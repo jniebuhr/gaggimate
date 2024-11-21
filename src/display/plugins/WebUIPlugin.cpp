@@ -40,6 +40,7 @@ void WebUIPlugin::start() {
                 if (request->hasArg("wifiPassword"))
                     settings->setWifiPassword(request->arg("wifiPassword"));
                 settings->setHomekit(request->hasArg("homekit"));
+                settings->setHomeAssistant(request->hasArg("homeassistant"));
             });
             controller->setTargetTemp(controller->getTargetTemp());
         }
@@ -69,6 +70,7 @@ String WebUIPlugin::processTemplate(const String &var) {
                                           {"TARGET_WATER_TEMP", String(settings.getTargetWaterTemp())},
                                           {"TARGET_DURATION", String(settings.getTargetDuration() / 1000)},
                                           {"HOMEKIT_CHECKED", settings.isHomekit() ? "checked" : ""},
+                                          {"HOMEASSISTANT_CHECKED", settings.isHomeAssistant() ? "checked" : ""},
                                           {"PID", settings.getPid()},
                                           {"WIFI_SSID", settings.getWifiSsid()},
                                           {"WIFI_PASSWORD", settings.getWifiPassword()},

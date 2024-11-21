@@ -30,6 +30,7 @@ class Settings {
     String getWifiPassword() const { return wifiPassword; }
     String getMdnsName() const { return mdnsName; }
     bool isHomekit() const { return homekit; }
+    bool isHomeAssistant() const { return homeAssistant; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -41,6 +42,7 @@ class Settings {
     void setWifiPassword(const String &wifiPassword);
     void setMdnsName(const String &mdnsName);
     void setHomekit(bool homekit);
+    void setHomeAssistant(bool homeAssistant);
 
   private:
     Preferences preferences;
@@ -57,6 +59,7 @@ class Settings {
     String wifiPassword = "";
     String mdnsName = DEFAULT_MDNS_NAME;
     bool homekit = false;
+    bool homeAssistant = false;
 };
 
 #endif // SETTINGS_H

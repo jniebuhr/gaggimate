@@ -13,6 +13,7 @@ Settings::Settings() {
     wifiPassword = preferences.getString("wp", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
     homekit = preferences.getBool("hk", false);
+    homeAssistant = preferences.getBool("ha", false);
     preferences.end();
 }
 
@@ -37,7 +38,8 @@ void Settings::save() {
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
     preferences.putString("mn", mdnsName);
-    preferences.putBool("hk", wifiPassword);
+    preferences.putBool("hk", homekit);
+    preferences.putBool("ha", homeAssistant);
     preferences.end();
 }
 
@@ -93,5 +95,10 @@ void Settings::setMdnsName(const String &mdnsName) {
 
 void Settings::setHomekit(const bool homekit) {
     this->homekit = homekit;
+    save();
+}
+
+void Settings::setHomeAssistant(const bool homeAssistant) {
+    this->homeAssistant = homeAssistant;
     save();
 }

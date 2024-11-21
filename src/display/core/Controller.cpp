@@ -8,6 +8,7 @@
 #include "../plugins/HomekitPlugin.h"
 #include "../plugins/mDNSPlugin.h"
 #include "../plugins/WebUIPlugin.h"
+#include "../plugins/MQTTPlugin.h"
 
 Controller::Controller()
     : timer(nullptr), mode(MODE_BREW), currentTemp(0), activeUntil(0), lastPing(0), lastProgress(0), lastAction(0),
@@ -17,11 +18,14 @@ void Controller::setup() {
     mode = settings.getStartupMode();
 
     pluginManager = new PluginManager();
+    pluginManager->registerPlugin(new WebUIPlugin());
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     else
         pluginManager->registerPlugin(new mDNSPlugin());
-    pluginManager->registerPlugin(new WebUIPlugin());
+    if (settings.isHomeAssistant()) {
+        pluginManager->registerPlugin(new MQTTPlugin());
+    }
     pluginManager->setup(this);
 
     setupPanel();
