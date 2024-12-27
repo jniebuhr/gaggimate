@@ -8,7 +8,7 @@
     "url": "vincent.stragier@outlook.com"
   },
   "version": "1.0.0",
-  "exclude": "doc",
   "frameworks": "arduino",
-  "platforms": ["esp32"]
+  "platforms": ["esp32"],
+  "dependencies": {}
 }

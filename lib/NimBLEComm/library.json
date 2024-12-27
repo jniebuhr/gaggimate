@@ -1,0 +1,14 @@
+{
+  "name": "NimBLEComm",
+  "keywords": "GaggiMate NimBLE Lib",
+  "description": "GaggiMate NimBLE Lib",
+  "repository":
+  {
+    "type": "email",
+    "url": "mail@gaggimate.eu"
+  },
+  "version": "1.0.0",
+  "exclude": "doc",
+  "frameworks": "arduino",
+  "platforms": ["esp32"]
+}
