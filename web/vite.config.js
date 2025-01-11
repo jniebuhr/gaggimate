@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://silvia.local/',
+        target: 'http://gaggimate.local/',
         changeOrigin: true,
       },
     },
