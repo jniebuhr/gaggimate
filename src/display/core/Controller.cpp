@@ -2,6 +2,7 @@
 #include "../config.h"
 #include "../drivers/LilyGo-T-RGB/LV_Helper.h"
 #include "../plugins/HomekitPlugin.h"
+#include "../plugins/MQTTPlugin.h"
 #include "../plugins/WebUIPlugin.h"
 #include "../plugins/mDNSPlugin.h"
 #include "../ui/ui.h"
