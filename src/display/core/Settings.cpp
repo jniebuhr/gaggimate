@@ -15,6 +15,9 @@ Settings::Settings() {
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
     homekit = preferences.getBool("hk", false);
     otaChannel = preferences.getString("oc", DEFAULT_OTA_CHANNEL);
+    homeAssistant = preferences.getBool("ha", false);
+    homeAssistantIP = preferences.getString("hai", "");
+    homeAssistantPort = preferences.getInt("hap", 1883);
     preferences.end();
 }
 
@@ -42,6 +45,9 @@ void Settings::save() {
     preferences.putString("mn", mdnsName);
     preferences.putBool("hk", homekit);
     preferences.putString("oc", otaChannel);
+    preferences.putBool("ha", homeAssistant);
+    preferences.putString("hai", homeAssistantIP);
+    preferences.putInt("hap", homeAssistantPort);
     preferences.end();
 }
 
@@ -107,5 +113,20 @@ void Settings::setHomekit(const bool homekit) {
 
 void Settings::setOTAChannel(const String &otaChannel) {
     this->otaChannel = otaChannel;
+    save();
+}
+
+void Settings::setHomeAssistant(const bool homeAssistant) {
+    this->homeAssistant = homeAssistant;
+    save();
+}
+
+void Settings::setHomeAssistantIP(const String &homeAssistantIP) {
+    this->homeAssistantIP = homeAssistantIP;
+    save();
+}
+
+void Settings::setHomeAssistantPort(const int homeAssistantPort) {
+    this->homeAssistantPort = homeAssistantPort;
     save();
 }
