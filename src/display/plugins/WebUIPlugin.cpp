@@ -103,7 +103,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
             if (request->hasArg("wifiPassword"))
                 settings->setWifiPassword(request->arg("wifiPassword"));
             settings->setHomekit(request->hasArg("homekit"));
-            settings->setHomeAssistant(request->hasArg("homeassistant"));
+            settings->setHomeAssistant(request->hasArg("homeAssistant"));
             if (request->hasArg("haIP"))
                 settings->setHomeAssistantIP(request->arg("haIP"));
             if (request->hasArg("haPort"))
@@ -121,7 +121,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
     doc["targetDuration"] = settings.getTargetDuration() / 1000;
     doc["homekit"] = settings.isHomekit();
-    doc["homeassistant"] = settings.isHomeAssistant();
+    doc["homeAssistant"] = settings.isHomeAssistant();
     doc["haIP"] = settings.getHomeAssistantIP();
     doc["haPort"] = settings.getHomeAssistantPort();
     doc["pid"] = settings.getPid();
