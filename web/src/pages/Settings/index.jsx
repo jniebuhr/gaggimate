@@ -30,6 +30,9 @@ export function Settings() {
       if (key === 'homekit') {
         value = !formData.homekit;
       }
+      if (key === 'homeAssistant') {
+        value = !formData.homeAssistant;
+      }
       setFormData({
         ...formData,
         [key]: value,
@@ -70,17 +73,17 @@ export function Settings() {
       <h2 class="text-3xl font-semibold mb-4 text-[#333333]">Settings</h2>
 
       <form
-        ref={formRef}
-        method="post"
-        action="/api/settings"
-        class="flex flex-col gap-4 w-full max-w-md border-b border-[#CCCCCC] pb-4"
-        onSubmit={onSubmit}
+          ref={formRef}
+          method="post"
+          action="/api/settings"
+          class="flex flex-col gap-4 w-full max-w-md border-b border-[#CCCCCC] pb-4"
+          onSubmit={onSubmit}
       >
         <div>
           <b>User Preferences</b>
         </div>
         <div>
-          <label for="startup-mode" class="block font-medium text-[#333333]">
+          <label for="startup-mode" className="block font-medium text-[#333333]">
             Startup Mode
           </label>
           <select id="startup-mode" name="startupMode" class="input-field" onChange={onChange('startupMode')}>
@@ -94,77 +97,77 @@ export function Settings() {
         </div>
 
         <div>
-          <label for="targetDuration" class="block font-medium text-[#333333]">
+          <label for="targetDuration" className="block font-medium text-[#333333]">
             Default Duration (sec)
           </label>
           <input
-            id="targetDuration"
-            name="targetDuration"
-            type="number"
-            class="input-field"
-            placeholder="30"
-            value={formData.targetDuration}
-            onChange={onChange('targetDuration')}
+              id="targetDuration"
+              name="targetDuration"
+              type="number"
+              className="input-field"
+              placeholder="30"
+              value={formData.targetDuration}
+              onChange={onChange('targetDuration')}
           />
         </div>
 
         <div>
-          <label for="targetBrewTemp" class="block font-medium text-[#333333]">
+          <label for="targetBrewTemp" className="block font-medium text-[#333333]">
             Default Brew Temperature (°C)
           </label>
           <input
-            id="targetBrewTemp"
-            name="targetBrewTemp"
-            type="number"
-            class="input-field"
-            placeholder="93"
-            value={formData.targetBrewTemp}
-            onChange={onChange('targetBrewTemp')}
+              id="targetBrewTemp"
+              name="targetBrewTemp"
+              type="number"
+              className="input-field"
+              placeholder="93"
+              value={formData.targetBrewTemp}
+              onChange={onChange('targetBrewTemp')}
           />
         </div>
 
         <div>
-          <label for="targetSteamTemp" class="block font-medium text-[#333333]">
+          <label for="targetSteamTemp" className="block font-medium text-[#333333]">
             Default Steam Temperature (°C)
           </label>
           <input
-            id="targetSteamTemp"
-            name="targetSteamTemp"
-            type="number"
-            class="input-field"
-            placeholder="135"
-            value={formData.targetSteamTemp}
-            onChange={onChange('targetSteamTemp')}
+              id="targetSteamTemp"
+              name="targetSteamTemp"
+              type="number"
+              className="input-field"
+              placeholder="135"
+              value={formData.targetSteamTemp}
+              onChange={onChange('targetSteamTemp')}
           />
         </div>
 
         <div>
-          <label for="targetWaterTemp" class="block font-medium text-[#333333]">
+          <label for="targetWaterTemp" className="block font-medium text-[#333333]">
             Default Water Temperature (°C)
           </label>
           <input
-            id="targetWaterTemp"
-            name="targetWaterTemp"
-            type="number"
-            class="input-field"
-            placeholder="80"
-            value={formData.targetWaterTemp}
-            onChange={onChange('targetWaterTemp')}
+              id="targetWaterTemp"
+              name="targetWaterTemp"
+              type="number"
+              className="input-field"
+              placeholder="80"
+              value={formData.targetWaterTemp}
+              onChange={onChange('targetWaterTemp')}
           />
         </div>
 
         <div>
-          <label for="temperatureOffset" class="block font-medium text-[#333333]">
+          <label for="temperatureOffset" className="block font-medium text-[#333333]">
             Temperature Offset (°C)
           </label>
           <input
-            id="temperatureOffset"
-            name="temperatureOffset"
-            type="number"
-            class="input-field"
-            placeholder="0"
-            value={formData.temperatureOffset}
-            onChange={onChange('temperatureOffset')}
+              id="temperatureOffset"
+              name="temperatureOffset"
+              type="number"
+              className="input-field"
+              placeholder="0"
+              value={formData.temperatureOffset}
+              onChange={onChange('temperatureOffset')}
           />
         </div>
 
@@ -172,97 +175,151 @@ export function Settings() {
           <b>Integrations</b>
         </div>
 
-        <div class="flex flex-row items-center gap-4">
-          <label class="relative inline-flex items-center cursor-pointer">
+        <div className="flex flex-row items-center gap-4">
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
-              id="homekit"
-              name="homekit"
-              value="homekit"
-              type="checkbox"
-              class="sr-only peer"
-              checked={!!formData.homekit}
-              onChange={onChange('homekit')}
+                id="homekit"
+                name="homekit"
+                value="homekit"
+                type="checkbox"
+                className="sr-only peer"
+                checked={!!formData.homekit}
+                onChange={onChange('homekit')}
             />
-            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <div
+                className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
           </label>
           <p>Homekit</p>
         </div>
 
+        <div className="flex flex-row items-center gap-4">
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+                id="homeAssistant"
+                name="homeAssistant"
+                value="homeAssistant"
+                type="checkbox"
+                className="sr-only peer"
+                checked={!!formData.homeAssistant}
+                onChange={onChange('homeAssistant')}
+            />
+            <div
+                className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          </label>
+          <p>Home Assistant</p>
+        </div>
+
+        {
+          formData.homeAssistant && (
+                <>
+                  <div>
+                    <label htmlFor="haIP" className="block font-medium text-[#333333]">
+                      Home Assistant IP
+                    </label>
+                    <input
+                        id="haIP"
+                        name="haIP"
+                        type="text"
+                        className="input-field"
+                        placeholder="0"
+                        value={formData.haIP}
+                        onChange={onChange('haIP')}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="haPort" className="block font-medium text-[#333333]">
+                      Home Assistant Port
+                    </label>
+                    <input
+                        id="haPort"
+                        name="haPort"
+                        type="number"
+                        className="input-field"
+                        placeholder="0"
+                        value={formData.haPort}
+                        onChange={onChange('haPort')}
+                    />
+                  </div>
+                </>
+            )
+        }
+
         <div>
           <b>System Settings</b>
-          <label for="wifiSsid" class="block font-medium text-[#333333]">
+          <label for="wifiSsid" className="block font-medium text-[#333333]">
             WiFi SSID
           </label>
           <input
-            id="wifiSsid"
-            name="wifiSsid"
-            type="text"
-            class="input-field"
-            placeholder="WiFi SSID"
-            value={formData.wifiSsid}
-            onChange={onChange('wifiSsid')}
+              id="wifiSsid"
+              name="wifiSsid"
+              type="text"
+              className="input-field"
+              placeholder="WiFi SSID"
+              value={formData.wifiSsid}
+              onChange={onChange('wifiSsid')}
           />
         </div>
         <div>
-          <label for="wifiPassword" class="block font-medium text-[#333333]">
+          <label for="wifiPassword" className="block font-medium text-[#333333]">
             WiFi Password
           </label>
           <input
-            id="wifiPassword"
-            name="wifiPassword"
-            type="password"
-            class="input-field"
-            placeholder="WiFi Password"
-            value={formData.wifiPassword}
-            onChange={onChange('wifiPassword')}
+              id="wifiPassword"
+              name="wifiPassword"
+              type="password"
+              className="input-field"
+              placeholder="WiFi Password"
+              value={formData.wifiPassword}
+              onChange={onChange('wifiPassword')}
           />
         </div>
         <div>
-          <label for="mdnsName" class="block font-medium text-[#333333]">
+          <label for="mdnsName" className="block font-medium text-[#333333]">
             Hostname
           </label>
           <input
-            id="mdnsName"
-            name="mdnsName"
-            type="text"
-            class="input-field"
-            placeholder="Hostname"
-            value={formData.mdnsName}
-            onChange={onChange('mdnsName')}
+              id="mdnsName"
+              name="mdnsName"
+              type="text"
+              className="input-field"
+              placeholder="Hostname"
+              value={formData.mdnsName}
+              onChange={onChange('mdnsName')}
           />
         </div>
         <div>
-          <label for="pid" class="block font-medium text-[#333333]">
+          <label for="pid" className="block font-medium text-[#333333]">
             PID Values (Kp, Ki, Kd)
           </label>
           <input
-            id="pid"
-            name="pid"
-            type="text"
-            class="input-field"
-            placeholder="2.0, 0.1, 0.01"
-            value={formData.pid}
-            onChange={onChange('pid')}
+              id="pid"
+              name="pid"
+              type="text"
+              className="input-field"
+              placeholder="2.0, 0.1, 0.01"
+              value={formData.pid}
+              onChange={onChange('pid')}
           />
         </div>
 
-        <div class="text-sm text-[#666666]">Some options like WiFi, NTP or integrations require a restart.</div>
+        <div className="text-sm text-[#666666]">Some options like WiFi, NTP or integrations require a restart.</div>
 
-        <div class="flex justify-center mt-6 flex-row gap-1">
+        <div className="flex justify-center mt-6 flex-row gap-1">
           <a href="/" class="menu-button">
             Back
           </a>
           <button type="submit" class="menu-button flex flex-row gap-2" disabled={submitting}>
             Save
-            {submitting && <Spinner size={4} />}
+            {submitting && <Spinner size={4}/>}
           </button>
           <input
-            type="submit"
-            name="restart"
-            class="menu-button"
-            value="Save and Restart"
-            disabled={submitting}
-            onClick={(e) => onSubmit(e, true)}
+              type="submit"
+              name="restart"
+              className="menu-button"
+              value="Save and Restart"
+              disabled={submitting}
+              onClick={(e) => onSubmit(e, true)}
           />
         </div>
       </form>

@@ -22,6 +22,9 @@ void Controller::setup() {
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     else
         pluginManager->registerPlugin(new mDNSPlugin());
+    if (settings.isHomeAssistant()) {
+        pluginManager->registerPlugin(new MQTTPlugin());
+    }
     pluginManager->registerPlugin(new WebUIPlugin());
     pluginManager->setup(this);
 

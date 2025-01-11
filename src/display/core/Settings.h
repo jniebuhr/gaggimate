@@ -32,6 +32,9 @@ class Settings {
     String getMdnsName() const { return mdnsName; }
     bool isHomekit() const { return homekit; }
     String getOTAChannel() const { return otaChannel; }
+    bool isHomeAssistant() const { return homeAssistant; }
+    String getHomeAssistantIP() const { return homeAssistantIP; }
+    int getHomeAssistantPort() const { return homeAssistantPort; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -45,6 +48,9 @@ class Settings {
     void setMdnsName(const String &mdnsName);
     void setHomekit(bool homekit);
     void setOTAChannel(const String &otaChannel);
+    void setHomeAssistant(bool homeAssistant);
+    void setHomeAssistantIP(const String &homeAssistantIP);
+    void setHomeAssistantPort(int homeAssistantPort);
 
   private:
     Preferences preferences;
@@ -62,6 +68,9 @@ class Settings {
     String wifiPassword = "";
     String mdnsName = DEFAULT_MDNS_NAME;
     bool homekit = false;
+    bool homeAssistant = false;
+    String homeAssistantIP = "";
+    int homeAssistantPort = 1883;
 
     String otaChannel = DEFAULT_OTA_CHANNEL;
 };
