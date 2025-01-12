@@ -206,7 +206,7 @@ export function Settings() {
             <div
                 className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
           </label>
-          <p>Home Assistant</p>
+          <p>Home Assistant via MQTT</p>
         </div>
 
         {
@@ -214,7 +214,7 @@ export function Settings() {
                 <>
                   <div>
                     <label htmlFor="haIP" className="block font-medium text-[#333333]">
-                      Home Assistant IP
+                      MQTT IP
                     </label>
                     <input
                         id="haIP"
@@ -229,7 +229,7 @@ export function Settings() {
 
                   <div>
                     <label htmlFor="haPort" className="block font-medium text-[#333333]">
-                      Home Assistant Port
+                      MQTT Port
                     </label>
                     <input
                         id="haPort"
@@ -241,9 +241,10 @@ export function Settings() {
                         onChange={onChange('haPort')}
                     />
                   </div>
+
                   <div>
                     <label htmlFor="haUser" className="block font-medium text-[#333333]">
-                      Home Assistant User
+                      MQTT User
                     </label>
                     <input
                         id="haUser"
@@ -255,9 +256,10 @@ export function Settings() {
                         onChange={onChange('haUser')}
                     />
                   </div>
+                  
                   <div>
                     <label htmlFor="haPassword" className="block font-medium text-[#333333]">
-                      Home Assistant Password
+                      MQTT Password
                     </label>
                     <input
                         id="haPassword"
