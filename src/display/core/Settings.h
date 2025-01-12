@@ -34,6 +34,8 @@ class Settings {
     String getOTAChannel() const { return otaChannel; }
     bool isHomeAssistant() const { return homeAssistant; }
     String getHomeAssistantIP() const { return homeAssistantIP; }
+    String getHomeAssistantUser() const { return homeAssistantUser; }
+    String getHomeAssistantPassword() const { return homeAssistantPassword; }
     int getHomeAssistantPort() const { return homeAssistantPort; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
@@ -49,6 +51,8 @@ class Settings {
     void setHomekit(bool homekit);
     void setOTAChannel(const String &otaChannel);
     void setHomeAssistant(bool homeAssistant);
+    void setHomeAssistantUser(const String &homeAssistantUser);
+    void setHomeAssistantPassword(const String &homeAssistantPassword);
     void setHomeAssistantIP(const String &homeAssistantIP);
     void setHomeAssistantPort(int homeAssistantPort);
 
@@ -69,6 +73,8 @@ class Settings {
     String mdnsName = DEFAULT_MDNS_NAME;
     bool homekit = false;
     bool homeAssistant = false;
+    String homeAssistantUser = "";
+    String homeAssistantPassword = "";
     String homeAssistantIP = "";
     int homeAssistantPort = 1883;
 

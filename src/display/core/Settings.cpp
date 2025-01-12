@@ -18,6 +18,8 @@ Settings::Settings() {
     homeAssistant = preferences.getBool("ha", false);
     homeAssistantIP = preferences.getString("hai", "");
     homeAssistantPort = preferences.getInt("hap", 1883);
+    homeAssistantUser = preferences.getString("hau", "");
+    homeAssistantPassword = preferences.getString("hapw", "");
     preferences.end();
 }
 
@@ -46,6 +48,8 @@ void Settings::save() {
     preferences.putBool("hk", homekit);
     preferences.putString("oc", otaChannel);
     preferences.putBool("ha", homeAssistant);
+    preferences.putString("hau", homeAssistantUser);
+    preferences.putString("hapw", homeAssistantPassword);
     preferences.putString("hai", homeAssistantIP);
     preferences.putInt("hap", homeAssistantPort);
     preferences.end();
@@ -128,5 +132,13 @@ void Settings::setHomeAssistantIP(const String &homeAssistantIP) {
 
 void Settings::setHomeAssistantPort(const int homeAssistantPort) {
     this->homeAssistantPort = homeAssistantPort;
+    save();
+}
+void Settings::setHomeAssistantUser(const String &homeAssistantUser) {
+    this->homeAssistantUser = homeAssistantUser;
+    save();
+}
+void Settings::setHomeAssistantPassword(const String &homeAssistantPassword) {
+    this->homeAssistantPassword = homeAssistantPassword;
     save();
 }

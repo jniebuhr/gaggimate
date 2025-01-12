@@ -5,10 +5,13 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     pluginManager->on("controller:wifi:connect", [this, controller](Event& event) {
         Settings settings = controller->getSettings();
         String ip = settings.getHomeAssistantIP();
+        String clientId = "GaggiMate";
+        String haUser = settings.getHomeAssistantUser();
+        String haPassword = settings.getHomeAssistantPassword();
         char hostname[ip.length() + 2];
         ip.toCharArray(hostname, ip.length());
         client.begin(hostname, settings.getHomeAssistantPort(), net);
-        client.connect("GaggiMate");
+        client.connect(clientId.c_str(), haUser.c_str(), haPassword.c_str());
         String mac = WiFi.macAddress();
         mac.replace(":", "_");
         const char* cmac = mac.c_str();
@@ -24,6 +27,17 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
         const char* cmac = mac.c_str();
         char topic[50], json[50];
         sprintf(topic, "gaggimate/%s/boilers/0/temperature", cmac);
+        float temp = event.getFloat("value");
+        sprintf(json, R"***({"temperature":%02f})***", temp);
+        client.publish(topic, json);
+    });
+
+    pluginManager->on("boiler:targetTemperature:change", [this](Event &event) {
+        String mac = WiFi.macAddress();
+        mac.replace(":", "_");
+        const char* cmac = mac.c_str();
+        char topic[50], json[50];
+        sprintf(topic, "gaggimate/%s/boilers/0/targetTemperature", cmac);
         float temp = event.getFloat("value");
         sprintf(json, R"***({"temperature":%02f})***", temp);
         client.publish(topic, json);
