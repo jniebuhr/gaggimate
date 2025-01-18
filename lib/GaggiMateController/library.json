@@ -1,0 +1,26 @@
+{
+  "name": "GaggiMateController",
+  "keywords": "GaggiMate Controller Lib",
+  "description": "GaggiMate Controller Lib",
+  "repository":
+  {
+    "type": "email",
+    "url": "mail@gaggimate.eu"
+  },
+  "version": "1.0.0",
+  "exclude": "doc",
+  "frameworks": "arduino",
+  "platforms": ["esp32"],
+  "dependencies": {
+    "FS": "*",
+    "SPIFFS": "*",
+    "ble_ota_dfu": "file://lib/ble_ota_dfu",
+    "NimBLEComm": "file://lib/NimBLEComm",
+    "br3ttb/PID-AutoTune": "^1.0.0",
+    "br3ttb/PID": "^1.2.1",
+    "adafruit/MAX6675 library": "^1.1.2",
+    "h2zero/NimBLE-Arduino": "^1.4.0",
+    "robtillaart/MAX31855": "^0.6.1",
+    "bblanchon/ArduinoJson": "^7.2.1"
+  }
+}
