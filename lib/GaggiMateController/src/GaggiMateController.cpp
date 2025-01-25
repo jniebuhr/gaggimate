@@ -2,13 +2,16 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-GaggiMateController::GaggiMateController(ControllerConfig const &config): _config(config) {
+GaggiMateController::GaggiMateController() {
     this->pid = new PID(&this->input, &this->output, &this->setpoint, 0, 0, 0, DIRECT);
     this->pidAutotune = new PID_ATune(&this->input, &this->output);
-    this->max31855 = new MAX31855(config.maxCsPin, config.maxMisoPin, config.maxSckPin);
+    configs.push_back(GM_CONTROLLER_REV_1x);
 }
 
 void GaggiMateController::setup() {
+    detectBoard();
+    detectAddon();
+    this->max31855 = new MAX31855(_config.maxCsPin, _config.maxMisoPin, _config.maxSckPin);
     // Initialize UART and Protobuf communication
     _ble.initServer();
 
@@ -97,6 +100,38 @@ void GaggiMateController::loop() {
 
         delay(50);
     }
+}
+
+void GaggiMateController::registerBoardConfig(ControllerConfig config) {
+    configs.push_back(config);
+}
+
+void GaggiMateController::detectBoard() {
+    pinMode(DETECT_EN_PIN, OUTPUT);
+    pinMode(DETECT_VALUE_PIN, INPUT_PULLDOWN);
+    digitalWrite(DETECT_EN_PIN, HIGH);
+    uint16_t millivolts = analogReadMilliVolts(DETECT_VALUE_PIN);
+    digitalWrite(DETECT_EN_PIN, LOW);
+    int boardId = round(((float) millivolts) / 100.0f);
+    printf("Detected Board ID: %d\n", boardId);
+    for (ControllerConfig config : configs) {
+        if (config.autodetectValue == boardId) {
+            _config = config;
+            printf("Using Board: %s\n", _config.name.c_str());
+            return;
+        }
+    }
+    printf("No compatible board detected.\n");
+    delay(5000);
+    ESP.restart();
+}
+
+void GaggiMateController::detectAddon() {
+    pinMode(_config.extDetectPin, INPUT_PULLDOWN);
+    uint16_t millivolts = analogReadMilliVolts(_config.extDetectPin);
+    int addonId = round(((float) millivolts) / 100.0f);
+    printf("Detected Addon ID: %d\n", addonId);
+
 }
 
 void GaggiMateController::onTemperatureControl(float temperature) {
