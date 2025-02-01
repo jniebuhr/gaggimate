@@ -40,6 +40,9 @@ export function Settings() {
       if (key === 'smartGrindToggle') {
         value = !formData.smartGrindToggle;
       }
+      if (key === 'homeAssistant') {
+        value = !formData.homeAssistant;
+      }
       setFormData({
         ...formData,
         [key]: value,
@@ -346,6 +349,88 @@ export function Settings() {
                   </div>
                 </div>
             }
+
+            <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 rounded-b-lg">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                    id="homeAssistant"
+                    name="homeAssistant"
+                    value="homeAssistant"
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={!!formData.homeAssistant}
+                    onChange={onChange('homeAssistant')}
+                />
+                <div
+                    className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+              <p>Home Assistant (MQTT)</p>
+            </div>
+            {
+                formData.homeAssistant &&
+                <div className="p-4 flex flex-col gap-4">
+                  <p className="flex-auto">
+                    This feature allows connection to a Home Assistant or MQTT installation and push the current state.
+                  </p>
+                  <div className="flex-auto">
+                    <label htmlFor="haIP" className="block font-medium text-[#333333]">
+                      MQTT IP
+                    </label>
+                    <input
+                        id="haIP"
+                        name="haIP"
+                        type="text"
+                        className="input-field"
+                        placeholder="0"
+                        value={formData.haIP}
+                        onChange={onChange('haIP')}
+                    />
+                  </div>
+
+                  <div className="flex-auto">
+                    <label htmlFor="haPort" className="block font-medium text-[#333333]">
+                      MQTT Port
+                    </label>
+                    <input
+                        id="haPort"
+                        name="haPort"
+                        type="number"
+                        className="input-field"
+                        placeholder="0"
+                        value={formData.haPort}
+                        onChange={onChange('haPort')}
+                    />
+                  </div>
+                  <div className="flex-auto">
+                    <label htmlFor="haUser" className="block font-medium text-[#333333]">
+                      MQTT User
+                    </label>
+                    <input
+                        id="haUser"
+                        name="haUser"
+                        type="text"
+                        className="input-field"
+                        placeholder="user"
+                        value={formData.haUser}
+                        onChange={onChange('haUser')}
+                    />
+                  </div>
+                  <div className="flex-auto">
+                    <label htmlFor="haPassword" className="block font-medium text-[#333333]">
+                      MQTT Password
+                    </label>
+                    <input
+                        id="haPassword"
+                        name="haPassword"
+                        type="password"
+                        className="input-field"
+                        placeholder="password"
+                        value={formData.haPassword}
+                        onChange={onChange('haPassword')}
+                    />
+                  </div>
+                </div>
+            }
           </div>
 
           <div class="flex flex-row items-center gap-4">
@@ -409,7 +494,7 @@ export function Settings() {
             />
           </div>
 
-          <div class="text-sm text-[#666666]">Some options like WiFi, NTP or integrations require a restart.</div>
+        <div className="text-sm text-[#666666]">Some options like WiFi, NTP, Homekit and MQTT require a restart.</div>
 
           <div class="flex justify-center mt-6 flex-row gap-1">
             <a href="/" class="menu-button">

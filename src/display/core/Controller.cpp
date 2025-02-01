@@ -9,6 +9,7 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#include <display/plugins/MQTTPlugin.h>
 
 void Controller::setup() {
     mode = settings.getStartupMode();
@@ -24,6 +25,9 @@ void Controller::setup() {
     }
     if (settings.isSmartGrindActive()) {
         pluginManager->registerPlugin(new SmartGrindPlugin());
+    }
+    if (settings.isHomeAssistant()) {
+        pluginManager->registerPlugin(new MQTTPlugin());
     }
     pluginManager->registerPlugin(new WebUIPlugin());
     pluginManager->registerPlugin(&BLEScales);

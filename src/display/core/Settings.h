@@ -44,6 +44,11 @@ class Settings {
     bool isSmartGrindActive() const { return smartGrindActive; }
     bool isSmartGrindToggle() const { return smartGrindToggle; }
     String getSmartGrindIp() const { return smartGrindIp; }
+    bool isHomeAssistant() const { return homeAssistant; }
+    String getHomeAssistantIP() const { return homeAssistantIP; }
+    String getHomeAssistantUser() const { return homeAssistantUser; }
+    String getHomeAssistantPassword() const { return homeAssistantPassword; }
+    int getHomeAssistantPort() const { return homeAssistantPort; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -69,6 +74,12 @@ class Settings {
     void setSmartGrindActive(bool smart_grind_active);
     void setSmartGrindIp(String smart_grind_ip);
     void setSmartGrindToggle(bool smart_grind_toggle);
+    void setHomeAssistant(bool homeAssistant);
+    void setHomeAssistantUser(const String &homeAssistantUser);
+    void setHomeAssistantPassword(const String &homeAssistantPassword);
+    void setHomeAssistantIP(const String &homeAssistantIP);
+    void setHomeAssistantPort(int homeAssistantPort);
+
 
   private:
     Preferences preferences;
@@ -98,6 +109,11 @@ class Settings {
     bool smartGrindActive = false;
     bool smartGrindToggle = false;
     String smartGrindIp = "";
+    bool homeAssistant = false;
+    String homeAssistantUser = "";
+    String homeAssistantPassword = "";
+    String homeAssistantIP = "";
+    int homeAssistantPort = 1883;
 
     String otaChannel = DEFAULT_OTA_CHANNEL;
 };
