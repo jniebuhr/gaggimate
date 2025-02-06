@@ -44,6 +44,7 @@ class BrewProcess : public Process {
     unsigned long currentPhaseStarted = 0;
     unsigned long previousPhaseFinished = 0;
     double currentVolume = 0;//most recent volume pushed
+    double volumePerSecond = 0;
     std::deque<std::pair<double,double>> measurements; //contains measurement and time pairs
 
 
@@ -65,6 +66,7 @@ class BrewProcess : public Process {
         while (measurements.size() > PREDICTIVE_MEASUREMENTS) {
             measurements.pop_front();
         }
+        volumePerSecond=volumePerSecond();
     }
 
     unsigned long getPhaseDuration() const {
@@ -105,7 +107,7 @@ class BrewProcess : public Process {
             if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
                 return true;
             }
-            const double predictiveFactor = volumePerSecond() / 1000.0 * PREDICTIVE_TIME_MS;
+            const double predictiveFactor = volumePerSecond / 1000.0 * PREDICTIVE_TIME_MS;
             return currentVolume + predictiveFactor >= brewVolume;
         }
         if (phase != BrewPhase::FINISHED) {
