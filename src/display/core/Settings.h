@@ -94,6 +94,8 @@ class Settings {
     int targetVolume = 36;
     int targetGrindVolume = 18;
     int targetGrindDuration = 25000;
+    double brewDelay = 1000.0
+    double grindDelay = 1000.0
     int startupMode = MODE_STANDBY;
     int infuseBloomTime = 0;
     int infusePumpTime = 0;

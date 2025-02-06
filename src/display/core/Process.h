@@ -6,7 +6,7 @@
 #include <numeric>
 
 constexpr int PREDICTIVE_MEASUREMENTS = 2; // last n measurements used for prediction
-constexpr double PREDICTIVE_TIME_MS = 1000.0;
+//constexpr double PREDICTIVE_TIME_MS = 1000.0;
 
 class Process {
   public:
@@ -41,17 +41,18 @@ class BrewProcess : public Process {
     int brewTime;
     int brewVolume;
     int brewPressurize;
+    double brewDelay;
     unsigned long currentPhaseStarted = 0;
     unsigned long previousPhaseFinished = 0;
     double currentVolume = 0;//most recent volume pushed
     double volumePerSecond = 0;
-    std::deque<std::pair<double,double>> measurements; //contains measurement and time pairs
-
+    std::vector<double> measurements;
+    std::vector<double> measurementTimes;
 
     explicit BrewProcess(ProcessTarget target = ProcessTarget::TIME, int pressurizeTime = 0, int infusionPumpTime = 0,
-                         int infusionBloomTime = 0, int brewTime = 0, int brewVolume = 0)
+                         int infusionBloomTime = 0, int brewTime = 0, int brewVolume = 0, double brewDelay=0.0)
         : target(target), infusionPumpTime(infusionPumpTime), infusionBloomTime(infusionBloomTime), brewTime(brewTime),
-          brewVolume(brewVolume), brewPressurize(pressurizeTime) {
+          brewVolume(brewVolume), brewPressurize(pressurizeTime),brewDelay(brewDelay) {
         if (infusionBloomTime == 0 || infusionPumpTime == 0) {
             phase = BrewPhase::BREW_PRESSURIZE;
         } else if (pressurizeTime == 0) {
@@ -62,10 +63,8 @@ class BrewProcess : public Process {
 
     void updateVolume(double new_volume) override {
         currentVolume = new_volume;
-        measurements.emplace_back({currentVolume,millis()});
-        while (measurements.size() > PREDICTIVE_MEASUREMENTS) {
-            measurements.pop_front();
-        }
+        measurements.emplace_back(currentVolume);
+        measurementTimes.emplace_back(millis());
         volumePerSecond=volumePerSecond();
     }
 
@@ -88,14 +87,16 @@ class BrewProcess : public Process {
 
     double volumePerSecond() const {
 
-        double v_mean = std::accumulate(measurements.begin(), measurements.end(), 0, auto [](std::pair<double,double> a, std::pair<double,double> b){return a.first+b.first})/measurements.size();
-        double t_mean = std::accumulate(measurements.begin(), measurements.end(), 0, auto [](std::pair<double,double> a, std::pair<double,double> b){return a.second+b.second})/measurements.size();
+        if (measurements.size()<PREDICTIVE_MEASUREMENTS) return 0.0;
+
+        double v_mean = std::accumulate(measurements.begin(), measurements.end(), 0)/measurements.size();
+        double t_mean = std::accumulate(measuremenTimes.begin(), measurementTimes.end(), 0)/measurementTimes.size();
 
         double tdev2 = 0.0;
         double tdev_vdev = 0.0
-        for (const auto n : measurements) {
-            tdev_vdev += (n.second-t_mean)*(n.first-v_mean)
-            tdev2 += pow(n.second-t_mean,2.0);
+        for (size_t i=measurements.size()-1; i>= measurements.size()-PREDICTIVE_MEASUREMENTS;i--) {
+            tdev_vdev += (measurementTimes[i]-t_mean)*(measurements[i]-v_mean)
+            tdev2 += pow(measurementTimes[i]-t_mean,2.0);
         }
         double volumePerMilliSecond=tdev_vdev/tdev2//the slope of the linear best fit
 
@@ -107,7 +108,7 @@ class BrewProcess : public Process {
             if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
                 return true;
             }
-            const double predictiveFactor = volumePerSecond / 1000.0 * PREDICTIVE_TIME_MS;
+            const double predictiveFactor = volumePerSecond / 1000.0 * brewDelay;
             return currentVolume + predictiveFactor >= brewVolume;
         }
         if (phase != BrewPhase::FINISHED) {
@@ -224,14 +225,15 @@ class GrindProcess : public Process {
     ProcessTarget target;
     int time;
     int volume;
+    double grindDelay;
     unsigned long started;
     std::deque<double> measurements;
 
     double currentVolume = 0;
     double lastVolume = 0;
 
-    explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, int volume = 0)
-        : target(target), time(time), volume(volume) {
+    explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, int volume = 0, double grindDelay = 0)
+        : target(target), time(time), volume(volume) grindDelay(grindDelay) {
         started = millis();
     }
 
@@ -268,7 +270,7 @@ class GrindProcess : public Process {
         if (target == ProcessTarget::TIME) {
             return millis() - started < time;
         }
-        const double predictiveFactor = volumePerSecond() / 1000.0 * PREDICTIVE_TIME_MS;
+        const double predictiveFactor = volumePerSecond() / 1000.0 * grindDelay;
         return currentVolume + predictiveFactor < volume;
     }
 
