@@ -121,6 +121,15 @@ void Settings::setTargetGrindDuration(const int target_duration) {
     save();
 }
 
+void Settings::setBrewDelay(double brew_Delay) {
+    brewDelay = brew_Delay;
+    save();
+}
+
+void Settings::setGrindDelay(double grind_Delay) {
+    grindDelay = grind_Delay;
+    save();
+}
 void Settings::setStartupMode(const int startup_mode) {
     startupMode = startup_mode;
     save();

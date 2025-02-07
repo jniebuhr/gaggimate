@@ -45,7 +45,7 @@ class BrewProcess : public Process {
     unsigned long currentPhaseStarted = 0;
     unsigned long previousPhaseFinished = 0;
     double currentVolume = 0;//most recent volume pushed
-    double volumePerSecond = 0;
+    double currentVolumePerSecond =0;
     std::vector<double> measurements;
     std::vector<double> measurementTimes;
 
@@ -65,7 +65,6 @@ class BrewProcess : public Process {
         currentVolume = new_volume;
         measurements.emplace_back(currentVolume);
         measurementTimes.emplace_back(millis());
-        volumePerSecond=volumePerSecond();
     }
 
     unsigned long getPhaseDuration() const {
@@ -89,32 +88,39 @@ class BrewProcess : public Process {
 
         if (measurements.size()<PREDICTIVE_MEASUREMENTS) return 0.0;
 
-        double v_mean = std::accumulate(measurements.begin(), measurements.end(), 0)/measurements.size();
-        double t_mean = std::accumulate(measuremenTimes.begin(), measurementTimes.end(), 0)/measurementTimes.size();
+        double v_mean = std::accumulate(measurements.begin(), measurements.end(), 0.0)/measurements.size();
+        double t_mean = std::accumulate(measurementTimes.begin(), measurementTimes.end(), 0.0)/measurementTimes.size();
 
         double tdev2 = 0.0;
-        double tdev_vdev = 0.0
+        double tdev_vdev = 0.0;
         for (size_t i=measurements.size()-1; i>= measurements.size()-PREDICTIVE_MEASUREMENTS;i--) {
-            tdev_vdev += (measurementTimes[i]-t_mean)*(measurements[i]-v_mean)
+            tdev_vdev += (measurementTimes[i]-t_mean)*(measurements[i]-v_mean);
             tdev2 += pow(measurementTimes[i]-t_mean,2.0);
         }
-        double volumePerMilliSecond=tdev_vdev/tdev2//the slope of the linear best fit
+        double volumePerMilliSecond=tdev_vdev/tdev2;//the slope of the linear best fit
 
         return volumePerMilliSecond ? volumePerMilliSecond * 1000.0 : 0.0; // return 0 if it is not positive
     }
 
-    bool isCurrentPhaseFinished() const {
+    bool isCurrentPhaseFinished() {
         if (phase == BrewPhase::BREW_PUMP && target == ProcessTarget::VOLUMETRIC) {
             if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
                 return true;
             }
-            const double predictiveFactor = volumePerSecond / 1000.0 * brewDelay;
-            return currentVolume + predictiveFactor >= brewVolume;
+            currentVolumePerSecond = volumePerSecond();//stored for determination of the delay
+            const double predictedAddedVolume = currentVolumePerSecond/ 1000.0 * brewDelay;
+            return currentVolume + predictedAddedVolume >= brewVolume;
         }
         if (phase != BrewPhase::FINISHED) {
             return millis() - currentPhaseStarted > getPhaseDuration();
         }
         return true;
+    }
+
+    double getNewDelayTime(double finalVolume) const {
+        double overshoot = finalVolume - double(brewVolume);
+        double overshootTime=overshoot*1000/currentVolumePerSecond;//the amount of brewDelay corresponding to the overshoot
+        return brewDelay-overshootTime; //decrease brewDelay and return
     }
 
     bool isRelayActive() override {
@@ -133,6 +139,11 @@ class BrewProcess : public Process {
 
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL
+
+
+
+
+
         if (isCurrentPhaseFinished()) {
             previousPhaseFinished = millis();
             switch (phase) {
@@ -233,7 +244,7 @@ class GrindProcess : public Process {
     double lastVolume = 0;
 
     explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, int volume = 0, double grindDelay = 0)
-        : target(target), time(time), volume(volume) grindDelay(grindDelay) {
+        : target(target), time(time), volume(volume), grindDelay(grindDelay) {
         started = millis();
     }
 
