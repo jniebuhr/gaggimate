@@ -2,10 +2,8 @@
 #define PROCESS_H
 
 #include "constants.h"
-#include <deque>
-#include <numeric>
+//#include <numeric>
 
-constexpr int PREDICTIVE_MEASUREMENTS = 2; // last n measurements used for prediction
 constexpr double PREDICTIVE_TIME = 2000.0; // time window for the prediction
 //constexpr double PREDICTIVE_TIME_MS = 1000.0;
 
@@ -115,7 +113,7 @@ class BrewProcess : public Process {
         }
         double volumePerMilliSecond=tdev_vdev/tdev2;//the slope of the linear best fit
 
-        return volumePerMilliSecond ? volumePerMilliSecond * 1000.0 : 0.0; // return 0 if it is not positive
+        return volumePerMilliSecond>0 ? volumePerMilliSecond * 1000.0 : 0.0; // return 0 if it is not positive
     }
 
     bool isCurrentPhaseFinished() {
@@ -291,7 +289,7 @@ class GrindProcess : public Process {
         }
         double volumePerMilliSecond=tdev_vdev/tdev2;//the slope of the linear best fit
 
-        return volumePerMilliSecond ? volumePerMilliSecond * 1000.0 : 0.0; // return 0 if it is not positive
+        return volumePerMilliSecond>0 ? volumePerMilliSecond * 1000.0 : 0.0; // return 0 if it is not positive
     }
 
     void updateVolume(double new_volume) override {
