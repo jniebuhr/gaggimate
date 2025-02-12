@@ -60,13 +60,42 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
         }
         lastTemperature = temp;
     });
-
-    pluginManager->on("boiler:targetTemperature:change", [this](const Event &event) {
+    pluginManager->on("boiler:targetTemperature:change", [this](Event const &event) {
         if (!client.connected())
             return;
         char json[50];
-        const float temp = event.getFloat("value");
+        const float temp = event.getInt("value");
         snprintf(json, sizeof(json), R"***({"temperature":%02f})***", temp);
         publish("boilers/0/targetTemperature", json);
     });
+
+    pluginManager->on("controller:mode:change", [this](Event const &event) {
+        int newMode = event.getInt("value");
+        const char* modeStr;
+        switch (newMode) {
+            case 0: modeStr = "Standby"; break;
+            case 1: modeStr = "Brew"; break;
+            case 2: modeStr = "Steam"; break;
+            case 3: modeStr = "Water"; break;
+            default: modeStr = "Unknown"; break; // Fallback in case of unexpected value
+        }
+        char json[100];
+        snprintf(json, sizeof(json), R"({"mode":%d,"mode_str":"%s"})", newMode, modeStr);
+        publish("controller/mode", json);
+    });
+    pluginManager->on("controller:brew:start", [this](Event const &event) {
+        char json[50];
+        snprintf(json, sizeof(json), R"({"Brew":%s})", "Started");
+        publish("controller/brew", json);
+    }); 
+    pluginManager->on("controller:brew:stop", [this](Event const &event) {
+        char json[50];
+        snprintf(json, sizeof(json), R"({"Brew":%s})", "Ended");
+        publish("controller/brew", json);
+    }); 
+    pluginManager->on("BLEScalePlugin:brew:stop", [this](Event const &event) {
+        char json[50];
+        snprintf(json, sizeof(json), R"({"Brew":%s})", "Ended");
+        publish("controller/brew", json);
+    }); 
 }
