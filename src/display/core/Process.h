@@ -60,10 +60,12 @@ class BrewProcess : public Process {
         currentPhaseStarted = millis();
     }
 
-    void updateVolume(double new_volume) override {
+    void updateVolume(double new_volume) override {//called even after the Process is no longer active
         currentVolume = new_volume;
-        measurements.emplace_back(currentVolume);
-        measurementTimes.emplace_back(millis());
+        if (isActive()) {//only store measurements while active
+            measurements.emplace_back(currentVolume);
+            measurementTimes.emplace_back(millis());
+        }
     }
 
     unsigned long getPhaseDuration() const {
@@ -123,7 +125,7 @@ class BrewProcess : public Process {
             }
             currentVolumePerSecond = volumePerSecond();//stored for determination of the delay
             const double predictedAddedVolume = currentVolumePerSecond/ 1000.0 * brewDelay;
-            return currentVolume + predictedAddedVolume >= brewVolume;
+            return measurements.back() + predictedAddedVolume >= brewVolume;
         }
         if (phase != BrewPhase::FINISHED) {
             return millis() - currentPhaseStarted > getPhaseDuration();
@@ -131,8 +133,8 @@ class BrewProcess : public Process {
         return true;
     }
 
-    double getNewDelayTime(double finalVolume) const {
-        double overshoot = finalVolume - double(brewVolume);
+    double getNewDelayTime() const {
+        double overshoot = currentVolume - double(brewVolume);
         double overshootTime=overshoot*1000/currentVolumePerSecond;//the amount of brewDelay corresponding to the overshoot
         return brewDelay-overshootTime; //decrease brewDelay and return
     }
@@ -152,7 +154,7 @@ class BrewProcess : public Process {
     }
 
     void progress() override {
-        // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL
+        // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
 
         if (isCurrentPhaseFinished()) {
             previousPhaseFinished = millis();
@@ -253,7 +255,7 @@ class GrindProcess : public Process {
     std::vector<double> measurements;
     std::vector<double> measurementTimes;
 
-    explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, int volume = 0, double grindDelay = 0)
+    explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, int volume = 0, double grindDelay = 0.0)
         : target(target), time(time), grindVolume(volume), grindDelay(grindDelay) {
         started = millis();
     }
@@ -294,8 +296,10 @@ class GrindProcess : public Process {
 
     void updateVolume(double new_volume) override {
         currentVolume = new_volume;
-        measurements.emplace_back(currentVolume);
-        measurementTimes.emplace_back(millis());
+        if (isActive()) {//only store measurements while active
+            measurements.emplace_back(currentVolume);
+            measurementTimes.emplace_back(millis());
+        }
     }
 
     bool isRelayActive() override { return false; }
@@ -305,14 +309,12 @@ class GrindProcess : public Process {
     float getPumpValue() override { return 0.f; }
 
     void progress() override {
-        // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL
-        if (isActive()) {
+        // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while GrindProcess is active
             currentVolumePerSecond = volumePerSecond();//determine and store rate prediction
-        }
     }
 
-    double getNewDelayTime(double finalVolume) const {
-        double overshoot = finalVolume - double(grindVolume);
+    double getNewDelayTime() const {
+        double overshoot = currentVolume - double(grindVolume);
         double overshootTime=overshoot*1000/currentVolumePerSecond;//the amount of grindDelay corresponding to the overshoot
         return grindDelay-overshootTime; //decrease grindDelay and return
     }
@@ -322,7 +324,7 @@ class GrindProcess : public Process {
             return millis() - started < time;
         }
         const double predictedAddedVolume= currentVolumePerSecond / 1000.0 * grindDelay;
-        return currentVolume + predictedAddedVolume < double(grindVolume);
+        return measurements.back() + predictedAddedVolume < double(grindVolume);//use the last recorded measurement and not the current so the process stays inactive even if the measured weight decreases
     }
 
     int getType() override { return MODE_GRIND; }
