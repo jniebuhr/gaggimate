@@ -2,10 +2,12 @@
 #define PROCESS_H
 
 #include "constants.h"
-//#include <numeric>
+#include "helperfunctions.h"
+
 
 constexpr double PREDICTIVE_TIME = 2000.0; // time window for the prediction
 //constexpr double PREDICTIVE_TIME_MS = 1000.0;
+
 
 class Process {
   public:
@@ -85,45 +87,13 @@ class BrewProcess : public Process {
         }
     }
 
-    double volumePerSecond() const {
-
-        if (measurements.size()<2) return 0.0;
-
-        size_t i = measurementTimes.size();
-        double cutoff= millis()-PREDICTIVE_TIME;
-        while (measurementTimes[i-1]>cutoff) {//check from the most recent time
-            i--;
-        }
-        // i is the index of the first entry after the cutoff
-
-        if (measurements.size()-i<2) return 0.0;
-
-        double v_mean = 0.0;
-        double t_mean = 0.0;
-        for (size_t j=i; j< measurements.size(); j++) {
-            v_mean += measurements[j];
-            t_mean += measurementTimes[j];
-        }
-        v_mean = v_mean / (measurements.size()-i);
-        t_mean = t_mean / (measurements.size()-i);
-
-        double tdev2 = 0.0;
-        double tdev_vdev = 0.0;
-        for (size_t j=i; j< measurements.size(); j++) {
-            tdev_vdev += (measurementTimes[i]-t_mean)*(measurements[i]-v_mean);
-            tdev2 += pow(measurementTimes[i]-t_mean,2.0);
-        }
-        double volumePerMilliSecond=tdev_vdev/tdev2;//the slope of the linear best fit
-
-        return volumePerMilliSecond>0 ? volumePerMilliSecond * 1000.0 : 0.0; // return 0 if it is not positive
-    }
 
     bool isCurrentPhaseFinished() {
         if (phase == BrewPhase::BREW_PUMP && target == ProcessTarget::VOLUMETRIC) {
             if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
                 return true;
             }
-            currentVolumePerSecond = volumePerSecond();//stored for determination of the delay
+            currentVolumePerSecond = SlopeLinearFitSeconds(measurements,measurementTimes,PREDICTIVE_TIME);//stored for determination of the delay
             const double predictedAddedVolume = currentVolumePerSecond/ 1000.0 * brewDelay;
             return measurements.back() + predictedAddedVolume >= brewVolume;
         }
@@ -261,39 +231,6 @@ class GrindProcess : public Process {
     }
 
 
-    double volumePerSecond() const {
-
-        if (measurements.size()<2) return 0.0;
-
-        size_t i = measurementTimes.size();
-        double cutoff= millis()-PREDICTIVE_TIME;
-        while (measurementTimes[i-1]>cutoff) {//check from the most recent time
-            i--;
-        }
-        // i is the index of the first entry after the cutoff
-
-        if (measurements.size()-i<2) return 0.0;
-
-        double v_mean = 0.0;
-        double t_mean = 0.0;
-        for (size_t j=i; j< measurements.size(); j++) {
-            v_mean += measurements[j];
-            t_mean += measurementTimes[j];
-        }
-        v_mean = v_mean / (measurements.size()-i);
-        t_mean = t_mean / (measurements.size()-i);
-
-        double tdev2 = 0.0;
-        double tdev_vdev = 0.0;
-        for (size_t j=i; j< measurements.size(); j++) {
-            tdev_vdev += (measurementTimes[i]-t_mean)*(measurements[i]-v_mean);
-            tdev2 += pow(measurementTimes[i]-t_mean,2.0);
-        }
-        double volumePerMilliSecond=tdev_vdev/tdev2;//the slope of the linear best fit
-
-        return volumePerMilliSecond>0 ? volumePerMilliSecond * 1000.0 : 0.0; // return 0 if it is not positive
-    }
-
     void updateVolume(double new_volume) override {
         currentVolume = new_volume;
         if (isActive()) {//only store measurements while active
@@ -310,7 +247,7 @@ class GrindProcess : public Process {
 
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while GrindProcess is active
-            currentVolumePerSecond = volumePerSecond();//determine and store rate prediction
+            currentVolumePerSecond = SlopeLinearFitSeconds(measurements,measurementTimes,PREDICTIVE_TIME);//determine and store rate prediction
     }
 
     double getNewDelayTime() const {
@@ -329,5 +266,7 @@ class GrindProcess : public Process {
 
     int getType() override { return MODE_GRIND; }
 };
+
+
 
 #endif // PROCESS_H
