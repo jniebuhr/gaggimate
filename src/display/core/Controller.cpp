@@ -132,9 +132,33 @@ void Controller::loop() {
     if (now - lastProgress > PROGRESS_INTERVAL) {
         if (currentProcess != nullptr) {
             currentProcess->progress();
-            if (!isActive()) {
-                deactivate();
+            switch (mode) {
+            case MODE_BREW:
+                auto* brewProcess = static_cast<BrewProcess *>(currentProcess);
+                if (!isActive() && brewProcess->target == ProcessTarget::TIME) {
+                    deactivate();
+                }
+                if(!isActive() && brewProcess->target == ProcessTarget::VOLUMETRIC && now-brewProcess->previousPhaseFinished>2000.0) {
+                    settings.setBrewDelay(brewProcess->getNewDelayTime());
+                    deactivate();
+                }
+                break;
+            case MODE_GRIND:
+                auto* grindProcess = static_cast<GrindProcess *>(currentProcess);
+                if (!isActive() && grindProcess->target == ProcessTarget::TIME) {
+                    deactivate();
+                }
+                if (!isActive() && grindProcess->target == ProcessTarget::VOLUMETRIC && now-grindProcess->measurementTimes.back()>2000.0) {
+                    settings.setGrindDelay(grindProcess->getNewDelayTime());
+                    deactivate();
+                }
+                break;
+            default:
+                if (!isActive()) {
+                    deactivate();
+                }
             }
+
         }
         int targetTemp = getTargetTemp();
         if (targetTemp > 0) {
