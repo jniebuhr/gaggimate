@@ -2,7 +2,7 @@
 
 NimBLEServerController::NimBLEServerController()
     : tempControlChar(nullptr), pumpControlChar(nullptr), valveControlChar(nullptr), altControlChar(nullptr),
-      tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr) {}
+      tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr), brewChar(nullptr) {}
 
 void NimBLEServerController::initServer() {
     NimBLEDevice::init("GPBLS");
@@ -50,6 +50,9 @@ void NimBLEServerController::initServer() {
     autotuneChar = pService->createCharacteristic(AUTOTUNE_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
     autotuneChar->setCallbacks(this); // Use this class as the callback handler
 
+    // Brew Characteristic (Server notifies client of brew button)
+    brewChar = pService->createCharacteristic(BREW_UUID, NIMBLE_PROPERTY::NOTIFY);
+
     pService->start();
 
     ota_dfu_ble.configure_OTA(pServer);
@@ -79,6 +82,16 @@ void NimBLEServerController::sendError(int errorCode) {
         snprintf(errorStr, sizeof(errorStr), "%d", errorCode);
         errorChar->setValue(errorStr);
         errorChar->notify();
+    }
+}
+
+void NimBLEServerController::sendBrew(bool breeButtonStatus) {
+    if (deviceConnected) {
+        // Send brew notification to the client
+        char brewStr[8];
+        snprintf(brewStr, sizeof(brewStr), "%d", breeButtonStatus);
+        brewChar->setValue(brewStr);
+        brewChar->notify();
     }
 }
 

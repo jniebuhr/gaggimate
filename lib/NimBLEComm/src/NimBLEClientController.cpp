@@ -33,6 +33,8 @@ void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callba
     remoteErrorCallback = callback;
 }
 
+void NimBLEClientController::registerBrewCallback(const brew_callback_t &callback) { brewCallback = callback; }
+
 bool NimBLEClientController::connectToServer() {
     Serial.println("Connecting to advertised device");
 
@@ -81,6 +83,12 @@ bool NimBLEClientController::connectToServer() {
     errorChar = pRemoteService->getCharacteristic(NimBLEUUID(ERROR_CHAR_UUID));
     if (errorChar->canNotify()) {
         errorChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                             std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
+    brewChar = pRemoteService->getCharacteristic(NimBLEUUID(BREW_UUID));
+    if (brewChar->canNotify()) {
+        brewChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
@@ -177,6 +185,14 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         Serial.printf("Error read: %d\n", errorCode);
         if (remoteErrorCallback != nullptr) {
             remoteErrorCallback(errorCode);
+        }
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_UUID))) {
+        int bewButtonStatus = atoi((char *)pData);
+        Serial.printf("brew button: %d\n", bewButtonStatus);
+        Serial.printf("brew button on");
+        if (brewCallback != nullptr) {
+            brewCallback();
         }
     }
 }

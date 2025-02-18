@@ -55,6 +55,9 @@ void setup() {
     control_alt(false);
     control_valve(false);
 
+    // brew switch input
+    pinMode(BREW_PIN, INPUT);
+
     aTune.SetOutputStep(10);  // Set the output step size for autotuning
     aTune.SetControlType(1);  // Set to 1 for temperature control
     aTune.SetNoiseBand(1.0);  // Set the noise band
@@ -105,6 +108,11 @@ void loop() {
         printf("Temperature: %f\n", input);
 
         control_pump();
+
+        if(digitalRead(BREW_PIN) == LOW) {
+            printf("brew button on\n");
+            serverController.sendBrew(true);
+        }
 
         delay(50);
     }

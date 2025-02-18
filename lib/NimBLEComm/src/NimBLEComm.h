@@ -15,6 +15,7 @@
 #define ERROR_CHAR_UUID "d6676ec7-820c-41de-820d-95620749003b"
 #define AUTOTUNE_CHAR_UUID "d54df381-69b6-4531-b1cc-dde7766bbaf4"
 #define PID_CONTROL_CHAR_UUID "d448c469-3e1d-4105-b5b8-75bf7d492fad"
+#define BREW_UUID "d6676ec7-820c-41de-820d-95620749003c"
 
 constexpr size_t ERROR_CODE_COMM_SEND = 1;
 constexpr size_t ERROR_CODE_COMM_RCV = 2;
@@ -30,5 +31,6 @@ using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd)>
 using ping_callback_t = std::function<void()>;
 using remote_err_callback_t = std::function<void(int errorCode)>;
 using autotune_callback_t = std::function<void()>;
+using brew_callback_t = std::function<void(bool breButtonStatus)>;
 
 #endif // NIMBLECOMM_H

@@ -60,6 +60,7 @@ void Controller::connect() {
 void Controller::setupBluetooth() {
     clientController.initClient();
     clientController.registerTempReadCallback([this](const float temp) { onTempRead(temp); });
+    clientController.registerBrewCallback([this]() { deactivateStandby(); });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
