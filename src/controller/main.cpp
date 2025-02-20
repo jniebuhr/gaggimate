@@ -20,6 +20,7 @@ unsigned long lastCycleStart = 0;             // Tracks the start time of the pu
 float flowPercentage = 0;                     // Declare flowPercentage with an initial value
 unsigned long lastTempUpdate = 0;
 bool brew_button_state;
+bool steam_button_state;
 
 NimBLEServerController serverController;
 
@@ -58,6 +59,8 @@ void setup() {
 
     // brew switch input
     pinMode(BREW_PIN, INPUT);
+    // steam switch input
+    pinMode(STEAM_PIN, INPUT);
 
     aTune.SetOutputStep(10);  // Set the output step size for autotuning
     aTune.SetControlType(1);  // Set to 1 for temperature control
@@ -116,6 +119,14 @@ void loop() {
                 serverController.sendBrew(true);
             } else {
                 serverController.sendBrew(false);
+            }
+        }
+        if(digitalRead(STEAM_PIN) != steam_button_state) {
+            steam_button_state = digitalRead(STEAM_PIN);
+            if(digitalRead(STEAM_PIN) == LOW) {
+                serverController.sendSteam(true);
+            } else {
+                serverController.sendSteam(false);
             }
         }
 

@@ -112,6 +112,9 @@ class Controller {
     // brew button
     void handleBrewButton(int brewButtonStatus);
 
+    // steam button
+    void handleSteamButton(int steamButtonStatus);
+
     // Private Attributes
     DefaultUI *ui = nullptr;
     NimBLEClientController clientController;

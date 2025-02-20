@@ -21,6 +21,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerTempReadCallback(const temp_read_callback_t &callback);
     void registerRemoteErrorCallback(const remote_err_callback_t &callback);
     void registerBrewCallback(const brew_callback_t &callback);
+    void registerSteamCallback(const steam_callback_t &callback);
 
   private:
     NimBLEClient *client;
@@ -35,12 +36,14 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *errorChar;
     NimBLERemoteCharacteristic *autotuneChar;
     NimBLERemoteCharacteristic *brewChar;
+    NimBLERemoteCharacteristic *steamChar;
     NimBLEAdvertisedDevice *serverDevice;
     bool readyForConnection = false;
 
     temp_read_callback_t tempReadCallback = nullptr;
     remote_err_callback_t remoteErrorCallback = nullptr;
     brew_callback_t brewCallback = nullptr;
+    steam_callback_t steamCallback = nullptr;
 
     // BLEAdvertisedDeviceCallbacks override
     void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;

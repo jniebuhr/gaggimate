@@ -34,6 +34,7 @@ void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callba
 }
 
 void NimBLEClientController::registerBrewCallback(const brew_callback_t &callback) { brewCallback = callback; }
+void NimBLEClientController::registerSteamCallback(const brew_callback_t &callback) { steamCallback = callback; }
 
 bool NimBLEClientController::connectToServer() {
     Serial.println("Connecting to advertised device");
@@ -89,6 +90,12 @@ bool NimBLEClientController::connectToServer() {
     brewChar = pRemoteService->getCharacteristic(NimBLEUUID(BREW_UUID));
     if (brewChar->canNotify()) {
         brewChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                             std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
+    steamChar = pRemoteService->getCharacteristic(NimBLEUUID(STEAM_UUID));
+    if (steamChar->canNotify()) {
+        steamChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
@@ -188,10 +195,17 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_UUID))) {
-        int bewButtonStatus = atoi((char *)pData);
-        Serial.printf("brew button: %d\n", bewButtonStatus);
+        int brewButtonStatus = atoi((char *)pData);
+        Serial.printf("brew button: %d\n", brewButtonStatus);
         if (brewCallback != nullptr) {
-            brewCallback(bewButtonStatus);
+            brewCallback(brewButtonStatus);
+        }
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_UUID))) {
+        int steamButtonStatus = atoi((char *)pData);
+        Serial.printf("steam button: %d\n", steamButtonStatus);
+        if (steamCallback != nullptr) {
+            steamCallback(steamButtonStatus);
         }
     }
 }

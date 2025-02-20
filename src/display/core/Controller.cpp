@@ -61,6 +61,7 @@ void Controller::setupBluetooth() {
     clientController.initClient();
     clientController.registerTempReadCallback([this](const float temp) { onTempRead(temp); });
     clientController.registerBrewCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
+    clientController.registerSteamCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
@@ -435,8 +436,11 @@ void Controller::handleBrewButton(int brewButtonStatus) {
             deactivateStandby();
             break;
         case MODE_BREW:
-            clear();
-            activate();
+            if(!isActive()) {
+                deactivateStandby();
+                clear();
+                activate();
+            }
             break;
         case MODE_WATER:
             activate();
@@ -454,6 +458,37 @@ void Controller::handleBrewButton(int brewButtonStatus) {
             }
             break;
         case MODE_WATER:
+            deactivate();
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+void Controller::handleSteamButton(int steamButtonStatus) {
+    printf("current screen %d, steam button %d\n", getMode(), steamButtonStatus);
+    if(steamButtonStatus == 1) {
+        switch (getMode())
+        {
+        case MODE_STANDBY:
+            deactivate();
+            setMode(MODE_STEAM);
+            break;
+        case MODE_BREW:
+            setMode(MODE_STEAM);
+            activate();
+            break;
+        case MODE_STEAM:
+            activate();
+            break;
+        default:
+            break;
+        }
+    } else {
+        switch (getMode())
+        {
+        case MODE_STEAM:
             deactivate();
             break;
         default:

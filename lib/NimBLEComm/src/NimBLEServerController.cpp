@@ -2,7 +2,7 @@
 
 NimBLEServerController::NimBLEServerController()
     : tempControlChar(nullptr), pumpControlChar(nullptr), valveControlChar(nullptr), altControlChar(nullptr),
-      tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr), brewChar(nullptr) {}
+      tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr), brewChar(nullptr), steamChar(nullptr) {}
 
 void NimBLEServerController::initServer() {
     NimBLEDevice::init("GPBLS");
@@ -50,8 +50,11 @@ void NimBLEServerController::initServer() {
     autotuneChar = pService->createCharacteristic(AUTOTUNE_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
     autotuneChar->setCallbacks(this); // Use this class as the callback handler
 
-    // Brew Characteristic (Server notifies client of brew button)
+    // Brew button Characteristic (Server notifies client of brew button)
     brewChar = pService->createCharacteristic(BREW_UUID, NIMBLE_PROPERTY::NOTIFY);
+
+    // Steam button Characteristic (Server notifies client of steam button)
+    steamChar = pService->createCharacteristic(STEAM_UUID, NIMBLE_PROPERTY::NOTIFY);
 
     pService->start();
 
@@ -92,6 +95,16 @@ void NimBLEServerController::sendBrew(bool brewButtonStatus) {
         snprintf(brewStr, sizeof(brewStr), "%d", brewButtonStatus);
         brewChar->setValue(brewStr);
         brewChar->notify();
+    }
+}
+
+void NimBLEServerController::sendSteam(bool steamButtonStatus) {
+    if (deviceConnected) {
+        // Send steam notification to the client
+        char steamStr[8];
+        snprintf(steamStr, sizeof(steamStr), "%d", steamButtonStatus);
+        steamChar->setValue(steamStr);
+        steamChar->notify();
     }
 }
 
