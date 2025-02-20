@@ -85,11 +85,11 @@ void NimBLEServerController::sendError(int errorCode) {
     }
 }
 
-void NimBLEServerController::sendBrew(bool breeButtonStatus) {
+void NimBLEServerController::sendBrew(bool brewButtonStatus) {
     if (deviceConnected) {
         // Send brew notification to the client
         char brewStr[8];
-        snprintf(brewStr, sizeof(brewStr), "%d", breeButtonStatus);
+        snprintf(brewStr, sizeof(brewStr), "%d", brewButtonStatus);
         brewChar->setValue(brewStr);
         brewChar->notify();
     }

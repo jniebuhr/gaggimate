@@ -190,9 +190,8 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_UUID))) {
         int bewButtonStatus = atoi((char *)pData);
         Serial.printf("brew button: %d\n", bewButtonStatus);
-        Serial.printf("brew button on");
         if (brewCallback != nullptr) {
-            brewCallback();
+            brewCallback(bewButtonStatus);
         }
     }
 }

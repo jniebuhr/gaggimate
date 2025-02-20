@@ -109,6 +109,9 @@ class Controller {
     // Event handlers
     void onTempRead(float temperature);
 
+    // brew button
+    void handleBrewButton(int brewButtonStatus);
+
     // Private Attributes
     DefaultUI *ui = nullptr;
     NimBLEClientController clientController;

@@ -60,7 +60,7 @@ void Controller::connect() {
 void Controller::setupBluetooth() {
     clientController.initClient();
     clientController.registerTempReadCallback([this](const float temp) { onTempRead(temp); });
-    clientController.registerBrewCallback([this]() { deactivateStandby(); });
+    clientController.registerBrewCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
@@ -358,7 +358,7 @@ void Controller::deactivate() {
 }
 
 void Controller::clear() {
-    if (lastProcess->getType() == MODE_BREW) {
+    if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:clear");
     }
     delete lastProcess;
@@ -423,5 +423,41 @@ void Controller::onVolumetricMeasurement(double measurement) const {
     }
     if (lastProcess != nullptr) {
         lastProcess->updateVolume(measurement);
+    }
+}
+
+void Controller::handleBrewButton(int brewButtonStatus) {
+    printf("current screen %d, brew button %d\n", getMode(), brewButtonStatus);
+    if(brewButtonStatus == 1) {
+        switch (getMode())
+        {
+        case MODE_STANDBY:
+            deactivateStandby();
+            break;
+        case MODE_BREW:
+            clear();
+            activate();
+            break;
+        case MODE_WATER:
+            activate();
+            break;
+        default:
+            break;
+        }
+    } else {
+        switch (getMode())
+        {
+        case MODE_BREW:
+            if(isActive()) {
+                deactivate();
+                clear();
+            }
+            break;
+        case MODE_WATER:
+            deactivate();
+            break;
+        default:
+            break;
+        }
     }
 }

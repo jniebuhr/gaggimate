@@ -19,6 +19,7 @@ bool is_autotuning = false;                   // Flag for whether we are in auto
 unsigned long lastCycleStart = 0;             // Tracks the start time of the pump cycle
 float flowPercentage = 0;                     // Declare flowPercentage with an initial value
 unsigned long lastTempUpdate = 0;
+bool brew_button_state;
 
 NimBLEServerController serverController;
 
@@ -109,9 +110,13 @@ void loop() {
 
         control_pump();
 
-        if(digitalRead(BREW_PIN) == LOW) {
-            printf("brew button on\n");
-            serverController.sendBrew(true);
+        if(digitalRead(BREW_PIN) != brew_button_state) {
+            brew_button_state = digitalRead(BREW_PIN);
+            if(digitalRead(BREW_PIN) == LOW) {
+                serverController.sendBrew(true);
+            } else {
+                serverController.sendBrew(false);
+            }
         }
 
         delay(50);
