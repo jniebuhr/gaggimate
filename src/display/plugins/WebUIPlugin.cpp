@@ -13,7 +13,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     this->controller = _controller;
     this->pluginManager = _pluginManager;
     this->ota = new GitHubOTA(
-        "1.5.0", RELEASE_URL + controller->getSettings().getOTAChannel(),
+        BUILD_GIT_VERSION, RELEASE_URL + controller->getSettings().getOTAChannel(),
         [this](uint8_t phase) { pluginManager->trigger("ota:update:phase", "phase", phase); },
         [this](int progress) { pluginManager->trigger("ota:update:progress", "progress", progress); }, "display-firmware.bin",
         "display-filesystem.bin");
@@ -83,7 +83,7 @@ void WebUIPlugin::handleOTA(AsyncWebServerRequest *request) {
     JsonDocument doc;
     Settings const &settings = controller->getSettings();
     doc["updateAvailable"] = ota->isUpdateAvailable();
-    doc["currentVersion"] = "1.5.0";
+    doc["currentVersion"] = BUILD_GIT_VERSION;
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;
