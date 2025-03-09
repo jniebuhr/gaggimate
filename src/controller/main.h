@@ -16,6 +16,8 @@
 #define MAX6675_SCK_PIN 6
 #define MAX6675_CS_PIN 7
 #define MAX6675_MISO_PIN 4
+#define BREW_PIN 38
+#define STEAM_PIN 48
 
 constexpr size_t TEMP_UPDATE_INTERVAL_MS = 1000;
 

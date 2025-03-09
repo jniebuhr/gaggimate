@@ -60,6 +60,8 @@ void Controller::connect() {
 void Controller::setupBluetooth() {
     clientController.initClient();
     clientController.registerTempReadCallback([this](const float temp) { onTempRead(temp); });
+    clientController.registerBrewCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
+    clientController.registerSteamCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
@@ -357,7 +359,7 @@ void Controller::deactivate() {
 }
 
 void Controller::clear() {
-    if (lastProcess->getType() == MODE_BREW) {
+    if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:clear");
     }
     delete lastProcess;
@@ -422,5 +424,75 @@ void Controller::onVolumetricMeasurement(double measurement) const {
     }
     if (lastProcess != nullptr) {
         lastProcess->updateVolume(measurement);
+    }
+}
+
+void Controller::handleBrewButton(int brewButtonStatus) {
+    printf("current screen %d, brew button %d\n", getMode(), brewButtonStatus);
+    if(brewButtonStatus == 1) {
+        switch (getMode())
+        {
+        case MODE_STANDBY:
+            deactivateStandby();
+            break;
+        case MODE_BREW:
+            if(!isActive()) {
+                deactivateStandby();
+                clear();
+                activate();
+            }
+            break;
+        case MODE_WATER:
+            activate();
+            break;
+        default:
+            break;
+        }
+    } else {
+        switch (getMode())
+        {
+        case MODE_BREW:
+            if(isActive()) {
+                deactivate();
+                clear();
+            }
+            break;
+        case MODE_WATER:
+            deactivate();
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+void Controller::handleSteamButton(int steamButtonStatus) {
+    printf("current screen %d, steam button %d\n", getMode(), steamButtonStatus);
+    if(steamButtonStatus == 1) {
+        switch (getMode())
+        {
+        case MODE_STANDBY:
+            deactivate();
+            setMode(MODE_STEAM);
+            break;
+        case MODE_BREW:
+            setMode(MODE_STEAM);
+            activate();
+            break;
+        case MODE_STEAM:
+            activate();
+            break;
+        default:
+            break;
+        }
+    } else {
+        switch (getMode())
+        {
+        case MODE_STEAM:
+            deactivate();
+            break;
+        default:
+            break;
+        }
     }
 }
