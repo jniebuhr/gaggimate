@@ -10,6 +10,8 @@ Settings::Settings() {
     targetVolume = preferences.getInt("tv", 36);
     targetGrindVolume = preferences.getInt("tgv", 18);
     targetGrindDuration = preferences.getInt("tgd", 25000);
+    brewDelay = preferences.getDouble("bd", 1000.0);
+    grindDelay = preferences.getDouble("gd", 1000.0);
     temperatureOffset = preferences.getInt("to", DEFAULT_TEMPERATURE_OFFSET);
     pid = preferences.getString("pid", DEFAULT_PID);
     wifiSsid = preferences.getString("ws", "");
@@ -56,6 +58,8 @@ void Settings::save() {
     preferences.putInt("tv", targetVolume);
     preferences.putInt("tgv", targetGrindVolume);
     preferences.putInt("tgd", targetGrindDuration);
+    preferences.putDouble("bd", brewDelay);
+    preferences.putDouble("gd", grindDelay);
     preferences.putInt("to", temperatureOffset);
     preferences.putString("pid", pid);
     preferences.putString("ws", wifiSsid);
@@ -122,6 +126,15 @@ void Settings::setTargetGrindDuration(const int target_duration) {
     save();
 }
 
+void Settings::setBrewDelay(double brew_Delay) {
+    brewDelay = brew_Delay;
+    save();
+}
+
+void Settings::setGrindDelay(double grind_Delay) {
+    grindDelay = grind_Delay;
+    save();
+}
 void Settings::setStartupMode(const int startup_mode) {
     startupMode = startup_mode;
     save();

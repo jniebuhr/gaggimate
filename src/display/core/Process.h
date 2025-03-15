@@ -2,11 +2,12 @@
 #define PROCESS_H
 
 #include "constants.h"
-#include <deque>
-#include <numeric>
+#include "helperfunctions.h"
 
-constexpr int PREDICTIVE_MEASUREMENTS = 30; // 3s
-constexpr double PREDICTIVE_TIME_MS = 1000.0;
+
+constexpr double PREDICTIVE_TIME = 2000.0; // time window for the prediction
+//constexpr double PREDICTIVE_TIME_MS = 1000.0;
+
 
 class Process {
   public:
@@ -41,16 +42,18 @@ class BrewProcess : public Process {
     int brewTime;
     int brewVolume;
     int brewPressurize;
+    double brewDelay;
     unsigned long currentPhaseStarted = 0;
     unsigned long previousPhaseFinished = 0;
-    double currentVolume = 0;
-    double lastVolume = 0;
-    std::deque<double> measurements;
+    double currentVolume = 0;//most recent volume pushed
+    double currentVolumePerSecond =0;
+    std::vector<double> measurements;
+    std::vector<double> measurementTimes;
 
     explicit BrewProcess(ProcessTarget target = ProcessTarget::TIME, int pressurizeTime = 0, int infusionPumpTime = 0,
-                         int infusionBloomTime = 0, int brewTime = 0, int brewVolume = 0)
+                         int infusionBloomTime = 0, int brewTime = 0, int brewVolume = 0, double brewDelay=0.0)
         : target(target), infusionPumpTime(infusionPumpTime), infusionBloomTime(infusionBloomTime), brewTime(brewTime),
-          brewVolume(brewVolume), brewPressurize(pressurizeTime) {
+          brewVolume(brewVolume), brewPressurize(pressurizeTime),brewDelay(brewDelay) {
         if (infusionBloomTime == 0 || infusionPumpTime == 0) {
             phase = BrewPhase::BREW_PRESSURIZE;
         } else if (pressurizeTime == 0) {
@@ -59,7 +62,13 @@ class BrewProcess : public Process {
         currentPhaseStarted = millis();
     }
 
-    void updateVolume(double volume) override { currentVolume = volume; };
+    void updateVolume(double new_volume) override {//called even after the Process is no longer active
+        currentVolume = new_volume;
+        if (isActive()) {//only store measurements while active
+            measurements.emplace_back(currentVolume);
+            measurementTimes.emplace_back(millis());
+        }
+    }
 
     unsigned long getPhaseDuration() const {
         switch (phase) {
@@ -78,26 +87,26 @@ class BrewProcess : public Process {
         }
     }
 
-    double volumePerSecond() const {
-        double sum = 0.0;
-        for (const auto n : measurements) {
-            sum += n;
-        }
-        return sum / static_cast<double>(measurements.size()) * (1000.0 / static_cast<double>(PROGRESS_INTERVAL));
-    }
 
-    bool isCurrentPhaseFinished() const {
+    bool isCurrentPhaseFinished() {
         if (phase == BrewPhase::BREW_PUMP && target == ProcessTarget::VOLUMETRIC) {
             if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
                 return true;
             }
-            const double predictiveFactor = volumePerSecond() / 1000.0 * PREDICTIVE_TIME_MS;
-            return currentVolume + predictiveFactor >= brewVolume;
+            currentVolumePerSecond = SlopeLinearFitSeconds(measurements,measurementTimes,PREDICTIVE_TIME);//stored for determination of the delay
+            const double predictedAddedVolume = currentVolumePerSecond/ 1000.0 * brewDelay;
+            return measurements.back() + predictedAddedVolume >= brewVolume;
         }
         if (phase != BrewPhase::FINISHED) {
             return millis() - currentPhaseStarted > getPhaseDuration();
         }
         return true;
+    }
+
+    double getNewDelayTime() const {
+        double overshoot = currentVolume - double(brewVolume);
+        double overshootTime=overshoot*1000/currentVolumePerSecond;//the amount of brewDelay corresponding to the overshoot
+        return brewDelay-overshootTime; //decrease brewDelay and return
     }
 
     bool isRelayActive() override {
@@ -115,16 +124,7 @@ class BrewProcess : public Process {
     }
 
     void progress() override {
-        // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL
-        double diff = currentVolume - lastVolume;
-        if (diff < 0.0) {
-            diff = 0.0;
-        }
-        lastVolume = currentVolume;
-        measurements.push_back(diff);
-        while (measurements.size() > PREDICTIVE_MEASUREMENTS) {
-            measurements.pop_front();
-        }
+        // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
 
         if (isCurrentPhaseFinished()) {
             previousPhaseFinished = millis();
@@ -217,27 +217,27 @@ class GrindProcess : public Process {
   public:
     ProcessTarget target;
     int time;
-    int volume;
+    int grindVolume;
+    double grindDelay;
     unsigned long started;
-    std::deque<double> measurements;
-
     double currentVolume = 0;
-    double lastVolume = 0;
+    double currentVolumePerSecond =0;
+    std::vector<double> measurements;
+    std::vector<double> measurementTimes;
 
-    explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, int volume = 0)
-        : target(target), time(time), volume(volume) {
+    explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, int volume = 0, double grindDelay = 0.0)
+        : target(target), time(time), grindVolume(volume), grindDelay(grindDelay) {
         started = millis();
     }
 
-    double volumePerSecond() const {
-        double sum = 0.0;
-        for (const auto n : measurements) {
-            sum += n;
-        }
-        return sum / static_cast<double>(measurements.size()) * (1000.0 / static_cast<double>(PROGRESS_INTERVAL));
-    }
 
-    void updateVolume(double volume) override { currentVolume = volume; };
+    void updateVolume(double new_volume) override {
+        currentVolume = new_volume;
+        if (isActive()) {//only store measurements while active
+            measurements.emplace_back(currentVolume);
+            measurementTimes.emplace_back(millis());
+        }
+    }
 
     bool isRelayActive() override { return false; }
 
@@ -246,27 +246,27 @@ class GrindProcess : public Process {
     float getPumpValue() override { return 0.f; }
 
     void progress() override {
-        // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL
-        double diff = currentVolume - lastVolume;
-        if (diff < 0.0) {
-            diff = 0.0;
-        }
-        lastVolume = currentVolume;
-        measurements.push_back(diff);
-        while (measurements.size() > PREDICTIVE_MEASUREMENTS) {
-            measurements.pop_front();
-        }
+        // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while GrindProcess is active
+            currentVolumePerSecond = SlopeLinearFitSeconds(measurements,measurementTimes,PREDICTIVE_TIME);//determine and store rate prediction
+    }
+
+    double getNewDelayTime() const {
+        double overshoot = currentVolume - double(grindVolume);
+        double overshootTime=overshoot*1000/currentVolumePerSecond;//the amount of grindDelay corresponding to the overshoot
+        return grindDelay-overshootTime; //decrease grindDelay and return
     }
 
     bool isActive() override {
         if (target == ProcessTarget::TIME) {
             return millis() - started < time;
         }
-        const double predictiveFactor = volumePerSecond() / 1000.0 * PREDICTIVE_TIME_MS;
-        return currentVolume + predictiveFactor < volume;
+        const double predictedAddedVolume= currentVolumePerSecond / 1000.0 * grindDelay;
+        return measurements.back() + predictedAddedVolume < double(grindVolume);//use the last recorded measurement and not the current so the process stays inactive even if the measured weight decreases
     }
 
     int getType() override { return MODE_GRIND; }
 };
+
+
 
 #endif // PROCESS_H

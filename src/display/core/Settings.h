@@ -31,6 +31,8 @@ class Settings {
     int getInfuseBloomTime() const { return infuseBloomTime; }
     int getInfusePumpTime() const { return infusePumpTime; }
     int getPressurizeTime() const { return pressurizeTime; }
+    double getBrewDelay() const { return brewDelay; }
+    double getGrindDelay() const { return grindDelay; }
     String getPid() const { return pid; }
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
@@ -63,6 +65,8 @@ class Settings {
     void setInfuseBloomTime(int infuse_bloom_time);
     void setInfusePumpTime(int infuse_pump_time);
     void setPressurizeTime(int pressurize_time);
+    void setBrewDelay(double brewDelay);
+    void setGrindDelay(double grindDelay);
     void setPid(const String &pid);
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
@@ -96,6 +100,8 @@ class Settings {
     int targetVolume = 36;
     int targetGrindVolume = 18;
     int targetGrindDuration = 25000;
+    double brewDelay = 1000.0;
+    double grindDelay = 1000.0;
     int startupMode = MODE_STANDBY;
     int infuseBloomTime = 0;
     int infusePumpTime = 0;
