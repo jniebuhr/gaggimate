@@ -134,33 +134,20 @@ void Controller::loop() {
     if (now - lastProgress > PROGRESS_INTERVAL) {
         if (currentProcess != nullptr) {
             currentProcess->progress();
-            switch (mode) {
-            case MODE_BREW:
-                auto* brewProcess = static_cast<BrewProcess *>(currentProcess);
-                if (!isActive() && brewProcess->target == ProcessTarget::TIME) {
-                    deactivate();
+            if (!isActive()) {
+                if (currentProcess->getType() == MODE_BREW) {
+                    if (auto const *brewProcess = static_cast<BrewProcess *>(currentProcess);
+                        brewProcess->target == ProcessTarget::VOLUMETRIC) {
+                        settings.setBrewDelay(brewProcess->getNewDelayTime());
+                    }
+                } else if (currentProcess->getType() == MODE_GRIND) {
+                    if (auto const *grindProcess = static_cast<GrindProcess *>(currentProcess);
+                        grindProcess->target == ProcessTarget::VOLUMETRIC) {
+                        settings.setGrindDelay(grindProcess->getNewDelayTime());
+                    }
                 }
-                if(!isActive() && brewProcess->target == ProcessTarget::VOLUMETRIC && now-brewProcess->previousPhaseFinished>2000.0) {
-                    settings.setBrewDelay(brewProcess->getNewDelayTime());
-                    deactivate();
-                }
-                break;
-            case MODE_GRIND:
-                auto* grindProcess = static_cast<GrindProcess *>(currentProcess);
-                if (!isActive() && grindProcess->target == ProcessTarget::TIME) {
-                    deactivate();
-                }
-                if (!isActive() && grindProcess->target == ProcessTarget::VOLUMETRIC && now-grindProcess->measurementTimes.back()>2000.0) {
-                    settings.setGrindDelay(grindProcess->getNewDelayTime());
-                    deactivate();
-                }
-                break;
-            default:
-                if (!isActive()) {
-                    deactivate();
-                }
+                deactivate();
             }
-
         }
         int targetTemp = getTargetTemp();
         if (targetTemp > 0) {
@@ -344,10 +331,10 @@ void Controller::activate() {
         if (settings.isVolumetricTarget() && volumetricAvailable) {
             currentProcess =
                 new BrewProcess(ProcessTarget::VOLUMETRIC, settings.getPressurizeTime(), settings.getInfusePumpTime(),
-                                settings.getInfuseBloomTime(), 0, settings.getTargetVolume(),settings.getBrewDelay());
+                                settings.getInfuseBloomTime(), 0, settings.getTargetVolume(), settings.getBrewDelay());
         } else {
             currentProcess = new BrewProcess(ProcessTarget::TIME, settings.getPressurizeTime(), settings.getInfusePumpTime(),
-                                             settings.getInfuseBloomTime(), settings.getTargetDuration(), 0,0.0);
+                                             settings.getInfuseBloomTime(), settings.getTargetDuration(), 0, 0.0);
         }
         break;
     case MODE_STEAM:
@@ -397,7 +384,8 @@ void Controller::activateGrind() {
     if (settings.isVolumetricTarget() && volumetricAvailable) {
         startProcess(new GrindProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetGrindVolume(), settings.getGrindDelay()));
     } else {
-        startProcess(new GrindProcess(ProcessTarget::TIME, settings.getTargetGrindDuration(), settings.getTargetGrindVolume(),0.0));
+        startProcess(
+            new GrindProcess(ProcessTarget::TIME, settings.getTargetGrindDuration(), settings.getTargetGrindVolume(), 0.0));
     }
     updateRelay();
     updateLastAction();

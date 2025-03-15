@@ -2,12 +2,10 @@
 #define PROCESS_H
 
 #include "constants.h"
-#include "helperfunctions.h"
-
+#include "predictive.h"
 
 constexpr double PREDICTIVE_TIME = 2000.0; // time window for the prediction
-//constexpr double PREDICTIVE_TIME_MS = 1000.0;
-
+// constexpr double PREDICTIVE_TIME_MS = 1000.0;
 
 class Process {
   public:
@@ -29,7 +27,7 @@ class Process {
     virtual void updateVolume(double volume) = 0;
 };
 
-enum class BrewPhase { INFUSION_PRESSURIZE, INFUSION_PUMP, INFUSION_BLOOM, BREW_PRESSURIZE, BREW_PUMP, FINISHED };
+enum class BrewPhase { INFUSION_PRESSURIZE, INFUSION_PUMP, INFUSION_BLOOM, BREW_PRESSURIZE, BREW_PUMP, BREW_DRIP, FINISHED };
 
 enum class ProcessTarget { TIME, VOLUMETRIC };
 
@@ -45,15 +43,14 @@ class BrewProcess : public Process {
     double brewDelay;
     unsigned long currentPhaseStarted = 0;
     unsigned long previousPhaseFinished = 0;
-    double currentVolume = 0;//most recent volume pushed
-    double currentVolumePerSecond =0;
-    std::vector<double> measurements;
-    std::vector<double> measurementTimes;
+    double currentVolume = 0; // most recent volume pushed
+    VolumetricRateCalculator *volumetricRateCalculator = nullptr;
 
     explicit BrewProcess(ProcessTarget target = ProcessTarget::TIME, int pressurizeTime = 0, int infusionPumpTime = 0,
-                         int infusionBloomTime = 0, int brewTime = 0, int brewVolume = 0, double brewDelay=0.0)
+                         int infusionBloomTime = 0, int brewTime = 0, int brewVolume = 0, double brewDelay = 0.0)
         : target(target), infusionPumpTime(infusionPumpTime), infusionBloomTime(infusionBloomTime), brewTime(brewTime),
-          brewVolume(brewVolume), brewPressurize(pressurizeTime),brewDelay(brewDelay) {
+          brewVolume(brewVolume), brewPressurize(pressurizeTime), brewDelay(brewDelay),
+          volumetricRateCalculator(new VolumetricRateCalculator(PREDICTIVE_TIME)) {
         if (infusionBloomTime == 0 || infusionPumpTime == 0) {
             phase = BrewPhase::BREW_PRESSURIZE;
         } else if (pressurizeTime == 0) {
@@ -62,11 +59,10 @@ class BrewProcess : public Process {
         currentPhaseStarted = millis();
     }
 
-    void updateVolume(double new_volume) override {//called even after the Process is no longer active
-        currentVolume = new_volume;
-        if (isActive()) {//only store measurements while active
-            measurements.emplace_back(currentVolume);
-            measurementTimes.emplace_back(millis());
+    void updateVolume(double volume) override { // called even after the Process is no longer active
+        currentVolume = volume;
+        if (phase != BrewPhase::BREW_DRIP && phase != BrewPhase::FINISHED) { // only store measurements while active
+            volumetricRateCalculator->addMeasurement(volume);
         }
     }
 
@@ -82,20 +78,21 @@ class BrewProcess : public Process {
             return brewPressurize;
         case BrewPhase::BREW_PUMP:
             return brewTime;
+        case BrewPhase::BREW_DRIP:
+            return PREDICTIVE_TIME;
         default:
             return 0;
         }
     }
-
 
     bool isCurrentPhaseFinished() {
         if (phase == BrewPhase::BREW_PUMP && target == ProcessTarget::VOLUMETRIC) {
             if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
                 return true;
             }
-            currentVolumePerSecond = SlopeLinearFitSeconds(measurements,measurementTimes,PREDICTIVE_TIME);//stored for determination of the delay
-            const double predictedAddedVolume = currentVolumePerSecond/ 1000.0 * brewDelay;
-            return measurements.back() + predictedAddedVolume >= brewVolume;
+            double currentRate = volumetricRateCalculator->getRate();
+            const double predictedAddedVolume = currentRate * brewDelay;
+            return currentVolume + predictedAddedVolume >= brewVolume;
         }
         if (phase != BrewPhase::FINISHED) {
             return millis() - currentPhaseStarted > getPhaseDuration();
@@ -104,9 +101,7 @@ class BrewProcess : public Process {
     }
 
     double getNewDelayTime() const {
-        double overshoot = currentVolume - double(brewVolume);
-        double overshootTime=overshoot*1000/currentVolumePerSecond;//the amount of brewDelay corresponding to the overshoot
-        return brewDelay-overshootTime; //decrease brewDelay and return
+        return brewDelay - volumetricRateCalculator->getOvershootAdjustMillis(double(brewVolume), currentVolume);
     }
 
     bool isRelayActive() override {
@@ -142,6 +137,9 @@ class BrewProcess : public Process {
                 phase = BrewPhase::BREW_PUMP;
                 break;
             case BrewPhase::BREW_PUMP:
+                phase = BrewPhase::BREW_DRIP;
+                return;
+            case BrewPhase::BREW_DRIP:
                 phase = BrewPhase::FINISHED;
                 return;
             default:;
@@ -216,57 +214,59 @@ class PumpProcess : public Process {
 class GrindProcess : public Process {
   public:
     ProcessTarget target;
+    bool active = true;
     int time;
     int grindVolume;
     double grindDelay;
     unsigned long started;
+    unsigned long finished{};
     double currentVolume = 0;
-    double currentVolumePerSecond =0;
-    std::vector<double> measurements;
-    std::vector<double> measurementTimes;
+    VolumetricRateCalculator *volumetricRateCalculator = nullptr;
 
     explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, int volume = 0, double grindDelay = 0.0)
-        : target(target), time(time), grindVolume(volume), grindDelay(grindDelay) {
+        : target(target), time(time), grindVolume(volume), grindDelay(grindDelay),
+          volumetricRateCalculator(new VolumetricRateCalculator(PREDICTIVE_TIME)) {
         started = millis();
     }
 
-
-    void updateVolume(double new_volume) override {
-        currentVolume = new_volume;
-        if (isActive()) {//only store measurements while active
-            measurements.emplace_back(currentVolume);
-            measurementTimes.emplace_back(millis());
+    void updateVolume(double volume) override {
+        currentVolume = volume;
+        if (active) { // only store measurements while active
+            volumetricRateCalculator->addMeasurement(volume);
         }
     }
 
     bool isRelayActive() override { return false; }
 
-    bool isAltRelayActive() override { return isActive(); }
+    bool isAltRelayActive() override { return active; }
 
     float getPumpValue() override { return 0.f; }
 
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while GrindProcess is active
-            currentVolumePerSecond = SlopeLinearFitSeconds(measurements,measurementTimes,PREDICTIVE_TIME);//determine and store rate prediction
+        if (target == ProcessTarget::TIME) {
+            active = millis() - started < time;
+        } else {
+            double currentRate = volumetricRateCalculator->getRate();
+            if (currentVolume + currentRate * grindDelay > grindVolume) {
+                active = false;
+                finished = millis();
+            }
+        }
     }
 
     double getNewDelayTime() const {
-        double overshoot = currentVolume - double(grindVolume);
-        double overshootTime=overshoot*1000/currentVolumePerSecond;//the amount of grindDelay corresponding to the overshoot
-        return grindDelay-overshootTime; //decrease grindDelay and return
+        return grindDelay - volumetricRateCalculator->getOvershootAdjustMillis(double(grindVolume), currentVolume);
     }
 
     bool isActive() override {
         if (target == ProcessTarget::TIME) {
             return millis() - started < time;
         }
-        const double predictedAddedVolume= currentVolumePerSecond / 1000.0 * grindDelay;
-        return measurements.back() + predictedAddedVolume < double(grindVolume);//use the last recorded measurement and not the current so the process stays inactive even if the measured weight decreases
+        return active || (finished + PREDICTIVE_TIME > millis());
     }
 
     int getType() override { return MODE_GRIND; }
 };
-
-
 
 #endif // PROCESS_H
