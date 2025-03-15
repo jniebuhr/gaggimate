@@ -1,0 +1,49 @@
+name: Feature Request
+description: Suggest a new feature or improvement for GaggiMate
+title: "[Feature Request] Short Description of Feature"
+labels: [feature request]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🚀 Feature Request
+        Thank you for taking the time to suggest a feature! Please fill out the details below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the feature"
+      description: "Provide a clear and concise description of the feature or improvement you’d like to see."
+      placeholder: "I would like GaggiMate to support pre-infusion timing adjustments..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "Why is this feature useful?"
+      description: "Explain why this feature would be helpful and how it improves the project."
+      placeholder: "This feature would help users fine-tune espresso extraction by..."
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: "How complex is this feature?"
+      description: "Provide an estimate of the effort required to implement this feature."
+      options:
+        - "Low - Simple enhancement"
+        - "Medium - Requires some changes"
+        - "High - Significant work required"
+        - "??? - I have absolutely no idea - so most likely VERY HIGH!"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: "Additional context"
+      description: "Any other information, screenshots, or references related to the request."

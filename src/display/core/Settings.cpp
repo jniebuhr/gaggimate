@@ -24,6 +24,7 @@ Settings::Settings() {
     infuseBloomTime = preferences.getInt("ibt", 0);
     pressurizeTime = preferences.getInt("pt", 0);
     savedScale = preferences.getString("ssc", "");
+    momentaryButtons = preferences.getBool("mb", false);
     boilerFillActive = preferences.getBool("bf_a", false);
     startupFillTime = preferences.getInt("bf_su", 5000);
     steamFillTime = preferences.getInt("bf_st", 5000);
@@ -244,5 +245,10 @@ void Settings::setHomeAssistantUser(const String &homeAssistantUser) {
 }
 void Settings::setHomeAssistantPassword(const String &homeAssistantPassword) {
     this->homeAssistantPassword = homeAssistantPassword;
+    save();
+}
+
+void Settings::setMomentaryButtons(bool momentary_buttons) {
+    momentaryButtons = momentary_buttons;
     save();
 }

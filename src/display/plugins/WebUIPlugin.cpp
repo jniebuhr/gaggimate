@@ -139,6 +139,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
                 settings->setHomeAssistantIP(request->arg("haIP"));
             if (request->hasArg("haPort"))
                 settings->setHomeAssistantPort(request->arg("haPort").toInt());
+            settings->setMomentaryButtons(request->hasArg("momentaryButtons"));
         });
         controller->setTargetTemp(controller->getTargetTemp());
     }
@@ -171,6 +172,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
     doc["smartGrindActive"] = settings.isSmartGrindActive();
     doc["smartGrindIp"] = settings.getSmartGrindIp();
     doc["smartGrindToggle"] = settings.isSmartGrindToggle();
+    doc["momentaryButtons"] = settings.isMomentaryButtons();
     serializeJson(doc, *response);
     request->send(response);
 

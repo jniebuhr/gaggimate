@@ -6,7 +6,7 @@ constexpr size_t BLE_SCAN_DURATION_SECONDS = 10;
 NimBLEClientController::NimBLEClientController()
     : client(nullptr), tempControlChar(nullptr), pumpControlChar(nullptr), valveControlChar(nullptr), altControlChar(nullptr),
       tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr),
-      serverDevice(nullptr) {}
+      brewBtnChar(nullptr), steamBtnChar(nullptr), serverDevice(nullptr) {}
 
 void NimBLEClientController::initClient() {
     NimBLEDevice::init("GPBLC");
@@ -32,6 +32,9 @@ void NimBLEClientController::registerTempReadCallback(const temp_read_callback_t
 void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callback_t &callback) {
     remoteErrorCallback = callback;
 }
+
+void NimBLEClientController::registerBrewBtnCallback(const brew_callback_t &callback) { brewBtnCallback = callback; }
+void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &callback) { steamBtnCallback = callback; }
 
 bool NimBLEClientController::connectToServer() {
     Serial.println("Connecting to advertised device");
@@ -82,6 +85,18 @@ bool NimBLEClientController::connectToServer() {
     if (errorChar->canNotify()) {
         errorChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
+    brewBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(BREW_BTN_UUID));
+    if (brewBtnChar->canNotify()) {
+        brewBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                               std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
+    steamBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(STEAM_BTN_UUID));
+    if (steamBtnChar->canNotify()) {
+        steamBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
     delay(500);
@@ -177,6 +192,20 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         Serial.printf("Error read: %d\n", errorCode);
         if (remoteErrorCallback != nullptr) {
             remoteErrorCallback(errorCode);
+        }
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
+        int brewButtonStatus = atoi((char *)pData);
+        Serial.printf("brew button: %d\n", brewButtonStatus);
+        if (brewBtnCallback != nullptr) {
+            brewBtnCallback(brewButtonStatus);
+        }
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
+        int steamButtonStatus = atoi((char *)pData);
+        Serial.printf("steam button: %d\n", steamButtonStatus);
+        if (steamBtnCallback != nullptr) {
+            steamBtnCallback(steamButtonStatus);
         }
     }
 }
