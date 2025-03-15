@@ -27,27 +27,28 @@ const bool FASTMODE = true;
 #endif
 // #endif
 
-const char SERVICE_OTA_BLE_UUID[] = "fe590001-54ae-4a28-9f74-dfccb248601d";
-const char CHARACTERISTIC_OTA_BL_UUID_RX[] =
+constexpr char SERVICE_OTA_BLE_UUID[] = "fe590001-54ae-4a28-9f74-dfccb248601d";
+constexpr char CHARACTERISTIC_OTA_BL_UUID_RX[] =
     "fe590002-54ae-4a28-9f74-dfccb248601d";
-const char CHARACTERISTIC_OTA_BL_UUID_TX[] =
+constexpr char CHARACTERISTIC_OTA_BL_UUID_TX[] =
     "fe590003-54ae-4a28-9f74-dfccb248601d";
 
-const bool FORMAT_FLASH_IF_MOUNT_FAILED = true;
-const uint32_t UPDATER_SIZE = 20000;
+constexpr bool FORMAT_FLASH_IF_MOUNT_FAILED = true;
+constexpr uint32_t UPDATER_SIZE = 20000;
 
 /* Dummy class */
 class BLE_OTA_DFU;
 
-class BLEOverTheAirDeviceFirmwareUpdate : public BLECharacteristicCallbacks {
+class BLEOverTheAirDeviceFirmwareUpdate final : public BLECharacteristicCallbacks {
 private:
   bool selected_updater = true;
   bool file_open = false;
-  uint8_t updater[2][UPDATER_SIZE];
+  uint8_t updater[2][UPDATER_SIZE]{};
   uint16_t write_len[2] = {0, 0};
   uint16_t parts = 0, MTU = 0;
   uint16_t current_progression = 0;
-  uint32_t received_file_size, expected_file_size;
+  uint32_t received_file_size = 0;
+  uint32_t expected_file_size = 0;
 
 public:
   friend class BLE_OTA_DFU;
@@ -55,8 +56,8 @@ public:
 
   uint16_t write_binary(fs::FS *file_system, const char *path, uint8_t *data,
                         uint16_t length, bool keep_open = true);
-  void onNotify(BLECharacteristic *pCharacteristic);
-  void onWrite(BLECharacteristic *pCharacteristic);
+  void onNotify(BLECharacteristic *pCharacteristic) override;
+  void onWrite(BLECharacteristic *pCharacteristic) override;
 };
 
 class BLE_OTA_DFU {

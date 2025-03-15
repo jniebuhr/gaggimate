@@ -10,7 +10,4 @@ void setup() {
     controller.setup();
 }
 
-void loop() {
-    controller.loop();
-}
-
+void loop() { controller.loop(); }

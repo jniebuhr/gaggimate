@@ -114,9 +114,7 @@ void GaggiMateController::loop() {
     }
 }
 
-void GaggiMateController::registerBoardConfig(ControllerConfig config) {
-    configs.push_back(config);
-}
+void GaggiMateController::registerBoardConfig(ControllerConfig config) { configs.push_back(config); }
 
 void GaggiMateController::detectBoard() {
     pinMode(DETECT_EN_PIN, OUTPUT);
@@ -124,7 +122,7 @@ void GaggiMateController::detectBoard() {
     digitalWrite(DETECT_EN_PIN, HIGH);
     uint16_t millivolts = analogReadMilliVolts(DETECT_VALUE_PIN);
     digitalWrite(DETECT_EN_PIN, LOW);
-    int boardId = round(((float) millivolts) / 100.0f);
+    int boardId = round(((float)millivolts) / 100.0f);
     printf("Detected Board ID: %d\n", boardId);
     for (ControllerConfig config : configs) {
         if (config.autodetectValue == boardId) {
@@ -141,9 +139,8 @@ void GaggiMateController::detectBoard() {
 void GaggiMateController::detectAddon() {
     pinMode(_config.extDetectPin, INPUT_PULLDOWN);
     uint16_t millivolts = analogReadMilliVolts(_config.extDetectPin);
-    int addonId = round(((float) millivolts) / 100.0f);
+    int addonId = round(((float)millivolts) / 100.0f);
     printf("Detected Addon ID: %d\n", addonId);
-
 }
 
 void GaggiMateController::onTemperatureControl(float temperature) {
@@ -159,7 +156,6 @@ void GaggiMateController::onPumpControl(const float flow) {
     flowPercentage = flow;
     controlPump();
 }
-
 
 void GaggiMateController::handlePingTimeout() {
     if (setpoint == 0.0) {
@@ -248,4 +244,3 @@ void GaggiMateController::stopPidAutotune() {
     pidAutotune->Cancel();
     printf("PID autotune stopped.\n");
 }
-

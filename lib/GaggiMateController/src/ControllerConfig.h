@@ -34,27 +34,25 @@ struct ControllerConfig {
     uint8_t relayOn;
 };
 
-const ControllerConfig GM_CONTROLLER_REV_1x = {
-    .name = "GaggiMate Controller Rev 1.x",
-    .autodetectValue = 0, // Voltage divider was missing in Rev 1.0 so it's 0
-    .heaterPin = 14,
-    .pumpPin = 9,
-    .valvePin = 10,
-    .altPin = 11,
-    .maxSckPin = 6,
-    .maxCsPin = 7,
-    .maxMisoPin = 4,
-    .brewButtonPin = 38,
-    .steamButtonPin = 48,
-    .scaleSclPin = 17,
-    .scaleSdaPin = 18,
-    .scaleSda1Pin = 39,
-    .extDetectPin = 1,
-    .ext1Pin = 2,
-    .ext2Pin = 8,
-    .ext3Pin = 12,
-    .ext4Pin = 13,
-    .relayOn = 1
-};
+const ControllerConfig GM_CONTROLLER_REV_1x = {.name = "GaggiMate Controller Rev 1.x",
+                                               .autodetectValue = 0, // Voltage divider was missing in Rev 1.0 so it's 0
+                                               .heaterPin = 14,
+                                               .pumpPin = 9,
+                                               .valvePin = 10,
+                                               .altPin = 11,
+                                               .maxSckPin = 6,
+                                               .maxCsPin = 7,
+                                               .maxMisoPin = 4,
+                                               .brewButtonPin = 38,
+                                               .steamButtonPin = 48,
+                                               .scaleSclPin = 17,
+                                               .scaleSdaPin = 18,
+                                               .scaleSda1Pin = 39,
+                                               .extDetectPin = 1,
+                                               .ext1Pin = 2,
+                                               .ext2Pin = 8,
+                                               .ext3Pin = 12,
+                                               .ext4Pin = 13,
+                                               .relayOn = 1};
 
-#endif //CONTROLLERCONFIG_H
+#endif // CONTROLLERCONFIG_H

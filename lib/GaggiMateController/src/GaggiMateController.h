@@ -16,13 +16,14 @@ constexpr int DETECT_EN_PIN = 40;
 constexpr int DETECT_VALUE_PIN = 14;
 
 class GaggiMateController {
-public:
+  public:
     GaggiMateController();
     void setup(void);
     void loop(void);
 
     void registerBoardConfig(ControllerConfig config);
-private:
+
+  private:
     void detectBoard();
     void detectAddon();
     void controlHeater(int signal);
@@ -58,4 +59,4 @@ private:
     bool brewButtonState = HIGH;
 };
 
-#endif //GAGGIMATECONTROLLER_H
+#endif // GAGGIMATECONTROLLER_H
