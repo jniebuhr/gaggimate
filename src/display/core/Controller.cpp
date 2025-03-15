@@ -429,7 +429,7 @@ void Controller::onVolumetricMeasurement(double measurement) const {
 
 void Controller::handleBrewButton(int brewButtonStatus) {
     printf("current screen %d, brew button %d\n", getMode(), brewButtonStatus);
-    if(brewButtonStatus == 1) {
+    if(brewButtonStatus) {
         switch (getMode())
         {
         case MODE_STANDBY:
@@ -448,31 +448,26 @@ void Controller::handleBrewButton(int brewButtonStatus) {
         default:
             break;
         }
-    } else {
-        switch (getMode())
-        {
-        case MODE_BREW:
+    } else if (!settings.isMomentaryButtons()) {
+        if (getMode() == MODE_BREW) {
             if(isActive()) {
                 deactivate();
                 clear();
+            } else {
+                clear();
             }
-            break;
-        case MODE_WATER:
+        } else if (getMode() == MODE_WATER) {
             deactivate();
-            break;
-        default:
-            break;
         }
     }
 }
 
 void Controller::handleSteamButton(int steamButtonStatus) {
     printf("current screen %d, steam button %d\n", getMode(), steamButtonStatus);
-    if(steamButtonStatus == 1) {
+    if(steamButtonStatus) {
         switch (getMode())
         {
         case MODE_STANDBY:
-            deactivate();
             setMode(MODE_STEAM);
             break;
         case MODE_BREW:
@@ -485,14 +480,7 @@ void Controller::handleSteamButton(int steamButtonStatus) {
         default:
             break;
         }
-    } else {
-        switch (getMode())
-        {
-        case MODE_STEAM:
-            deactivate();
-            break;
-        default:
-            break;
-        }
+    } else if (!settings.isMomentaryButtons() && getMode() == MODE_STEAM) {
+        deactivate();
     }
 }

@@ -19,8 +19,8 @@ bool is_autotuning = false;                   // Flag for whether we are in auto
 unsigned long lastCycleStart = 0;             // Tracks the start time of the pump cycle
 float flowPercentage = 0;                     // Declare flowPercentage with an initial value
 unsigned long lastTempUpdate = 0;
-bool brew_button_state;
-bool steam_button_state;
+bool brew_button_state = true;
+bool steam_button_state = true;
 
 NimBLEServerController serverController;
 
@@ -58,9 +58,9 @@ void setup() {
     control_valve(false);
 
     // brew switch input
-    pinMode(BREW_PIN, INPUT);
+    pinMode(BREW_PIN, INPUT_PULLUP);
     // steam switch input
-    pinMode(STEAM_PIN, INPUT);
+    pinMode(STEAM_PIN, INPUT_PULLUP);
 
     aTune.SetOutputStep(10);  // Set the output step size for autotuning
     aTune.SetControlType(1);  // Set to 1 for temperature control
@@ -115,19 +115,11 @@ void loop() {
 
         if(digitalRead(BREW_PIN) != brew_button_state) {
             brew_button_state = digitalRead(BREW_PIN);
-            if(digitalRead(BREW_PIN) == LOW) {
-                serverController.sendBrew(true);
-            } else {
-                serverController.sendBrew(false);
-            }
+            serverController.sendBrew(!brew_button_state);
         }
         if(digitalRead(STEAM_PIN) != steam_button_state) {
             steam_button_state = digitalRead(STEAM_PIN);
-            if(digitalRead(STEAM_PIN) == LOW) {
-                serverController.sendSteam(true);
-            } else {
-                serverController.sendSteam(false);
-            }
+            serverController.sendSteam(!steam_button_state);
         }
 
         delay(50);
