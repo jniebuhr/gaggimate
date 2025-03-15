@@ -3,7 +3,14 @@
 @tailwind utilities;
 
 .menu-button {
-  @apply bg-gray-50 border border-[#b0b3b8] border-opacity-40 hover:bg-gray-200 text-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 rounded-full px-5 py-3 mr-2 gap-3 items-center text-center;
+  @apply bg-gray-50 border border-[#ccc] dark:border-gray-600 border-opacity-40 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700;
+  @apply text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-200 rounded-full px-5 py-3 mr-2 gap-3 items-center text-center;
+  cursor: pointer;
+}
+
+.menu-button-sm {
+  @apply menu-button py-1 px-2;
+  @apply py-2 px-4;
   cursor: pointer;
 }
 
@@ -16,9 +23,10 @@
 .input-field {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ccc;
+  border-width: 1px;
   border-radius: 4px;
   font-size: 1rem;
+  @apply border-[#ccc] dark:border-gray-600;
 }
 
 .input-checkbox {

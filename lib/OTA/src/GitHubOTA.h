@@ -17,8 +17,9 @@ extern const uint8_t x509_crt_imported_bundle_bin_start[] asm("_binary_x509_crt_
 
 class GitHubOTA {
   public:
-    GitHubOTA(const String &version, const String &release_url, const phase_callback_t &phase_callback, const progress_callback_t &progress_callback,
-              const String &firmware_name = "firmware.bin", const String &filesystem_name = "filesystem.bin");
+    GitHubOTA(const String &version, const String &release_url, const phase_callback_t &phase_callback,
+              const progress_callback_t &progress_callback, const String &firmware_name = "firmware.bin",
+              const String &filesystem_name = "filesystem.bin");
 
     void checkForUpdates();
     bool isUpdateAvailable() const;

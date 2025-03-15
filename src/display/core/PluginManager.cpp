@@ -7,7 +7,7 @@ void PluginManager::setup(Controller *controller) {
     on("system:dummy", [](const Event &) {
         // Register a dummy event so the event map is initialized properly
     });
-    for (auto &plugin : plugins) {
+    for (const auto &plugin : plugins) {
         plugin->setup(controller, this);
     }
     initialized = true;
@@ -60,7 +60,7 @@ Event PluginManager::trigger(const String &eventId, const String &key, const flo
 void PluginManager::trigger(Event &event) {
     printf("Triggering event: %s\n", event.id.c_str());
     if (listeners.count(std::string(event.id.c_str()))) {
-        for (auto &callback : listeners[std::string(event.id.c_str())]) {
+        for (auto const &callback : listeners[std::string(event.id.c_str())]) {
             callback(event);
             if (event.stopPropagation) {
                 break;

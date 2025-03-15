@@ -10,6 +10,8 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void initServer();
     void sendTemperature(float temperature);
     void sendError(int errorCode);
+    void sendBrewBtnState(bool brewButtonStatus);
+    void sendSteamBtnState(bool steamButtonStatus);
     void registerTempControlCallback(const temp_control_callback_t &callback);
     void registerPumpControlCallback(const pump_control_callback_t &callback);
     void registerValveControlCallback(const pin_control_callback_t &callback);
@@ -29,6 +31,8 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     NimBLECharacteristic *pidControlChar;
     NimBLECharacteristic *errorChar;
     NimBLECharacteristic *autotuneChar;
+    NimBLECharacteristic *brewBtnChar;
+    NimBLECharacteristic *steamBtnChar;
 
     temp_control_callback_t tempControlCallback = nullptr;
     pump_control_callback_t pumpControlCallback = nullptr;

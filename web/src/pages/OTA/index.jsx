@@ -78,11 +78,11 @@ export function OTA() {
             <option value="latest" selected={formData.channel === 'latest'}>
               Stable
             </option>
-            { /*
+            {/*
             <option value="nightly" selected={formData.channel === 'nightly'}>
               Nightly
             </option>
-            */ }
+            */}
           </select>
         </div>
 

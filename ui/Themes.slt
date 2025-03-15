@@ -31,22 +31,22 @@
         "strtype": "THEME_COLOR",
         "strval": "SemiDark",
         "intarray": [
-          51,
-          51,
-          51,
-          255
+          255,
+          255,
+          255,
+          408
         ],
         "InheritedType": 0
       },
       {
-        "nid": 1000209,
+        "nid": 1000188,
         "strtype": "THEME_COLOR",
-        "strval": "Transparent",
+        "strval": "Progress",
         "intarray": [
-          0,
-          0,
-          0,
-          0
+          31,
+          251,
+          163,
+          255
         ],
         "InheritedType": 0
       }
@@ -93,15 +93,15 @@
           "InheritedType": 0
         },
         {
-          "nid": 1000209,
+          "nid": 1000188,
           "flags": 2097152,
           "strtype": "THEME_COLOR",
-          "strval": "Transparent",
+          "strval": "Progress",
           "intarray": [
-            0,
-            0,
-            0,
-            0
+            31,
+            251,
+            163,
+            255
           ],
           "InheritedType": 0
         }

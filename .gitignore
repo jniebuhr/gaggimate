@@ -6,3 +6,4 @@ pcb/**/*.kicad_sch_old
 .idea
 node_modules/
 __pycache__
+data/

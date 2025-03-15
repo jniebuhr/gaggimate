@@ -2,7 +2,8 @@
 
 NimBLEServerController::NimBLEServerController()
     : tempControlChar(nullptr), pumpControlChar(nullptr), valveControlChar(nullptr), altControlChar(nullptr),
-      tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr) {}
+      tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr),
+      brewBtnChar(nullptr), steamBtnChar(nullptr) {}
 
 void NimBLEServerController::initServer() {
     NimBLEDevice::init("GPBLS");
@@ -50,6 +51,12 @@ void NimBLEServerController::initServer() {
     autotuneChar = pService->createCharacteristic(AUTOTUNE_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
     autotuneChar->setCallbacks(this); // Use this class as the callback handler
 
+    // Brew button Characteristic (Server notifies client of brew button)
+    brewBtnChar = pService->createCharacteristic(BREW_BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
+
+    // Steam button Characteristic (Server notifies client of steam button)
+    steamBtnChar = pService->createCharacteristic(STEAM_BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
+
     pService->start();
 
     ota_dfu_ble.configure_OTA(pServer);
@@ -79,6 +86,26 @@ void NimBLEServerController::sendError(int errorCode) {
         snprintf(errorStr, sizeof(errorStr), "%d", errorCode);
         errorChar->setValue(errorStr);
         errorChar->notify();
+    }
+}
+
+void NimBLEServerController::sendBrewBtnState(bool brewButtonStatus) {
+    if (deviceConnected) {
+        // Send brew notification to the client
+        char brewStr[8];
+        snprintf(brewStr, sizeof(brewStr), "%d", brewButtonStatus);
+        brewBtnChar->setValue(brewStr);
+        brewBtnChar->notify();
+    }
+}
+
+void NimBLEServerController::sendSteamBtnState(bool steamButtonStatus) {
+    if (deviceConnected) {
+        // Send steam notification to the client
+        char steamStr[8];
+        snprintf(steamStr, sizeof(steamStr), "%d", steamButtonStatus);
+        steamBtnChar->setValue(steamStr);
+        steamBtnChar->notify();
     }
 }
 

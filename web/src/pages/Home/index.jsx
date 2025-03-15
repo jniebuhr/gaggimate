@@ -54,6 +54,9 @@ export function Home() {
         <a href="#" className="menu-button">
           PID Autotune (coming soon)
         </a>
+        <a href="/scales" className="menu-button">
+          Bluetooth Scales
+        </a>
         <a href="/settings" className="menu-button">
           Settings
         </a>

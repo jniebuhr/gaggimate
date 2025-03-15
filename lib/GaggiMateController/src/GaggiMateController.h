@@ -54,6 +54,8 @@ private:
     unsigned long lastCycleStart = 0;
     float flowPercentage = 0;
     unsigned long lastTempUpdate = 0;
+    bool steamButtonState = HIGH;
+    bool brewButtonState = HIGH;
 };
 
 #endif //GAGGIMATECONTROLLER_H

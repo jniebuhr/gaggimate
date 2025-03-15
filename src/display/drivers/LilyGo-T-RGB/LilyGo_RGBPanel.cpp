@@ -8,8 +8,8 @@
  *
  */
 #include "LilyGo_RGBPanel.h"
-#include "RGBPanelInit.h"
 #include "utilities.h"
+#include <display/drivers/common/RGBPanelInit.h>
 #include <esp_adc_cal.h>
 
 static void TouchDrvDigitalWrite(uint32_t gpio, uint8_t level);

@@ -9,9 +9,6 @@ void setup() {
 }
 
 void loop() {
-    if (!controller.isUpdating()) {
-        lv_timer_handler();
-    }
     controller.loop();
     delay(2);
 }

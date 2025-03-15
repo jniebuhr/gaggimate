@@ -30,11 +30,14 @@ void GaggiMateController::setup() {
     // Initialize last ping time
     lastPingTime = millis();
 
-    // Initialize heater and pump GPIOs (set to LOW/OFF state)
+    // Initialize GPIOs
     pinMode(_config.heaterPin, OUTPUT);
     pinMode(_config.pumpPin, OUTPUT);
     pinMode(_config.valvePin, OUTPUT);
     pinMode(_config.altPin, OUTPUT);
+    pinMode(_config.brewButtonPin, INPUT_PULLUP);
+    pinMode(_config.steamButtonPin, INPUT_PULLUP);
+
     controlHeater(0);
     controlPump();
     controlAlt(false);
@@ -97,6 +100,15 @@ void GaggiMateController::loop() {
         printf("Temperature: %f\n", input);
 
         controlPump();
+
+        if (digitalRead(_config.brewButtonPin) != brewButtonState) {
+            brewButtonState = digitalRead(_config.brewButtonPin);
+            _ble.sendBrewBtnState(!brewButtonState);
+        }
+        if (digitalRead(_config.steamButtonPin) != steamButtonState) {
+            steamButtonState = digitalRead(_config.steamButtonPin);
+            _ble.sendSteamBtnState(!steamButtonState);
+        }
 
         delay(50);
     }

@@ -9,6 +9,7 @@ import { Home } from './pages/Home/index.jsx';
 import { NotFound } from './pages/_404.jsx';
 import { Settings } from './pages/Settings/index.jsx';
 import { OTA } from './pages/OTA/index.jsx';
+import { Scales } from './pages/Scales/index.jsx';
 
 export function App() {
   return (
@@ -19,6 +20,7 @@ export function App() {
           <Route path="/" component={Home} />
           <Route path="/settings" component={Settings} />
           <Route path="/ota" component={OTA} />
+          <Route path="/scales" component={Scales} />
           <Route default component={NotFound} />
         </Router>
         <Footer />

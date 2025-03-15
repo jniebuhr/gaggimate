@@ -1,0 +1,64 @@
+name: Compatibility Request
+description: Request to check if an espresso machine is compatible with GaggiMate. Please search the issues tab before submitting a form.
+title: "[Compatibility Request] Machine Name - Model"
+labels: [compatibility]
+assignees: []
+
+body:
+  - type: input
+    id: producer
+    attributes:
+      label: "Producer of the machine"
+      description: "Enter the name of the manufacturer (e.g., Breville, De'Longhi, Gaggia, etc.)."
+      placeholder: "Gaggia"
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: "Machine model"
+      description: "Enter the exact model name or number."
+      placeholder: "Classic Pro"
+    validations:
+      required: true
+
+  - type: input
+    id: revision
+    attributes:
+      label: "Revision (if applicable)"
+      description: "Enter the revision number or year, if known."
+      placeholder: "2021"
+
+  - type: dropdown
+    id: three_way_valve
+    attributes:
+      label: "Does the machine have a 3-way valve?"
+      description: "Select whether the machine has a 3-way solenoid valve."
+      options:
+        - "I don't know"
+        - "Yes"
+        - "No"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: heat-source
+    attributes:
+      label: "What method of heating does your machine use?"
+      description: "Select what heat source the machine uses."
+      options:
+        - "Single boiler"
+        - "Dual boiler"
+        - "Heat Exchanger"
+        - "Thermoblock"
+        - "Thermocoil"
+        - "Other"
+    validations:
+      required: true
+  
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: "Additional context"
+      description: "Any other information, screenshots, or references related to the request."
