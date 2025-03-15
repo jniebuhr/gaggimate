@@ -2,7 +2,8 @@
 
 NimBLEServerController::NimBLEServerController()
     : tempControlChar(nullptr), pumpControlChar(nullptr), valveControlChar(nullptr), altControlChar(nullptr),
-      tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr), brewChar(nullptr), steamChar(nullptr) {}
+      tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr),
+      brewBtnChar(nullptr), steamBtnChar(nullptr) {}
 
 void NimBLEServerController::initServer() {
     NimBLEDevice::init("GPBLS");
@@ -51,10 +52,10 @@ void NimBLEServerController::initServer() {
     autotuneChar->setCallbacks(this); // Use this class as the callback handler
 
     // Brew button Characteristic (Server notifies client of brew button)
-    brewChar = pService->createCharacteristic(BREW_UUID, NIMBLE_PROPERTY::NOTIFY);
+    brewBtnChar = pService->createCharacteristic(BREW_BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
 
     // Steam button Characteristic (Server notifies client of steam button)
-    steamChar = pService->createCharacteristic(STEAM_UUID, NIMBLE_PROPERTY::NOTIFY);
+    steamBtnChar = pService->createCharacteristic(STEAM_BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
 
     pService->start();
 
@@ -88,23 +89,23 @@ void NimBLEServerController::sendError(int errorCode) {
     }
 }
 
-void NimBLEServerController::sendBrew(bool brewButtonStatus) {
+void NimBLEServerController::sendBrewBtnState(bool brewButtonStatus) {
     if (deviceConnected) {
         // Send brew notification to the client
         char brewStr[8];
         snprintf(brewStr, sizeof(brewStr), "%d", brewButtonStatus);
-        brewChar->setValue(brewStr);
-        brewChar->notify();
+        brewBtnChar->setValue(brewStr);
+        brewBtnChar->notify();
     }
 }
 
-void NimBLEServerController::sendSteam(bool steamButtonStatus) {
+void NimBLEServerController::sendSteamBtnState(bool steamButtonStatus) {
     if (deviceConnected) {
         // Send steam notification to the client
         char steamStr[8];
         snprintf(steamStr, sizeof(steamStr), "%d", steamButtonStatus);
-        steamChar->setValue(steamStr);
-        steamChar->notify();
+        steamBtnChar->setValue(steamStr);
+        steamBtnChar->notify();
     }
 }
 
