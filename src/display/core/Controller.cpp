@@ -60,8 +60,8 @@ void Controller::connect() {
 void Controller::setupBluetooth() {
     clientController.initClient();
     clientController.registerTempReadCallback([this](const float temp) { onTempRead(temp); });
-    clientController.registerBrewCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
-    clientController.registerSteamCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
+    clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
+    clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
@@ -429,14 +429,13 @@ void Controller::onVolumetricMeasurement(double measurement) const {
 
 void Controller::handleBrewButton(int brewButtonStatus) {
     printf("current screen %d, brew button %d\n", getMode(), brewButtonStatus);
-    if(brewButtonStatus) {
-        switch (getMode())
-        {
+    if (brewButtonStatus) {
+        switch (getMode()) {
         case MODE_STANDBY:
             deactivateStandby();
             break;
         case MODE_BREW:
-            if(!isActive()) {
+            if (!isActive()) {
                 deactivateStandby();
                 clear();
                 activate();
@@ -450,7 +449,7 @@ void Controller::handleBrewButton(int brewButtonStatus) {
         }
     } else if (!settings.isMomentaryButtons()) {
         if (getMode() == MODE_BREW) {
-            if(isActive()) {
+            if (isActive()) {
                 deactivate();
                 clear();
             } else {
@@ -464,9 +463,8 @@ void Controller::handleBrewButton(int brewButtonStatus) {
 
 void Controller::handleSteamButton(int steamButtonStatus) {
     printf("current screen %d, steam button %d\n", getMode(), steamButtonStatus);
-    if(steamButtonStatus) {
-        switch (getMode())
-        {
+    if (steamButtonStatus) {
+        switch (getMode()) {
         case MODE_STANDBY:
             setMode(MODE_STEAM);
             break;

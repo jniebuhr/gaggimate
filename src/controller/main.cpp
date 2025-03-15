@@ -113,13 +113,13 @@ void loop() {
 
         control_pump();
 
-        if(digitalRead(BREW_PIN) != brew_button_state) {
+        if (digitalRead(BREW_PIN) != brew_button_state) {
             brew_button_state = digitalRead(BREW_PIN);
-            serverController.sendBrew(!brew_button_state);
+            serverController.sendBrewBtnState(!brew_button_state);
         }
-        if(digitalRead(STEAM_PIN) != steam_button_state) {
+        if (digitalRead(STEAM_PIN) != steam_button_state) {
             steam_button_state = digitalRead(STEAM_PIN);
-            serverController.sendSteam(!steam_button_state);
+            serverController.sendSteamBtnState(!steam_button_state);
         }
 
         delay(50);

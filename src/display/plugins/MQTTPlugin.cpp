@@ -35,7 +35,7 @@ void MQTTPlugin::publish(const std::string &topic, const std::string &message) {
     client.publish(publishTopic, message.c_str());
 }
 void MQTTPlugin::publishBrewState(const char *state) {
-    char json[100]; 
+    char json[100];
     std::time_t now = std::time(nullptr); // Get current timestame
     snprintf(json, sizeof(json), R"({"state":"%s","timestamp":%ld})", state, now);
     publish("controller/brew/state", json);
@@ -77,24 +77,32 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     });
     pluginManager->on("controller:mode:change", [this](Event const &event) {
         int newMode = event.getInt("value");
-        const char* modeStr;
+        const char *modeStr;
         switch (newMode) {
-            case 0: modeStr = "Standby"; break;
-            case 1: modeStr = "Brew"; break;
-            case 2: modeStr = "Steam"; break;
-            case 3: modeStr = "Water"; break;
-            case 4: modeStr = "Grind"; break;
-            default: modeStr = "Unknown"; break; // Fallback in case of unexpected value
+        case 0:
+            modeStr = "Standby";
+            break;
+        case 1:
+            modeStr = "Brew";
+            break;
+        case 2:
+            modeStr = "Steam";
+            break;
+        case 3:
+            modeStr = "Water";
+            break;
+        case 4:
+            modeStr = "Grind";
+            break;
+        default:
+            modeStr = "Unknown";
+            break; // Fallback in case of unexpected value
         }
         char json[100];
         snprintf(json, sizeof(json), R"({"mode":%d,"mode_str":"%s"})", newMode, modeStr);
         publish("controller/mode", json);
     });
-    pluginManager->on("controller:brew:start", [this](Event const &) {
-        publishBrewState("brewing");
-    });
+    pluginManager->on("controller:brew:start", [this](Event const &) { publishBrewState("brewing"); });
 
-    pluginManager->on("controller:brew:end", [this](Event const &) {
-        publishBrewState("not brewing");
-    });
+    pluginManager->on("controller:brew:end", [this](Event const &) { publishBrewState("not brewing"); });
 }

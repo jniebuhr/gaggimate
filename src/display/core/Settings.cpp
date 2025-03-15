@@ -239,4 +239,3 @@ void Settings::setMomentaryButtons(bool momentary_buttons) {
     momentaryButtons = momentary_buttons;
     save();
 }
-
