@@ -5,7 +5,9 @@
 GaggiMateController::GaggiMateController() {
     this->pid = new PID(&this->input, &this->output, &this->setpoint, 0, 0, 0, DIRECT);
     this->pidAutotune = new PID_ATune(&this->input, &this->output);
-    configs.push_back(GM_CONTROLLER_REV_1x);
+    configs.push_back(GM_STANDARD_REV_1X);
+    configs.push_back(GM_STANDARD_REV_2X);
+    configs.push_back(GM_PRO_REV_1x);
 }
 
 void GaggiMateController::setup() {
@@ -137,10 +139,7 @@ void GaggiMateController::detectBoard() {
 }
 
 void GaggiMateController::detectAddon() {
-    pinMode(_config.extDetectPin, INPUT_PULLDOWN);
-    uint16_t millivolts = analogReadMilliVolts(_config.extDetectPin);
-    int addonId = round(((float)millivolts) / 100.0f);
-    printf("Detected Addon ID: %d\n", addonId);
+    // TODO: Add I2C scanning for extensions
 }
 
 void GaggiMateController::onTemperatureControl(float temperature) {
@@ -200,20 +199,20 @@ void GaggiMateController::controlPump() {
 
     // Turn pump ON for the first `onSteps` steps and OFF for the remainder
     if (currentCycleDuration < onTime) {
-        digitalWrite(_config.pumpPin, _config.relayOn); // Relay on
+        digitalWrite(_config.pumpPin, _config.pumpOn); // Relay on
     } else {
-        digitalWrite(_config.pumpPin, !_config.relayOn); // Relay off
+        digitalWrite(_config.pumpPin, !_config.pumpOn); // Relay off
     }
 }
 
 void GaggiMateController::controlValve(bool state) {
     if (state) {
         // Turn on the valve
-        digitalWrite(_config.valvePin, _config.relayOn);
+        digitalWrite(_config.valvePin, _config.valveOn);
         printf("Setting valve relay to ON\n");
     } else {
         // Turn off the valve
-        digitalWrite(_config.valvePin, !_config.relayOn);
+        digitalWrite(_config.valvePin, !_config.valveOn);
         printf("Setting valve relay to OFF\n");
     }
 }
@@ -221,11 +220,11 @@ void GaggiMateController::controlValve(bool state) {
 void GaggiMateController::controlAlt(bool state) {
     if (state) {
         // Turn on the valve
-        digitalWrite(_config.altPin, _config.relayOn);
+        digitalWrite(_config.altPin, _config.altOn);
         printf("Setting ALT relay to ON\n");
     } else {
         // Turn off the valve
-        digitalWrite(_config.altPin, !_config.relayOn);
+        digitalWrite(_config.altPin, !_config.altOn);
         printf("Setting ALT relay to OFF\n");
     }
 }

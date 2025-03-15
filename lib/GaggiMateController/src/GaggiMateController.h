@@ -13,7 +13,7 @@ constexpr double MAX_SAFE_TEMP = 170.0;
 constexpr double PING_TIMEOUT_SECONDS = 10.0;
 
 constexpr int DETECT_EN_PIN = 40;
-constexpr int DETECT_VALUE_PIN = 14;
+constexpr int DETECT_VALUE_PIN = 11;
 
 class GaggiMateController {
   public:
