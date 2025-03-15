@@ -1,0 +1,92 @@
+name: Bug Report
+description: Report an issue or unexpected behavior in GaggiMate
+title: "[Bug] Short description of the issue"
+labels: [bug]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 Bug Report
+        Please fill in the details below to help us investigate the issue.
+
+  - type: input
+    id: bug_summary
+    attributes:
+      label: "Brief summary of the bug"
+      description: "Describe the issue in a few words."
+      placeholder: "Machine stops responding after startup"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the issue in greater detail"
+      description: "Provide a detailed explanation of the problem as you experience it."
+      placeholder: "After turning on the machine, it remains unresponsive instead of heating up..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: "Steps to reproduce"
+      description: "List the steps needed to trigger the issue."
+      placeholder: |
+        1. Power on the machine
+        2. Press the start button
+        3. Observe that nothing happens
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reproducibility
+    attributes:
+      label: "Are you able to reproduce the issue?"
+      description: "To know if this was just some wierd one-off, we need to know if you are able to reproduce the same issue agai non your machine."
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: "Expected behavior"
+      description: "Describe what should happen instead."
+      placeholder: "The machine should begin heating and allow me to pull a shot."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: worked_before
+    attributes:
+      label: "Has this function/fetaure worked before with your GaggiMate?"
+      description: "Select whether this feature has worked before with your GaggiMate setup. This helps us determine if it's a new issue or a regression."
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Relevant logs or error messages"
+      description: "Paste any logs, error messages, or screenshots related to the issue."
+      render: shell
+
+  - type: textarea
+    id: machine_info
+    attributes:
+      label: "What machine are you experiencing this issue on?"
+      description: "What espresso machine do you use GaggiMate on?"
+
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: "Additional context"
+      description: "Any extra information that might help us diagnose the issue."

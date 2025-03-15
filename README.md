@@ -29,11 +29,9 @@ This project upgrades a Gaggia espresso machine with smart controls to improve y
 <img src="docs/assets/brew-screen.png" alt="Brew Screen" width="250px" />
 <img src="docs/assets/pcb_render.jpg" alt="PCB Render" width="250px" />
 
-### Availability of kits
+### How to buy
 
-The group buy we did in 2024 is filled up but I'll keep the form open. You can register there to get notified about the second batch and from then on also general availability which is supposed to start in February 2025.
-
-https://forms.gle/KEXdpgJGCZbsFdKD7
+The shop is now open for preorders and you can buy your kit on https://shop.gaggimate.eu/
 
 ## How It Works
 
