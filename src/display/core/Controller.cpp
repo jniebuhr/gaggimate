@@ -63,6 +63,10 @@ void Controller::setupBluetooth() {
     clientController.registerTempReadCallback([this](const float temp) { onTempRead(temp); });
     clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
     clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
+    clientController.registerRemoteErrorCallback([this](const int error) {
+        this->error = error;
+        deactivate();
+    });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
@@ -150,6 +154,10 @@ void Controller::loop() {
     if (now - lastPing > PING_INTERVAL) {
         lastPing = now;
         clientController.sendPing();
+    }
+
+    if (isErrorState()) {
+        return;
     }
 
     if (now - lastProgress > PROGRESS_INTERVAL) {

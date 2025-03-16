@@ -76,14 +76,15 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
     sendData(fileLengthBytes, sizeof(fileLengthBytes));
     uint8_t partsAndMTU[5];
     partsAndMTU[0] = 0xFF;
-    partsAndMTU[1] = (fileParts >> 8) & 0xFF;
-    partsAndMTU[2] = fileParts & 0xFF;
-    partsAndMTU[3] = (MTU >> 8) & 0xFF;
-    partsAndMTU[4] = MTU & 0xFF;
+    partsAndMTU[1] = fileParts / 256;
+    partsAndMTU[2] = fileParts % 256;
+    partsAndMTU[3] = MTU / 256;
+    partsAndMTU[4] = MTU % 256;
     sendData(partsAndMTU, sizeof(partsAndMTU));
     uint8_t updateStart[1];
     updateStart[0] = 0xFD;
     sendData(updateStart, sizeof(updateStart));
+    printf("Waiting for signal from controller\n");
 
     while (client->isConnected()) {
         if (lastSignal == 0xAA || lastSignal == 0xF1) {
@@ -99,7 +100,13 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
     printf("Controller update finished\n");
 }
 
-void ControllerOTA::sendData(uint8_t *data, uint16_t len) { rxChar->writeValue(data, len); }
+void ControllerOTA::sendData(uint8_t *data, uint16_t len) {
+    if (rxChar == nullptr) {
+        printf("RX Char uninitialized\n");
+        return;
+    }
+    rxChar->writeValue(data, len);
+}
 
 void ControllerOTA::notifyUpdate() {
     double progress = ((double)currentPart / (double)fileParts) * 100.0;
@@ -133,10 +140,10 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) {
     }
     uint8_t footer[5];
     footer[0] = 0xFC;
-    footer[1] = (partLength >> 8) & 0xFF;
-    footer[2] = partLength & 0xFF;
-    footer[3] = (currentPart >> 8) & 0xFF;
-    footer[4] = currentPart & 0xFF;
+    footer[1] = partLength / 256;
+    footer[2] = partLength % 256;
+    footer[3] = currentPart / 256;
+    footer[4] = currentPart % 256;
     sendData(footer, sizeof(footer));
 }
 

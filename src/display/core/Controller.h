@@ -56,6 +56,8 @@ class Controller {
     Process *getLastProcess() const { return lastProcess; }
     Settings &getSettings() { return settings; }
     DefaultUI *getUI() const { return ui; }
+    bool isErrorState() const { return error > 0; }
+    int getError() const { return error; }
 
     // Event callback methods
     void updateLastAction();
@@ -97,6 +99,8 @@ class Controller {
     void setVolumetricAvailable(bool available) { volumetricAvailable = available; }
 
     SystemInfo getSystemInfo() const { return systemInfo; }
+
+    NimBLEClientController* getClientController() { return &clientController; }
 
   private:
     // Initialization methods
@@ -142,6 +146,7 @@ class Controller {
     bool initialized = false;
     bool screenReady = false;
     bool volumetricAvailable = false;
+    int error = 0;
 };
 
 #endif // CONTROLLER_H

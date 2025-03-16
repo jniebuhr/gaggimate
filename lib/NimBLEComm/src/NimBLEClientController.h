@@ -22,8 +22,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerRemoteErrorCallback(const remote_err_callback_t &callback);
     void registerBrewBtnCallback(const brew_callback_t &callback);
     void registerSteamBtnCallback(const steam_callback_t &callback);
-
     const char *readInfo() const;
+    NimBLEClient* getClient() const { return client; };
 
   private:
     NimBLEClient *client;
