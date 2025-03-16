@@ -1,4 +1,5 @@
 #include "GaggiMateController.h"
+#include "utilities.h"
 #include <Arduino.h>
 #include <SPI.h>
 
@@ -14,8 +15,8 @@ void GaggiMateController::setup() {
     detectBoard();
     detectAddon();
     this->max31855 = new MAX31855(_config.maxCsPin, _config.maxMisoPin, _config.maxSckPin);
-    // Initialize UART and Protobuf communication
-    _ble.initServer();
+    String systemInfo = make_system_info(_config);
+    _ble.initServer(systemInfo);
 
     // Initialize PID controller
     pid->SetMode(AUTOMATIC);

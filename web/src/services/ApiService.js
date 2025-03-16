@@ -9,19 +9,33 @@ export default class ApiService {
   listeners = {};
 
   constructor() {
+    console.log("Established websocket connection");
+    this.connect();
+  }
+
+  connect() {
     this.socket = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/ws");
     this.socket.addEventListener("message", (e) => { this._onMessage(e); });
-    console.log("Established websocket connection");
+    this.socket.addEventListener("close", () => {
+      setTimeout(() => {
+        this.connect();
+      }, 1000);
+    });
+    this.socket.addEventListener("error", () => {
+      this.socket.close();
+    });
   }
 
   _onMessage(event) {
     const message = JSON.parse(event.data);
-    if (message.tp.startsWith("evt")) {
-      const listeners = Object.values(this.listeners[message.tp] || {});
-      for (const listener of listeners) {
-        listener(message);
-      }
+    const listeners = Object.values(this.listeners[message.tp] || {});
+    for (const listener of listeners) {
+      listener(message);
     }
+  }
+
+  send(event) {
+    this.socket.send(JSON.stringify(event));
   }
 
   on(type, listener) {

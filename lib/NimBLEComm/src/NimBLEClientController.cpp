@@ -36,6 +36,13 @@ void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callba
 void NimBLEClientController::registerBrewBtnCallback(const brew_callback_t &callback) { brewBtnCallback = callback; }
 void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &callback) { steamBtnCallback = callback; }
 
+const char *NimBLEClientController::readInfo() const {
+    if (infoChar != nullptr && infoChar->canRead()) {
+        return infoChar->readValue().c_str();
+    }
+    return "";
+}
+
 bool NimBLEClientController::connectToServer() {
     Serial.println("Connecting to advertised device");
 
@@ -73,6 +80,7 @@ bool NimBLEClientController::connectToServer() {
     autotuneChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_CHAR_UUID));
     pingChar = pRemoteService->getCharacteristic(NimBLEUUID(PING_CHAR_UUID));
     pidControlChar = pRemoteService->getCharacteristic(NimBLEUUID(PID_CONTROL_CHAR_UUID));
+    infoChar = pRemoteService->getCharacteristic(NimBLEUUID(INFO_UUID));
 
     // Obtain the remote notify characteristic and subscribe to it
     tempReadChar = pRemoteService->getCharacteristic(NimBLEUUID(TEMP_READ_CHAR_UUID));

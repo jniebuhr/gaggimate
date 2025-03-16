@@ -49,8 +49,33 @@ String get_redirect_location(WiFiClientSecure &wifi_client, String &initial_url)
     String redirect_url = https.getLocation();
     https.end();
 
-    ESP_LOGV(TAG, "returns: %s\n", redirect_url.c_str());
+    ESP_LOGI(TAG, "returns: %s\n", redirect_url.c_str());
     return redirect_url;
+}
+
+String get_updated_version_via_txt_file(WiFiClientSecure &wifi_client, String &_release_url) {
+    const char *TAG = "get_updated_version_via_txt_file";
+    HTTPClient https;
+    https.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+
+    String url = _release_url + "version.txt";
+    ESP_LOGI(TAG, "url: %s\n", url.c_str());
+    if (!https.begin(wifi_client, url)) {
+        ESP_LOGE(TAG, "[HTTPS] Unable to connect\n");
+        return "";
+    }
+
+    int httpCode = https.GET();
+    if (httpCode != HTTP_CODE_FOUND) {
+        ESP_LOGE(TAG, "[HTTPS] GET... failed\n");
+        char errorText[128];
+        int errCode = wifi_client.lastError(errorText, sizeof(errorText));
+        ESP_LOGV(TAG, "httpCode: %d, errorCode %d: %s\n", httpCode, errCode, errorText);
+    }
+    String version = https.getString();
+    https.end();
+    ESP_LOGI(TAG, "returns: %s\n", version.c_str());
+    return version;
 }
 
 void print_update_result(Updater updater, HTTPUpdateResult result, const char *TAG) {

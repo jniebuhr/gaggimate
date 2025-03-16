@@ -3,9 +3,10 @@
 NimBLEServerController::NimBLEServerController()
     : tempControlChar(nullptr), pumpControlChar(nullptr), valveControlChar(nullptr), altControlChar(nullptr),
       tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr),
-      brewBtnChar(nullptr), steamBtnChar(nullptr) {}
+      brewBtnChar(nullptr), steamBtnChar(nullptr), infoChar(nullptr) {}
 
-void NimBLEServerController::initServer() {
+void NimBLEServerController::initServer(const String infoString) {
+    this->infoString = infoString;
     NimBLEDevice::init("GPBLS");
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
     NimBLEDevice::setMTU(128);
@@ -56,6 +57,9 @@ void NimBLEServerController::initServer() {
 
     // Steam button Characteristic (Server notifies client of steam button)
     steamBtnChar = pService->createCharacteristic(STEAM_BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
+
+    infoChar = pService->createCharacteristic(INFO_UUID, NIMBLE_PROPERTY::READ);
+    setInfo(infoString);
 
     pService->start();
 
@@ -126,6 +130,11 @@ void NimBLEServerController::registerAltControlCallback(const pin_control_callba
 void NimBLEServerController::registerPingCallback(const ping_callback_t &callback) { pingCallback = callback; }
 
 void NimBLEServerController::registerAutotuneCallback(const autotune_callback_t &callback) { autotuneCallback = callback; }
+
+void NimBLEServerController::setInfo(const String infoString) {
+    this->infoString = infoString;
+    infoChar->setValue(infoString);
+}
 
 void NimBLEServerController::registerPidControlCallback(const pid_control_callback_t &callback) { pidControlCallback = callback; }
 

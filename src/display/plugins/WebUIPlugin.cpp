@@ -1,6 +1,4 @@
 #include "WebUIPlugin.h"
-#include <ArduinoJson.h>
-#include <AsyncJson.h>
 #include <DNSServer.h>
 #include <SPIFFS.h>
 #include <display/core/Controller.h>
@@ -13,10 +11,17 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     this->controller = _controller;
     this->pluginManager = _pluginManager;
     this->ota = new GitHubOTA(
-        BUILD_GIT_VERSION, RELEASE_URL + controller->getSettings().getOTAChannel(),
-        [this](uint8_t phase) { pluginManager->trigger("ota:update:phase", "phase", phase); },
-        [this](int progress) { pluginManager->trigger("ota:update:progress", "progress", progress); }, "display-firmware.bin",
-        "display-filesystem.bin");
+        BUILD_GIT_VERSION, controller->getSystemInfo().version,
+        RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"),
+        [this](uint8_t phase) {
+            pluginManager->trigger("ota:update:phase", "phase", phase);
+            updateOTAProgress(phase, 0);
+        },
+        [this](uint8_t phase, int progress) {
+            pluginManager->trigger("ota:update:progress", "progress", progress);
+            updateOTAProgress(phase, progress);
+        },
+        "display-firmware.bin", "display-filesystem.bin", "controller-firmware.bin");
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         const int apMode = event.getInt("AP");
         start(apMode);
@@ -35,6 +40,7 @@ void WebUIPlugin::loop() {
         ota->checkForUpdates();
         pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
         lastUpdateCheck = now;
+        updateOTAStatus(ota->getCurrentVersion());
     }
     if (now > lastStatus + STATUS_PERIOD) {
         lastStatus = now;
@@ -52,7 +58,6 @@ void WebUIPlugin::loop() {
 }
 
 void WebUIPlugin::start(bool apMode) {
-    server.on("/api/ota", [this](AsyncWebServerRequest *request) { handleOTA(request); });
     server.on("/api/settings", [this](AsyncWebServerRequest *request) { handleSettings(request); });
     server.on("/api/status", [this](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -71,6 +76,33 @@ void WebUIPlugin::start(bool apMode) {
     server.on("/settings", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.html"); });
     server.on("/scales", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.html"); });
     server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html").setCacheControl("max-age=0");
+    ws.onEvent(
+        [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+            if (type == WS_EVT_CONNECT) {
+                printf("Received new websocket connection\n");
+                client->setCloseClientOnQueueFull(true);
+            } else if (type == WS_EVT_DISCONNECT) {
+                printf("Client disconnected\n");
+            } else if (type == WS_EVT_DATA) {
+                auto *info = static_cast<AwsFrameInfo *>(arg);
+                if (info->final && info->index == 0 && info->len == len) {
+                    if (info->opcode == WS_TEXT) {
+                        data[len] = 0;
+                        Serial.printf("Received request: %s\n", (char *)data);
+                        JsonDocument doc;
+                        DeserializationError err = deserializeJson(doc, data);
+                        if (!err) {
+                            String msgType = doc["tp"].as<String>();
+                            if (msgType == "req:ota-settings") {
+                                handleOTASettings(client->id(), doc);
+                            } else if (msgType == "req:ota-start") {
+                                handleOTAStart(client->id());
+                            }
+                        }
+                    }
+                }
+            }
+        });
     server.addHandler(&ws);
     server.begin();
     printf("Webserver started\n");
@@ -81,31 +113,20 @@ void WebUIPlugin::start(bool apMode) {
     }
 }
 
-void WebUIPlugin::handleOTA(AsyncWebServerRequest *request) {
-    if (request->method() == HTTP_POST) {
-        if (request->hasArg("channel")) {
-            controller->getSettings().setOTAChannel(request->arg("channel") == "latest" ? "latest" : "nightly");
-            ota->setReleaseUrl(RELEASE_URL + controller->getSettings().getOTAChannel());
-            ota->checkForUpdates();
-        }
-        if (request->hasArg("update")) {
-            updating = true;
+void WebUIPlugin::handleOTASettings(uint32_t clientId, JsonDocument &request) {
+    if (request["update"].as<bool>()) {
+        if (!request["channel"].isNull()) {
+            controller->getSettings().setOTAChannel(request["channel"].as<String>() == "latest" ? "latest" : "nightly");
+            ota->setReleaseUrl(RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"));
+            lastUpdateCheck = 0;
         }
     }
-
-    AsyncResponseStream *response = request->beginResponseStream("application/json");
-    JsonDocument doc;
-    Settings const &settings = controller->getSettings();
-    doc["updateAvailable"] = ota->isUpdateAvailable();
-    doc["currentVersion"] = BUILD_GIT_VERSION;
-    doc["latestVersion"] = ota->getCurrentVersion();
-    doc["channel"] = settings.getOTAChannel();
-    doc["updating"] = updating;
-    serializeJson(doc, *response);
-    request->send(response);
+    updateOTAStatus("Checking...");
 }
 
-void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
+void WebUIPlugin::handleOTAStart(uint32_t clientId) { updating = true; }
+
+void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     if (request->method() == HTTP_POST) {
         controller->getSettings().batchUpdate([request](Settings *settings) {
             if (request->hasArg("startupMode"))
@@ -243,4 +264,28 @@ void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
     request->send(response);
+}
+
+void WebUIPlugin::updateOTAStatus(const String &version) {
+    Settings const &settings = controller->getSettings();
+    JsonDocument doc;
+    doc["latestVersion"] = ota->getCurrentVersion();
+    doc["tp"] = "res:ota-settings";
+    doc["updateAvailable"] = ota->isUpdateAvailable();
+    doc["displayVersion"] = BUILD_GIT_VERSION;
+    doc["controllerVersion"] = controller->getSystemInfo().version;
+    doc["hardware"] = controller->getSystemInfo().hardware;
+    doc["latestVersion"] = ota->getCurrentVersion();
+    doc["channel"] = settings.getOTAChannel();
+    doc["updating"] = updating;
+    ws.textAll(doc.as<String>());
+}
+
+void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
+    JsonDocument doc;
+    doc["tp"] = "evt:ota-progress";
+    doc["phase"] = phase;
+    doc["progress"] = progress;
+    String message = doc.as<String>();
+    ws.textAll(message);
 }

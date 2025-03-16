@@ -17,6 +17,7 @@
 #define PID_CONTROL_CHAR_UUID "d448c469-3e1d-4105-b5b8-75bf7d492fad"
 #define BREW_BTN_UUID "a29eb137-b33e-45a4-b1fc-15eb04e8ab39"
 #define STEAM_BTN_UUID "53750675-4839-421e-971e-cc6823507d8e"
+#define INFO_UUID "f8d7203b-e00c-48e2-83ba-37ff49cdba74"
 
 constexpr size_t ERROR_CODE_COMM_SEND = 1;
 constexpr size_t ERROR_CODE_COMM_RCV = 2;
@@ -34,5 +35,16 @@ using remote_err_callback_t = std::function<void(int errorCode)>;
 using autotune_callback_t = std::function<void()>;
 using brew_callback_t = std::function<void(bool brewButtonStatus)>;
 using steam_callback_t = std::function<void(bool steamButtonStatus)>;
+
+struct SystemCapabilities {
+    bool dimming;
+    bool pressure;
+};
+
+struct SystemInfo {
+    String hardware;
+    String version;
+    SystemCapabilities capabilities;
+};
 
 #endif // NIMBLECOMM_H

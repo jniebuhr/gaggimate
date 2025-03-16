@@ -1,4 +1,5 @@
 #include "Controller.h"
+#include "ArduinoJson.h"
 #include <SPIFFS.h>
 #include <ctime>
 #include <display/config.h>
@@ -65,6 +66,25 @@ void Controller::setupBluetooth() {
     pluginManager->trigger("controller:bluetooth:init");
 }
 
+void Controller::setupInfos() {
+    const char *info = clientController.readInfo();
+    printf("System info: %s\n", info);
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, info);
+    if (err) {
+        printf("Error deserializing JSON: %s\n", err.c_str());
+        systemInfo = SystemInfo{
+            .hardware = "GaggiMate Standard 1.x", .version = "v1.0.0", .capabilities = {.dimming = false, .pressure = false}};
+    } else {
+        systemInfo = SystemInfo{.hardware = doc["hardware"].as<String>(),
+                                .version = doc["version"].as<String>(),
+                                .capabilities = SystemCapabilities{
+                                    .dimming = doc["capabilities"]["dimming"].as<bool>(),
+                                    .pressure = doc["capabilities"]["pressure"].as<bool>(),
+                                }};
+    }
+}
+
 void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.mode(WIFI_STA);
@@ -123,6 +143,7 @@ void Controller::loop() {
                 activateStandby();
             pluginManager->trigger("controller:ready");
         }
+        setupInfos();
     }
 
     unsigned long now = millis();

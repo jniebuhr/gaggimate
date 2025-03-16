@@ -7,6 +7,8 @@
 
 #include "../core/Plugin.h"
 #include "GitHubOTA.h"
+#include <ArduinoJson.h>
+#include <AsyncJson.h>
 #include <ESPAsyncWebServer.h>
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
@@ -24,12 +26,15 @@ class WebUIPlugin : public Plugin {
   private:
     void start(bool apMode);
 
-    void handleOTA(AsyncWebServerRequest *request);
-    void handleSettings(AsyncWebServerRequest *request);
+    void handleOTASettings(uint32_t clientId, JsonDocument &request);
+    void handleOTAStart(uint32_t clientId);
+    void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
     void handleBLEScaleConnect(AsyncWebServerRequest *request);
     void handleBLEScaleInfo(AsyncWebServerRequest *request);
+    void updateOTAStatus(const String &version);
+    void updateOTAProgress(uint8_t phase, int progress);
 
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;

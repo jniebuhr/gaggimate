@@ -3,14 +3,14 @@ import { useContext } from 'react';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import {signal, effect} from '@preact/signals';
-import { Chart, LineController, TimeScale, LinearScale, PointElement, LineElement, Legend } from 'chart.js';
+import { Chart, LineController, TimeScale, LinearScale, PointElement, LineElement, Legend, Filler } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
-import dayjs from 'dayjs';
 Chart.register(LineController);
 Chart.register(TimeScale);
 Chart.register(LinearScale);
 Chart.register(PointElement);
 Chart.register(LineElement);
+Chart.register(Filler);
 Chart.register(Legend);
 
 const modeMap = {
@@ -143,7 +143,7 @@ export function Home() {
           Settings
         </a>
         <a href="/ota" className="menu-button">
-          Updates
+          System & Updates
         </a>
       </div>
     </>

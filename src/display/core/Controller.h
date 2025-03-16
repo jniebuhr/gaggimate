@@ -2,6 +2,7 @@
 #define CONTROLLER_H
 
 #include "NimBLEClientController.h"
+#include "NimBLEComm.h"
 #include "PluginManager.h"
 #include "Settings.h"
 #include <WiFi.h>
@@ -95,13 +96,14 @@ class Controller {
 
     void setVolumetricAvailable(bool available) { volumetricAvailable = available; }
 
+    SystemInfo getSystemInfo() const { return systemInfo; }
+
   private:
     // Initialization methods
     void setupPanel();
-
     void setupWifi();
-
     void setupBluetooth();
+    void setupInfos();
 
     // Functional methods
     void updateRelay();
@@ -124,6 +126,8 @@ class Controller {
 
     int mode = MODE_BREW;
     int currentTemp = 0;
+
+    SystemInfo systemInfo{};
 
     Process *currentProcess = nullptr;
     Process *lastProcess = nullptr;
