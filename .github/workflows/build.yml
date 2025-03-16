@@ -32,6 +32,11 @@ jobs:
           node-version: 22
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
+      - name: Add version
+        run: |
+          mkdir -p out
+          git tag -d nightly
+          git describe --tags --dirty > out/version.txt
       - name: Build Web
         run: ./scripts/build_spiffs.sh
       - name: Build controller
@@ -40,7 +45,6 @@ jobs:
         run: pio run -e display
       - name: Rename firmware files
         run: |
-          mkdir -p out
           mv .pio/build/controller/firmware.bin out/controller-firmware.bin
           mv .pio/build/controller/partitions.bin out/controller-partitions.bin
           mv .pio/build/controller/bootloader.bin out/controller-bootloader.bin
@@ -85,10 +89,6 @@ jobs:
         with:
           name: gaggimate-firmware
           path: release
-      - name: Add version
-        run: |
-          git tag -d nightly
-          git describe --tags --dirty > version.txt
       - name: Update Nightly Release
         uses: andelf/nightly-release@main
         env:
@@ -99,5 +99,4 @@ jobs:
           prerelease: true
           body: 'Latest nightly release, use the nightly channel in the UI to download this firmware.'
           files: |
-            release/*.bin
-            version.txt
+            release/*
