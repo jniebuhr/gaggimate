@@ -74,7 +74,7 @@ void Controller::setupInfos() {
     const char *info = clientController.readInfo();
     printf("System info: %s\n", info);
     JsonDocument doc;
-    DeserializationError err = deserializeJson(doc, info);
+    DeserializationError err = deserializeJson(doc, String(info));
     if (err) {
         printf("Error deserializing JSON: %s\n", err.c_str());
         systemInfo = SystemInfo{

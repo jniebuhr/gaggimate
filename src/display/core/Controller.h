@@ -100,7 +100,7 @@ class Controller {
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    NimBLEClientController* getClientController() { return &clientController; }
+    NimBLEClientController *getClientController() { return &clientController; }
 
   private:
     // Initialization methods

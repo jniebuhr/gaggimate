@@ -67,53 +67,58 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
     fileParts = (size + PART_SIZE - 1) / PART_SIZE;
     currentPart = 0;
 
-    uint8_t fileLengthBytes[5];
-    fileLengthBytes[0] = 0xFE;
-    fileLengthBytes[1] = (size >> 24) & 0xFF;
-    fileLengthBytes[2] = (size >> 16) & 0xFF;
-    fileLengthBytes[3] = (size >> 8) & 0xFF;
-    fileLengthBytes[4] = size & 0xFF;
-    sendData(fileLengthBytes, sizeof(fileLengthBytes));
-    uint8_t partsAndMTU[5];
-    partsAndMTU[0] = 0xFF;
-    partsAndMTU[1] = fileParts / 256;
-    partsAndMTU[2] = fileParts % 256;
-    partsAndMTU[3] = MTU / 256;
-    partsAndMTU[4] = MTU % 256;
-    sendData(partsAndMTU, sizeof(partsAndMTU));
-    uint8_t updateStart[1];
-    updateStart[0] = 0xFD;
-    sendData(updateStart, sizeof(updateStart));
+    uint8_t fileLengthBytes[] = {
+        0xFE,
+        static_cast<uint8_t>((size >> 24) & 0xFF),
+        static_cast<uint8_t>((size >> 16) & 0xFF),
+        static_cast<uint8_t>((size >> 8) & 0xFF),
+        static_cast<uint8_t>(size & 0xFF),
+    };
+    sendData(fileLengthBytes, 5);
+    uint8_t partsAndMTU[] = {
+        0xFF,
+        static_cast<uint8_t>(fileParts / 256),
+        static_cast<uint8_t>(fileParts % 256),
+        static_cast<uint8_t>(MTU / 256),
+        static_cast<uint8_t>(MTU % 256),
+    };
+    sendData(partsAndMTU, 5);
+    uint8_t updateStart[] = {0xFD};
+    sendData(updateStart, 1);
     printf("Waiting for signal from controller\n");
 
     while (client->isConnected()) {
-        if (lastSignal == 0xAA || lastSignal == 0xF1) {
+        uint8_t signal = lastSignal;
+        lastSignal = 0x00;
+        if (signal == 0xAA || signal == 0xF1) {
             // Start update or send next part
+            printf("Sending part %d / %d\n", currentPart + 1, fileParts);
             sendPart(in, size);
             currentPart++;
-        } else if (lastSignal == 0xF2 || lastSignal == 0xFF) {
+            notifyUpdate();
+        } else if (signal == 0xF2 || signal == 0xFF) {
             break;
         }
-        lastSignal = 0x00;
         delay(100);
     }
     printf("Controller update finished\n");
 }
 
-void ControllerOTA::sendData(uint8_t *data, uint16_t len) {
+void ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
     if (rxChar == nullptr) {
         printf("RX Char uninitialized\n");
         return;
     }
-    rxChar->writeValue(data, len);
+    rxChar->writeValue(data, len, true);
+    delay(10);
 }
 
-void ControllerOTA::notifyUpdate() {
-    double progress = ((double)currentPart / (double)fileParts) * 100.0;
-    progressCallback(progress);
+void ControllerOTA::notifyUpdate() const {
+    double progress = (static_cast<double>(currentPart) / static_cast<double>(fileParts)) * 100.0;
+    progressCallback(static_cast<int>(progress));
 }
 
-void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) {
+void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
     uint8_t partData[MTU + 2];
     partData[0] = 0xFB;
     uint32_t partLength = PART_SIZE;
@@ -126,6 +131,7 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) {
         for (uint32_t i = 0; i < MTU; i++) {
             partData[i + 2] = (uint8_t)in.read();
         }
+        printf("Sending part %d / %d - package %d / %d\n", currentPart + 1, fileParts, part + 1, parts);
         sendData(partData, MTU + 2);
     }
     if (partLength % MTU > 0) {
@@ -149,7 +155,7 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) {
 
 void ControllerOTA::onReceive(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) {
     lastSignal = pData[0];
-    printf("Received signal %x", lastSignal);
+    printf("Received signal 0x%x\n", lastSignal);
     switch (lastSignal) {
     case 0xAA:
         printf("Starting transfer, only slow mode supported as of yet\n");

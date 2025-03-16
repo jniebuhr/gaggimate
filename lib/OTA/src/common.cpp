@@ -66,7 +66,7 @@ String get_updated_version_via_txt_file(WiFiClientSecure &wifi_client, String &_
     }
 
     int httpCode = https.GET();
-    if (httpCode != HTTP_CODE_FOUND) {
+    if (httpCode != HTTP_CODE_OK) {
         ESP_LOGE(TAG, "[HTTPS] GET... failed\n");
         char errorText[128];
         int errCode = wifi_client.lastError(errorText, sizeof(errorText));

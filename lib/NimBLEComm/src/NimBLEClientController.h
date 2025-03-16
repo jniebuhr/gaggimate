@@ -23,7 +23,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerBrewBtnCallback(const brew_callback_t &callback);
     void registerSteamBtnCallback(const steam_callback_t &callback);
     const char *readInfo() const;
-    NimBLEClient* getClient() const { return client; };
+    NimBLEClient *getClient() const { return client; };
 
   private:
     NimBLEClient *client;

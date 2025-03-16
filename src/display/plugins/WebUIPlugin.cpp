@@ -26,9 +26,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         const int apMode = event.getInt("AP");
         start(apMode);
     });
-    pluginManager->on("controller:ready", [this](Event const &) {
-        ota->init(controller->getClientController()->getClient());
-    });
+    pluginManager->on("controller:ready", [this](Event const &) { ota->init(controller->getClientController()->getClient()); });
 }
 
 void WebUIPlugin::loop() {
