@@ -85,9 +85,10 @@ jobs:
         with:
           name: gaggimate-firmware
           path: release
-      - name: Build controller
+      - name: Add version
         run: |
-          ls -lah
+          git tag -d nightly
+          git describe --tags --dirty > version.txt
       - name: Update Nightly Release
         uses: andelf/nightly-release@main
         env:
@@ -99,3 +100,4 @@ jobs:
           body: 'Latest nightly release, use the nightly channel in the UI to download this firmware.'
           files: |
             release/*.bin
+            version.txt
