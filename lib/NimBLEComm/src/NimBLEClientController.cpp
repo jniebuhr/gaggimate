@@ -88,13 +88,13 @@ bool NimBLEClientController::connectToServer() {
     }
 
     brewBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(BREW_BTN_UUID));
-    if (brewBtnChar->canNotify()) {
+    if (brewBtnChar != nullptr && brewBtnChar->canNotify()) {
         brewBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
     steamBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(STEAM_BTN_UUID));
-    if (steamBtnChar->canNotify()) {
+    if (steamBtnChar != nullptr && steamBtnChar->canNotify()) {
         steamBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                                 std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }

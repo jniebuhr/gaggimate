@@ -7,7 +7,7 @@
 
 #include "BLEScalePlugin.h"
 
-WebUIPlugin::WebUIPlugin() : server(80) {}
+WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
 
 void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) {
     this->controller = _controller;
@@ -36,6 +36,19 @@ void WebUIPlugin::loop() {
         pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
         lastUpdateCheck = now;
     }
+    if (now > lastStatus + STATUS_PERIOD) {
+        lastStatus = now;
+        JsonDocument doc;
+        doc["tp"] = "evt:status";
+        doc["ct"] = controller->getCurrentTemp();
+        doc["tt"] = controller->getTargetTemp();
+        doc["m"] = controller->getMode();
+        ws.textAll(doc.as<String>());
+    }
+    if (now > lastCleanup + CLEANUP_PERIOD) {
+        lastCleanup = now;
+        ws.cleanupClients();
+    }
 }
 
 void WebUIPlugin::start(bool apMode) {
@@ -58,6 +71,7 @@ void WebUIPlugin::start(bool apMode) {
     server.on("/settings", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.html"); });
     server.on("/scales", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.html"); });
     server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html").setCacheControl("max-age=0");
+    server.addHandler(&ws);
     server.begin();
     printf("Webserver started\n");
     if (apMode) {

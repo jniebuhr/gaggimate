@@ -10,6 +10,8 @@
 #include <ESPAsyncWebServer.h>
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
+constexpr size_t CLEANUP_PERIOD = 30 * 1000;
+constexpr size_t STATUS_PERIOD = 1000;
 
 const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
 
@@ -31,11 +33,14 @@ class WebUIPlugin : public Plugin {
 
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
+    AsyncWebSocket ws;
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
     DNSServer *dnsServer = nullptr;
 
     long lastUpdateCheck = 0;
+    long lastStatus = 0;
+    long lastCleanup = 0;
     bool updating = false;
 };
 

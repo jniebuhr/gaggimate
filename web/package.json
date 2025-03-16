@@ -9,6 +9,9 @@
   },
   "dependencies": {
     "@preact/signals": "^1.3.1",
+    "chart.js": "^4.4.8",
+    "chartjs-adapter-dayjs-4": "^1.0.4",
+    "dayjs": "^1.11.13",
     "preact": "^10.22.1",
     "preact-fetching": "^1.0.0",
     "preact-iso": "^2.8.1"
