@@ -7,7 +7,7 @@
 inline String make_system_info(ControllerConfig config) {
     JsonDocument doc;
     doc["hardware"] = config.name;
-    doc["version"] = "v1.0.0-local";
+    doc["version"] = BUILD_GIT_VERSION;
     JsonDocument capabilities;
     capabilities["pressure"] = config.capabilites.pressure;
     capabilities["dimming"] = config.capabilites.dimming;
