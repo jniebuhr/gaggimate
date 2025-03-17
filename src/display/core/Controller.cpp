@@ -64,8 +64,10 @@ void Controller::setupBluetooth() {
     clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
     clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
     clientController.registerRemoteErrorCallback([this](const int error) {
-        this->error = error;
-        deactivate();
+        if (error != ERROR_CODE_TIMEOUT) {
+            this->error = error;
+            deactivate();
+        }
     });
     pluginManager->trigger("controller:bluetooth:init");
 }

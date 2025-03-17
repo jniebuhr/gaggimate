@@ -53,6 +53,8 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void onWrite(NimBLECharacteristic *pCharacteristic) override;
 
     BLE_OTA_DFU ota_dfu_ble;
+
+    const char *LOG_TAG = "NimBLEClientController";
 };
 
 #endif // NIMBLESERVERCONTROLLER_H

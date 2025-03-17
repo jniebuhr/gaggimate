@@ -56,6 +56,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
 
     // Notification callback
     void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) const;
+
+    const char *LOG_TAG = "NimBLEClientController";
 };
 
 #endif // NIMBLECLIENTCONTROLLER_H

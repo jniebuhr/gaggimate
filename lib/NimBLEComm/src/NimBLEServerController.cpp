@@ -70,7 +70,7 @@ void NimBLEServerController::initServer(const String infoString) {
     pAdvertising->addServiceUUID(SERVICE_UUID);
     pAdvertising->setScanResponse(true);
     NimBLEDevice::startAdvertising();
-    printf("BLE Server started, advertising...\n");
+    ESP_LOGI(LOG_TAG, "BLE Server started, advertising...\n");
 }
 
 void NimBLEServerController::sendTemperature(float temperature) {
@@ -140,13 +140,13 @@ void NimBLEServerController::registerPidControlCallback(const pid_control_callba
 
 // BLEServerCallbacks override
 void NimBLEServerController::onConnect(NimBLEServer *pServer) {
-    Serial.println("Client connected.");
+    ESP_LOGI(LOG_TAG, "Client connected.");
     deviceConnected = true;
     pServer->stopAdvertising();
 }
 
 void NimBLEServerController::onDisconnect(NimBLEServer *pServer) {
-    Serial.println("Client disconnected.");
+    ESP_LOGI(LOG_TAG, "Client disconnected.");
     deviceConnected = false;
     pServer->startAdvertising(); // Restart advertising so clients can reconnect
 }
@@ -175,39 +175,39 @@ String get_token(const String &from, uint8_t index, char separator) {
 
 // BLECharacteristicCallbacks override
 void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
-    printf("Write received!\n");
+    ESP_LOGV(LOG_TAG, "Write received!");
 
     if (pCharacteristic->getUUID().equals(NimBLEUUID(TEMP_CONTROL_CHAR_UUID))) {
         float setpoint = atof(pCharacteristic->getValue().c_str());
-        printf("Received temperature setpoint: %.2f\n", setpoint);
+        ESP_LOGV(LOG_TAG, "Received temperature setpoint: %.2f", setpoint);
         if (tempControlCallback != nullptr) {
             tempControlCallback(setpoint);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PUMP_CONTROL_CHAR_UUID))) {
         float setpoint = atof(pCharacteristic->getValue().c_str());
-        printf("Received pump control: %.2f\n", setpoint);
+        ESP_LOGV(LOG_TAG, "Received pump control: %.2f", setpoint);
         if (pumpControlCallback != nullptr) {
             pumpControlCallback(setpoint);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(VALVE_CONTROL_CHAR_UUID))) {
         bool pinState = (pCharacteristic->getValue()[0] == '1');
-        printf("Received valve control: %s\n", pinState ? "ON" : "OFF");
+        ESP_LOGV(LOG_TAG, "Received valve control: %s", pinState ? "ON" : "OFF");
         if (valveControlCallback != nullptr) {
             valveControlCallback(pinState);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(ALT_CONTROL_CHAR_UUID))) {
         bool pinState = (pCharacteristic->getValue()[0] == '1');
-        printf("Received ALT control: %s\n", pinState ? "ON" : "OFF");
+        ESP_LOGV(LOG_TAG, "Received ALT control: %s", pinState ? "ON" : "OFF");
         if (altControlCallback != nullptr) {
             altControlCallback(pinState);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PING_CHAR_UUID))) {
-        printf("Received ping\n");
+        ESP_LOGV(LOG_TAG, "Received ping");
         if (pingCallback != nullptr) {
             pingCallback();
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_CHAR_UUID))) {
-        printf("Received autotune\n");
+        ESP_LOGV(LOG_TAG, "Received autotune");
         if (autotuneCallback != nullptr) {
             autotuneCallback();
         }
@@ -216,7 +216,7 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         float Kp = get_token(pid, 0, ',').toFloat();
         float Ki = get_token(pid, 1, ',').toFloat();
         float Kd = get_token(pid, 2, ',').toFloat();
-        printf("Received PID settings: %.2f, %.2f, %.2f\n", Kp, Ki, Kd);
+        ESP_LOGV(LOG_TAG, "Received PID settings: %.2f, %.2f, %.2f", Kp, Ki, Kd);
         if (pidControlCallback != nullptr) {
             pidControlCallback(Kp, Ki, Kd);
         }

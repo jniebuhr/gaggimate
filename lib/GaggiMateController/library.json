@@ -16,11 +16,10 @@
     "SPIFFS": "*",
     "ble_ota_dfu": "file://lib/ble_ota_dfu",
     "NimBLEComm": "file://lib/NimBLEComm",
-    "br3ttb/PID-AutoTune": "^1.0.0",
-    "br3ttb/PID": "^1.2.1",
-    "adafruit/MAX6675 library": "^1.1.2",
     "h2zero/NimBLE-Arduino": "^1.4.0",
     "robtillaart/MAX31855": "^0.6.1",
-    "bblanchon/ArduinoJson": "^7.2.1"
+    "bblanchon/ArduinoJson": "^7.2.1",
+    "dlloydev/QuickPID": "^3.1.9",
+    "dlloydev/sTune": "^2.4.0"
   }
 }

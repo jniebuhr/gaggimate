@@ -14,7 +14,7 @@ void NimBLEClientController::initClient() {
     NimBLEDevice::setMTU(128);
     client = NimBLEDevice::createClient();
     if (client == nullptr)
-        Serial.println("Failed to create BLE client");
+        ESP_LOGE(LOG_TAG, "Failed to create BLE client");
 
     // Scan for BLE Server
     scan();
@@ -44,18 +44,18 @@ const char *NimBLEClientController::readInfo() const {
 }
 
 bool NimBLEClientController::connectToServer() {
-    Serial.println("Connecting to advertised device");
+    ESP_LOGI(LOG_TAG, "Connecting to advertised device");
 
     unsigned int tries = 0;
     while (!client->isConnected()) {
         if (!client->connect(NimBLEAddress(serverDevice->getAddress()))) {
-            Serial.println("Failed connecting to BLE server. Retrying...");
+            ESP_LOGE(LOG_TAG, "Failed connecting to BLE server. Retrying...");
         }
 
         tries++;
 
         if (tries >= MAX_CONNECT_RETRIES) {
-            Serial.println("Connection timeout! Unable to connect to BLE server.");
+            ESP_LOGE(LOG_TAG, "Connection timeout! Unable to connect to BLE server.");
             scan();
             return false; // Exit the connection attempt if timed out
         }
@@ -63,12 +63,12 @@ bool NimBLEClientController::connectToServer() {
         delay(500); // Add a small delay to avoid busy-waiting
     }
 
-    Serial.println("Successfully connected to BLE server");
+    ESP_LOGI(LOG_TAG, "Successfully connected to BLE server");
 
     // Obtain the remote service we wish to connect to
     NimBLERemoteService *pRemoteService = client->getService(NimBLEUUID(SERVICE_UUID));
     if (pRemoteService == nullptr) {
-        Serial.println("Error getting remote service");
+        ESP_LOGE(LOG_TAG, "Error getting remote service");
         return false;
     }
 
@@ -165,13 +165,13 @@ bool NimBLEClientController::isConnected() { return client->isConnected(); }
 
 // BLEAdvertisedDeviceCallbacks override
 void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
-    Serial.printf("Advertised Device found: %s \n", advertisedDevice->toString().c_str());
+    ESP_LOGV(LOG_TAG, "Advertised Device found: %s \n", advertisedDevice->toString().c_str());
 
     // Check if this is the device we're looking for
     if (advertisedDevice->haveServiceUUID()) {
-        Serial.println("Found BLE service. Checking for ID...");
+        ESP_LOGI(LOG_TAG, "Found BLE service. Checking for ID...");
         if (advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))) {
-            Serial.println("Found target BLE device. Connecting...");
+            ESP_LOGI(LOG_TAG, "Found target BLE device. Connecting...");
             NimBLEDevice::getScan()->stop(); // Stop scanning once we find the correct device
             serverDevice = advertisedDevice;
             readyForConnection = true;
@@ -180,7 +180,7 @@ void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) 
 }
 
 void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
-    Serial.println("Disconnected from server, trying to reconnect...");
+    ESP_LOGI(LOG_TAG, "Disconnected from server, trying to reconnect...");
     scan();
 }
 
@@ -190,28 +190,28 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
     // Process notifications from the server (e.g., temperature data)
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TEMP_READ_CHAR_UUID))) {
         float temperature = atof((char *)pData);
-        Serial.printf("Temperature read: %.2f\n", temperature);
+        ESP_LOGV(LOG_TAG, "Temperature read: %.2f", temperature);
         if (tempReadCallback != nullptr) {
             tempReadCallback(temperature);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(ERROR_CHAR_UUID))) {
         int errorCode = atoi((char *)pData);
-        Serial.printf("Error read: %d\n", errorCode);
+        ESP_LOGV(LOG_TAG, "Error read: %d", errorCode);
         if (remoteErrorCallback != nullptr) {
             remoteErrorCallback(errorCode);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
         int brewButtonStatus = atoi((char *)pData);
-        Serial.printf("brew button: %d\n", brewButtonStatus);
+        ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
         if (brewBtnCallback != nullptr) {
             brewBtnCallback(brewButtonStatus);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
         int steamButtonStatus = atoi((char *)pData);
-        Serial.printf("steam button: %d\n", steamButtonStatus);
+        ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
         if (steamBtnCallback != nullptr) {
             steamBtnCallback(steamButtonStatus);
         }
