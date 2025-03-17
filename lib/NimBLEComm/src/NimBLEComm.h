@@ -18,6 +18,7 @@
 #define BREW_BTN_UUID "a29eb137-b33e-45a4-b1fc-15eb04e8ab39"
 #define STEAM_BTN_UUID "53750675-4839-421e-971e-cc6823507d8e"
 #define INFO_UUID "f8d7203b-e00c-48e2-83ba-37ff49cdba74"
+#define PRESSURE_UUID "c7e6f5ca-ebfc-4ed8-96ae-c4afd13c4a11"
 
 constexpr size_t ERROR_CODE_COMM_SEND = 1;
 constexpr size_t ERROR_CODE_COMM_RCV = 2;
@@ -28,6 +29,7 @@ constexpr size_t ERROR_CODE_TIMEOUT = 5;
 using temp_read_callback_t = std::function<void(float temperature)>;
 using temp_control_callback_t = std::function<void(float setpoint)>;
 using pump_control_callback_t = std::function<void(float setpoint)>;
+using pressure_read_callback_t = std::function<void(float pressure)>;
 using pin_control_callback_t = std::function<void(bool isActive)>;
 using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd)>;
 using ping_callback_t = std::function<void()>;

@@ -31,20 +31,17 @@ void Max31855Thermocouple::loop() {
     if (status != STATUS_OK) {
         ESP_LOGE(LOG_TAG, "Failed to read temperature: %d\n", status);
         errors++;
-        if (errors >= MAX31855_MAX_ERRORS) {
-            error_callback();
-        }
-        return;
     }
     errors = 0;
     float temp = max31855->getTemperature();
     if (temp > 0) {
         temperature = temp;
     } else {
-        temperature = 50;
+        errors++;
     }
-    if (temperature > MAX_SAFE_TEMP) {
+    if (errors >= MAX31855_MAX_ERRORS || temperature > MAX_SAFE_TEMP) {
         error_callback();
+        return;
     }
     ESP_LOGV(LOG_TAG, "Updated temperature: %2f\n", temperature);
     callback(temperature);

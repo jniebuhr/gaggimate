@@ -1,7 +1,8 @@
 #include "Heater.h"
 #include <Arduino.h>
 
-Heater::Heater(TemperatureSensor *sensor, int heaterPin, const heater_error_callback_t &error_callback) : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback) {
+Heater::Heater(TemperatureSensor *sensor, int heaterPin, const heater_error_callback_t &error_callback)
+    : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback) {
     pid = new QuickPID(&temperature, &output, &setpoint);
 
     output = 0.0f;

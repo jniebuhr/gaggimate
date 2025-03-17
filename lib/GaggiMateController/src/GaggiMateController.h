@@ -4,8 +4,10 @@
 #include "NimBLEServerController.h"
 #include <MAX31855.h>
 #include <peripherals/DigitalInput.h>
+#include <peripherals/DimmedPump.h>
 #include <peripherals/Heater.h>
 #include <peripherals/Max31855Thermocouple.h>
+#include <peripherals/PressureSensor.h>
 #include <peripherals/SimplePump.h>
 #include <peripherals/SimpleRelay.h>
 #include <vector>
@@ -41,6 +43,7 @@ class GaggiMateController {
     Pump *pump = nullptr;
     DigitalInput *brewBtn = nullptr;
     DigitalInput *steamBtn = nullptr;
+    PressureSensor *pressureSensor = nullptr;
 
     std::vector<ControllerConfig> configs;
 

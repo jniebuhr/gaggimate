@@ -36,6 +36,8 @@ void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callba
 void NimBLEClientController::registerBrewBtnCallback(const brew_callback_t &callback) { brewBtnCallback = callback; }
 void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &callback) { steamBtnCallback = callback; }
 
+void NimBLEClientController::registerPressureCallback(const pressure_read_callback_t &callback) { pressureCallback = callback; }
+
 const char *NimBLEClientController::readInfo() const {
     if (infoChar != nullptr && infoChar->canRead()) {
         return infoChar->readValue().c_str();
@@ -187,12 +189,18 @@ void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
 // Notification callback
 void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t,
                                             bool) const {
-    // Process notifications from the server (e.g., temperature data)
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TEMP_READ_CHAR_UUID))) {
         float temperature = atof((char *)pData);
         ESP_LOGV(LOG_TAG, "Temperature read: %.2f", temperature);
         if (tempReadCallback != nullptr) {
             tempReadCallback(temperature);
+        }
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(PRESSURE_UUID))) {
+        float pressure = atof((char *)pData);
+        ESP_LOGV(LOG_TAG, "Pressure read: %.2f", pressure);
+        if (pressureCallback != nullptr) {
+            pressureCallback(pressure);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(ERROR_CHAR_UUID))) {

@@ -29,11 +29,15 @@ void GaggiMateController::setup() {
     this->valve->setup();
     this->alt->setup();
     if (_config.capabilites.dimming) {
-        // TODO: Use dimmed pump
+        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin);
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn);
     }
     pump->setup();
+    if (_config.capabilites.pressure) {
+        pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl);
+        pressureSensor->setup();
+    }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
     this->brewBtn->setup();

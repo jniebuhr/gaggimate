@@ -22,6 +22,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerRemoteErrorCallback(const remote_err_callback_t &callback);
     void registerBrewBtnCallback(const brew_callback_t &callback);
     void registerSteamBtnCallback(const steam_callback_t &callback);
+    void registerPressureCallback(const pressure_read_callback_t &callback);
     const char *readInfo() const;
     NimBLEClient *getClient() const { return client; };
 
@@ -40,6 +41,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *brewBtnChar;
     NimBLERemoteCharacteristic *steamBtnChar;
     NimBLERemoteCharacteristic *infoChar;
+    NimBLERemoteCharacteristic *pressureChar;
     NimBLEAdvertisedDevice *serverDevice;
     bool readyForConnection = false;
 
@@ -47,6 +49,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     remote_err_callback_t remoteErrorCallback = nullptr;
     brew_callback_t brewBtnCallback = nullptr;
     steam_callback_t steamBtnCallback = nullptr;
+    pressure_read_callback_t pressureCallback = nullptr;
 
     // BLEAdvertisedDeviceCallbacks override
     void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;

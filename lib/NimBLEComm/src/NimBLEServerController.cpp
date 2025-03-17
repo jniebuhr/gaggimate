@@ -61,6 +61,9 @@ void NimBLEServerController::initServer(const String infoString) {
     infoChar = pService->createCharacteristic(INFO_UUID, NIMBLE_PROPERTY::READ);
     setInfo(infoString);
 
+    // Pressure Read Characteristic (Server notifies client of pressure)
+    pressureChar = pService->createCharacteristic(PRESSURE_UUID, NIMBLE_PROPERTY::NOTIFY);
+
     pService->start();
 
     ota_dfu_ble.configure_OTA(pServer);
@@ -79,6 +82,16 @@ void NimBLEServerController::sendTemperature(float temperature) {
         char tempStr[8];
         snprintf(tempStr, sizeof(tempStr), "%.2f", temperature);
         tempReadChar->setValue(tempStr);
+        tempReadChar->notify();
+    }
+}
+
+void NimBLEServerController::sendPressure(float pressure) {
+    if (deviceConnected) {
+        // Send temperature notification to the client
+        char pressureStr[8];
+        snprintf(pressureStr, sizeof(pressureStr), "%.2f", pressureStr);
+        tempReadChar->setValue(pressureStr);
         tempReadChar->notify();
     }
 }
