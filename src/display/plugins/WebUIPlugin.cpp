@@ -56,9 +56,31 @@ void WebUIPlugin::loop() {
         lastCleanup = now;
         ws.cleanupClients();
     }
+    if (now > lastDns + DNS_PERIOD && dnsServer != nullptr) {
+        lastDns = now;
+        dnsServer->processNextRequest();
+    }
 }
 
 void WebUIPlugin::start(bool apMode) {
+    if (apMode) {
+        server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
+            request->redirect("http://logout.net");
+        }); // windows 11 captive portal workaround
+        server.on("/wpad.dat", [](AsyncWebServerRequest *request) {
+            request->send(404);
+        }); // Honestly don't understand what this is but a 404 stops win 10 keep calling this repeatedly and panicking the esp32
+            // :)
+        server.on("/generate_204",
+                  [](AsyncWebServerRequest *request) { request->redirect(LOCAL_URL); }); // android captive portal redirect
+        server.on("/redirect", [](AsyncWebServerRequest *request) { request->redirect(LOCAL_URL); }); // microsoft redirect
+        server.on("/hotspot-detect.html",
+                  [](AsyncWebServerRequest *request) { request->redirect(LOCAL_URL); }); // apple call home
+        server.on("/canonical.html",
+                  [](AsyncWebServerRequest *request) { request->redirect(LOCAL_URL); });       // firefox captive portal call home
+        server.on("/success.txt", [](AsyncWebServerRequest *request) { request->send(200); }); // firefox captive portal call home
+        server.on("/ncsi.txt", [](AsyncWebServerRequest *request) { request->redirect(LOCAL_URL); }); // windows call home
+    }
     server.on("/api/settings", [this](AsyncWebServerRequest *request) { handleSettings(request); });
     server.on("/api/status", [this](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -109,7 +131,8 @@ void WebUIPlugin::start(bool apMode) {
     printf("Webserver started\n");
     if (apMode) {
         dnsServer = new DNSServer();
-        dnsServer->start(53, "*", WiFi.softAPIP());
+        dnsServer->setTTL(3600);
+        dnsServer->start(53, "*", WIFI_AP_IP);
         printf("Started catchall DNS for captive portal\n");
     }
 }

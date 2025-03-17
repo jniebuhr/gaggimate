@@ -93,6 +93,7 @@ void Controller::setupInfos() {
 
 void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
+        WiFi.setSleep(WIFI_PS_NONE);
         WiFi.mode(WIFI_STA);
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
         for (int attempts = 0; attempts < WIFI_CONNECT_ATTEMPTS; attempts++) {
@@ -118,6 +119,7 @@ void Controller::setupWifi() {
     if (WiFi.status() != WL_CONNECTED) {
         isApConnection = true;
         WiFi.mode(WIFI_AP);
+        WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
         WiFi.softAP(WIFI_AP_SSID);
         Serial.println("Started in AP mode");
         Serial.print("Connect to:");

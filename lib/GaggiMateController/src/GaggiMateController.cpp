@@ -35,9 +35,8 @@ void GaggiMateController::setup() {
     }
     pump->setup();
     if (_config.capabilites.pressure) {
-        pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) {
-            _ble.sendPressure(pressure);
-        });
+        pressureSensor =
+            new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { _ble.sendPressure(pressure); });
         pressureSensor->setup();
     }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });

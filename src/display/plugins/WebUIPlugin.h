@@ -14,8 +14,23 @@
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 30 * 1000;
 constexpr size_t STATUS_PERIOD = 1000;
+constexpr size_t DNS_PERIOD = 10;
 
+const String LOCAL_URL = "http://4.4.4.1/";
 const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
+
+const char portal_html[] PROGMEM = R"=====(
+  <!DOCTYPE html> <html>
+    <head>
+      <title>GaggiMate Captive Portal</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="refresh" content="2000; url=http://4.4.4.1/settings" />
+    </head>
+    <body>
+      Redirecting...
+    </body>
+  </html>
+)=====";
 
 class WebUIPlugin : public Plugin {
   public:
@@ -46,6 +61,7 @@ class WebUIPlugin : public Plugin {
     long lastUpdateCheck = 0;
     long lastStatus = 0;
     long lastCleanup = 0;
+    long lastDns = 0;
     bool updating = false;
 };
 
