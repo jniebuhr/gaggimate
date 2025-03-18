@@ -113,6 +113,31 @@ void ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
     delay(10);
 }
 
+void ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const {
+    size_t bufferLen = 0;
+    size_t bytesToRead = len;
+    size_t toRead = 0;
+    size_t timeout_failures = 0;
+    while (bufferLen < len) {
+        while(!toRead) {
+            toRead = in.readBytes(buffer + bufferLen,  bytesToRead);
+            if(toRead == 0) {
+                timeout_failures++;
+                if (timeout_failures >= 300) {
+                    ESP_LOGE("ControllerOTA", "Failed to read data from stream");
+                    return;
+                }
+                ESP_LOGW("ControllerOTA", "Failed to read data from stream. Request %d bytes", bytesToRead);
+                delay(100);
+            }
+        }
+        bufferLen += toRead;
+        bytesToRead = len - bufferLen;
+        toRead = 0;
+    }
+    ESP_LOGI("ControllerOTA", "Read %d bytes", bufferLen);
+}
+
 void ControllerOTA::notifyUpdate() const {
     double progress = (static_cast<double>(currentPart) / static_cast<double>(fileParts)) * 100.0;
     progressCallback(static_cast<int>(progress));
@@ -120,6 +145,7 @@ void ControllerOTA::notifyUpdate() const {
 
 void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
     uint8_t partData[MTU + 2];
+    uint8_t buffer[MTU];
     partData[0] = 0xFB;
     uint32_t partLength = PART_SIZE;
     if ((currentPart + 1) * PART_SIZE > totalSize) {
@@ -128,8 +154,9 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
     uint8_t parts = partLength / MTU;
     for (uint8_t part = 0; part < parts; part++) {
         partData[1] = part;
+        fillBuffer(in, buffer, MTU);
         for (uint32_t i = 0; i < MTU; i++) {
-            partData[i + 2] = (uint8_t)in.read();
+            partData[i + 2] = buffer[i];
         }
         printf("Sending part %d / %d - package %d / %d\n", currentPart + 1, fileParts, part + 1, parts);
         sendData(partData, MTU + 2);
@@ -139,8 +166,9 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
         uint8_t remainingData[remaining + 2];
         remainingData[0] = 0xFB;
         remainingData[1] = parts;
+        fillBuffer(in, buffer, remaining);
         for (uint32_t i = 0; i < remaining; i++) {
-            remainingData[i + 2] = (uint8_t)in.read();
+            remainingData[i + 2] = buffer[i];
         }
         sendData(remainingData, remaining + 2);
     }
@@ -152,6 +180,8 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
     footer[4] = currentPart % 256;
     sendData(footer, sizeof(footer));
 }
+
+
 
 void ControllerOTA::onReceive(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) {
     lastSignal = pData[0];

@@ -2,6 +2,7 @@
 #define NIMBLECLIENTCONTROLLER_H
 
 #include "NimBLEComm.h"
+#include "cstring"
 
 class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLEClientCallbacks {
   public:
@@ -23,7 +24,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerBrewBtnCallback(const brew_callback_t &callback);
     void registerSteamBtnCallback(const steam_callback_t &callback);
     void registerPressureCallback(const pressure_read_callback_t &callback);
-    const char *readInfo() const;
+    std::string readInfo() const;
     NimBLEClient *getClient() const { return client; };
 
   private:

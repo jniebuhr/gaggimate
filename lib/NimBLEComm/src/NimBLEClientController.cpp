@@ -38,9 +38,9 @@ void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &cal
 
 void NimBLEClientController::registerPressureCallback(const pressure_read_callback_t &callback) { pressureCallback = callback; }
 
-const char *NimBLEClientController::readInfo() const {
+std::string NimBLEClientController::readInfo() const {
     if (infoChar != nullptr && infoChar->canRead()) {
-        return infoChar->readValue().c_str();
+        return infoChar->readValue();
     }
     return "";
 }

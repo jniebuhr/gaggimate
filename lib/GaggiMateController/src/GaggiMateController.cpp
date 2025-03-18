@@ -22,27 +22,29 @@ void GaggiMateController::setup() {
         _config.maxCsPin, _config.maxMisoPin, _config.maxSckPin, [this](float temperature) { _ble.sendTemperature(temperature); },
         [this]() { thermalRunawayShutdown(); });
     this->heater = new Heater(this->thermocouple, _config.heaterPin, [this]() { thermalRunawayShutdown(); });
-    this->thermocouple->setup();
-    this->heater->setup();
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
-    this->valve->setup();
-    this->alt->setup();
     if (_config.capabilites.dimming) {
         pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin);
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn);
     }
-    pump->setup();
     if (_config.capabilites.pressure) {
         pressureSensor =
             new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { _ble.sendPressure(pressure); });
-        pressureSensor->setup();
     }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
+    this->thermocouple->setup();
+    this->heater->setup();
+    this->valve->setup();
+    this->alt->setup();
+    this->pump->setup();
     this->brewBtn->setup();
     this->steamBtn->setup();
+    if (_config.capabilites.pressure) {
+        pressureSensor->setup();
+    }
 
     // Initialize last ping time
     lastPingTime = millis();
@@ -65,7 +67,7 @@ void GaggiMateController::loop() {
     if ((now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
         handlePingTimeout();
     }
-    delay(50);
+    delay(1000);
 }
 
 void GaggiMateController::registerBoardConfig(ControllerConfig config) { configs.push_back(config); }

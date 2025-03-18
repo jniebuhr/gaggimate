@@ -91,8 +91,8 @@ void NimBLEServerController::sendPressure(float pressure) {
         // Send temperature notification to the client
         char pressureStr[8];
         snprintf(pressureStr, sizeof(pressureStr), "%.2f", pressureStr);
-        tempReadChar->setValue(pressureStr);
-        tempReadChar->notify();
+        pressureChar->setValue(pressureStr);
+        pressureChar->notify();
     }
 }
 

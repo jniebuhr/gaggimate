@@ -6,12 +6,12 @@
 
 inline String make_system_info(ControllerConfig config) {
     JsonDocument doc;
-    doc["hardware"] = config.name;
-    doc["version"] = BUILD_GIT_VERSION;
+    doc["hw"] = config.name;
+    doc["v"] = BUILD_GIT_VERSION;
     JsonDocument capabilities;
-    capabilities["pressure"] = config.capabilites.pressure;
-    capabilities["dimming"] = config.capabilites.dimming;
-    doc["capabilities"] = capabilities;
+    capabilities["ps"] = config.capabilites.pressure;
+    capabilities["dm"] = config.capabilites.dimming;
+    doc["cp"] = capabilities;
     return doc.as<String>();
 }
 

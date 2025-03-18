@@ -3,7 +3,9 @@
 DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin)
     : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 1, 6) {}
 
-void DimmedPump::setup() { xTaskCreate(loopTask, "DimmedPump::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle); }
+void DimmedPump::setup() {
+    xTaskCreate(loopTask, "DimmedPump::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
+}
 
 void DimmedPump::loop() { ESP_LOGI(LOG_TAG, "Pump CPS: %u", _psm.cps()); }
 

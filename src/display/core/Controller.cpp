@@ -73,20 +73,20 @@ void Controller::setupBluetooth() {
 }
 
 void Controller::setupInfos() {
-    const char *info = clientController.readInfo();
-    printf("System info: %s\n", info);
+    const std::string info = clientController.readInfo();
+    printf("System info: %s\n", info.c_str());
     JsonDocument doc;
-    DeserializationError err = deserializeJson(doc, String(info));
+    DeserializationError err = deserializeJson(doc, info);
     if (err) {
         printf("Error deserializing JSON: %s\n", err.c_str());
         systemInfo = SystemInfo{
             .hardware = "GaggiMate Standard 1.x", .version = "v1.0.0", .capabilities = {.dimming = false, .pressure = false}};
     } else {
-        systemInfo = SystemInfo{.hardware = doc["hardware"].as<String>(),
-                                .version = doc["version"].as<String>(),
+        systemInfo = SystemInfo{.hardware = doc["hw"].as<String>(),
+                                .version = doc["v"].as<String>(),
                                 .capabilities = SystemCapabilities{
-                                    .dimming = doc["capabilities"]["dimming"].as<bool>(),
-                                    .pressure = doc["capabilities"]["pressure"].as<bool>(),
+                                    .dimming = doc["cp"]["dm"].as<bool>(),
+                                    .pressure = doc["cp"]["ps"].as<bool>(),
                                 }};
     }
 }
