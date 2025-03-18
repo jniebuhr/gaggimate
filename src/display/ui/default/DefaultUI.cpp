@@ -134,7 +134,7 @@ void DefaultUI::handleScreenChange() const {
 void DefaultUI::updateStandbyScreen() const {
     if (!apActive && WiFi.status() == WL_CONNECTED) {
         struct tm timeinfo;
-        if (getLocalTime(&timeinfo)) {
+        if (getLocalTime(&timeinfo, 50)) {
             char time[6];
             strftime(time, 6, "%H:%M", &timeinfo);
             lv_label_set_text(ui_StandbyScreen_time, time);
