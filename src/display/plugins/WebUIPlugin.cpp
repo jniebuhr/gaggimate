@@ -232,6 +232,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["smartGrindIp"] = settings.getSmartGrindIp();
     doc["smartGrindToggle"] = settings.isSmartGrindToggle();
     doc["momentaryButtons"] = settings.isMomentaryButtons();
+    doc["brewDelay"] = settings.getBrewDelay();
+    doc["grindDelay"] = settings.getGrindDelay();
     serializeJson(doc, *response);
     request->send(response);
 

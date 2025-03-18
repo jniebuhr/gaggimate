@@ -4,7 +4,7 @@
 #include "constants.h"
 #include "predictive.h"
 
-constexpr double PREDICTIVE_TIME = 2000.0; // time window for the prediction
+constexpr double PREDICTIVE_TIME = 4000.0; // time window for the prediction
 // constexpr double PREDICTIVE_TIME_MS = 1000.0;
 
 class Process {
@@ -21,6 +21,8 @@ class Process {
     virtual void progress() = 0;
 
     virtual bool isActive() = 0;
+
+    virtual bool isComplete() = 0;
 
     virtual int getType() = 0;
 
@@ -101,7 +103,7 @@ class BrewProcess : public Process {
     }
 
     double getNewDelayTime() const {
-        return brewDelay - volumetricRateCalculator->getOvershootAdjustMillis(double(brewVolume), currentVolume);
+        return brewDelay + volumetricRateCalculator->getOvershootAdjustMillis(double(brewVolume), currentVolume);
     }
 
     bool isRelayActive() override {
@@ -148,7 +150,9 @@ class BrewProcess : public Process {
         }
     }
 
-    bool isActive() override { return phase != BrewPhase::FINISHED; }
+    bool isActive() override { return phase != BrewPhase::FINISHED && phase != BrewPhase::BREW_DRIP; }
+
+    bool isComplete() override { return phase == BrewPhase::FINISHED; }
 
     int getType() override { return MODE_BREW; }
 };
@@ -179,6 +183,8 @@ class SteamProcess : public Process {
         return now - started < duration;
     };
 
+    bool isComplete() override { return !isActive(); };
+
     int getType() override { return MODE_STEAM; }
 
     void updateVolume(double volume) override {};
@@ -205,6 +211,8 @@ class PumpProcess : public Process {
         unsigned long now = millis();
         return now - started < duration;
     };
+
+    bool isComplete() override { return !isActive(); };
 
     int getType() override { return MODE_WATER; }
 
@@ -248,7 +256,7 @@ class GrindProcess : public Process {
             active = millis() - started < time;
         } else {
             double currentRate = volumetricRateCalculator->getRate();
-            if (currentVolume + currentRate * grindDelay > grindVolume) {
+            if (currentVolume + currentRate * grindDelay > grindVolume && active) {
                 active = false;
                 finished = millis();
             }
@@ -256,14 +264,21 @@ class GrindProcess : public Process {
     }
 
     double getNewDelayTime() const {
-        return grindDelay - volumetricRateCalculator->getOvershootAdjustMillis(double(grindVolume), currentVolume);
+        double newDelay = grindDelay + volumetricRateCalculator->getOvershootAdjustMillis(double(grindVolume), currentVolume);
+        return newDelay;
     }
 
     bool isActive() override {
         if (target == ProcessTarget::TIME) {
             return millis() - started < time;
         }
-        return active || (finished + PREDICTIVE_TIME > millis());
+        return active;
+    }
+
+    bool isComplete() override {
+        if (target == ProcessTarget::TIME)
+            return !isActive();
+        return finished + PREDICTIVE_TIME > millis();
     }
 
     int getType() override { return MODE_GRIND; }

@@ -3,7 +3,7 @@
 void PluginManager::registerPlugin(Plugin *plugin) { plugins.push_back(plugin); }
 
 void PluginManager::setup(Controller *controller) {
-    printf("Setting up PluginManager\n");
+    ESP_LOGV("PluginManager", "Setting up PluginManager");
     on("system:dummy", [](const Event &) {
         // Register a dummy event so the event map is initialized properly
     });
@@ -22,7 +22,7 @@ void PluginManager::loop() {
 }
 
 void PluginManager::on(const String &eventId, const EventCallback &callback) {
-    printf("Registering listener: %s\n", eventId.c_str());
+    ESP_LOGV("PluginManager", "Registering listener: %s", eventId.c_str());
     listeners[std::string(eventId.c_str())].push_back(callback);
 }
 
@@ -58,7 +58,7 @@ Event PluginManager::trigger(const String &eventId, const String &key, const flo
 }
 
 void PluginManager::trigger(Event &event) {
-    printf("Triggering event: %s\n", event.id.c_str());
+    ESP_LOGV("PluginManager", "Triggering event: %s", event.id.c_str());
     if (listeners.count(std::string(event.id.c_str()))) {
         for (auto const &callback : listeners[std::string(event.id.c_str())]) {
             callback(event);

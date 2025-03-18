@@ -149,6 +149,7 @@ class Controller {
     bool initialized = false;
     bool screenReady = false;
     bool volumetricAvailable = false;
+    bool processCompleted = false;
     int error = 0;
 };
 

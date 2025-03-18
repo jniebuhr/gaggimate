@@ -167,18 +167,24 @@ void Controller::loop() {
         if (currentProcess != nullptr) {
             currentProcess->progress();
             if (!isActive()) {
-                if (currentProcess->getType() == MODE_BREW) {
-                    if (auto const *brewProcess = static_cast<BrewProcess *>(currentProcess);
-                        brewProcess->target == ProcessTarget::VOLUMETRIC) {
-                        settings.setBrewDelay(brewProcess->getNewDelayTime());
-                    }
-                } else if (currentProcess->getType() == MODE_GRIND) {
-                    if (auto const *grindProcess = static_cast<GrindProcess *>(currentProcess);
-                        grindProcess->target == ProcessTarget::VOLUMETRIC) {
-                        settings.setGrindDelay(grindProcess->getNewDelayTime());
-                    }
-                }
                 deactivate();
+            }
+        }
+        if (lastProcess != nullptr && !lastProcess->isComplete()) {
+            lastProcess->progress();
+        }
+        if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted) {
+            processCompleted = true;
+            if (lastProcess->getType() == MODE_BREW) {
+                if (auto const *brewProcess = static_cast<BrewProcess *>(lastProcess);
+                    brewProcess->target == ProcessTarget::VOLUMETRIC) {
+                    settings.setBrewDelay(brewProcess->getNewDelayTime());
+                }
+            } else if (lastProcess->getType() == MODE_GRIND) {
+                if (auto const *grindProcess = static_cast<GrindProcess *>(lastProcess);
+                    grindProcess->target == ProcessTarget::VOLUMETRIC) {
+                    settings.setGrindDelay(grindProcess->getNewDelayTime());
+                }
             }
         }
         int targetTemp = getTargetTemp();
@@ -377,6 +383,7 @@ void Controller::activate() {
         break;
     default:;
     }
+    processCompleted = false;
     updateRelay();
     updateLastAction();
     if (currentProcess->getType() == MODE_BREW) {
@@ -402,6 +409,7 @@ void Controller::deactivate() {
 }
 
 void Controller::clear() {
+    processCompleted = true;
     if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:clear");
     }
@@ -411,6 +419,7 @@ void Controller::clear() {
 
 void Controller::activateGrind() {
     pluginManager->trigger("controller:grind:start");
+    processCompleted = false;
     if (isGrindActive())
         return;
     if (settings.isVolumetricTarget() && volumetricAvailable) {
