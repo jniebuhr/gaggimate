@@ -119,9 +119,9 @@ void ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const 
     size_t toRead = 0;
     size_t timeout_failures = 0;
     while (bufferLen < len) {
-        while(!toRead) {
-            toRead = in.readBytes(buffer + bufferLen,  bytesToRead);
-            if(toRead == 0) {
+        while (!toRead) {
+            toRead = in.readBytes(buffer + bufferLen, bytesToRead);
+            if (toRead == 0) {
                 timeout_failures++;
                 if (timeout_failures >= 300) {
                     ESP_LOGE("ControllerOTA", "Failed to read data from stream");
@@ -180,8 +180,6 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
     footer[4] = currentPart % 256;
     sendData(footer, sizeof(footer));
 }
-
-
 
 void ControllerOTA::onReceive(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) {
     lastSignal = pData[0];

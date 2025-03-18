@@ -178,13 +178,6 @@ void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacterist
     uint16_t len = value.length();
     // pData = pCharacteristic->getData();
     uint8_t *pData = (uint8_t *)value.data();
-    char data[3];
-    String line = "";
-    for (int i = 0; i < len; i++) {
-        sprintf(data, "%02X", pData[i]);
-        line += String(data);
-    }
-    printf("BLE_DATA: %s\n", line.c_str());
 
     // Check that data have been received
     if (pData != NULL) {
