@@ -12,6 +12,7 @@ Settings::Settings() {
     targetGrindDuration = preferences.getInt("tgd", 25000);
     brewDelay = preferences.getDouble("del_br", 1000.0);
     grindDelay = preferences.getDouble("del_gd", 1000.0);
+    delayAdjust = preferences.getBool("del_ad", true);
     temperatureOffset = preferences.getInt("to", DEFAULT_TEMPERATURE_OFFSET);
     pid = preferences.getString("pid", DEFAULT_PID);
     wifiSsid = preferences.getString("ws", "");
@@ -31,6 +32,7 @@ Settings::Settings() {
     smartGrindActive = preferences.getBool("sg_a", false);
     smartGrindIp = preferences.getString("sg_i", "");
     smartGrindToggle = preferences.getBool("sg_t", false);
+    smartGrindMode = preferences.getInt("sg_m", smartGrindToggle ? 1 : 0);
     homeAssistant = preferences.getBool("ha_a", false);
     homeAssistantIP = preferences.getString("ha_i", "");
     homeAssistantPort = preferences.getInt("ha_p", 1883);
@@ -60,6 +62,7 @@ void Settings::save() {
     preferences.putInt("tgd", targetGrindDuration);
     preferences.putDouble("del_br", brewDelay);
     preferences.putDouble("del_gd", grindDelay);
+    preferences.putBool("del_ad", delayAdjust);
     preferences.putInt("to", temperatureOffset);
     preferences.putString("pid", pid);
     preferences.putString("ws", wifiSsid);
@@ -78,6 +81,7 @@ void Settings::save() {
     preferences.putBool("sg_a", smartGrindActive);
     preferences.putString("sg_i", smartGrindIp);
     preferences.putBool("sg_t", smartGrindToggle);
+    preferences.putInt("sg_m", smartGrindMode);
     preferences.putBool("ha_a", homeAssistant);
     preferences.putString("ha_i", homeAssistantIP);
     preferences.putInt("ha_p", homeAssistantPort);
@@ -135,6 +139,12 @@ void Settings::setGrindDelay(double grind_Delay) {
     grindDelay = grind_Delay;
     save();
 }
+
+void Settings::setDelayAdjust(bool delay_adjust) {
+    delayAdjust = delay_adjust;
+    save();
+}
+
 void Settings::setStartupMode(const int startup_mode) {
     startupMode = startup_mode;
     save();
@@ -220,8 +230,8 @@ void Settings::setSmartGrindIp(String smart_grind_ip) {
     save();
 }
 
-void Settings::setSmartGrindToggle(bool smart_grind_toggle) {
-    this->smartGrindToggle = smart_grind_toggle;
+void Settings::setSmartGrindMode(int smart_grind_mode) {
+    this->smartGrindMode = smart_grind_mode;
     save();
 }
 

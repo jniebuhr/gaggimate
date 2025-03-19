@@ -7,14 +7,22 @@
 
 void SmartGrindPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
+    pluginManager->on("controller:grind:start", [this](Event const &event) { start(); });
     pluginManager->on("controller:grind:end", [this](Event const &event) { stop(); });
+}
+
+void SmartGrindPlugin::start() {
+    Settings &settings = this->controller->getSettings();
+    if (settings.getSmartGrindMode() == SG_MODE_ON_OFF) {
+        controlRelay(COMMAND_ON);
+    }
 }
 
 void SmartGrindPlugin::stop() {
     Settings &settings = controller->getSettings();
     controlRelay(COMMAND_OFF);
-    if (settings.isSmartGrindToggle()) {
-        delay(300);
+    if (settings.getSmartGrindMode() == SG_MODE_OFF_ON) {
+        delay(500);
         controlRelay(COMMAND_ON);
     }
 }

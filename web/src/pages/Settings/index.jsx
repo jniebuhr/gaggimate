@@ -46,6 +46,9 @@ export function Settings() {
       if (key === 'momentaryButtons') {
         value = !formData.momentaryButtons;
       }
+      if (key === 'delayAdjust') {
+        value = !formData.delayAdjust;
+      }
       setFormData({
         ...formData,
         [key]: value,
@@ -233,6 +236,61 @@ export function Settings() {
           </div>
         </div>
 
+
+
+        <div>
+          <b>Predictive scale delay</b>
+        </div>
+        <div>
+          <small>Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control.</small>
+        </div>
+
+        <div className="flex flex-row gap-4">
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              id="delayAdjust"
+              name="delayAdjust"
+              value="delayAdjust"
+              type="checkbox"
+              className="sr-only peer"
+              checked={!!formData.delayAdjust}
+              onChange={onChange('delayAdjust')}
+            />
+            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          </label>
+          <p>Auto Adjust</p>
+        </div>
+        <div className="flex flex-row gap-4">
+          <div className="flex-auto">
+            <label htmlFor="brewDelay" className="block font-medium text-[#333333]">
+              Brew (ms)
+            </label>
+            <input
+              id="brewDelay"
+              name="brewDelay"
+              type="number"
+              className="input-field"
+              placeholder="0"
+              value={formData.brewDelay}
+              onChange={onChange('brewDelay')}
+            />
+          </div>
+          <div className="flex-auto">
+            <label htmlFor="grindDelay" className="block font-medium text-[#333333]">
+              Grind (ms)
+            </label>
+            <input
+              id="grindDelay"
+              name="grindDelay"
+              type="number"
+              className="input-field"
+              placeholder="0"
+              value={formData.grindDelay}
+              onChange={onChange('grindDelay')}
+            />
+          </div>
+        </div>
+
         <div>
           <b>Plugins</b>
         </div>
@@ -340,20 +398,21 @@ export function Settings() {
                   onChange={onChange('smartGrindIp')}
                 />
               </div>
-              <div className="flex-auto flex flex-row gap-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    id="smartGrindToggle"
-                    name="smartGrindToggle"
-                    value="smartGrindToggle"
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={!!formData.smartGrindToggle}
-                    onChange={onChange('smartGrindToggle')}
-                  />
-                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="flex-auto">
+                <label htmlFor="smartGrindMode" className="block font-medium text-[#333333]">
+                  Mode
                 </label>
-                <p>Toggle Plug</p>
+                <select id="smartGrindMode" name="smartGrindMode" className="input-field" onChange={onChange('smartGrindMode')}>
+                  <option value="0" selected={formData.smartGrindMode.toString() === "0"}>
+                    Turn off at target
+                  </option>
+                  <option value="1" selected={formData.smartGrindMode.toString() === "1"}>
+                    Toggle off and on at target
+                  </option>
+                  <option value="2" selected={formData.smartGrindMode.toString() === "2"}>
+                    Turn on at start, off at target
+                  </option>
+                </select>
               </div>
             </div>
           )}

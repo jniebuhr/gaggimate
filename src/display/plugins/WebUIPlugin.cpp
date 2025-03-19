@@ -188,7 +188,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             settings->setSmartGrindActive(request->hasArg("smartGrindActive"));
             if (request->hasArg("smartGrindIp"))
                 settings->setSmartGrindIp(request->arg("smartGrindIp"));
-            settings->setSmartGrindToggle(request->hasArg("smartGrindToggle"));
+            if (request->hasArg("smartGrindMode"))
+                settings->setSmartGrindMode(request->arg("smartGrindMode").toInt());
             settings->setHomeAssistant(request->hasArg("homeAssistant"));
             if (request->hasArg("haUser"))
                 settings->setHomeAssistantUser(request->arg("haUser"));
@@ -199,6 +200,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("haPort"))
                 settings->setHomeAssistantPort(request->arg("haPort").toInt());
             settings->setMomentaryButtons(request->hasArg("momentaryButtons"));
+            settings->setDelayAdjust(request->hasArg("delayAdjust"));
+            if (request->hasArg("brewDelay"))
+                settings->setBrewDelay(request->arg("brewDelay").toDouble());
+            if (request->hasArg("grindDelay"))
+                settings->setGrindDelay(request->arg("grindDelay").toDouble());
         });
         controller->setTargetTemp(controller->getTargetTemp());
     }
@@ -230,10 +236,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["steamFillTime"] = settings.getSteamFillTime() / 1000;
     doc["smartGrindActive"] = settings.isSmartGrindActive();
     doc["smartGrindIp"] = settings.getSmartGrindIp();
-    doc["smartGrindToggle"] = settings.isSmartGrindToggle();
+    doc["smartGrindMode"] = settings.getSmartGrindMode();
     doc["momentaryButtons"] = settings.isMomentaryButtons();
     doc["brewDelay"] = settings.getBrewDelay();
     doc["grindDelay"] = settings.getGrindDelay();
+    doc["delayAdjust"] = settings.isDelayAdjust();
     serializeJson(doc, *response);
     request->send(response);
 

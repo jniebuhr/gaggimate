@@ -33,6 +33,7 @@ class Settings {
     int getPressurizeTime() const { return pressurizeTime; }
     double getBrewDelay() const { return brewDelay; }
     double getGrindDelay() const { return grindDelay; }
+    bool isDelayAdjust() const { return delayAdjust; }
     String getPid() const { return pid; }
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
@@ -45,7 +46,7 @@ class Settings {
     int getStartupFillTime() const { return startupFillTime; }
     int getSteamFillTime() const { return steamFillTime; }
     bool isSmartGrindActive() const { return smartGrindActive; }
-    bool isSmartGrindToggle() const { return smartGrindToggle; }
+    int getSmartGrindMode() const { return smartGrindMode; }
     String getSmartGrindIp() const { return smartGrindIp; }
     bool isHomeAssistant() const { return homeAssistant; }
     String getHomeAssistantIP() const { return homeAssistantIP; }
@@ -67,6 +68,7 @@ class Settings {
     void setPressurizeTime(int pressurize_time);
     void setBrewDelay(double brewDelay);
     void setGrindDelay(double grindDelay);
+    void setDelayAdjust(bool delay_adjust);
     void setPid(const String &pid);
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
@@ -80,7 +82,7 @@ class Settings {
     void setSteamFillTime(int steam_fill_time);
     void setSmartGrindActive(bool smart_grind_active);
     void setSmartGrindIp(String smart_grind_ip);
-    void setSmartGrindToggle(bool smart_grind_toggle);
+    void setSmartGrindMode(int smart_grind_mode);
     void setHomeAssistant(bool homeAssistant);
     void setHomeAssistantUser(const String &homeAssistantUser);
     void setHomeAssistantPassword(const String &homeAssistantPassword);
@@ -102,6 +104,7 @@ class Settings {
     int targetGrindDuration = 25000;
     double brewDelay = 1000.0;
     double grindDelay = 1000.0;
+    bool delayAdjust = true;
     int startupMode = MODE_STANDBY;
     int infuseBloomTime = 0;
     int infusePumpTime = 0;
@@ -118,6 +121,7 @@ class Settings {
     int steamFillTime = 0;
     bool smartGrindActive = false;
     bool smartGrindToggle = false;
+    int smartGrindMode = 0;
     String smartGrindIp = "";
     bool homeAssistant = false;
     String homeAssistantUser = "";

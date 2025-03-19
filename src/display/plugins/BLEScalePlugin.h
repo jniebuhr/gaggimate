@@ -33,6 +33,7 @@ class BLEScalePlugin : public Plugin {
 
     void establishConnection();
 
+    bool active = false;
     bool doConnect = false;
     std::string uuid;
 

@@ -33,12 +33,16 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     this->scanner = new RemoteScalesScanner();
     manager->on("controller:brew:start", [this](Event const &) { onProcessStart(); });
     manager->on("controller:grind:start", [this](Event const &) { onProcessStart(); });
-    manager->on("controller:bluetooth:connect", [this](Event const &) { scanner->initializeAsyncScan(); });
     manager->on("controller:mode:change", [this](Event const &event) {
         if (event.getInt("value") != MODE_STANDBY) {
+            ESP_LOGI("BLEScalePlugin", "Resuming scanning");
             scan();
+            active = true;
         } else {
+            active = false;
+            disconnect();
             scanner->stopAsyncScan();
+            ESP_LOGI("BLEScalePlugin", "Stopping scanning, disconnecting");
         }
     });
 }
@@ -55,18 +59,22 @@ void BLEScalePlugin::loop() {
 }
 
 void BLEScalePlugin::update() {
-    controller->setVolumetricAvailable(scale && scale->isConnected());
+    controller->setVolumetricAvailable(scale != nullptr && scale->isConnected());
+    if (!active)
+        return;
     if (scale != nullptr) {
         scale->update();
         if (!scale->isConnected()) {
             reconnectionTries++;
             if (reconnectionTries > RECONNECTION_TRIES) {
                 disconnect();
+                this->scanner->initializeAsyncScan();
             }
         }
     } else if (controller->getSettings().getSavedScale() != "") {
         for (const auto &d : scanner->getDiscoveredScales()) {
             if (d.getAddress().toString() == controller->getSettings().getSavedScale().c_str()) {
+                ESP_LOGI("BLEScalePlugin", "Connecting to last known scale");
                 connect(d.getAddress().toString());
             }
         }
@@ -90,24 +98,28 @@ void BLEScalePlugin::disconnect() {
     if (scale != nullptr) {
         scale->disconnect();
         scale = nullptr;
-        scanner->initializeAsyncScan();
+        uuid = "";
+        doConnect = false;
     }
 }
 
 void BLEScalePlugin::onProcessStart() const {
     if (scale != nullptr && scale->isConnected()) {
         scale->tare();
+        delay(50);
+        scale->tare();
     }
 }
 
 void BLEScalePlugin::establishConnection() {
+    ESP_LOGI("BLEScalePlugin", "Connecting to %s", uuid.c_str());
     scanner->stopAsyncScan();
     for (const auto &d : scanner->getDiscoveredScales()) {
         if (d.getAddress().toString() == uuid) {
             reconnectionTries = 0;
             scale = RemoteScalesFactory::getInstance()->create(d);
             if (!scale) {
-                printf("Connection to device %s failed\n", d.getName().c_str());
+                ESP_LOGE("BLEScalePlugin", "Connection to device %s failed\n", d.getName().c_str());
                 return;
             }
 
@@ -117,6 +129,7 @@ void BLEScalePlugin::establishConnection() {
 
             if (!scale->connect()) {
                 disconnect();
+                this->scanner->initializeAsyncScan();
             }
             break;
         }

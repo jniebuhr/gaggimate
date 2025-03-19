@@ -103,7 +103,12 @@ class BrewProcess : public Process {
     }
 
     double getNewDelayTime() const {
-        return brewDelay + volumetricRateCalculator->getOvershootAdjustMillis(double(brewVolume), currentVolume);
+        double newDelay = brewDelay + volumetricRateCalculator->getOvershootAdjustMillis(double(brewVolume), currentVolume);
+        if (newDelay < 0.0)
+            newDelay = 0.0;
+        if (newDelay > PREDICTIVE_TIME)
+            newDelay = PREDICTIVE_TIME;
+        return newDelay;
     }
 
     bool isRelayActive() override {
@@ -256,7 +261,8 @@ class GrindProcess : public Process {
             active = millis() - started < time;
         } else {
             double currentRate = volumetricRateCalculator->getRate();
-            ESP_LOGI("GrindProcess", "Current rate: %f, Current volume: %f, Expected Offset: %f", currentRate, currentVolume, currentRate * grindDelay);
+            ESP_LOGI("GrindProcess", "Current rate: %f, Current volume: %f, Expected Offset: %f", currentRate, currentVolume,
+                     currentRate * grindDelay);
             if (currentVolume + currentRate * grindDelay > grindVolume && active) {
                 active = false;
                 finished = millis();
@@ -266,7 +272,12 @@ class GrindProcess : public Process {
 
     double getNewDelayTime() const {
         double newDelay = grindDelay + volumetricRateCalculator->getOvershootAdjustMillis(double(grindVolume), currentVolume);
-        ESP_LOGI("GrindProcess", "Setting new delay time - Old: %2f, Expected Volume: %d, Actual Volume: %2f, New Delay: %f", grindDelay, grindVolume, currentVolume, newDelay);
+        ESP_LOGI("GrindProcess", "Setting new delay time - Old: %2f, Expected Volume: %d, Actual Volume: %2f, New Delay: %f",
+                 grindDelay, grindVolume, currentVolume, newDelay);
+        if (newDelay < 0.0)
+            newDelay = 0.0;
+        if (newDelay > PREDICTIVE_TIME)
+            newDelay = PREDICTIVE_TIME;
         return newDelay;
     }
 
@@ -280,7 +291,7 @@ class GrindProcess : public Process {
     bool isComplete() override {
         if (target == ProcessTarget::TIME)
             return !isActive();
-        return finished + PREDICTIVE_TIME > millis();
+        return millis() - finished > PREDICTIVE_TIME;
     }
 
     int getType() override { return MODE_GRIND; }

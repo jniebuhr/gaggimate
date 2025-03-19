@@ -173,7 +173,7 @@ void Controller::loop() {
         if (lastProcess != nullptr && !lastProcess->isComplete()) {
             lastProcess->progress();
         }
-        if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted) {
+        if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
             processCompleted = true;
             if (lastProcess->getType() == MODE_BREW) {
                 if (auto const *brewProcess = static_cast<BrewProcess *>(lastProcess);
@@ -208,6 +208,7 @@ bool Controller::isUpdating() const { return updating; }
 void Controller::startProcess(Process *process) {
     if (isActive())
         return;
+    processCompleted = false;
     this->currentProcess = process;
     updateRelay();
     updateLastAction();
@@ -364,28 +365,25 @@ void Controller::updateRelay() {
 void Controller::activate() {
     if (isActive())
         return;
+    clear();
     switch (mode) {
     case MODE_BREW:
         if (settings.isVolumetricTarget() && volumetricAvailable) {
-            currentProcess =
-                new BrewProcess(ProcessTarget::VOLUMETRIC, settings.getPressurizeTime(), settings.getInfusePumpTime(),
-                                settings.getInfuseBloomTime(), 0, settings.getTargetVolume(), settings.getBrewDelay());
+            startProcess(new BrewProcess(ProcessTarget::VOLUMETRIC, settings.getPressurizeTime(), settings.getInfusePumpTime(),
+                                         settings.getInfuseBloomTime(), 0, settings.getTargetVolume(), settings.getBrewDelay()));
         } else {
-            currentProcess = new BrewProcess(ProcessTarget::TIME, settings.getPressurizeTime(), settings.getInfusePumpTime(),
-                                             settings.getInfuseBloomTime(), settings.getTargetDuration(), 0, 0.0);
+            startProcess(new BrewProcess(ProcessTarget::TIME, settings.getPressurizeTime(), settings.getInfusePumpTime(),
+                                         settings.getInfuseBloomTime(), settings.getTargetDuration(), 0, 0.0));
         }
         break;
     case MODE_STEAM:
-        currentProcess = new SteamProcess();
+        startProcess(new SteamProcess());
         break;
     case MODE_WATER:
-        currentProcess = new PumpProcess();
+        startProcess(new PumpProcess());
         break;
     default:;
     }
-    processCompleted = false;
-    updateRelay();
-    updateLastAction();
     if (currentProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:start");
     }
@@ -419,20 +417,21 @@ void Controller::clear() {
 
 void Controller::activateGrind() {
     pluginManager->trigger("controller:grind:start");
-    processCompleted = false;
     if (isGrindActive())
         return;
+    clear();
     if (settings.isVolumetricTarget() && volumetricAvailable) {
         startProcess(new GrindProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetGrindVolume(), settings.getGrindDelay()));
     } else {
         startProcess(
             new GrindProcess(ProcessTarget::TIME, settings.getTargetGrindDuration(), settings.getTargetGrindVolume(), 0.0));
     }
-    updateRelay();
-    updateLastAction();
 }
 
-void Controller::deactivateGrind() { deactivate(); }
+void Controller::deactivateGrind() {
+    deactivate();
+    clear();
+}
 
 void Controller::activateStandby() {
     setMode(MODE_STANDBY);

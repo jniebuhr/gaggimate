@@ -6,6 +6,10 @@
 const String COMMAND_ON = "Power%20On";
 const String COMMAND_OFF = "Power%20off";
 
+constexpr int SG_MODE_OFF = 0;
+constexpr int SG_MODE_OFF_ON = 1;
+constexpr int SG_MODE_ON_OFF = 2;
+
 struct Event;
 
 class SmartGrindPlugin : public Plugin {
@@ -14,6 +18,7 @@ class SmartGrindPlugin : public Plugin {
     void loop() override {};
 
   private:
+    void start();
     void stop();
     void controlRelay(String command);
 
