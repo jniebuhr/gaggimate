@@ -336,8 +336,10 @@ void DefaultUI::updateGrindScreen() const {
     lv_label_set_text_fmt(ui_GrindScreen_tempText, "%d°C", controller->getCurrentTemp());
     const int16_t setTemp = controller->getTargetTemp();
     lv_img_set_angle(ui_GrindScreen_tempTarget, calculate_angle(setTemp));
+
     lv_imgbtn_set_src(ui_GrindScreen_startButton, LV_IMGBTN_STATE_RELEASED, nullptr,
                       controller->isGrindActive() ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
+    lv_obj_set_style_pad_all(ui_BrewScreen_startButton, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_img_set_src(ui_GrindScreen_targetSymbol, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
     ui_object_set_themeable_style_property(ui_GrindScreen_timedButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_IMG_RECOLOR,
