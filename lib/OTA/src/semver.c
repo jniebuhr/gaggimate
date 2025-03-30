@@ -236,9 +236,9 @@ static int compare_prerelease(char *x, char *y) {
     if (x == NULL && y == NULL)
         return 0;
     if (y == NULL && x)
-        return -1;
-    if (x == NULL && y)
         return 1;
+    if (x == NULL && y)
+        return -1;
 
     lastx = x;
     lasty = y;

@@ -1,4 +1,6 @@
 #include "ControllerOTA.h"
+#include <SPIFFS.h>
+#include <HTTPClient.h>
 
 void ControllerOTA::init(NimBLEClient *client, const ctr_progress_callback_t &progress_callback) {
     this->client = client;
@@ -10,13 +12,27 @@ void ControllerOTA::init(NimBLEClient *client, const ctr_progress_callback_t &pr
         txChar->subscribe(true, std::bind(&ControllerOTA::onReceive, this, std::placeholders::_1, std::placeholders::_2,
                                           std::placeholders::_3, std::placeholders::_4));
     }
+
 }
 
 void ControllerOTA::update(WiFiClientSecure &wifi_client, const String &release_url) {
+    if (SPIFFS.exists("/board-firmware.bin")) {
+        ESP_LOGI("ControllerOTA", "Removing previous update file");
+        SPIFFS.remove("/board-firmware.bin");
+    }
+    if (!downloadFile(wifi_client, release_url)) {
+        ESP_LOGE("ControllerOTA", "Download of firmware file failed");
+    }
+    File file = SPIFFS.open("/board-firmware.bin", FILE_READ);
+    runUpdate(file, file.size());
+    file.close();
+}
+
+bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &release_url) {
     HTTPClient http;
     if (!http.begin(wifi_client, release_url)) {
-        printf("Failed to start http client\n");
-        return;
+        ESP_LOGE("ControllerOTA", "Failed to start http client");
+        return false;
     }
 
     http.useHTTP10(true);
@@ -28,42 +44,46 @@ void ControllerOTA::update(WiFiClientSecure &wifi_client, const String &release_
     int len = http.getSize();
 
     if (code != HTTP_CODE_OK) {
-        log_e("HTTP error: %d\n", code);
+        ESP_LOGE("ControllerOTA", "HTTP error: %d", code);
         http.end();
-        return;
+        return false;
     }
 
     if (len == 0) {
-        printf("Could not fetch firmware\n");
+        ESP_LOGE("ControllerOTA", "Could not fetch firmware");
         http.end();
-        return;
-    }
-
-    int sketchFreeSpace = ESP.getFreeSketchSpace();
-    if (!sketchFreeSpace) {
-        printf("No free sketch space\n");
-        return;
-    }
-
-    if (len > sketchFreeSpace) {
-        log_e("FreeSketchSpace to low (%d) needed: %d\n", sketchFreeSpace, len);
-        return;
+        return false;
     }
 
     WiFiClient *tcp = http.getStreamPtr();
     delay(100);
 
     if (tcp->peek() != 0xE9) {
-        log_e("Magic header does not start with 0xE9\n");
+        ESP_LOGE("ControllerOTA", "Magic header does not start with 0xE9");
         http.end();
-        return;
+        return false;
     }
-    runUpdate(*tcp, len);
+
+    File file = SPIFFS.open("/board-firmware.bin", FILE_WRITE, true);
+
+    int written = 0;
+    while (written < len) {
+        int bufferSize = min(1024, len - written);
+        uint8_t buffer[bufferSize];
+        fillBuffer(*tcp, buffer, bufferSize);
+        file.write(buffer, bufferSize);
+        written += bufferSize;
+        double progress = (static_cast<double>(written) / static_cast<double>(len)) * 50.0;
+        progressCallback(static_cast<int>(progress));
+    }
+    ESP_LOGI("ControllerOTA", "Downloaded firmware file with %d bytes to /board-firmware.bin", len);
+    file.close();
     http.end();
+    return true;
 }
 
 void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
-    printf("Sending update instructions over BLE. File Size: %d\n", size);
+    ESP_LOGI("ControllerOTA", "Sending update instructions over BLE. File Size: %d", size);
     fileParts = (size + PART_SIZE - 1) / PART_SIZE;
     currentPart = 0;
 
@@ -85,28 +105,28 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
     sendData(partsAndMTU, 5);
     uint8_t updateStart[] = {0xFD};
     sendData(updateStart, 1);
-    printf("Waiting for signal from controller\n");
+    ESP_LOGI("ControllerOTA", "Waiting for signal from controller");
 
     while (client->isConnected()) {
         uint8_t signal = lastSignal;
         lastSignal = 0x00;
         if (signal == 0xAA || signal == 0xF1) {
             // Start update or send next part
-            printf("Sending part %d / %d\n", currentPart + 1, fileParts);
+            ESP_LOGI("ControllerOTA", "Sending part %d / %d", currentPart + 1, fileParts);
             sendPart(in, size);
             currentPart++;
             notifyUpdate();
         } else if (signal == 0xF2 || signal == 0xFF) {
             break;
         }
-        delay(100);
+        delay(25);
     }
-    printf("Controller update finished\n");
+    ESP_LOGI("ControllerOTA", "Controller update finished");
 }
 
 void ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
     if (rxChar == nullptr) {
-        printf("RX Char uninitialized\n");
+        ESP_LOGI("ControllerOTA", "RX Char uninitialized");
         return;
     }
     rxChar->writeValue(data, len, true);
@@ -135,11 +155,11 @@ void ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const 
         bytesToRead = len - bufferLen;
         toRead = 0;
     }
-    ESP_LOGI("ControllerOTA", "Read %d bytes", bufferLen);
+    ESP_LOGV("ControllerOTA", "Read %d bytes", bufferLen);
 }
 
 void ControllerOTA::notifyUpdate() const {
-    double progress = (static_cast<double>(currentPart) / static_cast<double>(fileParts)) * 100.0;
+    double progress = (static_cast<double>(currentPart) / static_cast<double>(fileParts)) * 50.0 + 50.0;
     progressCallback(static_cast<int>(progress));
 }
 
@@ -158,7 +178,7 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
         for (uint32_t i = 0; i < MTU; i++) {
             partData[i + 2] = buffer[i];
         }
-        printf("Sending part %d / %d - package %d / %d\n", currentPart + 1, fileParts, part + 1, parts);
+        ESP_LOGI("ControllerOTA", "Sending part %d / %d - package %d / %d", currentPart + 1, fileParts, part + 1, parts);
         sendData(partData, MTU + 2);
     }
     if (partLength % MTU > 0) {
@@ -183,19 +203,19 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
 
 void ControllerOTA::onReceive(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) {
     lastSignal = pData[0];
-    printf("Received signal 0x%x\n", lastSignal);
+    ESP_LOGI("ControllerOTA", "Received signal 0x%x", lastSignal);
     switch (lastSignal) {
     case 0xAA:
-        printf("Starting transfer, only slow mode supported as of yet\n");
+        ESP_LOGI("ControllerOTA", "Starting transfer, only slow mode supported as of yet");
         break;
     case 0xF1:
-        printf("Next part requested\n");
+        ESP_LOGI("ControllerOTA", "Next part requested");
         break;
     case 0xF2:
-        printf("Controller installing firmware\n");
+        ESP_LOGI("ControllerOTA", "Controller installing firmware");
         break;
     default:
-        printf("Unhandled message\n");
+        ESP_LOGI("ControllerOTA", "Unhandled message");
         break;
     }
 }

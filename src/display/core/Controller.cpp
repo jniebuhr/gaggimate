@@ -68,6 +68,7 @@ void Controller::setupBluetooth() {
             this->error = error;
             deactivate();
         }
+        ESP_LOGE("Controller", "Received error %d", error);
     });
     pluginManager->trigger("controller:bluetooth:init");
 }
@@ -95,6 +96,7 @@ void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.mode(WIFI_STA);
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
+        WiFi.setTxPower(WIFI_POWER_19_5dBm);
         for (int attempts = 0; attempts < WIFI_CONNECT_ATTEMPTS; attempts++) {
             if (WiFi.status() == WL_CONNECTED) {
                 break;
@@ -120,6 +122,7 @@ void Controller::setupWifi() {
         WiFi.mode(WIFI_AP);
         WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
         WiFi.softAP(WIFI_AP_SSID);
+        WiFi.setTxPower(WIFI_POWER_19_5dBm);
         Serial.println("Started in AP mode");
         Serial.print("Connect to:");
         Serial.println(WIFI_AP_SSID);
@@ -143,6 +146,7 @@ void Controller::loop() {
 
     if (clientController.isReadyForConnection()) {
         clientController.connectToServer();
+        setupInfos();
         pluginManager->trigger("controller:bluetooth:connect");
         if (!loaded) {
             loaded = true;
@@ -150,7 +154,6 @@ void Controller::loop() {
                 activateStandby();
             pluginManager->trigger("controller:ready");
         }
-        setupInfos();
     }
 
     unsigned long now = millis();

@@ -45,4 +45,12 @@ semver_t from_string(const string &version) {
     return _ver;
 }
 
+String render_to_string(const semver_t &version) {
+    String rendered = String(version.major) + "." + String(version.minor) + "." + String(version.patch);
+    if (version.prerelease != nullptr) {
+        rendered += "-" + String(version.prerelease);
+    }
+    return rendered;
+}
+
 bool operator>(const semver_t &x, const semver_t &y) { return semver_compare(x, y) > 0; }

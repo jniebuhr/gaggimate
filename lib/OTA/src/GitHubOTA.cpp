@@ -51,32 +51,33 @@ void GitHubOTA::checkForUpdates() {
         auto semver_str = _latest_url.substring(last_slash + 2);
         semver_str.replace("/", "");
         ESP_LOGI(TAG, "semver_str %s\n", semver_str.c_str());
+        _latest_version_string = semver_str;
         _latest_version = from_string(semver_str.c_str());
     } else {
         _latest_url = _release_url + "/";
         _latest_url.replace("tag", "download");
         String version = get_updated_version_via_txt_file(_wifi_client, _latest_url);
         version = version.substring(1);
+        _latest_version_string = version;
         _latest_version = from_string(version.c_str());
     }
 }
 
 String GitHubOTA::getCurrentVersion() const {
-    String version = String(_latest_version.major) + "." + String(_latest_version.minor) + "." + _latest_version.patch;
-    if (_latest_version.prerelease != nullptr) {
-        version = version + "-nightly";
+    return _latest_version_string;
+}
+
+bool GitHubOTA::isUpdateAvailable(bool controller) const {
+    if (controller) {
+        return update_required(_latest_version, _controller_version);
     }
-    return version;
+    return update_required(_latest_version, _version);
 }
 
-bool GitHubOTA::isUpdateAvailable() const {
-    return update_required(_latest_version, _version) || update_required(_latest_version, _controller_version);
-}
-
-void GitHubOTA::update() {
+void GitHubOTA::update(bool controller, bool display) {
     const char *TAG = "update";
 
-    if (update_required(_latest_version, _controller_version)) {
+    if (controller && update_required(_latest_version, _controller_version)) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
         this->phase = PHASE_CONTROLLER_FW;
         this->_phase_callback(PHASE_CONTROLLER_FW);
@@ -84,7 +85,7 @@ void GitHubOTA::update() {
         ESP_LOGI(TAG, "Controller update successful. Restarting...\n");
     }
 
-    if (update_required(_latest_version, _version)) {
+    if (display && update_required(_latest_version, _version)) {
         ESP_LOGI(TAG, "Update is required, running firmware update.");
         this->phase = PHASE_DISPLAY_FW;
         this->_phase_callback(PHASE_DISPLAY_FW);
@@ -135,4 +136,8 @@ HTTPUpdateResult GitHubOTA::update_filesystem(const String &url) {
     auto result = Updater.updateSpiffs(_wifi_client, url);
     print_update_result(Updater, result, TAG);
     return result;
+}
+
+void GitHubOTA::setControllerVersion(const String &controller_version) {
+    _controller_version = from_string(controller_version.substring(1).c_str());
 }

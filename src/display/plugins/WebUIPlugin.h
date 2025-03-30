@@ -29,7 +29,7 @@ class WebUIPlugin : public Plugin {
     void start(bool apMode);
 
     void handleOTASettings(uint32_t clientId, JsonDocument &request);
-    void handleOTAStart(uint32_t clientId);
+    void handleOTAStart(uint32_t clientId, JsonDocument &request);
     void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
@@ -50,6 +50,7 @@ class WebUIPlugin : public Plugin {
     long lastCleanup = 0;
     long lastDns = 0;
     bool updating = false;
+    String updateComponent = "";
 };
 
 #endif // WEBUIPLUGIN_H

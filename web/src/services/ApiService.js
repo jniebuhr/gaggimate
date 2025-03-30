@@ -14,7 +14,8 @@ export default class ApiService {
   }
 
   connect() {
-    this.socket = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/ws");
+    const apiHost = window.location.host;
+    this.socket = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + apiHost + "/ws");
     this.socket.addEventListener("message", (e) => { this._onMessage(e); });
     this.socket.addEventListener("close", () => {
       setTimeout(() => {
@@ -23,6 +24,9 @@ export default class ApiService {
     });
     this.socket.addEventListener("error", () => {
       this.socket.close();
+      setTimeout(() => {
+        this.connect();
+      }, 1000);
     });
   }
 

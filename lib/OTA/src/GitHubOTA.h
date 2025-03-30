@@ -27,10 +27,11 @@ class GitHubOTA {
 
     void init(NimBLEClient *client);
     void checkForUpdates();
-    bool isUpdateAvailable() const;
+    bool isUpdateAvailable(bool controller = false) const;
     String getCurrentVersion() const;
-    void update();
+    void update(bool controller = true, bool display = true);
     void setReleaseUrl(const String &release_url);
+    void setControllerVersion(const String &controller_version);
 
   private:
     HTTPUpdate Updater;
@@ -41,6 +42,7 @@ class GitHubOTA {
     uint8_t phase = PHASE_IDLE;
     semver_t _version;
     semver_t _controller_version;
+    String _latest_version_string;
     semver_t _latest_version = {0, 0, 0, nullptr, nullptr};
     String _release_url;
     String _latest_url;

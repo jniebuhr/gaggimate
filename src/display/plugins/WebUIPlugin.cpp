@@ -26,13 +26,16 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         const int apMode = event.getInt("AP");
         start(apMode);
     });
-    pluginManager->on("controller:ready", [this](Event const &) { ota->init(controller->getClientController()->getClient()); });
+    pluginManager->on("controller:ready", [this](Event const &) {
+        ota->setControllerVersion(controller->getSystemInfo().version);
+        ota->init(controller->getClientController()->getClient());
+    });
 }
 
 void WebUIPlugin::loop() {
     if (updating) {
         pluginManager->trigger("ota:update:start");
-        ota->update();
+        ota->update(updateComponent != "display", updateComponent != "controller");
         pluginManager->trigger("ota:update:end");
         updating = false;
     }
@@ -119,7 +122,7 @@ void WebUIPlugin::start(bool apMode) {
                             if (msgType == "req:ota-settings") {
                                 handleOTASettings(client->id(), doc);
                             } else if (msgType == "req:ota-start") {
-                                handleOTAStart(client->id());
+                                handleOTAStart(client->id(), doc);
                             }
                         }
                     }
@@ -148,7 +151,14 @@ void WebUIPlugin::handleOTASettings(uint32_t clientId, JsonDocument &request) {
     updateOTAStatus("Checking...");
 }
 
-void WebUIPlugin::handleOTAStart(uint32_t clientId) { updating = true; }
+void WebUIPlugin::handleOTAStart(uint32_t clientId,  JsonDocument &request) {
+    updating = true;
+    if (request["cp"].is<String>()) {
+        updateComponent = request["cp"].as<String>();
+    } else {
+        updateComponent = "";
+    }
+}
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     if (request->method() == HTTP_POST) {
@@ -304,7 +314,8 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     JsonDocument doc;
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["tp"] = "res:ota-settings";
-    doc["updateAvailable"] = ota->isUpdateAvailable();
+    doc["displayUpdateAvailable"] = ota->isUpdateAvailable(false);
+    doc["controllerUpdateAvailable"] = ota->isUpdateAvailable(true);
     doc["displayVersion"] = BUILD_GIT_VERSION;
     doc["controllerVersion"] = controller->getSystemInfo().version;
     doc["hardware"] = controller->getSystemInfo().hardware;

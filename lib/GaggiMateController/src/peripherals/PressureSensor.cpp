@@ -11,6 +11,7 @@ PressureSensor::PressureSensor(uint8_t sda_pin, uint8_t scl_pin, const pressure_
 
 void PressureSensor::setup() {
     Wire1.begin(_sda_pin, _scl_pin);
+    ESP_LOGI(LOG_TAG, "Initializing pressure sensor on SDA: %d, SCL: %d", _sda_pin, _scl_pin);
     delay(100);
     ads = new ADS1115(0x48, &Wire1);
     if (!ads->begin()) {
