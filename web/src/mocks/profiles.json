@@ -1,0 +1,250 @@
+[
+  {
+    "id": "b1f86708-9161-4b87-a7b2-3cedb9d7c244",
+    "label": "GaggiMate Classic",
+    "type": "standard",
+    "favorite": false,
+    "description": "Standard profile with pre-infusion phase",
+    "phases": [
+      {
+        "name": "Pump",
+        "phase": "preinfusion",
+        "valve": 1,
+        "pump": 1,
+        "duration": 3
+      },
+      {
+        "name": "Bloom",
+        "phase": "preinfusion",
+        "valve": 1,
+        "pump": 0,
+        "duration": 5
+      },
+      {
+        "name": "Pump",
+        "phase": "brew",
+        "valve": 1,
+        "pump": 1,
+        "duration": 50,
+        "targets": [
+          {
+            "type": "volumetric",
+            "value": 36
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "a81d74c6-58a8-4140-9c4d-07c9b377913c",
+    "label": "LM Leva",
+    "type": "pro",
+    "selected": true,
+    "favorite": true,
+    "description": "Ramps up pressure and flow to achieve similar results to a lever operated machine.",
+    "phases": [
+      {
+        "name": "Preinfusion Low",
+        "phase": "preinfusion",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 4,
+          "flow": 2
+        },
+        "duration": 3,
+        "targets": [
+          {
+            "type": "pressure",
+            "value": 4.5
+          }
+        ]
+      },
+      {
+        "name": "Preinfusion Bloom",
+        "phase": "preinfusion",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 1,
+          "flow": 1
+        },
+        "duration": 5
+      },
+      {
+        "name": "Ramp Up",
+        "phase": "brew",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 8,
+          "flow": 2
+        },
+        "duration": 3,
+        "targets": [
+          {
+            "type": "pressure",
+            "value": 8
+          }
+        ]
+      },
+      {
+        "name": "Hold",
+        "phase": "brew",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 8,
+          "flow": 1.5
+        },
+        "duration": 20,
+        "targets": [
+          {
+            "type": "volumetric",
+            "value": 36
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d7295f5e-3e53-4949-bc7f-26885c6fd164",
+    "label": "LM Leva 2",
+    "type": "pro",
+    "favorite": true,
+    "description": "Ramps up pressure and flow to achieve similar results to a lever operated machine.",
+    "phases": [
+      {
+        "name": "Preinfusion Low",
+        "phase": "preinfusion",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 4,
+          "flow": 2
+        },
+        "duration": 3,
+        "targets": [
+          {
+            "type": "pressure",
+            "value": 4.5
+          }
+        ]
+      },
+      {
+        "name": "Preinfusion Bloom",
+        "phase": "preinfusion",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 1,
+          "flow": 1
+        },
+        "duration": 5
+      },
+      {
+        "name": "Ramp Up",
+        "phase": "brew",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 8,
+          "flow": 2
+        },
+        "duration": 3,
+        "targets": [
+          {
+            "type": "pressure",
+            "value": 8
+          }
+        ]
+      },
+      {
+        "name": "Hold",
+        "phase": "brew",
+        "valve": 1,
+        "pump": {
+          "target": "flow",
+          "pressure": 8,
+          "flow": 1.5
+        },
+        "duration": 20,
+        "targets": [
+          {
+            "type": "volumetric",
+            "value": 36
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2a31aa27-1d72-4b14-9f90-8fb050ea033d",
+    "type": "pro",
+    "description": "Ramps up pressure and flow to achieve similar results to a lever operated machine.",
+    "phases": [
+      {
+        "name": "Preinfusion Low",
+        "phase": "preinfusion",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 4,
+          "flow": 2
+        },
+        "duration": 3,
+        "targets": [
+          {
+            "type": "pressure",
+            "value": 4.5
+          }
+        ]
+      },
+      {
+        "name": "Preinfusion Bloom",
+        "phase": "preinfusion",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 1,
+          "flow": 1
+        },
+        "duration": 5
+      },
+      {
+        "name": "Ramp Up",
+        "phase": "brew",
+        "valve": 1,
+        "pump": {
+          "target": "pressure",
+          "pressure": 8,
+          "flow": 2
+        },
+        "duration": 3,
+        "targets": [
+          {
+            "type": "pressure",
+            "value": 8
+          }
+        ]
+      },
+      {
+        "name": "Hold",
+        "phase": "brew",
+        "valve": 1,
+        "pump": {
+          "target": "flow",
+          "pressure": 9,
+          "flow": 1.5
+        },
+        "duration": 20,
+        "targets": [
+          {
+            "type": "volumetric",
+            "value": 36
+          }
+        ]
+      }
+    ]
+  }
+]
