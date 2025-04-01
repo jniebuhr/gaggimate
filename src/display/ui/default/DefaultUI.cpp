@@ -49,8 +49,11 @@ void DefaultUI::init() {
     });
     pluginManager->on("controller:brew:start",
                       [this](Event const &event) { changeScreen(&ui_StatusScreen, &ui_StatusScreen_screen_init); });
-    pluginManager->on("controller:brew:clear",
-                      [this](Event const &event) { changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init); });
+    pluginManager->on("controller:brew:clear", [this](Event const &event) {
+        if (lv_scr_act() == ui_StatusScreen) {
+            changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
+        }
+    });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
         bluetoothActive = true;
         rerender = true;
