@@ -119,7 +119,7 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
         } else if (signal == 0xF2 || signal == 0xFF) {
             break;
         }
-        delay(25);
+        delay(50);
     }
     ESP_LOGI("ControllerOTA", "Controller update finished");
 }
