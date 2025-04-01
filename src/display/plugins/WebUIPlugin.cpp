@@ -21,7 +21,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
             pluginManager->trigger("ota:update:progress", "progress", progress);
             updateOTAProgress(phase, progress);
         },
-        "display-firmware.bin", "display-filesystem.bin", "controller-firmware.bin");
+        "display-firmware.bin", "display-filesystem.bin", "board-firmware.bin");
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         const int apMode = event.getInt("AP");
         start(apMode);

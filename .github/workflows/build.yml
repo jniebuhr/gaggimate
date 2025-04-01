@@ -47,9 +47,9 @@ jobs:
         run: pio run -e display
       - name: Rename firmware files
         run: |
-          mv .pio/build/controller/firmware.bin out/controller-firmware.bin
-          mv .pio/build/controller/partitions.bin out/controller-partitions.bin
-          mv .pio/build/controller/bootloader.bin out/controller-bootloader.bin
+          mv .pio/build/controller/firmware.bin out/board-firmware.bin
+          mv .pio/build/controller/partitions.bin out/board-partitions.bin
+          mv .pio/build/controller/bootloader.bin out/board-bootloader.bin
           mv .pio/build/display/firmware.bin out/display-firmware.bin
           mv .pio/build/display/partitions.bin out/display-partitions.bin
           mv .pio/build/display/bootloader.bin out/display-bootloader.bin
