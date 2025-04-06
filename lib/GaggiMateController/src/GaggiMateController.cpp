@@ -61,14 +61,25 @@ void GaggiMateController::setup() {
 
     ESP_LOGI(LOG_TAG, "Initialization done");
 }
-
+//THOMASEDIT
 void GaggiMateController::loop() {
     unsigned long now = millis();
-    if ((now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
+
+    // Check for ping timeout (in milliseconds)
+    if ((now - lastPingTime) > PING_TIMEOUT_SECONDS * 1000) {
         handlePingTimeout();
     }
-    delay(1000);
+
+    // Add other non-blocking tasks here:
+    // - Read sensors
+    // - Process user input
+    // - Update displays
+    // - ...
+
+    // If you find the loop is running too fast, you could add a very short delay:
+    // delayMicroseconds(100); // 100 microseconds (adjust as needed)
 }
+//THOMASEDITEND
 
 void GaggiMateController::registerBoardConfig(ControllerConfig config) { configs.push_back(config); }
 

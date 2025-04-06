@@ -205,17 +205,17 @@ void LilyGo_RGBPanel::sleep() {
         // Wait for the interrupt level to stabilize
         delay(2000);
         // Set touch irq wakeup
-        esp_sleep_enable_ext1_wakeup(_BV(BOARD_TOUCH_IRQ), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(BOARD_TOUCH_IRQ), ESP_EXT1_WAKEUP_ANY_LOW);
     } break;
     case LILYGO_T_RGB_WAKEUP_FORM_BUTTON:
-        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
     case LILYGO_T_RGB_WAKEUP_FORM_TIMER:
         esp_sleep_enable_timer_wakeup(_sleepTimeUs);
         break;
     default:
         // Default GPIO0 Wakeup
-        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
     }
 

@@ -363,13 +363,13 @@ void BLE_OTA_DFU::start_OTA() {
     ESP_LOGI(TAG, "Available free space: %d", FLASH.totalBytes() - FLASH.usedBytes());
     // ESP_LOGE(TAG, "Available free blocks: %d", FLASH.blockCount());
     TaskHandle_t taskInstallUpdate = NULL;
-
-    xTaskCreatePinnedToCoreAndAssert(task_install_update, "task_install_update", 5120, static_cast<void *>(this), 5,
+//THOMASEDIT
+    xTaskCreatePinnedToCoreAndAssert(task_install_update, "task_install_update", 12288, static_cast<void *>(this), 5,
                                      &taskInstallUpdate, 1);
 
     ESP_LOGI(TAG, "Available memory (after task started): %d", ESP.getFreeHeap());
 }
-
+//THOMASEDITEND
 bool BLE_OTA_DFU::begin(String local_name) {
     // Create the BLE Device
     BLEDevice::init(local_name.c_str());
