@@ -225,6 +225,20 @@ export function Settings() {
               </option>
             </select>
           </div>
+          <div>
+            <label htmlFor="standbyTimeout" className="block font-medium text-[#333333]">
+              Standby Timeout (s)
+            </label>
+            <input
+              id="standbyTimeout"
+              name="standbyTimeout"
+              type="number"
+              className="input-field"
+              placeholder="0"
+              value={formData.standbyTimeout}
+              onChange={onChange('standbyTimeout')}
+            />
+          </div>
 
 
           <div>

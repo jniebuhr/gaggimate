@@ -217,6 +217,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setGrindDelay(request->arg("grindDelay").toDouble());
             if (request->hasArg("timezone"))
                 settings->setTimezone(request->arg("timezone"));
+            if (request->hasArg("standbyTimeout"))
+                settings->setStandbyTimeout(request->arg("standbyTimeout").toInt() * 1000);
         });
         controller->setTargetTemp(controller->getTargetTemp());
     }
@@ -254,6 +256,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["grindDelay"] = settings.getGrindDelay();
     doc["delayAdjust"] = settings.isDelayAdjust();
     doc["timezone"] = settings.getTimezone();
+    doc["standbyTimeout"] = settings.getStandbyTimeout() / 1000;
     serializeJson(doc, *response);
     request->send(response);
 

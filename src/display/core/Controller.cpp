@@ -203,7 +203,7 @@ void Controller::loop() {
 
     if (grindActiveUntil != 0 && now > grindActiveUntil)
         deactivateGrind();
-    if (mode != MODE_STANDBY && now > lastAction + STANDBY_TIMEOUT_MS)
+    if (mode != MODE_STANDBY && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
 }
 

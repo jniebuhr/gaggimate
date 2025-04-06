@@ -28,6 +28,7 @@ class Settings {
     int getTargetGrindVolume() const { return targetGrindVolume; }
     int getTargetGrindDuration() const { return targetGrindDuration; }
     int getStartupMode() const { return startupMode; }
+    int getStandbyTimeout() const { return standbyTimeout; }
     int getInfuseBloomTime() const { return infuseBloomTime; }
     int getInfusePumpTime() const { return infusePumpTime; }
     int getPressurizeTime() const { return pressurizeTime; }
@@ -64,6 +65,7 @@ class Settings {
     void setTargetGrindVolume(int target_grind_volume);
     void setTargetGrindDuration(int target_duration);
     void setStartupMode(int startup_mode);
+    void setStandbyTimeout(int standby_timeout);
     void setInfuseBloomTime(int infuse_bloom_time);
     void setInfusePumpTime(int infuse_pump_time);
     void setPressurizeTime(int pressurize_time);
@@ -108,6 +110,7 @@ class Settings {
     double grindDelay = 1000.0;
     bool delayAdjust = true;
     int startupMode = MODE_STANDBY;
+    int standbyTimeout = DEFAULT_STANDBY_TIMEOUT_MS;
     int infuseBloomTime = 0;
     int infusePumpTime = 0;
     int pressurizeTime = 0;

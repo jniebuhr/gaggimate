@@ -154,6 +154,11 @@ void Settings::setStartupMode(const int startup_mode) {
     save();
 }
 
+void Settings::setStandbyTimeout(int standby_timeout) {
+    standbyTimeout = standby_timeout;
+    save();
+}
+
 void Settings::setInfuseBloomTime(int infuse_bloom_time) {
     infuseBloomTime = infuse_bloom_time;
     save();
