@@ -65,9 +65,11 @@ void Controller::setupBluetooth() {
     clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
     clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
     clientController.registerRemoteErrorCallback([this](const int error) {
-        if (error != ERROR_CODE_TIMEOUT) {
+        if (error != ERROR_CODE_TIMEOUT && error != this->error) {
             this->error = error;
             deactivate();
+            setMode(MODE_STANDBY);
+            pluginManager->trigger("controller:error");
         }
         ESP_LOGE("Controller", "Received error %d", error);
     });
@@ -138,7 +140,6 @@ void Controller::setupWifi() {
 }
 
 void Controller::loop() {
-    ui->loop();
     pluginManager->loop();
 
     if (screenReady) {
@@ -210,7 +211,7 @@ void Controller::loop() {
 bool Controller::isUpdating() const { return updating; }
 
 void Controller::startProcess(Process *process) {
-    if (isActive())
+    if (isActive() || isErrorState())
         return;
     processCompleted = false;
     this->currentProcess = process;

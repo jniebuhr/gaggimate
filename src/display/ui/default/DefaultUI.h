@@ -36,6 +36,7 @@ class DefaultUI {
     void updateGrindScreen() const;
     void updateWaterScreen() const;
     void updateSteamScreen() const;
+    void updateInitScreen() const;
 
     Controller *controller;
     PluginManager *pluginManager;
@@ -43,7 +44,6 @@ class DefaultUI {
     // Screen state
     bool updateAvailable = false;
     bool updateActive = false;
-    bool bluetoothActive = false;
     bool apActive = false;
 
     bool rerender = false;
@@ -54,6 +54,9 @@ class DefaultUI {
     // Screen change
     lv_obj_t **targetScreen = &ui_InitScreen;
     void (*targetScreenInit)(void) = &ui_InitScreen_screen_init;
+
+    xTaskHandle taskHandle;
+    static void loopTask(void *arg);
 };
 
 #endif // DEFAULTUI_H

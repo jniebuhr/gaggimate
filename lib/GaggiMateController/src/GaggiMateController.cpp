@@ -78,7 +78,7 @@ void GaggiMateController::detectBoard() {
     digitalWrite(DETECT_EN_PIN, HIGH);
     uint16_t millivolts = analogReadMilliVolts(DETECT_VALUE_PIN);
     digitalWrite(DETECT_EN_PIN, LOW);
-    int boardId = round(((float)millivolts) / 100.0f);
+    int boardId = round(((float)millivolts) / 100.0f - 0.5f);
     ESP_LOGI(LOG_TAG, "Detected Board ID: %d", boardId);
     for (ControllerConfig config : configs) {
         if (config.autodetectValue == boardId) {

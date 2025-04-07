@@ -55,17 +55,12 @@ void DefaultUI::init() {
         }
     });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
-        bluetoothActive = true;
         rerender = true;
         if (lv_scr_act() == ui_InitScreen) {
             Settings &settings = controller->getSettings();
             settings.getStartupMode() == MODE_BREW ? changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init)
                                                    : changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
         }
-    });
-    pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) {
-        rerender = true;
-        bluetoothActive = false;
     });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         rerender = true;
@@ -80,8 +75,14 @@ void DefaultUI::init() {
         rerender = true;
         updateAvailable = event.getInt("value");
     });
+    pluginManager->on("controller:error", [this](Event const &) {
+        updateActive = true;
+        rerender = true;
+        changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+    });
 
     setupPanel();
+    xTaskCreate(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
 }
 
 void DefaultUI::loop() {
@@ -91,6 +92,9 @@ void DefaultUI::loop() {
         rerender = true;
     }
     if (rerender) {
+        if (controller->isErrorState()) {
+            changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+        }
         rerender = false;
         lastRender = now;
         handleScreenChange();
@@ -108,6 +112,8 @@ void DefaultUI::loop() {
             updateGrindScreen();
         if (lv_scr_act() == ui_MenuScreen)
             updateMenuScreen();
+        if (lv_scr_act() == ui_InitScreen)
+            updateInitScreen();
     }
 
     lv_timer_handler();
@@ -146,8 +152,8 @@ void DefaultUI::updateStandbyScreen() const {
     } else {
         lv_obj_add_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
     }
-    bluetoothActive ? lv_obj_clear_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN)
-                    : lv_obj_add_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
+    controller->getClientController()->isConnected() ? lv_obj_clear_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN)
+                                                     : lv_obj_add_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
     !apActive &&WiFi.status() == WL_CONNECTED ? lv_obj_clear_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN)
                                               : lv_obj_add_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN);
     updateAvailable ? lv_obj_clear_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN)
@@ -372,4 +378,23 @@ void DefaultUI::updateSteamScreen() const {
     lv_img_set_angle(ui_SteamScreen_tempTarget, calculate_angle(setTemp));
     lv_imgbtn_set_src(ui_SteamScreen_goButton, LV_IMGBTN_STATE_RELEASED, nullptr,
                       controller->isActive() ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
+}
+
+void DefaultUI::updateInitScreen() const {
+    if (controller->isUpdating()) {
+        lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Updating...");
+    }
+    if (controller->isErrorState()) {
+        if (controller->getError() == ERROR_CODE_RUNAWAY) {
+            lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Temperature error, please restart");
+        }
+    }
+}
+
+void DefaultUI::loopTask(void *arg) {
+    auto *ui = static_cast<DefaultUI *>(arg);
+    while (true) {
+        ui->loop();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
 }

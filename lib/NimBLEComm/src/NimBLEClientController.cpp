@@ -13,6 +13,7 @@ void NimBLEClientController::initClient() {
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
     NimBLEDevice::setMTU(128);
     client = NimBLEDevice::createClient();
+    client->setClientCallbacks(this);
     if (client == nullptr)
         ESP_LOGE(LOG_TAG, "Failed to create BLE client");
 
@@ -22,9 +23,10 @@ void NimBLEClientController::initClient() {
 
 void NimBLEClientController::scan() {
     NimBLEScan *pBLEScan = NimBLEDevice::getScan();
+    pBLEScan->clearDuplicateCache();
     pBLEScan->setAdvertisedDeviceCallbacks(this); // Use this class as the callback handler
     pBLEScan->setActiveScan(true);
-    pBLEScan->start(BLE_SCAN_DURATION_SECONDS);
+    pBLEScan->start(BLE_SCAN_DURATION_SECONDS, nullptr, false);
 }
 
 void NimBLEClientController::registerTempReadCallback(const temp_read_callback_t &callback) { tempReadCallback = callback; }
