@@ -25,6 +25,7 @@ function ProfileCard({ data }) {
   const typeClass = data.type === 'pro' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
   return (
     <div
+      key="profile-list"
       className="rounded-lg border flex flex-row items-center border-slate-200 bg-white p-4 sm:col-span-12 cursor-pointer"
     >
       <div className="flex flex-row justify-center items-center p-4">

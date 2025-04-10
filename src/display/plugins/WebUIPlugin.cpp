@@ -30,6 +30,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         ota->setControllerVersion(controller->getSystemInfo().version);
         ota->init(controller->getClientController()->getClient());
     });
+    pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
 }
 
 void WebUIPlugin::loop() {
@@ -123,6 +124,8 @@ void WebUIPlugin::start(bool apMode) {
                                 handleOTASettings(client->id(), doc);
                             } else if (msgType == "req:ota-start") {
                                 handleOTAStart(client->id(), doc);
+                            } else if (msgType == "req:autotune-start") {
+                                handleAutotuneStart(client->id(), doc);
                             }
                         }
                     }
@@ -158,6 +161,12 @@ void WebUIPlugin::handleOTAStart(uint32_t clientId, JsonDocument &request) {
     } else {
         updateComponent = "";
     }
+}
+
+void WebUIPlugin::handleAutotuneStart(uint32_t clientId, JsonDocument &request) {
+    int testTime = request["time"].as<int>();
+    int samples = request["samples"].as<int>();
+    controller->autotune(testTime, samples);
 }
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
@@ -336,6 +345,14 @@ void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
     doc["tp"] = "evt:ota-progress";
     doc["phase"] = phase;
     doc["progress"] = progress;
+    String message = doc.as<String>();
+    ws.textAll(message);
+}
+
+void WebUIPlugin::sendAutotuneResult() {
+    JsonDocument doc;
+    doc["tp"] = "evt:autotune-result";
+    doc["pid"] = controller->getSettings().getPid();
     String message = doc.as<String>();
     ws.textAll(message);
 }

@@ -51,6 +51,7 @@ void NimBLEServerController::initServer(const String infoString) {
     // Ping Characteristic (Client writes autotune, Server reads)
     autotuneChar = pService->createCharacteristic(AUTOTUNE_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
     autotuneChar->setCallbacks(this); // Use this class as the callback handler
+    autotuneResultChar = pService->createCharacteristic(AUTOTUNE_RESULT_UUID, NIMBLE_PROPERTY::NOTIFY);
 
     // Brew button Characteristic (Server notifies client of brew button)
     brewBtnChar = pService->createCharacteristic(BREW_BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
@@ -126,6 +127,15 @@ void NimBLEServerController::sendSteamBtnState(bool steamButtonStatus) {
     }
 }
 
+void NimBLEServerController::sendAutotuneResult(float Kp, float Ki, float Kd) {
+    if (deviceConnected) {
+        char pidStr[30];
+        snprintf(pidStr, sizeof(pidStr), "%.3f,%.3f,%.3f", Kp, Ki, Kd);
+        autotuneResultChar->setValue(pidStr);
+        autotuneResultChar->notify();
+    }
+}
+
 void NimBLEServerController::registerTempControlCallback(const temp_control_callback_t &callback) {
     tempControlCallback = callback;
 }
@@ -164,28 +174,6 @@ void NimBLEServerController::onDisconnect(NimBLEServer *pServer) {
     pServer->startAdvertising(); // Restart advertising so clients can reconnect
 }
 
-String get_token(const String &from, uint8_t index, char separator) {
-    uint16_t start = 0;
-    uint16_t idx = 0;
-    uint8_t cur = 0;
-    while (idx < from.length()) {
-        if (from.charAt(idx) == separator) {
-            if (cur == index) {
-                return from.substring(start, idx);
-            }
-            cur++;
-            while (idx < from.length() - 1 && from.charAt(idx + 1) == separator)
-                idx++;
-            start = idx + 1;
-        }
-        idx++;
-    }
-    if ((cur == index) && (start < from.length())) {
-        return from.substring(start, from.length());
-    }
-    return "";
-}
-
 // BLECharacteristicCallbacks override
 void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
     ESP_LOGV(LOG_TAG, "Write received!");
@@ -222,7 +210,10 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_CHAR_UUID))) {
         ESP_LOGV(LOG_TAG, "Received autotune");
         if (autotuneCallback != nullptr) {
-            autotuneCallback();
+            auto autotune = String(pCharacteristic->getValue().c_str());
+            int testTime = get_token(autotune, 0, ',').toInt();
+            int samples = get_token(autotune, 1, ',').toInt();
+            autotuneCallback(testTime, samples);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PID_CONTROL_CHAR_UUID))) {
         auto pid = String(pCharacteristic->getValue().c_str());

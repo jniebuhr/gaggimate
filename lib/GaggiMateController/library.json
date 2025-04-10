@@ -23,6 +23,7 @@
     "sTune": "https://github.com/gaggimate/sTune.git",
     "PSM": "https://github.com/banoz/PSM.Library.git",
     "robtillaart/ADS1X15": "^0.5.2",
-    "Wire": "*"
+    "Wire": "*",
+    "pidautotuner": "https://github.com/jackw01/arduino-pid-autotuner"
   }
 }

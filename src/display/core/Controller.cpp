@@ -73,6 +73,14 @@ void Controller::setupBluetooth() {
         }
         ESP_LOGE("Controller", "Received error %d", error);
     });
+    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd) {
+        ESP_LOGI("Controller", "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
+        char pid[30];
+        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f", Kp, Ki, Kd);
+        settings.setPid(String(pid));
+        pluginManager->trigger("controller:autotune:result");
+        autotuning = false;
+    });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
@@ -210,8 +218,24 @@ void Controller::loop() {
 
 bool Controller::isUpdating() const { return updating; }
 
+bool Controller::isAutotuning() const { return autotuning; }
+
+bool Controller::isReady() const { return !isUpdating() && !isErrorState() && !isAutotuning(); }
+
+void Controller::autotune(int testTime, int samples) {
+    if (isActive() || !isReady()) {
+        return;
+    }
+    if (mode != MODE_STANDBY) {
+        activateStandby();
+    }
+    autotuning = true;
+    clientController.sendAutotune(testTime, samples);
+    pluginManager->trigger("controller:autotune:start");
+}
+
 void Controller::startProcess(Process *process) {
-    if (isActive() || isErrorState())
+    if (isActive() || !isReady())
         return;
     processCompleted = false;
     this->currentProcess = process;
@@ -220,6 +244,10 @@ void Controller::startProcess(Process *process) {
 }
 
 int Controller::getTargetTemp() {
+    if (isAutotuning()) {
+        return settings.getTargetBrewTemp();
+    }
+
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:

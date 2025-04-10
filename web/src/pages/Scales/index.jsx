@@ -61,8 +61,7 @@ export function Scales() {
   }, []);
 
   return (
-    <>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
+    <div key="scales" className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
         <div className="sm:col-span-12">
           <h2 className="text-2xl font-bold">Bluetooth Scales</h2>
         </div>
@@ -118,6 +117,5 @@ export function Scales() {
           </div>
         </div>
       </div>
-    </>
   );
 }

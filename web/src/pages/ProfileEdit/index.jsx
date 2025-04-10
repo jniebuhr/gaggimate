@@ -53,19 +53,17 @@ export function ProfileEdit() {
     }
   }, [params.id, setData]);
   return (
-    <>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
-        <div className="sm:col-span-12">
-          <h2 className="text-2xl font-bold">Create Profile</h2>
-        </div>
-
-        {
-          !data?.type && <ProfileTypeSelection onSelect={(type) => setData({...data, type})} />
-        }
-        {
-          data?.type === 'standard' && <StandardProfileForm data={data} onChange={(data) => setData(data)} />
-        }
+    <div key="profile-edit" className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
+      <div className="sm:col-span-12">
+        <h2 className="text-2xl font-bold">Create Profile</h2>
       </div>
-    </>
+
+      {
+        !data?.type && <ProfileTypeSelection onSelect={(type) => setData({...data, type})} />
+      }
+      {
+        data?.type === 'standard' && <StandardProfileForm data={data} onChange={(data) => setData(data)} />
+      }
+    </div>
   );
 }

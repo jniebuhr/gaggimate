@@ -30,6 +30,7 @@ class WebUIPlugin : public Plugin {
 
     void handleOTASettings(uint32_t clientId, JsonDocument &request);
     void handleOTAStart(uint32_t clientId, JsonDocument &request);
+    void handleAutotuneStart(uint32_t clientId, JsonDocument &request);
     void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
@@ -37,6 +38,7 @@ class WebUIPlugin : public Plugin {
     void handleBLEScaleInfo(AsyncWebServerRequest *request);
     void updateOTAStatus(const String &version);
     void updateOTAProgress(uint8_t phase, int progress);
+    void sendAutotuneResult();
 
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;

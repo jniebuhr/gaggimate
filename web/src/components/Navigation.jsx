@@ -35,7 +35,7 @@ export function Navigation(props) {
         <hr className="h-5 border-0" />
       </>}
       <div class="space-y-1.5">
-        {props.extended && <MenuItem label="PID Autotune" link="/pidtune" iconClass="fa fa-temperature-half" />}
+        <MenuItem label="PID Autotune" link="/pidtune" iconClass="fa fa-temperature-half" />
         <MenuItem label="Bluetooth Scales" link="/scales" iconClass="fa-brands fa-bluetooth-b" />
         <MenuItem label="Settings" link="/settings" iconClass="fa fa-cog" />
       </div>

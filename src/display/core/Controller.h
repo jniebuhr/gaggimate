@@ -52,8 +52,13 @@ class Controller {
 
     bool isUpdating() const;
 
+    bool isAutotuning() const;
+
+    bool isReady() const;
+
     bool isVolumetricAvailable() const { return volumetricAvailable; }
 
+    void autotune(int testTime, int samples);
     void startProcess(Process *process);
     Process *getProcess() const { return currentProcess; }
     Process *getLastProcess() const { return lastProcess; }
@@ -145,6 +150,7 @@ class Controller {
     unsigned long lastAction = 0;
     bool loaded = false;
     bool updating = false;
+    bool autotuning = false;
     bool isApConnection = false;
     bool initialized = false;
     bool screenReady = false;

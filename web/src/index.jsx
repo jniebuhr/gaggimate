@@ -1,7 +1,7 @@
 import './style.css';
 
 import { render, createContext } from 'preact';
-import { LocationProvider, Router, Route } from 'preact-iso';
+import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
 import { Footer } from './components/Footer.jsx';
@@ -14,6 +14,7 @@ import ApiService, { ApiServiceContext } from './services/ApiService.js';
 import { Navigation } from './components/Navigation.jsx';
 import { ProfileList } from './pages/ProfileList/index.jsx';
 import { ProfileEdit } from './pages/ProfileEdit/index.jsx';
+import { Autotune } from './pages/Autotune/index.jsx';
 
 const apiService = new ApiService();
 
@@ -34,15 +35,18 @@ export function App() {
                 <div class="grid grid-cols-1 md:gap-20 lg:grid-cols-12">
                   <Navigation extended />
                   <div class="lg:col-span-9">
-                    <Router>
-                      <Route path="/" component={Home} />
-                      <Route path="/profiles" component={ProfileList} />
-                      <Route path="/profiles/:id" component={ProfileEdit} />
-                      <Route path="/settings" component={Settings} />
-                      <Route path="/ota" component={OTA} />
-                      <Route path="/scales" component={Scales} />
-                      <Route default component={NotFound} />
-                    </Router>
+                    <ErrorBoundary>
+                      <Router>
+                        <Route path="/" component={Home} />
+                        <Route path="/profiles" component={ProfileList} />
+                        <Route path="/profiles/:id" component={ProfileEdit} />
+                        <Route path="/settings" component={Settings} />
+                        <Route path="/ota" component={OTA} />
+                        <Route path="/scales" component={Scales} />
+                        <Route path="/pidtune" component={Autotune} />
+                        <Route default component={NotFound} />
+                      </Router>
+                    </ErrorBoundary>
                   </div>
                 </div>
               </div>

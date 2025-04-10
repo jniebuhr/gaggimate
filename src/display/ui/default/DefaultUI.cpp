@@ -80,6 +80,10 @@ void DefaultUI::init() {
         rerender = true;
         changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
     });
+    pluginManager->on("controller:autotune:start",
+                      [this](Event const &) { changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init); });
+    pluginManager->on("controller:autotune:result",
+                      [this](Event const &) { changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
 
     setupPanel();
     xTaskCreate(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
@@ -383,11 +387,12 @@ void DefaultUI::updateSteamScreen() const {
 void DefaultUI::updateInitScreen() const {
     if (controller->isUpdating()) {
         lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Updating...");
-    }
-    if (controller->isErrorState()) {
+    } else if (controller->isErrorState()) {
         if (controller->getError() == ERROR_CODE_RUNAWAY) {
             lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Temperature error, please restart");
         }
+    } else if (controller->isAutotuning()) {
+        lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Autotuning...");
     }
 }
 

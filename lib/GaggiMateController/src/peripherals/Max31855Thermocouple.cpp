@@ -35,7 +35,7 @@ void Max31855Thermocouple::loop() {
     errors = 0;
     float temp = max31855->getTemperature();
     if (temp > 0) {
-        temperature = temp;
+        temperature = 0.2 * temp + 0.8 * temperature;
     } else {
         errors++;
     }

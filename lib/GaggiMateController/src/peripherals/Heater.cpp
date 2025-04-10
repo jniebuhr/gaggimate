@@ -1,10 +1,11 @@
 #include "Heater.h"
 #include <Arduino.h>
 
-Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback)
-    : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback) {
+Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
+               const pid_result_callback_t &pid_callback)
+    : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback) {
     pid = new QuickPID(&temperature, &output, &setpoint);
-    tune = new sTune(&temperature, &output, sTune::ZN_PID, sTune::directIP, sTune::printSUMMARY);
+    tuner = new PIDAutotuner();
 
     output = 0.0f;
 }
@@ -16,19 +17,23 @@ void Heater::setup() {
 }
 
 void Heater::setupPid() {
-    tune->Configure(0, 0, 0, 0, TEST_TIME_SEC, 0, TUNER_SAMPLES);
     pid->SetOutputLimits(0, TUNER_OUTPUT_SPAN);
     pid->SetSampleTimeUs((TUNER_OUTPUT_SPAN - 1) * 1000);
     pid->SetMode(QuickPID::Control::automatic);
-    pid->SetProportionalMode(QuickPID::pMode::pOnMeas);
+    pid->SetProportionalMode(QuickPID::pMode::pOnError);
+    pid->SetDerivativeMode(QuickPID::dMode::dOnMeas);
     pid->SetAntiWindupMode(QuickPID::iAwMode::iAwClamp);
     pid->SetTunings(Kp, Ki, Kd);
 }
 
-void Heater::setupAutotune() {
-    tune->Configure(TUNER_INPUT_SPAN, TUNER_OUTPUT_SPAN, outputStart, outputStep, TEST_TIME_SEC_AUTOTUNE,
-                    SETTLE_TIME_SEC_AUTOTUNE, TUNER_SAMPLES_AUTOTUNE);
-    tune->SetEmergencyStop(120);
+void Heater::setupAutotune(int tuningTemp, int samples) {
+    pid->Initialize();
+    pid->SetMode(QuickPID::Control::manual);
+    tuner->setOutputRange(0, TUNER_OUTPUT_SPAN);
+    tuner->setTargetInputValue(tuningTemp);
+    tuner->setTuningCycles(samples);
+    tuner->setLoopInterval((TUNER_OUTPUT_SPAN - 1) * 1000);
+    tuner->setZNMode(PIDAutotuner::ZNModeLessOvershoot);
 }
 
 void Heater::loop() {
@@ -38,64 +43,111 @@ void Heater::loop() {
         return;
     }
 
-    loopPid();
+    if (autotuning) {
+        loopAutotune();
+    } else {
+        loopPid();
+    }
 }
 
 void Heater::setSetpoint(float setpoint) {
-    this->setpoint = setpoint;
-    ESP_LOGV(LOG_TAG, "Set setpoint %f°C", setpoint);
+    if (this->setpoint != setpoint) {
+        this->setpoint = setpoint;
+        pid->SetMode(QuickPID::Control::manual);
+        pid->SetMode(QuickPID::Control::automatic);
+        ESP_LOGV(LOG_TAG, "Set setpoint %f°C", setpoint);
+    }
 }
 
 void Heater::setTunings(float Kp, float Ki, float Kd) {
     if (pid->GetKp() != Kp || pid->GetKi() != Ki || pid->GetKd() != Kd) {
         pid->SetTunings(Kp, Ki, Kd);
+        pid->SetMode(QuickPID::Control::manual);
+        pid->SetMode(QuickPID::Control::automatic);
         ESP_LOGV(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f", Kp, Ki, Kd);
     }
 }
 
+void Heater::autotune(int testTime, int samples) {
+    setupAutotune(testTime, samples);
+    autotuning = true;
+}
+
 void Heater::loopPid() {
-    float optimumOutput = tune->softPwm(heaterPin, temperature, output, setpoint, TUNER_OUTPUT_SPAN, 0);
+    softPwm(TUNER_OUTPUT_SPAN, 1);
     if (pid->Compute()) {
-        float rawTemp = sensor->read();
-        temperature = 0.2 * rawTemp + 0.8 * temperature;
-        tune->plotter(temperature, optimumOutput, setpoint, 0.1f, 3);
+        temperature = sensor->read();
+        plot(output, 1.0f, 3);
     }
 }
 
 void Heater::loopAutotune() {
-    float rawTemp = 0;
-    float optimumOutput = tune->softPwm(heaterPin, temperature, output, setpoint, TUNER_OUTPUT_SPAN, debounce);
-    switch (tune->Run()) {
-    case tune->sample: // active once per sample during test
-        rawTemp = sensor->read();
-        temperature = 0.2 * rawTemp + 0.8 * temperature;
-        tune->plotter(temperature, output, setpoint, 0.1f, 3); // output scale 0.5, plot every 3rd sample
-        break;
-    case tune->tunings:                      // active just once when sTune is done
-        tune->GetAutoTunings(&Kp, &Ki, &Kd); // sketch variables updated by sTune
-        pid->SetOutputLimits(0, TUNER_OUTPUT_SPAN);
-        pid->SetSampleTimeUs((TUNER_OUTPUT_SPAN - 1) * 1000);
-        debounce = 0; // ssr mode
-        output = outputStep;
-        pid->SetMode(QuickPID::Control::automatic);
-        pid->SetProportionalMode(QuickPID::pMode::pOnMeas);
-        pid->SetAntiWindupMode(QuickPID::iAwMode::iAwClamp);
-        pid->SetTunings(Kp, Ki, Kd);
-        break;
-
-    case tune->runPid:                               // active once per sample after tunings
-        if (startup && temperature > setpoint - 5) { // reduce overshoot
-            startup = false;
-            output -= 9;
-            pid->SetMode(QuickPID::Control::manual);
-            pid->SetMode(QuickPID::Control::automatic);
+    tuner->startTuningLoop(micros());
+    long microseconds;
+    long loopInterval = (static_cast<long>(TUNER_OUTPUT_SPAN) - 1L) * 1000L;
+    while (!tuner->isFinished()) {
+        microseconds = micros();
+        temperature = sensor->read();
+        output = tuner->tunePID(temperature, microseconds);
+        softPwm(TUNER_OUTPUT_SPAN, 1);
+        plot(output, 1.0f, 3);
+        while (micros() - microseconds < loopInterval) {
+            softPwm(TUNER_OUTPUT_SPAN, 1);
+            vTaskDelay(1 / portTICK_PERIOD_MS);
         }
-        rawTemp = sensor->read();
-        temperature = 0.2 * rawTemp + 0.8 * temperature;
-        pid->Compute();
-        tune->plotter(temperature, optimumOutput, setpoint, 0.1f, 3);
-        break;
     }
+    output = 0;
+    softPwm(TUNER_OUTPUT_SPAN, 1);
+    pid_callback(tuner->getKp(), tuner->getKi(), tuner->getKd());
+    setTunings(tuner->getKp(), tuner->getKi(), tuner->getKd());
+    autotuning = false;
+}
+
+float Heater::softPwm(uint32_t windowSize, uint8_t debounce) {
+    // software PWM timer
+    uint32_t msNow = millis();
+    static uint32_t windowStartTime, nextSwitchTime;
+    if (msNow - windowStartTime >= windowSize) {
+        windowStartTime = msNow;
+    }
+    // SSR optimum AC half-cycle controller
+    /*
+    static float optimumOutput;
+    static bool reachedSetpoint;
+
+    if (temperature > setpoint) reachedSetpoint = true;
+    if (reachedSetpoint && !debounce && setpoint > 0 && temperature > setpoint) optimumOutput = output - 8;
+    else if (reachedSetpoint && !debounce && setpoint > 0 && temperature < setpoint) optimumOutput = output + 8;
+    else  optimumOutput = output;
+    if (optimumOutput < 0) optimumOutput = 0;
+    */
+
+    float optimumOutput = output;
+
+    // PWM relay output
+    static bool relayStatus;
+    if (!relayStatus && optimumOutput > (msNow - windowStartTime)) {
+        if (msNow > nextSwitchTime) {
+            nextSwitchTime = msNow + debounce;
+            relayStatus = true;
+            digitalWrite(heaterPin, HIGH);
+        }
+    } else if (relayStatus && optimumOutput < (msNow - windowStartTime)) {
+        if (msNow > nextSwitchTime) {
+            nextSwitchTime = msNow + debounce;
+            relayStatus = false;
+            digitalWrite(heaterPin, LOW);
+        }
+    }
+    return optimumOutput;
+}
+
+void Heater::plot(float optimumOutput, float outputScale, uint8_t everyNth) {
+    if (plotCount >= everyNth) {
+        plotCount = 1;
+        ESP_LOGI("sTune", "Setpoint: %.2f, Input: %.2f, Output: %.2f", setpoint, temperature, optimumOutput * outputScale);
+    } else
+        plotCount++;
 }
 
 void Heater::loopTask(void *arg) {

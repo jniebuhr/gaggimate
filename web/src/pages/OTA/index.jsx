@@ -15,7 +15,6 @@ export function OTA() {
   useEffect(() => {
     const listenerId = apiService.on('res:ota-settings', (msg) => {
       setFormData(msg);
-      console.log(msg);
       setIsLoading(false);
       setSubmitting(false);
     });
@@ -85,9 +84,7 @@ export function OTA() {
   }
 
   return (
-    <>
-
-      <form method="post" action="/api/ota" ref={formRef} onSubmit={onSubmit} className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
+    <form key="ota" method="post" action="/api/ota" ref={formRef} onSubmit={onSubmit} className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
         <div className="sm:col-span-12">
           <h2 className="text-2xl font-bold">System & Updates</h2>
         </div>
@@ -151,6 +148,5 @@ export function OTA() {
           />
         </div>
       </form>
-    </>
   );
 }

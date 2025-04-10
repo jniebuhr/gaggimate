@@ -21,7 +21,9 @@ void GaggiMateController::setup() {
     this->thermocouple = new Max31855Thermocouple(
         _config.maxCsPin, _config.maxMisoPin, _config.maxSckPin, [this](float temperature) { _ble.sendTemperature(temperature); },
         [this]() { thermalRunawayShutdown(); });
-    this->heater = new Heater(this->thermocouple, _config.heaterPin, [this]() { thermalRunawayShutdown(); });
+    this->heater = new Heater(
+        this->thermocouple, _config.heaterPin, [this]() { thermalRunawayShutdown(); },
+        [this](float Kp, float Ki, float Kd) { _ble.sendAutotuneResult(Kp, Ki, Kd); });
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
     if (_config.capabilites.dimming) {
@@ -58,6 +60,7 @@ void GaggiMateController::setup() {
         lastPingTime = millis();
         ESP_LOGV(LOG_TAG, "Ping received, system is alive");
     });
+    _ble.registerAutotuneCallback([this](int testTime, int samples) { this->heater->autotune(testTime, samples); });
 
     ESP_LOGI(LOG_TAG, "Initialization done");
 }

@@ -40,6 +40,10 @@ void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &cal
 
 void NimBLEClientController::registerPressureCallback(const pressure_read_callback_t &callback) { pressureCallback = callback; }
 
+void NimBLEClientController::registerAutotuneResultCallback(const pid_control_callback_t &callback) {
+    autotuneResultCallback = callback;
+}
+
 std::string NimBLEClientController::readInfo() const {
     if (infoChar != nullptr && infoChar->canRead()) {
         return infoChar->readValue();
@@ -111,6 +115,12 @@ bool NimBLEClientController::connectToServer() {
                                                 std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
+    autotuneResultChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_RESULT_UUID));
+    if (autotuneResultChar->canNotify()) {
+        autotuneResultChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                                      std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
     delay(500);
 
     readyForConnection = false;
@@ -157,9 +167,11 @@ void NimBLEClientController::sendPing() {
     }
 }
 
-void NimBLEClientController::sendAutotune() {
+void NimBLEClientController::sendAutotune(int testTime, int samples) {
     if (autotuneChar != nullptr && client->isConnected()) {
-        autotuneChar->writeValue("1");
+        char autotuneStr[20];
+        snprintf(autotuneStr, sizeof(autotuneStr), "%d,%d", testTime, samples);
+        autotuneChar->writeValue(autotuneStr);
     }
 }
 
@@ -224,6 +236,16 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
         if (steamBtnCallback != nullptr) {
             steamBtnCallback(steamButtonStatus);
+        }
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
+        String settings = String((char *)pData);
+        ESP_LOGV(LOG_TAG, "autotune result: %s", settings.c_str());
+        if (autotuneResultCallback != nullptr) {
+            float Kp = get_token(settings, 0, ',').toFloat();
+            float Ki = get_token(settings, 1, ',').toFloat();
+            float Kd = get_token(settings, 2, ',').toFloat();
+            autotuneResultCallback(Kp, Ki, Kd);
         }
     }
 }

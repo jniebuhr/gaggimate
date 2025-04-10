@@ -14,6 +14,7 @@
 #define PING_CHAR_UUID "9731755e-29ce-41a8-91d9-7a244f49859b"
 #define ERROR_CHAR_UUID "d6676ec7-820c-41de-820d-95620749003b"
 #define AUTOTUNE_CHAR_UUID "d54df381-69b6-4531-b1cc-dde7766bbaf4"
+#define AUTOTUNE_RESULT_UUID "7f61607a-2817-4354-9b94-d49c057fc879"
 #define PID_CONTROL_CHAR_UUID "d448c469-3e1d-4105-b5b8-75bf7d492fad"
 #define BREW_BTN_UUID "a29eb137-b33e-45a4-b1fc-15eb04e8ab39"
 #define STEAM_BTN_UUID "53750675-4839-421e-971e-cc6823507d8e"
@@ -34,7 +35,7 @@ using pin_control_callback_t = std::function<void(bool isActive)>;
 using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd)>;
 using ping_callback_t = std::function<void()>;
 using remote_err_callback_t = std::function<void(int errorCode)>;
-using autotune_callback_t = std::function<void()>;
+using autotune_callback_t = std::function<void(int testTime, int samples)>;
 using brew_callback_t = std::function<void(bool brewButtonStatus)>;
 using steam_callback_t = std::function<void(bool steamButtonStatus)>;
 
@@ -48,5 +49,7 @@ struct SystemInfo {
     String version;
     SystemCapabilities capabilities;
 };
+
+String get_token(const String &from, uint8_t index, char separator);
 
 #endif // NIMBLECOMM_H

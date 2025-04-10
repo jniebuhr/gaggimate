@@ -14,7 +14,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void sendValveControl(bool pinState);
     void sendAltControl(bool pinState);
     void sendPing();
-    void sendAutotune();
+    void sendAutotune(int testTime, int samples);
     void sendPidSettings(const String &pid);
     bool isReadyForConnection() const;
     bool isConnected();
@@ -24,6 +24,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerBrewBtnCallback(const brew_callback_t &callback);
     void registerSteamBtnCallback(const steam_callback_t &callback);
     void registerPressureCallback(const pressure_read_callback_t &callback);
+    void registerAutotuneResultCallback(const pid_control_callback_t &callback);
     std::string readInfo() const;
     NimBLEClient *getClient() const { return client; };
 
@@ -39,6 +40,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *pidControlChar;
     NimBLERemoteCharacteristic *errorChar;
     NimBLERemoteCharacteristic *autotuneChar;
+    NimBLERemoteCharacteristic *autotuneResultChar;
     NimBLERemoteCharacteristic *brewBtnChar;
     NimBLERemoteCharacteristic *steamBtnChar;
     NimBLERemoteCharacteristic *infoChar;
@@ -51,6 +53,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     brew_callback_t brewBtnCallback = nullptr;
     steam_callback_t steamBtnCallback = nullptr;
     pressure_read_callback_t pressureCallback = nullptr;
+    pid_control_callback_t autotuneResultCallback = nullptr;
 
     // BLEAdvertisedDeviceCallbacks override
     void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;
