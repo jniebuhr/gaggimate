@@ -17,6 +17,7 @@ class DefaultUI {
   public:
     DefaultUI(Controller *controller, PluginManager *pluginManager);
 
+
     // Default work methods
     void init();
     void loop();
@@ -26,33 +27,42 @@ class DefaultUI {
 
   private:
     void setupPanel() const;
+    void setupState();
+    void setupReactive();
 
-    void handleScreenChange() const;
+    void handleScreenChange();
 
     void updateStandbyScreen() const;
-    void updateMenuScreen() const;
     void updateStatusScreen() const;
-    void updateBrewScreen() const;
-    void updateGrindScreen() const;
-    void updateWaterScreen() const;
-    void updateSteamScreen() const;
-    void updateInitScreen() const;
 
     Controller *controller;
     PluginManager *pluginManager;
 
     // Screen state
-    bool updateAvailable = false;
-    bool updateActive = false;
-    bool apActive = false;
+    int updateAvailable = false;
+    int updateActive = false;
+    int apActive = false;
+    int error = false;
+    int autotuning = false;
+    int volumetricAvailable = false;
+    int volumetricMode = false;
+    int grindActive = false;
+    int active = false;
 
     bool rerender = false;
     unsigned long lastRender = 0;
 
     int mode = MODE_STANDBY;
+    int currentTemp = 0;
+    int targetTemp = 0;
+    int targetDuration = 0;
+    int targetVolume = 0;
+    int grindDuration = 0;
+    int grindVolume = 0;
 
     // Screen change
     lv_obj_t **targetScreen = &ui_InitScreen;
+    lv_obj_t **currentScreen = &ui_InitScreen;
     void (*targetScreenInit)(void) = &ui_InitScreen_screen_init;
 
     xTaskHandle taskHandle;
