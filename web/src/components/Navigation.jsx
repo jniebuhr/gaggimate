@@ -1,10 +1,10 @@
 import { useLocation, useRoute } from 'preact-iso';
 
 function MenuItem(props) {
-  let className = 'group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold active:border-indigo-200';
+  let className = 'group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold active:border-indigo-200 dark:text-indigo-100';
   const { path } = useLocation();
   if (props.active || path === props.link) {
-    className += ' bg-indigo-100 text-indigo-500';
+    className += ' bg-indigo-100 text-indigo-500 dark:bg-indigo-500 dark:text-indigo-100';
   } else {
     className += ' hover:bg-indigo-100 hover:text-indigo-600 text-slate-900';
   }

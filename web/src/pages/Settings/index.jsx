@@ -93,7 +93,7 @@ export function Settings() {
         </div>
         <Card xs={12} lg={6} title="Temperature settings">
             <div>
-              <label htmlFor="targetBrewTemp" className="block font-medium text-[#333333]">
+              <label htmlFor="targetBrewTemp" className="block font-medium text-gray-700 dark:text-gray-400">
                 Default Brew Temperature (°C)
               </label>
               <input
@@ -108,7 +108,7 @@ export function Settings() {
             </div>
 
             <div>
-              <label htmlFor="targetSteamTemp" className="block font-medium text-[#333333]">
+              <label htmlFor="targetSteamTemp" className="block font-medium text-gray-700 dark:text-gray-400">
                 Default Steam Temperature (°C)
               </label>
               <input
@@ -123,7 +123,7 @@ export function Settings() {
             </div>
 
             <div>
-              <label htmlFor="targetWaterTemp" className="block font-medium text-[#333333]">
+              <label htmlFor="targetWaterTemp" className="block font-medium text-gray-700 dark:text-gray-400">
                 Default Water Temperature (°C)
               </label>
               <input
@@ -138,7 +138,7 @@ export function Settings() {
             </div>
 
             <div>
-              <label htmlFor="temperatureOffset" className="block font-medium text-[#333333]">
+              <label htmlFor="temperatureOffset" className="block font-medium text-gray-700 dark:text-gray-400">
                 Temperature Offset (°C)
               </label>
               <input
@@ -154,7 +154,7 @@ export function Settings() {
         </Card>
         <Card xs={12} lg={6} title="Brew phases">
           <div>
-            <label htmlFor="targetDuration" className="block font-medium text-[#333333]">
+            <label htmlFor="targetDuration" className="block font-medium text-gray-700 dark:text-gray-400">
               Default brew duration (s)
             </label>
             <input
@@ -168,7 +168,7 @@ export function Settings() {
             />
           </div>
           <div>
-            <label htmlFor="pressurizeTime" className="block font-medium text-[#333333]">
+            <label htmlFor="pressurizeTime" className="block font-medium text-gray-700 dark:text-gray-400">
               Pressurize Time (s)
             </label>
             <input
@@ -182,7 +182,7 @@ export function Settings() {
             />
           </div>
           <div>
-            <label htmlFor="infusePumpTime" className="block font-medium text-[#333333]">
+            <label htmlFor="infusePumpTime" className="block font-medium text-gray-700 dark:text-gray-400">
               Infusion Water flow (s)
             </label>
             <input
@@ -196,7 +196,7 @@ export function Settings() {
             />
           </div>
           <div>
-            <label htmlFor="infuseBloomTime" className="block font-medium text-[#333333]">
+            <label htmlFor="infuseBloomTime" className="block font-medium text-gray-700 dark:text-gray-400">
               Infusion Bloom time (s)
             </label>
             <input
@@ -212,7 +212,7 @@ export function Settings() {
         </Card>
         <Card xs={12} lg={6} title="User preferences">
           <div>
-            <label htmlFor="startup-mode" className="block font-medium text-[#333333]">
+            <label htmlFor="startup-mode" className="block font-medium text-gray-700 dark:text-gray-400">
               Startup Mode
             </label>
             <select id="startup-mode" name="startupMode" className="input-field" onChange={onChange('startupMode')}>
@@ -225,7 +225,7 @@ export function Settings() {
             </select>
           </div>
           <div>
-            <label htmlFor="standbyTimeout" className="block font-medium text-[#333333]">
+            <label htmlFor="standbyTimeout" className="block font-medium text-gray-700 dark:text-gray-400">
               Standby Timeout (s)
             </label>
             <input
@@ -265,7 +265,7 @@ export function Settings() {
           </div>
           <div className="flex flex-row gap-4">
             <div className="flex-auto">
-              <label htmlFor="brewDelay" className="block font-medium text-[#333333]">
+              <label htmlFor="brewDelay" className="block font-medium text-gray-700 dark:text-gray-400">
                 Brew (ms)
               </label>
               <input
@@ -279,7 +279,7 @@ export function Settings() {
               />
             </div>
             <div className="flex-auto">
-              <label htmlFor="grindDelay" className="block font-medium text-[#333333]">
+              <label htmlFor="grindDelay" className="block font-medium text-gray-700 dark:text-gray-400">
                 Grind (ms)
               </label>
               <input
@@ -317,7 +317,7 @@ export function Settings() {
         </Card>
         <Card xs={12} lg={6} title="System preferences">
           <div>
-            <label htmlFor="wifiSsid" className="block font-medium text-[#333333]">
+            <label htmlFor="wifiSsid" className="block font-medium text-gray-700 dark:text-gray-400">
               WiFi SSID
             </label>
             <input
@@ -331,7 +331,7 @@ export function Settings() {
             />
           </div>
           <div>
-            <label htmlFor="wifiPassword" className="block font-medium text-[#333333]">
+            <label htmlFor="wifiPassword" className="block font-medium text-gray-700 dark:text-gray-400">
               WiFi Password
             </label>
             <input
@@ -345,7 +345,7 @@ export function Settings() {
             />
           </div>
           <div>
-            <label htmlFor="mdnsName" className="block font-medium text-[#333333]">
+            <label htmlFor="mdnsName" className="block font-medium text-gray-700 dark:text-gray-400">
               Hostname
             </label>
             <input
@@ -359,7 +359,7 @@ export function Settings() {
             />
           </div>
           <div>
-            <label htmlFor="timezone" className="block font-medium text-[#333333]">
+            <label htmlFor="timezone" className="block font-medium text-gray-700 dark:text-gray-400">
               Timezone
             </label>
             <select id="timezone" name="timezone" className="input-field" onChange={onChange('timezone')}>
@@ -373,7 +373,7 @@ export function Settings() {
             </select>
           </div>
           <div>
-            <label htmlFor="pid" className="block font-medium text-[#333333]">
+            <label htmlFor="pid" className="block font-medium text-gray-700 dark:text-gray-400">
               PID Values (Kp, Ki, Kd)
             </label>
             <input
@@ -430,7 +430,7 @@ export function Settings() {
             {formData.boilerFillActive && (
               <div className="p-4 flex flex-row gap-4">
                 <div className="flex-auto">
-                  <label htmlFor="startupFillTime" className="block font-medium text-[#333333]">
+                  <label htmlFor="startupFillTime" className="block font-medium text-gray-700 dark:text-gray-400">
                     On startup (s)
                   </label>
                   <input
@@ -444,7 +444,7 @@ export function Settings() {
                   />
                 </div>
                 <div className="flex-auto">
-                  <label htmlFor="infuseBloomTime" className="block font-medium text-[#333333]">
+                  <label htmlFor="infuseBloomTime" className="block font-medium text-gray-700 dark:text-gray-400">
                     On steam deactivate (s)
                   </label>
                   <input
@@ -481,7 +481,7 @@ export function Settings() {
                   This feature controls a Tasmota Plug to turn off your grinder after the target has been reached.
                 </p>
                 <div className="flex-auto">
-                  <label htmlFor="smartGrindIp" className="block font-medium text-[#333333]">
+                  <label htmlFor="smartGrindIp" className="block font-medium text-gray-700 dark:text-gray-400">
                     Tasmota IP
                   </label>
                   <input
@@ -495,7 +495,7 @@ export function Settings() {
                   />
                 </div>
                 <div className="flex-auto">
-                  <label htmlFor="smartGrindMode" className="block font-medium text-[#333333]">
+                  <label htmlFor="smartGrindMode" className="block font-medium text-gray-700 dark:text-gray-400">
                     Mode
                   </label>
                   <select id="smartGrindMode" name="smartGrindMode" className="input-field" onChange={onChange('smartGrindMode')}>
@@ -535,7 +535,7 @@ export function Settings() {
                   This feature allows connection to a Home Assistant or MQTT installation and push the current state.
                 </p>
                 <div className="flex-auto">
-                  <label htmlFor="haIP" className="block font-medium text-[#333333]">
+                  <label htmlFor="haIP" className="block font-medium text-gray-700 dark:text-gray-400">
                     MQTT IP
                   </label>
                   <input
@@ -550,7 +550,7 @@ export function Settings() {
                 </div>
 
                 <div className="flex-auto">
-                  <label htmlFor="haPort" className="block font-medium text-[#333333]">
+                  <label htmlFor="haPort" className="block font-medium text-gray-700 dark:text-gray-400">
                     MQTT Port
                   </label>
                   <input
@@ -564,7 +564,7 @@ export function Settings() {
                   />
                 </div>
                 <div className="flex-auto">
-                  <label htmlFor="haUser" className="block font-medium text-[#333333]">
+                  <label htmlFor="haUser" className="block font-medium text-gray-700 dark:text-gray-400">
                     MQTT User
                   </label>
                   <input
@@ -578,7 +578,7 @@ export function Settings() {
                   />
                 </div>
                 <div className="flex-auto">
-                  <label htmlFor="haPassword" className="block font-medium text-[#333333]">
+                  <label htmlFor="haPassword" className="block font-medium text-gray-700 dark:text-gray-400">
                     MQTT Password
                   </label>
                   <input

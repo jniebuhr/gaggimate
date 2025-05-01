@@ -18,11 +18,14 @@ export default function Card(props) {
   return (
     <>
       <div
-        className={`overflow-hidden rounded-xl border border-slate-200 bg-white ${spanClass}`}
+        className={`overflow-hidden rounded-xl border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 ${spanClass}`}
       >
-        <div className="px-6 pt-6">
-          <h2 className="text-lg font-bold">{props.title}</h2>
-        </div>
+        {
+          props.title && <div className="px-6 pt-6">
+            <h2 className="text-lg font-bold">{props.title}</h2>
+          </div>
+        }
+
 
         <div className="p-6 flex flex-col gap-2">
           {props.children}

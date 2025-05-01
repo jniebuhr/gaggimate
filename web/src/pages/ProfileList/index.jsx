@@ -26,12 +26,12 @@ function ProfileCard({ data }) {
   return (
     <div
       key="profile-list"
-      className="rounded-lg border flex flex-row items-center border-slate-200 bg-white p-4 sm:col-span-12 cursor-pointer"
+      className="rounded-lg border flex flex-row items-center border-slate-200 bg-white p-4 sm:col-span-12 cursor-pointer dark:bg-gray-800 dark:border-gray-600"
     >
       <div className="flex flex-row justify-center items-center p-4">
         <label className="flex items-center relative cursor-pointer">
           <input checked={data.selected} type="checkbox"
-                 className="peer h-6 w-6 cursor-pointer transition-all appearance-none rounded-full bg-slate-100 shadow hover:shadow-md border border-slate-300 checked:bg-green-600 checked:border-green-600"
+                 className="peer h-6 w-6 cursor-pointer transition-all appearance-none rounded-full bg-slate-100 dark:bg-slate-700 shadow hover:shadow-md border border-slate-300 checked:bg-green-600 checked:border-green-600"
                  id="check-custom-style" />
           <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <i className="fa fa-check text-white" />
@@ -55,7 +55,7 @@ function ProfileCard({ data }) {
             </a>
             <a
               href="javascript:void(0)"
-              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200"
+              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 dark:text-indigo-100 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200"
             >
               <span className="fa fa-pen" />
             </a>
@@ -98,7 +98,7 @@ function SimpleDivider() {
 
 function SimpleStep(props) {
   return (
-    <div className="bg-white border border-gray-200 p-2 rounded flex flex-col">
+    <div className="bg-white border border-gray-200 p-2 rounded flex flex-col dark:bg-slate-700 dark:border-slate-800">
       <div className="flex flex-row gap-2">
         <span className="text-sm font-bold">{PhaseLabels[props.phase]}</span>
         <span className="text-sm">{props.type}</span>

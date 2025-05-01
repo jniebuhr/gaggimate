@@ -33,7 +33,7 @@ export function Autotune() {
           <h2 className="text-2xl font-bold">PID Autotune</h2>
         </div>
         <div
-          className="overflow-hidden rounded-xl border border-slate-200 bg-white sm:col-span-12"
+          className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 sm:col-span-12"
         >
           <div className="p-6 grid grid-cols-1 gap-2 sm:grid-cols-12">
             {
@@ -61,7 +61,7 @@ export function Autotune() {
               !active && !result && (
                 <>
                   <div className="sm:col-span-6">
-                    <label htmlFor="testTime" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                    <label htmlFor="testTime" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
                       Test Temperature (°C)
                     </label>
                     <input
@@ -74,7 +74,7 @@ export function Autotune() {
                     />
                   </div>
                   <div className="sm:col-span-6">
-                    <label htmlFor="samples" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                    <label htmlFor="samples" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
                       Samples
                     </label>
                     <input
@@ -92,14 +92,14 @@ export function Autotune() {
           </div>
         </div>
         {!active && !result && (
-          <div className="col-span-12 flex flex-row">
+          <div className="sm:col-span-12 flex flex-row">
             <button type="submit" className="menu-button" onClick={() => onStart()}>
               Start
             </button>
           </div>
         )}
         {result && (
-          <div className="col-span-12 flex flex-row">
+          <div className="sm:col-span-12 flex flex-row">
             <button type="submit" className="menu-button" onClick={() => setResult(null)}>
               Back
             </button>

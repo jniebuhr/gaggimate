@@ -25,7 +25,7 @@ export function App() {
         <div x-data="{ userDropdownOpen: false, mobileNavOpen: false }">
           <div
             id="page-container"
-            className="mx-auto flex min-h-screen w-full min-w-[320px] flex-col bg-slate-100"
+            className="mx-auto flex min-h-screen w-full min-w-[320px] flex-col bg-slate-100 dark:bg-slate-900"
           >
             <Header />
 
