@@ -44,9 +44,23 @@ extern lv_obj_t *ui_ProfileScreen_tempGauge;
 extern lv_obj_t *ui_ProfileScreen_ImgButton1;
 extern lv_obj_t *ui_ProfileScreen_contentPanel;
 extern lv_obj_t *ui_ProfileScreen_mainLabel;
-void ui_event_ProfileScreen_profileChoices(lv_event_t *e);
-extern lv_obj_t *ui_ProfileScreen_profileChoices;
+extern lv_obj_t *ui_ProfileScreen_profileName;
+extern lv_obj_t *ui_ProfileScreen_tempIcon;
+extern lv_obj_t *ui_ProfileScreen_targetIcon;
+extern lv_obj_t *ui_ProfileScreen_targetTemp2;
+extern lv_obj_t *ui_ProfileScreen_targetDuration2;
+extern lv_obj_t *ui_ProfileScreen_extendedContent;
+extern lv_obj_t *ui_ProfileScreen_Chart1;
+extern lv_obj_t *ui_ProfileScreen_simpleContent;
+extern lv_obj_t *ui_ProfileScreen_phasesLabel;
+extern lv_obj_t *ui_ProfileScreen_stepsLabel;
 extern lv_obj_t *ui_ProfileScreen_tempText;
+void ui_event_ProfileScreen_previousProfileBtn(lv_event_t *e);
+extern lv_obj_t *ui_ProfileScreen_previousProfileBtn;
+void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e);
+extern lv_obj_t *ui_ProfileScreen_nextProfileBtn;
+void ui_event_ProfileScreen_ImgButton4(lv_event_t *e);
+extern lv_obj_t *ui_ProfileScreen_ImgButton4;
 // CUSTOM VARIABLES
 
 // SCREEN: ui_MenuScreen
@@ -222,6 +236,10 @@ LV_IMG_DECLARE(ui_img_indicator_png); // assets/indicator.png
 LV_IMG_DECLARE(ui_img_untitled_png);  // assets/Untitled.png
 LV_IMG_DECLARE(ui_img_489054950);     // assets/gauge-fill.png
 LV_IMG_DECLARE(ui_img_295763949);     // assets/angle-up-40x40.png
+LV_IMG_DECLARE(ui_img_1951499226);    // assets/thermometer-half-40x40.png
+LV_IMG_DECLARE(ui_img_360122106);     // assets/clock-40x40.png
+LV_IMG_DECLARE(ui_img_1829139226);    // assets/angle-down-40x40.png
+LV_IMG_DECLARE(ui_img_631115820);     // assets/check-40x40.png
 LV_IMG_DECLARE(ui_img_1455708189);    // assets/pressure-filled.png
 LV_IMG_DECLARE(ui_img_2044104741);    // assets/power-40x40.png
 LV_IMG_DECLARE(ui_img_979979123);     // assets/mug-hot-alt-80x80.png
@@ -229,18 +247,14 @@ LV_IMG_DECLARE(ui_img_783005998);     // assets/wind-80x80.png
 LV_IMG_DECLARE(ui_img_545340440);     // assets/raindrops-80x80.png
 LV_IMG_DECLARE(ui_img_363557387);     // assets/coffee-bean-80x80.png
 LV_IMG_DECLARE(ui_img_445946954);     // assets/play-40x40.png
-LV_IMG_DECLARE(ui_img_360122106);     // assets/clock-40x40.png
 LV_IMG_DECLARE(ui_img_1424216268);    // assets/equality-40x40.png
 LV_IMG_DECLARE(ui_img_834125362);     // assets/minus-small-40x40.png
 LV_IMG_DECLARE(ui_img_390988422);     // assets/plus-small-40x40.png
-LV_IMG_DECLARE(ui_img_1951499226);    // assets/thermometer-half-40x40.png
 LV_IMG_DECLARE(ui_img_364513079);     // assets/wifi-20x20.png
 LV_IMG_DECLARE(ui_img_1091371356);    // assets/bluetooth-alt-20x20.png
 LV_IMG_DECLARE(ui_img_1765671371);    // assets/refresh-20x20.png
 LV_IMG_DECLARE(ui_img_1732953241);    // assets/tap-60x60.png
 LV_IMG_DECLARE(ui_img_1456692430);    // assets/pause-40x40.png
-LV_IMG_DECLARE(ui_img_1829139226);    // assets/angle-down-40x40.png
-LV_IMG_DECLARE(ui_img_631115820);     // assets/check-40x40.png
 
 // UI INIT
 void ui_init(void);

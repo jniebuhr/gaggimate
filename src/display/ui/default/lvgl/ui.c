@@ -25,9 +25,23 @@ lv_obj_t *ui_ProfileScreen_tempGauge;
 lv_obj_t *ui_ProfileScreen_ImgButton1;
 lv_obj_t *ui_ProfileScreen_contentPanel;
 lv_obj_t *ui_ProfileScreen_mainLabel;
-void ui_event_ProfileScreen_profileChoices(lv_event_t *e);
-lv_obj_t *ui_ProfileScreen_profileChoices;
+lv_obj_t *ui_ProfileScreen_profileName;
+lv_obj_t *ui_ProfileScreen_tempIcon;
+lv_obj_t *ui_ProfileScreen_targetIcon;
+lv_obj_t *ui_ProfileScreen_targetTemp2;
+lv_obj_t *ui_ProfileScreen_targetDuration2;
+lv_obj_t *ui_ProfileScreen_extendedContent;
+lv_obj_t *ui_ProfileScreen_Chart1;
+lv_obj_t *ui_ProfileScreen_simpleContent;
+lv_obj_t *ui_ProfileScreen_phasesLabel;
+lv_obj_t *ui_ProfileScreen_stepsLabel;
 lv_obj_t *ui_ProfileScreen_tempText;
+void ui_event_ProfileScreen_previousProfileBtn(lv_event_t *e);
+lv_obj_t *ui_ProfileScreen_previousProfileBtn;
+void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e);
+lv_obj_t *ui_ProfileScreen_nextProfileBtn;
+void ui_event_ProfileScreen_ImgButton4(lv_event_t *e);
+lv_obj_t *ui_ProfileScreen_ImgButton4;
 // CUSTOM VARIABLES
 
 // SCREEN: ui_MenuScreen
@@ -246,11 +260,27 @@ void ui_event_ProfileScreen(lv_event_t *e) {
     }
 }
 
-void ui_event_ProfileScreen_profileChoices(lv_event_t *e) {
+void ui_event_ProfileScreen_previousProfileBtn(lv_event_t *e) {
     lv_event_code_t event_code = lv_event_get_code(e);
 
-    if (event_code == LV_EVENT_VALUE_CHANGED) {
-        _ui_screen_change(&ui_StatusScreen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, &ui_StatusScreen_screen_init);
+    if (event_code == LV_EVENT_CLICKED) {
+        onPreviousProfile(e);
+    }
+}
+
+void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e) {
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if (event_code == LV_EVENT_CLICKED) {
+        onNextProfile(e);
+    }
+}
+
+void ui_event_ProfileScreen_ImgButton4(lv_event_t *e) {
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if (event_code == LV_EVENT_CLICKED) {
+        onProfileLoad(e);
     }
 }
 
