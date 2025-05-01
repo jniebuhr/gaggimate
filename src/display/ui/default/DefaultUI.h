@@ -17,7 +17,6 @@ class DefaultUI {
   public:
     DefaultUI(Controller *controller, PluginManager *pluginManager);
 
-
     // Default work methods
     void init();
     void loop();
@@ -62,7 +61,7 @@ class DefaultUI {
 
     // Screen change
     lv_obj_t **targetScreen = &ui_InitScreen;
-    lv_obj_t **currentScreen = &ui_InitScreen;
+    lv_obj_t *currentScreen = ui_InitScreen;
     void (*targetScreenInit)(void) = &ui_InitScreen_screen_init;
 
     xTaskHandle taskHandle;

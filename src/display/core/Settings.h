@@ -96,7 +96,7 @@ class Settings {
 
   private:
     Preferences preferences;
-    bool inBatch = false;
+    bool dirty = false;
 
     int targetBrewTemp = 93;
     int targetSteamTemp = 155;
@@ -137,6 +137,10 @@ class Settings {
     String timezone = DEFAULT_TIMEZONE;
 
     String otaChannel = DEFAULT_OTA_CHANNEL;
+
+    void doSave();
+    xTaskHandle taskHandle;
+    static void loopTask(void *arg);
 };
 
 #endif // SETTINGS_H

@@ -138,11 +138,12 @@ void DefaultUI::loop() {
             changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
         }
         handleScreenChange();
+        currentScreen = lv_scr_act();
         if (lv_scr_act() == ui_StandbyScreen)
             updateStandbyScreen();
         if (lv_scr_act() == ui_StatusScreen)
             updateStatusScreen();
-        effect_mgr.evaluate_all(lv_scr_act());
+        effect_mgr.evaluate_all();
     }
 
     lv_task_handler();
@@ -181,149 +182,202 @@ void DefaultUI::setupState() {
 }
 
 void DefaultUI::setupReactive() {
-    effect_mgr.use_effect(ui_MenuScreen, [=]() {
-        lv_arc_set_value(ui_MenuScreen_tempGauge, currentTemp);
-        lv_label_set_text_fmt(ui_MenuScreen_tempText, "%d°C", currentTemp);
-    }, &currentTemp);
-    effect_mgr.use_effect(ui_StatusScreen, [=]() {
-        lv_arc_set_value(ui_StatusScreen_tempGauge, currentTemp);
-        lv_label_set_text_fmt(ui_StatusScreen_tempText, "%d°C", currentTemp);
-    }, &currentTemp);
-    effect_mgr.use_effect(ui_BrewScreen, [=]() {
-        lv_arc_set_value(ui_BrewScreen_tempGauge, currentTemp);
-        lv_label_set_text_fmt(ui_BrewScreen_tempText, "%d°C", currentTemp);
-    }, &currentTemp);
-    effect_mgr.use_effect(ui_GrindScreen, [=]() {
-        lv_arc_set_value(ui_GrindScreen_tempGauge, currentTemp);
-        lv_label_set_text_fmt(ui_GrindScreen_tempText, "%d°C", currentTemp);
-    }, &currentTemp);
-    effect_mgr.use_effect(ui_WaterScreen, [=]() {
-        lv_arc_set_value(ui_WaterScreen_tempGauge, currentTemp);
-        lv_label_set_text_fmt(ui_WaterScreen_tempText, "%d°C", currentTemp);
-    }, &currentTemp);
-    effect_mgr.use_effect(ui_SteamScreen, [=]() {
-        lv_arc_set_value(ui_SteamScreen_tempGauge, currentTemp);
-        lv_label_set_text_fmt(ui_SteamScreen_tempText, "%d°C", currentTemp);
-    }, &currentTemp);
-    effect_mgr.use_effect(ui_MenuScreen, [=]() {
-        int16_t angle = calculate_angle(targetTemp);
-        lv_img_set_angle(ui_MenuScreen_tempTarget, angle);
-    }, &targetTemp);
-    effect_mgr.use_effect(ui_StatusScreen, [=]() {
-        lv_label_set_text_fmt(ui_StatusScreen_targetTemp, "%d°C", targetTemp);
-        int16_t angle = calculate_angle(targetTemp);
-        lv_img_set_angle(ui_StatusScreen_tempTarget, angle);
-    }, &targetTemp);
-    effect_mgr.use_effect(ui_BrewScreen, [=]() {
-        lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%d°C", targetTemp);
-        int16_t angle = calculate_angle(targetTemp);
-        lv_img_set_angle(ui_BrewScreen_tempTarget, angle);
-    }, &targetTemp);
-    effect_mgr.use_effect(ui_GrindScreen, [=]() {
-        int16_t angle = calculate_angle(targetTemp);
-        lv_img_set_angle(ui_GrindScreen_tempTarget, angle);
-    }, &targetTemp);
-    effect_mgr.use_effect(ui_WaterScreen, [=]() {
-        lv_label_set_text_fmt(ui_WaterScreen_targetTemp, "%d°C", targetTemp);
-        int16_t angle = calculate_angle(targetTemp);
-        lv_img_set_angle(ui_WaterScreen_tempTarget, angle);
-    }, &targetTemp);
-    effect_mgr.use_effect(ui_SteamScreen, [=]() {
-        lv_label_set_text_fmt(ui_SteamScreen_targetTemp, "%d°C", targetTemp);
-        int16_t angle = calculate_angle(targetTemp);
-        lv_img_set_angle(ui_SteamScreen_tempTarget, angle);
-    }, &targetTemp);
-    effect_mgr.use_effect(ui_StandbyScreen, [=]() {
-        updateAvailable ? lv_obj_clear_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN)
-                : lv_obj_add_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN);
-    }, &updateAvailable);
-    effect_mgr.use_effect(ui_InitScreen, [=]() {
-        if (updateActive) {
-            lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Updating...");
-        } else if (error) {
-            if (controller->getError() == ERROR_CODE_RUNAWAY) {
-                lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Temperature error, please restart");
-            }
-        } else if (autotuning) {
-            lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Autotuning...");
-        }
-    }, &updateActive, &error, &autotuning);
-    effect_mgr.use_effect(ui_BrewScreen, [=]() {
-        if (volumetricMode) {
-            lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%dg", targetVolume);
-        } else {
-            const double secondsDouble = targetDuration / 1000.0;
-            const auto minutes = static_cast<int>(secondsDouble / 60.0 - 0.5);
-            const auto seconds = static_cast<int>(secondsDouble) % 60;
-            lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%2d:%02d", minutes, seconds);
-        }
-    }, &targetDuration, &targetVolume, &volumetricMode);
-    effect_mgr.use_effect(ui_GrindScreen, [=]() {
-        if (volumetricMode) {
-            lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%dg", grindVolume);
-        } else {
-            const double secondsDouble = grindDuration / 1000.0;
-            const auto minutes = static_cast<int>(secondsDouble / 60.0 - 0.5);
-            const auto seconds = static_cast<int>(secondsDouble) % 60;
-            lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%2d:%02d", minutes, seconds);
-        }
-    }, &grindDuration, &grindVolume, &volumetricMode);
-    effect_mgr.use_effect(ui_BrewScreen, [=]() {
-        lv_img_set_src(ui_BrewScreen_Image4, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
-        ui_object_set_themeable_style_property(ui_BrewScreen_timedButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_IMG_RECOLOR,
-                                               volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
-        ui_object_set_themeable_style_property(ui_BrewScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                               LV_STYLE_BG_IMG_RECOLOR,
-                                               volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-        ui_object_set_themeable_style_property(ui_BrewScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
-                                               volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-        ui_object_set_themeable_style_property(ui_BrewScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_GRAD_COLOR,
-                                               volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
-    }, &volumetricMode);
-    effect_mgr.use_effect(ui_GrindScreen, [=]() {
-        lv_img_set_src(ui_GrindScreen_targetSymbol, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
-        ui_object_set_themeable_style_property(ui_GrindScreen_timedButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_IMG_RECOLOR,
-                                               volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
-        ui_object_set_themeable_style_property(ui_GrindScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                               LV_STYLE_BG_IMG_RECOLOR,
-                                               volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-        ui_object_set_themeable_style_property(ui_GrindScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
-                                               volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-        ui_object_set_themeable_style_property(ui_GrindScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_GRAD_COLOR,
-                                               volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
-    }, &volumetricMode);
-    effect_mgr.use_effect(ui_BrewScreen, [=]() {
-        if (volumetricAvailable) {
-            lv_obj_clear_flag(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_add_flag(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
-        }
-    }, &volumetricAvailable);
-    effect_mgr.use_effect(ui_GrindScreen, [=]() {
-        if (volumetricAvailable) {
-            lv_obj_clear_flag(ui_GrindScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_add_flag(ui_GrindScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
-        }
-    }, &volumetricAvailable);
-    effect_mgr.use_effect(ui_WaterScreen, [=]() {
-        lv_imgbtn_set_src(ui_WaterScreen_goButton, LV_IMGBTN_STATE_RELEASED, nullptr,
-                          active ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
-    }, &active);
-    effect_mgr.use_effect(ui_SteamScreen, [=]() {
-        lv_imgbtn_set_src(ui_SteamScreen_goButton, LV_IMGBTN_STATE_RELEASED, nullptr,
-                          active ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
-    }, &active);
-    effect_mgr.use_effect(ui_GrindScreen, [=]() {
-        lv_imgbtn_set_src(ui_GrindScreen_startButton, LV_IMGBTN_STATE_RELEASED, nullptr,
-                          grindActive ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
-    }, &grindActive);
+    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
+                          [=]() {
+                              lv_arc_set_value(ui_MenuScreen_tempGauge, currentTemp);
+                              lv_label_set_text_fmt(ui_MenuScreen_tempText, "%d°C", currentTemp);
+                          },
+                          &currentTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
+                          [=]() {
+                              lv_arc_set_value(ui_StatusScreen_tempGauge, currentTemp);
+                              lv_label_set_text_fmt(ui_StatusScreen_tempText, "%d°C", currentTemp);
+                          },
+                          &currentTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              lv_arc_set_value(ui_BrewScreen_tempGauge, currentTemp);
+                              lv_label_set_text_fmt(ui_BrewScreen_tempText, "%d°C", currentTemp);
+                          },
+                          &currentTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
+                          [=]() {
+                              lv_arc_set_value(ui_GrindScreen_tempGauge, currentTemp);
+                              lv_label_set_text_fmt(ui_GrindScreen_tempText, "%d°C", currentTemp);
+                          },
+                          &currentTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_WaterScreen; },
+                          [=]() {
+                              lv_arc_set_value(ui_WaterScreen_tempGauge, currentTemp);
+                              lv_label_set_text_fmt(ui_WaterScreen_tempText, "%d°C", currentTemp);
+                          },
+                          &currentTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_SteamScreen; },
+                          [=]() {
+                              lv_arc_set_value(ui_SteamScreen_tempGauge, currentTemp);
+                              lv_label_set_text_fmt(ui_SteamScreen_tempText, "%d°C", currentTemp);
+                          },
+                          &currentTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
+                          [=]() {
+                              int16_t angle = calculate_angle(targetTemp);
+                              lv_img_set_angle(ui_MenuScreen_tempTarget, angle);
+                          },
+                          &targetTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
+                          [=]() {
+                              lv_label_set_text_fmt(ui_StatusScreen_targetTemp, "%d°C", targetTemp);
+                              int16_t angle = calculate_angle(targetTemp);
+                              lv_img_set_angle(ui_StatusScreen_tempTarget, angle);
+                          },
+                          &targetTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%d°C", targetTemp);
+                              int16_t angle = calculate_angle(targetTemp);
+                              lv_img_set_angle(ui_BrewScreen_tempTarget, angle);
+                          },
+                          &targetTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
+                          [=]() {
+                              int16_t angle = calculate_angle(targetTemp);
+                              lv_img_set_angle(ui_GrindScreen_tempTarget, angle);
+                          },
+                          &targetTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_WaterScreen; },
+                          [=]() {
+                              lv_label_set_text_fmt(ui_WaterScreen_targetTemp, "%d°C", targetTemp);
+                              int16_t angle = calculate_angle(targetTemp);
+                              lv_img_set_angle(ui_WaterScreen_tempTarget, angle);
+                          },
+                          &targetTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_SteamScreen; },
+                          [=]() {
+                              lv_label_set_text_fmt(ui_SteamScreen_targetTemp, "%d°C", targetTemp);
+                              int16_t angle = calculate_angle(targetTemp);
+                              lv_img_set_angle(ui_SteamScreen_tempTarget, angle);
+                          },
+                          &targetTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
+                          [=]() {
+                              updateAvailable ? lv_obj_clear_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN)
+                                              : lv_obj_add_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN);
+                          },
+                          &updateAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_InitScreen; },
+                          [=]() {
+                              if (updateActive) {
+                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Updating...");
+                              } else if (error) {
+                                  if (controller->getError() == ERROR_CODE_RUNAWAY) {
+                                      lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Temperature error, please restart");
+                                  }
+                              } else if (autotuning) {
+                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Autotuning...");
+                              }
+                          },
+                          &updateActive, &error, &autotuning);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              if (volumetricMode) {
+                                  lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%dg", targetVolume);
+                              } else {
+                                  const double secondsDouble = targetDuration / 1000.0;
+                                  const auto minutes = static_cast<int>(secondsDouble / 60.0 - 0.5);
+                                  const auto seconds = static_cast<int>(secondsDouble) % 60;
+                                  lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%2d:%02d", minutes, seconds);
+                              }
+                          },
+                          &targetDuration, &targetVolume, &volumetricMode);
+    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
+                          [=]() {
+                              if (volumetricMode) {
+                                  lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%dg", grindVolume);
+                              } else {
+                                  const double secondsDouble = grindDuration / 1000.0;
+                                  const auto minutes = static_cast<int>(secondsDouble / 60.0 - 0.5);
+                                  const auto seconds = static_cast<int>(secondsDouble) % 60;
+                                  lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%2d:%02d", minutes, seconds);
+                              }
+                          },
+                          &grindDuration, &grindVolume, &volumetricMode);
+    effect_mgr.use_effect(
+        [=] { return currentScreen == ui_BrewScreen; },
+        [=]() {
+            lv_img_set_src(ui_BrewScreen_Image4, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
+            ui_object_set_themeable_style_property(ui_BrewScreen_timedButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_BG_IMG_RECOLOR,
+                                                   volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
+            ui_object_set_themeable_style_property(ui_BrewScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_BG_IMG_RECOLOR,
+                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
+            ui_object_set_themeable_style_property(ui_BrewScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
+                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
+            ui_object_set_themeable_style_property(ui_BrewScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_BG_GRAD_COLOR,
+                                                   volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
+        },
+        &volumetricMode);
+    effect_mgr.use_effect(
+        [=] { return currentScreen == ui_GrindScreen; },
+        [=]() {
+            lv_img_set_src(ui_GrindScreen_targetSymbol, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
+            ui_object_set_themeable_style_property(ui_GrindScreen_timedButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_BG_IMG_RECOLOR,
+                                                   volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
+            ui_object_set_themeable_style_property(ui_GrindScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_BG_IMG_RECOLOR,
+                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
+            ui_object_set_themeable_style_property(ui_GrindScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
+                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
+            ui_object_set_themeable_style_property(ui_GrindScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_BG_GRAD_COLOR,
+                                                   volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
+        },
+        &volumetricMode);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_obj_clear_flag(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
+                              } else {
+                                  lv_obj_add_flag(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
+                              }
+                          },
+                          &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_obj_clear_flag(ui_GrindScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
+                              } else {
+                                  lv_obj_add_flag(ui_GrindScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
+                              }
+                          },
+                          &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_WaterScreen; },
+                          [=]() {
+                              lv_imgbtn_set_src(ui_WaterScreen_goButton, LV_IMGBTN_STATE_RELEASED, nullptr,
+                                                active ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
+                          },
+                          &active);
+    effect_mgr.use_effect([=] { return currentScreen == ui_SteamScreen; },
+                          [=]() {
+                              lv_imgbtn_set_src(ui_SteamScreen_goButton, LV_IMGBTN_STATE_RELEASED, nullptr,
+                                                active ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
+                          },
+                          &active);
+    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
+                          [=]() {
+                              lv_imgbtn_set_src(ui_GrindScreen_startButton, LV_IMGBTN_STATE_RELEASED, nullptr,
+                                                grindActive ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
+                          },
+                          &grindActive);
 }
 
 void DefaultUI::handleScreenChange() {
     if (lv_obj_t *current = lv_scr_act(); current != *targetScreen) {
         _ui_screen_change(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0, targetScreenInit);
-        // _ui_screen_delete(&current);
+        _ui_screen_delete(&current);
+        rerender = true;
     }
 }
 

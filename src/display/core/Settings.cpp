@@ -42,57 +42,16 @@ Settings::Settings() {
     homeAssistantPassword = preferences.getString("ha_pw", "");
     timezone = preferences.getString("tz", DEFAULT_TIMEZONE);
     preferences.end();
+
+    xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
 }
 
 void Settings::batchUpdate(const SettingsCallback &callback) {
-    inBatch = true;
     callback(this);
-    inBatch = false;
     save();
 }
 
-void Settings::save() {
-    if (inBatch)
-        return;
-    preferences.begin(PREFERENCES_KEY, false);
-    preferences.putInt("sm", startupMode);
-    preferences.putInt("tb", targetBrewTemp);
-    preferences.putInt("ts", targetSteamTemp);
-    preferences.putInt("tw", targetWaterTemp);
-    preferences.putInt("td", targetDuration);
-    preferences.putInt("tv", targetVolume);
-    preferences.putInt("tgv", targetGrindVolume);
-    preferences.putInt("tgd", targetGrindDuration);
-    preferences.putDouble("del_br", brewDelay);
-    preferences.putDouble("del_gd", grindDelay);
-    preferences.putBool("del_ad", delayAdjust);
-    preferences.putInt("to", temperatureOffset);
-    preferences.putString("pid", pid);
-    preferences.putString("ws", wifiSsid);
-    preferences.putString("wp", wifiPassword);
-    preferences.putString("mn", mdnsName);
-    preferences.putBool("hk", homekit);
-    preferences.putBool("vt", volumetricTarget);
-    preferences.putString("oc", otaChannel);
-    preferences.putInt("ipt", infusePumpTime);
-    preferences.putInt("ibt", infuseBloomTime);
-    preferences.putInt("pt", pressurizeTime);
-    preferences.putString("ssc", savedScale);
-    preferences.putBool("bf_a", boilerFillActive);
-    preferences.putInt("bf_su", startupFillTime);
-    preferences.putInt("bf_st", steamFillTime);
-    preferences.putBool("sg_a", smartGrindActive);
-    preferences.putString("sg_i", smartGrindIp);
-    preferences.putBool("sg_t", smartGrindToggle);
-    preferences.putInt("sg_m", smartGrindMode);
-    preferences.putBool("ha_a", homeAssistant);
-    preferences.putString("ha_i", homeAssistantIP);
-    preferences.putInt("ha_p", homeAssistantPort);
-    preferences.putString("ha_u", homeAssistantUser);
-    preferences.putString("ha_pw", homeAssistantPassword);
-    preferences.putString("tz", timezone);
-    preferences.end();
-}
+void Settings::save() { dirty = true; }
 
 void Settings::setTargetBrewTemp(const int target_brew_temp) {
     targetBrewTemp = target_brew_temp;
@@ -275,4 +234,58 @@ void Settings::setMomentaryButtons(bool momentary_buttons) {
 void Settings::setTimezone(String timezone) {
     this->timezone = std::move(timezone);
     save();
+}
+
+void Settings::doSave() {
+    if (!dirty) {
+        return;
+    }
+    dirty = false;
+    ESP_LOGI("Settings", "Saving settings");
+    preferences.begin(PREFERENCES_KEY, false);
+    preferences.putInt("sm", startupMode);
+    preferences.putInt("tb", targetBrewTemp);
+    preferences.putInt("ts", targetSteamTemp);
+    preferences.putInt("tw", targetWaterTemp);
+    preferences.putInt("td", targetDuration);
+    preferences.putInt("tv", targetVolume);
+    preferences.putInt("tgv", targetGrindVolume);
+    preferences.putInt("tgd", targetGrindDuration);
+    preferences.putDouble("del_br", brewDelay);
+    preferences.putDouble("del_gd", grindDelay);
+    preferences.putBool("del_ad", delayAdjust);
+    preferences.putInt("to", temperatureOffset);
+    preferences.putString("pid", pid);
+    preferences.putString("ws", wifiSsid);
+    preferences.putString("wp", wifiPassword);
+    preferences.putString("mn", mdnsName);
+    preferences.putBool("hk", homekit);
+    preferences.putBool("vt", volumetricTarget);
+    preferences.putString("oc", otaChannel);
+    preferences.putInt("ipt", infusePumpTime);
+    preferences.putInt("ibt", infuseBloomTime);
+    preferences.putInt("pt", pressurizeTime);
+    preferences.putString("ssc", savedScale);
+    preferences.putBool("bf_a", boilerFillActive);
+    preferences.putInt("bf_su", startupFillTime);
+    preferences.putInt("bf_st", steamFillTime);
+    preferences.putBool("sg_a", smartGrindActive);
+    preferences.putString("sg_i", smartGrindIp);
+    preferences.putBool("sg_t", smartGrindToggle);
+    preferences.putInt("sg_m", smartGrindMode);
+    preferences.putBool("ha_a", homeAssistant);
+    preferences.putString("ha_i", homeAssistantIP);
+    preferences.putInt("ha_p", homeAssistantPort);
+    preferences.putString("ha_u", homeAssistantUser);
+    preferences.putString("ha_pw", homeAssistantPassword);
+    preferences.putString("tz", timezone);
+    preferences.end();
+}
+
+void Settings::loopTask(void *arg) {
+    auto *settings = static_cast<Settings *>(arg);
+    while (true) {
+        settings->doSave();
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
 }

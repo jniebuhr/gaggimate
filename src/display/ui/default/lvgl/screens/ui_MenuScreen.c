@@ -8,6 +8,7 @@
 void ui_MenuScreen_screen_init(void) {
     ui_MenuScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_MenuScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_add_event_cb(ui_MenuScreen, scr_unloaded_delete_cb, LV_EVENT_SCREEN_UNLOADED, &ui_MenuScreen);
     ui_object_set_themeable_style_property(ui_MenuScreen, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
                                            _ui_theme_color_Dark);
     ui_object_set_themeable_style_property(ui_MenuScreen, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA, _ui_theme_alpha_Dark);

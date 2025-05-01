@@ -277,10 +277,6 @@ void Controller::setTargetTemp(int temperature) {
     default:;
     }
     updateLastAction();
-    int targetTemp = getTargetTemp();
-    if (targetTemp > 0) {
-        targetTemp = targetTemp + settings.getTemperatureOffset();
-    }
 }
 
 int Controller::getTargetDuration() const { return settings.getTargetDuration(); }
