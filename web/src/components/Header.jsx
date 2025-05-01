@@ -5,7 +5,7 @@ function HeaderItem(props) {
     <a
       href={props.link}
       onClick={props.onClick}
-      className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100"
+      className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 dark:text-slate-300"
     >
       <i className={props.iconClass} />
       <span className="grow">{props.label}</span>
@@ -28,7 +28,7 @@ export function Header(props) {
               className="inline-flex"
               onClick={() => openCb(false)}
             >
-              <span className="text-3xl font-light text-[#333333] font-logo">
+              <span className="text-3xl font-light text-[#333333] dark:text-gray-300 font-logo">
               <span className="font-semibold">GAGGI</span>MATE
             </span>
             </a>
@@ -38,14 +38,14 @@ export function Header(props) {
 
             <div className="relative inline-block">
               <a rel="noopener" href="https://github.com/jniebuhr/gaggimate" target="_blank"
-                 className="group flex items-center justify-between rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 sm:gap-2">
+                 className="group flex items-center justify-between rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 sm:gap-2 dark:text-slate-300">
                 <i className="fa-brands fa-github"></i>
               </a>
             </div>
 
             <div className="relative inline-block">
               <a rel="noopener" href="https://discord.gaggimate.eu/" target="_blank"
-                 className="group flex items-center justify-between rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 sm:gap-2">
+                 className="group flex items-center justify-between rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 sm:gap-2 dark:text-slate-300">
                 <i className="fa-brands fa-discord"></i>
               </a>
             </div>
@@ -54,7 +54,7 @@ export function Header(props) {
               <button
                 type="button"
                 onClick={() => openCb(!open)}
-                className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100"
+                className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 dark:text-slate-300"
               >
                 <svg
                   fill="currentColor"
@@ -84,7 +84,7 @@ export function Header(props) {
           </>}
           <hr className="h-5 border-0" />
           <div className="space-y-1.5">
-            {props.extended && <HeaderItem label="PID Autotune" link="/pidtune" iconClass="fa fa-temperature-half" onClick={() => openCb(false)} /> }
+            <HeaderItem label="PID Autotune" link="/pidtune" iconClass="fa fa-temperature-half" onClick={() => openCb(false)} />
             <HeaderItem label="Bluetooth Scales" link="/scales" iconClass="fa-brands fa-bluetooth-b" onClick={() => openCb(false)} />
             <HeaderItem label="Settings" link="/settings" iconClass="fa fa-cog" onClick={() => openCb(false)} />
           </div>

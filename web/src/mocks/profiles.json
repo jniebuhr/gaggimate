@@ -180,6 +180,7 @@
   },
   {
     "id": "2a31aa27-1d72-4b14-9f90-8fb050ea033d",
+    "label": "LM Leva 3",
     "type": "pro",
     "description": "Ramps up pressure and flow to achieve similar results to a lever operated machine.",
     "phases": [

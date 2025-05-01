@@ -88,10 +88,10 @@ export function OTA() {
         <div className="sm:col-span-12">
           <h2 className="text-2xl font-bold">System & Updates</h2>
         </div>
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white col-span-12">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white col-span-12 dark:bg-gray-800 dark:border-gray-600">
           <div className="p-6 flex flex-col gap-4">
             <div>
-              <label for="channel" class="block font-medium text-[#333333]">
+              <label for="channel" class="block font-medium text-gray-700 dark:text-gray-400">
                 Update Channel
               </label>
               <select id="channel" name="channel" class="input-field">
@@ -105,12 +105,12 @@ export function OTA() {
             </div>
 
             <div>
-              <span className="block font-medium text-[#333333]">Hardware</span>
+              <span className="block font-medium text-gray-700 dark:text-gray-400">Hardware</span>
               <span className="display-field">{formData.hardware}</span>
             </div>
 
             <div>
-              <span className="block font-medium text-[#333333]">Controller version</span>
+              <span className="block font-medium text-gray-700 dark:text-gray-400">Controller version</span>
               <span className="display-field">
                 {formData.controllerVersion}
                 {formData.controllerUpdateAvailable && <span className="font-bold">(Update available: {formData.latestVersion})</span> }
@@ -118,7 +118,7 @@ export function OTA() {
             </div>
 
             <div>
-              <span className="block font-medium text-[#333333]">Display version</span>
+              <span className="block font-medium text-gray-700 dark:text-gray-400">Display version</span>
               <span className="display-field">
                 {formData.displayVersion}
                 {formData.displayUpdateAvailable && <span className="font-bold">(Update available: {formData.latestVersion})</span> }

@@ -116,7 +116,7 @@ bool NimBLEClientController::connectToServer() {
     }
 
     autotuneResultChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_RESULT_UUID));
-    if (autotuneResultChar->canNotify()) {
+    if (autotuneResultChar != nullptr && autotuneResultChar->canNotify()) {
         autotuneResultChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                                       std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }

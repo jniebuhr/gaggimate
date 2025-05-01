@@ -66,7 +66,7 @@ export function Scales() {
           <h2 className="text-2xl font-bold">Bluetooth Scales</h2>
         </div>
         <div
-          className="overflow-hidden rounded-xl border border-slate-200 bg-white sm:col-span-12"
+          className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 sm:col-span-12"
         >
 
           <div className="p-6">

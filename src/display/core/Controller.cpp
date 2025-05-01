@@ -262,6 +262,7 @@ int Controller::getTargetTemp() {
 }
 
 void Controller::setTargetTemp(int temperature) {
+    pluginManager->trigger("boiler:targetTemperature:change", "value", getTargetTemp());
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
@@ -276,13 +277,10 @@ void Controller::setTargetTemp(int temperature) {
     default:;
     }
     updateLastAction();
-    clientController.sendPidSettings(settings.getPid());
     int targetTemp = getTargetTemp();
     if (targetTemp > 0) {
         targetTemp = targetTemp + settings.getTemperatureOffset();
     }
-    clientController.sendTemperatureControl(targetTemp);
-    pluginManager->trigger("boiler:targetTemperature:change", "value", getTargetTemp());
 }
 
 int Controller::getTargetDuration() const { return settings.getTargetDuration(); }

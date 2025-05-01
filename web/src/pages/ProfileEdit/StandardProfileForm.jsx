@@ -30,12 +30,10 @@ export function StandardProfileForm({ data, onChange }) {
 
   return (
     <>
-      <div
-        className={`overflow-hidden rounded-xl border border-slate-200 bg-white sm:col-span-12`}
-      >
+      <Card sm={12}>
         <div className="p-6 pb-3 flex flex-col gap-2">
           <div>
-            <label htmlFor="label" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            <label htmlFor="label" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
               Label
             </label>
             <input
@@ -47,7 +45,7 @@ export function StandardProfileForm({ data, onChange }) {
             />
           </div>
           <div>
-            <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
               Description
             </label>
             <input
@@ -59,7 +57,7 @@ export function StandardProfileForm({ data, onChange }) {
             />
           </div>
           <div>
-            <label htmlFor="temperature" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            <label htmlFor="temperature" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
               Temperature
             </label>
             <div className="flex">
@@ -103,7 +101,7 @@ export function StandardProfileForm({ data, onChange }) {
             Save
           </button>
         </div>
-      </div>
+      </Card>
     </>
   );
 }
@@ -113,7 +111,7 @@ function Phase({ phase }) {
   const volumetricTarget = targets.find(t => t.type === 'volumetric') || {};
   const targetWeight = volumetricTarget?.value || 0;
   return (
-    <div className="bg-gray-50 border-[#ccc] border p-4 rounded-md grid grid-cols-12 gap-4">
+    <div className="bg-gray-50 border-[#ccc] border p-4 rounded-md grid grid-cols-12 gap-4 dark:bg-slate-700 dark:border-slate-800">
       <div className="md:col-span-4 flex flex-row items-center">
         <select className="select-field">
           <option value="preinfusion" selected={phase.phase === 'preinfusion'}>
@@ -158,7 +156,7 @@ function Phase({ phase }) {
         <span>Valve</span>
       </div>
       <div className="col-span-12 flex flex-col">
-        <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Duration</label>
+        <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Duration</label>
         <div className="flex">
           <input
             className="input-field addition"
@@ -170,7 +168,7 @@ function Phase({ phase }) {
       </div>
       {
         phase.phase === 'brew' && <div className="col-span-12 flex flex-col">
-          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Volumetric Target</label>
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Volumetric Target</label>
           <div className="flex">
             <input
               className="input-field"
