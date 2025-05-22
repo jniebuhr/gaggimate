@@ -82,3 +82,15 @@ void onGrindTimedClick(lv_event_t *e) {
 void onGrindVolumetricClick(lv_event_t *e) {
     // Your code here
 }
+
+void onPreviousProfile(lv_event_t *e) {
+    // Your code here
+}
+
+void onNextProfile(lv_event_t *e) {
+    // Your code here
+}
+
+void onProfileLoad(lv_event_t *e) {
+    // Your code here
+}
