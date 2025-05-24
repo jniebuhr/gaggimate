@@ -2,8 +2,8 @@
 #define NIMBLESERVERCONTROLLER_H
 
 #include "NimBLEComm.h"
-#include <ble_ota_dfu.hpp>
 #include "cstring"
+#include <ble_ota_dfu.hpp>
 
 class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks {
   public:
@@ -56,6 +56,5 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
 
     const char *LOG_TAG = "NimBLEClientController";
 };
-
 
 #endif // NIMBLESERVERCONTROLLER_H

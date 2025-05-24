@@ -34,6 +34,8 @@ class DefaultUI {
     void updateStandbyScreen() const;
     void updateStatusScreen() const;
 
+    void adjustDials(lv_obj_t *dials);
+
     Controller *controller;
     PluginManager *pluginManager;
 
@@ -58,6 +60,7 @@ class DefaultUI {
     int targetVolume = 0;
     int grindDuration = 0;
     int grindVolume = 0;
+    int pressureAvailable = 0;
     float pressure = 0.0f;
 
     // Screen change

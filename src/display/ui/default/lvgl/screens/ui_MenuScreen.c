@@ -73,26 +73,6 @@ void ui_MenuScreen_screen_init(void) {
     lv_obj_set_style_shadow_width(ui_MenuScreen_btnSteam, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_spread(ui_MenuScreen_btnSteam, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_MenuScreen_grindBtn = lv_btn_create(ui_MenuScreen_contentPanel1);
-    lv_obj_set_width(ui_MenuScreen_grindBtn, 120);
-    lv_obj_set_height(ui_MenuScreen_grindBtn, 120);
-    lv_obj_set_align(ui_MenuScreen_grindBtn, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
-    lv_obj_clear_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
-    lv_obj_set_style_bg_color(ui_MenuScreen_grindBtn, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_MenuScreen_grindBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_img_src(ui_MenuScreen_grindBtn, &ui_img_363557387, LV_PART_MAIN | LV_STATE_DEFAULT);
-    ui_object_set_themeable_style_property(ui_MenuScreen_grindBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_IMG_RECOLOR,
-                                           _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_MenuScreen_grindBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_IMG_RECOLOR_OPA,
-                                           _ui_theme_alpha_NiceWhite);
-    ui_object_set_themeable_style_property(ui_MenuScreen_grindBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_SHADOW_COLOR,
-                                           _ui_theme_color_Dark);
-    ui_object_set_themeable_style_property(ui_MenuScreen_grindBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_SHADOW_OPA,
-                                           _ui_theme_alpha_Dark);
-    lv_obj_set_style_shadow_width(ui_MenuScreen_grindBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_spread(ui_MenuScreen_grindBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-
     ui_MenuScreen_waterBtn = lv_btn_create(ui_MenuScreen_contentPanel1);
     lv_obj_set_width(ui_MenuScreen_waterBtn, 120);
     lv_obj_set_height(ui_MenuScreen_waterBtn, 120);
@@ -112,6 +92,26 @@ void ui_MenuScreen_screen_init(void) {
                                            _ui_theme_alpha_Dark);
     lv_obj_set_style_shadow_width(ui_MenuScreen_waterBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_spread(ui_MenuScreen_waterBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_MenuScreen_grindBtn = lv_btn_create(ui_MenuScreen_contentPanel1);
+    lv_obj_set_width(ui_MenuScreen_grindBtn, 120);
+    lv_obj_set_height(ui_MenuScreen_grindBtn, 120);
+    lv_obj_set_align(ui_MenuScreen_grindBtn, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
+    lv_obj_clear_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+    lv_obj_set_style_bg_color(ui_MenuScreen_grindBtn, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_MenuScreen_grindBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_img_src(ui_MenuScreen_grindBtn, &ui_img_363557387, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_object_set_themeable_style_property(ui_MenuScreen_grindBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_IMG_RECOLOR,
+                                           _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_MenuScreen_grindBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_IMG_RECOLOR_OPA,
+                                           _ui_theme_alpha_NiceWhite);
+    ui_object_set_themeable_style_property(ui_MenuScreen_grindBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_SHADOW_COLOR,
+                                           _ui_theme_color_Dark);
+    ui_object_set_themeable_style_property(ui_MenuScreen_grindBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_SHADOW_OPA,
+                                           _ui_theme_alpha_Dark);
+    lv_obj_set_style_shadow_width(ui_MenuScreen_grindBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_spread(ui_MenuScreen_grindBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_MenuScreen_dials = ui_dials_create(ui_MenuScreen);
     lv_obj_set_x(ui_MenuScreen_dials, 0);
@@ -133,8 +133,8 @@ void ui_MenuScreen_screen_init(void) {
 
     lv_obj_add_event_cb(ui_MenuScreen_btnBrew, ui_event_MenuScreen_btnBrew, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_MenuScreen_btnSteam, ui_event_MenuScreen_btnSteam, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(ui_MenuScreen_grindBtn, ui_event_MenuScreen_grindBtn, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_MenuScreen_waterBtn, ui_event_MenuScreen_waterBtn, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_MenuScreen_grindBtn, ui_event_MenuScreen_grindBtn, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_MenuScreen_standbyButton, ui_event_MenuScreen_standbyButton, LV_EVENT_ALL, NULL);
     uic_MenuScreen_dials_tempTarget = ui_comp_get_child(ui_MenuScreen_dials, UI_COMP_DIALS_TEMPTARGET);
     uic_MenuScreen_dials_tempGauge = ui_comp_get_child(ui_MenuScreen_dials, UI_COMP_DIALS_TEMPGAUGE);

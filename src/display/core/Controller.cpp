@@ -388,7 +388,8 @@ void Controller::updateControl() {
     if (targetTemp > 0) {
         targetTemp = targetTemp + settings.getTemperatureOffset();
     }
-    clientController.sendOutputControl(isActive() && currentProcess->isRelayActive(), isActive() ? currentProcess->getPumpValue() : 0, static_cast<float>(targetTemp));
+    clientController.sendOutputControl(isActive() && currentProcess->isRelayActive(),
+                                       isActive() ? currentProcess->getPumpValue() : 0, static_cast<float>(targetTemp));
     clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
 }
 

@@ -117,6 +117,9 @@ lv_obj_t *ui_dials_create(lv_obj_t *comp_parent) {
     ui_object_set_themeable_style_property(cui_tempText, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
                                            _ui_theme_alpha_NiceWhite);
     lv_obj_set_style_text_font(cui_tempText, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_object_set_themeable_style_property(cui_tempText, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
+                                           _ui_theme_color_Dark);
+    ui_object_set_themeable_style_property(cui_tempText, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA, _ui_theme_alpha_Dark);
     lv_obj_set_style_pad_left(cui_tempText, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(cui_tempText, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(cui_tempText, 0, LV_PART_MAIN | LV_STATE_DEFAULT);

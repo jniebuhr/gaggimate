@@ -3,8 +3,7 @@
 constexpr size_t MAX_CONNECT_RETRIES = 3;
 constexpr size_t BLE_SCAN_DURATION_SECONDS = 10;
 
-NimBLEClientController::NimBLEClientController()
-    : client(nullptr) {}
+NimBLEClientController::NimBLEClientController() : client(nullptr) {}
 
 void NimBLEClientController::initClient() {
     NimBLEDevice::init("GPBLC");
@@ -27,16 +26,13 @@ void NimBLEClientController::scan() {
     pBLEScan->start(BLE_SCAN_DURATION_SECONDS, nullptr, false);
 }
 
-
 void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callback_t &callback) {
     remoteErrorCallback = callback;
 }
 void NimBLEClientController::registerBrewBtnCallback(const brew_callback_t &callback) { brewBtnCallback = callback; }
 void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &callback) { steamBtnCallback = callback; }
 
-void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t &callback) {
-    sensorCallback = callback;
-}
+void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t &callback) { sensorCallback = callback; }
 
 void NimBLEClientController::registerAutotuneResultCallback(const pid_control_callback_t &callback) {
     autotuneResultCallback = callback;
@@ -116,7 +112,7 @@ bool NimBLEClientController::connectToServer() {
     sensorChar = pRemoteService->getCharacteristic(NimBLEUUID(SENSOR_DATA_UUID));
     if (sensorChar != nullptr && sensorChar->canNotify()) {
         sensorChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
-                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+                                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
     delay(500);

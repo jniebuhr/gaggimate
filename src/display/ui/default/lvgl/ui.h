@@ -77,10 +77,10 @@ void ui_event_MenuScreen_btnBrew(lv_event_t *e);
 extern lv_obj_t *ui_MenuScreen_btnBrew;
 void ui_event_MenuScreen_btnSteam(lv_event_t *e);
 extern lv_obj_t *ui_MenuScreen_btnSteam;
-void ui_event_MenuScreen_grindBtn(lv_event_t *e);
-extern lv_obj_t *ui_MenuScreen_grindBtn;
 void ui_event_MenuScreen_waterBtn(lv_event_t *e);
 extern lv_obj_t *ui_MenuScreen_waterBtn;
+void ui_event_MenuScreen_grindBtn(lv_event_t *e);
+extern lv_obj_t *ui_MenuScreen_grindBtn;
 extern lv_obj_t *ui_MenuScreen_dials;
 void ui_event_MenuScreen_standbyButton(lv_event_t *e);
 extern lv_obj_t *ui_MenuScreen_standbyButton;
@@ -270,8 +270,8 @@ LV_IMG_DECLARE(ui_img_489054950);     // assets/gauge-fill.png
 LV_IMG_DECLARE(ui_img_1455708189);    // assets/pressure-filled.png
 LV_IMG_DECLARE(ui_img_979979123);     // assets/mug-hot-alt-80x80.png
 LV_IMG_DECLARE(ui_img_783005998);     // assets/wind-80x80.png
-LV_IMG_DECLARE(ui_img_363557387);     // assets/coffee-bean-80x80.png
 LV_IMG_DECLARE(ui_img_545340440);     // assets/raindrops-80x80.png
+LV_IMG_DECLARE(ui_img_363557387);     // assets/coffee-bean-80x80.png
 LV_IMG_DECLARE(ui_img_2044104741);    // assets/power-40x40.png
 LV_IMG_DECLARE(ui_img_445946954);     // assets/play-40x40.png
 LV_IMG_DECLARE(ui_img_1424216268);    // assets/equality-40x40.png

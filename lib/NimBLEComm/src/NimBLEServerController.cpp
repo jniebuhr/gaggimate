@@ -115,7 +115,9 @@ void NimBLEServerController::sendAutotuneResult(float Kp, float Ki, float Kd) {
     }
 }
 
-void NimBLEServerController::registerOutputControlCallback(const simple_output_callback_t &callback) { outputControlCallback = callback; }
+void NimBLEServerController::registerOutputControlCallback(const simple_output_callback_t &callback) {
+    outputControlCallback = callback;
+}
 void NimBLEServerController::registerAltControlCallback(const pin_control_callback_t &callback) { altControlCallback = callback; }
 void NimBLEServerController::registerPingCallback(const ping_callback_t &callback) { pingCallback = callback; }
 void NimBLEServerController::registerAutotuneCallback(const autotune_callback_t &callback) { autotuneCallback = callback; }
@@ -151,7 +153,8 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         float pumpSetpoint = get_token(control, 2, ',').toFloat();
         float boilerSetpoint = get_token(control, 3, ',').toFloat();
 
-        ESP_LOGI(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, boiler=%.1f", type, valve, pumpSetpoint, boilerSetpoint);
+        ESP_LOGI(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, boiler=%.1f", type, valve, pumpSetpoint,
+                 boilerSetpoint);
         if (outputControlCallback != nullptr) {
             outputControlCallback(valve == 1, pumpSetpoint, boilerSetpoint);
         }
@@ -184,7 +187,7 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
             pidControlCallback(Kp, Ki, Kd);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PRESSURE_SCALE_UUID))) {
-        const uint8_t* data = pCharacteristic->getValue().data();
+        const uint8_t *data = pCharacteristic->getValue().data();
         float scale;
         std::memcpy(&scale, data + 0, sizeof(scale));
 

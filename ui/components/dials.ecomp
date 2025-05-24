@@ -2094,6 +2094,19 @@
                   "InheritedType": 3
                 },
                 {
+                  "nid": 10520,
+                  "strtype": "_style/Bg_Color",
+                  "strval": "Dark",
+                  "integer": 1000207,
+                  "intarray": [
+                    19,
+                    19,
+                    19,
+                    255
+                  ],
+                  "InheritedType": 7
+                },
+                {
                   "nid": 11110,
                   "strtype": "_style/Padding",
                   "intarray": [

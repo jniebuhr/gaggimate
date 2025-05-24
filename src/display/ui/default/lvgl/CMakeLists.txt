@@ -27,8 +27,8 @@ SET(SOURCES components/ui_comp_dials.c
     images/ui_img_1455708189.c
     images/ui_img_979979123.c
     images/ui_img_783005998.c
-    images/ui_img_363557387.c
     images/ui_img_545340440.c
+    images/ui_img_363557387.c
     images/ui_img_2044104741.c
     images/ui_img_445946954.c
     images/ui_img_1424216268.c

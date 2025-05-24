@@ -56,10 +56,10 @@ void ui_event_MenuScreen_btnBrew(lv_event_t *e);
 lv_obj_t *ui_MenuScreen_btnBrew;
 void ui_event_MenuScreen_btnSteam(lv_event_t *e);
 lv_obj_t *ui_MenuScreen_btnSteam;
-void ui_event_MenuScreen_grindBtn(lv_event_t *e);
-lv_obj_t *ui_MenuScreen_grindBtn;
 void ui_event_MenuScreen_waterBtn(lv_event_t *e);
 lv_obj_t *ui_MenuScreen_waterBtn;
+void ui_event_MenuScreen_grindBtn(lv_event_t *e);
+lv_obj_t *ui_MenuScreen_grindBtn;
 lv_obj_t *ui_MenuScreen_dials;
 void ui_event_MenuScreen_standbyButton(lv_event_t *e);
 lv_obj_t *ui_MenuScreen_standbyButton;
@@ -325,19 +325,19 @@ void ui_event_MenuScreen_btnSteam(lv_event_t *e) {
     }
 }
 
-void ui_event_MenuScreen_grindBtn(lv_event_t *e) {
-    lv_event_code_t event_code = lv_event_get_code(e);
-
-    if (event_code == LV_EVENT_CLICKED) {
-        onGrindScreen(e);
-    }
-}
-
 void ui_event_MenuScreen_waterBtn(lv_event_t *e) {
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if (event_code == LV_EVENT_CLICKED) {
         onWaterScreen(e);
+    }
+}
+
+void ui_event_MenuScreen_grindBtn(lv_event_t *e) {
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if (event_code == LV_EVENT_CLICKED) {
+        onGrindScreen(e);
     }
 }
 
