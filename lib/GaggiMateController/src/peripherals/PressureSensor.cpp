@@ -1,12 +1,12 @@
 #include "PressureSensor.h"
 #include "Wire.h"
 
-PressureSensor::PressureSensor(uint8_t sda_pin, uint8_t scl_pin, const pressure_callback_t &callback, float pressure_range,
+PressureSensor::PressureSensor(uint8_t sda_pin, uint8_t scl_pin, const pressure_callback_t &callback, float pressure_scale,
                                float voltage_floor, float voltage_ceil)
-    : _sda_pin(sda_pin), _scl_pin(scl_pin), _pressure_range(pressure_range), _callback(callback), taskHandle(nullptr) {
+    : _sda_pin(sda_pin), _scl_pin(scl_pin), _pressure_scale(pressure_scale), _callback(callback), taskHandle(nullptr) {
     _adc_floor = static_cast<int16_t>(voltage_floor / ADC_STEP);
-    float pressureAdcRange = (voltage_ceil - voltage_floor) / ADC_STEP;
-    _pressure_step = pressure_range / pressureAdcRange;
+    _pressure_adc_range = (voltage_ceil - voltage_floor) / ADC_STEP;
+    _pressure_step = pressure_scale / _pressure_adc_range;
 }
 
 void PressureSensor::setup() {
@@ -30,11 +30,16 @@ void PressureSensor::loop() {
         reading = reading - _adc_floor;
         float pressure = reading * _pressure_step;
         _pressure = 0.1f * pressure + 0.9f * _pressure;
-        _pressure = std::clamp(_pressure, 0.0f, _pressure_range);
+        _pressure = std::clamp(_pressure, 0.0f, _pressure_scale);
         ESP_LOGV(LOG_TAG, "ADC Reading: %d, Pressure Reading: %f, Pressure Step: %f, Floor: %d", reading, _pressure,
                  _pressure_step, _adc_floor);
         _callback(_pressure);
     }
+}
+
+void PressureSensor::setScale(float pressure_scale) {
+    _pressure_scale = pressure_scale;
+    _pressure_step = pressure_scale / _pressure_adc_range;
 }
 
 [[noreturn]] void PressureSensor::loopTask(void *arg) {

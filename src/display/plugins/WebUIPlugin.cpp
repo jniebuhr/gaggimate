@@ -228,6 +228,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setTimezone(request->arg("timezone"));
             if (request->hasArg("standbyTimeout"))
                 settings->setStandbyTimeout(request->arg("standbyTimeout").toInt() * 1000);
+            settings->save(true);
         });
         controller->setTargetTemp(controller->getTargetTemp());
     }

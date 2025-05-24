@@ -3,51 +3,47 @@
 
 #include "NimBLEComm.h"
 #include <ble_ota_dfu.hpp>
+#include "cstring"
 
 class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks {
   public:
     NimBLEServerController();
     void initServer(String infoString);
-    void sendTemperature(float temperature);
-    void sendPressure(float temperature);
+    void sendSensorData(float temperature, float pressure);
     void sendError(int errorCode);
     void sendBrewBtnState(bool brewButtonStatus);
     void sendSteamBtnState(bool steamButtonStatus);
     void sendAutotuneResult(float Kp, float Ki, float Kd);
-    void registerTempControlCallback(const temp_control_callback_t &callback);
-    void registerPumpControlCallback(const pump_control_callback_t &callback);
-    void registerValveControlCallback(const pin_control_callback_t &callback);
+    void registerOutputControlCallback(const simple_output_callback_t &callback);
     void registerAltControlCallback(const pin_control_callback_t &callback);
     void registerPidControlCallback(const pid_control_callback_t &callback);
     void registerPingCallback(const ping_callback_t &callback);
     void registerAutotuneCallback(const autotune_callback_t &callback);
+    void registerPressureScaleCallback(const float_callback_t &callback);
     void setInfo(String infoString);
 
   private:
     bool deviceConnected = false;
     String infoString = "";
-    NimBLECharacteristic *tempControlChar;
-    NimBLECharacteristic *pumpControlChar;
-    NimBLECharacteristic *valveControlChar;
-    NimBLECharacteristic *altControlChar;
-    NimBLECharacteristic *tempReadChar;
-    NimBLECharacteristic *pingChar;
-    NimBLECharacteristic *pidControlChar;
-    NimBLECharacteristic *errorChar;
-    NimBLECharacteristic *autotuneChar;
-    NimBLECharacteristic *autotuneResultChar;
-    NimBLECharacteristic *brewBtnChar;
-    NimBLECharacteristic *steamBtnChar;
-    NimBLECharacteristic *infoChar;
-    NimBLECharacteristic *pressureChar;
+    NimBLECharacteristic *outputControlChar = nullptr;
+    NimBLECharacteristic *pressureScaleChar = nullptr;
+    NimBLECharacteristic *altControlChar = nullptr;
+    NimBLECharacteristic *pingChar = nullptr;
+    NimBLECharacteristic *pidControlChar = nullptr;
+    NimBLECharacteristic *errorChar = nullptr;
+    NimBLECharacteristic *autotuneChar = nullptr;
+    NimBLECharacteristic *autotuneResultChar = nullptr;
+    NimBLECharacteristic *brewBtnChar = nullptr;
+    NimBLECharacteristic *steamBtnChar = nullptr;
+    NimBLECharacteristic *infoChar = nullptr;
+    NimBLECharacteristic *sensorChar = nullptr;
 
-    temp_control_callback_t tempControlCallback = nullptr;
-    pump_control_callback_t pumpControlCallback = nullptr;
-    pin_control_callback_t valveControlCallback = nullptr;
+    simple_output_callback_t outputControlCallback = nullptr;
     pin_control_callback_t altControlCallback = nullptr;
     pid_control_callback_t pidControlCallback = nullptr;
     ping_callback_t pingCallback = nullptr;
     autotune_callback_t autotuneCallback = nullptr;
+    float_callback_t pressureScaleCallback = nullptr;
 
     // BLEServerCallbacks overrides
     void onConnect(NimBLEServer *pServer) override;
@@ -60,5 +56,6 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
 
     const char *LOG_TAG = "NimBLEClientController";
 };
+
 
 #endif // NIMBLESERVERCONTROLLER_H

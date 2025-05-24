@@ -37,7 +37,7 @@ void Heater::setupAutotune(int tuningTemp, int samples) {
 }
 
 void Heater::loop() {
-    if (temperature <= 0 || setpoint <= 0) {
+    if (temperature <= 0.0f || setpoint <= 0.0f) {
         pid->SetMode(QuickPID::Control::manual);
         digitalWrite(heaterPin, LOW);
         relayStatus = false;

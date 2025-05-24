@@ -16,7 +16,7 @@ class Settings {
     Settings();
 
     void batchUpdate(const SettingsCallback &callback);
-    void save();
+    void save(bool noDelay = false);
 
     // Getters and setters
     int getTargetBrewTemp() const { return targetBrewTemp; }

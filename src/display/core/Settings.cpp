@@ -52,7 +52,13 @@ void Settings::batchUpdate(const SettingsCallback &callback) {
     save();
 }
 
-void Settings::save() { dirty = true; }
+void Settings::save(bool noDelay) {
+    if (noDelay) {
+        doSave();
+        return;
+    }
+    dirty = true;
+}
 
 void Settings::setTargetBrewTemp(const int target_brew_temp) {
     targetBrewTemp = target_brew_temp;

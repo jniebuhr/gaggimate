@@ -7,7 +7,6 @@
 #include "Settings.h"
 #include <WiFi.h>
 #include <display/core/Process.h>
-#include <display/core/ProfileManager.h>
 #include <display/ui/default/DefaultUI.h>
 
 const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space
@@ -110,7 +109,6 @@ class Controller {
     SystemInfo getSystemInfo() const { return systemInfo; }
 
     NimBLEClientController *getClientController() { return &clientController; }
-    ProfileManager *getProfileManager() const { return profileManager; }
 
   private:
     // Initialization methods
@@ -120,7 +118,7 @@ class Controller {
     void setupInfos();
 
     // Functional methods
-    void updateRelay();
+    void updateControl();
 
     // Event handlers
     void onTempRead(float temperature);
@@ -137,7 +135,6 @@ class Controller {
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};
-    ProfileManager *profileManager = nullptr;
 
     int mode = MODE_BREW;
     int currentTemp = 0;

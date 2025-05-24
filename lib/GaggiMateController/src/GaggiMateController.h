@@ -32,6 +32,7 @@ class GaggiMateController {
     void thermalRunawayShutdown(void);
     void startPidAutotune(void);
     void stopPidAutotune(void);
+    void sendSensorData(void);
 
     ControllerConfig _config = ControllerConfig{};
     NimBLEServerController _ble;

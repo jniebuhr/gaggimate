@@ -4,9 +4,7 @@ constexpr size_t MAX_CONNECT_RETRIES = 3;
 constexpr size_t BLE_SCAN_DURATION_SECONDS = 10;
 
 NimBLEClientController::NimBLEClientController()
-    : client(nullptr), tempControlChar(nullptr), pumpControlChar(nullptr), valveControlChar(nullptr), altControlChar(nullptr),
-      tempReadChar(nullptr), pingChar(nullptr), pidControlChar(nullptr), errorChar(nullptr), autotuneChar(nullptr),
-      brewBtnChar(nullptr), steamBtnChar(nullptr), serverDevice(nullptr) {}
+    : client(nullptr) {}
 
 void NimBLEClientController::initClient() {
     NimBLEDevice::init("GPBLC");
@@ -29,16 +27,16 @@ void NimBLEClientController::scan() {
     pBLEScan->start(BLE_SCAN_DURATION_SECONDS, nullptr, false);
 }
 
-void NimBLEClientController::registerTempReadCallback(const temp_read_callback_t &callback) { tempReadCallback = callback; }
 
 void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callback_t &callback) {
     remoteErrorCallback = callback;
 }
-
 void NimBLEClientController::registerBrewBtnCallback(const brew_callback_t &callback) { brewBtnCallback = callback; }
 void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &callback) { steamBtnCallback = callback; }
 
-void NimBLEClientController::registerPressureCallback(const pressure_read_callback_t &callback) { pressureCallback = callback; }
+void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t &callback) {
+    sensorCallback = callback;
+}
 
 void NimBLEClientController::registerAutotuneResultCallback(const pid_control_callback_t &callback) {
     autotuneResultCallback = callback;
@@ -81,21 +79,15 @@ bool NimBLEClientController::connectToServer() {
     }
 
     // Obtain the remote write characteristics
-    tempControlChar = pRemoteService->getCharacteristic(NimBLEUUID(TEMP_CONTROL_CHAR_UUID));
-    pumpControlChar = pRemoteService->getCharacteristic(NimBLEUUID(PUMP_CONTROL_CHAR_UUID));
-    valveControlChar = pRemoteService->getCharacteristic(NimBLEUUID(VALVE_CONTROL_CHAR_UUID));
+    outputControlChar = pRemoteService->getCharacteristic(NimBLEUUID(OUTPUT_CONTROL_UUID));
     altControlChar = pRemoteService->getCharacteristic(NimBLEUUID(ALT_CONTROL_CHAR_UUID));
     autotuneChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_CHAR_UUID));
     pingChar = pRemoteService->getCharacteristic(NimBLEUUID(PING_CHAR_UUID));
     pidControlChar = pRemoteService->getCharacteristic(NimBLEUUID(PID_CONTROL_CHAR_UUID));
     infoChar = pRemoteService->getCharacteristic(NimBLEUUID(INFO_UUID));
+    pressureScaleChar = pRemoteService->getCharacteristic(NimBLEUUID(PRESSURE_SCALE_UUID));
 
     // Obtain the remote notify characteristic and subscribe to it
-    tempReadChar = pRemoteService->getCharacteristic(NimBLEUUID(TEMP_READ_CHAR_UUID));
-    if (tempReadChar->canNotify()) {
-        tempReadChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
-                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-    }
 
     errorChar = pRemoteService->getCharacteristic(NimBLEUUID(ERROR_CHAR_UUID));
     if (errorChar->canNotify()) {
@@ -121,9 +113,9 @@ bool NimBLEClientController::connectToServer() {
                                                       std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
-    pressureChar = pRemoteService->getCharacteristic(NimBLEUUID(PRESSURE_UUID));
-    if (pressureChar != nullptr && pressureChar->canNotify()) {
-        pressureChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+    sensorChar = pRemoteService->getCharacteristic(NimBLEUUID(SENSOR_DATA_UUID));
+    if (sensorChar != nullptr && sensorChar->canNotify()) {
+        sensorChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                                 std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
@@ -133,11 +125,13 @@ bool NimBLEClientController::connectToServer() {
     return true;
 }
 
-void NimBLEClientController::sendTemperatureControl(float setpoint) {
-    if (tempControlChar != nullptr && client->isConnected()) {
-        char tempStr[8];
-        snprintf(tempStr, sizeof(tempStr), "%.2f", setpoint);
-        tempControlChar->writeValue(tempStr);
+void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint) {
+    if (client->isConnected() && outputControlChar != nullptr) {
+        char str[30];
+        snprintf(str, sizeof(str), "%d,%d,%.1f,%.1f", 0, valve ? 1 : 0, pumpSetpoint, boilerSetpoint);
+        if (outputControlChar->getValue().c_str() != str) {
+            outputControlChar->writeValue(str, false);
+        }
     }
 }
 
@@ -147,17 +141,12 @@ void NimBLEClientController::sendPidSettings(const String &pid) {
     }
 }
 
-void NimBLEClientController::sendPumpControl(float setpoint) {
-    if (pumpControlChar != nullptr && client->isConnected()) {
-        char pumpStr[8];
-        snprintf(pumpStr, sizeof(pumpStr), "%.2f", setpoint);
-        pumpControlChar->writeValue(pumpStr);
-    }
-}
-
-void NimBLEClientController::sendValveControl(bool pinState) {
-    if (valveControlChar != nullptr && client->isConnected()) {
-        valveControlChar->writeValue(pinState ? "1" : "0");
+void NimBLEClientController::setPressureScale(float scale) {
+    if (client->isConnected() && pressureScaleChar != nullptr) {
+        constexpr size_t bufferSize = sizeof(float);
+        char buffer[bufferSize];
+        std::memcpy(buffer + 0, &scale, sizeof(scale));
+        pressureScaleChar->writeValue(buffer);
     }
 }
 
@@ -209,20 +198,6 @@ void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
 // Notification callback
 void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t,
                                             bool) const {
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TEMP_READ_CHAR_UUID))) {
-        float temperature = atof((char *)pData);
-        ESP_LOGV(LOG_TAG, "Temperature read: %.2f", temperature);
-        if (tempReadCallback != nullptr) {
-            tempReadCallback(temperature);
-        }
-    }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(PRESSURE_UUID))) {
-        float pressure = atof((char *)pData);
-        ESP_LOGV(LOG_TAG, "Pressure read: %.2f", pressure);
-        if (pressureCallback != nullptr) {
-            pressureCallback(pressure);
-        }
-    }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(ERROR_CHAR_UUID))) {
         int errorCode = atoi((char *)pData);
         ESP_LOGV(LOG_TAG, "Error read: %d", errorCode);
@@ -242,6 +217,16 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
         if (steamBtnCallback != nullptr) {
             steamBtnCallback(steamButtonStatus);
+        }
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
+        String data = String((char *)pData);
+        float temperature = get_token(data, 0, ',').toFloat();
+        float pressure = get_token(data, 1, ',').toFloat();
+
+        ESP_LOGV(LOG_TAG, "Received sensor data: temperature=%.1f, pressure=%.1f", temperature, pressure);
+        if (sensorCallback != nullptr) {
+            sensorCallback(temperature, pressure);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
