@@ -27,6 +27,7 @@ void Max31855Thermocouple::setup() {
 }
 
 void Max31855Thermocouple::loop() {
+    errors = max(0.0f, errors - 0.1f);
     int status = max31855->read();
     if (status != STATUS_OK) {
         ESP_LOGE(LOG_TAG, "Failed to read temperature: %d\n", status);

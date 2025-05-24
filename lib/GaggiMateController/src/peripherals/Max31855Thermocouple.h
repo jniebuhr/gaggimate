@@ -27,7 +27,7 @@ class Max31855Thermocouple : public TemperatureSensor {
     MAX31855 *max31855;
     xTaskHandle taskHandle;
 
-    int errors = 0;
+    float errors = .0f;
     float temperature = .0f;
 
     int csPin = 0;

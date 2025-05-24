@@ -12,11 +12,14 @@ extern "C" {
 
 void onLoadStarted(lv_event_t *e);
 void onMenuClick(lv_event_t *e);
-void onStandby(lv_event_t *e);
+void onPreviousProfile(lv_event_t *e);
+void onNextProfile(lv_event_t *e);
+void onProfileLoad(lv_event_t *e);
 void onBrewScreen(lv_event_t *e);
 void onSteamScreen(lv_event_t *e);
-void onWaterScreen(lv_event_t *e);
 void onGrindScreen(lv_event_t *e);
+void onWaterScreen(lv_event_t *e);
+void onStandby(lv_event_t *e);
 void onBrewStart(lv_event_t *e);
 void onTimedClick(lv_event_t *e);
 void onVolumetricClick(lv_event_t *e);

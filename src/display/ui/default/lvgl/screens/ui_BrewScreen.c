@@ -13,38 +13,6 @@ void ui_BrewScreen_screen_init(void) {
                                            _ui_theme_color_Dark);
     ui_object_set_themeable_style_property(ui_BrewScreen, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA, _ui_theme_alpha_Dark);
 
-    ui_BrewScreen_tempTarget = lv_img_create(ui_BrewScreen);
-    lv_img_set_src(ui_BrewScreen_tempTarget, &ui_img_indicator_png);
-    lv_obj_set_width(ui_BrewScreen_tempTarget, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(ui_BrewScreen_tempTarget, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_align(ui_BrewScreen_tempTarget, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_BrewScreen_tempTarget, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_BrewScreen_tempTarget, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-    lv_img_set_angle(ui_BrewScreen_tempTarget, 300);
-    ui_object_set_themeable_style_property(ui_BrewScreen_tempTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
-                                           _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_BrewScreen_tempTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
-                                           _ui_theme_alpha_NiceWhite);
-
-    ui_BrewScreen_tempGauge = lv_arc_create(ui_BrewScreen);
-    lv_obj_set_width(ui_BrewScreen_tempGauge, 480);
-    lv_obj_set_height(ui_BrewScreen_tempGauge, 480);
-    lv_obj_set_align(ui_BrewScreen_tempGauge, LV_ALIGN_CENTER);
-    lv_obj_add_state(ui_BrewScreen_tempGauge, LV_STATE_DISABLED); /// States
-    lv_arc_set_range(ui_BrewScreen_tempGauge, 0, 160);
-    lv_arc_set_value(ui_BrewScreen_tempGauge, 91);
-    lv_arc_set_bg_angles(ui_BrewScreen_tempGauge, 112, 68);
-    lv_obj_set_style_arc_width(ui_BrewScreen_tempGauge, 35, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_arc_rounded(ui_BrewScreen_tempGauge, false, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_arc_img_src(ui_BrewScreen_tempGauge, &ui_img_untitled_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    lv_obj_set_style_arc_width(ui_BrewScreen_tempGauge, 35, LV_PART_INDICATOR | LV_STATE_DEFAULT);
-    lv_obj_set_style_arc_rounded(ui_BrewScreen_tempGauge, false, LV_PART_INDICATOR | LV_STATE_DEFAULT);
-    lv_obj_set_style_arc_img_src(ui_BrewScreen_tempGauge, &ui_img_489054950, LV_PART_INDICATOR | LV_STATE_DEFAULT);
-
-    lv_obj_set_style_bg_color(ui_BrewScreen_tempGauge, lv_color_hex(0xD10000), LV_PART_KNOB | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_BrewScreen_tempGauge, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
-
     ui_BrewScreen_ImgButton5 = lv_imgbtn_create(ui_BrewScreen);
     lv_imgbtn_set_src(ui_BrewScreen_ImgButton5, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_295763949, NULL);
     lv_obj_set_width(ui_BrewScreen_ImgButton5, 40);
@@ -52,8 +20,10 @@ void ui_BrewScreen_screen_init(void) {
     lv_obj_set_x(ui_BrewScreen_ImgButton5, 0);
     lv_obj_set_y(ui_BrewScreen_ImgButton5, 210);
     lv_obj_set_align(ui_BrewScreen_ImgButton5, LV_ALIGN_CENTER);
-    lv_obj_set_style_img_recolor(ui_BrewScreen_ImgButton5, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_img_recolor_opa(ui_BrewScreen_ImgButton5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_object_set_themeable_style_property(ui_BrewScreen_ImgButton5, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+                                           _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_BrewScreen_ImgButton5, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
+                                           _ui_theme_alpha_NiceWhite);
 
     ui_BrewScreen_contentPanel4 = lv_obj_create(ui_BrewScreen);
     lv_obj_set_width(ui_BrewScreen_contentPanel4, 360);
@@ -99,26 +69,7 @@ void ui_BrewScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_BrewScreen_startButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
                                            _ui_theme_alpha_NiceWhite);
 
-    ui_BrewScreen_tempText = lv_label_create(ui_BrewScreen);
-    lv_obj_set_width(ui_BrewScreen_tempText, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(ui_BrewScreen_tempText, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_x(ui_BrewScreen_tempText, 0);
-    lv_obj_set_y(ui_BrewScreen_tempText, -180);
-    lv_obj_set_align(ui_BrewScreen_tempText, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_BrewScreen_tempText, "92°C");
-    lv_obj_set_style_text_color(ui_BrewScreen_tempText, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(ui_BrewScreen_tempText, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_BrewScreen_tempText, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
-    ui_object_set_themeable_style_property(ui_BrewScreen_tempText, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
-                                           _ui_theme_color_Dark);
-    ui_object_set_themeable_style_property(ui_BrewScreen_tempText, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA,
-                                           _ui_theme_alpha_Dark);
-    lv_obj_set_style_pad_left(ui_BrewScreen_tempText, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(ui_BrewScreen_tempText, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(ui_BrewScreen_tempText, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(ui_BrewScreen_tempText, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_BrewScreen_controlContainer = lv_obj_create(ui_BrewScreen);
+    ui_BrewScreen_controlContainer = lv_obj_create(ui_BrewScreen_contentPanel4);
     lv_obj_remove_style_all(ui_BrewScreen_controlContainer);
     lv_obj_set_width(ui_BrewScreen_controlContainer, 300);
     lv_obj_set_height(ui_BrewScreen_controlContainer, 196);
@@ -311,6 +262,10 @@ void ui_BrewScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_BrewScreen_Image4, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
                                            _ui_theme_alpha_NiceWhite);
 
+    ui_BrewScreen_dials = ui_dials_create(ui_BrewScreen);
+    lv_obj_set_x(ui_BrewScreen_dials, 0);
+    lv_obj_set_y(ui_BrewScreen_dials, 0);
+
     lv_obj_add_event_cb(ui_BrewScreen_startButton, ui_event_BrewScreen_startButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_BrewScreen_timedButton, ui_event_BrewScreen_timedButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_BrewScreen_volumetricButton, ui_event_BrewScreen_volumetricButton, LV_EVENT_ALL, NULL);
@@ -319,4 +274,10 @@ void ui_BrewScreen_screen_init(void) {
     lv_obj_add_event_cb(ui_BrewScreen_upDurationButton, ui_event_BrewScreen_upDurationButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_BrewScreen_downDurationButton, ui_event_BrewScreen_downDurationButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_BrewScreen, ui_event_BrewScreen, LV_EVENT_ALL, NULL);
+    uic_BrewScreen_dials_tempTarget = ui_comp_get_child(ui_BrewScreen_dials, UI_COMP_DIALS_TEMPTARGET);
+    uic_BrewScreen_dials_tempGauge = ui_comp_get_child(ui_BrewScreen_dials, UI_COMP_DIALS_TEMPGAUGE);
+    uic_BrewScreen_dials_pressureTarget = ui_comp_get_child(ui_BrewScreen_dials, UI_COMP_DIALS_PRESSURETARGET);
+    uic_BrewScreen_dials_pressureGauge = ui_comp_get_child(ui_BrewScreen_dials, UI_COMP_DIALS_PRESSUREGAUGE);
+    uic_BrewScreen_dials_pressureText = ui_comp_get_child(ui_BrewScreen_dials, UI_COMP_DIALS_PRESSURETEXT);
+    uic_BrewScreen_dials_tempText = ui_comp_get_child(ui_BrewScreen_dials, UI_COMP_DIALS_TEMPTEXT);
 }

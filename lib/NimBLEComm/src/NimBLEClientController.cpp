@@ -121,6 +121,12 @@ bool NimBLEClientController::connectToServer() {
                                                       std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
+    pressureChar = pRemoteService->getCharacteristic(NimBLEUUID(PRESSURE_UUID));
+    if (pressureChar != nullptr && pressureChar->canNotify()) {
+        pressureChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
     delay(500);
 
     readyForConnection = false;

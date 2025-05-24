@@ -16,6 +16,12 @@
 void Controller::setup() {
     mode = settings.getStartupMode();
 
+    if (!SPIFFS.begin(true)) {
+        Serial.println("An Error has occurred while mounting LittleFS");
+    }
+
+    profileManager = new ProfileManager(SPIFFS, "/profiles", settings);
+
     pluginManager = new PluginManager();
     ui = new DefaultUI(this, pluginManager);
     if (settings.isHomekit())
@@ -34,10 +40,6 @@ void Controller::setup() {
     pluginManager->registerPlugin(new WebUIPlugin());
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->setup(this);
-
-    if (!SPIFFS.begin(true)) {
-        Serial.println("An Error has occurred while mounting LittleFS");
-    }
 
     ui->init();
 }
@@ -80,6 +82,10 @@ void Controller::setupBluetooth() {
         settings.setPid(String(pid));
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
+    });
+    clientController.registerPressureCallback([this](const float _pressure) {
+        pressure = _pressure / 12.0f * 16.0f;
+        pluginManager->trigger("boiler:pressure:change", "value", pressure);
     });
     pluginManager->trigger("controller:bluetooth:init");
 }
@@ -262,7 +268,7 @@ int Controller::getTargetTemp() {
 }
 
 void Controller::setTargetTemp(int temperature) {
-    pluginManager->trigger("boiler:targetTemperature:change", "value", getTargetTemp());
+    pluginManager->trigger("boiler:targetTemperature:change", "value", temperature);
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
@@ -276,6 +282,12 @@ void Controller::setTargetTemp(int temperature) {
         break;
     default:;
     }
+    clientController.sendPidSettings(settings.getPid());
+    int targetTemp = temperature;
+    if (targetTemp > 0) {
+        targetTemp = targetTemp + settings.getTemperatureOffset();
+    }
+    clientController.sendTemperatureControl(targetTemp);
     updateLastAction();
 }
 

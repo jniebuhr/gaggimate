@@ -27,14 +27,14 @@ void GaggiMateController::setup() {
         [this](float Kp, float Ki, float Kd) { _ble.sendAutotuneResult(Kp, Ki, Kd); });
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
-    if (_config.capabilites.dimming) {
-        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin);
-    } else {
-        pump = new SimplePump(_config.pumpPin, _config.pumpOn);
-    }
     if (_config.capabilites.pressure) {
         pressureSensor =
             new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { _ble.sendPressure(pressure); });
+    }
+    if (_config.capabilites.dimming) {
+        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor);
+    } else {
+        pump = new SimplePump(_config.pumpPin, _config.pumpOn);
     }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });

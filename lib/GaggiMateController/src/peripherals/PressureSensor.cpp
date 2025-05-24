@@ -27,12 +27,13 @@ void PressureSensor::setup() {
 void PressureSensor::loop() {
     if (ads->isConnected()) {
         int16_t reading = ads->readADC();
-        // Subtract the voltage floor from the reading in case of a 0.5-4.5V sensor
         reading = reading - _adc_floor;
         float pressure = reading * _pressure_step;
-        ESP_LOGV(LOG_TAG, "ADC Reading: %d, Pressure Reading: %f, Pressure Step: %f, Floor: %d", reading, pressure,
+        _pressure = 0.1f * pressure + 0.9f * _pressure;
+        _pressure = std::clamp(_pressure, 0.0f, _pressure_range);
+        ESP_LOGV(LOG_TAG, "ADC Reading: %d, Pressure Reading: %f, Pressure Step: %f, Floor: %d", reading, _pressure,
                  _pressure_step, _adc_floor);
-        _callback(pressure);
+        _callback(_pressure);
     }
 }
 
