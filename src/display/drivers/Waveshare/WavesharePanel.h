@@ -82,6 +82,8 @@ class WavesharePanel : public Display {
 
     void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data) override;
 
+    bool supportsDirectMode() { return false; }
+
   private:
     void writeData(uint8_t data);
 
