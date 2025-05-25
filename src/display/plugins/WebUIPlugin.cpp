@@ -10,42 +10,44 @@ WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
 void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) {
     this->controller = _controller;
     this->pluginManager = _pluginManager;
-    this->ota = new GitHubOTA(
-        BUILD_GIT_VERSION, controller->getSystemInfo().version,
-        RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"),
-        [this](uint8_t phase) {
-            pluginManager->trigger("ota:update:phase", "phase", phase);
-            updateOTAProgress(phase, 0);
-        },
-        [this](uint8_t phase, int progress) {
-            pluginManager->trigger("ota:update:progress", "progress", progress);
-            updateOTAProgress(phase, progress);
-        },
-        "display-firmware.bin", "display-filesystem.bin", "board-firmware.bin");
+    // this->ota = new GitHubOTA(
+    //     BUILD_GIT_VERSION, controller->getSystemInfo().version,
+    //     RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"),
+    //     [this](uint8_t phase) {
+    //         pluginManager->trigger("ota:update:phase", "phase", phase);
+    //         updateOTAProgress(phase, 0);
+    //     },
+    //     [this](uint8_t phase, int progress) {
+    //         pluginManager->trigger("ota:update:progress", "progress", progress);
+    //         updateOTAProgress(phase, progress);
+    //     },
+    //     "display-firmware.bin", "display-filesystem.bin", "board-firmware.bin");
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         const int apMode = event.getInt("AP");
         start(apMode);
     });
     pluginManager->on("controller:ready", [this](Event const &) {
-        ota->setControllerVersion(controller->getSystemInfo().version);
-        ota->init(controller->getClientController()->getClient());
+        if (ota) {
+            ota->setControllerVersion(controller->getSystemInfo().version);
+            ota->init(controller->getClientController()->getClient());
+        }
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
 }
 
 void WebUIPlugin::loop() {
-    if (updating) {
+    if (ota && updating) {
         pluginManager->trigger("ota:update:start");
         ota->update(updateComponent != "display", updateComponent != "controller");
         pluginManager->trigger("ota:update:end");
         updating = false;
     }
     const long now = millis();
-    if (lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL) {
+    if (ota && (lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL)) {
         ota->checkForUpdates();
         pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
         lastUpdateCheck = now;
-        updateOTAStatus(ota->getCurrentVersion());
+        updateOTAStatus(ota->getCurrentVersion());   
     }
     if (now > lastStatus + STATUS_PERIOD) {
         lastStatus = now;
@@ -145,7 +147,7 @@ void WebUIPlugin::start(bool apMode) {
 
 void WebUIPlugin::handleOTASettings(uint32_t clientId, JsonDocument &request) {
     if (request["update"].as<bool>()) {
-        if (!request["channel"].isNull()) {
+        if (!request["channel"].isNull() && ota) {
             controller->getSettings().setOTAChannel(request["channel"].as<String>() == "latest" ? "latest" : "nightly");
             ota->setReleaseUrl(RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"));
             lastUpdateCheck = 0;
@@ -328,14 +330,14 @@ void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
 void WebUIPlugin::updateOTAStatus(const String &version) {
     Settings const &settings = controller->getSettings();
     JsonDocument doc;
-    doc["latestVersion"] = ota->getCurrentVersion();
+    doc["latestVersion"] = ota ? ota->getCurrentVersion() : "0.0.0";
     doc["tp"] = "res:ota-settings";
-    doc["displayUpdateAvailable"] = ota->isUpdateAvailable(false);
-    doc["controllerUpdateAvailable"] = ota->isUpdateAvailable(true);
+    doc["displayUpdateAvailable"] = ota ? ota->isUpdateAvailable(false) : false;
+    doc["controllerUpdateAvailable"] = ota ? ota->isUpdateAvailable(true) : false   ;
     doc["displayVersion"] = BUILD_GIT_VERSION;
     doc["controllerVersion"] = controller->getSystemInfo().version;
     doc["hardware"] = controller->getSystemInfo().hardware;
-    doc["latestVersion"] = ota->getCurrentVersion();
+    doc["latestVersion"] = ota ? ota->getCurrentVersion() : "0.0.0";
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;
     ws.textAll(doc.as<String>());
