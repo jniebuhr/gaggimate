@@ -153,7 +153,7 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         float pumpSetpoint = get_token(control, 2, ',').toFloat();
         float boilerSetpoint = get_token(control, 3, ',').toFloat();
 
-        ESP_LOGI(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, boiler=%.1f", type, valve, pumpSetpoint,
+        ESP_LOGV(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, boiler=%.1f", type, valve, pumpSetpoint,
                  boilerSetpoint);
         if (outputControlCallback != nullptr) {
             outputControlCallback(valve == 1, pumpSetpoint, boilerSetpoint);

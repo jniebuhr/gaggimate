@@ -1,38 +1,56 @@
 #include "SimplePump.h"
 
-SimplePump::SimplePump(int pin, uint8_t pumpOn) : _pin(pin), _pumpOn(pumpOn), taskHandle(nullptr) {}
+SimplePump::SimplePump(int pin, uint8_t pumpOn, float windowSize) : _pin(pin), _pumpOn(pumpOn), _windowSize(windowSize), taskHandle(nullptr) {}
 
 void SimplePump::setup() {
     pinMode(_pin, OUTPUT);
     digitalWrite(_pin, !_pumpOn);
-    xTaskCreate(loopTask, "SimplePump::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
+    xTaskCreate(loopTask, "SimplePump::loop", configMINIMAL_STACK_SIZE * 8, this, 1, &taskHandle);
 }
 
 void SimplePump::loop() {
-    unsigned long currentMillis = millis();
-
-    // Reset the cycle every PUMP_CYCLE_DURATION milliseconds
-    if (currentMillis - lastCycleStart >= static_cast<long>(PUMP_CYCLE_TIME)) {
-        lastCycleStart = currentMillis;
+    if (_setpoint == .0f) {
+        digitalWrite(_pin, !_pumpOn);
+        relayStatus = false;
+        return;
     }
 
-    // Calculate the time the pump should stay on for
-    unsigned long onTime = static_cast<long>(static_cast<int>(_setpoint) * PUMP_CYCLE_TIME / 100);
+    float output = _setpoint / 100.0f * _windowSize;
 
-    // Determine the current step in the cycle
-    unsigned long currentCycleDuration = (currentMillis - lastCycleStart);
+    // software PWM timer
+    unsigned long msNow = millis();
+    if (msNow - windowStartTime >= static_cast<long>(_windowSize)) {
+        windowStartTime = msNow;
+    }
 
-    // Turn pump ON for the first `onSteps` steps and OFF for the remainder
-    ESP_LOGV(LOG_TAG, "Switching to: %u", currentCycleDuration < onTime);
-    digitalWrite(_pin, currentCycleDuration < onTime ? _pumpOn : !_pumpOn); // Relay on
+    // PWM relay output
+    if (!relayStatus && static_cast<unsigned long>(output) > (msNow - windowStartTime)) {
+        if (msNow > nextSwitchTime) {
+            nextSwitchTime = msNow;
+            relayStatus = true;
+            digitalWrite(_pin, _pumpOn);
+        }
+    } else if (relayStatus && static_cast<unsigned long>(output) < (msNow - windowStartTime)) {
+        if (msNow > nextSwitchTime) {
+            nextSwitchTime = msNow;
+            relayStatus = false;
+            digitalWrite(_pin, !_pumpOn);
+        }
+    }
 }
 
-void SimplePump::setPower(float setpoint) { _setpoint = setpoint; }
+void SimplePump::setPower(float setpoint) {
+    _setpoint = setpoint;
+    if (_setpoint == .0f) {
+        digitalWrite(_pin, !_pumpOn);
+        relayStatus = false;
+    }
+}
 
 void SimplePump::loopTask(void *arg) {
     auto *pump = static_cast<SimplePump *>(arg);
     while (true) {
         pump->loop();
-        vTaskDelay(PUMP_CYCLE_TIME / 100 / portTICK_PERIOD_MS);
+        vTaskDelay(25 / portTICK_PERIOD_MS);
     }
 }

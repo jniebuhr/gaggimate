@@ -5,6 +5,7 @@
 struct Capabilities {
     bool dimming;
     bool pressure;
+    bool ssrPump;
 };
 
 struct ControllerConfig {
@@ -71,6 +72,7 @@ const ControllerConfig GM_STANDARD_REV_1X = {.name = "GaggiMate Standard Rev 1.x
                                              .capabilites = {
                                                  .dimming = false,
                                                  .pressure = false,
+                                                 .ssrPump = false,
                                              }};
 
 const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x",
@@ -98,6 +100,7 @@ const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x
                                              .capabilites = {
                                                  .dimming = false,
                                                  .pressure = false,
+                                                 .ssrPump = true,
                                              }};
 
 const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.x",
@@ -128,6 +131,7 @@ const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.x",
                                         .capabilites = {
                                             .dimming = true,
                                             .pressure = true,
+                                            .ssrPump = false,
                                         }};
 
 const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
@@ -158,6 +162,7 @@ const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
                                       .capabilites = {
                                           .dimming = true,
                                           .pressure = true,
+                                          .ssrPump = false,
                                       }};
 
 #endif // CONTROLLERCONFIG_H

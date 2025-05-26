@@ -54,6 +54,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     pid_control_callback_t autotuneResultCallback = nullptr;
     sensor_read_callback_t sensorCallback = nullptr;
 
+    String _lastOutputControl = "";
+
     // BLEAdvertisedDeviceCallbacks override
     void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;
 
