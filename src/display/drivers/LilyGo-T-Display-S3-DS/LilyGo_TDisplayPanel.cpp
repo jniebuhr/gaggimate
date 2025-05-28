@@ -3,15 +3,13 @@
 #include "TouchDrvFT6x36.hpp"
 #include "pin_config.h"
 
-LilyGo_TDisplayPanel::LilyGo_TDisplayPanel() {}
+LilyGo_TDisplayPanel::LilyGo_TDisplayPanel() { _rotation = 0; }
 
 LilyGo_TDisplayPanel::~LilyGo_TDisplayPanel() {}
 
 bool LilyGo_TDisplayPanel::begin(LilyGo_TDisplayPanel_Color_Order order) {
-    Serial.println("Starting display");
-
-    bool success = initDisplay();
-    delay(100);
+    bool success = false;
+    success = initDisplay();
     success &= initTouch();
 
     Serial.println("Display initialized");
@@ -47,7 +45,7 @@ uint8_t LilyGo_TDisplayPanel::getBrightness() { return (this->currentBrightness 
 
 LilyGo_TDisplayPanel_Type LilyGo_TDisplayPanel::getModel() { return LilyGo_TDisplayPanel_Type(); }
 
-const char *LilyGo_TDisplayPanel::getTouchModelName() { return nullptr; }
+const char *LilyGo_TDisplayPanel::getTouchModelName() { return _touchDrv->getModelName(); }
 
 void LilyGo_TDisplayPanel::enableTouchWakeup() {}
 
@@ -60,17 +58,35 @@ void LilyGo_TDisplayPanel::sleep() {}
 void LilyGo_TDisplayPanel::wakeup() {}
 
 uint8_t LilyGo_TDisplayPanel::getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point) {
-    if (_touchDrv) {
-        // The FT3267 type touch reading INT level is to read the coordinates
-        // after pressing The CST820 interrupt level is not continuous, so the
-        // register must be read all the time to obtain continuous coordinates.
-        if (!_touchDrv->isPressed()) {
-            return 0;
-        }
-
-        return _touchDrv->getPoint(x_array, y_array, get_point);
+    if (!_touchDrv || !_touchDrv->isPressed()) {
+        return 0;
     }
-    return 0;
+
+    uint8_t points = _touchDrv->getPoint(x_array, y_array, get_point);
+
+    for (uint8_t i = 0; i < points; i++) {
+        int16_t rawX = x_array[i];
+        int16_t rawY = y_array[i];
+
+        switch (_rotation) {
+        case 1: // 90°
+            x_array[i] = rawY;
+            y_array[i] = width() - rawX;
+            break;
+        case 2: // 180°
+            x_array[i] = width() - rawX;
+            y_array[i] = height() - rawY;
+            break;
+        case 3: // 270°
+            x_array[i] = height() - rawY;
+            y_array[i] = rawX;
+            break;
+        default: // 0°
+            break;
+        }
+    }
+
+    return points;
 }
 
 bool LilyGo_TDisplayPanel::isPressed() {
@@ -84,6 +100,36 @@ uint16_t LilyGo_TDisplayPanel::getBattVoltage(void) { return 0; }
 
 void LilyGo_TDisplayPanel::pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t *data) {
     display->draw16bitRGBBitmap(x, y, data, width, height);
+}
+
+void LilyGo_TDisplayPanel::setRotation(uint8_t rotation) {
+    _rotation = rotation;
+
+    if (displayBus && display) {
+        // Set the rotation of the display for the Arduino_GFX library
+        display->setRotation(rotation);
+
+        // Override the rotation of the display for the CO5300 display directly
+        uint8_t r;
+        switch (_rotation) {
+        case 1:
+            r = CO5300_MADCTL_COLOR_ORDER | 0x60;
+            break;
+        case 2:
+            r = CO5300_MADCTL_COLOR_ORDER | 0xC0;
+            break;
+        case 3:
+            r = CO5300_MADCTL_COLOR_ORDER | 0xA0;
+            break;
+        case 0:
+        default:
+            r = CO5300_MADCTL_COLOR_ORDER;
+            break;
+        }
+        displayBus->beginWrite();
+        displayBus->writeC8D8(CO5300_W_MADCTL, r);
+        displayBus->endWrite();
+    }
 }
 
 bool LilyGo_TDisplayPanel::initTouch() {
@@ -115,14 +161,18 @@ bool LilyGo_TDisplayPanel::initDisplay() {
         displayBus = new Arduino_ESP32QSPI(LCD_CS /* CS */, LCD_SCLK /* SCK */, LCD_SDIO0 /* SDIO0 */, LCD_SDIO1 /* SDIO1 */,
                                            LCD_SDIO2 /* SDIO2 */, LCD_SDIO3 /* SDIO3 */);
 
-        display = new Arduino_CO5300(displayBus, LCD_RST /* RST */, 0 /* rotation */, false /* IPS */, LCD_WIDTH, LCD_HEIGHT,
-                                     6 /* col offset 1 */, 0 /* row offset 1 */, 0 /* col_offset2 */, 0 /* row_offset2 */);
+        display =
+            new Arduino_CO5300(displayBus, LCD_RST /* RST */, _rotation /* rotation */, false /* IPS */, LCD_WIDTH, LCD_HEIGHT,
+                               6 /* col offset 1 */, 0 /* row offset 1 */, 8 /* col_offset2 */, 0 /* row_offset2 */);
     }
 
     pinMode(LCD_EN, OUTPUT);
     digitalWrite(LCD_EN, HIGH);
 
     bool success = display->begin(80000000);
+    this->setRotation(_rotation);
+
+    // required for correct GRAM initialization
     displayBus->writeCommand(CO5300_C_PTLON);
     display->fillScreen(BLACK);
 

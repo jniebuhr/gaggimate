@@ -1,5 +1,5 @@
 /**
- * @file      LilyGo_RGBPanel.h
+ * @file      LilyGo_TDisplayPanel.h
  * @author    Borys Tymchenko
  * @license   MIT
  * @copyright
@@ -85,6 +85,8 @@ class LilyGo_TDisplayPanel : public Display {
     void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data);
 
     bool supportsDirectMode() { return true; }
+
+    void setRotation(uint8_t rotation);
 
   private:
     bool initTouch();
