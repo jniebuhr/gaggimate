@@ -591,6 +591,19 @@ export function Settings() {
                     onChange={onChange('haPassword')}
                   />
                 </div>
+                <div className="flex-auto">
+                  <label htmlFor="haTopic" className="block font-medium text-gray-700 dark:text-gray-400">
+                    Home Assistant Autodiscovery Topic
+                  </label>
+                  <input
+                    id="haTopic"
+                    name="haTopic"
+                    type="text"
+                    className="input-field"
+                    value={formData.haTopic}
+                    onChange={onChange('haTopic')}
+                  />
+                </div>
               </div>
             )}
           </div>
