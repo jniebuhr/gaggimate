@@ -1,7 +1,8 @@
 #ifndef MAIN_H
 #define MAIN_H
-#include "core/Controller.h"
 
-extern Controller controller;
+#include "Controller.h"
+#include <lvgl.h>
+#include <default/DefaultUI.h>
 
 #endif // MAIN_H
