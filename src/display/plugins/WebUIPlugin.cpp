@@ -218,6 +218,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setHomeAssistantIP(request->arg("haIP"));
             if (request->hasArg("haPort"))
                 settings->setHomeAssistantPort(request->arg("haPort").toInt());
+            if (request->hasArg("haTopic"))
+                settings->setHomeAssistantTopic(request->arg("haTopic"));
             settings->setMomentaryButtons(request->hasArg("momentaryButtons"));
             settings->setDelayAdjust(request->hasArg("delayAdjust"));
             if (request->hasArg("brewDelay"))
@@ -250,6 +252,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haPassword"] = settings.getHomeAssistantPassword();
     doc["haIP"] = settings.getHomeAssistantIP();
     doc["haPort"] = settings.getHomeAssistantPort();
+    doc["haTopic"] = settings.getHomeAssistantTopic();
     doc["pid"] = settings.getPid();
     doc["wifiSsid"] = settings.getWifiSsid();
     doc["wifiPassword"] = settings.getWifiPassword();
