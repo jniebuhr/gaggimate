@@ -7,6 +7,7 @@ bool MQTTPlugin::connect(Controller *controller) {
     const Settings settings = controller->getSettings();
     const String ip = settings.getHomeAssistantIP();
     const int haPort = settings.getHomeAssistantPort();
+    const String haTopic = settings.getHomeAssistantTopic();
     const String clientId = "GaggiMate";
     const String haUser = settings.getHomeAssistantUser();
     const String haPassword = settings.getHomeAssistantPassword();
@@ -25,7 +26,7 @@ bool MQTTPlugin::connect(Controller *controller) {
     return false;
 }
 
-void MQTTPlugin::publishDiscovery(Controller *controller, const std::string &haPrefix) {
+void MQTTPlugin::publishDiscovery(Controller *controller) {
     if (!client.connected())
         return;
     String mac = WiFi.macAddress();
@@ -92,7 +93,7 @@ void MQTTPlugin::publishDiscovery(Controller *controller, const std::string &haP
     payload["qos"] = 2;
 
     char publishTopic[80];
-    snprintf(publishTopic, sizeof(publishTopic), "%s/device/%s/config", haPrefix.c_str(), cmac);
+    snprintf(publishTopic, sizeof(publishTopic), "%s/device/%s/config", haTopic.c_str(), cmac);
 
     client.publish(publishTopic, payload.as<String>());
 }
@@ -127,7 +128,7 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
             R"***({"dev":{"ids":"%s","name":"GaggiMate","mf":"GaggiMate","mdl":"GaggiMate","sw":"1.0","sn":"%s","hw":"1.0"},"o":{"name":"GaggiMate","sw":"v0.3.0","url":"https://gaggimate.eu/"},"cmps":{"boiler":{"p":"sensor","device_class":"temperature","unit_of_measurement":"°C","value_template":"{{ value_json.temperature }}","unique_id":"boiler0Tmp","state_topic":"gaggimate/%s/boilers/0/temperature"}},"state_topic":"gaggimate/%s/state","qos":2})***",
             cmac, cmac, cmac, cmac);
         publish("config", json);
-        publishDiscovery(controller, "homeassistant"); // This prefix should be configurable
+        publishDiscovery(controller);
     });
 
     pluginManager->on("boiler:currentTemperature:change", [this](Event const &event) {
