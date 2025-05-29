@@ -16,7 +16,7 @@
 #error "Please turn on PSRAM to OPI !"
 #endif
 
-#include "Arduino_GFX_Library.h"
+#include "CO5300.h"
 #include "pin_config.h"
 #include <TouchDrvInterface.hpp>
 #include <display/drivers/common/Display.h>
@@ -24,7 +24,6 @@
 enum LilyGo_TDisplayPanel_Type {
     LILYGO_T_TDISPLAY_UNKNOWN,
     LILYGO_T_TDISPLAY_1_43_INCHES,
-    LILYGO_T_TDISPLAY_1_75_INCHES,
 };
 
 enum LilyGo_TDisplayPanel_TouchType {
@@ -33,11 +32,12 @@ enum LilyGo_TDisplayPanel_TouchType {
 };
 
 enum LilyGo_TDisplayPanel_Color_Order {
-    LILYGO_T_DISPLAY_ORDER_RGB,
-    LILYGO_T_DISPLAY_ORDER_BGR,
+    LILYGO_T_DISPLAY_ORDER_RGB = CO5300_MADCTL_RGB,
+    LILYGO_T_DISPLAY_ORDER_BGR = CO5300_MADCTL_BGR,
 };
 
 enum LilyGo_TDisplayPanel_Wakeup_Method {
+    LILYGO_T_DISPLAY_WAKEUP_FORM_NONE,
     LILYGO_T_DISPLAY_WAKEUP_FORM_TOUCH,
     LILYGO_T_DISPLAY_WAKEUP_FORM_BUTTON,
     LILYGO_T_DISPLAY_WAKEUP_FORM_TIMER,
@@ -90,12 +90,12 @@ class LilyGo_TDisplayPanel : public Display {
 
   private:
     bool initTouch();
-    bool initDisplay();
+    bool initDisplay(LilyGo_TDisplayPanel_Color_Order colorOrder);
 
   private:
     TouchDrvInterface *_touchDrv = nullptr;
     Arduino_DataBus *displayBus = nullptr;
-    Arduino_CO5300 *display = nullptr;
+    CO5300 *display = nullptr;
 
   private:
     uint8_t currentBrightness = 0;

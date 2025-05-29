@@ -3,14 +3,23 @@
 #include "TouchDrvFT6x36.hpp"
 #include "pin_config.h"
 
-LilyGo_TDisplayPanel::LilyGo_TDisplayPanel() { _rotation = 0; }
+LilyGo_TDisplayPanel::LilyGo_TDisplayPanel() : 
+    displayBus(nullptr),
+    display(nullptr),
+    _touchDrv(nullptr),
+    _wakeupMethod(LILYGO_T_DISPLAY_WAKEUP_FORM_NONE),
+    _sleepTimeUs(0),
+    currentBrightness(0)
+{
+    _rotation = 0;
+}
 
 LilyGo_TDisplayPanel::~LilyGo_TDisplayPanel() {}
 
 bool LilyGo_TDisplayPanel::begin(LilyGo_TDisplayPanel_Color_Order order) {
     bool success = true;
 
-    success &= initDisplay();
+    success &= initDisplay(order);
     success &= initTouch();
 
     return success;
@@ -156,30 +165,9 @@ void LilyGo_TDisplayPanel::setRotation(uint8_t rotation) {
     _rotation = rotation;
 
     if (displayBus && display) {
-        // Set the rotation of the display for the Arduino_GFX library
         display->setRotation(rotation);
-
-        // Override the rotation of the display for the CO5300 display directly
-        uint8_t r;
-        switch (_rotation) {
-        case 1:
-            r = CO5300_MADCTL_COLOR_ORDER | 0x60;
-            break;
-        case 2:
-            r = CO5300_MADCTL_COLOR_ORDER | 0xC0;
-            break;
-        case 3:
-            r = CO5300_MADCTL_COLOR_ORDER | 0xA0;
-            break;
-        case 0:
-        default:
-            r = CO5300_MADCTL_COLOR_ORDER;
-            break;
-        }
-        displayBus->beginWrite();
-        displayBus->writeC8D8(CO5300_W_MADCTL, r);
-        displayBus->endWrite();
     }
+
 }
 
 bool LilyGo_TDisplayPanel::initTouch() {
@@ -206,14 +194,14 @@ bool LilyGo_TDisplayPanel::initTouch() {
     return false;
 }
 
-bool LilyGo_TDisplayPanel::initDisplay() {
+bool LilyGo_TDisplayPanel::initDisplay(LilyGo_TDisplayPanel_Color_Order colorOrder) {
     if (displayBus == nullptr) {
         displayBus = new Arduino_ESP32QSPI(LCD_CS /* CS */, LCD_SCLK /* SCK */, LCD_SDIO0 /* SDIO0 */, LCD_SDIO1 /* SDIO1 */,
                                            LCD_SDIO2 /* SDIO2 */, LCD_SDIO3 /* SDIO3 */);
 
         display =
-            new Arduino_CO5300(displayBus, LCD_RST /* RST */, _rotation /* rotation */, false /* IPS */, LCD_WIDTH, LCD_HEIGHT,
-                               6 /* col offset 1 */, 0 /* row offset 1 */, 8 /* col_offset2 */, 0 /* row_offset2 */);
+            new CO5300(displayBus, LCD_RST /* RST */, _rotation /* rotation */, false /* IPS */, LCD_WIDTH, LCD_HEIGHT,
+                               6 /* col offset 1 */, 0 /* row offset 1 */, 8 /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
     }
 
     pinMode(LCD_EN, OUTPUT);
