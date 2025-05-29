@@ -60,7 +60,7 @@ void MQTTPlugin::publishDiscovery(Controller *controller, const std::string &haP
     boilerTemperature["p"] = "sensor";
     boilerTemperature["device_class"] = "temperature";
     boilerTemperature["unit_of_measurement"] = "°C";
-    boilerTemperature["value_template"] = "{{ value_json.temperature }}";
+    boilerTemperature["value_template"] = "{{ value_json.temperature | round(2) }}";
     boilerTemperature["unique_id"] = "boiler0Tmp";
     boilerTemperature["state_topic"] = "gaggimate/" + String(cmac) + "/boilers/0/temperature";
 
@@ -68,7 +68,7 @@ void MQTTPlugin::publishDiscovery(Controller *controller, const std::string &haP
     boilerTargetTemperature["p"] = "sensor";
     boilerTargetTemperature["device_class"] = "temperature";
     boilerTargetTemperature["unit_of_measurement"] = "°C";
-    boilerTargetTemperature["value_template"] = "{{ value_json.temperature }}";
+    boilerTargetTemperature["value_template"] = "{{ value_json.temperature | round(2) }}";
     boilerTargetTemperature["unique_id"] = "boiler0TargetTmp";
     boilerTargetTemperature["state_topic"] = "gaggimate/" + String(cmac) + "/boilers/0/targetTemperature";
 
