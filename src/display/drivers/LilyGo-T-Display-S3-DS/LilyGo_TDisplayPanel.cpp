@@ -8,11 +8,10 @@ LilyGo_TDisplayPanel::LilyGo_TDisplayPanel() { _rotation = 0; }
 LilyGo_TDisplayPanel::~LilyGo_TDisplayPanel() {}
 
 bool LilyGo_TDisplayPanel::begin(LilyGo_TDisplayPanel_Color_Order order) {
-    bool success = false;
-    success = initDisplay();
-    success &= initTouch();
+    bool success = true;
 
-    Serial.println("Display initialized");
+    success &= initDisplay();
+    success &= initTouch();
 
     return success;
 }
@@ -47,14 +46,65 @@ LilyGo_TDisplayPanel_Type LilyGo_TDisplayPanel::getModel() { return LilyGo_TDisp
 
 const char *LilyGo_TDisplayPanel::getTouchModelName() { return _touchDrv->getModelName(); }
 
-void LilyGo_TDisplayPanel::enableTouchWakeup() {}
+void LilyGo_TDisplayPanel::enableTouchWakeup() { _wakeupMethod = LILYGO_T_DISPLAY_WAKEUP_FORM_TOUCH; }
 
-void LilyGo_TDisplayPanel::enableButtonWakeup() {}
+void LilyGo_TDisplayPanel::enableButtonWakeup() { _wakeupMethod = LILYGO_T_DISPLAY_WAKEUP_FORM_BUTTON; }
 
-void LilyGo_TDisplayPanel::enableTimerWakeup(uint64_t time_in_us) {}
+void LilyGo_TDisplayPanel::enableTimerWakeup(uint64_t time_in_us) {
+    _wakeupMethod = LILYGO_T_DISPLAY_WAKEUP_FORM_TIMER;
+    _sleepTimeUs = time_in_us;
+}
 
-void LilyGo_TDisplayPanel::sleep() {}
+void LilyGo_TDisplayPanel::sleep() {
+    setBrightness(0);
 
+    if (LILYGO_T_DISPLAY_WAKEUP_FORM_TOUCH != _wakeupMethod) {
+        if (_touchDrv) {
+            pinMode(TP_INT, OUTPUT);
+            digitalWrite(TP_INT, LOW); // Before touch to set sleep, it is necessary to set INT to LOW
+
+            _touchDrv->sleep();
+        }
+    }
+
+    switch (_wakeupMethod) {
+    case LILYGO_T_DISPLAY_WAKEUP_FORM_TOUCH: {
+        int16_t x_array[1];
+        int16_t y_array[1];
+        uint8_t get_point = 1;
+        pinMode(TP_INT, INPUT);
+
+        // Wait for the finger to be lifted from the screen
+        while (!digitalRead(TP_INT)) {
+            delay(100);
+            // Clear touch buffer
+            getPoint(x_array, y_array, get_point);
+        }
+
+        delay(2000); // Wait for the interrupt level to stabilize
+        esp_sleep_enable_ext1_wakeup(_BV(TP_INT), ESP_EXT1_WAKEUP_ANY_LOW);
+    } break;
+    case LILYGO_T_DISPLAY_WAKEUP_FORM_BUTTON:
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
+        break;
+    case LILYGO_T_DISPLAY_WAKEUP_FORM_TIMER:
+        esp_sleep_enable_timer_wakeup(_sleepTimeUs);
+        break;
+    default:
+        // Default GPIO0 Wakeup
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
+        break;
+    }
+
+    Wire.end();
+
+    pinMode(IIC_SCL, OPEN_DRAIN);
+    pinMode(IIC_SDA, OPEN_DRAIN);
+
+    Serial.end();
+
+    esp_deep_sleep_start();
+}
 void LilyGo_TDisplayPanel::wakeup() {}
 
 uint8_t LilyGo_TDisplayPanel::getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point) {

@@ -99,4 +99,7 @@ class LilyGo_TDisplayPanel : public Display {
 
   private:
     uint8_t currentBrightness = 0;
+    
+    LilyGo_TDisplayPanel_Wakeup_Method _wakeupMethod;
+    uint64_t _sleepTimeUs;
 };

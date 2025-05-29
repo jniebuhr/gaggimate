@@ -6,10 +6,7 @@
  */
 #pragma once
 
-//这里选择你使用的屏幕
-// #define DO0143FAT01 //DO0143FMST02//1.43 inches (SH8601 FT3168)
-// #define H0175Y003AM //1.75 inches (CO5300 CST9217)
-// #define DO0143FMST10 //1.43 inches (CO5300 FT3168)
+// DO0143FMST10 1.43 inches (CO5300 FT3168)
 
 #define LCD_SDIO0 11
 #define LCD_SDIO1 13
