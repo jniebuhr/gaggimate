@@ -25,7 +25,7 @@ bool MQTTPlugin::connect(Controller *controller) {
     return false;
 }
 
-void MQTTPlugin::publishDiscovery(const std::string &haPrefix) {
+void MQTTPlugin::publishDiscovery(Controller *controller, const std::string &haPrefix) {
     if (!client.connected())
         return;
     String mac = WiFi.macAddress();
@@ -41,9 +41,9 @@ void MQTTPlugin::publishDiscovery(const std::string &haPrefix) {
     device["name"] = "GaggiMate";
     device["mf"] = "GaggiMate";
     device["mdl"] = "GaggiMate";
-    device["sw"] = "1.0";
     device["sn"] = cmac;
-    device["hw"] = "1.0";
+    device["sw"] = controller->getSystemInfo().version;
+    device["hw"] = controller->getSystemInfo().hardware;
 
     // Origin information
     origin["name"] = "GaggiMate";
@@ -127,7 +127,7 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
             R"***({"dev":{"ids":"%s","name":"GaggiMate","mf":"GaggiMate","mdl":"GaggiMate","sw":"1.0","sn":"%s","hw":"1.0"},"o":{"name":"GaggiMate","sw":"v0.3.0","url":"https://gaggimate.eu/"},"cmps":{"boiler":{"p":"sensor","device_class":"temperature","unit_of_measurement":"°C","value_template":"{{ value_json.temperature }}","unique_id":"boiler0Tmp","state_topic":"gaggimate/%s/boilers/0/temperature"}},"state_topic":"gaggimate/%s/state","qos":2})***",
             cmac, cmac, cmac, cmac);
         publish("config", json);
-        publishDiscovery("homeassistant"); // This prefix should be configurable
+        publishDiscovery(controller, "homeassistant"); // This prefix should be configurable
     });
 
     pluginManager->on("boiler:currentTemperature:change", [this](Event const &event) {
