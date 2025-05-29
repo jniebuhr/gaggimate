@@ -1,5 +1,6 @@
 #include "MQTTPlugin.h"
 #include "../core/Controller.h"
+#include <ArduinoJson.h>
 #include <ctime>
 
 bool MQTTPlugin::connect(Controller *controller) {
@@ -22,6 +23,78 @@ bool MQTTPlugin::connect(Controller *controller) {
     }
     printf("\nConnection to MQTT failed.\n");
     return false;
+}
+
+void MQTTPlugin::publishDiscovery(const std::string &haPrefix) {
+    if (!client.connected())
+        return;
+    String mac = WiFi.macAddress();
+    mac.replace(":", "_");
+    const char *cmac = mac.c_str();
+
+    JsonDocument device;
+    JsonDocument origin;
+    JsonDocument components;
+
+    // Device information
+    device["ids"] = cmac;
+    device["name"] = "GaggiMate";
+    device["mf"] = "GaggiMate";
+    device["mdl"] = "GaggiMate";
+    device["sw"] = "1.0";
+    device["sn"] = cmac;
+    device["hw"] = "1.0";
+
+    // Origin information
+    origin["name"] = "GaggiMate";
+    origin["sw"] = "v0.3.0";
+    origin["url"] = "https://gaggimate.eu/";
+
+    // Components information
+    JsonDocument cmps;
+    JsonDocument boilerTemperature;
+    JsonDocument boilerTargetTemperature;
+    JsonDocument mode;
+
+    boilerTemperature["name"] = "Boiler Temperature";
+    boilerTemperature["p"] = "sensor";
+    boilerTemperature["device_class"] = "temperature";
+    boilerTemperature["unit_of_measurement"] = "°C";
+    boilerTemperature["value_template"] = "{{ value_json.temperature }}";
+    boilerTemperature["unique_id"] = "boiler0Tmp";
+    boilerTemperature["state_topic"] = "gaggimate/" + String(cmac) + "/boilers/0/temperature";
+
+    boilerTargetTemperature["name"] = "Boiler Target Temperature";
+    boilerTargetTemperature["p"] = "sensor";
+    boilerTargetTemperature["device_class"] = "temperature";
+    boilerTargetTemperature["unit_of_measurement"] = "°C";
+    boilerTargetTemperature["value_template"] = "{{ value_json.temperature }}";
+    boilerTargetTemperature["unique_id"] = "boiler0TargetTmp";
+    boilerTargetTemperature["state_topic"] = "gaggimate/" + String(cmac) + "/boilers/0/targetTemperature";
+
+    mode["name"] = "Mode";
+    mode["p"] = "text";
+    mode["device_class"] = "text";
+    mode["value_template"] = "{{ value_json.mode_str }}";
+    mode["unique_id"] = "mode";
+    mode["state_topic"] = "gaggimate/" + String(cmac) + "/controller/mode";
+
+    cmps["boiler"] = boilerTemperature;
+    cmps["boiler_target"] = boilerTargetTemperature;
+    cmps["mode"] = mode;
+
+    // Prepare the payload for Home Assistant discovery
+    JsonDocument payload;
+    payload["dev"] = device;
+    payload["o"] = origin;
+    payload["cmps"] = cmps;
+    payload["state_topic"] = "gaggimate/" + String(cmac) + "/state";
+    payload["qos"] = 2;
+
+    char publishTopic[80];
+    snprintf(publishTopic, sizeof(publishTopic), "%s/device/%s/config", haPrefix.c_str(), cmac);
+
+    client.publish(publishTopic, payload.as<String>());
 }
 
 void MQTTPlugin::publish(const std::string &topic, const std::string &message) {
@@ -54,6 +127,7 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
             R"***({"dev":{"ids":"%s","name":"GaggiMate","mf":"GaggiMate","mdl":"GaggiMate","sw":"1.0","sn":"%s","hw":"1.0"},"o":{"name":"GaggiMate","sw":"v0.3.0","url":"https://gaggimate.eu/"},"cmps":{"boiler":{"p":"sensor","device_class":"temperature","unit_of_measurement":"°C","value_template":"{{ value_json.temperature }}","unique_id":"boiler0Tmp","state_topic":"gaggimate/%s/boilers/0/temperature"}},"state_topic":"gaggimate/%s/state","qos":2})***",
             cmac, cmac, cmac, cmac);
         publish("config", json);
+        publishDiscovery("homeassistant"); // This prefix should be configurable
     });
 
     pluginManager->on("boiler:currentTemperature:change", [this](Event const &event) {
