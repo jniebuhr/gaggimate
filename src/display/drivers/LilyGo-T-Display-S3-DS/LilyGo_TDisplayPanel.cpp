@@ -51,7 +51,7 @@ void LilyGo_TDisplayPanel::setBrightness(uint8_t level) {
 
 uint8_t LilyGo_TDisplayPanel::getBrightness() { return (this->currentBrightness + 1) / 16; }
 
-LilyGo_TDisplayPanel_Type LilyGo_TDisplayPanel::getModel() { return LilyGo_TDisplayPanel_Type(); }
+LilyGo_TDisplayPanel_Type LilyGo_TDisplayPanel::getModel() { return LILYGO_T_TDISPLAY_1_43_INCHES; }
 
 const char *LilyGo_TDisplayPanel::getTouchModelName() { return _touchDrv->getModelName(); }
 
