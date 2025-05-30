@@ -19,6 +19,7 @@
 #define DEFAULT_MDNS_NAME "gaggimate"
 #define DEFAULT_OTA_CHANNEL "latest"
 #define DEFAULT_TIMEZONE "Europe/Rome"
+#define DEFAULT_HOME_ASSISTANT_TOPIC "homeassistant"
 
 #define MODE_STANDBY 0
 #define MODE_BREW 1

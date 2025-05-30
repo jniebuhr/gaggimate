@@ -38,6 +38,7 @@ Settings::Settings() {
     homeAssistant = preferences.getBool("ha_a", false);
     homeAssistantIP = preferences.getString("ha_i", "");
     homeAssistantPort = preferences.getInt("ha_p", 1883);
+    homeAssistantTopic = preferences.getString("ha_t", DEFAULT_HOME_ASSISTANT_TOPIC);
     homeAssistantUser = preferences.getString("ha_u", "");
     homeAssistantPassword = preferences.getString("ha_pw", "");
     standbyTimeout = preferences.getInt("sbt", DEFAULT_STANDBY_TIMEOUT_MS);
@@ -224,6 +225,10 @@ void Settings::setHomeAssistantPort(const int homeAssistantPort) {
     this->homeAssistantPort = homeAssistantPort;
     save();
 }
+void Settings::setHomeAssistantTopic(const int homeAssistantTopic) {
+    this->homeAssistantTopic = homeAssistantTopic;
+    save();
+}
 void Settings::setHomeAssistantUser(const String &homeAssistantUser) {
     this->homeAssistantUser = homeAssistantUser;
     save();
@@ -283,6 +288,7 @@ void Settings::doSave() {
     preferences.putBool("ha_a", homeAssistant);
     preferences.putString("ha_i", homeAssistantIP);
     preferences.putInt("ha_p", homeAssistantPort);
+    preferences.putString("ha_t", homeAssistantTopic);
     preferences.putString("ha_u", homeAssistantUser);
     preferences.putString("ha_pw", homeAssistantPassword);
     preferences.putString("tz", timezone);
