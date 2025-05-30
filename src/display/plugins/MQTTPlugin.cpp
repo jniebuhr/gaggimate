@@ -119,15 +119,6 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     pluginManager->on("controller:wifi:connect", [this, controller](const Event &) {
         if (!connect(controller))
             return;
-        char json[500];
-        String mac = WiFi.macAddress();
-        mac.replace(":", "_");
-        const char *cmac = mac.c_str();
-        snprintf(
-            json, sizeof(json),
-            R"***({"dev":{"ids":"%s","name":"GaggiMate","mf":"GaggiMate","mdl":"GaggiMate","sw":"1.0","sn":"%s","hw":"1.0"},"o":{"name":"GaggiMate","sw":"v0.3.0","url":"https://gaggimate.eu/"},"cmps":{"boiler":{"p":"sensor","device_class":"temperature","unit_of_measurement":"°C","value_template":"{{ value_json.temperature }}","unique_id":"boiler0Tmp","state_topic":"gaggimate/%s/boilers/0/temperature"}},"state_topic":"gaggimate/%s/state","qos":2})***",
-            cmac, cmac, cmac, cmac);
-        publish("config", json);
         publishDiscovery(controller);
     });
 
