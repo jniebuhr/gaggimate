@@ -1,0 +1,66 @@
+name: Deploy PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      pull-requests: write
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+      with:
+        fetch-tags: true
+        fetch-depth: 0
+        submodules: 'recursive'
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.platformio/.cache
+        key: ${{ runner.os }}-pio
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install PlatformIO Core
+      run: pip install --upgrade platformio
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: web/package-lock.json
+    - name: Add version
+      run: |
+        mkdir -p out
+        git tag -d nightly
+        git describe --tags --dirty > out/version.txt
+    - name: Build Web
+      run: ./scripts/build_spiffs.sh
+    - name: Build controller
+      run: pio run -e controller
+    - name: Build display
+      run: pio run -e display
+    - name: Rename firmware files
+      run: |
+        mv .pio/build/controller/firmware.bin out/board-firmware.bin
+        mv .pio/build/controller/partitions.bin out/board-partitions.bin
+        mv .pio/build/controller/bootloader.bin out/board-bootloader.bin
+        mv .pio/build/display/firmware.bin out/display-firmware.bin
+        mv .pio/build/display/partitions.bin out/display-partitions.bin
+        mv .pio/build/display/bootloader.bin out/display-bootloader.bin
+    - name: Build display FS
+      run: pio run -t buildfs -e display
+    - name: Rename FS files
+      run: |
+        mv .pio/build/display/spiffs.bin out/display-filesystem.bin
+    - name: Deploy to GitHub Pages subdirectory
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./out
+        destination_dir: pr-${{ github.event.pull_request.number }}
+        publish_branch: gh-pages

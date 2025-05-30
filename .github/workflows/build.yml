@@ -85,6 +85,10 @@ jobs:
   release-nightly:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      pull-requests: write
     steps:
       - name: Download Firmware Files
         uses: actions/download-artifact@v4
@@ -102,3 +106,10 @@ jobs:
           body: 'Latest nightly release, use the nightly channel in the UI to download this firmware.'
           files: |
             release/*
+      - name: Deploy to GitHub Pages subdirectory
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          destination_dir: nightly
+          publish_branch: gh-pages

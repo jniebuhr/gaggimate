@@ -1,6 +1,7 @@
 #include "SimplePump.h"
 
-SimplePump::SimplePump(int pin, uint8_t pumpOn, float windowSize) : _pin(pin), _pumpOn(pumpOn), _windowSize(windowSize), taskHandle(nullptr) {}
+SimplePump::SimplePump(int pin, uint8_t pumpOn, float windowSize)
+    : _pin(pin), _pumpOn(pumpOn), _windowSize(windowSize), taskHandle(nullptr) {}
 
 void SimplePump::setup() {
     pinMode(_pin, OUTPUT);
