@@ -163,6 +163,9 @@ void Controller::loop() {
         pluginManager->trigger("controller:bluetooth:connect");
         if (!loaded) {
             loaded = true;
+            if(systemInfo.capabilities.pressure){
+                clientController.setPressureScale(settings.getPressureScaling());
+            }
             if (settings.getStartupMode() == MODE_STANDBY)
                 activateStandby();
             pluginManager->trigger("controller:ready");

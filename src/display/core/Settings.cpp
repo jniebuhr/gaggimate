@@ -16,6 +16,7 @@ Settings::Settings() {
     grindDelay = preferences.getDouble("del_gd", 1000.0);
     delayAdjust = preferences.getBool("del_ad", true);
     temperatureOffset = preferences.getInt("to", DEFAULT_TEMPERATURE_OFFSET);
+    pressureScaling = preferences.getFloat("ps", DEFAULT_PRESSURE_SCALING);
     pid = preferences.getString("pid", DEFAULT_PID);
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
@@ -77,6 +78,11 @@ void Settings::setTargetWaterTemp(const int target_water_temp) {
 
 void Settings::setTemperatureOffset(const int temperature_offset) {
     temperatureOffset = temperature_offset;
+    save();
+}
+
+void Settings::setPressureScaling(const float pressure_scaling){
+    pressureScaling = pressure_scaling;
     save();
 }
 
@@ -262,6 +268,7 @@ void Settings::doSave() {
     preferences.putDouble("del_gd", grindDelay);
     preferences.putBool("del_ad", delayAdjust);
     preferences.putInt("to", temperatureOffset);
+    preferences.putFloat("ps", pressureScaling);
     preferences.putString("pid", pid);
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
