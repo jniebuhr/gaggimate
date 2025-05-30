@@ -167,7 +167,7 @@ void Controller::loop() {
                 activateStandby();
 
             ESP_LOGI("Controller","setting pressure scale to %.2f\n",settings.getPressureScaling());
-            setPressureScale(settings.getPressureScaling());
+            setPressureScale();
 
             pluginManager->trigger("controller:ready");
         }
