@@ -48,7 +48,7 @@ void MQTTPlugin::publishDiscovery(Controller *controller) {
 
     // Origin information
     origin["name"] = "GaggiMate";
-    origin["sw"] = "v0.3.0";
+    origin["sw"] = controller->getSystemInfo().version;
     origin["url"] = "https://gaggimate.eu/";
 
     // Components information
