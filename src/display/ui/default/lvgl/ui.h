@@ -58,8 +58,8 @@ void ui_event_ProfileScreen_previousProfileBtn(lv_event_t *e);
 extern lv_obj_t *ui_ProfileScreen_previousProfileBtn;
 void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e);
 extern lv_obj_t *ui_ProfileScreen_nextProfileBtn;
-void ui_event_ProfileScreen_ImgButton4(lv_event_t *e);
-extern lv_obj_t *ui_ProfileScreen_ImgButton4;
+void ui_event_ProfileScreen_chooseButton(lv_event_t *e);
+extern lv_obj_t *ui_ProfileScreen_chooseButton;
 extern lv_obj_t *ui_ProfileScreen_dials;
 // CUSTOM VARIABLES
 extern lv_obj_t *uic_ProfileScreen_dials_tempTarget;
@@ -107,6 +107,13 @@ void ui_event_BrewScreen_timedButton(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_timedButton;
 void ui_event_BrewScreen_volumetricButton(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_volumetricButton;
+extern lv_obj_t *ui_BrewScreen_profileInfo;
+extern lv_obj_t *ui_BrewScreen_Label1;
+extern lv_obj_t *ui_BrewScreen_Container3;
+extern lv_obj_t *ui_BrewScreen_profileName;
+void ui_event_BrewScreen_profileSelectBtn(lv_event_t *e);
+extern lv_obj_t *ui_BrewScreen_profileSelectBtn;
+extern lv_obj_t *ui_BrewScreen_adjustments;
 extern lv_obj_t *ui_BrewScreen_tempContainer;
 extern lv_obj_t *ui_BrewScreen_targetTemp;
 void ui_event_BrewScreen_downTempButton(lv_event_t *e);
@@ -207,12 +214,8 @@ extern lv_obj_t *ui_StatusScreen_currentDuration;
 extern lv_obj_t *ui_StatusScreen_stepLabel;
 extern lv_obj_t *ui_StatusScreen_phaseLabel;
 extern lv_obj_t *ui_StatusScreen_barContainer;
-extern lv_obj_t *ui_StatusScreen_preinfusePumpBar;
-extern lv_obj_t *ui_StatusScreen_preinfuseBloomBar;
 extern lv_obj_t *ui_StatusScreen_brewBar;
 extern lv_obj_t *ui_StatusScreen_labelContainer;
-extern lv_obj_t *ui_StatusScreen_preinfusePumpLabel;
-extern lv_obj_t *ui_StatusScreen_preinfuseBloomLabel;
 extern lv_obj_t *ui_StatusScreen_brewLabel;
 extern lv_obj_t *ui_StatusScreen_brewVolume;
 extern lv_obj_t *ui_StatusScreen_dials;
@@ -275,6 +278,7 @@ LV_IMG_DECLARE(ui_img_363557387);     // assets/coffee-bean-80x80.png
 LV_IMG_DECLARE(ui_img_2044104741);    // assets/power-40x40.png
 LV_IMG_DECLARE(ui_img_445946954);     // assets/play-40x40.png
 LV_IMG_DECLARE(ui_img_1424216268);    // assets/equality-40x40.png
+LV_IMG_DECLARE(ui_img_207915003);     // assets/refresh-40x40.png
 LV_IMG_DECLARE(ui_img_834125362);     // assets/minus-small-40x40.png
 LV_IMG_DECLARE(ui_img_390988422);     // assets/plus-small-40x40.png
 LV_IMG_DECLARE(ui_img_364513079);     // assets/wifi-20x20.png
@@ -282,6 +286,7 @@ LV_IMG_DECLARE(ui_img_1091371356);    // assets/bluetooth-alt-20x20.png
 LV_IMG_DECLARE(ui_img_1765671371);    // assets/refresh-20x20.png
 LV_IMG_DECLARE(ui_img_1732953241);    // assets/tap-60x60.png
 LV_IMG_DECLARE(ui_img_1456692430);    // assets/pause-40x40.png
+LV_IMG_DECLARE(ui_img_340148213);     // assets/settings-40x40.png
 
 // UI INIT
 void ui_init(void);

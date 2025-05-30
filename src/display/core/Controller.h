@@ -7,6 +7,7 @@
 #include "Settings.h"
 #include <WiFi.h>
 #include <display/core/Process.h>
+#include <display/core/ProfileManager.h>
 #include <display/ui/default/DefaultUI.h>
 
 const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space
@@ -63,6 +64,7 @@ class Controller {
     Process *getProcess() const { return currentProcess; }
     Process *getLastProcess() const { return lastProcess; }
     Settings &getSettings() { return settings; }
+    ProfileManager *getProfileManager() { return profileManager; }
     DefaultUI *getUI() const { return ui; }
     bool isErrorState() const { return error > 0; }
     int getError() const { return error; }
@@ -135,6 +137,7 @@ class Controller {
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};
+    ProfileManager *profileManager{};
 
     int mode = MODE_BREW;
     int currentTemp = 0;

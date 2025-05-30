@@ -56,6 +56,8 @@ class Settings {
     int getHomeAssistantPort() const { return homeAssistantPort; }
     bool isMomentaryButtons() const { return momentaryButtons; }
     String getTimezone() const { return timezone; }
+    String getSelectedProfile() const { return selectedProfile; }
+    bool isProfilesMigrated() const { return profilesMigrated; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -93,17 +95,18 @@ class Settings {
     void setHomeAssistantPort(int homeAssistantPort);
     void setMomentaryButtons(bool momentary_buttons);
     void setTimezone(String timezone);
+    void setSelectedProfile(String selected_profile);
+    void setProfilesMigrated(bool profiles_migrated);
 
   private:
     Preferences preferences;
     bool dirty = false;
 
-    int targetBrewTemp = 93;
+    String selectedProfile;
+    bool profilesMigrated = false;
     int targetSteamTemp = 155;
     int targetWaterTemp = 80;
     int temperatureOffset = DEFAULT_TEMPERATURE_OFFSET;
-    int targetDuration = 25000;
-    int targetVolume = 36;
     int targetGrindVolume = 18;
     int targetGrindDuration = 25000;
     double brewDelay = 1000.0;
@@ -111,9 +114,6 @@ class Settings {
     bool delayAdjust = true;
     int startupMode = MODE_STANDBY;
     int standbyTimeout = DEFAULT_STANDBY_TIMEOUT_MS;
-    int infuseBloomTime = 0;
-    int infusePumpTime = 0;
-    int pressurizeTime = 0;
     String pid = DEFAULT_PID;
     String wifiSsid = "";
     String wifiPassword = "";
@@ -137,6 +137,14 @@ class Settings {
     String timezone = DEFAULT_TIMEZONE;
 
     String otaChannel = DEFAULT_OTA_CHANNEL;
+
+    // Deprecated, use profiles
+    int targetBrewTemp = 93;
+    int targetDuration = 25000;
+    int targetVolume = 36;
+    int infuseBloomTime = 0;
+    int infusePumpTime = 0;
+    int pressurizeTime = 0;
 
     void doSave();
     xTaskHandle taskHandle;

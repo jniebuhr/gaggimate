@@ -19,6 +19,8 @@ constexpr size_t DNS_PERIOD = 10;
 const String LOCAL_URL = "http://4.4.4.1/";
 const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
 
+class ProfileManager;
+
 class WebUIPlugin : public Plugin {
   public:
     WebUIPlugin();
@@ -28,9 +30,13 @@ class WebUIPlugin : public Plugin {
   private:
     void start(bool apMode);
 
+    // Websocket handlers
     void handleOTASettings(uint32_t clientId, JsonDocument &request);
     void handleOTAStart(uint32_t clientId, JsonDocument &request);
     void handleAutotuneStart(uint32_t clientId, JsonDocument &request);
+    void handleProfileRequest(uint32_t clientId, JsonDocument &request);
+
+    // HTTP handlers
     void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
@@ -46,6 +52,7 @@ class WebUIPlugin : public Plugin {
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
     DNSServer *dnsServer = nullptr;
+    ProfileManager *profileManager = nullptr;
 
     long lastUpdateCheck = 0;
     long lastStatus = 0;

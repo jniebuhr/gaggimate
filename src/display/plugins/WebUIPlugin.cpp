@@ -2,6 +2,8 @@
 #include <DNSServer.h>
 #include <SPIFFS.h>
 #include <display/core/Controller.h>
+#include <display/core/ProfileManager.h>
+#include <display/models/profile.h>
 
 #include "BLEScalePlugin.h"
 
@@ -9,6 +11,7 @@ WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
 
 void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) {
     this->controller = _controller;
+    this->profileManager = _controller->getProfileManager();
     this->pluginManager = _pluginManager;
     this->ota = new GitHubOTA(
         BUILD_GIT_VERSION, controller->getSystemInfo().version,
@@ -99,10 +102,10 @@ void WebUIPlugin::start(bool apMode) {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
-    server.on("/ota", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.html"); });
-    server.on("/settings", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.html"); });
-    server.on("/scales", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.html"); });
-    server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html").setCacheControl("max-age=0");
+    server.on("/ota", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
+    server.on("/settings", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
+    server.on("/scales", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
+    server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
     ws.onEvent(
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
             if (type == WS_EVT_CONNECT) {
@@ -120,7 +123,9 @@ void WebUIPlugin::start(bool apMode) {
                         DeserializationError err = deserializeJson(doc, data);
                         if (!err) {
                             String msgType = doc["tp"].as<String>();
-                            if (msgType == "req:ota-settings") {
+                            if (msgType.startsWith("req:profiles:")) {
+                                handleProfileRequest(client->id(), doc);
+                            } else if (msgType == "req:ota-settings") {
                                 handleOTASettings(client->id(), doc);
                             } else if (msgType == "req:ota-start") {
                                 handleOTAStart(client->id(), doc);
@@ -167,6 +172,49 @@ void WebUIPlugin::handleAutotuneStart(uint32_t clientId, JsonDocument &request) 
     int testTime = request["time"].as<int>();
     int samples = request["samples"].as<int>();
     controller->autotune(testTime, samples);
+}
+
+void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request) {
+    JsonDocument response;
+    auto type = request["tp"].as<String>();
+    response["tp"] = String("res:") + type.substring(4);
+
+    if (type == "req:profiles:list") {
+        auto arr = response["profiles"].to<JsonArray>();
+        for (auto const &id : profileManager->listProfiles()) {
+            arr.add(id);
+        }
+    } else if (type == "req:profiles:load") {
+        auto id = request["id"].as<String>();
+        Profile profile;
+        if (profileManager->loadProfile(id, profile)) {
+            auto obj = response["profile"].to<JsonObject>();
+            writeProfile(obj, profile);
+        } else {
+            response["error"] = "Profile not found";
+        }
+    } else if (type == "req:profiles:save") {
+        auto obj = request["profile"].as<JsonObject>();
+        Profile profile;
+        parseProfile(obj, profile);
+        if (!profileManager->saveProfile(profile)) {
+            response["error"] = "Save failed";
+        }
+        auto respObj = response["profile"].to<JsonObject>();
+        writeProfile(respObj, profile);
+    } else if (type == "req:profiles:delete") {
+        auto id = request["id"].as<String>();
+        if (!profileManager->deleteProfile(id)) {
+            response["error"] = "Delete failed";
+        }
+    } else if (type == "req:profiles:select") {
+        auto id = request["id"].as<String>();
+        profileManager->selectProfile(id);
+    }
+
+    String msg;
+    serializeJson(response, msg);
+    ws.text(clientId, msg);
 }
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {

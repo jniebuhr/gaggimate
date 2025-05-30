@@ -482,29 +482,9 @@ void DefaultUI::updateStatusScreen() const {
     const auto targetMinutes = static_cast<int>(targetSecondsDouble / 60.0 - 0.5);
     const auto targetSeconds = static_cast<int>(targetSecondsDouble) % 60;
 
-    if (brewProcess->infusionBloomTime == 0 || brewProcess->infusionPumpTime == 0) {
-        lv_obj_add_flag(ui_StatusScreen_preinfusePumpBar, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(ui_StatusScreen_preinfusePumpLabel, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(ui_StatusScreen_preinfuseBloomBar, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(ui_StatusScreen_preinfuseBloomLabel, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_clear_flag(ui_StatusScreen_preinfusePumpBar, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(ui_StatusScreen_preinfusePumpLabel, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(ui_StatusScreen_preinfuseBloomBar, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(ui_StatusScreen_preinfuseBloomLabel, LV_OBJ_FLAG_HIDDEN);
-        lv_bar_set_range(ui_StatusScreen_preinfusePumpBar, 0, brewProcess->infusionPumpTime / 1000);
-        lv_label_set_text_fmt(ui_StatusScreen_preinfusePumpLabel, "%ds", brewProcess->infusionPumpTime / 1000);
-        lv_bar_set_range(ui_StatusScreen_preinfuseBloomBar, 0, brewProcess->infusionBloomTime / 1000);
-        lv_label_set_text_fmt(ui_StatusScreen_preinfuseBloomLabel, "%ds", brewProcess->infusionBloomTime / 1000);
-    }
-
     if (brewProcess->target == ProcessTarget::TIME) {
-        lv_bar_set_range(ui_StatusScreen_brewBar, 0, brewProcess->brewTime / 1000);
-        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%ds", brewProcess->brewTime / 1000);
         lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%2d:%02d", targetMinutes, targetSeconds);
     } else {
-        lv_bar_set_range(ui_StatusScreen_brewBar, 0, brewProcess->brewVolume);
-        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%dg", brewProcess->brewVolume);
         lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%dg", brewProcess->brewVolume);
     }
 
@@ -516,28 +496,25 @@ void DefaultUI::updateStatusScreen() const {
     case BrewPhase::BREW_PUMP:
         if (brewProcess->target == ProcessTarget::TIME) {
             lv_bar_set_value(ui_StatusScreen_brewBar, progress / 1000, LV_ANIM_OFF);
+            lv_bar_set_range(ui_StatusScreen_brewBar, 0, brewProcess->brewTime / 1000);
+            lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%ds", brewProcess->brewTime / 1000);
         } else {
             lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume, LV_ANIM_OFF);
+            lv_bar_set_range(ui_StatusScreen_brewBar, 0, brewProcess->brewVolume);
+            lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%dg", brewProcess->brewVolume);
         }
-        lv_bar_set_value(ui_StatusScreen_preinfuseBloomBar, brewProcess->infusionBloomTime / 1000, LV_ANIM_OFF);
-        lv_bar_set_value(ui_StatusScreen_preinfusePumpBar, brewProcess->infusionPumpTime / 1000, LV_ANIM_OFF);
         lv_label_set_text(ui_StatusScreen_stepLabel, "BREW");
         lv_label_set_text(ui_StatusScreen_phaseLabel, "Flowing...");
         break;
     case BrewPhase::BREW_PRESSURIZE:
-        lv_bar_set_value(ui_StatusScreen_preinfuseBloomBar, brewProcess->infusionBloomTime / 1000, LV_ANIM_OFF);
-        lv_bar_set_value(ui_StatusScreen_preinfusePumpBar, brewProcess->infusionPumpTime / 1000, LV_ANIM_OFF);
         lv_label_set_text(ui_StatusScreen_stepLabel, "BREW");
         lv_label_set_text(ui_StatusScreen_phaseLabel, "Pressurizing...");
         break;
     case BrewPhase::INFUSION_BLOOM:
-        lv_bar_set_value(ui_StatusScreen_preinfuseBloomBar, progress / 1000, LV_ANIM_OFF);
-        lv_bar_set_value(ui_StatusScreen_preinfusePumpBar, brewProcess->infusionPumpTime / 1000, LV_ANIM_OFF);
         lv_label_set_text(ui_StatusScreen_stepLabel, "INFUSION");
         lv_label_set_text(ui_StatusScreen_phaseLabel, "Blooming...");
         break;
     case BrewPhase::INFUSION_PUMP:
-        lv_bar_set_value(ui_StatusScreen_preinfusePumpBar, progress / 1000, LV_ANIM_OFF);
         lv_label_set_text(ui_StatusScreen_stepLabel, "INFUSION");
         lv_label_set_text(ui_StatusScreen_phaseLabel, "Flowing...");
         break;

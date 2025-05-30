@@ -20,6 +20,8 @@ void Controller::setup() {
         Serial.println("An Error has occurred while mounting LittleFS");
     }
 
+    profileManager = new ProfileManager(SPIFFS, "/p", settings);
+    profileManager->setup();
     pluginManager = new PluginManager();
     ui = new DefaultUI(this, pluginManager);
     if (settings.isHomekit())

@@ -37,8 +37,8 @@ void ui_event_ProfileScreen_previousProfileBtn(lv_event_t *e);
 lv_obj_t *ui_ProfileScreen_previousProfileBtn;
 void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e);
 lv_obj_t *ui_ProfileScreen_nextProfileBtn;
-void ui_event_ProfileScreen_ImgButton4(lv_event_t *e);
-lv_obj_t *ui_ProfileScreen_ImgButton4;
+void ui_event_ProfileScreen_chooseButton(lv_event_t *e);
+lv_obj_t *ui_ProfileScreen_chooseButton;
 lv_obj_t *ui_ProfileScreen_dials;
 // CUSTOM VARIABLES
 lv_obj_t *uic_ProfileScreen_dials_tempTarget;
@@ -86,6 +86,13 @@ void ui_event_BrewScreen_timedButton(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_timedButton;
 void ui_event_BrewScreen_volumetricButton(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_volumetricButton;
+lv_obj_t *ui_BrewScreen_profileInfo;
+lv_obj_t *ui_BrewScreen_Label1;
+lv_obj_t *ui_BrewScreen_Container3;
+lv_obj_t *ui_BrewScreen_profileName;
+void ui_event_BrewScreen_profileSelectBtn(lv_event_t *e);
+lv_obj_t *ui_BrewScreen_profileSelectBtn;
+lv_obj_t *ui_BrewScreen_adjustments;
 lv_obj_t *ui_BrewScreen_tempContainer;
 lv_obj_t *ui_BrewScreen_targetTemp;
 void ui_event_BrewScreen_downTempButton(lv_event_t *e);
@@ -186,12 +193,8 @@ lv_obj_t *ui_StatusScreen_currentDuration;
 lv_obj_t *ui_StatusScreen_stepLabel;
 lv_obj_t *ui_StatusScreen_phaseLabel;
 lv_obj_t *ui_StatusScreen_barContainer;
-lv_obj_t *ui_StatusScreen_preinfusePumpBar;
-lv_obj_t *ui_StatusScreen_preinfuseBloomBar;
 lv_obj_t *ui_StatusScreen_brewBar;
 lv_obj_t *ui_StatusScreen_labelContainer;
-lv_obj_t *ui_StatusScreen_preinfusePumpLabel;
-lv_obj_t *ui_StatusScreen_preinfuseBloomLabel;
 lv_obj_t *ui_StatusScreen_brewLabel;
 lv_obj_t *ui_StatusScreen_brewVolume;
 lv_obj_t *ui_StatusScreen_dials;
@@ -251,7 +254,8 @@ const lv_img_dsc_t *ui_imgset_1612577215[1] = {&ui_img_445946954};
 const lv_img_dsc_t *ui_imgset_1166435085[1] = {&ui_img_390988422};
 const lv_img_dsc_t *ui_imgset_1010926578[1] = {&ui_img_2044104741};
 const lv_img_dsc_t *ui_imgset_1155213431[1] = {&ui_img_545340440};
-const lv_img_dsc_t *ui_imgset_524469952[1] = {&ui_img_1765671371};
+const lv_img_dsc_t *ui_imgset_524469952[2] = {&ui_img_1765671371, &ui_img_207915003};
+const lv_img_dsc_t *ui_imgset_648927478[1] = {&ui_img_340148213};
 const lv_img_dsc_t *ui_imgset_690294202[1] = {&ui_img_1732953241};
 const lv_img_dsc_t *ui_imgset_1252186405[1] = {&ui_img_1951499226};
 const lv_img_dsc_t *ui_imgset_2074400918[1] = {&ui_img_364513079};
@@ -301,7 +305,7 @@ void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e) {
     }
 }
 
-void ui_event_ProfileScreen_ImgButton4(lv_event_t *e) {
+void ui_event_ProfileScreen_chooseButton(lv_event_t *e) {
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if (event_code == LV_EVENT_CLICKED) {
@@ -379,6 +383,14 @@ void ui_event_BrewScreen_volumetricButton(lv_event_t *e) {
 
     if (event_code == LV_EVENT_CLICKED) {
         onVolumetricClick(e);
+    }
+}
+
+void ui_event_BrewScreen_profileSelectBtn(lv_event_t *e) {
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if (event_code == LV_EVENT_CLICKED) {
+        onProfileSelect(e);
     }
 }
 

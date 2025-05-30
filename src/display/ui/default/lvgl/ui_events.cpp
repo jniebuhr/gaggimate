@@ -94,3 +94,7 @@ void onNextProfile(lv_event_t *e) {
 void onProfileLoad(lv_event_t *e) {
     // Your code here
 }
+
+void onProfileSelect(lv_event_t *e) {
+    // Your code here
+}
