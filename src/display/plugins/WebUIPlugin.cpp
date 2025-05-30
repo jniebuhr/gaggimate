@@ -184,6 +184,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setTargetDuration(request->arg("targetDuration").toInt() * 1000);
             if (request->hasArg("temperatureOffset"))
                 settings->setTemperatureOffset(request->arg("temperatureOffset").toInt());
+            if (request->hasArg("pressureScaling"))
+                settings->setPressureScaling(request->arg("pressureScaling").toFloat());
             if (request->hasArg("infusePumpTime"))
                 settings->setInfusePumpTime(request->arg("infusePumpTime").toInt() * 1000);
             if (request->hasArg("infuseBloomTime"))

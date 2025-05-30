@@ -154,19 +154,20 @@ export function Settings() {
         </Card>
         <Card xs={12} lg={6} title="Pressure settings">
           <div>
-            <label htmlFor="pressureScaling" className="lock font-medium text-gray-700 dark:text-gray-400">
+            <label htmlFor="pressureScaling" className="block font-medium text-gray-700 dark:text-gray-400">
               Pressure scaling factor
             </label>
-            <select
+            <input
               id="pressureScaling"
               name="pressureScaling"
-              placeholder="12"
+              type="number"
+              placeholder="0.0"
               className="input-field"
+              min="0"
+              step="any"
               value={formData.pressureScaling}
-              onChange={onChange('pressureScaling')}>
-                <option value="12">12 Bar</option>
-                <option value="16">16 Bar</option>
-            </select>
+              onChange={onChange('pressureScaling')}
+            />
           </div>
         </Card>
         <Card xs={12} lg={6} title="Brew phases">

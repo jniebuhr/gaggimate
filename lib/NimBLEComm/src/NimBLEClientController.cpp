@@ -144,6 +144,7 @@ void NimBLEClientController::setPressureScale(float scale) {
         char buffer[bufferSize];
         std::memcpy(buffer + 0, &scale, sizeof(scale));
         pressureScaleChar->writeValue(buffer);
+        //for some reason buffer content is empty here!
     }
 }
 
