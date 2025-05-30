@@ -140,11 +140,7 @@ void NimBLEClientController::sendPidSettings(const String &pid) {
 
 void NimBLEClientController::setPressureScale(float scale) {
     if (client->isConnected() && pressureScaleChar != nullptr) {
-        constexpr size_t bufferSize = sizeof(float);
-        char buffer[bufferSize];
-        std::memcpy(buffer + 0, &scale, sizeof(scale));
-        pressureScaleChar->writeValue(buffer);
-        //for some reason buffer content is empty here!
+        pressureScaleChar->writeValue(String(scale));
     }
 }
 

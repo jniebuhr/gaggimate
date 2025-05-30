@@ -161,6 +161,7 @@ export function Settings() {
               id="pressureScaling"
               name="pressureScaling"
               type="number"
+              inputmode="decimal"
               placeholder="0.0"
               className="input-field"
               min="0"
