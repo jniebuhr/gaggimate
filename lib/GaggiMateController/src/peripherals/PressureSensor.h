@@ -1,12 +1,6 @@
 #ifndef PRESSURESENSOR_H
 #define PRESSURESENSOR_H
 
-#ifdef PRESSURE_12BAR
-#define PRESSURE_SCALE 12.0f
-#else
-#define PRESSURE_SCALE 16.0f
-#endif
-
 #include <ADS1X15.h>
 #include <Arduino.h>
 
@@ -17,7 +11,7 @@ using pressure_callback_t = std::function<void(float)>;
 
 class PressureSensor {
   public:
-    PressureSensor(uint8_t sda_pin, uint8_t scl_pin, const pressure_callback_t &callback, float pressure_scale = PRESSURE_SCALE,
+    PressureSensor(uint8_t sda_pin, uint8_t scl_pin, const pressure_callback_t &callback, float pressure_scale = 16.0f,
                    float voltage_floor = 0.5, float voltage_ceil = 4.5);
     ~PressureSensor() = default;
 
