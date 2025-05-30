@@ -135,7 +135,7 @@ class Settings {
     String homeAssistantPassword = "";
     String homeAssistantIP = "";
     int homeAssistantPort = 1883;
-    String homeAssistantTopic = "homeassistant";
+    String homeAssistantTopic = DEFAULT_HOME_ASSISTANT_TOPIC;
     bool momentaryButtons = false;
     String timezone = DEFAULT_TIMEZONE;
 
