@@ -165,6 +165,10 @@ void Controller::loop() {
             loaded = true;
             if (settings.getStartupMode() == MODE_STANDBY)
                 activateStandby();
+
+            ESP_LOGI("Controller","setting pressure scale to %.2f\n",settings.getPressureScaling());
+            setPressureScale();
+
             pluginManager->trigger("controller:ready");
         }
     }
@@ -277,6 +281,12 @@ void Controller::setTargetTemp(int temperature) {
     clientController.sendPidSettings(settings.getPid());
     updateControl();
     updateLastAction();
+}
+
+void Controller::setPressureScale(void){
+    if(systemInfo.capabilities.pressure){
+        clientController.setPressureScale(settings.getPressureScaling());
+    }
 }
 
 int Controller::getTargetDuration() const { return settings.getTargetDuration(); }

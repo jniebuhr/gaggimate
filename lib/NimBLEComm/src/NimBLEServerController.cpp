@@ -187,13 +187,12 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
             pidControlCallback(Kp, Ki, Kd);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PRESSURE_SCALE_UUID))) {
-        const uint8_t *data = pCharacteristic->getValue().data();
-        float scale;
-        std::memcpy(&scale, data + 0, sizeof(scale));
+        String scale_string = pCharacteristic->getValue().c_str();
+        float scale_value = scale_string.toFloat();
 
-        ESP_LOGI(LOG_TAG, "Received pressure scale: %.1f", scale);
+        ESP_LOGV(LOG_TAG, "Received pressure scale: %.2f", scale_value);
         if (pressureScaleCallback != nullptr) {
-            pressureScaleCallback(scale);
+            pressureScaleCallback(scale_value);
         }
     }
 }

@@ -23,6 +23,7 @@ class Settings {
     int getTargetSteamTemp() const { return targetSteamTemp; }
     int getTargetWaterTemp() const { return targetWaterTemp; }
     int getTemperatureOffset() const { return temperatureOffset; }
+    float getPressureScaling() const { return pressureScaling; }
     int getTargetDuration() const { return targetDuration; }
     int getTargetVolume() const { return targetVolume; }
     int getTargetGrindVolume() const { return targetGrindVolume; }
@@ -60,6 +61,7 @@ class Settings {
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
+    void setPressureScaling(float pressure_scaling);
     void setTargetDuration(int target_duration);
     void setTargetVolume(int target_volume);
     void setTargetGrindVolume(int target_grind_volume);
@@ -102,6 +104,7 @@ class Settings {
     int targetSteamTemp = 155;
     int targetWaterTemp = 80;
     int temperatureOffset = DEFAULT_TEMPERATURE_OFFSET;
+    float pressureScaling = DEFAULT_PRESSURE_SCALING;
     int targetDuration = 25000;
     int targetVolume = 36;
     int targetGrindVolume = 18;
