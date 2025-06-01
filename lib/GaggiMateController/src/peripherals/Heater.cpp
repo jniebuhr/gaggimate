@@ -1,5 +1,7 @@
 #include "Heater.h"
 #include <Arduino.h>
+#include <algorithm> 
+
 
 Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
                const pid_result_callback_t &pid_callback, PIDLibrary library)
@@ -32,6 +34,9 @@ void Heater::setupPid() {
     } else {
         simplePid->setSamplingFrequency(TUNER_OUTPUT_SPAN / 1000.0f);
         simplePid->setCtrlOutputLimits(0.0f, TUNER_OUTPUT_SPAN);
+        simplePid->activateSetPointFilter(true);
+        simplePid->activateFeedForward(true);
+        simplePid->reset();
     }
 }
 
@@ -45,9 +50,10 @@ void Heater::setupAutotune(int tuningTemp, int samples) {
         tuner->setLoopInterval((TUNER_OUTPUT_SPAN - 1) * 1000);
         tuner->setZNMode(PIDAutotuner::ZNModeLessOvershoot);
     } else {
-        autotuner->setWindowsize(3);
+        autotuner->setWindowsize(samples);
         autotuner->setEpsilon(0.1f);
-        autotuner->setRequiredConfirmations(samples);
+        autotuner->setRequiredConfirmations(3);
+        autotuner->setTuningGoal(tuningTemp);
         autotuner->reset();
     }
 }
@@ -92,7 +98,7 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
         }
     } else {
         if (simplePid->getKp() != Kp || simplePid->getKi() != Ki || simplePid->getKd() != Kd) {
-            simplePid->setControllerPIDGains(Kp, Ki, Kd, 0.0f);
+            simplePid->setControllerPIDGains(Kp, Ki, Kd, simplePid->getKFF());
             simplePid->reset();
             ESP_LOGI(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f", Kp, Ki, Kd);
         }
@@ -113,7 +119,7 @@ void Heater::loopPid() {
         }
     } else {
         if (simplePid->update()) {
-            plot(output, 1.0f, 3);
+            plot(output, 1.0f, 1);
         }
     }
 }
@@ -168,13 +174,21 @@ void Heater::loopAutotuneNimrod() {
         }
     }
     output = 0.0f;
-    softPwm(TUNER_OUTPUT_SPAN);
-    pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
-    setTunings(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
     autotuning = false;
+    softPwm(TUNER_OUTPUT_SPAN);
+    
+    pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
+
+    setTunings(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
+    simplePid->computeSetpointDelay(autotuner->getSystemDelay());
+    simplePid->setKFF(autotuner->getKff()*1000);
     simplePid->setMode(SimplePID::Control::automatic);
-    ESP_LOGI(LOG_TAG, "Autotuning finished: Kp=%.4f, Ki=%.4f, Kd=%.4f, Kff=%.4f\n", autotuner->getKp(), autotuner->getKi(), autotuner->getKd(), autotuner->getKff());
-    ESP_LOGI(LOG_TAG, "System delay: %.2f s, System gain: %.4f\n", autotuner->getSystemDelay(), autotuner->getSystemGain());
+        
+    simplePid->setSetpointRateLimits(-INFINITY, autotuner->getSystemGain() * 0.8);
+    simplePid->setSetpointFilterFrequency(autotuner->getCrossoverFreq()/2);
+    
+    ESP_LOGI(LOG_TAG, "Autotuning finished: Kp=%.4f, Ki=%.4f, Kd=%.4f, Kff=%.4f\n", autotuner->getKp()*1000.0f, autotuner->getKi()*1000.0f, autotuner->getKd()*1000.0f, autotuner->getKff()*1000.0f);
+    ESP_LOGI(LOG_TAG, "System delay: %.2f s, System gain: %.4f Setpoint Freq: %.4f Hz\n", autotuner->getSystemDelay(), autotuner->getSystemGain(), autotuner->getCrossoverFreq()/2);
 }
 
 float Heater::softPwm(uint32_t windowSize) {

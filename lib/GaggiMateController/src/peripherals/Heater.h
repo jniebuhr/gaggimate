@@ -37,7 +37,7 @@ class Heater {
     void loopAutotuneNimrod();
     float softPwm(uint32_t windowSize);
     void plot(float optimumOutput, float outputScale, uint8_t everyNth);
-
+    void setTuningGoal(float percent);
     PIDLibrary _library;
     TemperatureSensor *sensor;
     uint8_t heaterPin;

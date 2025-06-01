@@ -41,8 +41,7 @@ bool SimplePID::update() {
 
     if (isFeedForwardActive)
         FFOut = setpointDerivative * gainFF;
-
-    // Serial.printf("%.2f\t %.2f\t %.2f\t %.2f\n", *setpointTarget, setpointFiltered, setpointDerivative, *sensorOutput);
+    Serial.printf("%.2f\t %.2f\t %.2f\t %.2f\n", *setpointTarget, setpointFiltered, setpointDerivative, *sensorOutput);
 
     float deltaTime = 1.0f / ctrl_freq_sampling; // Time step in seconds
 
@@ -88,21 +87,21 @@ bool SimplePID::update() {
 
 void SimplePID::setpointFiltering(float freq) {
 
-    // Apply the low-pass filter to the setpoint
-    float deriv = 2.0f * PI * freq * (*setpointTarget - setpointFilteredValues.back());
-
+    float wn = (2.0f * PI * freq);
+    float dderiv = wn * wn * (*setpointTarget - setpointFilteredValues.back());   
+    setpointFiltstate1 += dderiv / ctrl_freq_sampling;
+    setpointDerivative = setpointFiltstate1 - wn * 2 * setpointFiltXi * setpointFilteredValues.back();
     // Output the filtered setpoint values
-    setpointDerivative = constrain(deriv, setpointRatelimits[0], setpointRatelimits[1]);
-
-    // Integrate (backward euler) the setpoint derivative to get the filtered setpoint value
+    setpointDerivative = constrain(setpointDerivative, setpointRatelimits[0], setpointRatelimits[1]);
+    // Integrate (forward euler) the setpoint derivative to get the filtered setpoint value
     float integ = setpointFilteredValues.back() + setpointDerivative / ctrl_freq_sampling;
     // Add the new setpoint to the history to introduce a delay between the setpoint derivative and the filtered setpoint
-
     setpointFilteredValues.push_back(integ);
     if (setpointFilteredValues.size() > setpointDelaySamples + 1) {
         setpointFilteredValues.pop_front();
     }
     setpointFiltered = setpointFilteredValues.front(); // Get the filtered setpoint value
+
 }
 
 void SimplePID::initSetPointFilter(float initialValue) {
@@ -110,6 +109,7 @@ void SimplePID::initSetPointFilter(float initialValue) {
     for (int i = 0; i < setpointDelaySamples + 1; ++i) {
         setpointFilteredValues.push_back(initialValue);
     }
+    setpointFiltstate1 = 2*setpointFiltXi*2*PI*setpointFilterFreq*initialValue;
 }
 
 void SimplePID::resetFeedbackController() {
@@ -122,6 +122,7 @@ void SimplePID::reset() {
     resetFeedbackController();
     isInitialized = false;
     setpointFilteredValues.clear();
+    setpointFiltstate1 = 0.0f;
 }
 
 // GETTER-SETTER FUNCTIONS
@@ -144,7 +145,6 @@ void SimplePID::setControllerPIDGains(float Kp, float Ki, float Kd, float FF) {
 }
 
 void SimplePID::setSamplingFrequency(float freq) { ctrl_freq_sampling = freq; }
-float SimplePID::getCtrlSamplingFrequency() { return ctrl_freq_sampling; }
 void SimplePID::setCtrlOutputLimits(float minOutput, float maxOutput) {
     ctrlOutputLimits[0] = minOutput;
     ctrlOutputLimits[1] = maxOutput;
