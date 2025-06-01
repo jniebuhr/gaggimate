@@ -5,6 +5,20 @@
 DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor)
     : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 1, 4), _pressureSensor(pressure_sensor) {
     _psm.set(0);
+    _pressureGains.push_back(0.002f);
+    _pressureGains.push_back(0.005f);
+    _pressureGains.push_back(0.01f);
+    _pressureGains.push_back(0.02f);
+    _pressureGains.push_back(0.03f);
+    _pressureGains.push_back(0.15f);
+    _pressureGains.push_back(0.20f);
+    _pressureGains.push_back(0.15f);
+    _pressureGains.push_back(0.1f);
+    _pressureGains.push_back(0.09f);
+    _pressureGains.push_back(0.085f);
+    _pressureGains.push_back(0.08f);
+    _pressureGains.push_back(0.07f);
+
 }
 
 void DimmedPump::setup() {
@@ -27,18 +41,19 @@ void DimmedPump::calibrate() {
     float lastPressure = 0;
     float lastRoundedPressure = 0;
     _currentPressure = _pressureSensor->getPressure();
+    _psm.set(10);
     vTaskDelay(100);
-    _psm.set(100);
     do {
         vTaskDelay(100);
         lastRoundedPressure = round(_currentPressure - 0.5);
         lastPressure = _currentPressure;
         _currentPressure = _pressureSensor->getPressure();
         if (round(_currentPressure - 0.5) > lastRoundedPressure) {
-            float gain = (_currentPressure - lastPressure) * 10.0f / static_cast<float>(_cps);
+            float gain = (_currentPressure - lastPressure) * 10.0f / (static_cast<float>(_cps) / 10.0f);
+            ESP_LOGI("DimmedPump", "Gain: %.6f at %.6f bar", gain, round(_currentPressure - 0.5));
             _pressureGains.push_back(gain);
         }
-    } while (_currentPressure > lastPressure);
+    } while (_currentPressure > lastPressure - 0.1 || _currentPressure < 4.0f);
     _opvPressure = _currentPressure;
 
     ESP_LOGI("DimmedPump", "Finished calibration");
@@ -80,12 +95,13 @@ void DimmedPump::updatePower() {
         break;
 
     case ControlMode::POWER:
-        // Power is already set directly
+        _psm.set(static_cast<int>(_power));
         break;
     }
 
-    if (newPower != _power) {
-        _power = std::clamp(newPower, 0.0f, 100.0f);
+    if (newPower != _power && _mode != ControlMode::POWER) {
+        newPower = std::clamp(newPower, 0.0f, 100.0f);
+        _power = 0.8f * _power + 0.2f * newPower;
         _psm.set(static_cast<int>(_power));
     }
 }
