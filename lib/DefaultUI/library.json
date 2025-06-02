@@ -1,0 +1,17 @@
+{
+  "name": "DefaultUI",
+  "keywords": "gaggimate, controller, ui",
+  "description": "Default UI for GaggiMate Controller",
+  "repository":
+  {
+    "type": "email",
+    "url": "mail@gaggimate.eu"
+  },
+  "version": "1.0.0",
+  "exclude": "doc",
+  "frameworks": "arduino",
+  "platforms": ["esp32"],
+  "dependencies": {
+    "DisplayCore": "file://lib/DisplayCore"
+  }
+}
