@@ -125,8 +125,9 @@ void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, f
     if (client->isConnected() && outputControlChar != nullptr) {
         char str[30];
         snprintf(str, sizeof(str), "%d,%d,%.1f,%.1f", 0, valve ? 1 : 0, pumpSetpoint, boilerSetpoint);
-        if (outputControlChar->getValue().c_str() != str) {
-            outputControlChar->writeValue(str, false);
+        if (String(str) != _lastOutputControl) {
+            _lastOutputControl = String(str);
+            outputControlChar->writeValue(_lastOutputControl, false);
         }
     }
 }
