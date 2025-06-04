@@ -13,24 +13,32 @@ Chart.register(Legend);
 import mockData from '../../mocks/profiles.json';
 import { ExtendedContent } from './ExtendedContent.jsx';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
+import { useContext } from 'react';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { useCallback, useEffect, useState } from 'preact/hooks';
+import { computed } from '@preact/signals';
+import { Spinner } from '../../components/Spinner.jsx';
 
 const PhaseLabels = {
   preinfusion: 'Pre-Infusion',
   brew: 'Brew',
 }
 
-function ProfileCard({ data }) {
+const connected = computed(() => machine.value.connected);
+
+function ProfileCard({ data, onDelete, onSelect }) {
   const bookmarkClass = data.favorite ? 'text-yellow-400' : '';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
   return (
     <div
       key="profile-list"
-      className="rounded-lg border flex flex-row items-center border-slate-200 bg-white p-4 sm:col-span-12 cursor-pointer dark:bg-gray-800 dark:border-gray-600"
+      className="rounded-lg border flex flex-row items-center border-slate-200 bg-white p-4 sm:col-span-12 dark:bg-gray-800 dark:border-gray-600"
     >
       <div className="flex flex-row justify-center items-center p-4">
         <label className="flex items-center relative cursor-pointer">
           <input checked={data.selected} type="checkbox"
+                 onClick={() => onSelect(data.id)}
                  className="peer h-6 w-6 cursor-pointer transition-all appearance-none rounded-full bg-slate-100 dark:bg-slate-700 shadow hover:shadow-md border border-slate-300 checked:bg-green-600 checked:border-green-600"
                  id="check-custom-style" />
           <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
@@ -47,20 +55,23 @@ function ProfileCard({ data }) {
             <span className={`${typeClass} text-xs font-medium me-2 px-4 py-0.5 rounded-sm dark:bg-blue-900 dark:text-blue-300`}>{typeText}</span>
           </div>
           <div className="flex flex-row gap-2">
+            {/*
             <a
               href="javascript:void(0)"
               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-100 hover:text-yellow-400 active:border-yellow-200"
             >
               <span className={`fa fa-star ${bookmarkClass}`} />
             </a>
+            */}
             <a
-              href="javascript:void(0)"
+              href={`/profiles/${data.id}`}
               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 dark:text-indigo-100 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200"
             >
               <span className="fa fa-pen" />
             </a>
             <a
               href="javascript:void(0)"
+              onClick={() => onDelete(data.id)}
               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
             >
               <span className="fa fa-trash" />
@@ -114,6 +125,40 @@ function SimpleStep(props) {
 }
 
 export function ProfileList() {
+  const apiService = useContext(ApiServiceContext);
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const loadProfiles = async () => {
+    const response = await apiService.request({ tp: 'req:profiles:list' });
+    setProfiles(response.profiles);
+    setLoading(false);
+  }
+  useEffect(async () => {
+    if (connected.value) {
+      await loadProfiles();
+    }
+  }, [connected.value]);
+
+  const onDelete = useCallback(async(id) => {
+    setLoading(true);
+    await apiService.request({ tp: 'req:profiles:delete', id });
+    await loadProfiles();
+  }, [apiService, setLoading]);
+
+  const onSelect = useCallback(async(id) => {
+    setLoading(true);
+    await apiService.request({ tp: 'req:profiles:select', id });
+    await loadProfiles();
+  }, [apiService, setLoading]);
+
+  if (loading) {
+    return (
+      <div class="flex flex-row py-16 items-center justify-center w-full">
+        <Spinner size={8} />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
@@ -121,8 +166,8 @@ export function ProfileList() {
           <h2 className="text-2xl font-bold">Profiles</h2>
         </div>
 
-        {mockData.map((data) => (
-          <ProfileCard data={data} key={data.id} />
+        {profiles.map((data) => (
+          <ProfileCard data={data} key={data.id} onDelete={(id) => onDelete(id)} onSelect={(id) => onSelect(id)} />
         ))}
 
         <ProfileAddCard />

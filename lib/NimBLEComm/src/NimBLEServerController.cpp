@@ -167,7 +167,8 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
             bool pressureTarget = get_token(control, 4, ',').toInt() == 1;
             float pumpPressure = get_token(control, 5, ',').toFloat();
             float pumpFlow = get_token(control, 6, ',').toFloat();
-            ESP_LOGV(LOG_TAG, "Received advanced output control: type=%d, valve=%d, pressure_target=%d, pressure=%.1f, flow=%.1f", type, valve, pressureTarget, pumpPressure, pumpFlow);
+            ESP_LOGV(LOG_TAG, "Received advanced output control: type=%d, valve=%d, pressure_target=%d, pressure=%.1f, flow=%.1f",
+                     type, valve, pressureTarget, pumpPressure, pumpFlow);
             if (advancedControlCallback != nullptr) {
                 advancedControlCallback(valve == 1, boilerSetpoint, pressureTarget, pumpPressure, pumpFlow);
             }

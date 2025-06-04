@@ -1,6 +1,7 @@
 #pragma once
 #ifndef PROFILEMANAGER_H
 #define PROFILEMANAGER_H
+#include "PluginManager.h"
 #include <FS.h>
 #include <display/core/Settings.h>
 #include <display/models/profile.h>
@@ -8,7 +9,7 @@
 
 class ProfileManager {
   public:
-    ProfileManager(fs::FS &fs, const char *dir, Settings &settings);
+    ProfileManager(fs::FS &fs, char *dir, Settings &settings, PluginManager *plugin_manager);
 
     void setup();
     std::vector<String> listProfiles();
@@ -21,6 +22,7 @@ class ProfileManager {
     void loadSelectedProfile(Profile &outProfile);
 
   private:
+    PluginManager *_plugin_manager;
     Settings &_settings;
     fs::FS &_fs;
     String _dir;

@@ -177,12 +177,17 @@ void WebUIPlugin::handleAutotuneStart(uint32_t clientId, JsonDocument &request) 
 void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request) {
     JsonDocument response;
     auto type = request["tp"].as<String>();
+    ESP_LOGI("WebUIPlugin", "Handling request: %s", type.c_str());
     response["tp"] = String("res:") + type.substring(4);
+    response["rid"] = request["rid"].as<String>();
 
     if (type == "req:profiles:list") {
         auto arr = response["profiles"].to<JsonArray>();
         for (auto const &id : profileManager->listProfiles()) {
-            arr.add(id);
+            Profile profile{};
+            profileManager->loadProfile(id, profile);
+            auto p = arr.add<JsonObject>();
+            writeProfile(p, profile);
         }
     } else if (type == "req:profiles:load") {
         auto id = request["id"].as<String>();

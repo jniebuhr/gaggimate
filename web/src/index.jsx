@@ -33,7 +33,7 @@ export function App() {
             <main id="page-content" class="flex max-w-full flex-auto flex-col">
               <div class="container mx-auto p-4 lg:p-8 xl:max-w-7xl">
                 <div class="grid grid-cols-1 md:gap-20 lg:grid-cols-12">
-                  <Navigation extended />
+                  <Navigation />
                   <div class="lg:col-span-9">
                     <ErrorBoundary>
                       <Router>

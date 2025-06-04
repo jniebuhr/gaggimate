@@ -2,11 +2,13 @@
 #include <ArduinoJson.h>
 #include <display/core/utils.h>
 
-ProfileManager::ProfileManager(fs::FS &fs, const char *dir, Settings &settings) : _fs(fs), _dir(dir), _settings(settings) {}
+ProfileManager::ProfileManager(fs::FS &fs, char *dir, Settings &settings, PluginManager *plugin_manager)
+    : _plugin_manager(plugin_manager), _fs(fs), _dir(dir), _settings(settings) {}
 
 void ProfileManager::setup() {
     ensureDirectory();
-    if (!_settings.isProfilesMigrated()) {
+    auto profiles = listProfiles();
+    if (!_settings.isProfilesMigrated() || profiles.empty()) {
         migrate();
         _settings.setProfilesMigrated(true);
     }
@@ -34,7 +36,7 @@ void ProfileManager::migrate() {
         pressurizePhase1.name = "Pressurize";
         pressurizePhase1.phase = PhaseType::PHASE_TYPE_PREINFUSION;
         pressurizePhase1.valve = 0;
-        pressurizePhase1.duration = _settings.getPressurizeTime();
+        pressurizePhase1.duration = _settings.getPressurizeTime() / 1000;
         pressurizePhase1.pumpIsSimple = true;
         pressurizePhase1.pumpSimple = 100;
         profile.phases.push_back(pressurizePhase1);
@@ -44,7 +46,7 @@ void ProfileManager::migrate() {
         infusePumpPhase.name = "Bloom";
         infusePumpPhase.phase = PhaseType::PHASE_TYPE_BREW;
         infusePumpPhase.valve = 1;
-        infusePumpPhase.duration = _settings.getInfusePumpTime();
+        infusePumpPhase.duration = _settings.getInfusePumpTime() / 1000;
         infusePumpPhase.pumpIsSimple = true;
         infusePumpPhase.pumpSimple = 100;
         profile.phases.push_back(infusePumpPhase);
@@ -54,7 +56,7 @@ void ProfileManager::migrate() {
         infuseBloomPhase1.name = "Bloom";
         infuseBloomPhase1.phase = PhaseType::PHASE_TYPE_BREW;
         infuseBloomPhase1.valve = 1;
-        infuseBloomPhase1.duration = _settings.getInfuseBloomTime();
+        infuseBloomPhase1.duration = _settings.getInfuseBloomTime() / 1000;
         infuseBloomPhase1.pumpIsSimple = true;
         infuseBloomPhase1.pumpSimple = 0;
         profile.phases.push_back(infuseBloomPhase1);
@@ -64,7 +66,7 @@ void ProfileManager::migrate() {
         pressurizePhase1.name = "Pressurize";
         pressurizePhase1.phase = PhaseType::PHASE_TYPE_BREW;
         pressurizePhase1.valve = 0;
-        pressurizePhase1.duration = _settings.getPressurizeTime();
+        pressurizePhase1.duration = _settings.getPressurizeTime() / 1000;
         pressurizePhase1.pumpIsSimple = true;
         pressurizePhase1.pumpSimple = 100;
         profile.phases.push_back(pressurizePhase1);
@@ -73,7 +75,7 @@ void ProfileManager::migrate() {
     brewPhase.name = "Brew";
     brewPhase.phase = PhaseType::PHASE_TYPE_BREW;
     brewPhase.valve = 1;
-    brewPhase.duration = _settings.getTargetDuration();
+    brewPhase.duration = _settings.getTargetDuration() / 1000;
     brewPhase.pumpIsSimple = true;
     brewPhase.pumpSimple = 100;
     Target target{};
@@ -115,14 +117,20 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
     if (err)
         return false;
 
-    return parseProfile(doc.as<JsonObject>(), outProfile);
+    if (!parseProfile(doc.as<JsonObject>(), outProfile)) {
+        return false;
+    }
+    outProfile.selected = outProfile.id == _settings.getSelectedProfile();
+    return true;
 }
 
 bool ProfileManager::saveProfile(Profile &profile) {
     if (!ensureDirectory())
         return false;
 
-    if (!profile.id) {
+    ESP_LOGI("ProfileManager", "Saving profile %s", profile.id.c_str());
+
+    if (profile.id == nullptr || profile.id.isEmpty()) {
         profile.id = generateShortID();
     }
 
@@ -143,7 +151,10 @@ bool ProfileManager::deleteProfile(const String &uuid) { return _fs.remove(profi
 
 bool ProfileManager::profileExists(const String &uuid) { return _fs.exists(profilePath(uuid)); }
 
-void ProfileManager::selectProfile(const String &uuid) const { _settings.setSelectedProfile(uuid); }
+void ProfileManager::selectProfile(const String &uuid) const {
+    _settings.setSelectedProfile(uuid);
+    _plugin_manager->trigger("profiles:profile:select", "id", uuid);
+}
 
 String ProfileManager::getSelectedProfile() const { return _settings.getSelectedProfile(); }
 

@@ -18,7 +18,6 @@ DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *press
     _pressureGains.push_back(0.085f);
     _pressureGains.push_back(0.08f);
     _pressureGains.push_back(0.07f);
-
 }
 
 void DimmedPump::setup() {

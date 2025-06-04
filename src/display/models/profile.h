@@ -44,7 +44,8 @@ struct Profile {
 };
 
 inline bool parseProfile(const JsonObject &obj, Profile &profile) {
-    profile.id = obj["id"].as<String>();
+    if (obj["id"].is<String>())
+        profile.id = obj["id"].as<String>();
     profile.label = obj["label"].as<String>();
     profile.type = obj["type"].as<String>();
     profile.description = obj["description"].as<String>();

@@ -20,9 +20,9 @@ void Controller::setup() {
         Serial.println("An Error has occurred while mounting LittleFS");
     }
 
-    profileManager = new ProfileManager(SPIFFS, "/p", settings);
-    profileManager->setup();
     pluginManager = new PluginManager();
+    profileManager = new ProfileManager(SPIFFS, "/p", settings, pluginManager);
+    profileManager->setup();
     ui = new DefaultUI(this, pluginManager);
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));

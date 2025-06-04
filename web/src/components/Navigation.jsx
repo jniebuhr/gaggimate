@@ -19,7 +19,6 @@ function MenuItem(props) {
       <span className="grow">{props.label}</span>
     </a>
   );
-
 }
 
 export function Navigation(props) {
@@ -27,13 +26,11 @@ export function Navigation(props) {
     <nav class="hidden lg:col-span-3 lg:block">
       <MenuItem label="Dashboard" link="/" iconClass="fa fa-home" />
       <hr class="h-5 border-0" />
-      {props.extended && <>
-        <div className="space-y-1.5">
-          <MenuItem label="Profiles" link="/profiles" iconClass="fa fa-list" />
-          <MenuItem label="Shot History" link="/history" iconClass="fa fa-timeline" />
-        </div>
-        <hr className="h-5 border-0" />
-      </>}
+      <div className="space-y-1.5">
+        <MenuItem label="Profiles" link="/profiles" iconClass="fa fa-list" />
+        {props.extended && <MenuItem label="Shot History" link="/history" iconClass="fa fa-timeline" />}
+      </div>
+      <hr className="h-5 border-0" />
       <div class="space-y-1.5">
         <MenuItem label="PID Autotune" link="/pidtune" iconClass="fa fa-temperature-half" />
         <MenuItem label="Bluetooth Scales" link="/scales" iconClass="fa-brands fa-bluetooth-b" />

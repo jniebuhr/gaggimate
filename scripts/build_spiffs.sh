@@ -4,7 +4,7 @@
 rm -rf data/*
 mkdir -p data/w
 mkdir -p data/p
-touch data/profiles/.keep
+touch data/p/.keep
 
 # Build web application
 cd web || exit
