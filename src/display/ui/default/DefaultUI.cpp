@@ -213,6 +213,7 @@ void DefaultUI::setupState() {
     grindDuration = settings.getTargetGrindDuration();
     grindVolume = settings.getTargetGrindVolume();
     pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
+    pressureScaling = std::ceil(settings.getPressureScaling());
     selectedProfileId = settings.getSelectedProfile();
     profileManager->loadSelectedProfile(selectedProfile);
 }
@@ -627,6 +628,7 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
     lv_obj_set_x(tempText, pressureAvailable ? -50 : 0);
     lv_obj_set_y(tempText, pressureAvailable ? -205 : -180);
     lv_arc_set_bg_angles(tempGauge, 118, pressureAvailable ? 242 : 62);
+    lv_arc_set_range(pressureGauge,0,pressureScaling);
 }
 
 void DefaultUI::loopTask(void *arg) {
