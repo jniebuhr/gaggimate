@@ -12,6 +12,7 @@ void ProfileManager::setup() {
         migrate();
         _settings.setProfilesMigrated(true);
     }
+    loadSelectedProfile(selectedProfile);
 }
 
 bool ProfileManager::ensureDirectory() {
@@ -151,11 +152,12 @@ bool ProfileManager::deleteProfile(const String &uuid) { return _fs.remove(profi
 
 bool ProfileManager::profileExists(const String &uuid) { return _fs.exists(profilePath(uuid)); }
 
-void ProfileManager::selectProfile(const String &uuid) const {
+void ProfileManager::selectProfile(const String &uuid) {
     _settings.setSelectedProfile(uuid);
+    loadSelectedProfile(selectedProfile);
     _plugin_manager->trigger("profiles:profile:select", "id", uuid);
 }
 
-String ProfileManager::getSelectedProfile() const { return _settings.getSelectedProfile(); }
+Profile ProfileManager::getSelectedProfile() const { return selectedProfile; }
 
 void ProfileManager::loadSelectedProfile(Profile &outProfile) { loadProfile(_settings.getSelectedProfile(), outProfile); }

@@ -31,7 +31,7 @@ export function Home() {
           <h2 className="text-2xl font-bold">Dashboard</h2>
         </div>
         <div
-          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-4 xl:col-span-4"
+          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-6 xl:col-span-3"
         >
           <dl>
             <dt className="text-2xl font-bold">{modeMap[status.value.mode] || 'Standby'}</dt>
@@ -41,7 +41,7 @@ export function Home() {
           </dl>
         </div>
         <div
-          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-4 xl:col-span-4"
+          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-6 xl:col-span-3"
         >
           <dl>
             <dt className="text-2xl font-bold">{status.value.currentTemperature || 0} °C</dt>
@@ -51,7 +51,7 @@ export function Home() {
           </dl>
         </div>
         <div
-          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-4 xl:col-span-4"
+          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-6 xl:col-span-3"
         >
           <dl>
             <dt className="text-2xl font-bold">{status.value.targetTemperature || 0} °C</dt>
@@ -60,18 +60,16 @@ export function Home() {
             </dd>
           </dl>
         </div>
-        {/*
         <div
           className="rounded-lg border border-slate-200 bg-white p-6 sm:col-span-6 xl:col-span-3"
         >
           <dl>
-            <dt className="text-2xl font-bold">{status?.profile || 'LM Leva 2'}</dt>
+            <dt className="text-2xl font-bold">{status.value.selectedProfile || '-'}</dt>
             <dd className="text-sm font-medium text-slate-500">
               Current Profile
             </dd>
           </dl>
         </div>
-        */ }
         <div
           className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 sm:col-span-12"
         >

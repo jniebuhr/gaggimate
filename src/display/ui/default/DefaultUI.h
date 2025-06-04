@@ -2,7 +2,9 @@
 #define DEFAULTUI_H
 
 #include <display/core/PluginManager.h>
+#include <display/core/ProfileManager.h>
 #include <display/core/constants.h>
+#include <display/models/profile.h>
 
 #include "./lvgl/ui.h"
 
@@ -38,8 +40,11 @@ class DefaultUI {
 
     Controller *controller;
     PluginManager *pluginManager;
+    ProfileManager *profileManager;
 
     // Screen state
+    String selectedProfileId = "";
+    Profile selectedProfile{};
     int updateAvailable = false;
     int updateActive = false;
     int apActive = false;

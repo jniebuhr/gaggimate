@@ -17,11 +17,12 @@ class ProfileManager {
     bool saveProfile(Profile &profile);
     bool deleteProfile(const String &uuid);
     bool profileExists(const String &uuid);
-    void selectProfile(const String &uuid) const;
-    String getSelectedProfile() const;
+    void selectProfile(const String &uuid);
+    Profile getSelectedProfile() const;
     void loadSelectedProfile(Profile &outProfile);
 
   private:
+    Profile selectedProfile{};
     PluginManager *_plugin_manager;
     Settings &_settings;
     fs::FS &_fs;

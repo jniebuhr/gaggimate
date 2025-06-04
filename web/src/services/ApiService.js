@@ -91,6 +91,7 @@ export default class ApiService {
       currentTemperature: message.ct,
       targetTemperature: message.tt,
       mode: message.m,
+      selectedProfile: message.p,
       timestamp: new Date(),
     };
     const newValue = {

@@ -516,7 +516,6 @@ void ui_event_StatusScreen_pauseButton(lv_event_t *e) {
     if (event_code == LV_EVENT_CLICKED) {
         onBrewCancel(e);
         (e);
-        _ui_screen_change(&ui_BrewScreen, LV_SCR_LOAD_ANIM_NONE, 500, 0, &ui_BrewScreen_screen_init);
     }
 }
 

@@ -16,7 +16,9 @@ int16_t calculate_angle(int set_temp, int range, int offset) {
 }
 
 DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
-    : controller(controller), pluginManager(pluginManager) {}
+    : controller(controller), pluginManager(pluginManager) {
+    profileManager = controller->getProfileManager();
+}
 
 void DefaultUI::init() {
     auto triggerRender = [this](Event const &) { rerender = true; };
@@ -115,6 +117,10 @@ void DefaultUI::init() {
     pluginManager->on("controller:autotune:result",
                       [this](Event const &) { changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
 
+    pluginManager->on("profiles:profile:select", [this](Event const &event) {
+        selectedProfileId = event.getString("id");
+        profileManager->loadSelectedProfile(selectedProfile);
+    });
     setupPanel();
     setupState();
     setupReactive();
@@ -183,6 +189,8 @@ void DefaultUI::setupState() {
     grindDuration = settings.getTargetGrindDuration();
     grindVolume = settings.getTargetGrindVolume();
     pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
+    selectedProfileId = settings.getSelectedProfile();
+    profileManager->loadSelectedProfile(selectedProfile);
 }
 
 void DefaultUI::setupReactive() {
@@ -197,6 +205,10 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_WaterScreen; }, [=]() { adjustDials(ui_WaterScreen_dials); },
                           &pressureAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_SteamScreen; }, [=]() { adjustDials(ui_SteamScreen_dials); },
+                          &pressureAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_SteamScreen; }, [=]() { adjustDials(ui_SteamScreen_dials); },
+                          &pressureAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustDials(ui_ProfileScreen_dials); },
                           &pressureAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
@@ -232,6 +244,12 @@ void DefaultUI::setupReactive() {
                           [=]() {
                               lv_arc_set_value(uic_SteamScreen_dials_tempGauge, currentTemp);
                               lv_label_set_text_fmt(uic_SteamScreen_dials_tempText, "%d°C", currentTemp);
+                          },
+                          &currentTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
+                          [=]() {
+                              lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, currentTemp);
+                              lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
@@ -280,6 +298,13 @@ void DefaultUI::setupReactive() {
                               lv_img_set_angle(uic_SteamScreen_dials_tempTarget, angle);
                           },
                           &targetTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
+                          [=]() {
+                              int16_t angle =
+                                  calculate_angle(targetTemp, pressureAvailable ? 1360 : 3040, pressureAvailable ? 900 : 0);
+                              lv_img_set_angle(uic_ProfileScreen_dials_tempTarget, angle);
+                          },
+                          &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
                               lv_arc_set_value(uic_MenuScreen_dials_pressureGauge, pressure);
@@ -314,6 +339,12 @@ void DefaultUI::setupReactive() {
                           [=]() {
                               lv_arc_set_value(uic_SteamScreen_dials_pressureGauge, pressure);
                               lv_label_set_text_fmt(uic_SteamScreen_dials_pressureText, "%.1f bar", pressure);
+                          },
+                          &pressure);
+    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
+                          [=]() {
+                              lv_arc_set_value(uic_ProfileScreen_dials_pressureGauge, pressure);
+                              lv_label_set_text_fmt(uic_ProfileScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
     effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
@@ -429,6 +460,9 @@ void DefaultUI::setupReactive() {
                                                 grindActive ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
                           },
                           &grindActive);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=] { lv_label_set_text(ui_BrewScreen_profileName, selectedProfile.label.c_str()); },
+                          &selectedProfileId);
 }
 
 void DefaultUI::handleScreenChange() {

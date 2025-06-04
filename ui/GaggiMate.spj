@@ -14721,31 +14721,31 @@
                               {
                                 "nid": 1040,
                                 "strtype": "IMGBUTTON/Image_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 1050,
                                 "strtype": "IMGBUTTON/Image_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 1060,
                                 "strtype": "IMGBUTTON/Image_checked_released",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 1070,
                                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 1080,
                                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
@@ -21968,31 +21968,31 @@
                   {
                     "nid": -1721122245,
                     "strtype": "IMGBUTTON/Image_pressed",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": 1688828786,
                     "strtype": "IMGBUTTON/Image_disabled",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": -533808198,
                     "strtype": "IMGBUTTON/Image_checked_released",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": 979689380,
                     "strtype": "IMGBUTTON/Image_checked_pressed",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": -882691280,
                     "strtype": "IMGBUTTON/Image_checked_disabled",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
@@ -34954,31 +34954,31 @@
                   {
                     "nid": 1727654351,
                     "strtype": "IMGBUTTON/Image_pressed",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": 949935607,
                     "strtype": "IMGBUTTON/Image_disabled",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": -963469536,
                     "strtype": "IMGBUTTON/Image_checked_released",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": -1551715477,
                     "strtype": "IMGBUTTON/Image_checked_pressed",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": 193264585,
                     "strtype": "IMGBUTTON/Image_checked_disabled",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
@@ -35129,55 +35129,6 @@
                             "strtype": "CALL FUNCTION/Dont_export_function",
                             "strval": "False",
                             "InheritedType": 2
-                          }
-                        ],
-                        "InheritedType": 10
-                      },
-                      {
-                        "nid": 1377246639,
-                        "strtype": "_event/action",
-                        "strval": "CHANGE SCREEN",
-                        "childs": [
-                          {
-                            "nid": 434815459,
-                            "strtype": "CHANGE SCREEN/Name",
-                            "strval": "CHANGE SCREEN",
-                            "InheritedType": 10
-                          },
-                          {
-                            "nid": -522850154,
-                            "strtype": "CHANGE SCREEN/Call",
-                            "strval": "ChangeScreen( <{Screen_to}>, lv.SCR_LOAD_ANIM.<{Fade_mode}>, <{Speed}>, <{Delay}>)",
-                            "InheritedType": 10
-                          },
-                          {
-                            "nid": 1781428231,
-                            "strtype": "CHANGE SCREEN/CallC",
-                            "strval": "_ui_screen_change( &<{Screen_to}>, LV_SCR_LOAD_ANIM_<{Fade_mode}>, <{Speed}>, <{Delay}>, &<{Screen_to}>_screen_init);",
-                            "InheritedType": 10
-                          },
-                          {
-                            "nid": -1749261342,
-                            "strtype": "CHANGE SCREEN/Screen_to",
-                            "strval": "GUID44512596-957382S3953295",
-                            "InheritedType": 9
-                          },
-                          {
-                            "nid": 937717031,
-                            "strtype": "CHANGE SCREEN/Fade_mode",
-                            "strval": "NONE",
-                            "InheritedType": 3
-                          },
-                          {
-                            "nid": 1890832682,
-                            "strtype": "CHANGE SCREEN/Speed",
-                            "integer": 500,
-                            "InheritedType": 6
-                          },
-                          {
-                            "nid": -1146439416,
-                            "strtype": "CHANGE SCREEN/Delay",
-                            "InheritedType": 6
                           }
                         ],
                         "InheritedType": 10
@@ -42193,31 +42144,31 @@
                       {
                         "nid": 1818514568,
                         "strtype": "IMGBUTTON/Image_pressed",
-                        "strval": "-",
+                        "strval": "",
                         "InheritedType": 5
                       },
                       {
                         "nid": -2019235858,
                         "strtype": "IMGBUTTON/Image_disabled",
-                        "strval": "-",
+                        "strval": "",
                         "InheritedType": 5
                       },
                       {
                         "nid": -1729574391,
                         "strtype": "IMGBUTTON/Image_checked_released",
-                        "strval": "-",
+                        "strval": "",
                         "InheritedType": 5
                       },
                       {
                         "nid": 824458078,
                         "strtype": "IMGBUTTON/Image_checked_pressed",
-                        "strval": "-",
+                        "strval": "",
                         "InheritedType": 5
                       },
                       {
                         "nid": -530315678,
                         "strtype": "IMGBUTTON/Image_checked_disabled",
-                        "strval": "-",
+                        "strval": "",
                         "InheritedType": 5
                       },
                       {
@@ -47638,7 +47589,7 @@
     "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
     "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 331,
+    "backup_cnt": 332,
     "autosave_cnt": 0,
     "lvgl_version": "8.3.11",
     "callfuncsexport": "CPP_FILE",

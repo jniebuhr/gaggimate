@@ -57,6 +57,7 @@ void WebUIPlugin::loop() {
         doc["ct"] = controller->getCurrentTemp();
         doc["tt"] = controller->getTargetTemp();
         doc["m"] = controller->getMode();
+        doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
         ws.textAll(doc.as<String>());
     }
     if (now > lastCleanup + CLEANUP_PERIOD) {

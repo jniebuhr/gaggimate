@@ -93,21 +93,6 @@ export function Settings() {
         </div>
         <Card xs={12} lg={6} title="Temperature settings">
             <div>
-              <label htmlFor="targetBrewTemp" className="block font-medium text-gray-700 dark:text-gray-400">
-                Default Brew Temperature (°C)
-              </label>
-              <input
-                id="targetBrewTemp"
-                name="targetBrewTemp"
-                type="number"
-                className="input-field"
-                placeholder="93"
-                value={formData.targetBrewTemp}
-                onChange={onChange('targetBrewTemp')}
-              />
-            </div>
-
-            <div>
               <label htmlFor="targetSteamTemp" className="block font-medium text-gray-700 dark:text-gray-400">
                 Default Steam Temperature (°C)
               </label>
@@ -151,64 +136,6 @@ export function Settings() {
                 onChange={onChange('temperatureOffset')}
               />
             </div>
-        </Card>
-        <Card xs={12} lg={6} title="Brew phases">
-          <div>
-            <label htmlFor="targetDuration" className="block font-medium text-gray-700 dark:text-gray-400">
-              Default brew duration (s)
-            </label>
-            <input
-              id="targetDuration"
-              name="targetDuration"
-              type="number"
-              className="input-field"
-              placeholder="30"
-              value={formData.targetDuration}
-              onChange={onChange('targetDuration')}
-            />
-          </div>
-          <div>
-            <label htmlFor="pressurizeTime" className="block font-medium text-gray-700 dark:text-gray-400">
-              Pressurize Time (s)
-            </label>
-            <input
-              id="pressurizeTime"
-              name="pressurizeTime"
-              type="number"
-              className="input-field"
-              placeholder="0"
-              value={formData.pressurizeTime}
-              onChange={onChange('pressurizeTime')}
-            />
-          </div>
-          <div>
-            <label htmlFor="infusePumpTime" className="block font-medium text-gray-700 dark:text-gray-400">
-              Infusion Water flow (s)
-            </label>
-            <input
-              id="infusePumpTime"
-              name="infusePumpTime"
-              type="number"
-              className="input-field"
-              placeholder="0"
-              value={formData.infusePumpTime}
-              onChange={onChange('infusePumpTime')}
-            />
-          </div>
-          <div>
-            <label htmlFor="infuseBloomTime" className="block font-medium text-gray-700 dark:text-gray-400">
-              Infusion Bloom time (s)
-            </label>
-            <input
-              id="infuseBloomTime"
-              name="infuseBloomTime"
-              type="number"
-              className="input-field"
-              placeholder="0"
-              value={formData.infuseBloomTime}
-              onChange={onChange('infuseBloomTime')}
-            />
-          </div>
         </Card>
         <Card xs={12} lg={6} title="User preferences">
           <div>
