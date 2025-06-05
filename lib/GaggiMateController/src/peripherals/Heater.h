@@ -1,12 +1,13 @@
 #ifndef HEATER_H
 #define HEATER_H
+#include "Autotune.h"
 #include "Max31855Thermocouple.h"
+#include "SimplePID.h"
 #include "TemperatureSensor.h"
-#include <QuickPID.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <pidautotuner.h>
-#include <sTune.h>
+
+enum class PIDLibrary { Legacy, Nimrod };
 
 constexpr float TUNER_INPUT_SPAN = 160.0f;
 constexpr float TUNER_OUTPUT_SPAN = 1000.0f;
@@ -23,28 +24,28 @@ class Heater {
 
     void setSetpoint(float setpoint);
     void setTunings(float Kp, float Ki, float Kd);
-    void autotune(int testTime, int samples);
+    void autotune(int goal, int windowSize);
 
   private:
     void setupPid();
-    void setupAutotune(int tuningTemp, int samples);
+    void setupAutotune(int goal, int windowSize);
     void loopPid();
     void loopAutotune();
     float softPwm(uint32_t windowSize);
     void plot(float optimumOutput, float outputScale, uint8_t everyNth);
-
+    void setTuningGoal(float percent);
     TemperatureSensor *sensor;
     uint8_t heaterPin;
     xTaskHandle taskHandle;
-    QuickPID *pid = nullptr;
-    PIDAutotuner *tuner = nullptr;
+    SimplePID *simplePid = nullptr;
+    Autotune *autotuner = nullptr;
 
     heater_error_callback_t error_callback;
     pid_result_callback_t pid_callback;
 
-    float temperature = 0;
-    float output = 0;
-    float setpoint = 0;
+    float temperature = 0.0f;
+    float output = 0.0f;
+    float setpoint = 0.0f;
     float Kp = 2.4;
     float Ki = 40;
     float Kd = 10;

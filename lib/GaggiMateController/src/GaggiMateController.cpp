@@ -77,7 +77,7 @@ void GaggiMateController::setup() {
         lastPingTime = millis();
         ESP_LOGV(LOG_TAG, "Ping received, system is alive");
     });
-    _ble.registerAutotuneCallback([this](int testTime, int samples) { this->heater->autotune(testTime, samples); });
+    _ble.registerAutotuneCallback([this](int goal, int windowSize) { this->heater->autotune(goal, windowSize); });
 
     ESP_LOGI(LOG_TAG, "Initialization done");
 }

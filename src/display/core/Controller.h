@@ -33,6 +33,8 @@ class Controller {
 
     void setTargetTemp(int temperature);
 
+    void setPressureScale();
+
     int getTargetDuration() const;
 
     void setTargetDuration(int duration);
