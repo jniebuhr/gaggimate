@@ -192,14 +192,14 @@ bool LilyGo_TDisplayPanel::initTouch() {
 
     log_i("=================initTouch====================");
 
-    _touchDrv = new TouchDrvFT6X36();
-    _touchDrv->setPins(TP_RST, TP_INT);
+    TouchDrvFT6X36 *tmp = new TouchDrvFT6X36();
+    tmp->setPins(TP_RST, TP_INT);
 
-    result = _touchDrv->begin(Wire, FT3168_DEVICE_ADDRESS, IIC_SDA, IIC_SCL);
+    result = tmp->begin(Wire, FT3168_DEVICE_ADDRESS, IIC_SDA, IIC_SCL);
 
     if (result) {
-        TouchDrvFT6X36 *tmp = static_cast<TouchDrvFT6X36 *>(_touchDrv);
         tmp->interruptTrigger();
+        _touchDrv = tmp;
 
         const char *model = _touchDrv->getModelName();
         log_i("Successfully initialized %s, using %s Driver!\n", model, model);
