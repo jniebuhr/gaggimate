@@ -216,6 +216,12 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
     } else if (type == "req:profiles:select") {
         auto id = request["id"].as<String>();
         profileManager->selectProfile(id);
+    } else if (type == "req:profiles:favorite") {
+        auto id = request["id"].as<String>();
+        controller->getSettings().addFavoritedProfile(id);
+    } else if (type == "req:profiles:unfavorite") {
+        auto id = request["id"].as<String>();
+        controller->getSettings().removeFavoritedProfile(id);
     }
 
     String msg;
@@ -228,22 +234,12 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         controller->getSettings().batchUpdate([request](Settings *settings) {
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
-            if (request->hasArg("targetBrewTemp"))
-                settings->setTargetBrewTemp(request->arg("targetBrewTemp").toInt());
             if (request->hasArg("targetSteamTemp"))
                 settings->setTargetSteamTemp(request->arg("targetSteamTemp").toInt());
             if (request->hasArg("targetWaterTemp"))
                 settings->setTargetWaterTemp(request->arg("targetWaterTemp").toInt());
-            if (request->hasArg("targetDuration"))
-                settings->setTargetDuration(request->arg("targetDuration").toInt() * 1000);
             if (request->hasArg("temperatureOffset"))
                 settings->setTemperatureOffset(request->arg("temperatureOffset").toInt());
-            if (request->hasArg("infusePumpTime"))
-                settings->setInfusePumpTime(request->arg("infusePumpTime").toInt() * 1000);
-            if (request->hasArg("infuseBloomTime"))
-                settings->setInfuseBloomTime(request->arg("infuseBloomTime").toInt() * 1000);
-            if (request->hasArg("pressurizeTime"))
-                settings->setPressurizeTime(request->arg("pressurizeTime").toInt() * 1000);
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("wifiSsid"))
@@ -291,13 +287,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     JsonDocument doc;
     Settings const &settings = controller->getSettings();
     doc["startupMode"] = settings.getStartupMode() == MODE_BREW ? "brew" : "standby";
-    doc["targetBrewTemp"] = settings.getTargetBrewTemp();
     doc["targetSteamTemp"] = settings.getTargetSteamTemp();
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
-    doc["targetDuration"] = settings.getTargetDuration() / 1000;
-    doc["infusePumpTime"] = settings.getInfusePumpTime() / 1000;
-    doc["infuseBloomTime"] = settings.getInfuseBloomTime() / 1000;
-    doc["pressurizeTime"] = settings.getPressurizeTime() / 1000;
     doc["homekit"] = settings.isHomekit();
     doc["homeAssistant"] = settings.isHomeAssistant();
     doc["haUser"] = settings.getHomeAssistantUser();

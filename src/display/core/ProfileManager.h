@@ -5,7 +5,7 @@
 #include <FS.h>
 #include <display/core/Settings.h>
 #include <display/models/profile.h>
-#include <vector>
+#include <display/core/utils.h>
 
 class ProfileManager {
   public:

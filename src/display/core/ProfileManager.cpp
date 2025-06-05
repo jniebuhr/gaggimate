@@ -1,6 +1,5 @@
 #include "ProfileManager.h"
 #include <ArduinoJson.h>
-#include <display/core/utils.h>
 
 ProfileManager::ProfileManager(fs::FS &fs, char *dir, Settings &settings, PluginManager *plugin_manager)
     : _plugin_manager(plugin_manager), _fs(fs), _dir(dir), _settings(settings) {}
@@ -30,7 +29,6 @@ void ProfileManager::migrate() {
     profile.label = "Default";
     profile.description = "Default profile generated from previous settings";
     profile.temperature = _settings.getTargetBrewTemp();
-    profile.favorite = true;
     profile.type = "standard";
     if (_settings.getPressurizeTime() > 0) {
         Phase pressurizePhase1{};
@@ -86,6 +84,7 @@ void ProfileManager::migrate() {
     profile.phases.push_back(brewPhase);
     saveProfile(profile);
     _settings.setSelectedProfile(profile.id);
+    _settings.addFavoritedProfile(profile.id);
 }
 
 std::vector<String> ProfileManager::listProfiles() {
@@ -122,6 +121,8 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
         return false;
     }
     outProfile.selected = outProfile.id == _settings.getSelectedProfile();
+    std::vector<String> favoritedProfiles = _settings.getFavoritedProfiles();
+    outProfile.favorite = std::find(favoritedProfiles.begin(), favoritedProfiles.end(), outProfile.id) != favoritedProfiles.end();
     return true;
 }
 

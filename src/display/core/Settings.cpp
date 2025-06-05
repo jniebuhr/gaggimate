@@ -44,6 +44,7 @@ Settings::Settings() {
     timezone = preferences.getString("tz", DEFAULT_TIMEZONE);
     selectedProfile = preferences.getString("sp", "");
     profilesMigrated = preferences.getBool("pm", false);
+    favoritedProfiles = explode(preferences.getString("fp", ""), ',');
     preferences.end();
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
@@ -255,6 +256,22 @@ void Settings::setProfilesMigrated(bool profiles_migrated) {
     save();
 }
 
+void Settings::setFavoritedProfiles(std::vector<String> favorited_profiles) {
+    favoritedProfiles = std::move(favorited_profiles);
+    save();
+}
+
+void Settings::addFavoritedProfile(String profile) {
+    favoritedProfiles.emplace_back(profile);
+    save();
+}
+
+void Settings::removeFavoritedProfile(String profile) {
+    favoritedProfiles.erase(std::remove(favoritedProfiles.begin(), favoritedProfiles.end(), profile), favoritedProfiles.end());
+    favoritedProfiles.shrink_to_fit();
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -302,6 +319,7 @@ void Settings::doSave() {
     preferences.putInt("sbt", standbyTimeout);
     preferences.putBool("pm", profilesMigrated);
     preferences.putInt("mb", momentaryButtons);
+    preferences.putString("fp", implode(favoritedProfiles, ","));
     preferences.end();
 }
 

@@ -386,6 +386,7 @@ void Controller::lowerGrindTarget() {
 }
 
 void Controller::updateControl() {
+    ESP_LOGI("Controller", "Updating control");
     int targetTemp = getTargetTemp();
     if (targetTemp > 0) {
         targetTemp = targetTemp + settings.getTemperatureOffset();

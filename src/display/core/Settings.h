@@ -1,10 +1,11 @@
+#pragma once
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include "constants.h"
-
+#include <display/core/constants.h>
 #include <Arduino.h>
 #include <Preferences.h>
+#include <display/core/utils.h>
 
 #define PREFERENCES_KEY "controller"
 
@@ -58,6 +59,7 @@ class Settings {
     String getTimezone() const { return timezone; }
     String getSelectedProfile() const { return selectedProfile; }
     bool isProfilesMigrated() const { return profilesMigrated; }
+    std::vector<String> getFavoritedProfiles() const { return favoritedProfiles; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -97,6 +99,9 @@ class Settings {
     void setTimezone(String timezone);
     void setSelectedProfile(String selected_profile);
     void setProfilesMigrated(bool profiles_migrated);
+    void setFavoritedProfiles(std::vector<String> favorited_profiles);
+    void addFavoritedProfile(String profile);
+    void removeFavoritedProfile(String profile);
 
   private:
     Preferences preferences;
@@ -135,8 +140,8 @@ class Settings {
     int homeAssistantPort = 1883;
     bool momentaryButtons = false;
     String timezone = DEFAULT_TIMEZONE;
-
     String otaChannel = DEFAULT_OTA_CHANNEL;
+    std::vector<String> favoritedProfiles;
 
     // Deprecated, use profiles
     int targetBrewTemp = 93;

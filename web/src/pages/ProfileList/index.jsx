@@ -26,10 +26,18 @@ const PhaseLabels = {
 
 const connected = computed(() => machine.value.connected);
 
-function ProfileCard({ data, onDelete, onSelect }) {
+function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favoriteDisabled, unfavoriteDisabled }) {
   const bookmarkClass = data.favorite ? 'text-yellow-400' : '';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
+  const favoriteToggleDisabled = data.favorite ? unfavoriteDisabled : favoriteDisabled;
+  const favoriteToggleClass = favoriteToggleDisabled ? 'opacity-50 cursor-not-allowed' : '';
+  const onFavoriteToggle = useCallback(() => {
+    if (data.favorite && !unfavoriteDisabled)
+      onUnfavorite(data.id);
+    else if (!data.favorite && !favoriteDisabled)
+      onFavorite(data.id);
+  }, [data.favorite]);
   return (
     <div
       key="profile-list"
@@ -55,14 +63,13 @@ function ProfileCard({ data, onDelete, onSelect }) {
             <span className={`${typeClass} text-xs font-medium me-2 px-4 py-0.5 rounded-sm dark:bg-blue-900 dark:text-blue-300`}>{typeText}</span>
           </div>
           <div className="flex flex-row gap-2">
-            {/*
-            <a
-              href="javascript:void(0)"
-              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-100 hover:text-yellow-400 active:border-yellow-200"
+            <button
+              onClick={onFavoriteToggle}
+              disabled={favoriteToggleDisabled}
+              className={`group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-100 hover:text-yellow-400 active:border-yellow-200 ${favoriteToggleClass}`}
             >
               <span className={`fa fa-star ${bookmarkClass}`} />
-            </a>
-            */}
+            </button>
             <a
               href={`/profiles/${data.id}`}
               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 dark:text-indigo-100 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200"
@@ -128,6 +135,9 @@ export function ProfileList() {
   const apiService = useContext(ApiServiceContext);
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const favoriteCount = profiles.map(p => p.favorite ? 1 : 0).reduce((a, b) => a + b, 0);
+  const unfavoriteDisabled = favoriteCount <= 1;
+  const favoriteDisabled = favoriteCount >= 10;
   const loadProfiles = async () => {
     const response = await apiService.request({ tp: 'req:profiles:list' });
     setProfiles(response.profiles);
@@ -151,6 +161,18 @@ export function ProfileList() {
     await loadProfiles();
   }, [apiService, setLoading]);
 
+  const onFavorite = useCallback(async(id) => {
+    setLoading(true);
+    await apiService.request({ tp: 'req:profiles:favorite', id });
+    await loadProfiles();
+  }, [apiService, setLoading]);
+
+  const onUnfavorite = useCallback(async(id) => {
+    setLoading(true);
+    await apiService.request({ tp: 'req:profiles:unfavorite', id });
+    await loadProfiles();
+  }, [apiService, setLoading]);
+
   if (loading) {
     return (
       <div class="flex flex-row py-16 items-center justify-center w-full">
@@ -167,7 +189,16 @@ export function ProfileList() {
         </div>
 
         {profiles.map((data) => (
-          <ProfileCard data={data} key={data.id} onDelete={(id) => onDelete(id)} onSelect={(id) => onSelect(id)} />
+          <ProfileCard
+            data={data}
+            key={data.id}
+            onDelete={onDelete}
+            onSelect={onSelect}
+            favoriteDisabled={favoriteDisabled}
+            unfavoriteDisabled={unfavoriteDisabled}
+            onUnfavorite={onUnfavorite}
+            onFavorite={onFavorite}
+          />
         ))}
 
         <ProfileAddCard />
