@@ -153,21 +153,22 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
 
     if (pCharacteristic->getUUID().equals(NimBLEUUID(OUTPUT_CONTROL_UUID))) {
         auto control = String(pCharacteristic->getValue().c_str());
+        ESP_LOGI(LOG_TAG, "Received raw output control: %s", control.c_str());
         uint8_t type = get_token(control, 0, ',').toInt();
         uint8_t valve = get_token(control, 1, ',').toInt();
         float boilerSetpoint = get_token(control, 3, ',').toFloat();
-        if (type == 1) {
+        if (type == 0) {
             float pumpSetpoint = get_token(control, 2, ',').toFloat();
-            ESP_LOGV(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, boiler=%.1f", type, valve, pumpSetpoint,
+            ESP_LOGI(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, boiler=%.1f", type, valve, pumpSetpoint,
                      boilerSetpoint);
             if (outputControlCallback != nullptr) {
                 outputControlCallback(valve == 1, pumpSetpoint, boilerSetpoint);
             }
-        } else if (type == 2) {
+        } else if (type == 1) {
             bool pressureTarget = get_token(control, 4, ',').toInt() == 1;
             float pumpPressure = get_token(control, 5, ',').toFloat();
             float pumpFlow = get_token(control, 6, ',').toFloat();
-            ESP_LOGV(LOG_TAG, "Received advanced output control: type=%d, valve=%d, pressure_target=%d, pressure=%.1f, flow=%.1f",
+            ESP_LOGI(LOG_TAG, "Received advanced output control: type=%d, valve=%d, pressure_target=%d, pressure=%.1f, flow=%.1f",
                      type, valve, pressureTarget, pumpPressure, pumpFlow);
             if (advancedControlCallback != nullptr) {
                 advancedControlCallback(valve == 1, boilerSetpoint, pressureTarget, pumpPressure, pumpFlow);
