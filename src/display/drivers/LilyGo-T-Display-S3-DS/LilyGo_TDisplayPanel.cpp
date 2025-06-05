@@ -2,6 +2,7 @@
 #include "Arduino_GFX_Library.h"
 #include "TouchDrvFT6x36.hpp"
 #include "pin_config.h"
+#include <esp_adc_cal.h>
 
 LilyGo_TDisplayPanel::LilyGo_TDisplayPanel() : 
     displayBus(nullptr),
@@ -155,7 +156,24 @@ bool LilyGo_TDisplayPanel::isPressed() {
     return 0;
 }
 
-uint16_t LilyGo_TDisplayPanel::getBattVoltage(void) { return 0; }
+uint16_t LilyGo_TDisplayPanel::getBattVoltage(void) {
+    esp_adc_cal_characteristics_t adc_chars;
+    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+
+    const int number_of_samples = 20;
+    uint32_t sum = 0;
+    uint16_t raw_buffer[number_of_samples] = {0};
+    for (int i = 0; i < number_of_samples; i++) {
+        raw_buffer[i] = analogRead(BATTERY_VOLTAGE_ADC_DATA);
+        delay(2);
+    }
+    for (int i = 0; i < number_of_samples; i++) {
+        sum += raw_buffer[i];
+    }
+    sum = sum / number_of_samples;
+
+    return esp_adc_cal_raw_to_voltage(sum, &adc_chars) * 2;
+}
 
 void LilyGo_TDisplayPanel::pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t *data) {
     display->draw16bitRGBBitmap(x, y, data, width, height);
@@ -167,7 +185,6 @@ void LilyGo_TDisplayPanel::setRotation(uint8_t rotation) {
     if (displayBus && display) {
         display->setRotation(rotation);
     }
-
 }
 
 bool LilyGo_TDisplayPanel::initTouch() {
@@ -199,9 +216,8 @@ bool LilyGo_TDisplayPanel::initDisplay(LilyGo_TDisplayPanel_Color_Order colorOrd
         displayBus = new Arduino_ESP32QSPI(LCD_CS /* CS */, LCD_SCLK /* SCK */, LCD_SDIO0 /* SDIO0 */, LCD_SDIO1 /* SDIO1 */,
                                            LCD_SDIO2 /* SDIO2 */, LCD_SDIO3 /* SDIO3 */);
 
-        display =
-            new CO5300(displayBus, LCD_RST /* RST */, _rotation /* rotation */, false /* IPS */, LCD_WIDTH, LCD_HEIGHT,
-                               6 /* col offset 1 */, 0 /* row offset 1 */, 8 /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
+        display = new CO5300(displayBus, LCD_RST /* RST */, _rotation /* rotation */, false /* IPS */, LCD_WIDTH, LCD_HEIGHT,
+                             6 /* col offset 1 */, 0 /* row offset 1 */, 8 /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
     }
 
     pinMode(LCD_EN, OUTPUT);
