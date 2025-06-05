@@ -6,31 +6,33 @@
 LilyGoTDisplayDriver *LilyGoTDisplayDriver::instance = nullptr;
 
 bool LilyGoTDisplayDriver::isCompatible() {
-    Wire.begin(IIC_SDA, IIC_SCL);
-    Serial.println("I2C Scanner. Scanning...");
+    // No Wire on these pins, definitely wrong board
+    if (!Wire.begin(IIC_SDA, IIC_SCL))
+        return false;
 
-    const uint8_t addresses[] = {0x51, 0x6A};
-    const uint8_t numAddresses = sizeof(addresses) / sizeof(addresses[0]);
-    bool foundAll = false;
+    // Check for devices on the I2C bus, if found all, it's a compatible board
+    const uint8_t addresses[] = {FT3168_DEVICE_ADDRESS, PCF8563_DEVICE_ADDRESS, SY6970_DEVICE_ADDRESS};
+    bool success = true;
 
-    for (uint8_t retry = 0; retry < 5; retry++) {
-        uint8_t found = 0;
-        for (auto addr : addresses) {
+    for (auto addr : addresses) {
+        bool found = false;
+        for (uint8_t retry = 0; retry < 5; retry++) {
             Wire.beginTransmission(addr);
             if (Wire.endTransmission() == 0) {
                 Serial.printf("Found device at 0x%02X\n", addr);
-                found++;
+                found = true;
+                break;
             }
+            delay(100);
         }
-        if (found == numAddresses) {
-            foundAll = true;
+        if (!found) {
+            success = false;
             break;
         }
-        delay(100);
     }
 
     Wire.end();
-    return foundAll;
+    return success;
 }
 
 void LilyGoTDisplayDriver::init() {
@@ -43,7 +45,7 @@ void LilyGoTDisplayDriver::init() {
         }
         ESP.restart();
     }
-    
+
     beginLvglHelper(panel);
 
     panel.setBrightness(16);
