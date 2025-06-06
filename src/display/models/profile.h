@@ -33,7 +33,7 @@ struct Phase {
 
     bool hasVolumetricTarget() const {
         for (const auto &target : targets) {
-            if (target.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+            if (target.type == TargetType::TARGET_TYPE_VOLUMETRIC && target.value > 0.0f) {
                 return true;
             }
         }
