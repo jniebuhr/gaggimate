@@ -19,9 +19,6 @@ DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
     : controller(controller), pluginManager(pluginManager) {
     profileManager = controller->getProfileManager();
 }
-    : controller(controller), pluginManager(pluginManager) {
-    profileManager = controller->getProfileManager();
-}
 
 void DefaultUI::init() {
     auto triggerRender = [this](Event const &) { rerender = true; };
@@ -116,10 +113,6 @@ void DefaultUI::init() {
         selectedProfileId = event.getString("id");
         profileManager->loadSelectedProfile(selectedProfile);
     });
-    pluginManager->on("profiles:profile:select", [this](Event const &event) {
-        selectedProfileId = event.getString("id");
-        profileManager->loadSelectedProfile(selectedProfile);
-    });
     setupPanel();
     setupState();
     setupReactive();
@@ -195,38 +188,6 @@ void DefaultUI::onProfileSelect() {
     changeScreen(&ui_BrewScreen, ui_BrewScreen_screen_init);
 }
 
-void DefaultUI::onProfileSwitch() {
-    favoritedProfiles = controller->getSettings().getFavoritedProfiles();
-    currentProfileIdx = 0;
-    currentProfileId = favoritedProfiles[currentProfileIdx];
-    currentProfileChoice = Profile{};
-    profileManager->loadProfile(currentProfileId, currentProfileChoice);
-    changeScreen(&ui_ProfileScreen, ui_ProfileScreen_screen_init);
-}
-
-void DefaultUI::onNextProfile() {
-    if (currentProfileIdx < favoritedProfiles.size() - 1) {
-        currentProfileIdx++;
-        currentProfileId = favoritedProfiles.at(currentProfileIdx);
-        currentProfileChoice = Profile{};
-        profileManager->loadProfile(currentProfileId, currentProfileChoice);
-    }
-}
-
-void DefaultUI::onPreviousProfile() {
-    if (currentProfileIdx > 0) {
-        currentProfileIdx--;
-        currentProfileId = favoritedProfiles.at(currentProfileIdx);
-        currentProfileChoice = Profile{};
-        profileManager->loadProfile(currentProfileId, currentProfileChoice);
-    }
-}
-
-void DefaultUI::onProfileSelect() {
-    profileManager->selectProfile(currentProfileId);
-    changeScreen(&ui_BrewScreen, ui_BrewScreen_screen_init);
-}
-
 void DefaultUI::setupPanel() const {
     if (LilyGoDriver::getInstance()->isCompatible()) {
         LilyGoDriver::getInstance()->init();
@@ -254,8 +215,6 @@ void DefaultUI::setupState() {
     pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
     selectedProfileId = settings.getSelectedProfile();
     profileManager->loadSelectedProfile(selectedProfile);
-    selectedProfileId = settings.getSelectedProfile();
-    profileManager->loadSelectedProfile(selectedProfile);
 }
 
 void DefaultUI::setupReactive() {
@@ -270,10 +229,6 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_WaterScreen; }, [=]() { adjustDials(ui_WaterScreen_dials); },
                           &pressureAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_SteamScreen; }, [=]() { adjustDials(ui_SteamScreen_dials); },
-                          &pressureAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_SteamScreen; }, [=]() { adjustDials(ui_SteamScreen_dials); },
-                          &pressureAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustDials(ui_ProfileScreen_dials); },
                           &pressureAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_SteamScreen; }, [=]() { adjustDials(ui_SteamScreen_dials); },
                           &pressureAvailable);
@@ -313,12 +268,6 @@ void DefaultUI::setupReactive() {
                           [=]() {
                               lv_arc_set_value(uic_SteamScreen_dials_tempGauge, currentTemp);
                               lv_label_set_text_fmt(uic_SteamScreen_dials_tempText, "%d°C", currentTemp);
-                          },
-                          &currentTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
@@ -380,13 +329,6 @@ void DefaultUI::setupReactive() {
                               lv_img_set_angle(uic_ProfileScreen_dials_tempTarget, angle);
                           },
                           &targetTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
-                          [=]() {
-                              int16_t angle =
-                                  calculate_angle(targetTemp, pressureAvailable ? 1360 : 3040, pressureAvailable ? 900 : 0);
-                              lv_img_set_angle(uic_ProfileScreen_dials_tempTarget, angle);
-                          },
-                          &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
                               lv_arc_set_value(uic_MenuScreen_dials_pressureGauge, pressure);
@@ -421,12 +363,6 @@ void DefaultUI::setupReactive() {
                           [=]() {
                               lv_arc_set_value(uic_SteamScreen_dials_pressureGauge, pressure);
                               lv_label_set_text_fmt(uic_SteamScreen_dials_pressureText, "%.1f bar", pressure);
-                          },
-                          &pressure);
-    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_ProfileScreen_dials_pressureGauge, pressure);
-                              lv_label_set_text_fmt(uic_ProfileScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
@@ -580,38 +516,6 @@ void DefaultUI::setupReactive() {
                 currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
         },
         &currentProfileId);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=] { lv_label_set_text(ui_BrewScreen_profileName, selectedProfile.label.c_str()); },
-                          &selectedProfileId);
-
-    effect_mgr.use_effect(
-        [=] { return currentScreen == ui_ProfileScreen; },
-        [=] {
-            lv_label_set_text(ui_ProfileScreen_profileName, currentProfileChoice.label.c_str());
-
-            const auto minutes = static_cast<int>(currentProfileChoice.getTotalDuration() / 60.0 - 0.5);
-            const auto seconds = static_cast<int>(currentProfileChoice.getTotalDuration()) % 60;
-            lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
-            lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C", static_cast<int>(currentProfileChoice.temperature));
-            unsigned int phaseCount = currentProfileChoice.getPhaseCount();
-            unsigned int stepCount = currentProfileChoice.phases.size();
-            lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d step%s", stepCount, stepCount > 1 ? "s" : "");
-            lv_label_set_text_fmt(ui_ProfileScreen_phasesLabel, "%d phase%s", phaseCount, phaseCount > 1 ? "s" : "");
-
-            ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR,
-                                                   currentProfileIdx > 0 ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
-            ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR_OPA,
-                                                   currentProfileIdx > 0 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
-            ui_object_set_themeable_style_property(
-                ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
-                currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
-            ui_object_set_themeable_style_property(
-                ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
-                currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
-        },
-        &currentProfileId);
 }
 
 void DefaultUI::handleScreenChange() {
@@ -650,23 +554,11 @@ void DefaultUI::updateStatusScreen() const {
     }
     auto *brewProcess = static_cast<BrewProcess *>(process);
     const auto phase = brewProcess->currentPhase;
-    auto *brewProcess = static_cast<BrewProcess *>(process);
-    const auto phase = brewProcess->currentPhase;
 
     unsigned long now = millis();
     if (!process->isActive()) {
         now = brewProcess->finished;
-        now = brewProcess->finished;
     }
-
-    lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
-    lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess->isActive() ? phase.name.c_str() : "Finished");
-
-    const unsigned long processDuration = now - brewProcess->processStarted;
-    const double processSecondsDouble = processDuration / 1000.0;
-    const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0 - 0.5);
-    const auto processSeconds = static_cast<int>(processSecondsDouble) % 60;
-    lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "%2d:%02d", processMinutes, processSeconds);
 
     lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
     lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess->isActive() ? phase.name.c_str() : "Finished");
@@ -729,7 +621,6 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
     lv_obj_t *pressureTarget = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETARGET);
     lv_obj_t *pressureGauge = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSUREGAUGE);
     lv_obj_t *pressureText = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETEXT);
-    _ui_flag_modify(pressureTarget, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     _ui_flag_modify(pressureTarget, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     _ui_flag_modify(pressureGauge, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     _ui_flag_modify(pressureText, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
