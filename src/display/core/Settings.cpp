@@ -16,6 +16,7 @@ Settings::Settings() {
     grindDelay = preferences.getDouble("del_gd", 1000.0);
     delayAdjust = preferences.getBool("del_ad", true);
     temperatureOffset = preferences.getInt("to", DEFAULT_TEMPERATURE_OFFSET);
+    pressureScaling = preferences.getFloat("ps", DEFAULT_PRESSURE_SCALING);
     pid = preferences.getString("pid", DEFAULT_PID);
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
@@ -42,6 +43,9 @@ Settings::Settings() {
     homeAssistantPassword = preferences.getString("ha_pw", "");
     standbyTimeout = preferences.getInt("sbt", DEFAULT_STANDBY_TIMEOUT_MS);
     timezone = preferences.getString("tz", DEFAULT_TIMEZONE);
+    selectedProfile = preferences.getString("sp", "");
+    profilesMigrated = preferences.getBool("pm", false);
+    favoritedProfiles = explode(preferences.getString("fp", ""), ',');
     preferences.end();
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
@@ -77,6 +81,11 @@ void Settings::setTargetWaterTemp(const int target_water_temp) {
 
 void Settings::setTemperatureOffset(const int temperature_offset) {
     temperatureOffset = temperature_offset;
+    save();
+}
+
+void Settings::setPressureScaling(const float pressure_scaling) {
+    pressureScaling = pressure_scaling;
     save();
 }
 
@@ -243,6 +252,32 @@ void Settings::setTimezone(String timezone) {
     save();
 }
 
+void Settings::setSelectedProfile(String selected_profile) {
+    this->selectedProfile = std::move(selected_profile);
+    save();
+}
+
+void Settings::setProfilesMigrated(bool profiles_migrated) {
+    profilesMigrated = profiles_migrated;
+    save();
+}
+
+void Settings::setFavoritedProfiles(std::vector<String> favorited_profiles) {
+    favoritedProfiles = std::move(favorited_profiles);
+    save();
+}
+
+void Settings::addFavoritedProfile(String profile) {
+    favoritedProfiles.emplace_back(profile);
+    save();
+}
+
+void Settings::removeFavoritedProfile(String profile) {
+    favoritedProfiles.erase(std::remove(favoritedProfiles.begin(), favoritedProfiles.end(), profile), favoritedProfiles.end());
+    favoritedProfiles.shrink_to_fit();
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -262,6 +297,7 @@ void Settings::doSave() {
     preferences.putDouble("del_gd", grindDelay);
     preferences.putBool("del_ad", delayAdjust);
     preferences.putInt("to", temperatureOffset);
+    preferences.putFloat("ps", pressureScaling);
     preferences.putString("pid", pid);
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
@@ -286,7 +322,11 @@ void Settings::doSave() {
     preferences.putString("ha_u", homeAssistantUser);
     preferences.putString("ha_pw", homeAssistantPassword);
     preferences.putString("tz", timezone);
+    preferences.putString("sp", selectedProfile);
     preferences.putInt("sbt", standbyTimeout);
+    preferences.putBool("pm", profilesMigrated);
+    preferences.putInt("mb", momentaryButtons);
+    preferences.putString("fp", implode(favoritedProfiles, ","));
     preferences.end();
 }
 

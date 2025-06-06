@@ -75,13 +75,11 @@ export function Header(props) {
 
         <nav className={`${open ? 'flex' : 'hidden'} flex-col py-4 lg:hidden`}>
           <HeaderItem label="Dashboard" link="/" iconClass="fa fa-home" onClick={() => openCb(false)} />
-          {props.extended && <>
-            <hr className="h-5 border-0" />
-            <div className="space-y-1.5">
-              <HeaderItem label="Profiles" link="/profiles" iconClass="fa fa-list" onClick={() => openCb(false)} />
-              <HeaderItem label="Shot History" link="/history" iconClass="fa fa-timeline" onClick={() => openCb(false)} />
-            </div>
-          </>}
+          <hr className="h-5 border-0" />
+          <div className="space-y-1.5">
+            <HeaderItem label="Profiles" link="/profiles" iconClass="fa fa-list" onClick={() => openCb(false)} />
+            {props.extended && <HeaderItem label="Shot History" link="/history" iconClass="fa fa-timeline" onClick={() => openCb(false)} />}
+          </div>
           <hr className="h-5 border-0" />
           <div className="space-y-1.5">
             <HeaderItem label="PID Autotune" link="/pidtune" iconClass="fa fa-temperature-half" onClick={() => openCb(false)} />

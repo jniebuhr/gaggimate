@@ -59,7 +59,7 @@ lv_obj_t *ui_dials_create(lv_obj_t *comp_parent) {
     lv_obj_set_align(cui_pressureTarget, LV_ALIGN_CENTER);
     lv_obj_add_flag(cui_pressureTarget, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
     lv_obj_clear_flag(cui_pressureTarget, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-    lv_img_set_angle(cui_pressureTarget, 900);
+    lv_img_set_angle(cui_pressureTarget, 1530);
     ui_object_set_themeable_style_property(cui_pressureTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(cui_pressureTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,

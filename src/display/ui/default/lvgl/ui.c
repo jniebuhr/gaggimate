@@ -37,8 +37,8 @@ void ui_event_ProfileScreen_previousProfileBtn(lv_event_t *e);
 lv_obj_t *ui_ProfileScreen_previousProfileBtn;
 void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e);
 lv_obj_t *ui_ProfileScreen_nextProfileBtn;
-void ui_event_ProfileScreen_ImgButton4(lv_event_t *e);
-lv_obj_t *ui_ProfileScreen_ImgButton4;
+void ui_event_ProfileScreen_chooseButton(lv_event_t *e);
+lv_obj_t *ui_ProfileScreen_chooseButton;
 lv_obj_t *ui_ProfileScreen_dials;
 // CUSTOM VARIABLES
 lv_obj_t *uic_ProfileScreen_dials_tempTarget;
@@ -86,6 +86,13 @@ void ui_event_BrewScreen_timedButton(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_timedButton;
 void ui_event_BrewScreen_volumetricButton(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_volumetricButton;
+lv_obj_t *ui_BrewScreen_profileInfo;
+lv_obj_t *ui_BrewScreen_Label1;
+lv_obj_t *ui_BrewScreen_Container3;
+lv_obj_t *ui_BrewScreen_profileName;
+void ui_event_BrewScreen_profileSelectBtn(lv_event_t *e);
+lv_obj_t *ui_BrewScreen_profileSelectBtn;
+lv_obj_t *ui_BrewScreen_adjustments;
 lv_obj_t *ui_BrewScreen_tempContainer;
 lv_obj_t *ui_BrewScreen_targetTemp;
 void ui_event_BrewScreen_downTempButton(lv_event_t *e);
@@ -186,12 +193,8 @@ lv_obj_t *ui_StatusScreen_currentDuration;
 lv_obj_t *ui_StatusScreen_stepLabel;
 lv_obj_t *ui_StatusScreen_phaseLabel;
 lv_obj_t *ui_StatusScreen_barContainer;
-lv_obj_t *ui_StatusScreen_preinfusePumpBar;
-lv_obj_t *ui_StatusScreen_preinfuseBloomBar;
 lv_obj_t *ui_StatusScreen_brewBar;
 lv_obj_t *ui_StatusScreen_labelContainer;
-lv_obj_t *ui_StatusScreen_preinfusePumpLabel;
-lv_obj_t *ui_StatusScreen_preinfuseBloomLabel;
 lv_obj_t *ui_StatusScreen_brewLabel;
 lv_obj_t *ui_StatusScreen_brewVolume;
 lv_obj_t *ui_StatusScreen_dials;
@@ -238,6 +241,8 @@ lv_obj_t *ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
 const lv_img_dsc_t *ui_imgset_459451241[1] = {&ui_img_1829139226};
+const lv_img_dsc_t *ui_imgset_849879536[1] = {&ui_img_98036921};
+const lv_img_dsc_t *ui_imgset_1382826243[1] = {&ui_img_944513416};
 const lv_img_dsc_t *ui_imgset_434888472[1] = {&ui_img_295763949};
 const lv_img_dsc_t *ui_imgset_1091184723[1] = {&ui_img_1091371356};
 const lv_img_dsc_t *ui_imgset_960046369[1] = {&ui_img_631115820};
@@ -251,7 +256,8 @@ const lv_img_dsc_t *ui_imgset_1612577215[1] = {&ui_img_445946954};
 const lv_img_dsc_t *ui_imgset_1166435085[1] = {&ui_img_390988422};
 const lv_img_dsc_t *ui_imgset_1010926578[1] = {&ui_img_2044104741};
 const lv_img_dsc_t *ui_imgset_1155213431[1] = {&ui_img_545340440};
-const lv_img_dsc_t *ui_imgset_524469952[1] = {&ui_img_1765671371};
+const lv_img_dsc_t *ui_imgset_524469952[2] = {&ui_img_1765671371, &ui_img_207915003};
+const lv_img_dsc_t *ui_imgset_648927478[1] = {&ui_img_340148213};
 const lv_img_dsc_t *ui_imgset_690294202[1] = {&ui_img_1732953241};
 const lv_img_dsc_t *ui_imgset_1252186405[1] = {&ui_img_1951499226};
 const lv_img_dsc_t *ui_imgset_2074400918[1] = {&ui_img_364513079};
@@ -283,6 +289,14 @@ void ui_event_ProfileScreen(lv_event_t *e) {
         lv_indev_wait_release(lv_indev_get_act());
         onMenuClick(e);
     }
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT) {
+        lv_indev_wait_release(lv_indev_get_act());
+        onNextProfile(e);
+    }
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT) {
+        lv_indev_wait_release(lv_indev_get_act());
+        onPreviousProfile(e);
+    }
 }
 
 void ui_event_ProfileScreen_previousProfileBtn(lv_event_t *e) {
@@ -301,7 +315,7 @@ void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e) {
     }
 }
 
-void ui_event_ProfileScreen_ImgButton4(lv_event_t *e) {
+void ui_event_ProfileScreen_chooseButton(lv_event_t *e) {
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if (event_code == LV_EVENT_CLICKED) {
@@ -379,6 +393,14 @@ void ui_event_BrewScreen_volumetricButton(lv_event_t *e) {
 
     if (event_code == LV_EVENT_CLICKED) {
         onVolumetricClick(e);
+    }
+}
+
+void ui_event_BrewScreen_profileSelectBtn(lv_event_t *e) {
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if (event_code == LV_EVENT_CLICKED) {
+        onProfileSelect(e);
     }
 }
 
@@ -504,7 +526,6 @@ void ui_event_StatusScreen_pauseButton(lv_event_t *e) {
     if (event_code == LV_EVENT_CLICKED) {
         onBrewCancel(e);
         (e);
-        _ui_screen_change(&ui_BrewScreen, LV_SCR_LOAD_ANIM_NONE, 500, 0, &ui_BrewScreen_screen_init);
     }
 }
 

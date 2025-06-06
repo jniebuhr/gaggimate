@@ -21,6 +21,8 @@ void Controller::setup() {
     }
 
     pluginManager = new PluginManager();
+    profileManager = new ProfileManager(SPIFFS, "/p", settings, pluginManager);
+    profileManager->setup();
     ui = new DefaultUI(this, pluginManager);
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
@@ -38,6 +40,15 @@ void Controller::setup() {
     pluginManager->registerPlugin(new WebUIPlugin());
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->setup(this);
+
+    pluginManager->on("profiles:profile:save", [this](Event const &event) {
+        String id = event.getString("id");
+        if (id == profileManager->getSelectedProfile().id) {
+            this->handleProfileUpdate();
+        }
+    });
+
+    pluginManager->on("profiles:profile:select", [this](Event const &event) { this->handleProfileUpdate(); });
 
     ui->init();
 }
@@ -165,6 +176,10 @@ void Controller::loop() {
             loaded = true;
             if (settings.getStartupMode() == MODE_STANDBY)
                 activateStandby();
+
+            ESP_LOGI("Controller", "setting pressure scale to %.2f\n", settings.getPressureScaling());
+            setPressureScale();
+
             pluginManager->trigger("controller:ready");
         }
     }
@@ -243,13 +258,13 @@ void Controller::startProcess(Process *process) {
 
 int Controller::getTargetTemp() {
     if (isAutotuning()) {
-        return settings.getTargetBrewTemp();
+        return 93;
     }
 
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
-        return settings.getTargetBrewTemp();
+        return profileManager->getSelectedProfile().temperature;
     case MODE_STEAM:
         return settings.getTargetSteamTemp();
     case MODE_WATER:
@@ -264,7 +279,7 @@ void Controller::setTargetTemp(int temperature) {
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
-        settings.setTargetBrewTemp(temperature);
+        // Update current profile
         break;
     case MODE_STEAM:
         settings.setTargetSteamTemp(temperature);
@@ -277,6 +292,12 @@ void Controller::setTargetTemp(int temperature) {
     clientController.sendPidSettings(settings.getPid());
     updateControl();
     updateLastAction();
+}
+
+void Controller::setPressureScale(void) {
+    if (systemInfo.capabilities.pressure) {
+        clientController.setPressureScale(settings.getPressureScaling());
+    }
 }
 
 int Controller::getTargetDuration() const { return settings.getTargetDuration(); }
@@ -388,9 +409,17 @@ void Controller::updateControl() {
     if (targetTemp > 0) {
         targetTemp = targetTemp + settings.getTemperatureOffset();
     }
+    clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
+    if (isActive() && currentProcess->getType() == MODE_BREW) {
+        auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
+        if (brewProcess->isAdvancedPump() && systemInfo.capabilities.pressure) {
+            clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp), true,
+                                                       brewProcess->getPumpTargetPressure(), 0.0f);
+            return;
+        }
+    }
     clientController.sendOutputControl(isActive() && currentProcess->isRelayActive(),
                                        isActive() ? currentProcess->getPumpValue() : 0, static_cast<float>(targetTemp));
-    clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
 }
 
 void Controller::activate() {
@@ -399,13 +428,10 @@ void Controller::activate() {
     clear();
     switch (mode) {
     case MODE_BREW:
-        if (settings.isVolumetricTarget() && volumetricAvailable) {
-            startProcess(new BrewProcess(ProcessTarget::VOLUMETRIC, settings.getPressurizeTime(), settings.getInfusePumpTime(),
-                                         settings.getInfuseBloomTime(), 0, settings.getTargetVolume(), settings.getBrewDelay()));
-        } else {
-            startProcess(new BrewProcess(ProcessTarget::TIME, settings.getPressurizeTime(), settings.getInfusePumpTime(),
-                                         settings.getInfuseBloomTime(), settings.getTargetDuration(), 0, 0.0));
-        }
+        startProcess(new BrewProcess(profileManager->getSelectedProfile(),
+                                     settings.isVolumetricTarget() && volumetricAvailable ? ProcessTarget::VOLUMETRIC
+                                                                                          : ProcessTarget::TIME,
+                                     settings.getBrewDelay()));
         break;
     case MODE_STEAM:
         startProcess(new SteamProcess());
@@ -564,4 +590,9 @@ void Controller::handleSteamButton(int steamButtonStatus) {
     } else if (!settings.isMomentaryButtons() && getMode() == MODE_STEAM) {
         deactivate();
     }
+}
+
+void Controller::handleProfileUpdate() {
+    pluginManager->trigger("boiler:targetTemperature:change", "value",
+                           static_cast<int>(profileManager->getSelectedProfile().temperature));
 }

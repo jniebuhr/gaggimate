@@ -37,6 +37,8 @@ using steam_callback_t = std::function<void(bool steamButtonStatus)>;
 // New combined callbacks
 using float_callback_t = std::function<void(float val)>;
 using simple_output_callback_t = std::function<void(bool valve, float pumpSetpoint, float boilerSetpoint)>;
+using advanced_output_callback_t =
+    std::function<void(bool valve, float boilerSetpoint, bool pressureTarget, float pumpPressure, float pumpFlow)>;
 using sensor_read_callback_t = std::function<void(float temperature, float pressure)>;
 
 struct SystemCapabilities {

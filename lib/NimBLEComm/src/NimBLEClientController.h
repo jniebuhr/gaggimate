@@ -9,6 +9,9 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLEClientController();
     void initClient();
     bool connectToServer();
+
+    void sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure, float flow);
+
     void sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint);
     void sendAltControl(bool pinState);
     void sendPing();
@@ -53,6 +56,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     steam_callback_t steamBtnCallback = nullptr;
     pid_control_callback_t autotuneResultCallback = nullptr;
     sensor_read_callback_t sensorCallback = nullptr;
+
+    String _lastOutputControl = "";
 
     // BLEAdvertisedDeviceCallbacks override
     void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;

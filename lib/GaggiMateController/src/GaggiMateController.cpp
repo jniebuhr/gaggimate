@@ -31,9 +31,9 @@ void GaggiMateController::setup() {
         pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { /* noop */ });
     }
     if (_config.capabilites.dimming) {
-        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin);
+        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor);
     } else {
-        pump = new SimplePump(_config.pumpPin, _config.pumpOn);
+        pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
@@ -57,13 +57,27 @@ void GaggiMateController::setup() {
         this->valve->set(valve);
         this->heater->setSetpoint(heaterSetpoint);
     });
+    _ble.registerAdvancedOutputControlCallback(
+        [this](bool valve, float heaterSetpoint, bool pressureTarget, float pressure, float flow) {
+            this->valve->set(valve);
+            this->heater->setSetpoint(heaterSetpoint);
+            if (!_config.capabilites.dimming) {
+                return;
+            }
+            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            if (pressureTarget) {
+                dimmedPump->setPressureTarget(pressure, flow);
+            } else {
+                dimmedPump->setFlowTarget(flow, pressure);
+            }
+        });
     _ble.registerAltControlCallback([this](bool state) { this->alt->set(state); });
     _ble.registerPidControlCallback([this](float Kp, float Ki, float Kd) { this->heater->setTunings(Kp, Ki, Kd); });
     _ble.registerPingCallback([this]() {
         lastPingTime = millis();
         ESP_LOGV(LOG_TAG, "Ping received, system is alive");
     });
-    _ble.registerAutotuneCallback([this](int testTime, int samples) { this->heater->autotune(testTime, samples); });
+    _ble.registerAutotuneCallback([this](int goal, int windowSize) { this->heater->autotune(goal, windowSize); });
 
     ESP_LOGI(LOG_TAG, "Initialization done");
 }

@@ -15,6 +15,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void sendSteamBtnState(bool steamButtonStatus);
     void sendAutotuneResult(float Kp, float Ki, float Kd);
     void registerOutputControlCallback(const simple_output_callback_t &callback);
+    void registerAdvancedOutputControlCallback(const advanced_output_callback_t &callback);
     void registerAltControlCallback(const pin_control_callback_t &callback);
     void registerPidControlCallback(const pid_control_callback_t &callback);
     void registerPingCallback(const ping_callback_t &callback);
@@ -39,6 +40,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     NimBLECharacteristic *sensorChar = nullptr;
 
     simple_output_callback_t outputControlCallback = nullptr;
+    advanced_output_callback_t advancedControlCallback = nullptr;
     pin_control_callback_t altControlCallback = nullptr;
     pid_control_callback_t pidControlCallback = nullptr;
     ping_callback_t pingCallback = nullptr;

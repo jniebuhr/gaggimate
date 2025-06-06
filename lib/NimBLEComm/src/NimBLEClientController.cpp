@@ -121,13 +121,23 @@ bool NimBLEClientController::connectToServer() {
     return true;
 }
 
+void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure,
+                                                       float flow) {
+    if (client->isConnected() && outputControlChar != nullptr) {
+        char str[30];
+        snprintf(str, sizeof(str), "%d,%d,%.1f,%.1f,%d,%.2f,%.2f", 1, valve ? 1 : 0, 100.0f, boilerSetpoint,
+                 pressureTarget ? 1 : 0, pressure, flow);
+        _lastOutputControl = String(str);
+        outputControlChar->writeValue(_lastOutputControl, false);
+    }
+}
+
 void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint) {
     if (client->isConnected() && outputControlChar != nullptr) {
         char str[30];
         snprintf(str, sizeof(str), "%d,%d,%.1f,%.1f", 0, valve ? 1 : 0, pumpSetpoint, boilerSetpoint);
-        if (outputControlChar->getValue().c_str() != str) {
-            outputControlChar->writeValue(str, false);
-        }
+        _lastOutputControl = String(str);
+        outputControlChar->writeValue(_lastOutputControl, false);
     }
 }
 
@@ -139,10 +149,7 @@ void NimBLEClientController::sendPidSettings(const String &pid) {
 
 void NimBLEClientController::setPressureScale(float scale) {
     if (client->isConnected() && pressureScaleChar != nullptr) {
-        constexpr size_t bufferSize = sizeof(float);
-        char buffer[bufferSize];
-        std::memcpy(buffer + 0, &scale, sizeof(scale));
-        pressureScaleChar->writeValue(buffer);
+        pressureScaleChar->writeValue(String(scale));
     }
 }
 

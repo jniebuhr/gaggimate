@@ -4,11 +4,9 @@
 #include "Pump.h"
 #include <Arduino.h>
 
-constexpr int PUMP_CYCLE_TIME = 5000;
-
 class SimplePump : public Pump {
   public:
-    SimplePump(int pin, uint8_t pumpOn);
+    SimplePump(int pin, uint8_t pumpOn, float windowSize = 5000.0f);
     ~SimplePump() = default;
 
     void setup() override;
@@ -19,7 +17,10 @@ class SimplePump : public Pump {
     int _pin;
     uint8_t _pumpOn;
     float _setpoint = 0;
-    unsigned long lastCycleStart = 0;
+    bool relayStatus = false;
+    float _windowSize = 5000.0f;
+    unsigned long windowStartTime = 0;
+    unsigned long nextSwitchTime = 0;
     xTaskHandle taskHandle;
 
     const char *LOG_TAG = "SimplePump";

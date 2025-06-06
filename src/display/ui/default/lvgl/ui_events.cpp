@@ -75,22 +75,10 @@ void onTimedClick(lv_event_t *e) { controller.onTargetChange(ProcessTarget::TIME
 
 void onVolumetricClick(lv_event_t *e) { controller.onTargetChange(ProcessTarget::VOLUMETRIC); }
 
-void onGrindTimedClick(lv_event_t *e) {
-    // Your code here
-}
+void onPreviousProfile(lv_event_t *e) { controller.getUI()->onPreviousProfile(); }
 
-void onGrindVolumetricClick(lv_event_t *e) {
-    // Your code here
-}
+void onNextProfile(lv_event_t *e) { controller.getUI()->onNextProfile(); }
 
-void onPreviousProfile(lv_event_t *e) {
-    // Your code here
-}
+void onProfileLoad(lv_event_t *e) { controller.getUI()->onProfileSelect(); }
 
-void onNextProfile(lv_event_t *e) {
-    // Your code here
-}
-
-void onProfileLoad(lv_event_t *e) {
-    // Your code here
-}
+void onProfileSelect(lv_event_t *e) { controller.getUI()->onProfileSwitch(); }
