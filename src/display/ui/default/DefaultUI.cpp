@@ -157,7 +157,7 @@ void DefaultUI::changeScreen(lv_obj_t **screen, void (*target_init)()) {
 }
 
 void DefaultUI::onProfileSwitch() {
-    favoritedProfiles = controller->getSettings().getFavoritedProfiles();
+    favoritedProfiles = profileManager->getFavoritedProfiles();
     currentProfileIdx = 0;
     currentProfileId = favoritedProfiles[currentProfileIdx];
     currentProfileChoice = Profile{};

@@ -35,7 +35,7 @@ export function Autotune() {
         <div
           className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 sm:col-span-12"
         >
-          <div className="p-6 grid grid-cols-1 gap-2 sm:grid-cols-12">
+          <div className="lg:p-6 p-2 grid grid-cols-1 gap-2 sm:grid-cols-12">
             {
               active && (
                 <>

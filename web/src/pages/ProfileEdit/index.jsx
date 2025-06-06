@@ -86,7 +86,7 @@ export function ProfileEdit() {
   return (
     <div key="profile-edit" className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
       <div className="sm:col-span-12">
-        <h2 className="text-2xl font-bold">Create Profile</h2>
+        <h2 className="text-2xl font-bold">{params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}</h2>
       </div>
 
       {

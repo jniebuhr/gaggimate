@@ -27,7 +27,7 @@ export default function Card(props) {
         }
 
 
-        <div className="p-6 flex flex-col gap-2">
+        <div className="lg:p-6 p-2 flex flex-col gap-2">
           {props.children}
         </div>
       </div>

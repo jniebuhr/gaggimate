@@ -15,7 +15,6 @@ class DimmedPump : public Pump {
 
     void setup() override;
     void loop() override;
-    void calibrate();
     void setPower(float setpoint) override;
 
     void setFlowTarget(float targetFlow, float pressureLimit);
@@ -38,11 +37,9 @@ class DimmedPump : public Pump {
     float _flowLimit = 0.0f;
     float _currentPressure = 0.0f;
     float _lastPressure = 0.0f;
-    float _expectedPressureGain = 0.0f;
     int _cps = MAX_FREQ;
 
     float _opvPressure = 0.0f;
-    std::vector<float> _pressureGains;
 
     static constexpr float BASE_FLOW_RATE = 0.25f;
     static constexpr float MAX_PRESSURE = 15.0f;
