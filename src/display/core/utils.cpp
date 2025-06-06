@@ -20,7 +20,7 @@ String generateShortID(uint8_t length) {
     return id;
 }
 
-std::vector<String> explode(const String& input, char delim) {
+std::vector<String> explode(const String &input, char delim) {
     std::vector<String> strings;
     size_t start;
     size_t end = 0;
@@ -32,19 +32,13 @@ std::vector<String> explode(const String& input, char delim) {
     return strings;
 }
 
-String implode(const std::vector<String>& strings, String delim) {
+String implode(const std::vector<String> &strings, String delim) {
     if (strings.size() == 0) {
         return "";
     }
     if (strings.size() == 1) {
         return strings.at(0);
     }
-    return std::accumulate(
-      std::next(strings.begin()),
-      strings.end(),
-      strings[0],
-      [delim](String a, String b) {
-          return a + delim + b;
-      }
-    );
+    return std::accumulate(std::next(strings.begin()), strings.end(), strings[0],
+                           [delim](String a, String b) { return a + delim + b; });
 }

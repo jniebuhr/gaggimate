@@ -4,8 +4,8 @@
 #include "PluginManager.h"
 #include <FS.h>
 #include <display/core/Settings.h>
-#include <display/models/profile.h>
 #include <display/core/utils.h>
+#include <display/models/profile.h>
 
 class ProfileManager {
   public:

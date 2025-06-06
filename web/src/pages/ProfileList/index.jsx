@@ -10,7 +10,6 @@ Chart.register(LineElement);
 Chart.register(Filler);
 Chart.register(Legend);
 
-import mockData from '../../mocks/profiles.json';
 import { ExtendedContent } from './ExtendedContent.jsx';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { useContext } from 'react';
@@ -38,6 +37,22 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
     else if (!data.favorite && !favoriteDisabled)
       onFavorite(data.id);
   }, [data.favorite]);
+  const onDownload = useCallback(() => {
+    const download = {
+      ...data
+    };
+    delete download.id;
+    delete download.selected;
+    delete download.favorite;
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(download, undefined, 2));
+    var downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", data.id + ".json");
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }, [data]);
+
   return (
     <div
       key="profile-list"
@@ -54,7 +69,7 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
           </span>
         </label>
       </div>
-      <div className="flex flex-col flex-grow">
+      <div className="flex flex-col flex-grow overflow-auto">
         <div className="flex flex-row">
           <div className="flex-grow flex flex-row items-center gap-4">
             <span className="font-bold text-xl leading-tight">
@@ -78,6 +93,13 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
             </a>
             <a
               href="javascript:void(0)"
+              onClick={() => onDownload()}
+              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+            >
+              <span className="fa fa-file-export" />
+            </a>
+            <a
+              href="javascript:void(0)"
               onClick={() => onDelete(data.id)}
               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
             >
@@ -85,7 +107,7 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
             </a>
           </div>
         </div>
-        <div className="flex flex-row gap-2 py-4 items-center">
+        <div className="flex flex-row gap-2 py-4 items-center overflow-auto">
           {data.type === 'pro' ? <ExtendedContent data={data} /> : <SimpleContent data={data} />}
         </div>
       </div>
@@ -173,6 +195,19 @@ export function ProfileList() {
     await loadProfiles();
   }, [apiService, setLoading]);
 
+  const onUpload = function(evt) {
+    if (evt.target.files.length) {
+      const file = evt.target.files[0];
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const profile = JSON.parse(e.target.result);
+        await apiService.request({ tp: 'req:profiles:save', profile });
+        await loadProfiles();
+      }
+      reader.readAsText(file);
+    }
+  };
+
   if (loading) {
     return (
       <div class="flex flex-row py-16 items-center justify-center w-full">
@@ -184,8 +219,14 @@ export function ProfileList() {
   return (
     <>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
-        <div className="sm:col-span-12">
-          <h2 className="text-2xl font-bold">Profiles</h2>
+        <div className="sm:col-span-12 flex flex-row">
+          <h2 className="text-2xl font-bold flex-grow">Profiles</h2>
+          <div>
+            <label title="Import" for="profileImport" className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200">
+              <span className="fa fa-file-import" />
+            </label>
+          </div>
+          <input onChange={onUpload} className="hidden" id="profileImport" type="file" accept=".json,application/json" />
         </div>
 
         {profiles.map((data) => (

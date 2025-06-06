@@ -84,7 +84,7 @@ void Settings::setTemperatureOffset(const int temperature_offset) {
     save();
 }
 
-void Settings::setPressureScaling(const float pressure_scaling){
+void Settings::setPressureScaling(const float pressure_scaling) {
     pressureScaling = pressure_scaling;
     save();
 }

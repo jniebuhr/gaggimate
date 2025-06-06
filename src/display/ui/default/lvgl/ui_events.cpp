@@ -75,14 +75,10 @@ void onTimedClick(lv_event_t *e) { controller.onTargetChange(ProcessTarget::TIME
 
 void onVolumetricClick(lv_event_t *e) { controller.onTargetChange(ProcessTarget::VOLUMETRIC); }
 
-void onPreviousProfile(lv_event_t *e) {
-    // Your code here
-}
+void onPreviousProfile(lv_event_t *e) { controller.getUI()->onPreviousProfile(); }
 
-void onNextProfile(lv_event_t *e) {
-    // Your code here
-}
+void onNextProfile(lv_event_t *e) { controller.getUI()->onNextProfile(); }
 
-void onProfileLoad(lv_event_t *e) { controller.getUI()->changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init); }
+void onProfileLoad(lv_event_t *e) { controller.getUI()->onProfileSelect(); }
 
-void onProfileSelect(lv_event_t *e) { controller.getUI()->changeScreen(&ui_ProfileScreen, &ui_ProfileScreen_screen_init); }
+void onProfileSelect(lv_event_t *e) { controller.getUI()->onProfileSwitch(); }

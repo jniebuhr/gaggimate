@@ -26,7 +26,7 @@ class Autotune {
 
     float getSystemDelay() const { return system_pure_delay; }
     float getSystemGain() const { return system_gain; };
-    float getCrossoverFreq() const{return cross_freq;};
+    float getCrossoverFreq() const { return cross_freq; };
 
   private:
     float computeSlope(const std::deque<float> &x, const std::deque<float> &y);
@@ -34,7 +34,8 @@ class Autotune {
 
     unsigned int N = 3;   // Size of the moving window to compute the derivative of temperature
     float epsilon = 0.4f; // Temperature variation threshold to detect the reaction
-    unsigned int requiredConfirmations =3; // Number consecutive detection of rising temperature to consider the reaction detected
+    unsigned int requiredConfirmations =
+        3; // Number consecutive detection of rising temperature to consider the reaction detected
     float tuningPercentage = 50;
     std::deque<float> values, times, slopes, slopeTimes;
 
@@ -48,6 +49,5 @@ class Autotune {
 
     float system_pure_delay = 0.0f;
     float system_gain = 0.0f;
-    float cross_freq=0.0f;
-    
+    float cross_freq = 0.0f;
 };

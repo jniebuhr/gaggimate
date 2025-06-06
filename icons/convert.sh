@@ -23,6 +23,8 @@ function convert() {
 
 convert "angle-down.svg" 40
 convert "angle-up.svg" 40
+convert "angle-left.svg" 40
+convert "angle-right.svg" 40
 convert "bluetooth-alt.svg" 20
 convert "check.svg" 40
 convert "coffee-bean.svg" 80

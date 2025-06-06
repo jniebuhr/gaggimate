@@ -26,6 +26,11 @@ class DefaultUI {
     // Interface methods
     void changeScreen(lv_obj_t **screen, void (*target_init)(void));
 
+    void onProfileSwitch();
+    void onNextProfile();
+    void onPreviousProfile();
+    void onProfileSelect();
+
   private:
     void setupPanel() const;
     void setupState();
@@ -67,6 +72,11 @@ class DefaultUI {
     int grindVolume = 0;
     int pressureAvailable = 0;
     float pressure = 0.0f;
+
+    int currentProfileIdx;
+    String currentProfileId;
+    Profile currentProfileChoice{};
+    std::vector<String> favoritedProfiles;
 
     // Screen change
     lv_obj_t **targetScreen = &ui_InitScreen;

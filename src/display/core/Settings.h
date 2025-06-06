@@ -2,9 +2,9 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include <display/core/constants.h>
 #include <Arduino.h>
 #include <Preferences.h>
+#include <display/core/constants.h>
 #include <display/core/utils.h>
 
 #define PREFERENCES_KEY "controller"

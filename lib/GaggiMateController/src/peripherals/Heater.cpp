@@ -1,12 +1,10 @@
 #include "Heater.h"
 #include <Arduino.h>
-#include <algorithm> 
-
+#include <algorithm>
 
 Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
                const pid_result_callback_t &pid_callback)
-    : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback),
-      pid_callback(pid_callback) {
+    : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback) {
 
     simplePid = new SimplePID(&output, &temperature, &setpoint);
     autotuner = new Autotune();
@@ -119,8 +117,10 @@ void Heater::loopAutotune() {
     // simplePid->setSetpointRateLimits(-INFINITY, autotuner->getSystemGain() * 0.8);
     // simplePid->setSetpointFilterFrequency(autotuner->getCrossoverFreq()/2);
 
-    ESP_LOGI(LOG_TAG, "Autotuning finished: Kp=%.4f, Ki=%.4f, Kd=%.4f, Kff=%.4f\n", autotuner->getKp()*1000.0f, autotuner->getKi()*1000.0f, autotuner->getKd()*1000.0f, autotuner->getKff()*1000.0f);
-    ESP_LOGI(LOG_TAG, "System delay: %.2f s, System gain: %.4f Setpoint Freq: %.4f Hz\n", autotuner->getSystemDelay(), autotuner->getSystemGain(), autotuner->getCrossoverFreq()/2);
+    ESP_LOGI(LOG_TAG, "Autotuning finished: Kp=%.4f, Ki=%.4f, Kd=%.4f, Kff=%.4f\n", autotuner->getKp() * 1000.0f,
+             autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, autotuner->getKff() * 1000.0f);
+    ESP_LOGI(LOG_TAG, "System delay: %.2f s, System gain: %.4f Setpoint Freq: %.4f Hz\n", autotuner->getSystemDelay(),
+             autotuner->getSystemGain(), autotuner->getCrossoverFreq() / 2);
 }
 
 float Heater::softPwm(uint32_t windowSize) {
@@ -151,7 +151,9 @@ float Heater::softPwm(uint32_t windowSize) {
 void Heater::plot(float optimumOutput, float outputScale, uint8_t everyNth) {
     if (plotCount >= everyNth) {
         plotCount = 1;
-        ESP_LOGI(LOG_TAG, "Setpoint: %.2f, Input: %.2f, Output: %.2f, Kp: %.2f, Ki: %.2f, Kd: %.2f, Filtered Setpoint: %.2f", setpoint, temperature, optimumOutput * outputScale, simplePid->getKp(), simplePid->getKi(), simplePid->getKd(), simplePid->getSetpointFiltered());
+        ESP_LOGI(LOG_TAG, "Setpoint: %.2f, Input: %.2f, Output: %.2f, Kp: %.2f, Ki: %.2f, Kd: %.2f, Filtered Setpoint: %.2f",
+                 setpoint, temperature, optimumOutput * outputScale, simplePid->getKp(), simplePid->getKi(), simplePid->getKd(),
+                 simplePid->getSetpointFiltered());
     } else
         plotCount++;
 }

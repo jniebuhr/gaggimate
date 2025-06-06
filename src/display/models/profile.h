@@ -30,6 +30,24 @@ struct Phase {
     int pumpSimple; // Used if pumpIsSimple == true
     PumpAdvanced pumpAdvanced;
     std::vector<Target> targets;
+
+    bool hasVolumetricTarget() const {
+        for (const auto &target : targets) {
+            if (target.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Target getVolumetricTarget() const {
+        for (const auto &target : targets) {
+            if (target.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+                return target;
+            }
+        }
+        return Target{};
+    }
 };
 
 struct Profile {
@@ -41,6 +59,27 @@ struct Profile {
     bool favorite = false;
     bool selected = false;
     std::vector<Phase> phases;
+
+    unsigned int getPhaseCount() const {
+        int brew = 0;
+        int preinfusion = 0;
+        for (const auto &phase : phases) {
+            if (phase.phase == PhaseType::PHASE_TYPE_BREW) {
+                brew = 1;
+            } else {
+                preinfusion = 1;
+            }
+        }
+        return brew + preinfusion;
+    }
+
+    unsigned long getTotalDuration() const {
+        unsigned long duration = 0;
+        for (const auto &phase : phases) {
+            duration += phase.duration;
+        }
+        return duration;
+    }
 };
 
 inline bool parseProfile(const JsonObject &obj, Profile &profile) {

@@ -33,7 +33,7 @@ export function ProfileEdit() {
             "name": "Pump",
             "phase": "preinfusion",
             "valve": 1,
-            "pump": 1,
+            "pump": 100,
             "duration": 3
           },
           {
@@ -47,8 +47,8 @@ export function ProfileEdit() {
             "name": "Pump",
             "phase": "brew",
             "valve": 1,
-            "pump": 1,
-            "duration": 27,
+            "pump": 100,
+            "duration": 20,
             "targets": [
               {
                 "type": "volumetric",

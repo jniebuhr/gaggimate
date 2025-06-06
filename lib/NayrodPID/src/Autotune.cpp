@@ -52,7 +52,7 @@ void Autotune::update(float temperature, float currentTime) {
 
             if (slopes.size() >= N) {
                 float slopeOfSlope = computeSlope(slopeTimes, slopes);
-                if (slopeOfSlope < 0 && !maxSlopeFound && temperature >values[0] + 7) {
+                if (slopeOfSlope < 0 && !maxSlopeFound && temperature > values[0] + 7) {
                     auto maxIt = std::max_element(slopes.begin(), slopes.end());
                     system_gain = *maxIt;
                     maxSlopeTime = slopeTimes[std::distance(slopes.begin(), maxIt)];
@@ -90,9 +90,9 @@ void Autotune::computeControllerGains(float delay, float gain) {
     float maxMargin = 70.0f;
     float minMargin = 20.0f;
 
-    float range = maxMargin-minMargin;
+    float range = maxMargin - minMargin;
 
-    const float min_phase_margin = minMargin+ tuningPercentage/100*range;
+    const float min_phase_margin = minMargin + tuningPercentage / 100 * range;
     const float integ_delay = 10.0f;
 
     float mphi = min_phase_margin + integ_delay;
@@ -105,8 +105,10 @@ void Autotune::computeControllerGains(float delay, float gain) {
 
     float ku = kp / 0.7f;
     float tu = 1.75f * ku / ki;
-    float kd = 0.105f * ku * tu * 0.35f; // Reduced to only 35% of Kd because of gain margin migh by too close to unstability, test showed it's unecessary to have derivative
-    float kff = 1 / gain;             // Can go full gain inverse because we only estimate the speed and miss the static gain so we're always lower than the actual real system gain 
+    float kd = 0.105f * ku * tu * 0.35f; // Reduced to only 35% of Kd because of gain margin migh by too close to unstability,
+                                         // test showed it's unecessary to have derivative
+    float kff = 1 / gain; // Can go full gain inverse because we only estimate the speed and miss the static gain so we're always
+                          // lower than the actual real system gain
 
     Kp = kp;
     Ki = ki;
@@ -159,9 +161,7 @@ float Autotune::getKi() const { return Ki; }
 float Autotune::getKd() const { return Kd; }
 float Autotune::getKff() const { return Kff; }
 
-
-void Autotune::setTuningGoal(float percentage)
-{
+void Autotune::setTuningGoal(float percentage) {
     /**
      * @brief Configure the PID tuning aggressiveness as a percentage.
      *
@@ -171,14 +171,14 @@ void Autotune::setTuningGoal(float percentage)
      * A higher percentage reduces the phase margin for improved speed and performance at the
      * expense of reduced stability margin. Internally, values outside the [0, 100] range are clamped
      * to ensure a valid tuning setting.
-     * 
+     *
      * @param percentage Desired tuning aggressiveness (0 = fully conservative, 100 = maximum speed).
      */
     if (percentage > 100.0f) {
         tuningPercentage = 100;
-    }else if (percentage < 0.0f) {
+    } else if (percentage < 0.0f) {
         tuningPercentage = 0;
-    }else {
-        tuningPercentage = 100-(int)std::round(percentage);
+    } else {
+        tuningPercentage = 100 - (int)std::round(percentage);
     }
 }

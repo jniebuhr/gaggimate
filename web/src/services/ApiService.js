@@ -101,6 +101,11 @@ export default class ApiService {
         ...machine.value.status,
         ...newStatus,
       },
+      capabilities: {
+        ...machine.value.capabilities,
+        dimming: message.cd,
+        pressure: message.cp,
+      },
       history: [
         ...machine.value.history,
         newStatus,
@@ -120,6 +125,10 @@ export const machine = signal({
     targetTemperature: 0,
     mode: 0,
     selectedProfile: ''
+  },
+  capabilities: {
+    pressure: false,
+    dimming: false,
   },
   history: []
 });

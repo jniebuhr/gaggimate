@@ -19,7 +19,8 @@ SET(SOURCES components/ui_comp_dials.c
     images/ui_img_295763949.c
     images/ui_img_1951499226.c
     images/ui_img_360122106.c
-    images/ui_img_1829139226.c
+    images/ui_img_98036921.c
+    images/ui_img_944513416.c
     images/ui_img_631115820.c
     images/ui_img_indicator_png.c
     images/ui_img_untitled_png.c
@@ -40,6 +41,7 @@ SET(SOURCES components/ui_comp_dials.c
     images/ui_img_1765671371.c
     images/ui_img_1732953241.c
     images/ui_img_1456692430.c
+    images/ui_img_1829139226.c
     images/ui_img_340148213.c)
 
 add_library(ui ${SOURCES})

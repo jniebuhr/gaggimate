@@ -265,7 +265,8 @@ LV_IMG_DECLARE(ui_img_logo_png);      // assets/logo.png
 LV_IMG_DECLARE(ui_img_295763949);     // assets/angle-up-40x40.png
 LV_IMG_DECLARE(ui_img_1951499226);    // assets/thermometer-half-40x40.png
 LV_IMG_DECLARE(ui_img_360122106);     // assets/clock-40x40.png
-LV_IMG_DECLARE(ui_img_1829139226);    // assets/angle-down-40x40.png
+LV_IMG_DECLARE(ui_img_98036921);      // assets/angle-left-40x40.png
+LV_IMG_DECLARE(ui_img_944513416);     // assets/angle-right-40x40.png
 LV_IMG_DECLARE(ui_img_631115820);     // assets/check-40x40.png
 LV_IMG_DECLARE(ui_img_indicator_png); // assets/indicator.png
 LV_IMG_DECLARE(ui_img_untitled_png);  // assets/Untitled.png
@@ -286,6 +287,7 @@ LV_IMG_DECLARE(ui_img_1091371356);    // assets/bluetooth-alt-20x20.png
 LV_IMG_DECLARE(ui_img_1765671371);    // assets/refresh-20x20.png
 LV_IMG_DECLARE(ui_img_1732953241);    // assets/tap-60x60.png
 LV_IMG_DECLARE(ui_img_1456692430);    // assets/pause-40x40.png
+LV_IMG_DECLARE(ui_img_1829139226);    // assets/angle-down-40x40.png
 LV_IMG_DECLARE(ui_img_340148213);     // assets/settings-40x40.png
 
 // UI INIT

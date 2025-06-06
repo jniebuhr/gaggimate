@@ -2,7 +2,7 @@
 #include <ArduinoJson.h>
 
 ProfileManager::ProfileManager(fs::FS &fs, char *dir, Settings &settings, PluginManager *plugin_manager)
-    : _plugin_manager(plugin_manager), _fs(fs), _dir(dir), _settings(settings) {}
+    : _plugin_manager(plugin_manager), _settings(settings), _fs(fs), _dir(dir) {}
 
 void ProfileManager::setup() {
     ensureDirectory();
@@ -146,6 +146,12 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
     bool ok = serializeJson(doc, file) > 0;
     file.close();
+    if (profile.id == selectedProfile.id) {
+        selectedProfile = Profile{};
+        loadSelectedProfile(selectedProfile);
+    }
+    selectProfile(_settings.getSelectedProfile());
+    _plugin_manager->trigger("profiles:profile:save", "id", profile.id);
     return ok;
 }
 
@@ -154,7 +160,9 @@ bool ProfileManager::deleteProfile(const String &uuid) { return _fs.remove(profi
 bool ProfileManager::profileExists(const String &uuid) { return _fs.exists(profilePath(uuid)); }
 
 void ProfileManager::selectProfile(const String &uuid) {
+    ESP_LOGI("ProfileManager", "Selecting profile %s", uuid.c_str());
     _settings.setSelectedProfile(uuid);
+    selectedProfile = Profile{};
     loadSelectedProfile(selectedProfile);
     _plugin_manager->trigger("profiles:profile:select", "id", uuid);
 }

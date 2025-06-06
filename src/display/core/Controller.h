@@ -132,6 +132,7 @@ class Controller {
 
     // steam button
     void handleSteamButton(int steamButtonStatus);
+    void handleProfileUpdate();
 
     // Private Attributes
     DefaultUI *ui = nullptr;

@@ -88,7 +88,7 @@ bool SimplePID::update() {
 void SimplePID::setpointFiltering(float freq) {
 
     float wn = (2.0f * PI * freq);
-    float dderiv = wn * wn * (*setpointTarget - setpointFilteredValues.back());   
+    float dderiv = wn * wn * (*setpointTarget - setpointFilteredValues.back());
     setpointFiltstate1 += dderiv / ctrl_freq_sampling;
     setpointDerivative = setpointFiltstate1 - wn * 2 * setpointFiltXi * setpointFilteredValues.back();
     // Output the filtered setpoint values
@@ -101,7 +101,6 @@ void SimplePID::setpointFiltering(float freq) {
         setpointFilteredValues.pop_front();
     }
     setpointFiltered = setpointFilteredValues.front(); // Get the filtered setpoint value
-
 }
 
 void SimplePID::initSetPointFilter(float initialValue) {
@@ -109,7 +108,7 @@ void SimplePID::initSetPointFilter(float initialValue) {
     for (int i = 0; i < setpointDelaySamples + 1; ++i) {
         setpointFilteredValues.push_back(initialValue);
     }
-    setpointFiltstate1 = 2*setpointFiltXi*2*PI*setpointFilterFreq*initialValue;
+    setpointFiltstate1 = 2 * setpointFiltXi * 2 * PI * setpointFilterFreq * initialValue;
 }
 
 void SimplePID::resetFeedbackController() {

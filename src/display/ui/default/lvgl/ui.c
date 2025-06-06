@@ -241,6 +241,8 @@ lv_obj_t *ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
 const lv_img_dsc_t *ui_imgset_459451241[1] = {&ui_img_1829139226};
+const lv_img_dsc_t *ui_imgset_849879536[1] = {&ui_img_98036921};
+const lv_img_dsc_t *ui_imgset_1382826243[1] = {&ui_img_944513416};
 const lv_img_dsc_t *ui_imgset_434888472[1] = {&ui_img_295763949};
 const lv_img_dsc_t *ui_imgset_1091184723[1] = {&ui_img_1091371356};
 const lv_img_dsc_t *ui_imgset_960046369[1] = {&ui_img_631115820};
@@ -286,6 +288,14 @@ void ui_event_ProfileScreen(lv_event_t *e) {
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_TOP) {
         lv_indev_wait_release(lv_indev_get_act());
         onMenuClick(e);
+    }
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT) {
+        lv_indev_wait_release(lv_indev_get_act());
+        onNextProfile(e);
+    }
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT) {
+        lv_indev_wait_release(lv_indev_get_act());
+        onPreviousProfile(e);
     }
 }
 

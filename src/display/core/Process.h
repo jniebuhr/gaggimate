@@ -1,6 +1,8 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include <display/models/profile.h>
+
 #include "constants.h"
 #include "predictive.h"
 
@@ -29,81 +31,73 @@ class Process {
     virtual void updateVolume(double volume) = 0;
 };
 
-enum class BrewPhase { INFUSION_PRESSURIZE, INFUSION_PUMP, INFUSION_BLOOM, BREW_PRESSURIZE, BREW_PUMP, BREW_DRIP, FINISHED };
-
-enum class ProcessTarget { TIME, VOLUMETRIC };
+enum class ProcessTarget { VOLUMETRIC, TIME };
+enum class ProcessPhase { RUNNING, FINISHED };
+;
 
 class BrewProcess : public Process {
   public:
-    BrewPhase phase = BrewPhase::INFUSION_PRESSURIZE;
+    Profile profile;
     ProcessTarget target;
-    int infusionPumpTime;
-    int infusionBloomTime;
-    int brewTime;
-    int brewVolume;
-    int brewPressurize;
     double brewDelay;
+    unsigned int phaseIndex = 0;
+    Phase currentPhase;
+    ProcessPhase processPhase = ProcessPhase::RUNNING;
+    unsigned long processStarted = 0;
     unsigned long currentPhaseStarted = 0;
     unsigned long previousPhaseFinished = 0;
+    unsigned long finished = 0;
     double currentVolume = 0; // most recent volume pushed
     VolumetricRateCalculator *volumetricRateCalculator = nullptr;
 
-    explicit BrewProcess(ProcessTarget target = ProcessTarget::TIME, int pressurizeTime = 0, int infusionPumpTime = 0,
-                         int infusionBloomTime = 0, int brewTime = 0, int brewVolume = 0, double brewDelay = 0.0)
-        : target(target), infusionPumpTime(infusionPumpTime), infusionBloomTime(infusionBloomTime), brewTime(brewTime),
-          brewVolume(brewVolume), brewPressurize(pressurizeTime), brewDelay(brewDelay),
+    explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
+        : profile(profile), target(target), brewDelay(brewDelay),
           volumetricRateCalculator(new VolumetricRateCalculator(PREDICTIVE_TIME)) {
-        if (infusionBloomTime == 0 || infusionPumpTime == 0) {
-            phase = BrewPhase::BREW_PRESSURIZE;
-        } else if (pressurizeTime == 0) {
-            phase = BrewPhase::INFUSION_PUMP;
-        }
+        currentPhase = profile.phases.at(phaseIndex);
+        processStarted = millis();
         currentPhaseStarted = millis();
     }
 
     void updateVolume(double volume) override { // called even after the Process is no longer active
         currentVolume = volume;
-        if (phase != BrewPhase::BREW_DRIP && phase != BrewPhase::FINISHED) { // only store measurements while active
+        if (processPhase != ProcessPhase::FINISHED) { // only store measurements while active
             volumetricRateCalculator->addMeasurement(volume);
         }
     }
 
-    unsigned long getPhaseDuration() const {
-        switch (phase) {
-        case BrewPhase::INFUSION_PRESSURIZE:
-            return brewPressurize;
-        case BrewPhase::INFUSION_PUMP:
-            return infusionPumpTime;
-        case BrewPhase::INFUSION_BLOOM:
-            return infusionBloomTime;
-        case BrewPhase::BREW_PRESSURIZE:
-            return brewPressurize;
-        case BrewPhase::BREW_PUMP:
-            return brewTime;
-        case BrewPhase::BREW_DRIP:
-            return PREDICTIVE_TIME;
-        default:
-            return 0;
-        }
-    }
+    unsigned long getTotalDuration() const { return profile.getTotalDuration() * 1000L; }
+
+    unsigned long getPhaseDuration() const { return static_cast<long>(currentPhase.duration) * 1000L; }
 
     bool isCurrentPhaseFinished() {
-        if (phase == BrewPhase::BREW_PUMP && target == ProcessTarget::VOLUMETRIC) {
+        if (target == ProcessTarget::VOLUMETRIC && currentPhase.hasVolumetricTarget()) {
             if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
                 return true;
             }
             double currentRate = volumetricRateCalculator->getRate();
             const double predictedAddedVolume = currentRate * brewDelay;
-            return currentVolume + predictedAddedVolume >= brewVolume;
+            Target target = currentPhase.getVolumetricTarget();
+            return currentVolume + predictedAddedVolume >= target.value;
         }
-        if (phase != BrewPhase::FINISHED) {
+        if (processPhase != ProcessPhase::FINISHED) {
             return millis() - currentPhaseStarted > getPhaseDuration();
         }
         return true;
     }
 
+    double getBrewVolume() const {
+        double brewVolume = 0;
+        for (const auto &phase : profile.phases) {
+            if (phase.hasVolumetricTarget()) {
+                Target target = phase.getVolumetricTarget();
+                brewVolume = target.value;
+            }
+        }
+        return brewVolume;
+    }
+
     double getNewDelayTime() const {
-        double newDelay = brewDelay + volumetricRateCalculator->getOvershootAdjustMillis(double(brewVolume), currentVolume);
+        double newDelay = brewDelay + volumetricRateCalculator->getOvershootAdjustMillis(double(getBrewVolume()), currentVolume);
         if (newDelay < 0.0)
             newDelay = 0.0;
         if (newDelay > PREDICTIVE_TIME)
@@ -112,52 +106,53 @@ class BrewProcess : public Process {
     }
 
     bool isRelayActive() override {
-        return phase == BrewPhase::INFUSION_PUMP || phase == BrewPhase::INFUSION_BLOOM || phase == BrewPhase::BREW_PUMP;
+        if (processPhase == ProcessPhase::FINISHED) {
+            return false;
+        }
+        return currentPhase.valve;
     }
 
     bool isAltRelayActive() override { return false; }
 
     float getPumpValue() override {
-        if (phase == BrewPhase::INFUSION_PRESSURIZE || phase == BrewPhase::INFUSION_PUMP || phase == BrewPhase::BREW_PRESSURIZE ||
-            phase == BrewPhase::BREW_PUMP) {
-            return 100.f;
+        if (processPhase == ProcessPhase::FINISHED) {
+            return 0.0f;
         }
-        return 0.f;
+        return currentPhase.pumpIsSimple ? currentPhase.pumpSimple : 100.0f;
+    }
+
+    bool isAdvancedPump() const { return processPhase != ProcessPhase::FINISHED && !currentPhase.pumpIsSimple; }
+
+    float getPumpTargetPressure() const {
+        if (isAdvancedPump()) {
+            return currentPhase.pumpAdvanced.pressure;
+        }
+        return 0.0f;
     }
 
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
-
-        if (isCurrentPhaseFinished()) {
+        if (isCurrentPhaseFinished() && processPhase == ProcessPhase::RUNNING) {
             previousPhaseFinished = millis();
-            switch (phase) {
-            case BrewPhase::INFUSION_PRESSURIZE:
-                phase = BrewPhase::INFUSION_PUMP;
-                break;
-            case BrewPhase::INFUSION_PUMP:
-                phase = BrewPhase::INFUSION_BLOOM;
-                break;
-            case BrewPhase::INFUSION_BLOOM:
-                phase = BrewPhase::BREW_PRESSURIZE;
-                break;
-            case BrewPhase::BREW_PRESSURIZE:
-                phase = BrewPhase::BREW_PUMP;
-                break;
-            case BrewPhase::BREW_PUMP:
-                phase = BrewPhase::BREW_DRIP;
-                return;
-            case BrewPhase::BREW_DRIP:
-                phase = BrewPhase::FINISHED;
-                return;
-            default:;
+            if (phaseIndex + 1 < profile.phases.size()) {
+                phaseIndex++;
+                currentPhase = profile.phases.at(phaseIndex);
+                currentPhaseStarted = millis();
+            } else {
+                processPhase = ProcessPhase::FINISHED;
+                finished = millis();
             }
-            currentPhaseStarted = millis();
         }
     }
 
-    bool isActive() override { return phase != BrewPhase::FINISHED && phase != BrewPhase::BREW_DRIP; }
+    bool isActive() override { return processPhase == ProcessPhase::RUNNING; }
 
-    bool isComplete() override { return phase == BrewPhase::FINISHED; }
+    bool isComplete() override {
+        if (target == ProcessTarget::TIME) {
+            return !isActive();
+        }
+        return processPhase == ProcessPhase::FINISHED && millis() - finished > PREDICTIVE_TIME;
+    }
 
     int getType() override { return MODE_BREW; }
 };

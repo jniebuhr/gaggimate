@@ -30,7 +30,7 @@ class SimplePID {
     enum class Control : uint8_t { manual, automatic }; // controller mode
     void setMode(Control mode);
 
-    float getCtrlSamplingFrequency(){ return ctrl_freq_sampling; };
+    float getCtrlSamplingFrequency() { return ctrl_freq_sampling; };
     float getKp() { return gainKp; };
     float getKi() { return gainKi; };
     float getKd() { return gainKd; };
@@ -47,16 +47,16 @@ class SimplePID {
   private:
     // setpoint filtering
     void setpointFiltering(float freq);
-    bool isfilterSetpointActive = false;                         // Flag to activate/deactivate the setpoint filter
-    std::deque<float> setpointFilteredValues;            // Setpoint synchronized state
-    float setpointDerivative = 0.0f;                     // Setpoint derivative
-    float setpointFiltstate1 = 0.0f;                     // Setpoint State1
-    float setpointFiltXi = 1.2f;                         // Setpoint filter damping
-    float setpointFiltered = 0.0f;                       // Filtered setpoint value
-    uint32_t setpointDelaySamples = 5;                   // Number of samples to delay the setpoint
-    float setpointFilterFreq = 0.005f;                     // Setpoint filter frequency
+    bool isfilterSetpointActive = false;          // Flag to activate/deactivate the setpoint filter
+    std::deque<float> setpointFilteredValues;     // Setpoint synchronized state
+    float setpointDerivative = 0.0f;              // Setpoint derivative
+    float setpointFiltstate1 = 0.0f;              // Setpoint State1
+    float setpointFiltXi = 1.2f;                  // Setpoint filter damping
+    float setpointFiltered = 0.0f;                // Filtered setpoint value
+    uint32_t setpointDelaySamples = 5;            // Number of samples to delay the setpoint
+    float setpointFilterFreq = 0.005f;            // Setpoint filter frequency
     float setpointRatelimits[2] = {-INFINITY, 2}; // Setpoint rate limits {lower, upper}
-    bool isFeedForwardActive = false;                    // Flag to activate/deactivate the feedforward control
+    bool isFeedForwardActive = false;             // Flag to activate/deactivate the feedforward control
 
     // feedback controler
     float ctrlOutputLimits[2] = {-INFINITY, INFINITY}; // Control output limits {lower, upper}
@@ -65,7 +65,7 @@ class SimplePID {
     float gainKp = 0.0f;                               // Proportional gain
     float gainKi = 0.0f; // Integral gain (multiplies by Kp if Kp,Ki,Kd are strictly parallèle (no factoring by Kp))
     float gainKd = 0.0f; // Derivative gain (by default no derivative term)
-    float gainFF = 0.5*1000.0f/2.5f; // Feedforward gain
+    float gainFF = 0.5 * 1000.0f / 2.5f; // Feedforward gain
     float feedback_integralState = 0.0f; // Integral state
     float prevError = 0.0f;              // Previous error for derivative calculation
     float prevOutput = 0.0f;             // Previous output for derivative calculation
