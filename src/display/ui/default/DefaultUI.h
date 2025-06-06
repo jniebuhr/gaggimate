@@ -78,6 +78,11 @@ class DefaultUI {
     Profile currentProfileChoice{};
     std::vector<String> favoritedProfiles;
 
+    int currentProfileIdx;
+    String currentProfileId;
+    Profile currentProfileChoice{};
+    std::vector<String> favoritedProfiles;
+
     // Screen change
     lv_obj_t **targetScreen = &ui_InitScreen;
     lv_obj_t *currentScreen = ui_InitScreen;
