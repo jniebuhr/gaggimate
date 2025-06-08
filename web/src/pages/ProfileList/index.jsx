@@ -58,7 +58,7 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
       key="profile-list"
       className="rounded-lg border flex flex-row items-center border-slate-200 bg-white p-4 sm:col-span-12 dark:bg-gray-800 dark:border-gray-600"
     >
-      <div className="flex flex-row justify-center items-center p-4">
+      <div className="flex flex-row justify-center items-center lg:p-4 p-2">
         <label className="flex items-center relative cursor-pointer">
           <input checked={data.selected} type="checkbox"
                  onClick={() => onSelect(data.id)}
@@ -70,14 +70,14 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
         </label>
       </div>
       <div className="flex flex-col flex-grow overflow-auto">
-        <div className="flex flex-row">
+        <div className="flex flex-row gap-2 flex-wrap">
           <div className="flex-grow flex flex-row items-center gap-4">
             <span className="font-bold text-xl leading-tight">
               {data.label}
             </span>
             <span className={`${typeClass} text-xs font-medium me-2 px-4 py-0.5 rounded-sm dark:bg-blue-900 dark:text-blue-300`}>{typeText}</span>
           </div>
-          <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-2 justify-end">
             <button
               onClick={onFavoriteToggle}
               disabled={favoriteToggleDisabled}

@@ -29,7 +29,7 @@ void PressureSensor::loop() {
         int16_t reading = ads->readADC();
         reading = reading - _adc_floor;
         float pressure = reading * _pressure_step;
-        _pressure = 0.1f * pressure + 0.9f * _pressure;
+        _pressure = 0.05f * pressure + 0.95f * _pressure;
         _pressure = std::clamp(_pressure, 0.0f, _pressure_scale);
         ESP_LOGV(LOG_TAG, "ADC Reading: %d, Pressure Reading: %f, Pressure Step: %f, Floor: %d", reading, _pressure,
                  _pressure_step, _adc_floor);

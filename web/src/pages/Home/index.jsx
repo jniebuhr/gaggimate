@@ -61,7 +61,7 @@ export function Home() {
           </dl>
         </div>
         <div
-          className="rounded-lg border border-slate-200 bg-white p-6 sm:col-span-6 xl:col-span-3"
+          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-6 xl:col-span-3"
         >
           <dl>
             <dt className="text-2xl font-bold">{status.value.selectedProfile || '-'}</dt>

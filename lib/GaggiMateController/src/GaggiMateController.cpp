@@ -105,6 +105,8 @@ void GaggiMateController::detectBoard() {
         if (config.autodetectValue == boardId) {
             _config = config;
             ESP_LOGI(LOG_TAG, "Using Board: %s", _config.name.c_str());
+            pinMode(_config.pumpPin, OUTPUT);
+            digitalWrite(_config.pumpPin, !_config.pumpOn);
             return;
         }
     }

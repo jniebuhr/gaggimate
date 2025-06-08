@@ -7,3 +7,4 @@ pcb/**/*.kicad_sch_old
 node_modules/
 __pycache__
 data/
+.codebuddy

@@ -155,7 +155,10 @@ bool ProfileManager::saveProfile(Profile &profile) {
     return ok;
 }
 
-bool ProfileManager::deleteProfile(const String &uuid) { return _fs.remove(profilePath(uuid)); }
+bool ProfileManager::deleteProfile(const String &uuid) {
+    _settings.removeFavoritedProfile(uuid);
+    return _fs.remove(profilePath(uuid));
+}
 
 bool ProfileManager::profileExists(const String &uuid) { return _fs.exists(profilePath(uuid)); }
 
@@ -170,3 +173,13 @@ void ProfileManager::selectProfile(const String &uuid) {
 Profile ProfileManager::getSelectedProfile() const { return selectedProfile; }
 
 void ProfileManager::loadSelectedProfile(Profile &outProfile) { loadProfile(_settings.getSelectedProfile(), outProfile); }
+
+std::vector<String> ProfileManager::getFavoritedProfiles() {
+    std::vector<String> favoritedProfiles;
+    for (String profile : _settings.getFavoritedProfiles()) {
+        if (profileExists(profile)) {
+            favoritedProfiles.push_back(profile);
+        }
+    }
+    return favoritedProfiles;
+}

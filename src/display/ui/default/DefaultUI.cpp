@@ -158,7 +158,7 @@ void DefaultUI::changeScreen(lv_obj_t **screen, void (*target_init)()) {
 }
 
 void DefaultUI::onProfileSwitch() {
-    favoritedProfiles = controller->getSettings().getFavoritedProfiles();
+    favoritedProfiles = profileManager->getFavoritedProfiles();
     currentProfileIdx = 0;
     currentProfileId = favoritedProfiles[currentProfileIdx];
     currentProfileChoice = Profile{};
@@ -572,7 +572,7 @@ void DefaultUI::updateStatusScreen() const {
 
     const unsigned long processDuration = now - brewProcess->processStarted;
     const double processSecondsDouble = processDuration / 1000.0;
-    const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0 - 0.5);
+    const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0);
     const auto processSeconds = static_cast<int>(processSecondsDouble) % 60;
     lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "%2d:%02d", processMinutes, processSeconds);
 
@@ -580,7 +580,7 @@ void DefaultUI::updateStatusScreen() const {
         Target target = phase.getVolumetricTarget();
         lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume, LV_ANIM_OFF);
         lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value + 1);
-        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%dg", target.value);
+        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1fg", target.value);
     } else {
         const unsigned long progress = now - brewProcess->currentPhaseStarted;
         lv_bar_set_value(ui_StatusScreen_brewBar, progress / 1000, LV_ANIM_OFF);
@@ -591,11 +591,11 @@ void DefaultUI::updateStatusScreen() const {
     if (brewProcess->target == ProcessTarget::TIME) {
         const unsigned long targetDuration = brewProcess->getTotalDuration();
         const double targetSecondsDouble = targetDuration / 1000.0;
-        const auto targetMinutes = static_cast<int>(targetSecondsDouble / 60.0 - 0.5);
+        const auto targetMinutes = static_cast<int>(targetSecondsDouble / 60.0);
         const auto targetSeconds = static_cast<int>(targetSecondsDouble) % 60;
         lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%2d:%02d", targetMinutes, targetSeconds);
     } else {
-        lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%dg", brewProcess->getBrewVolume());
+        lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%.1fg", brewProcess->getBrewVolume());
     }
     lv_img_set_src(ui_StatusScreen_Image8, brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
 

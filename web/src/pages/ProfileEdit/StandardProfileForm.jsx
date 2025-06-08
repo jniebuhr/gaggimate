@@ -52,7 +52,7 @@ export function StandardProfileForm({ data, onChange, onSave, saving = true }) {
   return (
     <>
       <Card sm={12}>
-        <div className="p-6 pb-3 flex flex-col gap-2">
+        <div className="pb-3 flex flex-col gap-2 p-2 lg:p-6">
           <div>
             <label htmlFor="label" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
               Label
@@ -94,10 +94,10 @@ export function StandardProfileForm({ data, onChange, onSave, saving = true }) {
             </div>
           </div>
         </div>
-        <div className="p-6 pb-3">
+        <div className="p-2 lg:p-6 pb-3">
           <h3 className="text-lg font-bold">Phases</h3>
         </div>
-        <div className="p-6 flex flex-col">
+        <div className="p-2 lg:p-6 flex flex-col">
           {
             data.phases.map((value, index) => (
               <>
@@ -137,6 +137,13 @@ function Phase({ phase, onChange, onRemove }) {
     });
   };
   const onVolumetricTargetChange = (value) => {
+    if (value === 0) {
+      onChange({
+        ...phase,
+        targets: null
+      });
+      return;
+    }
     onChange({
       ...phase,
       targets: [
@@ -168,8 +175,8 @@ function Phase({ phase, onChange, onRemove }) {
   const volumetricTarget = targets.find(t => t.type === 'volumetric') || {};
   const targetWeight = volumetricTarget?.value || 0;
   return (
-    <div className="bg-gray-50 border-[#ccc] border p-4 rounded-md grid grid-cols-12 gap-4 dark:bg-slate-700 dark:border-slate-800">
-      <div className="md:col-span-4 flex flex-row items-center">
+    <div className="bg-gray-50 border-[#ccc] border p-2 lg:p-4 rounded-md grid grid-cols-12 gap-4 dark:bg-slate-700 dark:border-slate-800">
+      <div className="col-span-12 md:col-span-4 flex flex-row items-center">
         <select className="select-field" onChange={(e) => onFieldChange('phase', e.target.value)}>
           <option value="preinfusion" selected={phase.phase === 'preinfusion'}>
             Pre-Infusion
@@ -179,7 +186,7 @@ function Phase({ phase, onChange, onRemove }) {
           </option>
         </select>
       </div>
-      <div className="md:col-span-8 flex flex-row gap-2 align-center">
+      <div className="col-span-12 md:col-span-8 flex flex-row gap-2 align-center">
         <input
           className="input-field"
           placeholder="Name..."
@@ -189,12 +196,12 @@ function Phase({ phase, onChange, onRemove }) {
         <a
           href="javascript:void(0)"
           onClick={() => onRemove()}
-          className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
+          className="hidden md:flex group items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
         >
           <span className="fa fa-trash" />
         </a>
       </div>
-      <div className="md:col-span-6 flex flex-row gap-4">
+      <div className="col-span-6 flex flex-row gap-4">
         <label className="relative inline-flex items-center cursor-pointer">
           <input
             value="on"
@@ -208,7 +215,7 @@ function Phase({ phase, onChange, onRemove }) {
         </label>
         <span>Pump</span>
       </div>
-      <div className="md:col-span-6 flex flex-row gap-4">
+      <div className="col-span-6 flex flex-row gap-4">
         <label className="relative inline-flex items-center cursor-pointer">
           <input
             value="on"
@@ -265,6 +272,15 @@ function Phase({ phase, onChange, onRemove }) {
           </div>
         )
       }
+      <div className="block md:hidden col-span-12 mb-2">
+        <a
+          href="javascript:void(0)"
+          onClick={() => onRemove()}
+          className="group items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
+        >
+          Delete
+        </a>
+      </div>
     </div>
   );
 }

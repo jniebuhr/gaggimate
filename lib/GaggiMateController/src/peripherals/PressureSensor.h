@@ -4,7 +4,7 @@
 #include <ADS1X15.h>
 #include <Arduino.h>
 
-constexpr int PRESSURE_READ_INTERVAL_MS = 50;
+constexpr int PRESSURE_READ_INTERVAL_MS = 10;
 constexpr float ADC_STEP = 6.144f / 32767.0f;
 
 using pressure_callback_t = std::function<void(float)>;
