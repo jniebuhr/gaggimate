@@ -596,7 +596,7 @@ void DefaultUI::updateStatusScreen() const {
     if (brewProcess->isAdvancedPump()) {
         float pressure = brewProcess->getPumpTargetPressure();
         ESP_LOGI("DefaultUI", "%.2f", pressure);
-        const double percentage = 1.0 - static_cast<double>(pressure) / static_cast<double>(16);
+        const double percentage = 1.0 - static_cast<double>(pressure) / static_cast<double>(pressureScaling);
         int16_t angle = percentage * 1360.0 - 1360.0 / 2.0 + 900.0;
         lv_img_set_angle(uic_StatusScreen_dials_pressureTarget, angle);
     }
