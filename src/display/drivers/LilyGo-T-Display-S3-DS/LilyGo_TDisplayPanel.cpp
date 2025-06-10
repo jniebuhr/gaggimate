@@ -200,16 +200,10 @@ void LilyGo_TDisplayPanel::setRotation(uint8_t rotation) {
 }
 
 bool LilyGo_TDisplayPanel::initTouch() {
-    bool result = false;
-
-    log_i("=================initTouch====================");
-
     TouchDrvFT6X36 *tmp = new TouchDrvFT6X36();
     tmp->setPins(TP_RST, TP_INT);
 
-    result = tmp->begin(Wire, FT3168_DEVICE_ADDRESS, IIC_SDA, IIC_SCL);
-
-    if (result) {
+    if (tmp->begin(Wire, FT3168_DEVICE_ADDRESS, IIC_SDA, IIC_SCL)) {
         tmp->interruptTrigger();
         _touchDrv = tmp;
 
