@@ -16,6 +16,7 @@
 #error "Please turn on PSRAM to OPI !"
 #endif
 
+#include <SD_MMC.h>
 #include "CO5300.h"
 #include "pin_config.h"
 #include <TouchDrvInterface.hpp>

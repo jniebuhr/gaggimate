@@ -26,9 +26,21 @@ bool LilyGo_TDisplayPanel::begin(LilyGo_TDisplayPanel_Color_Order order) {
     return success;
 }
 
-bool LilyGo_TDisplayPanel::installSD() { return false; }
 
-void LilyGo_TDisplayPanel::uninstallSD() {}
+bool LilyGo_TDisplayPanel::installSD() {
+    pinMode(SD_CS, OUTPUT);
+    digitalWrite(SD_CS, HIGH);
+
+    SD_MMC.setPins(SD_SCLK, SD_MOSI, SD_MISO);
+
+    return SD_MMC.begin("/sdcard", true, false);
+}
+
+void LilyGo_TDisplayPanel::uninstallSD() {
+    SD_MMC.end();
+    digitalWrite(SD_CS, LOW);
+    pinMode(SD_CS, INPUT);
+}
 
 void LilyGo_TDisplayPanel::setBrightness(uint8_t level) {
     uint16_t brightness = level * 16;
