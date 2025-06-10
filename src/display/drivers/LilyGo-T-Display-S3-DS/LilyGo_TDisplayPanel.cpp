@@ -166,13 +166,9 @@ uint16_t LilyGo_TDisplayPanel::getBattVoltage(void) {
 
     const int number_of_samples = 20;
     uint32_t sum = 0;
-    uint16_t raw_buffer[number_of_samples] = {0};
     for (int i = 0; i < number_of_samples; i++) {
-        raw_buffer[i] = analogRead(BATTERY_VOLTAGE_ADC_DATA);
+        sum += analogRead(BATTERY_VOLTAGE_ADC_DATA);
         delay(2);
-    }
-    for (int i = 0; i < number_of_samples; i++) {
-        sum += raw_buffer[i];
     }
     sum = sum / number_of_samples;
 
