@@ -8,7 +8,7 @@ LilyGo_TDisplayPanel::LilyGo_TDisplayPanel() :
     displayBus(nullptr),
     display(nullptr),
     _touchDrv(nullptr),
-    _wakeupMethod(LILYGO_T_DISPLAY_WAKEUP_FORM_NONE),
+    _wakeupMethod(LILYGO_T_DISPLAY_WAKEUP_FROM_NONE),
     _sleepTimeUs(0),
     currentBrightness(0)
 {
@@ -56,19 +56,23 @@ LilyGo_TDisplayPanel_Type LilyGo_TDisplayPanel::getModel() { return LILYGO_T_TDI
 
 const char *LilyGo_TDisplayPanel::getTouchModelName() { return _touchDrv->getModelName(); }
 
-void LilyGo_TDisplayPanel::enableTouchWakeup() { _wakeupMethod = LILYGO_T_DISPLAY_WAKEUP_FORM_TOUCH; }
+void LilyGo_TDisplayPanel::enableTouchWakeup() { _wakeupMethod = LILYGO_T_DISPLAY_WAKEUP_FROM_TOUCH; }
 
-void LilyGo_TDisplayPanel::enableButtonWakeup() { _wakeupMethod = LILYGO_T_DISPLAY_WAKEUP_FORM_BUTTON; }
+void LilyGo_TDisplayPanel::enableButtonWakeup() { _wakeupMethod = LILYGO_T_DISPLAY_WAKEUP_FROM_BUTTON; }
 
 void LilyGo_TDisplayPanel::enableTimerWakeup(uint64_t time_in_us) {
-    _wakeupMethod = LILYGO_T_DISPLAY_WAKEUP_FORM_TIMER;
+    _wakeupMethod = LILYGO_T_DISPLAY_WAKEUP_FROM_TIMER;
     _sleepTimeUs = time_in_us;
 }
 
 void LilyGo_TDisplayPanel::sleep() {
+    if (LILYGO_T_DISPLAY_WAKEUP_FROM_NONE == _wakeupMethod) {
+        return;
+    }
+
     setBrightness(0);
 
-    if (LILYGO_T_DISPLAY_WAKEUP_FORM_TOUCH != _wakeupMethod) {
+    if (LILYGO_T_DISPLAY_WAKEUP_FROM_TOUCH != _wakeupMethod) {
         if (_touchDrv) {
             pinMode(TP_INT, OUTPUT);
             digitalWrite(TP_INT, LOW); // Before touch to set sleep, it is necessary to set INT to LOW
@@ -78,7 +82,7 @@ void LilyGo_TDisplayPanel::sleep() {
     }
 
     switch (_wakeupMethod) {
-    case LILYGO_T_DISPLAY_WAKEUP_FORM_TOUCH: {
+    case LILYGO_T_DISPLAY_WAKEUP_FROM_TOUCH: {
         int16_t x_array[1];
         int16_t y_array[1];
         uint8_t get_point = 1;
@@ -94,10 +98,10 @@ void LilyGo_TDisplayPanel::sleep() {
         delay(2000); // Wait for the interrupt level to stabilize
         esp_sleep_enable_ext1_wakeup(_BV(TP_INT), ESP_EXT1_WAKEUP_ANY_LOW);
     } break;
-    case LILYGO_T_DISPLAY_WAKEUP_FORM_BUTTON:
+    case LILYGO_T_DISPLAY_WAKEUP_FROM_BUTTON:
         esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
-    case LILYGO_T_DISPLAY_WAKEUP_FORM_TIMER:
+    case LILYGO_T_DISPLAY_WAKEUP_FROM_TIMER:
         esp_sleep_enable_timer_wakeup(_sleepTimeUs);
         break;
     default:
