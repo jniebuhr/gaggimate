@@ -81,18 +81,21 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
             <button
               onClick={onFavoriteToggle}
               disabled={favoriteToggleDisabled}
+              title="Show this profile on the Gaggimate display"
               className={`group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-100 hover:text-yellow-400 active:border-yellow-200 ${favoriteToggleClass}`}
             >
               <span className={`fa fa-star ${bookmarkClass}`} />
             </button>
             <a
               href={`/profiles/${data.id}`}
+              title="Edit this profile"
               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 dark:text-indigo-100 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200"
             >
               <span className="fa fa-pen" />
             </a>
             <a
               href="javascript:void(0)"
+              title="Export this profile (rename to .json to import it again)"
               onClick={() => onDownload()}
               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
             >
@@ -100,6 +103,7 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
             </a>
             <a
               href="javascript:void(0)"
+              title="Delete this profile"
               onClick={() => onDelete(data.id)}
               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
             >

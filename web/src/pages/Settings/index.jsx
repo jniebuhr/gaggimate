@@ -140,7 +140,7 @@ export function Settings() {
         <Card xs={12} lg={6} title="Pressure settings">
           <div>
             <label htmlFor="pressureScaling" className="block font-medium text-gray-700 dark:text-gray-400">
-              Pressure scaling factor
+              Pressure scaling factor <small>Value depends on the pressure sensor being used.</small>
             </label>
             <input
               id="pressureScaling"
