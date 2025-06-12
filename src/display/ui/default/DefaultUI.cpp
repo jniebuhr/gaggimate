@@ -116,7 +116,7 @@ void DefaultUI::init() {
     setupPanel();
     setupState();
     setupReactive();
-    xTaskCreate(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
+    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
 void DefaultUI::loop() {
