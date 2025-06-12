@@ -23,6 +23,7 @@ class Controller {
     void connect();
 
     void loop(); // Called in loop, encapsulating most of the functionality
+    void loopControl();
 
     // Getters and setters
     int getMode() const;
@@ -164,6 +165,9 @@ class Controller {
     bool volumetricAvailable = false;
     bool processCompleted = false;
     int error = 0;
+
+    xTaskHandle taskHandle;
+    static void loopTask(void *arg);
 };
 
 #endif // CONTROLLER_H

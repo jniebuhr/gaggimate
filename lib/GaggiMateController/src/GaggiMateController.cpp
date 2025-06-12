@@ -5,6 +5,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
+#include "../../../../../../../.platformio/packages/toolchain-riscv32-esp@8.4.0+2021r2-patch5/riscv32-esp-elf/include/c++/8.4.0/ratio"
+
 GaggiMateController::GaggiMateController() {
     configs.push_back(GM_STANDARD_REV_1X);
     configs.push_back(GM_STANDARD_REV_2X);
@@ -13,7 +15,7 @@ GaggiMateController::GaggiMateController() {
 }
 
 void GaggiMateController::setup() {
-    delay(2000);
+    delay(5000);
     detectBoard();
     detectAddon();
 
