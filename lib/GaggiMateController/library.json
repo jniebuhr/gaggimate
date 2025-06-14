@@ -19,7 +19,7 @@
     "h2zero/NimBLE-Arduino": "^1.4.0",
     "robtillaart/MAX31855": "^0.6.1",
     "bblanchon/ArduinoJson": "^7.2.1",
-    "PSM": "https://github.com/banoz/PSM.Library.git",
+    "PSM": "https://github.com/gaggimate/PSM.Library.git",
     "robtillaart/ADS1X15": "^0.5.2",
     "Wire": "*",
     "NayrodPID": "file://lib/NayrodPID"

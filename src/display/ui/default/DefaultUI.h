@@ -72,6 +72,7 @@ class DefaultUI {
     int grindVolume = 0;
     int pressureAvailable = 0;
     float pressure = 0.0f;
+    int pressureScaling = DEFAULT_PRESSURE_SCALING;
 
     int currentProfileIdx;
     String currentProfileId;

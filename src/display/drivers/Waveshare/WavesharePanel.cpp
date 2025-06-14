@@ -302,6 +302,7 @@ void WavesharePanel::initBUS() {
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
         .max_transfer_sz = 64, // ESP32 S3 max size is 64Kbytes
+        .intr_flags = ESP_INTR_FLAG_SHARED
     };
     spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
     spi_device_interface_config_t devcfg = {
@@ -882,6 +883,7 @@ void WavesharePanel::initBUS() {
                 ESP_PANEL_LCD_PIN_NUM_RGB_DATA14,
                 ESP_PANEL_LCD_PIN_NUM_RGB_DATA15,
             },
+        .disp_gpio_num = GPIO_NUM_NC,
         .on_frame_trans_done = NULL,
         .user_ctx = NULL,
         .flags =

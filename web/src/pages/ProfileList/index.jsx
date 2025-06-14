@@ -59,7 +59,9 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
       className="rounded-lg border flex flex-row items-center border-slate-200 bg-white p-4 sm:col-span-12 dark:bg-gray-800 dark:border-gray-600"
     >
       <div className="flex flex-row justify-center items-center lg:p-4 p-2">
-        <label className="flex items-center relative cursor-pointer">
+        <label className="flex items-center relative cursor-pointer"
+               tooltip="Select profile"
+               tooltip-position="right">
           <input checked={data.selected} type="checkbox"
                  onClick={() => onSelect(data.id)}
                  className="peer h-6 w-6 cursor-pointer transition-all appearance-none rounded-full bg-slate-100 dark:bg-slate-700 shadow hover:shadow-md border border-slate-300 checked:bg-green-600 checked:border-green-600"
@@ -81,27 +83,35 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
             <button
               onClick={onFavoriteToggle}
               disabled={favoriteToggleDisabled}
-              className={`group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-100 hover:text-yellow-400 active:border-yellow-200 ${favoriteToggleClass}`}
+              tooltip="Show/hide"
+              tooltip-position="left"
+              className={`group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-100 hover:text-yellow-400 active:border-yellow-200 ${favoriteToggleClass}`}
             >
               <span className={`fa fa-star ${bookmarkClass}`} />
             </button>
             <a
               href={`/profiles/${data.id}`}
-              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 dark:text-indigo-100 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200"
+              tooltip="Edit"
+              tooltip-position="left"
+              className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 dark:text-indigo-100 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200"
             >
               <span className="fa fa-pen" />
             </a>
             <a
               href="javascript:void(0)"
+              tooltip="Export"
+              tooltip-position="left"
               onClick={() => onDownload()}
-              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+              className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
             >
               <span className="fa fa-file-export" />
             </a>
             <a
               href="javascript:void(0)"
+              tooltip="Delete"
+              tooltip-position="left"
               onClick={() => onDelete(data.id)}
-              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
+              className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
             >
               <span className="fa fa-trash" />
             </a>

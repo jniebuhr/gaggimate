@@ -19,6 +19,7 @@ const modeMap = {
   1: 'Brew',
   2: 'Steam',
   3: 'Water',
+  4: 'Grind'
 };
 
 const status = computed(() => machine.value.status);
