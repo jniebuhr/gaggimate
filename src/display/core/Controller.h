@@ -46,7 +46,7 @@ class Controller {
 
     void setTargetGrindDuration(int duration);
 
-    void setTargetGrindVolume(int volume);
+    void setTargetGrindVolume(double volume);
 
     virtual int getCurrentTemp() const { return currentTemp; }
 

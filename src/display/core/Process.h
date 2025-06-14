@@ -224,14 +224,14 @@ class GrindProcess : public Process {
     ProcessTarget target;
     bool active = true;
     int time;
-    int grindVolume;
+    double grindVolume;
     double grindDelay;
     unsigned long started;
     unsigned long finished{};
     double currentVolume = 0;
     VolumetricRateCalculator *volumetricRateCalculator = nullptr;
 
-    explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, int volume = 0, double grindDelay = 0.0)
+    explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, double volume = 0, double grindDelay = 0.0)
         : target(target), time(time), grindVolume(volume), grindDelay(grindDelay),
           volumetricRateCalculator(new VolumetricRateCalculator(PREDICTIVE_TIME)) {
         started = millis();

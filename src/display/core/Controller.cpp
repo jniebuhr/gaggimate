@@ -326,8 +326,8 @@ void Controller::setTargetGrindDuration(int duration) {
     updateLastAction();
 }
 
-void Controller::setTargetGrindVolume(int volume) {
-    Event event = pluginManager->trigger("controller:grindVolume:change", "value", volume);
+void Controller::setTargetGrindVolume(double volume) {
+    Event event = pluginManager->trigger("controller:grindVolume:change", "value", static_cast<float>(volume));
     settings.setTargetGrindVolume(event.getInt("value"));
     updateLastAction();
 }
@@ -378,7 +378,7 @@ void Controller::lowerBrewTarget() {
 
 void Controller::raiseGrindTarget() {
     if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
-        int newTarget = settings.getTargetGrindVolume() + 1;
+        double newTarget = settings.getTargetGrindVolume() + 0.5;
         if (newTarget > BREW_MAX_VOLUMETRIC) {
             newTarget = BREW_MAX_VOLUMETRIC;
         }
@@ -394,7 +394,7 @@ void Controller::raiseGrindTarget() {
 
 void Controller::lowerGrindTarget() {
     if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
-        int newTarget = settings.getTargetGrindVolume() - 1;
+        double newTarget = settings.getTargetGrindVolume() - 0.5;
         if (newTarget < BREW_MIN_VOLUMETRIC) {
             newTarget = BREW_MIN_VOLUMETRIC;
         }

@@ -295,15 +295,13 @@ void WavesharePanel::initBUS() {
 
     ST7701_Reset();
 
-    spi_bus_config_t buscfg = {
-        .mosi_io_num = WS_BOARD_TFT_MOSI,
-        .miso_io_num = -1,
-        .sclk_io_num = WS_BOARD_TFT_SCLK,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = 64, // ESP32 S3 max size is 64Kbytes
-        .intr_flags = ESP_INTR_FLAG_SHARED
-    };
+    spi_bus_config_t buscfg = {.mosi_io_num = WS_BOARD_TFT_MOSI,
+                               .miso_io_num = -1,
+                               .sclk_io_num = WS_BOARD_TFT_SCLK,
+                               .quadwp_io_num = -1,
+                               .quadhd_io_num = -1,
+                               .max_transfer_sz = 64, // ESP32 S3 max size is 64Kbytes
+                               .intr_flags = ESP_INTR_FLAG_SHARED};
     spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
     spi_device_interface_config_t devcfg = {
         .command_bits = 1,
