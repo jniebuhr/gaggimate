@@ -51,6 +51,8 @@ void Controller::setup() {
     pluginManager->on("profiles:profile:select", [this](Event const &event) { this->handleProfileUpdate(); });
 
     ui->init();
+
+    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
 void Controller::onScreenReady() { screenReady = true; }
@@ -179,6 +181,7 @@ void Controller::loop() {
 
             ESP_LOGI("Controller", "setting pressure scale to %.2f\n", settings.getPressureScaling());
             setPressureScale();
+            clientController.sendPidSettings(settings.getPid());
 
             pluginManager->trigger("controller:ready");
         }
@@ -218,8 +221,6 @@ void Controller::loop() {
                 }
             }
         }
-        clientController.sendPidSettings(settings.getPid());
-        updateControl();
         lastProgress = now;
     }
 
@@ -227,6 +228,12 @@ void Controller::loop() {
         deactivateGrind();
     if (mode != MODE_STANDBY && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
+}
+
+void Controller::loopControl() {
+    if (initialized) {
+        updateControl();
+    }
 }
 
 bool Controller::isUpdating() const { return updating; }
@@ -252,7 +259,6 @@ void Controller::startProcess(Process *process) {
         return;
     processCompleted = false;
     this->currentProcess = process;
-    updateControl();
     updateLastAction();
 }
 
@@ -289,8 +295,6 @@ void Controller::setTargetTemp(int temperature) {
         break;
     default:;
     }
-    clientController.sendPidSettings(settings.getPid());
-    updateControl();
     updateLastAction();
 }
 
@@ -459,7 +463,6 @@ void Controller::deactivate() {
     if (lastProcess->getType() == MODE_GRIND) {
         pluginManager->trigger("controller:grind:end");
     }
-    updateControl();
     updateLastAction();
 }
 
@@ -595,4 +598,12 @@ void Controller::handleSteamButton(int steamButtonStatus) {
 void Controller::handleProfileUpdate() {
     pluginManager->trigger("boiler:targetTemperature:change", "value",
                            static_cast<int>(profileManager->getSelectedProfile().temperature));
+}
+
+void Controller::loopTask(void *arg) {
+    auto *controller = static_cast<Controller *>(arg);
+    while (true) {
+        controller->loopControl();
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
 }

@@ -64,6 +64,7 @@ bool NimBLEClientController::connectToServer() {
 
         delay(500); // Add a small delay to avoid busy-waiting
     }
+    client->updateConnParams(6, 8, 0, 400);
 
     ESP_LOGI(LOG_TAG, "Successfully connected to BLE server");
 

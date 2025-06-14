@@ -13,7 +13,7 @@ GaggiMateController::GaggiMateController() {
 }
 
 void GaggiMateController::setup() {
-    delay(2000);
+    delay(5000);
     detectBoard();
     detectAddon();
 
