@@ -11,6 +11,8 @@ public:
     
     void initClient();
     bool connectToServer();
+    
+    void sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure, float flow);
     void sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint);
     void sendAltControl(bool pinState);
     void sendPing();

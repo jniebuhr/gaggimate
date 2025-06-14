@@ -13,6 +13,10 @@ bool MockBLEClientController::connectToServer() {
     return true;
 }
 
+void MockBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure, float flow) {
+    delay(10);
+}
+
 void MockBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint) {
     delay(10);
 }
@@ -78,7 +82,7 @@ void MockBLEClientController::registerAutotuneResultCallback(const pid_control_c
 
 std::string MockBLEClientController::readInfo() const {
     delay(10);
-    static const std::string info = "{\"hw\":\"GaggiMate Standard 1.x\",\"v\":\"v1.4.4\",\"cp\":{\"ps\":true,\"dm\":true}}";
+    static const std::string info = "{\"hw\":\"GaggiMate Pro 1.x\",\"v\":\"v1.4.4+\",\"cp\":{\"ps\":true,\"dm\":true}}";
     return info;
 }
 
