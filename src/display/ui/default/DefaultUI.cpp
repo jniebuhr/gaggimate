@@ -39,7 +39,7 @@ void DefaultUI::init() {
         rerender = true;
     });
     pluginManager->on("controller:grindVolume:change", [=](Event const &event) {
-        grindVolume = event.getInt("value");
+        grindVolume = event.getFloat("value");
         rerender = true;
     });
     pluginManager->on("controller:grind:end", triggerRender);
@@ -406,7 +406,7 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
                           [=]() {
                               if (volumetricMode) {
-                                  lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%dg", grindVolume);
+                                  lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%.1fg", grindVolume);
                               } else {
                                   const double secondsDouble = grindDuration / 1000.0;
                                   const auto minutes = static_cast<int>(secondsDouble / 60.0 - 0.5);

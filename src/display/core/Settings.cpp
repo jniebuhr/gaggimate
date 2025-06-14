@@ -10,7 +10,7 @@ Settings::Settings() {
     targetWaterTemp = preferences.getInt("tw", 80);
     targetDuration = preferences.getInt("td", 25000);
     targetVolume = preferences.getInt("tv", 36);
-    targetGrindVolume = preferences.getInt("tgv", 18);
+    targetGrindVolume = preferences.getDouble("tgv", 18.0);
     targetGrindDuration = preferences.getInt("tgd", 25000);
     brewDelay = preferences.getDouble("del_br", 1000.0);
     grindDelay = preferences.getDouble("del_gd", 1000.0);
@@ -100,7 +100,7 @@ void Settings::setTargetVolume(int target_volume) {
     save();
 }
 
-void Settings::setTargetGrindVolume(int target_grind_volume) {
+void Settings::setTargetGrindVolume(double target_grind_volume) {
     targetGrindVolume = target_grind_volume;
     save();
 }
@@ -297,7 +297,7 @@ void Settings::doSave() {
     preferences.putInt("tw", targetWaterTemp);
     preferences.putInt("td", targetDuration);
     preferences.putInt("tv", targetVolume);
-    preferences.putInt("tgv", targetGrindVolume);
+    preferences.putDouble("tgv", targetGrindVolume);
     preferences.putInt("tgd", targetGrindDuration);
     preferences.putDouble("del_br", brewDelay);
     preferences.putDouble("del_gd", grindDelay);
