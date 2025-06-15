@@ -122,3 +122,7 @@ def onProfileLoad(event_struct):
 def onProfileSelect(event_struct):
     return
 
+
+def onFlush(event_struct):
+    return
+

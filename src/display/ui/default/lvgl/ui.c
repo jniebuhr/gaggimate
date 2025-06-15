@@ -378,6 +378,9 @@ void ui_event_BrewScreen_startButton(lv_event_t *e) {
     if (event_code == LV_EVENT_CLICKED) {
         onBrewStart(e);
     }
+    if (event_code == LV_EVENT_LONG_PRESSED) {
+        onFlush(e);
+    }
 }
 
 void ui_event_BrewScreen_timedButton(lv_event_t *e) {

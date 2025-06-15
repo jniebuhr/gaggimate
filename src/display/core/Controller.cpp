@@ -4,6 +4,7 @@
 #include <ctime>
 #include <display/config.h>
 #include <display/core/constants.h>
+#include <display/core/static_profiles.h>
 #include <display/core/zones.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
@@ -537,6 +538,15 @@ void Controller::onVolumetricMeasurement(double measurement) const {
     if (lastProcess != nullptr) {
         lastProcess->updateVolume(measurement);
     }
+}
+
+void Controller::onFlush() {
+    if (isActive()) {
+        return;
+    }
+    clear();
+    startProcess(new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay()));
+    pluginManager->trigger("controller:brew:start");
 }
 
 void Controller::handleBrewButton(int brewButtonStatus) {

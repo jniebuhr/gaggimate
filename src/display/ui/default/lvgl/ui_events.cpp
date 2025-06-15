@@ -82,3 +82,7 @@ void onNextProfile(lv_event_t *e) { controller.getUI()->onNextProfile(); }
 void onProfileLoad(lv_event_t *e) { controller.getUI()->onProfileSelect(); }
 
 void onProfileSelect(lv_event_t *e) { controller.getUI()->onProfileSwitch(); }
+
+void onFlush(lv_event_t *e) {
+    controller.onFlush();
+}

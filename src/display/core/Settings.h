@@ -58,6 +58,7 @@ class Settings {
     int getHomeAssistantPort() const { return homeAssistantPort; }
     bool isMomentaryButtons() const { return momentaryButtons; }
     String getTimezone() const { return timezone; }
+    bool isClock24hFormat() const { return clock24hFormat; }
     String getSelectedProfile() const { return selectedProfile; }
     bool isProfilesMigrated() const { return profilesMigrated; }
     std::vector<String> getFavoritedProfiles() const { return favoritedProfiles; }
@@ -99,6 +100,7 @@ class Settings {
     void setHomeAssistantPort(int homeAssistantPort);
     void setMomentaryButtons(bool momentary_buttons);
     void setTimezone(String timezone);
+    void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
     void setProfilesMigrated(bool profiles_migrated);
     void setFavoritedProfiles(std::vector<String> favorited_profiles);
@@ -143,6 +145,7 @@ class Settings {
     int homeAssistantPort = 1883;
     bool momentaryButtons = false;
     String timezone = DEFAULT_TIMEZONE;
+    bool clock24hFormat = true;
     String otaChannel = DEFAULT_OTA_CHANNEL;
     std::vector<String> favoritedProfiles;
 
