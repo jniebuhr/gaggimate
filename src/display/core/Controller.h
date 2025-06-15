@@ -17,49 +17,29 @@ class Controller {
   public:
     Controller() = default;
 
-    // Base methods called from sketch
     void setup();
-
     void connect();
-
-    void loop(); // Called in loop, encapsulating most of the functionality
+    void loop();
     void loopControl();
 
-    // Getters and setters
-    int getMode() const;
-
     void setMode(int newMode);
-
-    int getTargetTemp();
-
     void setTargetTemp(int temperature);
-
     void setPressureScale();
-
-    int getTargetDuration() const;
-
     void setTargetDuration(int duration);
-
     void setTargetVolume(int volume);
-
-    int getTargetGrindDuration() const;
-
     void setTargetGrindDuration(int duration);
-
     void setTargetGrindVolume(int volume);
 
+    int getMode() const;
+    int getTargetTemp();
+    int getTargetDuration() const;
+    int getTargetGrindDuration() const;
     virtual int getCurrentTemp() const { return currentTemp; }
-
     bool isActive() const;
-
     bool isGrindActive() const;
-
     bool isUpdating() const;
-
     bool isAutotuning() const;
-
     bool isReady() const;
-
     bool isVolumetricAvailable() const { return volumetricAvailable; }
 
     void autotune(int testTime, int samples);
@@ -74,42 +54,25 @@ class Controller {
 
     // Event callback methods
     void updateLastAction();
-
     void raiseTemp();
-
     void lowerTemp();
-
     void raiseBrewTarget();
-
     void lowerBrewTarget();
-
     void raiseGrindTarget();
-
     void lowerGrindTarget();
-
     void activate();
-
     void deactivate();
-
     void clear();
-
     void activateGrind();
-
     void deactivateGrind();
-
     void activateStandby();
-
     void deactivateStandby();
-
     void onOTAUpdate();
-
     void onScreenReady();
-
     void onTargetChange(ProcessTarget target);
-
     void onVolumetricMeasurement(double measurement) const;
-
     void setVolumetricAvailable(bool available) { volumetricAvailable = available; }
+    void onFlush();
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 

@@ -13617,31 +13617,31 @@
                   {
                     "nid": -2094117598,
                     "strtype": "IMGBUTTON/Image_pressed",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": 1755909524,
                     "strtype": "IMGBUTTON/Image_disabled",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": -261413535,
                     "strtype": "IMGBUTTON/Image_checked_released",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": -300058726,
                     "strtype": "IMGBUTTON/Image_checked_pressed",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": -1034059470,
                     "strtype": "IMGBUTTON/Image_checked_disabled",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
@@ -13750,6 +13750,71 @@
                           },
                           {
                             "nid": 1879927854,
+                            "strtype": "CALL FUNCTION/Dont_export_function",
+                            "strval": "False",
+                            "InheritedType": 2
+                          }
+                        ],
+                        "InheritedType": 10
+                      }
+                    ],
+                    "InheritedType": 4
+                  },
+                  {
+                    "disabled": false,
+                    "nid": 1000249,
+                    "strtype": "_event/EventHandler",
+                    "strval": "LONG_PRESSED",
+                    "childs": [
+                      {
+                        "nid": 1000250,
+                        "strtype": "_event/name",
+                        "strval": "onFlush",
+                        "InheritedType": 10
+                      },
+                      {
+                        "nid": 1000251,
+                        "strtype": "_event/condition_C",
+                        "strval": "",
+                        "InheritedType": 10
+                      },
+                      {
+                        "nid": 1000252,
+                        "strtype": "_event/condition_P",
+                        "strval": "",
+                        "InheritedType": 10
+                      },
+                      {
+                        "nid": 1000253,
+                        "strtype": "_event/action",
+                        "strval": "CALL FUNCTION",
+                        "childs": [
+                          {
+                            "nid": 1000254,
+                            "strtype": "CALL FUNCTION/Name",
+                            "strval": "CALL FUNCTION",
+                            "InheritedType": 10
+                          },
+                          {
+                            "nid": 1000255,
+                            "strtype": "CALL FUNCTION/Call",
+                            "strval": "<{Function_name}>( event_struct )",
+                            "InheritedType": 10
+                          },
+                          {
+                            "nid": 1000256,
+                            "strtype": "CALL FUNCTION/CallC",
+                            "strval": "<{Function_name}>( e );",
+                            "InheritedType": 10
+                          },
+                          {
+                            "nid": 1000257,
+                            "strtype": "CALL FUNCTION/Function_name",
+                            "strval": "onFlush",
+                            "InheritedType": 10
+                          },
+                          {
+                            "nid": 1000258,
                             "strtype": "CALL FUNCTION/Dont_export_function",
                             "strval": "False",
                             "InheritedType": 2
@@ -22085,31 +22150,31 @@
                   {
                     "nid": -1721122245,
                     "strtype": "IMGBUTTON/Image_pressed",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": 1688828786,
                     "strtype": "IMGBUTTON/Image_disabled",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": -533808198,
                     "strtype": "IMGBUTTON/Image_checked_released",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": 979689380,
                     "strtype": "IMGBUTTON/Image_checked_pressed",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
                     "nid": -882691280,
                     "strtype": "IMGBUTTON/Image_checked_disabled",
-                    "strval": "-",
+                    "strval": "",
                     "InheritedType": 5
                   },
                   {
@@ -41003,7 +41068,8 @@
                 "InheritedType": 11
               }
             ],
-            "saved_objtypeKey": "CONTAINER"
+            "saved_objtypeKey": "CONTAINER",
+            "tree_closed": true
           }
         ],
         "isPage": true,
@@ -47706,7 +47772,7 @@
     "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
     "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 349,
+    "backup_cnt": 350,
     "autosave_cnt": 0,
     "lvgl_version": "8.3.11",
     "callfuncsexport": "CPP_FILE",
@@ -47722,7 +47788,7 @@
     "drive_fatfs_path": "",
     "naming": "_Screen_Name",
     "naming_force_lowercase": false,
-    "nidcnt": 1000249,
+    "nidcnt": 1000259,
     "BitDepth": 16,
     "Name": "GaggiMate"
   }
