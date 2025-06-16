@@ -79,7 +79,13 @@ void GaggiMateController::setup() {
         ESP_LOGV(LOG_TAG, "Ping received, system is alive");
     });
     _ble.registerAutotuneCallback([this](int goal, int windowSize) { this->heater->autotune(goal, windowSize); });
-
+    _ble.registerTareCallback([this]() {
+        if (!_config.capabilites.dimming) {
+            return;
+        }
+        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        dimmedPump->tare();
+    });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }
 
@@ -140,8 +146,10 @@ void GaggiMateController::thermalRunawayShutdown() {
 
 void GaggiMateController::sendSensorData() {
     if (_config.capabilites.pressure) {
-        _ble.sendSensorData(this->thermocouple->read(), this->pressureSensor->getPressure());
+        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        _ble.sendSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getFlow());
+        _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
     } else {
-        _ble.sendSensorData(this->thermocouple->read(), 0.0f);
+        _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f);
     }
 }

@@ -26,6 +26,12 @@ void NimBLEClientController::scan() {
     pBLEScan->start(BLE_SCAN_DURATION_SECONDS, nullptr, false);
 }
 
+void NimBLEClientController::tare() {
+    if (volumetricTareChar != nullptr && client->isConnected()) {
+        volumetricTareChar->writeValue("1");
+    }
+}
+
 void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callback_t &callback) {
     remoteErrorCallback = callback;
 }
@@ -36,6 +42,10 @@ void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t
 
 void NimBLEClientController::registerAutotuneResultCallback(const pid_control_callback_t &callback) {
     autotuneResultCallback = callback;
+}
+
+void NimBLEClientController::registerVolumetricMeasurementCallback(const float_callback_t &callback) {
+    volumetricMeasurementCallback = callback;
 }
 
 std::string NimBLEClientController::readInfo() const {
@@ -83,6 +93,7 @@ bool NimBLEClientController::connectToServer() {
     pidControlChar = pRemoteService->getCharacteristic(NimBLEUUID(PID_CONTROL_CHAR_UUID));
     infoChar = pRemoteService->getCharacteristic(NimBLEUUID(INFO_UUID));
     pressureScaleChar = pRemoteService->getCharacteristic(NimBLEUUID(PRESSURE_SCALE_UUID));
+    volumetricTareChar = pRemoteService->getCharacteristic(NimBLEUUID(VOLUMETRIC_TARE_UUID));
 
     // Obtain the remote notify characteristic and subscribe to it
 
@@ -114,6 +125,13 @@ bool NimBLEClientController::connectToServer() {
     if (sensorChar != nullptr && sensorChar->canNotify()) {
         sensorChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                               std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
+    volumetricMeasurementChar = pRemoteService->getCharacteristic(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID));
+    if (volumetricMeasurementChar != nullptr && volumetricMeasurementChar->canNotify()) {
+        volumetricMeasurementChar->subscribe(true,
+                                             std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                                       std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
     delay(500);
@@ -227,10 +245,11 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         String data = String((char *)pData);
         float temperature = get_token(data, 0, ',').toFloat();
         float pressure = get_token(data, 1, ',').toFloat();
+        float flow = get_token(data, 2, ',').toFloat();
 
-        ESP_LOGV(LOG_TAG, "Received sensor data: temperature=%.1f, pressure=%.1f", temperature, pressure);
+        ESP_LOGV(LOG_TAG, "Received sensor data: temperature=%.1f, pressure=%.1f, flow=%.1f", temperature, pressure, flow);
         if (sensorCallback != nullptr) {
-            sensorCallback(temperature, pressure);
+            sensorCallback(temperature, pressure, flow);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
@@ -241,6 +260,13 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             float Ki = get_token(settings, 1, ',').toFloat();
             float Kd = get_token(settings, 2, ',').toFloat();
             autotuneResultCallback(Kp, Ki, Kd);
+        }
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
+        float value = atof((char *)pData);
+        ESP_LOGV(LOG_TAG, "Volumetric measurement: %.2f", value);
+        if (volumetricMeasurementCallback != nullptr) {
+            volumetricMeasurementCallback(value);
         }
     }
 }

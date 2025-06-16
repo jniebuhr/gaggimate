@@ -9,11 +9,12 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
   public:
     NimBLEServerController();
     void initServer(String infoString);
-    void sendSensorData(float temperature, float pressure);
+    void sendSensorData(float temperature, float pressure, float flow);
     void sendError(int errorCode);
     void sendBrewBtnState(bool brewButtonStatus);
     void sendSteamBtnState(bool steamButtonStatus);
     void sendAutotuneResult(float Kp, float Ki, float Kd);
+    void sendVolumetricMeasurement(float value);
     void registerOutputControlCallback(const simple_output_callback_t &callback);
     void registerAdvancedOutputControlCallback(const advanced_output_callback_t &callback);
     void registerAltControlCallback(const pin_control_callback_t &callback);
@@ -21,6 +22,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void registerPingCallback(const ping_callback_t &callback);
     void registerAutotuneCallback(const autotune_callback_t &callback);
     void registerPressureScaleCallback(const float_callback_t &callback);
+    void registerTareCallback(const void_callback_t &callback);
     void setInfo(String infoString);
 
   private:
@@ -38,6 +40,8 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     NimBLECharacteristic *steamBtnChar = nullptr;
     NimBLECharacteristic *infoChar = nullptr;
     NimBLECharacteristic *sensorChar = nullptr;
+    NimBLECharacteristic *volumetricMeasurementChar;
+    NimBLECharacteristic *volumetricTareChar;
 
     simple_output_callback_t outputControlCallback = nullptr;
     advanced_output_callback_t advancedControlCallback = nullptr;
@@ -46,6 +50,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     ping_callback_t pingCallback = nullptr;
     autotune_callback_t autotuneCallback = nullptr;
     float_callback_t pressureScaleCallback = nullptr;
+    void_callback_t tareCallback = nullptr;
 
     // BLEServerCallbacks overrides
     void onConnect(NimBLEServer *pServer) override;

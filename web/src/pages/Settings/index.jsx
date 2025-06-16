@@ -81,6 +81,28 @@ export function Settings() {
     [setFormData, formRef],
   );
 
+  const onExport = useCallback(() => {
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(formData, undefined, 2));
+    var downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", "settings.json");
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }, [formData]);
+
+  const onUpload = function(evt) {
+    if (evt.target.files.length) {
+      const file = evt.target.files[0];
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const data = JSON.parse(e.target.result);
+        setFormData(data);
+      }
+      reader.readAsText(file);
+    }
+  };
+
   if (isLoading) {
     return (
       <div class="flex flex-row py-16 items-center justify-center w-full">
@@ -91,21 +113,33 @@ export function Settings() {
 
   return (
     <form key="settings" ref={formRef} method="post" action="/api/settings" onSubmit={onSubmit} className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
-        <div className="sm:col-span-12">
-          <h2 className="text-2xl font-bold">Settings</h2>
+      <div className="sm:col-span-12 flex flex-row">
+        <h2 className="text-2xl font-bold flex-grow">Settings</h2>
+        <button tooltip="Export"
+                onClick={onExport}
+               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200">
+          <span className="fa fa-file-export" />
+        </button>
+        <div>
+          <label tooltip="Import" htmlFor="settingsImport"
+                 className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200 cursor-pointer">
+            <span className="fa fa-file-import" />
+          </label>
         </div>
-        <Card xs={12} lg={6} title="Temperature settings">
-            <div>
-              <label htmlFor="targetSteamTemp" className="block font-medium text-gray-700 dark:text-gray-400">
-                Default Steam Temperature (°C)
-              </label>
-              <input
-                id="targetSteamTemp"
-                name="targetSteamTemp"
-                type="number"
-                className="input-field"
-                placeholder="135"
-                value={formData.targetSteamTemp}
+        <input onChange={onUpload} className="hidden" id="settingsImport" type="file" accept=".json,application/json" />
+      </div>
+      <Card xs={12} lg={6} title="Temperature settings">
+        <div>
+          <label htmlFor="targetSteamTemp" className="block font-medium text-gray-700 dark:text-gray-400">
+            Default Steam Temperature (°C)
+          </label>
+          <input
+            id="targetSteamTemp"
+            name="targetSteamTemp"
+            type="number"
+            className="input-field"
+            placeholder="135"
+            value={formData.targetSteamTemp}
                 onChange={onChange('targetSteamTemp')}
               />
             </div>

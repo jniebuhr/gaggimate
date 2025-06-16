@@ -124,6 +124,9 @@ export function OTA() {
                 {formData.displayUpdateAvailable && <span className="font-bold">(Update available: {formData.latestVersion})</span> }
               </span>
             </div>
+            <div>
+              <span className="font-medium">Make sure to backup your profiles from the profile screen before updating the display.</span>
+            </div>
           </div>
         </div>
         <div className="col-span-12 flex flex-row">

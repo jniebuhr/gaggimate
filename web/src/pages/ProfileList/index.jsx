@@ -205,13 +205,37 @@ export function ProfileList() {
     await loadProfiles();
   }, [apiService, setLoading]);
 
+  const onExport = useCallback(() => {
+    const exportedProfiles = profiles.map(p => {
+      const ep = {
+        ...p
+      };
+      delete ep.id;
+      delete ep.selected;
+      delete ep.favorite;
+      return ep;
+    });
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportedProfiles, undefined, 2));
+    var downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", "profiles.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }, [profiles]);
+
   const onUpload = function(evt) {
     if (evt.target.files.length) {
       const file = evt.target.files[0];
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const profile = JSON.parse(e.target.result);
-        await apiService.request({ tp: 'req:profiles:save', profile });
+        let profiles = JSON.parse(e.target.result);
+        if (!Array.isArray(profiles)) {
+          profiles = [profiles];
+        }
+        for (const p of profiles) {
+          await apiService.request({ tp: 'req:profiles:save', profile: p });
+        }
         await loadProfiles();
       }
       reader.readAsText(file);
@@ -231,8 +255,13 @@ export function ProfileList() {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
         <div className="sm:col-span-12 flex flex-row">
           <h2 className="text-2xl font-bold flex-grow">Profiles</h2>
+          <button tooltip="Export"
+                  onClick={onExport}
+                  className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200">
+            <span className="fa fa-file-export" />
+          </button>
           <div>
-            <label title="Import" for="profileImport" className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200">
+            <label tooltip="Import" for="profileImport" className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200">
               <span className="fa fa-file-import" />
             </label>
           </div>

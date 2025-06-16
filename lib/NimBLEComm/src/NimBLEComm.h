@@ -19,6 +19,8 @@
 #define PRESSURE_SCALE_UUID "3aa65ab6-2dda-4c95-9cf3-58b2a0480623"
 #define SENSOR_DATA_UUID "62b69e72-ac19-4d4b-bd53-2edd65330c93"
 #define OUTPUT_CONTROL_UUID "77fbb08f-c29c-4f2e-8e1d-ed0a9afa5e1a"
+#define VOLUMETRIC_MEASUREMENT_UUID "b0080557-3865-4a9c-be37-492d77ee5951"
+#define VOLUMETRIC_TARE_UUID "a8bd52e0-77c3-412c-847c-4e802c3982f9"
 
 constexpr size_t ERROR_CODE_COMM_SEND = 1;
 constexpr size_t ERROR_CODE_COMM_RCV = 2;
@@ -33,13 +35,14 @@ using remote_err_callback_t = std::function<void(int errorCode)>;
 using autotune_callback_t = std::function<void(int testTime, int samples)>;
 using brew_callback_t = std::function<void(bool brewButtonStatus)>;
 using steam_callback_t = std::function<void(bool steamButtonStatus)>;
+using void_callback_t = std::function<void()>;
 
 // New combined callbacks
 using float_callback_t = std::function<void(float val)>;
 using simple_output_callback_t = std::function<void(bool valve, float pumpSetpoint, float boilerSetpoint)>;
 using advanced_output_callback_t =
     std::function<void(bool valve, float boilerSetpoint, bool pressureTarget, float pumpPressure, float pumpFlow)>;
-using sensor_read_callback_t = std::function<void(float temperature, float pressure)>;
+using sensor_read_callback_t = std::function<void(float temperature, float pressure, float flow)>;
 
 struct SystemCapabilities {
     bool dimming;

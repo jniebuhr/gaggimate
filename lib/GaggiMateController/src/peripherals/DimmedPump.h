@@ -1,10 +1,10 @@
 #ifndef DIMMEDPUMP_H
 #define DIMMEDPUMP_H
 #include "PSM.h"
+#include "PressureController.h"
+#include "PressureSensor.h"
 #include "Pump.h"
 #include <Arduino.h>
-
-#include "PressureSensor.h"
 
 class DimmedPump : public Pump {
   public:
@@ -17,6 +17,10 @@ class DimmedPump : public Pump {
     void loop() override;
     void setPower(float setpoint) override;
 
+    float getCoffeeVolume();
+    float getFlow();
+    void tare();
+
     void setFlowTarget(float targetFlow, float pressureLimit);
     void setPressureTarget(float targetPressure, float flowLimit);
     void stop();
@@ -27,16 +31,19 @@ class DimmedPump : public Pump {
     uint8_t _sense_pin;
     PSM _psm;
     PressureSensor *_pressureSensor;
+    PressureController _pressureController;
     xTaskHandle taskHandle;
 
     ControlMode _mode = ControlMode::POWER;
     float _power = 0.0f;
+    float _controllerPower = 0.0f;
     float _targetFlow = 0.0f;
     float _targetPressure = 0.0f;
     float _pressureLimit = 0.0f;
     float _flowLimit = 0.0f;
     float _currentPressure = 0.0f;
     float _lastPressure = 0.0f;
+    int _opvStatus = 1;
     int _cps = MAX_FREQ;
 
     float _opvPressure = 0.0f;

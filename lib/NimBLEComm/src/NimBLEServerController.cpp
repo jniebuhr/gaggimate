@@ -55,6 +55,10 @@ void NimBLEServerController::initServer(const String infoString) {
     pressureScaleChar = pService->createCharacteristic(PRESSURE_SCALE_UUID, NIMBLE_PROPERTY::WRITE);
     pressureScaleChar->setCallbacks(this); // Use this class as the callback handler
 
+    volumetricMeasurementChar = pService->createCharacteristic(VOLUMETRIC_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY);
+    volumetricTareChar = pService->createCharacteristic(VOLUMETRIC_TARE_UUID, NIMBLE_PROPERTY::WRITE);
+    volumetricTareChar->setCallbacks(this);
+
     pService->start();
 
     ota_dfu_ble.configure_OTA(pServer);
@@ -67,10 +71,10 @@ void NimBLEServerController::initServer(const String infoString) {
     ESP_LOGI(LOG_TAG, "BLE Server started, advertising...\n");
 }
 
-void NimBLEServerController::sendSensorData(float temperature, float pressure) {
+void NimBLEServerController::sendSensorData(float temperature, float pressure, float flow) {
     if (deviceConnected && sensorChar != nullptr) {
         char str[30];
-        snprintf(str, sizeof(str), "%.3f,%.3f", temperature, pressure);
+        snprintf(str, sizeof(str), "%.3f,%.3f,%.3f", temperature, pressure, flow);
         sensorChar->setValue(str);
         sensorChar->notify();
     }
@@ -115,6 +119,15 @@ void NimBLEServerController::sendAutotuneResult(float Kp, float Ki, float Kd) {
     }
 }
 
+void NimBLEServerController::sendVolumetricMeasurement(float value) {
+    if (deviceConnected) {
+        char data[8];
+        snprintf(data, sizeof(data), "%.2f", value);
+        volumetricMeasurementChar->setValue(data);
+        volumetricMeasurementChar->notify();
+    }
+}
+
 void NimBLEServerController::registerOutputControlCallback(const simple_output_callback_t &callback) {
     outputControlCallback = callback;
 }
@@ -127,6 +140,8 @@ void NimBLEServerController::registerAltControlCallback(const pin_control_callba
 void NimBLEServerController::registerPingCallback(const ping_callback_t &callback) { pingCallback = callback; }
 void NimBLEServerController::registerAutotuneCallback(const autotune_callback_t &callback) { autotuneCallback = callback; }
 void NimBLEServerController::registerPressureScaleCallback(const float_callback_t &callback) { pressureScaleCallback = callback; }
+
+void NimBLEServerController::registerTareCallback(const void_callback_t &callback) { tareCallback = callback; }
 
 void NimBLEServerController::setInfo(const String infoString) {
     this->infoString = infoString;
@@ -208,6 +223,11 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         ESP_LOGV(LOG_TAG, "Received pressure scale: %.2f", scale_value);
         if (pressureScaleCallback != nullptr) {
             pressureScaleCallback(scale_value);
+        }
+    } else if (pCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_TARE_UUID))) {
+        ESP_LOGV(LOG_TAG, "Received tare");
+        if (tareCallback != nullptr) {
+            tareCallback();
         }
     }
 }

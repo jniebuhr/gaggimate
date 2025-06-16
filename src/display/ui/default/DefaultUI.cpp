@@ -40,7 +40,7 @@ void DefaultUI::init() {
         rerender = true;
     });
     pluginManager->on("controller:grindVolume:change", [=](Event const &event) {
-        grindVolume = event.getInt("value");
+        grindVolume = event.getFloat("value");
         rerender = true;
     });
     pluginManager->on("controller:grind:end", triggerRender);
@@ -413,7 +413,7 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
                           [=]() {
                               if (volumetricMode) {
-                                  lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%dg", grindVolume);
+                                  lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%.1fg", grindVolume);
                               } else {
                                   const double secondsDouble = grindDuration / 1000.0;
                                   const auto minutes = static_cast<int>(secondsDouble / 60.0 - 0.5);
@@ -541,7 +541,7 @@ void DefaultUI::updateStandbyScreen() const {
             // allocate enough space for both 12h/24h time formats
             char time[9];
             Settings &settings = controller->getSettings();
-            const char* format = settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p";
+            const char *format = settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p";
             strftime(time, sizeof(time), format, &timeinfo);
             lv_label_set_text(ui_StandbyScreen_time, time);
             lv_obj_clear_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
@@ -638,7 +638,7 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
     lv_obj_set_x(tempText, pressureAvailable ? -50 : 0);
     lv_obj_set_y(tempText, pressureAvailable ? -205 : -180);
     lv_arc_set_bg_angles(tempGauge, 118, pressureAvailable ? 242 : 62);
-    lv_arc_set_range(pressureGauge,0,pressureScaling);
+    lv_arc_set_range(pressureGauge, 0, pressureScaling);
 }
 
 void DefaultUI::loopTask(void *arg) {

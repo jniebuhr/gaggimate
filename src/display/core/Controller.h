@@ -17,50 +17,33 @@ class Controller {
   public:
     Controller() = default;
 
-    // Base methods called from sketch
     void setup();
-
     void connect();
-
-    void loop(); // Called in loop, encapsulating most of the functionality
+    void loop();
     void loopControl();
 
-    // Getters and setters
-    int getMode() const;
-
     void setMode(int newMode);
-
-    int getTargetTemp();
-
     void setTargetTemp(int temperature);
-
     void setPressureScale();
-
-    int getTargetDuration() const;
-
     void setTargetDuration(int duration);
-
     void setTargetVolume(int volume);
-
-    int getTargetGrindDuration() const;
-
     void setTargetGrindDuration(int duration);
+    void setTargetGrindVolume(double volume);
 
-    void setTargetGrindVolume(int volume);
-
+    int getMode() const;
+    int getTargetTemp();
+    int getTargetDuration() const;
+    int getTargetGrindDuration() const;
     virtual int getCurrentTemp() const { return currentTemp; }
-
     bool isActive() const;
-
     bool isGrindActive() const;
-
     bool isUpdating() const;
-
     bool isAutotuning() const;
-
     bool isReady() const;
-
-    bool isVolumetricAvailable() const { return volumetricAvailable; }
+    bool isVolumetricAvailable() const;
+    virtual float getTargetPressure() const { return targetPressure; }
+    virtual float getCurrentPressure() const { return pressure; }
+    virtual float getCurrentFlow() const { return currentFlow; }
 
     void autotune(int testTime, int samples);
     void startProcess(Process *process);
@@ -74,42 +57,25 @@ class Controller {
 
     // Event callback methods
     void updateLastAction();
-
     void raiseTemp();
-
     void lowerTemp();
-
     void raiseBrewTarget();
-
     void lowerBrewTarget();
-
     void raiseGrindTarget();
-
     void lowerGrindTarget();
-
     void activate();
-
     void deactivate();
-
     void clear();
-
     void activateGrind();
-
     void deactivateGrind();
-
     void activateStandby();
-
     void deactivateStandby();
-
     void onOTAUpdate();
-
     void onScreenReady();
-
     void onTargetChange(ProcessTarget target);
-
     void onVolumetricMeasurement(double measurement) const;
-
-    void setVolumetricAvailable(bool available) { volumetricAvailable = available; }
+    void setVolumetricOverride(bool override) { volumetricOverride = override; }
+    void onFlush();
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
@@ -146,6 +112,8 @@ class Controller {
     int mode = MODE_BREW;
     int currentTemp = 0;
     float pressure = 0.0f;
+    float targetPressure = 0.0f;
+    float currentFlow = 0.0f;
 
     SystemInfo systemInfo{};
 
@@ -162,7 +130,7 @@ class Controller {
     bool isApConnection = false;
     bool initialized = false;
     bool screenReady = false;
-    bool volumetricAvailable = false;
+    bool volumetricOverride = false;
     bool processCompleted = false;
     int error = 0;
 

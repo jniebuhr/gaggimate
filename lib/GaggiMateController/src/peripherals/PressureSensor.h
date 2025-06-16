@@ -4,7 +4,7 @@
 #include <ADS1X15.h>
 #include <Arduino.h>
 
-constexpr int PRESSURE_READ_INTERVAL_MS = 10;
+constexpr int PRESSURE_READ_INTERVAL_MS = 30;
 constexpr float ADC_STEP = 6.144f / 32767.0f;
 
 using pressure_callback_t = std::function<void(float)>;
@@ -18,12 +18,14 @@ class PressureSensor {
     void setup();
     void loop();
     inline float getPressure() const { return _pressure; };
+    inline float getRawPressure() const { return _raw_pressure; };
     void setScale(float pressure_scale);
 
   private:
     uint8_t _sda_pin;
     uint8_t _scl_pin;
     float _pressure = 0.0f;
+    float _raw_pressure = 0.0f;
     float _pressure_adc_range;
     float _pressure_scale;
     float _pressure_step;

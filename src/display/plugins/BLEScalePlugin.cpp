@@ -59,7 +59,7 @@ void BLEScalePlugin::loop() {
 }
 
 void BLEScalePlugin::update() {
-    controller->setVolumetricAvailable(scale != nullptr && scale->isConnected());
+    controller->setVolumetricOverride(scale != nullptr && scale->isConnected());
     if (!active)
         return;
     if (scale != nullptr) {

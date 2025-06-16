@@ -90,6 +90,9 @@ export default class ApiService {
     const newStatus = {
       currentTemperature: message.ct,
       targetTemperature: message.tt,
+      currentPressure: message.pr,
+      targetPressure: message.pt,
+      currentFlow: message.fl,
       mode: message.m,
       selectedProfile: message.p,
       timestamp: new Date(),

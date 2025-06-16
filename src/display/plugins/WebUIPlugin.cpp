@@ -58,6 +58,9 @@ void WebUIPlugin::loop() {
         doc["tp"] = "evt:status";
         doc["ct"] = controller->getCurrentTemp();
         doc["tt"] = controller->getTargetTemp();
+        doc["pr"] = controller->getCurrentPressure();
+        doc["fl"] = controller->getCurrentFlow();
+        doc["pt"] = controller->getTargetPressure();
         doc["m"] = controller->getMode();
         doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;

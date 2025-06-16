@@ -27,7 +27,7 @@ class Settings {
     float getPressureScaling() const { return pressureScaling; }
     int getTargetDuration() const { return targetDuration; }
     int getTargetVolume() const { return targetVolume; }
-    int getTargetGrindVolume() const { return targetGrindVolume; }
+    double getTargetGrindVolume() const { return targetGrindVolume; }
     int getTargetGrindDuration() const { return targetGrindDuration; }
     int getStartupMode() const { return startupMode; }
     int getStandbyTimeout() const { return standbyTimeout; }
@@ -69,7 +69,7 @@ class Settings {
     void setPressureScaling(float pressure_scaling);
     void setTargetDuration(int target_duration);
     void setTargetVolume(int target_volume);
-    void setTargetGrindVolume(int target_grind_volume);
+    void setTargetGrindVolume(double target_grind_volume);
     void setTargetGrindDuration(int target_duration);
     void setStartupMode(int startup_mode);
     void setStandbyTimeout(int standby_timeout);
@@ -117,7 +117,7 @@ class Settings {
     int targetWaterTemp = 80;
     int temperatureOffset = DEFAULT_TEMPERATURE_OFFSET;
     float pressureScaling = DEFAULT_PRESSURE_SCALING;
-    int targetGrindVolume = 18;
+    double targetGrindVolume = 18;
     int targetGrindDuration = 25000;
     double brewDelay = 1000.0;
     double grindDelay = 1000.0;

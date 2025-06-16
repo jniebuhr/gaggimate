@@ -13,7 +13,7 @@
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 30 * 1000;
-constexpr size_t STATUS_PERIOD = 1000;
+constexpr size_t STATUS_PERIOD = 500;
 constexpr size_t DNS_PERIOD = 10;
 
 const String LOCAL_URL = "http://4.4.4.1/";

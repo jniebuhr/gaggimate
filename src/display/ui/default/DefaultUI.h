@@ -69,7 +69,7 @@ class DefaultUI {
     int targetDuration = 0;
     int targetVolume = 0;
     int grindDuration = 0;
-    int grindVolume = 0;
+    float grindVolume = 0.0f;
     int pressureAvailable = 0;
     float pressure = 0.0f;
     int pressureScaling = DEFAULT_PRESSURE_SCALING;

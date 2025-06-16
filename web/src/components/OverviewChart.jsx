@@ -14,17 +14,41 @@ function getChartData(data) {
       datasets: [
         {
           label: 'Current Temperature',
-          borderColor: '#F44336',
+          borderColor: '#F0561D',
           pointStyle: false,
           data: data.map((i, idx) => ({x: i.timestamp.toISOString(), y: i.currentTemperature}))
         },
         {
           label: 'Target Temperature',
           fill: true,
-          borderColor: '#03A9F4',
+          borderColor: '#731F00',
+          borderDash: [6, 6],
           pointStyle: false,
           data: data.map(((i, idx) => ({x: i.timestamp.toISOString(), y: i.targetTemperature})))
-        }
+        },
+        {
+          label: 'Current Pressure',
+          borderColor: '#0066CC',
+          pointStyle: false,
+          yAxisID: 'y1',
+          data: data.map((i, idx) => ({x: i.timestamp.toISOString(), y: i.currentPressure}))
+        },
+        {
+          label: 'Target Pressure',
+          fill: true,
+          borderColor: '#003366',
+          borderDash: [6, 6],
+          pointStyle: false,
+          yAxisID: 'y1',
+          data: data.map(((i, idx) => ({x: i.timestamp.toISOString(), y: i.targetPressure})))
+        },
+        {
+          label: 'Current Flow',
+          borderColor: '#63993D',
+          pointStyle: false,
+          yAxisID: 'y1',
+          data: data.map((i, idx) => ({x: i.timestamp.toISOString(), y: i.currentFlow}))
+        },
       ]
     },
     options: {
@@ -47,6 +71,15 @@ function getChartData(data) {
           max: 160,
           ticks: {
             callback: value => { return `${value} °C` }
+          }
+        },
+        y1: {
+          type: 'linear',
+          min: 0,
+          max: 16,
+          position: 'right',
+          ticks: {
+            callback: value => { return `${value} bar / g/s` }
           }
         },
         x: {
