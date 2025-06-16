@@ -1,7 +1,7 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include "MockBLEClientController.h"
+#include "NimBLEClientController.h"
 #include "NimBLEComm.h"
 #include "PluginManager.h"
 #include "Settings.h"
@@ -79,7 +79,7 @@ class Controller {
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    MockBLEClientController *getClientController() { return &clientController; }
+    NimBLEClientController *getClientController() { return &clientController; }
 
   private:
     // Initialization methods
@@ -103,7 +103,7 @@ class Controller {
 
     // Private Attributes
     DefaultUI *ui = nullptr;
-    MockBLEClientController clientController;
+    NimBLEClientController clientController;
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};

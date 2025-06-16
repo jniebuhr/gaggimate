@@ -191,16 +191,18 @@ void DefaultUI::onProfileSelect() {
 
 void DefaultUI::setupPanel() const {
     if (LilyGoTDisplayDriver::getInstance()->isCompatible()) {
-        Serial.println("LilyGoTDisplayDriver::init");
         LilyGoTDisplayDriver::getInstance()->init();
     } else if (LilyGoDriver::getInstance()->isCompatible()) {
-        Serial.println("LilyGoDriver::init");
         LilyGoDriver::getInstance()->init();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
-        Serial.println("WaveshareDriver::init");
         WaveshareDriver::getInstance()->init();
     }
-    
+    else {
+        Serial.println("No compatible display driver found");
+        delay(10000);
+        ESP.restart();
+    }
+
     ui_init();
 }
 

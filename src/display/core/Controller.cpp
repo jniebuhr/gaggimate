@@ -111,7 +111,7 @@ void Controller::setupBluetooth() {
 
 void Controller::setupInfos() {
     const std::string info = clientController.readInfo();
-    // printf("System info: %s\n", info.c_str());
+    printf("System info: %s\n", info.c_str());
     JsonDocument doc;
     DeserializationError err = deserializeJson(doc, info);
     if (err) {
