@@ -52,7 +52,7 @@ void Autotune::update(float temperature, float currentTime) {
 
             if (slopes.size() >= N) {
                 float slopeOfSlope = computeSlope(slopeTimes, slopes);
-                if (slopeOfSlope < 0 && !maxSlopeFound && temperature > values[0] + 7) {
+                if (slopeOfSlope < 0.1 && !maxSlopeFound && temperature > values[0] + 7) {
                     auto maxIt = std::max_element(slopes.begin(), slopes.end());
                     system_gain = *maxIt;
                     maxSlopeTime = slopeTimes[std::distance(slopes.begin(), maxIt)];
