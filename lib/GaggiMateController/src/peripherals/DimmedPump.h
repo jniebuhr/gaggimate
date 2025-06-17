@@ -25,6 +25,7 @@ class DimmedPump : public Pump {
     void setPressureTarget(float targetPressure, float flowLimit);
     void stop();
     void fullPower();
+    void setValveState(bool open);
 
   private:
     uint8_t _ssr_pin;
@@ -43,7 +44,7 @@ class DimmedPump : public Pump {
     float _flowLimit = 0.0f;
     float _currentPressure = 0.0f;
     float _lastPressure = 0.0f;
-    int _opvStatus = 1;
+    int _valveStatus = 0;
     int _cps = MAX_FREQ;
 
     float _opvPressure = 0.0f;

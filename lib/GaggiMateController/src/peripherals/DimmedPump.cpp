@@ -4,7 +4,7 @@
 
 DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor)
     : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 1, 4), _pressureSensor(pressure_sensor),
-      _pressureController(0.03f, &_targetPressure, &_currentPressure, &_controllerPower, &_opvStatus) {
+      _pressureController(0.03f, &_targetPressure, &_currentPressure, &_controllerPower, &_valveStatus) {
     _psm.set(0);
 }
 
@@ -24,6 +24,8 @@ void DimmedPump::loop() {
 void DimmedPump::setPower(float setpoint) {
     ESP_LOGV(LOG_TAG, "Setting power to %2f", setpoint);
     _mode = ControlMode::POWER;
+    _targetPressure = setpoint == 100 ? 20.0f : 0.0f;
+    _flowLimit = 0.0f;
     _power = std::clamp(setpoint, 0.0f, 100.0f);
     _psm.set(static_cast<int>(_power));
 }
@@ -97,3 +99,5 @@ void DimmedPump::setPressureTarget(float targetPressure, float flowLimit) {
     _targetPressure = targetPressure;
     _flowLimit = flowLimit;
 }
+
+void DimmedPump::setValveState(bool open) { _valveStatus = open; }

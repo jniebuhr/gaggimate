@@ -66,8 +66,8 @@ void Controller::connect() {
     lastPing = millis();
     pluginManager->trigger("controller:startup");
 
-    setupBluetooth();
     setupWifi();
+    setupBluetooth();
 
     updateLastAction();
     initialized = true;

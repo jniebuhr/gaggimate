@@ -57,6 +57,11 @@ void GaggiMateController::setup() {
         this->pump->setPower(pumpSetpoint);
         this->valve->set(valve);
         this->heater->setSetpoint(heaterSetpoint);
+        if (!_config.capabilites.dimming) {
+            return;
+        }
+        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        dimmedPump->setValveState(valve);
     });
     _ble.registerAdvancedOutputControlCallback(
         [this](bool valve, float heaterSetpoint, bool pressureTarget, float pressure, float flow) {
@@ -71,6 +76,7 @@ void GaggiMateController::setup() {
             } else {
                 dimmedPump->setFlowTarget(flow, pressure);
             }
+            dimmedPump->setValveState(valve);
         });
     _ble.registerAltControlCallback([this](bool state) { this->alt->set(state); });
     _ble.registerPidControlCallback([this](float Kp, float Ki, float Kd) { this->heater->setTunings(Kp, Ki, Kd); });

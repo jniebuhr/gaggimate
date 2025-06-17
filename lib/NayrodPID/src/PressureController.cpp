@@ -96,7 +96,7 @@ void PressureController::computePumpDutyCycle() {
 
     *_ctrlOutput = alpha * 100.0f;
 
-    ESP_LOGI("",
+    ESP_LOGV("",
              "Time:%1.2f(s)\tP_ref:%1.2f(bar)\tP_ref_filt:%1.2f(bar)\tP_filt:%1.2f(bar)\tCoffee:%1.2f(g)\tR:%1.2e(bar.s/m3)\tR "
              "score:%1.2f(0-1)",
              (float)millis() / 1000.0, *_rawSetpoint, this->getFilteredSetpoint(), this->getFilteredPressure(), coffeeOutput,
