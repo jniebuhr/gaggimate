@@ -15,7 +15,24 @@ LilyGo_TDisplayPanel::LilyGo_TDisplayPanel() :
     _rotation = 0;
 }
 
-LilyGo_TDisplayPanel::~LilyGo_TDisplayPanel() {}
+LilyGo_TDisplayPanel::~LilyGo_TDisplayPanel() {
+    uninstallSD();
+
+    if (_touchDrv) {
+        delete _touchDrv;
+        _touchDrv = nullptr;
+    }
+    if (display) {
+        display->setBrightness(0);
+        digitalWrite(LCD_EN, LOW);
+        delete display;
+        display = nullptr;
+    }
+    if (displayBus) {
+        delete displayBus;
+        displayBus = nullptr;
+    }
+}
 
 bool LilyGo_TDisplayPanel::begin(LilyGo_TDisplayPanel_Color_Order order) {
     bool success = true;
@@ -188,7 +205,9 @@ uint16_t LilyGo_TDisplayPanel::getBattVoltage(void) {
 }
 
 void LilyGo_TDisplayPanel::pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t *data) {
-    display->draw16bitRGBBitmap(x, y, data, width, height);
+    if (displayBus && display) {
+        display->draw16bitRGBBitmap(x, y, data, width, height);
+    }
 }
 
 void LilyGo_TDisplayPanel::setRotation(uint8_t rotation) {
