@@ -5,6 +5,7 @@
 #include <display/core/Process.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
+#include <display/drivers/LilyGoTDisplayDriver.h>
 #include <display/drivers/common/LV_Helper.h>
 #include <display/ui/utils/effects.h>
 
@@ -189,11 +190,19 @@ void DefaultUI::onProfileSelect() {
 }
 
 void DefaultUI::setupPanel() const {
-    if (LilyGoDriver::getInstance()->isCompatible()) {
+    if (LilyGoTDisplayDriver::getInstance()->isCompatible()) {
+        LilyGoTDisplayDriver::getInstance()->init();
+    } else if (LilyGoDriver::getInstance()->isCompatible()) {
         LilyGoDriver::getInstance()->init();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
         WaveshareDriver::getInstance()->init();
     }
+    else {
+        Serial.println("No compatible display driver found");
+        delay(10000);
+        ESP.restart();
+    }
+
     ui_init();
 }
 
