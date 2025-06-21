@@ -50,9 +50,9 @@ void PressureController::filterSensor() {
 void PressureController::tare() { coffeeOutput = 0.0; }
 
 void PressureController::update() {
-    if (*_OPVStatus == 1 && oldOPVStatus == 0)
+    if (*_ValveStatus == 1 && old_ValveStatus == 0)
         reset();
-    oldOPVStatus = *_OPVStatus;
+    old_ValveStatus = *_ValveStatus;
 
     filterSetpoint();
     filterSensor();
@@ -64,18 +64,27 @@ void PressureController::virtualScale() {
     float Qi_estim = *_ctrlOutput / 100.0f * _Q0 * (1 - _filteredPressureSensor / _Pmax);
     bool isPpressurized = this->R_estimator->update(Qi_estim, _filteredPressureSensor);
     bool isRconverged = R_estimator->getConvergenceScore() > 0.9f;
-    bool isPrefReached = fabsf(_r - _filteredPressureSensor) < 0.2;
-    if (isPpressurized && *_OPVStatus == 1 && isRconverged) {
-        flowPerSecond =
-            powf((_filteredPressureSensor + retroCoffeeOutputPressureHistory) / this->R_estimator->getEstimate() * 1e6f, 1 / 1.2);
-        coffeeOutput += flowPerSecond * _dt;
+    
+    if (isRconverged){// When R confidence will decrease we can rely on the old value saved
+        estimationHasConvergedOnce = true;
+        lastGoodEstimatedR = this->R_estimator->getEstimate();
+    }
+
+    if (isPpressurized && *_ValveStatus == 1 && estimationHasConvergedOnce ) {
+        flowPerSecond = powf(_filteredPressureSensor /lastGoodEstimatedR  * 1e6f, 1 / 1.2); // Instanteneous flow rate
+        float memorizedFlow = 0.0f;
+        if(retroCoffeeOutputPressureHistory!=0){ // If statement to save up on computation time of pow() function
+            // To determine how much coffee has been poured while R wasn't converged
+             memorizedFlow = powf(retroCoffeeOutputPressureHistory /lastGoodEstimatedR  * 1e6f, 1 / 1.2); 
+        }
+        coffeeOutput += (flowPerSecond + memorizedFlow) * _dt;
         retroCoffeeOutputPressureHistory = 0.0f;
-    } else {
-        flowPerSecond = 0.0f;
-        if (isPrefReached)
+        memorizedFlow = 0.0f;
+    } else if(*_ValveStatus == 1){
+        // Shot starts: don't know the puck resitance yet so we just memorise the pressure history to compute the coffee output later
+        // Pressure has drop below threshold during shot: Memorise the small pressure level ... not so important
             retroCoffeeOutputPressureHistory += _filteredPressureSensor;
     }
-    // ESP_LOGI("","%1.2e",this->R_estimator->getEstimate());
 }
 
 void PressureController::computePumpDutyCycle() {
@@ -124,7 +133,7 @@ void PressureController::computePumpDutyCycle() {
     // Integrator
      _errorInteg += error * _dt;
     float iterm = Ki * _errorInteg;
-    alpha = _Co  / Qa * (dP_ref + P/R - _lambda * error*0  - K * sat_s  ) - iterm;
+    alpha = _Co  / Qa * (- _lambda * error*0  - K * sat_s  ) - iterm;
     // Antiwindup
     if ((sign(error) == -sign(alpha)) && (fabs(alpha) > 1.0f)) {
         _errorInteg -= error * _dt;
@@ -142,4 +151,5 @@ void PressureController::reset() {
     initSetpointFilter();
     _errorInteg = 0.0f;
     retroCoffeeOutputPressureHistory = 0;
+    estimationHasConvergedOnce = false;
 }

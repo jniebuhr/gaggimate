@@ -67,6 +67,8 @@ class PressureController {
     float flowPerSecond = 0.0f;
     float coffeeOutput = 0.0f;
     float retroCoffeeOutputPressureHistory = 0.0f;
+    bool estimationHasConvergedOnce = false;
+    float lastGoodEstimatedR = 0.0f;
 
     SimpleKalmanFilter *pressureKF;
     RLSFilter *R_estimator;
