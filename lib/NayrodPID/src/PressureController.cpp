@@ -6,11 +6,11 @@
 inline float sign(float x) { return (x > 0.0f) - (x < 0.0f); }
 
 PressureController::PressureController(float dt, float *rawSetpoint, float *sensorOutput, float *controllerOutput,
-                                       int *OPVStatus) {
+                                       int *ValveStatus) {
     this->_rawSetpoint = rawSetpoint;
     this->_rawPressure = sensorOutput;
     this->_ctrlOutput = controllerOutput;
-    this->_OPVStatus = OPVStatus;
+    this->_ValveStatus = ValveStatus;
     this->_dt = dt;
 
     this->pressureKF = new SimpleKalmanFilter(0.1f, 10.0f, powf(4 * _dt, 2));

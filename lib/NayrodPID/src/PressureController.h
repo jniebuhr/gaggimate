@@ -8,7 +8,7 @@ static constexpr float M_PI = 3.14159265358979323846f;
 #include "SimpleKalmanFilter.h"
 class PressureController {
   public:
-    PressureController(float dt, float *rawSetpoint, float *sensorOutput, float *controllerOutput, int *OPVStatus);
+    PressureController(float dt, float *rawSetpoint, float *sensorOutput, float *controllerOutput, int *valveStatus);
     void filterSetpoint();
     void initSetpointFilter(float val =0.0f);
     void setupSetpointFilter(float freq, float damping);
@@ -34,8 +34,8 @@ class PressureController {
     float *_rawSetpoint = nullptr; // pointer to the Pressure profile current setpoint
     float *_rawPressure = nullptr; // pointer to the pressure measurement ,raw output from sensor
     float *_ctrlOutput = nullptr;  // pointer to controller output value of power ratio 0-100%
-    int *_OPVStatus = nullptr;     // pointer to OPV status regarding group head canal open/closed
-    int oldOPVStatus = 0;
+    int *_ValveStatus = nullptr;     // pointer to OPV status regarding group head canal open/closed
+    int old_ValveStatus = 0;
     float _filteredPressureSensor = 0.0f;
     float _filtfreqHz = 1.0f; // Setpoint filter cuttoff frequency
     float _filtxi = 1.2f;     // Setpoint filter damping ratio
