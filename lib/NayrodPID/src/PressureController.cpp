@@ -133,7 +133,8 @@ void PressureController::computePumpDutyCycle() {
     // Integrator
      _errorInteg += error * _dt;
     float iterm = Ki * _errorInteg;
-    alpha = _Co  / Qa * (- _lambda * error*0  - K * sat_s  ) - iterm;
+    alpha = _Co  / Qa * (- _lambda * error  - K * sat_s  ) - iterm;
+
     // Antiwindup
     if ((sign(error) == -sign(alpha)) && (fabs(alpha) > 1.0f)) {
         _errorInteg -= error * _dt;

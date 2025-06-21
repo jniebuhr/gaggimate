@@ -55,7 +55,7 @@ class PressureController {
     float _lambda = 3;  // Convergence gain 
     float _epsilon = 2.0f;  // Limite band
     float _rho = _K * 0.0f; // Uncertainty
-    float _Ki = 0.02 ;  // dt/tau
+    float _Ki = 0.05 ;  // dt/tau
     float _integLimit = 0.8f;
 
     float _P_previous = 0.0f;
