@@ -49,9 +49,12 @@ void Max31855Thermocouple::loop() {
 }
 
 [[noreturn]] void Max31855Thermocouple::monitorTask(void *arg) {
+    TickType_t lastWake = xTaskGetTickCount();
     auto *thermocouple = static_cast<Max31855Thermocouple *>(arg);
     while (true) {
         thermocouple->loop();
-        vTaskDelay(MAX31855_UPDATE_INTERVAL / portTICK_PERIOD_MS);
+        // vTaskDelay(MAX31855_UPDATE_INTERVAL / portTICK_PERIOD_MS);
+        // ESP_LOGI("SENSOR T°C","%1.3f",micros()/1000.0f);
+        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(MAX31855_UPDATE_INTERVAL));
     }
 }

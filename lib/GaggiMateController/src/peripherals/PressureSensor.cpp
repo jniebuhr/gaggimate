@@ -45,9 +45,12 @@ void PressureSensor::setScale(float pressure_scale) {
 }
 
 [[noreturn]] void PressureSensor::loopTask(void *arg) {
+    TickType_t lastWake = xTaskGetTickCount();
     auto *sensor = static_cast<PressureSensor *>(arg);
     while (true) {
         sensor->loop();
-        vTaskDelay(PRESSURE_READ_INTERVAL_MS / portTICK_PERIOD_MS);
+        // vTaskDelay(PRESSURE_READ_INTERVAL_MS / portTICK_PERIOD_MS);
+        // ESP_LOGI("SENSOR PRESS","%1.3f",micros()/1000.0f);
+        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(PRESSURE_READ_INTERVAL_MS));
     }
 }
