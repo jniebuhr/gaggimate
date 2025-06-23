@@ -389,6 +389,55 @@ export function Settings() {
             />
           </div>
         </Card>
+        <Card xs={12} lg={6} title="Display settings">
+          <div>
+            <label htmlFor="mainBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
+              Main Brightness (1-16)
+            </label>
+            <input
+              id="mainBrightness"
+              name="mainBrightness"
+              type="number"
+              className="input-field"
+              placeholder="16"
+              min="1"
+              max="16"
+              value={formData.mainBrightness}
+              onChange={onChange('mainBrightness')}
+            />
+          </div>
+          <div>
+            <label htmlFor="standbyBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
+              Standby Brightness (1-16)
+            </label>
+            <input
+              id="standbyBrightness"
+              name="standbyBrightness"
+              type="number"
+              className="input-field"
+              placeholder="8"
+              min="1"
+              max="16"
+              value={formData.standbyBrightness}
+              onChange={onChange('standbyBrightness')}
+            />
+          </div>
+          <div>
+            <label htmlFor="standbyBrightnessTimeout" className="block font-medium text-gray-700 dark:text-gray-400">
+              Standby Brightness Timeout (seconds)
+            </label>
+            <input
+              id="standbyBrightnessTimeout"
+              name="standbyBrightnessTimeout"
+              type="number"
+              className="input-field"
+              placeholder="60"
+              min="1"
+              value={formData.standbyBrightnessTimeout}
+              onChange={onChange('standbyBrightnessTimeout')}
+            />
+          </div>
+        </Card>
         <Card xs={12} title="Plugins">
           <div className="flex flex-col rounded-lg divide-y divide-[#ccc] border-[#ccc] dark:border-gray-600 dark:divide-gray-600 border">
             <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
