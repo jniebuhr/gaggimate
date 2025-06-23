@@ -5,6 +5,7 @@
 #include <display/core/ProfileManager.h>
 #include <display/core/constants.h>
 #include <display/models/profile.h>
+#include <display/drivers/Driver.h>
 
 #include "./lvgl/ui.h"
 
@@ -30,9 +31,14 @@ class DefaultUI {
     void onNextProfile();
     void onPreviousProfile();
     void onProfileSelect();
+    void setBrightness(int brightness) {
+        if (panelDriver) {
+            panelDriver->setBrightness(brightness);
+        }
+    };
 
   private:
-    void setupPanel() const;
+    void setupPanel();
     void setupState();
     void setupReactive();
 
@@ -43,6 +49,7 @@ class DefaultUI {
 
     void adjustDials(lv_obj_t *dials);
 
+    Driver *panelDriver = nullptr;
     Controller *controller;
     PluginManager *pluginManager;
     ProfileManager *profileManager;
@@ -83,6 +90,9 @@ class DefaultUI {
     lv_obj_t **targetScreen = &ui_InitScreen;
     lv_obj_t *currentScreen = ui_InitScreen;
     void (*targetScreenInit)(void) = &ui_InitScreen_screen_init;
+
+    // Standby brightness control
+    unsigned long standbyEnterTime = 0;
 
     xTaskHandle taskHandle;
     static void loopTask(void *arg);

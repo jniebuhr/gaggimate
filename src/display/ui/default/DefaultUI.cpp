@@ -147,6 +147,14 @@ void DefaultUI::loop() {
         effect_mgr.evaluate_all();
     }
 
+    // Check for standby brightness timer
+    if (lv_scr_act() == ui_StandbyScreen && standbyEnterTime > 0) {
+        const Settings &settings = controller->getSettings();
+        if (now - standbyEnterTime >= settings.getStandbyBrightnessTimeout()) {
+            setBrightness(settings.getStandbyBrightness());
+        }
+    }
+
     lv_task_handler();
 }
 
@@ -188,13 +196,17 @@ void DefaultUI::onProfileSelect() {
     changeScreen(&ui_BrewScreen, ui_BrewScreen_screen_init);
 }
 
-void DefaultUI::setupPanel() const {
+void DefaultUI::setupPanel() {
     if (LilyGoDriver::getInstance()->isCompatible()) {
         LilyGoDriver::getInstance()->init();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
-        WaveshareDriver::getInstance()->init();
+        panelDriver = WaveshareDriver::getInstance();
     }
     ui_init();
+    
+    // Set initial brightness based on settings
+    const Settings &settings = controller->getSettings();
+    setBrightness(settings.getMainBrightness());
 }
 
 void DefaultUI::setupState() {
@@ -520,7 +532,17 @@ void DefaultUI::setupReactive() {
 }
 
 void DefaultUI::handleScreenChange() {
-    if (lv_obj_t *current = lv_scr_act(); current != *targetScreen) {
+    lv_obj_t *current = lv_scr_act(); 
+
+    if (current != *targetScreen) {
+        if (*targetScreen == ui_StandbyScreen) {
+            standbyEnterTime = millis();
+        }
+        else if (current == ui_StandbyScreen) {
+            const Settings &settings = controller->getSettings();
+            setBrightness(settings.getMainBrightness());
+        }
+        
         _ui_screen_change(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0, targetScreenInit);
         _ui_screen_delete(&current);
         rerender = true;
