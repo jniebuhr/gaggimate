@@ -24,7 +24,19 @@ export function Settings() {
   const formRef = useRef();
 
   useEffect(() => {
-    setFormData(fetchedSettings || {});
+    if (fetchedSettings) {
+      // Initialize standbyDisplayEnabled based on standby brightness value
+      // but preserve it if it already exists in the fetched data
+      const settingsWithToggle = {
+        ...fetchedSettings,
+        standbyDisplayEnabled: fetchedSettings.standbyDisplayEnabled !== undefined 
+          ? fetchedSettings.standbyDisplayEnabled 
+          : fetchedSettings.standbyBrightness > 0
+      };
+      setFormData(settingsWithToggle);
+    } else {
+      setFormData({});
+    }
   }, [fetchedSettings]);
 
   const onChange = (key) => {
@@ -54,6 +66,19 @@ export function Settings() {
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
       }
+      if (key === 'standbyDisplayEnabled') {
+        value = !formData.standbyDisplayEnabled;
+        // Set standby brightness to 0 when toggle is off
+        const newFormData = {
+          ...formData,
+          [key]: value,
+        };
+        if (!value) {
+          newFormData.standbyBrightness = 0;
+        }
+        setFormData(newFormData);
+        return;
+      }
       setFormData({
         ...formData,
         [key]: value,
@@ -66,19 +91,33 @@ export function Settings() {
       e.preventDefault();
       setSubmitting(true);
       const form = formRef.current;
-      const formData = new FormData(form);
+      const formDataToSubmit = new FormData(form);
+      
+      // Ensure standbyBrightness is included even when the field is disabled
+      if (!formData.standbyDisplayEnabled) {
+        formDataToSubmit.set('standbyBrightness', '0');
+      }
+      
       if (restart) {
-        formData.append('restart', '1');
+        formDataToSubmit.append('restart', '1');
       }
       const response = await fetch(form.action, {
         method: 'post',
-        body: formData,
+        body: formDataToSubmit,
       });
       const data = await response.json();
-      setFormData(data);
+      
+      // Only preserve standbyDisplayEnabled if brightness is greater than 0
+      // If brightness is 0, let the useEffect recalculate it based on the saved value
+      const updatedData = {
+        ...data,
+        standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false
+      };
+      
+      setFormData(updatedData);
       setSubmitting(false);
     },
-    [setFormData, formRef],
+    [setFormData, formRef, formData],
   );
 
   const onExport = useCallback(() => {
@@ -406,6 +445,27 @@ export function Settings() {
               onChange={onChange('mainBrightness')}
             />
           </div>
+          
+          <div>
+            <b>Standby Display</b>
+          </div>
+          <div className="flex flex-row gap-4">
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                id="standbyDisplayEnabled"
+                name="standbyDisplayEnabled"
+                value="standbyDisplayEnabled"
+                type="checkbox"
+                className="sr-only peer"
+                checked={formData.standbyDisplayEnabled}
+                onChange={onChange('standbyDisplayEnabled')}
+              />
+              <div
+                className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+            <p>Enable standby display</p>
+          </div>
+          
           <div>
             <label htmlFor="standbyBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
               Standby Brightness (0-16)
@@ -420,6 +480,7 @@ export function Settings() {
               max="16"
               value={formData.standbyBrightness}
               onChange={onChange('standbyBrightness')}
+              disabled={!formData.standbyDisplayEnabled}
             />
           </div>
           <div>
