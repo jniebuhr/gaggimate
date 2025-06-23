@@ -198,10 +198,12 @@ void DefaultUI::onProfileSelect() {
 
 void DefaultUI::setupPanel() {
     if (LilyGoDriver::getInstance()->isCompatible()) {
-        LilyGoDriver::getInstance()->init();
+        panelDriver = LilyGoDriver::getInstance();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
         panelDriver = WaveshareDriver::getInstance();
     }
+
+    panelDriver->init();
     ui_init();
     
     // Set initial brightness based on settings
