@@ -408,7 +408,7 @@ export function Settings() {
           </div>
           <div>
             <label htmlFor="standbyBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
-              Standby Brightness (1-16)
+              Standby Brightness (0-16)
             </label>
             <input
               id="standbyBrightness"
@@ -416,7 +416,7 @@ export function Settings() {
               type="number"
               className="input-field"
               placeholder="8"
-              min="1"
+              min="0"
               max="16"
               value={formData.standbyBrightness}
               onChange={onChange('standbyBrightness')}
