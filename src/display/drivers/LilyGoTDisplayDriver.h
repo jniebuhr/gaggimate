@@ -7,6 +7,9 @@ class LilyGoTDisplayDriver : public Driver {
   public:
     bool isCompatible() override;
     void init() override;
+    void setBrightness(int brightness) {
+        panel.setBrightness(brightness);
+    };
 
     static LilyGoTDisplayDriver *getInstance() {
         if (instance == nullptr) {

@@ -68,12 +68,12 @@ void LilyGo_TDisplayPanel::setBrightness(uint8_t level) {
     if (brightness > this->currentBrightness) {
         for (int i = this->currentBrightness; i <= brightness; i++) {
             display->setBrightness(i);
-            delay(3);
+            delay(1);
         }
     } else {
         for (int i = this->currentBrightness; i >= brightness; i--) {
             display->setBrightness(i);
-            delay(3);
+            delay(1);
         }
     }
     this->currentBrightness = brightness;
