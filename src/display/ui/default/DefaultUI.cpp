@@ -146,15 +146,7 @@ void DefaultUI::loop() {
             updateStatusScreen();
         effect_mgr.evaluate_all();
     }
-
-    // Check for standby brightness timer
-    if (lv_scr_act() == ui_StandbyScreen && standbyEnterTime > 0) {
-        const Settings &settings = controller->getSettings();
-        if (now - standbyEnterTime >= settings.getStandbyBrightnessTimeout()) {
-            setBrightness(settings.getStandbyBrightness());
-        }
-    }
-
+    
     lv_task_handler();
 }
 
@@ -551,7 +543,15 @@ void DefaultUI::handleScreenChange() {
     }
 }
 
-void DefaultUI::updateStandbyScreen() const {
+void DefaultUI::updateStandbyScreen() {
+    if (standbyEnterTime > 0) {
+        const Settings &settings = controller->getSettings();
+        const unsigned long now = millis();
+        if (now - standbyEnterTime >= settings.getStandbyBrightnessTimeout()) {
+            setBrightness(settings.getStandbyBrightness());
+        }
+    }
+
     if (!apActive && WiFi.status() == WL_CONNECTED) {
         tm timeinfo;
         if (getLocalTime(&timeinfo, 50)) {

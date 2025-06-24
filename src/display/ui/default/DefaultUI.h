@@ -44,7 +44,7 @@ class DefaultUI {
 
     void handleScreenChange();
 
-    void updateStandbyScreen() const;
+    void updateStandbyScreen();
     void updateStatusScreen() const;
 
     void adjustDials(lv_obj_t *dials);
