@@ -44,9 +44,7 @@ void DimmedPump::loopTask(void *arg) {
     TickType_t lastWake = xTaskGetTickCount();
     while (true) {
         pump->loop();
-        // vTaskDelay(30 / portTICK_PERIOD_MS);
-        // ESP_LOGI("DIMMER","%1.3f",micros()/1000.0f);
-        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(30));
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(30));
     }
 }
 
@@ -55,7 +53,6 @@ void DimmedPump::updatePower() {
     switch (_mode) {
     case ControlMode::PRESSURE:
         _power = calculatePowerForPressure(_targetPressure, _currentPressure, _flowLimit);
-        // ESP_LOGI("DimmedPump", "Calculating power for pressure: %.2f", _power);
         break;
 
     case ControlMode::FLOW:

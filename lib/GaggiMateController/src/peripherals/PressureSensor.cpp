@@ -11,7 +11,7 @@ PressureSensor::PressureSensor(uint8_t sda_pin, uint8_t scl_pin, const pressure_
 
 void PressureSensor::setup() {
     Wire1.begin(_sda_pin, _scl_pin);
-    ESP_LOGI(LOG_TAG, "Initializing pressure sensor on SDA: %d, SCL: %d", _sda_pin, _scl_pin);
+    ESP_LOGV(LOG_TAG, "Initializing pressure sensor on SDA: %d, SCL: %d", _sda_pin, _scl_pin);
     delay(100);
     ads = new ADS1115(0x48, &Wire1);
     if (!ads->begin()) {
@@ -49,8 +49,6 @@ void PressureSensor::setScale(float pressure_scale) {
     auto *sensor = static_cast<PressureSensor *>(arg);
     while (true) {
         sensor->loop();
-        // vTaskDelay(PRESSURE_READ_INTERVAL_MS / portTICK_PERIOD_MS);
-        // ESP_LOGI("SENSOR PRESS","%1.3f",micros()/1000.0f);
-        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(PRESSURE_READ_INTERVAL_MS));
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(PRESSURE_READ_INTERVAL_MS));
     }
 }

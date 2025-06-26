@@ -151,9 +151,6 @@ float Heater::softPwm(uint32_t windowSize) {
 void Heater::plot(float optimumOutput, float outputScale, uint8_t everyNth) {
     if (plotCount >= everyNth) {
         plotCount = 1;
-        // ESP_LOGI(LOG_TAG, "Setpoint: %.2f, Input: %.2f, Output: %.2f, Kp: %.2f, Ki: %.2f, Kd: %.2f, Filtered Setpoint: %.2f",
-        //          setpoint, temperature, optimumOutput * outputScale, simplePid->getKp(), simplePid->getKi(), simplePid->getKd(),
-        //          simplePid->getSetpointFiltered());
     } else
         plotCount++;
 }
@@ -163,8 +160,6 @@ void Heater::loopTask(void *arg) {
     auto *heater = static_cast<Heater *>(arg);
     while (true) {
         heater->loop();
-        // vTaskDelay(10 / portTICK_PERIOD_MS);
-        // ESP_LOGI("HEATER","%1.3f",micros()/1000.0f);
-        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(10));
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(10));
     }
 }
