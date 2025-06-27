@@ -7,12 +7,61 @@
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
 #include <display/ui/utils/effects.h>
+#include <display/ui/default/lvgl/ui_themes.h>
+#include <display/ui/default/lvgl/ui_theme_manager.h>
 
 static EffectManager effect_mgr;
 
 int16_t calculate_angle(int set_temp, int range, int offset) {
     const double percentage = static_cast<double>(set_temp) / static_cast<double>(MAX_TEMP);
     return (percentage * ((double)range)) - range / 2 - offset;
+}
+
+void DefaultUI::updateTempHistory()
+{
+    if (currentTemp > 0) {
+        tempHistory[tempHistoryIndex++] = currentTemp;
+    }
+
+    if (tempHistoryIndex > TEMP_HISTORY_LENGTH) {
+        tempHistoryIndex = 0;
+        isTempHistoryInitialized = true;
+    }
+}
+
+void DefaultUI::updateTempStableFlag() {
+    if (isTempHistoryInitialized) {
+        float totalError = 0.0f;
+        float maxError = 0.0f;
+        for (uint16_t i = 0; i < TEMP_HISTORY_LENGTH; i++) {
+            float error = abs(tempHistory[i] - targetTemp);
+            totalError += error;
+            maxError = error > maxError ? error : maxError;
+        }
+
+        const float avgError = totalError / TEMP_HISTORY_LENGTH;
+        const float errorMargin = targetTemp * 0.02f;
+        
+        isTempertureStable = avgError < errorMargin && maxError <= errorMargin;
+    }
+
+    // instantly reset stability if setpoint has changed
+    if(prevTargetTemp != targetTemp) 
+    {
+        isTempertureStable = false;
+    }
+
+    prevTargetTemp = targetTemp;
+}
+
+void DefaultUI::switchTempBasedPanelBorderColor(lv_obj_t* contentPanel) {
+    if(isTempertureStable){
+        lv_obj_set_style_border_color(contentPanel, lv_color_hex(0x00D100), LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+    else {
+        lv_obj_set_style_border_color(contentPanel, lv_color_hex(ui_get_theme_value(_ui_theme_color_NiceWhite)), LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+    lv_obj_set_style_border_opa(contentPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
 DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
@@ -122,6 +171,11 @@ void DefaultUI::init() {
 void DefaultUI::loop() {
     const unsigned long now = millis();
     const unsigned long diff = now - lastRender;
+
+    if (diff > TEMP_HISTORY_INTERVAL) {
+        updateTempHistory();
+    }   
+
     if ((controller->isActive() && diff > RERENDER_INTERVAL_ACTIVE) || diff > RERENDER_INTERVAL_IDLE) {
         rerender = true;
     }
@@ -138,6 +192,7 @@ void DefaultUI::loop() {
         if (controller->isErrorState()) {
             changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
         }
+        updateTempStableFlag();
         handleScreenChange();
         currentScreen = lv_scr_act();
         if (lv_scr_act() == ui_StandbyScreen)
@@ -235,6 +290,25 @@ void DefaultUI::setupReactive() {
                           &pressureAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustDials(ui_ProfileScreen_dials); },
                           &pressureAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
+                          [=]() { switchTempBasedPanelBorderColor(ui_MenuScreen_contentPanel1); },
+                          &isTempertureStable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
+                          [=]() { switchTempBasedPanelBorderColor(ui_StatusScreen_contentPanel2); },
+                          &isTempertureStable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() { switchTempBasedPanelBorderColor(ui_BrewScreen_contentPanel4); },
+                          &isTempertureStable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_WaterScreen; },
+                          [=]() { switchTempBasedPanelBorderColor(ui_WaterScreen_contentPanel6); },
+                          &isTempertureStable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_SteamScreen; },
+                          [=]() { switchTempBasedPanelBorderColor(ui_SteamScreen_contentPanel5); },
+                          &isTempertureStable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
+                          [=]() { switchTempBasedPanelBorderColor(ui_ProfileScreen_contentPanel); },
+                          &isTempertureStable);
+
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
                               lv_arc_set_value(uic_MenuScreen_dials_tempGauge, currentTemp);
