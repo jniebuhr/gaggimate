@@ -62,6 +62,9 @@ class Settings {
     String getSelectedProfile() const { return selectedProfile; }
     bool isProfilesMigrated() const { return profilesMigrated; }
     std::vector<String> getFavoritedProfiles() const { return favoritedProfiles; }
+    int getMainBrightness() const { return mainBrightness; }
+    int getStandbyBrightness() const { return standbyBrightness; }
+    int getStandbyBrightnessTimeout() const { return standbyBrightnessTimeout; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -106,6 +109,9 @@ class Settings {
     void setFavoritedProfiles(std::vector<String> favorited_profiles);
     void addFavoritedProfile(String profile);
     void removeFavoritedProfile(String profile);
+    void setMainBrightness(int main_brightness);
+    void setStandbyBrightness(int standby_brightness);
+    void setStandbyBrightnessTimeout(int standby_brightness_timeout);
 
   private:
     Preferences preferences;
@@ -156,6 +162,11 @@ class Settings {
     int infuseBloomTime = 0;
     int infusePumpTime = 0;
     int pressurizeTime = 0;
+
+    // Display settings
+    int mainBrightness = 16;
+    int standbyBrightness = 8;
+    int standbyBrightnessTimeout = 60000; // 60 seconds default
 
     void doSave();
     xTaskHandle taskHandle;

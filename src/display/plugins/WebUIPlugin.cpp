@@ -286,6 +286,12 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             settings->setClockFormat(request->hasArg("clock24hFormat"));
             if (request->hasArg("standbyTimeout"))
                 settings->setStandbyTimeout(request->arg("standbyTimeout").toInt() * 1000);
+            if (request->hasArg("mainBrightness"))
+                settings->setMainBrightness(request->arg("mainBrightness").toInt());
+            if (request->hasArg("standbyBrightness"))
+                settings->setStandbyBrightness(request->arg("standbyBrightness").toInt());
+            if (request->hasArg("standbyBrightnessTimeout"))
+                settings->setStandbyBrightnessTimeout(request->arg("standbyBrightnessTimeout").toInt() * 1000);
             settings->save(true);
         });
         controller->setTargetTemp(controller->getTargetTemp());
@@ -322,6 +328,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["timezone"] = settings.getTimezone();
     doc["clock24hFormat"] = settings.isClock24hFormat();
     doc["standbyTimeout"] = settings.getStandbyTimeout() / 1000;
+    doc["mainBrightness"] = settings.getMainBrightness();
+    doc["standbyBrightness"] = settings.getStandbyBrightness();
+    doc["standbyBrightnessTimeout"] = settings.getStandbyBrightnessTimeout() / 1000;
     serializeJson(doc, *response);
     request->send(response);
 
