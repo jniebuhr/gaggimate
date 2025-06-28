@@ -47,6 +47,12 @@ Settings::Settings() {
     selectedProfile = preferences.getString("sp", "");
     profilesMigrated = preferences.getBool("pm", false);
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
+    
+    // Display settings
+    mainBrightness = preferences.getInt("main_b", 16);
+    standbyBrightness = preferences.getInt("standby_b", 8);
+    standbyBrightnessTimeout = preferences.getInt("standby_bt", 60000);
+    
     preferences.end();
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
@@ -284,6 +290,21 @@ void Settings::removeFavoritedProfile(String profile) {
     save();
 }
 
+void Settings::setMainBrightness(int main_brightness) {
+    mainBrightness = main_brightness;
+    save();
+}
+
+void Settings::setStandbyBrightness(int standby_brightness) {
+    standbyBrightness = standby_brightness;
+    save();
+}
+
+void Settings::setStandbyBrightnessTimeout(int standby_brightness_timeout) {
+    standbyBrightnessTimeout = standby_brightness_timeout;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -334,6 +355,12 @@ void Settings::doSave() {
     preferences.putBool("pm", profilesMigrated);
     preferences.putInt("mb", momentaryButtons);
     preferences.putString("fp", implode(favoritedProfiles, ","));
+    
+    // Display settings
+    preferences.putInt("main_b", mainBrightness);
+    preferences.putInt("standby_b", standbyBrightness);
+    preferences.putInt("standby_bt", standbyBrightnessTimeout);
+    
     preferences.end();
 }
 

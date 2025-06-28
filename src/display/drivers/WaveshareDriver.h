@@ -7,6 +7,9 @@ class WaveshareDriver : public Driver {
   public:
     inline bool isCompatible() override { return true; };
     void init() override;
+    void setBrightness(int brightness) override {
+        panel.setBrightness(brightness);
+    };
 
     static WaveshareDriver *getInstance() {
         if (instance == nullptr) {

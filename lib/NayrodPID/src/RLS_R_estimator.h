@@ -128,7 +128,7 @@ class RLSFilter {
     }
 
   private:
-    float R_est; ///< Estimation courante de R
+    float R_est=5e7f; ///< Estimation courante de R
     float R_est_prev;
     float P_cov;                ///< Covariance de l'estimation
     const float R_min, R_max;   ///< Bornes pour les contraintes

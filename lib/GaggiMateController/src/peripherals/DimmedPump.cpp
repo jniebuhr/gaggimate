@@ -3,7 +3,7 @@
 #include <GaggiMateController.h>
 
 DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor)
-    : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 1, 4), _pressureSensor(pressure_sensor),
+    : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 2, 4), _pressureSensor(pressure_sensor),
       _pressureController(0.03f, &_targetPressure, &_currentPressure, &_controllerPower, &_valveStatus) {
     _psm.set(0);
 }
@@ -41,9 +41,10 @@ void DimmedPump::tare() {
 
 void DimmedPump::loopTask(void *arg) {
     auto *pump = static_cast<DimmedPump *>(arg);
+    TickType_t lastWake = xTaskGetTickCount();
     while (true) {
         pump->loop();
-        vTaskDelay(30 / portTICK_PERIOD_MS);
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(30));
     }
 }
 
@@ -52,7 +53,6 @@ void DimmedPump::updatePower() {
     switch (_mode) {
     case ControlMode::PRESSURE:
         _power = calculatePowerForPressure(_targetPressure, _currentPressure, _flowLimit);
-        ESP_LOGI("DimmedPump", "Calculating power for pressure: %.2f", _power);
         break;
 
     case ControlMode::FLOW:
