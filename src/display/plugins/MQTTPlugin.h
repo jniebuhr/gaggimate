@@ -18,6 +18,7 @@ class MQTTPlugin : public Plugin {
   private:
     void publish(const std::string &topic, const std::string &message);
     void publishBrewState(const char *state);
+    void publishDiscovery(const std::string &haPrefix);
     MQTTClient client;
     WiFiClient net;
 
