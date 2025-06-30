@@ -1,6 +1,5 @@
 #include "LilyGo_TDisplayPanel.h"
 #include "Arduino_GFX_Library.h"
-#include <TouchDrvFT6x36.hpp>
 #include "pin_config.h"
 #include <esp_adc_cal.h>
 

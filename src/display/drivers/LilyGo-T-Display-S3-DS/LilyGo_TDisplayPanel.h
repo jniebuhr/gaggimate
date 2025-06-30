@@ -21,6 +21,8 @@
 #include "pin_config.h"
 #include <TouchDrvInterface.hpp>
 #include <display/drivers/common/Display.h>
+#include <display/drivers/common/ext.h>
+
 
 enum LilyGo_TDisplayPanel_Type {
     LILYGO_T_TDISPLAY_UNKNOWN,
