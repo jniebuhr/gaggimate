@@ -389,37 +389,37 @@ void DefaultUI::setupReactive() {
                           &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_MenuScreen_dials_pressureGauge, pressure);
+                              lv_arc_set_value(uic_MenuScreen_dials_pressureGauge, pressure * 10.0f);
                               lv_label_set_text_fmt(uic_MenuScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_StatusScreen_dials_pressureGauge, pressure);
+                              lv_arc_set_value(uic_StatusScreen_dials_pressureGauge, pressure * 10.0f);
                               lv_label_set_text_fmt(uic_StatusScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_BrewScreen_dials_pressureGauge, pressure);
+                              lv_arc_set_value(uic_BrewScreen_dials_pressureGauge, pressure * 10.0f);
                               lv_label_set_text_fmt(uic_BrewScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_GrindScreen_dials_pressureGauge, pressure);
+                              lv_arc_set_value(uic_GrindScreen_dials_pressureGauge, pressure * 10.0f);
                               lv_label_set_text_fmt(uic_GrindScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_SimpleProcessScreen_dials_pressureGauge, pressure);
+                              lv_arc_set_value(uic_SimpleProcessScreen_dials_pressureGauge, pressure * 10.0f);
                               lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_ProfileScreen_dials_pressureGauge, pressure);
+                              lv_arc_set_value(uic_ProfileScreen_dials_pressureGauge, pressure * 10.0f);
                               lv_label_set_text_fmt(uic_ProfileScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
@@ -699,7 +699,7 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
     lv_obj_set_x(tempText, pressureAvailable ? -50 : 0);
     lv_obj_set_y(tempText, pressureAvailable ? -205 : -180);
     lv_arc_set_bg_angles(tempGauge, 118, pressureAvailable ? 242 : 62);
-    lv_arc_set_range(pressureGauge, 0, pressureScaling);
+    lv_arc_set_range(pressureGauge, 0, pressureScaling * 10);
 }
 
 inline void DefaultUI::adjustTempTarget(lv_obj_t *dials) {

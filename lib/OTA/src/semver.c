@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define SLICE_SIZE 50
 #define DELIMITER "."
@@ -218,21 +219,6 @@ int semver_parse_version(const char *str, semver_t *ver) {
 }
 
 static int compare_prerelease(char *x, char *y) {
-    char *lastx;
-    char *lasty;
-    char *xptr;
-    char *yptr;
-    char *endptr;
-    int xlen;
-    int ylen;
-    int xisnum;
-    int yisnum;
-    int xnum;
-    int ynum;
-    int xn;
-    int yn;
-    int min;
-    int res;
     if (x == NULL && y == NULL)
         return 0;
     if (y == NULL && x)
@@ -240,53 +226,49 @@ static int compare_prerelease(char *x, char *y) {
     if (x == NULL && y)
         return -1;
 
-    lastx = x;
-    lasty = y;
-    xlen = strlen(x);
-    ylen = strlen(y);
+    while (*x && *y) {
+        // If both start with digits, compare numbers
+        if (isdigit(*x) && isdigit(*y)) {
+            long xnum = 0;
+            long ynum = 0;
 
-    while (1) {
-        if ((xptr = strchr(lastx, DELIMITER[0])) == NULL)
-            xptr = x + xlen;
-        if ((yptr = strchr(lasty, DELIMITER[0])) == NULL)
-            yptr = y + ylen;
+            // Read complete number from x
+            while (isdigit(*x)) {
+                xnum = xnum * 10 + (*x - '0');
+                x++;
+            }
 
-        xnum = strtol(lastx, &endptr, 10);
-        xisnum = endptr == xptr ? 1 : 0;
-        ynum = strtol(lasty, &endptr, 10);
-        yisnum = endptr == yptr ? 1 : 0;
+            // Read complete number from y
+            while (isdigit(*y)) {
+                ynum = ynum * 10 + (*y - '0');
+                y++;
+            }
 
-        if (xisnum && !yisnum)
-            return -1;
-        if (!xisnum && yisnum)
-            return 1;
-
-        if (xisnum && yisnum) {
-            /* Numerical comparison */
             if (xnum != ynum)
                 return xnum < ynum ? -1 : 1;
-        } else {
-            /* String comparison */
-            xn = xptr - lastx;
-            yn = yptr - lasty;
-            min = xn < yn ? xn : yn;
-            if ((res = strncmp(lastx, lasty, min)))
-                return res < 0 ? -1 : 1;
-            if (xn != yn)
-                return xn < yn ? -1 : 1;
         }
-
-        lastx = xptr + 1;
-        lasty = yptr + 1;
-        if (lastx == x + xlen + 1 && lasty == y + ylen + 1)
-            break;
-        if (lastx == x + xlen + 1)
-            return -1;
-        if (lasty == y + ylen + 1)
-            return 1;
+        // If one starts with digit and other doesn't
+        else if (isdigit(*x))
+            return -1;  // Numbers have lower precedence
+        else if (isdigit(*y))
+            return 1;   // Numbers have lower precedence
+        // Compare characters until we hit a number or end
+        else {
+            while (*x && *y && !isdigit(*x) && !isdigit(*y)) {
+                if (*x != *y)
+                    return *x < *y ? -1 : 1;
+                x++;
+                y++;
+            }
+            // If one string ended
+            if (!*x && *y)
+                return -1;
+            if (*x && !*y)
+                return 1;
+        }
     }
 
-    return 0;
+    return *x ? 1 : (*y ? -1 : 0);
 }
 
 int semver_compare_prerelease(semver_t x, semver_t y) { return compare_prerelease(x.prerelease, y.prerelease); }

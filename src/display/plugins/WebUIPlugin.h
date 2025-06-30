@@ -28,7 +28,7 @@ class WebUIPlugin : public Plugin {
     void loop() override;
 
   private:
-    void start(bool apMode);
+    void start();
 
     // Websocket handlers
     void handleOTASettings(uint32_t clientId, JsonDocument &request);
@@ -59,6 +59,7 @@ class WebUIPlugin : public Plugin {
     long lastCleanup = 0;
     long lastDns = 0;
     bool updating = false;
+    bool apMode = false;
     String updateComponent = "";
 };
 

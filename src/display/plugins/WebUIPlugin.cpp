@@ -26,8 +26,8 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         },
         "display-firmware.bin", "display-filesystem.bin", "board-firmware.bin");
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
-        const int apMode = event.getInt("AP");
-        start(apMode);
+        apMode = event.getInt("AP");
+        start();
     });
     pluginManager->on("controller:ready", [this](Event const &) {
         ota->setControllerVersion(controller->getSystemInfo().version);
@@ -75,7 +75,7 @@ void WebUIPlugin::loop() {
     }
 }
 
-void WebUIPlugin::start(bool apMode) {
+void WebUIPlugin::start() {
     if (apMode) {
         server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
             request->redirect("http://logout.net");
@@ -251,7 +251,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setWifiSsid(request->arg("wifiSsid"));
             if (request->hasArg("mdnsName"))
                 settings->setMdnsName(request->arg("mdnsName"));
-            if (request->hasArg("wifiPassword"))
+            if (request->hasArg("wifiPassword") && request->arg("wifiPassword") != "---unchanged---")
                 settings->setWifiPassword(request->arg("wifiPassword"));
             settings->setHomekit(request->hasArg("homekit"));
             settings->setBoilerFillActive(request->hasArg("boilerFillActive"));
@@ -311,7 +311,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haPort"] = settings.getHomeAssistantPort();
     doc["pid"] = settings.getPid();
     doc["wifiSsid"] = settings.getWifiSsid();
-    doc["wifiPassword"] = settings.getWifiPassword();
+    doc["wifiPassword"] = apMode ? "---unchanged---" : settings.getWifiPassword();
     doc["mdnsName"] = settings.getMdnsName();
     doc["temperatureOffset"] = String(settings.getTemperatureOffset());
     doc["pressureScaling"] = String(settings.getPressureScaling());
