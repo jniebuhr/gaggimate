@@ -3,330 +3,6 @@
   "deepid": 2085679092,
   "children": [
     {
-      "guid": "GUID26820456-980726S8333346",
-      "deepid": -538394159,
-      "dont_export": false,
-      "locked": false,
-      "properties": [
-        {
-          "nid": 10,
-          "strtype": "OBJECT/Name",
-          "strval": "tempTarget",
-          "InheritedType": 10
-        },
-        {
-          "nid": 20,
-          "strtype": "OBJECT/Layout",
-          "InheritedType": 1
-        },
-        {
-          "Flow": 0,
-          "Wrap": false,
-          "Reversed": false,
-          "MainAlignment": 0,
-          "CrossAlignment": 0,
-          "TrackAlignment": 0,
-          "LayoutType": 0,
-          "nid": 30,
-          "strtype": "OBJECT/Layout_type",
-          "strval": "No_layout",
-          "InheritedType": 13
-        },
-        {
-          "nid": 40,
-          "strtype": "OBJECT/Transform",
-          "InheritedType": 1
-        },
-        {
-          "nid": 50,
-          "flags": 17,
-          "strtype": "OBJECT/Position",
-          "intarray": [
-            0,
-            0
-          ],
-          "InheritedType": 7
-        },
-        {
-          "nid": 60,
-          "flags": 51,
-          "strtype": "OBJECT/Size",
-          "intarray": [
-            1,
-            1
-          ],
-          "InheritedType": 7
-        },
-        {
-          "nid": 70,
-          "strtype": "OBJECT/Align",
-          "strval": "CENTER",
-          "InheritedType": 3
-        },
-        {
-          "nid": 90,
-          "flags": 1048576,
-          "strtype": "OBJECT/Flags",
-          "InheritedType": 1
-        },
-        {
-          "nid": 100,
-          "strtype": "OBJECT/Hidden",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 110,
-          "strtype": "OBJECT/Clickable",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 120,
-          "strtype": "OBJECT/Checkable",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 130,
-          "strtype": "OBJECT/Press_lock",
-          "strval": "True",
-          "InheritedType": 2
-        },
-        {
-          "nid": 140,
-          "strtype": "OBJECT/Click_focusable",
-          "strval": "True",
-          "InheritedType": 2
-        },
-        {
-          "nid": 150,
-          "strtype": "OBJECT/Adv_hittest",
-          "strval": "True",
-          "InheritedType": 2
-        },
-        {
-          "nid": 160,
-          "strtype": "OBJECT/Ignore_layout",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 170,
-          "strtype": "OBJECT/Floating",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 180,
-          "strtype": "OBJECT/Overflow_visible",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 190,
-          "strtype": "OBJECT/Flex_in_new_track",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 200,
-          "strtype": "OBJECT/Event_bubble",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 210,
-          "strtype": "OBJECT/Gesture_bubble",
-          "strval": "True",
-          "InheritedType": 2
-        },
-        {
-          "nid": 220,
-          "strtype": "OBJECT/Snappable",
-          "strval": "True",
-          "InheritedType": 2
-        },
-        {
-          "nid": 230,
-          "strtype": "OBJECT/Scrollable",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 240,
-          "strtype": "OBJECT/Scroll_elastic",
-          "strval": "True",
-          "InheritedType": 2
-        },
-        {
-          "nid": 250,
-          "strtype": "OBJECT/Scroll_momentum",
-          "strval": "True",
-          "InheritedType": 2
-        },
-        {
-          "nid": 260,
-          "strtype": "OBJECT/Scroll_on_focus",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 270,
-          "strtype": "OBJECT/Scroll_chain",
-          "strval": "True",
-          "InheritedType": 2
-        },
-        {
-          "nid": 280,
-          "strtype": "OBJECT/Scroll_with_arrow",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 290,
-          "strtype": "OBJECT/Scroll_one",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 300,
-          "strtype": "OBJECT/Scrollbar_mode",
-          "strval": "AUTO",
-          "InheritedType": 3
-        },
-        {
-          "nid": 310,
-          "strtype": "OBJECT/Scroll_direction",
-          "strval": "ALL",
-          "InheritedType": 3
-        },
-        {
-          "nid": 320,
-          "flags": 1048576,
-          "strtype": "OBJECT/States",
-          "InheritedType": 1
-        },
-        {
-          "nid": 330,
-          "strtype": "OBJECT/Checked",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 340,
-          "strtype": "OBJECT/Disabled",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 350,
-          "strtype": "OBJECT/Focused",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 360,
-          "strtype": "OBJECT/Pressed",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 370,
-          "strtype": "OBJECT/Edited",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 380,
-          "strtype": "OBJECT/User_1",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 390,
-          "strtype": "OBJECT/User_2",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 400,
-          "strtype": "OBJECT/User_3",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 410,
-          "strtype": "OBJECT/User_4",
-          "strval": "False",
-          "InheritedType": 2
-        },
-        {
-          "nid": 1010,
-          "strtype": "IMAGE/Image",
-          "InheritedType": 1
-        },
-        {
-          "nid": 1020,
-          "strtype": "IMAGE/Asset",
-          "strval": "assets/indicator.png",
-          "InheritedType": 5
-        },
-        {
-          "nid": 1030,
-          "strtype": "IMAGE/Pivot",
-          "intarray": [
-            0,
-            0
-          ],
-          "InheritedType": 7
-        },
-        {
-          "nid": 1040,
-          "strtype": "IMAGE/Rotation",
-          "integer": -900,
-          "InheritedType": 6
-        },
-        {
-          "nid": 1050,
-          "strtype": "IMAGE/Scale",
-          "integer": 256,
-          "InheritedType": 6
-        },
-        {
-          "part": "lv.PART.MAIN",
-          "childs": [
-            {
-              "nid": 10000,
-              "strtype": "_style/StyleState",
-              "strval": "DEFAULT",
-              "childs": [
-                {
-                  "nid": 11210,
-                  "strtype": "_style/Image_reColor",
-                  "strval": "NiceWhite",
-                  "integer": 1000206,
-                  "intarray": [
-                    250,
-                    250,
-                    250,
-                    255
-                  ],
-                  "InheritedType": 7
-                }
-              ],
-              "InheritedType": 1
-            }
-          ],
-          "nid": 1060,
-          "strtype": "IMAGE/Style_main",
-          "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
-          "InheritedType": 11
-        }
-      ],
-      "saved_objtypeKey": "IMAGE"
-    },
-    {
       "guid": "GUID72318471-659535S540396",
       "deepid": -1078875598,
       "dont_export": false,
@@ -727,7 +403,7 @@
       "tree_closed": true
     },
     {
-      "guid": "GUID80524104-980729S130833346",
+      "guid": "GUID26820456-980726S8333346",
       "deepid": -538394159,
       "dont_export": false,
       "locked": false,
@@ -735,7 +411,7 @@
         {
           "nid": 10,
           "strtype": "OBJECT/Name",
-          "strval": "pressureTarget",
+          "strval": "tempTarget",
           "InheritedType": 10
         },
         {
@@ -766,8 +442,8 @@
           "flags": 17,
           "strtype": "OBJECT/Position",
           "intarray": [
-            0,
-            0
+            -235,
+            -16
           ],
           "InheritedType": 7
         },
@@ -993,7 +669,7 @@
         {
           "nid": 1020,
           "strtype": "IMAGE/Asset",
-          "strval": "assets/indicator.png",
+          "strval": "assets/indicator-small.png",
           "InheritedType": 5
         },
         {
@@ -1008,7 +684,7 @@
         {
           "nid": 1040,
           "strtype": "IMAGE/Rotation",
-          "integer": 1530,
+          "integer": -1760,
           "InheritedType": 6
         },
         {
@@ -1048,8 +724,7 @@
           "InheritedType": 11
         }
       ],
-      "saved_objtypeKey": "IMAGE",
-      "tree_closed": true
+      "saved_objtypeKey": "IMAGE"
     },
     {
       "guid": "GUID82878425-980724S2833346",
@@ -1449,6 +1124,331 @@
         }
       ],
       "saved_objtypeKey": "ARC",
+      "tree_closed": true
+    },
+    {
+      "guid": "GUID80524104-980729S130833346",
+      "deepid": -538394159,
+      "dont_export": false,
+      "locked": false,
+      "properties": [
+        {
+          "nid": 10,
+          "strtype": "OBJECT/Name",
+          "strval": "pressureTarget",
+          "InheritedType": 10
+        },
+        {
+          "nid": 20,
+          "strtype": "OBJECT/Layout",
+          "InheritedType": 1
+        },
+        {
+          "Flow": 0,
+          "Wrap": false,
+          "Reversed": false,
+          "MainAlignment": 0,
+          "CrossAlignment": 0,
+          "TrackAlignment": 0,
+          "LayoutType": 0,
+          "nid": 30,
+          "strtype": "OBJECT/Layout_type",
+          "strval": "No_layout",
+          "InheritedType": 13
+        },
+        {
+          "nid": 40,
+          "strtype": "OBJECT/Transform",
+          "InheritedType": 1
+        },
+        {
+          "nid": 50,
+          "flags": 17,
+          "strtype": "OBJECT/Position",
+          "intarray": [
+            110,
+            208
+          ],
+          "InheritedType": 7
+        },
+        {
+          "nid": 60,
+          "flags": 51,
+          "strtype": "OBJECT/Size",
+          "intarray": [
+            1,
+            1
+          ],
+          "InheritedType": 7
+        },
+        {
+          "nid": 70,
+          "strtype": "OBJECT/Align",
+          "strval": "CENTER",
+          "InheritedType": 3
+        },
+        {
+          "nid": 90,
+          "flags": 1048576,
+          "strtype": "OBJECT/Flags",
+          "InheritedType": 1
+        },
+        {
+          "nid": 100,
+          "strtype": "OBJECT/Hidden",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 110,
+          "strtype": "OBJECT/Clickable",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 120,
+          "strtype": "OBJECT/Checkable",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 130,
+          "strtype": "OBJECT/Press_lock",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 140,
+          "strtype": "OBJECT/Click_focusable",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 150,
+          "strtype": "OBJECT/Adv_hittest",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 160,
+          "strtype": "OBJECT/Ignore_layout",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 170,
+          "strtype": "OBJECT/Floating",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 180,
+          "strtype": "OBJECT/Overflow_visible",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 190,
+          "strtype": "OBJECT/Flex_in_new_track",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 200,
+          "strtype": "OBJECT/Event_bubble",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 210,
+          "strtype": "OBJECT/Gesture_bubble",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 220,
+          "strtype": "OBJECT/Snappable",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 230,
+          "strtype": "OBJECT/Scrollable",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 240,
+          "strtype": "OBJECT/Scroll_elastic",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 250,
+          "strtype": "OBJECT/Scroll_momentum",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 260,
+          "strtype": "OBJECT/Scroll_on_focus",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 270,
+          "strtype": "OBJECT/Scroll_chain",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 280,
+          "strtype": "OBJECT/Scroll_with_arrow",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 290,
+          "strtype": "OBJECT/Scroll_one",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 300,
+          "strtype": "OBJECT/Scrollbar_mode",
+          "strval": "AUTO",
+          "InheritedType": 3
+        },
+        {
+          "nid": 310,
+          "strtype": "OBJECT/Scroll_direction",
+          "strval": "ALL",
+          "InheritedType": 3
+        },
+        {
+          "nid": 320,
+          "flags": 1048576,
+          "strtype": "OBJECT/States",
+          "InheritedType": 1
+        },
+        {
+          "nid": 330,
+          "strtype": "OBJECT/Checked",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 340,
+          "strtype": "OBJECT/Disabled",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 350,
+          "strtype": "OBJECT/Focused",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 360,
+          "strtype": "OBJECT/Pressed",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 370,
+          "strtype": "OBJECT/Edited",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 380,
+          "strtype": "OBJECT/User_1",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 390,
+          "strtype": "OBJECT/User_2",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 400,
+          "strtype": "OBJECT/User_3",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 410,
+          "strtype": "OBJECT/User_4",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 1010,
+          "strtype": "IMAGE/Image",
+          "InheritedType": 1
+        },
+        {
+          "nid": 1020,
+          "strtype": "IMAGE/Asset",
+          "strval": "assets/indicator-small.png",
+          "InheritedType": 5
+        },
+        {
+          "nid": 1030,
+          "strtype": "IMAGE/Pivot",
+          "intarray": [
+            0,
+            0
+          ],
+          "InheritedType": 7
+        },
+        {
+          "nid": 1040,
+          "strtype": "IMAGE/Rotation",
+          "integer": 620,
+          "InheritedType": 6
+        },
+        {
+          "nid": 1050,
+          "strtype": "IMAGE/Scale",
+          "integer": 256,
+          "InheritedType": 6
+        },
+        {
+          "part": "lv.PART.MAIN",
+          "childs": [
+            {
+              "nid": 10000,
+              "strtype": "_style/StyleState",
+              "strval": "DEFAULT",
+              "childs": [
+                {
+                  "nid": 11210,
+                  "strtype": "_style/Image_reColor",
+                  "strval": "NiceWhite",
+                  "integer": 1000206,
+                  "intarray": [
+                    250,
+                    250,
+                    250,
+                    255
+                  ],
+                  "InheritedType": 7
+                }
+              ],
+              "InheritedType": 1
+            }
+          ],
+          "nid": 1060,
+          "strtype": "IMAGE/Style_main",
+          "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
+          "InheritedType": 11
+        }
+      ],
+      "saved_objtypeKey": "IMAGE",
       "tree_closed": true
     },
     {
@@ -2127,8 +2127,649 @@
           "InheritedType": 11
         }
       ],
-      "saved_objtypeKey": "LABEL",
-      "tree_closed": true
+      "saved_objtypeKey": "LABEL"
+    },
+    {
+      "guid": "GUID19597783-650132S3864179",
+      "deepid": 261812163,
+      "dont_export": false,
+      "locked": false,
+      "properties": [
+        {
+          "nid": 10,
+          "strtype": "OBJECT/Name",
+          "strval": "tempIcon",
+          "InheritedType": 10
+        },
+        {
+          "nid": 20,
+          "strtype": "OBJECT/Layout",
+          "InheritedType": 1
+        },
+        {
+          "Flow": 0,
+          "Wrap": false,
+          "Reversed": false,
+          "MainAlignment": 0,
+          "CrossAlignment": 0,
+          "TrackAlignment": 0,
+          "LayoutType": 0,
+          "nid": 30,
+          "strtype": "OBJECT/Layout_type",
+          "strval": "No_layout",
+          "InheritedType": 13
+        },
+        {
+          "nid": 40,
+          "strtype": "OBJECT/Transform",
+          "InheritedType": 1
+        },
+        {
+          "nid": 50,
+          "flags": 17,
+          "strtype": "OBJECT/Position",
+          "intarray": [
+            -85,
+            200
+          ],
+          "InheritedType": 7
+        },
+        {
+          "nid": 60,
+          "flags": 51,
+          "strtype": "OBJECT/Size",
+          "intarray": [
+            40,
+            40
+          ],
+          "InheritedType": 7
+        },
+        {
+          "nid": 70,
+          "strtype": "OBJECT/Align",
+          "strval": "CENTER",
+          "InheritedType": 3
+        },
+        {
+          "nid": 90,
+          "flags": 1048576,
+          "strtype": "OBJECT/Flags",
+          "InheritedType": 1
+        },
+        {
+          "nid": 100,
+          "strtype": "OBJECT/Hidden",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 110,
+          "strtype": "OBJECT/Clickable",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 120,
+          "strtype": "OBJECT/Checkable",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 130,
+          "strtype": "OBJECT/Press_lock",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 140,
+          "strtype": "OBJECT/Click_focusable",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 150,
+          "strtype": "OBJECT/Adv_hittest",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 160,
+          "strtype": "OBJECT/Ignore_layout",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 170,
+          "strtype": "OBJECT/Floating",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 180,
+          "strtype": "OBJECT/Overflow_visible",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 190,
+          "strtype": "OBJECT/Flex_in_new_track",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 200,
+          "strtype": "OBJECT/Event_bubble",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 210,
+          "strtype": "OBJECT/Gesture_bubble",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 220,
+          "strtype": "OBJECT/Snappable",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 230,
+          "strtype": "OBJECT/Scrollable",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 240,
+          "strtype": "OBJECT/Scroll_elastic",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 250,
+          "strtype": "OBJECT/Scroll_momentum",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 260,
+          "strtype": "OBJECT/Scroll_on_focus",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 270,
+          "strtype": "OBJECT/Scroll_chain",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 280,
+          "strtype": "OBJECT/Scroll_with_arrow",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 290,
+          "strtype": "OBJECT/Scroll_one",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 300,
+          "strtype": "OBJECT/Scrollbar_mode",
+          "strval": "AUTO",
+          "InheritedType": 3
+        },
+        {
+          "nid": 310,
+          "strtype": "OBJECT/Scroll_direction",
+          "strval": "ALL",
+          "InheritedType": 3
+        },
+        {
+          "nid": 320,
+          "flags": 1048576,
+          "strtype": "OBJECT/States",
+          "InheritedType": 1
+        },
+        {
+          "nid": 330,
+          "strtype": "OBJECT/Checked",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 340,
+          "strtype": "OBJECT/Disabled",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 350,
+          "strtype": "OBJECT/Focused",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 360,
+          "strtype": "OBJECT/Pressed",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 370,
+          "strtype": "OBJECT/Edited",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 380,
+          "strtype": "OBJECT/User_1",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 390,
+          "strtype": "OBJECT/User_2",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 400,
+          "strtype": "OBJECT/User_3",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 410,
+          "strtype": "OBJECT/User_4",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 1010,
+          "strtype": "IMAGE/Image",
+          "InheritedType": 1
+        },
+        {
+          "nid": 1020,
+          "strtype": "IMAGE/Asset",
+          "strval": "assets/thermometer-half-40x40.png",
+          "InheritedType": 5
+        },
+        {
+          "nid": 1030,
+          "strtype": "IMAGE/Pivot",
+          "intarray": [
+            0,
+            0
+          ],
+          "InheritedType": 7
+        },
+        {
+          "nid": 1040,
+          "strtype": "IMAGE/Rotation",
+          "InheritedType": 6
+        },
+        {
+          "nid": 1050,
+          "strtype": "IMAGE/Scale",
+          "integer": 150,
+          "InheritedType": 6
+        },
+        {
+          "part": "lv.PART.MAIN",
+          "childs": [
+            {
+              "nid": 10000,
+              "strtype": "_style/StyleState",
+              "strval": "DEFAULT",
+              "childs": [
+                {
+                  "nid": 11210,
+                  "strtype": "_style/Image_reColor",
+                  "intarray": [
+                    246,
+                    44,
+                    44,
+                    255
+                  ],
+                  "InheritedType": 7
+                }
+              ],
+              "InheritedType": 1
+            }
+          ],
+          "nid": 1060,
+          "strtype": "IMAGE/Style_main",
+          "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
+          "InheritedType": 11
+        }
+      ],
+      "saved_objtypeKey": "IMAGE"
+    },
+    {
+      "guid": "GUID16373852-650134S9194179",
+      "deepid": -1615477471,
+      "dont_export": false,
+      "locked": false,
+      "properties": [
+        {
+          "nid": 10,
+          "strtype": "OBJECT/Name",
+          "strval": "Image6",
+          "InheritedType": 10
+        },
+        {
+          "nid": 20,
+          "strtype": "OBJECT/Layout",
+          "InheritedType": 1
+        },
+        {
+          "Flow": 0,
+          "Wrap": false,
+          "Reversed": false,
+          "MainAlignment": 0,
+          "CrossAlignment": 0,
+          "TrackAlignment": 0,
+          "LayoutType": 0,
+          "nid": 30,
+          "strtype": "OBJECT/Layout_type",
+          "strval": "No_layout",
+          "InheritedType": 13
+        },
+        {
+          "nid": 40,
+          "strtype": "OBJECT/Transform",
+          "InheritedType": 1
+        },
+        {
+          "nid": 50,
+          "flags": 17,
+          "strtype": "OBJECT/Position",
+          "intarray": [
+            85,
+            200
+          ],
+          "InheritedType": 7
+        },
+        {
+          "nid": 60,
+          "flags": 51,
+          "strtype": "OBJECT/Size",
+          "intarray": [
+            40,
+            40
+          ],
+          "InheritedType": 7
+        },
+        {
+          "nid": 70,
+          "strtype": "OBJECT/Align",
+          "strval": "CENTER",
+          "InheritedType": 3
+        },
+        {
+          "nid": 90,
+          "flags": 1048576,
+          "strtype": "OBJECT/Flags",
+          "InheritedType": 1
+        },
+        {
+          "nid": 100,
+          "strtype": "OBJECT/Hidden",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 110,
+          "strtype": "OBJECT/Clickable",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 120,
+          "strtype": "OBJECT/Checkable",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 130,
+          "strtype": "OBJECT/Press_lock",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 140,
+          "strtype": "OBJECT/Click_focusable",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 150,
+          "strtype": "OBJECT/Adv_hittest",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 160,
+          "strtype": "OBJECT/Ignore_layout",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 170,
+          "strtype": "OBJECT/Floating",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 180,
+          "strtype": "OBJECT/Overflow_visible",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 190,
+          "strtype": "OBJECT/Flex_in_new_track",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 200,
+          "strtype": "OBJECT/Event_bubble",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 210,
+          "strtype": "OBJECT/Gesture_bubble",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 220,
+          "strtype": "OBJECT/Snappable",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 230,
+          "strtype": "OBJECT/Scrollable",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 240,
+          "strtype": "OBJECT/Scroll_elastic",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 250,
+          "strtype": "OBJECT/Scroll_momentum",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 260,
+          "strtype": "OBJECT/Scroll_on_focus",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 270,
+          "strtype": "OBJECT/Scroll_chain",
+          "strval": "True",
+          "InheritedType": 2
+        },
+        {
+          "nid": 280,
+          "strtype": "OBJECT/Scroll_with_arrow",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 290,
+          "strtype": "OBJECT/Scroll_one",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 300,
+          "strtype": "OBJECT/Scrollbar_mode",
+          "strval": "AUTO",
+          "InheritedType": 3
+        },
+        {
+          "nid": 310,
+          "strtype": "OBJECT/Scroll_direction",
+          "strval": "ALL",
+          "InheritedType": 3
+        },
+        {
+          "nid": 320,
+          "flags": 1048576,
+          "strtype": "OBJECT/States",
+          "InheritedType": 1
+        },
+        {
+          "nid": 330,
+          "strtype": "OBJECT/Checked",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 340,
+          "strtype": "OBJECT/Disabled",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 350,
+          "strtype": "OBJECT/Focused",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 360,
+          "strtype": "OBJECT/Pressed",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 370,
+          "strtype": "OBJECT/Edited",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 380,
+          "strtype": "OBJECT/User_1",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 390,
+          "strtype": "OBJECT/User_2",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 400,
+          "strtype": "OBJECT/User_3",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 410,
+          "strtype": "OBJECT/User_4",
+          "strval": "False",
+          "InheritedType": 2
+        },
+        {
+          "nid": 1010,
+          "strtype": "IMAGE/Image",
+          "InheritedType": 1
+        },
+        {
+          "nid": 1020,
+          "strtype": "IMAGE/Asset",
+          "strval": "assets/tachometer-fast-40x40.png",
+          "InheritedType": 5
+        },
+        {
+          "nid": 1030,
+          "strtype": "IMAGE/Pivot",
+          "intarray": [
+            0,
+            0
+          ],
+          "InheritedType": 7
+        },
+        {
+          "nid": 1040,
+          "strtype": "IMAGE/Rotation",
+          "InheritedType": 6
+        },
+        {
+          "nid": 1050,
+          "strtype": "IMAGE/Scale",
+          "integer": 150,
+          "InheritedType": 6
+        },
+        {
+          "part": "lv.PART.MAIN",
+          "childs": [
+            {
+              "nid": 10000,
+              "strtype": "_style/StyleState",
+              "strval": "DEFAULT",
+              "childs": [
+                {
+                  "nid": 11210,
+                  "strtype": "_style/Image_reColor",
+                  "intarray": [
+                    44,
+                    164,
+                    246,
+                    255
+                  ],
+                  "InheritedType": 7
+                }
+              ],
+              "InheritedType": 1
+            }
+          ],
+          "nid": 1060,
+          "strtype": "IMAGE/Style_main",
+          "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
+          "InheritedType": 11
+        }
+      ],
+      "saved_objtypeKey": "IMAGE"
     }
   ],
   "dont_export": false,

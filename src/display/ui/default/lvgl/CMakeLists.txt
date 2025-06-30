@@ -4,8 +4,7 @@ SET(SOURCES components/ui_comp_dials.c
     screens/ui_ProfileScreen.c
     screens/ui_MenuScreen.c
     screens/ui_BrewScreen.c
-    screens/ui_SteamScreen.c
-    screens/ui_WaterScreen.c
+    screens/ui_SimpleProcessScreen.c
     screens/ui_StandbyScreen.c
     screens/ui_StatusScreen.c
     screens/ui_GrindScreen.c
@@ -16,21 +15,22 @@ SET(SOURCES components/ui_comp_dials.c
     ui_helpers.c
     ui_events.cpp
     images/ui_img_logo_png.c
-    images/ui_img_295763949.c
+    images/ui_img_untitled_png.c
+    images/ui_img_489054950.c
+    images/ui_img_340686386.c
+    images/ui_img_1455708189.c
     images/ui_img_1951499226.c
+    images/ui_img_1220767159.c
+    images/ui_img_295763949.c
     images/ui_img_360122106.c
     images/ui_img_98036921.c
     images/ui_img_944513416.c
     images/ui_img_631115820.c
-    images/ui_img_indicator_png.c
-    images/ui_img_untitled_png.c
-    images/ui_img_489054950.c
-    images/ui_img_1455708189.c
+    images/ui_img_2044104741.c
     images/ui_img_979979123.c
     images/ui_img_783005998.c
     images/ui_img_545340440.c
     images/ui_img_363557387.c
-    images/ui_img_2044104741.c
     images/ui_img_445946954.c
     images/ui_img_1424216268.c
     images/ui_img_207915003.c
@@ -42,6 +42,7 @@ SET(SOURCES components/ui_comp_dials.c
     images/ui_img_1732953241.c
     images/ui_img_1456692430.c
     images/ui_img_1829139226.c
-    images/ui_img_340148213.c)
+    images/ui_img_340148213.c
+    images/ui_img_691326438.c)
 
 add_library(ui ${SOURCES})

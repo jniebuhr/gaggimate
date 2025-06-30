@@ -126,3 +126,7 @@ def onProfileSelect(event_struct):
 def onFlush(event_struct):
     return
 
+
+def onSimpleProcessToggle(event_struct):
+    return
+

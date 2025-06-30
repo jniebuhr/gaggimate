@@ -14,6 +14,10 @@ void ui_GrindScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_GrindScreen, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA,
                                            _ui_theme_alpha_Dark);
 
+    ui_GrindScreen_dials = ui_dials_create(ui_GrindScreen);
+    lv_obj_set_x(ui_GrindScreen_dials, 0);
+    lv_obj_set_y(ui_GrindScreen_dials, 0);
+
     ui_GrindScreen_ImgButton2 = lv_imgbtn_create(ui_GrindScreen);
     lv_imgbtn_set_src(ui_GrindScreen_ImgButton2, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_295763949, NULL);
     lv_obj_set_width(ui_GrindScreen_ImgButton2, 40);
@@ -21,6 +25,10 @@ void ui_GrindScreen_screen_init(void) {
     lv_obj_set_x(ui_GrindScreen_ImgButton2, 0);
     lv_obj_set_y(ui_GrindScreen_ImgButton2, 210);
     lv_obj_set_align(ui_GrindScreen_ImgButton2, LV_ALIGN_CENTER);
+    lv_obj_set_style_outline_color(ui_GrindScreen_ImgButton2, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_opa(ui_GrindScreen_ImgButton2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_width(ui_GrindScreen_ImgButton2, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_pad(ui_GrindScreen_ImgButton2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_img_recolor(ui_GrindScreen_ImgButton2, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_img_recolor_opa(ui_GrindScreen_ImgButton2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -36,6 +44,7 @@ void ui_GrindScreen_screen_init(void) {
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_GrindScreen_contentPanel7, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BORDER_OPA,
                                            _ui_theme_alpha_NiceWhite);
+    lv_obj_set_style_border_width(ui_GrindScreen_contentPanel7, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_GrindScreen_mainLabel7 = lv_label_create(ui_GrindScreen_contentPanel7);
     lv_obj_set_width(ui_GrindScreen_mainLabel7, LV_SIZE_CONTENT);  /// 1
@@ -96,6 +105,10 @@ void ui_GrindScreen_screen_init(void) {
     lv_obj_set_x(ui_GrindScreen_upDurationButton, 120);
     lv_obj_set_y(ui_GrindScreen_upDurationButton, 0);
     lv_obj_set_align(ui_GrindScreen_upDurationButton, LV_ALIGN_CENTER);
+    lv_obj_set_style_outline_color(ui_GrindScreen_upDurationButton, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_opa(ui_GrindScreen_upDurationButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_width(ui_GrindScreen_upDurationButton, 25, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_pad(ui_GrindScreen_upDurationButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     ui_object_set_themeable_style_property(ui_GrindScreen_upDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_GrindScreen_upDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT,
@@ -108,6 +121,10 @@ void ui_GrindScreen_screen_init(void) {
     lv_obj_set_x(ui_GrindScreen_downDurationButton, -60);
     lv_obj_set_y(ui_GrindScreen_downDurationButton, 0);
     lv_obj_set_align(ui_GrindScreen_downDurationButton, LV_ALIGN_CENTER);
+    lv_obj_set_style_outline_color(ui_GrindScreen_downDurationButton, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_opa(ui_GrindScreen_downDurationButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_width(ui_GrindScreen_downDurationButton, 25, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_pad(ui_GrindScreen_downDurationButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     ui_object_set_themeable_style_property(ui_GrindScreen_downDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT,
                                            LV_STYLE_IMG_RECOLOR, _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_GrindScreen_downDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT,
@@ -189,20 +206,17 @@ void ui_GrindScreen_screen_init(void) {
     lv_obj_set_style_shadow_color(ui_GrindScreen_volumetricButton, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_opa(ui_GrindScreen_volumetricButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_GrindScreen_dials = ui_dials_create(ui_GrindScreen);
-    lv_obj_set_x(ui_GrindScreen_dials, 0);
-    lv_obj_set_y(ui_GrindScreen_dials, 0);
-
+    lv_obj_add_event_cb(ui_GrindScreen_ImgButton2, ui_event_GrindScreen_ImgButton2, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_GrindScreen_startButton, ui_event_GrindScreen_startButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_GrindScreen_upDurationButton, ui_event_GrindScreen_upDurationButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_GrindScreen_downDurationButton, ui_event_GrindScreen_downDurationButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_GrindScreen_timedButton, ui_event_GrindScreen_timedButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_GrindScreen_volumetricButton, ui_event_GrindScreen_volumetricButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_GrindScreen, ui_event_GrindScreen, LV_EVENT_ALL, NULL);
-    uic_GrindScreen_dials_tempTarget = ui_comp_get_child(ui_GrindScreen_dials, UI_COMP_DIALS_TEMPTARGET);
     uic_GrindScreen_dials_tempGauge = ui_comp_get_child(ui_GrindScreen_dials, UI_COMP_DIALS_TEMPGAUGE);
-    uic_GrindScreen_dials_pressureTarget = ui_comp_get_child(ui_GrindScreen_dials, UI_COMP_DIALS_PRESSURETARGET);
+    uic_GrindScreen_dials_tempTarget = ui_comp_get_child(ui_GrindScreen_dials, UI_COMP_DIALS_TEMPTARGET);
     uic_GrindScreen_dials_pressureGauge = ui_comp_get_child(ui_GrindScreen_dials, UI_COMP_DIALS_PRESSUREGAUGE);
+    uic_GrindScreen_dials_pressureTarget = ui_comp_get_child(ui_GrindScreen_dials, UI_COMP_DIALS_PRESSURETARGET);
     uic_GrindScreen_dials_pressureText = ui_comp_get_child(ui_GrindScreen_dials, UI_COMP_DIALS_PRESSURETEXT);
     uic_GrindScreen_dials_tempText = ui_comp_get_child(ui_GrindScreen_dials, UI_COMP_DIALS_TEMPTEXT);
 }

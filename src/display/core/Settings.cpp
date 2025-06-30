@@ -47,12 +47,13 @@ Settings::Settings() {
     selectedProfile = preferences.getString("sp", "");
     profilesMigrated = preferences.getBool("pm", false);
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
-    
+    steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
+
     // Display settings
     mainBrightness = preferences.getInt("main_b", 16);
     standbyBrightness = preferences.getInt("standby_b", 8);
     standbyBrightnessTimeout = preferences.getInt("standby_bt", 60000);
-    
+
     preferences.end();
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
@@ -305,6 +306,11 @@ void Settings::setStandbyBrightnessTimeout(int standby_brightness_timeout) {
     save();
 }
 
+void Settings::setSteamPumpPercentage(float steam_pump_percentage) {
+    steamPumpPercentage = steam_pump_percentage;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -355,12 +361,13 @@ void Settings::doSave() {
     preferences.putBool("pm", profilesMigrated);
     preferences.putInt("mb", momentaryButtons);
     preferences.putString("fp", implode(favoritedProfiles, ","));
-    
+    preferences.putFloat("spp", steamPumpPercentage);
+
     // Display settings
     preferences.putInt("main_b", mainBrightness);
     preferences.putInt("standby_b", standbyBrightness);
     preferences.putInt("standby_bt", standbyBrightnessTimeout);
-    
+
     preferences.end();
 }
 
@@ -368,6 +375,6 @@ void Settings::loopTask(void *arg) {
     auto *settings = static_cast<Settings *>(arg);
     while (true) {
         settings->doSave();
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 }

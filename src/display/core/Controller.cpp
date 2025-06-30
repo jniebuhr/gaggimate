@@ -207,12 +207,21 @@ void Controller::loop() {
     }
 
     if (now - lastProgress > PROGRESS_INTERVAL) {
+        // Check if steam is ready
+        if (mode == MODE_STEAM && !steamReady && currentTemp + 5 > getTargetTemp()) {
+            activate();
+            steamReady = true;
+        }
+
+        // Handle current process
         if (currentProcess != nullptr) {
             currentProcess->progress();
             if (!isActive()) {
                 deactivate();
             }
         }
+
+        // Handle last process - Calculate auto delay
         if (lastProcess != nullptr && !lastProcess->isComplete()) {
             lastProcess->progress();
         }
@@ -270,14 +279,11 @@ void Controller::startProcess(Process *process) {
         return;
     processCompleted = false;
     this->currentProcess = process;
+    pluginManager->trigger("controller:process:start");
     updateLastAction();
 }
 
 int Controller::getTargetTemp() {
-    if (isAutotuning()) {
-        return 93;
-    }
-
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
@@ -453,7 +459,7 @@ void Controller::activate() {
                                      settings.getBrewDelay()));
         break;
     case MODE_STEAM:
-        startProcess(new SteamProcess());
+        startProcess(new SteamProcess(STEAM_SAFETY_DURATION_MS, settings.getSteamPumpPercentage()));
         break;
     case MODE_WATER:
         startProcess(new PumpProcess());
@@ -474,10 +480,10 @@ void Controller::deactivate() {
     currentProcess = nullptr;
     if (lastProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:end");
-    }
-    if (lastProcess->getType() == MODE_GRIND) {
+    } else if (lastProcess->getType() == MODE_GRIND) {
         pluginManager->trigger("controller:grind:end");
     }
+    pluginManager->trigger("controller:process:end");
     updateLastAction();
 }
 
@@ -525,6 +531,7 @@ bool Controller::isGrindActive() const { return isActive() && currentProcess->ge
 int Controller::getMode() const { return mode; }
 
 void Controller::setMode(int newMode) {
+    steamReady = false;
     Event modeEvent = pluginManager->trigger("controller:mode:change", "value", newMode);
     mode = modeEvent.getInt("value");
 
@@ -580,6 +587,9 @@ void Controller::handleBrewButton(int brewButtonStatus) {
         case MODE_WATER:
             activate();
             break;
+        case MODE_STEAM:
+            deactivate();
+            setMode(MODE_BREW);
         default:
             break;
         }
@@ -606,16 +616,13 @@ void Controller::handleSteamButton(int steamButtonStatus) {
             break;
         case MODE_BREW:
             setMode(MODE_STEAM);
-            activate();
-            break;
-        case MODE_STEAM:
-            activate();
             break;
         default:
             break;
         }
     } else if (!settings.isMomentaryButtons() && getMode() == MODE_STEAM) {
         deactivate();
+        setMode(MODE_BREW);
     }
 }
 

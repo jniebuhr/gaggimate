@@ -22,37 +22,33 @@ void onBrewTimeLower(lv_event_t *e) { controller.lowerBrewTarget(); }
 
 void onBrewTimeRaise(lv_event_t *e) { controller.raiseBrewTarget(); }
 
-void onSteamToggle(lv_event_t *e) { controller.isActive() ? controller.deactivate() : controller.activate(); }
-
 void onSteamTempLower(lv_event_t *e) { controller.lowerTemp(); }
 
 void onSteamTempRaise(lv_event_t *e) { controller.raiseTemp(); }
 
 void onBrewScreen(lv_event_t *e) {
+    controller.getUI()->changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
     controller.deactivate();
     controller.setMode(MODE_BREW);
 }
 
 void onWaterScreen(lv_event_t *e) {
+    controller.getUI()->changeScreen(&ui_SimpleProcessScreen, &ui_SimpleProcessScreen_screen_init);
     controller.setMode(MODE_WATER);
     controller.deactivate();
 }
 
 void onSteamScreen(lv_event_t *e) {
+    controller.getUI()->changeScreen(&ui_SimpleProcessScreen, &ui_SimpleProcessScreen_screen_init);
     controller.setMode(MODE_STEAM);
     controller.deactivate();
 }
 
-void onWaterToggle(lv_event_t *e) { controller.isActive() ? controller.deactivate() : controller.activate(); }
-
 void onWakeup(lv_event_t *e) {
+    controller.getUI()->changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
     controller.deactivate();
     controller.setMode(MODE_BREW);
 }
-
-void onWaterTempLower(lv_event_t *e) { controller.lowerTemp(); }
-
-void onWaterTempRaise(lv_event_t *e) { controller.raiseTemp(); }
 
 void onLoadStarted(lv_event_t *e) { controller.onScreenReady(); }
 
@@ -65,15 +61,25 @@ void onGrindTimeLower(lv_event_t *e) { controller.lowerGrindTarget(); }
 void onGrindTimeRaise(lv_event_t *e) { controller.raiseGrindTarget(); }
 
 void onMenuClick(lv_event_t *e) {
+    controller.deactivate();
     controller.setMode(MODE_BREW);
     controller.getUI()->changeScreen(&ui_MenuScreen, &ui_MenuScreen_screen_init);
 }
 
-void onGrindScreen(lv_event_t *e) { controller.setMode(MODE_GRIND); }
+void onGrindScreen(lv_event_t *e) {
+    controller.getUI()->changeScreen(&ui_GrindScreen, &ui_GrindScreen_screen_init);
+    controller.setMode(MODE_GRIND);
+}
 
-void onTimedClick(lv_event_t *e) { controller.onTargetChange(ProcessTarget::TIME); }
+void onTimedClick(lv_event_t *e) {
+    controller.onTargetChange(ProcessTarget::TIME);
+    controller.getUI()->markDirty();
+}
 
-void onVolumetricClick(lv_event_t *e) { controller.onTargetChange(ProcessTarget::VOLUMETRIC); }
+void onVolumetricClick(lv_event_t *e) {
+    controller.onTargetChange(ProcessTarget::VOLUMETRIC);
+    controller.getUI()->markDirty();
+}
 
 void onPreviousProfile(lv_event_t *e) { controller.getUI()->onPreviousProfile(); }
 
@@ -84,3 +90,9 @@ void onProfileLoad(lv_event_t *e) { controller.getUI()->onProfileSelect(); }
 void onProfileSelect(lv_event_t *e) { controller.getUI()->onProfileSwitch(); }
 
 void onFlush(lv_event_t *e) { controller.onFlush(); }
+
+void onSimpleProcessToggle(lv_event_t *e) {
+    if (controller.getMode() != MODE_STEAM) {
+        controller.isActive() ? controller.deactivate() : controller.activate();
+    }
+}

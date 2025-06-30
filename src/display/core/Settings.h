@@ -65,6 +65,7 @@ class Settings {
     int getMainBrightness() const { return mainBrightness; }
     int getStandbyBrightness() const { return standbyBrightness; }
     int getStandbyBrightnessTimeout() const { return standbyBrightnessTimeout; }
+    float getSteamPumpPercentage() const { return steamPumpPercentage; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -112,6 +113,7 @@ class Settings {
     void setMainBrightness(int main_brightness);
     void setStandbyBrightness(int standby_brightness);
     void setStandbyBrightnessTimeout(int standby_brightness_timeout);
+    void setSteamPumpPercentage(float steam_pump_percentage);
 
   private:
     Preferences preferences;
@@ -154,6 +156,7 @@ class Settings {
     bool clock24hFormat = true;
     String otaChannel = DEFAULT_OTA_CHANNEL;
     std::vector<String> favoritedProfiles;
+    float steamPumpPercentage = DEFAULT_STEAM_PUMP_PERCENTAGE;
 
     // Deprecated, use profiles
     int targetBrewTemp = 93;

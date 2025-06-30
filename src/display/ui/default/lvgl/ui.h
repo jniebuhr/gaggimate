@@ -41,6 +41,8 @@ extern lv_obj_t *ui_InitScreen_mainLabel;
 void ui_ProfileScreen_screen_init(void);
 void ui_event_ProfileScreen(lv_event_t *e);
 extern lv_obj_t *ui_ProfileScreen;
+extern lv_obj_t *ui_ProfileScreen_dials;
+void ui_event_ProfileScreen_ImgButton1(lv_event_t *e);
 extern lv_obj_t *ui_ProfileScreen_ImgButton1;
 extern lv_obj_t *ui_ProfileScreen_contentPanel;
 extern lv_obj_t *ui_ProfileScreen_mainLabel;
@@ -60,18 +62,20 @@ void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e);
 extern lv_obj_t *ui_ProfileScreen_nextProfileBtn;
 void ui_event_ProfileScreen_chooseButton(lv_event_t *e);
 extern lv_obj_t *ui_ProfileScreen_chooseButton;
-extern lv_obj_t *ui_ProfileScreen_dials;
 // CUSTOM VARIABLES
-extern lv_obj_t *uic_ProfileScreen_dials_tempTarget;
 extern lv_obj_t *uic_ProfileScreen_dials_tempGauge;
-extern lv_obj_t *uic_ProfileScreen_dials_pressureTarget;
+extern lv_obj_t *uic_ProfileScreen_dials_tempTarget;
 extern lv_obj_t *uic_ProfileScreen_dials_pressureGauge;
+extern lv_obj_t *uic_ProfileScreen_dials_pressureTarget;
 extern lv_obj_t *uic_ProfileScreen_dials_pressureText;
 extern lv_obj_t *uic_ProfileScreen_dials_tempText;
 
 // SCREEN: ui_MenuScreen
 void ui_MenuScreen_screen_init(void);
 extern lv_obj_t *ui_MenuScreen;
+extern lv_obj_t *ui_MenuScreen_dials;
+void ui_event_MenuScreen_standbyButton(lv_event_t *e);
+extern lv_obj_t *ui_MenuScreen_standbyButton;
 extern lv_obj_t *ui_MenuScreen_contentPanel1;
 void ui_event_MenuScreen_btnBrew(lv_event_t *e);
 extern lv_obj_t *ui_MenuScreen_btnBrew;
@@ -81,14 +85,11 @@ void ui_event_MenuScreen_waterBtn(lv_event_t *e);
 extern lv_obj_t *ui_MenuScreen_waterBtn;
 void ui_event_MenuScreen_grindBtn(lv_event_t *e);
 extern lv_obj_t *ui_MenuScreen_grindBtn;
-extern lv_obj_t *ui_MenuScreen_dials;
-void ui_event_MenuScreen_standbyButton(lv_event_t *e);
-extern lv_obj_t *ui_MenuScreen_standbyButton;
 // CUSTOM VARIABLES
-extern lv_obj_t *uic_MenuScreen_dials_tempTarget;
 extern lv_obj_t *uic_MenuScreen_dials_tempGauge;
-extern lv_obj_t *uic_MenuScreen_dials_pressureTarget;
+extern lv_obj_t *uic_MenuScreen_dials_tempTarget;
 extern lv_obj_t *uic_MenuScreen_dials_pressureGauge;
+extern lv_obj_t *uic_MenuScreen_dials_pressureTarget;
 extern lv_obj_t *uic_MenuScreen_dials_pressureText;
 extern lv_obj_t *uic_MenuScreen_dials_tempText;
 
@@ -96,6 +97,8 @@ extern lv_obj_t *uic_MenuScreen_dials_tempText;
 void ui_BrewScreen_screen_init(void);
 void ui_event_BrewScreen(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen;
+extern lv_obj_t *ui_BrewScreen_dials;
+void ui_event_BrewScreen_ImgButton5(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_ImgButton5;
 extern lv_obj_t *ui_BrewScreen_contentPanel4;
 extern lv_obj_t *ui_BrewScreen_mainLabel3;
@@ -128,62 +131,38 @@ extern lv_obj_t *ui_BrewScreen_upDurationButton;
 void ui_event_BrewScreen_downDurationButton(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_downDurationButton;
 extern lv_obj_t *ui_BrewScreen_Image4;
-extern lv_obj_t *ui_BrewScreen_dials;
 // CUSTOM VARIABLES
-extern lv_obj_t *uic_BrewScreen_dials_tempTarget;
 extern lv_obj_t *uic_BrewScreen_dials_tempGauge;
-extern lv_obj_t *uic_BrewScreen_dials_pressureTarget;
+extern lv_obj_t *uic_BrewScreen_dials_tempTarget;
 extern lv_obj_t *uic_BrewScreen_dials_pressureGauge;
+extern lv_obj_t *uic_BrewScreen_dials_pressureTarget;
 extern lv_obj_t *uic_BrewScreen_dials_pressureText;
 extern lv_obj_t *uic_BrewScreen_dials_tempText;
 
-// SCREEN: ui_SteamScreen
-void ui_SteamScreen_screen_init(void);
-void ui_event_SteamScreen(lv_event_t *e);
-extern lv_obj_t *ui_SteamScreen;
-extern lv_obj_t *ui_SteamScreen_ImgButton6;
-extern lv_obj_t *ui_SteamScreen_contentPanel5;
-extern lv_obj_t *ui_SteamScreen_mainLabel5;
-void ui_event_SteamScreen_goButton(lv_event_t *e);
-extern lv_obj_t *ui_SteamScreen_goButton;
-void ui_event_SteamScreen_downTempButton(lv_event_t *e);
-extern lv_obj_t *ui_SteamScreen_downTempButton;
-void ui_event_SteamScreen_upTempButton(lv_event_t *e);
-extern lv_obj_t *ui_SteamScreen_upTempButton;
-extern lv_obj_t *ui_SteamScreen_targetTemp;
-extern lv_obj_t *ui_SteamScreen_Image9;
-extern lv_obj_t *ui_SteamScreen_dials;
+// SCREEN: ui_SimpleProcessScreen
+void ui_SimpleProcessScreen_screen_init(void);
+void ui_event_SimpleProcessScreen(lv_event_t *e);
+extern lv_obj_t *ui_SimpleProcessScreen;
+extern lv_obj_t *ui_SimpleProcessScreen_dials;
+void ui_event_SimpleProcessScreen_ImgButton6(lv_event_t *e);
+extern lv_obj_t *ui_SimpleProcessScreen_ImgButton6;
+extern lv_obj_t *ui_SimpleProcessScreen_contentPanel5;
+extern lv_obj_t *ui_SimpleProcessScreen_mainLabel5;
+void ui_event_SimpleProcessScreen_goButton(lv_event_t *e);
+extern lv_obj_t *ui_SimpleProcessScreen_goButton;
+void ui_event_SimpleProcessScreen_downTempButton(lv_event_t *e);
+extern lv_obj_t *ui_SimpleProcessScreen_downTempButton;
+void ui_event_SimpleProcessScreen_upTempButton(lv_event_t *e);
+extern lv_obj_t *ui_SimpleProcessScreen_upTempButton;
+extern lv_obj_t *ui_SimpleProcessScreen_targetTemp;
+extern lv_obj_t *ui_SimpleProcessScreen_Image9;
 // CUSTOM VARIABLES
-extern lv_obj_t *uic_SteamScreen_dials_tempTarget;
-extern lv_obj_t *uic_SteamScreen_dials_tempGauge;
-extern lv_obj_t *uic_SteamScreen_dials_pressureTarget;
-extern lv_obj_t *uic_SteamScreen_dials_pressureGauge;
-extern lv_obj_t *uic_SteamScreen_dials_pressureText;
-extern lv_obj_t *uic_SteamScreen_dials_tempText;
-
-// SCREEN: ui_WaterScreen
-void ui_WaterScreen_screen_init(void);
-void ui_event_WaterScreen(lv_event_t *e);
-extern lv_obj_t *ui_WaterScreen;
-extern lv_obj_t *ui_WaterScreen_ImgButton7;
-extern lv_obj_t *ui_WaterScreen_contentPanel6;
-extern lv_obj_t *ui_WaterScreen_mainLabel6;
-void ui_event_WaterScreen_goButton(lv_event_t *e);
-extern lv_obj_t *ui_WaterScreen_goButton;
-void ui_event_WaterScreen_downTempButton(lv_event_t *e);
-extern lv_obj_t *ui_WaterScreen_downTempButton;
-void ui_event_WaterScreen_upTempButton(lv_event_t *e);
-extern lv_obj_t *ui_WaterScreen_upTempButton;
-extern lv_obj_t *ui_WaterScreen_targetTemp;
-extern lv_obj_t *ui_WaterScreen_Image10;
-extern lv_obj_t *ui_WaterScreen_dials;
-// CUSTOM VARIABLES
-extern lv_obj_t *uic_WaterScreen_dials_tempTarget;
-extern lv_obj_t *uic_WaterScreen_dials_tempGauge;
-extern lv_obj_t *uic_WaterScreen_dials_pressureTarget;
-extern lv_obj_t *uic_WaterScreen_dials_pressureGauge;
-extern lv_obj_t *uic_WaterScreen_dials_pressureText;
-extern lv_obj_t *uic_WaterScreen_dials_tempText;
+extern lv_obj_t *uic_SimpleProcessScreen_dials_tempGauge;
+extern lv_obj_t *uic_SimpleProcessScreen_dials_tempTarget;
+extern lv_obj_t *uic_SimpleProcessScreen_dials_pressureGauge;
+extern lv_obj_t *uic_SimpleProcessScreen_dials_pressureTarget;
+extern lv_obj_t *uic_SimpleProcessScreen_dials_pressureText;
+extern lv_obj_t *uic_SimpleProcessScreen_dials_tempText;
 
 // SCREEN: ui_StandbyScreen
 void ui_StandbyScreen_screen_init(void);
@@ -202,6 +181,8 @@ extern lv_obj_t *ui_StandbyScreen_Image3;
 void ui_StatusScreen_screen_init(void);
 void ui_event_StatusScreen(lv_event_t *e);
 extern lv_obj_t *ui_StatusScreen;
+extern lv_obj_t *ui_StatusScreen_dials;
+void ui_event_StatusScreen_ImgButton8(lv_event_t *e);
 extern lv_obj_t *ui_StatusScreen_ImgButton8;
 extern lv_obj_t *ui_StatusScreen_contentPanel2;
 extern lv_obj_t *ui_StatusScreen_targetDuration;
@@ -218,12 +199,11 @@ extern lv_obj_t *ui_StatusScreen_brewBar;
 extern lv_obj_t *ui_StatusScreen_labelContainer;
 extern lv_obj_t *ui_StatusScreen_brewLabel;
 extern lv_obj_t *ui_StatusScreen_brewVolume;
-extern lv_obj_t *ui_StatusScreen_dials;
 // CUSTOM VARIABLES
-extern lv_obj_t *uic_StatusScreen_dials_tempTarget;
 extern lv_obj_t *uic_StatusScreen_dials_tempGauge;
-extern lv_obj_t *uic_StatusScreen_dials_pressureTarget;
+extern lv_obj_t *uic_StatusScreen_dials_tempTarget;
 extern lv_obj_t *uic_StatusScreen_dials_pressureGauge;
+extern lv_obj_t *uic_StatusScreen_dials_pressureTarget;
 extern lv_obj_t *uic_StatusScreen_dials_pressureText;
 extern lv_obj_t *uic_StatusScreen_dials_tempText;
 
@@ -231,6 +211,8 @@ extern lv_obj_t *uic_StatusScreen_dials_tempText;
 void ui_GrindScreen_screen_init(void);
 void ui_event_GrindScreen(lv_event_t *e);
 extern lv_obj_t *ui_GrindScreen;
+extern lv_obj_t *ui_GrindScreen_dials;
+void ui_event_GrindScreen_ImgButton2(lv_event_t *e);
 extern lv_obj_t *ui_GrindScreen_ImgButton2;
 extern lv_obj_t *ui_GrindScreen_contentPanel7;
 extern lv_obj_t *ui_GrindScreen_mainLabel7;
@@ -248,12 +230,11 @@ void ui_event_GrindScreen_timedButton(lv_event_t *e);
 extern lv_obj_t *ui_GrindScreen_timedButton;
 void ui_event_GrindScreen_volumetricButton(lv_event_t *e);
 extern lv_obj_t *ui_GrindScreen_volumetricButton;
-extern lv_obj_t *ui_GrindScreen_dials;
 // CUSTOM VARIABLES
-extern lv_obj_t *uic_GrindScreen_dials_tempTarget;
 extern lv_obj_t *uic_GrindScreen_dials_tempGauge;
-extern lv_obj_t *uic_GrindScreen_dials_pressureTarget;
+extern lv_obj_t *uic_GrindScreen_dials_tempTarget;
 extern lv_obj_t *uic_GrindScreen_dials_pressureGauge;
+extern lv_obj_t *uic_GrindScreen_dials_pressureTarget;
 extern lv_obj_t *uic_GrindScreen_dials_pressureText;
 extern lv_obj_t *uic_GrindScreen_dials_tempText;
 
@@ -261,34 +242,36 @@ extern lv_obj_t *uic_GrindScreen_dials_tempText;
 extern lv_obj_t *ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
-LV_IMG_DECLARE(ui_img_logo_png);      // assets/logo.png
-LV_IMG_DECLARE(ui_img_295763949);     // assets/angle-up-40x40.png
-LV_IMG_DECLARE(ui_img_1951499226);    // assets/thermometer-half-40x40.png
-LV_IMG_DECLARE(ui_img_360122106);     // assets/clock-40x40.png
-LV_IMG_DECLARE(ui_img_98036921);      // assets/angle-left-40x40.png
-LV_IMG_DECLARE(ui_img_944513416);     // assets/angle-right-40x40.png
-LV_IMG_DECLARE(ui_img_631115820);     // assets/check-40x40.png
-LV_IMG_DECLARE(ui_img_indicator_png); // assets/indicator.png
-LV_IMG_DECLARE(ui_img_untitled_png);  // assets/Untitled.png
-LV_IMG_DECLARE(ui_img_489054950);     // assets/gauge-fill.png
-LV_IMG_DECLARE(ui_img_1455708189);    // assets/pressure-filled.png
-LV_IMG_DECLARE(ui_img_979979123);     // assets/mug-hot-alt-80x80.png
-LV_IMG_DECLARE(ui_img_783005998);     // assets/wind-80x80.png
-LV_IMG_DECLARE(ui_img_545340440);     // assets/raindrops-80x80.png
-LV_IMG_DECLARE(ui_img_363557387);     // assets/coffee-bean-80x80.png
-LV_IMG_DECLARE(ui_img_2044104741);    // assets/power-40x40.png
-LV_IMG_DECLARE(ui_img_445946954);     // assets/play-40x40.png
-LV_IMG_DECLARE(ui_img_1424216268);    // assets/equality-40x40.png
-LV_IMG_DECLARE(ui_img_207915003);     // assets/refresh-40x40.png
-LV_IMG_DECLARE(ui_img_834125362);     // assets/minus-small-40x40.png
-LV_IMG_DECLARE(ui_img_390988422);     // assets/plus-small-40x40.png
-LV_IMG_DECLARE(ui_img_364513079);     // assets/wifi-20x20.png
-LV_IMG_DECLARE(ui_img_1091371356);    // assets/bluetooth-alt-20x20.png
-LV_IMG_DECLARE(ui_img_1765671371);    // assets/refresh-20x20.png
-LV_IMG_DECLARE(ui_img_1732953241);    // assets/tap-60x60.png
-LV_IMG_DECLARE(ui_img_1456692430);    // assets/pause-40x40.png
-LV_IMG_DECLARE(ui_img_1829139226);    // assets/angle-down-40x40.png
-LV_IMG_DECLARE(ui_img_340148213);     // assets/settings-40x40.png
+LV_IMG_DECLARE(ui_img_logo_png);     // assets/logo.png
+LV_IMG_DECLARE(ui_img_untitled_png); // assets/Untitled.png
+LV_IMG_DECLARE(ui_img_489054950);    // assets/gauge-fill.png
+LV_IMG_DECLARE(ui_img_340686386);    // assets/indicator-small.png
+LV_IMG_DECLARE(ui_img_1455708189);   // assets/pressure-filled.png
+LV_IMG_DECLARE(ui_img_1951499226);   // assets/thermometer-half-40x40.png
+LV_IMG_DECLARE(ui_img_1220767159);   // assets/tachometer-fast-40x40.png
+LV_IMG_DECLARE(ui_img_295763949);    // assets/angle-up-40x40.png
+LV_IMG_DECLARE(ui_img_360122106);    // assets/clock-40x40.png
+LV_IMG_DECLARE(ui_img_98036921);     // assets/angle-left-40x40.png
+LV_IMG_DECLARE(ui_img_944513416);    // assets/angle-right-40x40.png
+LV_IMG_DECLARE(ui_img_631115820);    // assets/check-40x40.png
+LV_IMG_DECLARE(ui_img_2044104741);   // assets/power-40x40.png
+LV_IMG_DECLARE(ui_img_979979123);    // assets/mug-hot-alt-80x80.png
+LV_IMG_DECLARE(ui_img_783005998);    // assets/wind-80x80.png
+LV_IMG_DECLARE(ui_img_545340440);    // assets/raindrops-80x80.png
+LV_IMG_DECLARE(ui_img_363557387);    // assets/coffee-bean-80x80.png
+LV_IMG_DECLARE(ui_img_445946954);    // assets/play-40x40.png
+LV_IMG_DECLARE(ui_img_1424216268);   // assets/equality-40x40.png
+LV_IMG_DECLARE(ui_img_207915003);    // assets/refresh-40x40.png
+LV_IMG_DECLARE(ui_img_834125362);    // assets/minus-small-40x40.png
+LV_IMG_DECLARE(ui_img_390988422);    // assets/plus-small-40x40.png
+LV_IMG_DECLARE(ui_img_364513079);    // assets/wifi-20x20.png
+LV_IMG_DECLARE(ui_img_1091371356);   // assets/bluetooth-alt-20x20.png
+LV_IMG_DECLARE(ui_img_1765671371);   // assets/refresh-20x20.png
+LV_IMG_DECLARE(ui_img_1732953241);   // assets/tap-60x60.png
+LV_IMG_DECLARE(ui_img_1456692430);   // assets/pause-40x40.png
+LV_IMG_DECLARE(ui_img_1829139226);   // assets/angle-down-40x40.png
+LV_IMG_DECLARE(ui_img_340148213);    // assets/settings-40x40.png
+LV_IMG_DECLARE(ui_img_691326438);    // assets/wind-40x40.png
 
 // UI INIT
 void ui_init(void);

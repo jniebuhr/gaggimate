@@ -292,6 +292,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setStandbyBrightness(request->arg("standbyBrightness").toInt());
             if (request->hasArg("standbyBrightnessTimeout"))
                 settings->setStandbyBrightnessTimeout(request->arg("standbyBrightnessTimeout").toInt() * 1000);
+            if (request->hasArg("steamPumpPercentage"))
+                settings->setSteamPumpPercentage(request->arg("steamPumpPercentage").toFloat());
             settings->save(true);
         });
         controller->setTargetTemp(controller->getTargetTemp());
@@ -331,6 +333,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["mainBrightness"] = settings.getMainBrightness();
     doc["standbyBrightness"] = settings.getStandbyBrightness();
     doc["standbyBrightnessTimeout"] = settings.getStandbyBrightnessTimeout() / 1000;
+    doc["steamPumpPercentage"] = settings.getSteamPumpPercentage();
     serializeJson(doc, *response);
     request->send(response);
 

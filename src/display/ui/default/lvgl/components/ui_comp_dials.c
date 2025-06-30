@@ -17,20 +17,6 @@ lv_obj_t *ui_dials_create(lv_obj_t *comp_parent) {
     lv_obj_set_align(cui_dials, LV_ALIGN_CENTER);
     lv_obj_clear_flag(cui_dials, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
-    lv_obj_t *cui_tempTarget;
-    cui_tempTarget = lv_img_create(cui_dials);
-    lv_img_set_src(cui_tempTarget, &ui_img_indicator_png);
-    lv_obj_set_width(cui_tempTarget, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(cui_tempTarget, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_align(cui_tempTarget, LV_ALIGN_CENTER);
-    lv_obj_add_flag(cui_tempTarget, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(cui_tempTarget, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-    lv_img_set_angle(cui_tempTarget, -900);
-    ui_object_set_themeable_style_property(cui_tempTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
-                                           _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(cui_tempTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
-                                           _ui_theme_alpha_NiceWhite);
-
     lv_obj_t *cui_tempGauge;
     cui_tempGauge = lv_arc_create(cui_dials);
     lv_obj_set_width(cui_tempGauge, 480);
@@ -51,18 +37,20 @@ lv_obj_t *ui_dials_create(lv_obj_t *comp_parent) {
     lv_obj_set_style_bg_color(cui_tempGauge, lv_color_hex(0xD10000), LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_tempGauge, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
 
-    lv_obj_t *cui_pressureTarget;
-    cui_pressureTarget = lv_img_create(cui_dials);
-    lv_img_set_src(cui_pressureTarget, &ui_img_indicator_png);
-    lv_obj_set_width(cui_pressureTarget, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(cui_pressureTarget, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_align(cui_pressureTarget, LV_ALIGN_CENTER);
-    lv_obj_add_flag(cui_pressureTarget, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(cui_pressureTarget, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-    lv_img_set_angle(cui_pressureTarget, 1530);
-    ui_object_set_themeable_style_property(cui_pressureTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+    lv_obj_t *cui_tempTarget;
+    cui_tempTarget = lv_img_create(cui_dials);
+    lv_img_set_src(cui_tempTarget, &ui_img_340686386);
+    lv_obj_set_width(cui_tempTarget, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(cui_tempTarget, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_x(cui_tempTarget, -235);
+    lv_obj_set_y(cui_tempTarget, -16);
+    lv_obj_set_align(cui_tempTarget, LV_ALIGN_CENTER);
+    lv_obj_add_flag(cui_tempTarget, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+    lv_obj_clear_flag(cui_tempTarget, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_img_set_angle(cui_tempTarget, -1760);
+    ui_object_set_themeable_style_property(cui_tempTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(cui_pressureTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
+    ui_object_set_themeable_style_property(cui_tempTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
                                            _ui_theme_alpha_NiceWhite);
 
     lv_obj_t *cui_pressureGauge;
@@ -85,6 +73,22 @@ lv_obj_t *ui_dials_create(lv_obj_t *comp_parent) {
 
     lv_obj_set_style_bg_color(cui_pressureGauge, lv_color_hex(0xD10000), LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(cui_pressureGauge, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_pressureTarget;
+    cui_pressureTarget = lv_img_create(cui_dials);
+    lv_img_set_src(cui_pressureTarget, &ui_img_340686386);
+    lv_obj_set_width(cui_pressureTarget, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(cui_pressureTarget, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_x(cui_pressureTarget, 110);
+    lv_obj_set_y(cui_pressureTarget, 208);
+    lv_obj_set_align(cui_pressureTarget, LV_ALIGN_CENTER);
+    lv_obj_add_flag(cui_pressureTarget, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+    lv_obj_clear_flag(cui_pressureTarget, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_img_set_angle(cui_pressureTarget, 620);
+    ui_object_set_themeable_style_property(cui_pressureTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+                                           _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(cui_pressureTarget, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
+                                           _ui_theme_alpha_NiceWhite);
 
     lv_obj_t *cui_pressureText;
     cui_pressureText = lv_label_create(cui_dials);
@@ -125,14 +129,44 @@ lv_obj_t *ui_dials_create(lv_obj_t *comp_parent) {
     lv_obj_set_style_pad_top(cui_tempText, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(cui_tempText, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    lv_obj_t *cui_tempIcon;
+    cui_tempIcon = lv_img_create(cui_dials);
+    lv_img_set_src(cui_tempIcon, &ui_img_1951499226);
+    lv_obj_set_width(cui_tempIcon, LV_SIZE_CONTENT);  /// 40
+    lv_obj_set_height(cui_tempIcon, LV_SIZE_CONTENT); /// 40
+    lv_obj_set_x(cui_tempIcon, -85);
+    lv_obj_set_y(cui_tempIcon, 200);
+    lv_obj_set_align(cui_tempIcon, LV_ALIGN_CENTER);
+    lv_obj_add_flag(cui_tempIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+    lv_obj_clear_flag(cui_tempIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_img_set_zoom(cui_tempIcon, 150);
+    lv_obj_set_style_img_recolor(cui_tempIcon, lv_color_hex(0xF62C2C), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_img_recolor_opa(cui_tempIcon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *cui_Image6;
+    cui_Image6 = lv_img_create(cui_dials);
+    lv_img_set_src(cui_Image6, &ui_img_1220767159);
+    lv_obj_set_width(cui_Image6, LV_SIZE_CONTENT);  /// 40
+    lv_obj_set_height(cui_Image6, LV_SIZE_CONTENT); /// 40
+    lv_obj_set_x(cui_Image6, 85);
+    lv_obj_set_y(cui_Image6, 200);
+    lv_obj_set_align(cui_Image6, LV_ALIGN_CENTER);
+    lv_obj_add_flag(cui_Image6, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+    lv_obj_clear_flag(cui_Image6, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_img_set_zoom(cui_Image6, 150);
+    lv_obj_set_style_img_recolor(cui_Image6, lv_color_hex(0x2CA4F6), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_img_recolor_opa(cui_Image6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
     lv_obj_t **children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_DIALS_NUM);
     children[UI_COMP_DIALS_DIALS] = cui_dials;
-    children[UI_COMP_DIALS_TEMPTARGET] = cui_tempTarget;
     children[UI_COMP_DIALS_TEMPGAUGE] = cui_tempGauge;
-    children[UI_COMP_DIALS_PRESSURETARGET] = cui_pressureTarget;
+    children[UI_COMP_DIALS_TEMPTARGET] = cui_tempTarget;
     children[UI_COMP_DIALS_PRESSUREGAUGE] = cui_pressureGauge;
+    children[UI_COMP_DIALS_PRESSURETARGET] = cui_pressureTarget;
     children[UI_COMP_DIALS_PRESSURETEXT] = cui_pressureText;
     children[UI_COMP_DIALS_TEMPTEXT] = cui_tempText;
+    children[UI_COMP_DIALS_TEMPICON] = cui_tempIcon;
+    children[UI_COMP_DIALS_IMAGE6] = cui_Image6;
     lv_obj_add_event_cb(cui_dials, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui_dials, del_component_child_event_cb, LV_EVENT_DELETE, children);
     ui_comp_dials_create_hook(cui_dials);

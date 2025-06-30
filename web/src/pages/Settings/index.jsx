@@ -197,48 +197,14 @@ export function Settings() {
                 onChange={onChange('targetWaterTemp')}
               />
             </div>
-
-            <div>
-              <label htmlFor="temperatureOffset" className="block font-medium text-gray-700 dark:text-gray-400">
-                Temperature Offset (°C)
-              </label>
-              <input
-                id="temperatureOffset"
-                name="temperatureOffset"
-                type="number"
-                className="input-field"
-                placeholder="0"
-                value={formData.temperatureOffset}
-                onChange={onChange('temperatureOffset')}
-              />
-            </div>
         </Card>
-        <Card xs={12} lg={6} title="Pressure settings">
-          <div>
-            <label htmlFor="pressureScaling" className="block font-medium text-gray-700 dark:text-gray-400">
-              Pressure scaling factor <small>Value depends on the pressure sensor being used.</small>
-            </label>
-            <input
-              id="pressureScaling"
-              name="pressureScaling"
-              type="number"
-              inputmode="decimal"
-              placeholder="0.0"
-              className="input-field"
-              min="0"
-              step="any"
-              value={formData.pressureScaling}
-              onChange={onChange('pressureScaling')}
-            />
-          </div>
-        </Card>
-        <Card xs={12} lg={6} title="User preferences">
-          <div>
-            <label htmlFor="startup-mode" className="block font-medium text-gray-700 dark:text-gray-400">
-              Startup Mode
-            </label>
-            <select id="startup-mode" name="startupMode" className="input-field" onChange={onChange('startupMode')}>
-              <option value="standby" selected={formData.startupMode === 'standby'}>
+      <Card xs={12} lg={6} title="User preferences">
+        <div>
+          <label htmlFor="startup-mode" className="block font-medium text-gray-700 dark:text-gray-400">
+            Startup Mode
+          </label>
+          <select id="startup-mode" name="startupMode" className="input-field" onChange={onChange('startupMode')}>
+            <option value="standby" selected={formData.startupMode === 'standby'}>
                 Standby
               </option>
               <option value="brew" selected={formData.startupMode === 'brew'}>
@@ -415,6 +381,8 @@ export function Settings() {
             </label>
             <p>Use 24h Format</p>
           </div>
+        </Card>
+        <Card xs={12} lg={6} title="Machine settings">
           <div>
             <label htmlFor="pid" className="block font-medium text-gray-700 dark:text-gray-400">
               PID Values (Kp, Ki, Kd)
@@ -428,6 +396,63 @@ export function Settings() {
               value={formData.pid}
               onChange={onChange('pid')}
             />
+          </div>
+          <div>
+            <label htmlFor="temperatureOffset" className="block font-medium text-gray-700 dark:text-gray-400">
+              Temperature Offset
+            </label>
+            <div className="flex">
+              <input
+                id="temperatureOffset"
+                name="temperatureOffset"
+                type="number"
+                className="input-field addition"
+                placeholder="0"
+                value={formData.temperatureOffset}
+                onChange={onChange('temperatureOffset')}
+              />
+              <span className="input-addition">°C</span>
+            </div>
+          </div>
+          <div>
+            <label htmlFor="pressureScaling" className="block font-medium text-gray-700 dark:text-gray-400">
+              Pressure sensor rating <small>Enter the bar rating of the pressure sensor being used</small>
+            </label>
+            <div className="flex">
+              <input
+                id="pressureScaling"
+                name="pressureScaling"
+                type="number"
+                inputMode="decimal"
+                placeholder="0.0"
+                className="input-field addition"
+                min="0"
+                step="any"
+                value={formData.pressureScaling}
+                onChange={onChange('pressureScaling')}
+              />
+              <span className="input-addition">bar</span>
+            </div>
+          </div>
+          <div>
+            <label htmlFor="pressureScaling" className="block font-medium text-gray-700 dark:text-gray-400">
+              Steam Pump Assist <small>What percentage to run the pump at during steaming</small>
+            </label>
+            <div className="flex">
+              <input
+                id="steamPumpPercentage"
+                name="steamPumpPercentage"
+                type="number"
+                inputMode="decimal"
+                placeholder="0.0"
+                className="input-field addition"
+                min="0"
+                step="any"
+                value={formData.steamPumpPercentage}
+                onChange={onChange('steamPumpPercentage')}
+              />
+              <span className="input-addition">%</span>
+            </div>
           </div>
         </Card>
         <Card xs={12} lg={6} title="Display settings">

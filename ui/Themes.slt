@@ -49,6 +49,18 @@
           255
         ],
         "InheritedType": 0
+      },
+      {
+        "nid": 1000259,
+        "strtype": "THEME_COLOR",
+        "strval": "Heating",
+        "intarray": [
+          0,
+          105,
+          173,
+          255
+        ],
+        "InheritedType": 0
       }
     ]
   },
@@ -94,13 +106,24 @@
         },
         {
           "nid": 1000188,
-          "flags": 2097152,
           "strtype": "THEME_COLOR",
           "strval": "Progress",
           "intarray": [
             31,
             251,
             163,
+            255
+          ],
+          "InheritedType": 0
+        },
+        {
+          "nid": 1000259,
+          "strtype": "THEME_COLOR",
+          "strval": "Heating",
+          "intarray": [
+            0,
+            105,
+            173,
             255
           ],
           "InheritedType": 0
