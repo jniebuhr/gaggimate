@@ -137,7 +137,7 @@ function Phase({ phase, onChange, onRemove }) {
     });
   };
   const onVolumetricTargetChange = (value) => {
-    if (value === 0) {
+    if (value == 0) {
       onChange({
         ...phase,
         targets: null
@@ -155,7 +155,7 @@ function Phase({ phase, onChange, onRemove }) {
     });
   };
   const onPumpPressureSetting = (value) => {
-    if (value === 0) {
+    if (value == 0) {
       onChange({
         ...phase,
         pump: 100,
@@ -243,20 +243,18 @@ function Phase({ phase, onChange, onRemove }) {
           <span className="input-addition">s</span>
         </div>
       </div>
-      {
-        phase.phase === 'brew' && <div className="col-span-12 flex flex-col">
-          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Volumetric Target</label>
-          <div className="flex">
-            <input
-              className="input-field"
-              type="number"
-              value={targetWeight}
-              onChange={(e) => onVolumetricTargetChange(e.target.value)}
-            />
-            <span className="input-addition">g</span>
-          </div>
+      <div className="col-span-12 flex flex-col">
+        <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Volumetric Target</label>
+        <div className="flex">
+          <input
+            className="input-field"
+            type="number"
+            value={targetWeight}
+            onChange={(e) => onVolumetricTargetChange(e.target.value)}
+          />
+          <span className="input-addition">g</span>
         </div>
-      }
+      </div>
       {
         !!phase.pump && capabilities.value.pressure && (
           <div className="col-span-12 flex flex-col">
