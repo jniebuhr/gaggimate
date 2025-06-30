@@ -108,23 +108,21 @@ void WebUIPlugin::start(bool apMode) {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
-    server.on("/ota", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
-    server.on("/settings", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
-    server.on("/scales", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
+    server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
     ws.onEvent(
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
             if (type == WS_EVT_CONNECT) {
-                printf("Received new websocket connection\n");
                 client->setCloseClientOnQueueFull(true);
+                ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DISCONNECT) {
-                printf("Client disconnected\n");
+                ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DATA) {
                 auto *info = static_cast<AwsFrameInfo *>(arg);
                 if (info->final && info->index == 0 && info->len == len) {
                     if (info->opcode == WS_TEXT) {
                         data[len] = 0;
-                        Serial.printf("Received request: %s\n", (char *)data);
+                        ESP_LOGI("WebUIPlugin", "Received request: %", (char *)data);
                         JsonDocument doc;
                         DeserializationError err = deserializeJson(doc, data);
                         if (!err) {
@@ -145,12 +143,12 @@ void WebUIPlugin::start(bool apMode) {
         });
     server.addHandler(&ws);
     server.begin();
-    printf("Webserver started\n");
+    ESP_LOGI("WebUIPlugin", "Started webserver");
     if (apMode) {
         dnsServer = new DNSServer();
         dnsServer->setTTL(3600);
         dnsServer->start(53, "*", WIFI_AP_IP);
-        printf("Started catchall DNS for captive portal\n");
+        ESP_LOGI("WebUIPlugin", "Started catchall DNS for captive portal");
     }
 }
 

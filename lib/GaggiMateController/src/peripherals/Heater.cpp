@@ -33,6 +33,11 @@ void Heater::setupAutotune(int goal, int windowSize) {
 }
 
 void Heater::loop() {
+    if (autotuning) {
+        loopAutotune();
+        return;
+    }
+
     if (temperature <= 0.0f || setpoint <= 0.0f) {
         simplePid->setMode(SimplePID::Control::manual);
         digitalWrite(heaterPin, LOW);
@@ -42,11 +47,7 @@ void Heater::loop() {
     }
     simplePid->setMode(SimplePID::Control::automatic);
 
-    if (autotuning) {
-        loopAutotune();
-    } else {
-        loopPid();
-    }
+    loopPid();
 }
 
 void Heater::setSetpoint(float setpoint) {
