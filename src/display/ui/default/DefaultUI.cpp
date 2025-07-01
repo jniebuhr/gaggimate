@@ -65,6 +65,9 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     if (!isTemperatureStable) {
         lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
     }
+    else {
+        lv_obj_set_style_opa(heatingIcon, LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
 }
 
 DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
@@ -192,6 +195,7 @@ void DefaultUI::loop() {
     if ((controller->isActive() && diff > RERENDER_INTERVAL_ACTIVE) || diff > RERENDER_INTERVAL_IDLE) {
         rerender = true;
     }
+    applyTheme();
     if (rerender) {
         rerender = false;
         lastRender = now;
@@ -701,6 +705,17 @@ inline void DefaultUI::adjustTempTarget(lv_obj_t *dials) {
     double percentage = static_cast<double>(targetTemp) / 160.0;
     lv_obj_t *tempTarget = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTARGET);
     adjustTarget(tempTarget, percentage, gaugeStart, gaugeAngle);
+}
+
+void DefaultUI::applyTheme() {
+    const Settings &settings = controller->getSettings();
+    int newThemeMode = settings.getThemeMode();
+    
+    if (newThemeMode != currentThemeMode) {
+        currentThemeMode = newThemeMode;
+        ui_theme_set(currentThemeMode);
+        markDirty(); // Trigger a re-render
+    }
 }
 
 void DefaultUI::adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const {

@@ -42,6 +42,8 @@ class DefaultUI {
 
     void markDirty() { rerender = true; }
 
+    void applyTheme();
+
   private:
     void setupPanel();
     void setupState();
@@ -104,6 +106,7 @@ class DefaultUI {
     String currentProfileId;
     Profile currentProfileChoice{};
     std::vector<String> favoritedProfiles;
+    int currentThemeMode = 0; // Track current theme mode
 
     // Screen change
     lv_obj_t **targetScreen = &ui_InitScreen;

@@ -525,6 +525,21 @@ export function Settings() {
               onChange={onChange('standbyBrightnessTimeout')}
             />
           </div>
+          <div>
+            <label htmlFor="themeMode" className="block font-medium text-gray-700 dark:text-gray-400">
+              Theme
+            </label>
+            <select 
+              id="themeMode"
+              name="themeMode"
+              className="input-field"
+              value={formData.themeMode}
+              onChange={onChange('themeMode')}
+            >
+              <option value={0}>Dark Theme</option>
+              <option value={1}>Light Theme</option>
+            </select>
+          </div>
         </Card>
         <Card xs={12} title="Plugins">
           <div className="flex flex-col rounded-lg divide-y divide-[#ccc] border-[#ccc] dark:border-gray-600 dark:divide-gray-600 border">
