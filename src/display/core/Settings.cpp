@@ -53,6 +53,7 @@ Settings::Settings() {
     mainBrightness = preferences.getInt("main_b", 16);
     standbyBrightness = preferences.getInt("standby_b", 8);
     standbyBrightnessTimeout = preferences.getInt("standby_bt", 60000);
+    themeMode = preferences.getInt("theme", 0); // Default to Dark theme
 
     preferences.end();
 
@@ -311,6 +312,14 @@ void Settings::setSteamPumpPercentage(float steam_pump_percentage) {
     save();
 }
 
+void Settings::setThemeMode(int theme_mode) {
+    // Validate theme mode (0-2 for 3 themes)
+    if (theme_mode >= 0 && theme_mode <= 2) {
+        themeMode = theme_mode;
+        save();
+    }
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -367,6 +376,7 @@ void Settings::doSave() {
     preferences.putInt("main_b", mainBrightness);
     preferences.putInt("standby_b", standbyBrightness);
     preferences.putInt("standby_bt", standbyBrightnessTimeout);
+    preferences.putInt("theme", themeMode);
 
     preferences.end();
 }
