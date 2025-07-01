@@ -530,15 +530,14 @@ export function Settings() {
               Theme
             </label>
             <select 
-              id="themeMode" 
-              name="themeMode" 
-              className="input-field" 
-              value={formData.themeMode} 
+              id="themeMode"
+              name="themeMode"
+              className="input-field"
+              value={formData.themeMode}
               onChange={onChange('themeMode')}
             >
               <option value={0}>Dark Theme</option>
               <option value={1}>Light Theme</option>
-              <option value={2}>Dark AMOLED</option>
             </select>
           </div>
         </Card>

@@ -313,8 +313,7 @@ void Settings::setSteamPumpPercentage(float steam_pump_percentage) {
 }
 
 void Settings::setThemeMode(int theme_mode) {
-    // Validate theme mode (0-2 for 3 themes)
-    if (theme_mode >= 0 && theme_mode <= 2) {
+    if (theme_mode >= 0 && theme_mode <= 1) {
         themeMode = theme_mode;
         save();
     }

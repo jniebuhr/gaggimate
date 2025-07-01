@@ -19,27 +19,24 @@ extern "C" {
 #define UI_THEME_DEFAULT 0
 
 #define UI_THEME_LIGHT 1
-#define UI_THEME_DARK_AMOLED 2
 
-#define NUM_THEMES 3
+extern const ui_theme_variable_t _ui_theme_color_NiceWhite[2];
+extern const ui_theme_variable_t _ui_theme_alpha_NiceWhite[2];
 
-extern const ui_theme_variable_t _ui_theme_color_NiceWhite[NUM_THEMES];
-extern const ui_theme_variable_t _ui_theme_alpha_NiceWhite[NUM_THEMES];
+extern const ui_theme_variable_t _ui_theme_color_Dark[2];
+extern const ui_theme_variable_t _ui_theme_alpha_Dark[2];
 
-extern const ui_theme_variable_t _ui_theme_color_Dark[NUM_THEMES];
-extern const ui_theme_variable_t _ui_theme_alpha_Dark[NUM_THEMES];
+extern const ui_theme_variable_t _ui_theme_color_SemiDark[2];
+extern const ui_theme_variable_t _ui_theme_alpha_SemiDark[2];
 
-extern const ui_theme_variable_t _ui_theme_color_SemiDark[NUM_THEMES];
-extern const ui_theme_variable_t _ui_theme_alpha_SemiDark[NUM_THEMES];
+extern const ui_theme_variable_t _ui_theme_color_Progress[2];
+extern const ui_theme_variable_t _ui_theme_alpha_Progress[2];
 
-extern const ui_theme_variable_t _ui_theme_color_Progress[NUM_THEMES];
-extern const ui_theme_variable_t _ui_theme_alpha_Progress[NUM_THEMES];
+extern const ui_theme_variable_t _ui_theme_color_Heating[2];
+extern const ui_theme_variable_t _ui_theme_alpha_Heating[2];
 
-extern const ui_theme_variable_t _ui_theme_color_Heating[NUM_THEMES];
-extern const ui_theme_variable_t _ui_theme_alpha_Heating[NUM_THEMES];
-
-extern const uint32_t *ui_theme_colors[NUM_THEMES];
-extern const uint8_t *ui_theme_alphas[NUM_THEMES];
+extern const uint32_t *ui_theme_colors[2];
+extern const uint8_t *ui_theme_alphas[2];
 extern uint8_t ui_theme_idx;
 
 void ui_theme_set(uint8_t theme_idx);
