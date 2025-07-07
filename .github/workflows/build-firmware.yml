@@ -1,0 +1,47 @@
+name: Build and Deploy Firmware
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'src/**'
+      - 'platformio.ini'
+      - 'lib/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+        
+    - name: Install PlatformIO
+      run: |
+        pip install platformio
+        
+    - name: Build Display Firmware
+      run: |
+        platformio run -e display
+        
+    - name: Build Controller Firmware
+      run: |
+        platformio run -e controller
+        
+    - name: Copy firmware to docs
+      run: |
+        cp .pio/build/display/firmware.bin docs/flasher/firmware/gaggimate-display.bin
+        cp .pio/build/controller/firmware.bin docs/flasher/firmware/gaggimate-controller.bin
+        
+    - name: Commit and push if changed
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add docs/flasher/firmware/
+        git diff --staged --quiet || (git commit -m "Auto-update firmware files [skip ci]" && git push)

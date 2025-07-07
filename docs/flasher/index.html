@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GaggiMate Firmware Flasher</title>
+    <script type="module" src="https://unpkg.com/esp-web-tools@10.0.1/dist/web/install-button.js?module"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .firmware-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .firmware-section:hover {
+            border-color: #4facfe;
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.2);
+        }
+        
+        .firmware-section h2 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .icon {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        
+        .display-icon {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234facfe"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/></svg>');
+        }
+        
+        .controller-icon {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234facfe"><path d="M17.5 12c0 4.14-3.36 7.5-7.5 7.5S2.5 16.14 2.5 12 5.86 4.5 10 4.5s7.5 3.36 7.5 7.5zM10 6C7.24 6 5 8.24 5 11s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm3 5c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg>');
+        }
+        
+        .description {
+            margin: 15px 0;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .board-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .board-info strong {
+            color: #333;
+        }
+        
+        esp-web-install-button {
+            --esp-tools-button-color: #4facfe;
+            --esp-tools-button-text-color: white;
+            margin: 15px 0;
+            display: block;
+        }
+        
+        esp-web-install-button[install-supported] {
+            --esp-tools-button-color: #28a745;
+        }
+        
+        esp-web-install-button[install-unsupported] {
+            --esp-tools-button-color: #dc3545;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .warning strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .requirements {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            color: #0d47a1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .requirements h3 {
+            margin-top: 0;
+            color: #0d47a1;
+        }
+        
+        .requirements ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .requirements li {
+            margin: 5px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GaggiMate Firmware Flasher</h1>
+            <p>Flash your GaggiMate boards directly from your web browser</p>
+        </div>
+        
+        <div class="content">
+            <div class="requirements">
+                <h3>🔧 Requirements</h3>
+                <ul>
+                    <li><strong>Chrome/Edge Browser:</strong> This tool requires Chrome 89+ or Edge 89+ with Web Serial API support</li>
+                    <li><strong>USB Connection:</strong> Connect your board via USB cable</li>
+                    <li><strong>Boot Mode:</strong> Put your ESP32-S3 board into download mode (hold BOOT button while pressing RESET)</li>
+                </ul>
+            </div>
+            
+            <div class="warning">
+                <strong>⚠️ Important:</strong>
+                Make sure you select the correct firmware for your board type. Flashing the wrong firmware may cause your device to malfunction.
+            </div>
+            
+            <!-- Display Firmware Section -->
+            <div class="firmware-section">
+                <h2>
+                    <div class="icon display-icon"></div>
+                    Display Firmware (LilyGo T-RGB)
+                </h2>
+                <div class="description">
+                    This firmware is for the GaggiMate display unit based on the LilyGo T-RGB board. It provides the touchscreen interface and connects to the controller via Bluetooth.
+                </div>
+                <div class="board-info">
+                    <strong>Board:</strong> LilyGo T-RGB (ESP32-S3)<br>
+                    <strong>Flash Size:</strong> 16MB<br>
+                    <strong>PSRAM:</strong> 8MB OPI<br>
+                    <strong>Features:</strong> WiFi, Bluetooth, Touchscreen, LVGL UI
+                </div>
+                
+                <esp-web-install-button manifest="./manifests/display-manifest.json">
+                    <button slot="activate">Install Display Firmware</button>
+                    <span slot="unsupported">Ah snap, your browser doesn't work!</span>
+                    <span slot="not-allowed">Ah snap, you are not allowed to use this on HTTP!</span>
+                </esp-web-install-button>
+            </div>
+            
+            <!-- Controller Firmware Section -->
+            <div class="firmware-section">
+                <h2>
+                    <div class="icon controller-icon"></div>
+                    Controller Firmware (GaggiMate Controller)
+                </h2>
+                <div class="description">
+                    This firmware is for the GaggiMate controller board that interfaces with your espresso machine. It handles PID control, sensors, and communicates with the display unit.
+                </div>
+                <div class="board-info">
+                    <strong>Board:</strong> GaggiMate Controller (ESP32-S3)<br>
+                    <strong>Flash Size:</strong> 8MB<br>
+                    <strong>PSRAM:</strong> 8MB OPI<br>
+                    <strong>Features:</strong> PID Control, Sensor Interface, Bluetooth Communication
+                </div>
+                
+                <esp-web-install-button manifest="./manifests/controller-manifest.json">
+                    <button slot="activate">Install Controller Firmware</button>
+                    <span slot="unsupported">Ah snap, your browser doesn't work!</span>
+                    <span slot="not-allowed">Ah snap, you are not allowed to use this on HTTP!</span>
+                </esp-web-install-button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>GaggiMate Project • Web Serial Flasher • Built with ESP Web Tools</p>
+            <p>Make sure your board is in download mode before flashing</p>
+        </div>
+    </div>
+</body>
+</html>
