@@ -31,7 +31,7 @@ Follow these steps to deploy your GaggiMate firmware flasher to GitHub Pages:
 
 Your firmware flasher will be available at:
 ```
-https://yourusername.github.io/repository-name/flasher/
+https://031devstudios.github.io/gaggimate/flasher/
 ```
 
 **Example:**
