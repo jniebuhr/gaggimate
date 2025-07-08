@@ -60,14 +60,14 @@ void DefaultUI::updateTempStableFlag() {
 
 void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     lv_obj_t *heatingIcon = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPICON);
-    lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(isTemperatureStable ? 0x00D100 : 0xF62C2C),
+    lv_obj_set_style_img_recolor(heatingIcon,
+                                 lv_color_hex(isTemperatureStable ? 0xF62C2C : _ui_theme_color_NiceWhite[ui_theme_idx]),
                                  LV_PART_MAIN | LV_STATE_DEFAULT);
-    if (!isTemperatureStable) {
-        lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
-    }
-    else {
-        lv_obj_set_style_opa(heatingIcon, LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
-    }
+
+    lv_obj_set_style_opa(heatingIcon, 
+                         isTemperatureStable || heatingFlash ? LV_OPA_100 : LV_OPA_50,
+                         LV_PART_MAIN | LV_STATE_DEFAULT);
+    
 }
 
 DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
