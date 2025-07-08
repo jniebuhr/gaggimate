@@ -53,7 +53,7 @@ Settings::Settings() {
     mainBrightness = preferences.getInt("main_b", 16);
     standbyBrightness = preferences.getInt("standby_b", 8);
     standbyBrightnessTimeout = preferences.getInt("standby_bt", 60000);
-    themeMode = preferences.getInt("theme", 0); // Default to Dark theme
+    themeMode = preferences.getInt("theme", 0);
 
     preferences.end();
 

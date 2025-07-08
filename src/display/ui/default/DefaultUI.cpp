@@ -195,7 +195,7 @@ void DefaultUI::loop() {
     if ((controller->isActive() && diff > RERENDER_INTERVAL_ACTIVE) || diff > RERENDER_INTERVAL_IDLE) {
         rerender = true;
     }
-    applyTheme();
+
     if (rerender) {
         rerender = false;
         lastRender = now;
@@ -206,6 +206,7 @@ void DefaultUI::loop() {
         volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
         grindActive = controller->isGrindActive();
         active = controller->isActive();
+        applyTheme();
         if (controller->isErrorState()) {
             changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
         }
@@ -714,7 +715,6 @@ void DefaultUI::applyTheme() {
     if (newThemeMode != currentThemeMode) {
         currentThemeMode = newThemeMode;
         ui_theme_set(currentThemeMode);
-        markDirty(); // Trigger a re-render
     }
 }
 

@@ -172,7 +172,7 @@ class Settings {
     int mainBrightness = 16;
     int standbyBrightness = 8;
     int standbyBrightnessTimeout = 60000; // 60 seconds default
-    int themeMode = 0; // 0 = Dark, 1 = Light
+    int themeMode = 0;
 
     void doSave();
     xTaskHandle taskHandle;
