@@ -16,20 +16,20 @@ static void TouchDrvDigitalWrite(uint32_t gpio, uint8_t level);
 static int TouchDrvDigitalRead(uint32_t gpio);
 static void TouchDrvPinMode(uint32_t gpio, uint8_t mode);
 static ExtensionIOXL9555 extension;
-static const lcd_init_cmd_t *_init_cmd = NULL;
+static const lcd_init_cmd_t *_init_cmd = nullptr;
 
 LilyGo_RGBPanel::LilyGo_RGBPanel(/* args */)
-    : _brightness(0), _panelDrv(NULL), _touchDrv(NULL), _order(LILYGO_T_RGB_ORDER_RGB), _has_init(false),
+    : _brightness(0), _panelDrv(nullptr), _touchDrv(nullptr), _order(LILYGO_T_RGB_ORDER_RGB), _has_init(false),
       _wakeupMethod(LILYGO_T_RGB_WAKEUP_FORM_BUTTON), _sleepTimeUs(0), _touchType(LILYGO_T_RGB_TOUCH_UNKNOWN) {}
 
 LilyGo_RGBPanel::~LilyGo_RGBPanel() {
     if (_panelDrv) {
         esp_lcd_panel_del(_panelDrv);
-        _panelDrv = NULL;
+        _panelDrv = nullptr;
     }
     if (_touchDrv) {
         delete _touchDrv;
-        _touchDrv = NULL;
+        _touchDrv = nullptr;
     }
 }
 
@@ -130,7 +130,7 @@ void LilyGo_RGBPanel::setBrightness(uint8_t value) {
     _brightness = value;
 }
 
-uint8_t LilyGo_RGBPanel::getBrightness() { return _brightness; }
+uint8_t LilyGo_RGBPanel::getBrightness() const { return _brightness; }
 
 LilyGo_RGBPanel_Type LilyGo_RGBPanel::getModel() {
     if (_touchDrv) {
@@ -205,17 +205,17 @@ void LilyGo_RGBPanel::sleep() {
         // Wait for the interrupt level to stabilize
         delay(2000);
         // Set touch irq wakeup
-        esp_sleep_enable_ext1_wakeup(_BV(BOARD_TOUCH_IRQ), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(BOARD_TOUCH_IRQ), ESP_EXT1_WAKEUP_ANY_LOW);
     } break;
     case LILYGO_T_RGB_WAKEUP_FORM_BUTTON:
-        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
     case LILYGO_T_RGB_WAKEUP_FORM_TIMER:
         esp_sleep_enable_timer_wakeup(_sleepTimeUs);
         break;
     default:
         // Default GPIO0 Wakeup
-        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
     }
 
@@ -272,7 +272,7 @@ bool LilyGo_RGBPanel::isPressed() {
 
 uint16_t LilyGo_RGBPanel::getBattVoltage() {
     esp_adc_cal_characteristics_t adc_chars;
-    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
 
     const int number_of_samples = 20;
     uint32_t sum = 0;

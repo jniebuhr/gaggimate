@@ -130,7 +130,6 @@ void Controller::setupInfos() {
     }
 }
 
-
 void Controller::loop() {
     pluginManager->loop();
 

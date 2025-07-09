@@ -53,7 +53,7 @@ Settings::Settings() {
     mainBrightness = preferences.getInt("main_b", 16);
     standbyBrightness = preferences.getInt("standby_b", 8);
     standbyBrightnessTimeout = preferences.getInt("standby_bt", 60000);
-    wifiApTimeout = preferences.getInt("wifi_ap_t", DEFAULT_WIFI_AP_TIMEOUT_MS);
+    wifiApTimeout = preferences.getInt("wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS);
 
     preferences.end();
 
@@ -373,7 +373,7 @@ void Settings::doSave() {
     preferences.putInt("main_b", mainBrightness);
     preferences.putInt("standby_b", standbyBrightness);
     preferences.putInt("standby_bt", standbyBrightnessTimeout);
-    preferences.putInt("wifi_ap_t", wifiApTimeout);
+    preferences.putInt("wifi_apt", wifiApTimeout);
 
     preferences.end();
 }

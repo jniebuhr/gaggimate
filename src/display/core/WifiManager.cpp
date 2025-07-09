@@ -1,8 +1,8 @@
 #include "WifiManager.h"
-#include <esp_log.h>
 #include <display/config.h>
 #include <display/core/constants.h>
 #include <display/core/zones.h>
+#include <esp_log.h>
 
 static const char *TAG = "WifiManager";
 
@@ -26,17 +26,16 @@ void WifiManager::handleEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
         pluginManager->trigger("controller:wifi:connect", "AP", apActive ? 1 : 0);
         break;
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-        ESP_LOGI(TAG, "Disconnected from WiFi");
-        connected = false;
-        connecting = false;
-        pluginManager->trigger("controller:wifi:disconnect");
+        if (connected) { // If we weren't connected previously this is a connection reject
+            disconnect();
+        }
         break;
     default:
         break;
     }
 }
 
-void WifiManager::connectToWifi() {
+void WifiManager::connect() {
     if (settings->getWifiSsid() == "" || settings->getWifiPassword() == "") {
         startAccessPoint();
         return;
@@ -48,17 +47,26 @@ void WifiManager::connectToWifi() {
     connectStart = millis();
 }
 
+void WifiManager::disconnect() {
+    ESP_LOGI(TAG, "Disconnected from WiFi");
+    WiFi.disconnect();
+    connecting = false;
+    connected = false;
+    pluginManager->trigger("controller:wifi:disconnect");
+}
+
 void WifiManager::startAccessPoint() {
     if (apActive || apStarted)
         return;
+    WiFi.disconnect();
     ESP_LOGI(TAG, "Starting access point");
     WiFi.mode(WIFI_AP_STA);
     WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
     WiFi.softAP(WIFI_AP_SSID);
     WiFi.setTxPower(WIFI_POWER_19_5dBm);
+    apStart = millis();
     apActive = true;
     apStarted = true;
-    apStart = millis();
     pluginManager->trigger("controller:wifi:connect", "AP", 1);
 }
 
@@ -69,12 +77,11 @@ void WifiManager::stopAccessPoint() {
     WiFi.softAPdisconnect(true);
     apActive = false;
     pluginManager->trigger("controller:wifi:disconnect");
-    pluginManager->trigger("controller:wifi:connect", "AP", 0);
 }
 
 void WifiManager::loopTask(void *arg) {
     auto *manager = static_cast<WifiManager *>(arg);
-    manager->connectToWifi();
+    manager->connect();
     while (true) {
         manager->loop();
         vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -84,16 +91,23 @@ void WifiManager::loopTask(void *arg) {
 void WifiManager::loop() {
     unsigned long now = millis();
 
-    if (connecting && !connected && now - connectStart > WIFI_CONNECT_TIMEOUT_MS) {
+    if (connected && WiFi.SSID() != settings->getWifiSsid()) {
+        disconnect();
+    }
+
+    if (!hasCredentials() || (!connected && connecting && now - connectStart > WIFI_CONNECT_TIMEOUT_MS)) {
         startAccessPoint();
-        connecting = false; // WiFi continue trying but we will retry later
+        connecting = false;
     }
 
-    if (!connected && !connecting) {
-        connectToWifi();
+    if (!connected && !connecting && !apActive) {
+        connect();
     }
 
-    if (apActive && now - apStart > settings->getWifiApTimeout()) {
+    if (apActive && (apStart + settings->getWifiApTimeout() < now)) {
+        ESP_LOGI(TAG, "Access point timeout");
         stopAccessPoint();
     }
 }
+
+bool WifiManager::hasCredentials() const { return settings->getWifiSsid() != "" && settings->getWifiPassword() != ""; }

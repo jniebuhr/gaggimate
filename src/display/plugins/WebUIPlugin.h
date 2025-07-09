@@ -28,6 +28,7 @@ class WebUIPlugin : public Plugin {
     void loop() override;
 
   private:
+    void setupServer();
     void start();
     void stop();
 
