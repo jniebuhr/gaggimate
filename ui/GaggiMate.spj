@@ -5923,7 +5923,7 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      280,
+                      315,
                       30
                     ],
                     "InheritedType": 7
@@ -5972,13 +5972,13 @@
                   {
                     "nid": 1020,
                     "strtype": "LABEL/Long_mode",
-                    "strval": "DOT",
+                    "strval": "SCROLL_CIRCULAR",
                     "InheritedType": 3
                   },
                   {
                     "nid": 1030,
                     "strtype": "LABEL/Text",
-                    "strval": "LM Leva 1",
+                    "strval": "Cremina Lever",
                     "InheritedType": 10
                   },
                   {
@@ -13791,31 +13791,31 @@
               {
                 "nid": -996892213,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1737495694,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1636428949,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1887859431,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 481020053,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
@@ -21824,13 +21824,13 @@
                               {
                                 "nid": 1020,
                                 "strtype": "LABEL/Long_mode",
-                                "strval": "WRAP",
+                                "strval": "SCROLL_CIRCULAR",
                                 "InheritedType": 3
                               },
                               {
                                 "nid": 1030,
                                 "strtype": "LABEL/Text",
-                                "strval": "Text",
+                                "strval": "Cremina Lever",
                                 "InheritedType": 10
                               },
                               {
@@ -39447,7 +39447,7 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      200,
+                      335,
                       30
                     ],
                     "InheritedType": 7
@@ -39496,13 +39496,13 @@
                   {
                     "nid": 779027838,
                     "strtype": "LABEL/Long_mode",
-                    "strval": "WRAP",
+                    "strval": "SCROLL_CIRCULAR",
                     "InheritedType": 3
                   },
                   {
                     "nid": -1758973152,
                     "strtype": "LABEL/Text",
-                    "strval": "Blooming",
+                    "strval": "Brew",
                     "InheritedType": 10
                   },
                   {
@@ -40457,8 +40457,7 @@
                 "InheritedType": 11
               }
             ],
-            "saved_objtypeKey": "PANEL",
-            "tree_closed": true
+            "saved_objtypeKey": "PANEL"
           }
         ],
         "isPage": true,
@@ -48229,7 +48228,7 @@
     "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
     "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 412,
+    "backup_cnt": 414,
     "autosave_cnt": 0,
     "lvgl_version": "8.3.11",
     "callfuncsexport": "CPP_FILE",
