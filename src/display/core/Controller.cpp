@@ -218,7 +218,13 @@ bool Controller::isAutotuning() const { return autotuning; }
 
 bool Controller::isReady() const { return !isUpdating() && !isErrorState() && !isAutotuning(); }
 
-bool Controller::isVolumetricAvailable() const { return volumetricOverride || systemInfo.capabilities.dimming; }
+bool Controller::isVolumetricAvailable() const {
+#ifdef NIGHTLY_BUILD
+    return volumetricOverride || systemInfo.capabilities.dimming;
+#else
+    return volumetricOverride;
+#endif
+}
 
 void Controller::autotune(int testTime, int samples) {
     if (isActive() || !isReady()) {

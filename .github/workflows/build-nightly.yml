@@ -1,7 +1,7 @@
 on:
   push:
-    tags:
-      - "*"
+    branches:
+      - "master"
 
 permissions:
   contents: write
@@ -40,9 +40,13 @@ jobs:
       - name: Build Web
         run: ./scripts/build_spiffs.sh
       - name: Build controller
-        run: pio run -e controller
+        run: |
+          export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
+          pio run -e controller
       - name: Build display
-        run: pio run -e display
+        run: |
+          export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
+          pio run -e display
       - name: Rename firmware files
         run: |
           mv .pio/build/controller/firmware.bin out/board-firmware.bin
@@ -52,7 +56,8 @@ jobs:
           mv .pio/build/display/partitions.bin out/display-partitions.bin
           mv .pio/build/display/bootloader.bin out/display-bootloader.bin
       - name: Build display FS
-        run: pio run -t buildfs -e display
+        run: |
+          pio run -t buildfs -e display
       - name: Rename FS files
         run: |
           mv .pio/build/display/spiffs.bin out/display-filesystem.bin
@@ -61,20 +66,34 @@ jobs:
         with:
           name: gaggimate-firmware
           path: "out/*"
-  release:
+  release-nightly:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      pull-requests: write
     steps:
       - name: Download Firmware Files
         uses: actions/download-artifact@v4
         with:
           name: gaggimate-firmware
           path: release
-      - name: Release Firmware
-        uses: ncipollo/release-action@v1
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Update Nightly Release
+        uses: andelf/nightly-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          artifacts: release/*.bin
-          generateReleaseNotes: true
-          allowUpdates: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: nightly
+          name: 'Nightly Release $$'
+          prerelease: true
+          body: 'Latest nightly release, use the nightly channel in the UI to download this firmware.'
+          files: |
+            release/*
+      - name: Deploy to GitHub Pages subdirectory
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./release
+          destination_dir: nightly
+          publish_branch: gh-pages
