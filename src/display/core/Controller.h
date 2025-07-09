@@ -5,6 +5,7 @@
 #include "NimBLEComm.h"
 #include "PluginManager.h"
 #include "Settings.h"
+#include "WifiManager.h"
 #include <WiFi.h>
 #include <display/core/Process.h>
 #include <display/core/ProfileManager.h>
@@ -84,7 +85,6 @@ class Controller {
   private:
     // Initialization methods
     void setupPanel();
-    void setupWifi();
     void setupBluetooth();
     void setupInfos();
 
@@ -108,6 +108,7 @@ class Controller {
     Settings settings;
     PluginManager *pluginManager{};
     ProfileManager *profileManager{};
+    WifiManager wifiManager;
 
     int mode = MODE_BREW;
     int currentTemp = 0;
@@ -127,7 +128,6 @@ class Controller {
     bool loaded = false;
     bool updating = false;
     bool autotuning = false;
-    bool isApConnection = false;
     bool initialized = false;
     bool screenReady = false;
     bool volumetricOverride = false;

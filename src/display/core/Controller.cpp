@@ -66,8 +66,10 @@ void Controller::connect() {
     lastPing = millis();
     pluginManager->trigger("controller:startup");
 
-    setupWifi();
+    wifiManager.setup(&settings, pluginManager);
     setupBluetooth();
+    pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
+    pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
 
     updateLastAction();
     initialized = true;
@@ -128,49 +130,6 @@ void Controller::setupInfos() {
     }
 }
 
-void Controller::setupWifi() {
-    if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
-        WiFi.mode(WIFI_STA);
-        WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
-        WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        for (int attempts = 0; attempts < WIFI_CONNECT_ATTEMPTS; attempts++) {
-            if (WiFi.status() == WL_CONNECTED) {
-                break;
-            }
-            delay(500);
-            Serial.print(".");
-        }
-        if (WiFi.status() == WL_CONNECTED) {
-            Serial.println("");
-            Serial.print("Connected to ");
-            Serial.println(settings.getWifiSsid());
-            Serial.print("IP address: ");
-            Serial.println(WiFi.localIP());
-
-            configTzTime(resolve_timezone(settings.getTimezone()), NTP_SERVER);
-        } else {
-            WiFi.disconnect(true, true);
-            Serial.println("Timed out while connecting to WiFi");
-        }
-    }
-    if (WiFi.status() != WL_CONNECTED) {
-        isApConnection = true;
-        WiFi.mode(WIFI_AP);
-        WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
-        WiFi.softAP(WIFI_AP_SSID);
-        WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        Serial.println("Started in AP mode");
-        Serial.print("Connect to:");
-        Serial.println(WIFI_AP_SSID);
-        Serial.print("IP address: ");
-        Serial.println(WiFi.localIP());
-    }
-
-    pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
-    pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
-
-    pluginManager->trigger("controller:wifi:connect", "AP", isApConnection ? 1 : 0);
-}
 
 void Controller::loop() {
     pluginManager->loop();

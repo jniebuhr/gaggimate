@@ -29,6 +29,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         apMode = event.getInt("AP");
         start();
     });
+    pluginManager->on("controller:wifi:disconnect", [this](Event const &) { stop(); });
     pluginManager->on("controller:ready", [this](Event const &) {
         ota->setControllerVersion(controller->getSystemInfo().version);
         ota->init(controller->getClientController()->getClient());
@@ -76,6 +77,7 @@ void WebUIPlugin::loop() {
 }
 
 void WebUIPlugin::start() {
+    stop();
     if (apMode) {
         server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
             request->redirect("http://logout.net");
@@ -150,6 +152,20 @@ void WebUIPlugin::start() {
         dnsServer->start(53, "*", WIFI_AP_IP);
         ESP_LOGI("WebUIPlugin", "Started catchall DNS for captive portal");
     }
+    serverRunning = true;
+}
+
+void WebUIPlugin::stop() {
+    if (!serverRunning)
+        return;
+    server.end();
+    ws.closeAll();
+    if (dnsServer != nullptr) {
+        dnsServer->stop();
+        delete dnsServer;
+        dnsServer = nullptr;
+    }
+    serverRunning = false;
 }
 
 void WebUIPlugin::handleOTASettings(uint32_t clientId, JsonDocument &request) {
