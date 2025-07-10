@@ -82,6 +82,8 @@ void PressureController::virtualScale() {
         // Shot starts: don't know the puck resitance yet so we just memorise the pressure history to compute the coffee output
         // later Pressure has drop below threshold during shot: Memorise the small pressure level ... not so important
         retroCoffeeOutputPressureHistory += _filteredPressureSensor;
+    } else if (*_ValveStatus == 0) {
+        flowPerSecond = 0.0f;
     }
 }
 

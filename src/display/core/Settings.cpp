@@ -53,6 +53,7 @@ Settings::Settings() {
     mainBrightness = preferences.getInt("main_b", 16);
     standbyBrightness = preferences.getInt("standby_b", 8);
     standbyBrightnessTimeout = preferences.getInt("standby_bt", 60000);
+    wifiApTimeout = preferences.getInt("wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS);
     themeMode = preferences.getInt("theme", 0);
 
     preferences.end();
@@ -307,6 +308,11 @@ void Settings::setStandbyBrightnessTimeout(int standby_brightness_timeout) {
     save();
 }
 
+void Settings::setWifiApTimeout(int timeout) {
+    wifiApTimeout = timeout;
+    save();
+}
+
 void Settings::setSteamPumpPercentage(float steam_pump_percentage) {
     steamPumpPercentage = steam_pump_percentage;
     save();
@@ -373,6 +379,7 @@ void Settings::doSave() {
     preferences.putInt("main_b", mainBrightness);
     preferences.putInt("standby_b", standbyBrightness);
     preferences.putInt("standby_bt", standbyBrightnessTimeout);
+    preferences.putInt("wifi_apt", wifiApTimeout);
     preferences.putInt("theme", themeMode);
 
     preferences.end();

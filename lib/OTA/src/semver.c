@@ -6,10 +6,10 @@
  */
 
 #include "semver.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #define SLICE_SIZE 50
 #define DELIMITER "."
@@ -249,9 +249,9 @@ static int compare_prerelease(char *x, char *y) {
         }
         // If one starts with digit and other doesn't
         else if (isdigit(*x))
-            return -1;  // Numbers have lower precedence
+            return -1; // Numbers have lower precedence
         else if (isdigit(*y))
-            return 1;   // Numbers have lower precedence
+            return 1; // Numbers have lower precedence
         // Compare characters until we hit a number or end
         else {
             while (*x && *y && !isdigit(*x) && !isdigit(*y)) {
