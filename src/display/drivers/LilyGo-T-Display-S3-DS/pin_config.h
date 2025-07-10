@@ -17,6 +17,8 @@
 #define LCD_RST 17
 #define LCD_WIDTH 466
 #define LCD_HEIGHT 466
+#define LCD_GRAM_OFFSET_X 6
+#define LCD_GRAM_OFFSET_Y 8
 
 #define LCD_EN 16
 

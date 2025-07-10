@@ -157,8 +157,8 @@ uint8_t LilyGo_TDisplayPanel::getPoint(int16_t *x_array, int16_t *y_array, uint8
     uint8_t points = _touchDrv->getPoint(x_array, y_array, get_point);
 
     for (uint8_t i = 0; i < points; i++) {
-        int16_t rawX = x_array[i];
-        int16_t rawY = y_array[i];
+        int16_t rawX = x_array[i] + LCD_GRAM_OFFSET_X;
+        int16_t rawY = y_array[i] + LCD_GRAM_OFFSET_Y;
 
         switch (_rotation) {
         case 1: // 90°
@@ -241,7 +241,7 @@ bool LilyGo_TDisplayPanel::initDisplay(LilyGo_TDisplayPanel_Color_Order colorOrd
                                            LCD_SDIO2 /* SDIO2 */, LCD_SDIO3 /* SDIO3 */);
 
         display = new CO5300(displayBus, LCD_RST /* RST */, _rotation /* rotation */, false /* IPS */, LCD_WIDTH, LCD_HEIGHT,
-                             6 /* col offset 1 */, 0 /* row offset 1 */, 8 /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
+                             LCD_GRAM_OFFSET_X /* col offset 1 */, 0 /* row offset 1 */, LCD_GRAM_OFFSET_Y /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
     }
 
     pinMode(LCD_EN, OUTPUT);
