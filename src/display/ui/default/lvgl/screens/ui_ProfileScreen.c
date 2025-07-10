@@ -60,13 +60,13 @@ void ui_ProfileScreen_screen_init(void) {
     lv_obj_set_style_text_font(ui_ProfileScreen_mainLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_ProfileScreen_profileName = lv_label_create(ui_ProfileScreen_contentPanel);
-    lv_obj_set_width(ui_ProfileScreen_profileName, 280);
+    lv_obj_set_width(ui_ProfileScreen_profileName, 315);
     lv_obj_set_height(ui_ProfileScreen_profileName, 30);
     lv_obj_set_x(ui_ProfileScreen_profileName, 0);
     lv_obj_set_y(ui_ProfileScreen_profileName, -90);
     lv_obj_set_align(ui_ProfileScreen_profileName, LV_ALIGN_CENTER);
-    lv_label_set_long_mode(ui_ProfileScreen_profileName, LV_LABEL_LONG_DOT);
-    lv_label_set_text(ui_ProfileScreen_profileName, "LM Leva 1");
+    lv_label_set_long_mode(ui_ProfileScreen_profileName, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(ui_ProfileScreen_profileName, "Cremina Lever");
     ui_object_set_themeable_style_property(ui_ProfileScreen_profileName, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_ProfileScreen_profileName, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,

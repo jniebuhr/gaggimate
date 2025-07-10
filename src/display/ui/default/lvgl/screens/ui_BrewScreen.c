@@ -194,6 +194,8 @@ void ui_BrewScreen_screen_init(void) {
     lv_obj_set_x(ui_BrewScreen_profileName, -7);
     lv_obj_set_y(ui_BrewScreen_profileName, 21);
     lv_obj_set_align(ui_BrewScreen_profileName, LV_ALIGN_CENTER);
+    lv_label_set_long_mode(ui_BrewScreen_profileName, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(ui_BrewScreen_profileName, "Cremina Lever");
     ui_object_set_themeable_style_property(ui_BrewScreen_profileName, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_BrewScreen_profileName, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,

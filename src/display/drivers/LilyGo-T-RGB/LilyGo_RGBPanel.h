@@ -63,7 +63,7 @@ class LilyGo_RGBPanel : public Display {
 
     void setBrightness(uint8_t level);
 
-    uint8_t getBrightness();
+    uint8_t getBrightness() const;
 
     LilyGo_RGBPanel_Type getModel();
 

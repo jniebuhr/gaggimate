@@ -149,12 +149,13 @@ void ui_StatusScreen_screen_init(void) {
     lv_obj_set_style_text_font(ui_StatusScreen_stepLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_StatusScreen_phaseLabel = lv_label_create(ui_StatusScreen_contentPanel2);
-    lv_obj_set_width(ui_StatusScreen_phaseLabel, 200);
+    lv_obj_set_width(ui_StatusScreen_phaseLabel, 335);
     lv_obj_set_height(ui_StatusScreen_phaseLabel, 30);
     lv_obj_set_x(ui_StatusScreen_phaseLabel, 0);
     lv_obj_set_y(ui_StatusScreen_phaseLabel, -40);
     lv_obj_set_align(ui_StatusScreen_phaseLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_StatusScreen_phaseLabel, "Blooming");
+    lv_label_set_long_mode(ui_StatusScreen_phaseLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(ui_StatusScreen_phaseLabel, "Brew");
     ui_object_set_themeable_style_property(ui_StatusScreen_phaseLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_StatusScreen_phaseLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
