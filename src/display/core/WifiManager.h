@@ -1,39 +1,88 @@
 #ifndef WIFI_MANAGER_H
 #define WIFI_MANAGER_H
 
-#include "PluginManager.h"
-#include "Settings.h"
 #include <Arduino.h>
 #include <WiFi.h>
+#include "esp_wifi.h"
+#include "freertos/task.h"
+#include "freertos/event_groups.h"
+#include <display/core/PluginManager.h>
 
 const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space
 const IPAddress WIFI_SUBNET_MASK(255, 255, 255, 0); // no need to change: https://avinetworks.com/glossary/subnet-mask/
 
 class WifiManager {
-  public:
-    WifiManager() = default;
-    void setup(Settings *settings, PluginManager *pluginManager);
-    bool isApActive() const { return apActive; }
+public:
+    struct WiFiConfig {
+        String ssid;
+        String password;
+        String apSSID;
+        String apPassword;
+        uint32_t apTimeoutMs;
 
-  private:
-    Settings *settings = nullptr;
-    PluginManager *pluginManager = nullptr;
-    bool apActive = false;
-    bool apStarted = false;
-    bool connected = false;
-    bool connecting = false;
-    unsigned long connectStart = 0;
-    unsigned long apStart = 0;
-    WiFiEventId_t eventId = 0;
-    TaskHandle_t taskHandle = nullptr;
-    static void loopTask(void *arg);
-    void loop();
-    void connect();
-    void disconnect();
-    void startAccessPoint();
-    void stopAccessPoint();
-    void handleEvent(WiFiEvent_t event, WiFiEventInfo_t info);
+        WiFiConfig(const char* wifi_ssid = "",
+                  const char* wifi_password = "",
+                  const char* ap_ssid = "GaggiMate",
+                  const char* ap_password = "",
+                  uint32_t ap_timeout_ms = 10 * 60 * 1000)  // 5 minutes default
+            : ssid(wifi_ssid)
+            , password(wifi_password)
+            , apSSID(ap_ssid)
+            , apPassword(ap_password)
+            , apTimeoutMs(ap_timeout_ms) {}
+    };
+
+private:
+    static const uint8_t MAX_CONNECTION_ATTEMPTS = 6;
+    static const uint32_t RECONNECT_DELAY_MS = 5000;  // 5 seconds between reconnection attempts
+
+    WiFiConfig config;
+    bool isAPActive = false;
+    uint32_t apStartTime = 0;
+    TaskHandle_t wifiTaskHandle = nullptr;
+    bool shouldReconnect = false;
+    PluginManager *pluginManager;
+
+    EventGroupHandle_t wifiEventGroup;
+    static const int WIFI_CONNECTED_BIT = BIT0;
+    static const int WIFI_FAIL_BIT = BIT1;
+    static const int WIFI_RECONNECT_BIT = BIT2;
+
     bool hasCredentials() const;
+    void startConnection() const;
+    static void wifiEventHandler(void* arg, esp_event_base_t event_base,
+                                 int32_t event_id, void* event_data);
+    static void wifiTask(void* parameter);
+
+public:
+    WifiManager(PluginManager *pm, const WiFiConfig& initial_config = WiFiConfig())
+        : config(initial_config), pluginManager(pm) {
+        wifiEventGroup = xEventGroupCreate();
+    }
+
+    void begin();
+
+    // Configuration methods
+    void reconfigure(const WiFiConfig& new_config);
+    void updateCredentials(const char* new_ssid, const char* new_password);
+    void updateAPConfig(const char* ap_ssid, const char* ap_password, uint32_t timeout_ms);
+    void startAP();
+    void stopAP();
+    bool isConnected() {
+        return WiFi.status() == WL_CONNECTED;
+    }
+    bool isAccessPointActive() {
+        return isAPActive;
+    }
+    String getLocalIP() {
+        return WiFi.localIP().toString();
+    }
+    String getAPIP() {
+        return WiFi.softAPIP().toString();
+    }
+    const WiFiConfig& getCurrentConfig() const {
+        return config;
+    }
 };
 
-#endif // WIFI_MANAGER_H
+#endif
