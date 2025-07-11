@@ -28,17 +28,17 @@ void ST7701_Reset() {
 }
 
 WavesharePanel::WavesharePanel(/* args */)
-    : _brightness(0), _panelDrv(NULL), _touchDrv(NULL), _order(WS_T_RGB_ORDER_RGB), _has_init(false),
+    : _brightness(0), _panelDrv(nullptr), _touchDrv(nullptr), _order(WS_T_RGB_ORDER_RGB), _has_init(false),
       _wakeupMethod(WS_T_RGB_WAKEUP_FORM_BUTTON), _sleepTimeUs(0), _touchType(WS_T_RGB_TOUCH_UNKNOWN) {}
 
 WavesharePanel::~WavesharePanel() {
     if (_panelDrv) {
         esp_lcd_panel_del(_panelDrv);
-        _panelDrv = NULL;
+        _panelDrv = nullptr;
     }
     if (_touchDrv) {
         delete _touchDrv;
-        _touchDrv = NULL;
+        _touchDrv = nullptr;
     }
 }
 
@@ -152,7 +152,7 @@ WavesharePanelType WavesharePanel::getModel() {
     return WS_UNKNOWN;
 }
 
-const char *WavesharePanel::getTouchModelName() {
+const char *WavesharePanel::getTouchModelName() const {
     if (_touchDrv) {
         return _touchDrv->getModelName();
     }
@@ -204,17 +204,17 @@ void WavesharePanel::sleep() {
         // Wait for the interrupt level to stabilize
         delay(2000);
         // Set touch irq wakeup
-        esp_sleep_enable_ext1_wakeup(_BV(WS_BOARD_TOUCH_IRQ), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(WS_BOARD_TOUCH_IRQ), ESP_EXT1_WAKEUP_ANY_LOW);
     } break;
     case WS_T_RGB_WAKEUP_FORM_BUTTON:
-        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
     case WS_T_RGB_WAKEUP_FORM_TIMER:
         esp_sleep_enable_timer_wakeup(_sleepTimeUs);
         break;
     default:
         // Default GPIO0 Wakeup
-        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
     }
 
@@ -262,7 +262,7 @@ uint8_t WavesharePanel::getPoint(int16_t *x_array, int16_t *y_array, uint8_t get
     return 0;
 }
 
-bool WavesharePanel::isPressed() {
+bool WavesharePanel::isPressed() const {
     if (_touchDrv) {
         return _touchDrv->isPressed();
     }
@@ -271,7 +271,7 @@ bool WavesharePanel::isPressed() {
 
 uint16_t WavesharePanel::getBattVoltage() {
     esp_adc_cal_characteristics_t adc_chars;
-    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
 
     const int number_of_samples = 20;
     uint32_t sum = 0;

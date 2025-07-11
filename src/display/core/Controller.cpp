@@ -23,6 +23,8 @@ void Controller::setup() {
 
     pluginManager = new PluginManager();
     profileManager = new ProfileManager(SPIFFS, "/p", settings, pluginManager);
+    wifiManager = new WifiManager(pluginManager);
+    wifiManager->updateCredentials(settings.getWifiSsid().c_str(), settings.getWifiPassword().c_str());
     profileManager->setup();
     ui = new DefaultUI(this, pluginManager);
     if (settings.isHomekit())
@@ -66,8 +68,9 @@ void Controller::connect() {
     lastPing = millis();
     pluginManager->trigger("controller:startup");
 
-    setupWifi();
     setupBluetooth();
+    pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
+    pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
 
     updateLastAction();
     initialized = true;
@@ -90,8 +93,8 @@ void Controller::setupBluetooth() {
             deactivate();
             setMode(MODE_STANDBY);
             pluginManager->trigger("controller:error");
+            ESP_LOGE("Controller", "Received error %d", error);
         }
-        ESP_LOGE("Controller", "Received error %d", error);
     });
     clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd) {
         ESP_LOGI("Controller", "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
@@ -128,50 +131,6 @@ void Controller::setupInfos() {
     }
 }
 
-void Controller::setupWifi() {
-    if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
-        WiFi.mode(WIFI_STA);
-        WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
-        WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        for (int attempts = 0; attempts < WIFI_CONNECT_ATTEMPTS; attempts++) {
-            if (WiFi.status() == WL_CONNECTED) {
-                break;
-            }
-            delay(500);
-            Serial.print(".");
-        }
-        if (WiFi.status() == WL_CONNECTED) {
-            Serial.println("");
-            Serial.print("Connected to ");
-            Serial.println(settings.getWifiSsid());
-            Serial.print("IP address: ");
-            Serial.println(WiFi.localIP());
-
-            configTzTime(resolve_timezone(settings.getTimezone()), NTP_SERVER);
-        } else {
-            WiFi.disconnect(true, true);
-            Serial.println("Timed out while connecting to WiFi");
-        }
-    }
-    if (WiFi.status() != WL_CONNECTED) {
-        isApConnection = true;
-        WiFi.mode(WIFI_AP);
-        WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
-        WiFi.softAP(WIFI_AP_SSID);
-        WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        Serial.println("Started in AP mode");
-        Serial.print("Connect to:");
-        Serial.println(WIFI_AP_SSID);
-        Serial.print("IP address: ");
-        Serial.println(WiFi.localIP());
-    }
-
-    pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
-    pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
-
-    pluginManager->trigger("controller:wifi:connect", "AP", isApConnection ? 1 : 0);
-}
-
 void Controller::loop() {
     pluginManager->loop();
 
@@ -184,6 +143,7 @@ void Controller::loop() {
         setupInfos();
         pluginManager->trigger("controller:bluetooth:connect");
         if (!loaded) {
+            wifiManager->begin();
             loaded = true;
             if (settings.getStartupMode() == MODE_STANDBY)
                 activateStandby();
@@ -260,7 +220,13 @@ bool Controller::isAutotuning() const { return autotuning; }
 
 bool Controller::isReady() const { return !isUpdating() && !isErrorState() && !isAutotuning(); }
 
-bool Controller::isVolumetricAvailable() const { return volumetricOverride || systemInfo.capabilities.dimming; }
+bool Controller::isVolumetricAvailable() const {
+#ifdef NIGHTLY_BUILD
+    return volumetricOverride || systemInfo.capabilities.dimming;
+#else
+    return volumetricOverride;
+#endif
+}
 
 void Controller::autotune(int testTime, int samples) {
     if (isActive() || !isReady()) {

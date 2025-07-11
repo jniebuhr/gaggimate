@@ -65,6 +65,7 @@ class Settings {
     int getMainBrightness() const { return mainBrightness; }
     int getStandbyBrightness() const { return standbyBrightness; }
     int getStandbyBrightnessTimeout() const { return standbyBrightnessTimeout; }
+    int getWifiApTimeout() const { return wifiApTimeout; }
     float getSteamPumpPercentage() const { return steamPumpPercentage; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
@@ -113,6 +114,7 @@ class Settings {
     void setMainBrightness(int main_brightness);
     void setStandbyBrightness(int standby_brightness);
     void setStandbyBrightnessTimeout(int standby_brightness_timeout);
+    void setWifiApTimeout(int timeout);
     void setSteamPumpPercentage(float steam_pump_percentage);
 
   private:
@@ -170,6 +172,7 @@ class Settings {
     int mainBrightness = 16;
     int standbyBrightness = 8;
     int standbyBrightnessTimeout = 60000; // 60 seconds default
+    int wifiApTimeout = DEFAULT_WIFI_AP_TIMEOUT_MS;
 
     void doSave();
     xTaskHandle taskHandle;

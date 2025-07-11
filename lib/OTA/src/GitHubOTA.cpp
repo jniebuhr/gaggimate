@@ -30,7 +30,7 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     Updater.onProgress([progress_callback, this](int bytesReceived, int totalBytes) {
         int percentage = 100.0 * bytesReceived / totalBytes;
         progress_callback(phase, percentage);
-        ESP_LOGI("update_progress", "Data received, Progress: %d %%\r", percentage);
+        ESP_LOGV("update_progress", "Data received, Progress: %d %%\r", percentage);
     });
     Updater.onError(update_error);
     Updater.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);

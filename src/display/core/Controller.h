@@ -8,10 +8,8 @@
 #include <WiFi.h>
 #include <display/core/Process.h>
 #include <display/core/ProfileManager.h>
+#include <display/core/WifiManager.h>
 #include <display/ui/default/DefaultUI.h>
-
-const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space
-const IPAddress WIFI_SUBNET_MASK(255, 255, 255, 0); // no need to change: https://avinetworks.com/glossary/subnet-mask/
 
 class Controller {
   public:
@@ -84,7 +82,6 @@ class Controller {
   private:
     // Initialization methods
     void setupPanel();
-    void setupWifi();
     void setupBluetooth();
     void setupInfos();
 
@@ -108,6 +105,7 @@ class Controller {
     Settings settings;
     PluginManager *pluginManager{};
     ProfileManager *profileManager{};
+    WifiManager *wifiManager{};
 
     int mode = MODE_BREW;
     int currentTemp = 0;
@@ -127,7 +125,6 @@ class Controller {
     bool loaded = false;
     bool updating = false;
     bool autotuning = false;
-    bool isApConnection = false;
     bool initialized = false;
     bool screenReady = false;
     bool volumetricOverride = false;
