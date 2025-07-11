@@ -5,10 +5,10 @@
 #include "NimBLEComm.h"
 #include "PluginManager.h"
 #include "Settings.h"
-#include "WifiManager.h"
 #include <WiFi.h>
 #include <display/core/Process.h>
 #include <display/core/ProfileManager.h>
+#include <display/core/WifiManager.h>
 #include <display/ui/default/DefaultUI.h>
 
 class Controller {
@@ -105,7 +105,7 @@ class Controller {
     Settings settings;
     PluginManager *pluginManager{};
     ProfileManager *profileManager{};
-    WifiManager wifiManager;
+    WifiManager *wifiManager{};
 
     int mode = MODE_BREW;
     int currentTemp = 0;

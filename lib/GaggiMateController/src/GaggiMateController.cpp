@@ -137,7 +137,6 @@ void GaggiMateController::handlePingTimeout() {
     this->pump->setPower(0);
     this->valve->set(false);
     this->alt->set(false);
-    _ble.sendError(ERROR_CODE_TIMEOUT);
 }
 
 void GaggiMateController::thermalRunawayShutdown() {

@@ -23,6 +23,8 @@ void Controller::setup() {
 
     pluginManager = new PluginManager();
     profileManager = new ProfileManager(SPIFFS, "/p", settings, pluginManager);
+    wifiManager = new WifiManager(pluginManager);
+    wifiManager->updateCredentials(settings.getWifiSsid().c_str(), settings.getWifiPassword().c_str());
     profileManager->setup();
     ui = new DefaultUI(this, pluginManager);
     if (settings.isHomekit())
@@ -66,7 +68,6 @@ void Controller::connect() {
     lastPing = millis();
     pluginManager->trigger("controller:startup");
 
-    wifiManager.setup(&settings, pluginManager);
     setupBluetooth();
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
     pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
@@ -92,8 +93,8 @@ void Controller::setupBluetooth() {
             deactivate();
             setMode(MODE_STANDBY);
             pluginManager->trigger("controller:error");
+            ESP_LOGE("Controller", "Received error %d", error);
         }
-        ESP_LOGE("Controller", "Received error %d", error);
     });
     clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd) {
         ESP_LOGI("Controller", "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
@@ -142,6 +143,7 @@ void Controller::loop() {
         setupInfos();
         pluginManager->trigger("controller:bluetooth:connect");
         if (!loaded) {
+            wifiManager->begin();
             loaded = true;
             if (settings.getStartupMode() == MODE_STANDBY)
                 activateStandby();
