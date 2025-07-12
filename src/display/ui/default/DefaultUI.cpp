@@ -1,8 +1,10 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
+#include <display/config.h>
 #include <display/core/Controller.h>
 #include <display/core/Process.h>
+#include <display/core/zones.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
@@ -144,6 +146,7 @@ void DefaultUI::init() {
         pressureAvailable = controller->getSystemInfo().capabilities.pressure;
     });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
+        configTzTime(resolve_timezone(controller->getSettings().getTimezone()), NTP_SERVER);
         rerender = true;
         apActive = event.getInt("AP");
     });
