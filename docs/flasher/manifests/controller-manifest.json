@@ -1,6 +1,6 @@
 {
   "name": "GaggiMate Controller Firmware",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "home_assistant_domain": "esphome",
   "new_install_prompt_erase": true,
   "builds": [
