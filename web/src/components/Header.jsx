@@ -37,7 +37,7 @@ export function Header(props) {
           <div className="flex items-center gap-1 lg:gap-5">
 
             <div className="relative inline-block">
-              <a rel="noopener" href="https://github.com/yourusername/gaggimate" target="_blank"
+              <a rel="noopener" href="https://github.com/031devstudios/gaggimate" target="_blank"
                  className="group flex items-center justify-between rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 sm:gap-2 dark:text-slate-300">
                 <i className="fa-brands fa-github"></i>
               </a>
