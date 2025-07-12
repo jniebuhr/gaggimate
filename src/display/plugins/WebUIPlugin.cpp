@@ -6,6 +6,8 @@
 #include <display/models/profile.h>
 
 #include "BLEScalePlugin.h"
+#include "ShotHistoryPlugin.h"
+#include <vector>
 
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
 
@@ -137,6 +139,12 @@ void WebUIPlugin::setupServer() {
                                 handleOTAStart(client->id(), doc);
                             } else if (msgType == "req:autotune-start") {
                                 handleAutotuneStart(client->id(), doc);
+                            } else if (msgType.startsWith("req:history")) {
+                                JsonDocument resp;
+                                ShotHistory.handleRequest(doc, resp);
+                                String msg;
+                                serializeJson(resp, msg);
+                                ws.text(client->id(), msg);
                             }
                         }
                     }

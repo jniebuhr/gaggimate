@@ -7,9 +7,11 @@
 
 #include "../core/Plugin.h"
 #include "GitHubOTA.h"
+#include "ShotHistoryPlugin.h"
 #include <ArduinoJson.h>
 #include <AsyncJson.h>
 #include <ESPAsyncWebServer.h>
+#include <vector>
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 5 * 1000;

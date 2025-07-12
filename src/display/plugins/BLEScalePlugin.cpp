@@ -143,10 +143,11 @@ void BLEScalePlugin::establishConnection() {
     }
 }
 
-void BLEScalePlugin::onMeasurement(float value) const {
+void BLEScalePlugin::onMeasurement(float value) {
     if (controller != nullptr) {
         controller->onVolumetricMeasurement(value);
     }
+    lastWeight = value;
 }
 
 std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const { return scanner->getDiscoveredScales(); }

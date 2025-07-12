@@ -20,7 +20,8 @@ class BLEScalePlugin : public Plugin {
     void connect(const std::string &uuid);
     void scan() const;
     void disconnect();
-    void onMeasurement(float value) const;
+    void onMeasurement(float value);
+    float getLastWeight() const { return lastWeight; };
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
     std::string getName() { return isConnected() ? scale->getDeviceName() : ""; };
     std::string getUUID() { return isConnected() ? scale->getDeviceAddress() : ""; };
@@ -44,6 +45,7 @@ class BLEScalePlugin : public Plugin {
     RemoteScalesPluginRegistry *pluginRegistry = nullptr;
     RemoteScalesScanner *scanner = nullptr;
     std::unique_ptr<RemoteScales> scale = nullptr;
+    float lastWeight = 0.0f;
 };
 
 extern BLEScalePlugin BLEScales;

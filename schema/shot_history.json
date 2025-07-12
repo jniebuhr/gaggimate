@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Shot History Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer" },
+    "profile": { "type": "string" },
+    "timestamp": { "type": "integer" },
+    "duration": { "type":  "number" },
+    "volume": { "type": "number" },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "t": {
+            "description": "Timestamp of this measurement",
+            "type": "integer"
+          },
+          "tt": {
+            "description": "Target temperature at this measurement",
+            "type": "number"
+          },
+          "ct": {
+            "description": "Current temperature at this measurement",
+            "type": "number"
+          },
+          "tp": {
+            "description": "Target / Limit pressure at this measurement",
+            "type": "number"
+          },
+          "cp": {
+            "description": "Current boiler pressure",
+            "type": "number"
+          },
+          "fl": {
+            "description": "Current pump flow",
+            "type": "number"
+          },
+          "tf": {
+            "description": "Target / Limit pump flow",
+            "type": "number"
+          },
+          "pf": {
+            "description": "Estimated puck flow",
+            "type": "number"
+          },
+          "vf": {
+            "description": "Volume flow",
+            "type": "number"
+          },
+          "v": {
+            "description": "Measured volume in g/ml",
+            "type": "number"
+          },
+          "ev": {
+            "description": "Estimated volume in g/ml",
+            "type": "number"
+          }
+        },
+        "required": ["t","tt","ct","tp","cp","tf","fl"]
+      }
+    }
+  },
+  "required": ["version","profile","timestamp","samples","duration","volume"]
+}

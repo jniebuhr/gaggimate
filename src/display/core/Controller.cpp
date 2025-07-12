@@ -10,6 +10,7 @@
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/HomekitPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
+#include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
@@ -41,6 +42,7 @@ void Controller::setup() {
         pluginManager->registerPlugin(new MQTTPlugin());
     }
     pluginManager->registerPlugin(new WebUIPlugin());
+    pluginManager->registerPlugin(&ShotHistory);
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->setup(this);
 
@@ -518,7 +520,8 @@ void Controller::onOTAUpdate() {
     updating = true;
 }
 
-void Controller::onVolumetricMeasurement(double measurement) const {
+void Controller::onVolumetricMeasurement(double measurement) {
+    estimatedWeight = measurement;
     if (currentProcess != nullptr) {
         currentProcess->updateVolume(measurement);
     }

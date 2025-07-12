@@ -42,6 +42,7 @@ class Controller {
     virtual float getTargetPressure() const { return targetPressure; }
     virtual float getCurrentPressure() const { return pressure; }
     virtual float getCurrentFlow() const { return currentFlow; }
+    double getEstimatedWeight() const { return estimatedWeight; }
 
     void autotune(int testTime, int samples);
     void startProcess(Process *process);
@@ -71,7 +72,7 @@ class Controller {
     void onOTAUpdate();
     void onScreenReady();
     void onTargetChange(ProcessTarget target);
-    void onVolumetricMeasurement(double measurement) const;
+    void onVolumetricMeasurement(double measurement);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     void onFlush();
 
@@ -112,6 +113,7 @@ class Controller {
     float pressure = 0.0f;
     float targetPressure = 0.0f;
     float currentFlow = 0.0f;
+    double estimatedWeight = 0.0f;
 
     SystemInfo systemInfo{};
 
