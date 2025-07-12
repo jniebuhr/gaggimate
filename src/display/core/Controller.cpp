@@ -18,7 +18,7 @@ void Controller::setup() {
     mode = settings.getStartupMode();
 
     if (!SPIFFS.begin(true)) {
-        Serial.println("An Error has occurred while mounting LittleFS");
+        Serial.println(F("An Error has occurred while mounting LittleFS"));
     }
 
     pluginManager = new PluginManager();

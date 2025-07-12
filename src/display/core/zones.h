@@ -2,13 +2,14 @@
 #define ZONES_H
 
 #include "Arduino.h"
+#include <pgmspace.h>
 
 typedef struct {
-    String name;
-    String zones;
+    const char *name;
+    const char *zones;
 } zones_t;
 
-const zones_t zones[] = {
+static const zones_t zones[] PROGMEM = {
     {"Africa/Abidjan", "GMT0"},
     {"Africa/Accra", "GMT0"},
     {"Africa/Addis_Ababa", "EAT-3"},
@@ -472,12 +473,12 @@ const zones_t zones[] = {
     {"Pacific/Wallis", "<+12>-12"},
 };
 
-inline char const *FALLBACK_TZ = "GMT0";
+static const char FALLBACK_TZ[] PROGMEM = "GMT0";
 
-inline const char *resolve_timezone(String time_zone_label) {
-    for (int i = 0; i < sizeof(zones); i++) {
-        if (zones[i].name == time_zone_label) {
-            return zones[i].zones.c_str();
+inline const char *resolve_timezone(const String &time_zone_label) {
+    for (size_t i = 0; i < sizeof(zones) / sizeof(zones[0]); i++) {
+        if (time_zone_label == zones[i].name) {
+            return zones[i].zones;
         }
     }
     return FALLBACK_TZ;

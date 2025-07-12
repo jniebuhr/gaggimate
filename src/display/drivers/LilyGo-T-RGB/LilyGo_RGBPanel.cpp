@@ -45,7 +45,7 @@ bool LilyGo_RGBPanel::begin(LilyGo_RGBPanel_Color_Order order) {
 
     // Initialize the XL9555 expansion chip
     if (!extension.init(Wire, BOARD_I2C_SDA, BOARD_I2C_SCL)) {
-        Serial.println("External GPIO expansion chip does not exist.");
+        Serial.println(F("External GPIO expansion chip does not exist."));
         assert(false);
     }
 
@@ -57,7 +57,7 @@ bool LilyGo_RGBPanel::begin(LilyGo_RGBPanel_Color_Order order) {
     extension.digitalWrite(power_enable, HIGH);
 
     if (!initTouch()) {
-        Serial.println("Touch chip not found.");
+        Serial.println(F("Touch chip not found."));
     }
 
     initBUS();
@@ -76,15 +76,15 @@ bool LilyGo_RGBPanel::installSD() {
     if (SD_MMC.begin("/sdcard", true, false)) {
         uint8_t cardType = SD_MMC.cardType();
         if (cardType != CARD_NONE) {
-            Serial.print("SD Card Type: ");
+            Serial.print(F("SD Card Type: "));
             if (cardType == CARD_MMC)
-                Serial.println("MMC");
+                Serial.println(F("MMC"));
             else if (cardType == CARD_SD)
-                Serial.println("SDSC");
+                Serial.println(F("SDSC"));
             else if (cardType == CARD_SDHC)
-                Serial.println("SDHC");
+                Serial.println(F("SDHC"));
             else
-                Serial.println("UNKNOWN");
+                Serial.println(F("UNKNOWN"));
             uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
             Serial.printf("SD Card Size: %lluMB\n", cardSize);
         }
