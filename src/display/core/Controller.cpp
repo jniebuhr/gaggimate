@@ -18,7 +18,7 @@ void Controller::setup() {
     mode = settings.getStartupMode();
 
     if (!SPIFFS.begin(true)) {
-        Serial.println("An Error has occurred while mounting LittleFS");
+        Serial.println(F("An Error has occurred while mounting LittleFS"));
     }
 
     pluginManager = new PluginManager();
@@ -68,6 +68,8 @@ void Controller::connect() {
 
     setupWifi();
     setupBluetooth();
+    pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
+    pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
 
     updateLastAction();
     initialized = true;
@@ -90,8 +92,8 @@ void Controller::setupBluetooth() {
             deactivate();
             setMode(MODE_STANDBY);
             pluginManager->trigger("controller:error");
+            ESP_LOGE("Controller", "Received error %d", error);
         }
-        ESP_LOGE("Controller", "Received error %d", error);
     });
     clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd) {
         ESP_LOGI("Controller", "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
@@ -133,6 +135,7 @@ void Controller::setupWifi() {
         WiFi.mode(WIFI_STA);
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
+        WiFi.setAutoReconnect(true);
         for (int attempts = 0; attempts < WIFI_CONNECT_ATTEMPTS; attempts++) {
             if (WiFi.status() == WL_CONNECTED) {
                 break;
@@ -140,16 +143,21 @@ void Controller::setupWifi() {
             delay(500);
             Serial.print(".");
         }
+        Serial.println("");
         if (WiFi.status() == WL_CONNECTED) {
-            Serial.println("");
-            Serial.print("Connected to ");
-            Serial.println(settings.getWifiSsid());
-            Serial.print("IP address: ");
-            Serial.println(WiFi.localIP());
-
-            configTzTime(resolve_timezone(settings.getTimezone()), NTP_SERVER);
+            ESP_LOGI("Controller", "Connected to %s with IP address %s", settings.getWifiSsid().c_str(),
+                     WiFi.localIP().toString().c_str());
+            WiFi.onEvent([this](WiFiEvent_t, WiFiEventInfo_t) { pluginManager->trigger("controller:wifi:connect", "AP", 0); },
+                         WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+            WiFi.onEvent(
+                [this](WiFiEvent_t, WiFiEventInfo_t info) {
+                    ESP_LOGI("Controller", "Lost WiFi connection. Reason: %d", info.wifi_sta_disconnected.reason);
+                    pluginManager->trigger("controller:wifi:disconnect");
+                },
+                WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
         } else {
             WiFi.disconnect(true, true);
+            ESP_LOGI("Controller", "Timed out while connecting to WiFi");
             Serial.println("Timed out while connecting to WiFi");
         }
     }
@@ -159,11 +167,7 @@ void Controller::setupWifi() {
         WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
         WiFi.softAP(WIFI_AP_SSID);
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        Serial.println("Started in AP mode");
-        Serial.print("Connect to:");
-        Serial.println(WIFI_AP_SSID);
-        Serial.print("IP address: ");
-        Serial.println(WiFi.localIP());
+        ESP_LOGI("Controller", "Started WiFi AP %s", WIFI_AP_SSID);
     }
 
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
@@ -260,7 +264,13 @@ bool Controller::isAutotuning() const { return autotuning; }
 
 bool Controller::isReady() const { return !isUpdating() && !isErrorState() && !isAutotuning(); }
 
-bool Controller::isVolumetricAvailable() const { return volumetricOverride || systemInfo.capabilities.dimming; }
+bool Controller::isVolumetricAvailable() const {
+#ifdef NIGHTLY_BUILD
+    return volumetricOverride || systemInfo.capabilities.dimming;
+#else
+    return volumetricOverride;
+#endif
+}
 
 void Controller::autotune(int testTime, int samples) {
     if (isActive() || !isReady()) {

@@ -53,6 +53,7 @@ Settings::Settings() {
     mainBrightness = preferences.getInt("main_b", 16);
     standbyBrightness = preferences.getInt("standby_b", 8);
     standbyBrightnessTimeout = preferences.getInt("standby_bt", 60000);
+    wifiApTimeout = preferences.getInt("wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS);
 
     preferences.end();
 
@@ -118,12 +119,12 @@ void Settings::setTargetGrindDuration(const int target_duration) {
 }
 
 void Settings::setBrewDelay(double brew_Delay) {
-    brewDelay = brew_Delay;
+    brewDelay = std::clamp(brew_Delay, 0.0, 4000.0);
     save();
 }
 
 void Settings::setGrindDelay(double grind_Delay) {
-    grindDelay = grind_Delay;
+    grindDelay = std::clamp(grind_Delay, 0.0, 4000.0);
     save();
 }
 
@@ -306,6 +307,11 @@ void Settings::setStandbyBrightnessTimeout(int standby_brightness_timeout) {
     save();
 }
 
+void Settings::setWifiApTimeout(int timeout) {
+    wifiApTimeout = timeout;
+    save();
+}
+
 void Settings::setSteamPumpPercentage(float steam_pump_percentage) {
     steamPumpPercentage = steam_pump_percentage;
     save();
@@ -367,6 +373,7 @@ void Settings::doSave() {
     preferences.putInt("main_b", mainBrightness);
     preferences.putInt("standby_b", standbyBrightness);
     preferences.putInt("standby_bt", standbyBrightnessTimeout);
+    preferences.putInt("wifi_apt", wifiApTimeout);
 
     preferences.end();
 }

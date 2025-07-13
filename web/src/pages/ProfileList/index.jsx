@@ -25,7 +25,7 @@ const PhaseLabels = {
 
 const connected = computed(() => machine.value.connected);
 
-function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favoriteDisabled, unfavoriteDisabled }) {
+function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDuplicate, favoriteDisabled, unfavoriteDisabled }) {
   const bookmarkClass = data.favorite ? 'text-yellow-400' : '';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
@@ -105,6 +105,15 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, favor
               className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
             >
               <span className="fa fa-file-export" />
+            </a>
+            <a
+              href="javascript:void(0)"
+              tooltip="Duplicate"
+              tooltip-position="left"
+              onClick={() => onDuplicate(data.id)}
+              className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-green-600 hover:bg-green-100 active:border-green-200"
+            >
+              <span className="fa fa-copy" />
             </a>
             <a
               href="javascript:void(0)"
@@ -205,6 +214,20 @@ export function ProfileList() {
     await loadProfiles();
   }, [apiService, setLoading]);
 
+  const onDuplicate = useCallback(async(id) => {
+    setLoading(true);
+    const original = profiles.find(p => p.id === id);
+    if (original) {
+      const copy = { ...original };
+      delete copy.id;
+      delete copy.selected;
+      delete copy.favorite;
+      copy.label = `${original.label} Copy`;
+      await apiService.request({ tp: 'req:profiles:save', profile: copy });
+    }
+    await loadProfiles();
+  }, [apiService, profiles, setLoading]);
+
   const onExport = useCallback(() => {
     const exportedProfiles = profiles.map(p => {
       const ep = {
@@ -278,6 +301,7 @@ export function ProfileList() {
             unfavoriteDisabled={unfavoriteDisabled}
             onUnfavorite={onUnfavorite}
             onFavorite={onFavorite}
+            onDuplicate={onDuplicate}
           />
         ))}
 

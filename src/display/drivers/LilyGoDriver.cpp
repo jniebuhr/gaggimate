@@ -13,7 +13,7 @@ void LilyGoDriver::init() {
     printf("Initializing LilyGo driver\n");
     if (!panel.begin()) {
         for (uint8_t i = 0; i < 20; i++) {
-            Serial.println("Error, failed to initialize T-RGB");
+            Serial.println(F("Error, failed to initialize T-RGB"));
             delay(1000);
         }
         ESP.restart();
