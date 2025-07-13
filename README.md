@@ -13,9 +13,6 @@
 
 This project upgrades a Gaggia espresso machine with smart controls to improve your coffee-making experience. By adding a display and custom electronics, you can monitor and control the machine more easily.
 
-You can flash both the display and controller with WeighMyBru support from this link
-https://031devstudios.github.io/gaggimate/flasher/
-
 <img src="docs/assets/gaggimate-render.png" alt="Gaggia Classic Installation" width="500" />
 
 ## Features
