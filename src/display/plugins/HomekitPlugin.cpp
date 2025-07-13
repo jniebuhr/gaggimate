@@ -62,6 +62,7 @@ void HomekitPlugin::setup(Controller *controller, PluginManager *pluginManager) 
         homeSpan.setHostNameSuffix("");
         homeSpan.setPortNum(HOMESPAN_PORT);
         homeSpan.begin(Category::Thermostats, DEVICE_NAME, this->controller->getSettings().getMdnsName().c_str());
+        homeSpan.setWifiCredentials(wifiSsid.c_str(), wifiPassword.c_str());
         spanAccessory = new SpanAccessory();
         accessoryInformation = new Service::AccessoryInformation();
         identify = new Characteristic::Identify();

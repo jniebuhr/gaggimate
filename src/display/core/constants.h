@@ -21,6 +21,7 @@
 #define DEFAULT_OTA_CHANNEL "latest"
 #define DEFAULT_TIMEZONE "Europe/Rome"
 #define DEFAULT_STEAM_PUMP_PERCENTAGE 4.f
+#define WIFI_CONNECT_ATTEMPTS 20
 
 #define MODE_STANDBY 0
 #define MODE_BREW 1

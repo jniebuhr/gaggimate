@@ -156,6 +156,7 @@ void WebUIPlugin::start() {
         dnsServer->start(53, "*", WIFI_AP_IP);
         ESP_LOGI("WebUIPlugin", "Started catchall DNS for captive portal");
     }
+    lastUpdateCheck = millis();
     serverRunning = true;
 }
 
@@ -220,21 +221,21 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
             auto obj = response["profile"].to<JsonObject>();
             writeProfile(obj, profile);
         } else {
-            response["error"] = "Profile not found";
+            response["error"] = F("Profile not found");
         }
     } else if (type == "req:profiles:save") {
         auto obj = request["profile"].as<JsonObject>();
         Profile profile;
         parseProfile(obj, profile);
         if (!profileManager->saveProfile(profile)) {
-            response["error"] = "Save failed";
+            response["error"] = F("Save failed");
         }
         auto respObj = response["profile"].to<JsonObject>();
         writeProfile(respObj, profile);
     } else if (type == "req:profiles:delete") {
         auto id = request["id"].as<String>();
         if (!profileManager->deleteProfile(id)) {
-            response["error"] = "Delete failed";
+            response["error"] = F("Delete failed");
         }
     } else if (type == "req:profiles:select") {
         auto id = request["id"].as<String>();

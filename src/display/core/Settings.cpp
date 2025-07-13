@@ -119,12 +119,12 @@ void Settings::setTargetGrindDuration(const int target_duration) {
 }
 
 void Settings::setBrewDelay(double brew_Delay) {
-    brewDelay = brew_Delay;
+    brewDelay = std::clamp(brew_Delay, 0.0, 4000.0);
     save();
 }
 
 void Settings::setGrindDelay(double grind_Delay) {
-    grindDelay = grind_Delay;
+    grindDelay = std::clamp(grind_Delay, 0.0, 4000.0);
     save();
 }
 
