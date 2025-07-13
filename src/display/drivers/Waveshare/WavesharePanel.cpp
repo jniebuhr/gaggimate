@@ -58,7 +58,7 @@ bool WavesharePanel::begin(WS_RGBPanel_Color_Order order) {
     Set_EXIO(EXIO_PIN8, Low);
 
     if (!initTouch()) {
-        Serial.println("Touch chip not found.");
+        Serial.println(F("Touch chip not found."));
         return false;
     }
 
@@ -78,15 +78,15 @@ bool WavesharePanel::installSD() {
     if (SD_MMC.begin("/sdcard", true, false)) {
         uint8_t cardType = SD_MMC.cardType();
         if (cardType != CARD_NONE) {
-            Serial.print("SD Card Type: ");
+            Serial.print(F("SD Card Type: "));
             if (cardType == CARD_MMC)
-                Serial.println("MMC");
+                Serial.println(F("MMC"));
             else if (cardType == CARD_SD)
-                Serial.println("SDSC");
+                Serial.println(F("SDSC"));
             else if (cardType == CARD_SDHC)
-                Serial.println("SDHC");
+                Serial.println(F("SDHC"));
             else
-                Serial.println("UNKNOWN");
+                Serial.println(F("UNKNOWN"));
             uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
             Serial.printf("SD Card Size: %lluMB\n", cardSize);
         }

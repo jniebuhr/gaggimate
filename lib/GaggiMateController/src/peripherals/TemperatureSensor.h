@@ -4,7 +4,7 @@
 class TemperatureSensor {
   public:
     virtual float read();
-    virtual bool hasError();
+    virtual bool isErrorState();
 };
 
 #endif // TEMPERATURESENSOR_H

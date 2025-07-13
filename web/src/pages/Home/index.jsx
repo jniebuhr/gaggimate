@@ -78,7 +78,7 @@ export function Home() {
             <h2 className="text-2xl font-bold">Overview</h2>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 h-full">
             <OverviewChart />
           </div>
         </div>
