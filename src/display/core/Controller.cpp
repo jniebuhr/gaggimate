@@ -18,13 +18,11 @@ void Controller::setup() {
     mode = settings.getStartupMode();
 
     if (!SPIFFS.begin(true)) {
-        Serial.println("An Error has occurred while mounting LittleFS");
+        Serial.println(F("An Error has occurred while mounting LittleFS"));
     }
 
     pluginManager = new PluginManager();
     profileManager = new ProfileManager(SPIFFS, "/p", settings, pluginManager);
-    wifiManager = new WifiManager(pluginManager);
-    wifiManager->updateCredentials(settings.getWifiSsid().c_str(), settings.getWifiPassword().c_str());
     profileManager->setup();
     ui = new DefaultUI(this, pluginManager);
     if (settings.isHomekit())
@@ -68,6 +66,7 @@ void Controller::connect() {
     lastPing = millis();
     pluginManager->trigger("controller:startup");
 
+    setupWifi();
     setupBluetooth();
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
     pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
@@ -131,6 +130,52 @@ void Controller::setupInfos() {
     }
 }
 
+void Controller::setupWifi() {
+    if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
+        WiFi.mode(WIFI_STA);
+        WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
+        WiFi.setTxPower(WIFI_POWER_19_5dBm);
+        WiFi.setAutoReconnect(true);
+        for (int attempts = 0; attempts < WIFI_CONNECT_ATTEMPTS; attempts++) {
+            if (WiFi.status() == WL_CONNECTED) {
+                break;
+            }
+            delay(500);
+            Serial.print(".");
+        }
+        Serial.println("");
+        if (WiFi.status() == WL_CONNECTED) {
+            ESP_LOGI("Controller", "Connected to %s with IP address %s", settings.getWifiSsid().c_str(),
+                     WiFi.localIP().toString().c_str());
+            WiFi.onEvent([this](WiFiEvent_t, WiFiEventInfo_t) { pluginManager->trigger("controller:wifi:connect", "AP", 0); },
+                         WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+            WiFi.onEvent(
+                [this](WiFiEvent_t, WiFiEventInfo_t info) {
+                    ESP_LOGI("Controller", "Lost WiFi connection. Reason: %d", info.wifi_sta_disconnected.reason);
+                    pluginManager->trigger("controller:wifi:disconnect");
+                },
+                WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+        } else {
+            WiFi.disconnect(true, true);
+            ESP_LOGI("Controller", "Timed out while connecting to WiFi");
+            Serial.println("Timed out while connecting to WiFi");
+        }
+    }
+    if (WiFi.status() != WL_CONNECTED) {
+        isApConnection = true;
+        WiFi.mode(WIFI_AP);
+        WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
+        WiFi.softAP(WIFI_AP_SSID);
+        WiFi.setTxPower(WIFI_POWER_19_5dBm);
+        ESP_LOGI("Controller", "Started WiFi AP %s", WIFI_AP_SSID);
+    }
+
+    pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
+    pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
+
+    pluginManager->trigger("controller:wifi:connect", "AP", isApConnection ? 1 : 0);
+}
+
 void Controller::loop() {
     pluginManager->loop();
 
@@ -143,7 +188,6 @@ void Controller::loop() {
         setupInfos();
         pluginManager->trigger("controller:bluetooth:connect");
         if (!loaded) {
-            wifiManager->begin();
             loaded = true;
             if (settings.getStartupMode() == MODE_STANDBY)
                 activateStandby();
