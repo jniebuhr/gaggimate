@@ -67,6 +67,8 @@ class Settings {
     int getStandbyBrightnessTimeout() const { return standbyBrightnessTimeout; }
     int getWifiApTimeout() const { return wifiApTimeout; }
     float getSteamPumpPercentage() const { return steamPumpPercentage; }
+    int getThemeMode() const { return themeMode; }
+    int getHistoryIndex() const { return historyIndex; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -116,6 +118,8 @@ class Settings {
     void setStandbyBrightnessTimeout(int standby_brightness_timeout);
     void setWifiApTimeout(int timeout);
     void setSteamPumpPercentage(float steam_pump_percentage);
+    void setThemeMode(int theme_mode);
+    void setHistoryIndex(int history_index);
 
   private:
     Preferences preferences;
@@ -159,6 +163,7 @@ class Settings {
     String otaChannel = DEFAULT_OTA_CHANNEL;
     std::vector<String> favoritedProfiles;
     float steamPumpPercentage = DEFAULT_STEAM_PUMP_PERCENTAGE;
+    int historyIndex = 0;
 
     // Deprecated, use profiles
     int targetBrewTemp = 93;
@@ -173,6 +178,7 @@ class Settings {
     int standbyBrightness = 8;
     int standbyBrightnessTimeout = 60000; // 60 seconds default
     int wifiApTimeout = DEFAULT_WIFI_AP_TIMEOUT_MS;
+    int themeMode = 0;
 
     void doSave();
     xTaskHandle taskHandle;

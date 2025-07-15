@@ -9,7 +9,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
   public:
     NimBLEServerController();
     void initServer(String infoString);
-    void sendSensorData(float temperature, float pressure, float flow);
+    void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow);
     void sendError(int errorCode);
     void sendBrewBtnState(bool brewButtonStatus);
     void sendSteamBtnState(bool steamButtonStatus);

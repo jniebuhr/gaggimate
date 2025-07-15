@@ -71,10 +71,10 @@ void NimBLEServerController::initServer(const String infoString) {
     ESP_LOGI(LOG_TAG, "BLE Server started, advertising...\n");
 }
 
-void NimBLEServerController::sendSensorData(float temperature, float pressure, float flow) {
+void NimBLEServerController::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow) {
     if (deviceConnected && sensorChar != nullptr) {
         char str[30];
-        snprintf(str, sizeof(str), "%.3f,%.3f,%.3f", temperature, pressure, flow);
+        snprintf(str, sizeof(str), "%.3f,%.3f,%.3f,%.3f", temperature, pressure, puckFlow, pumpFlow);
         sensorChar->setValue(str);
         sensorChar->notify();
     }

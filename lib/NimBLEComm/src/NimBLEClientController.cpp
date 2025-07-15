@@ -245,11 +245,13 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         String data = String((char *)pData);
         float temperature = get_token(data, 0, ',').toFloat();
         float pressure = get_token(data, 1, ',').toFloat();
-        float flow = get_token(data, 2, ',').toFloat();
+        float puckFlow = get_token(data, 2, ',').toFloat();
+        float pumpFlow = get_token(data, 3, ',').toFloat();
 
-        ESP_LOGV(LOG_TAG, "Received sensor data: temperature=%.1f, pressure=%.1f, flow=%.1f", temperature, pressure, flow);
+        ESP_LOGV(LOG_TAG, "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f", temperature,
+                 pressure, puckFlow, pumpFlow);
         if (sensorCallback != nullptr) {
-            sensorCallback(temperature, pressure, flow);
+            sensorCallback(temperature, pressure, puckFlow, pumpFlow);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
