@@ -6,6 +6,8 @@
 #include <display/models/profile.h>
 
 #include "BLEScalePlugin.h"
+#include "ShotHistoryPlugin.h"
+#include <vector>
 
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
 
@@ -62,7 +64,7 @@ void WebUIPlugin::loop() {
         doc["ct"] = controller->getCurrentTemp();
         doc["tt"] = controller->getTargetTemp();
         doc["pr"] = controller->getCurrentPressure();
-        doc["fl"] = controller->getCurrentFlow();
+        doc["fl"] = controller->getCurrentPuckFlow();
         doc["pt"] = controller->getTargetPressure();
         doc["m"] = controller->getMode();
         doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
@@ -137,6 +139,12 @@ void WebUIPlugin::setupServer() {
                                 handleOTAStart(client->id(), doc);
                             } else if (msgType == "req:autotune-start") {
                                 handleAutotuneStart(client->id(), doc);
+                            } else if (msgType.startsWith("req:history")) {
+                                JsonDocument resp;
+                                ShotHistory.handleRequest(doc, resp);
+                                String msg;
+                                serializeJson(resp, msg);
+                                ws.text(client->id(), msg);
                             }
                         }
                     }
@@ -313,6 +321,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setStandbyBrightnessTimeout(request->arg("standbyBrightnessTimeout").toInt() * 1000);
             if (request->hasArg("steamPumpPercentage"))
                 settings->setSteamPumpPercentage(request->arg("steamPumpPercentage").toFloat());
+            if (request->hasArg("themeMode"))
+                settings->setThemeMode(request->arg("themeMode").toInt());
             settings->save(true);
         });
         controller->setTargetTemp(controller->getTargetTemp());
@@ -353,6 +363,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["standbyBrightness"] = settings.getStandbyBrightness();
     doc["standbyBrightnessTimeout"] = settings.getStandbyBrightnessTimeout() / 1000;
     doc["steamPumpPercentage"] = settings.getSteamPumpPercentage();
+    doc["themeMode"] = settings.getThemeMode();
     serializeJson(doc, *response);
     request->send(response);
 

@@ -8,9 +8,6 @@
 #include <WiFi.h>
 #include <display/core/PluginManager.h>
 
-const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space
-const IPAddress WIFI_SUBNET_MASK(255, 255, 255, 0); // no need to change: https://avinetworks.com/glossary/subnet-mask/
-
 class WifiManager {
   public:
     struct WiFiConfig {

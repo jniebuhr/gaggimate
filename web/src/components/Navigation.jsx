@@ -28,7 +28,7 @@ export function Navigation(props) {
       <hr class="h-5 border-0" />
       <div className="space-y-1.5">
         <MenuItem label="Profiles" link="/profiles" iconClass="fa fa-list" />
-        {props.extended && <MenuItem label="Shot History" link="/history" iconClass="fa fa-timeline" />}
+        <MenuItem label="Shot History" link="/history" iconClass="fa fa-timeline" />
       </div>
       <hr className="h-5 border-0" />
       <div class="space-y-1.5">

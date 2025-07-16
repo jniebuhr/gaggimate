@@ -147,7 +147,7 @@ void BLEScalePlugin::establishConnection() {
 
 void BLEScalePlugin::onMeasurement(float value) const {
     if (controller != nullptr) {
-        controller->onVolumetricMeasurement(value);
+        controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::BLUETOOTH);
     }
 }
 

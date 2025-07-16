@@ -48,12 +48,14 @@ Settings::Settings() {
     profilesMigrated = preferences.getBool("pm", false);
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
+    historyIndex = preferences.getInt("hi", 0);
 
     // Display settings
     mainBrightness = preferences.getInt("main_b", 16);
     standbyBrightness = preferences.getInt("standby_b", 8);
     standbyBrightnessTimeout = preferences.getInt("standby_bt", 60000);
     wifiApTimeout = preferences.getInt("wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS);
+    themeMode = preferences.getInt("theme", 0);
 
     preferences.end();
 
@@ -317,6 +319,16 @@ void Settings::setSteamPumpPercentage(float steam_pump_percentage) {
     save();
 }
 
+void Settings::setThemeMode(int theme_mode) {
+    themeMode = theme_mode;
+    save();
+}
+
+void Settings::setHistoryIndex(int history_index) {
+    historyIndex = history_index;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -368,12 +380,14 @@ void Settings::doSave() {
     preferences.putInt("mb", momentaryButtons);
     preferences.putString("fp", implode(favoritedProfiles, ","));
     preferences.putFloat("spp", steamPumpPercentage);
+    preferences.putInt("hi", historyIndex);
 
     // Display settings
     preferences.putInt("main_b", mainBrightness);
     preferences.putInt("standby_b", standbyBrightness);
     preferences.putInt("standby_bt", standbyBrightnessTimeout);
     preferences.putInt("wifi_apt", wifiApTimeout);
+    preferences.putInt("theme", themeMode);
 
     preferences.end();
 }

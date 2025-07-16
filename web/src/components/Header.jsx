@@ -78,7 +78,7 @@ export function Header(props) {
           <hr className="h-5 border-0" />
           <div className="space-y-1.5">
             <HeaderItem label="Profiles" link="/profiles" iconClass="fa fa-list" onClick={() => openCb(false)} />
-            {props.extended && <HeaderItem label="Shot History" link="/history" iconClass="fa fa-timeline" onClick={() => openCb(false)} />}
+            <HeaderItem label="Shot History" link="/history" iconClass="fa fa-timeline" onClick={() => openCb(false)} />
           </div>
           <hr className="h-5 border-0" />
           <div className="space-y-1.5">

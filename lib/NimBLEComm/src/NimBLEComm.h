@@ -42,7 +42,7 @@ using float_callback_t = std::function<void(float val)>;
 using simple_output_callback_t = std::function<void(bool valve, float pumpSetpoint, float boilerSetpoint)>;
 using advanced_output_callback_t =
     std::function<void(bool valve, float boilerSetpoint, bool pressureTarget, float pumpPressure, float pumpFlow)>;
-using sensor_read_callback_t = std::function<void(float temperature, float pressure, float flow)>;
+using sensor_read_callback_t = std::function<void(float temperature, float pressure, float puckFlow, float pumpFlow)>;
 
 struct SystemCapabilities {
     bool dimming;

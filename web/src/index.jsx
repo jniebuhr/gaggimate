@@ -15,6 +15,7 @@ import { Navigation } from './components/Navigation.jsx';
 import { ProfileList } from './pages/ProfileList/index.jsx';
 import { ProfileEdit } from './pages/ProfileEdit/index.jsx';
 import { Autotune } from './pages/Autotune/index.jsx';
+import { ShotHistory } from './pages/ShotHistory/index.jsx';
 
 const apiService = new ApiService();
 
@@ -44,6 +45,7 @@ export function App() {
                         <Route path="/ota" component={OTA} />
                         <Route path="/scales" component={Scales} />
                         <Route path="/pidtune" component={Autotune} />
+                        <Route path="/history" component={ShotHistory} />
                         <Route default component={NotFound} />
                       </Router>
                     </ErrorBoundary>

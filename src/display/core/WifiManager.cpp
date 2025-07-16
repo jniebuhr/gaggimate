@@ -153,7 +153,7 @@ void WifiManager::startAP() {
     if (!isAPActive) {
         ESP_LOGI("WifiManager", "Starting AP mode");
 
-        WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
+        // WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
         WiFi.softAP(config.apSSID.c_str(), config.apPassword.c_str());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
         isAPActive = true;

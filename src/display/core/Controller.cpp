@@ -10,15 +10,18 @@
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/HomekitPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
+#include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+
+const String LOG_TAG = F("Controller");
 
 void Controller::setup() {
     mode = settings.getStartupMode();
 
     if (!SPIFFS.begin(true)) {
-        Serial.println(F("An Error has occurred while mounting LittleFS"));
+        Serial.println(F("An Error has occurred while mounting SPIFFS"));
     }
 
     pluginManager = new PluginManager();
@@ -39,6 +42,7 @@ void Controller::setup() {
         pluginManager->registerPlugin(new MQTTPlugin());
     }
     pluginManager->registerPlugin(new WebUIPlugin());
+    pluginManager->registerPlugin(&ShotHistory);
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->setup(this);
 
@@ -77,13 +81,16 @@ void Controller::connect() {
 
 void Controller::setupBluetooth() {
     clientController.initClient();
-    clientController.registerSensorCallback([this](const float temp, const float pressure, const float flow) {
-        onTempRead(temp);
-        this->pressure = pressure;
-        this->currentFlow = flow;
-        pluginManager->trigger("boiler:pressure:change", "value", pressure);
-        pluginManager->trigger("pump:flow:change", "value", flow);
-    });
+    clientController.registerSensorCallback(
+        [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow) {
+            onTempRead(temp);
+            this->pressure = pressure;
+            this->currentPuckFlow = puckFlow;
+            this->currentPumpFlow = pumpFlow;
+            pluginManager->trigger("boiler:pressure:change", "value", pressure);
+            pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
+            pluginManager->trigger("pump:flow:change", "value", pumpFlow);
+        });
     clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
     clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
     clientController.registerRemoteErrorCallback([this](const int error) {
@@ -91,12 +98,12 @@ void Controller::setupBluetooth() {
             this->error = error;
             deactivate();
             setMode(MODE_STANDBY);
-            pluginManager->trigger("controller:error");
-            ESP_LOGE("Controller", "Received error %d", error);
+            pluginManager->trigger(F("controller:error"));
+            ESP_LOGE(LOG_TAG, "Received error %d", error);
         }
     });
     clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd) {
-        ESP_LOGI("Controller", "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
+        ESP_LOGI(LOG_TAG, "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
         char pid[30];
         snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f", Kp, Ki, Kd);
         settings.setPid(String(pid));
@@ -105,7 +112,7 @@ void Controller::setupBluetooth() {
     });
     clientController.registerVolumetricMeasurementCallback([this](const float value) {
         if (!volumetricOverride) {
-            onVolumetricMeasurement(value);
+            onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
         }
     });
     pluginManager->trigger("controller:bluetooth:init");
@@ -145,19 +152,19 @@ void Controller::setupWifi() {
         }
         Serial.println("");
         if (WiFi.status() == WL_CONNECTED) {
-            ESP_LOGI("Controller", "Connected to %s with IP address %s", settings.getWifiSsid().c_str(),
+            ESP_LOGI(LOG_TAG, "Connected to %s with IP address %s", settings.getWifiSsid().c_str(),
                      WiFi.localIP().toString().c_str());
             WiFi.onEvent([this](WiFiEvent_t, WiFiEventInfo_t) { pluginManager->trigger("controller:wifi:connect", "AP", 0); },
                          WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
             WiFi.onEvent(
                 [this](WiFiEvent_t, WiFiEventInfo_t info) {
-                    ESP_LOGI("Controller", "Lost WiFi connection. Reason: %d", info.wifi_sta_disconnected.reason);
+                    ESP_LOGI(LOG_TAG, "Lost WiFi connection. Reason: %d", info.wifi_sta_disconnected.reason);
                     pluginManager->trigger("controller:wifi:disconnect");
                 },
                 WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
         } else {
             WiFi.disconnect(true, true);
-            ESP_LOGI("Controller", "Timed out while connecting to WiFi");
+            ESP_LOGI(LOG_TAG, "Timed out while connecting to WiFi");
             Serial.println("Timed out while connecting to WiFi");
         }
     }
@@ -167,7 +174,7 @@ void Controller::setupWifi() {
         WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
         WiFi.softAP(WIFI_AP_SSID);
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        ESP_LOGI("Controller", "Started WiFi AP %s", WIFI_AP_SSID);
+        ESP_LOGI(LOG_TAG, "Started WiFi AP %s", WIFI_AP_SSID);
     }
 
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
@@ -192,7 +199,7 @@ void Controller::loop() {
             if (settings.getStartupMode() == MODE_STANDBY)
                 activateStandby();
 
-            ESP_LOGI("Controller", "setting pressure scale to %.2f\n", settings.getPressureScaling());
+            ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
             setPressureScale();
             clientController.sendPidSettings(settings.getPid());
 
@@ -562,7 +569,11 @@ void Controller::onOTAUpdate() {
     updating = true;
 }
 
-void Controller::onVolumetricMeasurement(double measurement) const {
+void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
+    pluginManager->trigger(source == VolumetricMeasurementSource::FLOW_ESTIMATION
+                               ? F("controller:volumetric-measurement:estimation:change")
+                               : F("controller:volumetric-measurement:bluetooth:change"),
+                           "value", static_cast<float>(measurement));
     if (currentProcess != nullptr) {
         currentProcess->updateVolume(measurement);
     }
