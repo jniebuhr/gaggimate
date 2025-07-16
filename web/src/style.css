@@ -2,19 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-
 .menu-button {
   @apply bg-gray-50 border border-[#ccc] dark:border-gray-600 border-opacity-40 dark:bg-gray-800;
   @apply text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-200 rounded-full px-5 py-3 mr-2 gap-3 items-center text-center;
 }
 
 .menu-button:not(:disabled) {
-    cursor: pointer;
-    @apply hover:bg-gray-200 dark:hover:bg-gray-700;
+  cursor: pointer;
+  @apply hover:bg-gray-200 dark:hover:bg-gray-700;
 }
 
 .menu-button:disabled {
-    @apply bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300;
+  @apply bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300;
 }
 
 .menu-button-sm {
@@ -38,109 +37,110 @@
 }
 
 .input-field.addition {
-    @apply border-e-0 rounded-e-none;
+  @apply border-e-0 rounded-e-none;
 }
 
 .input-addition {
-    @apply inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-s-none border-gray-300 border-s-0 rounded-e-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600;
+  @apply inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-s-none border-gray-300 border-s-0 rounded-e-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600;
 }
 
 .select-field {
-    appearance: none;
-    -webkit-appearance: none;
-    @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
+  appearance: none;
+  -webkit-appearance: none;
+  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
 }
 
 .select-field:not([size]) {
-    print-color-adjust: exact;
-    background-image: url("data:image/svg+xml,%3csvg aria-hidden='true' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 10 6'%3e %3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 1 4 4 4-4'/%3e %3c/svg%3e");
-    background-position: right .75rem center;
-    background-repeat: no-repeat;
-    background-size: .75em .75em;
-    padding-right:2.5rem
+  print-color-adjust: exact;
+  background-image: url("data:image/svg+xml,%3csvg aria-hidden='true' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 10 6'%3e %3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 1 4 4 4-4'/%3e %3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 0.75em 0.75em;
+  padding-right: 2.5rem;
 }
 
 .input-checkbox {
   @apply w-4 h-4 text-blue-600 bg-gray-100 border-[#ccc] rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600;
 }
 
-[tooltip]{
-    position:relative;
+[tooltip] {
+  position: relative;
 }
 
 [tooltip]::before {
-    content: "";
-    position: absolute;
-    top:-6px;
-    left:50%;
-    transform: translateX(-50%);
-    border-width: 4px 6px 0 6px;
-    border-style: solid;
-    border-color: rgba(0,0,0,0.7) transparent transparent     transparent;
-    z-index: 99;
-    opacity:0;
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px 6px 0 6px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.7) transparent transparent transparent;
+  z-index: 99;
+  opacity: 0;
 }
 
-[tooltip-position='left']::before{
-    left:0%;
-    top:50%;
-    margin-left:-12px;
-    transform:translatey(-50%) rotate(-90deg)
+[tooltip-position='left']::before {
+  left: 0%;
+  top: 50%;
+  margin-left: -12px;
+  transform: translatey(-50%) rotate(-90deg);
 }
-[tooltip-position='top']::before{
-    left:50%;
+[tooltip-position='top']::before {
+  left: 50%;
 }
-[tooltip-position='buttom']::before{
-    top:100%;
-    margin-top:8px;
-    transform: translateX(-50%) translatey(-100%) rotate(-180deg)
+[tooltip-position='buttom']::before {
+  top: 100%;
+  margin-top: 8px;
+  transform: translateX(-50%) translatey(-100%) rotate(-180deg);
 }
-[tooltip-position='right']::before{
-    left:100%;
-    top:50%;
-    margin-left:1px;
-    transform:translatey(-50%) rotate(90deg)
+[tooltip-position='right']::before {
+  left: 100%;
+  top: 50%;
+  margin-left: 1px;
+  transform: translatey(-50%) rotate(90deg);
 }
 
 [tooltip]::after {
-    content: attr(tooltip);
-    position: absolute;
-    left:50%;
-    top:-6px;
-    transform: translateX(-50%)   translateY(-100%);
-    background: rgba(0,0,0,0.7);
-    text-align: center;
-    color: #fff;
-    font-size: 12px;
-    min-width: 80px;
-    border-radius: 5px;
-    pointer-events: none;
-    padding: 4px 4px;
-    z-index:99;
-    opacity:0;
+  content: attr(tooltip);
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  transform: translateX(-50%) translateY(-100%);
+  background: rgba(0, 0, 0, 0.7);
+  text-align: center;
+  color: #fff;
+  font-size: 12px;
+  min-width: 80px;
+  border-radius: 5px;
+  pointer-events: none;
+  padding: 4px 4px;
+  z-index: 99;
+  opacity: 0;
 }
 
-[tooltip-position='left']::after{
-    left:0%;
-    top:50%;
-    margin-left:-8px;
-    transform: translateX(-100%)   translateY(-50%);
+[tooltip-position='left']::after {
+  left: 0%;
+  top: 50%;
+  margin-left: -8px;
+  transform: translateX(-100%) translateY(-50%);
 }
-[tooltip-position='top']::after{
-    left:50%;
+[tooltip-position='top']::after {
+  left: 50%;
 }
-[tooltip-position='buttom']::after{
-    top:100%;
-    margin-top:8px;
-    transform: translateX(-50%) translateY(0%);
+[tooltip-position='buttom']::after {
+  top: 100%;
+  margin-top: 8px;
+  transform: translateX(-50%) translateY(0%);
 }
-[tooltip-position='right']::after{
-    left:100%;
-    top:50%;
-    margin-left:8px;
-    transform: translateX(0%)   translateY(-50%);
+[tooltip-position='right']::after {
+  left: 100%;
+  top: 50%;
+  margin-left: 8px;
+  transform: translateX(0%) translateY(-50%);
 }
 
-[tooltip]:hover::after,[tooltip]:hover::before {
-    opacity:1
+[tooltip]:hover::after,
+[tooltip]:hover::before {
+  opacity: 1;
 }

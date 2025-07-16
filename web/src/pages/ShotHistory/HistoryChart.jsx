@@ -11,7 +11,7 @@ function getChartData(data) {
           label: 'Current Temperature',
           borderColor: '#F0561D',
           pointStyle: false,
-          data: data.map((i, idx) => ({x: (i.t / 1000).toFixed(1), y: i.ct}))
+          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.ct })),
         },
         {
           label: 'Target Temperature',
@@ -19,14 +19,14 @@ function getChartData(data) {
           borderColor: '#731F00',
           borderDash: [6, 6],
           pointStyle: false,
-          data: data.map(((i, idx) => ({x: (i.t / 1000).toFixed(1), y: i.tt})))
+          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tt })),
         },
         {
           label: 'Current Pressure',
           borderColor: '#0066CC',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({x: (i.t / 1000).toFixed(1), y: i.cp}))
+          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.cp })),
         },
         {
           label: 'Target Pressure',
@@ -35,21 +35,21 @@ function getChartData(data) {
           borderDash: [6, 6],
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map(((i, idx) => ({x: (i.t / 1000).toFixed(1), y: i.tp})))
+          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tp })),
         },
         {
           label: 'Current Pump Flow',
           borderColor: '#63993D',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({x: (i.t / 1000).toFixed(1), y: i.fl}))
+          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.fl })),
         },
         {
           label: 'Current Puck Flow',
           borderColor: '#204D00',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({x: (i.t / 1000).toFixed(1), y: i.pf}))
+          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.pf })),
         },
       ],
     },
@@ -62,8 +62,8 @@ function getChartData(data) {
         },
         title: {
           display: true,
-          text: 'Temperature History'
-        }
+          text: 'Temperature History',
+        },
       },
       animation: false,
       scales: {
@@ -72,8 +72,10 @@ function getChartData(data) {
           min: 0,
           max: 160,
           ticks: {
-            callback: value => { return `${value} °C` }
-          }
+            callback: (value) => {
+              return `${value} °C`;
+            },
+          },
         },
         y1: {
           type: 'linear',
@@ -81,20 +83,22 @@ function getChartData(data) {
           max: 16,
           position: 'right',
           ticks: {
-            callback: value => { return `${value} bar / g/s` }
-          }
+            callback: (value) => {
+              return `${value} bar / g/s`;
+            },
+          },
         },
         x: {
           ticks: {
-            source: 'auto'
-          }
-        }
-      }
+            source: 'auto',
+          },
+        },
+      },
     },
   };
 }
 
-export function HistoryChart({shot}) {
+export function HistoryChart({ shot }) {
   console.log(shot);
   const [chart, setChart] = useState(null);
   const ref = useRef();
@@ -113,7 +117,5 @@ export function HistoryChart({shot}) {
     chart.update();
   }, [shot, chart]);
 
-  return (
-    <canvas className="w-full" ref={ref} />
-  );
+  return <canvas className="w-full" ref={ref} />;
 }

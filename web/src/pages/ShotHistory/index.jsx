@@ -1,5 +1,15 @@
 import './style.css';
-import { Chart, LineController, TimeScale, LinearScale, PointElement, LineElement, Legend, Filler, CategoryScale } from 'chart.js';
+import {
+  Chart,
+  LineController,
+  TimeScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Legend,
+  Filler,
+  CategoryScale,
+} from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 Chart.register(LineController);
 Chart.register(TimeScale);
@@ -30,18 +40,21 @@ export function ShotHistory() {
     setHistory(history);
     console.log(history);
     setLoading(false);
-  }
+  };
   useEffect(async () => {
     if (connected.value) {
       await loadHistory();
     }
   }, [connected.value]);
 
-  const onDelete = useCallback(async(id) => {
-    setLoading(true);
-    await apiService.request({ tp: 'req:history:delete', id });
-    await loadHistory();
-  }, [apiService, setLoading]);
+  const onDelete = useCallback(
+    async (id) => {
+      setLoading(true);
+      await apiService.request({ tp: 'req:history:delete', id });
+      await loadHistory();
+    },
+    [apiService, setLoading]
+  );
 
   if (loading) {
     return (
@@ -51,14 +64,15 @@ export function ShotHistory() {
     );
   }
 
-
   return (
     <>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
         <div className="sm:col-span-12 flex flex-row">
           <h2 className="text-2xl font-bold flex-grow">Shot History</h2>
         </div>
-        {history.map((item, idx) => (<HistoryCard shot={item} key={idx} onDelete={(id) => onDelete(id)} />))}
+        {history.map((item, idx) => (
+          <HistoryCard shot={item} key={idx} onDelete={(id) => onDelete(id)} />
+        ))}
         {history.length === 0 && (
           <div className="sm:col-span-12 flex flex-row items-center justify-center py-20">
             <span>No shots available</span>

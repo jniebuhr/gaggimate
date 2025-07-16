@@ -11,7 +11,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 const PhaseLabels = {
   preinfusion: 'Pre-Infusion',
   brew: 'Brew',
-}
+};
 
 const connected = computed(() => machine.value.connected);
 
@@ -30,32 +30,32 @@ export function ProfileEdit() {
         temperature: 93,
         phases: [
           {
-            "name": "Pump",
-            "phase": "preinfusion",
-            "valve": 1,
-            "pump": 100,
-            "duration": 3
+            name: 'Pump',
+            phase: 'preinfusion',
+            valve: 1,
+            pump: 100,
+            duration: 3,
           },
           {
-            "name": "Bloom",
-            "phase": "preinfusion",
-            "valve": 1,
-            "pump": 0,
-            "duration": 5
+            name: 'Bloom',
+            phase: 'preinfusion',
+            valve: 1,
+            pump: 0,
+            duration: 5,
           },
           {
-            "name": "Pump",
-            "phase": "brew",
-            "valve": 1,
-            "pump": 100,
-            "duration": 20,
-            "targets": [
+            name: 'Pump',
+            phase: 'brew',
+            valve: 1,
+            pump: 100,
+            duration: 20,
+            targets: [
               {
-                "type": "volumetric",
-                "value": 36
-              }
-            ]
-          }
+                type: 'volumetric',
+                value: 36,
+              },
+            ],
+          },
         ],
       });
       setLoading(false);
@@ -89,12 +89,10 @@ export function ProfileEdit() {
         <h2 className="text-2xl font-bold">{params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}</h2>
       </div>
 
-      {
-        !data?.type && <ProfileTypeSelection onSelect={(type) => setData({...data, type})} />
-      }
-      {
-        data?.type === 'standard' && <StandardProfileForm data={data} onChange={(data) => setData(data)} onSave={onSave} saving={saving} />
-      }
+      {!data?.type && <ProfileTypeSelection onSelect={(type) => setData({ ...data, type })} />}
+      {data?.type === 'standard' && (
+        <StandardProfileForm data={data} onChange={(data) => setData(data)} onSave={onSave} saving={saving} />
+      )}
     </div>
   );
 }

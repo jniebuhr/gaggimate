@@ -14,7 +14,7 @@ export default defineConfig({
       '/ws': {
         target: 'ws://gaggimate.local',
         ws: true,
-      }
+      },
     },
   },
 });

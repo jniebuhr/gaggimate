@@ -1,17 +1,17 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Chart } from 'chart.js';
 
-const skipped = (ctx, value) => !ctx.p0.raw.target ? value : undefined;
+const skipped = (ctx, value) => (!ctx.p0.raw.target ? value : undefined);
 const pressureDatasetDefaults = {
   label: 'Pressure',
   borderColor: 'rgb(75, 192, 192)',
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
   segment: {
-    borderColor: ctx => skipped(ctx, 'rgb(75, 192, 192, 0.4)'),
-    borderDash: ctx => skipped(ctx, [6, 6]),
+    borderColor: (ctx) => skipped(ctx, 'rgb(75, 192, 192, 0.4)'),
+    borderDash: (ctx) => skipped(ctx, [6, 6]),
   },
-  spanGaps: true
+  spanGaps: true,
 };
 
 const flowDatasetDefaults = {
@@ -20,17 +20,17 @@ const flowDatasetDefaults = {
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
   segment: {
-    borderColor: ctx => skipped(ctx, 'rgb(255, 192, 192, 0.4)'),
-    borderDash: ctx => skipped(ctx, [6, 6]),
+    borderColor: (ctx) => skipped(ctx, 'rgb(255, 192, 192, 0.4)'),
+    borderDash: (ctx) => skipped(ctx, [6, 6]),
   },
   spanGaps: true,
-  yAxisID: 'y1'
+  yAxisID: 'y1',
 };
 
 const chartOptions = {
   fill: false,
   interaction: {
-    intersect: false
+    intersect: false,
   },
   radius: 0,
   scales: {
@@ -40,7 +40,7 @@ const chartOptions = {
       position: 'left',
       title: {
         display: true,
-        text: 'Pressure (bar)'
+        text: 'Pressure (bar)',
       },
       min: 0,
       max: 12,
@@ -51,18 +51,18 @@ const chartOptions = {
       position: 'right',
       title: {
         display: true,
-        text: 'Flow (ml/s)'
+        text: 'Flow (ml/s)',
       },
       min: 0,
       max: 10,
-    }
-  }
+    },
+  },
 };
 
 function makeLabels(phases) {
   const labels = [0];
-  let time = phases.map(p => p.duration).reduce((a, b) => a + b, 0);
-  return [...Array(time).keys()].map(i => `${i}s`);
+  let time = phases.map((p) => p.duration).reduce((a, b) => a + b, 0);
+  return [...Array(time).keys()].map((i) => `${i}s`);
 }
 
 function prepareData(phases, target) {
@@ -82,19 +82,22 @@ function makeChartData(data) {
     type: 'line',
     data: {
       labels: makeLabels(data.phases),
-      datasets: [{
-        ...pressureDatasetDefaults,
-        data: prepareData(data.phases, 'pressure'),
-      }, {
-        ...flowDatasetDefaults,
-        data: prepareData(data.phases, 'flow'),
-      }]
+      datasets: [
+        {
+          ...pressureDatasetDefaults,
+          data: prepareData(data.phases, 'pressure'),
+        },
+        {
+          ...flowDatasetDefaults,
+          data: prepareData(data.phases, 'flow'),
+        },
+      ],
     },
-    options: chartOptions
+    options: chartOptions,
   };
 }
 
-export function ExtendedContent({data}) {
+export function ExtendedContent({ data }) {
   const ref = useRef();
   const config = makeChartData(data);
 

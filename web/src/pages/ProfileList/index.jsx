@@ -1,5 +1,15 @@
 import './style.css';
-import { Chart, LineController, TimeScale, LinearScale, PointElement, LineElement, Legend, Filler, CategoryScale } from 'chart.js';
+import {
+  Chart,
+  LineController,
+  TimeScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Legend,
+  Filler,
+  CategoryScale,
+} from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 Chart.register(LineController);
 Chart.register(TimeScale);
@@ -21,7 +31,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 const PhaseLabels = {
   preinfusion: 'Pre-Infusion',
   brew: 'Brew',
-}
+};
 
 const connected = computed(() => machine.value.connected);
 
@@ -32,22 +42,20 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
   const favoriteToggleDisabled = data.favorite ? unfavoriteDisabled : favoriteDisabled;
   const favoriteToggleClass = favoriteToggleDisabled ? 'opacity-50 cursor-not-allowed' : '';
   const onFavoriteToggle = useCallback(() => {
-    if (data.favorite && !unfavoriteDisabled)
-      onUnfavorite(data.id);
-    else if (!data.favorite && !favoriteDisabled)
-      onFavorite(data.id);
+    if (data.favorite && !unfavoriteDisabled) onUnfavorite(data.id);
+    else if (!data.favorite && !favoriteDisabled) onFavorite(data.id);
   }, [data.favorite]);
   const onDownload = useCallback(() => {
     const download = {
-      ...data
+      ...data,
     };
     delete download.id;
     delete download.selected;
     delete download.favorite;
-    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(download, undefined, 2));
+    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(download, undefined, 2));
     var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href",     dataStr);
-    downloadAnchorNode.setAttribute("download", data.id + ".json");
+    downloadAnchorNode.setAttribute('href', dataStr);
+    downloadAnchorNode.setAttribute('download', data.id + '.json');
     document.body.appendChild(downloadAnchorNode); // required for firefox
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -59,13 +67,14 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
       className="rounded-lg border flex flex-row items-center border-slate-200 bg-white p-4 sm:col-span-12 dark:bg-gray-800 dark:border-gray-600"
     >
       <div className="flex flex-row justify-center items-center lg:p-4 p-2">
-        <label className="flex items-center relative cursor-pointer"
-               tooltip="Select profile"
-               tooltip-position="right">
-          <input checked={data.selected} type="checkbox"
-                 onClick={() => onSelect(data.id)}
-                 className="peer h-6 w-6 cursor-pointer transition-all appearance-none rounded-full bg-slate-100 dark:bg-slate-700 shadow hover:shadow-md border border-slate-300 checked:bg-green-600 checked:border-green-600"
-                 id="check-custom-style" />
+        <label className="flex items-center relative cursor-pointer" tooltip="Select profile" tooltip-position="right">
+          <input
+            checked={data.selected}
+            type="checkbox"
+            onClick={() => onSelect(data.id)}
+            className="peer h-6 w-6 cursor-pointer transition-all appearance-none rounded-full bg-slate-100 dark:bg-slate-700 shadow hover:shadow-md border border-slate-300 checked:bg-green-600 checked:border-green-600"
+            id="check-custom-style"
+          />
           <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <i className="fa fa-check text-white" />
           </span>
@@ -74,10 +83,10 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
       <div className="flex flex-col flex-grow overflow-auto">
         <div className="flex flex-row gap-2 flex-wrap">
           <div className="flex-grow flex flex-row items-center gap-4">
-            <span className="font-bold text-xl leading-tight">
-              {data.label}
+            <span className="font-bold text-xl leading-tight">{data.label}</span>
+            <span className={`${typeClass} text-xs font-medium me-2 px-4 py-0.5 rounded-sm dark:bg-blue-900 dark:text-blue-300`}>
+              {typeText}
             </span>
-            <span className={`${typeClass} text-xs font-medium me-2 px-4 py-0.5 rounded-sm dark:bg-blue-900 dark:text-blue-300`}>{typeText}</span>
           </div>
           <div className="flex flex-row gap-2 justify-end">
             <button
@@ -134,25 +143,21 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
   );
 }
 
-function SimpleContent({data}) {
+function SimpleContent({ data }) {
   return (
     <>
-      {
-        data.phases.map((phase, i) => (
-          <>
-            {i > 0 && <SimpleDivider key={`d-${i}`} />}
-            <SimpleStep phase={phase.phase} key={i} type={phase.name} duration={phase.duration} targets={phase.targets || []} />
-          </>
-        ))
-      }
+      {data.phases.map((phase, i) => (
+        <>
+          {i > 0 && <SimpleDivider key={`d-${i}`} />}
+          <SimpleStep phase={phase.phase} key={i} type={phase.name} duration={phase.duration} targets={phase.targets || []} />
+        </>
+      ))}
     </>
   );
 }
 
 function SimpleDivider() {
-  return (
-    <i className="fa-solid fa-chevron-right" />
-  )
+  return <i className="fa-solid fa-chevron-right" />;
 }
 
 function SimpleStep(props) {
@@ -163,9 +168,12 @@ function SimpleStep(props) {
         <span className="text-sm">{props.type}</span>
       </div>
       <div className="text-sm italic">
-        {props.targets.length === 0 && <span>Duration: {props.duration}s</span> }
+        {props.targets.length === 0 && <span>Duration: {props.duration}s</span>}
         {props.targets.map((t, i) => (
-          <span>Exit on: {t.value}{t.type === 'volumetric' && 'g'}</span>
+          <span>
+            Exit on: {t.value}
+            {t.type === 'volumetric' && 'g'}
+          </span>
         ))}
       </div>
     </div>
@@ -176,78 +184,93 @@ export function ProfileList() {
   const apiService = useContext(ApiServiceContext);
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const favoriteCount = profiles.map(p => p.favorite ? 1 : 0).reduce((a, b) => a + b, 0);
+  const favoriteCount = profiles.map((p) => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
   const favoriteDisabled = favoriteCount >= 10;
   const loadProfiles = async () => {
     const response = await apiService.request({ tp: 'req:profiles:list' });
     setProfiles(response.profiles);
     setLoading(false);
-  }
+  };
   useEffect(async () => {
     if (connected.value) {
       await loadProfiles();
     }
   }, [connected.value]);
 
-  const onDelete = useCallback(async(id) => {
-    setLoading(true);
-    await apiService.request({ tp: 'req:profiles:delete', id });
-    await loadProfiles();
-  }, [apiService, setLoading]);
+  const onDelete = useCallback(
+    async (id) => {
+      setLoading(true);
+      await apiService.request({ tp: 'req:profiles:delete', id });
+      await loadProfiles();
+    },
+    [apiService, setLoading]
+  );
 
-  const onSelect = useCallback(async(id) => {
-    setLoading(true);
-    await apiService.request({ tp: 'req:profiles:select', id });
-    await loadProfiles();
-  }, [apiService, setLoading]);
+  const onSelect = useCallback(
+    async (id) => {
+      setLoading(true);
+      await apiService.request({ tp: 'req:profiles:select', id });
+      await loadProfiles();
+    },
+    [apiService, setLoading]
+  );
 
-  const onFavorite = useCallback(async(id) => {
-    setLoading(true);
-    await apiService.request({ tp: 'req:profiles:favorite', id });
-    await loadProfiles();
-  }, [apiService, setLoading]);
+  const onFavorite = useCallback(
+    async (id) => {
+      setLoading(true);
+      await apiService.request({ tp: 'req:profiles:favorite', id });
+      await loadProfiles();
+    },
+    [apiService, setLoading]
+  );
 
-  const onUnfavorite = useCallback(async(id) => {
-    setLoading(true);
-    await apiService.request({ tp: 'req:profiles:unfavorite', id });
-    await loadProfiles();
-  }, [apiService, setLoading]);
+  const onUnfavorite = useCallback(
+    async (id) => {
+      setLoading(true);
+      await apiService.request({ tp: 'req:profiles:unfavorite', id });
+      await loadProfiles();
+    },
+    [apiService, setLoading]
+  );
 
-  const onDuplicate = useCallback(async(id) => {
-    setLoading(true);
-    const original = profiles.find(p => p.id === id);
-    if (original) {
-      const copy = { ...original };
-      delete copy.id;
-      delete copy.selected;
-      delete copy.favorite;
-      copy.label = `${original.label} Copy`;
-      await apiService.request({ tp: 'req:profiles:save', profile: copy });
-    }
-    await loadProfiles();
-  }, [apiService, profiles, setLoading]);
+  const onDuplicate = useCallback(
+    async (id) => {
+      setLoading(true);
+      const original = profiles.find((p) => p.id === id);
+      if (original) {
+        const copy = { ...original };
+        delete copy.id;
+        delete copy.selected;
+        delete copy.favorite;
+        copy.label = `${original.label} Copy`;
+        await apiService.request({ tp: 'req:profiles:save', profile: copy });
+      }
+      await loadProfiles();
+    },
+    [apiService, profiles, setLoading]
+  );
 
   const onExport = useCallback(() => {
-    const exportedProfiles = profiles.map(p => {
+    const exportedProfiles = profiles.map((p) => {
       const ep = {
-        ...p
+        ...p,
       };
       delete ep.id;
       delete ep.selected;
       delete ep.favorite;
       return ep;
     });
-    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportedProfiles, undefined, 2));
+    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportedProfiles, undefined, 2));
     var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href",     dataStr);
-    downloadAnchorNode.setAttribute("download", "profiles.json");
+    downloadAnchorNode.setAttribute('href', dataStr);
+    downloadAnchorNode.setAttribute('download', 'profiles.json');
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   }, [profiles]);
 
-  const onUpload = function(evt) {
+  const onUpload = function (evt) {
     if (evt.target.files.length) {
       const file = evt.target.files[0];
       const reader = new FileReader();
@@ -260,7 +283,7 @@ export function ProfileList() {
           await apiService.request({ tp: 'req:profiles:save', profile: p });
         }
         await loadProfiles();
-      }
+      };
       reader.readAsText(file);
     }
   };
@@ -278,13 +301,19 @@ export function ProfileList() {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
         <div className="sm:col-span-12 flex flex-row">
           <h2 className="text-2xl font-bold flex-grow">Profiles</h2>
-          <button tooltip="Export"
-                  onClick={onExport}
-                  className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200">
+          <button
+            tooltip="Export"
+            onClick={onExport}
+            className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+          >
             <span className="fa fa-file-export" />
           </button>
           <div>
-            <label tooltip="Import" for="profileImport" className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200">
+            <label
+              tooltip="Import"
+              for="profileImport"
+              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+            >
               <span className="fa fa-file-import" />
             </label>
           </div>
