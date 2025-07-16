@@ -151,7 +151,7 @@ export function OTA() {
           </div>
         </div>
       </div>
-      <div className="col-span-12 flex flex-row flex-wrap gap-y-2">
+      <div className="col-span-12 flex flex-row flex-wrap gap-y-1">
         <input
           type="submit"
           name="update"
