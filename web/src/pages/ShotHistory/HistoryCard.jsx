@@ -16,7 +16,9 @@ export default function HistoryCard({ shot, onDelete }) {
   return (
     <Card xs={12}>
       <div className="flex flex-row">
-        <span className="font-bold text-xl leading-tight flex-grow">{date.toLocaleString()}</span>
+        <span className="font-bold text-xl leading-tight flex-grow">
+          {shot.profile} - {date.toLocaleString()}
+        </span>
 
         <div className="flex flex-row gap-2 justify-end">
           <a
@@ -44,7 +46,7 @@ export default function HistoryCard({ shot, onDelete }) {
           <span className="fa fa-clock"></span>
           {(shot.duration / 1000).toFixed(1)}s
         </div>
-        {shot.weight && (
+        {shot.volume && (
           <div className="flex flex-row gap-2 items-center">
             <span className="fa fa-scale-balanced"></span>
             {shot.volume}g
