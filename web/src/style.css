@@ -1,9 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 .menu-button {
-  @apply bg-gray-50 border border-[#ccc] dark:border-gray-600 border-opacity-40 dark:bg-gray-800;
+  @apply bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800;
   @apply text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-200 rounded-full px-5 py-3 mr-2 gap-3 items-center text-center;
 }
 
@@ -17,8 +15,18 @@
 }
 
 .menu-button-sm {
-  @apply menu-button py-1 px-2;
+  @apply bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800;
+  @apply text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-200 rounded-full mr-2 gap-3 items-center text-center;
   @apply py-2 px-4;
+}
+
+.menu-button-sm:not(:disabled) {
+  cursor: pointer;
+  @apply hover:bg-gray-200 dark:hover:bg-gray-700;
+}
+
+.menu-button-sm:disabled {
+  @apply bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300;
 }
 
 .display-field {
