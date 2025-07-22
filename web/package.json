@@ -12,7 +12,6 @@
     "chart.js": "^4.4.8",
     "chartjs-adapter-dayjs-4": "^1.0.4",
     "dayjs": "^1.11.13",
-    "flowbite": "^3.1.2",
     "preact": "^10.22.1",
     "preact-fetching": "^1.0.0",
     "preact-iso": "^2.8.1",
@@ -20,12 +19,12 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.9.0",
+    "@tailwindcss/vite": "^4.1.11",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-preact": "^1.5.0",
     "prettier": "^3.4.2",
     "tailwindcss": "^4.1.11",
-    "@tailwindcss/vite": "^4.1.11",
     "vite": "^7.0.5"
   },
   "eslintConfig": {
