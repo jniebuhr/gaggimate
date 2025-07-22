@@ -15,7 +15,8 @@
     "flowbite": "^3.1.2",
     "preact": "^10.22.1",
     "preact-fetching": "^1.0.0",
-    "preact-iso": "^2.8.1"
+    "preact-iso": "^2.8.1",
+    "preact-render-to-string": "^6.5.13"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.9.0",
@@ -25,7 +26,7 @@
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.15",
-    "vite": "^5.4.14"
+    "vite": "^7.0.0"
   },
   "eslintConfig": {
     "extends": "preact"
