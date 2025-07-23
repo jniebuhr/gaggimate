@@ -18,7 +18,7 @@
     "preact-render-to-string": "^6.5.13"
   },
   "devDependencies": {
-    "@preact/preset-vite": "^2.9.0",
+    "@preact/preset-vite": "^2.10.2",
     "@tailwindcss/vite": "^4.1.11",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
