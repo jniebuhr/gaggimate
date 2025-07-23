@@ -19,12 +19,11 @@ PressureController::PressureController(float dt, float *rawSetpoint, float *sens
     this->R_estimator = new HydraulicParameterEstimator(dt);
 }
 
-void PressureController::filterSetpoint() {
-
+void PressureController::filterSetpoint(float rawSetpoint) {
     if (!_filterInitialised)
         initSetpointFilter();
-    float _wn = 2 * M_PI * _filtfreqHz;
-    float d2r = (_wn * _wn) * (*_rawSetpoint - _r) - 2.0f * _filtxi * _wn * _dr;
+    float _wn = 2.0 * M_PI * _filtfreqHz;
+    float d2r = (_wn * _wn) * (rawSetpoint - _r) - 2.0f * _filtxi * _wn * _dr;
     _dr += constrain(d2r * _dt, -_maxSpeedP, _maxSpeedP);
     _r += _dr * _dt;
 }
@@ -49,18 +48,50 @@ void PressureController::filterSensor() { _filteredPressureSensor = this->pressu
 
 void PressureController::tare() { coffeeOutput = 0.0; }
 
-void PressureController::update() {
-    if (*_ValveStatus != old_ValveStatus) {
-        reset();
+void PressureController::update(ControlMode mode ) {
+    bool isRconverged = R_estimator->hasConverged();
+    switch(mode){
+        case ControlMode::PRESSURE: {
+            if(isRconverged){// With R estimated we can gestimate the appropriate pressure setpoint to not go above flow rate limite
+                if(flowPerSecond > _flowLimit){
+                    *_rawSetpoint = _flowLimit * this->R_estimator->getResistance();
+                }
+            }else{
+                if(fabs(_r-_filteredPressureSensor) <0.2 ){ // We consider the pressure to be established so pump flow = coffee flow
+                    if( flowPerSecond > _flowLimit ){
+                        *_rawSetpoint *= _flowLimit / flowPerSecond;
+                    }
+                }
+            }
+            filterSensor();
+            filterSetpoint(*_rawSetpoint);
+            computePumpDutyCycle();
+            break;
+        }
+        case ControlMode::FLOW: {
+            // Coffee flow  = Pressure / R, with the estimated R we can find the appropiate pressure.
+            // Without R we can only set the pump to the desired flow rate (which does not say anything about coffee flow rate)
+            float pressureSetpointForFlow = *_rawSetpoint * this->R_estimator->getResistance();
+            pressureSetpointForFlow = std::clamp(pressureSetpointForFlow, 0.0f, _pressureLimit);
+            filterSetpoint(pressureSetpointForFlow);
+            if(isRconverged){
+                computePumpDutyCycle();
+            }else{
+                *_ctrlOutput = 100.0f  * _r /( _Q0 * (1 - _filteredPressureSensor / _Pmax));
+            }
+            break;
+        }
+        case ControlMode::POWER: {
+            *_ctrlOutput = *_rawSetpoint;
+        }
+
+        default:
+            break;
     }
-    old_ValveStatus = *_ValveStatus;
-    filterSetpoint();
-    filterSensor();
-    computePumpDutyCycle();
     virtualScale();
 }
 
-float PressureController::computeAdustedCoffeeFlowRate(float pressure = 0.0f) {
+float PressureController::computeAdustedCoffeeFlowRate(float pressure = 0.0f) const {
     if (pressure == 0.0f) {
         pressure = _filteredPressureSensor;
     }
@@ -68,7 +99,7 @@ float PressureController::computeAdustedCoffeeFlowRate(float pressure = 0.0f) {
     return Q;
 }
 
-float PressureController::pumpFlowModel(float alpha = 100.0f) {
+float PressureController::pumpFlowModel(float alpha = 100.0f) const {
 
     // Third order polynomial
     float P = _filteredPressureSensor;
@@ -81,9 +112,9 @@ float PressureController::pumpFlowModel(float alpha = 100.0f) {
     return alpha / 100.0f * (_Q1 * _filteredPressureSensor + _Q0) * 1e-6;
 }
 
-float PressureController::getPumpDutyCycleForFlowRate(float desiredPumpFlowRate) {
+float PressureController::getPumpDutyCycleForFlowRate(float desiredPumpFlowRate) const {
     // Afine model base on one Gaggia Classic Pro Unit measurements
-    float availableFlow = _Q1 * _filteredPressureSensor + _Q0;
+    const float availableFlow = _Q1 * _filteredPressureSensor + _Q0;
     return desiredPumpFlowRate / availableFlow * 100.0f;
 }
 
@@ -102,9 +133,8 @@ void PressureController::virtualScale() {
     float temp_resist = R_estimator->getResistance();
     if (temp_resist != 0.0f)
         puckResistance = temp_resist;
-    bool isRconverged = R_estimator->hasConverged();
     // Trigger for the estimation flow output
-    if (isRconverged) {
+    if (R_estimator->hasConverged()) {
         estimationConvergenceCounter += 1;
     }
     // Flow estimation :
@@ -134,7 +164,7 @@ void PressureController::computePumpDutyCycle() {
         *_ctrlOutput = 100.0f;
         return;
     }
-    // COMMANDE IS ACTUALLY ZERO: The profil is asking for no pressure (ex: blooming phase)
+    // COMMAND IS ACTUALLY ZERO: The profil is asking for no pressure (ex: blooming phase)
     // Until otherwise, make the controller ready to start as if it is a new shot comming
     // Do not reset the estimation of R since the estimation has to converge still
     if (*_rawSetpoint == 0.0f) {
@@ -146,22 +176,23 @@ void PressureController::computePumpDutyCycle() {
         return;
     }
 
-    // CONTROL: The boiler is pressurise, the profil is something specific, let's try to
+    // CONTROL: The boiler is pressurised, the profil is something specific, let's try to
     // control that pressure now that all conditions are reunited
     float P = _filteredPressureSensor;
     float P_ref = _r;
     float dP_ref = _dr;
 
     float error = P - P_ref;
-    float dP_actual = 0.3 * _dP_previous + 0.7 * (P - _P_previous) / _dt;
+    float dP_actual = 0.3f * _dP_previous + 0.7f * (P - _P_previous) / _dt;
      _dP_previous = dP_actual;
     float error_dot = dP_actual - dP_ref;
+
     _P_previous = P;
 
     // Switching surface
-    _epsilon = 0.15 * _r;
-    deadband = 0.1 * _r;
-    float s = _lambda * error + error_dot * 0.1;
+    _epsilon = 0.15f * _r;
+    deadband = 0.1f * _r;
+    float s = _lambda * error + error_dot * 0.1f;
     float sat_s = 0.0f;
     if (error > 0) {
         float tan = tanhf(s / _epsilon - deadband * _lambda / _epsilon);
@@ -180,7 +211,7 @@ void PressureController::computePumpDutyCycle() {
     float K = _K / (1 - P / _Pmax) * Qa / _Co;
     alpha = _Co / Qa * (-_lambda * error - K * sat_s) - iterm;
 
-    // Antiwindup
+    // Anti-windup
     if ((sign(error) == -sign(alpha)) && (fabs(alpha) > 1.0f)) {
         _errorInteg -= error * _dt;
         iterm = Ki * _errorInteg;

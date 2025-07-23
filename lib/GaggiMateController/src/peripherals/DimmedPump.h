@@ -41,6 +41,7 @@ class DimmedPump : public Pump {
     float _controllerPower = 0.0f;
     float _targetFlow = 0.0f;
     float _targetPressure = 0.0f;
+    float _ctrlTarget = 0.0f;
     float _pressureLimit = 0.0f;
     float _flowLimit = 0.0f;
     float _currentPressure = 0.0f;
