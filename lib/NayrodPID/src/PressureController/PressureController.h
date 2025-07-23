@@ -16,8 +16,8 @@ class PressureController {
     void initSetpointFilter(float val = 0.0f);
     void setupSetpointFilter(float freq, float damping);
 
-    void setFlowLimit(float lim){_flowLimit = lim;};
-    void setPressureLimit(float lim){_pressureLimit = lim;};
+    void setFlowLimit(float lim) { _flowLimit = lim; };
+    void setPressureLimit(float lim) { _pressureLimit = lim; };
 
     float getFilteredSetpoint() const { return _r; };
     float getFilteredSetpointDeriv() const { return _dr; };

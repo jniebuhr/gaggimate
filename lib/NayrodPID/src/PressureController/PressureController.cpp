@@ -48,45 +48,47 @@ void PressureController::filterSensor() { _filteredPressureSensor = this->pressu
 
 void PressureController::tare() { coffeeOutput = 0.0; }
 
-void PressureController::update(ControlMode mode ) {
+void PressureController::update(ControlMode mode) {
     bool isRconverged = R_estimator->hasConverged();
-    switch(mode){
-        case ControlMode::PRESSURE: {
-            if(isRconverged){// With R estimated we can gestimate the appropriate pressure setpoint to not go above flow rate limite
-                if(flowPerSecond > _flowLimit){
-                    *_rawSetpoint = _flowLimit * this->R_estimator->getResistance();
-                }
-            }else{
-                if(fabs(_r-_filteredPressureSensor) <0.2 ){ // We consider the pressure to be established so pump flow = coffee flow
-                    if( flowPerSecond > _flowLimit ){
-                        *_rawSetpoint *= _flowLimit / flowPerSecond;
-                    }
+    switch (mode) {
+    case ControlMode::PRESSURE: {
+        if (isRconverged) { // With R estimated we can gestimate the appropriate pressure setpoint to not go above flow rate
+                            // limite
+            if (flowPerSecond > _flowLimit) {
+                *_rawSetpoint = _flowLimit * this->R_estimator->getResistance();
+            }
+        } else {
+            if (fabs(_r - _filteredPressureSensor) <
+                0.2) { // We consider the pressure to be established so pump flow = coffee flow
+                if (flowPerSecond > _flowLimit) {
+                    *_rawSetpoint *= _flowLimit / flowPerSecond;
                 }
             }
-            filterSensor();
-            filterSetpoint(*_rawSetpoint);
+        }
+        filterSensor();
+        filterSetpoint(*_rawSetpoint);
+        computePumpDutyCycle();
+        break;
+    }
+    case ControlMode::FLOW: {
+        // Coffee flow  = Pressure / R, with the estimated R we can find the appropiate pressure.
+        // Without R we can only set the pump to the desired flow rate (which does not say anything about coffee flow rate)
+        float pressureSetpointForFlow = *_rawSetpoint * this->R_estimator->getResistance();
+        pressureSetpointForFlow = std::clamp(pressureSetpointForFlow, 0.0f, _pressureLimit);
+        filterSetpoint(pressureSetpointForFlow);
+        if (isRconverged) {
             computePumpDutyCycle();
-            break;
+        } else {
+            *_ctrlOutput = 100.0f * _r / (_Q0 * (1 - _filteredPressureSensor / _Pmax));
         }
-        case ControlMode::FLOW: {
-            // Coffee flow  = Pressure / R, with the estimated R we can find the appropiate pressure.
-            // Without R we can only set the pump to the desired flow rate (which does not say anything about coffee flow rate)
-            float pressureSetpointForFlow = *_rawSetpoint * this->R_estimator->getResistance();
-            pressureSetpointForFlow = std::clamp(pressureSetpointForFlow, 0.0f, _pressureLimit);
-            filterSetpoint(pressureSetpointForFlow);
-            if(isRconverged){
-                computePumpDutyCycle();
-            }else{
-                *_ctrlOutput = 100.0f  * _r /( _Q0 * (1 - _filteredPressureSensor / _Pmax));
-            }
-            break;
-        }
-        case ControlMode::POWER: {
-            *_ctrlOutput = *_rawSetpoint;
-        }
+        break;
+    }
+    case ControlMode::POWER: {
+        *_ctrlOutput = *_rawSetpoint;
+    }
 
-        default:
-            break;
+    default:
+        break;
     }
     virtualScale();
 }
@@ -184,7 +186,7 @@ void PressureController::computePumpDutyCycle() {
 
     float error = P - P_ref;
     float dP_actual = 0.3f * _dP_previous + 0.7f * (P - _P_previous) / _dt;
-     _dP_previous = dP_actual;
+    _dP_previous = dP_actual;
     float error_dot = dP_actual - dP_ref;
 
     _P_previous = P;

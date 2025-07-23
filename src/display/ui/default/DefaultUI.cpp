@@ -664,7 +664,7 @@ void DefaultUI::updateStatusScreen() const {
     lv_img_set_src(ui_StatusScreen_Image8, brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
 
     if (brewProcess->isAdvancedPump()) {
-        float pressure = brewProcess->getPumpTargetPressure();
+        float pressure = brewProcess->getPumpPressure();
         const double percentage = 1.0 - static_cast<double>(pressure) / static_cast<double>(pressureScaling);
         adjustTarget(uic_StatusScreen_dials_pressureTarget, percentage, -62.0, 124.0);
     } else {
