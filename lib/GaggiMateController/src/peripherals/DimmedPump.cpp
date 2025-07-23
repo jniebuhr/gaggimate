@@ -24,7 +24,7 @@ void DimmedPump::loop() {
 void DimmedPump::setPower(float setpoint) {
     ESP_LOGV(LOG_TAG, "Setting power to %2f", setpoint);
     _mode = ControlMode::POWER;
-    _targetPressure = setpoint == 100 ? 20.0f : 0.0f;
+    _pressureLimit = 0.0f;
     _flowLimit = 0.0f;
     _power = std::clamp(setpoint, 0.0f, 100.0f);
     _psm.set(static_cast<int>(_power));
