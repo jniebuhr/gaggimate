@@ -56,12 +56,6 @@ void DimmedPump::updatePower() {
     _psm.set(static_cast<int>(_power));
 }
 
-float DimmedPump::calculateFlowRate(float pressure) const {
-    float flow = BASE_FLOW_RATE;
-    float pressurePercentage = pressure / MAX_PRESSURE;
-    return flow * pressurePercentage;
-}
-
 void DimmedPump::setFlowTarget(float targetFlow, float pressureLimit) {
     _mode = ControlMode::FLOW;
     _ctrlTarget = targetFlow;
