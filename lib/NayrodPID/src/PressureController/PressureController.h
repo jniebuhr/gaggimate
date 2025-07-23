@@ -39,8 +39,8 @@ class PressureController {
     void computePumpDutyCycle();
     void virtualScale();
     void filterSensor();
-    float computeAdustedCoffeeFlowRate(float pressure) const;
-    float pumpFlowModel(float alpha) const;
+    float computeAdustedCoffeeFlowRate(float pressure = 0.0f) const;
+    float pumpFlowModel(float alpha = 100.0f) const;
 
     float _dt = 1; // Controler frequency sampling
 

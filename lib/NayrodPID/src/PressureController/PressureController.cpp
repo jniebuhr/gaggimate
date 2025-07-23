@@ -85,6 +85,7 @@ void PressureController::update(ControlMode mode) {
     }
     case ControlMode::POWER: {
         *_ctrlOutput = *_rawSetpoint;
+        break;
     }
 
     default:
@@ -93,7 +94,7 @@ void PressureController::update(ControlMode mode) {
     virtualScale();
 }
 
-float PressureController::computeAdustedCoffeeFlowRate(float pressure = 0.0f) const {
+float PressureController::computeAdustedCoffeeFlowRate(float pressure) const {
     if (pressure == 0.0f) {
         pressure = _filteredPressureSensor;
     }
@@ -101,7 +102,7 @@ float PressureController::computeAdustedCoffeeFlowRate(float pressure = 0.0f) co
     return Q;
 }
 
-float PressureController::pumpFlowModel(float alpha = 100.0f) const {
+float PressureController::pumpFlowModel(float alpha) const {
 
     // Third order polynomial
     float P = _filteredPressureSensor;

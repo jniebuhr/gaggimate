@@ -39,8 +39,6 @@ class DimmedPump : public Pump {
     ControlMode _mode = ControlMode::POWER;
     float _power = 0.0f;
     float _controllerPower = 0.0f;
-    float _targetFlow = 0.0f;
-    float _targetPressure = 0.0f;
     float _ctrlTarget = 0.0f;
     float _pressureLimit = 0.0f;
     float _flowLimit = 0.0f;
