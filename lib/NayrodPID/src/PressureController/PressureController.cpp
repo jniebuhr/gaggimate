@@ -153,8 +153,8 @@ void PressureController::computePumpDutyCycle() {
     float dP_ref = _dr;
 
     float error = P - P_ref;
-    float dP_actual = (P - _P_previous) / _dt;
-    _dP_previous = dP_actual;
+    float dP_actual = 0.3 * _dP_previous + 0.7 * (P - _P_previous) / _dt;
+     _dP_previous = dP_actual;
     float error_dot = dP_actual - dP_ref;
     _P_previous = P;
 
