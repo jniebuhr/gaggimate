@@ -21,9 +21,8 @@ Chart.register(Legend);
 
 import { ExtendedContent } from './ExtendedContent.jsx';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
-import { useContext } from 'react';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 

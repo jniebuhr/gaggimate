@@ -1,8 +1,7 @@
 import { useLocation, useRoute } from 'preact-iso';
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';
 import { StandardProfileForm } from './StandardProfileForm.jsx';
-import { useContext } from 'react';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';

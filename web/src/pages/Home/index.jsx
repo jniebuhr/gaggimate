@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext } from 'preact/hooks';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { computed } from '@preact/signals';
 import { Chart, LineController, TimeScale, LinearScale, PointElement, LineElement, Legend, Filler } from 'chart.js';
