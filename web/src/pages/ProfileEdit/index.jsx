@@ -1,4 +1,3 @@
-import './style.css';
 import { useLocation, useRoute } from 'preact-iso';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';

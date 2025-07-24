@@ -113,7 +113,7 @@ export default class ApiService {
       throw new Error('WebSocket is not connected');
     }
 
-    const returnType = 'res:' + data.tp.substring(4);
+    const returnType = `res:${data.tp.substring(4)}`;
     const rid = uuidv4();
     const message = { ...data, rid };
     return new Promise((resolve, reject) => {
@@ -138,7 +138,7 @@ export default class ApiService {
   }
 
   on(type, listener) {
-    const id = randomId();
+    //const id = randomId();
     if (!this.listeners[type]) {
       this.listeners[type] = {};
     }

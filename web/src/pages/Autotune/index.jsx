@@ -1,5 +1,4 @@
-import './style.css';
-import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useContext } from 'react';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import { OverviewChart } from '../../components/OverviewChart.jsx';

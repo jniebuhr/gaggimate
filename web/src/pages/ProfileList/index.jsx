@@ -1,4 +1,3 @@
-import './style.css';
 import {
   Chart,
   LineController,
@@ -52,8 +51,8 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
     delete download.id;
     delete download.selected;
     delete download.favorite;
-    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(download, undefined, 2));
-    var downloadAnchorNode = document.createElement('a');
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(download, undefined, 2));
+    const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute('href', dataStr);
     downloadAnchorNode.setAttribute('download', data.id + '.json');
     document.body.appendChild(downloadAnchorNode); // required for firefox

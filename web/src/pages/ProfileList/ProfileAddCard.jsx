@@ -1,5 +1,3 @@
-import { useCallback, useState } from 'preact/hooks';
-
 export function ProfileAddCard(props) {
   return (
     <a

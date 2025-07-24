@@ -1,16 +1,14 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+@import 'tailwindcss';
 @source inline("{w-,h-}{0..100..5}, w-auto, h-auto, w-full, h-full");
 
-
 @theme {
-  --font-logo: "Montserrat"; 
+  --font-logo: 'Montserrat';
 }
 
 @layer components {
   .menu-button {
-    @apply
-      bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800
+    @apply bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800
       text-gray-700 dark:text-gray-200
       focus:outline-none focus:ring-4 focus:ring-gray-200
       rounded-full px-5 py-3 mr-2 gap-3 items-center text-center;
@@ -23,8 +21,7 @@
   }
 
   .menu-button-sm {
-    @apply
-      bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800
+    @apply bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800
       text-gray-700 dark:text-gray-200
       focus:outline-none focus:ring-4 focus:ring-gray-200
       rounded-full py-2 px-4 text-sm mr-2 gap-3 items-center text-center;

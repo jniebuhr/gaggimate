@@ -1,6 +1,4 @@
-import './style.css';
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
-import { useQuery } from 'preact-fetching';
 import { Spinner } from '../../components/Spinner.jsx';
 import { useContext } from 'react';
 import { ApiServiceContext } from '../../services/ApiService.js';
