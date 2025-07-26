@@ -5,7 +5,6 @@ import './style.css';
 
 export function StandardProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
-  console.log(props);
   const onFieldChange = (field, value) => {
     onChange({
       ...data,
