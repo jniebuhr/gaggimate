@@ -213,7 +213,7 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
             className="input-field"
             type="number"
             value={targetWeight}
-            onChange={(e) => onVolumetricTargetChange(e.target.value)}
+            onChange={(e) => onVolumetricTargetChange(parseFloat(e.target.value))}
           />
           <span className="input-addition">g</span>
         </div>
