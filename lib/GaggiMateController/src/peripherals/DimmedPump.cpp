@@ -4,7 +4,7 @@
 
 DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor)
     : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 1, 4), _pressureSensor(pressure_sensor),
-      _pressureController(0.03f, &_ctrlTarget, &_currentPressure, &_controllerPower, &_valveStatus) {
+      _pressureController(0.03f, &_ctrlPressure, &_ctrlFlow, &_currentPressure, &_controllerPower, &_valveStatus) {
     _psm.set(0);
 }
 
@@ -23,9 +23,8 @@ void DimmedPump::loop() {
 
 void DimmedPump::setPower(float setpoint) {
     ESP_LOGV(LOG_TAG, "Setting power to %2f", setpoint);
+    _ctrlPressure = setpoint > 0 ? 20.0f : 0.0f;
     _mode = ControlMode::POWER;
-    _pressureLimit = 0.0f;
-    _flowLimit = 0.0f;
     _power = std::clamp(setpoint, 0.0f, 100.0f);
     _psm.set(static_cast<int>(_power));
 }
@@ -52,21 +51,23 @@ void DimmedPump::loopTask(void *arg) {
 
 void DimmedPump::updatePower() {
     _pressureController.update(static_cast<PressureController::ControlMode>(_mode));
-    _power = _controllerPower;
+    if (_mode != ControlMode::POWER) {
+        _power = _controllerPower;
+    }
     _psm.set(static_cast<int>(_power));
 }
 
 void DimmedPump::setFlowTarget(float targetFlow, float pressureLimit) {
     _mode = ControlMode::FLOW;
-    _ctrlTarget = targetFlow;
-    _pressureLimit = pressureLimit;
+    _ctrlFlow = targetFlow;
+    _ctrlPressure = pressureLimit;
     _pressureController.setPressureLimit(pressureLimit);
 }
 
 void DimmedPump::setPressureTarget(float targetPressure, float flowLimit) {
     _mode = ControlMode::PRESSURE;
-    _ctrlTarget = targetPressure;
-    _flowLimit = flowLimit;
+    _ctrlFlow = flowLimit;
+    _ctrlPressure = targetPressure;
     _pressureController.setFlowLimit(flowLimit);
 }
 

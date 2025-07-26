@@ -6,9 +6,10 @@
 // Helper function to return the sign of a float
 inline float sign(float x) { return (x > 0.0f) - (x < 0.0f); }
 
-PressureController::PressureController(float dt, float *rawSetpoint, float *sensorOutput, float *controllerOutput,
-                                       int *ValveStatus) {
-    this->_rawSetpoint = rawSetpoint;
+PressureController::PressureController(float dt, float *rawPressureSetpoint, float *rawFlowSetpoint, float *sensorOutput,
+                                       float *controllerOutput, int *ValveStatus) {
+    this->_rawPressureSetpoint = rawPressureSetpoint;
+    this->_rawFlowSetpoint = rawFlowSetpoint;
     this->_rawPressure = sensorOutput;
     this->_ctrlOutput = controllerOutput;
     this->_ValveStatus = ValveStatus;
@@ -29,7 +30,7 @@ void PressureController::filterSetpoint(float rawSetpoint) {
 }
 
 void PressureController::initSetpointFilter(float val) {
-    _r = *_rawSetpoint;
+    _r = *_rawPressureSetpoint;
     if (val != 0.0f)
         _r = val;
     _dr = 0.0f;
@@ -49,47 +50,25 @@ void PressureController::filterSensor() { _filteredPressureSensor = this->pressu
 void PressureController::tare() { coffeeOutput = 0.0; }
 
 void PressureController::update(ControlMode mode) {
-    bool isRconverged = R_estimator->hasConverged();
-    switch (mode) {
-    case ControlMode::PRESSURE: {
-        if (isRconverged) { // With R estimated we can gestimate the appropriate pressure setpoint to not go above flow rate
-                            // limite
-            if (flowPerSecond > _flowLimit) {
-                *_rawSetpoint = _flowLimit * this->R_estimator->getResistance();
-            }
-        } else {
-            if (fabs(_r - _filteredPressureSensor) <
-                0.2) { // We consider the pressure to be established so pump flow = coffee flow
-                if (flowPerSecond > _flowLimit) {
-                    *_rawSetpoint *= _flowLimit / flowPerSecond;
-                }
-            }
-        }
-        filterSensor();
-        filterSetpoint(*_rawSetpoint);
-        computePumpDutyCycle();
-        break;
+    if (*_ValveStatus != old_ValveStatus) {
+        reset();
     }
-    case ControlMode::FLOW: {
-        // Coffee flow  = Pressure / R, with the estimated R we can find the appropiate pressure.
-        // Without R we can only set the pump to the desired flow rate (which does not say anything about coffee flow rate)
-        float pressureSetpointForFlow = *_rawSetpoint * this->R_estimator->getResistance();
-        pressureSetpointForFlow = std::clamp(pressureSetpointForFlow, 0.0f, _pressureLimit);
-        filterSetpoint(pressureSetpointForFlow);
-        if (isRconverged) {
-            computePumpDutyCycle();
-        } else {
-            *_ctrlOutput = 100.0f * _r / (_Q0 * (1 - _filteredPressureSensor / _Pmax));
-        }
-        break;
-    }
-    case ControlMode::POWER: {
-        *_ctrlOutput = *_rawSetpoint;
-        break;
-    }
+    old_ValveStatus = *_ValveStatus;
+    filterSetpoint(*_rawPressureSetpoint);
+    filterSensor();
 
-    default:
-        break;
+    if ((mode == ControlMode::FLOW || mode == ControlMode::PRESSURE) && *_rawPressureSetpoint > 0.0f &&
+        *_rawFlowSetpoint > 0.0f) {
+        float flowOutput = getPumpDutyCycleForFlowRate();
+        float pressureOutput = getPumpDutyCycleForPressure();
+        *_ctrlOutput = std::min(flowOutput, pressureOutput);
+        if (mode == ControlMode::FLOW) {
+            _errorInteg = 0.0f; // Reset error buildup in flow target
+        }
+    } else if (mode == ControlMode::FLOW) {
+        *_ctrlOutput = getPumpDutyCycleForFlowRate();
+    } else if (mode == ControlMode::PRESSURE) {
+        *_ctrlOutput = getPumpDutyCycleForPressure();
     }
     virtualScale();
 }
@@ -115,10 +94,10 @@ float PressureController::pumpFlowModel(float alpha) const {
     return alpha / 100.0f * (_Q1 * _filteredPressureSensor + _Q0) * 1e-6;
 }
 
-float PressureController::getPumpDutyCycleForFlowRate(float desiredPumpFlowRate) const {
+float PressureController::getPumpDutyCycleForFlowRate() const {
     // Afine model base on one Gaggia Classic Pro Unit measurements
     const float availableFlow = _Q1 * _filteredPressureSensor + _Q0;
-    return desiredPumpFlowRate / availableFlow * 100.0f;
+    return *_rawFlowSetpoint / availableFlow * 100.0f;
 }
 
 void PressureController::setPumpFlowCoeff(float oneBarFlow, float nineBarFlow) {
@@ -149,7 +128,7 @@ void PressureController::virtualScale() {
             retroCoffeeOutputPressureHistory = 0.0f;
         }
         coffeeOutput += flowPerSecond * _dt;
-    } else if (*_rawSetpoint != 0) { // Shot just started (no pressure yet, no R converge but setpoint not 0)
+    } else if (*_rawPressureSetpoint != 0) { // Shot just started (no pressure yet, no R converge but setpoint not 0)
         retroCoffeeOutputPressureHistory += _filteredPressureSensor;
     } else if (estimationConvergenceCounter) { // We're in a low pressure profil phase but we know R ->we can compute flow rate
         flowPerSecond = computeAdustedCoffeeFlowRate();
@@ -158,25 +137,25 @@ void PressureController::virtualScale() {
     }
 }
 
-void PressureController::computePumpDutyCycle() {
+float PressureController::getPumpDutyCycleForPressure() {
 
     // BOILER NOT PRESSURISED : Do not start control before the boiler is filled up.
     // Threshold value needs to be as low as possible while escaping disturbance surge or pressure from the pump
-    if (_filteredPressureSensor < 0.5 && *_rawSetpoint != 0) {
+    if (_filteredPressureSensor < 0.5 && *_rawPressureSetpoint != 0) {
         reset();
         *_ctrlOutput = 100.0f;
-        return;
+        return 100.0f;
     }
     // COMMAND IS ACTUALLY ZERO: The profil is asking for no pressure (ex: blooming phase)
     // Until otherwise, make the controller ready to start as if it is a new shot comming
     // Do not reset the estimation of R since the estimation has to converge still
-    if (*_rawSetpoint == 0.0f) {
+    if (*_rawPressureSetpoint == 0.0f) {
         initSetpointFilter();
         _errorInteg = 0.0f;
         *_ctrlOutput = 0.0f;
         _P_previous = 0.0f;
         _dP_previous = 0.0f;
-        return;
+        return 0.0f;
     }
 
     // CONTROL: The boiler is pressurised, the profil is something specific, let's try to
@@ -221,7 +200,7 @@ void PressureController::computePumpDutyCycle() {
     }
 
     alpha = _Co / Qa * (-_lambda * error - K * sat_s) - iterm;
-    *_ctrlOutput = constrain(alpha * 100.0f, 0.0f, 100.0f);
+    return constrain(alpha * 100.0f, 0.0f, 100.0f);
 }
 
 void PressureController::reset() {
