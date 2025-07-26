@@ -62,7 +62,7 @@ void PressureController::update(ControlMode mode) {
         float flowOutput = getPumpDutyCycleForFlowRate();
         float pressureOutput = getPumpDutyCycleForPressure();
         *_ctrlOutput = std::min(flowOutput, pressureOutput);
-        if (mode == ControlMode::FLOW) {
+        if (flowOutput < pressureOutput) {
             _errorInteg = 0.0f; // Reset error buildup in flow target
         }
     } else if (mode == ControlMode::FLOW) {
@@ -97,6 +97,9 @@ float PressureController::pumpFlowModel(float alpha) const {
 float PressureController::getPumpDutyCycleForFlowRate() const {
     // Afine model base on one Gaggia Classic Pro Unit measurements
     const float availableFlow = _Q1 * _filteredPressureSensor + _Q0;
+    if (availableFlow <= 0.0f) {
+        return 0.0f;
+    }
     return *_rawFlowSetpoint / availableFlow * 100.0f;
 }
 
