@@ -1,16 +1,14 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+@import 'tailwindcss';
 @source inline("{w-,h-}{0..100..5}, w-auto, h-auto, w-full, h-full");
 
-
 @theme {
-  --font-logo: "Montserrat"; 
+  --font-logo: 'Montserrat';
 }
 
 @layer components {
   .menu-button {
-    @apply
-      bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800
+    @apply bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800
       text-gray-700 dark:text-gray-200
       focus:outline-none focus:ring-4 focus:ring-gray-200
       rounded-full px-5 py-3 mr-2 gap-3 items-center text-center;
@@ -23,8 +21,7 @@
   }
 
   .menu-button-sm {
-    @apply
-      bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800
+    @apply bg-gray-50 border border-[#ccc] dark:border-gray-600 dark:bg-gray-800
       text-gray-700 dark:text-gray-200
       focus:outline-none focus:ring-4 focus:ring-gray-200
       rounded-full py-2 px-4 text-sm mr-2 gap-3 items-center text-center;
@@ -73,11 +70,11 @@
   @apply w-4 h-4 text-blue-600 bg-gray-100 border-[#ccc] rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600;
 }
 
-[tooltip] {
+[data-tooltip] {
   position: relative;
 }
 
-[tooltip]::before {
+[data-tooltip]::before {
   content: '';
   position: absolute;
   top: -6px;
@@ -90,28 +87,28 @@
   opacity: 0;
 }
 
-[tooltip-position='left']::before {
+[data-tooltip-position='left']::before {
   left: 0%;
   top: 50%;
   margin-left: -12px;
   transform: translatey(-50%) rotate(-90deg);
 }
-[tooltip-position='top']::before {
+[data-tooltip-position='top']::before {
   left: 50%;
 }
-[tooltip-position='buttom']::before {
+[data-tooltip-position='buttom']::before {
   top: 100%;
   margin-top: 8px;
   transform: translateX(-50%) translatey(-100%) rotate(-180deg);
 }
-[tooltip-position='right']::before {
+[data-tooltip-position='right']::before {
   left: 100%;
   top: 50%;
   margin-left: 1px;
   transform: translatey(-50%) rotate(90deg);
 }
 
-[tooltip]::after {
+[data-tooltip]::after {
   content: attr(tooltip);
   position: absolute;
   left: 50%;
@@ -129,28 +126,28 @@
   opacity: 0;
 }
 
-[tooltip-position='left']::after {
+[data-tooltip-position='left']::after {
   left: 0%;
   top: 50%;
   margin-left: -8px;
   transform: translateX(-100%) translateY(-50%);
 }
-[tooltip-position='top']::after {
+[data-tooltip-position='top']::after {
   left: 50%;
 }
-[tooltip-position='buttom']::after {
+[data-tooltip-position='buttom']::after {
   top: 100%;
   margin-top: 8px;
   transform: translateX(-50%) translateY(0%);
 }
-[tooltip-position='right']::after {
+[data-tooltip-position='right']::after {
   left: 100%;
   top: 50%;
   margin-left: 8px;
   transform: translateX(0%) translateY(-50%);
 }
 
-[tooltip]:hover::after,
-[tooltip]:hover::before {
+[data-tooltip]:hover::after,
+[data-tooltip]:hover::before {
   opacity: 1;
 }

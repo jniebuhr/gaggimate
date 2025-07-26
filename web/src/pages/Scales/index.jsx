@@ -1,5 +1,4 @@
-import './style.css';
-import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import { Spinner } from '../../components/Spinner.jsx';
 

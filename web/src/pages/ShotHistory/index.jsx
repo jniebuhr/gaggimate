@@ -1,4 +1,3 @@
-import './style.css';
 import {
   Chart,
   LineController,
@@ -20,9 +19,8 @@ Chart.register(LineElement);
 Chart.register(Filler);
 Chart.register(Legend);
 
-import { useContext } from 'react';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import { parseHistoryData } from './utils.js';

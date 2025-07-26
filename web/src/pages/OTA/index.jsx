@@ -1,8 +1,5 @@
-import './style.css';
-import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
-import { useQuery } from 'preact-fetching';
+import { useState, useEffect, useRef, useCallback, useContext } from 'preact/hooks';
 import { Spinner } from '../../components/Spinner.jsx';
-import { useContext } from 'react';
 import { ApiServiceContext } from '../../services/ApiService.js';
 
 export function OTA() {

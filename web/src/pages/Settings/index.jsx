@@ -1,4 +1,3 @@
-import './style.css';
 import { useQuery } from 'preact-fetching';
 import { Spinner } from '../../components/Spinner.jsx';
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks';

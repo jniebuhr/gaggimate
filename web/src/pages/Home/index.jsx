@@ -1,7 +1,5 @@
-import './style.css';
-import { useContext } from 'react';
+import { useContext } from 'preact/hooks';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useEffect, useRef, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Chart, LineController, TimeScale, LinearScale, PointElement, LineElement, Legend, Filler } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';

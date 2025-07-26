@@ -1,4 +1,3 @@
-import './style.css';
 import {
   Chart,
   LineController,
@@ -22,9 +21,8 @@ Chart.register(Legend);
 
 import { ExtendedContent } from './ExtendedContent.jsx';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
-import { useContext } from 'react';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 
@@ -52,8 +50,8 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
     delete download.id;
     delete download.selected;
     delete download.favorite;
-    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(download, undefined, 2));
-    var downloadAnchorNode = document.createElement('a');
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(download, undefined, 2));
+    const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute('href', dataStr);
     downloadAnchorNode.setAttribute('download', data.id + '.json');
     document.body.appendChild(downloadAnchorNode); // required for firefox
@@ -67,7 +65,7 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
       className="rounded-lg border flex flex-row items-center border-slate-200 bg-white p-4 sm:col-span-12 dark:bg-gray-800 dark:border-gray-600"
     >
       <div className="flex flex-row justify-center items-center lg:p-4 p-2">
-        <label className="flex items-center relative cursor-pointer" tooltip="Select profile" tooltip-position="right">
+        <label className="flex items-center relative cursor-pointer" data-tooltip="Select profile" data-tooltip-position="right">
           <input
             checked={data.selected}
             type="checkbox"
@@ -92,24 +90,24 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
             <button
               onClick={onFavoriteToggle}
               disabled={favoriteToggleDisabled}
-              tooltip="Show/hide"
-              tooltip-position="left"
+              data-tooltip="Show/hide"
+              data-tooltip-position="left"
               className={`group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-100 hover:text-yellow-400 active:border-yellow-200 ${favoriteToggleClass}`}
             >
               <span className={`fa fa-star ${bookmarkClass}`} />
             </button>
             <a
               href={`/profiles/${data.id}`}
-              tooltip="Edit"
-              tooltip-position="left"
+              data-tooltip="Edit"
+              data-tooltip-position="left"
               className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 dark:text-indigo-100 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200"
             >
               <span className="fa fa-pen" />
             </a>
             <a
               href="javascript:void(0)"
-              tooltip="Export"
-              tooltip-position="left"
+              data-tooltip="Export"
+              data-tooltip-position="left"
               onClick={() => onDownload()}
               className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
             >
@@ -117,8 +115,8 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
             </a>
             <a
               href="javascript:void(0)"
-              tooltip="Duplicate"
-              tooltip-position="left"
+              data-tooltip="Duplicate"
+              data-tooltip-position="left"
               onClick={() => onDuplicate(data.id)}
               className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-green-600 hover:bg-green-100 active:border-green-200"
             >
@@ -126,8 +124,8 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
             </a>
             <a
               href="javascript:void(0)"
-              tooltip="Delete"
-              tooltip-position="left"
+              data-tooltip="Delete"
+              data-tooltip-position="left"
               onClick={() => onDelete(data.id)}
               className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
             >
@@ -192,10 +190,13 @@ export function ProfileList() {
     setProfiles(response.profiles);
     setLoading(false);
   };
-  useEffect(async () => {
-    if (connected.value) {
-      await loadProfiles();
-    }
+  useEffect(() => {
+    const loadData = async () => {
+      if (connected.value) {
+        await loadProfiles();
+      }
+    };
+    loadData();
   }, [connected.value]);
 
   const onDelete = useCallback(
@@ -275,14 +276,17 @@ export function ProfileList() {
       const file = evt.target.files[0];
       const reader = new FileReader();
       reader.onload = async (e) => {
-        let profiles = JSON.parse(e.target.result);
-        if (!Array.isArray(profiles)) {
-          profiles = [profiles];
+        const result = e.target.result;
+        if (typeof result === 'string') {
+          let profiles = JSON.parse(result);
+          if (!Array.isArray(profiles)) {
+            profiles = [profiles];
+          }
+          for (const p of profiles) {
+            await apiService.request({ tp: 'req:profiles:save', profile: p });
+          }
+          await loadProfiles();
         }
-        for (const p of profiles) {
-          await apiService.request({ tp: 'req:profiles:save', profile: p });
-        }
-        await loadProfiles();
       };
       reader.readAsText(file);
     }
@@ -302,7 +306,7 @@ export function ProfileList() {
         <div className="sm:col-span-12 flex flex-row">
           <h2 className="text-2xl font-bold flex-grow">Profiles</h2>
           <button
-            tooltip="Export"
+            data-tooltip="Export"
             onClick={onExport}
             className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
           >
@@ -310,7 +314,7 @@ export function ProfileList() {
           </button>
           <div>
             <label
-              tooltip="Import"
+              data-tooltip="Import"
               for="profileImport"
               className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
             >
