@@ -42,6 +42,7 @@ class DimmedPump : public Pump {
     float _ctrlPressure = 0.0f;
     float _ctrlFlow = 0.0f;
     float _currentPressure = 0.0f;
+    float _currentFlow = 0.0f;
     float _lastPressure = 0.0f;
     int _valveStatus = 0;
     int _cps = MAX_FREQ;
