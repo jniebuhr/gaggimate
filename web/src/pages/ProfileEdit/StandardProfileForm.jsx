@@ -222,7 +222,6 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Valve</label>
         <div className="inline-flex rounded-md">
           <span
-            aria-current="page"
             className={`mode-selector ${!phase.valve && 'selected'}`}
             onClick={() => onFieldChange('valve', 0)}
           >
