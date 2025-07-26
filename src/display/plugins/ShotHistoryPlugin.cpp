@@ -51,9 +51,9 @@ void ShotHistoryPlugin::record() {
                      controller->getTargetPressure(),
                      controller->getCurrentPressure(),
                      controller->getCurrentPumpFlow(),
-                     0.0f,
+                     controller->getTargetFlow(),
                      controller->getCurrentPuckFlow(),
-                     controller->getCurrentPumpFlow(),
+                     currentBluetoothFlow,
                      currentBluetoothWeight,
                      currentEstimatedWeight};
         if (isFileOpen) {

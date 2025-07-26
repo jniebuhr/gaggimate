@@ -51,6 +51,14 @@ function getChartData(data) {
           yAxisID: 'y1',
           data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.pf })),
         },
+        {
+          label: 'Target Pump Flow',
+          borderColor: '#63993D',
+          borderDash: [6, 6],
+          pointStyle: false,
+          yAxisID: 'y1',
+          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tf })),
+        },
       ],
     },
     options: {

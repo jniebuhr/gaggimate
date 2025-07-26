@@ -455,10 +455,12 @@ void Controller::updateControl() {
                                                        brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
                                                        brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
             targetPressure = brewProcess->getPumpPressure();
+            targetFlow = brewProcess->getPumpFlow();
             return;
         }
     }
     targetPressure = 0.0f;
+    targetFlow = 0.0f;
     clientController.sendOutputControl(isActive() && currentProcess->isRelayActive(),
                                        isActive() ? currentProcess->getPumpValue() : 0, static_cast<float>(targetTemp));
 }

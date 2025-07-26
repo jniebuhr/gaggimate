@@ -221,10 +221,7 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
       <div className="col-span-12 flex flex-col">
         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Valve</label>
         <div className="inline-flex rounded-md">
-          <span
-            className={`mode-selector ${!phase.valve && 'selected'}`}
-            onClick={() => onFieldChange('valve', 0)}
-          >
+          <span className={`mode-selector ${!phase.valve && 'selected'}`} onClick={() => onFieldChange('valve', 0)}>
             Closed
           </span>
           <span className={`mode-selector ${phase.valve && 'selected'}`} onClick={() => onFieldChange('valve', 1)}>
