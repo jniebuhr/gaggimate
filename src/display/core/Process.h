@@ -123,9 +123,18 @@ class BrewProcess : public Process {
 
     bool isAdvancedPump() const { return processPhase != ProcessPhase::FINISHED && !currentPhase.pumpIsSimple; }
 
-    float getPumpTargetPressure() const {
+    [[nodiscard]] PumpTarget getPumpTarget() const { return currentPhase.pumpAdvanced.target; }
+
+    float getPumpPressure() const {
         if (isAdvancedPump()) {
             return currentPhase.pumpAdvanced.pressure;
+        }
+        return 0.0f;
+    }
+
+    float getPumpFlow() const {
+        if (isAdvancedPump()) {
+            return currentPhase.pumpAdvanced.flow;
         }
         return 0.0f;
     }

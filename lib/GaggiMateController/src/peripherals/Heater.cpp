@@ -96,7 +96,7 @@ void Heater::loopAutotune() {
             softPwm(TUNER_OUTPUT_SPAN);
             vTaskDelay(1 / portTICK_PERIOD_MS);
         }
-        if (temperature > 160.0f) {
+        if (temperature > MAX_AUTOTUNE_TEMP) {
             output = 0.0f;
             autotuning = false;
             softPwm(TUNER_OUTPUT_SPAN);

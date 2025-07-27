@@ -39,11 +39,10 @@ class DimmedPump : public Pump {
     ControlMode _mode = ControlMode::POWER;
     float _power = 0.0f;
     float _controllerPower = 0.0f;
-    float _targetFlow = 0.0f;
-    float _targetPressure = 0.0f;
-    float _pressureLimit = 0.0f;
-    float _flowLimit = 0.0f;
+    float _ctrlPressure = 0.0f;
+    float _ctrlFlow = 0.0f;
     float _currentPressure = 0.0f;
+    float _currentFlow = 0.0f;
     float _lastPressure = 0.0f;
     int _valveStatus = 0;
     int _cps = MAX_FREQ;
@@ -54,9 +53,6 @@ class DimmedPump : public Pump {
     static constexpr float MAX_PRESSURE = 15.0f;
     static constexpr float MAX_FREQ = 60.0f;
 
-    [[nodiscard]] float calculateFlowRate(float pressure) const;
-    [[nodiscard]] float calculatePowerForPressure(float targetPressure, float currentPressure, float flowLimit);
-    [[nodiscard]] float calculatePowerForFlow(float targetFlow, float currentPressure, float pressureLimit) const;
     void updatePower();
     void onPressureUpdate(float pressure);
 

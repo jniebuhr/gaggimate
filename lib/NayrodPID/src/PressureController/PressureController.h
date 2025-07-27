@@ -10,14 +10,20 @@ static constexpr float M_PI = 3.14159265358979323846f;
 #include <algorithm>
 class PressureController {
   public:
-    PressureController(float dt, float *rawSetpoint, float *sensorOutput, float *controllerOutput, int *valveStatus);
-    void filterSetpoint();
+    enum class ControlMode { POWER, PRESSURE, FLOW };
+    PressureController(float dt, float *_rawPressureSetpoint, float *_rawFlowSetpoint, float *sensorOutput,
+                       float *controllerOutput, int *valveStatus);
+    void filterSetpoint(float rawSetpoint);
     void initSetpointFilter(float val = 0.0f);
     void setupSetpointFilter(float freq, float damping);
+
+    void setFlowLimit(float lim) { _flowLimit = lim; };
+    void setPressureLimit(float lim) { _pressureLimit = lim; };
+
     float getFilteredSetpoint() const { return _r; };
     float getFilteredSetpointDeriv() const { return _dr; };
 
-    void update();
+    void update(ControlMode mode);
     void tare();
     void reset();
 
@@ -28,21 +34,22 @@ class PressureController {
     float getCoffeeFlowRate() { return *_ValveStatus == 1 ? flowPerSecond : 0.0f; };
     float getPuckResistance() { return R_estimator->getResistance(); }
     float getEstimatorCovariance() { return R_estimator->getCovariance(); };
-    float getPumpDutyCycleForFlowRate(float desiredPumpFlowRate);
+    float getPumpDutyCycleForFlowRate() const;
 
   private:
-    void computePumpDutyCycle();
+    float getPumpDutyCycleForPressure();
     void virtualScale();
     void filterSensor();
-    float computeAdustedCoffeeFlowRate(float pressure);
-    float pumpFlowModel(float alpha);
+    float computeAdustedCoffeeFlowRate(float pressure = 0.0f) const;
+    float pumpFlowModel(float alpha = 100.0f) const;
 
     float _dt = 1; // Controler frequency sampling
 
-    float *_rawSetpoint = nullptr; // pointer to the Pressure profile current setpoint
-    float *_rawPressure = nullptr; // pointer to the pressure measurement ,raw output from sensor
-    float *_ctrlOutput = nullptr;  // pointer to controller output value of power ratio 0-100%
-    int *_ValveStatus = nullptr;   // pointer to 3WV status regarding group head canal open/closed
+    float *_rawPressureSetpoint = nullptr; // pointer to the Pressure profile current setpoint / limit
+    float *_rawFlowSetpoint = nullptr;     // pointer to the flow profile current setpoint / limit
+    float *_rawPressure = nullptr;         // pointer to the pressure measurement ,raw output from sensor
+    float *_ctrlOutput = nullptr;          // pointer to controller output value of power ratio 0-100%
+    int *_ValveStatus = nullptr;           // pointer to 3WV status regarding group head canal open/closed
     int old_ValveStatus = 0;
     float _filteredPressureSensor = 0.0f;
     float _filtfreqHz = 1.0f; // Setpoint filter cuttoff frequency
@@ -50,6 +57,8 @@ class PressureController {
     float _r = 0.0f;          // r[n]     : filtered setpoint
     float _dr = 0.0f;         // dr[n]     : derivative of filtered setpoint
     bool _filterInitialised = false;
+    float _flowLimit = 0.0f;
+    float _pressureLimit = 0.0f;
 
     // === System parameters ===
     const float _Co = 6.6e-7f;     // Compliance (m^3/bar)

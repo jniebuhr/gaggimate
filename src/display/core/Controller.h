@@ -44,6 +44,7 @@ class Controller {
     bool isReady() const;
     bool isVolumetricAvailable() const;
     virtual float getTargetPressure() const { return targetPressure; }
+    virtual float getTargetFlow() const { return targetFlow; }
     virtual float getCurrentPressure() const { return pressure; }
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
@@ -118,6 +119,7 @@ class Controller {
     float targetPressure = 0.0f;
     float currentPuckFlow = 0.0f;
     float currentPumpFlow = 0.0f;
+    float targetFlow = 0.0f;
 
     SystemInfo systemInfo{};
 

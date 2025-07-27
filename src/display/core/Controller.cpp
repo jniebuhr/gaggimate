@@ -451,13 +451,16 @@ void Controller::updateControl() {
     if (isActive() && currentProcess->getType() == MODE_BREW) {
         auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
         if (brewProcess->isAdvancedPump() && systemInfo.capabilities.pressure) {
-            clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp), true,
-                                                       brewProcess->getPumpTargetPressure(), 0.0f);
-            targetPressure = brewProcess->getPumpTargetPressure();
+            clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp),
+                                                       brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
+                                                       brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
+            targetPressure = brewProcess->getPumpPressure();
+            targetFlow = brewProcess->getPumpFlow();
             return;
         }
     }
     targetPressure = 0.0f;
+    targetFlow = 0.0f;
     clientController.sendOutputControl(isActive() && currentProcess->isRelayActive(),
                                        isActive() ? currentProcess->getPumpValue() : 0, static_cast<float>(targetTemp));
 }

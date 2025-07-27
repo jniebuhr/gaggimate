@@ -1,3 +1,5 @@
+import 'preact/debug';
+
 import './style.css';
 
 import { render, createContext } from 'preact';
@@ -30,7 +32,6 @@ export function App() {
           >
             <Header />
 
-
             <main id="page-content" class="flex max-w-full flex-auto flex-col">
               <div class="container mx-auto p-4 lg:p-8 xl:max-w-7xl">
                 <div class="grid grid-cols-1 md:gap-20 lg:grid-cols-12">
@@ -58,9 +59,7 @@ export function App() {
         </div>
       </ApiServiceContext.Provider>
     </LocationProvider>
-);
+  );
 }
 
-render(
-  <App />
-, document.getElementById('app'));
+render(<App />, document.getElementById('app'));

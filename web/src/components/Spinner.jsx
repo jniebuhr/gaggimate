@@ -1,9 +1,14 @@
 export function Spinner({ size = 8 }) {
+  const classMap = {
+    4: 'w-4 h-4',
+    8: 'w-8 h-8',
+  };
+
   return (
     <div role="status">
       <svg
         aria-hidden="true"
-        className={`w-${size} h-${size} text-gray-200 animate-spin dark:text-gray-600 fill-blue-600`}
+        className={`${classMap[size]} text-gray-200 animate-spin dark:text-gray-600 fill-blue-600`}
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

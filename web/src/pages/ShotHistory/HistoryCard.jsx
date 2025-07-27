@@ -5,10 +5,10 @@ import { HistoryChart } from './HistoryChart.jsx';
 export default function HistoryCard({ shot, onDelete }) {
   const date = new Date(shot.timestamp * 1000);
   const onExport = useCallback(() => {
-    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(shot, undefined, 2));
+    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(shot, undefined, 2));
     var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href",     dataStr);
-    downloadAnchorNode.setAttribute("download", shot.id + ".json");
+    downloadAnchorNode.setAttribute('href', dataStr);
+    downloadAnchorNode.setAttribute('download', shot.id + '.json');
     document.body.appendChild(downloadAnchorNode); // required for firefox
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -16,9 +16,9 @@ export default function HistoryCard({ shot, onDelete }) {
   return (
     <Card xs={12}>
       <div className="flex flex-row">
-          <span className="font-bold text-xl leading-tight flex-grow">
-            {date.toLocaleString()}
-          </span>
+        <span className="font-bold text-xl leading-tight flex-grow">
+          {shot.profile} - {date.toLocaleString()}
+        </span>
 
         <div className="flex flex-row gap-2 justify-end">
           <a
@@ -46,7 +46,7 @@ export default function HistoryCard({ shot, onDelete }) {
           <span className="fa fa-clock"></span>
           {(shot.duration / 1000).toFixed(1)}s
         </div>
-        {shot.weight && (
+        {shot.volume && (
           <div className="flex flex-row gap-2 items-center">
             <span className="fa fa-scale-balanced"></span>
             {shot.volume}g
