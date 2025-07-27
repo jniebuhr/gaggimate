@@ -18,6 +18,7 @@ Settings::Settings() {
     temperatureOffset = preferences.getInt("to", DEFAULT_TEMPERATURE_OFFSET);
     pressureScaling = preferences.getFloat("ps", DEFAULT_PRESSURE_SCALING);
     pid = preferences.getString("pid", DEFAULT_PID);
+    pumpModelCoeffs = preferences.getString("pm", DEFAULT_PUMP_MODEL_COEFFS);
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
@@ -162,6 +163,11 @@ void Settings::setPressurizeTime(int pressurize_time) {
 
 void Settings::setPid(const String &pid) {
     this->pid = pid;
+    save();
+}
+
+void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) {
+    this->pumpModelCoeffs = pumpModelCoeffs;
     save();
 }
 
@@ -350,6 +356,7 @@ void Settings::doSave() {
     preferences.putInt("to", temperatureOffset);
     preferences.putFloat("ps", pressureScaling);
     preferences.putString("pid", pid);
+    preferences.putString("pm", pumpModelCoeffs);
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
     preferences.putString("mn", mdnsName);

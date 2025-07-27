@@ -29,7 +29,7 @@ class PressureController {
 
     float getcoffeeOutputEstimate() { return coffeeOutput; };
     float getFilteredPressure() { return _filteredPressureSensor; };
-    void setPumpFlowCoeff(float oneBarFlow, float nineBarFlow);
+    void setPumpFlowCoeff(float Q0, float Q1);
     float getPumFlowRate() { return pumpFlowModel(*_ctrlOutput); };
     float getCoffeeFlowRate() { return *_ValveStatus == 1 ? flowPerSecond : 0.0f; };
     float getPuckResistance() { return R_estimator->getResistance(); }

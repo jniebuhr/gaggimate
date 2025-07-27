@@ -103,10 +103,10 @@ float PressureController::getPumpDutyCycleForFlowRate() const {
     return *_rawFlowSetpoint / availableFlow * 100.0f;
 }
 
-void PressureController::setPumpFlowCoeff(float oneBarFlow, float nineBarFlow) {
+void PressureController::setPumpFlowCoeff(float Q0, float Q1) {
     // Set the affine pump flow model coefficients based on flow measurement at 1 bar and 9 bar
-    _Q1 = (nineBarFlow - oneBarFlow) / 8;
-    _Q0 = oneBarFlow - _Q1 * 1.0f;
+    _Q1 = Q1;
+    _Q0 = Q0;
 }
 
 void PressureController::virtualScale() {

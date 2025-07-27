@@ -76,3 +76,7 @@ void DimmedPump::setPressureTarget(float targetPressure, float flowLimit) {
 }
 
 void DimmedPump::setValveState(bool open) { _valveStatus = open; }
+
+void DimmedPump::setPumpFlowCoeff(float Q0, float Q1) {
+    _pressureController.setPumpFlowCoeff(Q0, Q1);
+}

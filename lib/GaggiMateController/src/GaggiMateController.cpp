@@ -80,6 +80,12 @@ void GaggiMateController::setup() {
         });
     _ble.registerAltControlCallback([this](bool state) { this->alt->set(state); });
     _ble.registerPidControlCallback([this](float Kp, float Ki, float Kd) { this->heater->setTunings(Kp, Ki, Kd); });
+    _ble.registerPumpModelCoeffsCallback([this](float Q0, float Q1) { 
+        if (_config.capabilites.dimming) {
+            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            dimmedPump->setPumpFlowCoeff(Q0, Q1);
+        }
+    });
     _ble.registerPingCallback([this]() {
         lastPingTime = millis();
         ESP_LOGV(LOG_TAG, "Ping received, system is alive");

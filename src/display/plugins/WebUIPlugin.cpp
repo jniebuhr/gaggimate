@@ -276,6 +276,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setPressureScaling(request->arg("pressureScaling").toFloat());
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
+            if (request->hasArg("pumpModelCoeffs"))
+                settings->setPumpModelCoeffs(request->arg("pumpModelCoeffs"));
             if (request->hasArg("wifiSsid"))
                 settings->setWifiSsid(request->arg("wifiSsid"));
             if (request->hasArg("mdnsName"))
@@ -326,6 +328,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             settings->save(true);
         });
         controller->setTargetTemp(controller->getTargetTemp());
+        controller->setPumpModelCoeffs();
     }
 
     AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -341,6 +344,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haIP"] = settings.getHomeAssistantIP();
     doc["haPort"] = settings.getHomeAssistantPort();
     doc["pid"] = settings.getPid();
+    doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["wifiSsid"] = settings.getWifiSsid();
     doc["wifiPassword"] = apMode ? "---unchanged---" : settings.getWifiPassword();
     doc["mdnsName"] = settings.getMdnsName();

@@ -405,6 +405,20 @@ export function Settings() {
           />
         </div>
         <div>
+          <label htmlFor="pumpModelCoeffs" className="block font-medium text-gray-700 dark:text-gray-400">
+            Pump Model Coefficients (Q0, Q1) <small>Flow rate coefficients for pump modeling</small>
+          </label>
+          <input
+            id="pumpModelCoeffs"
+            name="pumpModelCoeffs"
+            type="text"
+            className="input-field"
+            placeholder="10.79, -0.5854"
+            value={formData.pumpModelCoeffs}
+            onChange={onChange('pumpModelCoeffs')}
+          />
+        </div>
+        <div>
           <label htmlFor="temperatureOffset" className="block font-medium text-gray-700 dark:text-gray-400">
             Temperature Offset
           </label>
