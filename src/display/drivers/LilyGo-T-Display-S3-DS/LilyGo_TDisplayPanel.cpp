@@ -174,6 +174,8 @@ uint8_t LilyGo_TDisplayPanel::getPoint(int16_t *x_array, int16_t *y_array, uint8
             y_array[i] = rawX;
             break;
         default: // 0°
+            x_array[i] = rawX;
+            y_array[i] = rawY;
             break;
         }
     }
@@ -248,6 +250,11 @@ bool LilyGo_TDisplayPanel::initDisplay(LilyGo_TDisplayPanel_Color_Order colorOrd
     digitalWrite(LCD_EN, HIGH);
 
     bool success = display->begin(80000000);
+    if (!success) {
+        ESP_LOGE("LilyGo_TDisplayPanel", "Failed to initialize display");
+        return false;
+    }
+
     this->setRotation(_rotation);
 
     // required for correct GRAM initialization
