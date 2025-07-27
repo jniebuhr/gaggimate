@@ -26,6 +26,7 @@ void DimmedPump::setPower(float setpoint) {
     _ctrlPressure = setpoint > 0 ? 20.0f : 0.0f;
     _mode = ControlMode::POWER;
     _power = std::clamp(setpoint, 0.0f, 100.0f);
+    _controllerPower = _power; // Feed manual control back into pressure controller
     _psm.set(static_cast<int>(_power));
 }
 
