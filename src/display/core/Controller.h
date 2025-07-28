@@ -8,7 +8,9 @@
 #include <WiFi.h>
 #include <display/core/Process.h>
 #include <display/core/ProfileManager.h>
+#ifndef GAGGIMATE_HEADLESS
 #include <display/ui/default/DefaultUI.h>
+#endif
 
 const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space
 const IPAddress WIFI_SUBNET_MASK(255, 255, 255, 0); // no need to change: https://avinetworks.com/glossary/subnet-mask/
@@ -55,7 +57,9 @@ class Controller {
     Process *getLastProcess() const { return lastProcess; }
     Settings &getSettings() { return settings; }
     ProfileManager *getProfileManager() { return profileManager; }
+#ifndef GAGGIMATE_HEADLESS
     DefaultUI *getUI() const { return ui; }
+#endif
     bool isErrorState() const { return error > 0; }
     int getError() const { return error; }
 
@@ -106,7 +110,9 @@ class Controller {
     void handleProfileUpdate();
 
     // Private Attributes
+#ifndef GAGGIMATE_HEADLESS
     DefaultUI *ui = nullptr;
+#endif
     NimBLEClientController clientController;
     hw_timer_t *timer = nullptr;
     Settings settings;
