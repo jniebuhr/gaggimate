@@ -46,6 +46,26 @@
   @apply border-e-0 rounded-e-none;
 }
 
+.mode-selector {
+  @apply cursor-pointer px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-l border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white;
+}
+
+.mode-selector:first-child {
+  @apply rounded-s-lg;
+}
+
+.mode-selector:last-child {
+  @apply rounded-e-lg border-r;
+}
+
+.mode-selector.selected {
+  @apply text-blue-700 bg-gray-300;
+}
+
+.mode-selector.mode-selector-xl {
+  @apply text-base;
+}
+
 .input-addition {
   @apply inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-s-none border-gray-300 border-s-0 rounded-e-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600;
 }

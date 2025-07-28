@@ -3,14 +3,9 @@
 #include "pin_config.h"
 #include <esp_adc_cal.h>
 
-LilyGo_TDisplayPanel::LilyGo_TDisplayPanel() : 
-    displayBus(nullptr),
-    display(nullptr),
-    _touchDrv(nullptr),
-    _wakeupMethod(LILYGO_T_DISPLAY_WAKEUP_FROM_NONE),
-    _sleepTimeUs(0),
-    currentBrightness(0)
-{
+LilyGo_TDisplayPanel::LilyGo_TDisplayPanel()
+    : displayBus(nullptr), display(nullptr), _touchDrv(nullptr), _wakeupMethod(LILYGO_T_DISPLAY_WAKEUP_FROM_NONE),
+      _sleepTimeUs(0), currentBrightness(0) {
     _rotation = 0;
 }
 
@@ -41,7 +36,6 @@ bool LilyGo_TDisplayPanel::begin(LilyGo_TDisplayPanel_Color_Order order) {
 
     return success;
 }
-
 
 bool LilyGo_TDisplayPanel::installSD() {
     pinMode(SD_CS, OUTPUT);
@@ -243,7 +237,8 @@ bool LilyGo_TDisplayPanel::initDisplay(LilyGo_TDisplayPanel_Color_Order colorOrd
                                            LCD_SDIO2 /* SDIO2 */, LCD_SDIO3 /* SDIO3 */);
 
         display = new CO5300(displayBus, LCD_RST /* RST */, _rotation /* rotation */, false /* IPS */, LCD_WIDTH, LCD_HEIGHT,
-                             LCD_GRAM_OFFSET_X /* col offset 1 */, 0 /* row offset 1 */, LCD_GRAM_OFFSET_Y /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
+                             LCD_GRAM_OFFSET_X /* col offset 1 */, 0 /* row offset 1 */, LCD_GRAM_OFFSET_Y /* col_offset2 */,
+                             0 /* row_offset2 */, colorOrder);
     }
 
     pinMode(LCD_EN, OUTPUT);
