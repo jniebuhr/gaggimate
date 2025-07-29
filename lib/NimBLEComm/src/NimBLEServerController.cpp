@@ -224,11 +224,13 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PUMP_MODEL_COEFFS_CHAR_UUID))) {
         auto pumpModelCoeffs = String(pCharacteristic->getValue().c_str());
-        float Q0 = get_token(pumpModelCoeffs, 0, ',').toFloat();
-        float Q1 = get_token(pumpModelCoeffs, 1, ',').toFloat();
-        ESP_LOGV(LOG_TAG, "Received pump model coefficients: %.4f, %.4f", Q0, Q1);
+        float a = get_token(pumpModelCoeffs, 0, ',').toFloat();
+        float b = get_token(pumpModelCoeffs, 1, ',').toFloat();
+        float c = get_token(pumpModelCoeffs, 2, ',').toFloat();
+        float d = get_token(pumpModelCoeffs, 3, ',').toFloat();
+        ESP_LOGV(LOG_TAG, "Received pump flow polynomial coefficients: %.6f, %.6f, %.6f, %.6f", a, b, c, d);
         if (pumpModelCoeffsCallback != nullptr) {
-            pumpModelCoeffsCallback(Q0, Q1);
+            pumpModelCoeffsCallback(a, b, c, d);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PRESSURE_SCALE_UUID))) {
         String scale_string = pCharacteristic->getValue().c_str();

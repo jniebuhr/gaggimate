@@ -31,7 +31,7 @@ constexpr size_t ERROR_CODE_TIMEOUT = 5;
 
 using pin_control_callback_t = std::function<void(bool isActive)>;
 using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd)>;
-using pump_model_coeffs_callback_t = std::function<void(float Q0, float Q1)>;
+using pump_model_coeffs_callback_t = std::function<void(float a, float b, float c, float d)>;
 using ping_callback_t = std::function<void()>;
 using remote_err_callback_t = std::function<void(int errorCode)>;
 using autotune_callback_t = std::function<void(int testTime, int samples)>;
