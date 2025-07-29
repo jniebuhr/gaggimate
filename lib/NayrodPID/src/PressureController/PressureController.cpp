@@ -185,7 +185,9 @@ float PressureController::getPumpDutyCycleForPressure() {
     // Switching surface
     _epsilon = 0.15f * _r;
     deadband = 0.1f * _r;
-    float s = _lambda * error + error_dot * 0.1f;
+    // Try out pump control without error
+    // float s = _lambda * error + error_dot * 0.1f;
+    float s = _lambda * error;
     float sat_s = 0.0f;
     if (error > 0) {
         float tan = tanhf(s / _epsilon - deadband * _lambda / _epsilon);
