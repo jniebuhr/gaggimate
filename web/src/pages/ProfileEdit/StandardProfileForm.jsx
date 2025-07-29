@@ -120,7 +120,10 @@ export function StandardProfileForm(props) {
             </div>
           </div>
         </div>
-        <div className="px-6 py-2">
+        <div className="px-6 py-2 flex flex-row gap-2">
+          <a href="/profiles" className="menu-button">
+            Back
+          </a>
           <button type="submit" className="menu-button flex flex-row gap-2" onClick={() => onSave(data)} disabled={saving}>
             <span>Save</span>
             {saving && <Spinner size={4} />}

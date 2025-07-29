@@ -6,8 +6,8 @@
 #include <display/core/Process.h>
 #include <display/core/zones.h>
 #include <display/drivers/LilyGoDriver.h>
-#include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/LilyGoTDisplayDriver.h>
+#include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
 #include <display/ui/default/lvgl/ui_theme_manager.h>
 #include <display/ui/default/lvgl/ui_themes.h>
@@ -270,8 +270,7 @@ void DefaultUI::setupPanel() {
         panelDriver = LilyGoDriver::getInstance();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
         panelDriver = WaveshareDriver::getInstance();
-    }
-    else {
+    } else {
         Serial.println("No compatible display driver found");
         delay(10000);
         ESP.restart();

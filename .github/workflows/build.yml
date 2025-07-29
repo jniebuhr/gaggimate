@@ -43,6 +43,8 @@ jobs:
         run: pio run -e controller
       - name: Build display
         run: pio run -e display
+      - name: Build headless
+        run: pio run -e display-display
       - name: Rename firmware files
         run: |
           mv .pio/build/controller/firmware.bin out/board-firmware.bin
@@ -51,11 +53,15 @@ jobs:
           mv .pio/build/display/firmware.bin out/display-firmware.bin
           mv .pio/build/display/partitions.bin out/display-partitions.bin
           mv .pio/build/display/bootloader.bin out/display-bootloader.bin
+          mv .pio/build/display-headless/firmware.bin out/display-headless-firmware.bin
+          mv .pio/build/display-headless/partitions.bin out/display-headless-partitions.bin
+          mv .pio/build/display-headless/bootloader.bin out/display-headless-bootloader.bin
       - name: Build display FS
         run: pio run -t buildfs -e display
       - name: Rename FS files
         run: |
-          mv .pio/build/display/spiffs.bin out/display-filesystem.bin
+          cp .pio/build/display/spiffs.bin out/display-filesystem.bin
+          cp .pio/build/display/spiffs.bin out/display-headless-filesystem.bin
       - name: Archive Firmware Files
         uses: actions/upload-artifact@v4
         with:
