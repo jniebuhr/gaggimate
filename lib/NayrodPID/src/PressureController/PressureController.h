@@ -67,7 +67,7 @@ class PressureController {
     float _R = 1e7f;               // Gestimate of the average puck resitance at t=0
     const float _Pmax = 15.0f;     // Pression max (bar)
     const float _maxSpeedP = 9.0f; // bar/s
-    float PUMP_FLOW_POLY[4] = {-0.008291194, 0.123166854, -1.079052155, 11.20154433};
+    float PUMP_FLOW_POLY[4] = {0.0f, 0.0f, -0.5854f, 10.79f};
 
     // === Controller Gains ===
     float _K = 0.7f;       // Commutation gain
