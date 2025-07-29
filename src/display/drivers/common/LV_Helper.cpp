@@ -19,7 +19,6 @@ static lv_indev_drv_t indev_drv;
 static lv_color_t *buf = NULL;
 static lv_color_t *buf1 = NULL;
 
-
 /* Display flushing */
 static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
     static_cast<Display *>(disp_drv->user_data)->pushColors(area->x1, area->y1, area->x2 + 1, area->y2 + 1, (uint16_t *)color_p);

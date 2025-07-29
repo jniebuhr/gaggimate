@@ -70,6 +70,36 @@ void WebUIPlugin::loop() {
         doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
+        doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+
+        Process *process = controller->getProcess();
+        if (process == nullptr) {
+            process = controller->getLastProcess();
+        }
+        if (process != nullptr) {
+            JsonObject pObj = doc.createNestedObject("process");
+            pObj["a"] = controller->isActive() ? 1 : 0;
+            if (process->getType() == MODE_BREW) {
+                auto *brew = static_cast<BrewProcess *>(process);
+                unsigned long ts = millis();
+                if (!brew->isActive()) {
+                    ts = brew->finished;
+                }
+                pObj["s"] = brew->currentPhase.phase == PhaseType::PHASE_TYPE_BREW ? "brew" : "infusion";
+                pObj["l"] = brew->isActive() ? brew->currentPhase.name.c_str() : "Finished";
+                pObj["e"] = ts - brew->processStarted;
+                pObj["tt"] = brew->target == ProcessTarget::TIME ? "time" : "volumetric";
+                if (brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget()) {
+                    Target t = brew->currentPhase.getVolumetricTarget();
+                    pObj["pt"] = t.value;
+                    pObj["pp"] = brew->currentVolume;
+                } else {
+                    pObj["pt"] = brew->getPhaseDuration();
+                    pObj["pp"] = ts - brew->currentPhaseStarted;
+                }
+            }
+        }
+
         ws.textAll(doc.as<String>());
     }
     if (now > lastCleanup + CLEANUP_PERIOD) {
@@ -139,6 +169,23 @@ void WebUIPlugin::setupServer() {
                                 handleOTAStart(client->id(), doc);
                             } else if (msgType == "req:autotune-start") {
                                 handleAutotuneStart(client->id(), doc);
+                            } else if (msgType == "req:process:activate") {
+                                controller->activate();
+                            } else if (msgType == "req:process:deactivate") {
+                                controller->deactivate();
+                            } else if (msgType == "req:process:clear") {
+                                controller->clear();
+                            } else if (msgType == "req:change-mode") {
+                                if (doc["mode"].is<uint8_t>()) {
+                                    auto mode = doc["mode"].as<uint8_t>();
+                                    controller->deactivate();
+                                    controller->setMode(mode);
+                                }
+                            } else if (msgType == "req:change-brew-target") {
+                                if (doc["target"].is<uint8_t>()) {
+                                    auto target = doc["target"].as<uint8_t>();
+                                    controller->getSettings().setVolumetricTarget(target);
+                                }
                             } else if (msgType.startsWith("req:history")) {
                                 JsonDocument resp;
                                 ShotHistory.handleRequest(doc, resp);

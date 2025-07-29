@@ -33,7 +33,7 @@ export function App() {
             <Header />
 
             <main id="page-content" class="flex max-w-full flex-auto flex-col">
-              <div class="container mx-auto p-4 lg:p-8 xl:max-w-7xl">
+              <div class="container mx-auto p-1 sm:p-4 lg:p-8 xl:max-w-7xl">
                 <div class="grid grid-cols-1 md:gap-20 lg:grid-cols-12">
                   <Navigation />
                   <div class="lg:col-span-9">

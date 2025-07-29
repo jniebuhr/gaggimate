@@ -16,13 +16,12 @@
 #error "Please turn on PSRAM to OPI !"
 #endif
 
-#include <SD_MMC.h>
 #include "CO5300.h"
 #include "pin_config.h"
+#include <SD_MMC.h>
 #include <TouchDrvInterface.hpp>
 #include <display/drivers/common/Display.h>
 #include <display/drivers/common/ext.h>
-
 
 enum LilyGo_TDisplayPanel_Type {
     LILYGO_T_TDISPLAY_UNKNOWN,
@@ -102,7 +101,7 @@ class LilyGo_TDisplayPanel : public Display {
 
   private:
     uint8_t currentBrightness = 0;
-    
+
     LilyGo_TDisplayPanel_Wakeup_Method _wakeupMethod;
     uint64_t _sleepTimeUs;
 };

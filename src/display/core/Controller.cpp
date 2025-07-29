@@ -27,7 +27,9 @@ void Controller::setup() {
     pluginManager = new PluginManager();
     profileManager = new ProfileManager(SPIFFS, "/p", settings, pluginManager);
     profileManager->setup();
+#ifndef GAGGIMATE_HEADLESS
     ui = new DefaultUI(this, pluginManager);
+#endif
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     else
@@ -55,9 +57,13 @@ void Controller::setup() {
 
     pluginManager->on("profiles:profile:select", [this](Event const &event) { this->handleProfileUpdate(); });
 
+#ifndef GAGGIMATE_HEADLESS
     ui->init();
+#else
+    this->onScreenReady();
+#endif
 
-    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
+    xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
 void Controller::onScreenReady() { screenReady = true; }
