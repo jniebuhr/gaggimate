@@ -406,14 +406,14 @@ export function Settings() {
         </div>
         <div>
           <label htmlFor="pumpModelCoeffs" className="block font-medium text-gray-700 dark:text-gray-400">
-            Pump Flow Polynomial Coefficients (a, b, c, d) <small>3rd order polynomial coefficients for pump flow modeling</small>
+            Pump Flow Coefficients <small>Enter 2 values (flow at 1bar, flow at 9bar) or 4 polynomial coefficients (a, b, c, d)</small>
           </label>
           <input
             id="pumpModelCoeffs"
             name="pumpModelCoeffs"
             type="text"
             className="input-field"
-            placeholder="0.0,0.0,-0.5854,10.79"
+            placeholder="10.79, 5.5 (or) 0.0, 0.0, -0.5854, 10.79"
             value={formData.pumpModelCoeffs}
             onChange={onChange('pumpModelCoeffs')}
           />

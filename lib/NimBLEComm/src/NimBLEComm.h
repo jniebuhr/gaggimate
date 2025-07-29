@@ -57,6 +57,6 @@ struct SystemInfo {
     SystemCapabilities capabilities;
 };
 
-String get_token(const String &from, uint8_t index, char separator);
+String get_token(const String &from, uint8_t index, char separator, String default_value="");
 
 #endif // NIMBLECOMM_H
