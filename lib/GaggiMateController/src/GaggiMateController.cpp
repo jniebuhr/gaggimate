@@ -83,8 +83,8 @@ void GaggiMateController::setup() {
     _ble.registerPumpModelCoeffsCallback([this](float a, float b, float c, float d) { 
         if (_config.capabilites.dimming) {
             auto dimmedPump = static_cast<DimmedPump *>(pump);
-            // Check if this is a flow measurement call (a and b are flow measurements, c and d are 0)
-            if (c == 0.0f && d == 0.0f) {
+            // Check if this is a flow measurement call (a and b are flow measurements, c and d are nan)
+            if (isnan(c) && isnan(d)) {
                 dimmedPump->setPumpFlowCoeff(a, b); // a = oneBarFlow, b = nineBarFlow
             } else {
                 dimmedPump->setPumpFlowPolyCoeffs(a, b, c, d); // a, b, c, d are polynomial coefficients
