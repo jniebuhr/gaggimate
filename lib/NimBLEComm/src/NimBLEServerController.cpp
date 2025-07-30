@@ -59,6 +59,10 @@ void NimBLEServerController::initServer(const String infoString) {
     volumetricTareChar = pService->createCharacteristic(VOLUMETRIC_TARE_UUID, NIMBLE_PROPERTY::WRITE);
     volumetricTareChar->setCallbacks(this);
 
+    tofMeasurementChar = pService->createCharacteristic(TOF_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY);
+    ledControlChar = pService->createCharacteristic(LED_CONTROL_UUID, NIMBLE_PROPERTY::WRITE);
+    ledControlChar->setCallbacks(this);
+
     pService->start();
 
     ota_dfu_ble.configure_OTA(pServer);
@@ -128,6 +132,15 @@ void NimBLEServerController::sendVolumetricMeasurement(float value) {
     }
 }
 
+void NimBLEServerController::sendTofMeasurement(int value) {
+    if (deviceConnected) {
+        char data[8];
+        snprintf(data, sizeof(data), "%d", value);
+        tofMeasurementChar->setValue(data);
+        tofMeasurementChar->notify();
+    }
+}
+
 void NimBLEServerController::registerOutputControlCallback(const simple_output_callback_t &callback) {
     outputControlCallback = callback;
 }
@@ -142,6 +155,8 @@ void NimBLEServerController::registerAutotuneCallback(const autotune_callback_t 
 void NimBLEServerController::registerPressureScaleCallback(const float_callback_t &callback) { pressureScaleCallback = callback; }
 
 void NimBLEServerController::registerTareCallback(const void_callback_t &callback) { tareCallback = callback; }
+
+void NimBLEServerController::registerLedControlCallback(const led_control_callback_t &callback) { ledControlCallback = callback; }
 
 void NimBLEServerController::setInfo(const String infoString) {
     this->infoString = infoString;
@@ -228,6 +243,14 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         ESP_LOGV(LOG_TAG, "Received tare");
         if (tareCallback != nullptr) {
             tareCallback();
+        }
+    } else if (pCharacteristic->getUUID().equals(NimBLEUUID(LED_CONTROL_UUID))) {
+        if (ledControlCallback != nullptr) {
+            auto msg = String(pCharacteristic->getValue().c_str());
+            uint8_t channel = get_token(msg, 0, ',').toInt();
+            uint8_t brightness = get_token(msg, 1, ',').toInt();
+            ledControlCallback(channel, brightness);
+            ESP_LOGV(LOG_TAG, "Received led control, %d: %d", channel, brightness);
         }
     }
 }

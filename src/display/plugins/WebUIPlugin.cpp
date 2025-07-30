@@ -71,6 +71,7 @@ void WebUIPlugin::loop() {
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+        doc["led"] = controller->getSystemInfo().capabilities.ledControl;
 
         Process *process = controller->getProcess();
         if (process == nullptr) {
@@ -370,6 +371,20 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setSteamPumpPercentage(request->arg("steamPumpPercentage").toFloat());
             if (request->hasArg("themeMode"))
                 settings->setThemeMode(request->arg("themeMode").toInt());
+            if (request->hasArg("sunriseR"))
+                settings->setSunriseR(request->arg("sunriseR").toInt());
+            if (request->hasArg("sunriseG"))
+                settings->setSunriseG(request->arg("sunriseG").toInt());
+            if (request->hasArg("sunriseB"))
+                settings->setSunriseB(request->arg("sunriseB").toInt());
+            if (request->hasArg("sunriseW"))
+                settings->setSunriseW(request->arg("sunriseW").toInt());
+            if (request->hasArg("sunriseExtBrightness"))
+                settings->setSunriseExtBrightness(request->arg("sunriseExtBrightness").toInt());
+            if (request->hasArg("emptyTankDistance"))
+                settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
+            if (request->hasArg("fullTankDistance"))
+                settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
             settings->save(true);
         });
         controller->setTargetTemp(controller->getTargetTemp());
@@ -411,6 +426,13 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["standbyBrightnessTimeout"] = settings.getStandbyBrightnessTimeout() / 1000;
     doc["steamPumpPercentage"] = settings.getSteamPumpPercentage();
     doc["themeMode"] = settings.getThemeMode();
+    doc["sunriseR"] = settings.getSunriseR();
+    doc["sunriseG"] = settings.getSunriseG();
+    doc["sunriseB"] = settings.getSunriseB();
+    doc["sunriseW"] = settings.getSunriseW();
+    doc["sunriseExtBrightness"] = settings.getSunriseExtBrightness();
+    doc["emptyTankDistance"] = settings.getEmptyTankDistance();
+    doc["fullTankDistance"] = settings.getFullTankDistance();
     serializeJson(doc, *response);
     request->send(response);
 

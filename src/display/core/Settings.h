@@ -69,6 +69,13 @@ class Settings {
     float getSteamPumpPercentage() const { return steamPumpPercentage; }
     int getThemeMode() const { return themeMode; }
     int getHistoryIndex() const { return historyIndex; }
+    int getSunriseR() const { return sunriseR; }
+    int getSunriseG() const { return sunriseG; }
+    int getSunriseB() const { return sunriseB; }
+    int getSunriseW() const { return sunriseW; }
+    int getSunriseExtBrightness() const { return sunriseExtBrightness; }
+    int getEmptyTankDistance() const { return emptyTankDistance; }
+    int getFullTankDistance() const { return fullTankDistance; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -120,6 +127,13 @@ class Settings {
     void setSteamPumpPercentage(float steam_pump_percentage);
     void setThemeMode(int theme_mode);
     void setHistoryIndex(int history_index);
+    void setSunriseR(int sunrise_r);
+    void setSunriseG(int sunrise_g);
+    void setSunriseB(int sunrise_b);
+    void setSunriseW(int sunrise_w);
+    void setSunriseExtBrightness(int sunrise_ext_brightness);
+    void setEmptyTankDistance(int empty_tank_distance);
+    void setFullTankDistance(int full_tank_distance);
 
   private:
     Preferences preferences;
@@ -179,6 +193,15 @@ class Settings {
     int standbyBrightnessTimeout = 60000; // 60 seconds default
     int wifiApTimeout = DEFAULT_WIFI_AP_TIMEOUT_MS;
     int themeMode = 0;
+
+    // Sunrise settings
+    int sunriseR = 0;
+    int sunriseG = 0;
+    int sunriseB = 255;
+    int sunriseW = 50;
+    int sunriseExtBrightness = 255;
+    int emptyTankDistance = 200;
+    int fullTankDistance = 50;
 
     void doSave();
     xTaskHandle taskHandle;

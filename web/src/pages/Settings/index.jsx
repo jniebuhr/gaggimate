@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import homekitImage from '../../assets/homekit.png';
 import Card from '../../components/Card.jsx';
 import { timezones } from '../../config/zones.js';
+import { computed } from '@preact/signals';
+import { machine } from '../../services/ApiService.js';
+
+const ledControl = computed(() => machine.value.capabilities.ledControl);
 
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
@@ -547,6 +551,129 @@ export function Settings() {
           </select>
         </div>
       </Card>
+      {ledControl.value && (
+        <Card xs={12} lg={6} title="Sunrise Settings">
+          <div>
+            <span>Set the colors for the LEDs when in idle mode with no warnings.</span>
+          </div>
+          <div className="flex flex-row gap-2">
+            <div className="flex-auto">
+              <label htmlFor="sunriseR" className="block font-medium text-gray-700 dark:text-gray-400">
+                Red (0 - 255)
+              </label>
+              <input
+                id="sunriseR"
+                name="sunriseR"
+                type="number"
+                className="input-field"
+                placeholder="16"
+                min="0"
+                max="255"
+                value={formData.sunriseR}
+                onChange={onChange('sunriseR')}
+              />
+            </div>
+            <div className="flex-auto">
+              <label htmlFor="sunriseG" className="block font-medium text-gray-700 dark:text-gray-400">
+                Green (0 - 255)
+              </label>
+              <input
+                id="sunriseG"
+                name="sunriseG"
+                type="number"
+                className="input-field"
+                placeholder="16"
+                min="0"
+                max="255"
+                value={formData.sunriseG}
+                onChange={onChange('sunriseG')}
+              />
+            </div>
+          </div>
+          <div className="flex flex-row gap-2">
+            <div className="flex-auto">
+              <label htmlFor="sunriseB" className="block font-medium text-gray-700 dark:text-gray-400">
+                Blue (0 - 255)
+              </label>
+              <input
+                id="sunriseB"
+                name="sunriseB"
+                type="number"
+                className="input-field"
+                placeholder="16"
+                min="0"
+                max="255"
+                value={formData.sunriseB}
+                onChange={onChange('sunriseB')}
+              />
+            </div>
+            <div className="flex-auto">
+              <label htmlFor="sunriseW" className="block font-medium text-gray-700 dark:text-gray-400">
+                White (0 - 255)
+              </label>
+              <input
+                id="sunriseW"
+                name="sunriseW"
+                type="number"
+                className="input-field"
+                placeholder="16"
+                min="0"
+                max="255"
+                value={formData.sunriseW}
+                onChange={onChange('sunriseW')}
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="sunriseExtBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
+              External LED (0 - 255)
+            </label>
+            <input
+              id="sunriseExtBrightness"
+              name="sunriseExtBrightness"
+              type="number"
+              className="input-field"
+              placeholder="16"
+              min="0"
+              max="255"
+              value={formData.sunriseExtBrightness}
+              onChange={onChange('sunriseExtBrightness')}
+            />
+          </div>
+          <div>
+            <label htmlFor="emptyTankDistance" className="block font-medium text-gray-700 dark:text-gray-400">
+              Distance from sensor to bottom of the tank
+            </label>
+            <input
+              id="emptyTankDistance"
+              name="emptyTankDistance"
+              type="number"
+              className="input-field"
+              placeholder="16"
+              min="0"
+              max="1000"
+              value={formData.emptyTankDistance}
+              onChange={onChange('emptyTankDistance')}
+            />
+          </div>
+          <div>
+            <label htmlFor="fullTankDistance" className="block font-medium text-gray-700 dark:text-gray-400">
+              Distance from sensor to the fill line
+            </label>
+            <input
+              id="fullTankDistance"
+              name="fullTankDistance"
+              type="number"
+              className="input-field"
+              placeholder="16"
+              min="0"
+              max="1000"
+              value={formData.fullTankDistance}
+              onChange={onChange('fullTankDistance')}
+            />
+          </div>
+        </Card>
+      )}
       <Card xs={12} title="Plugins">
         <div className="flex flex-col rounded-lg divide-y divide-[#ccc] border-[#ccc] dark:border-gray-600 dark:divide-gray-600 border">
           <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg">

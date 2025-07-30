@@ -84,6 +84,13 @@ class Controller {
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     void onFlush();
+    int getWaterLevel() const {
+        float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
+                              static_cast<float>(std::min(settings.getEmptyTankDistance(), tofDistance));
+        return static_cast<int>((reversedLevel - settings.getFullTankDistance()) /
+                                static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance()) * 100.0f);
+    };
+    bool isLowWaterLevel() const { return getWaterLevel() < 20; };
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
@@ -126,6 +133,7 @@ class Controller {
     float currentPuckFlow = 0.0f;
     float currentPumpFlow = 0.0f;
     float targetFlow = 0.0f;
+    int tofDistance = 0;
 
     SystemInfo systemInfo{};
 

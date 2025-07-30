@@ -1,9 +1,10 @@
 #include "GaggiMateController.h"
 #include "utilities.h"
 #include <Arduino.h>
-#include <SPI.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <peripherals/DimmedPump.h>
+#include <peripherals/SimplePump.h>
 
 GaggiMateController::GaggiMateController() {
     configs.push_back(GM_STANDARD_REV_1X);
@@ -16,9 +17,6 @@ void GaggiMateController::setup() {
     delay(5000);
     detectBoard();
     detectAddon();
-
-    String systemInfo = make_system_info(_config);
-    _ble.initServer(systemInfo);
 
     this->thermocouple = new Max31855Thermocouple(
         _config.maxCsPin, _config.maxMisoPin, _config.maxSckPin, [this](float temperature) { /* noop */ },
@@ -38,6 +36,21 @@ void GaggiMateController::setup() {
     }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
+
+    // 5-Pin peripheral port
+    Wire.begin(_config.scaleSdaPin, _config.scaleSclPin, 400000);
+    this->ledController = new LedController(&Wire);
+    this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _ble.sendTofMeasurement(distance); });
+    if (this->ledController->isAvailable()) {
+        _config.capabilites.ledControls = true;
+        _config.capabilites.tof = true;
+        _ble.registerLedControlCallback(
+            [this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
+    }
+
+    String systemInfo = make_system_info(_config);
+    _ble.initServer(systemInfo);
+
     this->thermocouple->setup();
     this->heater->setup();
     this->valve->setup();
@@ -48,6 +61,12 @@ void GaggiMateController::setup() {
     if (_config.capabilites.pressure) {
         pressureSensor->setup();
         _ble.registerPressureScaleCallback([this](float scale) { this->pressureSensor->setScale(scale); });
+    }
+    if (_config.capabilites.ledControls) {
+        this->ledController->setup();
+    }
+    if (_config.capabilites.tof) {
+        this->distanceSensor->setup();
     }
 
     // Initialize last ping time

@@ -36,9 +36,7 @@ void DimmedPump::setPower(float setpoint) {
 
 float DimmedPump::getCoffeeVolume() { return _pressureController.getcoffeeOutputEstimate(); }
 
-float DimmedPump::getPumpFlow() {
-    return _currentFlow;
-}
+float DimmedPump::getPumpFlow() { return _currentFlow; }
 
 float DimmedPump::getPuckFlow() { return _pressureController.getCoffeeFlowRate(); }
 

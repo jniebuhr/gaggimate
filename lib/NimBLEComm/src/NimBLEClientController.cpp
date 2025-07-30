@@ -48,6 +48,8 @@ void NimBLEClientController::registerVolumetricMeasurementCallback(const float_c
     volumetricMeasurementCallback = callback;
 }
 
+void NimBLEClientController::registerTofMeasurementCallback(const int_callback_t &callback) { tofMeasurementCallback = callback; }
+
 std::string NimBLEClientController::readInfo() const {
     if (infoChar != nullptr && infoChar->canRead()) {
         return infoChar->readValue();
@@ -94,6 +96,7 @@ bool NimBLEClientController::connectToServer() {
     infoChar = pRemoteService->getCharacteristic(NimBLEUUID(INFO_UUID));
     pressureScaleChar = pRemoteService->getCharacteristic(NimBLEUUID(PRESSURE_SCALE_UUID));
     volumetricTareChar = pRemoteService->getCharacteristic(NimBLEUUID(VOLUMETRIC_TARE_UUID));
+    ledControlChar = pRemoteService->getCharacteristic(NimBLEUUID(LED_CONTROL_UUID));
 
     // Obtain the remote notify characteristic and subscribe to it
 
@@ -134,6 +137,12 @@ bool NimBLEClientController::connectToServer() {
                                                        std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
+    tofMeasurementChar = pRemoteService->getCharacteristic(NimBLEUUID(TOF_MEASUREMENT_UUID));
+    if (tofMeasurementChar != nullptr && tofMeasurementChar->canNotify()) {
+        tofMeasurementChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                                      std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
     delay(500);
 
     readyForConnection = false;
@@ -169,6 +178,12 @@ void NimBLEClientController::sendPidSettings(const String &pid) {
 void NimBLEClientController::setPressureScale(float scale) {
     if (client->isConnected() && pressureScaleChar != nullptr) {
         pressureScaleChar->writeValue(String(scale));
+    }
+}
+
+void NimBLEClientController::sendLedControl(uint8_t channel, uint8_t brightness) {
+    if (client->isConnected() && ledControlChar != nullptr) {
+        ledControlChar->writeValue(String(channel) + "," + String(brightness));
     }
 }
 
@@ -269,6 +284,13 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         ESP_LOGV(LOG_TAG, "Volumetric measurement: %.2f", value);
         if (volumetricMeasurementCallback != nullptr) {
             volumetricMeasurementCallback(value);
+        }
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
+        int value = atoi((char *)pData);
+        ESP_LOGV(LOG_TAG, "ToF measurement: %.2f", value);
+        if (tofMeasurementCallback != nullptr) {
+            tofMeasurementCallback(value);
         }
     }
 }
