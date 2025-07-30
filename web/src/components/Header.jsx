@@ -1,19 +1,19 @@
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useState } from 'preact/hooks';
 
 function HeaderItem(props) {
   return (
     <a
       href={props.link}
       onClick={props.onClick}
-      className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 dark:text-slate-300"
+      className="btn btn-ghost btn-sm justify-start gap-2 w-full"
     >
       <i className={props.iconClass} />
-      <span className="grow">{props.label}</span>
+      <span className="flex-1">{props.label}</span>
     </a>
   );
 }
 
-export function Header(props) {
+export function Header() {
   const [open, setOpen] = useState(false);
   const openCb = useCallback(
     (newState) => {
@@ -24,7 +24,7 @@ export function Header(props) {
   return (
     <header id="page-header" className="z-1 flex flex-none items-center">
       <div className="container mx-auto px-4 lg:px-8 xl:max-w-7xl">
-        <div className="flex justify-between border-b-2 border-slate-200/50 py-6">
+        <div className="flex justify-between border-b-2 border-base-300 py-6">
           <div className="flex items-center">
             <a href="/" className="inline-flex" onClick={() => openCb(false)}>
               <span className="text-3xl font-light text-[#333333] dark:text-gray-300 font-logo">
@@ -36,23 +36,23 @@ export function Header(props) {
           <div className="flex items-center gap-1 lg:gap-5">
             <div className="relative inline-block">
               <a
-                rel="noopener"
+                rel="noopener noreferrer"
                 href="https://github.com/jniebuhr/gaggimate"
                 target="_blank"
-                className="group flex items-center justify-between rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 sm:gap-2 dark:text-slate-300"
+                className="btn btn-ghost btn-sm btn-circle"
               >
-                <i className="fa-brands fa-github"></i>
+                <i className="fa-brands fa-github text-lg" />
               </a>
             </div>
 
             <div className="relative inline-block">
               <a
-                rel="noopener"
+                rel="noopener noreferrer"
                 href="https://discord.gaggimate.eu/"
                 target="_blank"
-                className="group flex items-center justify-between rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 sm:gap-2 dark:text-slate-300"
+                className="btn btn-ghost btn-sm btn-circle"
               >
-                <i className="fa-brands fa-discord"></i>
+                <i className="fa-brands fa-discord text-lg" />
               </a>
             </div>
 
@@ -60,19 +60,19 @@ export function Header(props) {
               <button
                 type="button"
                 onClick={() => openCb(!open)}
-                className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 dark:text-slate-300"
+                className="btn btn-ghost btn-sm btn-circle"
               >
                 <svg
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="hi-solid hi-menu inline-block size-5"
+                  className="w-5 h-5"
                 >
                   <path
                     fill-rule="evenodd"
                     d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
                     clip-rule="evenodd"
-                  ></path>
+                  />
                 </svg>
               </button>
             </div>

@@ -23,16 +23,16 @@ const BrewProgress = (props) => {
     <div className="flex flex-col justify-center items-center w-full">
       {active && (
         <>
-          <span className="text-gray-600 font-light text-xl">{processInfo.s === 'brew' ? 'BREW' : 'PREINFUSION'}</span>
+          <span className="text-base-content/70 font-light text-xl">{processInfo.s === 'brew' ? 'BREW' : 'PREINFUSION'}</span>
           <span className="text-xl">{processInfo.l}</span>
-          <div className="w-9/12 my-2 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-            <div className="bg-blue-600 h-2.5 rounded-full" style={`width: ${progress.toFixed(0)}%`}></div>
+          <div className="w-9/12 my-2">
+            <progress className="progress progress-primary w-full" value={progress.toFixed(0)} max="100" />
           </div>
         </>
       )}
       {processInfo.tt === 'volumetric' ||
         (active && (
-          <span className="text-sm text-gray-700 dark:text-gray-400">
+          <span className="text-sm text-base-content/60">
             {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(1)}s`}
             {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(1)}g`}
           </span>
@@ -78,22 +78,28 @@ const ProcessControls = (props) => {
     <>
       {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
       <div className="flex flex-row gap-2 items-center justify-center">
-        <span
-          className="cursor-pointer group flex items-center justify-center rounded-full border border-transparent w-20 h-20 text-center p-0 text-4xl font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 sm:gap-2 dark:text-slate-300"
+        <button
+          className="btn btn-circle btn-lg btn-primary"
           onClick={() => (active ? deactivate() : finished ? clear() : activate())}
         >
-          <i className={active ? 'fa fa-pause' : finished ? 'fa fa-check' : 'fa fa-play'}></i>
-        </span>
+          <i className={active ? 'fa fa-pause' : finished ? 'fa fa-check' : 'fa fa-play'} />
+        </button>
       </div>
       {brew && !active && !finished && (
         <div className="flex flex-row gap-2 items-center justify-center">
-          <div className="inline-flex rounded-md">
-            <span className={`mode-selector ${brewTarget === 0 && 'selected'}`} onClick={() => changeTarget(0)}>
-              <i className="fa-solid fa-clock"></i>
-            </span>
-            <span className={`mode-selector ${brewTarget === 1 && 'selected'}`} onClick={() => changeTarget(1)}>
-              <i className="fa-solid fa-weight-scale"></i>
-            </span>
+          <div className="join">
+            <button 
+              className={`join-item btn ${brewTarget === 0 ? 'btn-primary' : 'btn-outline'}`} 
+              onClick={() => changeTarget(0)}
+            >
+              <i className="fa-solid fa-clock" />
+            </button>
+            <button 
+              className={`join-item btn ${brewTarget === 1 ? 'btn-primary' : 'btn-outline'}`} 
+              onClick={() => changeTarget(1)}
+            >
+              <i className="fa-solid fa-weight-scale" />
+            </button>
           </div>
         </div>
       )}
