@@ -112,9 +112,9 @@ const ProcessControls = (props) => {
       return 'fa fa-pause';
     } else if (finished) {
       return 'fa fa-check';
-    } else {
+    } 
       return 'fa fa-play';
-    }
+    
   };
 
   return (

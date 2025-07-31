@@ -1,20 +1,12 @@
 import { useCallback, useContext } from 'preact/hooks';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { computed } from '@preact/signals';
 import { Chart, LineController, TimeScale, LinearScale, PointElement, LineElement, Legend, Filler } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import ProcessControls from './ProcessControls.jsx';
-Chart.register(LineController);
-Chart.register(TimeScale);
-Chart.register(LinearScale);
-Chart.register(PointElement);
-Chart.register(LineElement);
-Chart.register(Filler);
-Chart.register(Legend);
 
-const status = computed(() => machine.value.status);
+Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
 export function Home() {
   const apiService = useContext(ApiServiceContext);
