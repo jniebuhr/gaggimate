@@ -3,10 +3,10 @@
 @plugin 'daisyui';
 
 @plugin "daisyui/theme" {
-  name: "light";
+  name: 'light';
   default: true;
   prefersdark: false;
-  color-scheme: "light";
+  color-scheme: 'light';
   --color-base-100: oklch(100% 0 0);
   --color-base-200: oklch(93% 0 0);
   --color-base-300: oklch(86% 0 0);
@@ -38,10 +38,10 @@
 }
 
 @plugin "daisyui/theme" {
-  name: "dark";
+  name: 'dark';
   default: false;
   prefersdark: true;
-  color-scheme: "dark";
+  color-scheme: 'dark';
   --color-base-100: oklch(30.857% 0.023 264.149);
   --color-base-200: oklch(28.036% 0.019 264.182);
   --color-base-300: oklch(26.346% 0.018 262.177);
@@ -73,10 +73,10 @@
 }
 
 @plugin "daisyui/theme" {
-  name: "coffee";
+  name: 'coffee';
   default: false;
   prefersdark: false;
-  color-scheme: "dark";
+  color-scheme: 'dark';
   --color-base-100: oklch(24% 0.023 329.708);
   --color-base-200: oklch(21% 0.021 329.708);
   --color-base-300: oklch(16% 0.019 329.708);
@@ -108,10 +108,10 @@
 }
 
 @plugin "daisyui/theme" {
-  name: "nord";
+  name: 'nord';
   default: false;
   prefersdark: false;
-  color-scheme: "light";
+  color-scheme: 'light';
   --color-base-100: oklch(95.127% 0.007 260.731);
   --color-base-200: oklch(93.299% 0.01 261.788);
   --color-base-300: oklch(89.925% 0.016 262.749);
@@ -141,9 +141,6 @@
   --depth: 0;
   --noise: 0;
 }
-
-
-
 
 @theme {
   --font-logo: 'Montserrat';

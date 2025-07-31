@@ -26,11 +26,11 @@ export function Home() {
       <div className="col-span-12">
         <h2 className="text-2xl font-bold">Dashboard</h2>
       </div>
-      
+
       <Card sm={12}>
         <OverviewChart />
       </Card>
-      
+
       <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
     </div>
   );

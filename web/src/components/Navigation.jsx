@@ -1,17 +1,17 @@
 import { useLocation, useRoute } from 'preact-iso';
 
 function MenuItem(props) {
-  let className = 'btn btn-sm justify-start gap-2 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none';
+  let className =
+    'btn btn-md justify-start gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
   const { path } = useLocation();
   if (props.active || path === props.link) {
-    className = 'btn btn-sm justify-start gap-2 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content';
+    className =
+      'btn btn-md justify-start gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
   }
   return (
     <a href={props.link} className={className}>
-      <div className="min-w-6 flex flex-row justify-center align-middle">
-        <i className={props.iconClass || ''} />
-      </div>
-      <span className="grow">{props.label}</span>
+      <i className={props.iconClass || ''} />
+      <span>{props.label}</span>
     </a>
   );
 }

@@ -3,20 +3,18 @@ import { useLocation } from 'preact-iso';
 
 function HeaderItem(props) {
   const { path } = useLocation();
-  let className = 'btn btn-sm justify-start gap-2 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none';
-  
+  let className =
+    'btn btn-md justify-start gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
+
   if (path === props.link) {
-    className = 'btn btn-sm justify-start gap-2 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content';
+    className =
+      'btn btn-md justify-start gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
   }
-  
+
   return (
-    <a
-      href={props.link}
-      onClick={props.onClick}
-      className={className}
-    >
+    <a href={props.link} onClick={props.onClick} className={className}>
       <i className={props.iconClass} />
-      <span className="flex-1">{props.label}</span>
+      <span>{props.label}</span>
     </a>
   );
 }
@@ -70,12 +68,7 @@ export function Header() {
                 onClick={() => openCb(!open)}
                 className="btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none"
               >
-                <svg
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                >
+                <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
                   <path
                     fillRule="evenodd"
                     d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
