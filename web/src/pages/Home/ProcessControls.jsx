@@ -119,18 +119,6 @@ const ProcessControls = (props) => {
 
   return (
     <div className={`flex flex-col justify-between ${shouldExpand ? 'min-h-[600px]' : 'min-h-[300px]'}`}>
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0">
-        <div className="text-base sm:text-lg text-center sm:text-left">
-          <span className="text-base-content">{status.value.currentTemperature || 0}</span>
-          <span className="text-success font-semibold"> / {status.value.targetTemperature || 0}°C</span>
-        </div>
-        <div className="text-base sm:text-lg text-center sm:text-right">
-          <span className="text-base-content">
-            {status.value.currentPressure?.toFixed(0) || 0} / {status.value.targetPressure?.toFixed(0) || 0} bar
-          </span>
-        </div>
-      </div>
-
       <div className="flex justify-center mb-4">
         <div className="flex bg-base-300 rounded-full p-1 w-full max-w-md">
           {[
@@ -149,6 +137,18 @@ const ProcessControls = (props) => {
               {tab.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0">
+        <div className="text-base sm:text-lg text-center sm:text-left">
+          <span className="text-base-content">{status.value.currentTemperature || 0}</span>
+          <span className="text-success font-semibold"> / {status.value.targetTemperature || 0}°C</span>
+        </div>
+        <div className="text-base sm:text-lg text-center sm:text-right">
+          <span className="text-base-content">
+            {status.value.currentPressure?.toFixed(0) || 0} / {status.value.targetPressure?.toFixed(0) || 0} bar
+          </span>
         </div>
       </div>
 
