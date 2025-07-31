@@ -21,7 +21,7 @@ const BrewProgress = (props) => {
   const elapsed = Math.floor(processInfo.e / 1000);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full space-y-6">
+    <div className="flex flex-col items-center justify-center w-full space-y-4">
       {active && (
         <>
           <div className="text-center space-y-2">
@@ -40,7 +40,7 @@ const BrewProgress = (props) => {
             </div>
           </div>
 
-          <div className="text-center space-y-1">
+          <div className="text-center space-y-2">
             <div className="text-base-content/60 text-sm">
               {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(0)}s`}
               {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(0)}g`}
@@ -67,6 +67,9 @@ const ProcessControls = (props) => {
   const active = !!processInfo?.a;
   const finished = !!processInfo && !active;
   const apiService = useContext(ApiServiceContext);
+
+  // Determine if we should show expanded view
+  const shouldExpand = active || finished || (brew && !active && !finished);
 
   const changeTarget = useCallback(
     (target) => {
@@ -117,8 +120,8 @@ const ProcessControls = (props) => {
 
   return (
     <Card sm={12}>
-      <div className="min-h-[600px] flex flex-col justify-between">
-        <div className="flex justify-between items-center mb-6">
+      <div className={`flex flex-col justify-between ${shouldExpand ? 'min-h-[600px]' : 'min-h-[300px]'}`}>
+        <div className="flex justify-between items-center mb-4">
           <div className="text-lg">
             <span className="text-base-content">{status.value.currentTemperature || 0}</span>
             <span className="text-success font-semibold"> / {status.value.targetTemperature || 0}°C</span>
@@ -130,7 +133,7 @@ const ProcessControls = (props) => {
           </div>
         </div>
 
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-4">
           <div className="flex bg-base-300 rounded-full p-1">
             {[
               { id: 0, label: 'Standby' },
@@ -140,7 +143,7 @@ const ProcessControls = (props) => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                className={`px-6 py-2 rounded-full transition-all duration-200 ${
+                className={`px-4 py-2 rounded-full transition-all duration-200 ${
                   mode === tab.id ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'
                 }`}
                 onClick={() => changeMode(tab.id)}
@@ -151,33 +154,56 @@ const ProcessControls = (props) => {
           </div>
         </div>
 
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-2xl font-semibold text-base-content">{status.value.selectedProfile || 'Default'}</span>
-            <i className="fa-solid fa-rectangle-list text-base-content/60" />
-          </div>
-          <div className="text-base-content/60 text-sm">Current Profile</div>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center">
-          {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
-          {!brew && (
-            <div className="text-center space-y-4">
-              <div className="text-base-content text-2xl font-bold">
-                {mode === 0 && 'Standby Mode'}
-                {mode === 2 && 'Steam Mode'}
-                {mode === 3 && 'Water Mode'}
+        {shouldExpand && (
+          <>
+            <div className="text-center mb-4">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-2xl font-semibold text-base-content">{status.value.selectedProfile || 'Default'}</span>
+                <i className="fa-solid fa-rectangle-list text-base-content/60" />
               </div>
-              <div className="text-base-content/60">
+              <div className="text-base-content/60 text-sm">Current Profile</div>
+            </div>
+
+            <div className="flex-1 flex items-center justify-center">
+              {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
+              {!brew && (
+                <div className="text-center space-y-2">
+                  <div className="text-base-content text-2xl font-bold">
+                    {mode === 0 && 'Standby Mode'}
+                    {mode === 2 && 'Steam Mode'}
+                    {mode === 3 && 'Water Mode'}
+                  </div>
+                  <div className="text-base-content/60">
+                    {mode === 0 && 'Machine is ready'}
+                    {mode === 2 && 'Steam function active'}
+                    {mode === 3 && 'Hot water function active'}
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {!shouldExpand && (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <div className="text-base-content text-xl font-semibold">
+                {mode === 0 && 'Standby'}
+                {mode === 1 && 'Brew Mode'}
+                {mode === 2 && 'Steam'}
+                {mode === 3 && 'Water'}
+              </div>
+              <div className="text-base-content/60 text-sm">
                 {mode === 0 && 'Machine is ready'}
-                {mode === 2 && 'Steam function active'}
-                {mode === 3 && 'Hot water function active'}
+                {mode === 1 && 'Select brew target to start'}
+                {mode === 2 && 'Steam function available'}
+                {mode === 3 && 'Hot water function available'}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div className="flex flex-col items-center space-y-6 mt-8">
+        <div className="flex flex-col items-center space-y-4 mt-4">
           {(mode === 1 || mode === 3) && (
             <button className="btn btn-circle btn-lg btn-primary" onClick={handleButtonClick}>
               <i className={`text-2xl ${getButtonIcon()}`} />
@@ -186,23 +212,13 @@ const ProcessControls = (props) => {
 
           {brew && !active && !finished && (
             <div className="flex bg-base-300 rounded-full p-1">
-              <button
-                className={`px-4 py-2 rounded-full transition-all duration-200 flex items-center gap-2 ${
-                  brewTarget === 0 ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:text-base-content'
-                }`}
-                onClick={() => changeTarget(0)}
-              >
+              <button className={`px-4 py-2 rounded-full transition-all duration-200 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`} onClick={() => changeTarget(0)}>
                 <i className="fa-solid fa-clock" />
-                <span className="text-sm">Time</span>
+                <span>Time</span>
               </button>
-              <button
-                className={`px-4 py-2 rounded-full transition-all duration-200 flex items-center gap-2 ${
-                  brewTarget === 1 ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:text-base-content'
-                }`}
-                onClick={() => changeTarget(1)}
-              >
+              <button className={`px-4 py-2 rounded-full transition-all duration-200 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`} onClick={() => changeTarget(1)}>
                 <i className="fa-solid fa-weight-scale" />
-                <span className="text-sm">Weight</span>
+                <span>Weight</span>
               </button>
             </div>
           )}

@@ -22,9 +22,9 @@ export function Home() {
   const mode = machine.value.status.mode;
 
   return (
-    <div key="home" className="grid grid-cols-1 gap-6 sm:grid-cols-12 md:gap-6">
+    <div key="home" className="grid grid-cols-1 gap-4 sm:grid-cols-12">
       <div className="col-span-12">
-        <h2 className="text-2xl font-bold">Dashboard</h2>
+        <h2 className="text-2xl font-bold text-base-content">Dashboard</h2>
       </div>
 
       <Card sm={12}>

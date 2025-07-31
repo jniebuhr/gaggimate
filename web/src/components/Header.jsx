@@ -33,7 +33,7 @@ export function Header() {
         <div className="flex justify-between border-b-2 border-base-300 py-6">
           <div className="flex items-center">
             <a href="/" className="inline-flex" onClick={() => openCb(false)}>
-              <span className="text-3xl font-light text-[#333333] dark:text-gray-300 font-logo">
+              <span className="text-3xl font-light text-base-content font-logo">
                 <span className="font-semibold">GAGGI</span>MATE
               </span>
             </a>
