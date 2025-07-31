@@ -31,9 +31,9 @@ export function Home() {
         <OverviewChart />
       </Card>
       
-      <div className="col-span-12">
+      <Card sm={12}>
         <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
-      </div>
+      </Card>
     </div>
   );
 }

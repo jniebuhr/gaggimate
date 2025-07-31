@@ -120,7 +120,7 @@ const ProcessControls = (props) => {
   };
 
   return (
-    <div className="bg-base-200 rounded-2xl p-8 min-h-[600px] flex flex-col justify-between">
+    <div className="min-h-[600px] flex flex-col justify-between">
       <div className="flex justify-between items-center mb-6">
         <div className="text-lg">
           <span className="text-base-content">{status.value.currentTemperature || 0}</span>
