@@ -1,6 +1,7 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext } from 'preact/hooks';
+import PropTypes from 'prop-types';
 
 const status = computed(() => machine.value.status);
 
@@ -62,6 +63,7 @@ const BrewProgress = (props) => {
 };
 
 const ProcessControls = (props) => {
+  // brew is true when mode equals 1 (Brew mode), false otherwise
   const { brew, mode, changeMode } = props;
   const brewTarget = status.value.brewTarget;
   const processInfo = status.value.process;
@@ -217,6 +219,12 @@ const ProcessControls = (props) => {
       </div>
     </div>
   );
+};
+
+ProcessControls.propTypes = {
+  brew: PropTypes.bool.isRequired,
+  mode: PropTypes.oneOf([0, 1, 2, 3]).isRequired,
+  changeMode: PropTypes.func.isRequired,
 };
 
 export default ProcessControls;
