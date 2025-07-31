@@ -115,16 +115,12 @@ export function OTA() {
           </div>
 
           <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium">
-              Hardware
-            </label>
+            <label className="text-sm font-medium">Hardware</label>
             <div className="input input-bordered bg-base-200 cursor-default">{formData.hardware}</div>
           </div>
 
           <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium">
-              Controller version
-            </label>
+            <label className="text-sm font-medium">Controller version</label>
             <div className="input input-bordered bg-base-200 cursor-default">
               {formData.controllerVersion}
               {formData.controllerUpdateAvailable && (
@@ -134,21 +130,21 @@ export function OTA() {
           </div>
 
           <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium">
-              Display version
-            </label>
+            <label className="text-sm font-medium">Display version</label>
             <div className="input input-bordered bg-base-200 cursor-default">
               {formData.displayVersion}
-              {formData.displayUpdateAvailable && <span className="font-bold text-primary">(Update available: {formData.latestVersion})</span>}
+              {formData.displayUpdateAvailable && (
+                <span className="font-bold text-primary">(Update available: {formData.latestVersion})</span>
+              )}
             </div>
           </div>
-          
+
           <div className="alert alert-warning">
             <span>Make sure to backup your profiles from the profile screen before updating the display.</span>
           </div>
         </div>
       </div>
-      
+
       <div className="col-span-12 flex flex-col sm:flex-row flex-wrap gap-2">
         <button type="submit" className="btn btn-primary" disabled={submitting}>
           Save & Refresh

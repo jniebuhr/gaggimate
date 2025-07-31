@@ -59,16 +59,16 @@ function getChartData(data) {
             boxWidth: 12,
             padding: 8,
             font: {
-              size: window.innerWidth < 640 ? 10 : 12
-            }
-          }
+              size: window.innerWidth < 640 ? 10 : 12,
+            },
+          },
         },
         title: {
           display: true,
           text: 'Temperature History',
           font: {
-            size: window.innerWidth < 640 ? 14 : 16
-          }
+            size: window.innerWidth < 640 ? 14 : 16,
+          },
         },
       },
       animation: false,
@@ -79,7 +79,7 @@ function getChartData(data) {
           max: 160,
           ticks: {
             font: {
-              size: window.innerWidth < 640 ? 10 : 12
+              size: window.innerWidth < 640 ? 10 : 12,
             },
             callback: (value) => {
               return `${value} °C`;
@@ -93,7 +93,7 @@ function getChartData(data) {
           position: 'right',
           ticks: {
             font: {
-              size: window.innerWidth < 640 ? 10 : 12
+              size: window.innerWidth < 640 ? 10 : 12,
             },
             callback: (value) => {
               return `${value} bar / g/s`;
@@ -113,9 +113,9 @@ function getChartData(data) {
           ticks: {
             source: 'auto',
             font: {
-              size: window.innerWidth < 640 ? 10 : 12
+              size: window.innerWidth < 640 ? 10 : 12,
             },
-            maxTicksLimit: window.innerWidth < 640 ? 5 : 10
+            maxTicksLimit: window.innerWidth < 640 ? 5 : 10,
           },
         },
       },
@@ -127,12 +127,12 @@ export function OverviewChart() {
   const [chart, setChart] = useState(null);
   const ref = useRef();
   const chartData = getChartData(machine.value.history);
-  
+
   useEffect(() => {
     const ct = new Chart(ref.current, chartData);
     setChart(ct);
   }, [ref]);
-  
+
   useEffect(() => {
     const cd = getChartData(machine.value.history);
     chart.data = cd.data;
@@ -146,28 +146,28 @@ export function OverviewChart() {
 
     const handleResize = () => {
       const isSmallScreen = window.innerWidth < 640;
-      
+
       // Update legend font size
       chart.options.plugins.legend.labels.font.size = isSmallScreen ? 10 : 12;
-      
+
       // Update title font size
       chart.options.plugins.title.font.size = isSmallScreen ? 14 : 16;
-      
+
       // Update axis font sizes
       chart.options.scales.y.ticks.font.size = isSmallScreen ? 10 : 12;
       chart.options.scales.y1.ticks.font.size = isSmallScreen ? 10 : 12;
       chart.options.scales.x.ticks.font.size = isSmallScreen ? 10 : 12;
-      
+
       // Update maxTicksLimit for x-axis
       chart.options.scales.x.ticks.maxTicksLimit = isSmallScreen ? 5 : 10;
-      
+
       // Update the chart to apply changes
       chart.update('none'); // Use 'none' mode for better performance
     };
 
     // Add event listener
     window.addEventListener('resize', handleResize);
-    
+
     // Initial call to ensure correct sizing
     handleResize();
 

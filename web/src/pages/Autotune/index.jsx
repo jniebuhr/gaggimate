@@ -9,7 +9,7 @@ export function Autotune() {
   const [result, setResult] = useState(null);
   const [time, setTime] = useState(60);
   const [samples, setSamples] = useState(4);
-  
+
   const onStart = useCallback(() => {
     apiService.send({
       tp: 'req:autotune-start',
@@ -18,7 +18,7 @@ export function Autotune() {
     });
     setActive(true);
   }, [time, samples, apiService]);
-  
+
   useEffect(() => {
     const listenerId = apiService.on('evt:autotune-result', (msg) => {
       setActive(false);
@@ -63,7 +63,9 @@ export function Autotune() {
                 </div>
               </div>
               <div className="mockup-code bg-base-200 max-w-md mx-auto">
-                <pre data-prefix="$"><code>{result}</code></pre>
+                <pre data-prefix="$">
+                  <code>{result}</code>
+                </pre>
               </div>
             </div>
           )}
@@ -118,20 +120,17 @@ export function Autotune() {
 
       <div className="flex justify-start space-x-4">
         {!active && !result && (
-          <button 
-            className="btn btn-primary btn-lg" 
+          <button
+            className="btn btn-primary btn-lg"
             onClick={onStart}
             disabled={time < 0 || time > 100 || samples < 1 || samples > 10}
           >
             Start Autotune
           </button>
         )}
-        
+
         {result && (
-          <button 
-            className="btn btn-outline btn-lg" 
-            onClick={() => setResult(null)}
-          >
+          <button className="btn btn-outline btn-lg" onClick={() => setResult(null)}>
             Back to Settings
           </button>
         )}

@@ -1,5 +1,5 @@
 export default function Card(props) {
-  let spanClass = '';
+  let spanClass = props.className || '';
   if (props.xs) {
     spanClass += ` col-span-${props.xs}`;
   }
@@ -24,7 +24,7 @@ export default function Card(props) {
           </div>
         )}
 
-        <div className="card-body p-4 sm:p-6 flex flex-col gap-2">{props.children}</div>
+        <div className="card-body p-2 sm:p-6 flex flex-col gap-2">{props.children}</div>
       </div>
     </>
   );

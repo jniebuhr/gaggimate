@@ -55,7 +55,7 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
 
   return (
     <Card sm={12}>
-      <div className="flex flex-row items-center p-4">
+      <div className="flex flex-row items-center">
         <div className="flex flex-row justify-center items-center mr-4">
           <label
             className="flex items-center relative cursor-pointer"
@@ -94,7 +94,7 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
                 data-tooltip="Export"
                 data-tooltip-position="left"
                 onClick={() => onDownload()}
-                className="btn btn-sm btn-ghost text-info"
+                className="btn btn-sm btn-ghost text-primary"
               >
                 <i className="fa fa-file-export" />
               </button>
@@ -289,11 +289,11 @@ export function ProfileList() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
         <div className="sm:col-span-12 flex flex-row items-center gap-4">
           <h2 className="text-2xl font-bold text-base-content flex-grow">Profiles</h2>
-          <button data-tooltip="Export" onClick={onExport} className="btn btn-sm btn-ghost text-info">
+          <button data-tooltip="Export" onClick={onExport} className="btn btn-ghost text-primary">
             <i className="fa fa-file-export" />
           </button>
           <div>
-            <label data-tooltip="Import" htmlFor="profileImport" className="btn btn-sm btn-ghost text-info">
+            <label data-tooltip="Import" htmlFor="profileImport" className="btn btn-ghost text-primary">
               <i className="fa fa-file-import" />
             </label>
           </div>

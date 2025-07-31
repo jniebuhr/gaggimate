@@ -5,15 +5,15 @@ export function Scales() {
   const [key, setKey] = useState(0);
   const [scaleData, setScaleData] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
-  
+
   useEffect(() => {
     const intervalHandle = setInterval(() => {
       setKey(Date.now().valueOf());
     }, 10000);
-    
+
     return () => clearInterval(intervalHandle);
   }, []);
-  
+
   const {
     isLoading,
     isError,
@@ -23,7 +23,7 @@ export function Scales() {
     const data = await response.json();
     return data;
   });
-  
+
   const {
     isInfoLoading,
     isInfoError,
@@ -82,11 +82,7 @@ export function Scales() {
         <div className="card-body">
           <div className="flex items-center justify-between mb-6">
             <h2 className="card-title">Available Scales</h2>
-            <button 
-              className={`btn btn-primary ${isScanning ? 'loading' : ''}`}
-              onClick={onScan}
-              disabled={isScanning}
-            >
+            <button className={`btn btn-primary ${isScanning ? 'loading' : ''}`} onClick={onScan} disabled={isScanning}>
               {isScanning ? 'Scanning...' : 'Scan for Scales'}
             </button>
           </div>
@@ -122,14 +118,9 @@ export function Scales() {
                       </div>
                       <div className="flex items-center space-x-3">
                         {scale.connected ? (
-                          <div className="badge badge-success gap-2">
-                            Connected
-                          </div>
+                          <div className="badge badge-success gap-2">Connected</div>
                         ) : (
-                          <button 
-                            className="btn btn-primary btn-sm"
-                            onClick={() => onConnect(scale.uuid)}
-                          >
+                          <button className="btn btn-primary btn-sm" onClick={() => onConnect(scale.uuid)}>
                             Connect
                           </button>
                         )}

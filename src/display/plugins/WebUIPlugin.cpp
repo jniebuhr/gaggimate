@@ -180,6 +180,7 @@ void WebUIPlugin::setupServer() {
                                 if (doc["mode"].is<uint8_t>()) {
                                     auto mode = doc["mode"].as<uint8_t>();
                                     controller->deactivate();
+                                    controller->clear();
                                     controller->setMode(mode);
                                 }
                             } else if (msgType == "req:change-brew-target") {

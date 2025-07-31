@@ -28,9 +28,9 @@ export function Header() {
     [setOpen]
   );
   return (
-    <header id="page-header" className="z-1 flex flex-none items-center">
-      <div className="container mx-auto px-4 lg:px-8 xl:max-w-7xl">
-        <div className="flex justify-between border-b-2 border-base-300 py-6">
+    <header id="page-header" className="z-1">
+      <div className="container-fluid xl:container mx-auto px-4 lg:px-8">
+        <div className="flex justify-between border-b-2 border-base-300 py-2 lg:py-6">
           <div className="flex items-center">
             <a href="/" className="inline-flex" onClick={() => openCb(false)}>
               <span className="text-3xl font-light text-base-content font-logo">

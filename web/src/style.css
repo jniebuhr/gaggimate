@@ -6,7 +6,7 @@
   name: 'light';
   default: true;
   prefersdark: false;
-  color-scheme: "light";
+  color-scheme: 'light';
   --color-base-100: oklch(100% 0 0);
   --color-base-200: oklch(97.466% 0.011 259.822);
   --color-base-300: oklch(93.268% 0.016 262.751);
@@ -310,4 +310,3 @@
 [data-tooltip]:hover::before {
   opacity: 1;
 }
-
