@@ -9,6 +9,7 @@ export function Autotune() {
   const [result, setResult] = useState(null);
   const [time, setTime] = useState(60);
   const [samples, setSamples] = useState(4);
+  
   const onStart = useCallback(() => {
     apiService.send({
       tp: 'req:autotune-start',
@@ -17,6 +18,7 @@ export function Autotune() {
     });
     setActive(true);
   }, [time, samples, apiService]);
+  
   useEffect(() => {
     const listenerId = apiService.on('evt:autotune-result', (msg) => {
       setActive(false);
@@ -28,80 +30,113 @@ export function Autotune() {
   }, [apiService]);
 
   return (
-    <div key="autotune" className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
-      <div className="sm:col-span-12">
-        <h2 className="text-2xl font-bold">PID Autotune</h2>
+    <div className="container mx-auto p-4 space-y-6">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-base-content">PID Autotune</h1>
+        <p className="text-base-content/70 mt-2">Optimize your PID controller settings automatically</p>
       </div>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 sm:col-span-12">
-        <div className="lg:p-6 p-2 grid grid-cols-1 gap-2 sm:grid-cols-12">
+
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
           {active && (
-            <>
-              <div className="col-span-12">
+            <div className="space-y-6">
+              <div className="w-full">
                 <OverviewChart />
               </div>
-              <div className="col-span-12 text-lg gap-4 py-6 flex flex-row justify-center">
-                <Spinner size={8} />
-                <span>Autotune in Progress</span>
+              <div className="flex flex-col items-center justify-center space-y-4 py-8">
+                <div className="flex items-center space-x-3">
+                  <Spinner size={8} />
+                  <span className="text-lg font-medium">Autotune in Progress</span>
+                </div>
+                <div className="alert alert-info max-w-md">
+                  <span>Please wait while the system optimizes your PID settings. This may take up to 30 seconds.</span>
+                </div>
               </div>
-            </>
+            </div>
           )}
+
           {result && (
-            <>
-              <div className="col-span-12 gap-4 flex flex-col items-center justify-center p-6">
-                <i className="fa fa-check text-green-600 text-4xl" />
-                <span className="text-lg">Process successful. Your new values {result} have been saved.</span>
+            <div className="text-center space-y-6">
+              <div className="alert alert-success max-w-md mx-auto">
+                <div>
+                  <h3 className="font-bold">Autotune Complete!</h3>
+                  <div className="text-sm">Your new PID values have been saved successfully.</div>
+                </div>
               </div>
-            </>
+              <div className="mockup-code bg-base-200 max-w-md mx-auto">
+                <pre data-prefix="$"><code>{result}</code></pre>
+              </div>
+            </div>
           )}
+
           {!active && !result && (
-            <>
-              <div className="sm:col-span-12">
-                Please run the Autotune with the boiler below 50°C. The process should take about 30 seconds.
+            <div className="space-y-6">
+              <div className="alert alert-warning">
+                <span>Please ensure the boiler temperature is below 50°C before starting the autotune process.</span>
               </div>
-              <div className="sm:col-span-6">
-                <label htmlFor="testTime" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                  Tuning Goal (0 = Conservative, 100 = Aggressive)
-                </label>
-                <input
-                  id="testTime"
-                  name="testTime"
-                  type="number"
-                  className="input-field"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text font-medium">Tuning Goal</span>
+                    <span className="label-text-alt">0 = Conservative, 100 = Aggressive</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    className="input input-bordered w-full"
+                    value={time}
+                    onChange={(e) => setTime(parseInt(e.target.value) || 0)}
+                  />
+                  <label className="label">
+                    <span className="label-text-alt">Higher values result in faster response but may cause overshoot</span>
+                  </label>
+                </div>
+
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text font-medium">Window Size</span>
+                    <span className="label-text-alt">Number of samples</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    className="input input-bordered w-full"
+                    value={samples}
+                    onChange={(e) => setSamples(parseInt(e.target.value) || 1)}
+                  />
+                  <label className="label">
+                    <span className="label-text-alt">More samples provide better accuracy but take longer</span>
+                  </label>
+                </div>
               </div>
-              <div className="sm:col-span-6">
-                <label htmlFor="samples" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                  Window Size
-                </label>
-                <input
-                  id="samples"
-                  name="samples"
-                  type="number"
-                  className="input-field"
-                  value={samples}
-                  onChange={(e) => setSamples(e.target.value)}
-                />
-              </div>
-            </>
+            </div>
           )}
         </div>
       </div>
-      {!active && !result && (
-        <div className="sm:col-span-12 flex flex-row">
-          <button type="submit" className="menu-button" onClick={() => onStart()}>
-            Start
+
+      <div className="flex justify-start space-x-4">
+        {!active && !result && (
+          <button 
+            className="btn btn-primary btn-lg" 
+            onClick={onStart}
+            disabled={time < 0 || time > 100 || samples < 1 || samples > 10}
+          >
+            Start Autotune
           </button>
-        </div>
-      )}
-      {result && (
-        <div className="sm:col-span-12 flex flex-row">
-          <button type="submit" className="menu-button" onClick={() => setResult(null)}>
-            Back
+        )}
+        
+        {result && (
+          <button 
+            className="btn btn-outline btn-lg" 
+            onClick={() => setResult(null)}
+          >
+            Back to Settings
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
