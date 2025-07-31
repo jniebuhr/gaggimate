@@ -2,6 +2,7 @@ import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext } from 'preact/hooks';
 import PropTypes from 'prop-types';
+import Card from '../../components/Card.jsx';
 
 const status = computed(() => machine.value.status);
 
@@ -120,7 +121,8 @@ const ProcessControls = (props) => {
   };
 
   return (
-    <div className="min-h-[600px] flex flex-col justify-between">
+    <Card sm={12}>
+      <div className="min-h-[600px] flex flex-col justify-between">
       <div className="flex justify-between items-center mb-6">
         <div className="text-lg">
           <span className="text-base-content">{status.value.currentTemperature || 0}</span>
@@ -217,7 +219,8 @@ const ProcessControls = (props) => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </Card>
   );
 };
 

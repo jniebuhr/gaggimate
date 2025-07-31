@@ -31,9 +31,7 @@ export function Home() {
         <OverviewChart />
       </Card>
       
-      <Card sm={12}>
-        <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
-      </Card>
+      <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
     </div>
   );
 }
