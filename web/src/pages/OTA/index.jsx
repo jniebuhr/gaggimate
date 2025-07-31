@@ -37,7 +37,7 @@ export function OTA() {
   const formRef = useRef();
 
   const onSubmit = useCallback(
-    async (e, update = false) => {
+    async (e) => {
       e.preventDefault();
       setSubmitting(true);
       const form = formRef.current;
@@ -65,7 +65,7 @@ export function OTA() {
 
   if (phase > 0) {
     return (
-      <div class="p-16 flex flex-col items-center gap-5">
+      <div className="p-16 flex flex-col items-center gap-5">
         <Spinner size={8} />
         <span className="text-xl font-medium">
           {phase === 1
@@ -78,7 +78,7 @@ export function OTA() {
         </span>
         <span className="text-lg font-medium">{phase === 4 ? 100 : progress}%</span>
         {phase === 4 && (
-          <a href="/" className="menu-button">
+          <a href="/" className="btn btn-primary">
             Back
           </a>
         )}
@@ -98,13 +98,13 @@ export function OTA() {
       <div className="sm:col-span-12">
         <h2 className="text-2xl font-bold">System & Updates</h2>
       </div>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white col-span-12 dark:bg-gray-800 dark:border-gray-600">
-        <div className="p-6 flex flex-col gap-4">
-          <div>
-            <label for="channel" class="block font-medium text-gray-700 dark:text-gray-400">
+      <div className="card bg-base-100 shadow-xl col-span-12">
+        <div className="card-body space-y-6">
+          <div className="flex flex-col space-y-2">
+            <label htmlFor="channel" className="text-sm font-medium">
               Update Channel
             </label>
-            <select id="channel" name="channel" class="input-field">
+            <select id="channel" name="channel" className="select select-bordered w-full">
               <option value="latest" selected={formData.channel === 'latest'}>
                 Stable
               </option>
@@ -114,55 +114,66 @@ export function OTA() {
             </select>
           </div>
 
-          <div>
-            <span className="block font-medium text-gray-700 dark:text-gray-400">Hardware</span>
-            <span className="display-field">{formData.hardware}</span>
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium">
+              Hardware
+            </label>
+            <div className="input input-bordered bg-base-200 cursor-default">{formData.hardware}</div>
           </div>
 
-          <div>
-            <span className="block font-medium text-gray-700 dark:text-gray-400">Controller version</span>
-            <span className="display-field">
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium">
+              Controller version
+            </label>
+            <div className="input input-bordered bg-base-200 cursor-default">
               {formData.controllerVersion}
               {formData.controllerUpdateAvailable && (
-                <span className="font-bold">(Update available: {formData.latestVersion})</span>
+                <span className="font-bold text-primary">(Update available: {formData.latestVersion})</span>
               )}
-            </span>
+            </div>
           </div>
 
-          <div>
-            <span className="block font-medium text-gray-700 dark:text-gray-400">Display version</span>
-            <span className="display-field">
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium">
+              Display version
+            </label>
+            <div className="input input-bordered bg-base-200 cursor-default">
               {formData.displayVersion}
-              {formData.displayUpdateAvailable && <span className="font-bold">(Update available: {formData.latestVersion})</span>}
-            </span>
+              {formData.displayUpdateAvailable && <span className="font-bold text-primary">(Update available: {formData.latestVersion})</span>}
+            </div>
           </div>
-          <div>
-            <span className="font-medium">
-              Make sure to backup your profiles from the profile screen before updating the display.
-            </span>
+          
+          <div className="alert alert-info">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Make sure to backup your profiles from the profile screen before updating the display.</span>
           </div>
         </div>
       </div>
-      <div className="col-span-12 flex flex-col sm:flex-row flex-wrap gap-y-1">
-        <button type="submit" className="menu-button" disabled={submitting}>
+      
+      <div className="col-span-12 flex flex-col sm:flex-row flex-wrap gap-2">
+        <button type="submit" className="btn btn-primary" disabled={submitting}>
           Save & Refresh
         </button>
-        <input
+        <button
           type="submit"
           name="update"
-          className="menu-button"
-          value="Update Display"
+          className="btn btn-secondary"
           disabled={!formData.displayUpdateAvailable || submitting}
-          onClick={(e) => onUpdate('display')}
-        />
-        <input
+          onClick={() => onUpdate('display')}
+        >
+          Update Display
+        </button>
+        <button
           type="submit"
           name="update"
-          className="menu-button"
-          value="Update Controller"
+          className="btn btn-accent"
           disabled={!formData.controllerUpdateAvailable || submitting}
-          onClick={(e) => onUpdate('controller')}
-        />
+          onClick={() => onUpdate('controller')}
+        >
+          Update Controller
+        </button>
       </div>
     </form>
   );
