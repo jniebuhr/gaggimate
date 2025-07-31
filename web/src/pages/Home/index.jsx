@@ -35,14 +35,10 @@ export function Home() {
         <h2 className="text-2xl font-bold">Dashboard</h2>
       </div>
       
-      {/* Overview Chart */}
-      <div className="card bg-base-100 shadow-xl col-span-12">
-        <div className="card-body p-6 h-full">
-          <OverviewChart />
-        </div>
-      </div>
+      <Card sm={12}>
+        <OverviewChart />
+      </Card>
       
-      {/* Process Controls - Full Width */}
       <div className="col-span-12">
         <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
       </div>

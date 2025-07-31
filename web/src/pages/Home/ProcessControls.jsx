@@ -97,6 +97,26 @@ const ProcessControls = (props) => {
     });
   }, [apiService]);
 
+  const handleButtonClick = () => {
+    if (active) {
+      deactivate();
+    } else if (finished) {
+      clear();
+    } else {
+      activate();
+    }
+  };
+
+  const getButtonIcon = () => {
+    if (active) {
+      return 'fa fa-pause';
+    } else if (finished) {
+      return 'fa fa-check';
+    } else {
+      return 'fa fa-play';
+    }
+  };
+
   return (
     <div className="bg-base-200 rounded-2xl p-8 min-h-[600px] flex flex-col justify-between">
       <div className="flex justify-between items-center mb-6">
@@ -162,9 +182,9 @@ const ProcessControls = (props) => {
         {(mode === 1 || mode === 3) && (
           <button
             className="btn btn-circle btn-lg btn-primary"
-            onClick={() => (active ? deactivate() : finished ? clear() : activate())}
+            onClick={handleButtonClick}
           >
-            <i className={`text-2xl ${active ? 'fa fa-pause' : finished ? 'fa fa-check' : 'fa fa-play'}`} />
+            <i className={`text-2xl ${getButtonIcon()}`} />
           </button>
         )}
 
