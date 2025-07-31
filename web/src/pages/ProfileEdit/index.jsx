@@ -74,16 +74,16 @@ export function ProfileEdit() {
 
   if (loading) {
     return (
-      <div class="flex flex-row py-16 items-center justify-center w-full">
+      <div className="flex flex-row py-16 items-center justify-center w-full">
         <Spinner size={8} />
       </div>
     );
   }
 
   return (
-    <div key="profile-edit" className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
-      <div className="sm:col-span-12">
-        <h2 className="text-2xl font-bold">{params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}</h2>
+    <div key="profile-edit" className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+      <div className="sm:col-span-12 mb-4">
+        <h2 className="text-2xl font-bold text-base-content">{params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}</h2>
       </div>
 
       {!data?.type && <ProfileTypeSelection onSelect={(type) => setData({ ...data, type })} />}
