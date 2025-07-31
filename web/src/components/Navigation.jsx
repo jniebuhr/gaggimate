@@ -1,10 +1,10 @@
 import { useLocation, useRoute } from 'preact-iso';
 
 function MenuItem(props) {
-  let className = 'btn btn-ghost btn-sm justify-start gap-2 w-full';
+  let className = 'btn btn-sm justify-start gap-2 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none';
   const { path } = useLocation();
   if (props.active || path === props.link) {
-    className += ' btn-active';
+    className = 'btn btn-sm justify-start gap-2 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content';
   }
   return (
     <a href={props.link} className={className}>
@@ -18,21 +18,21 @@ function MenuItem(props) {
 
 export function Navigation(props) {
   return (
-    <nav class="hidden lg:col-span-3 lg:block">
+    <nav className="hidden lg:col-span-3 lg:block">
       <MenuItem label="Dashboard" link="/" iconClass="fa fa-home" />
-      <hr class="h-5 border-0" />
+      <hr className="h-5 border-0" />
       <div className="space-y-1.5">
         <MenuItem label="Profiles" link="/profiles" iconClass="fa fa-list" />
         <MenuItem label="Shot History" link="/history" iconClass="fa fa-timeline" />
       </div>
       <hr className="h-5 border-0" />
-      <div class="space-y-1.5">
+      <div className="space-y-1.5">
         <MenuItem label="PID Autotune" link="/pidtune" iconClass="fa fa-temperature-half" />
         <MenuItem label="Bluetooth Scales" link="/scales" iconClass="fa-brands fa-bluetooth-b" />
         <MenuItem label="Settings" link="/settings" iconClass="fa fa-cog" />
       </div>
-      <hr class="h-5 border-0" />
-      <div class="space-y-1.5">
+      <hr className="h-5 border-0" />
+      <div className="space-y-1.5">
         <MenuItem label="System & Updates" link="/ota" iconClass="fa fa-rotate" />
       </div>
     </nav>

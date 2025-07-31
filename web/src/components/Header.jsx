@@ -1,11 +1,19 @@
 import { useCallback, useState } from 'preact/hooks';
+import { useLocation } from 'preact-iso';
 
 function HeaderItem(props) {
+  const { path } = useLocation();
+  let className = 'btn btn-sm justify-start gap-2 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none';
+  
+  if (path === props.link) {
+    className = 'btn btn-sm justify-start gap-2 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content';
+  }
+  
   return (
     <a
       href={props.link}
       onClick={props.onClick}
-      className="btn btn-ghost btn-sm justify-start gap-2 w-full"
+      className={className}
     >
       <i className={props.iconClass} />
       <span className="flex-1">{props.label}</span>
@@ -39,7 +47,7 @@ export function Header() {
                 rel="noopener noreferrer"
                 href="https://github.com/jniebuhr/gaggimate"
                 target="_blank"
-                className="btn btn-ghost btn-sm btn-circle"
+                className="btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none"
               >
                 <i className="fa-brands fa-github text-lg" />
               </a>
@@ -50,7 +58,7 @@ export function Header() {
                 rel="noopener noreferrer"
                 href="https://discord.gaggimate.eu/"
                 target="_blank"
-                className="btn btn-ghost btn-sm btn-circle"
+                className="btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none"
               >
                 <i className="fa-brands fa-discord text-lg" />
               </a>
@@ -60,7 +68,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => openCb(!open)}
-                className="btn btn-ghost btn-sm btn-circle"
+                className="btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none"
               >
                 <svg
                   fill="currentColor"
