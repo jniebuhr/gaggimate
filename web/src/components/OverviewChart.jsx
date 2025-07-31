@@ -53,14 +53,25 @@ function getChartData(data) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           position: 'top',
           display: true,
+          labels: {
+            boxWidth: 12,
+            padding: 8,
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12
+            }
+          }
         },
         title: {
           display: true,
           text: 'Temperature History',
+          font: {
+            size: window.innerWidth < 640 ? 14 : 16
+          }
         },
       },
       animation: false,
@@ -70,6 +81,9 @@ function getChartData(data) {
           min: 0,
           max: 160,
           ticks: {
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12
+            },
             callback: (value) => {
               return `${value} °C`;
             },
@@ -81,6 +95,9 @@ function getChartData(data) {
           max: 16,
           position: 'right',
           ticks: {
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12
+            },
             callback: (value) => {
               return `${value} bar / g/s`;
             },
@@ -98,6 +115,10 @@ function getChartData(data) {
           },
           ticks: {
             source: 'auto',
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12
+            },
+            maxTicksLimit: window.innerWidth < 640 ? 5 : 10
           },
         },
       },
@@ -120,5 +141,9 @@ export function OverviewChart() {
     chart.update();
   }, [machine.value.history, chart]);
 
-  return <canvas className="w-full" ref={ref} />;
+  return (
+    <div className="w-full h-64 sm:h-80">
+      <canvas className="w-full h-full" ref={ref} />
+    </div>
+  );
 }

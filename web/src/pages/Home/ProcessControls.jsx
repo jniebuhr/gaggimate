@@ -2,7 +2,6 @@ import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext } from 'preact/hooks';
 import PropTypes from 'prop-types';
-import Card from '../../components/Card.jsx';
 
 const status = computed(() => machine.value.status);
 
@@ -21,14 +20,14 @@ const BrewProgress = (props) => {
   const elapsed = Math.floor(processInfo.e / 1000);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full space-y-4">
+    <div className="flex flex-col items-center justify-center w-full space-y-4 px-4">
       {active && (
         <>
           <div className="text-center space-y-2">
-            <div className="text-base-content/60 text-sm font-light tracking-wider">
+            <div className="text-base-content/60 text-xs sm:text-sm font-light tracking-wider">
               {processInfo.s === 'brew' ? 'INFUSION' : 'PREINFUSION'}
             </div>
-            <div className="text-base-content text-4xl font-bold">{processInfo.l}</div>
+            <div className="text-base-content text-2xl sm:text-4xl font-bold">{processInfo.l}</div>
           </div>
 
           <div className="w-full max-w-md">
@@ -41,18 +40,18 @@ const BrewProgress = (props) => {
           </div>
 
           <div className="text-center space-y-2">
-            <div className="text-base-content/60 text-sm">
+            <div className="text-base-content/60 text-xs sm:text-sm">
               {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(0)}s`}
               {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(0)}g`}
             </div>
-            <div className="text-base-content text-3xl font-bold">{formatDuration(elapsed)}</div>
+            <div className="text-base-content text-2xl sm:text-3xl font-bold">{formatDuration(elapsed)}</div>
           </div>
         </>
       )}
       {!active && (
         <div className="text-center space-y-2">
-          <div className="text-base-content text-2xl font-bold">Finished</div>
-          <div className="text-base-content text-3xl font-bold">{formatDuration(elapsed)}</div>
+          <div className="text-base-content text-xl sm:text-2xl font-bold">Finished</div>
+          <div className="text-base-content text-2xl sm:text-3xl font-bold">{formatDuration(elapsed)}</div>
         </div>
       )}
     </div>
@@ -119,112 +118,110 @@ const ProcessControls = (props) => {
   };
 
   return (
-    <Card sm={12}>
-      <div className={`flex flex-col justify-between ${shouldExpand ? 'min-h-[600px]' : 'min-h-[300px]'}`}>
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-lg">
-            <span className="text-base-content">{status.value.currentTemperature || 0}</span>
-            <span className="text-success font-semibold"> / {status.value.targetTemperature || 0}°C</span>
-          </div>
-          <div className="text-lg">
-            <span className="text-base-content">
-              {status.value.currentPressure?.toFixed(0) || 0} / {status.value.targetPressure?.toFixed(0) || 0} bar
-            </span>
-          </div>
+    <div className={`flex flex-col justify-between ${shouldExpand ? 'min-h-[600px]' : 'min-h-[300px]'}`}>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0">
+        <div className="text-base sm:text-lg text-center sm:text-left">
+          <span className="text-base-content">{status.value.currentTemperature || 0}</span>
+          <span className="text-success font-semibold"> / {status.value.targetTemperature || 0}°C</span>
         </div>
-
-        <div className="flex justify-center mb-4">
-          <div className="flex bg-base-300 rounded-full p-1">
-            {[
-              { id: 0, label: 'Standby' },
-              { id: 1, label: 'Brew' },
-              { id: 2, label: 'Steam' },
-              { id: 3, label: 'Water' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                className={`px-4 py-2 rounded-full transition-all duration-200 ${
-                  mode === tab.id ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'
-                }`}
-                onClick={() => changeMode(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {shouldExpand && (
-          <>
-            <div className="text-center mb-4">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <span className="text-2xl font-semibold text-base-content">{status.value.selectedProfile || 'Default'}</span>
-                <i className="fa-solid fa-rectangle-list text-base-content/60" />
-              </div>
-              <div className="text-base-content/60 text-sm">Current Profile</div>
-            </div>
-
-            <div className="flex-1 flex items-center justify-center">
-              {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
-              {!brew && (
-                <div className="text-center space-y-2">
-                  <div className="text-base-content text-2xl font-bold">
-                    {mode === 0 && 'Standby Mode'}
-                    {mode === 2 && 'Steam Mode'}
-                    {mode === 3 && 'Water Mode'}
-                  </div>
-                  <div className="text-base-content/60">
-                    {mode === 0 && 'Machine is ready'}
-                    {mode === 2 && 'Steam function active'}
-                    {mode === 3 && 'Hot water function active'}
-                  </div>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {!shouldExpand && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center space-y-2">
-              <div className="text-base-content text-xl font-semibold">
-                {mode === 0 && 'Standby'}
-                {mode === 1 && 'Brew Mode'}
-                {mode === 2 && 'Steam'}
-                {mode === 3 && 'Water'}
-              </div>
-              <div className="text-base-content/60 text-sm">
-                {mode === 0 && 'Machine is ready'}
-                {mode === 1 && 'Select brew target to start'}
-                {mode === 2 && 'Steam function available'}
-                {mode === 3 && 'Hot water function available'}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-col items-center space-y-4 mt-4">
-          {(mode === 1 || mode === 3) && (
-            <button className="btn btn-circle btn-lg btn-primary" onClick={handleButtonClick}>
-              <i className={`text-2xl ${getButtonIcon()}`} />
-            </button>
-          )}
-
-          {brew && !active && !finished && (
-            <div className="flex bg-base-300 rounded-full p-1">
-              <button className={`px-4 py-2 rounded-full transition-all duration-200 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`} onClick={() => changeTarget(0)}>
-                <i className="fa-solid fa-clock" />
-                <span>Time</span>
-              </button>
-              <button className={`px-4 py-2 rounded-full transition-all duration-200 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`} onClick={() => changeTarget(1)}>
-                <i className="fa-solid fa-weight-scale" />
-                <span>Weight</span>
-              </button>
-            </div>
-          )}
+        <div className="text-base sm:text-lg text-center sm:text-right">
+          <span className="text-base-content">
+            {status.value.currentPressure?.toFixed(0) || 0} / {status.value.targetPressure?.toFixed(0) || 0} bar
+          </span>
         </div>
       </div>
-    </Card>
+
+      <div className="flex justify-center mb-4">
+        <div className="flex bg-base-300 rounded-full p-1 w-full max-w-md">
+          {[
+            { id: 0, label: 'Standby' },
+            { id: 1, label: 'Brew' },
+            { id: 2, label: 'Steam' },
+            { id: 3, label: 'Water' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              className={`flex-1 px-2 sm:px-4 py-2 rounded-full transition-all duration-200 text-sm sm:text-base ${
+                mode === tab.id ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'
+              }`}
+              onClick={() => changeMode(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {shouldExpand && (
+        <>
+          <div className="text-center mb-4">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="text-xl sm:text-2xl font-semibold text-base-content">{status.value.selectedProfile || 'Default'}</span>
+              <i className="fa-solid fa-rectangle-list text-base-content/60" />
+            </div>
+            <div className="text-base-content/60 text-sm">Current Profile</div>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center">
+            {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
+            {!brew && (
+              <div className="text-center space-y-2">
+                <div className="text-xl sm:text-2xl font-bold">
+                  {mode === 0 && 'Standby Mode'}
+                  {mode === 2 && 'Steam Mode'}
+                  {mode === 3 && 'Water Mode'}
+                </div>
+                <div className="text-base-content/60 text-sm">
+                  {mode === 0 && 'Machine is ready'}
+                  {mode === 2 && 'Steam function active'}
+                  {mode === 3 && 'Hot water function active'}
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {!shouldExpand && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-2">
+            <div className="text-lg sm:text-xl font-semibold">
+              {mode === 0 && 'Standby'}
+              {mode === 1 && 'Brew Mode'}
+              {mode === 2 && 'Steam'}
+              {mode === 3 && 'Water'}
+            </div>
+            <div className="text-base-content/60 text-sm">
+              {mode === 0 && 'Machine is ready'}
+              {mode === 1 && 'Select brew target to start'}
+              {mode === 2 && 'Steam function available'}
+              {mode === 3 && 'Hot water function available'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col items-center space-y-4 mt-4">
+        {(mode === 1 || mode === 3) && (
+          <button className="btn btn-circle btn-lg btn-primary" onClick={handleButtonClick}>
+            <i className={`text-2xl ${getButtonIcon()}`} />
+          </button>
+        )}
+
+        {brew && !active && !finished && (
+          <div className="flex bg-base-300 rounded-full p-1 w-full max-w-xs">
+            <button className={`flex-1 px-3 py-2 rounded-full transition-all duration-200 text-sm ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`} onClick={() => changeTarget(0)}>
+              <i className="fa-solid fa-clock" />
+              <span className="ml-1">Time</span>
+            </button>
+            <button className={`flex-1 px-3 py-2 rounded-full transition-all duration-200 text-sm ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`} onClick={() => changeTarget(1)}>
+              <i className="fa-solid fa-weight-scale" />
+              <span className="ml-1">Weight</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

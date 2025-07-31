@@ -19,12 +19,12 @@ export default function Card(props) {
     <>
       <div className={`card bg-base-100 shadow-xl ${spanClass}`}>
         {props.title && (
-          <div className="card-header px-6 pt-6">
-            <h2 className="card-title">{props.title}</h2>
+          <div className="card-header px-4 sm:px-6 pt-4 sm:pt-6">
+            <h2 className="card-title text-lg sm:text-xl">{props.title}</h2>
           </div>
         )}
 
-        <div className="card-body lg:p-6 p-2 flex flex-col gap-2">{props.children}</div>
+        <div className="card-body p-4 sm:p-6 flex flex-col gap-2">{props.children}</div>
       </div>
     </>
   );

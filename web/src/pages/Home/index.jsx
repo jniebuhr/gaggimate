@@ -22,16 +22,18 @@ export function Home() {
   const mode = machine.value.status.mode;
 
   return (
-    <div key="home" className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+    <div key="home" className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-12">
       <div className="col-span-12">
-        <h2 className="text-2xl font-bold text-base-content">Dashboard</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-base-content">Dashboard</h2>
       </div>
 
-      <Card sm={12}>
+      <Card xs={12} sm={12}>
         <OverviewChart />
       </Card>
 
-      <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
+      <Card xs={12} sm={12}>
+        <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
+      </Card>
     </div>
   );
 }
