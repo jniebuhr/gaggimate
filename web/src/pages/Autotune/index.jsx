@@ -31,9 +31,8 @@ export function Autotune() {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <div className="text-center">
+      <div>
         <h1 className="text-3xl font-bold text-base-content">PID Autotune</h1>
-        <p className="text-base-content/70 mt-2">Optimize your PID controller settings automatically</p>
       </div>
 
       <div className="card bg-base-100 shadow-xl">

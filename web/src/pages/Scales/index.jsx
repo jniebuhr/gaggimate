@@ -74,9 +74,8 @@ export function Scales() {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <div className="text-center">
+      <div>
         <h1 className="text-3xl font-bold text-base-content">Bluetooth Scales</h1>
-        <p className="text-base-content/70 mt-2">Connect and manage your Bluetooth scales</p>
       </div>
 
       <div className="card bg-base-100 shadow-xl">
