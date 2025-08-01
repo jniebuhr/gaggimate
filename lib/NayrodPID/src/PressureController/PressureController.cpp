@@ -82,21 +82,21 @@ float PressureController::computeAdustedCoffeeFlowRate(float pressure) const {
 }
 
 float PressureController::pumpFlowModel(float alpha) const {
+    const float availableFlow = getAvailableFlow();
+    return availableFlow * 1e-6 * alpha / 100.0f;
+}
 
-    // Third order polynomial
-    float P = _filteredPressureSensor;
-    float P2 = P * P;
-    float P3 = P2 * P;
-    float Q = PUMP_FLOW_POLY[0] * P3 + PUMP_FLOW_POLY[1] * P2 + PUMP_FLOW_POLY[2] * P + PUMP_FLOW_POLY[3];
-    // return Q*1e-6*alpha/100.0f;
-
-    // Afine model base on one Gaggia Classic Pro Unit measurements
-    return alpha / 100.0f * (_Q1 * _filteredPressureSensor + _Q0) * 1e-6;
+float PressureController::getAvailableFlow() const {
+    const float P = _filteredPressureSensor;
+    const float P2 = P * P;
+    const float P3 = P2 * P;
+    const float Q = PUMP_FLOW_POLY[0] * P3 + PUMP_FLOW_POLY[1] * P2 + PUMP_FLOW_POLY[2] * P + PUMP_FLOW_POLY[3];
+    
+    return Q;
 }
 
 float PressureController::getPumpDutyCycleForFlowRate() const {
-    // Afine model base on one Gaggia Classic Pro Unit measurements
-    const float availableFlow = _Q1 * _filteredPressureSensor + _Q0;
+    const float availableFlow = getAvailableFlow();
     if (availableFlow <= 0.0f) {
         return 0.0f;
     }
@@ -105,12 +105,20 @@ float PressureController::getPumpDutyCycleForFlowRate() const {
 
 void PressureController::setPumpFlowCoeff(float oneBarFlow, float nineBarFlow) {
     // Set the affine pump flow model coefficients based on flow measurement at 1 bar and 9 bar
-    _Q1 = (nineBarFlow - oneBarFlow) / 8;
-    _Q0 = oneBarFlow - _Q1 * 1.0f;
+    PUMP_FLOW_POLY[0] = 0.0f;
+    PUMP_FLOW_POLY[1] = 0.0f;
+    PUMP_FLOW_POLY[2] = (nineBarFlow - oneBarFlow) / 8;
+    PUMP_FLOW_POLY[3] = oneBarFlow - PUMP_FLOW_POLY[2] * 1.0f;
+}
+
+void PressureController::setPumpFlowPolyCoeffs(float a, float b, float c, float d) {
+    PUMP_FLOW_POLY[0] = a;
+    PUMP_FLOW_POLY[1] = b;
+    PUMP_FLOW_POLY[2] = c;
+    PUMP_FLOW_POLY[3] = d;
 }
 
 void PressureController::virtualScale() {
-
     // Estimate pump output flow
     pumpFlowRate = pumpFlowModel(*_ctrlOutput);
     // Update puck resistance estimation:
