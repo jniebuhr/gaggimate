@@ -112,10 +112,15 @@ function getChartData(data) {
           },
           ticks: {
             source: 'auto',
+            callback: (value, index, ticks) => {
+              const now = new Date().getTime();
+              const diff = Math.ceil((now - value) / 1000);
+              return `-${diff}s`;
+            },
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            maxTicksLimit: window.innerWidth < 640 ? 5 : 10,
+            maxTicksLimit: window.innerWidth < 640 ? 5 : 5,
           },
         },
       },
@@ -178,7 +183,7 @@ export function OverviewChart() {
   }, [chart]);
 
   return (
-    <div className="w-full h-64 sm:h-80">
+    <div className="w-full h-64 sm:h-72">
       <canvas className="w-full h-full" ref={ref} />
     </div>
   );
