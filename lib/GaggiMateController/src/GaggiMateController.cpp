@@ -99,6 +99,17 @@ void GaggiMateController::setup() {
         });
     _ble.registerAltControlCallback([this](bool state) { this->alt->set(state); });
     _ble.registerPidControlCallback([this](float Kp, float Ki, float Kd) { this->heater->setTunings(Kp, Ki, Kd); });
+    _ble.registerPumpModelCoeffsCallback([this](float a, float b, float c, float d) { 
+        if (_config.capabilites.dimming) {
+            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            // Check if this is a flow measurement call (a and b are flow measurements, c and d are nan)
+            if (isnan(c) && isnan(d)) {
+                dimmedPump->setPumpFlowCoeff(a, b); // a = oneBarFlow, b = nineBarFlow
+            } else {
+                dimmedPump->setPumpFlowPolyCoeffs(a, b, c, d); // a, b, c, d are polynomial coefficients
+            }
+        }
+    });
     _ble.registerPingCallback([this]() {
         lastPingTime = millis();
         ESP_LOGV(LOG_TAG, "Ping received, system is alive");

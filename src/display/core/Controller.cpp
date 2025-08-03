@@ -217,6 +217,7 @@ void Controller::loop() {
             ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
             setPressureScale();
             clientController.sendPidSettings(settings.getPid());
+            clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
 
             pluginManager->trigger("controller:ready");
         }
@@ -350,6 +351,12 @@ void Controller::setTargetTemp(int temperature) {
 void Controller::setPressureScale(void) {
     if (systemInfo.capabilities.pressure) {
         clientController.setPressureScale(settings.getPressureScaling());
+    }
+}
+
+void Controller::setPumpModelCoeffs(void) {
+    if (systemInfo.capabilities.dimming) {
+        clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
     }
 }
 

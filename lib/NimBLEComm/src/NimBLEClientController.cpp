@@ -93,6 +93,7 @@ bool NimBLEClientController::connectToServer() {
     autotuneChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_CHAR_UUID));
     pingChar = pRemoteService->getCharacteristic(NimBLEUUID(PING_CHAR_UUID));
     pidControlChar = pRemoteService->getCharacteristic(NimBLEUUID(PID_CONTROL_CHAR_UUID));
+    pumpModelCoeffsChar = pRemoteService->getCharacteristic(NimBLEUUID(PUMP_MODEL_COEFFS_CHAR_UUID));
     infoChar = pRemoteService->getCharacteristic(NimBLEUUID(INFO_UUID));
     pressureScaleChar = pRemoteService->getCharacteristic(NimBLEUUID(PRESSURE_SCALE_UUID));
     volumetricTareChar = pRemoteService->getCharacteristic(NimBLEUUID(VOLUMETRIC_TARE_UUID));
@@ -172,6 +173,12 @@ void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, f
 void NimBLEClientController::sendPidSettings(const String &pid) {
     if (pidControlChar != nullptr && client->isConnected()) {
         pidControlChar->writeValue(pid);
+    }
+}
+
+void NimBLEClientController::sendPumpModelCoeffs(const String &pumpModelCoeffs) {
+    if (pumpModelCoeffsChar != nullptr && client->isConnected()) {
+        pumpModelCoeffsChar->writeValue(pumpModelCoeffs);
     }
 }
 
