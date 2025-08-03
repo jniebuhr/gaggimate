@@ -8,10 +8,13 @@ constexpr int SCALE_READ_INTERVAL_MS = 100;
 
 using scale_reading_callback_t = std::function<void(float)>;
 using scale_configuration_callback_t = std::function<void(float scaleFactor1, float scaleFactor2)>;
+using void_callback_t = std::function<void()>;
 
 class HardwareScale {
     public:
-        HardwareScale(uint8_t data_pin1, uint8_t data_pin2, uint8_t clock_pin, const scale_reading_callback_t &reading_callback, const scale_configuration_callback_t &config_callback);
+        HardwareScale(uint8_t data_pin1, uint8_t data_pin2, uint8_t clock_pin, 
+            const scale_reading_callback_t &reading_callback,
+            const scale_configuration_callback_t &config_callback);
         ~HardwareScale() = default;
 
          struct RawReading {
