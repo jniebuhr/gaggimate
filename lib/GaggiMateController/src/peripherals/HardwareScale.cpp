@@ -8,9 +8,15 @@
 #define MAX_WAIT_READ_MS 250
 #define MAX_STARTUP_WAIT_MS 1200
 
-HardwareScale::HardwareScale(uint8_t data_pin1, uint8_t data_pin2, uint8_t clock_pin, const scale_reading_callback_t &reading_callback, const scale_configuration_callback_t &config_callback)
-    : _data_pin1(data_pin1), _data_pin2(data_pin2), _clock_pin(clock_pin), _scale_factor1(1.0f), _scale_factor2(1.0f),
-      _offset1(0.0f), _offset2(0.0f), _is_taring_or_calibrating(false), _reading_callback(reading_callback), _configuration_callback(config_callback), taskHandle(nullptr) {
+HardwareScale::HardwareScale(uint8_t data_pin1, uint8_t data_pin2, uint8_t clock_pin, 
+    const scale_reading_callback_t &reading_callback, 
+    const scale_configuration_callback_t &config_callback)
+    : _data_pin1(data_pin1), _data_pin2(data_pin2), _clock_pin(clock_pin),
+    _scale_factor1(1.0f), _scale_factor2(1.0f),
+    _offset1(0.0f), _offset2(0.0f), _is_taring_or_calibrating(false),
+    _reading_callback(reading_callback),
+    _configuration_callback(config_callback),
+    taskHandle(nullptr) {
     _raw_weight = {0, 0};
 }
 
@@ -101,8 +107,8 @@ HardwareScale::RawReading HardwareScale::readRaw() {
 
 float HardwareScale::convertRawToWeight(const RawReading &raw) const {
     // throw away the bottom 7 bits, as we only have ~17 effective bits
-    float weight1 = (static_cast<float>(raw.value1 & 0xFFFFFF80) - _offset1) / _scale_factor1;
-    float weight2 = (static_cast<float>(raw.value2 & 0xFFFFFF80) - _offset2) / _scale_factor2;
+    float weight1 = (static_cast<float>(raw.value1) - _offset1) / _scale_factor1;
+    float weight2 = (static_cast<float>(raw.value2) - _offset2) / _scale_factor2;
     return std::clamp(std::round((weight1 + weight2) * 100.0f) / 100.0f, -1.0f * MAX_SCALE_GRAMS, MAX_SCALE_GRAMS);
 }
 
@@ -119,7 +125,7 @@ void HardwareScale::loop() {
     ESP_LOGI(LOG_TAG, "Raw Scale Reading: %ld, %ld", _raw_weight.value1, _raw_weight.value2);
     float reading = convertRawToWeight(_raw_weight);
     _weight = 0.5f * reading + 0.5f * _weight;
-    _weight = std::clamp(_weight, 0.0f, MAX_SCALE_GRAMS);
+    _weight = std::clamp(_weight, -1.0f * MAX_SCALE_GRAMS, MAX_SCALE_GRAMS);
     ESP_LOGI(LOG_TAG, "Scale Reading: %0.2f, Smoothed Weight: %0.2f", reading, _weight);
     _reading_callback(_weight);
 }
@@ -133,18 +139,13 @@ void HardwareScale::setScaleFactors(float scale_factor1, float scale_factor2) {
 void HardwareScale::tare() {
     _is_taring_or_calibrating = true;
 
-    long raw1 = 0;
-    long raw2 = 0;
-    for (int i = 0; i < 10; i++) {
-        while (!isReady()) {
-            delay(10);
-        }
-        _raw_weight = readRaw();
-        raw1 += _raw_weight.value1;
-        raw2 += _raw_weight.value2;
+    while (!isReady()) {
+        delay(10);
     }
-    _offset1 = raw1 / 10;
-    _offset2 = raw2 / 10;
+    auto raw = readRaw();
+    
+    _offset1 = raw.value1;
+    _offset2 = raw.value2;
     _weight = 0.0f; // Reset weight to zero after tare
     ESP_LOGI(LOG_TAG, "Tared scale offsets: %.3f, %.3f", _offset1, _offset2);
     _is_taring_or_calibrating = false;
