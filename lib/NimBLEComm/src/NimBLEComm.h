@@ -23,6 +23,10 @@
 #define VOLUMETRIC_TARE_UUID "a8bd52e0-77c3-412c-847c-4e802c3982f9"
 #define TOF_MEASUREMENT_UUID "7282c525-21a0-416a-880d-21fe98602533"
 #define LED_CONTROL_UUID "37804a2b-49ab-4500-8582-db4279fc8573"
+#define SCALE_TARE_UUID "c1b8f0d2-3a4e-4f5c-9b6d-7f8c1e2b3a4e"
+#define SCALE_CALIBRATION_UUID "d2b3a4e1-3f0d-4f5c-9b6d-7f8c1e2b3a4e"
+#define SCALE_CALIBRATE_UUID "e1b3a4d2-3f0d-4f5c-9b6d-7f8c1e2b3a4e"
+#define SCALE_WEIGHT_MEASUREMENT_UUID "f1b3a4d2-3f0d-4f5c-9b6d-7f8c1e2b3a4e"
 
 constexpr size_t ERROR_CODE_COMM_SEND = 1;
 constexpr size_t ERROR_CODE_COMM_RCV = 2;
@@ -37,6 +41,8 @@ using remote_err_callback_t = std::function<void(int errorCode)>;
 using autotune_callback_t = std::function<void(int testTime, int samples)>;
 using brew_callback_t = std::function<void(bool brewButtonStatus)>;
 using steam_callback_t = std::function<void(bool steamButtonStatus)>;
+using scale_calibrate_callback_t = std::function<void(uint8_t cell, float calibrationWeight)>;
+using scale_calibration_callback_t = std::function<void(float scaleFactor1, float scaleFactor2)>;
 using void_callback_t = std::function<void()>;
 
 // New combined callbacks
@@ -53,6 +59,7 @@ struct SystemCapabilities {
     bool pressure;
     bool ledControl;
     bool tof;
+    bool hwScale;
 };
 
 struct SystemInfo {

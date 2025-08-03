@@ -37,16 +37,33 @@ void GaggiMateController::setup() {
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
 
-    // 5-Pin peripheral port
-    Wire.begin(_config.scaleSdaPin, _config.scaleSclPin, 400000);
-    this->ledController = new LedController(&Wire);
-    this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _ble.sendTofMeasurement(distance); });
-    if (this->ledController->isAvailable()) {
-        _config.capabilites.ledControls = true;
-        _config.capabilites.tof = true;
-        _ble.registerLedControlCallback(
-            [this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
+    this->hardwareScale = new HardwareScale(_config.scaleSdaPin, _config.scaleSda1Pin, _config.scaleSclPin,
+                                              [this](float weight) { _ble.sendScaleMeasurement(weight); },
+                                              [this](float scaleFactor1, float scaleFactor2) { _ble.sendScaleCalibration(scaleFactor1, scaleFactor2); });
+    this->hardwareScale->setup();
+    if (this->hardwareScale->isAvailable()) {
+        _config.capabilites.hwScale = true;
+        _ble.registerScaleTareCallback([this]() {
+            this->hardwareScale->tare();
+        });
+
+        _ble.registerScaleCalibrationCallback([this](float scaleFactor1, float scaleFactor2) {
+            this->hardwareScale->setScaleFactors(scaleFactor1, scaleFactor2);
+        });
+        _ble.registerScaleCalibrateCallback([this](uint8_t scale, float calibration_weight) {
+            this->hardwareScale->calibrateScale(scale, calibration_weight);
+        });
     }
+    // // 5-Pin peripheral port
+    // Wire.begin(_config.scaleSdaPin, _config.scaleSclPin, 400000);
+    // this->ledController = new LedController(&Wire);
+    // this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _ble.sendTofMeasurement(distance); });
+    // if (this->ledController->isAvailable()) {
+    //     _config.capabilites.ledControls = true;
+    //     _config.capabilites.tof = true;
+    //     _ble.registerLedControlCallback(
+    //         [this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
+    // }
 
     String systemInfo = make_system_info(_config);
     _ble.initServer(systemInfo);
