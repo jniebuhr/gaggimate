@@ -151,8 +151,8 @@ void NimBLEServerController::sendTofMeasurement(int value) {
 
 void NimBLEServerController::sendScaleMeasurement(float weight) {
     if (deviceConnected && scaleWeightMeasurementChar != nullptr) {
-        char data[9]; // 1500.000 is 8 bytes + null terminator
-        snprintf(data, sizeof(data), "%.3f", weight);
+        char data[9]; // -1500.00 is 8 bytes + null terminator
+        snprintf(data, sizeof(data), "%.2f", weight);
         scaleWeightMeasurementChar->setValue(data);
         scaleWeightMeasurementChar->notify();
     }

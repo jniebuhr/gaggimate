@@ -103,7 +103,7 @@ float HardwareScale::convertRawToWeight(const RawReading &raw) const {
     // throw away the bottom 7 bits, as we only have ~17 effective bits
     float weight1 = (static_cast<float>(raw.value1 & 0xFFFFFF80) - _offset1) / _scale_factor1;
     float weight2 = (static_cast<float>(raw.value2 & 0xFFFFFF80) - _offset2) / _scale_factor2;
-    return std::clamp(std::round((weight1 + weight2) * 10.0f) / 10.0f, 0.0f, MAX_SCALE_GRAMS);
+    return std::clamp(std::round((weight1 + weight2) * 100.0f) / 100.0f, -1.0f * MAX_SCALE_GRAMS, MAX_SCALE_GRAMS);
 }
 
 float HardwareScale::getWeight() const {
@@ -120,7 +120,7 @@ void HardwareScale::loop() {
     float reading = convertRawToWeight(_raw_weight);
     _weight = 0.5f * reading + 0.5f * _weight;
     _weight = std::clamp(_weight, 0.0f, MAX_SCALE_GRAMS);
-    ESP_LOGI(LOG_TAG, "Scale Reading: %0.2f, Smoothed Weight: %0.1f", reading, _weight);
+    ESP_LOGI(LOG_TAG, "Scale Reading: %0.2f, Smoothed Weight: %0.2f", reading, _weight);
     _reading_callback(_weight);
 }
 
