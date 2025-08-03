@@ -8,6 +8,7 @@ struct Capabilities {
     bool ssrPump;
     bool ledControls;
     bool tof;
+    bool hwScale;
 };
 
 struct ControllerConfig {

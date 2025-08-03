@@ -10,6 +10,7 @@
 #include <peripherals/PressureSensor.h>
 #include <peripherals/Pump.h>
 #include <peripherals/SimpleRelay.h>
+#include <peripherals/HardwareScale.h>
 #include <vector>
 
 constexpr double PING_TIMEOUT_SECONDS = 20.0;
@@ -47,7 +48,7 @@ class GaggiMateController {
     PressureSensor *pressureSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
-
+    HardwareScale *hardwareScale = nullptr;
     std::vector<ControllerConfig> configs;
 
     String _version;
