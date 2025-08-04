@@ -678,18 +678,16 @@ export function Settings() {
           <div className="bg-base-200 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-xl font-medium">Homekit</span>
-              <label className="label cursor-pointer">
-                <span className="label-text">Enable Homekit</span>
-                <input
-                  id="homekit"
-                  name="homekit"
-                  value="homekit"
-                  type="checkbox"
-                  className="toggle toggle-primary"
-                  checked={!!formData.homekit}
-                  onChange={onChange('homekit')}
-                />
-              </label>
+              <input
+                id="homekit"
+                name="homekit"
+                value="homekit"
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={!!formData.homekit}
+                onChange={onChange('homekit')}
+                aria-label="Enable Homekit"
+              />
             </div>
             {formData.homekit && (
               <div className="flex flex-col gap-4 items-center justify-center mt-4 pt-4 border-t border-base-300">
@@ -704,9 +702,7 @@ export function Settings() {
           <div className="bg-base-200 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-xl font-medium">Boiler Refill Plugin</span>
-              <label className="label cursor-pointer">
-                <span className="label-text">Enable Boiler Refill</span>
-                <input
+                              <input
                   id="boilerFillActive"
                   name="boilerFillActive"
                   value="boilerFillActive"
@@ -714,8 +710,8 @@ export function Settings() {
                   className="toggle toggle-primary"
                   checked={!!formData.boilerFillActive}
                   onChange={onChange('boilerFillActive')}
+                  aria-label="Enable Boiler Refill"
                 />
-              </label>
             </div>
             {formData.boilerFillActive && (
               <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-base-300">
@@ -754,9 +750,7 @@ export function Settings() {
           <div className="bg-base-200 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-xl font-medium">Smart Grind Plugin</span>
-              <label className="label cursor-pointer">
-                <span className="label-text">Enable Smart Grind</span>
-                <input
+                              <input
                   id="smartGrindActive"
                   name="smartGrindActive"
                   value="smartGrindActive"
@@ -764,8 +758,8 @@ export function Settings() {
                   className="toggle toggle-primary"
                   checked={!!formData.smartGrindActive}
                   onChange={onChange('smartGrindActive')}
+                  aria-label="Enable Smart Grind"
                 />
-              </label>
             </div>
             {formData.smartGrindActive && (
               <div className="space-y-4 mt-4 pt-4 border-t border-base-300">
@@ -814,9 +808,7 @@ export function Settings() {
           <div className="bg-base-200 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-xl font-medium">Home Assistant (MQTT)</span>
-              <label className="label cursor-pointer">
-                <span className="label-text">Enable Home Assistant</span>
-                <input
+                              <input
                   id="homeAssistant"
                   name="homeAssistant"
                   value="homeAssistant"
@@ -824,8 +816,8 @@ export function Settings() {
                   className="toggle toggle-primary"
                   checked={!!formData.homeAssistant}
                   onChange={onChange('homeAssistant')}
+                  aria-label="Enable Home Assistant"
                 />
-              </label>
             </div>
             {formData.homeAssistant && (
               <div className="space-y-4 mt-4 pt-4 border-t border-base-300">
