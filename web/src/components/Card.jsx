@@ -1,31 +1,22 @@
-export default function Card(props) {
-  let spanClass = props.className || '';
-  if (props.xs) {
-    spanClass += ` col-span-${props.xs}`;
-  }
-  if (props.sm) {
-    spanClass += ` sm:col-span-${props.sm}`;
-  }
-  if (props.md) {
-    spanClass += ` md:col-span-${props.md}`;
-  }
-  if (props.lg) {
-    spanClass += ` lg:col-span-${props.lg}`;
-  }
-  if (props.xl) {
-    spanClass += ` xl:col-span-${props.xl}`;
-  }
-  return (
-    <>
-      <div className={`card bg-base-100 shadow-xl ${spanClass}`}>
-        {props.title && (
-          <div className="card-header px-4 sm:px-6 pt-4 sm:pt-6">
-            <h2 className="card-title text-lg sm:text-xl">{props.title}</h2>
-          </div>
-        )}
+export default function Card({ xs, sm, md, lg, xl, title, children, className = '' }) {
+  const gridClasses = [
+    xs && `col-span-${xs}`,
+    sm && `sm:col-span-${sm}`,
+    md && `md:col-span-${md}`,
+    lg && `lg:col-span-${lg}`,
+    xl && `xl:col-span-${xl}`,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-        <div className="card-body p-2 sm:p-6 flex flex-col gap-2">{props.children}</div>
-      </div>
-    </>
+  return (
+    <div className={`card bg-base-100 shadow-xl ${gridClasses} ${className}`}>
+      {title && (
+        <div className="card-header px-4 sm:px-6 pt-4 sm:pt-6">
+          <h2 className="card-title text-lg sm:text-xl">{title}</h2>
+        </div>
+      )}
+      <div className="card-body p-2 sm:p-6 flex flex-col gap-2">{children}</div>
+    </div>
   );
 }

@@ -2,7 +2,7 @@ import 'preact/debug';
 
 import './style.css';
 
-import { render, createContext } from 'preact';
+import { render } from 'preact';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
@@ -30,7 +30,7 @@ export function App() {
             <Header />
 
             <main className="flex-1">
-              <div className="container-fluid xl:container mx-auto py-2 px-4 lg:p-8">
+              <div className="xl:container mx-auto py-2 px-4 lg:p-8">
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                   <Navigation />
                   <div className="lg:col-span-9">

@@ -13,10 +13,7 @@ export function Settings() {
   const [submitting, setSubmitting] = useState(false);
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
-  const {
-    isLoading,
-    data: fetchedSettings,
-  } = useQuery(`settings/${gen}`, async () => {
+  const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
     return data;
@@ -123,7 +120,7 @@ export function Settings() {
   );
 
   const onExport = useCallback(() => {
-    const dataStr = `data:text/json;charset=utf-8,${  encodeURIComponent(JSON.stringify(formData, undefined, 2))}`;
+    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(formData, undefined, 2))}`;
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute('href', dataStr);
     downloadAnchorNode.setAttribute('download', 'settings.json');
@@ -163,24 +160,15 @@ export function Settings() {
     >
       <div className="sm:col-span-12 flex flex-row items-center gap-2">
         <h2 className="text-2xl font-bold flex-grow">Settings</h2>
-        <button
-          type="button"
-          onClick={onExport}
-          className="btn btn-ghost btn-sm"
-          title="Export Settings"
-        >
+        <button type="button" onClick={onExport} className="btn btn-ghost btn-sm" title="Export Settings">
           <i className="fa fa-file-export" />
         </button>
-        <label
-          htmlFor="settingsImport"
-          className="btn btn-ghost btn-sm cursor-pointer"
-          title="Import Settings"
-        >
+        <label htmlFor="settingsImport" className="btn btn-ghost btn-sm cursor-pointer" title="Import Settings">
           <i className="fa fa-file-import" />
         </label>
         <input onChange={onUpload} className="hidden" id="settingsImport" type="file" accept=".json,application/json" />
       </div>
-      
+
       <Card xs={12} lg={6} title="Temperature settings">
         <div className="form-control">
           <label htmlFor="targetSteamTemp" className="block text-sm font-medium mb-2">
@@ -212,13 +200,18 @@ export function Settings() {
           />
         </div>
       </Card>
-      
+
       <Card xs={12} lg={6} title="User preferences">
         <div className="form-control">
           <label htmlFor="startup-mode" className="block text-sm font-medium mb-2">
             Startup Mode
           </label>
-          <select id="startup-mode" name="startupMode" className="select select-bordered w-full" onChange={onChange('startupMode')}>
+          <select
+            id="startup-mode"
+            name="startupMode"
+            className="select select-bordered w-full"
+            onChange={onChange('startupMode')}
+          >
             <option value="standby" selected={formData.startupMode === 'standby'}>
               Standby
             </option>
@@ -227,7 +220,7 @@ export function Settings() {
             </option>
           </select>
         </div>
-        
+
         <div className="form-control">
           <label htmlFor="standbyTimeout" className="block text-sm font-medium mb-2">
             Standby Timeout (s)
@@ -262,7 +255,7 @@ export function Settings() {
             />
           </label>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div className="form-control">
             <label htmlFor="brewDelay" className="block text-sm font-medium mb-2">
@@ -312,7 +305,7 @@ export function Settings() {
           </label>
         </div>
       </Card>
-      
+
       <Card xs={12} lg={6} title="System preferences">
         <div className="form-control">
           <label htmlFor="wifiSsid" className="block text-sm font-medium mb-2">
@@ -328,7 +321,7 @@ export function Settings() {
             onChange={onChange('wifiSsid')}
           />
         </div>
-        
+
         <div className="form-control">
           <label htmlFor="wifiPassword" className="block text-sm font-medium mb-2">
             WiFi Password
@@ -343,7 +336,7 @@ export function Settings() {
             onChange={onChange('wifiPassword')}
           />
         </div>
-        
+
         <div className="form-control">
           <label htmlFor="mdnsName" className="block text-sm font-medium mb-2">
             Hostname
@@ -358,7 +351,7 @@ export function Settings() {
             onChange={onChange('mdnsName')}
           />
         </div>
-        
+
         <div className="form-control">
           <label htmlFor="timezone" className="block text-sm font-medium mb-2">
             Timezone
@@ -371,7 +364,7 @@ export function Settings() {
             ))}
           </select>
         </div>
-        
+
         <div className="divider">Clock</div>
         <div className="form-control">
           <label className="label cursor-pointer">
@@ -388,7 +381,7 @@ export function Settings() {
           </label>
         </div>
       </Card>
-      
+
       <Card xs={12} lg={6} title="Machine settings">
         <div className="form-control">
           <label htmlFor="pid" className="block text-sm font-medium mb-2">
@@ -404,7 +397,7 @@ export function Settings() {
             onChange={onChange('pid')}
           />
         </div>
-        
+
         <div className="form-control">
           <label htmlFor="temperatureOffset" className="block text-sm font-medium mb-2">
             Temperature Offset
@@ -422,7 +415,7 @@ export function Settings() {
             <span className="btn btn-square">°C</span>
           </div>
         </div>
-        
+
         <div className="form-control">
           <label htmlFor="pressureScaling" className="block text-sm font-medium mb-2">
             Pressure sensor rating
@@ -444,7 +437,7 @@ export function Settings() {
             <span className="btn btn-square">bar</span>
           </div>
         </div>
-        
+
         <div className="form-control">
           <label htmlFor="steamPumpPercentage" className="block text-sm font-medium mb-2">
             Steam Pump Assist
@@ -467,7 +460,7 @@ export function Settings() {
           </div>
         </div>
       </Card>
-      
+
       <Card xs={12} lg={6} title="Display settings">
         <div className="form-control">
           <label htmlFor="mainBrightness" className="block text-sm font-medium mb-2">
@@ -519,7 +512,7 @@ export function Settings() {
             disabled={!formData.standbyDisplayEnabled}
           />
         </div>
-        
+
         <div className="form-control">
           <label htmlFor="standbyBrightnessTimeout" className="block text-sm font-medium mb-2">
             Standby Brightness Timeout (seconds)
@@ -535,7 +528,7 @@ export function Settings() {
             onChange={onChange('standbyBrightnessTimeout')}
           />
         </div>
-        
+
         <div className="form-control">
           <label htmlFor="themeMode" className="block text-sm font-medium mb-2">
             Theme
@@ -552,13 +545,11 @@ export function Settings() {
           </select>
         </div>
       </Card>
-      
+
       {ledControl.value && (
         <Card xs={12} lg={6} title="Sunrise Settings">
-          <div className="text-sm opacity-70 mb-4">
-            Set the colors for the LEDs when in idle mode with no warnings.
-          </div>
-          
+          <div className="text-sm opacity-70 mb-4">Set the colors for the LEDs when in idle mode with no warnings.</div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="form-control">
               <label htmlFor="sunriseR" className="block text-sm font-medium mb-2">
@@ -593,7 +584,7 @@ export function Settings() {
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="form-control">
               <label htmlFor="sunriseB" className="block text-sm font-medium mb-2">
@@ -628,7 +619,7 @@ export function Settings() {
               />
             </div>
           </div>
-          
+
           <div className="form-control">
             <label htmlFor="sunriseExtBrightness" className="block text-sm font-medium mb-2">
               External LED (0 - 255)
@@ -645,7 +636,7 @@ export function Settings() {
               onChange={onChange('sunriseExtBrightness')}
             />
           </div>
-          
+
           <div className="form-control">
             <label htmlFor="emptyTankDistance" className="block text-sm font-medium mb-2">
               Distance from sensor to bottom of the tank
@@ -662,7 +653,7 @@ export function Settings() {
               onChange={onChange('emptyTankDistance')}
             />
           </div>
-          
+
           <div className="form-control">
             <label htmlFor="fullTankDistance" className="block text-sm font-medium mb-2">
               Distance from sensor to the fill line
@@ -681,13 +672,14 @@ export function Settings() {
           </div>
         </Card>
       )}
-      
+
       <Card xs={12} title="Plugins">
         <div className="space-y-4">
           <div className="bg-base-200 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-xl font-medium">Homekit</span>
               <label className="label cursor-pointer">
+                <span className="label-text">Enable Homekit</span>
                 <input
                   id="homekit"
                   name="homekit"
@@ -702,15 +694,18 @@ export function Settings() {
             {formData.homekit && (
               <div className="flex flex-col gap-4 items-center justify-center mt-4 pt-4 border-t border-base-300">
                 <img src={homekitImage} alt="Homekit Setup Code" />
-                <p className="text-center">Open the Homekit App, find your GaggiMate device and scan the setup code above to add it.</p>
+                <p className="text-center">
+                  Open the Homekit App, find your GaggiMate device and scan the setup code above to add it.
+                </p>
               </div>
             )}
           </div>
-          
+
           <div className="bg-base-200 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-xl font-medium">Boiler Refill Plugin</span>
               <label className="label cursor-pointer">
+                <span className="label-text">Enable Boiler Refill</span>
                 <input
                   id="boilerFillActive"
                   name="boilerFillActive"
@@ -755,11 +750,12 @@ export function Settings() {
               </div>
             )}
           </div>
-          
+
           <div className="bg-base-200 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-xl font-medium">Smart Grind Plugin</span>
               <label className="label cursor-pointer">
+                <span className="label-text">Enable Smart Grind</span>
                 <input
                   id="smartGrindActive"
                   name="smartGrindActive"
@@ -794,7 +790,12 @@ export function Settings() {
                   <label htmlFor="smartGrindMode" className="block text-sm font-medium mb-2">
                     Mode
                   </label>
-                  <select id="smartGrindMode" name="smartGrindMode" className="select select-bordered w-full" onChange={onChange('smartGrindMode')}>
+                  <select
+                    id="smartGrindMode"
+                    name="smartGrindMode"
+                    className="select select-bordered w-full"
+                    onChange={onChange('smartGrindMode')}
+                  >
                     <option value="0" selected={formData.smartGrindMode?.toString() === '0'}>
                       Turn off at target
                     </option>
@@ -814,6 +815,7 @@ export function Settings() {
             <div className="flex items-center justify-between">
               <span className="text-xl font-medium">Home Assistant (MQTT)</span>
               <label className="label cursor-pointer">
+                <span className="label-text">Enable Home Assistant</span>
                 <input
                   id="homeAssistant"
                   name="homeAssistant"
@@ -859,7 +861,7 @@ export function Settings() {
                     onChange={onChange('haPort')}
                   />
                 </div>
-                
+
                 <div className="form-control">
                   <label htmlFor="haUser" className="block text-sm font-medium mb-2">
                     MQTT User
@@ -874,7 +876,7 @@ export function Settings() {
                     onChange={onChange('haUser')}
                   />
                 </div>
-                
+
                 <div className="form-control">
                   <label htmlFor="haPassword" className="block text-sm font-medium mb-2">
                     MQTT Password
@@ -894,7 +896,7 @@ export function Settings() {
           </div>
         </div>
       </Card>
-      
+
       <div className="col-span-12 space-y-4">
         <div className="alert alert-info">
           <span>Some options like WiFi, NTP and managing Plugins require a restart.</span>
