@@ -80,6 +80,8 @@ class Settings {
     int getSunriseExtBrightness() const { return sunriseExtBrightness; }
     int getEmptyTankDistance() const { return emptyTankDistance; }
     int getFullTankDistance() const { return fullTankDistance; }
+    float getScaleFactor1() const { return scaleFactor1; }
+    float getScaleFactor2() const { return scaleFactor2; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -142,6 +144,7 @@ class Settings {
     void setSunriseExtBrightness(int sunrise_ext_brightness);
     void setEmptyTankDistance(int empty_tank_distance);
     void setFullTankDistance(int full_tank_distance);
+    void setScaleFactors(float scale_factor_1, float scale_factor_2);
 
   private:
     Preferences preferences;
@@ -214,6 +217,10 @@ class Settings {
     int sunriseExtBrightness = 255;
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
+
+    // Hardware scale settings
+    float scaleFactor1 = 0.0f;
+    float scaleFactor2 = 0.0f;
 
     void doSave();
     xTaskHandle taskHandle;
