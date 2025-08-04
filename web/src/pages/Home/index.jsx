@@ -23,6 +23,7 @@ const modeMap = {
 };
 
 const status = computed(() => machine.value.status);
+const hwScale = computed(() => machine.value.capabilities.hardwareScale);
 
 export function Home() {
   const apiService = useContext(ApiServiceContext);
@@ -84,6 +85,16 @@ export function Home() {
                 <dd className="text-sm font-medium text-slate-500">Pressure</dd>
               </dl>
             </div>
+            {hwScale.value && (
+              <div className="p-6 sm:col-span-12 md:col-span-4">
+                <dl>
+                  <dt className="text-xl md:text-2xl font-bold">
+                    {status.value.currentWeight?.toFixed(1) || 0} g
+                  </dt>
+                  <dd className="text-sm font-medium text-slate-500">Weight</dd>
+                </dl>
+              </div>
+            )}
             <div className="p-6 sm:col-span-12 md:col-span-4">
               <dl>
                 <dt className="text-xl md:text-2xl font-bold">

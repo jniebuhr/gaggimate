@@ -8,6 +8,7 @@ import { computed } from '@preact/signals';
 import { machine } from '../../services/ApiService.js';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
+const hwScale = computed(() => machine.value.capabilities.hardwareScale);
 
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
@@ -670,6 +671,47 @@ export function Settings() {
               max="1000"
               value={formData.fullTankDistance}
               onChange={onChange('fullTankDistance')}
+            />
+          </div>
+        </Card>
+      )}
+      {hwScale.value && (
+        <Card xs={12} lg={6} title="Hardware Scale Settings">
+          <div>
+            <span>Set the calibration factors for the hardware scale</span>
+          </div>
+          <div>
+            <label htmlFor="scaleFactor1" className="block font-medium text-gray-700 dark:text-gray-400">
+              Load Cell 1 Scale Factor
+            </label>
+            <input
+              id="scaleFactor1"
+              name="scaleFactor1"
+              type="number"
+              className="input-field"
+              placeholder="200.00"
+              min="-50000.00"
+              max="50000.00"
+              step="0.01"
+              value={formData.scaleFactor1}
+              onChange={onChange('scaleFactor1')}
+            />
+          </div>
+          <div>
+            <label htmlFor="scaleFactor2" className="block font-medium text-gray-700 dark:text-gray-400">
+              Load Cell 2 Scale Factor
+            </label>
+            <input
+              id="scaleFactor2"
+              name="scaleFactor2"
+              type="number"
+              className="input-field"
+              placeholder="200.00"
+              min="-50000.00"
+              max="50000.00"
+              step="0.01"
+              value={formData.scaleFactor2}
+              onChange={onChange('scaleFactor2')}
             />
           </div>
         </Card>

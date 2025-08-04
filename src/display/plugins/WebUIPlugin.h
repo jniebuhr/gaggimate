@@ -49,6 +49,8 @@ class WebUIPlugin : public Plugin {
     void updateOTAStatus(const String &version);
     void updateOTAProgress(uint8_t phase, int progress);
     void sendAutotuneResult();
+    void handleScaleTare(AsyncWebServerRequest *request);
+    void handleScaleCalibrate(AsyncWebServerRequest *request);
 
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
