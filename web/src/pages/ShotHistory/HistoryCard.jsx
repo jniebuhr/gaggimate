@@ -41,7 +41,7 @@ export default function HistoryCard({ shot, onDelete }) {
           </a>
         </div>
       </div>
-      <div className="flex flex-row gap-6 items-center">
+              <div className="flex flex-row gap-4 items-center">
         <div className="flex flex-row gap-2 items-center">
           <span className="fa fa-clock"></span>
           {(shot.duration / 1000).toFixed(1)}s

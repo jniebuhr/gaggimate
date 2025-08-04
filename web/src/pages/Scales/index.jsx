@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
+import Card from '../../components/Card.jsx';
 
 export function Scales() {
   const [key, setKey] = useState(0);
@@ -73,19 +74,17 @@ export function Scales() {
   }, []);
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto p-4 space-y-4">
       <div>
         <h1 className="text-3xl font-bold text-base-content">Bluetooth Scales</h1>
       </div>
 
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="card-title">Available Scales</h2>
-            <button className={`btn btn-primary ${isScanning ? 'loading' : ''}`} onClick={onScan} disabled={isScanning}>
-              {isScanning ? 'Scanning...' : 'Scan for Scales'}
-            </button>
-          </div>
+      <Card xs={12} title="Available Scales">
+        <div className="flex items-center justify-end mb-4">
+          <button className={`btn btn-primary ${isScanning ? 'loading' : ''}`} onClick={onScan} disabled={isScanning}>
+            {isScanning ? 'Scanning...' : 'Scan for Scales'}
+          </button>
+        </div>
 
           {isLoading || isInfoLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -109,30 +108,27 @@ export function Scales() {
           ) : (
             <div className="space-y-4">
               {scaleData.map((scale, i) => (
-                <div key={i} className="card bg-base-200 shadow-sm">
-                  <div className="card-body p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-base-content">{scale.name}</h3>
-                        <p className="text-sm text-base-content/60 font-mono">{scale.uuid}</p>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        {scale.connected ? (
-                          <div className="badge badge-success gap-2">Connected</div>
-                        ) : (
-                          <button className="btn btn-primary btn-sm" onClick={() => onConnect(scale.uuid)}>
-                            Connect
-                          </button>
-                        )}
-                      </div>
+                <div key={i} className="bg-base-200 border border-base-300 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-base-content">{scale.name}</h3>
+                      <p className="text-sm text-base-content/60 font-mono">{scale.uuid}</p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      {scale.connected ? (
+                        <div className="badge badge-success gap-2">Connected</div>
+                      ) : (
+                        <button className="btn btn-primary btn-sm" onClick={() => onConnect(scale.uuid)}>
+                          Connect
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </Card>
 
       {scaleData.length > 0 && (
         <div className="alert alert-info">

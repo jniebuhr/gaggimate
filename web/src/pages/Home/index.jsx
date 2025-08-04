@@ -22,7 +22,7 @@ export function Home() {
   const mode = machine.value.status.mode;
 
   return (
-    <div key="home" className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-12 max-h-fit">
+    <div key="home" className="grid grid-cols-1 gap-4 sm:grid-cols-12 max-h-fit">
       <div className="col-span-12 landscape:hidden">
         <h2 className="text-xl sm:text-2xl font-bold text-base-content">Dashboard</h2>
       </div>

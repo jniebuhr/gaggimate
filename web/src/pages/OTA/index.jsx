@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useContext } from 'preact/hooks';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ApiServiceContext } from '../../services/ApiService.js';
+import Card from '../../components/Card.jsx';
 
 export function OTA() {
   const apiService = useContext(ApiServiceContext);
@@ -65,7 +66,7 @@ export function OTA() {
 
   if (phase > 0) {
     return (
-      <div className="p-16 flex flex-col items-center gap-5">
+              <div className="p-16 flex flex-col items-center gap-4">
         <Spinner size={8} />
         <span className="text-xl font-medium">
           {phase === 1
@@ -98,9 +99,8 @@ export function OTA() {
       <div className="sm:col-span-12">
         <h2 className="text-2xl font-bold">System & Updates</h2>
       </div>
-      <div className="card bg-base-100 shadow-xl col-span-12">
-        <div className="card-body space-y-6">
-          <div className="flex flex-col space-y-2">
+      <Card xs={12} title="System Information">
+          <div className="flex flex-col space-y-4">
             <label htmlFor="channel" className="text-sm font-medium">
               Update Channel
             </label>
@@ -114,12 +114,12 @@ export function OTA() {
             </select>
           </div>
 
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-4">
             <label className="text-sm font-medium">Hardware</label>
             <div className="input input-bordered bg-base-200 cursor-default">{formData.hardware}</div>
           </div>
 
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-4">
             <label className="text-sm font-medium">Controller version</label>
             <div className="input input-bordered bg-base-200 cursor-default">
               {formData.controllerVersion}
@@ -129,7 +129,7 @@ export function OTA() {
             </div>
           </div>
 
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-4">
             <label className="text-sm font-medium">Display version</label>
             <div className="input input-bordered bg-base-200 cursor-default">
               {formData.displayVersion}
@@ -142,8 +142,7 @@ export function OTA() {
           <div className="alert alert-warning">
             <span>Make sure to backup your profiles from the profile screen before updating the display.</span>
           </div>
-        </div>
-      </div>
+        </Card>
 
       <div className="col-span-12 flex flex-col sm:flex-row flex-wrap gap-2">
         <button type="submit" className="btn btn-primary" disabled={submitting}>

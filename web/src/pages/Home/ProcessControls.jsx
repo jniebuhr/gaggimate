@@ -119,7 +119,7 @@ const ProcessControls = (props) => {
 
   return (
     <div className={`flex flex-col justify-between min-h-[350px]`}>
-      <div className="flex justify-center mb-4">
+              <div className="flex justify-center mb-2">
         <div className="flex bg-base-300 rounded-full p-1 w-full max-w-md">
           {[
             { id: 0, label: 'Standby' },
@@ -140,7 +140,7 @@ const ProcessControls = (props) => {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0">
+              <div className="flex flex-col sm:flex-row justify-between items-center mb-2 space-y-2 sm:space-y-0">
         <div className="text-base sm:text-lg text-center sm:text-left">
           <span className="text-base-content">{status.value.currentTemperature || 0}</span>
           <span className="text-success font-semibold"> / {status.value.targetTemperature || 0}°C</span>
@@ -152,7 +152,7 @@ const ProcessControls = (props) => {
         </div>
       </div>
       {brew && (
-        <div className="text-center mb-4">
+        <div className="text-center mb-2">
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="text-xl sm:text-2xl font-semibold text-base-content">
               {status.value.selectedProfile || 'Default'}

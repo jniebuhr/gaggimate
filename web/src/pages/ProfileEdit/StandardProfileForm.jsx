@@ -52,7 +52,7 @@ export function StandardProfileForm(props) {
   return (
     <>
       <Card sm={12}>
-        <div className="flex flex-col gap-6 p-4">
+        <div className="flex flex-col gap-4 p-4">
           <div className="form-control">
             <label htmlFor="label" className="label">
               <span className="label-text text-base-content">Label</span>
@@ -97,7 +97,7 @@ export function StandardProfileForm(props) {
         <div className="p-4">
           <h3 className="text-lg font-bold text-base-content mb-2">Phases</h3>
         </div>
-        <div className="p-4 flex flex-col gap-6">
+        <div className="p-4 flex flex-col gap-4">
           {data.phases.map((value, index) => (
             <div key={index}>
               {index > 0 && (
@@ -120,7 +120,7 @@ export function StandardProfileForm(props) {
             </button>
           </div>
         </div>
-        <div className="p-4 flex flex-row gap-4">
+        <div className="p-4 flex flex-row gap-2">
           <a href="/profiles" className="btn btn-ghost">
             Back
           </a>
@@ -171,7 +171,7 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
   const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
 
   return (
-    <div className="bg-base-200 border border-base-300 p-6 rounded-lg grid grid-cols-12 gap-6">
+            <div className="bg-base-200 border border-base-300 p-4 rounded-lg grid grid-cols-12 gap-4">
       <div className="col-span-12 md:col-span-4 flex flex-row items-center">
         <select 
           className="select select-bordered w-full" 
@@ -182,7 +182,7 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
           <option value="brew">Brew</option>
         </select>
       </div>
-      <div className="col-span-12 md:col-span-8 flex flex-row gap-4 align-center">
+              <div className="col-span-12 md:col-span-8 flex flex-row gap-2 align-center">
         <input
           className="input input-bordered flex-1"
           placeholder="Name..."

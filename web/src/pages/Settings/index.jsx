@@ -244,7 +244,7 @@ export function Settings() {
         </div>
 
         <div className="divider">Predictive scale delay</div>
-        <div className="text-sm opacity-70 mb-4">
+        <div className="text-sm opacity-70 mb-2">
           Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control.
         </div>
 
@@ -579,7 +579,7 @@ export function Settings() {
 
       {ledControl.value && (
         <Card xs={12} lg={6} title="Sunrise Settings">
-          <div className="text-sm opacity-70 mb-4">Set the colors for the LEDs when in idle mode with no warnings.</div>
+          <div className="text-sm opacity-70 mb-2">Set the colors for the LEDs when in idle mode with no warnings.</div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="form-control">

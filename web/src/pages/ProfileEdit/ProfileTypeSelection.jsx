@@ -6,7 +6,7 @@ export function ProfileTypeSelection({ onSelect }) {
       <Card sm={6}>
         <div className="tooltip tooltip-top" data-tip="Create a simple profile with basic brew phases">
           <div
-            className="flex flex-col gap-3 items-center justify-center p-6 cursor-pointer text-base-content hover:text-primary hover:bg-base-content/5 transition-colors"
+            className="flex flex-col gap-2 items-center justify-center p-4 cursor-pointer text-base-content hover:text-primary hover:bg-base-content/5 transition-colors"
             onClick={() => onSelect('standard')}
           >
             <i className="fa fa-diagram-next text-5xl" />
@@ -20,7 +20,7 @@ export function ProfileTypeSelection({ onSelect }) {
 
       <Card sm={6}>
         <div className="tooltip tooltip-top" data-tip="Advanced profiles coming soon">
-          <div className="flex flex-col gap-3 items-center justify-center p-6 text-base-content/40 cursor-not-allowed">
+                      <div className="flex flex-col gap-2 items-center justify-center p-4 text-base-content/40 cursor-not-allowed">
             <span className="text-sm text-base-content/60 font-bold">Coming soon</span>
             <i className="fa fa-chart-simple text-5xl" />
             <span className="text-lg">Pro profile</span>

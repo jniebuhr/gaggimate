@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useContext } from 'preact/hooks';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
+import Card from '../../components/Card.jsx';
 
 export function Autotune() {
   const apiService = useContext(ApiServiceContext);
@@ -30,19 +31,18 @@ export function Autotune() {
   }, [apiService]);
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto p-4 space-y-4">
       <div>
         <h1 className="text-3xl font-bold text-base-content">PID Autotune</h1>
       </div>
 
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          {active && (
-            <div className="space-y-6">
+      <Card xs={12} title="PID Autotune Settings">
+                  {active && (
+            <div className="space-y-4">
               <div className="w-full">
                 <OverviewChart />
               </div>
-              <div className="flex flex-col items-center justify-center space-y-4 py-8">
+              <div className="flex flex-col items-center justify-center space-y-4 py-4">
                 <div className="flex items-center space-x-3">
                   <Spinner size={8} />
                   <span className="text-lg font-medium">Autotune in Progress</span>
@@ -55,7 +55,7 @@ export function Autotune() {
           )}
 
           {result && (
-            <div className="text-center space-y-6">
+            <div className="text-center space-y-4">
               <div className="alert alert-success max-w-md mx-auto">
                 <div>
                   <h3 className="font-bold">Autotune Complete!</h3>
@@ -71,12 +71,12 @@ export function Autotune() {
           )}
 
           {!active && !result && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="alert alert-warning">
                 <span>Please ensure the boiler temperature is below 50°C before starting the autotune process.</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="form-control w-full">
                   <label className="label">
                     <span className="label-text font-medium">Tuning Goal</span>
@@ -115,8 +115,7 @@ export function Autotune() {
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </Card>
 
       <div className="flex justify-start space-x-4">
         {!active && !result && (
