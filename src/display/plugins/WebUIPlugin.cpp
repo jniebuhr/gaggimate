@@ -8,6 +8,7 @@
 #include "BLEScalePlugin.h"
 #include "ShotHistoryPlugin.h"
 #include <vector>
+#include "HardwareScalePlugin.h"
 
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
 
@@ -70,6 +71,7 @@ void WebUIPlugin::loop() {
         doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
+        doc["hs"] = controller->getSystemInfo().capabilities.hwScale;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
 
@@ -385,6 +387,15 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
+            if (request->hasArg("scaleFactor1") || request->hasArg("scaleFactor2")) {
+                float scaleFactor1 = settings->getScaleFactor1();
+                float scaleFactor2 = settings->getScaleFactor2();
+                if (request->hasArg("scaleFactor1"))
+                    scaleFactor1 = request->arg("scaleFactor1").toFloat();
+                if (request->hasArg("scaleFactor2"))   
+                    scaleFactor2 = request->arg("scaleFactor2").toFloat();
+                settings->setScaleFactors(scaleFactor1, scaleFactor2);
+            }
             settings->save(true);
         });
         controller->setTargetTemp(controller->getTargetTemp());
@@ -433,6 +444,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["sunriseExtBrightness"] = settings.getSunriseExtBrightness();
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
+    doc["scaleFactor1"] = settings.getScaleFactor1();
+    doc["scaleFactor2"] = settings.getScaleFactor2();
     serializeJson(doc, *response);
     request->send(response);
 

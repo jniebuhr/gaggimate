@@ -157,6 +157,7 @@ export default class ApiService {
       currentPressure: message.pr,
       targetPressure: message.pt,
       currentFlow: message.fl,
+      currentWeight: message.cw,
       mode: message.m,
       selectedProfile: message.p,
       brewTarget: message.bt || 0,
@@ -177,6 +178,7 @@ export default class ApiService {
         dimming: message.cd,
         pressure: message.cp,
         ledControl: message.led,
+        hardwareScale: message.hs,
       },
       history: [...machine.value.history, historyEntry],
     };
@@ -199,6 +201,7 @@ export const machine = signal({
   capabilities: {
     pressure: false,
     dimming: false,
+    hardwareScale: false,
   },
   history: [],
 });
