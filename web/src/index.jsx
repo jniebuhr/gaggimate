@@ -1,6 +1,7 @@
 import 'preact/debug';
 
 import './style.css';
+import { initializeTheme } from './utils/themeManager.js';
 
 import { render } from 'preact';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
@@ -58,5 +59,8 @@ export function App() {
     </LocationProvider>
   );
 }
+
+// Must be called before render
+initializeTheme();
 
 render(<App />, document.getElementById('app'));

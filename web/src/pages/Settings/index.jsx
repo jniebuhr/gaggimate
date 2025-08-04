@@ -6,6 +6,7 @@ import Card from '../../components/Card.jsx';
 import { timezones } from '../../config/zones.js';
 import { computed } from '@preact/signals';
 import { machine } from '../../services/ApiService.js';
+import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 
@@ -13,6 +14,7 @@ export function Settings() {
   const [submitting, setSubmitting] = useState(false);
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
+  const [currentTheme, setCurrentTheme] = useState('light');
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -37,6 +39,11 @@ export function Settings() {
       setFormData({});
     }
   }, [fetchedSettings]);
+
+  // Initialize theme
+  useEffect(() => {
+    setCurrentTheme(getStoredTheme());
+  }, []);
 
   const onChange = (key) => {
     return (e) => {
@@ -303,6 +310,30 @@ export function Settings() {
               onChange={onChange('momentaryButtons')}
             />
           </label>
+        </div>
+      </Card>
+
+      <Card xs={12} lg={6} title="Interface Theme">
+        <div className="form-control">
+          <label htmlFor="daisyui-theme" className="label">
+            <span className="label-text font-medium">Color Theme</span>
+            <span className="label-text-alt">Choose your preferred color theme for the Web UI</span>
+          </label>
+          <select
+            id="daisyui-theme"
+            name="daisyui-theme"
+            className="select select-bordered w-full"
+            value={currentTheme}
+            onChange={(e) => {
+              setCurrentTheme(e.target.value);
+              handleThemeChange(e);
+            }}
+          >
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="coffee">Coffee</option>
+            <option value="nord">Nord</option>
+          </select>
         </div>
       </Card>
 
