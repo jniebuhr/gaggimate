@@ -35,7 +35,7 @@ class Controller {
     void setTargetGrindVolume(double volume);
 
     int getMode() const;
-    int getTargetTemp();
+    int getTargetTemp() const;
     int getTargetDuration() const;
     int getTargetGrindDuration() const;
     virtual int getCurrentTemp() const { return currentTemp; }

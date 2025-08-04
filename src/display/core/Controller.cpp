@@ -241,6 +241,11 @@ void Controller::loop() {
 
         // Handle current process
         if (currentProcess != nullptr) {
+            if (currentProcess->getType() == MODE_BREW) {
+                auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+                brewProcess->updatePressure(pressure);
+                brewProcess->updateFlow(currentPumpFlow);
+            }
             currentProcess->progress();
             if (!isActive()) {
                 deactivate();
@@ -315,10 +320,14 @@ void Controller::startProcess(Process *process) {
     updateLastAction();
 }
 
-int Controller::getTargetTemp() {
+int Controller::getTargetTemp() const {
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
+        if (isActive() && currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+            auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+            return brewProcess->getTemperature();
+        }
         return profileManager->getSelectedProfile().temperature;
     case MODE_STEAM:
         return settings.getTargetSteamTemp();

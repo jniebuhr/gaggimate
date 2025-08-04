@@ -33,7 +33,6 @@ class Process {
 
 enum class ProcessTarget { VOLUMETRIC, TIME };
 enum class ProcessPhase { RUNNING, FINISHED };
-;
 
 class BrewProcess : public Process {
   public:
@@ -48,6 +47,9 @@ class BrewProcess : public Process {
     unsigned long previousPhaseFinished = 0;
     unsigned long finished = 0;
     double currentVolume = 0; // most recent volume pushed
+    float currentFlow = 0.0f;
+    float currentPressure = 0.0f;
+    float waterPumped = 0.0f;
     VolumetricRateCalculator *volumetricRateCalculator = nullptr;
 
     explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
@@ -65,24 +67,27 @@ class BrewProcess : public Process {
         }
     }
 
+    void updatePressure(float pressure) { currentPressure = pressure; }
+
+    void updateFlow(float flow) { currentFlow = flow; }
+
     unsigned long getTotalDuration() const { return profile.getTotalDuration() * 1000L; }
 
     unsigned long getPhaseDuration() const { return static_cast<long>(currentPhase.duration) * 1000L; }
 
     bool isCurrentPhaseFinished() {
-        if (target == ProcessTarget::VOLUMETRIC && currentPhase.hasVolumetricTarget()) {
-            if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
-                return true;
-            }
+        if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
+            return true;
+        }
+        double volume = currentVolume;
+        if (volume > 0.0) {
             double currentRate = volumetricRateCalculator->getRate();
             const double predictedAddedVolume = currentRate * brewDelay;
-            Target target = currentPhase.getVolumetricTarget();
-            return currentVolume + predictedAddedVolume >= target.value;
+            volume += predictedAddedVolume;
         }
-        if (processPhase != ProcessPhase::FINISHED) {
-            return millis() - currentPhaseStarted > getPhaseDuration();
-        }
-        return true;
+        float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
+        return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
+                                       waterPumped);
     }
 
     double getBrewVolume() const {
@@ -139,11 +144,20 @@ class BrewProcess : public Process {
         return 0.0f;
     }
 
+    float getTemperature() const {
+        if (currentPhase.temperature > 0.0f) {
+            return currentPhase.temperature;
+        }
+        return profile.temperature;
+    }
+
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
+        waterPumped += currentFlow / 10.0f; // Add current flow divided to 100ms to water pumped counter
         if (isCurrentPhaseFinished() && processPhase == ProcessPhase::RUNNING) {
             previousPhaseFinished = millis();
             if (phaseIndex + 1 < profile.phases.size()) {
+                waterPumped = 0.0f;
                 phaseIndex++;
                 currentPhase = profile.phases.at(phaseIndex);
                 currentPhaseStarted = millis();
