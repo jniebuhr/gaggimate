@@ -8,7 +8,7 @@ export function Spinner({ size = 8 }) {
     <div role="status">
       <svg
         aria-hidden="true"
-        className={`${classMap[size]} text-gray-200 animate-spin dark:text-gray-600 fill-blue-600`}
+        className={`${classMap[size]} text-base-content/20 animate-spin dark:text-base-content/40 fill-primary`}
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

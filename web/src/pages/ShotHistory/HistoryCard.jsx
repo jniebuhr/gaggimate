@@ -26,7 +26,7 @@ export default function HistoryCard({ shot, onDelete }) {
             tooltip="Export"
             tooltip-position="left"
             onClick={() => onExport()}
-            className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+            className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-info hover:bg-info/10 active:border-info/20"
           >
             <span className="fa fa-file-export" />
           </a>
@@ -35,7 +35,7 @@ export default function HistoryCard({ shot, onDelete }) {
             tooltip="Delete"
             tooltip-position="left"
             onClick={() => onDelete(shot.id)}
-            className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
+            className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-error hover:bg-error/10 active:border-error/20"
           >
             <span className="fa fa-trash" />
           </a>
