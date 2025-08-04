@@ -4,12 +4,14 @@ import { isNumber } from 'chart.js/helpers';
 
 export function StandardProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
+  
   const onFieldChange = (field, value) => {
     onChange({
       ...data,
       [field]: value,
     });
   };
+  
   const onPhaseChange = (index, value) => {
     const newData = {
       ...data,
@@ -112,7 +114,7 @@ export function StandardProfileForm(props) {
             </div>
           ))}
           <div className="flex flex-row justify-center pt-4">
-            <button className="btn btn-outline gap-2" onClick={() => onPhaseAdd()}>
+            <button className="btn btn-outline gap-2" onClick={onPhaseAdd}>
               <i className="fa fa-plus" />
               <span>Add phase</span>
             </button>
@@ -139,6 +141,7 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
       [field]: value,
     });
   };
+  
   const onVolumetricTargetChange = (value) => {
     if (value === 0) {
       onChange({
@@ -157,6 +160,7 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
       ],
     });
   };
+  
   const targets = phase?.targets || [];
   const volumetricTarget = targets.find((t) => t.type === 'volumetric') || {};
   const targetWeight = volumetricTarget?.value || 0;
@@ -169,13 +173,13 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
   return (
     <div className="bg-base-200 border border-base-300 p-6 rounded-lg grid grid-cols-12 gap-6">
       <div className="col-span-12 md:col-span-4 flex flex-row items-center">
-        <select className="select select-bordered w-full" onChange={(e) => onFieldChange('phase', e.target.value)}>
-          <option value="preinfusion" selected={phase.phase === 'preinfusion'}>
-            Pre-Infusion
-          </option>
-          <option value="brew" selected={phase.phase === 'brew'}>
-            Brew
-          </option>
+        <select 
+          className="select select-bordered w-full" 
+          onChange={(e) => onFieldChange('phase', e.target.value)}
+          value={phase.phase}
+        >
+          <option value="preinfusion">Pre-Infusion</option>
+          <option value="brew">Brew</option>
         </select>
       </div>
       <div className="col-span-12 md:col-span-8 flex flex-row gap-4 align-center">
@@ -185,13 +189,14 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
           value={phase.name}
           onChange={(e) => onFieldChange('name', e.target.value)}
         />
-        <button
-          data-tooltip="Delete this phase"
-          onClick={() => onRemove()}
-          className="btn btn-sm btn-ghost text-error hidden md:flex"
-        >
-          <i className="fa fa-trash" />
-        </button>
+        <div className="tooltip tooltip-left" data-tip="Delete this phase">
+          <button
+            onClick={onRemove}
+            className="btn btn-sm btn-ghost text-error hidden md:flex"
+          >
+            <i className="fa fa-trash" />
+          </button>
+        </div>
       </div>
       <div className="col-span-12 form-control">
         <label className="label">
@@ -330,7 +335,7 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
         )}
       </div>
       <div className="block md:hidden col-span-12">
-        <button onClick={() => onRemove()} className="btn btn-sm btn-ghost text-error w-full">
+        <button onClick={onRemove} className="btn btn-sm btn-ghost text-error w-full">
           <i className="fa fa-trash mr-2" />
           Delete
         </button>
