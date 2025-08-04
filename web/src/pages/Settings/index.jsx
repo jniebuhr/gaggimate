@@ -11,12 +11,10 @@ const ledControl = computed(() => machine.value.capabilities.ledControl);
 
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
-  const [gen, setGen] = useState(0);
+  const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const {
     isLoading,
-    isError,
-    error,
     data: fetchedSettings,
   } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
@@ -148,7 +146,7 @@ export function Settings() {
 
   if (isLoading) {
     return (
-      <div class="flex flex-row py-16 items-center justify-center w-full">
+      <div className="flex flex-row py-16 items-center justify-center w-full">
         <Spinner size={8} />
       </div>
     );
@@ -161,65 +159,66 @@ export function Settings() {
       method="post"
       action="/api/settings"
       onSubmit={onSubmit}
-      className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-12"
     >
-      <div className="sm:col-span-12 flex flex-row">
+      <div className="sm:col-span-12 flex flex-row items-center gap-2">
         <h2 className="text-2xl font-bold flex-grow">Settings</h2>
         <button
-          tooltip="Export"
+          type="button"
           onClick={onExport}
-          className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+          className="btn btn-ghost btn-sm"
+          title="Export Settings"
         >
-          <span className="fa fa-file-export" />
+          <i className="fa fa-file-export" />
         </button>
-        <div>
-          <label
-            tooltip="Import"
-            htmlFor="settingsImport"
-            className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200 cursor-pointer"
-          >
-            <span className="fa fa-file-import" />
-          </label>
-        </div>
+        <label
+          htmlFor="settingsImport"
+          className="btn btn-ghost btn-sm cursor-pointer"
+          title="Import Settings"
+        >
+          <i className="fa fa-file-import" />
+        </label>
         <input onChange={onUpload} className="hidden" id="settingsImport" type="file" accept=".json,application/json" />
       </div>
+      
       <Card xs={12} lg={6} title="Temperature settings">
-        <div>
-          <label htmlFor="targetSteamTemp" className="block font-medium text-gray-700 dark:text-gray-400">
+        <div className="form-control">
+          <label htmlFor="targetSteamTemp" className="block text-sm font-medium mb-2">
             Default Steam Temperature (°C)
           </label>
           <input
             id="targetSteamTemp"
             name="targetSteamTemp"
             type="number"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="135"
             value={formData.targetSteamTemp}
             onChange={onChange('targetSteamTemp')}
           />
         </div>
 
-        <div>
-          <label htmlFor="targetWaterTemp" className="block font-medium text-gray-700 dark:text-gray-400">
+        <div className="form-control">
+          <label htmlFor="targetWaterTemp" className="block text-sm font-medium mb-2">
             Default Water Temperature (°C)
           </label>
           <input
             id="targetWaterTemp"
             name="targetWaterTemp"
             type="number"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="80"
             value={formData.targetWaterTemp}
             onChange={onChange('targetWaterTemp')}
           />
         </div>
       </Card>
+      
       <Card xs={12} lg={6} title="User preferences">
-        <div>
-          <label htmlFor="startup-mode" className="block font-medium text-gray-700 dark:text-gray-400">
+        <div className="form-control">
+          <label htmlFor="startup-mode" className="block text-sm font-medium mb-2">
             Startup Mode
           </label>
-          <select id="startup-mode" name="startupMode" className="input-field" onChange={onChange('startupMode')}>
+          <select id="startup-mode" name="startupMode" className="select select-bordered w-full" onChange={onChange('startupMode')}>
             <option value="standby" selected={formData.startupMode === 'standby'}>
               Standby
             </option>
@@ -228,48 +227,45 @@ export function Settings() {
             </option>
           </select>
         </div>
-        <div>
-          <label htmlFor="standbyTimeout" className="block font-medium text-gray-700 dark:text-gray-400">
+        
+        <div className="form-control">
+          <label htmlFor="standbyTimeout" className="block text-sm font-medium mb-2">
             Standby Timeout (s)
           </label>
           <input
             id="standbyTimeout"
             name="standbyTimeout"
             type="number"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="0"
             value={formData.standbyTimeout}
             onChange={onChange('standbyTimeout')}
           />
         </div>
 
-        <div>
-          <b>Predictive scale delay</b>
-        </div>
-        <div>
-          <small>
-            Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control.
-          </small>
+        <div className="divider">Predictive scale delay</div>
+        <div className="text-sm opacity-70 mb-4">
+          Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control.
         </div>
 
-        <div className="flex flex-row gap-4">
-          <label className="relative inline-flex items-center cursor-pointer">
+        <div className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text">Auto Adjust</span>
             <input
               id="delayAdjust"
               name="delayAdjust"
               value="delayAdjust"
               type="checkbox"
-              className="sr-only peer"
+              className="toggle toggle-primary"
               checked={!!formData.delayAdjust}
               onChange={onChange('delayAdjust')}
             />
-            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
           </label>
-          <p>Auto Adjust</p>
         </div>
-        <div className="flex flex-row gap-4">
-          <div className="flex-auto">
-            <label htmlFor="brewDelay" className="block font-medium text-gray-700 dark:text-gray-400">
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="form-control">
+            <label htmlFor="brewDelay" className="block text-sm font-medium mb-2">
               Brew (ms)
             </label>
             <input
@@ -277,14 +273,14 @@ export function Settings() {
               name="brewDelay"
               type="number"
               step="any"
-              className="input-field"
+              className="input input-bordered w-full"
               placeholder="0"
               value={formData.brewDelay}
               onChange={onChange('brewDelay')}
             />
           </div>
-          <div className="flex-auto">
-            <label htmlFor="grindDelay" className="block font-medium text-gray-700 dark:text-gray-400">
+          <div className="form-control">
+            <label htmlFor="grindDelay" className="block text-sm font-medium mb-2">
               Grind (ms)
             </label>
             <input
@@ -292,7 +288,7 @@ export function Settings() {
               name="grindDelay"
               type="number"
               step="any"
-              className="input-field"
+              className="input input-bordered w-full"
               placeholder="0"
               value={formData.grindDelay}
               onChange={onChange('grindDelay')}
@@ -300,73 +296,74 @@ export function Settings() {
           </div>
         </div>
 
-        <div>
-          <b>Switch control</b>
-        </div>
-        <div className="flex flex-row gap-4">
-          <label className="relative inline-flex items-center cursor-pointer">
+        <div className="divider">Switch control</div>
+        <div className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text">Use momentary switches</span>
             <input
               id="momentaryButtons"
               name="momentaryButtons"
               value="momentaryButtons"
               type="checkbox"
-              className="sr-only peer"
+              className="toggle toggle-primary"
               checked={!!formData.momentaryButtons}
               onChange={onChange('momentaryButtons')}
             />
-            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
           </label>
-          <p>Use momentary switches</p>
         </div>
       </Card>
+      
       <Card xs={12} lg={6} title="System preferences">
-        <div>
-          <label htmlFor="wifiSsid" className="block font-medium text-gray-700 dark:text-gray-400">
+        <div className="form-control">
+          <label htmlFor="wifiSsid" className="block text-sm font-medium mb-2">
             WiFi SSID
           </label>
           <input
             id="wifiSsid"
             name="wifiSsid"
             type="text"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="WiFi SSID"
             value={formData.wifiSsid}
             onChange={onChange('wifiSsid')}
           />
         </div>
-        <div>
-          <label htmlFor="wifiPassword" className="block font-medium text-gray-700 dark:text-gray-400">
+        
+        <div className="form-control">
+          <label htmlFor="wifiPassword" className="block text-sm font-medium mb-2">
             WiFi Password
           </label>
           <input
             id="wifiPassword"
             name="wifiPassword"
             type="password"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="WiFi Password"
             value={formData.wifiPassword}
             onChange={onChange('wifiPassword')}
           />
         </div>
-        <div>
-          <label htmlFor="mdnsName" className="block font-medium text-gray-700 dark:text-gray-400">
+        
+        <div className="form-control">
+          <label htmlFor="mdnsName" className="block text-sm font-medium mb-2">
             Hostname
           </label>
           <input
             id="mdnsName"
             name="mdnsName"
             type="text"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="Hostname"
             value={formData.mdnsName}
             onChange={onChange('mdnsName')}
           />
         </div>
-        <div>
-          <label htmlFor="timezone" className="block font-medium text-gray-700 dark:text-gray-400">
+        
+        <div className="form-control">
+          <label htmlFor="timezone" className="block text-sm font-medium mb-2">
             Timezone
           </label>
-          <select id="timezone" name="timezone" className="input-field" onChange={onChange('timezone')}>
+          <select id="timezone" name="timezone" className="select select-bordered w-full" onChange={onChange('timezone')}>
             {timezones.map((timezone) => (
               <option key={timezone} value={timezone} selected={formData.timezone === timezone}>
                 {timezone}
@@ -374,108 +371,113 @@ export function Settings() {
             ))}
           </select>
         </div>
-        <div>
-          <b>Clock</b>
-        </div>
-        <div className="flex flex-row gap-4">
-          <label className="relative inline-flex items-center cursor-pointer">
+        
+        <div className="divider">Clock</div>
+        <div className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text">Use 24h Format</span>
             <input
               id="clock24hFormat"
               name="clock24hFormat"
               value="clock24hFormat"
               type="checkbox"
-              className="sr-only peer"
+              className="toggle toggle-primary"
               checked={!!formData.clock24hFormat}
               onChange={onChange('clock24hFormat')}
             />
-            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
           </label>
-          <p>Use 24h Format</p>
         </div>
       </Card>
+      
       <Card xs={12} lg={6} title="Machine settings">
-        <div>
-          <label htmlFor="pid" className="block font-medium text-gray-700 dark:text-gray-400">
+        <div className="form-control">
+          <label htmlFor="pid" className="block text-sm font-medium mb-2">
             PID Values (Kp, Ki, Kd)
           </label>
           <input
             id="pid"
             name="pid"
             type="text"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="2.0, 0.1, 0.01"
             value={formData.pid}
             onChange={onChange('pid')}
           />
         </div>
-        <div>
-          <label htmlFor="temperatureOffset" className="block font-medium text-gray-700 dark:text-gray-400">
+        
+        <div className="form-control">
+          <label htmlFor="temperatureOffset" className="block text-sm font-medium mb-2">
             Temperature Offset
           </label>
-          <div className="flex">
+          <div className="input-group">
             <input
               id="temperatureOffset"
               name="temperatureOffset"
               type="number"
-              className="input-field addition"
+              className="input input-bordered"
               placeholder="0"
               value={formData.temperatureOffset}
               onChange={onChange('temperatureOffset')}
             />
-            <span className="input-addition">°C</span>
+            <span className="btn btn-square">°C</span>
           </div>
         </div>
-        <div>
-          <label htmlFor="pressureScaling" className="block font-medium text-gray-700 dark:text-gray-400">
-            Pressure sensor rating <small>Enter the bar rating of the pressure sensor being used</small>
+        
+        <div className="form-control">
+          <label htmlFor="pressureScaling" className="block text-sm font-medium mb-2">
+            Pressure sensor rating
           </label>
-          <div className="flex">
+          <div className="text-xs opacity-70 mb-2">Enter the bar rating of the pressure sensor being used</div>
+          <div className="input-group">
             <input
               id="pressureScaling"
               name="pressureScaling"
               type="number"
               inputMode="decimal"
               placeholder="0.0"
-              className="input-field addition"
+              className="input input-bordered"
               min="0"
               step="any"
               value={formData.pressureScaling}
               onChange={onChange('pressureScaling')}
             />
-            <span className="input-addition">bar</span>
+            <span className="btn btn-square">bar</span>
           </div>
         </div>
-        <div>
-          <label htmlFor="pressureScaling" className="block font-medium text-gray-700 dark:text-gray-400">
-            Steam Pump Assist <small>What percentage to run the pump at during steaming</small>
+        
+        <div className="form-control">
+          <label htmlFor="steamPumpPercentage" className="block text-sm font-medium mb-2">
+            Steam Pump Assist
           </label>
-          <div className="flex">
+          <div className="text-xs opacity-70 mb-2">What percentage to run the pump at during steaming</div>
+          <div className="input-group">
             <input
               id="steamPumpPercentage"
               name="steamPumpPercentage"
               type="number"
               inputMode="decimal"
               placeholder="0.0"
-              className="input-field addition"
+              className="input input-bordered"
               min="0"
               step="any"
               value={formData.steamPumpPercentage}
               onChange={onChange('steamPumpPercentage')}
             />
-            <span className="input-addition">%</span>
+            <span className="btn btn-square">%</span>
           </div>
         </div>
       </Card>
+      
       <Card xs={12} lg={6} title="Display settings">
-        <div>
-          <label htmlFor="mainBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
+        <div className="form-control">
+          <label htmlFor="mainBrightness" className="block text-sm font-medium mb-2">
             Main Brightness (1-16)
           </label>
           <input
             id="mainBrightness"
             name="mainBrightness"
             type="number"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="16"
             min="1"
             max="16"
@@ -484,34 +486,31 @@ export function Settings() {
           />
         </div>
 
-        <div>
-          <b>Standby Display</b>
-        </div>
-        <div className="flex flex-row gap-4">
-          <label className="relative inline-flex items-center cursor-pointer">
+        <div className="divider">Standby Display</div>
+        <div className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text">Enable standby display</span>
             <input
               id="standbyDisplayEnabled"
               name="standbyDisplayEnabled"
               value="standbyDisplayEnabled"
               type="checkbox"
-              className="sr-only peer"
+              className="toggle toggle-primary"
               checked={formData.standbyDisplayEnabled}
               onChange={onChange('standbyDisplayEnabled')}
             />
-            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
           </label>
-          <p>Enable standby display</p>
         </div>
 
-        <div>
-          <label htmlFor="standbyBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
+        <div className="form-control">
+          <label htmlFor="standbyBrightness" className="block text-sm font-medium mb-2">
             Standby Brightness (0-16)
           </label>
           <input
             id="standbyBrightness"
             name="standbyBrightness"
             type="number"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="8"
             min="0"
             max="16"
@@ -520,29 +519,31 @@ export function Settings() {
             disabled={!formData.standbyDisplayEnabled}
           />
         </div>
-        <div>
-          <label htmlFor="standbyBrightnessTimeout" className="block font-medium text-gray-700 dark:text-gray-400">
+        
+        <div className="form-control">
+          <label htmlFor="standbyBrightnessTimeout" className="block text-sm font-medium mb-2">
             Standby Brightness Timeout (seconds)
           </label>
           <input
             id="standbyBrightnessTimeout"
             name="standbyBrightnessTimeout"
             type="number"
-            className="input-field"
+            className="input input-bordered w-full"
             placeholder="60"
             min="1"
             value={formData.standbyBrightnessTimeout}
             onChange={onChange('standbyBrightnessTimeout')}
           />
         </div>
-        <div>
-          <label htmlFor="themeMode" className="block font-medium text-gray-700 dark:text-gray-400">
+        
+        <div className="form-control">
+          <label htmlFor="themeMode" className="block text-sm font-medium mb-2">
             Theme
           </label>
           <select
             id="themeMode"
             name="themeMode"
-            className="input-field"
+            className="select select-bordered w-full"
             value={formData.themeMode}
             onChange={onChange('themeMode')}
           >
@@ -551,21 +552,23 @@ export function Settings() {
           </select>
         </div>
       </Card>
+      
       {ledControl.value && (
         <Card xs={12} lg={6} title="Sunrise Settings">
-          <div>
-            <span>Set the colors for the LEDs when in idle mode with no warnings.</span>
+          <div className="text-sm opacity-70 mb-4">
+            Set the colors for the LEDs when in idle mode with no warnings.
           </div>
-          <div className="flex flex-row gap-2">
-            <div className="flex-auto">
-              <label htmlFor="sunriseR" className="block font-medium text-gray-700 dark:text-gray-400">
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="form-control">
+              <label htmlFor="sunriseR" className="block text-sm font-medium mb-2">
                 Red (0 - 255)
               </label>
               <input
                 id="sunriseR"
                 name="sunriseR"
                 type="number"
-                className="input-field"
+                className="input input-bordered w-full"
                 placeholder="16"
                 min="0"
                 max="255"
@@ -573,15 +576,15 @@ export function Settings() {
                 onChange={onChange('sunriseR')}
               />
             </div>
-            <div className="flex-auto">
-              <label htmlFor="sunriseG" className="block font-medium text-gray-700 dark:text-gray-400">
+            <div className="form-control">
+              <label htmlFor="sunriseG" className="block text-sm font-medium mb-2">
                 Green (0 - 255)
               </label>
               <input
                 id="sunriseG"
                 name="sunriseG"
                 type="number"
-                className="input-field"
+                className="input input-bordered w-full"
                 placeholder="16"
                 min="0"
                 max="255"
@@ -590,16 +593,17 @@ export function Settings() {
               />
             </div>
           </div>
-          <div className="flex flex-row gap-2">
-            <div className="flex-auto">
-              <label htmlFor="sunriseB" className="block font-medium text-gray-700 dark:text-gray-400">
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="form-control">
+              <label htmlFor="sunriseB" className="block text-sm font-medium mb-2">
                 Blue (0 - 255)
               </label>
               <input
                 id="sunriseB"
                 name="sunriseB"
                 type="number"
-                className="input-field"
+                className="input input-bordered w-full"
                 placeholder="16"
                 min="0"
                 max="255"
@@ -607,15 +611,15 @@ export function Settings() {
                 onChange={onChange('sunriseB')}
               />
             </div>
-            <div className="flex-auto">
-              <label htmlFor="sunriseW" className="block font-medium text-gray-700 dark:text-gray-400">
+            <div className="form-control">
+              <label htmlFor="sunriseW" className="block text-sm font-medium mb-2">
                 White (0 - 255)
               </label>
               <input
                 id="sunriseW"
                 name="sunriseW"
                 type="number"
-                className="input-field"
+                className="input input-bordered w-full"
                 placeholder="16"
                 min="0"
                 max="255"
@@ -624,15 +628,16 @@ export function Settings() {
               />
             </div>
           </div>
-          <div>
-            <label htmlFor="sunriseExtBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
+          
+          <div className="form-control">
+            <label htmlFor="sunriseExtBrightness" className="block text-sm font-medium mb-2">
               External LED (0 - 255)
             </label>
             <input
               id="sunriseExtBrightness"
               name="sunriseExtBrightness"
               type="number"
-              className="input-field"
+              className="input input-bordered w-full"
               placeholder="16"
               min="0"
               max="255"
@@ -640,15 +645,16 @@ export function Settings() {
               onChange={onChange('sunriseExtBrightness')}
             />
           </div>
-          <div>
-            <label htmlFor="emptyTankDistance" className="block font-medium text-gray-700 dark:text-gray-400">
+          
+          <div className="form-control">
+            <label htmlFor="emptyTankDistance" className="block text-sm font-medium mb-2">
               Distance from sensor to bottom of the tank
             </label>
             <input
               id="emptyTankDistance"
               name="emptyTankDistance"
               type="number"
-              className="input-field"
+              className="input input-bordered w-full"
               placeholder="16"
               min="0"
               max="1000"
@@ -656,15 +662,16 @@ export function Settings() {
               onChange={onChange('emptyTankDistance')}
             />
           </div>
-          <div>
-            <label htmlFor="fullTankDistance" className="block font-medium text-gray-700 dark:text-gray-400">
+          
+          <div className="form-control">
+            <label htmlFor="fullTankDistance" className="block text-sm font-medium mb-2">
               Distance from sensor to the fill line
             </label>
             <input
               id="fullTankDistance"
               name="fullTankDistance"
               type="number"
-              className="input-field"
+              className="input input-bordered w-full"
               placeholder="16"
               min="0"
               max="1000"
@@ -674,229 +681,242 @@ export function Settings() {
           </div>
         </Card>
       )}
+      
       <Card xs={12} title="Plugins">
-        <div className="flex flex-col rounded-lg divide-y divide-[#ccc] border-[#ccc] dark:border-gray-600 dark:divide-gray-600 border">
-          <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
-            <label className="relative inline-flex items-center cursor-pointer justify-center">
-              <input
-                id="homekit"
-                name="homekit"
-                value="homekit"
-                type="checkbox"
-                className="sr-only peer"
-                checked={!!formData.homekit}
-                onChange={onChange('homekit')}
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-            <p>Homekit</p>
-          </div>
-          {formData.homekit && (
-            <div className="p-4 flex flex-col gap-4 items-center justify-center">
-              <img src={homekitImage} alt="Homekit Setup Code" />
-              <p>Open the Homekit App, find your GaggiMate device and scan the setup code above to add it.</p>
-            </div>
-          )}
-          <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                id="boilerFillActive"
-                name="boilerFillActive"
-                value="boilerFillActive"
-                type="checkbox"
-                className="sr-only peer"
-                checked={!!formData.boilerFillActive}
-                onChange={onChange('boilerFillActive')}
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-            <p>Boiler Refill Plugin</p>
-          </div>
-          {formData.boilerFillActive && (
-            <div className="p-4 flex flex-row gap-4">
-              <div className="flex-auto">
-                <label htmlFor="startupFillTime" className="block font-medium text-gray-700 dark:text-gray-400">
-                  On startup (s)
-                </label>
+        <div className="space-y-4">
+          <div className="bg-base-200 p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-medium">Homekit</span>
+              <label className="label cursor-pointer">
                 <input
-                  id="startupFillTime"
-                  name="startupFillTime"
-                  type="number"
-                  className="input-field"
-                  placeholder="0"
-                  value={formData.startupFillTime}
-                  onChange={onChange('startupFillTime')}
+                  id="homekit"
+                  name="homekit"
+                  value="homekit"
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={!!formData.homekit}
+                  onChange={onChange('homekit')}
                 />
-              </div>
-              <div className="flex-auto">
-                <label htmlFor="infuseBloomTime" className="block font-medium text-gray-700 dark:text-gray-400">
-                  On steam deactivate (s)
-                </label>
-                <input
-                  id="steamFillTime"
-                  name="steamFillTime"
-                  type="number"
-                  className="input-field"
-                  placeholder="0"
-                  value={formData.steamFillTime}
-                  onChange={onChange('steamFillTime')}
-                />
-              </div>
+              </label>
             </div>
-          )}
-          <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                id="smartGrindActive"
-                name="smartGrindActive"
-                value="smartGrindActive"
-                type="checkbox"
-                className="sr-only peer"
-                checked={!!formData.smartGrindActive}
-                onChange={onChange('smartGrindActive')}
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-            <p>Smart Grind Plugin</p>
+            {formData.homekit && (
+              <div className="flex flex-col gap-4 items-center justify-center mt-4 pt-4 border-t border-base-300">
+                <img src={homekitImage} alt="Homekit Setup Code" />
+                <p className="text-center">Open the Homekit App, find your GaggiMate device and scan the setup code above to add it.</p>
+              </div>
+            )}
           </div>
-          {formData.smartGrindActive && (
-            <div className="p-4 flex flex-col gap-4">
-              <p className="flex-auto">
-                This feature controls a Tasmota Plug to turn off your grinder after the target has been reached.
-              </p>
-              <div className="flex-auto">
-                <label htmlFor="smartGrindIp" className="block font-medium text-gray-700 dark:text-gray-400">
-                  Tasmota IP
-                </label>
+          
+          <div className="bg-base-200 p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-medium">Boiler Refill Plugin</span>
+              <label className="label cursor-pointer">
                 <input
-                  id="smartGrindIp"
-                  name="smartGrindIp"
-                  type="text"
-                  className="input-field"
-                  placeholder="0"
-                  value={formData.smartGrindIp}
-                  onChange={onChange('smartGrindIp')}
+                  id="boilerFillActive"
+                  name="boilerFillActive"
+                  value="boilerFillActive"
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={!!formData.boilerFillActive}
+                  onChange={onChange('boilerFillActive')}
                 />
-              </div>
-              <div className="flex-auto">
-                <label htmlFor="smartGrindMode" className="block font-medium text-gray-700 dark:text-gray-400">
-                  Mode
-                </label>
-                <select id="smartGrindMode" name="smartGrindMode" className="input-field" onChange={onChange('smartGrindMode')}>
-                  <option value="0" selected={formData.smartGrindMode?.toString() === '0'}>
-                    Turn off at target
-                  </option>
-                  <option value="1" selected={formData.smartGrindMode?.toString() === '1'}>
-                    Toggle off and on at target
-                  </option>
-                  <option value="2" selected={formData.smartGrindMode?.toString() === '2'}>
-                    Turn on at start, off at target
-                  </option>
-                </select>
-              </div>
+              </label>
             </div>
-          )}
+            {formData.boilerFillActive && (
+              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-base-300">
+                <div className="form-control">
+                  <label htmlFor="startupFillTime" className="block text-sm font-medium mb-2">
+                    On startup (s)
+                  </label>
+                  <input
+                    id="startupFillTime"
+                    name="startupFillTime"
+                    type="number"
+                    className="input input-bordered w-full"
+                    placeholder="0"
+                    value={formData.startupFillTime}
+                    onChange={onChange('startupFillTime')}
+                  />
+                </div>
+                <div className="form-control">
+                  <label htmlFor="steamFillTime" className="block text-sm font-medium mb-2">
+                    On steam deactivate (s)
+                  </label>
+                  <input
+                    id="steamFillTime"
+                    name="steamFillTime"
+                    type="number"
+                    className="input input-bordered w-full"
+                    placeholder="0"
+                    value={formData.steamFillTime}
+                    onChange={onChange('steamFillTime')}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="bg-base-200 p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-medium">Smart Grind Plugin</span>
+              <label className="label cursor-pointer">
+                <input
+                  id="smartGrindActive"
+                  name="smartGrindActive"
+                  value="smartGrindActive"
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={!!formData.smartGrindActive}
+                  onChange={onChange('smartGrindActive')}
+                />
+              </label>
+            </div>
+            {formData.smartGrindActive && (
+              <div className="space-y-4 mt-4 pt-4 border-t border-base-300">
+                <p className="text-sm opacity-70">
+                  This feature controls a Tasmota Plug to turn off your grinder after the target has been reached.
+                </p>
+                <div className="form-control">
+                  <label htmlFor="smartGrindIp" className="block text-sm font-medium mb-2">
+                    Tasmota IP
+                  </label>
+                  <input
+                    id="smartGrindIp"
+                    name="smartGrindIp"
+                    type="text"
+                    className="input input-bordered w-full"
+                    placeholder="0"
+                    value={formData.smartGrindIp}
+                    onChange={onChange('smartGrindIp')}
+                  />
+                </div>
+                <div className="form-control">
+                  <label htmlFor="smartGrindMode" className="block text-sm font-medium mb-2">
+                    Mode
+                  </label>
+                  <select id="smartGrindMode" name="smartGrindMode" className="select select-bordered w-full" onChange={onChange('smartGrindMode')}>
+                    <option value="0" selected={formData.smartGrindMode?.toString() === '0'}>
+                      Turn off at target
+                    </option>
+                    <option value="1" selected={formData.smartGrindMode?.toString() === '1'}>
+                      Toggle off and on at target
+                    </option>
+                    <option value="2" selected={formData.smartGrindMode?.toString() === '2'}>
+                      Turn on at start, off at target
+                    </option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
 
-          <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                id="homeAssistant"
-                name="homeAssistant"
-                value="homeAssistant"
-                type="checkbox"
-                className="sr-only peer"
-                checked={!!formData.homeAssistant}
-                onChange={onChange('homeAssistant')}
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-            <p>Home Assistant (MQTT)</p>
-          </div>
-          {formData.homeAssistant && (
-            <div className="p-4 flex flex-col gap-4">
-              <p className="flex-auto">
-                This feature allows connection to a Home Assistant or MQTT installation and push the current state.
-              </p>
-              <div className="flex-auto">
-                <label htmlFor="haIP" className="block font-medium text-gray-700 dark:text-gray-400">
-                  MQTT IP
-                </label>
+          <div className="bg-base-200 p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-medium">Home Assistant (MQTT)</span>
+              <label className="label cursor-pointer">
                 <input
-                  id="haIP"
-                  name="haIP"
-                  type="text"
-                  className="input-field"
-                  placeholder="0"
-                  value={formData.haIP}
-                  onChange={onChange('haIP')}
+                  id="homeAssistant"
+                  name="homeAssistant"
+                  value="homeAssistant"
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={!!formData.homeAssistant}
+                  onChange={onChange('homeAssistant')}
                 />
-              </div>
-
-              <div className="flex-auto">
-                <label htmlFor="haPort" className="block font-medium text-gray-700 dark:text-gray-400">
-                  MQTT Port
-                </label>
-                <input
-                  id="haPort"
-                  name="haPort"
-                  type="number"
-                  className="input-field"
-                  placeholder="0"
-                  value={formData.haPort}
-                  onChange={onChange('haPort')}
-                />
-              </div>
-              <div className="flex-auto">
-                <label htmlFor="haUser" className="block font-medium text-gray-700 dark:text-gray-400">
-                  MQTT User
-                </label>
-                <input
-                  id="haUser"
-                  name="haUser"
-                  type="text"
-                  className="input-field"
-                  placeholder="user"
-                  value={formData.haUser}
-                  onChange={onChange('haUser')}
-                />
-              </div>
-              <div className="flex-auto">
-                <label htmlFor="haPassword" className="block font-medium text-gray-700 dark:text-gray-400">
-                  MQTT Password
-                </label>
-                <input
-                  id="haPassword"
-                  name="haPassword"
-                  type="password"
-                  className="input-field"
-                  placeholder="password"
-                  value={formData.haPassword}
-                  onChange={onChange('haPassword')}
-                />
-              </div>
+              </label>
             </div>
-          )}
+            {formData.homeAssistant && (
+              <div className="space-y-4 mt-4 pt-4 border-t border-base-300">
+                <p className="text-sm opacity-70">
+                  This feature allows connection to a Home Assistant or MQTT installation and push the current state.
+                </p>
+                <div className="form-control">
+                  <label htmlFor="haIP" className="block text-sm font-medium mb-2">
+                    MQTT IP
+                  </label>
+                  <input
+                    id="haIP"
+                    name="haIP"
+                    type="text"
+                    className="input input-bordered w-full"
+                    placeholder="0"
+                    value={formData.haIP}
+                    onChange={onChange('haIP')}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label htmlFor="haPort" className="block text-sm font-medium mb-2">
+                    MQTT Port
+                  </label>
+                  <input
+                    id="haPort"
+                    name="haPort"
+                    type="number"
+                    className="input input-bordered w-full"
+                    placeholder="0"
+                    value={formData.haPort}
+                    onChange={onChange('haPort')}
+                  />
+                </div>
+                
+                <div className="form-control">
+                  <label htmlFor="haUser" className="block text-sm font-medium mb-2">
+                    MQTT User
+                  </label>
+                  <input
+                    id="haUser"
+                    name="haUser"
+                    type="text"
+                    className="input input-bordered w-full"
+                    placeholder="user"
+                    value={formData.haUser}
+                    onChange={onChange('haUser')}
+                  />
+                </div>
+                
+                <div className="form-control">
+                  <label htmlFor="haPassword" className="block text-sm font-medium mb-2">
+                    MQTT Password
+                  </label>
+                  <input
+                    id="haPassword"
+                    name="haPassword"
+                    type="password"
+                    className="input input-bordered w-full"
+                    placeholder="password"
+                    value={formData.haPassword}
+                    onChange={onChange('haPassword')}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </Card>
-      <div className="col-span-12 gap-2 flex flex-col">
-        <div className="text-sm text-[#666666]">Some options like WiFi, NTP and managing Plugins require a restart.</div>
+      
+      <div className="col-span-12 space-y-4">
+        <div className="alert alert-info">
+          <span>Some options like WiFi, NTP and managing Plugins require a restart.</span>
+        </div>
 
-        <div className="flex justify-start flex-col sm:flex-row flex-wrap gap-1">
-          <a href="/" className="menu-button">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <a href="/" className="btn btn-outline">
             Back
           </a>
-          <button type="submit" className="menu-button flex flex-row gap-2 justify-center" disabled={submitting}>
-            Save
+          <button type="submit" className="btn btn-primary" disabled={submitting}>
             {submitting && <Spinner size={4} />}
+            Save
           </button>
-          <input
+          <button
             type="submit"
             name="restart"
-            className="menu-button"
-            value="Save and Restart"
+            className="btn btn-secondary"
             disabled={submitting}
             onClick={(e) => onSubmit(e, true)}
-          />
+          >
+            Save and Restart
+          </button>
         </div>
       </div>
     </form>
