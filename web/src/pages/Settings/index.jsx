@@ -123,8 +123,8 @@ export function Settings() {
   );
 
   const onExport = useCallback(() => {
-    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(formData, undefined, 2));
-    var downloadAnchorNode = document.createElement('a');
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(formData, undefined, 2));
+    const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute('href', dataStr);
     downloadAnchorNode.setAttribute('download', 'settings.json');
     document.body.appendChild(downloadAnchorNode); // required for firefox
