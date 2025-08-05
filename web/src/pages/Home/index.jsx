@@ -32,17 +32,17 @@ export function Home() {
 
   return (
     <>
-      <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden'>
+      <div className='mb-4 flex flex-row items-center gap-2'>
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h2>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
-        <Card sm={12} title='Temperature & Pressure Chart'>
-          <OverviewChart />
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
+        <Card sm={10} lg={5} title='Process Controls'>
+          <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
         </Card>
 
-        <Card sm={12} title='Process Controls'>
-          <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
+        <Card sm={10} lg={5} title='Temperature & Pressure Chart'>
+          <OverviewChart />
         </Card>
       </div>
     </>

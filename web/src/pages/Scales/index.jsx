@@ -75,21 +75,19 @@ export function Scales() {
 
   return (
     <>
-      <div className='mb-4 flex flex-row items-center gap-2'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Bluetooth Scales</h1>
+      <div className='mb-4 flex flex-row items-center justify-between gap-4'>
+        <h1 className='text-2xl font-bold sm:text-3xl'>Bluetooth Scales</h1>
+        <button
+          className={`btn btn-primary ${isScanning ? 'loading' : ''}`}
+          onClick={onScan}
+          disabled={isScanning}
+        >
+          {isScanning ? 'Scanning...' : 'Scan for Scales'}
+        </button>
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
         <Card sm={12} title='Available Scales'>
-          <div className='mb-4 flex items-center justify-end'>
-            <button
-              className={`btn btn-primary ${isScanning ? 'loading' : ''}`}
-              onClick={onScan}
-              disabled={isScanning}
-            >
-              {isScanning ? 'Scanning...' : 'Scan for Scales'}
-            </button>
-          </div>
 
           {isLoading || isInfoLoading ? (
             <div className='flex items-center justify-center py-12'>

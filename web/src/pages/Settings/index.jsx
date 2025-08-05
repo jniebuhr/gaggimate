@@ -334,7 +334,7 @@ export function Settings() {
             <div className='form-control'>
               <label htmlFor='daisyui-theme' className='label'>
                 <span className='label-text font-medium'>Color Theme</span>
-                <span className='label-text-alt'>
+                <span className='mb-2 text-sm opacity-70'>
                   Choose your preferred color theme for the Web UI
                 </span>
               </label>
