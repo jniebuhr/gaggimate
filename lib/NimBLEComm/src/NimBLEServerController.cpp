@@ -63,6 +63,14 @@ void NimBLEServerController::initServer(const String infoString) {
     ledControlChar = pService->createCharacteristic(LED_CONTROL_UUID, NIMBLE_PROPERTY::WRITE);
     ledControlChar->setCallbacks(this);
 
+    scaleTareChar = pService->createCharacteristic(SCALE_TARE_UUID, NIMBLE_PROPERTY::WRITE);
+    scaleTareChar->setCallbacks(this);
+    scaleCalibrationChar = pService->createCharacteristic(SCALE_CALIBRATION_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+    scaleCalibrationChar->setCallbacks(this);
+    scaleCalibrateChar = pService->createCharacteristic(SCALE_CALIBRATE_UUID, NIMBLE_PROPERTY::WRITE);
+    scaleCalibrateChar->setCallbacks(this);
+    scaleWeightMeasurementChar = pService->createCharacteristic(SCALE_WEIGHT_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY);
+
     pService->start();
 
     ota_dfu_ble.configure_OTA(pServer);
@@ -141,6 +149,24 @@ void NimBLEServerController::sendTofMeasurement(int value) {
     }
 }
 
+void NimBLEServerController::sendScaleMeasurement(float weight) {
+    if (deviceConnected && scaleWeightMeasurementChar != nullptr) {
+        char data[9]; // -1500.00 is 8 bytes + null terminator
+        snprintf(data, sizeof(data), "%.2f", weight);
+        scaleWeightMeasurementChar->setValue(data);
+        scaleWeightMeasurementChar->notify();
+    }
+}
+
+void NimBLEServerController::sendScaleCalibration(float scaleFactor1, float scaleFactor2) {
+    if (deviceConnected && scaleCalibrationChar != nullptr) {
+        char data[32]; // -9999.999,-9999.999 is 19 bytes + null terminator
+        snprintf(data, sizeof(data), "%.3f,%.3f", scaleFactor1, scaleFactor2);
+        scaleCalibrationChar->setValue(data);
+        scaleCalibrationChar->notify();
+    }
+}
+
 void NimBLEServerController::registerOutputControlCallback(const simple_output_callback_t &callback) {
     outputControlCallback = callback;
 }
@@ -161,6 +187,14 @@ void NimBLEServerController::registerLedControlCallback(const led_control_callba
 void NimBLEServerController::setInfo(const String infoString) {
     this->infoString = infoString;
     infoChar->setValue(infoString);
+}
+
+void NimBLEServerController::registerScaleTareCallback(const void_callback_t &callback) { scaleTareCallback = callback; }
+void NimBLEServerController::registerScaleCalibrateCallback(const scale_calibrate_callback_t &callback) {
+    scaleCalibrateCallback = callback;
+}
+void NimBLEServerController::registerScaleCalibrationCallback(const scale_calibration_callback_t &callback) {
+    scaleCalibrationCallback = callback;
 }
 
 void NimBLEServerController::registerPidControlCallback(const pid_control_callback_t &callback) { pidControlCallback = callback; }
@@ -251,6 +285,27 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
             uint8_t brightness = get_token(msg, 1, ',').toInt();
             ledControlCallback(channel, brightness);
             ESP_LOGV(LOG_TAG, "Received led control, %d: %d", channel, brightness);
+        }
+    } else if (pCharacteristic->getUUID().equals(NimBLEUUID(SCALE_TARE_UUID))) {
+        ESP_LOGV(LOG_TAG, "Received scale tare");
+        if (scaleTareCallback != nullptr) {
+            scaleTareCallback();
+        }
+    } else if (pCharacteristic->getUUID().equals(NimBLEUUID(SCALE_CALIBRATION_UUID))) {
+        auto calibration = String(pCharacteristic->getValue().c_str());
+        float scaleFactor1 = get_token(calibration, 0, ',').toFloat();
+        float scaleFactor2 = get_token(calibration, 1, ',').toFloat();
+        ESP_LOGV(LOG_TAG, "Received scale calibration: %.2f, %.2f", scaleFactor1, scaleFactor2);
+        if (scaleCalibrationCallback != nullptr) {
+            scaleCalibrationCallback(scaleFactor1, scaleFactor2);
+        }
+    } else if (pCharacteristic->getUUID().equals(NimBLEUUID(SCALE_CALIBRATE_UUID))) {
+        auto calibration = String(pCharacteristic->getValue().c_str());
+        uint8_t scale = get_token(calibration, 0, ',').toInt();
+        float calibrationWeight = get_token(calibration, 1, ',').toFloat();
+        ESP_LOGV(LOG_TAG, "Received scale calibrate: %d, %.2f", scale, calibrationWeight);
+        if (scaleCalibrateCallback != nullptr) {
+            scaleCalibrateCallback(scale, calibrationWeight);
         }
     }
 }

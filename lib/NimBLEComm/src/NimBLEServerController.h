@@ -16,6 +16,8 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void sendAutotuneResult(float Kp, float Ki, float Kd);
     void sendVolumetricMeasurement(float value);
     void sendTofMeasurement(int value);
+    void sendScaleMeasurement(float weight);
+    void sendScaleCalibration(float scaleFactor1, float scaleFactor2);
     void registerOutputControlCallback(const simple_output_callback_t &callback);
     void registerAdvancedOutputControlCallback(const advanced_output_callback_t &callback);
     void registerAltControlCallback(const pin_control_callback_t &callback);
@@ -25,6 +27,9 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void registerPressureScaleCallback(const float_callback_t &callback);
     void registerTareCallback(const void_callback_t &callback);
     void registerLedControlCallback(const led_control_callback_t &callback);
+    void registerScaleTareCallback(const void_callback_t &callback);
+    void registerScaleCalibrateCallback(const scale_calibrate_callback_t &callback);
+    void registerScaleCalibrationCallback(const scale_calibration_callback_t &callback);
     void setInfo(String infoString);
 
   private:
@@ -46,6 +51,10 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     NimBLECharacteristic *volumetricTareChar = nullptr;
     NimBLECharacteristic *tofMeasurementChar = nullptr;
     NimBLECharacteristic *ledControlChar = nullptr;
+    NimBLECharacteristic *scaleTareChar = nullptr;
+    NimBLECharacteristic *scaleCalibrationChar = nullptr;
+    NimBLECharacteristic *scaleCalibrateChar = nullptr;
+    NimBLECharacteristic *scaleWeightMeasurementChar = nullptr; 
 
     simple_output_callback_t outputControlCallback = nullptr;
     advanced_output_callback_t advancedControlCallback = nullptr;
@@ -55,6 +64,9 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     autotune_callback_t autotuneCallback = nullptr;
     float_callback_t pressureScaleCallback = nullptr;
     void_callback_t tareCallback = nullptr;
+    void_callback_t scaleTareCallback = nullptr;
+    scale_calibrate_callback_t scaleCalibrateCallback = nullptr;
+    scale_calibration_callback_t scaleCalibrationCallback = nullptr;
     led_control_callback_t ledControlCallback = nullptr;
 
     // BLEServerCallbacks overrides

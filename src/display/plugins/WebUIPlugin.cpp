@@ -8,6 +8,7 @@
 #include "BLEScalePlugin.h"
 #include "ShotHistoryPlugin.h"
 #include <vector>
+#include "HardwareScalePlugin.h"
 
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
 
@@ -66,10 +67,14 @@ void WebUIPlugin::loop() {
         doc["pr"] = controller->getCurrentPressure();
         doc["fl"] = controller->getCurrentPumpFlow();
         doc["pt"] = controller->getTargetPressure();
+        if (HardwareScales.isConnected()) {
+            doc["cw"] = HardwareScales.getWeight();
+        }
         doc["m"] = controller->getMode();
         doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
+        doc["hs"] = controller->getSystemInfo().capabilities.hwScale;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
 
@@ -136,6 +141,9 @@ void WebUIPlugin::setupServer() {
         doc["mode"] = controller->getMode();
         doc["tt"] = controller->getTargetTemp();
         doc["ct"] = controller->getCurrentTemp();
+        if (HardwareScales.isConnected()) {
+            doc["cw"] = HardwareScales.getWeight();
+        }
         serializeJson(doc, *response);
         request->send(response);
     });
@@ -193,6 +201,14 @@ void WebUIPlugin::setupServer() {
                                 String msg;
                                 serializeJson(resp, msg);
                                 ws.text(client->id(), msg);
+                            } else if (msgType == "req:scale:tare") {
+                                if (HardwareScales.isConnected()) {
+                                    HardwareScales.tare();
+                                }
+                            } else if (msgType == "req:scale:calibrate") {
+                                if (HardwareScales.isConnected() && doc["cell"].is<uint8_t>() && doc["calWeight"].is<float>()) {
+                                    HardwareScales.calibrate(doc["cell"].as<uint8_t>(), doc["calWeight"].as<float>());
+                                }
                             }
                         }
                     }
@@ -385,6 +401,15 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
+            if (request->hasArg("scaleFactor1") || request->hasArg("scaleFactor2")) {
+                float scaleFactor1 = settings->getScaleFactor1();
+                float scaleFactor2 = settings->getScaleFactor2();
+                if (request->hasArg("scaleFactor1"))
+                    scaleFactor1 = request->arg("scaleFactor1").toFloat();
+                if (request->hasArg("scaleFactor2"))   
+                    scaleFactor2 = request->arg("scaleFactor2").toFloat();
+                settings->setScaleFactors(scaleFactor1, scaleFactor2);
+            }
             settings->save(true);
         });
         controller->setTargetTemp(controller->getTargetTemp());
@@ -433,6 +458,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["sunriseExtBrightness"] = settings.getSunriseExtBrightness();
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
+    doc["scaleFactor1"] = settings.getScaleFactor1();
+    doc["scaleFactor2"] = settings.getScaleFactor2();
     serializeJson(doc, *response);
     request->send(response);
 

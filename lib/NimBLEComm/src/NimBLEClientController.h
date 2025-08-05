@@ -19,6 +19,9 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void sendPidSettings(const String &pid);
     void setPressureScale(float scale);
     void sendLedControl(uint8_t channel, uint8_t brightness);
+    void sendScaleTare();
+    void sendCalibrateScale(uint8_t cell, float calibrationWeight);
+    void sendScaleCalibration(float scaleFactor1, float scaleFactor2);
     bool isReadyForConnection() const;
     bool isConnected();
     void scan();
@@ -30,6 +33,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerAutotuneResultCallback(const pid_control_callback_t &callback);
     void registerVolumetricMeasurementCallback(const float_callback_t &callback);
     void registerTofMeasurementCallback(const int_callback_t &callback);
+    void registerScaleMeasurementCallback(const float_callback_t &callback);
+    void registerScaleCalibrationCallback(const scale_calibration_callback_t &callback);
     std::string readInfo() const;
     NimBLEClient *getClient() const { return client; };
 
@@ -56,6 +61,10 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *volumetricTareChar = nullptr;
     NimBLERemoteCharacteristic *ledControlChar = nullptr;
     NimBLERemoteCharacteristic *tofMeasurementChar = nullptr;
+    NimBLERemoteCharacteristic *scaleTareChar = nullptr;
+    NimBLERemoteCharacteristic *scaleCalibrationChar = nullptr;
+    NimBLERemoteCharacteristic *scaleCalibrateChar = nullptr;
+    NimBLERemoteCharacteristic *scaleWeightMeasurementChar = nullptr; 
     NimBLEAdvertisedDevice *serverDevice = nullptr;
     bool readyForConnection = false;
 
@@ -66,7 +75,9 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     sensor_read_callback_t sensorCallback = nullptr;
     float_callback_t volumetricMeasurementCallback = nullptr;
     int_callback_t tofMeasurementCallback = nullptr;
-
+    float_callback_t scaleMeasurementCallback = nullptr;
+    scale_calibration_callback_t scaleCalibrationCallback = nullptr;
+    void_callback_t scaleTareCompleteCallback = nullptr;
     String _lastOutputControl = "";
 
     // BLEAdvertisedDeviceCallbacks override

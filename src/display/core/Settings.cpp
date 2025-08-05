@@ -66,6 +66,10 @@ Settings::Settings() {
     emptyTankDistance = preferences.getInt("sr_ed", 200);
     fullTankDistance = preferences.getInt("sr_fd", 50);
 
+    // Hardware scale settings
+    scaleFactor1 = preferences.getFloat("hs_sf1", 0.0f);
+    scaleFactor2 = preferences.getFloat("hs_sf2", 0.0f);
+
     preferences.end();
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
@@ -373,6 +377,12 @@ void Settings::setFullTankDistance(int full_tank_distance) {
     save();
 }
 
+void Settings::setScaleFactors(float scale_factor_1, float scale_factor_2) {
+    scaleFactor1 = scale_factor_1;
+    scaleFactor2 = scale_factor_2;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -441,6 +451,10 @@ void Settings::doSave() {
     preferences.putInt("sr_exb", sunriseExtBrightness);
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);
+
+    // Hardware scale settings
+    preferences.putFloat("hs_sf1", scaleFactor1);
+    preferences.putFloat("hs_sf2", scaleFactor2);
 
     preferences.end();
 }
