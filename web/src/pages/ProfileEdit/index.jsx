@@ -81,9 +81,9 @@ export function ProfileEdit() {
   }
 
   return (
-    <div key="profile-edit" className="grid grid-cols-1 gap-4 sm:grid-cols-12">
-              <div className="sm:col-span-12 mb-2">
-        <h2 className="text-2xl font-bold text-base-content">{params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}</h2>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+      <div className="sm:col-span-12">
+        <h2 className="text-2xl font-bold">{params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}</h2>
       </div>
 
       {!data?.type && <ProfileTypeSelection onSelect={(type) => setData({ ...data, type })} />}

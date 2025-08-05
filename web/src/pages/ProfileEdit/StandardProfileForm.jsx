@@ -51,57 +51,55 @@ export function StandardProfileForm(props) {
 
   return (
     <>
-      <Card sm={12}>
-        <div className="flex flex-col gap-4 p-4">
-          <div className="form-control">
-            <label htmlFor="label" className="label">
-              <span className="label-text text-base-content">Label</span>
-            </label>
+      <Card sm={12} title="Profile Information">
+        <div className="form-control">
+          <label htmlFor="label" className="block text-sm font-medium mb-2">
+            Label
+          </label>
+          <input
+            id="label"
+            name="label"
+            className="input input-bordered w-full"
+            value={data?.label}
+            onChange={(e) => onFieldChange('label', e.target.value)}
+          />
+        </div>
+        <div className="form-control">
+          <label htmlFor="description" className="block text-sm font-medium mb-2">
+            Description
+          </label>
+          <input
+            id="description"
+            name="description"
+            className="input input-bordered w-full"
+            value={data?.description}
+            onChange={(e) => onFieldChange('description', e.target.value)}
+          />
+        </div>
+        <div className="form-control">
+          <label htmlFor="temperature" className="block text-sm font-medium mb-2">
+            Temperature
+          </label>
+          <div className="input-group">
             <input
-              id="label"
-              name="label"
+              id="temperature"
+              name="temperature"
+              type="number"
               className="input input-bordered"
-              value={data?.label}
-              onChange={(e) => onFieldChange('label', e.target.value)}
+              value={data?.temperature}
+              onChange={(e) => onFieldChange('temperature', e.target.value)}
             />
-          </div>
-          <div className="form-control">
-            <label htmlFor="description" className="label">
-              <span className="label-text text-base-content">Description</span>
-            </label>
-            <input
-              id="description"
-              name="description"
-              className="input input-bordered"
-              value={data?.description}
-              onChange={(e) => onFieldChange('description', e.target.value)}
-            />
-          </div>
-          <div className="form-control">
-            <label htmlFor="temperature" className="label">
-              <span className="label-text text-base-content">Temperature</span>
-            </label>
-            <div className="input-group">
-              <input
-                id="temperature"
-                name="temperature"
-                type="number"
-                className="input input-bordered"
-                value={data?.temperature}
-                onChange={(e) => onFieldChange('temperature', e.target.value)}
-              />
-              <span className="btn btn-square btn-disabled">°C</span>
-            </div>
+            <span className="btn btn-square btn-disabled">°C</span>
           </div>
         </div>
-        <div className="p-4">
-          <h3 className="text-lg font-bold text-base-content mb-2">Phases</h3>
-        </div>
-        <div className="p-4 flex flex-col gap-4">
+      </Card>
+
+      <Card sm={12} title="Brew Phases">
+        <div className="space-y-4">
           {data.phases.map((value, index) => (
             <div key={index}>
               {index > 0 && (
-                <div className="p-4 flex flex-col items-center">
+                <div className="flex flex-col items-center py-2">
                   <i className="fa fa-chevron-down text-lg text-base-content/60" />
                 </div>
               )}
@@ -120,16 +118,17 @@ export function StandardProfileForm(props) {
             </button>
           </div>
         </div>
-        <div className="p-4 flex flex-row gap-2">
-          <a href="/profiles" className="btn btn-ghost">
-            Back
-          </a>
-          <button type="submit" className="btn btn-primary gap-2" onClick={() => onSave(data)} disabled={saving}>
-            <span>Save</span>
-            {saving && <Spinner size={4} />}
-          </button>
-        </div>
       </Card>
+
+      <div className="sm:col-span-12 flex flex-col sm:flex-row gap-2">
+        <a href="/profiles" className="btn btn-outline">
+          Back
+        </a>
+        <button type="submit" className="btn btn-primary gap-2" onClick={() => onSave(data)} disabled={saving}>
+          <span>Save</span>
+          {saving && <Spinner size={4} />}
+        </button>
+      </div>
     </>
   );
 }
@@ -171,65 +170,78 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
   const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
 
   return (
-            <div className="bg-base-200 border border-base-300 p-4 rounded-lg grid grid-cols-12 gap-4">
-      <div className="col-span-12 md:col-span-4 flex flex-row items-center">
-        <select 
-          className="select select-bordered w-full" 
-          onChange={(e) => onFieldChange('phase', e.target.value)}
-          value={phase.phase}
-        >
-          <option value="preinfusion">Pre-Infusion</option>
-          <option value="brew">Brew</option>
-        </select>
-      </div>
-              <div className="col-span-12 md:col-span-8 flex flex-row gap-2 align-center">
-        <input
-          className="input input-bordered flex-1"
-          placeholder="Name..."
-          value={phase.name}
-          onChange={(e) => onFieldChange('name', e.target.value)}
-        />
-        <div className="tooltip tooltip-left" data-tip="Delete this phase">
-          <button
-            onClick={onRemove}
-            className="btn btn-sm btn-ghost text-error hidden md:flex"
+    <div className="bg-base-200 border border-base-300 p-4 rounded-lg space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="form-control">
+          <label className="block text-sm font-medium mb-2">
+            Phase Type
+          </label>
+          <select 
+            className="select select-bordered w-full" 
+            onChange={(e) => onFieldChange('phase', e.target.value)}
+            value={phase.phase}
           >
-            <i className="fa fa-trash" />
-          </button>
+            <option value="preinfusion">Pre-Infusion</option>
+            <option value="brew">Brew</option>
+          </select>
+        </div>
+        <div className="form-control">
+          <label className="block text-sm font-medium mb-2">
+            Phase Name
+          </label>
+          <div className="flex gap-2">
+            <input
+              className="input input-bordered flex-1"
+              placeholder="Name..."
+              value={phase.name}
+              onChange={(e) => onFieldChange('name', e.target.value)}
+            />
+            <button
+              onClick={onRemove}
+              className="btn btn-sm btn-ghost text-error"
+              title="Delete this phase"
+            >
+              <i className="fa fa-trash" />
+            </button>
+          </div>
         </div>
       </div>
-      <div className="col-span-12 form-control">
-        <label className="label">
-          <span className="label-text text-base-content">Duration</span>
-        </label>
-        <div className="input-group">
-          <input
-            className="input input-bordered"
-            type="number"
-            min="1"
-            value={phase.duration}
-            onChange={(e) => onFieldChange('duration', e.target.value)}
-          />
-          <span className="btn btn-square btn-disabled">s</span>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="form-control">
+          <label className="block text-sm font-medium mb-2">
+            Duration
+          </label>
+          <div className="input-group">
+            <input
+              className="input input-bordered"
+              type="number"
+              min="1"
+              value={phase.duration}
+              onChange={(e) => onFieldChange('duration', e.target.value)}
+            />
+            <span className="btn btn-square btn-disabled">s</span>
+          </div>
+        </div>
+        <div className="form-control">
+          <label className="block text-sm font-medium mb-2">
+            Volumetric Target
+          </label>
+          <div className="input-group">
+            <input
+              className="input input-bordered"
+              type="number"
+              value={targetWeight}
+              onChange={(e) => onVolumetricTargetChange(parseFloat(e.target.value))}
+            />
+            <span className="btn btn-square btn-disabled">g</span>
+          </div>
         </div>
       </div>
-      <div className="col-span-12 form-control">
-        <label className="label">
-          <span className="label-text text-base-content">Volumetric Target</span>
-        </label>
-        <div className="input-group">
-          <input
-            className="input input-bordered"
-            type="number"
-            value={targetWeight}
-            onChange={(e) => onVolumetricTargetChange(parseFloat(e.target.value))}
-          />
-          <span className="btn btn-square btn-disabled">g</span>
-        </div>
-      </div>
-      <div className="col-span-12 form-control">
-        <label className="label">
-          <span className="label-text text-base-content">Valve</span>
+
+      <div className="form-control">
+        <label className="block text-sm font-medium mb-2">
+          Valve
         </label>
         <div className="join">
           <button
@@ -246,9 +258,10 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
           </button>
         </div>
       </div>
-      <div className="col-span-12 form-control">
-        <label className="label">
-          <span className="label-text text-base-content">Pump</span>
+
+      <div className="form-control">
+        <label className="block text-sm font-medium mb-2">
+          Pump Mode
         </label>
         <div className="join">
           <button
@@ -280,66 +293,62 @@ function Phase({ phase, onChange, onRemove, pressureAvailable }) {
             </>
           )}
         </div>
-        {mode === 'power' && (
-          <div className="col-span-12 form-control">
-            <label className="label">
-              <span className="label-text text-base-content">Pump Power</span>
+      </div>
+
+      {mode === 'power' && (
+        <div className="form-control">
+          <label className="block text-sm font-medium mb-2">
+            Pump Power
+          </label>
+          <div className="input-group">
+            <input
+              className="input input-bordered"
+              type="number"
+              step="1"
+              min={0}
+              max={100}
+              value={pumpPower}
+              onChange={(e) => onFieldChange('pump', parseFloat(e.target.value))}
+            />
+            <span className="btn btn-square btn-disabled">%</span>
+          </div>
+        </div>
+      )}
+
+      {(mode === 'pressure' || mode === 'flow') && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="form-control">
+            <label className="block text-sm font-medium mb-2">
+              Pressure {mode === 'pressure' ? 'Target' : 'Limit'}
             </label>
             <div className="input-group">
               <input
                 className="input input-bordered"
                 type="number"
-                step="1"
-                min={0}
-                max={100}
-                value={pumpPower}
-                onChange={(e) => onFieldChange('pump', parseFloat(e.target.value))}
+                step="0.01"
+                value={pressure}
+                onChange={(e) => onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })}
               />
-              <span className="btn btn-square btn-disabled">%</span>
+              <span className="btn btn-square btn-disabled">bar</span>
             </div>
           </div>
-        )}
-        {(mode === 'pressure' || mode === 'flow') && (
-          <>
-            <div className="col-span-12 md:col-span-6 form-control">
-              <label className="label">
-                <span className="label-text text-base-content">Pressure {mode === 'pressure' ? 'Target' : 'Limit'}</span>
-              </label>
-              <div className="input-group">
-                <input
-                  className="input input-bordered"
-                  type="number"
-                  step="0.01"
-                  value={pressure}
-                  onChange={(e) => onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })}
-                />
-                <span className="btn btn-square btn-disabled">bar</span>
-              </div>
+          <div className="form-control">
+            <label className="block text-sm font-medium mb-2">
+              Flow {mode === 'flow' ? 'Target' : 'Limit'}
+            </label>
+            <div className="input-group">
+              <input
+                className="input input-bordered"
+                type="number"
+                step="0.01"
+                value={flow}
+                onChange={(e) => onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })}
+              />
+              <span className="btn btn-square btn-disabled">g/s</span>
             </div>
-            <div className="col-span-12 md:col-span-6 form-control">
-              <label className="label">
-                <span className="label-text text-base-content">Flow {mode === 'flow' ? 'Target' : 'Limit'}</span>
-              </label>
-              <div className="input-group">
-                <input
-                  className="input input-bordered"
-                  type="number"
-                  step="0.01"
-                  value={flow}
-                  onChange={(e) => onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })}
-                />
-                <span className="btn btn-square btn-disabled">g/s</span>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-      <div className="block md:hidden col-span-12">
-        <button onClick={onRemove} className="btn btn-sm btn-ghost text-error w-full">
-          <i className="fa fa-trash mr-2" />
-          Delete
-        </button>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

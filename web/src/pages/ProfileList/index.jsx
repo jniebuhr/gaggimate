@@ -290,45 +290,41 @@ export function ProfileList() {
   }
 
   return (
-    <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
-        <div className="sm:col-span-12 flex flex-row items-center gap-4">
-          <h2 className="text-2xl font-bold text-base-content flex-grow">Profiles</h2>
-          <div className="tooltip tooltip-left" data-tip="Export all profiles">
-            <button 
-              onClick={onExport} 
-              className="btn btn-ghost text-primary"
-            >
-              <i className="fa fa-file-export" />
-            </button>
-          </div>
-          <div className="tooltip tooltip-left" data-tip="Import profiles">
-            <label 
-              htmlFor="profileImport" 
-              className="btn btn-ghost text-primary cursor-pointer"
-            >
-              <i className="fa fa-file-import" />
-            </label>
-          </div>
-          <input onChange={onUpload} className="hidden" id="profileImport" type="file" accept=".json,application/json" />
-        </div>
-
-        {profiles.map((data) => (
-          <ProfileCard
-            data={data}
-            key={data.id}
-            onDelete={onDelete}
-            onSelect={onSelect}
-            favoriteDisabled={favoriteDisabled}
-            unfavoriteDisabled={unfavoriteDisabled}
-            onUnfavorite={onUnfavorite}
-            onFavorite={onFavorite}
-            onDuplicate={onDuplicate}
-          />
-        ))}
-
-        <ProfileAddCard />
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+      <div className="sm:col-span-12 flex flex-row items-center gap-2">
+        <h2 className="text-2xl font-bold flex-grow">Profiles</h2>
+        <button 
+          onClick={onExport} 
+          className="btn btn-ghost btn-sm"
+          title="Export all profiles"
+        >
+          <i className="fa fa-file-export" />
+        </button>
+        <label 
+          htmlFor="profileImport" 
+          className="btn btn-ghost btn-sm cursor-pointer"
+          title="Import profiles"
+        >
+          <i className="fa fa-file-import" />
+        </label>
+        <input onChange={onUpload} className="hidden" id="profileImport" type="file" accept=".json,application/json" />
       </div>
-    </>
+
+      {profiles.map((data) => (
+        <ProfileCard
+          data={data}
+          key={data.id}
+          onDelete={onDelete}
+          onSelect={onSelect}
+          favoriteDisabled={favoriteDisabled}
+          unfavoriteDisabled={unfavoriteDisabled}
+          onUnfavorite={onUnfavorite}
+          onFavorite={onFavorite}
+          onDuplicate={onDuplicate}
+        />
+      ))}
+
+      <ProfileAddCard />
+    </div>
   );
 }
