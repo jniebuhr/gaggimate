@@ -48,6 +48,12 @@ export function Home() {
     },
     [apiService],
   );
+  const tareScale = useCallback(() => {
+    apiService.send({
+      tp: 'req:scale:tare',
+    });
+  }, [apiService]);
+
   const mode = machine.value.status.mode;
 
   return (
@@ -117,7 +123,7 @@ export function Home() {
               <div className="p-6 sm:col-span-12 md:col-span-4">
                 <dl>
                   <dt className="text-xl md:text-2xl font-bold">
-                    {status.value.currentWeight?.toFixed(1) || 0} g
+                    {status.value.currentWeight?.toFixed(1) || 0}g <a class="btn" href="" onClick={() => tareScale()}><i className="fa-solid fa-scale-unbalanced ml-2"></i></a>
                   </dt>
                   <dd className="text-sm font-medium text-slate-500">Weight</dd>
                 </dl>

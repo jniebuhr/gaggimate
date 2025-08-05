@@ -177,7 +177,50 @@ void WebUIPlugin::setupServer() {
                 ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
                 rxBuffers.erase(client->id());
             } else if (type == WS_EVT_DATA) {
-                handleWebSocketData(server, client, type, arg, data, len);
+                auto *info = static_cast<AwsFrameInfo *>(arg);
+                if (info->final && info->index == 0 && info->len == len) {
+                    if (info->opcode == WS_TEXT) {
+                        data[len] = 0;
+                        ESP_LOGI("WebUIPlugin", "Received request: %", (char *)data);
+                        JsonDocument doc;
+                        DeserializationError err = deserializeJson(doc, data);
+                        if (!err) {
+                            String msgType = doc["tp"].as<String>();
+                            if (msgType.startsWith("req:profiles:")) {
+                                handleProfileRequest(client->id(), doc);
+                            } else if (msgType == "req:ota-settings") {
+                                handleOTASettings(client->id(), doc);
+                            } else if (msgType == "req:ota-start") {
+                                handleOTAStart(client->id(), doc);
+                            } else if (msgType == "req:autotune-start") {
+                                handleAutotuneStart(client->id(), doc);
+                            } else if (msgType == "req:process:activate") {
+                                controller->activate();
+                            } else if (msgType == "req:process:deactivate") {
+                                controller->deactivate();
+                            } else if (msgType == "req:process:clear") {
+                                controller->clear();
+                            } else if (msgType == "req:change-mode") {
+                                if (doc["mode"].is<uint8_t>()) {
+                                    auto mode = doc["mode"].as<uint8_t>();
+                                    controller->deactivate();
+                                    controller->setMode(mode);
+                                }
+                            } else if (msgType == "req:change-brew-target") {
+                                if (doc["target"].is<uint8_t>()) {
+                                    auto target = doc["target"].as<uint8_t>();
+                                    controller->getSettings().setVolumetricTarget(target);
+                                }
+                            } else if (msgType.startsWith("req:history")) {
+                                JsonDocument resp;
+                                ShotHistory.handleRequest(doc, resp);
+                                String msg;
+                                serializeJson(resp, msg);
+                                ws.text(client->id(), msg);
+                            }
+                        }
+                    }
+                }
             }
         });
     server.addHandler(&ws);
@@ -272,6 +315,14 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     client->text(buffer);
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
+                } else if (msgType == "req:scale:tare") {
+                        if (HardwareScales.isConnected()) {
+                            HardwareScales.tare();
+                        }
+                } else if (msgType == "req:scale:calibrate") {
+                    if (HardwareScales.isConnected() && doc["cell"].is<uint8_t>() && doc["calWeight"].is<float>()) {
+                        HardwareScales.calibrate(doc["cell"].as<uint8_t>(), doc["calWeight"].as<float>());
+                    }
                 }
             }
         }
