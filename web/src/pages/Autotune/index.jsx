@@ -21,7 +21,7 @@ export function Autotune() {
   }, [time, samples, apiService]);
 
   useEffect(() => {
-    const listenerId = apiService.on('evt:autotune-result', (msg) => {
+    const listenerId = apiService.on('evt:autotune-result', msg => {
       setActive(false);
       setResult(msg.pid);
     });
@@ -31,39 +31,43 @@ export function Autotune() {
   }, [apiService]);
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <div>
-        <h1 className="text-3xl font-bold text-base-content">PID Autotune</h1>
+    <>
+      <div className='mb-4 flex flex-row items-center gap-2'>
+        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>PID Autotune</h1>
       </div>
 
-      <Card xs={12} title="PID Autotune Settings">
-                  {active && (
-            <div className="space-y-4">
-              <div className="w-full">
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
+        <Card sm={12} title='PID Autotune Settings'>
+          {active && (
+            <div className='space-y-4'>
+              <div className='w-full'>
                 <OverviewChart />
               </div>
-              <div className="flex flex-col items-center justify-center space-y-4 py-4">
-                <div className="flex items-center space-x-3">
+              <div className='flex flex-col items-center justify-center space-y-4 py-4'>
+                <div className='flex items-center space-x-3'>
                   <Spinner size={8} />
-                  <span className="text-lg font-medium">Autotune in Progress</span>
+                  <span className='text-lg font-medium'>Autotune in Progress</span>
                 </div>
-                <div className="alert alert-info max-w-md">
-                  <span>Please wait while the system optimizes your PID settings. This may take up to 30 seconds.</span>
+                <div className='alert alert-info max-w-md'>
+                  <span>
+                    Please wait while the system optimizes your PID settings. This may take up to 30
+                    seconds.
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
           {result && (
-            <div className="text-center space-y-4">
-              <div className="alert alert-success max-w-md mx-auto">
+            <div className='space-y-4 text-center'>
+              <div className='alert alert-success mx-auto max-w-md'>
                 <div>
-                  <h3 className="font-bold">Autotune Complete!</h3>
-                  <div className="text-sm">Your new PID values have been saved successfully.</div>
+                  <h3 className='font-bold'>Autotune Complete!</h3>
+                  <div className='text-sm'>Your new PID values have been saved successfully.</div>
                 </div>
               </div>
-              <div className="mockup-code bg-base-200 max-w-md mx-auto">
-                <pre data-prefix="$">
+              <div className='mockup-code bg-base-200 mx-auto max-w-md'>
+                <pre data-prefix='$'>
                   <code>{result}</code>
                 </pre>
               </div>
@@ -71,69 +75,69 @@ export function Autotune() {
           )}
 
           {!active && !result && (
-            <div className="space-y-4">
-              <div className="alert alert-warning">
-                <span>Please ensure the boiler temperature is below 50°C before starting the autotune process.</span>
+            <div className='space-y-4'>
+              <div className='alert alert-warning'>
+                <span>
+                  Please ensure the boiler temperature is below 50°C before starting the autotune
+                  process.
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="form-control w-full">
-                  <label className="label">
-                    <span className="label-text font-medium">Tuning Goal</span>
-                    <span className="label-text-alt">0 = Conservative, 100 = Aggressive</span>
-                  </label>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <div className='form-control'>
+                  <label htmlFor='tuningGoal' className='mb-2 block text-sm font-medium'>Tuning Goal</label>
                   <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    className="input input-bordered w-full"
+                    id='tuningGoal'
+                    type='number'
+                    min='0'
+                    max='100'
+                    className='input input-bordered w-full'
                     value={time}
-                    onChange={(e) => setTime(parseInt(e.target.value) || 0)}
+                    onChange={e => setTime(parseInt(e.target.value) || 0)}
+                    placeholder='60'
                   />
-                  <label className="label">
-                    <span className="label-text-alt">Higher values result in faster response but may cause overshoot</span>
-                  </label>
+                  <div className='mb-2 text-xs opacity-70'>0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot.</div>
                 </div>
 
-                <div className="form-control w-full">
-                  <label className="label">
-                    <span className="label-text font-medium">Window Size</span>
-                    <span className="label-text-alt">Number of samples</span>
-                  </label>
+                <div className='form-control'>
+                  <label htmlFor='windowSize' className='mb-2 block text-sm font-medium'>Window Size</label>
                   <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    className="input input-bordered w-full"
+                    id='windowSize'
+                    type='number'
+                    min='1'
+                    max='10'
+                    className='input input-bordered w-full'
                     value={samples}
-                    onChange={(e) => setSamples(parseInt(e.target.value) || 1)}
+                    onChange={e => setSamples(parseInt(e.target.value) || 1)}
+                    placeholder='4'
                   />
-                  <label className="label">
-                    <span className="label-text-alt">More samples provide better accuracy but take longer</span>
-                  </label>
+                  <div className='mb-2 text-xs opacity-70'>Number of samples. More samples provide better accuracy but take longer.</div>
                 </div>
               </div>
             </div>
           )}
         </Card>
-
-      <div className="flex justify-start space-x-4">
-        {!active && !result && (
-          <button
-            className="btn btn-primary btn-lg"
-            onClick={onStart}
-            disabled={time < 0 || time > 100 || samples < 1 || samples > 10}
-          >
-            Start Autotune
-          </button>
-        )}
-
-        {result && (
-          <button className="btn btn-outline btn-lg" onClick={() => setResult(null)}>
-            Back to Settings
-          </button>
-        )}
       </div>
-    </div>
+
+      <div className='pt-4 lg:col-span-12'>
+        <div className='flex flex-col gap-2 sm:flex-row'>
+          {!active && !result && (
+            <button
+              className='btn btn-primary'
+              onClick={onStart}
+              disabled={time < 0 || time > 100 || samples < 1 || samples > 10}
+            >
+              Start Autotune
+            </button>
+          )}
+
+          {result && (
+            <button className='btn btn-outline' onClick={() => setResult(null)}>
+              Back to Settings
+            </button>
+          )}
+        </div>
+      </div>
+    </>
   );
 }

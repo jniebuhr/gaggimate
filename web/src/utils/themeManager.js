@@ -34,7 +34,7 @@ export function applyTheme(theme) {
 export function getAvailableThemes() {
   return AVAILABLE_THEMES.map(theme => ({
     value: theme,
-    label: theme.charAt(0).toUpperCase() + theme.slice(1)
+    label: theme.charAt(0).toUpperCase() + theme.slice(1),
   }));
 }
 
@@ -48,4 +48,4 @@ export function initializeTheme() {
 export function handleThemeChange(event) {
   const theme = event.target.value;
   setStoredTheme(theme);
-} 
+}

@@ -17,18 +17,22 @@ export default function ProcessInfo() {
     return null;
   }
 
-  const target = info.targetType === 'time' ? formatTime(info.targetValue || 0) : `${info.targetValue || 0}g`;
+  const target =
+    info.targetType === 'time' ? formatTime(info.targetValue || 0) : `${info.targetValue || 0}g`;
 
-  const progress = info.phaseTarget > 0 ? Math.min(100, Math.floor((info.phaseProgress / info.phaseTarget) * 100)) : 0;
+  const progress =
+    info.phaseTarget > 0
+      ? Math.min(100, Math.floor((info.phaseProgress / info.phaseTarget) * 100))
+      : 0;
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="text-xl font-bold">{info.step.toUpperCase()}</div>
-      <div className="text-sm opacity-70">{info.phase}</div>
-      <div className="text-sm">
+    <div className='flex flex-col gap-2'>
+      <div className='text-xl font-bold'>{info.step.toUpperCase()}</div>
+      <div className='text-sm opacity-70'>{info.phase}</div>
+      <div className='text-sm'>
         {formatTime(info.elapsed)} / {target}
       </div>
-      <progress className="progress progress-primary w-full" value={progress} max="100" />
+      <progress className='progress progress-primary w-full' value={progress} max='100' />
     </div>
   );
 }

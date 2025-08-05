@@ -11,7 +11,7 @@ export function OTA() {
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
   useEffect(() => {
-    const listenerId = apiService.on('res:ota-settings', (msg) => {
+    const listenerId = apiService.on('res:ota-settings', msg => {
       setFormData(msg);
       setIsLoading(false);
       setSubmitting(false);
@@ -21,7 +21,7 @@ export function OTA() {
     };
   }, [apiService]);
   useEffect(() => {
-    const listenerId = apiService.on('evt:ota-progress', (msg) => {
+    const listenerId = apiService.on('evt:ota-progress', msg => {
       setProgress(msg.progress);
       setPhase(msg.phase);
     });
@@ -38,7 +38,7 @@ export function OTA() {
   const formRef = useRef();
 
   const onSubmit = useCallback(
-    async (e) => {
+    async e => {
       e.preventDefault();
       setSubmitting(true);
       const form = formRef.current;
@@ -46,19 +46,19 @@ export function OTA() {
       apiService.send({ tp: 'req:ota-settings', update: true, channel: formData.get('channel') });
       setSubmitting(true);
     },
-    [setFormData, formRef]
+    [setFormData, formRef],
   );
 
   const onUpdate = useCallback(
-    (component) => {
+    component => {
       apiService.send({ tp: 'req:ota-start', cp: component });
     },
-    [apiService]
+    [apiService],
   );
 
   if (isLoading) {
     return (
-      <div className="flex flex-row py-16 items-center justify-center w-full">
+      <div className='flex w-full flex-row items-center justify-center py-16'>
         <Spinner size={8} />
       </div>
     );
@@ -66,9 +66,9 @@ export function OTA() {
 
   if (phase > 0) {
     return (
-              <div className="p-16 flex flex-col items-center gap-4">
+      <div className='flex flex-col items-center gap-4 p-16'>
         <Spinner size={8} />
-        <span className="text-xl font-medium">
+        <span className='text-xl font-medium'>
           {phase === 1
             ? 'Updating Display firmware'
             : phase === 2
@@ -77,9 +77,9 @@ export function OTA() {
                 ? 'Updating controller firmware'
                 : 'Finished'}
         </span>
-        <span className="text-lg font-medium">{phase === 4 ? 100 : progress}%</span>
+        <span className='text-lg font-medium'>{phase === 4 ? 100 : progress}%</span>
         {phase === 4 && (
-          <a href="/" className="btn btn-primary">
+          <a href='/' className='btn btn-primary'>
             Back
           </a>
         )}
@@ -88,85 +88,97 @@ export function OTA() {
   }
 
   return (
-    <form
-      key="ota"
-      method="post"
-      action="/api/ota"
-      ref={formRef}
-      onSubmit={onSubmit}
-      className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2"
-    >
-      <div className="sm:col-span-12">
-        <h2 className="text-2xl font-bold">System & Updates</h2>
+    <>
+      <div className='mb-4 flex flex-row items-center gap-2'>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>System & Updates</h2>
       </div>
-      <Card xs={12} title="System Information">
-          <div className="flex flex-col space-y-4">
-            <label htmlFor="channel" className="text-sm font-medium">
-              Update Channel
-            </label>
-            <select id="channel" name="channel" className="select select-bordered w-full">
-              <option value="latest" selected={formData.channel === 'latest'}>
-                Stable
-              </option>
-              <option value="nightly" selected={formData.channel === 'nightly'}>
-                Nightly
-              </option>
-            </select>
-          </div>
 
-          <div className="flex flex-col space-y-4">
-            <label className="text-sm font-medium">Hardware</label>
-            <div className="input input-bordered bg-base-200 cursor-default">{formData.hardware}</div>
-          </div>
-
-          <div className="flex flex-col space-y-4">
-            <label className="text-sm font-medium">Controller version</label>
-            <div className="input input-bordered bg-base-200 cursor-default">
-              {formData.controllerVersion}
-              {formData.controllerUpdateAvailable && (
-                <span className="font-bold text-primary">(Update available: {formData.latestVersion})</span>
-              )}
+      <form
+        key='ota'
+        method='post'
+        action='/api/ota'
+        ref={formRef}
+        onSubmit={onSubmit}
+      >
+        <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
+          <Card sm={12} title='System Information'>
+            <div className='flex flex-col space-y-4'>
+              <label htmlFor='channel' className='text-sm font-medium'>
+                Update Channel
+              </label>
+              <select id='channel' name='channel' className='select select-bordered w-full'>
+                <option value='latest' selected={formData.channel === 'latest'}>
+                  Stable
+                </option>
+                <option value='nightly' selected={formData.channel === 'nightly'}>
+                  Nightly
+                </option>
+              </select>
             </div>
-          </div>
 
-          <div className="flex flex-col space-y-4">
-            <label className="text-sm font-medium">Display version</label>
-            <div className="input input-bordered bg-base-200 cursor-default">
-              {formData.displayVersion}
-              {formData.displayUpdateAvailable && (
-                <span className="font-bold text-primary">(Update available: {formData.latestVersion})</span>
-              )}
+            <div className='flex flex-col space-y-4'>
+              <label className='text-sm font-medium'>Hardware</label>
+              <div className='input input-bordered bg-base-200 cursor-default'>{formData.hardware}</div>
             </div>
-          </div>
 
-          <div className="alert alert-warning">
-            <span>Make sure to backup your profiles from the profile screen before updating the display.</span>
-          </div>
-        </Card>
+            <div className='flex flex-col space-y-4'>
+              <label className='text-sm font-medium'>Controller version</label>
+              <div className='input input-bordered bg-base-200 cursor-default'>
+                {formData.controllerVersion}
+                {formData.controllerUpdateAvailable && (
+                  <span className='text-primary font-bold'>
+                    (Update available: {formData.latestVersion})
+                  </span>
+                )}
+              </div>
+            </div>
 
-      <div className="col-span-12 flex flex-col sm:flex-row flex-wrap gap-2">
-        <button type="submit" className="btn btn-primary" disabled={submitting}>
-          Save & Refresh
-        </button>
-        <button
-          type="submit"
-          name="update"
-          className="btn btn-secondary"
-          disabled={!formData.displayUpdateAvailable || submitting}
-          onClick={() => onUpdate('display')}
-        >
-          Update Display
-        </button>
-        <button
-          type="submit"
-          name="update"
-          className="btn btn-accent"
-          disabled={!formData.controllerUpdateAvailable || submitting}
-          onClick={() => onUpdate('controller')}
-        >
-          Update Controller
-        </button>
-      </div>
-    </form>
+            <div className='flex flex-col space-y-4'>
+              <label className='text-sm font-medium'>Display version</label>
+              <div className='input input-bordered bg-base-200 cursor-default'>
+                {formData.displayVersion}
+                {formData.displayUpdateAvailable && (
+                  <span className='text-primary font-bold'>
+                    (Update available: {formData.latestVersion})
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className='alert alert-warning'>
+              <span>
+                Make sure to backup your profiles from the profile screen before updating the display.
+              </span>
+            </div>
+          </Card>
+        </div>
+
+        <div className='space-y-4 lg:col-span-12'>
+          <div className='flex flex-col flex-wrap gap-2 sm:flex-row'>
+            <button type='submit' className='btn btn-primary' disabled={submitting}>
+              Save & Refresh
+            </button>
+            <button
+              type='submit'
+              name='update'
+              className='btn btn-secondary'
+              disabled={!formData.displayUpdateAvailable || submitting}
+              onClick={() => onUpdate('display')}
+            >
+              Update Display
+            </button>
+            <button
+              type='submit'
+              name='update'
+              className='btn btn-accent'
+              disabled={!formData.controllerUpdateAvailable || submitting}
+              onClick={() => onUpdate('controller')}
+            >
+              Update Controller
+            </button>
+          </div>
+        </div>
+      </form>
+    </>
   );
 }

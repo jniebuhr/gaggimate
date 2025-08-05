@@ -18,22 +18,22 @@ function MenuItem(props) {
 
 export function Navigation(props) {
   return (
-    <nav className="hidden lg:col-span-3 lg:block">
-      <MenuItem label="Dashboard" link="/" iconClass="fa fa-home" />
-      <hr className="h-5 border-0" />
-      <div className="space-y-1.5">
-        <MenuItem label="Profiles" link="/profiles" iconClass="fa fa-list" />
-        <MenuItem label="Shot History" link="/history" iconClass="fa fa-timeline" />
+    <nav className='hidden lg:col-span-2 lg:block'>
+      <MenuItem label='Dashboard' link='/' iconClass='fa fa-home' />
+      <hr className='h-5 border-0' />
+      <div className='space-y-1.5'>
+        <MenuItem label='Profiles' link='/profiles' iconClass='fa fa-list' />
+        <MenuItem label='Shot History' link='/history' iconClass='fa fa-timeline' />
       </div>
-      <hr className="h-5 border-0" />
-      <div className="space-y-1.5">
-        <MenuItem label="PID Autotune" link="/pidtune" iconClass="fa fa-temperature-half" />
-        <MenuItem label="Bluetooth Scales" link="/scales" iconClass="fa-brands fa-bluetooth-b" />
-        <MenuItem label="Settings" link="/settings" iconClass="fa fa-cog" />
+      <hr className='h-5 border-0' />
+      <div className='space-y-1.5'>
+        <MenuItem label='PID Autotune' link='/pidtune' iconClass='fa fa-temperature-half' />
+        <MenuItem label='Bluetooth Scales' link='/scales' iconClass='fa-brands fa-bluetooth-b' />
+        <MenuItem label='Settings' link='/settings' iconClass='fa fa-cog' />
       </div>
-      <hr className="h-5 border-0" />
-      <div className="space-y-1.5">
-        <MenuItem label="System & Updates" link="/ota" iconClass="fa fa-rotate" />
+      <hr className='h-5 border-0' />
+      <div className='space-y-1.5'>
+        <MenuItem label='System & Updates' link='/ota' iconClass='fa fa-rotate' />
       </div>
     </nav>
   );

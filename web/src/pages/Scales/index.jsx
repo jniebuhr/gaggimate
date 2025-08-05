@@ -58,7 +58,7 @@ export function Scales() {
     }
   }, []);
 
-  const onConnect = useCallback(async (uuid) => {
+  const onConnect = useCallback(async uuid => {
     try {
       const data = new FormData();
       data.append('uuid', uuid);
@@ -74,51 +74,61 @@ export function Scales() {
   }, []);
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <div>
-        <h1 className="text-3xl font-bold text-base-content">Bluetooth Scales</h1>
+    <>
+      <div className='mb-4 flex flex-row items-center gap-2'>
+        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Bluetooth Scales</h1>
       </div>
 
-      <Card xs={12} title="Available Scales">
-        <div className="flex items-center justify-end mb-4">
-          <button className={`btn btn-primary ${isScanning ? 'loading' : ''}`} onClick={onScan} disabled={isScanning}>
-            {isScanning ? 'Scanning...' : 'Scan for Scales'}
-          </button>
-        </div>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
+        <Card sm={12} title='Available Scales'>
+          <div className='mb-4 flex items-center justify-end'>
+            <button
+              className={`btn btn-primary ${isScanning ? 'loading' : ''}`}
+              onClick={onScan}
+              disabled={isScanning}
+            >
+              {isScanning ? 'Scanning...' : 'Scan for Scales'}
+            </button>
+          </div>
 
           {isLoading || isInfoLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <span className="loading loading-spinner loading-lg" />
-              <span className="ml-3 text-base-content/70">Loading scales...</span>
+            <div className='flex items-center justify-center py-12'>
+              <span className='loading loading-spinner loading-lg' />
+              <span className='text-base-content/70 ml-3'>Loading scales...</span>
             </div>
           ) : isError || isInfoError ? (
-            <div className="alert alert-error">
+            <div className='alert alert-error'>
               <span>Error loading scales. Please try again.</span>
             </div>
           ) : scaleData.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="text-6xl text-base-content/30">⚖️</div>
+            <div className='py-12 text-center'>
+              <div className='flex flex-col items-center space-y-4'>
+                <div className='text-base-content/30 text-6xl'>⚖️</div>
                 <div>
-                  <h3 className="text-lg font-medium text-base-content">No scales found</h3>
-                  <p className="text-base-content/70">Click "Scan for Scales" to discover Bluetooth scales nearby</p>
+                  <h3 className='text-base-content text-lg font-medium'>No scales found</h3>
+                  <p className='text-base-content/70'>
+                    Click "Scan for Scales" to discover Bluetooth scales nearby
+                  </p>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {scaleData.map((scale, i) => (
-                <div key={i} className="bg-base-200 border border-base-300 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-base-content">{scale.name}</h3>
-                      <p className="text-sm text-base-content/60 font-mono">{scale.uuid}</p>
+                <div key={i} className='bg-base-200 border-base-300 rounded-lg border p-4'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex-1'>
+                      <h3 className='text-base-content font-semibold'>{scale.name}</h3>
+                      <p className='text-base-content/60 font-mono text-sm'>{scale.uuid}</p>
                     </div>
-                    <div className="flex items-center space-x-3">
+                    <div className='flex items-center space-x-3'>
                       {scale.connected ? (
-                        <div className="badge badge-success gap-2">Connected</div>
+                        <div className='badge badge-success gap-2'>Connected</div>
                       ) : (
-                        <button className="btn btn-primary btn-sm" onClick={() => onConnect(scale.uuid)}>
+                        <button
+                          className='btn btn-primary btn-sm'
+                          onClick={() => onConnect(scale.uuid)}
+                        >
                           Connect
                         </button>
                       )}
@@ -129,12 +139,18 @@ export function Scales() {
             </div>
           )}
         </Card>
+      </div>
 
       {scaleData.length > 0 && (
-        <div className="alert alert-info">
-          <span>Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices.</span>
+        <div className='space-y-4 lg:col-span-12'>
+          <div className='alert alert-info'>
+            <span>
+              Scales are automatically refreshed every 10 seconds. Use the scan button to discover
+              new devices.
+            </span>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
