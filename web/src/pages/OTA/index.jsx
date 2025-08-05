@@ -117,12 +117,12 @@ export function OTA() {
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Hardware</label>
+              <span className='text-sm font-medium'>Hardware</span>
               <div className='input input-bordered bg-base-200 cursor-default'>{formData.hardware}</div>
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Controller version</label>
+              <span className='text-sm font-medium'>Controller version</span>
               <div className='input input-bordered bg-base-200 cursor-default'>
                 {formData.controllerVersion}
                 {formData.controllerUpdateAvailable && (
@@ -134,7 +134,7 @@ export function OTA() {
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Display version</label>
+              <span className='text-sm font-medium'>Display version</span>
               <div className='input input-bordered bg-base-200 cursor-default'>
                 {formData.displayVersion}
                 {formData.displayUpdateAvailable && (
