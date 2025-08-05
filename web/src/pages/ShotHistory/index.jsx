@@ -39,9 +39,9 @@ export function ShotHistory() {
     console.log(history);
     setLoading(false);
   };
-  useEffect(async () => {
+  useEffect(() => {
     if (connected.value) {
-      await loadHistory();
+      loadHistory();
     }
   }, [connected.value]);
 
