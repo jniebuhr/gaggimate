@@ -110,7 +110,7 @@ export function StandardProfileForm(props) {
         </Card>
 
         <Card sm={10} lg={5} title='Brew Phases'>
-          <fieldset className='space-y-4' aria-label='Brew phases configuration'>
+          <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
             {data.phases.map((value, index) => (
               <div key={index}>
                 {index > 0 && (
@@ -138,7 +138,7 @@ export function StandardProfileForm(props) {
                 <span>Add phase</span>
               </button>
             </div>
-          </fieldset>
+          </div>
         </Card>
       </div>
 
@@ -199,8 +199,9 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
 
   return (
-    <fieldset
+    <div
       className='bg-base-200 border-base-300 space-y-4 rounded-lg border p-4'
+      role='group'
       aria-label={`Phase ${index + 1} configuration`}
     >
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -290,7 +291,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
       <div className='form-control'>
         <fieldset>
           <legend className='mb-2 block text-sm font-medium'>Valve</legend>
-          <fieldset className='join' aria-label='Valve state selection'>
+          <div className='join' role='group' aria-label='Valve state selection'>
             <button
               type='button'
               className={`join-item btn btn-sm ${!phase.valve ? 'btn-primary' : 'btn-outline'}`}
@@ -309,14 +310,14 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
             >
               Open
             </button>
-          </fieldset>
+          </div>
         </fieldset>
       </div>
 
       <div className='form-control'>
         <fieldset>
           <legend className='mb-2 block text-sm font-medium'>Pump Mode</legend>
-          <fieldset className='join' aria-label='Pump mode selection'>
+          <div className='join' role='group' aria-label='Pump mode selection'>
             <button
               type='button'
               className={`join-item btn btn-sm ${mode === 'off' ? 'btn-primary' : 'btn-outline'}`}
@@ -363,7 +364,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 </button>
               </>
             )}
-          </fieldset>
+          </div>
         </fieldset>
       </div>
 
@@ -439,6 +440,6 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
           </div>
         </div>
       )}
-    </fieldset>
+    </div>
   );
 }

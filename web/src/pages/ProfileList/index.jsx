@@ -75,8 +75,9 @@ function ProfileCard({
 
   return (
     <Card sm={12} role='listitem'>
-      <fieldset
+      <div
         className='flex flex-row items-center'
+        role='group'
         aria-labelledby={`profile-${data.id}-title`}
       >
         <div className='mr-4 flex flex-row items-center justify-center'>
@@ -103,8 +104,9 @@ function ProfileCard({
                 {typeText}
               </span>
             </div>
-            <fieldset
+            <div
               className='flex flex-row justify-end gap-2'
+              role='group'
               aria-label={`Actions for ${data.label} profile`}
             >
               <button
@@ -148,7 +150,7 @@ function ProfileCard({
               >
                 <i className='fa fa-trash' aria-hidden='true' />
               </button>
-            </fieldset>
+            </div>
           </div>
           <div
             className='flex flex-row items-center gap-2 overflow-auto py-2'
@@ -157,7 +159,7 @@ function ProfileCard({
             {data.type === 'pro' ? <ExtendedContent data={data} /> : <SimpleContent data={data} />}
           </div>
         </div>
-      </fieldset>
+      </div>
     </Card>
   );
 }
@@ -322,13 +324,14 @@ export function ProfileList() {
 
   if (loading) {
     return (
-      <output
+      <div
         className='flex w-full flex-row items-center justify-center py-16'
+        role='status'
         aria-live='polite'
         aria-label='Loading profiles'
       >
         <Spinner size={8} />
-      </output>
+      </div>
     );
   }
 
