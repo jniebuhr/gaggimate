@@ -41,6 +41,20 @@ void HardwareScalePlugin::setup(Controller *controller, PluginManager *pluginMan
     });
 }
 
+void HardwareScalePlugin::tare() {
+    if (_isAvailable) {
+        ESP_LOGI(LOG_TAG, "Taring hardware scale");
+        controller->getClientController()->sendScaleTare();
+    }
+}
+
+void HardwareScalePlugin::calibrate(uint8_t cell, float calibrationWeight) {
+    if (_isAvailable) {
+        ESP_LOGI(LOG_TAG, "Calibrating hardware scale: cell %d, weight %.2f", cell, calibrationWeight);
+        controller->getClientController()->sendCalibrateScale(cell, calibrationWeight);
+    }
+}
+
 void HardwareScalePlugin::onProcessStart() {
     if (_isAvailable) {
         ESP_LOGI(LOG_TAG, "Starting tare process for hardware scale");
