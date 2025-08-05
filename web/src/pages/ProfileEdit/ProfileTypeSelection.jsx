@@ -7,8 +7,17 @@ export function ProfileTypeSelection({ onSelect }) {
         <div 
           className="flex flex-col gap-2 items-center justify-center p-4 cursor-pointer text-base-content hover:text-primary transition-colors"
           onClick={() => onSelect('standard')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSelect('standard');
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Select simple profile type"
         >
-          <i className="fa fa-diagram-next text-5xl" />
+          <i className="fa fa-diagram-next text-5xl" aria-hidden="true" />
           <span className="text-lg font-medium">Simple profile</span>
           <span className="text-sm text-center text-base-content/70">
             Supports creating of profiles with different brew phases and targets.
@@ -17,9 +26,14 @@ export function ProfileTypeSelection({ onSelect }) {
       </Card>
 
       <Card xs={12} md={6} title="Pro Profile">
-        <div className="flex flex-col gap-2 items-center justify-center p-4 text-base-content/40 cursor-not-allowed">
+        <div 
+          className="flex flex-col gap-2 items-center justify-center p-4 text-base-content/40 cursor-not-allowed"
+          role="button"
+          aria-label="Pro profile type (coming soon)"
+          aria-disabled="true"
+        >
           <span className="text-sm text-base-content/60 font-bold">Coming soon</span>
-          <i className="fa fa-chart-simple text-5xl" />
+          <i className="fa fa-chart-simple text-5xl" aria-hidden="true" />
           <span className="text-lg">Pro profile</span>
           <span className="text-sm text-center text-base-content/60">
             Supports advanced pressure and flow controlled phases with ramps, different targets and further visualization.

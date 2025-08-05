@@ -56,8 +56,8 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
   }, [data]);
 
   return (
-    <Card sm={12}>
-      <div className="flex flex-row items-center">
+    <Card sm={12} role="listitem">
+      <div className="flex flex-row items-center" role="group" aria-labelledby={`profile-${data.id}-title`}>
         <div className="flex flex-row justify-center items-center mr-4">
           <label className="flex items-center relative cursor-pointer">
             <input
@@ -65,61 +65,57 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
               type="checkbox"
               onClick={() => onSelect(data.id)}
               className="checkbox checkbox-success"
-              aria-label="Select profile"
+              aria-label={`Select ${data.label} profile`}
             />
           </label>
         </div>
         <div className="flex flex-col flex-grow overflow-auto">
           <div className="flex flex-row gap-2 flex-wrap">
             <div className="flex-grow flex flex-row items-center gap-4">
-              <span className="font-bold text-xl leading-tight">{data.label}</span>
-              <span className={`${typeClass} text-xs font-medium`}>{typeText}</span>
+              <span id={`profile-${data.id}-title`} className="font-bold text-xl leading-tight">{data.label}</span>
+              <span className={`${typeClass} text-xs font-medium`} aria-label={`Profile type: ${typeText}`}>{typeText}</span>
             </div>
-            <div className="flex flex-row gap-2 justify-end">
-              <div className="tooltip tooltip-left" data-tip="Show/hide profile">
-                <button
-                  onClick={onFavoriteToggle}
-                  disabled={favoriteToggleDisabled}
-                  className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
-                >
-                  <i className={`fa fa-star ${bookmarkClass}`} />
-                </button>
-              </div>
-              <div className="tooltip tooltip-left" data-tip="Edit profile">
-                <a 
-                  href={`/profiles/${data.id}`} 
-                  className="btn btn-sm btn-ghost"
-                >
-                  <i className="fa fa-pen" />
-                </a>
-              </div>
-              <div className="tooltip tooltip-left" data-tip="Export profile">
-                <button
-                  onClick={onDownload}
-                  className="btn btn-sm btn-ghost text-primary"
-                >
-                  <i className="fa fa-file-export" />
-                </button>
-              </div>
-              <div className="tooltip tooltip-left" data-tip="Duplicate profile">
-                <button
-                  onClick={() => onDuplicate(data.id)}
-                  className="btn btn-sm btn-ghost text-success"
-                >
-                  <i className="fa fa-copy" />
-                </button>
-              </div>
-              <div className="tooltip tooltip-left" data-tip="Delete profile">
-                <button
-                  onClick={() => onDelete(data.id)}
-                  className="btn btn-sm btn-ghost text-error"
-                >
-                  <i className="fa fa-trash" />
-                </button>
-              </div>
+            <div className="flex flex-row gap-2 justify-end" role="group" aria-label={`Actions for ${data.label} profile`}>
+              <button
+                onClick={onFavoriteToggle}
+                disabled={favoriteToggleDisabled}
+                className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
+                aria-label={data.favorite ? `Remove ${data.label} from favorites` : `Add ${data.label} to favorites`}
+                aria-pressed={data.favorite}
+              >
+                <i className={`fa fa-star ${bookmarkClass}`} aria-hidden="true" />
+              </button>
+              <a 
+                href={`/profiles/${data.id}`} 
+                className="btn btn-sm btn-ghost"
+                aria-label={`Edit ${data.label} profile`}
+              >
+                <i className="fa fa-pen" aria-hidden="true" />
+              </a>
+              <button
+                onClick={onDownload}
+                className="btn btn-sm btn-ghost text-primary"
+                aria-label={`Export ${data.label} profile`}
+              >
+                <i className="fa fa-file-export" aria-hidden="true" />
+              </button>
+              <button
+                onClick={() => onDuplicate(data.id)}
+                className="btn btn-sm btn-ghost text-success"
+                aria-label={`Duplicate ${data.label} profile`}
+              >
+                <i className="fa fa-copy" aria-hidden="true" />
+              </button>
+              <button
+                onClick={() => onDelete(data.id)}
+                className="btn btn-sm btn-ghost text-error"
+                aria-label={`Delete ${data.label} profile`}
+              >
+                <i className="fa fa-trash" aria-hidden="true" />
+              </button>
             </div>
           </div>
-          <div className="flex flex-row gap-2 py-2 items-center overflow-auto">
+          <div className="flex flex-row gap-2 py-2 items-center overflow-auto" aria-label={`Profile details for ${data.label}`}>
             {data.type === 'pro' ? <ExtendedContent data={data} /> : <SimpleContent data={data} />}
           </div>
         </div>
@@ -130,9 +126,9 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
 
 function SimpleContent({ data }) {
   return (
-    <div className="flex flex-row items-center gap-2">
+    <div className="flex flex-row items-center gap-2" role="list" aria-label="Brew phases">
       {data.phases.map((phase, i) => (
-        <div key={i} className="flex flex-row items-center gap-2">
+        <div key={i} className="flex flex-row items-center gap-2" role="listitem">
           {i > 0 && <SimpleDivider />}
           <SimpleStep phase={phase.phase} type={phase.name} duration={phase.duration} targets={phase.targets || []} />
         </div>
@@ -142,7 +138,7 @@ function SimpleContent({ data }) {
 }
 
 function SimpleDivider() {
-  return <i className="fa-solid fa-chevron-right text-base-content/60" />;
+  return <i className="fa-solid fa-chevron-right text-base-content/60" aria-hidden="true" />;
 }
 
 function SimpleStep(props) {
@@ -283,37 +279,48 @@ export function ProfileList() {
 
   if (loading) {
     return (
-      <div className="flex flex-row py-16 items-center justify-center w-full">
+      <div className="flex flex-row py-16 items-center justify-center w-full" role="status" aria-live="polite">
         <Spinner size={8} />
+        <span className="sr-only">Loading profiles...</span>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-12" role="list" aria-label="Profile list">
       <div className="sm:col-span-12 flex flex-row items-center gap-2">
-        <h2 className="text-2xl font-bold flex-grow">Profiles</h2>
+        <h1 className="text-2xl font-bold flex-grow">Profiles</h1>
         <button 
           onClick={onExport} 
           className="btn btn-ghost btn-sm"
           title="Export all profiles"
+          aria-label="Export all profiles"
         >
-          <i className="fa fa-file-export" />
+          <i className="fa fa-file-export" aria-hidden="true" />
         </button>
         <label 
           htmlFor="profileImport" 
           className="btn btn-ghost btn-sm cursor-pointer"
           title="Import profiles"
+          aria-label="Import profiles"
         >
-          <i className="fa fa-file-import" />
+          <i className="fa fa-file-import" aria-hidden="true" />
         </label>
-        <input onChange={onUpload} className="hidden" id="profileImport" type="file" accept=".json,application/json" />
+        <input 
+          onChange={onUpload} 
+          className="hidden" 
+          id="profileImport" 
+          type="file" 
+          accept=".json,application/json"
+          aria-describedby="profileImportHelp"
+        />
+        <div id="profileImportHelp" className="sr-only">Select a JSON file containing profile data to import</div>
       </div>
 
       {profiles.map((data) => (
         <ProfileCard
-          data={data}
           key={data.id}
+          data={data}
           onDelete={onDelete}
           onSelect={onSelect}
           favoriteDisabled={favoriteDisabled}

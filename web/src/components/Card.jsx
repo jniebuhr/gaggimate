@@ -1,4 +1,4 @@
-export default function Card({ xs, sm, md, lg, xl, title, children, className = '' }) {
+export default function Card({ xs, sm, md, lg, xl, title, children, className = '', role }) {
   const gridClasses = [
     xs && `col-span-${xs}`,
     sm && `sm:col-span-${sm}`,
@@ -10,7 +10,7 @@ export default function Card({ xs, sm, md, lg, xl, title, children, className = 
     .join(' ');
 
   return (
-    <div className={`card bg-base-100 shadow-xl ${gridClasses} ${className}`}>
+    <div className={`card bg-base-100 shadow-xl ${gridClasses} ${className}`} role={role}>
       {title && (
         <div className="card-header px-4 pt-4">
           <h2 className="card-title text-lg sm:text-xl">{title}</h2>
