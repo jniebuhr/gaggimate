@@ -954,12 +954,12 @@ export function Settings() {
           </Card>
         </div>
 
-        <div className='space-y-4 lg:col-span-10'>
+        <div className='pt-4 lg:col-span-10'>
           <div className='alert alert-info'>
             <span>Some options like WiFi, NTP and managing Plugins require a restart.</span>
           </div>
 
-          <div className='flex flex-col gap-2 sm:flex-row'>
+          <div className='pt-4 flex flex-col gap-2 sm:flex-row'>
             <a href='/' className='btn btn-outline'>
               Back
             </a>
