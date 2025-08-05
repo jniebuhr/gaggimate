@@ -7,9 +7,8 @@ export function Spinner({ size = 8 }) {
   };
 
   return (
-    <span
+    <output
       className={`loading loading-spinner ${sizeMap[size] || 'loading-md'}`}
-      role='status'
       aria-label='Loading'
     />
   );

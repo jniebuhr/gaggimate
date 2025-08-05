@@ -2,6 +2,31 @@
 @import 'tailwindcss';
 @plugin 'daisyui';
 
+/* Fieldset reset for consistent styling */
+fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Button reset for consistent styling */
+button {
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 @plugin "daisyui/theme" {
   name: 'light';
   default: true;
