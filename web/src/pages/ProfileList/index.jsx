@@ -74,93 +74,91 @@ function ProfileCard({
   }, [data]);
 
   return (
-    <li>
-      <Card sm={12}>
-        <fieldset
-          className='flex flex-row items-center'
-          aria-labelledby={`profile-${data.id}-title`}
-        >
-          <div className='mr-4 flex flex-row items-center justify-center'>
-            <label className='relative flex cursor-pointer items-center'>
-              <input
-                checked={data.selected}
-                type='checkbox'
-                onClick={() => onSelect(data.id)}
-                className='checkbox checkbox-success'
-                aria-label={`Select ${data.label} profile`}
-              />
-            </label>
-          </div>
-          <div className='flex flex-grow flex-col overflow-auto'>
-            <div className='flex flex-row flex-wrap gap-2'>
-              <div className='flex flex-grow flex-row items-center gap-4'>
-                <span id={`profile-${data.id}-title`} className='text-xl leading-tight font-bold'>
-                  {data.label}
-                </span>
-                <span
-                  className={`${typeClass} text-xs font-medium`}
-                  aria-label={`Profile type: ${typeText}`}
-                >
-                  {typeText}
-                </span>
-              </div>
-              <fieldset
-                className='flex flex-row justify-end gap-2'
-                aria-label={`Actions for ${data.label} profile`}
+    <Card sm={12} role='listitem'>
+      <fieldset
+        className='flex flex-row items-center'
+        aria-labelledby={`profile-${data.id}-title`}
+      >
+        <div className='mr-4 flex flex-row items-center justify-center'>
+          <label className='relative flex cursor-pointer items-center'>
+            <input
+              checked={data.selected}
+              type='checkbox'
+              onClick={() => onSelect(data.id)}
+              className='checkbox checkbox-success'
+              aria-label={`Select ${data.label} profile`}
+            />
+          </label>
+        </div>
+        <div className='flex flex-grow flex-col overflow-auto'>
+          <div className='flex flex-row flex-wrap gap-2'>
+            <div className='flex flex-grow flex-row items-center gap-4'>
+              <span id={`profile-${data.id}-title`} className='text-xl leading-tight font-bold'>
+                {data.label}
+              </span>
+              <span
+                className={`${typeClass} text-xs font-medium`}
+                aria-label={`Profile type: ${typeText}`}
               >
-                <button
-                  onClick={onFavoriteToggle}
-                  disabled={favoriteToggleDisabled}
-                  className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
-                  aria-label={
-                    data.favorite
-                      ? `Remove ${data.label} from favorites`
-                      : `Add ${data.label} to favorites`
-                  }
-                  aria-pressed={data.favorite}
-                >
-                  <i className={`fa fa-star ${bookmarkClass}`} aria-hidden='true' />
-                </button>
-                <a
-                  href={`/profiles/${data.id}`}
-                  className='btn btn-sm btn-ghost'
-                  aria-label={`Edit ${data.label} profile`}
-                >
-                  <i className='fa fa-pen' aria-hidden='true' />
-                </a>
-                <button
-                  onClick={onDownload}
-                  className='btn btn-sm btn-ghost text-primary'
-                  aria-label={`Export ${data.label} profile`}
-                >
-                  <i className='fa fa-file-export' aria-hidden='true' />
-                </button>
-                <button
-                  onClick={() => onDuplicate(data.id)}
-                  className='btn btn-sm btn-ghost text-success'
-                  aria-label={`Duplicate ${data.label} profile`}
-                >
-                  <i className='fa fa-copy' aria-hidden='true' />
-                </button>
-                <button
-                  onClick={() => onDelete(data.id)}
-                  className='btn btn-sm btn-ghost text-error'
-                  aria-label={`Delete ${data.label} profile`}
-                >
-                  <i className='fa fa-trash' aria-hidden='true' />
-                </button>
-              </fieldset>
+                {typeText}
+              </span>
             </div>
-            <div
-              className='flex flex-row items-center gap-2 overflow-auto py-2'
-              aria-label={`Profile details for ${data.label}`}
+            <fieldset
+              className='flex flex-row justify-end gap-2'
+              aria-label={`Actions for ${data.label} profile`}
             >
-              {data.type === 'pro' ? <ExtendedContent data={data} /> : <SimpleContent data={data} />}
-            </div>
+              <button
+                onClick={onFavoriteToggle}
+                disabled={favoriteToggleDisabled}
+                className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
+                aria-label={
+                  data.favorite
+                    ? `Remove ${data.label} from favorites`
+                    : `Add ${data.label} to favorites`
+                }
+                aria-pressed={data.favorite}
+              >
+                <i className={`fa fa-star ${bookmarkClass}`} aria-hidden='true' />
+              </button>
+              <a
+                href={`/profiles/${data.id}`}
+                className='btn btn-sm btn-ghost'
+                aria-label={`Edit ${data.label} profile`}
+              >
+                <i className='fa fa-pen' aria-hidden='true' />
+              </a>
+              <button
+                onClick={onDownload}
+                className='btn btn-sm btn-ghost text-primary'
+                aria-label={`Export ${data.label} profile`}
+              >
+                <i className='fa fa-file-export' aria-hidden='true' />
+              </button>
+              <button
+                onClick={() => onDuplicate(data.id)}
+                className='btn btn-sm btn-ghost text-success'
+                aria-label={`Duplicate ${data.label} profile`}
+              >
+                <i className='fa fa-copy' aria-hidden='true' />
+              </button>
+              <button
+                onClick={() => onDelete(data.id)}
+                className='btn btn-sm btn-ghost text-error'
+                aria-label={`Delete ${data.label} profile`}
+              >
+                <i className='fa fa-trash' aria-hidden='true' />
+              </button>
+            </fieldset>
           </div>
-        </fieldset>
-      </Card>
-    </li>
+          <div
+            className='flex flex-row items-center gap-2 overflow-auto py-2'
+            aria-label={`Profile details for ${data.label}`}
+          >
+            {data.type === 'pro' ? <ExtendedContent data={data} /> : <SimpleContent data={data} />}
+          </div>
+        </div>
+      </fieldset>
+    </Card>
   );
 }
 
