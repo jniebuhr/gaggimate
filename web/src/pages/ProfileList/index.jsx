@@ -279,9 +279,8 @@ export function ProfileList() {
 
   if (loading) {
     return (
-      <div className="flex flex-row py-16 items-center justify-center w-full" role="status" aria-live="polite">
+      <div className="flex flex-row py-16 items-center justify-center w-full" role="status" aria-live="polite" aria-label="Loading profiles">
         <Spinner size={8} />
-        <span className="sr-only">Loading profiles...</span>
       </div>
     );
   }
@@ -312,9 +311,8 @@ export function ProfileList() {
           id="profileImport" 
           type="file" 
           accept=".json,application/json"
-          aria-describedby="profileImportHelp"
+          aria-label="Select a JSON file containing profile data to import"
         />
-        <div id="profileImportHelp" className="sr-only">Select a JSON file containing profile data to import</div>
       </div>
 
       {profiles.map((data) => (

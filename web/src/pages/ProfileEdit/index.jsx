@@ -70,7 +70,7 @@ export function ProfileEdit() {
     if (response.profile.id !== params.id) {
       location.route(`/profiles/${response.profile.id}`);
     }
-  }, []);
+  }, [apiService, params.id, location]);
 
   if (loading) {
     return (
@@ -81,7 +81,7 @@ export function ProfileEdit() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+    <>
       <div className="sm:col-span-12">
         <h2 className="text-2xl font-bold">{params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}</h2>
       </div>
@@ -96,6 +96,6 @@ export function ProfileEdit() {
           pressureAvailable={pressureAvailable}
         />
       )}
-    </div>
+    </>
   );
 }
