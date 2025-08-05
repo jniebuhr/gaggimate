@@ -23,22 +23,22 @@ export default function HistoryCard({ shot, onDelete }) {
 
         <div className='flex flex-row justify-end gap-2'>
           <div className='tooltip tooltip-left' data-tip='Export'>
-            <a
-              href='javascript:void(0)'
+            <button
               onClick={() => onExport()}
               className='group text-info hover:bg-info/10 active:border-info/20 inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold'
+              aria-label='Export shot data'
             >
               <span className='fa fa-file-export' />
-            </a>
+            </button>
           </div>
           <div className='tooltip tooltip-left' data-tip='Delete'>
-            <a
-              href='javascript:void(0)'
+            <button
               onClick={() => onDelete(shot.id)}
               className='group text-error hover:bg-error/10 active:border-error/20 inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold'
+              aria-label='Delete shot'
             >
               <span className='fa fa-trash' />
-            </a>
+            </button>
           </div>
         </div>
       </div>
