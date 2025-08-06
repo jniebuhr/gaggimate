@@ -57,7 +57,7 @@ export function StandardProfileForm(props) {
       }}
     >
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
-        <Card sm={10} lg={5} title='Profile Information'>
+        <Card sm={10} title='Profile Information'>
           <div className='form-control'>
             <label htmlFor='label' className='mb-2 block text-sm font-medium'>
               Title
@@ -109,7 +109,7 @@ export function StandardProfileForm(props) {
           </div>
         </Card>
 
-        <Card sm={10} lg={5} title='Brew Phases'>
+        <Card sm={10} title='Brew Phases'>
           <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
             {data.phases.map((value, index) => (
               <div key={index}>
@@ -142,7 +142,7 @@ export function StandardProfileForm(props) {
         </Card>
       </div>
 
-      <div className='space-y-4 lg:col-span-10'>
+      <div className='pt-4 lg:col-span-10'>
         <div className='flex flex-col gap-2 sm:flex-row'>
           <a href='/profiles' className='btn btn-outline'>
             Back
