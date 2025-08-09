@@ -324,13 +324,10 @@ export function Settings() {
             </div>
           </Card>
 
-          <Card sm={10} lg={5} title='Interface Theme'>
+          <Card sm={10} lg={5} title='Web Settings'>
             <div className='form-control'>
-              <label htmlFor='daisyui-theme' className='label'>
-                <span className='label-text font-medium'>Color Theme</span>
-                <span className='mb-2 text-sm opacity-70'>
-                  Choose your preferred color theme for the Web UI
-                </span>
+              <label htmlFor='webui-theme' className='label'>
+                <span className='label-text font-medium'>Theme</span>
               </label>
               <select
                 id='daisyui-theme'
