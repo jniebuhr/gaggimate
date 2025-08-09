@@ -88,7 +88,6 @@ export function Scales() {
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
         <Card sm={12} title='Available Scales'>
-
           {isLoading || isInfoLoading ? (
             <div className='flex items-center justify-center py-12'>
               <span className='loading loading-spinner loading-lg' />

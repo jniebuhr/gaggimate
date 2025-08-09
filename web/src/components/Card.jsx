@@ -1,12 +1,11 @@
 export default function Card({ xs, sm, md, lg, xl, title, children, className = '', role }) {
-
   const getGridClasses = () => {
     const breakpoints = [
       { value: xs, prefix: '' },
       { value: sm, prefix: 'sm:' },
       { value: md, prefix: 'md:' },
       { value: lg, prefix: 'lg:' },
-      { value: xl, prefix: 'xl:' }
+      { value: xl, prefix: 'xl:' },
     ];
 
     return breakpoints

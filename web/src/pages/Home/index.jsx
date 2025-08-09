@@ -37,11 +37,11 @@ export function Home() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
-        <Card sm={10} lg={5} title='Process Controls'>
+        <Card sm={10} lg={4} title='Process Controls'>
           <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
         </Card>
 
-        <Card sm={10} lg={5} title='Temperature & Pressure Chart'>
+        <Card sm={10} lg={6} title='Temperature & Pressure Chart'>
           <OverviewChart />
         </Card>
       </div>

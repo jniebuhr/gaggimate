@@ -85,7 +85,9 @@ export function Autotune() {
 
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div className='form-control'>
-                  <label htmlFor='tuningGoal' className='mb-2 block text-sm font-medium'>Tuning Goal</label>
+                  <label htmlFor='tuningGoal' className='mb-2 block text-sm font-medium'>
+                    Tuning Goal
+                  </label>
                   <input
                     id='tuningGoal'
                     type='number'
@@ -96,11 +98,16 @@ export function Autotune() {
                     onChange={e => setTime(parseInt(e.target.value) || 0)}
                     placeholder='60'
                   />
-                  <div className='mb-2 text-xs opacity-70'>0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot.</div>
+                  <div className='mb-2 text-xs opacity-70'>
+                    0 = Conservative, 100 = Aggressive. Higher values result in faster response but
+                    may cause overshoot.
+                  </div>
                 </div>
 
                 <div className='form-control'>
-                  <label htmlFor='windowSize' className='mb-2 block text-sm font-medium'>Window Size</label>
+                  <label htmlFor='windowSize' className='mb-2 block text-sm font-medium'>
+                    Window Size
+                  </label>
                   <input
                     id='windowSize'
                     type='number'
@@ -111,7 +118,9 @@ export function Autotune() {
                     onChange={e => setSamples(parseInt(e.target.value) || 1)}
                     placeholder='4'
                   />
-                  <div className='mb-2 text-xs opacity-70'>Number of samples. More samples provide better accuracy but take longer.</div>
+                  <div className='mb-2 text-xs opacity-70'>
+                    Number of samples. More samples provide better accuracy but take longer.
+                  </div>
                 </div>
               </div>
             </div>

@@ -184,13 +184,7 @@ export function Settings() {
         />
       </div>
 
-      <form
-        key='settings'
-        ref={formRef}
-        method='post'
-        action='/api/settings'
-        onSubmit={onSubmit}
-      >
+      <form key='settings' ref={formRef} method='post' action='/api/settings' onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
           <Card sm={10} lg={5} title='Temperature settings'>
             <div className='form-control'>
@@ -885,8 +879,8 @@ export function Settings() {
                 {formData.homeAssistant && (
                   <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
                     <p className='text-sm opacity-70'>
-                      This feature allows connection to a Home Assistant or MQTT installation and push
-                      the current state.
+                      This feature allows connection to a Home Assistant or MQTT installation and
+                      push the current state.
                     </p>
                     <div className='form-control'>
                       <label htmlFor='haIP' className='mb-2 block text-sm font-medium'>
@@ -959,7 +953,7 @@ export function Settings() {
             <span>Some options like WiFi, NTP and managing Plugins require a restart.</span>
           </div>
 
-          <div className='pt-4 flex flex-col gap-2 sm:flex-row'>
+          <div className='flex flex-col gap-2 pt-4 sm:flex-row'>
             <a href='/' className='btn btn-outline'>
               Back
             </a>

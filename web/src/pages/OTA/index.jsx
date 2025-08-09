@@ -93,13 +93,7 @@ export function OTA() {
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>System & Updates</h2>
       </div>
 
-      <form
-        key='ota'
-        method='post'
-        action='/api/ota'
-        ref={formRef}
-        onSubmit={onSubmit}
-      >
+      <form key='ota' method='post' action='/api/ota' ref={formRef} onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
           <Card sm={12} title='System Information'>
             <div className='flex flex-col space-y-4'>
@@ -118,7 +112,9 @@ export function OTA() {
 
             <div className='flex flex-col space-y-4'>
               <label className='text-sm font-medium'>Hardware</label>
-              <div className='input input-bordered bg-base-200 cursor-default'>{formData.hardware}</div>
+              <div className='input input-bordered bg-base-200 cursor-default'>
+                {formData.hardware}
+              </div>
             </div>
 
             <div className='flex flex-col space-y-4'>
@@ -147,13 +143,14 @@ export function OTA() {
 
             <div className='alert alert-warning'>
               <span>
-                Make sure to backup your profiles from the profile screen before updating the display.
+                Make sure to backup your profiles from the profile screen before updating the
+                display.
               </span>
             </div>
           </Card>
         </div>
 
-        <div className='space-y-4 lg:col-span-12'>
+        <div className='pt-4 lg:col-span-12'>
           <div className='flex flex-col flex-wrap gap-2 sm:flex-row'>
             <button type='submit' className='btn btn-primary' disabled={submitting}>
               Save & Refresh

@@ -68,9 +68,7 @@ export function ProfileEdit() {
       const response = await apiService.request({ tp: 'req:profiles:save', profile: data });
       setData(response.profile);
       setSaving(false);
-      if (response.profile.id !== params.id) {
-        location.route(`/profiles/${response.profile.id}`);
-      }
+      location.route('/profiles');
     },
     [apiService, params.id, location],
   );

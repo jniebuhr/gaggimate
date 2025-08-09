@@ -31,7 +31,7 @@ export function App() {
             <Header />
 
             <main className='flex-1'>
-              <div className='xl:container mx-auto w-full py-2 px-4 lg:p-8'>
+              <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
                 <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
                   <Navigation />
                   <div className='lg:col-span-10'>
