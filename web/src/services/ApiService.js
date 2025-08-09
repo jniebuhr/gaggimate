@@ -79,7 +79,10 @@ export default class ApiService {
     }
 
     // Calculate delay with exponential backoff
-    const delay = Math.min(this.baseReconnectDelay * Math.pow(2, this.reconnectAttempts), this.maxReconnectDelay);
+    const delay = Math.min(
+      this.baseReconnectDelay * Math.pow(2, this.reconnectAttempts),
+      this.maxReconnectDelay,
+    );
 
     console.log(`Scheduling reconnect attempt ${this.reconnectAttempts + 1} in ${delay}ms`);
 
@@ -118,7 +121,7 @@ export default class ApiService {
     const message = { ...data, rid };
     return new Promise((resolve, reject) => {
       // Create a listener for the response with matching rid
-      const listenerId = this.on(returnType, (response) => {
+      const listenerId = this.on(returnType, response => {
         if (response.rid === rid) {
           // Clean up the listener
           this.off(returnType, listenerId);

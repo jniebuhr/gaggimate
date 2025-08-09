@@ -12,24 +12,27 @@ function formatTime(ms) {
 
 export default function ProcessInfo() {
   const info = processInfo.value;
+
   if (!info || !info.step) {
     return null;
   }
 
-  const target = info.targetType === 'time' ? formatTime(info.targetValue || 0) : `${info.targetValue || 0}g`;
+  const target =
+    info.targetType === 'time' ? formatTime(info.targetValue || 0) : `${info.targetValue || 0}g`;
 
-  const progress = info.phaseTarget > 0 ? Math.min(100, Math.floor((info.phaseProgress / info.phaseTarget) * 100)) : 0;
+  const progress =
+    info.phaseTarget > 0
+      ? Math.min(100, Math.floor((info.phaseProgress / info.phaseTarget) * 100))
+      : 0;
 
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-lg font-semibold">{info.step.toUpperCase()}</span>
-      <span className="text-sm text-slate-500">{info.phase}</span>
-      <span className="text-sm">
+    <div className='flex flex-col gap-2'>
+      <div className='text-xl font-bold'>{info.step.toUpperCase()}</div>
+      <div className='text-sm opacity-70'>{info.phase}</div>
+      <div className='text-sm'>
         {formatTime(info.elapsed)} / {target}
-      </span>
-      <div className="w-full h-2 bg-slate-200 rounded">
-        <div className="bg-indigo-500 h-2" style={{ width: `${progress}%` }} />
       </div>
+      <progress className='progress progress-primary w-full' value={progress} max='100' />
     </div>
   );
 }

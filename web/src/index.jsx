@@ -1,8 +1,9 @@
 import 'preact/debug';
 
 import './style.css';
+import { initializeTheme } from './utils/themeManager.js';
 
-import { render, createContext } from 'preact';
+import { render } from 'preact';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
@@ -25,25 +26,25 @@ export function App() {
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div className="min-h-screen bg-base-300">
-          <div className="flex flex-col min-h-screen">
+        <div className='bg-base-300 min-h-screen'>
+          <div className='flex min-h-screen flex-col'>
             <Header />
 
-            <main className="flex-1">
-              <div className="container-fluid xl:container mx-auto py-2 px-4 lg:p-8">
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <main className='flex-1'>
+              <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
+                <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
                   <Navigation />
-                  <div className="lg:col-span-9">
+                  <div className='lg:col-span-10'>
                     <ErrorBoundary>
                       <Router>
-                        <Route path="/" component={Home} />
-                        <Route path="/profiles" component={ProfileList} />
-                        <Route path="/profiles/:id" component={ProfileEdit} />
-                        <Route path="/settings" component={Settings} />
-                        <Route path="/ota" component={OTA} />
-                        <Route path="/scales" component={Scales} />
-                        <Route path="/pidtune" component={Autotune} />
-                        <Route path="/history" component={ShotHistory} />
+                        <Route path='/' component={Home} />
+                        <Route path='/profiles' component={ProfileList} />
+                        <Route path='/profiles/:id' component={ProfileEdit} />
+                        <Route path='/settings' component={Settings} />
+                        <Route path='/ota' component={OTA} />
+                        <Route path='/scales' component={Scales} />
+                        <Route path='/pidtune' component={Autotune} />
+                        <Route path='/history' component={ShotHistory} />
                         <Route default component={NotFound} />
                       </Router>
                     </ErrorBoundary>
@@ -58,5 +59,8 @@ export function App() {
     </LocationProvider>
   );
 }
+
+// Must be called before render
+initializeTheme();
 
 render(<App />, document.getElementById('app'));
