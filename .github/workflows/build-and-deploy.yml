@@ -1,0 +1,348 @@
+name: Build Firmware and Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      - 'dev-*'      # Triggers on dev tags like dev-v1.0.0, dev-feature-name
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  REGISTRY_URL: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  get-branches:
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.get-branches.outputs.branches }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get all branches
+        id: get-branches
+        run: |
+          # Get all remote branches excluding gh-pages
+          branches=$(git branch -r --format='%(refname:short)' | sed 's|origin/||' | grep -v '^gh-pages$' | jq -R -s -c 'split("\n")[:-1]')
+          echo "branches=$branches" >> $GITHUB_OUTPUT
+          echo "Found branches: $branches"
+
+  build-firmware:
+    needs: get-branches
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch: ${{ fromJson(needs.get-branches.outputs.branches) }}
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+          submodules: recursive
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfile') }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+
+      - name: Build Display Firmware
+        run: |
+          pio run -e display
+          mkdir -p artifacts/${{ matrix.branch }}/display
+          cp .pio/build/display/bootloader.bin artifacts/${{ matrix.branch }}/display/
+          cp .pio/build/display/partitions.bin artifacts/${{ matrix.branch }}/display/
+          cp ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin artifacts/${{ matrix.branch }}/display/
+          cp .pio/build/display/firmware.bin artifacts/${{ matrix.branch }}/display/
+
+      - name: Build Controller Firmware  
+        run: |
+          pio run -e controller
+          mkdir -p artifacts/${{ matrix.branch }}/controller
+          cp .pio/build/controller/bootloader.bin artifacts/${{ matrix.branch }}/controller/
+          cp .pio/build/controller/partitions.bin artifacts/${{ matrix.branch }}/controller/
+          cp ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin artifacts/${{ matrix.branch }}/controller/
+          cp .pio/build/controller/firmware.bin artifacts/${{ matrix.branch }}/controller/
+
+      - name: Create Display Manifest
+        run: |
+          mkdir -p artifacts/${{ matrix.branch }}
+          cat > artifacts/${{ matrix.branch }}/display-manifest.json << 'EOF'
+          {
+            "name": "GaggiMate Display (${{ matrix.branch }})",
+            "version": "$(date +%Y.%m.%d)",
+            "home_assistant_domain": "esphome",
+            "funding_url": "https://github.com/silverfoxy/gaggimate",
+            "new_install_prompt_erase": true,
+            "builds": [
+              {
+                "chipFamily": "ESP32",
+                "parts": [
+                  {
+                    "path": "display/bootloader.bin",
+                    "offset": 4096
+                  },
+                  {
+                    "path": "display/partitions.bin", 
+                    "offset": 32768
+                  },
+                  {
+                    "path": "display/boot_app0.bin",
+                    "offset": 57344
+                  },
+                  {
+                    "path": "display/firmware.bin",
+                    "offset": 65536
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+
+      - name: Create Controller Manifest
+        run: |
+          cat > artifacts/${{ matrix.branch }}/controller-manifest.json << 'EOF'
+          {
+            "name": "GaggiMate Controller (${{ matrix.branch }})",
+            "version": "$(date +%Y.%m.%d)",
+            "home_assistant_domain": "esphome", 
+            "funding_url": "https://github.com/silverfoxy/gaggimate",
+            "new_install_prompt_erase": true,
+            "builds": [
+              {
+                "chipFamily": "ESP32",
+                "parts": [
+                  {
+                    "path": "controller/bootloader.bin",
+                    "offset": 4096
+                  },
+                  {
+                    "path": "controller/partitions.bin",
+                    "offset": 32768
+                  },
+                  {
+                    "path": "controller/boot_app0.bin", 
+                    "offset": 57344
+                  },
+                  {
+                    "path": "controller/firmware.bin",
+                    "offset": 65536
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.branch }}
+          path: artifacts/${{ matrix.branch }}
+          retention-days: 30
+
+  deploy-gh-pages:
+    needs: [get-branches, build-firmware]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Organize firmware files
+        run: |
+          mkdir -p manifests
+          
+          # Process each branch
+          for artifact_dir in artifacts/firmware-*; do
+            if [ -d "$artifact_dir" ]; then
+              branch_name=$(basename "$artifact_dir" | sed 's/firmware-//')
+              echo "Processing branch: $branch_name"
+              
+              # Create manifest directory
+              mkdir -p "manifests/$branch_name"
+              
+              # Copy firmware files and manifests
+              if [ -d "$artifact_dir" ]; then
+                # Copy manifests
+                if [ -f "$artifact_dir/display-manifest.json" ]; then
+                  cp "$artifact_dir/display-manifest.json" "manifests/$branch_name/"
+                fi
+                if [ -f "$artifact_dir/controller-manifest.json" ]; then
+                  cp "$artifact_dir/controller-manifest.json" "manifests/$branch_name/"
+                fi
+                
+                # Copy firmware binaries
+                if [ -d "$artifact_dir/display" ]; then
+                  cp -r "$artifact_dir/display" "manifests/$branch_name/"
+                fi
+                if [ -d "$artifact_dir/controller" ]; then
+                  cp -r "$artifact_dir/controller" "manifests/$branch_name/"
+                fi
+              fi
+            fi
+          done
+
+      - name: Generate dynamic index.html
+        run: |
+          cat > index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>GaggiMate Firmware Flasher</title>
+              <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+              <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
+                  .header { text-align: center; margin-bottom: 40px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                  .header h1 { color: #333; margin: 0 0 10px 0; }
+                  .header p { color: #666; margin: 0; }
+                  .branch-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px; }
+                  .branch-card { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #007bff; }
+                  .branch-card.master { border-left-color: #28a745; }
+                  .branch-card.feature { border-left-color: #ffc107; }
+                  .branch-card.fix { border-left-color: #dc3545; }
+                  .branch-title { font-size: 1.4em; font-weight: 600; margin: 0 0 10px 0; color: #333; }
+                  .branch-description { color: #666; margin-bottom: 20px; font-size: 0.95em; }
+                  .firmware-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+                  .firmware-buttons esp-web-install-button { flex: 1; }
+                  .install-button { width: 100%; padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background-color 0.2s; }
+                  .install-button:hover { background: #0056b3; }
+                  .install-button.controller { background: #28a745; }
+                  .install-button.controller:hover { background: #1e7e34; }
+                  .warning { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin-bottom: 30px; }
+                  .warning h3 { color: #856404; margin: 0 0 8px 0; }
+                  .warning p { color: #856404; margin: 0; }
+                  .instructions { background: white; border-radius: 10px; padding: 25px; margin-top: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                  .instructions h3 { color: #333; margin-top: 0; }
+                  .instructions ol { color: #666; }
+                  .instructions li { margin-bottom: 8px; }
+                  @media (max-width: 768px) { .branch-container { grid-template-columns: 1fr; } .firmware-buttons { flex-direction: column; } }
+              </style>
+          </head>
+          <body>
+              <div class="header">
+                  <h1>GaggiMate Firmware Flasher</h1>
+                  <p>Flash the latest firmware for your GaggiMate espresso machine controller</p>
+                  <p><small>Last updated: $(date)</small></p>
+              </div>
+
+              <div class="warning">
+                  <h3>⚠️ Important Notes</h3>
+                  <p>Make sure your ESP32 device is connected via USB and you're using Chrome or Edge browser. This tool requires HTTPS to work properly.</p>
+              </div>
+
+              <div class="branch-container">
+          EOF
+
+          # Generate cards for each branch
+          for manifest_dir in manifests/*/; do
+            if [ -d "$manifest_dir" ]; then
+              branch_name=$(basename "$manifest_dir")
+              
+              # Determine card class and emoji based on branch name
+              if [ "$branch_name" = "master" ]; then
+                card_class="master"
+                emoji="🚀"
+                description="Stable release branch with the latest tested features. Recommended for most users."
+              elif [[ "$branch_name" == *"feature"* ]] || [[ "$branch_name" == *"add"* ]] || [[ "$branch_name" == *"chart"* ]] || [[ "$branch_name" == *"resize"* ]]; then
+                card_class="feature"
+                emoji="🔧"
+                description="Development branch with new features and improvements."
+              elif [[ "$branch_name" == *"fix"* ]]; then
+                card_class="fix" 
+                emoji="🐛"
+                description="Bug fix branch addressing specific issues."
+              else
+                card_class=""
+                emoji="🔨"
+                description="Development branch with experimental changes."
+              fi
+
+              # Convert branch name to display title
+              display_name=$(echo "$branch_name" | sed 's|-| |g' | sed 's|/| - |g' | sed 's|silverfoxy-||g')
+
+              cat >> index.html << EOF
+                  <div class="branch-card $card_class">
+                      <h2 class="branch-title">$emoji $display_name</h2>
+                      <p class="branch-description">$description</p>
+                      <div class="firmware-buttons">
+                          <esp-web-install-button manifest="/gaggimate/manifests/$branch_name/display-manifest.json">
+                              <button class="install-button">Install Display Firmware</button>
+                          </esp-web-install-button>
+                          <esp-web-install-button manifest="/gaggimate/manifests/$branch_name/controller-manifest.json">
+                              <button class="install-button controller">Install Controller Firmware</button>
+                          </esp-web-install-button>
+                      </div>
+                  </div>
+          EOF
+            fi
+          done
+
+          cat >> index.html << 'EOF'
+              </div>
+
+              <div class="instructions">
+                  <h3>📋 Installation Instructions</h3>
+                  <ol>
+                      <li>Connect your ESP32 device to your computer via USB cable</li>
+                      <li>Make sure you're using Chrome or Edge browser (other browsers don't support Web Serial)</li>
+                      <li>Choose the appropriate branch/firmware version above</li>
+                      <li>Click "Install Display Firmware" first, then "Install Controller Firmware"</li>
+                      <li>Follow the on-screen prompts to complete the flashing process</li>
+                      <li>Wait for the process to complete - do not disconnect during flashing!</li>
+                  </ol>
+                  <p><strong>Need help?</strong> Visit the <a href="https://github.com/silverfoxy/gaggimate" target="_blank">GitHub repository</a> for documentation and support.</p>
+              </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Auto-update firmware builds for all branches" || exit 0
+          git push
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          force_orphan: true
