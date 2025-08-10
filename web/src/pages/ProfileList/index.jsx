@@ -64,13 +64,23 @@ function ProfileCard({
     delete download.id;
     delete download.selected;
     delete download.favorite;
-    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(download, undefined, 2))}`;
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', `${data.id}.json`);
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+
+    const jsonStr = JSON.stringify(download, undefined, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'profile-' + data.id + '.json';
+    a.target = '_blank';
+    a.rel = 'noopener';
+
+    document.body.appendChild(a);
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 10);
   }, [data]);
 
   return (
@@ -292,13 +302,24 @@ export function ProfileList() {
       delete ep.favorite;
       return ep;
     });
-    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportedProfiles, undefined, 2))}`;
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', 'profiles.json');
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+
+    const jsonStr = JSON.stringify(exportedProfiles, undefined, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'profiles.json';
+    a.target = '_blank';
+    a.rel = 'noopener';
+
+    document.body.appendChild(a);
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 10);
   }, [profiles]);
 
   const onUpload = function (evt) {

@@ -132,13 +132,23 @@ export function Settings() {
   );
 
   const onExport = useCallback(() => {
-    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(formData, undefined, 2))}`;
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', 'settings.json');
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const jsonStr = JSON.stringify(formData, undefined, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'settings.json';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    
+    document.body.appendChild(a);
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 10);
   }, [formData]);
 
   const onUpload = function (evt) {
