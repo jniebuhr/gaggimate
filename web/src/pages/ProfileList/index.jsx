@@ -50,13 +50,23 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
     delete download.id;
     delete download.selected;
     delete download.favorite;
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(download, undefined, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', data.id + '.json');
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+
+    const jsonStr = JSON.stringify(download, undefined, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'profile-' + data.id + '.json';
+    a.target = '_blank';
+    a.rel = 'noopener';
+
+    document.body.appendChild(a);
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 10);
   }, [data]);
 
   return (
@@ -92,7 +102,7 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
               disabled={favoriteToggleDisabled}
               data-tooltip="Show/hide"
               data-tooltip-position="left"
-              className={`group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-100 hover:text-yellow-400 active:border-yellow-200 ${favoriteToggleClass}`}
+              className={`group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-100 hover:text-yellow-400 active:border-yellow-200 cursor-pointer ${favoriteToggleClass}`}
             >
               <span className={`fa fa-star ${bookmarkClass}`} />
             </button>
@@ -104,33 +114,33 @@ function ProfileCard({ data, onDelete, onSelect, onFavorite, onUnfavorite, onDup
             >
               <span className="fa fa-pen" />
             </a>
-            <a
-              href="javascript:void(0)"
+            <button
+              type="button"
               data-tooltip="Export"
               data-tooltip-position="left"
-              onClick={() => onDownload()}
-              className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+              onClick={onDownload}
+              className="group inline-flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200 cursor-pointer"
             >
               <span className="fa fa-file-export" />
-            </a>
-            <a
-              href="javascript:void(0)"
+            </button>
+            <button
+              type="button"
               data-tooltip="Duplicate"
               data-tooltip-position="left"
               onClick={() => onDuplicate(data.id)}
-              className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-green-600 hover:bg-green-100 active:border-green-200"
+              className="group inline-flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-green-600 hover:bg-green-100 active:border-green-200 cursor-pointer"
             >
               <span className="fa fa-copy" />
-            </a>
-            <a
-              href="javascript:void(0)"
+            </button>
+            <button
+              type="button"
               data-tooltip="Delete"
               data-tooltip-position="left"
               onClick={() => onDelete(data.id)}
-              className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
+              className="group inline-flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200 cursor-pointer"
             >
               <span className="fa fa-trash" />
-            </a>
+            </button>
           </div>
         </div>
         <div className="flex flex-row gap-2 py-4 items-center overflow-auto">
@@ -262,13 +272,24 @@ export function ProfileList() {
       delete ep.favorite;
       return ep;
     });
-    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportedProfiles, undefined, 2));
-    var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', 'profiles.json');
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+
+    const jsonStr = JSON.stringify(exportedProfiles, undefined, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'profiles.json';
+    a.target = '_blank';
+    a.rel = 'noopener';
+
+    document.body.appendChild(a);
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 10);
   }, [profiles]);
 
   const onUpload = function (evt) {
@@ -308,7 +329,7 @@ export function ProfileList() {
           <button
             data-tooltip="Export"
             onClick={onExport}
-            className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+            className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200 cursor-pointer"
           >
             <span className="fa fa-file-export" />
           </button>
@@ -316,7 +337,7 @@ export function ProfileList() {
             <label
               data-tooltip="Import"
               for="profileImport"
-              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+              className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200 cursor-pointer"
             >
               <span className="fa fa-file-import" />
             </label>

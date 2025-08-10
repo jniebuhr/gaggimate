@@ -5,13 +5,23 @@ import { HistoryChart } from './HistoryChart.jsx';
 export default function HistoryCard({ shot, onDelete }) {
   const date = new Date(shot.timestamp * 1000);
   const onExport = useCallback(() => {
-    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(shot, undefined, 2));
-    var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', shot.id + '.json');
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const jsonStr = JSON.stringify(shot, undefined, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'shot-' + shot.id + '.json';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    
+    document.body.appendChild(a);
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 10);
   });
   return (
     <Card xs={12}>
@@ -21,24 +31,24 @@ export default function HistoryCard({ shot, onDelete }) {
         </span>
 
         <div className="flex flex-row gap-2 justify-end">
-          <a
-            href="javascript:void(0)"
-            tooltip="Export"
-            tooltip-position="left"
-            onClick={() => onExport()}
-            className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+          <button
+            type="button"
+            data-tooltip="Export"
+            data-tooltip-position="left"
+            onClick={onExport}
+            className="group inline-flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200 cursor-pointer"
           >
             <span className="fa fa-file-export" />
-          </a>
-          <a
-            href="javascript:void(0)"
-            tooltip="Delete"
-            tooltip-position="left"
+          </button>
+          <button
+            type="button"
+            data-tooltip="Delete"
+            data-tooltip-position="left"
             onClick={() => onDelete(shot.id)}
-            className="group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200"
+            className="group inline-flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 active:border-red-200 cursor-pointer"
           >
             <span className="fa fa-trash" />
-          </a>
+          </button>
         </div>
       </div>
       <div className="flex flex-row gap-6 items-center">

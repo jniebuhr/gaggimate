@@ -125,13 +125,23 @@ export function Settings() {
   );
 
   const onExport = useCallback(() => {
-    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(formData, undefined, 2));
-    var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', 'settings.json');
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const jsonStr = JSON.stringify(formData, undefined, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'settings.json';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    
+    document.body.appendChild(a);
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 10);
   }, [formData]);
 
   const onUpload = function (evt) {
@@ -166,15 +176,15 @@ export function Settings() {
       <div className="sm:col-span-12 flex flex-row">
         <h2 className="text-2xl font-bold flex-grow">Settings</h2>
         <button
-          tooltip="Export"
+          data-tooltip="Export"
           onClick={onExport}
-          className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200"
+          className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200 cursor-pointer"
         >
           <span className="fa fa-file-export" />
         </button>
         <div>
           <label
-            tooltip="Import"
+            data-tooltip="Import"
             htmlFor="settingsImport"
             className="group flex items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-lg font-semibold text-blue-600 hover:bg-blue-100 active:border-blue-200 cursor-pointer"
           >
