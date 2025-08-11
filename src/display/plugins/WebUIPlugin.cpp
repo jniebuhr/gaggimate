@@ -3,6 +3,7 @@
 #include <SPIFFS.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
+#include <display/core/process/BrewProcess.h>
 #include <display/models/profile.h>
 
 #include "BLEScalePlugin.h"

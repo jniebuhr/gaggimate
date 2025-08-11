@@ -4,6 +4,10 @@
 #include <ctime>
 #include <display/config.h>
 #include <display/core/constants.h>
+#include <display/core/process/BrewProcess.h>
+#include <display/core/process/GrindProcess.h>
+#include <display/core/process/PumpProcess.h>
+#include <display/core/process/SteamProcess.h>
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
 #include <display/plugins/BLEScalePlugin.h>
