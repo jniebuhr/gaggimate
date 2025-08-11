@@ -7,6 +7,7 @@ import { timezones } from '../../config/zones.js';
 import { computed } from '@preact/signals';
 import { machine } from '../../services/ApiService.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
+import { setDashboardLayout } from '../../utils/dashboardManager.js';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 
@@ -33,6 +34,7 @@ export function Settings() {
           fetchedSettings.standbyDisplayEnabled !== undefined
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
+        dashboardLayout: fetchedSettings.dashboardLayout || 'process-first',
       };
       setFormData(settingsWithToggle);
     } else {
@@ -84,6 +86,9 @@ export function Settings() {
         }
         setFormData(newFormData);
         return;
+      }
+      if (key === 'dashboardLayout') {
+        setDashboardLayout(value);
       }
       setFormData({
         ...formData,
@@ -343,6 +348,29 @@ export function Settings() {
                 <option value='dark'>Dark</option>
                 <option value='coffee'>Coffee</option>
                 <option value='nord'>Nord</option>
+              </select>
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='dashboardLayout' className='label'>
+                <span className='label-text font-medium'>Dashboard Layout</span>
+              </label>
+              <select
+                id='dashboardLayout'
+                name='dashboardLayout'
+                className='select select-bordered w-full'
+                value={formData.dashboardLayout || 'process-first'}
+                onChange={e => {
+                  const value = e.target.value;
+                  setFormData({
+                    ...formData,
+                    dashboardLayout: value,
+                  });
+                  setDashboardLayout(value);
+                }}
+              >
+                <option value='process-first'>Process Controls Left</option>
+                <option value='chart-first'>Chart Left</option>
               </select>
             </div>
           </Card>
