@@ -36,12 +36,12 @@ export function Home() {
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h2>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch'>
         <Card sm={10} lg={4} title='Process Controls'>
           <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
         </Card>
 
-        <Card sm={10} lg={6} title='Temperature & Pressure Chart'>
+        <Card sm={10} lg={6} title='Temperature & Pressure Chart' fullHeight={true}>
           <OverviewChart />
         </Card>
       </div>

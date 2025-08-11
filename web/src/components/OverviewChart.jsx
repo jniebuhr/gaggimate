@@ -131,17 +131,30 @@ function getChartData(data) {
 export function OverviewChart() {
   const [chart, setChart] = useState(null);
   const ref = useRef();
-  const chartData = getChartData(machine.value.history);
 
+  // Create chart on mount
   useEffect(() => {
-    const ct = new Chart(ref.current, chartData);
-    setChart(ct);
-  }, [ref]);
+    if (!ref.current) return;
+    
+    const chartData = getChartData(machine.value.history);
+    const newChart = new Chart(ref.current, chartData);
+    setChart(newChart);
 
+    // Cleanup function to destroy chart on unmount
+    return () => {
+      if (newChart) {
+        newChart.destroy();
+      }
+    };
+  }, []); // Empty dependency array - only run on mount
+
+  // Update chart data when history changes
   useEffect(() => {
-    const cd = getChartData(machine.value.history);
-    chart.data = cd.data;
-    chart.options = cd.options;
+    if (!chart) return;
+    
+    const chartData = getChartData(machine.value.history);
+    chart.data = chartData.data;
+    chart.options = chartData.options;
     chart.update();
   }, [machine.value.history, chart]);
 
@@ -183,7 +196,7 @@ export function OverviewChart() {
   }, [chart]);
 
   return (
-    <div className='h-full w-full min-h-[200px]'>
+    <div className='h-full w-full min-h-[300px] flex-1'>
       <canvas className='h-full w-full' ref={ref} />
     </div>
   );
