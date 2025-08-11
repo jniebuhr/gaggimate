@@ -12,6 +12,7 @@
 #include <scales/timemore.h>
 #include <scales/varia.h>
 #include <scales/weighmybru.h>
+#include <scales/myscale.h>
 
 void on_ble_measurement(float value) { BLEScales.onMeasurement(value); }
 
@@ -32,6 +33,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     TimemoreScalesPlugin::apply();
     VariaScalesPlugin::apply();
     WeighMyBrewScalePlugin::apply();
+    myscalePlugin::apply();    
     this->scanner = new RemoteScalesScanner();
     manager->on("controller:ready", [this](Event const &) {
         if (this->controller->getMode() != MODE_STANDBY) {
