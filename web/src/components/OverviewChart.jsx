@@ -183,7 +183,7 @@ export function OverviewChart() {
   }, [chart]);
 
   return (
-    <div className='h-64 w-full sm:h-72'>
+    <div className='h-full w-full min-h-[200px]'>
       <canvas className='h-full w-full' ref={ref} />
     </div>
   );
