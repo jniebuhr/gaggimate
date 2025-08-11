@@ -21,23 +21,23 @@ Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement
 export function Home() {
   const [dashboardLayout, setDashboardLayout] = useState('process-first');
   const apiService = useContext(ApiServiceContext);
-  
+
   useEffect(() => {
     setDashboardLayout(getDashboardLayout());
-    
-    const handleStorageChange = (e) => {
+
+    const handleStorageChange = e => {
       if (e.key === 'dashboardLayout') {
         setDashboardLayout(e.newValue || 'process-first');
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
-  
+
   const changeMode = useCallback(
     mode => {
       apiService.send({

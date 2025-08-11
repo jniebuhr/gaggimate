@@ -135,7 +135,7 @@ export function OverviewChart() {
   // Create chart on mount
   useEffect(() => {
     if (!ref.current) return;
-    
+
     const chartData = getChartData(machine.value.history);
     const newChart = new Chart(ref.current, chartData);
     setChart(newChart);
@@ -151,7 +151,7 @@ export function OverviewChart() {
   // Update chart data when history changes
   useEffect(() => {
     if (!chart) return;
-    
+
     const chartData = getChartData(machine.value.history);
     chart.data = chartData.data;
     chart.options = chartData.options;
@@ -196,7 +196,7 @@ export function OverviewChart() {
   }, [chart]);
 
   return (
-    <div className='h-full w-full min-h-[300px] flex-1'>
+    <div className='h-full min-h-[300px] w-full flex-1'>
       <canvas className='h-full w-full' ref={ref} />
     </div>
   );

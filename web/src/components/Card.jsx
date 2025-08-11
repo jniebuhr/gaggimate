@@ -1,4 +1,15 @@
-export default function Card({ xs, sm, md, lg, xl, title, children, className = '', role, fullHeight = false }) {
+export default function Card({
+  xs,
+  sm,
+  md,
+  lg,
+  xl,
+  title,
+  children,
+  className = '',
+  role,
+  fullHeight = false,
+}) {
   const getGridClasses = () => {
     const breakpoints = [
       { value: xs, prefix: '' },
@@ -17,13 +28,18 @@ export default function Card({ xs, sm, md, lg, xl, title, children, className = 
   const gridClasses = getGridClasses();
 
   return (
-    <div className={`card bg-base-100 shadow-xl ${gridClasses} ${fullHeight ? 'h-full' : ''} ${className}`} role={role}>
+    <div
+      className={`card bg-base-100 shadow-xl ${gridClasses} ${fullHeight ? 'h-full' : ''} ${className}`}
+      role={role}
+    >
       {title && (
         <div className='card-header px-4 pt-4'>
           <h2 className='card-title text-lg sm:text-xl'>{title}</h2>
         </div>
       )}
-      <div className={`card-body flex flex-col gap-2 p-4 ${fullHeight ? 'flex-1' : ''}`}>{children}</div>
+      <div className={`card-body flex flex-col gap-2 p-4 ${fullHeight ? 'flex-1' : ''}`}>
+        {children}
+      </div>
     </div>
   );
 }
