@@ -476,18 +476,18 @@ export function Settings() {
               <label htmlFor='temperatureOffset' className='mb-2 block text-sm font-medium'>
                 Temperature Offset
               </label>
-              <div className='input-group'>
-                <input
-                  id='temperatureOffset'
-                  name='temperatureOffset'
-                  type='number'
-                  className='input input-bordered'
-                  placeholder='0'
-                  value={formData.temperatureOffset}
-                  onChange={onChange('temperatureOffset')}
-                />
-                <span className='btn btn-square'>°C</span>
-              </div>
+              <input
+                id='temperatureOffset'
+                name='temperatureOffset'
+                type='number'
+                inputMode='decimal'
+                className='input input-bordered w-full'
+                placeholder='0 °C'
+                min='0'
+                step='any'
+                value={formData.temperatureOffset}
+                onChange={onChange('temperatureOffset')}
+              />
             </div>
 
             <div className='form-control'>
@@ -497,21 +497,18 @@ export function Settings() {
               <div className='mb-2 text-xs opacity-70'>
                 Enter the bar rating of the pressure sensor being used
               </div>
-              <div className='input-group'>
-                <input
-                  id='pressureScaling'
-                  name='pressureScaling'
-                  type='number'
-                  inputMode='decimal'
-                  placeholder='0.0'
-                  className='input input-bordered'
-                  min='0'
-                  step='any'
-                  value={formData.pressureScaling}
-                  onChange={onChange('pressureScaling')}
-                />
-                <span className='btn btn-square'>bar</span>
-              </div>
+              <input
+                id='pressureScaling'
+                name='pressureScaling'
+                type='number'
+                inputMode='decimal'
+                className='input input-bordered w-full'
+                placeholder='0.0 bar'
+                min='0'
+                step='any'
+                value={formData.pressureScaling}
+                onChange={onChange('pressureScaling')}
+              />
             </div>
 
             <div className='form-control'>
@@ -521,21 +518,18 @@ export function Settings() {
               <div className='mb-2 text-xs opacity-70'>
                 What percentage to run the pump at during steaming
               </div>
-              <div className='input-group'>
-                <input
-                  id='steamPumpPercentage'
-                  name='steamPumpPercentage'
-                  type='number'
-                  inputMode='decimal'
-                  placeholder='0.0'
-                  className='input input-bordered'
-                  min='0'
-                  step='any'
-                  value={formData.steamPumpPercentage}
-                  onChange={onChange('steamPumpPercentage')}
-                />
-                <span className='btn btn-square'>%</span>
-              </div>
+              <input
+                id='steamPumpPercentage'
+                name='steamPumpPercentage'
+                type='number'
+                inputMode='decimal'
+                className='input input-bordered w-full'
+                placeholder='0.0 %'
+                min='0'
+                step='any'
+                value={formData.steamPumpPercentage}
+                onChange={onChange('steamPumpPercentage')}
+              />
             </div>
           </Card>
 
