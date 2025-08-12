@@ -21,8 +21,8 @@ export function PluginCard({ formData, onChange }) {
           <div className='border-base-300 mt-4 flex flex-col items-center justify-center gap-4 border-t pt-4'>
             <img src={homekitImage} alt='Homekit Setup Code' />
             <p className='text-center'>
-              Open the Homekit App, find your GaggiMate device and scan the setup code above
-              to add it.
+              Open the Homekit App, find your GaggiMate device and scan the setup code above to add
+              it.
             </p>
           </div>
         )}
@@ -93,8 +93,8 @@ export function PluginCard({ formData, onChange }) {
         {formData.smartGrindActive && (
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
             <p className='text-sm opacity-70'>
-              This feature controls a Tasmota Plug to turn off your grinder after the target
-              has been reached.
+              This feature controls a Tasmota Plug to turn off your grinder after the target has
+              been reached.
             </p>
             <div className='form-control'>
               <label htmlFor='smartGrindIp' className='mb-2 block text-sm font-medium'>
@@ -152,8 +152,8 @@ export function PluginCard({ formData, onChange }) {
         {formData.homeAssistant && (
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
             <p className='text-sm opacity-70'>
-              This feature allows connection to a Home Assistant or MQTT installation and
-              push the current state.
+              This feature allows connection to a Home Assistant or MQTT installation and push the
+              current state.
             </p>
             <div className='form-control'>
               <label htmlFor='haIP' className='mb-2 block text-sm font-medium'>
@@ -219,4 +219,4 @@ export function PluginCard({ formData, onChange }) {
       </div>
     </div>
   );
-} 
+}
