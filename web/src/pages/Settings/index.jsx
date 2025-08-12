@@ -335,8 +335,8 @@ export function Settings() {
                 <span className='label-text font-medium'>Theme</span>
               </label>
               <select
-                id='daisyui-theme'
-                name='daisyui-theme'
+                id='webui-theme'
+                name='webui-theme'
                 className='select select-bordered w-full'
                 value={currentTheme}
                 onChange={e => {
