@@ -1,6 +1,6 @@
 #include "NimBLEComm.h"
 
-String get_token(const String &from, uint8_t index, char separator) {
+String get_token(const String &from, uint8_t index, char separator, String default_value) {
     uint16_t start = 0;
     uint16_t idx = 0;
     uint8_t cur = 0;
@@ -19,5 +19,5 @@ String get_token(const String &from, uint8_t index, char separator) {
     if ((cur == index) && (start < from.length())) {
         return from.substring(start, from.length());
     }
-    return "";
+    return default_value;
 }

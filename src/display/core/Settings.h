@@ -38,6 +38,7 @@ class Settings {
     double getGrindDelay() const { return grindDelay; }
     bool isDelayAdjust() const { return delayAdjust; }
     String getPid() const { return pid; }
+    String getPumpModelCoeffs() const { return pumpModelCoeffs; }
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
     String getMdnsName() const { return mdnsName; }
@@ -94,6 +95,7 @@ class Settings {
     void setGrindDelay(double grindDelay);
     void setDelayAdjust(bool delay_adjust);
     void setPid(const String &pid);
+    void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
     void setMdnsName(const String &mdnsName);
@@ -153,6 +155,7 @@ class Settings {
     int startupMode = MODE_STANDBY;
     int standbyTimeout = DEFAULT_STANDBY_TIMEOUT_MS;
     String pid = DEFAULT_PID;
+    String pumpModelCoeffs = DEFAULT_PUMP_MODEL_COEFFS;
     String wifiSsid = "";
     String wifiPassword = "";
     String mdnsName = DEFAULT_MDNS_NAME;
