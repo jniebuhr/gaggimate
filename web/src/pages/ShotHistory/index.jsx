@@ -55,7 +55,7 @@ export function ShotHistory() {
 
   if (loading) {
     return (
-      <div class='flex w-full flex-row items-center justify-center py-16'>
+      <div className='flex w-full flex-row items-center justify-center py-16'>
         <Spinner size={8} />
       </div>
     );

@@ -10,7 +10,7 @@ function MenuItem(props) {
   }
   return (
     <a href={props.link} className={className}>
-      <i className={props.iconClass || ''} />
+      <i className={props.iconClass || ''} aria-hidden='true' />
       <span>{props.label}</span>
     </a>
   );

@@ -107,7 +107,6 @@ function getChartData(data) {
 }
 
 export function HistoryChart({ shot }) {
-  console.log(shot);
   const [chart, setChart] = useState(null);
   const ref = useRef();
   const chartData = getChartData(shot.samples);

@@ -51,11 +51,11 @@ export function Home() {
 
   return (
     <>
-      <div className='mb-4 flex flex-row items-center gap-2'>
+      <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h2>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch'>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
         {dashboardLayout === 'process-first' ? (
           <>
             <Card sm={10} lg={4} title='Process Controls'>
@@ -68,11 +68,17 @@ export function Home() {
           </>
         ) : (
           <>
-            <Card sm={10} lg={6} title='Temperature & Pressure Chart' fullHeight={true}>
+            <Card
+              sm={10}
+              lg={6}
+              className='landscape:sm:col-span-5'
+              title='Temperature & Pressure Chart'
+              fullHeight={true}
+            >
               <OverviewChart />
             </Card>
 
-            <Card sm={10} lg={4} title='Process Controls'>
+            <Card sm={10} lg={4} className='landscape:sm:col-span-5' title='Process Controls'>
               <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
             </Card>
           </>

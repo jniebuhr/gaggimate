@@ -122,7 +122,7 @@ const ProcessControls = props => {
   };
 
   return (
-    <div className={`flex min-h-[350px] flex-col justify-between`}>
+    <div className={`flex min-h-[250px] flex-col justify-between lg:min-h-[350px]`}>
       <div className='mb-2 flex justify-center'>
         <div className='bg-base-300 flex w-full max-w-md rounded-full p-1'>
           {[
@@ -133,7 +133,7 @@ const ProcessControls = props => {
           ].map(tab => (
             <button
               key={tab.id}
-              className={`flex-1 rounded-full px-2 py-2 text-sm transition-all duration-200 sm:px-4 sm:text-base ${
+              className={`flex-1 rounded-full px-1 py-1 text-sm transition-all duration-200 sm:px-4 lg:px-2 lg:py-2 ${
                 mode === tab.id
                   ? 'bg-primary text-primary-content font-medium'
                   : 'text-base-content/60 hover:text-base-content'
@@ -146,15 +146,17 @@ const ProcessControls = props => {
         </div>
       </div>
 
-      <div className='mb-2 flex flex-col items-center justify-between space-y-2 sm:flex-row sm:space-y-0'>
-        <div className='text-center text-base sm:text-left sm:text-lg'>
+      <div className='mt-1 mb-2 flex flex-col items-center justify-between space-y-2 sm:flex-row sm:space-y-0'>
+        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
+          <i className='fa fa-thermometer-half text-base-content/60' />
           <span className='text-base-content'>{status.value.currentTemperature || 0}</span>
           <span className='text-success font-semibold'>
             {' '}
             / {status.value.targetTemperature || 0}°C
           </span>
         </div>
-        <div className='text-center text-base sm:text-right sm:text-lg'>
+        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
+          <i className='fa fa-gauge text-base-content/60' />
           <span className='text-base-content'>
             {status.value.currentPressure?.toFixed(0) || 0} /{' '}
             {status.value.targetPressure?.toFixed(0) || 0} bar
@@ -163,13 +165,13 @@ const ProcessControls = props => {
       </div>
       {brew && (
         <div className='mb-2 text-center'>
-          <div className='mb-2 flex items-center justify-center gap-2'>
+          <div className='text-base-content/60 text-sm'>Current Profile</div>
+          <a href='/profiles' className='mb-2 flex items-center justify-center gap-2'>
             <span className='text-base-content text-xl font-semibold sm:text-2xl'>
               {status.value.selectedProfile || 'Default'}
             </span>
             <i className='fa-solid fa-rectangle-list text-base-content/60' />
-          </div>
-          <div className='text-base-content/60 text-sm'>Current Profile</div>
+          </a>
         </div>
       )}
 
@@ -224,14 +226,14 @@ const ProcessControls = props => {
         {brew && !active && !finished && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
-              className={`flex-1 rounded-full px-3 py-2 text-sm transition-all duration-200 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(0)}
             >
               <i className='fa-solid fa-clock' />
               <span className='ml-1'>Time</span>
             </button>
             <button
-              className={`flex-1 rounded-full px-3 py-2 text-sm transition-all duration-200 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(1)}
             >
               <i className='fa-solid fa-weight-scale' />

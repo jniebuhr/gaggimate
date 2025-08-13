@@ -90,21 +90,21 @@ export function StandardProfileForm(props) {
               Temperature
             </label>
             <div className='input-group'>
-              <input
-                id='temperature'
-                name='temperature'
-                type='number'
-                className='input input-bordered'
-                value={data?.temperature}
-                onChange={e => onFieldChange('temperature', e.target.value)}
-                aria-label='Temperature in degrees Celsius'
-                min='0'
-                max='150'
-                step='0.1'
-              />
-              <span className='btn btn-square btn-disabled' aria-label='degrees Celsius'>
-                °C
-              </span>
+              <label htmlFor='temperature' className='input w-full'>
+                <input
+                  id='temperature'
+                  name='temperature'
+                  type='number'
+                  className='grow'
+                  value={data?.temperature}
+                  onChange={e => onFieldChange('temperature', e.target.value)}
+                  aria-label='Temperature in degrees Celsius'
+                  min='0'
+                  max='150'
+                  step='0.1'
+                />
+                <span aria-label='degrees Celsius'>°C</span>
+              </label>
             </div>
           </div>
         </Card>
@@ -252,18 +252,18 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
             Duration
           </label>
           <div className='input-group'>
-            <input
-              id={`phase-${index}-duration`}
-              className='input input-bordered'
-              type='number'
-              min='1'
-              value={phase.duration}
-              onChange={e => onFieldChange('duration', e.target.value)}
-              aria-label='Duration in seconds'
-            />
-            <span className='btn btn-square btn-disabled' aria-label='seconds'>
-              s
-            </span>
+            <label htmlFor={`phase-${index}-duration`} className='input w-full'>
+              <input
+                id={`phase-${index}-duration`}
+                className='grow'
+                type='number'
+                min='1'
+                value={phase.duration}
+                onChange={e => onFieldChange('duration', e.target.value)}
+                aria-label='Duration in seconds'
+              />
+              <span aria-label='seconds'>s</span>
+            </label>
           </div>
         </div>
         <div className='form-control'>
@@ -271,19 +271,19 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
             Volumetric Target
           </label>
           <div className='input-group'>
-            <input
-              id={`phase-${index}-target`}
-              className='input input-bordered'
-              type='number'
-              value={targetWeight}
-              onChange={e => onVolumetricTargetChange(parseFloat(e.target.value))}
-              aria-label='Target weight in grams'
-              min='0'
-              step='0.1'
-            />
-            <span className='btn btn-square btn-disabled' aria-label='grams'>
-              g
-            </span>
+            <label htmlFor={`phase-${index}-target`} className='input w-full'>
+              <input
+                id={`phase-${index}-target`}
+                className='grow'
+                type='number'
+                value={targetWeight}
+                onChange={e => onVolumetricTargetChange(parseFloat(e.target.value))}
+                aria-label='Target weight in grams'
+                min='0'
+                step='0.1'
+              />
+              <span aria-label='grams'>g</span>
+            </label>
           </div>
         </div>
       </div>
@@ -374,20 +374,20 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
             Pump Power
           </label>
           <div className='input-group'>
-            <input
-              id={`phase-${index}-power`}
-              className='input input-bordered'
-              type='number'
-              step='1'
-              min={0}
-              max={100}
-              value={pumpPower}
-              onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
-              aria-label='Pump power as percentage'
-            />
-            <span className='btn btn-square btn-disabled' aria-label='percent'>
-              %
-            </span>
+            <label htmlFor={`phase-${index}-power`} className='input w-full'>
+              <input
+                id={`phase-${index}-power`}
+                className='grow'
+                type='number'
+                step='1'
+                min={0}
+                max={100}
+                value={pumpPower}
+                onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
+                aria-label='Pump power as percentage'
+              />
+              <span aria-label='percent'>%</span>
+            </label>
           </div>
         </div>
       )}
@@ -399,21 +399,21 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
               Pressure {mode === 'pressure' ? 'Target' : 'Limit'}
             </label>
             <div className='input-group'>
-              <input
-                id={`phase-${index}-pressure`}
-                className='input input-bordered'
-                type='number'
-                step='0.01'
-                value={pressure}
-                onChange={e =>
-                  onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
-                }
-                aria-label='Pressure in bar'
-                min='0'
-              />
-              <span className='btn btn-square btn-disabled' aria-label='bar'>
-                bar
-              </span>
+              <label htmlFor={`phase-${index}-pressure`} className='input w-full'>
+                <input
+                  id={`phase-${index}-pressure`}
+                  className='grow'
+                  type='number'
+                  step='0.01'
+                  value={pressure}
+                  onChange={e =>
+                    onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
+                  }
+                  aria-label='Pressure in bar'
+                  min='0'
+                />
+                <span aria-label='bar'>bar</span>
+              </label>
             </div>
           </div>
           <div className='form-control'>
@@ -421,21 +421,21 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
               Flow {mode === 'flow' ? 'Target' : 'Limit'}
             </label>
             <div className='input-group'>
-              <input
-                id={`phase-${index}-flow`}
-                className='input input-bordered'
-                type='number'
-                step='0.01'
-                value={flow}
-                onChange={e =>
-                  onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
-                }
-                aria-label='Flow rate in grams per second'
-                min='0'
-              />
-              <span className='btn btn-square btn-disabled' aria-label='grams per second'>
-                g/s
-              </span>
+              <label htmlFor={`phase-${index}-flow`} className='input w-full'>
+                <input
+                  id={`phase-${index}-flow`}
+                  className='grow'
+                  type='number'
+                  step='0.01'
+                  value={flow}
+                  onChange={e =>
+                    onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
+                  }
+                  aria-label='Flow rate in grams per second'
+                  min='0'
+                />
+                <span aria-label='grams per second'>g/s</span>
+              </label>
             </div>
           </div>
         </div>

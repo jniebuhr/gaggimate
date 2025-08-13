@@ -188,321 +188,6 @@ export function Settings() {
           accept='.json,application/json'
         />
       </div>
-      <Card xs={12} lg={6} title="Temperature settings">
-        <div>
-          <label htmlFor="targetSteamTemp" className="block font-medium text-gray-700 dark:text-gray-400">
-            Default Steam Temperature (°C)
-          </label>
-          <input
-            id="targetSteamTemp"
-            name="targetSteamTemp"
-            type="number"
-            className="input-field"
-            placeholder="135"
-            value={formData.targetSteamTemp}
-            onChange={onChange('targetSteamTemp')}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="targetWaterTemp" className="block font-medium text-gray-700 dark:text-gray-400">
-            Default Water Temperature (°C)
-          </label>
-          <input
-            id="targetWaterTemp"
-            name="targetWaterTemp"
-            type="number"
-            className="input-field"
-            placeholder="80"
-            value={formData.targetWaterTemp}
-            onChange={onChange('targetWaterTemp')}
-          />
-        </div>
-      </Card>
-      <Card xs={12} lg={6} title="User preferences">
-        <div>
-          <label htmlFor="startup-mode" className="block font-medium text-gray-700 dark:text-gray-400">
-            Startup Mode
-          </label>
-          <select id="startup-mode" name="startupMode" className="input-field" onChange={onChange('startupMode')}>
-            <option value="standby" selected={formData.startupMode === 'standby'}>
-              Standby
-            </option>
-            <option value="brew" selected={formData.startupMode === 'brew'}>
-              Brew
-            </option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="standbyTimeout" className="block font-medium text-gray-700 dark:text-gray-400">
-            Standby Timeout (s)
-          </label>
-          <input
-            id="standbyTimeout"
-            name="standbyTimeout"
-            type="number"
-            className="input-field"
-            placeholder="0"
-            value={formData.standbyTimeout}
-            onChange={onChange('standbyTimeout')}
-          />
-        </div>
-
-        <div>
-          <b>Predictive scale delay</b>
-        </div>
-        <div>
-          <small>
-            Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control.
-          </small>
-        </div>
-
-        <div className="flex flex-row gap-4">
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              id="delayAdjust"
-              name="delayAdjust"
-              value="delayAdjust"
-              type="checkbox"
-              className="sr-only peer"
-              checked={!!formData.delayAdjust}
-              onChange={onChange('delayAdjust')}
-            />
-            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-          </label>
-          <p>Auto Adjust</p>
-        </div>
-        <div className="flex flex-row gap-4">
-          <div className="flex-auto">
-            <label htmlFor="brewDelay" className="block font-medium text-gray-700 dark:text-gray-400">
-              Brew (ms)
-            </label>
-            <input
-              id="brewDelay"
-              name="brewDelay"
-              type="number"
-              step="any"
-              className="input-field"
-              placeholder="0"
-              value={formData.brewDelay}
-              onChange={onChange('brewDelay')}
-            />
-          </div>
-          <div className="flex-auto">
-            <label htmlFor="grindDelay" className="block font-medium text-gray-700 dark:text-gray-400">
-              Grind (ms)
-            </label>
-            <input
-              id="grindDelay"
-              name="grindDelay"
-              type="number"
-              step="any"
-              className="input-field"
-              placeholder="0"
-              value={formData.grindDelay}
-              onChange={onChange('grindDelay')}
-            />
-          </div>
-        </div>
-
-        <div>
-          <b>Switch control</b>
-        </div>
-        <div className="flex flex-row gap-4">
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              id="momentaryButtons"
-              name="momentaryButtons"
-              value="momentaryButtons"
-              type="checkbox"
-              className="sr-only peer"
-              checked={!!formData.momentaryButtons}
-              onChange={onChange('momentaryButtons')}
-            />
-            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-          </label>
-          <p>Use momentary switches</p>
-        </div>
-      </Card>
-      <Card xs={12} lg={6} title="System preferences">
-        <div>
-          <label htmlFor="wifiSsid" className="block font-medium text-gray-700 dark:text-gray-400">
-            WiFi SSID
-          </label>
-          <input
-            id="wifiSsid"
-            name="wifiSsid"
-            type="text"
-            className="input-field"
-            placeholder="WiFi SSID"
-            value={formData.wifiSsid}
-            onChange={onChange('wifiSsid')}
-          />
-        </div>
-        <div>
-          <label htmlFor="wifiPassword" className="block font-medium text-gray-700 dark:text-gray-400">
-            WiFi Password
-          </label>
-          <input
-            id="wifiPassword"
-            name="wifiPassword"
-            type="password"
-            className="input-field"
-            placeholder="WiFi Password"
-            value={formData.wifiPassword}
-            onChange={onChange('wifiPassword')}
-          />
-        </div>
-        <div>
-          <label htmlFor="mdnsName" className="block font-medium text-gray-700 dark:text-gray-400">
-            Hostname
-          </label>
-          <input
-            id="mdnsName"
-            name="mdnsName"
-            type="text"
-            className="input-field"
-            placeholder="Hostname"
-            value={formData.mdnsName}
-            onChange={onChange('mdnsName')}
-          />
-        </div>
-        <div>
-          <label htmlFor="timezone" className="block font-medium text-gray-700 dark:text-gray-400">
-            Timezone
-          </label>
-          <select id="timezone" name="timezone" className="input-field" onChange={onChange('timezone')}>
-            {timezones.map((timezone) => (
-              <option key={timezone} value={timezone} selected={formData.timezone === timezone}>
-                {timezone}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <b>Clock</b>
-        </div>
-        <div className="flex flex-row gap-4">
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              id="clock24hFormat"
-              name="clock24hFormat"
-              value="clock24hFormat"
-              type="checkbox"
-              className="sr-only peer"
-              checked={!!formData.clock24hFormat}
-              onChange={onChange('clock24hFormat')}
-            />
-            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-          </label>
-          <p>Use 24h Format</p>
-        </div>
-      </Card>
-      <Card xs={12} lg={6} title="Machine settings">
-        <div>
-          <label htmlFor="pid" className="block font-medium text-gray-700 dark:text-gray-400">
-            PID Values (Kp, Ki, Kd)
-          </label>
-          <input
-            id="pid"
-            name="pid"
-            type="text"
-            className="input-field"
-            placeholder="2.0, 0.1, 0.01"
-            value={formData.pid}
-            onChange={onChange('pid')}
-          />
-        </div>
-        <div>
-          <label htmlFor="pumpModelCoeffs" className="block font-medium text-gray-700 dark:text-gray-400">
-            Pump Flow Coefficients <small>Enter 2 values (flow at 1bar, flow at 9bar)</small>
-          </label>
-          <input
-            id="pumpModelCoeffs"
-            name="pumpModelCoeffs"
-            type="text"
-            className="input-field"
-            placeholder="10.205,5.521"
-            value={formData.pumpModelCoeffs}
-            onChange={onChange('pumpModelCoeffs')}
-          />
-        </div>
-        <div>
-          <label htmlFor="temperatureOffset" className="block font-medium text-gray-700 dark:text-gray-400">
-            Temperature Offset
-          </label>
-          <div className="flex">
-            <input
-              id="temperatureOffset"
-              name="temperatureOffset"
-              type="number"
-              className="input-field addition"
-              placeholder="0"
-              value={formData.temperatureOffset}
-              onChange={onChange('temperatureOffset')}
-            />
-            <span className="input-addition">°C</span>
-          </div>
-        </div>
-        <div>
-          <label htmlFor="pressureScaling" className="block font-medium text-gray-700 dark:text-gray-400">
-            Pressure sensor rating <small>Enter the bar rating of the pressure sensor being used</small>
-          </label>
-          <div className="flex">
-            <input
-              id="pressureScaling"
-              name="pressureScaling"
-              type="number"
-              inputMode="decimal"
-              placeholder="0.0"
-              className="input-field addition"
-              min="0"
-              step="any"
-              value={formData.pressureScaling}
-              onChange={onChange('pressureScaling')}
-            />
-            <span className="input-addition">bar</span>
-          </div>
-        </div>
-        <div>
-          <label htmlFor="pressureScaling" className="block font-medium text-gray-700 dark:text-gray-400">
-            Steam Pump Assist <small>What percentage to run the pump at during steaming</small>
-          </label>
-          <div className="flex">
-            <input
-              id="steamPumpPercentage"
-              name="steamPumpPercentage"
-              type="number"
-              inputMode="decimal"
-              placeholder="0.0"
-              className="input-field addition"
-              min="0"
-              step="any"
-              value={formData.steamPumpPercentage}
-              onChange={onChange('steamPumpPercentage')}
-            />
-            <span className="input-addition">%</span>
-          </div>
-        </div>
-      </Card>
-      <Card xs={12} lg={6} title="Display settings">
-        <div>
-          <label htmlFor="mainBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
-            Main Brightness (1-16)
-          </label>
-          <input
-            id="mainBrightness"
-            name="mainBrightness"
-            type="number"
-            className="input-field"
-            placeholder="16"
-            min="1"
-            max="16"
-            value={formData.mainBrightness}
-            onChange={onChange('mainBrightness')}
-          />
-        </div>
-
       <form key='settings' ref={formRef} method='post' action='/api/settings' onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
           <Card sm={10} lg={5} title='Temperature settings'>
@@ -683,8 +368,8 @@ export function Settings() {
                   setDashboardLayout(value);
                 }}
               >
-                <option value='process-first'>Process Controls Left</option>
-                <option value='chart-first'>Chart Left</option>
+                <option value='process-first'>Left Handed</option>
+                <option value='chart-first'>Right Handed</option>
               </select>
             </div>
           </Card>
@@ -783,6 +468,21 @@ export function Settings() {
                 placeholder='2.0, 0.1, 0.01'
                 value={formData.pid}
                 onChange={onChange('pid')}
+              />
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='pumpModelCoeffs' className='mb-2 block text-sm font-medium'>
+                Pump Flow Coefficients <small>Enter 2 values (flow at 1bar, flow at 9bar)</small>
+              </label>
+              <input
+                id='pumpModelCoeffs'
+                name='pumpModelCoeffs'
+                type='text'
+                className='input input-bordered w-full'
+                placeholder='10.205,5.521'
+                value={formData.pumpModelCoeffs}
+                onChange={onChange('pumpModelCoeffs')}
               />
             </div>
 
