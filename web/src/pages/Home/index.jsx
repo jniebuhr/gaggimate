@@ -1,47 +1,83 @@
-import { useCallback, useContext } from 'preact/hooks';
+import { useCallback, useContext, useState, useEffect } from 'preact/hooks';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { Chart, LineController, TimeScale, LinearScale, PointElement, LineElement, Legend, Filler } from 'chart.js';
+import {
+  Chart,
+  LineController,
+  TimeScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Legend,
+  Filler,
+} from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import ProcessControls from './ProcessControls.jsx';
+import { getDashboardLayout } from '../../utils/dashboardManager.js';
 
 Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
 export function Home() {
+  const [dashboardLayout, setDashboardLayout] = useState('process-first');
   const apiService = useContext(ApiServiceContext);
+
+  useEffect(() => {
+    setDashboardLayout(getDashboardLayout());
+
+    const handleStorageChange = e => {
+      if (e.key === 'dashboardLayout') {
+        setDashboardLayout(e.newValue || 'process-first');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const changeMode = useCallback(
-    (mode) => {
+    mode => {
       apiService.send({
         tp: 'req:change-mode',
         mode,
       });
     },
-    [apiService]
+    [apiService],
   );
   const mode = machine.value.status.mode;
 
   return (
-    <div key="home" className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-12 max-h-fit">
-      <div className="col-span-12 landscape:hidden">
-        <h2 className="text-xl sm:text-2xl font-bold text-base-content">Dashboard</h2>
+    <>
+      <div className='mb-4 flex flex-row items-center gap-2'>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h2>
       </div>
 
-      <Card
-        xs={12}
-        lg={12}
-        className="md:landscape:col-span-6 md:portrait:col-span-12 lg:landscape:col-span-12 lg:portrait:col-span-12"
-      >
-        <OverviewChart />
-      </Card>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch'>
+        {dashboardLayout === 'process-first' ? (
+          <>
+            <Card sm={10} lg={4} title='Process Controls'>
+              <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
+            </Card>
 
-      <Card
-        xs={12}
-        lg={12}
-        className="md:landscape:col-span-6 md:portrait:col-span-12 lg:landscape:col-span-12 lg:portrait:col-span-12"
-      >
-        <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
-      </Card>
-    </div>
+            <Card sm={10} lg={6} title='Temperature & Pressure Chart' fullHeight={true}>
+              <OverviewChart />
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card sm={10} lg={6} title='Temperature & Pressure Chart' fullHeight={true}>
+              <OverviewChart />
+            </Card>
+
+            <Card sm={10} lg={4} title='Process Controls'>
+              <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
+            </Card>
+          </>
+        )}
+      </div>
+    </>
   );
 }

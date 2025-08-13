@@ -13,7 +13,7 @@ function getChartData(data) {
           label: 'Current Temperature',
           borderColor: '#F0561D',
           pointStyle: false,
-          data: data.map((i) => ({ x: i.timestamp.toISOString(), y: i.currentTemperature })),
+          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentTemperature })),
         },
         {
           label: 'Target Temperature',
@@ -21,14 +21,14 @@ function getChartData(data) {
           borderColor: '#731F00',
           borderDash: [6, 6],
           pointStyle: false,
-          data: data.map((i) => ({ x: i.timestamp.toISOString(), y: i.targetTemperature })),
+          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetTemperature })),
         },
         {
           label: 'Current Pressure',
           borderColor: '#0066CC',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i) => ({ x: i.timestamp.toISOString(), y: i.currentPressure })),
+          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentPressure })),
         },
         {
           label: 'Target Pressure',
@@ -37,14 +37,14 @@ function getChartData(data) {
           borderDash: [6, 6],
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i) => ({ x: i.timestamp.toISOString(), y: i.targetPressure })),
+          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetPressure })),
         },
         {
           label: 'Current Flow',
           borderColor: '#63993D',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i) => ({ x: i.timestamp.toISOString(), y: i.currentFlow })),
+          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentFlow })),
         },
       ],
     },
@@ -81,7 +81,7 @@ function getChartData(data) {
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            callback: (value) => {
+            callback: value => {
               return `${value} °C`;
             },
           },
@@ -95,7 +95,7 @@ function getChartData(data) {
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            callback: (value) => {
+            callback: value => {
               return `${value} bar / g/s`;
             },
           },
@@ -131,17 +131,30 @@ function getChartData(data) {
 export function OverviewChart() {
   const [chart, setChart] = useState(null);
   const ref = useRef();
-  const chartData = getChartData(machine.value.history);
 
+  // Create chart on mount
   useEffect(() => {
-    const ct = new Chart(ref.current, chartData);
-    setChart(ct);
-  }, [ref]);
+    if (!ref.current) return;
 
+    const chartData = getChartData(machine.value.history);
+    const newChart = new Chart(ref.current, chartData);
+    setChart(newChart);
+
+    // Cleanup function to destroy chart on unmount
+    return () => {
+      if (newChart) {
+        newChart.destroy();
+      }
+    };
+  }, []); // Empty dependency array - only run on mount
+
+  // Update chart data when history changes
   useEffect(() => {
-    const cd = getChartData(machine.value.history);
-    chart.data = cd.data;
-    chart.options = cd.options;
+    if (!chart) return;
+
+    const chartData = getChartData(machine.value.history);
+    chart.data = chartData.data;
+    chart.options = chartData.options;
     chart.update();
   }, [machine.value.history, chart]);
 
@@ -183,8 +196,8 @@ export function OverviewChart() {
   }, [chart]);
 
   return (
-    <div className="w-full h-64 sm:h-72">
-      <canvas className="w-full h-full" ref={ref} />
+    <div className='h-full min-h-[300px] w-full flex-1'>
+      <canvas className='h-full w-full' ref={ref} />
     </div>
   );
 }
