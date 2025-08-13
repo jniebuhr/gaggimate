@@ -38,24 +38,24 @@ export function ShotHistory() {
     setHistory(history);
     setLoading(false);
   };
-  useEffect(async () => {
+  useEffect(() => {
     if (connected.value) {
-      await loadHistory();
+      loadHistory();
     }
   }, [connected.value]);
 
   const onDelete = useCallback(
-    async (id) => {
+    async id => {
       setLoading(true);
       await apiService.request({ tp: 'req:history:delete', id });
       await loadHistory();
     },
-    [apiService, setLoading]
+    [apiService, setLoading],
   );
 
   if (loading) {
     return (
-      <div class="flex flex-row py-16 items-center justify-center w-full">
+      <div className='flex w-full flex-row items-center justify-center py-16'>
         <Spinner size={8} />
       </div>
     );
@@ -63,15 +63,16 @@ export function ShotHistory() {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
-        <div className="sm:col-span-12 flex flex-row">
-          <h2 className="text-2xl font-bold flex-grow">Shot History</h2>
-        </div>
+      <div className='mb-4 flex flex-row items-center gap-2'>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
+      </div>
+
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
         {history.map((item, idx) => (
-          <HistoryCard shot={item} key={idx} onDelete={(id) => onDelete(id)} />
+          <HistoryCard shot={item} key={idx} onDelete={id => onDelete(id)} />
         ))}
         {history.length === 0 && (
-          <div className="sm:col-span-12 flex flex-row items-center justify-center py-20">
+          <div className='flex flex-row items-center justify-center py-20 lg:col-span-12'>
             <span>No shots available</span>
           </div>
         )}

@@ -8,8 +8,8 @@ const pressureDatasetDefaults = {
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
   segment: {
-    borderColor: (ctx) => skipped(ctx, 'rgb(75, 192, 192, 0.4)'),
-    borderDash: (ctx) => skipped(ctx, [6, 6]),
+    borderColor: ctx => skipped(ctx, 'rgb(75, 192, 192, 0.4)'),
+    borderDash: ctx => skipped(ctx, [6, 6]),
   },
   spanGaps: true,
 };
@@ -20,8 +20,8 @@ const flowDatasetDefaults = {
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
   segment: {
-    borderColor: (ctx) => skipped(ctx, 'rgb(255, 192, 192, 0.4)'),
-    borderDash: (ctx) => skipped(ctx, [6, 6]),
+    borderColor: ctx => skipped(ctx, 'rgb(255, 192, 192, 0.4)'),
+    borderDash: ctx => skipped(ctx, [6, 6]),
   },
   spanGaps: true,
   yAxisID: 'y1',
@@ -61,8 +61,8 @@ const chartOptions = {
 
 function makeLabels(phases) {
   const labels = [0];
-  let time = phases.map((p) => p.duration).reduce((a, b) => a + b, 0);
-  return [...Array(time).keys()].map((i) => `${i}s`);
+  let time = phases.map(p => p.duration).reduce((a, b) => a + b, 0);
+  return [...Array(time).keys()].map(i => `${i}s`);
 }
 
 function prepareData(phases, target) {
@@ -105,8 +105,8 @@ export function ExtendedContent({ data }) {
     const ct = new Chart(ref.current, config);
   }, [ref]);
   return (
-    <div className="flex-grow">
-      <canvas className="w-full max-h-36" ref={ref} />
+    <div className='flex-grow'>
+      <canvas className='max-h-36 w-full' ref={ref} />
     </div>
   );
 }

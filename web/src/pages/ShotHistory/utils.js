@@ -6,7 +6,7 @@ export function parseHistoryData(shot) {
   const header = lines[0].split(',');
   data['version'] = header[0];
   data['profile'] = header[1];
-  data['timestamp'] = parseInt(header[2]);
+  data['timestamp'] = parseInt(header[2], 10);
   data['samples'] = [];
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i]) {
@@ -14,7 +14,7 @@ export function parseHistoryData(shot) {
     }
     const numbers = lines[i].split(',');
     data['samples'].push({
-      t: parseInt(numbers[0]),
+      t: parseInt(numbers[0], 10),
       tt: parseFloat(numbers[1]),
       ct: parseFloat(numbers[2]),
       tp: parseFloat(numbers[3]),
