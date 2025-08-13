@@ -1,6 +1,7 @@
 #include "WavesharePanel.h"
 #include "I2C_Driver.h"
 #include "TCA9554PWR.h"
+#include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "utilities.h"
 #include <display/drivers/common/RGBPanelInit.h>
@@ -49,8 +50,8 @@ bool WavesharePanel::begin(WS_RGBPanel_Color_Order order) {
 
     _order = order;
 
-    pinMode(WS_BOARD_TFT_BL, OUTPUT);
-    digitalWrite(WS_BOARD_TFT_BL, LOW);
+    ledcSetup(WS_PWM_CHANNEL, WS_PWM_FREQ, WS_PWM_RESOLUTION);
+    ledcAttachPin(WS_BOARD_TFT_BL, WS_PWM_CHANNEL);
 
     I2C_Init();
     delay(120);
@@ -63,9 +64,7 @@ bool WavesharePanel::begin(WS_RGBPanel_Color_Order order) {
     }
 
     initBUS();
-
     getModel();
-
     return true;
 }
 
@@ -102,34 +101,9 @@ void WavesharePanel::uninstallSD() {
 }
 
 void WavesharePanel::setBrightness(uint8_t value) {
-    static uint8_t steps = 16;
-
-    if (_brightness == value) {
-        return;
-    }
-
-    if (value > 16) {
-        value = 16;
-    }
-    if (value == 0) {
-        digitalWrite(WS_BOARD_TFT_BL, 0);
-        delay(3);
-        _brightness = 0;
-        return;
-    }
-    if (_brightness == 0) {
-        digitalWrite(WS_BOARD_TFT_BL, 1);
-        _brightness = steps;
-        delayMicroseconds(30);
-    }
-    int from = steps - _brightness;
-    int to = steps - value;
-    int num = (steps + to - from) % steps;
-    for (int i = 0; i < num; i++) {
-        digitalWrite(WS_BOARD_TFT_BL, 0);
-        digitalWrite(WS_BOARD_TFT_BL, 1);
-    }
+    value = constrain(value, 0, WS_BACKLIGHT_MAX);
     _brightness = value;
+    ledcWrite(WS_PWM_CHANNEL, _brightness);
 }
 
 uint8_t WavesharePanel::getBrightness() const { return _brightness; }
@@ -898,6 +872,10 @@ void WavesharePanel::initBUS() {
 bool WavesharePanel::initTouch() {
     const uint8_t touch_irq_pin = WS_BOARD_TOUCH_IRQ;
     bool result = false;
+
+    TouchDrvDigitalWrite(0, Low);
+    delay(100);
+    TouchDrvDigitalWrite(0, High);
 
     log_i("=================initTouch====================");
     _touchDrv = new TouchDrvCSTXXX();

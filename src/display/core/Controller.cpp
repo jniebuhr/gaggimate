@@ -217,6 +217,7 @@ void Controller::loop() {
             ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
             setPressureScale();
             clientController.sendPidSettings(settings.getPid());
+            clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
 
             pluginManager->trigger("controller:ready");
         }
@@ -353,6 +354,12 @@ void Controller::setPressureScale(void) {
     }
 }
 
+void Controller::setPumpModelCoeffs(void) {
+    if (systemInfo.capabilities.dimming) {
+        clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
+    }
+}
+
 int Controller::getTargetDuration() const { return settings.getTargetDuration(); }
 
 void Controller::setTargetDuration(int duration) {
@@ -463,15 +470,23 @@ void Controller::updateControl() {
         targetTemp = targetTemp + settings.getTemperatureOffset();
     }
     clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
-    if (isActive() && currentProcess->getType() == MODE_BREW) {
-        auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
-        if (brewProcess->isAdvancedPump() && systemInfo.capabilities.pressure) {
-            clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp),
-                                                       brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
-                                                       brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
-            targetPressure = brewProcess->getPumpPressure();
-            targetFlow = brewProcess->getPumpFlow();
+    if (isActive() && systemInfo.capabilities.pressure) {
+        if (currentProcess->getType() == MODE_STEAM) {
+            targetPressure = 4;
+            targetFlow = currentProcess->getPumpValue() * 0.1f;
+            clientController.sendAdvancedOutputControl(false, static_cast<float>(targetTemp), false, targetPressure, targetFlow);
             return;
+        }
+        if (currentProcess->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
+            if (brewProcess->isAdvancedPump()) {
+                clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp),
+                                                           brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
+                                                           brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
+                targetPressure = brewProcess->getPumpPressure();
+                targetFlow = brewProcess->getPumpFlow();
+                return;
+            }
         }
     }
     targetPressure = 0.0f;

@@ -30,6 +30,7 @@ class PressureController {
     float getcoffeeOutputEstimate() { return coffeeOutput; };
     float getFilteredPressure() { return _filteredPressureSensor; };
     void setPumpFlowCoeff(float oneBarFlow, float nineBarFlow);
+    void setPumpFlowPolyCoeffs(float a, float b, float c, float d);
     float getPumFlowRate() { return pumpFlowModel(*_ctrlOutput); };
     float getCoffeeFlowRate() { return *_ValveStatus == 1 ? flowPerSecond : 0.0f; };
     float getPuckResistance() { return R_estimator->getResistance(); }
@@ -42,6 +43,7 @@ class PressureController {
     void filterSensor();
     float computeAdustedCoffeeFlowRate(float pressure = 0.0f) const;
     float pumpFlowModel(float alpha = 100.0f) const;
+    float getAvailableFlow() const;
 
     float _dt = 1; // Controler frequency sampling
 
@@ -65,9 +67,7 @@ class PressureController {
     float _R = 1e7f;               // Gestimate of the average puck resitance at t=0
     const float _Pmax = 15.0f;     // Pression max (bar)
     const float _maxSpeedP = 9.0f; // bar/s
-    float _Q0 = 10.79f;            // Flow rate at P=0bar
-    float _Q1 = -0.5854f;          // 1st order polynomial
-    float PUMP_FLOW_POLY[4] = {-0.008291194, 0.123166854, -1.079052155, 11.20154433};
+    float PUMP_FLOW_POLY[4] = {0.0f, 0.0f, -0.5854f, 10.79f};
 
     // === Controller Gains ===
     float _K = 0.7f;       // Commutation gain
