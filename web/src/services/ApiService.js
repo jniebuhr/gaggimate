@@ -176,6 +176,7 @@ export default class ApiService {
         ...machine.value.capabilities,
         dimming: message.cd,
         pressure: message.cp,
+        ledControl: message.led,
       },
       history: [...machine.value.history, historyEntry],
     };

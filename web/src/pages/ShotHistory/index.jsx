@@ -34,9 +34,8 @@ export function ShotHistory() {
   const [loading, setLoading] = useState(true);
   const loadHistory = async () => {
     const response = await apiService.request({ tp: 'req:history:list' });
-    const history = response.history.map(parseHistoryData);
+    const history = response.history.map(parseHistoryData).reverse();
     setHistory(history);
-    console.log(history);
     setLoading(false);
   };
   useEffect(async () => {

@@ -6,6 +6,8 @@ struct Capabilities {
     bool dimming;
     bool pressure;
     bool ssrPump;
+    bool ledControls;
+    bool tof;
 };
 
 struct ControllerConfig {
@@ -37,6 +39,9 @@ struct ControllerConfig {
     uint8_t scaleSclPin;
     uint8_t scaleSdaPin;
     uint8_t scaleSda1Pin;
+
+    uint8_t sunriseSclPin;
+    uint8_t sunriseSdaPin;
 
     uint8_t ext1Pin;
     uint8_t ext2Pin;
@@ -73,6 +78,8 @@ const ControllerConfig GM_STANDARD_REV_1X = {.name = "GaggiMate Standard Rev 1.x
                                                  .dimming = false,
                                                  .pressure = false,
                                                  .ssrPump = false,
+                                                 .ledControls = false,
+                                                 .tof = false,
                                              }};
 
 const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x",
@@ -92,6 +99,8 @@ const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x
                                              .scaleSclPin = 17,
                                              .scaleSdaPin = 18,
                                              .scaleSda1Pin = 39,
+                                             .sunriseSclPin = 44,
+                                             .sunriseSdaPin = 43,
                                              .ext1Pin = 1,
                                              .ext2Pin = 2,
                                              .ext3Pin = 8,
@@ -101,6 +110,8 @@ const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x
                                                  .dimming = false,
                                                  .pressure = false,
                                                  .ssrPump = true,
+                                                 .ledControls = false,
+                                                 .tof = false,
                                              }};
 
 const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.x",
@@ -123,6 +134,8 @@ const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.x",
                                         .scaleSclPin = 17,
                                         .scaleSdaPin = 18,
                                         .scaleSda1Pin = 39,
+                                        .sunriseSclPin = 44,
+                                        .sunriseSdaPin = 43,
                                         .ext1Pin = 1,
                                         .ext2Pin = 2,
                                         .ext3Pin = 8,
@@ -132,6 +145,8 @@ const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.x",
                                             .dimming = true,
                                             .pressure = true,
                                             .ssrPump = false,
+                                            .ledControls = false,
+                                            .tof = false,
                                         }};
 
 const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
@@ -154,6 +169,8 @@ const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
                                       .scaleSclPin = 17,
                                       .scaleSdaPin = 18,
                                       .scaleSda1Pin = 39,
+                                      .sunriseSclPin = 44,
+                                      .sunriseSdaPin = 43,
                                       .ext1Pin = 1,
                                       .ext2Pin = 2,
                                       .ext3Pin = 8,
@@ -163,6 +180,8 @@ const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
                                           .dimming = true,
                                           .pressure = true,
                                           .ssrPump = false,
+                                          .ledControls = false,
+                                          .tof = false,
                                       }};
 
 #endif // CONTROLLERCONFIG_H

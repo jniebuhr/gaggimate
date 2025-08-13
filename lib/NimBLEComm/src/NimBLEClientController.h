@@ -19,6 +19,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void sendPidSettings(const String &pid);
     void sendPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPressureScale(float scale);
+    void sendLedControl(uint8_t channel, uint8_t brightness);
     bool isReadyForConnection() const;
     bool isConnected();
     void scan();
@@ -29,6 +30,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerSensorCallback(const sensor_read_callback_t &callback);
     void registerAutotuneResultCallback(const pid_control_callback_t &callback);
     void registerVolumetricMeasurementCallback(const float_callback_t &callback);
+    void registerTofMeasurementCallback(const int_callback_t &callback);
     std::string readInfo() const;
     NimBLEClient *getClient() const { return client; };
 
@@ -52,8 +54,10 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *sensorChar = nullptr;
     NimBLERemoteCharacteristic *outputControlChar = nullptr;
     NimBLERemoteCharacteristic *pressureScaleChar = nullptr;
-    NimBLERemoteCharacteristic *volumetricMeasurementChar;
-    NimBLERemoteCharacteristic *volumetricTareChar;
+    NimBLERemoteCharacteristic *volumetricMeasurementChar = nullptr;
+    NimBLERemoteCharacteristic *volumetricTareChar = nullptr;
+    NimBLERemoteCharacteristic *ledControlChar = nullptr;
+    NimBLERemoteCharacteristic *tofMeasurementChar = nullptr;
     NimBLEAdvertisedDevice *serverDevice = nullptr;
     bool readyForConnection = false;
 
@@ -63,6 +67,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     pid_control_callback_t autotuneResultCallback = nullptr;
     sensor_read_callback_t sensorCallback = nullptr;
     float_callback_t volumetricMeasurementCallback = nullptr;
+    int_callback_t tofMeasurementCallback = nullptr;
 
     String _lastOutputControl = "";
 

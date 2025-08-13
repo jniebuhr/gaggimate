@@ -22,6 +22,8 @@
     "PSM": "https://github.com/gaggimate/PSM.Library.git",
     "robtillaart/ADS1X15": "^0.5.2",
     "Wire": "*",
-    "NayrodPID": "file://lib/NayrodPID"
+    "NayrodPID": "file://lib/NayrodPID",
+    "robtillaart/PCA9634": "0.4.1",
+    "PWFusion_VL53L3C": "https://github.com/PlayingWithFusion/PWFusion_VL53L3C"
   }
 }

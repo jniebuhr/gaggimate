@@ -9,6 +9,7 @@
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/HomekitPlugin.h>
+#include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
@@ -46,6 +47,7 @@ void Controller::setup() {
     pluginManager->registerPlugin(new WebUIPlugin());
     pluginManager->registerPlugin(&ShotHistory);
     pluginManager->registerPlugin(&BLEScales);
+    pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->setup(this);
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
@@ -121,6 +123,11 @@ void Controller::setupBluetooth() {
             onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
         }
     });
+    clientController.registerTofMeasurementCallback([this](const int value) {
+        tofDistance = value;
+        ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", value);
+        pluginManager->trigger("controller:tof:change", "value", value);
+    });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
@@ -139,6 +146,8 @@ void Controller::setupInfos() {
                                 .capabilities = SystemCapabilities{
                                     .dimming = doc["cp"]["dm"].as<bool>(),
                                     .pressure = doc["cp"]["ps"].as<bool>(),
+                                    .ledControl = doc["cp"]["led"].as<bool>(),
+                                    .tof = doc["cp"]["tof"].as<bool>(),
                                 }};
     }
 }
@@ -461,15 +470,23 @@ void Controller::updateControl() {
         targetTemp = targetTemp + settings.getTemperatureOffset();
     }
     clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
-    if (isActive() && currentProcess->getType() == MODE_BREW) {
-        auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
-        if (brewProcess->isAdvancedPump() && systemInfo.capabilities.pressure) {
-            clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp),
-                                                       brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
-                                                       brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
-            targetPressure = brewProcess->getPumpPressure();
-            targetFlow = brewProcess->getPumpFlow();
+    if (isActive() && systemInfo.capabilities.pressure) {
+        if (currentProcess->getType() == MODE_STEAM) {
+            targetPressure = 4;
+            targetFlow = currentProcess->getPumpValue() * 0.1f;
+            clientController.sendAdvancedOutputControl(false, static_cast<float>(targetTemp), false, targetPressure, targetFlow);
             return;
+        }
+        if (currentProcess->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
+            if (brewProcess->isAdvancedPump()) {
+                clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp),
+                                                           brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
+                                                           brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
+                targetPressure = brewProcess->getPumpPressure();
+                targetFlow = brewProcess->getPumpFlow();
+                return;
+            }
         }
     }
     targetPressure = 0.0f;
