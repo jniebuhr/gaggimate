@@ -1,6 +1,7 @@
 import Card from '../../components/Card.jsx';
 import { useCallback } from 'preact/hooks';
 import { HistoryChart } from './HistoryChart.jsx';
+import ShotNotesCard from './ShotNotesCard.jsx';
 
 export default function HistoryCard({ shot, onDelete }) {
   const date = new Date(shot.timestamp * 1000);
@@ -9,11 +10,11 @@ export default function HistoryCard({ shot, onDelete }) {
       'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(shot, undefined, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', shot.id + '.json');
+    downloadAnchorNode.setAttribute('download', shot.id + '-complete.json');
     document.body.appendChild(downloadAnchorNode); // required for firefox
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-  });
+  }, [shot]);
   return (
     <Card sm={12}>
       <div className='flex flex-row'>
@@ -57,6 +58,7 @@ export default function HistoryCard({ shot, onDelete }) {
       <div>
         <HistoryChart shot={shot} />
       </div>
+      <ShotNotesCard shot={shot} />
     </Card>
   );
 }
