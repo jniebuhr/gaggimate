@@ -63,14 +63,10 @@ void ShotHistoryPlugin::record() {
         if (extendedRecording) {
             const unsigned long now = millis();
             
-            // Add safety check to prevent crashes if BLE connection is unstable
-            bool canProcessWeight = true;
-            try {
-                if (!controller || !controller->isVolumetricAvailable()) {
-                    canProcessWeight = false;
-                }
-            } catch (...) {
-                canProcessWeight = false;
+            // Explicit safety checks instead of try/catch for embedded systems
+            bool canProcessWeight = (controller != nullptr);
+            if (canProcessWeight) {
+                canProcessWeight = controller->isVolumetricAvailable();
             }
             
             if (!canProcessWeight) {
