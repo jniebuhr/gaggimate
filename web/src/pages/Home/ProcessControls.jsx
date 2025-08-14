@@ -14,11 +14,10 @@ function formatDuration(duration) {
 }
 
 const BrewProgress = props => {
-  const { processInfo } = props;
+  const { processInfo, isFlushing } = props;
   const active = !!processInfo.a;
   const progress = (processInfo.pp / processInfo.pt) * 100.0;
   const elapsed = Math.floor(processInfo.e / 1000);
-  const isFlushing = processInfo.l === 'Flush';
 
   return (
     <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
@@ -195,7 +194,7 @@ const ProcessControls = props => {
       {shouldExpand && (
         <>
           <div className='flex flex-1 items-center justify-center'>
-            {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
+            {(active || finished) && brew && <BrewProgress processInfo={processInfo} isFlushing={isFlushing} />}
             {!brew && (
               <div className='space-y-2 text-center'>
                 <div className='text-xl font-bold sm:text-2xl'>
