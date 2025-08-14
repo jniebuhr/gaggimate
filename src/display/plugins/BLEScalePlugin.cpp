@@ -42,7 +42,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
             active = true;
         }
     });
-    manager->on("controller:brew:start", [this](Event const &) { onProcessStart(); });
+    manager->on("controller:brew:prestart", [this](Event const &) { onProcessStart(); });
     manager->on("controller:grind:start", [this](Event const &) { onProcessStart(); });
     manager->on("controller:mode:change", [this](Event const &event) {
         if (event.getInt("value") != MODE_STANDBY) {

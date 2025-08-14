@@ -500,6 +500,8 @@ void Controller::activate() {
         return;
     clear();
     clientController.tare();
+    if (isVolumetricAvailable())
+        pluginManager->trigger("controller:brew:prestart");
     delay(100);
     switch (mode) {
     case MODE_BREW:
