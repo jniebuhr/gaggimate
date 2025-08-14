@@ -8,6 +8,9 @@
 
 constexpr size_t SHOT_HISTORY_INTERVAL = 100;
 constexpr size_t MAX_HISTORY_ENTRIES = 3;
+constexpr unsigned long EXTENDED_RECORDING_DURATION = 3000; // 3 seconds
+constexpr unsigned long WEIGHT_STABILIZATION_TIME = 1000; // 1 second
+constexpr float WEIGHT_STABILIZATION_THRESHOLD = 0.1f; // 0.1g threshold
 
 class ShotHistoryPlugin : public Plugin {
   public:
@@ -48,6 +51,7 @@ class ShotHistoryPlugin : public Plugin {
     unsigned long getTime();
 
     void endRecording();
+    void finalizeRecording();
     void cleanupHistory();
 
     Controller *controller = nullptr;
@@ -57,9 +61,13 @@ class ShotHistoryPlugin : public Plugin {
 
     bool recording = false;
     bool headerWritten = false;
+    bool extendedRecording = false;
     unsigned long shotStart = 0;
+    unsigned long extendedRecordingStart = 0;
+    unsigned long lastWeightChangeTime = 0;
     float currentTemperature = 0.0f;
     float currentActiveWeight = 0.0f;
+    float lastStableWeight = 0.0f;
     float lastActiveWeight = 0.0f;
     float currentActiveFlow = 0.0f;
     float currentEstimatedWeight = 0.0f;
