@@ -19,7 +19,7 @@ import { getDashboardLayout } from '../../utils/dashboardManager.js';
 Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
 export function Home() {
-  const [dashboardLayout, setDashboardLayout] = useState('process-first');
+  const [dashboardLayout, setDashboardLayout] = useState('order-first');
   const apiService = useContext(ApiServiceContext);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function Home() {
 
     const handleStorageChange = e => {
       if (e.key === 'dashboardLayout') {
-        setDashboardLayout(e.newValue || 'process-first');
+        setDashboardLayout(e.newValue || 'order-first');
       }
     };
 
@@ -56,39 +56,24 @@ export function Home() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
-        {dashboardLayout === 'process-first' ? (
-          <>
-            <Card sm={10} lg={4} className='landscape:sm:col-span-5' title='Process Controls'>
-              <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
-            </Card>
+        <Card 
+          sm={10} 
+          lg={4} 
+          className={`landscape:sm:col-span-5 ${dashboardLayout === 'order-first' ? 'order-first' : 'order-last'}`} 
+          title='Process Controls'
+        >
+          <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
+        </Card>
 
-            <Card
-              sm={10}
-              lg={6}
-              className='landscape:sm:col-span-5'
-              title='Temperature & Pressure Chart'
-              fullHeight={true}
-            >
-              <OverviewChart />
-            </Card>
-          </>
-        ) : (
-          <>
-            <Card
-              sm={10}
-              lg={6}
-              className='landscape:sm:col-span-5'
-              title='Temperature & Pressure Chart'
-              fullHeight={true}
-            >
-              <OverviewChart />
-            </Card>
-
-            <Card sm={10} lg={4} className='landscape:sm:col-span-5' title='Process Controls'>
-              <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
-            </Card>
-          </>
-        )}
+        <Card
+          sm={10}
+          lg={6}
+          className={`landscape:sm:col-span-5 ${dashboardLayout === 'order-first' ? 'order-last' : 'order-first'}`}
+          title='Temperature & Pressure Chart'
+          fullHeight={true}
+        >
+          <OverviewChart />
+        </Card>
       </div>
     </>
   );

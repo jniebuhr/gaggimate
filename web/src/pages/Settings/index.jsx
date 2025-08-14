@@ -34,7 +34,7 @@ export function Settings() {
           fetchedSettings.standbyDisplayEnabled !== undefined
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
-        dashboardLayout: fetchedSettings.dashboardLayout || 'process-first',
+        dashboardLayout: fetchedSettings.dashboardLayout || 'order-first',
       };
       setFormData(settingsWithToggle);
     } else {
@@ -358,7 +358,7 @@ export function Settings() {
                 id='dashboardLayout'
                 name='dashboardLayout'
                 className='select select-bordered w-full'
-                value={formData.dashboardLayout || 'process-first'}
+                value={formData.dashboardLayout || 'order-first'}
                 onChange={e => {
                   const value = e.target.value;
                   setFormData({
@@ -368,8 +368,8 @@ export function Settings() {
                   setDashboardLayout(value);
                 }}
               >
-                <option value='process-first'>Left Handed</option>
-                <option value='chart-first'>Right Handed</option>
+                <option value='order-first'>Process Controls First</option>
+                <option value='order-last'>Chart First</option>
               </select>
             </div>
           </Card>
