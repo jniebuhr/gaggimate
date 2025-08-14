@@ -14,7 +14,7 @@ function formatDuration(duration) {
 }
 
 const BrewProgress = props => {
-  const { processInfo, isFlushing } = props;
+  const { processInfo } = props;
   const active = !!processInfo.a;
   const progress = (processInfo.pp / processInfo.pt) * 100.0;
   const elapsed = Math.floor(processInfo.e / 1000);
@@ -50,7 +50,7 @@ const BrewProgress = props => {
           </div>
         </>
       )}
-      {!active && !isFlushing && (
+      {!active && (
         <div className='space-y-2 text-center'>
           <div className='text-base-content text-xl font-bold sm:text-2xl'>Finished</div>
           <div className='text-base-content text-2xl font-bold sm:text-3xl'>
@@ -194,7 +194,7 @@ const ProcessControls = props => {
       {shouldExpand && (
         <>
           <div className='flex flex-1 items-center justify-center'>
-            {(active || finished) && brew && <BrewProgress processInfo={processInfo} isFlushing={isFlushing} />}
+            {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
             {!brew && (
               <div className='space-y-2 text-center'>
                 <div className='text-xl font-bold sm:text-2xl'>
@@ -258,18 +258,19 @@ const ProcessControls = props => {
           </div>
         )}
         {(mode === 1 || mode === 3) && (
-          <div className='flex items-center gap-4'>
+          <div className='flex flex-col items-center gap-4 space-y-4'>
             <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
               <i className={`text-2xl ${getButtonIcon()}`} />
             </button>
-
-            {brew && !isFlushing && (
-              <button
-                className='btn btn-circle btn-lg btn-secondary'
+            
+            {brew && !active && !finished && (
+              <button 
+                className='btn rounded-full text-base-content/60 hover:text-base-content transition-color duration-200 text-sm'
                 onClick={startFlush}
                 title="Click to flush water"
               >
-                <i className='fa-solid fa-tint text-2xl' />
+                <i className='fa-solid fa-tint' />
+                Flush
               </button>
             )}
           </div>
