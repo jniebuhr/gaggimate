@@ -7,7 +7,7 @@
 #include <display/core/utils.h>
 
 constexpr size_t SHOT_HISTORY_INTERVAL = 100;
-constexpr size_t MAX_HISTORY_ENTRIES = 3;
+constexpr size_t MAX_HISTORY_ENTRIES = 6;
 constexpr unsigned long EXTENDED_RECORDING_DURATION = 3000; // 3 seconds
 constexpr unsigned long WEIGHT_STABILIZATION_TIME = 1000; // 1 second
 constexpr float WEIGHT_STABILIZATION_THRESHOLD = 0.1f; // 0.1g threshold
