@@ -2,6 +2,30 @@
 
 This document describes the new shot notes functionality added to the ShotHistoryPlugin.
 
+## Enhanced Shot Recording
+
+The shot history recording has been enhanced for volumetric shots:
+
+### Extended Recording for Scale-Connected Shots
+
+When brewing with a connected Bluetooth scale (regardless of volumetric or time-based mode), the system now continues recording for a brief period after the shot officially ends to capture the additional liquid that drips from the portafilter.
+
+**Extended Recording Logic:**
+- **Trigger**: Automatically activates when Bluetooth scale data is available and weight > 0
+- **Mode Independent**: Works for both volumetric and time-based shots
+- **Duration**: Maximum 3 seconds additional recording
+- **Weight Stabilization**: Stops early if weight doesn't change by more than 0.1g for 1 second
+- **Purpose**: Captures more accurate final extraction weight
+
+**Configuration Constants:**
+```cpp
+constexpr unsigned long EXTENDED_RECORDING_DURATION = 3000; // 3 seconds max
+constexpr unsigned long WEIGHT_STABILIZATION_TIME = 1000;  // 1 second stability
+constexpr float WEIGHT_STABILIZATION_THRESHOLD = 0.1f;     // 0.1g threshold
+```
+
+This ensures that the recorded shot data includes the complete extraction weight, not just the weight at the moment the shot timer stops.
+
 ## Enhanced Shot History API
 
 The existing shot history API endpoints have been enhanced to automatically include notes data when available.
