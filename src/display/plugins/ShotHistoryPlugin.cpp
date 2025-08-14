@@ -15,20 +15,22 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
     pm->on("controller:volumetric-measurement:bluetooth:change", [this](Event const &event) {
-        try {
-            const float weight = event.getFloat("value");
-            const unsigned long now = millis();
-            if (lastVolumeSample != 0) {
-                const unsigned long timeDiff = now - lastVolumeSample;
-                const float volumeDiff = weight - currentBluetoothWeight;
-                currentBluetoothFlow = volumeDiff / static_cast<float>(timeDiff) * 1000.0f;
-            }
-            lastVolumeSample = now;
-            currentBluetoothWeight = weight;
-        } catch (...) {
-            // If there's any exception processing weight data, ignore this update
-            // This prevents crashes if BLE data is corrupted or connection is unstable
+        // Explicit checks instead of try/catch for embedded systems
+        const float weight = event.getFloat("value");
+        
+        // Validate weight data before processing
+        if (isnan(weight) || weight < 0) {
+            return; // Skip invalid weight data
         }
+        
+        const unsigned long now = millis();
+        if (lastVolumeSample != 0) {
+            const unsigned long timeDiff = now - lastVolumeSample;
+            const float volumeDiff = weight - currentBluetoothWeight;
+            currentBluetoothFlow = volumeDiff / static_cast<float>(timeDiff) * 1000.0f;
+        }
+        lastVolumeSample = now;
+        currentBluetoothWeight = weight;
     });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 3, this, 1, &taskHandle, 0);
@@ -71,14 +73,10 @@ void ShotHistoryPlugin::record() {
         if (extendedRecording) {
             const unsigned long now = millis();
             
-            // Add safety check to prevent crashes if BLE connection is unstable
-            bool canProcessWeight = true;
-            try {
-                if (!controller || !controller->isVolumetricAvailable()) {
-                    canProcessWeight = false;
-                }
-            } catch (...) {
-                canProcessWeight = false;
+            // Explicit safety checks instead of try/catch for embedded systems
+            bool canProcessWeight = (controller != nullptr);
+            if (canProcessWeight) {
+                canProcessWeight = controller->isVolumetricAvailable();
             }
             
             if (!canProcessWeight) {
@@ -152,17 +150,14 @@ void ShotHistoryPlugin::endRecording() {
     recording = false;
     
     // Check if we have active bluetooth weight data (regardless of volumetric mode)
-    // Add safety check to ensure we have a valid controller and BLE connection
     bool hasActiveWeightData = false;
-    try {
-        hasActiveWeightData = controller && 
-                             controller->isVolumetricAvailable() && 
-                             currentBluetoothWeight > 0;
-    } catch (...) {
-        // If there's any exception checking BLE status, assume no weight data
-        hasActiveWeightData = false;
-    }
     
+    if (controller != nullptr) {
+        if (controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
+            hasActiveWeightData = true;
+        }
+    }
+     
     if (hasActiveWeightData) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
