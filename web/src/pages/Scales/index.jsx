@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import Card from '../../components/Card.jsx';
+import { t } from '@lingui/core/macro';
+import { i18n } from '@lingui/core';
 
 export function Scales() {
   const [key, setKey] = useState(0);
@@ -76,35 +78,35 @@ export function Scales() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center justify-between gap-4'>
-        <h1 className='text-2xl font-bold sm:text-3xl'>Bluetooth Scales</h1>
+        <h1 className='text-2xl font-bold sm:text-3xl'>{i18n._(t`Bluetooth Scales`)}</h1>
         <button
           className={`btn btn-primary ${isScanning ? 'loading' : ''}`}
           onClick={onScan}
           disabled={isScanning}
         >
-          {isScanning ? 'Scanning...' : 'Scan for Scales'}
+          {isScanning ? i18n._(t`Scanning...`) : i18n._(t`Scan for Scales`)}
         </button>
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
-        <Card sm={12} title='Available Scales'>
+        <Card sm={12} title={i18n._(t`Available Scales`)}>
           {isLoading || isInfoLoading ? (
             <div className='flex items-center justify-center py-12'>
               <span className='loading loading-spinner loading-lg' />
-              <span className='text-base-content/70 ml-3'>Loading scales...</span>
+              <span className='text-base-content/70 ml-3'>{i18n._(t`Loading scales...`)}</span>
             </div>
           ) : isError || isInfoError ? (
             <div className='alert alert-error'>
-              <span>Error loading scales. Please try again.</span>
+              <span>{i18n._(t`Error loading scales. Please try again.`)}</span>
             </div>
           ) : scaleData.length === 0 ? (
             <div className='py-12 text-center'>
               <div className='flex flex-col items-center space-y-4'>
                 <div className='text-base-content/30 text-6xl'>⚖️</div>
                 <div>
-                  <h3 className='text-base-content text-lg font-medium'>No scales found</h3>
+                  <h3 className='text-base-content text-lg font-medium'>{i18n._(t`No scales found`)}</h3>
                   <p className='text-base-content/70'>
-                    Click "Scan for Scales" to discover Bluetooth scales nearby
+                    {i18n._(t`Click "Scan for Scales" to discover Bluetooth scales nearby`)}
                   </p>
                 </div>
               </div>
@@ -120,13 +122,13 @@ export function Scales() {
                     </div>
                     <div className='flex items-center space-x-3'>
                       {scale.connected ? (
-                        <div className='badge badge-success gap-2'>Connected</div>
+                        <div className='badge badge-success gap-2'>{i18n._(t`Connected`)}</div>
                       ) : (
                         <button
                           className='btn btn-primary btn-sm'
                           onClick={() => onConnect(scale.uuid)}
                         >
-                          Connect
+                          {i18n._(t`Connect`)}
                         </button>
                       )}
                     </div>
@@ -142,8 +144,7 @@ export function Scales() {
         <div className='space-y-4 lg:col-span-12'>
           <div className='alert alert-info'>
             <span>
-              Scales are automatically refreshed every 10 seconds. Use the scan button to discover
-              new devices.
+              {i18n._(t`Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices.`)}
             </span>
           </div>
         </div>

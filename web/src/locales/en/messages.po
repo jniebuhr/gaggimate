@@ -1,0 +1,130 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GaggiMate Web UI\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language-Team: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+
+#: src/pages/Scales/index.jsx
+msgid "Available Scales"
+msgstr "Available Scales"
+
+#: src/pages/OTA/index.jsx
+msgid "Back"
+msgstr "Back"
+
+#: src/pages/Scales/index.jsx
+msgid "Bluetooth Scales"
+msgstr "Bluetooth Scales"
+
+#: src/pages/Scales/index.jsx
+msgid "Click \"Scan for Scales\" to discover Bluetooth scales nearby"
+msgstr "Click \"Scan for Scales\" to discover Bluetooth scales nearby"
+
+#: src/pages/Scales/index.jsx
+msgid "Connect"
+msgstr "Connect"
+
+#: src/pages/Scales/index.jsx
+msgid "Connected"
+msgstr "Connected"
+
+#: src/pages/OTA/index.jsx
+msgid "Controller version"
+msgstr "Controller version"
+
+#: src/pages/OTA/index.jsx
+msgid "Display version"
+msgstr "Display version"
+
+#: src/pages/Scales/index.jsx
+msgid "Error loading scales. Please try again."
+msgstr "Error loading scales. Please try again."
+
+#: src/pages/OTA/index.jsx
+msgid "Finished"
+msgstr "Finished"
+
+#: src/pages/OTA/index.jsx
+msgid "Hardware"
+msgstr "Hardware"
+
+#: src/pages/Scales/index.jsx
+msgid "Loading scales..."
+msgstr "Loading scales..."
+
+#: src/pages/OTA/index.jsx
+msgid "Make sure to backup your profiles from the profile screen before updating the display."
+msgstr "Make sure to backup your profiles from the profile screen before updating the display."
+
+#: src/pages/OTA/index.jsx
+msgid "Nightly"
+msgstr "Nightly"
+
+#: src/pages/Scales/index.jsx
+msgid "No scales found"
+msgstr "No scales found"
+
+#: src/pages/OTA/index.jsx
+msgid "Save & Refresh"
+msgstr "Save & Refresh"
+
+#: src/pages/Scales/index.jsx
+msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+msgstr "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+
+#: src/pages/Scales/index.jsx
+msgid "Scan for Scales"
+msgstr "Scan for Scales"
+
+#: src/pages/Scales/index.jsx
+msgid "Scanning..."
+msgstr "Scanning..."
+
+#: src/pages/OTA/index.jsx
+msgid "Stable"
+msgstr "Stable"
+
+#: src/pages/OTA/index.jsx
+msgid "System & Updates"
+msgstr "System & Updates"
+
+#: src/pages/OTA/index.jsx
+msgid "System Information"
+msgstr "System Information"
+
+#: src/pages/OTA/index.jsx
+#: src/pages/OTA/index.jsx
+msgid "Update available: {version}"
+msgstr "Update available: {version}"
+
+#: src/pages/OTA/index.jsx
+msgid "Update Channel"
+msgstr "Update Channel"
+
+#: src/pages/OTA/index.jsx
+msgid "Update Controller"
+msgstr "Update Controller"
+
+#: src/pages/OTA/index.jsx
+msgid "Update Display"
+msgstr "Update Display"
+
+#: src/pages/OTA/index.jsx
+msgid "Updating controller firmware"
+msgstr "Updating controller firmware"
+
+#: src/pages/OTA/index.jsx
+msgid "Updating Display filesystem"
+msgstr "Updating Display filesystem"
+
+#: src/pages/OTA/index.jsx
+msgid "Updating Display firmware"
+msgstr "Updating Display firmware"

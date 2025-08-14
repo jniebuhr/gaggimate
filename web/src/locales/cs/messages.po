@@ -1,0 +1,130 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GaggiMate Web UI\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 12:00+0000\n"
+"PO-Revision-Date: 2024-01-01 12:00+0000\n"
+"Last-Translator: \n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"Language-Team: \n"
+
+#: src/pages/Scales/index.jsx
+msgid "Available Scales"
+msgstr "Dostupné váhy"
+
+#: src/pages/OTA/index.jsx
+msgid "Back"
+msgstr "Zpět"
+
+#: src/pages/Scales/index.jsx
+msgid "Bluetooth Scales"
+msgstr "Bluetooth váhy"
+
+#: src/pages/Scales/index.jsx
+msgid "Click \"Scan for Scales\" to discover Bluetooth scales nearby"
+msgstr "Klikněte na \"Hledat váhy\" pro nalezení Bluetooth vah v okolí"
+
+#: src/pages/Scales/index.jsx
+msgid "Connect"
+msgstr "Připojit"
+
+#: src/pages/Scales/index.jsx
+msgid "Connected"
+msgstr "Připojeno"
+
+#: src/pages/OTA/index.jsx
+msgid "Controller version"
+msgstr "Verze kontroléru"
+
+#: src/pages/OTA/index.jsx
+msgid "Display version"
+msgstr "Verze displeje"
+
+#: src/pages/Scales/index.jsx
+msgid "Error loading scales. Please try again."
+msgstr "Chyba při načítání vah. Zkuste to prosím znovu."
+
+#: src/pages/OTA/index.jsx
+msgid "Finished"
+msgstr "Dokončeno"
+
+#: src/pages/OTA/index.jsx
+msgid "Hardware"
+msgstr "Hardware"
+
+#: src/pages/Scales/index.jsx
+msgid "Loading scales..."
+msgstr "Načítání vah..."
+
+#: src/pages/OTA/index.jsx
+msgid "Make sure to backup your profiles from the profile screen before updating the display."
+msgstr "Před aktualizací displeje se ujistěte, že jste zálohovali své profily z obrazovky profilů."
+
+#: src/pages/OTA/index.jsx
+msgid "Nightly"
+msgstr "Nightly"
+
+#: src/pages/Scales/index.jsx
+msgid "No scales found"
+msgstr "Nebyly nalezeny žádné váhy"
+
+#: src/pages/OTA/index.jsx
+msgid "Save & Refresh"
+msgstr "Uložit a obnovit"
+
+#: src/pages/Scales/index.jsx
+msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+msgstr "Váhy se automaticky obnovují každých 10 sekund. Použijte tlačítko skenování pro objevení nových zařízení."
+
+#: src/pages/Scales/index.jsx
+msgid "Scan for Scales"
+msgstr "Hledat váhy"
+
+#: src/pages/Scales/index.jsx
+msgid "Scanning..."
+msgstr "Skenování..."
+
+#: src/pages/OTA/index.jsx
+msgid "Stable"
+msgstr "Stabilní"
+
+#: src/pages/OTA/index.jsx
+msgid "System & Updates"
+msgstr "Systém a aktualizace"
+
+#: src/pages/OTA/index.jsx
+msgid "System Information"
+msgstr "Systémové informace"
+
+#: src/pages/OTA/index.jsx
+#: src/pages/OTA/index.jsx
+msgid "Update available: {version}"
+msgstr "Dostupná aktualizace: {version}"
+
+#: src/pages/OTA/index.jsx
+msgid "Update Channel"
+msgstr "Kanál aktualizací"
+
+#: src/pages/OTA/index.jsx
+msgid "Update Controller"
+msgstr "Aktualizovat kontrolér"
+
+#: src/pages/OTA/index.jsx
+msgid "Update Display"
+msgstr "Aktualizovat displej"
+
+#: src/pages/OTA/index.jsx
+msgid "Updating controller firmware"
+msgstr "Aktualizace firmwaru kontroléru"
+
+#: src/pages/OTA/index.jsx
+msgid "Updating Display filesystem"
+msgstr "Aktualizace souborového systému displeje"
+
+#: src/pages/OTA/index.jsx
+msgid "Updating Display firmware"
+msgstr "Aktualizace firmwaru displeje"

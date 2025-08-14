@@ -8,6 +8,7 @@ import { machine } from '../../services/ApiService.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { setDashboardLayout } from '../../utils/dashboardManager.js';
 import { PluginCard } from './PluginCard.jsx';
+import { setLocale, currentLocale } from '../../utils/i18n.js';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 
@@ -370,6 +371,27 @@ export function Settings() {
               >
                 <option value='process-first'>Left Handed</option>
                 <option value='chart-first'>Right Handed</option>
+              </select>
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='language' className='label'>
+                <span className='label-text font-medium'>Language</span>
+              </label>
+              <select
+                id='language'
+                name='language'
+                className='select select-bordered w-full'
+                value={currentLocale.value}
+                onChange={async (e) => {
+                  const newLocale = e.target.value;
+                  await setLocale(newLocale);
+                  localStorage.setItem('locale', newLocale);
+                }}
+              >
+                <option value='en'>English</option>
+                <option value='cs'>Čeština</option>
+                <option value='de'>Deutsch</option>
               </select>
             </div>
           </Card>

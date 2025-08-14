@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback, useContext } from 'preact/hoo
 import { Spinner } from '../../components/Spinner.jsx';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import Card from '../../components/Card.jsx';
+import { t } from '@lingui/core/macro';
+import { i18n } from '@lingui/core';
 
 export function OTA() {
   const apiService = useContext(ApiServiceContext);
@@ -10,6 +12,7 @@ export function OTA() {
   const [formData, setFormData] = useState({});
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
+
   useEffect(() => {
     const listenerId = apiService.on('res:ota-settings', msg => {
       setFormData(msg);
@@ -70,17 +73,17 @@ export function OTA() {
         <Spinner size={8} />
         <span className='text-xl font-medium'>
           {phase === 1
-            ? 'Updating Display firmware'
+            ? i18n._(t`Updating Display firmware`)
             : phase === 2
-              ? 'Updating Display filesystem'
+              ? i18n._(t`Updating Display filesystem`)
               : phase === 3
-                ? 'Updating controller firmware'
-                : 'Finished'}
+                ? i18n._(t`Updating controller firmware`)
+                : i18n._(t`Finished`)}
         </span>
         <span className='text-lg font-medium'>{phase === 4 ? 100 : progress}%</span>
         {phase === 4 && (
           <a href='/' className='btn btn-primary'>
-            Back
+            {i18n._(t`Back`)}
           </a>
         )}
       </div>
@@ -90,52 +93,52 @@ export function OTA() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>System & Updates</h2>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>{i18n._(t`System & Updates`)}</h2>
       </div>
 
       <form key='ota' method='post' action='/api/ota' ref={formRef} onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
-          <Card sm={12} title='System Information'>
+          <Card sm={12} title={i18n._(t`System Information`)}>
             <div className='flex flex-col space-y-4'>
               <label htmlFor='channel' className='text-sm font-medium'>
-                Update Channel
+                {i18n._(t`Update Channel`)}
               </label>
               <select id='channel' name='channel' className='select select-bordered w-full'>
                 <option value='latest' selected={formData.channel === 'latest'}>
-                  Stable
+                  {i18n._(t`Stable`)}
                 </option>
                 <option value='nightly' selected={formData.channel === 'nightly'}>
-                  Nightly
+                  {i18n._(t`Nightly`)}
                 </option>
               </select>
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Hardware</label>
+              <label className='text-sm font-medium'>{i18n._(t`Hardware`)}</label>
               <div className='input input-bordered bg-base-200 cursor-default'>
                 {formData.hardware}
               </div>
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Controller version</label>
+              <label className='text-sm font-medium'>{i18n._(t`Controller version`)}</label>
               <div className='input input-bordered bg-base-200 cursor-default'>
                 {formData.controllerVersion}
                 {formData.controllerUpdateAvailable && (
                   <span className='text-primary font-bold'>
-                    (Update available: {formData.latestVersion})
+                    {i18n._(t`Update available: {version}`, { version: formData.latestVersion })}
                   </span>
                 )}
               </div>
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Display version</label>
+              <label className='text-sm font-medium'>{i18n._(t`Display version`)}</label>
               <div className='input input-bordered bg-base-200 cursor-default'>
                 {formData.displayVersion}
                 {formData.displayUpdateAvailable && (
                   <span className='text-primary font-bold'>
-                    (Update available: {formData.latestVersion})
+                    {i18n._(t`Update available: {version}`, { version: formData.latestVersion })}
                   </span>
                 )}
               </div>
@@ -143,8 +146,7 @@ export function OTA() {
 
             <div className='alert alert-warning'>
               <span>
-                Make sure to backup your profiles from the profile screen before updating the
-                display.
+                {i18n._(t`Make sure to backup your profiles from the profile screen before updating the display.`)}
               </span>
             </div>
           </Card>
@@ -153,7 +155,7 @@ export function OTA() {
         <div className='pt-4 lg:col-span-12'>
           <div className='flex flex-col flex-wrap gap-2 sm:flex-row'>
             <button type='submit' className='btn btn-primary' disabled={submitting}>
-              Save & Refresh
+              {i18n._(t`Save & Refresh`)}
             </button>
             <button
               type='submit'
@@ -162,7 +164,7 @@ export function OTA() {
               disabled={!formData.displayUpdateAvailable || submitting}
               onClick={() => onUpdate('display')}
             >
-              Update Display
+              {i18n._(t`Update Display`)}
             </button>
             <button
               type='submit'
@@ -171,7 +173,7 @@ export function OTA() {
               disabled={!formData.controllerUpdateAvailable || submitting}
               onClick={() => onUpdate('controller')}
             >
-              Update Controller
+              {i18n._(t`Update Controller`)}
             </button>
           </div>
         </div>

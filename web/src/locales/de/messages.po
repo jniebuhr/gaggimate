@@ -1,0 +1,130 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GaggiMate Web UI\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 12:00+0000\n"
+"PO-Revision-Date: 2024-01-01 12:00+0000\n"
+"Last-Translator: \n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language-Team: \n"
+
+#: src/pages/Scales/index.jsx
+msgid "Available Scales"
+msgstr "Verfügbare Waagen"
+
+#: src/pages/OTA/index.jsx
+msgid "Back"
+msgstr "Zurück"
+
+#: src/pages/Scales/index.jsx
+msgid "Bluetooth Scales"
+msgstr "Bluetooth Waagen"
+
+#: src/pages/Scales/index.jsx
+msgid "Click \"Scan for Scales\" to discover Bluetooth scales nearby"
+msgstr "Klicken Sie auf \"Nach Waagen suchen\", um Bluetooth-Waagen in der Nähe zu finden"
+
+#: src/pages/Scales/index.jsx
+msgid "Connect"
+msgstr "Verbinden"
+
+#: src/pages/Scales/index.jsx
+msgid "Connected"
+msgstr "Verbunden"
+
+#: src/pages/OTA/index.jsx
+msgid "Controller version"
+msgstr "Controller-Version"
+
+#: src/pages/OTA/index.jsx
+msgid "Display version"
+msgstr "Display-Version"
+
+#: src/pages/Scales/index.jsx
+msgid "Error loading scales. Please try again."
+msgstr "Fehler beim Laden der Waagen. Bitte versuchen Sie es erneut."
+
+#: src/pages/OTA/index.jsx
+msgid "Finished"
+msgstr "Abgeschlossen"
+
+#: src/pages/OTA/index.jsx
+msgid "Hardware"
+msgstr "Hardware"
+
+#: src/pages/Scales/index.jsx
+msgid "Loading scales..."
+msgstr "Lade Waagen..."
+
+#: src/pages/OTA/index.jsx
+msgid "Make sure to backup your profiles from the profile screen before updating the display."
+msgstr "Stellen Sie sicher, dass Sie Ihre Profile vom Profilbildschirm sichern, bevor Sie das Display aktualisieren."
+
+#: src/pages/OTA/index.jsx
+msgid "Nightly"
+msgstr "Nightly"
+
+#: src/pages/Scales/index.jsx
+msgid "No scales found"
+msgstr "Keine Waagen gefunden"
+
+#: src/pages/OTA/index.jsx
+msgid "Save & Refresh"
+msgstr "Speichern & Aktualisieren"
+
+#: src/pages/Scales/index.jsx
+msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+msgstr "Waagen werden automatisch alle 10 Sekunden aktualisiert. Verwenden Sie die Scan-Taste, um neue Geräte zu entdecken."
+
+#: src/pages/Scales/index.jsx
+msgid "Scan for Scales"
+msgstr "Nach Waagen suchen"
+
+#: src/pages/Scales/index.jsx
+msgid "Scanning..."
+msgstr "Suche..."
+
+#: src/pages/OTA/index.jsx
+msgid "Stable"
+msgstr "Stabil"
+
+#: src/pages/OTA/index.jsx
+msgid "System & Updates"
+msgstr "System & Updates"
+
+#: src/pages/OTA/index.jsx
+msgid "System Information"
+msgstr "Systeminformationen"
+
+#: src/pages/OTA/index.jsx
+#: src/pages/OTA/index.jsx
+msgid "Update available: {version}"
+msgstr "Update verfügbar: {version}"
+
+#: src/pages/OTA/index.jsx
+msgid "Update Channel"
+msgstr "Update-Kanal"
+
+#: src/pages/OTA/index.jsx
+msgid "Update Controller"
+msgstr "Controller aktualisieren"
+
+#: src/pages/OTA/index.jsx
+msgid "Update Display"
+msgstr "Display aktualisieren"
+
+#: src/pages/OTA/index.jsx
+msgid "Updating controller firmware"
+msgstr "Controller-Firmware wird aktualisiert"
+
+#: src/pages/OTA/index.jsx
+msgid "Updating Display filesystem"
+msgstr "Display-Dateisystem wird aktualisiert"
+
+#: src/pages/OTA/index.jsx
+msgid "Updating Display firmware"
+msgstr "Display-Firmware wird aktualisiert"
