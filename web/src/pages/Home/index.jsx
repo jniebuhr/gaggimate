@@ -56,10 +56,10 @@ export function Home() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
-        <Card 
-          sm={10} 
-          lg={4} 
-          className={`landscape:sm:col-span-5 ${dashboardLayout === 'order-first' ? 'order-first' : 'order-last'}`} 
+        <Card
+          sm={10}
+          lg={4}
+          className={`landscape:sm:col-span-5 ${dashboardLayout === 'order-first' ? 'order-first' : 'order-last'}`}
           title='Process Controls'
         >
           <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
