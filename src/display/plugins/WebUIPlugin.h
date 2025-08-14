@@ -39,6 +39,7 @@ class WebUIPlugin : public Plugin {
     void handleOTAStart(uint32_t clientId, JsonDocument &request);
     void handleAutotuneStart(uint32_t clientId, JsonDocument &request);
     void handleProfileRequest(uint32_t clientId, JsonDocument &request);
+    void handleFlushStart(uint32_t clientId, JsonDocument &request);
 
     // HTTP handlers
     void handleSettings(AsyncWebServerRequest *request) const;

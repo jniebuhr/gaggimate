@@ -1,6 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext } from 'preact/hooks';
+import { useCallback, useContext, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
 
 const status = computed(() => machine.value.status);
@@ -18,6 +18,7 @@ const BrewProgress = props => {
   const active = !!processInfo.a;
   const progress = (processInfo.pp / processInfo.pt) * 100.0;
   const elapsed = Math.floor(processInfo.e / 1000);
+  const isFlushing = processInfo.l === 'Flush';
 
   return (
     <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
@@ -50,7 +51,7 @@ const BrewProgress = props => {
           </div>
         </>
       )}
-      {!active && (
+      {!active && !isFlushing && (
         <div className='space-y-2 text-center'>
           <div className='text-base-content text-xl font-bold sm:text-2xl'>Finished</div>
           <div className='text-base-content text-2xl font-bold sm:text-3xl'>
@@ -70,6 +71,7 @@ const ProcessControls = props => {
   const active = !!processInfo?.a;
   const finished = !!processInfo && !active;
   const apiService = useContext(ApiServiceContext);
+  const [isFlushing, setIsFlushing] = useState(false);
 
   // Determine if we should show expanded view
   const shouldExpand = brew && (active || finished || (brew && !active && !finished));
@@ -102,9 +104,24 @@ const ProcessControls = props => {
     });
   }, [apiService]);
 
+  const startFlush = useCallback(() => {
+    setIsFlushing(true);
+    apiService.request({
+      tp: 'req:flush:start',
+    }).catch(error => {
+      console.error('Flush start failed:', error);
+      setIsFlushing(false);
+    });
+  }, [apiService]);
+
   const handleButtonClick = () => {
     if (active) {
       deactivate();
+
+      if (isFlushing) {
+        clear();
+        setIsFlushing(false);
+      }
     } else if (finished) {
       clear();
     } else {
@@ -242,9 +259,21 @@ const ProcessControls = props => {
           </div>
         )}
         {(mode === 1 || mode === 3) && (
-          <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
-            <i className={`text-2xl ${getButtonIcon()}`} />
-          </button>
+          <div className='flex items-center gap-4'>
+            <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
+              <i className={`text-2xl ${getButtonIcon()}`} />
+            </button>
+
+            {brew && !isFlushing && (
+              <button
+                className='btn btn-circle btn-lg btn-secondary'
+                onClick={startFlush}
+                title="Click to flush water"
+              >
+                <i className='fa-solid fa-tint text-2xl' />
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
