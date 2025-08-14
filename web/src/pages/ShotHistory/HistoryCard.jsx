@@ -7,6 +7,7 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import ShotNotesCard from './ShotNotesCard.jsx';
 
 export default function HistoryCard({ shot, onDelete }) {
   const date = new Date(shot.timestamp * 1000);
@@ -56,6 +57,7 @@ export default function HistoryCard({ shot, onDelete }) {
       <div>
         <HistoryChart shot={shot} />
       </div>
+      <ShotNotesCard shot={shot} />
     </Card>
   );
 }

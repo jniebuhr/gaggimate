@@ -21,6 +21,8 @@ class ShotHistoryPlugin : public Plugin {
     void handleRequest(JsonDocument &request, JsonDocument &response);
 
   private:
+    void saveNotes(const String &id, const JsonDocument &notes);
+    void loadNotes(const String &id, JsonDocument &notes);
     struct ShotSample {
         unsigned long t;
         float tt;
