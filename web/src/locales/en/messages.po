@@ -1,16 +1,11 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: GaggiMate Web UI\n"
-"Report-Msgid-Bugs-To: \n"
-"Last-Translator: \n"
-"Language: en\n"
+"POT-Creation-Date: 2025-08-15 07:59-0700\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"Language-Team: \n"
-"POT-Creation-Date: \n"
-"PO-Revision-Date: \n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
 
 #: src/pages/Autotune/index.jsx
 msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
@@ -149,11 +144,6 @@ msgstr "Tuning Goal"
 #: src/pages/OTA/index.jsx
 msgid "Update available: {0}"
 msgstr "Update available: {0}"
-
-#: src/pages/OTA/index.jsx
-#: src/pages/OTA/index.jsx
-#~ msgid "Update available: {version}"
-#~ msgstr "Update available: {version}"
 
 #: src/pages/OTA/index.jsx
 msgid "Update Channel"
