@@ -39,7 +39,6 @@ class BLEScalePlugin : public Plugin {
 
     unsigned long lastUpdate = 0;
     unsigned int reconnectionTries = 0;
-    bool lastConnectionState = false;  // Track previous connection state for auto-switching
 
     Controller *controller = nullptr;
     RemoteScalesPluginRegistry *pluginRegistry = nullptr;
