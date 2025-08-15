@@ -6,6 +6,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: de\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
 
 #: src/pages/Autotune/index.jsx
 msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
@@ -51,12 +57,44 @@ msgstr ""
 msgid "Controller version"
 msgstr ""
 
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pressure"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Puck Flow"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pump Flow"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Temperature"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete shot"
+msgstr ""
+
 #: src/pages/OTA/index.jsx
 msgid "Display version"
 msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Error loading scales. Please try again."
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export shot data"
 msgstr ""
 
 #: src/pages/OTA/index.jsx
@@ -69,12 +107,10 @@ msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Loading scales..."
-msgstr "Lade Waagen..."
 msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Make sure to backup your profiles from the profile screen before updating the display."
-msgstr "Stellen Sie sicher, dass Sie Ihre Profile vom Profilbildschirm sichern, bevor Sie das Display aktualisieren."
 msgstr ""
 
 #: src/pages/OTA/index.jsx
@@ -83,6 +119,10 @@ msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "No scales found"
+msgstr ""
+
+#: src/pages/ShotHistory/index.jsx
+msgid "No shots available"
 msgstr ""
 
 #: src/pages/Autotune/index.jsx
@@ -121,6 +161,10 @@ msgstr ""
 msgid "Scanning..."
 msgstr ""
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Shot History"
+msgstr ""
+
 #: src/pages/OTA/index.jsx
 msgid "Stable"
 msgstr ""
@@ -135,6 +179,22 @@ msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "System Information"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pressure"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pump Flow"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Temperature"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Temperature History"
 msgstr ""
 
 #: src/pages/Autotune/index.jsx

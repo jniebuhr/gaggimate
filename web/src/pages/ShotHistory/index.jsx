@@ -65,7 +65,7 @@ export function ShotHistory() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>{t`Shot History`}</h2>
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>

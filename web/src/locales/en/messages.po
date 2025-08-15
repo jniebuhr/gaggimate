@@ -6,6 +6,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
 
 #: src/pages/Autotune/index.jsx
 msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
@@ -51,6 +57,30 @@ msgstr "Connected"
 msgid "Controller version"
 msgstr "Controller version"
 
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pressure"
+msgstr "Current Pressure"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Puck Flow"
+msgstr "Current Puck Flow"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pump Flow"
+msgstr "Current Pump Flow"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Temperature"
+msgstr "Current Temperature"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete"
+msgstr "Delete"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete shot"
+msgstr "Delete shot"
+
 #: src/pages/OTA/index.jsx
 msgid "Display version"
 msgstr "Display version"
@@ -58,6 +88,14 @@ msgstr "Display version"
 #: src/pages/Scales/index.jsx
 msgid "Error loading scales. Please try again."
 msgstr "Error loading scales. Please try again."
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export"
+msgstr "Export"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export shot data"
+msgstr "Export shot data"
 
 #: src/pages/OTA/index.jsx
 msgid "Finished"
@@ -82,6 +120,10 @@ msgstr "Nightly"
 #: src/pages/Scales/index.jsx
 msgid "No scales found"
 msgstr "No scales found"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "No shots available"
+msgstr "No shots available"
 
 #: src/pages/Autotune/index.jsx
 msgid "Number of samples. More samples provide better accuracy but take longer."
@@ -119,6 +161,10 @@ msgstr "Scan for Scales"
 msgid "Scanning..."
 msgstr "Scanning..."
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Shot History"
+msgstr "Shot History"
+
 #: src/pages/OTA/index.jsx
 msgid "Stable"
 msgstr "Stable"
@@ -134,6 +180,22 @@ msgstr "System & Updates"
 #: src/pages/OTA/index.jsx
 msgid "System Information"
 msgstr "System Information"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pressure"
+msgstr "Target Pressure"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pump Flow"
+msgstr "Target Pump Flow"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Temperature"
+msgstr "Target Temperature"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Temperature History"
+msgstr "Temperature History"
 
 #: src/pages/Autotune/index.jsx
 msgid "Tuning Goal"

@@ -1,6 +1,7 @@
 import Card from '../../components/Card.jsx';
 import { useCallback } from 'preact/hooks';
 import { HistoryChart } from './HistoryChart.jsx';
+import { t } from '@lingui/core/macro';
 
 export default function HistoryCard({ shot, onDelete }) {
   const date = new Date(shot.timestamp * 1000);
@@ -22,20 +23,20 @@ export default function HistoryCard({ shot, onDelete }) {
         </span>
 
         <div className='flex flex-row justify-end gap-2'>
-          <div className='tooltip tooltip-left' data-tip='Export'>
+          <div className='tooltip tooltip-left' data-tip={t`Export`}>
             <button
               onClick={() => onExport()}
               className='group text-info hover:bg-info/10 active:border-info/20 inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold'
-              aria-label='Export shot data'
+              aria-label={t`Export shot data`}
             >
               <span className='fa fa-file-export' />
             </button>
           </div>
-          <div className='tooltip tooltip-left' data-tip='Delete'>
+          <div className='tooltip tooltip-left' data-tip={t`Delete`}>
             <button
               onClick={() => onDelete(shot.id)}
               className='group text-error hover:bg-error/10 active:border-error/20 inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold'
-              aria-label='Delete shot'
+              aria-label={t`Delete shot`}
             >
               <span className='fa fa-trash' />
             </button>
