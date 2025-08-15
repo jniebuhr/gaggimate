@@ -88,7 +88,7 @@ void WebUIPlugin::loop() {
         }
         
         // Set brewTarget to total volumetric target if in volumetric mode, otherwise keep as boolean
-        if (controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() && totalVolumetricTarget > 0) {
+        if (controller->isVolumetricAvailable()) {
             doc["bt"] = totalVolumetricTarget;
         } else {
             doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
