@@ -5,6 +5,7 @@ import { StandardProfileForm } from './StandardProfileForm.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
+import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
 
 const connected = computed(() => machine.value.connected);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -92,6 +93,15 @@ export function ProfileEdit() {
       {!data?.type && <ProfileTypeSelection onSelect={type => setData({ ...data, type })} />}
       {data?.type === 'standard' && (
         <StandardProfileForm
+          data={data}
+          onChange={data => setData(data)}
+          onSave={onSave}
+          saving={saving}
+          pressureAvailable={pressureAvailable}
+        />
+      )}
+      {data?.type === 'pro' && (
+        <ExtendedProfileForm
           data={data}
           onChange={data => setData(data)}
           onSave={onSave}
