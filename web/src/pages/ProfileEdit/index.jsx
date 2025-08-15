@@ -62,40 +62,43 @@ export function ProfileEdit() {
     }
     fetchData();
   }, [params.id, setData, connected.value, apiService]);
-  const onSave = useCallback(async (data) => {
-    setSaving(true);
-    const response = await apiService.request({ tp: 'req:profiles:save', profile: data });
-    setData(response.profile);
-    setSaving(false);
-    if (response.profile.id !== params.id) {
-      location.route(`/profiles/${response.profile.id}`);
-    }
-  }, []);
+  const onSave = useCallback(
+    async data => {
+      setSaving(true);
+      const response = await apiService.request({ tp: 'req:profiles:save', profile: data });
+      setData(response.profile);
+      setSaving(false);
+      location.route('/profiles');
+    },
+    [apiService, params.id, location],
+  );
 
   if (loading) {
     return (
-      <div class="flex flex-row py-16 items-center justify-center w-full">
+      <div className='flex w-full flex-row items-center justify-center py-16'>
         <Spinner size={8} />
       </div>
     );
   }
 
   return (
-    <div key="profile-edit" className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
-      <div className="sm:col-span-12">
-        <h2 className="text-2xl font-bold">{params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}</h2>
+    <>
+      <div className='mb-4 flex flex-row items-center gap-2'>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>
+          {params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}
+        </h2>
       </div>
 
-      {!data?.type && <ProfileTypeSelection onSelect={(type) => setData({ ...data, type })} />}
+      {!data?.type && <ProfileTypeSelection onSelect={type => setData({ ...data, type })} />}
       {data?.type === 'standard' && (
         <StandardProfileForm
           data={data}
-          onChange={(data) => setData(data)}
+          onChange={data => setData(data)}
           onSave={onSave}
           saving={saving}
           pressureAvailable={pressureAvailable}
         />
       )}
-    </div>
+    </>
   );
 }

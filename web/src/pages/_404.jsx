@@ -1,13 +1,11 @@
 export function NotFound() {
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
-      <div className="sm:col-span-12 flex flex-col justify-center h-full items-center">
-        <h1 className="text-8xl font-logo my-12 font-medium">404</h1>
-        <p>The page you were looking for is not available.</p>
-        <a href="/" className="menu-button my-4">
-          Back
-        </a>
-      </div>
+    <div className='flex min-h-screen flex-col items-center justify-center'>
+      <h1 className='text-base-content mb-4 text-6xl font-bold'>404</h1>
+      <p className='text-base-content/70 mb-8 text-xl'>Page not found</p>
+      <a href='/' className='btn btn-primary'>
+        Go Home
+      </a>
     </div>
   );
 }
