@@ -52,7 +52,7 @@ export function Home() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h2>
+        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
