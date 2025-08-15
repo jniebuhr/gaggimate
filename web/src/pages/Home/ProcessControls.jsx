@@ -81,6 +81,7 @@ const ProcessControls = props => {
   const finished = !!processInfo?.e && !active;
   const apiService = useContext(ApiServiceContext);
   const [isFlushing, setIsFlushing] = useState(false);
+  const isWeightTarget = Boolean(brewTarget) && Number(brewTarget) > 0;
 
   // Determine if we should show expanded view
   const shouldExpand = brew && (active || finished || (brew && !active && !finished));
@@ -189,10 +190,10 @@ const ProcessControls = props => {
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
           <i className='fa fa-weight-scale text-base-content/60' />
           <span className='text-base-content'>{status.value.bluetoothWeight?.toFixed(1) || 0.0}g</span>
-          {status.value.brewTarget > 1 && (
+          {isWeightTarget && (
             <span className='text-success font-semibold'>
               {' '}
-              / {status.value.brewTarget?.toFixed(0)}g
+              / {brewTarget?.toFixed(0)}g
             </span>
           )}
         </div>
@@ -268,14 +269,14 @@ const ProcessControls = props => {
         {brew && !active && !finished && status.value.volumetricAvailable && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${!isWeightTarget ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(0)}
             >
               <FontAwesomeIcon icon={faClock} />
               <span className='ml-1'>Time</span>
             </button>
             <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${isWeightTarget ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(1)}
             >
               <FontAwesomeIcon icon={faWeightScale} />
