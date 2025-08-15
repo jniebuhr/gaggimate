@@ -42,6 +42,11 @@ class Settings {
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
     String getMdnsName() const { return mdnsName; }
+    bool isStaticIpEnabled() const { return staticIpEnabled; }
+    String getStaticIp() const { return staticIp; }
+    String getStaticNetmask() const { return staticNetmask; }
+    String getStaticGateway() const { return staticGateway; }
+    String getStaticDns() const { return staticDns; }
     bool isHomekit() const { return homekit; }
     bool isVolumetricTarget() const { return volumetricTarget; }
     String getOTAChannel() const { return otaChannel; }
@@ -99,6 +104,11 @@ class Settings {
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
     void setMdnsName(const String &mdnsName);
+    void setStaticIpEnabled(bool enabled);
+    void setStaticIp(const String &ip);
+    void setStaticNetmask(const String &netmask);
+    void setStaticGateway(const String &gateway);
+    void setStaticDns(const String &dns);
     void setHomekit(bool homekit);
     void setVolumetricTarget(bool volumetric_target);
     void setOTAChannel(const String &otaChannel);
@@ -159,6 +169,11 @@ class Settings {
     String wifiSsid = "";
     String wifiPassword = "";
     String mdnsName = DEFAULT_MDNS_NAME;
+    bool staticIpEnabled = false;
+    String staticIp = "";
+    String staticNetmask = "";
+    String staticGateway = "";
+    String staticDns = "";
     String savedScale = "";
     bool homekit = false;
     bool volumetricTarget = false;

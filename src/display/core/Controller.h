@@ -5,6 +5,7 @@
 #include "NimBLEComm.h"
 #include "PluginManager.h"
 #include "Settings.h"
+#include "WifiManager.h"
 #include <WiFi.h>
 #include <display/core/Process.h>
 #include <display/core/ProfileManager.h>
@@ -96,6 +97,7 @@ class Controller {
     SystemInfo getSystemInfo() const { return systemInfo; }
 
     NimBLEClientController *getClientController() { return &clientController; }
+    WifiManager *getWifiManager() { return wifiManager; }
 
   private:
     // Initialization methods
@@ -124,6 +126,7 @@ class Controller {
     NimBLEClientController clientController;
     hw_timer_t *timer = nullptr;
     Settings settings;
+    WifiManager *wifiManager{};
     PluginManager *pluginManager{};
     ProfileManager *profileManager{};
 

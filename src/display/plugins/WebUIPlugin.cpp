@@ -312,7 +312,8 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     if (request->method() == HTTP_POST) {
-        controller->getSettings().batchUpdate([request](Settings *settings) {
+        bool needsWifiUpdate = false;
+        controller->getSettings().batchUpdate([request, &needsWifiUpdate](Settings *settings) {
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
             if (request->hasArg("targetSteamTemp"))
@@ -333,6 +334,24 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMdnsName(request->arg("mdnsName"));
             if (request->hasArg("wifiPassword") && request->arg("wifiPassword") != "---unchanged---")
                 settings->setWifiPassword(request->arg("wifiPassword"));
+            settings->setStaticIpEnabled(request->hasArg("staticIpEnabled"));
+            if (request->hasArg("staticIp"))
+                settings->setStaticIp(request->arg("staticIp"));
+            if (request->hasArg("staticNetmask"))
+                settings->setStaticNetmask(request->arg("staticNetmask"));
+            if (request->hasArg("staticGateway"))
+                settings->setStaticGateway(request->arg("staticGateway"));
+            if (request->hasArg("staticDns"))
+                settings->setStaticDns(request->arg("staticDns"));
+            
+            // Check if WiFi settings changed
+            if (request->hasArg("wifiSsid") || request->hasArg("wifiPassword") || 
+                request->hasArg("staticIpEnabled") || request->hasArg("staticIp") ||
+                request->hasArg("staticNetmask") || request->hasArg("staticGateway") || 
+                request->hasArg("staticDns")) {
+                needsWifiUpdate = true;
+            }
+            
             settings->setHomekit(request->hasArg("homekit"));
             settings->setBoilerFillActive(request->hasArg("boilerFillActive"));
             if (request->hasArg("startupFillTime"))
@@ -390,6 +409,28 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
             settings->save(true);
         });
+        
+        // Update WiFi manager with new configuration if needed
+        if (needsWifiUpdate) {
+            auto* wifiManager = controller->getWifiManager();
+            if (wifiManager) {
+                const Settings& settings = controller->getSettings();
+                WifiManager::WiFiConfig wifiConfig(
+                    settings.getWifiSsid().c_str(),
+                    settings.getWifiPassword().c_str(),
+                    "GaggiMate", // AP SSID
+                    "", // AP Password
+                    settings.getWifiApTimeout(),
+                    settings.isStaticIpEnabled(),
+                    settings.getStaticIp().c_str(),
+                    settings.getStaticNetmask().c_str(),
+                    settings.getStaticGateway().c_str(),
+                    settings.getStaticDns().c_str()
+                );
+                wifiManager->reconfigure(wifiConfig);
+            }
+        }
+        
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
     }
@@ -411,6 +452,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["wifiSsid"] = settings.getWifiSsid();
     doc["wifiPassword"] = apMode ? "---unchanged---" : settings.getWifiPassword();
     doc["mdnsName"] = settings.getMdnsName();
+    doc["staticIpEnabled"] = settings.isStaticIpEnabled();
+    doc["staticIp"] = settings.getStaticIp();
+    doc["staticNetmask"] = settings.getStaticNetmask();
+    doc["staticGateway"] = settings.getStaticGateway();
+    doc["staticDns"] = settings.getStaticDns();
     doc["temperatureOffset"] = String(settings.getTemperatureOffset());
     doc["pressureScaling"] = String(settings.getPressureScaling());
     doc["boilerFillActive"] = settings.isBoilerFillActive();

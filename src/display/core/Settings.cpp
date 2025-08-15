@@ -22,6 +22,11 @@ Settings::Settings() {
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
+    staticIpEnabled = preferences.getBool("si_en", false);
+    staticIp = preferences.getString("si_ip", "");
+    staticNetmask = preferences.getString("si_nm", "");
+    staticGateway = preferences.getString("si_gw", "");
+    staticDns = preferences.getString("si_dns", "");
     homekit = preferences.getBool("hk", false);
     volumetricTarget = preferences.getBool("vt", false);
     otaChannel = preferences.getString("oc", DEFAULT_OTA_CHANNEL);
@@ -192,6 +197,31 @@ void Settings::setWifiPassword(const String &wifiPassword) {
 
 void Settings::setMdnsName(const String &mdnsName) {
     this->mdnsName = mdnsName;
+    save();
+}
+
+void Settings::setStaticIpEnabled(bool enabled) {
+    this->staticIpEnabled = enabled;
+    save();
+}
+
+void Settings::setStaticIp(const String &ip) {
+    this->staticIp = ip;
+    save();
+}
+
+void Settings::setStaticNetmask(const String &netmask) {
+    this->staticNetmask = netmask;
+    save();
+}
+
+void Settings::setStaticGateway(const String &gateway) {
+    this->staticGateway = gateway;
+    save();
+}
+
+void Settings::setStaticDns(const String &dns) {
+    this->staticDns = dns;
     save();
 }
 
@@ -404,6 +434,11 @@ void Settings::doSave() {
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
     preferences.putString("mn", mdnsName);
+    preferences.putBool("si_en", staticIpEnabled);
+    preferences.putString("si_ip", staticIp);
+    preferences.putString("si_nm", staticNetmask);
+    preferences.putString("si_gw", staticGateway);
+    preferences.putString("si_dns", staticDns);
     preferences.putBool("hk", homekit);
     preferences.putBool("vt", volumetricTarget);
     preferences.putString("oc", otaChannel);

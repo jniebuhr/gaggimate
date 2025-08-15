@@ -16,11 +16,19 @@ class WifiManager {
         String apSSID;
         String apPassword;
         uint32_t apTimeoutMs;
+        bool staticIpEnabled;
+        String staticIp;
+        String staticNetmask;
+        String staticGateway;
+        String staticDns;
 
         WiFiConfig(const char *wifi_ssid = "", const char *wifi_password = "", const char *ap_ssid = "GaggiMate",
-                   const char *ap_password = "",
-                   uint32_t ap_timeout_ms = 10 * 60 * 1000) // 5 minutes default
-            : ssid(wifi_ssid), password(wifi_password), apSSID(ap_ssid), apPassword(ap_password), apTimeoutMs(ap_timeout_ms) {}
+                   const char *ap_password = "", uint32_t ap_timeout_ms = 10 * 60 * 1000,
+                   bool static_ip_enabled = false, const char *static_ip = "", const char *static_netmask = "",
+                   const char *static_gateway = "", const char *static_dns = "") // 10 minutes default
+            : ssid(wifi_ssid), password(wifi_password), apSSID(ap_ssid), apPassword(ap_password), apTimeoutMs(ap_timeout_ms),
+              staticIpEnabled(static_ip_enabled), staticIp(static_ip), staticNetmask(static_netmask), 
+              staticGateway(static_gateway), staticDns(static_dns) {}
     };
 
   private:
@@ -55,6 +63,7 @@ class WifiManager {
     void reconfigure(const WiFiConfig &new_config);
     void updateCredentials(const char *new_ssid, const char *new_password);
     void updateAPConfig(const char *ap_ssid, const char *ap_password, uint32_t timeout_ms);
+    void updateStaticIpConfig(bool enabled, const char *ip, const char *netmask, const char *gateway, const char *dns);
     void startAP();
     void stopAP();
     bool isConnected() { return WiFi.status() == WL_CONNECTED; }

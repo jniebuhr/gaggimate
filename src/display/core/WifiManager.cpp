@@ -5,6 +5,29 @@ bool WifiManager::hasCredentials() const { return !config.ssid.isEmpty() && !con
 void WifiManager::startConnection() const {
     if (hasCredentials()) {
         ESP_LOGI("WifiManager", "Attempting to connect to %s\n", config.ssid.c_str());
+        
+        // Configure static IP if enabled
+        if (config.staticIpEnabled && !config.staticIp.isEmpty()) {
+            IPAddress ip, netmask, gateway, dns;
+            
+            if (ip.fromString(config.staticIp) && 
+                netmask.fromString(config.staticNetmask) && 
+                gateway.fromString(config.staticGateway)) {
+                
+                if (config.staticDns.isEmpty() || !dns.fromString(config.staticDns)) {
+                    dns = gateway; // Use gateway as DNS if no DNS specified
+                }
+                
+                ESP_LOGI("WifiManager", "Configuring static IP: %s", config.staticIp.c_str());
+                WiFi.config(ip, gateway, netmask, dns);
+            } else {
+                ESP_LOGE("WifiManager", "Invalid static IP configuration, using DHCP");
+            }
+        } else {
+            // Reset to DHCP
+            WiFi.config(0U, 0U, 0U);
+        }
+        
         WiFi.begin(config.ssid.c_str(), config.password.c_str());
     } else {
         ESP_LOGI("WifiManager", "No credentials stored - starting AP mode");
@@ -80,17 +103,23 @@ void WifiManager::wifiTask(void *parameter) {
 
         // Handle connection state
         if (WiFi.status() == WL_CONNECTED) {
-            if (!xEventGroupGetBits(manager->wifiEventGroup) & WIFI_CONNECTED_BIT) {
+            if (!(xEventGroupGetBits(manager->wifiEventGroup) & WIFI_CONNECTED_BIT)) {
                 // Just connected
                 xEventGroupSetBits(manager->wifiEventGroup, WIFI_CONNECTED_BIT);
                 xEventGroupClearBits(manager->wifiEventGroup, WIFI_FAIL_BIT);
                 attempts = 0;
                 manager->pluginManager->trigger("controller:wifi:connect", "AP", manager->isAPActive ? 1 : 0);
+                
+                // Stop AP immediately when connected to WiFi
+                if (manager->isAPActive) {
+                    ESP_LOGI("WifiManager", "Connected to WiFi, stopping AP");
+                    manager->stopAP();
+                }
             }
 
-            // If connected and AP is active, check timeout
-            if (manager->isAPActive && manager->config.apTimeoutMs > 0 &&
-                (millis() - manager->apStartTime >= manager->config.apTimeoutMs)) {
+            // Additional safety: ensure AP is stopped when connected (in case event handler missed it)
+            if (manager->isAPActive) {
+                ESP_LOGI("WifiManager", "WiFi connected but AP still active, stopping AP");
                 manager->stopAP();
             }
         } else {
@@ -149,10 +178,20 @@ void WifiManager::updateAPConfig(const char *ap_ssid, const char *ap_password, u
     }
 }
 
+void WifiManager::updateStaticIpConfig(bool enabled, const char *ip, const char *netmask, const char *gateway, const char *dns) {
+    config.staticIpEnabled = enabled;
+    config.staticIp = ip;
+    config.staticNetmask = netmask;
+    config.staticGateway = gateway;
+    config.staticDns = dns;
+    xEventGroupSetBits(wifiEventGroup, WIFI_RECONNECT_BIT);
+}
+
 void WifiManager::startAP() {
     if (!isAPActive) {
         ESP_LOGI("WifiManager", "Starting AP mode");
 
+        WiFi.mode(WIFI_MODE_APSTA);  // Switch to AP+STA mode
         // WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
         WiFi.softAP(config.apSSID.c_str(), config.apPassword.c_str());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
@@ -169,6 +208,7 @@ void WifiManager::stopAP() {
     if (isAPActive) {
         ESP_LOGI("WifiManager", "Stopping AP mode");
         WiFi.softAPdisconnect(true);
+        WiFi.mode(WIFI_MODE_STA);  // Switch to station mode only
         isAPActive = false;
         pluginManager->trigger("controller:wifi:disconnect");
     }
