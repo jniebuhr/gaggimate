@@ -70,7 +70,19 @@ void BLEScalePlugin::loop() {
 }
 
 void BLEScalePlugin::update() {
-    controller->setVolumetricOverride(scale != nullptr && scale->isConnected());
+    bool currentConnectionState = scale != nullptr && scale->isConnected();
+    controller->setVolumetricOverride(currentConnectionState);
+    
+    // Auto-switch to weight mode when scale connects (if not already in weight mode)
+    if (currentConnectionState && !lastConnectionState) {
+        // Scale just connected - auto-switch to weight mode
+        if (!controller->getSettings().isVolumetricTarget()) {
+            ESP_LOGI("BLEScalePlugin", "Scale connected - auto-switching to weight mode");
+            controller->getSettings().setVolumetricTarget(true);
+        }
+    }
+    lastConnectionState = currentConnectionState;
+    
     if (!active)
         return;
     if (scale != nullptr) {
