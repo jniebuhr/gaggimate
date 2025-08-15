@@ -12,6 +12,18 @@ msgstr ""
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
 
+#: src/pages/Autotune/index.jsx
+msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
+msgstr "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
+
+#: src/pages/Autotune/index.jsx
+msgid "Autotune Complete!"
+msgstr "Autotune Complete!"
+
+#: src/pages/Autotune/index.jsx
+msgid "Autotune in Progress"
+msgstr "Autotune in Progress"
+
 #: src/pages/Scales/index.jsx
 msgid "Available Scales"
 msgstr "Available Scales"
@@ -19,6 +31,10 @@ msgstr "Available Scales"
 #: src/pages/OTA/index.jsx
 msgid "Back"
 msgstr "Back"
+
+#: src/pages/Autotune/index.jsx
+msgid "Back to Settings"
+msgstr "Back to Settings"
 
 #: src/pages/Scales/index.jsx
 msgid "Bluetooth Scales"
@@ -72,6 +88,26 @@ msgstr "Nightly"
 msgid "No scales found"
 msgstr "No scales found"
 
+#: src/pages/Autotune/index.jsx
+msgid "Number of samples. More samples provide better accuracy but take longer."
+msgstr "Number of samples. More samples provide better accuracy but take longer."
+
+#: src/pages/Autotune/index.jsx
+msgid "PID Autotune"
+msgstr "PID Autotune"
+
+#: src/pages/Autotune/index.jsx
+msgid "PID Autotune Settings"
+msgstr "PID Autotune Settings"
+
+#: src/pages/Autotune/index.jsx
+msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
+msgstr "Please ensure the boiler temperature is below 50°C before starting the autotune process."
+
+#: src/pages/Autotune/index.jsx
+msgid "Please wait while the system optimizes your PID settings. This may take up to 30 seconds."
+msgstr "Please wait while the system optimizes your PID settings. This may take up to 30 seconds."
+
 #: src/pages/OTA/index.jsx
 msgid "Save & Refresh"
 msgstr "Save & Refresh"
@@ -92,6 +128,10 @@ msgstr "Scanning..."
 msgid "Stable"
 msgstr "Stable"
 
+#: src/pages/Autotune/index.jsx
+msgid "Start Autotune"
+msgstr "Start Autotune"
+
 #: src/pages/OTA/index.jsx
 msgid "System & Updates"
 msgstr "System & Updates"
@@ -100,10 +140,20 @@ msgstr "System & Updates"
 msgid "System Information"
 msgstr "System Information"
 
+#: src/pages/Autotune/index.jsx
+msgid "Tuning Goal"
+msgstr "Tuning Goal"
+
+#. placeholder {0}: formData.latestVersion
 #: src/pages/OTA/index.jsx
 #: src/pages/OTA/index.jsx
-msgid "Update available: {version}"
-msgstr "Update available: {version}"
+msgid "Update available: {0}"
+msgstr "Update available: {0}"
+
+#: src/pages/OTA/index.jsx
+#: src/pages/OTA/index.jsx
+#~ msgid "Update available: {version}"
+#~ msgstr "Update available: {version}"
 
 #: src/pages/OTA/index.jsx
 msgid "Update Channel"
@@ -128,3 +178,11 @@ msgstr "Updating Display filesystem"
 #: src/pages/OTA/index.jsx
 msgid "Updating Display firmware"
 msgstr "Updating Display firmware"
+
+#: src/pages/Autotune/index.jsx
+msgid "Window Size"
+msgstr "Window Size"
+
+#: src/pages/Autotune/index.jsx
+msgid "Your new PID values have been saved successfully."
+msgstr "Your new PID values have been saved successfully."

@@ -12,6 +12,18 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Language-Team: \n"
 
+#: src/pages/Autotune/index.jsx
+msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Autotune Complete!"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Autotune in Progress"
+msgstr ""
+
 #: src/pages/Scales/index.jsx
 msgid "Available Scales"
 msgstr "Verfügbare Waagen"
@@ -19,6 +31,10 @@ msgstr "Verfügbare Waagen"
 #: src/pages/OTA/index.jsx
 msgid "Back"
 msgstr "Zurück"
+
+#: src/pages/Autotune/index.jsx
+msgid "Back to Settings"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Bluetooth Scales"
@@ -72,6 +88,26 @@ msgstr "Nightly"
 msgid "No scales found"
 msgstr "Keine Waagen gefunden"
 
+#: src/pages/Autotune/index.jsx
+msgid "Number of samples. More samples provide better accuracy but take longer."
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "PID Autotune"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "PID Autotune Settings"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Please wait while the system optimizes your PID settings. This may take up to 30 seconds."
+msgstr ""
+
 #: src/pages/OTA/index.jsx
 msgid "Save & Refresh"
 msgstr "Speichern & Aktualisieren"
@@ -92,6 +128,10 @@ msgstr "Suche..."
 msgid "Stable"
 msgstr "Stabil"
 
+#: src/pages/Autotune/index.jsx
+msgid "Start Autotune"
+msgstr ""
+
 #: src/pages/OTA/index.jsx
 msgid "System & Updates"
 msgstr "System & Updates"
@@ -100,10 +140,20 @@ msgstr "System & Updates"
 msgid "System Information"
 msgstr "Systeminformationen"
 
+#: src/pages/Autotune/index.jsx
+msgid "Tuning Goal"
+msgstr ""
+
+#. placeholder {0}: formData.latestVersion
 #: src/pages/OTA/index.jsx
 #: src/pages/OTA/index.jsx
-msgid "Update available: {version}"
-msgstr "Update verfügbar: {version}"
+msgid "Update available: {0}"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+#: src/pages/OTA/index.jsx
+#~ msgid "Update available: {version}"
+#~ msgstr "Update verfügbar: {version}"
 
 #: src/pages/OTA/index.jsx
 msgid "Update Channel"
@@ -128,3 +178,11 @@ msgstr "Display-Dateisystem wird aktualisiert"
 #: src/pages/OTA/index.jsx
 msgid "Updating Display firmware"
 msgstr "Display-Firmware wird aktualisiert"
+
+#: src/pages/Autotune/index.jsx
+msgid "Window Size"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Your new PID values have been saved successfully."
+msgstr ""

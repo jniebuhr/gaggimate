@@ -3,6 +3,7 @@ import { ApiServiceContext } from '../../services/ApiService.js';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
+import { t } from '@lingui/core/macro';
 
 export function Autotune() {
   const apiService = useContext(ApiServiceContext);
@@ -33,11 +34,11 @@ export function Autotune() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>PID Autotune</h1>
+        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>{t`PID Autotune`}</h1>
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
-        <Card sm={12} title='PID Autotune Settings'>
+        <Card sm={12} title={t`PID Autotune Settings`}>
           {active && (
             <div className='space-y-4'>
               <div className='w-full'>
@@ -46,12 +47,11 @@ export function Autotune() {
               <div className='flex flex-col items-center justify-center space-y-4 py-4'>
                 <div className='flex items-center space-x-3'>
                   <Spinner size={8} />
-                  <span className='text-lg font-medium'>Autotune in Progress</span>
+                  <span className='text-lg font-medium'>{t`Autotune in Progress`}</span>
                 </div>
                 <div className='alert alert-info max-w-md'>
                   <span>
-                    Please wait while the system optimizes your PID settings. This may take up to 30
-                    seconds.
+                    {t`Please wait while the system optimizes your PID settings. This may take up to 30 seconds.`}
                   </span>
                 </div>
               </div>
@@ -62,8 +62,8 @@ export function Autotune() {
             <div className='space-y-4 text-center'>
               <div className='alert alert-success mx-auto max-w-md'>
                 <div>
-                  <h3 className='font-bold'>Autotune Complete!</h3>
-                  <div className='text-sm'>Your new PID values have been saved successfully.</div>
+                  <h3 className='font-bold'>{t`Autotune Complete!`}</h3>
+                  <div className='text-sm'>{t`Your new PID values have been saved successfully.`}</div>
                 </div>
               </div>
               <div className='mockup-code bg-base-200 mx-auto max-w-md'>
@@ -78,15 +78,14 @@ export function Autotune() {
             <div className='space-y-4'>
               <div className='alert alert-warning'>
                 <span>
-                  Please ensure the boiler temperature is below 50°C before starting the autotune
-                  process.
+                  {t`Please ensure the boiler temperature is below 50°C before starting the autotune process.`}
                 </span>
               </div>
 
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div className='form-control'>
                   <label htmlFor='tuningGoal' className='mb-2 block text-sm font-medium'>
-                    Tuning Goal
+                    {t`Tuning Goal`}
                   </label>
                   <input
                     id='tuningGoal'
@@ -99,14 +98,13 @@ export function Autotune() {
                     placeholder='60'
                   />
                   <div className='mb-2 text-xs opacity-70'>
-                    0 = Conservative, 100 = Aggressive. Higher values result in faster response but
-                    may cause overshoot.
+                    {t`0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot.`}
                   </div>
                 </div>
 
                 <div className='form-control'>
                   <label htmlFor='windowSize' className='mb-2 block text-sm font-medium'>
-                    Window Size
+                    {t`Window Size`}
                   </label>
                   <input
                     id='windowSize'
@@ -119,7 +117,7 @@ export function Autotune() {
                     placeholder='4'
                   />
                   <div className='mb-2 text-xs opacity-70'>
-                    Number of samples. More samples provide better accuracy but take longer.
+                    {t`Number of samples. More samples provide better accuracy but take longer.`}
                   </div>
                 </div>
               </div>
@@ -136,13 +134,13 @@ export function Autotune() {
               onClick={onStart}
               disabled={time < 0 || time > 100 || samples < 1 || samples > 10}
             >
-              Start Autotune
+              {t`Start Autotune`}
             </button>
           )}
 
           {result && (
             <button className='btn btn-outline' onClick={() => setResult(null)}>
-              Back to Settings
+              {t`Back to Settings`}
             </button>
           )}
         </div>

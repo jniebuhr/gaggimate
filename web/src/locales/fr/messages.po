@@ -1,130 +1,178 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: GaggiMate Web UI\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-01 12:00+0000\n"
-"PO-Revision-Date: 2024-01-01 12:00+0000\n"
-"Last-Translator: \n"
-"Language: cs\n"
+"POT-Creation-Date: 2025-08-15 06:33-0700\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"Language-Team: \n"
+"X-Generator: @lingui/cli\n"
+"Language: fr\n"
+
+#: src/pages/Autotune/index.jsx
+msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Autotune Complete!"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Autotune in Progress"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Available Scales"
-msgstr "Dostupné váhy"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Back"
-msgstr "Zpět"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Back to Settings"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Bluetooth Scales"
-msgstr "Bluetooth váhy"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Click \"Scan for Scales\" to discover Bluetooth scales nearby"
-msgstr "Klikněte na \"Hledat váhy\" pro nalezení Bluetooth vah v okolí"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Connect"
-msgstr "Připojit"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Connected"
-msgstr "Připojeno"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Controller version"
-msgstr "Verze kontroléru"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Display version"
-msgstr "Verze displeje"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Error loading scales. Please try again."
-msgstr "Chyba při načítání vah. Zkuste to prosím znovu."
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Finished"
-msgstr "Dokončeno"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Hardware"
-msgstr "Hardware"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Loading scales..."
-msgstr "Načítání vah..."
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Make sure to backup your profiles from the profile screen before updating the display."
-msgstr "Před aktualizací displeje se ujistěte, že jste zálohovali své profily z obrazovky profilů."
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Nightly"
-msgstr "Nightly"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "No scales found"
-msgstr "Nebyly nalezeny žádné váhy"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Number of samples. More samples provide better accuracy but take longer."
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "PID Autotune"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "PID Autotune Settings"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Please wait while the system optimizes your PID settings. This may take up to 30 seconds."
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Save & Refresh"
-msgstr "Uložit a obnovit"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
-msgstr "Váhy se automaticky obnovují každých 10 sekund. Použijte tlačítko skenování pro objevení nových zařízení."
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Scan for Scales"
-msgstr "Hledat váhy"
+msgstr ""
 
 #: src/pages/Scales/index.jsx
 msgid "Scanning..."
-msgstr "Skenování..."
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Stable"
-msgstr "Stabilní"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Start Autotune"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "System & Updates"
-msgstr "Systém a aktualizace"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "System Information"
-msgstr "Systémové informace"
+msgstr ""
 
+#: src/pages/Autotune/index.jsx
+msgid "Tuning Goal"
+msgstr ""
+
+#. placeholder {0}: formData.latestVersion
 #: src/pages/OTA/index.jsx
 #: src/pages/OTA/index.jsx
-msgid "Update available: {version}"
-msgstr "Dostupná aktualizace: {version}"
+msgid "Update available: {0}"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Update Channel"
-msgstr "Kanál aktualizací"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Update Controller"
-msgstr "Aktualizovat kontrolér"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Update Display"
-msgstr "Aktualizovat displej"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Updating controller firmware"
-msgstr "Aktualizace firmwaru kontroléru"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Updating Display filesystem"
-msgstr "Aktualizace souborového systému displeje"
+msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Updating Display firmware"
-msgstr "Aktualizace firmwaru displeje"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Window Size"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Your new PID values have been saved successfully."
+msgstr ""
