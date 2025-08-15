@@ -1,0 +1,240 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2025-08-15 07:58-0700\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: es\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/pages/Autotune/index.jsx
+msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Autotune Complete!"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Autotune in Progress"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Available Scales"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Back"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Back to Settings"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Bluetooth Scales"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Click \"Scan for Scales\" to discover Bluetooth scales nearby"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Connect"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Connected"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Controller version"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pressure"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Puck Flow"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pump Flow"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Temperature"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete shot"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Display version"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Error loading scales. Please try again."
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export shot data"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Finished"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Hardware"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Loading scales..."
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Make sure to backup your profiles from the profile screen before updating the display."
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Nightly"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "No scales found"
+msgstr ""
+
+#: src/pages/ShotHistory/index.jsx
+msgid "No shots available"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Number of samples. More samples provide better accuracy but take longer."
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "PID Autotune"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "PID Autotune Settings"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Please wait while the system optimizes your PID settings. This may take up to 30 seconds."
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Save & Refresh"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Scan for Scales"
+msgstr ""
+
+#: src/pages/Scales/index.jsx
+msgid "Scanning..."
+msgstr ""
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Shot History"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Stable"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Start Autotune"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "System & Updates"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "System Information"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pressure"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pump Flow"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Temperature"
+msgstr ""
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Temperature History"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Tuning Goal"
+msgstr ""
+
+#. placeholder {0}: formData.latestVersion
+#: src/pages/OTA/index.jsx
+#: src/pages/OTA/index.jsx
+msgid "Update available: {0}"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Update Channel"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Update Controller"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Update Display"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Updating controller firmware"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Updating Display filesystem"
+msgstr ""
+
+#: src/pages/OTA/index.jsx
+msgid "Updating Display firmware"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Window Size"
+msgstr ""
+
+#: src/pages/Autotune/index.jsx
+msgid "Your new PID values have been saved successfully."
+msgstr ""

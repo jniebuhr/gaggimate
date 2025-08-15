@@ -1,10 +1,15 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import tailwindcss from '@tailwindcss/vite';
+import { lingui } from "@lingui/vite-plugin";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [preact(), tailwindcss()],
+  plugins: [preact({
+    babel: {
+      plugins: ["@lingui/babel-plugin-lingui-macro"],
+    }
+  }), tailwindcss(), lingui()],
 
   server: {
     proxy: {
