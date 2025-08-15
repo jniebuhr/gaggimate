@@ -122,9 +122,8 @@ void Controller::setupBluetooth() {
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
     });
-    clientController.registerVolumetricMeasurementCallback([this](const float value) {
-        onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
-    });
+    clientController.registerVolumetricMeasurementCallback(
+        [this](const float value) { onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION); });
     clientController.registerTofMeasurementCallback([this](const int value) {
         tofDistance = value;
         ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", value);

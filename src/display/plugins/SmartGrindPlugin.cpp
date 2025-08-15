@@ -1,9 +1,9 @@
 #include "SmartGrindPlugin.h"
-#include "../core/Controller.h"
-#include "../core/Event.h"
 #include <ESPmDNS.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
+#include <display/core/Controller.h>
+#include <display/core/Event.h>
 
 void SmartGrindPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
