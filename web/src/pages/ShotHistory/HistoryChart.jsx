@@ -39,7 +39,7 @@ function getChartData(data) {
           data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tp })),
         },
         {
-          label: t'Current Pump Flow',
+          label: t`Current Pump Flow`,
           borderColor: '#63993D',
           pointStyle: false,
           yAxisID: 'y1',
