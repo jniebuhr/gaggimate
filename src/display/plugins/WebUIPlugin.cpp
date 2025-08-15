@@ -78,12 +78,11 @@ void WebUIPlugin::loop() {
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
         
         // Calculate total volumetric target weight from all phases
-        float totalVolumetricTarget = 0.0f;
+        double totalVolumetricTarget = 0.0;
         Profile selectedProfile = controller->getProfileManager()->getSelectedProfile();
         for (const auto &phase : selectedProfile.phases) {
             if (phase.hasVolumetricTarget()) {
-                Target target = phase.getVolumetricTarget();
-                totalVolumetricTarget += target.value;
+                totalVolumetricTarget += phase.getVolumetricTarget().value;
             }
         }
         
