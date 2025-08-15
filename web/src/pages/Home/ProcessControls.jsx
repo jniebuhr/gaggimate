@@ -82,7 +82,6 @@ const ProcessControls = props => {
   const apiService = useContext(ApiServiceContext);
   const [isFlushing, setIsFlushing] = useState(false);
   const isWeightTarget = Boolean(brewTarget) && Number(brewTarget) > 0;
-  const [isFlushing, setIsFlushing] = useState(false);
 
   // Determine if we should show expanded view
   const shouldExpand = brew && (active || finished || (brew && !active && !finished));
