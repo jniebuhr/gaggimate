@@ -185,6 +185,18 @@ const ProcessControls = props => {
             / {status.value.targetTemperature || 0}°C
           </span>
         </div>
+      {status.value.bluetoothConnected && (
+        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
+          <i className='fa fa-weight-scale text-base-content/60' />
+          <span className='text-base-content'>{status.value.bluetoothWeight?.toFixed(1) || 0.0}g</span>
+          {status.value.brewTarget > 1 && (
+            <span className='text-success font-semibold'>
+              {' '}
+              / {status.value.brewTarget?.toFixed(0)}g
+            </span>
+          )}
+        </div>
+      )}        
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
           <FontAwesomeIcon icon={faGauge} className='text-base-content/60' />
           <span className='text-base-content'>
@@ -193,21 +205,6 @@ const ProcessControls = props => {
           </span>
         </div>
       </div>
-      {brew && status.value.bluetoothConnected && (
-        <div className='mb-2 flex flex-col items-center justify-center space-y-1'>
-          <div className='flex flex-row items-center gap-2 text-center text-base sm:text-lg'>
-            <i className='fa fa-weight-scale text-base-content/60' />
-            <span className='text-base-content'>{status.value.bluetoothWeight?.toFixed(1) || 0.0}g</span>
-            {status.value.brewTarget > 1 && (
-              <span className='text-success font-semibold'>
-                {' '}
-                / {status.value.brewTarget?.toFixed(0)}g
-              </span>
-            )}
-          </div>
-          <div className='text-base-content/60 text-xs'>Bluetooth Scale</div>
-        </div>
-      )}
       {brew && (
         <div className='mb-2 text-center'>
           <div className='text-base-content/60 text-sm'>Current Profile</div>
