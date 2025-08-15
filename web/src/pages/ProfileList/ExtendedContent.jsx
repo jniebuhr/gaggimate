@@ -70,7 +70,11 @@ function prepareData(phases, target) {
   let time = 0;
   for (const phase of phases) {
     for (let i = 0; i < phase.duration; i++) {
-      data.push({ x: `${time}s`, y: phase.pump[target], target: phase.pump.target === target });
+      data.push({
+        x: `${time}s`,
+        y: phase.pump[target] || 0,
+        target: phase.pump.target === target,
+      });
       time++;
     }
   }

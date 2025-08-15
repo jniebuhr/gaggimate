@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
+import { tryConvertProfile } from './utils.js';
 
 Chart.register(
   LineController,
@@ -310,6 +311,7 @@ export function ProfileList() {
         if (typeof result === 'string') {
           let profiles = JSON.parse(result);
           if (!Array.isArray(profiles)) {
+            profiles = tryConvertProfile(profiles);
             profiles = [profiles];
           }
           for (const p of profiles) {
