@@ -195,6 +195,8 @@ void WebUIPlugin::setupServer() {
                                 String msg;
                                 serializeJson(resp, msg);
                                 ws.text(client->id(), msg);
+                            } else if (msgType == "req:flush:start") {
+                                handleFlushStart(client->id(), doc);
                             }
                         }
                     }
@@ -528,4 +530,17 @@ void WebUIPlugin::sendAutotuneResult() {
     doc["pid"] = controller->getSettings().getPid();
     String message = doc.as<String>();
     ws.textAll(message);
+}
+
+void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
+    controller->onFlush();
+
+    JsonDocument response;
+    response["tp"] = "res:flush:start";
+    response["rid"] = request["rid"];
+    response["success"] = true;
+
+    String msg;
+    serializeJson(response, msg);
+    ws.text(clientId, msg);
 }

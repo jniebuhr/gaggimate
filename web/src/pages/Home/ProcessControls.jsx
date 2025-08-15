@@ -1,6 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext } from 'preact/hooks';
+import { useCallback, useContext, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
 
 const status = computed(() => machine.value.status);
@@ -70,6 +70,7 @@ const ProcessControls = props => {
   const active = !!processInfo?.a;
   const finished = !!processInfo && !active;
   const apiService = useContext(ApiServiceContext);
+  const [isFlushing, setIsFlushing] = useState(false);
 
   // Determine if we should show expanded view
   const shouldExpand = brew && (active || finished || (brew && !active && !finished));
@@ -102,9 +103,24 @@ const ProcessControls = props => {
     });
   }, [apiService]);
 
+  const startFlush = useCallback(() => {
+    setIsFlushing(true);
+    apiService.request({
+      tp: 'req:flush:start',
+    }).catch(error => {
+      console.error('Flush start failed:', error);
+      setIsFlushing(false);
+    });
+  }, [apiService]);
+
   const handleButtonClick = () => {
     if (active) {
       deactivate();
+
+      if (isFlushing) {
+        clear();
+        setIsFlushing(false);
+      }
     } else if (finished) {
       clear();
     } else {
@@ -242,9 +258,22 @@ const ProcessControls = props => {
           </div>
         )}
         {(mode === 1 || mode === 3) && (
-          <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
-            <i className={`text-2xl ${getButtonIcon()}`} />
-          </button>
+          <div className='flex flex-col items-center gap-4 space-y-4'>
+            <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
+              <i className={`text-2xl ${getButtonIcon()}`} />
+            </button>
+            
+            {brew && !active && !finished && (
+              <button 
+                className='btn rounded-full text-base-content/60 hover:text-base-content transition-color duration-200 text-sm'
+                onClick={startFlush}
+                title="Click to flush water"
+              >
+                <i className='fa-solid fa-tint' />
+                Flush
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -112,17 +112,17 @@ export function OTA() {
 
             <div className='flex flex-col space-y-4'>
               <label className='text-sm font-medium'>Hardware</label>
-              <div className='input input-bordered bg-base-200 cursor-default'>
+              <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
                 {formData.hardware}
               </div>
             </div>
 
             <div className='flex flex-col space-y-4'>
               <label className='text-sm font-medium'>Controller version</label>
-              <div className='input input-bordered bg-base-200 cursor-default'>
-                {formData.controllerVersion}
+              <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
+                <span className='break-all'>{formData.controllerVersion}</span>
                 {formData.controllerUpdateAvailable && (
-                  <span className='text-primary font-bold'>
+                  <span className='text-primary font-bold break-all'>
                     (Update available: {formData.latestVersion})
                   </span>
                 )}
@@ -131,10 +131,10 @@ export function OTA() {
 
             <div className='flex flex-col space-y-4'>
               <label className='text-sm font-medium'>Display version</label>
-              <div className='input input-bordered bg-base-200 cursor-default'>
-                {formData.displayVersion}
+              <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
+                <span className='break-all'>{formData.displayVersion}</span>
                 {formData.displayUpdateAvailable && (
-                  <span className='text-primary font-bold'>
+                  <span className='text-primary font-bold break-all'>
                     (Update available: {formData.latestVersion})
                   </span>
                 )}

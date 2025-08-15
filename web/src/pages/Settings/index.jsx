@@ -6,7 +6,7 @@ import { timezones } from '../../config/zones.js';
 import { computed } from '@preact/signals';
 import { machine } from '../../services/ApiService.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
-import { setDashboardLayout } from '../../utils/dashboardManager.js';
+import { setDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
 import { PluginCard } from './PluginCard.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
@@ -34,7 +34,7 @@ export function Settings() {
           fetchedSettings.standbyDisplayEnabled !== undefined
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
-        dashboardLayout: fetchedSettings.dashboardLayout || 'process-first',
+        dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
       setFormData(settingsWithToggle);
     } else {
@@ -358,7 +358,7 @@ export function Settings() {
                 id='dashboardLayout'
                 name='dashboardLayout'
                 className='select select-bordered w-full'
-                value={formData.dashboardLayout || 'process-first'}
+                value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
                 onChange={e => {
                   const value = e.target.value;
                   setFormData({
@@ -368,8 +368,8 @@ export function Settings() {
                   setDashboardLayout(value);
                 }}
               >
-                <option value='process-first'>Left Handed</option>
-                <option value='chart-first'>Right Handed</option>
+                <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
+                <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
               </select>
             </div>
           </Card>
