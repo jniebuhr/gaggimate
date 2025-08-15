@@ -1,16 +1,16 @@
 {
   "name": "GaggiMate Controller",
-  "version": "feature/improve-pid",
+  "version": "feature/advanced-profiles",
   "funding_url": "https://ko-fi.com/jniebuhr",
   "new_install_prompt_erase": false,
   "builds": [
     {
       "chipFamily": "ESP32-S3",
       "parts": [
-        { "path": "/gaggimate/pr-223/board-bootloader.bin", "offset": 0 },
-        { "path": "/gaggimate/pr-223/board-partitions.bin", "offset": 32768 },
+        { "path": "/gaggimate/pr-365/board-bootloader.bin", "offset": 0 },
+        { "path": "/gaggimate/pr-365/board-partitions.bin", "offset": 32768 },
         { "path": "/gaggimate/boot_app0.bin", "offset": 57344 },
-        { "path": "/gaggimate/pr-223/board-firmware.bin", "offset": 65536 }
+        { "path": "/gaggimate/pr-365/board-firmware.bin", "offset": 65536 }
       ]
     }
   ]
