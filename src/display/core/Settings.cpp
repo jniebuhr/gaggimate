@@ -428,7 +428,7 @@ void Settings::doSave() {
     preferences.putString("sp", selectedProfile);
     preferences.putInt("sbt", standbyTimeout);
     preferences.putBool("pm", profilesMigrated);
-    preferences.putInt("mb", momentaryButtons);
+    preferences.putBool("mb", momentaryButtons);
     preferences.putString("fp", implode(favoritedProfiles, ","));
     preferences.putFloat("spp", steamPumpPercentage);
     preferences.putInt("hi", historyIndex);
