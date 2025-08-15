@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
+import { t } from '@lingui/core/macro';
 
 function getChartData(data) {
   let start = 0;
@@ -8,13 +9,13 @@ function getChartData(data) {
     data: {
       datasets: [
         {
-          label: 'Current Temperature',
+          label: t`Current Temperature`,
           borderColor: '#F0561D',
           pointStyle: false,
           data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.ct })),
         },
         {
-          label: 'Target Temperature',
+          label: t`Target Temperature`,
           fill: true,
           borderColor: '#731F00',
           borderDash: [6, 6],
@@ -22,14 +23,14 @@ function getChartData(data) {
           data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tt })),
         },
         {
-          label: 'Current Pressure',
+          label: t`Current Pressure`,
           borderColor: '#0066CC',
           pointStyle: false,
           yAxisID: 'y1',
           data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.cp })),
         },
         {
-          label: 'Target Pressure',
+          label: t`Target Pressure`,
           fill: true,
           borderColor: '#0066CC',
           borderDash: [6, 6],
@@ -45,14 +46,14 @@ function getChartData(data) {
           data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.fl })),
         },
         {
-          label: 'Current Puck Flow',
+          label: t`Current Puck Flow`,
           borderColor: '#204D00',
           pointStyle: false,
           yAxisID: 'y1',
           data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.pf })),
         },
         {
-          label: 'Target Pump Flow',
+          label: t`Target Pump Flow`,
           borderColor: '#63993D',
           borderDash: [6, 6],
           pointStyle: false,
@@ -70,7 +71,7 @@ function getChartData(data) {
         },
         title: {
           display: true,
-          text: 'Temperature History',
+          text: t`Temperature History`,
         },
       },
       animation: false,

@@ -25,6 +25,7 @@ import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import { parseHistoryData } from './utils.js';
 import HistoryCard from './HistoryCard.jsx';
+import { t } from '@lingui/core/macro';
 
 const connected = computed(() => machine.value.connected);
 
@@ -73,7 +74,7 @@ export function ShotHistory() {
         ))}
         {history.length === 0 && (
           <div className='flex flex-row items-center justify-center py-20 lg:col-span-12'>
-            <span>No shots available</span>
+            <span>{t`No shots available`}</span>
           </div>
         )}
       </div>

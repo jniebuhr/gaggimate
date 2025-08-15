@@ -9,7 +9,7 @@ export default function HistoryCard({ shot, onDelete }) {
       'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(shot, undefined, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', shot.id + '.json');
+    downloadAnchorNode.setAttribute('download', `${shot.id  }.json`);
     document.body.appendChild(downloadAnchorNode); // required for firefox
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -44,12 +44,12 @@ export default function HistoryCard({ shot, onDelete }) {
       </div>
       <div className='flex flex-row items-center gap-4'>
         <div className='flex flex-row items-center gap-2'>
-          <span className='fa fa-clock'></span>
+          <span className='fa fa-clock' />
           {(shot.duration / 1000).toFixed(1)}s
         </div>
         {shot.volume && (
           <div className='flex flex-row items-center gap-2'>
-            <span className='fa fa-scale-balanced'></span>
+            <span className='fa fa-scale-balanced' />
             {shot.volume}g
           </div>
         )}
