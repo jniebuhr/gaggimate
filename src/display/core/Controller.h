@@ -29,6 +29,7 @@ class Controller {
     void setMode(int newMode);
     void setTargetTemp(int temperature);
     void setPressureScale();
+    void setPumpModelCoeffs();
     void setTargetDuration(int duration);
     void setTargetVolume(int volume);
     void setTargetGrindDuration(int duration);

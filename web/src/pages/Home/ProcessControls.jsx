@@ -1,6 +1,7 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext } from 'preact/hooks';
+import PropTypes from 'prop-types';
 
 const status = computed(() => machine.value.status);
 
@@ -12,93 +13,248 @@ function formatDuration(duration) {
   return `${zeroPad(minutes, 1)}:${zeroPad(seconds, 2)}`;
 }
 
-const BrewProgress = (props) => {
+const BrewProgress = props => {
   const { processInfo } = props;
   const active = !!processInfo.a;
   const progress = (processInfo.pp / processInfo.pt) * 100.0;
-
   const elapsed = Math.floor(processInfo.e / 1000);
 
   return (
-    <div className="flex flex-col justify-center items-center w-full">
+    <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
       {active && (
         <>
-          <span className="text-gray-600 font-light text-xl">{processInfo.s === 'brew' ? 'BREW' : 'PREINFUSION'}</span>
-          <span className="text-xl">{processInfo.l}</span>
-          <div className="w-9/12 my-2 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-            <div className="bg-blue-600 h-2.5 rounded-full" style={`width: ${progress.toFixed(0)}%`}></div>
+          <div className='space-y-2 text-center'>
+            <div className='text-base-content/60 text-xs font-light tracking-wider sm:text-sm'>
+              {processInfo.s === 'brew' ? 'INFUSION' : 'PREINFUSION'}
+            </div>
+            <div className='text-base-content text-2xl font-bold sm:text-4xl'>{processInfo.l}</div>
+          </div>
+
+          <div className='w-full max-w-md'>
+            <div className='bg-base-content/20 h-2 w-full rounded-full'>
+              <div
+                className='bg-primary h-2 rounded-full transition-all duration-300 ease-out'
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          <div className='space-y-2 text-center'>
+            <div className='text-base-content/60 text-xs sm:text-sm'>
+              {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(0)}s`}
+              {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(0)}g`}
+            </div>
+            <div className='text-base-content text-2xl font-bold sm:text-3xl'>
+              {formatDuration(elapsed)}
+            </div>
           </div>
         </>
       )}
-      {processInfo.tt === 'volumetric' ||
-        (active && (
-          <span className="text-sm text-gray-700 dark:text-gray-400">
-            {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(1)}s`}
-            {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(1)}g`}
-          </span>
-        ))}
-      {!active && <span className="text-lg">Finished</span>}
-      <span className={active ? 'text-lg' : 'text-2xl my-2'}>{formatDuration(elapsed)}</span>
+      {!active && (
+        <div className='space-y-2 text-center'>
+          <div className='text-base-content text-xl font-bold sm:text-2xl'>Finished</div>
+          <div className='text-base-content text-2xl font-bold sm:text-3xl'>
+            {formatDuration(elapsed)}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-const ProcessControls = (props) => {
-  const { brew } = props;
+const ProcessControls = props => {
+  // brew is true when mode equals 1 (Brew mode), false otherwise
+  const { brew, mode, changeMode } = props;
   const brewTarget = status.value.brewTarget;
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
   const finished = !!processInfo && !active;
   const apiService = useContext(ApiServiceContext);
+
+  // Determine if we should show expanded view
+  const shouldExpand = brew && (active || finished || (brew && !active && !finished));
+
   const changeTarget = useCallback(
-    (target) => {
+    target => {
       apiService.send({
         tp: 'req:change-brew-target',
         target,
       });
     },
-    [apiService]
+    [apiService],
   );
+
   const activate = useCallback(() => {
     apiService.send({
       tp: 'req:process:activate',
     });
   }, [apiService]);
+
   const deactivate = useCallback(() => {
     apiService.send({
       tp: 'req:process:deactivate',
     });
   }, [apiService]);
+
   const clear = useCallback(() => {
     apiService.send({
       tp: 'req:process:clear',
     });
   }, [apiService]);
+
+  const handleButtonClick = () => {
+    if (active) {
+      deactivate();
+    } else if (finished) {
+      clear();
+    } else {
+      activate();
+    }
+  };
+
+  const getButtonIcon = () => {
+    if (active) {
+      return 'fa fa-pause';
+    } else if (finished) {
+      return 'fa fa-check';
+    }
+    return 'fa fa-play';
+  };
+
   return (
-    <>
-      {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
-      <div className="flex flex-row gap-2 items-center justify-center">
-        <span
-          className="cursor-pointer group flex items-center justify-center rounded-full border border-transparent w-20 h-20 text-center p-0 text-4xl font-semibold text-slate-900 hover:bg-indigo-100 hover:text-indigo-600 active:border-indigo-200 active:bg-indigo-100 sm:gap-2 dark:text-slate-300"
-          onClick={() => (active ? deactivate() : finished ? clear() : activate())}
-        >
-          <i className={active ? 'fa fa-pause' : finished ? 'fa fa-check' : 'fa fa-play'}></i>
-        </span>
+    <div className={`flex min-h-[250px] flex-col justify-between lg:min-h-[350px]`}>
+      <div className='mb-2 flex justify-center'>
+        <div className='bg-base-300 flex w-full max-w-md rounded-full p-1'>
+          {[
+            { id: 0, label: 'Standby' },
+            { id: 1, label: 'Brew' },
+            { id: 2, label: 'Steam' },
+            { id: 3, label: 'Water' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              className={`flex-1 rounded-full px-1 py-1 text-sm transition-all duration-200 sm:px-4 lg:px-2 lg:py-2 ${
+                mode === tab.id
+                  ? 'bg-primary text-primary-content font-medium'
+                  : 'text-base-content/60 hover:text-base-content'
+              }`}
+              onClick={() => changeMode(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
-      {brew && !active && !finished && (
-        <div className="flex flex-row gap-2 items-center justify-center">
-          <div className="inline-flex rounded-md">
-            <span className={`mode-selector ${brewTarget === 0 && 'selected'}`} onClick={() => changeTarget(0)}>
-              <i className="fa-solid fa-clock"></i>
+
+      <div className='mt-1 mb-2 flex flex-col items-center justify-between space-y-2 sm:flex-row sm:space-y-0'>
+        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
+          <i className='fa fa-thermometer-half text-base-content/60' />
+          <span className='text-base-content'>{status.value.currentTemperature || 0}</span>
+          <span className='text-success font-semibold'>
+            {' '}
+            / {status.value.targetTemperature || 0}°C
+          </span>
+        </div>
+        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
+          <i className='fa fa-gauge text-base-content/60' />
+          <span className='text-base-content'>
+            {status.value.currentPressure?.toFixed(0) || 0} /{' '}
+            {status.value.targetPressure?.toFixed(0) || 0} bar
+          </span>
+        </div>
+      </div>
+      {brew && (
+        <div className='mb-2 text-center'>
+          <div className='text-base-content/60 text-sm'>Current Profile</div>
+          <a href='/profiles' className='mb-2 flex items-center justify-center gap-2'>
+            <span className='text-base-content text-xl font-semibold sm:text-2xl'>
+              {status.value.selectedProfile || 'Default'}
             </span>
-            <span className={`mode-selector ${brewTarget === 1 && 'selected'}`} onClick={() => changeTarget(1)}>
-              <i className="fa-solid fa-weight-scale"></i>
-            </span>
+            <i className='fa-solid fa-rectangle-list text-base-content/60' />
+          </a>
+        </div>
+      )}
+
+      {shouldExpand && (
+        <>
+          <div className='flex flex-1 items-center justify-center'>
+            {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
+            {!brew && (
+              <div className='space-y-2 text-center'>
+                <div className='text-xl font-bold sm:text-2xl'>
+                  {mode === 0 && 'Standby Mode'}
+                  {mode === 2 && 'Steam Mode'}
+                  {mode === 3 && 'Water Mode'}
+                </div>
+                <div className='text-base-content/60 text-sm'>
+                  {mode === 0 && 'Machine is ready'}
+                  {mode === 3 && 'Start and open steam valve to pull water'}
+                  {mode === 2 &&
+                    (Math.abs(status.value.targetTemperature - status.value.currentTemperature) < 5
+                      ? 'Steam is ready'
+                      : 'Preheating')}
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {!shouldExpand && (
+        <div className='flex flex-1 items-center justify-center'>
+          <div className='space-y-2 text-center'>
+            <div className='text-lg font-semibold sm:text-xl'>
+              {mode === 0 && 'Standby'}
+              {mode === 1 && 'Brew Mode'}
+              {mode === 2 && 'Steam'}
+              {mode === 3 && 'Water'}
+            </div>
+            <div className='text-base-content/60 text-sm'>
+              {mode === 0 && 'Machine is ready'}
+              {mode === 1 && 'Select brew target to start'}
+              {mode === 2 &&
+                (Math.abs(status.value.targetTemperature - status.value.currentTemperature) < 5
+                  ? 'Steam is ready'
+                  : 'Preheating')}
+              {mode === 3 && 'Start and open steam valve to pull water'}
+            </div>
           </div>
         </div>
       )}
-    </>
+
+      <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
+        {brew && !active && !finished && (
+          <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
+            <button
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              onClick={() => changeTarget(0)}
+            >
+              <i className='fa-solid fa-clock' />
+              <span className='ml-1'>Time</span>
+            </button>
+            <button
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              onClick={() => changeTarget(1)}
+            >
+              <i className='fa-solid fa-weight-scale' />
+              <span className='ml-1'>Weight</span>
+            </button>
+          </div>
+        )}
+        {(mode === 1 || mode === 3) && (
+          <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
+            <i className={`text-2xl ${getButtonIcon()}`} />
+          </button>
+        )}
+      </div>
+    </div>
   );
+};
+
+ProcessControls.propTypes = {
+  brew: PropTypes.bool.isRequired,
+  mode: PropTypes.oneOf([0, 1, 2, 3]).isRequired,
+  changeMode: PropTypes.func.isRequired,
 };
 
 export default ProcessControls;

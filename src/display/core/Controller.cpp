@@ -123,9 +123,7 @@ void Controller::setupBluetooth() {
         autotuning = false;
     });
     clientController.registerVolumetricMeasurementCallback([this](const float value) {
-        if (!volumetricOverride) {
-            onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
-        }
+        onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
     });
     clientController.registerTofMeasurementCallback([this](const int value) {
         tofDistance = value;
@@ -221,6 +219,7 @@ void Controller::loop() {
             ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
             setPressureScale();
             clientController.sendPidSettings(settings.getPid());
+            clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
 
             pluginManager->trigger("controller:ready");
         }
@@ -366,6 +365,12 @@ void Controller::setPressureScale(void) {
     }
 }
 
+void Controller::setPumpModelCoeffs(void) {
+    if (systemInfo.capabilities.dimming) {
+        clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
+    }
+}
+
 int Controller::getTargetDuration() const { return settings.getTargetDuration(); }
 
 void Controller::setTargetDuration(int duration) {
@@ -476,15 +481,23 @@ void Controller::updateControl() {
         targetTemp = targetTemp + settings.getTemperatureOffset();
     }
     clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
-    if (isActive() && currentProcess->getType() == MODE_BREW) {
-        auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
-        if (brewProcess->isAdvancedPump() && systemInfo.capabilities.pressure) {
-            clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp),
-                                                       brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
-                                                       brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
-            targetPressure = brewProcess->getPumpPressure();
-            targetFlow = brewProcess->getPumpFlow();
+    if (isActive() && systemInfo.capabilities.pressure) {
+        if (currentProcess->getType() == MODE_STEAM) {
+            targetPressure = 4;
+            targetFlow = currentProcess->getPumpValue() * 0.1f;
+            clientController.sendAdvancedOutputControl(false, static_cast<float>(targetTemp), false, targetPressure, targetFlow);
             return;
+        }
+        if (currentProcess->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
+            if (brewProcess->isAdvancedPump()) {
+                clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp),
+                                                           brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
+                                                           brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
+                targetPressure = brewProcess->getPumpPressure();
+                targetFlow = brewProcess->getPumpFlow();
+                return;
+            }
         }
     }
     targetPressure = 0.0f;
@@ -498,6 +511,8 @@ void Controller::activate() {
         return;
     clear();
     clientController.tare();
+    if (isVolumetricAvailable())
+        pluginManager->trigger("controller:brew:prestart");
     delay(100);
     switch (mode) {
     case MODE_BREW:
@@ -605,6 +620,10 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
                                ? F("controller:volumetric-measurement:estimation:change")
                                : F("controller:volumetric-measurement:bluetooth:change"),
                            "value", static_cast<float>(measurement));
+    // Bluetooth volume override is active, ignore volume estimation
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION && volumetricOverride) {
+        return;
+    }
     if (currentProcess != nullptr) {
         currentProcess->updateVolume(measurement);
     }
@@ -634,6 +653,9 @@ void Controller::handleBrewButton(int brewButtonStatus) {
                 deactivateStandby();
                 clear();
                 activate();
+            } else if (settings.isMomentaryButtons()) {
+                deactivate();
+                clear();
             }
             break;
         case MODE_WATER:

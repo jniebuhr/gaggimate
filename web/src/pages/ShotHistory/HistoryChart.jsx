@@ -80,7 +80,7 @@ function getChartData(data) {
           min: 0,
           max: 160,
           ticks: {
-            callback: (value) => {
+            callback: value => {
               return `${value} °C`;
             },
           },
@@ -91,7 +91,7 @@ function getChartData(data) {
           max: 16,
           position: 'right',
           ticks: {
-            callback: (value) => {
+            callback: value => {
               return `${value} bar / g/s`;
             },
           },
@@ -107,7 +107,6 @@ function getChartData(data) {
 }
 
 export function HistoryChart({ shot }) {
-  console.log(shot);
   const [chart, setChart] = useState(null);
   const ref = useRef();
   const chartData = getChartData(shot.samples);
@@ -125,5 +124,5 @@ export function HistoryChart({ shot }) {
     chart.update();
   }, [shot, chart]);
 
-  return <canvas className="w-full" ref={ref} />;
+  return <canvas className='w-full' ref={ref} />;
 }
