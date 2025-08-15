@@ -1,9 +1,11 @@
 #ifndef BREWPROCESS_H
 #define BREWPROCESS_H
 
+#include <algorithm>
 #include <display/core/constants.h>
 #include <display/core/predictive.h>
 #include <display/core/process/Process.h>
+#include <display/models/profile.h>
 
 class BrewProcess : public Process {
   public:
@@ -21,11 +23,10 @@ class BrewProcess : public Process {
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
     float waterPumped = 0.0f;
-    VolumetricRateCalculator *volumetricRateCalculator = nullptr;
+    VolumetricRateCalculator volumetricRateCalculator{static_cast<double>(PREDICTIVE_TIME)};
 
     explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
-        : profile(profile), target(target), brewDelay(brewDelay),
-          volumetricRateCalculator(new VolumetricRateCalculator(PREDICTIVE_TIME)) {
+        : profile(profile), target(target), brewDelay(brewDelay) {
         currentPhase = profile.phases.at(phaseIndex);
         processStarted = millis();
         currentPhaseStarted = millis();
@@ -37,7 +38,7 @@ class BrewProcess : public Process {
     void updateVolume(double volume) override { // called even after the Process is no longer active
         currentVolume = volume;
         if (processPhase != ProcessPhase::FINISHED) { // only store measurements while active
-            volumetricRateCalculator->addMeasurement(volume);
+            volumetricRateCalculator.addMeasurement(volume);
         }
     }
 
@@ -55,7 +56,7 @@ class BrewProcess : public Process {
         }
         double volume = currentVolume;
         if (volume > 0.0) {
-            double currentRate = volumetricRateCalculator->getRate();
+            double currentRate = volumetricRateCalculator.getRate();
             const double predictedAddedVolume = currentRate * brewDelay;
             volume += predictedAddedVolume;
         }
@@ -75,8 +76,8 @@ class BrewProcess : public Process {
         return brewVolume;
     }
 
-    double getNewDelayTime() const {
-        double newDelay = brewDelay + volumetricRateCalculator->getOvershootAdjustMillis(double(getBrewVolume()), currentVolume);
+    double getNewDelayTime() {
+        double newDelay = brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(double(getBrewVolume()), currentVolume);
         newDelay = std::clamp(newDelay, 0.0, PREDICTIVE_TIME);
         return newDelay;
     }
@@ -137,9 +138,9 @@ class BrewProcess : public Process {
                 Phase nextPhase = profile.phases.at(phaseIndex);
                 phaseStartPressure = nextPhase.transition.adaptive ? currentPressure : getPumpPressure();
                 phaseStartFlow = nextPhase.transition.adaptive ? currentFlow : getPumpFlow();
-                computeEffectiveTargetsForCurrentPhase();
                 currentPhase = nextPhase;
                 currentPhaseStarted = millis();
+                computeEffectiveTargetsForCurrentPhase();
             } else {
                 processPhase = ProcessPhase::FINISHED;
                 finished = millis();

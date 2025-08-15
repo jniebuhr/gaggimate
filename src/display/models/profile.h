@@ -238,6 +238,27 @@ inline void writeProfile(JsonObject &obj, const Profile &profile) {
         p["phase"] = phase.phase == PhaseType::PHASE_TYPE_PREINFUSION ? "preinfusion" : "brew";
         p["valve"] = phase.valve;
         p["duration"] = phase.duration;
+        auto transition = p["transition"].to<JsonObject>();
+        switch (phase.transition.type) {
+        case TransitionType::LINEAR:
+            transition["type"] = "linear";
+            break;
+        case TransitionType::EASE_IN:
+            transition["type"] = "ease-in";
+            break;
+        case TransitionType::EASE_OUT:
+            transition["type"] = "ease-out";
+            break;
+        case TransitionType::EASE_IN_OUT:
+            transition["type"] = "ease-in-out";
+            break;
+        case TransitionType::INSTANT:
+        default:
+            transition["type"] = "instant";
+            break;
+        }
+        transition["duration"] = phase.transition.duration;
+        transition["adaptive"] = phase.transition.adaptive;
 
         if (phase.pumpIsSimple) {
             p["pump"] = phase.pumpSimple;
@@ -252,7 +273,23 @@ inline void writeProfile(JsonObject &obj, const Profile &profile) {
             JsonArray targets = p["targets"].to<JsonArray>();
             for (const Target &t : phase.targets) {
                 auto tObj = targets.add<JsonObject>();
-                tObj["type"] = t.type == TargetType::TARGET_TYPE_VOLUMETRIC ? "volumetric" : "pressure";
+                switch (t.type) {
+                case TargetType::TARGET_TYPE_VOLUMETRIC:
+                    tObj["type"] = "volumetric";
+                    break;
+                case TargetType::TARGET_TYPE_PRESSURE:
+                    tObj["type"] = "pressure";
+                    break;
+                case TargetType::TARGET_TYPE_FLOW:
+                    tObj["type"] = "flow";
+                    break;
+                case TargetType::TARGET_TYPE_PUMPED:
+                    tObj["type"] = "pumped";
+                    break;
+                default:
+                    break;
+                }
+                tObj["operator"] = t.operator_ == TargetOperator::LTE ? "lte" : "gte";
                 tObj["value"] = t.value;
             }
         }

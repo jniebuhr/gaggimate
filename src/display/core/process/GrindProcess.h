@@ -1,6 +1,7 @@
 #ifndef GRINDPROCESS_H
 #define GRINDPROCESS_H
 
+#include <algorithm>
 #include <display/core/constants.h>
 #include <display/core/predictive.h>
 #include <display/core/process/Process.h>
@@ -15,18 +16,17 @@ class GrindProcess : public Process {
     unsigned long started;
     unsigned long finished{};
     double currentVolume = 0;
-    VolumetricRateCalculator *volumetricRateCalculator = nullptr;
+    VolumetricRateCalculator volumetricRateCalculator{static_cast<double>(PREDICTIVE_TIME)};
 
     explicit GrindProcess(ProcessTarget target = ProcessTarget::TIME, int time = 0, double volume = 0, double grindDelay = 0.0)
-        : target(target), time(time), grindVolume(volume), grindDelay(grindDelay),
-          volumetricRateCalculator(new VolumetricRateCalculator(PREDICTIVE_TIME)) {
+        : target(target), time(time), grindVolume(volume), grindDelay(grindDelay) {
         started = millis();
     }
 
     void updateVolume(double volume) override {
         currentVolume = volume;
         if (active) { // only store measurements while active
-            volumetricRateCalculator->addMeasurement(volume);
+            volumetricRateCalculator.addMeasurement(volume);
         }
     }
 
@@ -41,7 +41,7 @@ class GrindProcess : public Process {
         if (target == ProcessTarget::TIME) {
             active = millis() - started < time;
         } else {
-            double currentRate = volumetricRateCalculator->getRate();
+            double currentRate = volumetricRateCalculator.getRate();
             ESP_LOGI("GrindProcess", "Current rate: %f, Current volume: %f, Expected Offset: %f", currentRate, currentVolume,
                      currentRate * grindDelay);
             if (currentVolume + currentRate * grindDelay > grindVolume && active) {
@@ -51,9 +51,9 @@ class GrindProcess : public Process {
         }
     }
 
-    double getNewDelayTime() const {
-        double newDelay = grindDelay + volumetricRateCalculator->getOvershootAdjustMillis(double(grindVolume), currentVolume);
-        ESP_LOGI("GrindProcess", "Setting new delay time - Old: %2f, Expected Volume: %d, Actual Volume: %2f, New Delay: %f",
+    double getNewDelayTime() {
+        double newDelay = grindDelay + volumetricRateCalculator.getOvershootAdjustMillis(double(grindVolume), currentVolume);
+        ESP_LOGI("GrindProcess", "Setting new delay time - Old: %2f, Expected Volume: %f, Actual Volume: %2f, New Delay: %f",
                  grindDelay, grindVolume, currentVolume, newDelay);
         newDelay = std::clamp(newDelay, 0.0, PREDICTIVE_TIME);
         return newDelay;

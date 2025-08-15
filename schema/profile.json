@@ -150,9 +150,10 @@
                   "type": "string",
                   "description": "Whether the target should hit if greater than or less than. Default is gt",
                   "enum": [
-                    "gt",
-                    "lt"
-                  ]
+                    "gte",
+                    "lte"
+                  ],
+                  "default": "gte"
                 },
                 "value": {
                   "type": "number",
