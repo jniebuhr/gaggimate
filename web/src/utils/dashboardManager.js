@@ -2,14 +2,14 @@ const DASHBOARD_LAYOUT_KEY = 'dashboardLayout';
 
 export const getDashboardLayout = () => {
   if (typeof window === 'undefined' || !window.localStorage) {
-    return 'order-first';
+    return DASHBOARD_LAYOUTS.ORDER_FIRST;
   }
 
   try {
-    return localStorage.getItem(DASHBOARD_LAYOUT_KEY) || 'order-first';
+    return localStorage.getItem(DASHBOARD_LAYOUT_KEY) || DASHBOARD_LAYOUTS.ORDER_FIRST;
   } catch (error) {
     console.warn('getDashboardLayout: localStorage access failed:', error);
-    return 'order-first';
+    return DASHBOARD_LAYOUTS.ORDER_FIRST;
   }
 };
 
