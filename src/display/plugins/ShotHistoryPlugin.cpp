@@ -15,7 +15,14 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
     pm->on("controller:volumetric-measurement:bluetooth:change", [this](Event const &event) {
+        // Explicit checks instead of try/catch for embedded systems
         const float weight = event.getFloat("value");
+        
+        // Validate weight data before processing
+        if (isnan(weight) || weight < 0) {
+            return; // Skip invalid weight data
+        }
+        
         const unsigned long now = millis();
         if (lastVolumeSample != 0) {
             const unsigned long timeDiff = now - lastVolumeSample;
@@ -31,7 +38,9 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
 
 void ShotHistoryPlugin::record() {
     static File file;
-    if (recording && controller->getMode() == MODE_BREW) {
+    bool shouldRecord = recording || extendedRecording;
+    
+    if (shouldRecord && (controller->getMode() == MODE_BREW || extendedRecording)) {
         if (!isFileOpen) {
             if (!SPIFFS.exists("/h")) {
                 SPIFFS.mkdir("/h");
@@ -59,8 +68,50 @@ void ShotHistoryPlugin::record() {
         if (isFileOpen) {
             file.println(s.serialize().c_str());
         }
+        
+        // Check for weight stabilization during extended recording
+        if (extendedRecording) {
+            const unsigned long now = millis();
+            
+            // Explicit safety checks instead of try/catch for embedded systems
+            bool canProcessWeight = (controller != nullptr);
+            if (canProcessWeight) {
+                canProcessWeight = controller->isVolumetricAvailable();
+            }
+            
+            if (!canProcessWeight) {
+                // If BLE connection is unstable, end extended recording early
+                extendedRecording = false;
+                finalizeRecording();
+                return;
+            }
+            
+            const float weightDiff = abs(currentBluetoothWeight - lastStableWeight);
+            
+            if (weightDiff < WEIGHT_STABILIZATION_THRESHOLD) {
+                if (lastWeightChangeTime == 0) {
+                    lastWeightChangeTime = now;
+                }
+                // Weight has been stable for the threshold time, stop extended recording
+                if (now - lastWeightChangeTime >= WEIGHT_STABILIZATION_TIME) {
+                    extendedRecording = false;
+                    finalizeRecording();
+                }
+            } else {
+                // Weight changed, reset stabilization timer
+                lastWeightChangeTime = 0;
+                lastStableWeight = currentBluetoothWeight;
+            }
+            
+            // Also stop extended recording after maximum duration
+            if (now - extendedRecordingStart >= EXTENDED_RECORDING_DURATION) {
+                extendedRecording = false;
+                finalizeRecording();
+            }
+        }
     }
-    if (!recording && isFileOpen) {
+    
+    if (!recording && !extendedRecording && isFileOpen) {
         file.close();
         isFileOpen = false;
     }
@@ -73,11 +124,15 @@ void ShotHistoryPlugin::startRecording() {
     }
     shotStart = millis();
     lastVolumeSample = 0;
+    lastWeightChangeTime = 0;
+    extendedRecordingStart = 0;
     currentBluetoothWeight = 0.0f;
+    lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
+    extendedRecording = false;
     headerWritten = false;
 }
 
@@ -93,9 +148,34 @@ unsigned long ShotHistoryPlugin::getTime() {
 
 void ShotHistoryPlugin::endRecording() {
     recording = false;
+    
+    // Check if we have active bluetooth weight data (regardless of volumetric mode)
+    bool hasActiveWeightData = false;
+    
+    if (controller != nullptr) {
+        if (controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
+            hasActiveWeightData = true;
+        }
+    }
+     
+    if (hasActiveWeightData) {
+        // Start extended recording for any shot with active weight data
+        extendedRecording = true;
+        extendedRecordingStart = millis();
+        lastStableWeight = currentBluetoothWeight;
+        lastWeightChangeTime = 0;
+        return; // Don't finalize the recording yet
+    }
+    
+    // For shots without weight data, finalize immediately
+    finalizeRecording();
+}
+
+void ShotHistoryPlugin::finalizeRecording() {
     unsigned long duration = millis() - shotStart;
     if (duration <= 5000) {
         SPIFFS.remove("/h/" + currentId + ".dat");
+        SPIFFS.remove("/h/" + currentId + ".json"); // Also remove notes file if it exists
     } else {
         controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
         cleanupHistory();
@@ -131,12 +211,20 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             File file = root.openNextFile();
             while (file) {
                 if (String(file.name()).endsWith(".dat")) {
-                    JsonObject o = arr.createNestedObject();
+                    JsonObject o = arr.add<JsonObject>();
                     String name = String(file.name());
                     int start = name.lastIndexOf('/') + 1;
                     int end = name.lastIndexOf('.');
-                    o["id"] = name.substring(start, end);
+                    String id = name.substring(start, end);
+                    o["id"] = id;
                     o["history"] = file.readString();
+                    
+                    // Also include notes if they exist
+                    JsonDocument notes;
+                    loadNotes(id, notes);
+                    if (!notes.isNull() && notes.size() > 0) {
+                        o["notes"] = notes;
+                    }
                 }
                 file = root.openNextFile();
             }
@@ -148,13 +236,51 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             String data = file.readString();
             response["history"] = data;
             file.close();
+            
+            // Also include notes if they exist
+            JsonDocument notes;
+            loadNotes(id, notes);
+            if (!notes.isNull() && notes.size() > 0) {
+                response["notes"] = notes;
+            }
         } else {
             response["error"] = "not found";
         }
     } else if (type == "req:history:delete") {
         String id = request["id"].as<String>();
         SPIFFS.remove("/h/" + id + ".dat");
+        SPIFFS.remove("/h/" + id + ".json"); // Also remove notes file if it exists
         response["msg"] = "Ok";
+    } else if (type == "req:history:notes:get") {
+        String id = request["id"].as<String>();
+        JsonDocument notes;
+        loadNotes(id, notes);
+        response["notes"] = notes;
+    } else if (type == "req:history:notes:save") {
+        String id = request["id"].as<String>();
+        JsonDocument notes = request["notes"];
+        notes["timestamp"] = getTime();
+        saveNotes(id, notes);
+        response["msg"] = "Ok";
+    }
+}
+
+void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
+    File file = SPIFFS.open("/h/" + id + ".json", FILE_WRITE);
+    if (file) {
+        String notesStr;
+        serializeJson(notes, notesStr);
+        file.print(notesStr);
+        file.close();
+    }
+}
+
+void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
+    File file = SPIFFS.open("/h/" + id + ".json", "r");
+    if (file) {
+        String notesStr = file.readString();
+        file.close();
+        deserializeJson(notes, notesStr);
     }
 }
 
