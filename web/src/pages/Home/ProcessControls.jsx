@@ -105,12 +105,14 @@ const ProcessControls = props => {
 
   const startFlush = useCallback(() => {
     setIsFlushing(true);
-    apiService.request({
-      tp: 'req:flush:start',
-    }).catch(error => {
-      console.error('Flush start failed:', error);
-      setIsFlushing(false);
-    });
+    apiService
+      .request({
+        tp: 'req:flush:start',
+      })
+      .catch(error => {
+        console.error('Flush start failed:', error);
+        setIsFlushing(false);
+      });
   }, [apiService]);
 
   const handleButtonClick = () => {
@@ -174,8 +176,8 @@ const ProcessControls = props => {
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
           <i className='fa fa-gauge text-base-content/60' />
           <span className='text-base-content'>
-            {status.value.currentPressure?.toFixed(0) || 0} /{' '}
-            {status.value.targetPressure?.toFixed(0) || 0} bar
+            {status.value.currentPressure?.toFixed(1) || 0} /{' '}
+            {status.value.targetPressure?.toFixed(1) || 0} bar
           </span>
         </div>
       </div>
@@ -262,12 +264,12 @@ const ProcessControls = props => {
             <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
               <i className={`text-2xl ${getButtonIcon()}`} />
             </button>
-            
+
             {brew && !active && !finished && (
-              <button 
-                className='btn rounded-full text-base-content/60 hover:text-base-content transition-color duration-200 text-sm'
+              <button
+                className='btn text-base-content/60 hover:text-base-content transition-color rounded-full text-sm duration-200'
                 onClick={startFlush}
-                title="Click to flush water"
+                title='Click to flush water'
               >
                 <i className='fa-solid fa-tint' />
                 Flush

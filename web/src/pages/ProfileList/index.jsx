@@ -10,13 +10,14 @@ import {
   CategoryScale,
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
-import { ExtendedContent } from './ExtendedContent.jsx';
+import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
+import { tryConvertProfile } from './utils.js';
 
 Chart.register(
   LineController,
@@ -156,7 +157,11 @@ function ProfileCard({
             className='flex flex-row items-center gap-2 overflow-auto py-2'
             aria-label={`Profile details for ${data.label}`}
           >
-            {data.type === 'pro' ? <ExtendedContent data={data} /> : <SimpleContent data={data} />}
+            {data.type === 'pro' ? (
+              <ExtendedProfileChart data={data} className='max-h-36' />
+            ) : (
+              <SimpleContent data={data} />
+            )}
           </div>
         </div>
       </div>
@@ -310,6 +315,7 @@ export function ProfileList() {
         if (typeof result === 'string') {
           let profiles = JSON.parse(result);
           if (!Array.isArray(profiles)) {
+            profiles = tryConvertProfile(profiles);
             profiles = [profiles];
           }
           for (const p of profiles) {

@@ -3,7 +3,8 @@
 #include <WiFi.h>
 #include <display/config.h>
 #include <display/core/Controller.h>
-#include <display/core/Process.h>
+#include <display/core/process/BrewProcess.h>
+#include <display/core/process/Process.h>
 #include <display/core/zones.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/LilyGoTDisplayDriver.h>

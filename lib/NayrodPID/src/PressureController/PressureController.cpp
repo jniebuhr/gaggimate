@@ -91,7 +91,7 @@ float PressureController::getAvailableFlow() const {
     const float P2 = P * P;
     const float P3 = P2 * P;
     const float Q = PUMP_FLOW_POLY[0] * P3 + PUMP_FLOW_POLY[1] * P2 + PUMP_FLOW_POLY[2] * P + PUMP_FLOW_POLY[3];
-    
+
     return Q;
 }
 

@@ -57,6 +57,41 @@
             "type": "number",
             "minimum": 0
           },
+          "transition": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "instant",
+                  "linear",
+                  "ease-in",
+                  "ease-out",
+                  "ease-in-out"
+                ]
+              },
+              "duration": {
+                "type": "number"
+              },
+              "adaptive": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "duration"
+            ]
+          },
+          "temperature": {
+            "type": "number",
+            "description": "When this is set it will override the temperature of the profile while running",
+            "minimum": 0,
+            "maximum": 165
+          },
           "pump": {
             "oneOf": [
               {
@@ -79,11 +114,13 @@
                   },
                   "pressure": {
                     "type": "number",
-                    "minimum": 0
+                    "description": "The target or limit pressure of the phase. If it's set to -1, it will use the current pressure at the start of the phase",
+                    "minimum": -1
                   },
                   "flow": {
                     "type": "number",
-                    "minimum": 0
+                    "description": "The target or limit flow of the phase. If it's set to -1, it will use the current flow at the start of the phase",
+                    "minimum": -1
                   }
                 },
                 "required": [
@@ -104,8 +141,19 @@
                   "type": "string",
                   "enum": [
                     "volumetric",
-                    "pressure"
+                    "pressure",
+                    "flow",
+                    "pumped"
                   ]
+                },
+                "operator": {
+                  "type": "string",
+                  "description": "Whether the target should hit if greater than or less than. Default is gt",
+                  "enum": [
+                    "gte",
+                    "lte"
+                  ],
+                  "default": "gte"
                 },
                 "value": {
                   "type": "number",

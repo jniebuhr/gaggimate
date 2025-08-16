@@ -6,8 +6,8 @@
 #include "PluginManager.h"
 #include "Settings.h"
 #include <WiFi.h>
-#include <display/core/Process.h>
 #include <display/core/ProfileManager.h>
+#include <display/core/process/Process.h>
 #ifndef GAGGIMATE_HEADLESS
 #include <display/ui/default/DefaultUI.h>
 #endif
@@ -36,7 +36,7 @@ class Controller {
     void setTargetGrindVolume(double volume);
 
     int getMode() const;
-    int getTargetTemp();
+    int getTargetTemp() const;
     int getTargetDuration() const;
     int getTargetGrindDuration() const;
     virtual int getCurrentTemp() const { return currentTemp; }
