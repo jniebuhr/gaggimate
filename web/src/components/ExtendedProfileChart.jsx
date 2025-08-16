@@ -77,7 +77,7 @@ function prepareData(phases, target) {
     currentPhase = phases[phaseIndex];
     const alpha = applyEasing(
       phaseTime / currentPhase.duration,
-      currentPhase.transition.type || 'linear',
+      currentPhase?.transition?.type || 'linear',
     );
     currentFlow = phaseStartFlow + (effectiveFlow - phaseStartFlow) * alpha;
     currentPressure = phaseStartPressure + (effectivePressure - phaseStartPressure) * alpha;

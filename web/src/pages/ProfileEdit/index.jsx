@@ -31,6 +31,10 @@ export function ProfileEdit() {
               valve: 1,
               pump: 100,
               duration: 3,
+              transition: {
+                type: 'instant',
+                duration: 0,
+              },
             },
             {
               name: 'Bloom',
@@ -38,6 +42,10 @@ export function ProfileEdit() {
               valve: 1,
               pump: 0,
               duration: 5,
+              transition: {
+                type: 'instant',
+                duration: 0,
+              },
             },
             {
               name: 'Pump',
@@ -51,6 +59,10 @@ export function ProfileEdit() {
                   value: 36,
                 },
               ],
+              transition: {
+                type: 'instant',
+                duration: 0,
+              },
             },
           ],
         });
