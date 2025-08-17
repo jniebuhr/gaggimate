@@ -59,6 +59,7 @@ function parseJsonProfile(input) {
       phase.transition = {
         type: p.target.curve.toLowerCase().replace('_', '-'),
         duration: p.target.time / 1000,
+        adaptive: true,
       };
 
       const conditions = p.stopConditions || {};

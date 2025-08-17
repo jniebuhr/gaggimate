@@ -79,8 +79,14 @@ function prepareData(phases, target) {
       phaseTime / currentPhase.duration,
       currentPhase?.transition?.type || 'linear',
     );
-    currentFlow = phaseStartFlow + (effectiveFlow - phaseStartFlow) * alpha;
-    currentPressure = phaseStartPressure + (effectivePressure - phaseStartPressure) * alpha;
+    currentFlow =
+      currentPhase.pump.target === 'flow'
+        ? phaseStartFlow + (effectiveFlow - phaseStartFlow) * alpha
+        : currentPhase.pump.flow;
+    currentPressure =
+      currentPhase.pump.target === 'pressure'
+        ? phaseStartPressure + (effectivePressure - phaseStartPressure) * alpha
+        : currentPhase.pump.pressure;
     data.push({
       x: time,
       y: target === 'pressure' ? currentPressure : currentFlow,
