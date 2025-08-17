@@ -227,7 +227,11 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
 
   return (
-    <div className='p-2' role='group' aria-label={`Phase ${index + 1} configuration`}>
+    <div
+      className='grid grid-cols-1 gap-2 p-2'
+      role='group'
+      aria-label={`Phase ${index + 1} configuration`}
+    >
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-type`} className='mb-2 block text-sm font-medium'>
@@ -292,7 +296,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
         </div>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-target`} className='mb-2 block text-sm font-medium'>
-            Volumetric Target
+            Temperature (0 = Default)
           </label>
           <div className='input-group'>
             <label htmlFor={`phase-${index}-target`} className='input w-full'>
@@ -300,13 +304,13 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 id={`phase-${index}-target`}
                 className='grow'
                 type='number'
-                value={targetWeight}
-                onChange={e => onVolumetricTargetChange(parseFloat(e.target.value))}
-                aria-label='Target weight in grams'
+                value={phase.temperature || 0}
+                onChange={e => onFieldChange('temperature', parseFloat(e.target.value))}
+                aria-label='Target temperature'
                 min='0'
                 step='0.1'
               />
-              <span aria-label='grams'>g</span>
+              <span aria-label='celsius'>°C</span>
             </label>
           </div>
         </div>
@@ -464,6 +468,124 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
           </div>
         </div>
       )}
+
+      <div className='grid grid-cols-1 gap-4'>
+        <div className='form-control'>
+          <fieldset>
+            <legend className='mb-2 block text-sm font-medium'>Transition</legend>
+            <div className='join' role='group' aria-label='Pump mode selection'>
+              <button
+                type='button'
+                className={`join-item btn btn-sm ${(phase.transition?.type || 'instant') === 'instant' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() =>
+                  onFieldChange('transition', { ...phase.transition, type: 'instant', duration: 0 })
+                }
+                aria-pressed={mode === 'off'}
+                aria-label='Instant'
+              >
+                Instant
+              </button>
+              <button
+                type='button'
+                className={`join-item btn btn-sm ${phase.transition?.type === 'linear' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => onFieldChange('transition', { ...phase.transition, type: 'linear' })}
+                aria-pressed={phase.transition?.type === 'linear'}
+                aria-label='Linear'
+              >
+                Linear
+              </button>
+              <button
+                type='button'
+                className={`join-item btn btn-sm ${phase.transition?.type === 'ease-in' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() =>
+                  onFieldChange('transition', { ...phase.transition, type: 'ease-in' })
+                }
+                aria-pressed={phase.transition?.type === 'ease-in'}
+                aria-label='Ease In'
+              >
+                Ease In
+              </button>
+              <button
+                type='button'
+                className={`join-item btn btn-sm ${phase.transition?.type === 'ease-out' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() =>
+                  onFieldChange('transition', { ...phase.transition, type: 'ease-out' })
+                }
+                aria-pressed={phase.transition?.type === 'ease-out'}
+                aria-label='Ease Out'
+              >
+                Ease Out
+              </button>
+              <button
+                type='button'
+                className={`join-item btn btn-sm ${phase.transition?.type === 'ease-in-out' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() =>
+                  onFieldChange('transition', { ...phase.transition, type: 'ease-in-out' })
+                }
+                aria-pressed={phase.transition?.type === 'ease-in-out'}
+                aria-label='Ease In Out'
+              >
+                Ease In Out
+              </button>
+            </div>
+          </fieldset>
+        </div>
+      </div>
+      {phase.transition?.type !== 'instant' && (
+        <div className='grid grid-cols-1 gap-4'>
+          <div className='form-control'>
+            <label
+              htmlFor={`phase-${index}-transition-duration`}
+              className='mb-2 block text-sm font-medium'
+            >
+              Transition Duration
+            </label>
+            <div className='input-group'>
+              <label htmlFor={`phase-${index}-transition-duration`} className='input w-full'>
+                <input
+                  id={`phase-${index}-transition-duration`}
+                  className='grow'
+                  type='number'
+                  value={phase.transition?.duration || 0}
+                  onChange={e =>
+                    onFieldChange('transition', {
+                      ...phase.transition,
+                      duration: parseFloat(e.target.value),
+                    })
+                  }
+                  aria-label='Transition duration in seconds'
+                  min='0'
+                  step='0.1'
+                />
+                <span aria-label='grams'>s</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className='grid grid-cols-1 gap-4'>
+        <div className='form-control'>
+          <label htmlFor={`phase-${index}-target`} className='mb-2 block text-sm font-medium'>
+            Volumetric Target
+          </label>
+          <div className='input-group'>
+            <label htmlFor={`phase-${index}-target`} className='input w-full'>
+              <input
+                id={`phase-${index}-target`}
+                className='grow'
+                type='number'
+                value={targetWeight}
+                onChange={e => onVolumetricTargetChange(parseFloat(e.target.value))}
+                aria-label='Target weight in grams'
+                min='0'
+                step='0.1'
+              />
+              <span aria-label='grams'>g</span>
+            </label>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
