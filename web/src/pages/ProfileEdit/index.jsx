@@ -63,6 +63,7 @@ export function ProfileEdit() {
                 type: 'instant',
                 duration: 0,
               },
+              w,
             },
           ],
         });

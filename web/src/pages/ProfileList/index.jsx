@@ -17,7 +17,7 @@ import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
-import { tryConvertProfile } from './utils.js';
+import { parseProfile } from './utils.js';
 
 Chart.register(
   LineController,
@@ -313,11 +313,7 @@ export function ProfileList() {
       reader.onload = async e => {
         const result = e.target.result;
         if (typeof result === 'string') {
-          let profiles = JSON.parse(result);
-          if (!Array.isArray(profiles)) {
-            profiles = tryConvertProfile(profiles);
-            profiles = [profiles];
-          }
+          const profiles = parseProfile(result);
           for (const p of profiles) {
             await apiService.request({ tp: 'req:profiles:save', profile: p });
           }
@@ -366,7 +362,7 @@ export function ProfileList() {
           className='hidden'
           id='profileImport'
           type='file'
-          accept='.json,application/json'
+          accept='.json,application/json,.tcl'
           aria-label='Select a JSON file containing profile data to import'
         />
       </div>

@@ -130,7 +130,7 @@ class BrewProcess : public Process {
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
         waterPumped += currentFlow / 10.0f; // Add current flow divided to 100ms to water pumped counter
-        if (isCurrentPhaseFinished() && processPhase == ProcessPhase::RUNNING) {
+        while (isCurrentPhaseFinished() && processPhase == ProcessPhase::RUNNING) {
             previousPhaseFinished = millis();
             if (phaseIndex + 1 < profile.phases.size()) {
                 waterPumped = 0.0f;

@@ -1,4 +1,24 @@
-export function tryConvertProfile(input) {
+import { TclConverter } from './TclConverter.js';
+
+export function parseProfile(input) {
+  try {
+    let profiles = JSON.parse(input);
+    if (!Array.isArray(profiles)) {
+      profiles = parseJsonProfile(profiles);
+      profiles = [profiles];
+    }
+    return profiles;
+  } catch (ignored) {
+    const result = TclConverter.toGaggiMate(input);
+    if (result.ok) {
+      return [result.json];
+    }
+    // Input isn't JSON, try TCL
+  }
+  return [];
+}
+
+function parseJsonProfile(input) {
   if (input.waterTemperature) {
     let profile = {
       label: input.name,
@@ -56,6 +76,8 @@ export function tryConvertProfile(input) {
       }
       if (isPositive(conditions.weight)) {
         phase.targets.push({ type: 'volumetric', value: conditions.weight });
+      } else if (isPositive(input.globalStopConditions?.weight)) {
+        phase.targets.push({ type: 'volumetric', value: input.globalStopConditions.weight });
       }
       if (isPositive(conditions.waterPumpedInPhase)) {
         phase.targets.push({ type: 'pumped', value: conditions.waterPumpedInPhase });
