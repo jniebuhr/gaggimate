@@ -120,7 +120,7 @@ function getChartData(data) {
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            maxTicksLimit: window.innerWidth < 640 ? 5 : 5,
+            maxTicksLimit: 5,
           },
         },
       },

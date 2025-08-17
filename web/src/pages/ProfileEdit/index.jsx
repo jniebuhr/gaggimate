@@ -113,7 +113,7 @@ export function ProfileEdit() {
           onChange={data => setData(data)}
           onSave={onSave}
           saving={saving}
-          pressureAvailable={pressureAvailable}
+          pressureAvailable={pressureAvailable.value}
         />
       )}
       {data?.type === 'pro' && (
@@ -122,7 +122,7 @@ export function ProfileEdit() {
           onChange={data => setData(data)}
           onSave={onSave}
           saving={saving}
-          pressureAvailable={pressureAvailable}
+          pressureAvailable={pressureAvailable.value}
         />
       )}
     </>

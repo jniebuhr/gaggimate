@@ -13,7 +13,7 @@ const pressureDatasetDefaults = {
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
   segment: {
-    borderColor: ctx => skipped(ctx, 'rgb(75, 192, 192, 0.4)'),
+    borderColor: ctx => skipped(ctx, 'rgba(75, 192, 192, 0.6)'),
     borderDash: ctx => skipped(ctx, [6, 6]),
   },
   spanGaps: true,
@@ -25,7 +25,7 @@ const flowDatasetDefaults = {
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
   segment: {
-    borderColor: ctx => skipped(ctx, 'rgb(255, 192, 192, 0.4)'),
+    borderColor: ctx => skipped(ctx, 'rgba(255, 192, 192, 0.6)'),
     borderDash: ctx => skipped(ctx, [6, 6]),
   },
   spanGaps: true,

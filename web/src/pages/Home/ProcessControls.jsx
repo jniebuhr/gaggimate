@@ -267,7 +267,7 @@ const ProcessControls = props => {
 
             {brew && !active && !finished && (
               <button
-                className='btn text-base-content/60 hover:text-base-content transition-color rounded-full text-sm duration-200'
+                className='btn text-base-content/60 hover:text-base-content rounded-full text-sm transition-colors duration-200'
                 onClick={startFlush}
                 title='Click to flush water'
               >
