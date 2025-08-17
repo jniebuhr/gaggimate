@@ -40,6 +40,11 @@ function parseJsonProfile(input) {
         duration: Math.max(p.target.time, p.stopConditions.time) / 1000,
         targets: [],
         temperature: isPositive(p.waterTemperature) ? p.waterTemperature : 0,
+        transition: {
+          type: p.target.curve.toLowerCase().replace('_', '-'),
+          duration: p.target.time / 1000,
+          adaptive: true,
+        }
       };
       if (p.target.end > 0) {
         if (p.type == 'PRESSURE') {
@@ -56,11 +61,6 @@ function parseJsonProfile(input) {
           };
         }
       }
-      phase.transition = {
-        type: p.target.curve.toLowerCase().replace('_', '-'),
-        duration: p.target.time / 1000,
-        adaptive: true,
-      };
 
       const conditions = p.stopConditions || {};
       if (isPositive(conditions.pressureAbove)) {
