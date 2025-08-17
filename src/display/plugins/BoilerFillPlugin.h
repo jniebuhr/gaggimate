@@ -1,6 +1,7 @@
 #ifndef BOILERFILLPLUGIN_H
 #define BOILERFILLPLUGIN_H
-#include "../core/Plugin.h"
+
+#include <display/core/Plugin.h>
 
 struct Event;
 

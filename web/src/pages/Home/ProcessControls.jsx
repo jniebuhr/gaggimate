@@ -176,8 +176,8 @@ const ProcessControls = props => {
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
           <i className='fa fa-gauge text-base-content/60' />
           <span className='text-base-content'>
-            {status.value.currentPressure?.toFixed(0) || 0} /{' '}
-            {status.value.targetPressure?.toFixed(0) || 0} bar
+            {status.value.currentPressure?.toFixed(1) || 0} /{' '}
+            {status.value.targetPressure?.toFixed(1) || 0} bar
           </span>
         </div>
       </div>
@@ -267,7 +267,7 @@ const ProcessControls = props => {
 
             {brew && !active && !finished && (
               <button
-                className='btn text-base-content/60 hover:text-base-content transition-color rounded-full text-sm duration-200'
+                className='btn text-base-content/60 hover:text-base-content transition-colors rounded-full text-sm duration-200'
                 onClick={startFlush}
                 title='Click to flush water'
               >

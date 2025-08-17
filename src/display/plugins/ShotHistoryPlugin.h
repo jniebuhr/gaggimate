@@ -1,9 +1,9 @@
 #ifndef SHOTHISTORYPLUGIN_H
 #define SHOTHISTORYPLUGIN_H
 
-#include "../core/Plugin.h"
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
+#include <display/core/Plugin.h>
 #include <display/core/utils.h>
 
 constexpr size_t SHOT_HISTORY_INTERVAL = 100;

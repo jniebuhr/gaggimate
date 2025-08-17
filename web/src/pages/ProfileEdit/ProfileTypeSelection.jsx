@@ -27,12 +27,18 @@ export function ProfileTypeSelection({ onSelect }) {
 
       <Card sm={10} lg={5} title='Pro Profile'>
         <div
-          className='text-base-content/40 flex cursor-not-allowed flex-col items-center justify-center gap-2 p-4'
+          className='text-base-content hover:text-primary flex cursor-pointer flex-col items-center justify-center gap-2 p-4 transition-colors'
+          onClick={() => onSelect('pro')}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSelect('pro');
+            }
+          }}
           role='button'
-          aria-label='Pro profile type (coming soon)'
-          aria-disabled='true'
+          tabIndex={1}
+          aria-label='Select Pro profile type'
         >
-          <span className='text-base-content/60 text-sm font-bold'>Coming soon</span>
           <i className='fa fa-chart-simple text-5xl' aria-hidden='true' />
           <span className='text-lg'>Pro profile</span>
           <span className='text-base-content/60 text-center text-sm'>

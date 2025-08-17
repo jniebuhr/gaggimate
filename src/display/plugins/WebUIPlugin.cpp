@@ -3,11 +3,15 @@
 #include <SPIFFS.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
+#include <display/core/process/BrewProcess.h>
 #include <display/models/profile.h>
 
 #include "BLEScalePlugin.h"
 #include "ShotHistoryPlugin.h"
+#include <string>
+#include <unordered_map>
 #include <vector>
+static std::unordered_map<uint32_t, std::string> rxBuffers;
 
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
 
@@ -152,54 +156,9 @@ void WebUIPlugin::setupServer() {
                 ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DISCONNECT) {
                 ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
+                rxBuffers.erase(client->id());
             } else if (type == WS_EVT_DATA) {
-                auto *info = static_cast<AwsFrameInfo *>(arg);
-                if (info->final && info->index == 0 && info->len == len) {
-                    if (info->opcode == WS_TEXT) {
-                        data[len] = 0;
-                        ESP_LOGI("WebUIPlugin", "Received request: %", (char *)data);
-                        JsonDocument doc;
-                        DeserializationError err = deserializeJson(doc, data);
-                        if (!err) {
-                            String msgType = doc["tp"].as<String>();
-                            if (msgType.startsWith("req:profiles:")) {
-                                handleProfileRequest(client->id(), doc);
-                            } else if (msgType == "req:ota-settings") {
-                                handleOTASettings(client->id(), doc);
-                            } else if (msgType == "req:ota-start") {
-                                handleOTAStart(client->id(), doc);
-                            } else if (msgType == "req:autotune-start") {
-                                handleAutotuneStart(client->id(), doc);
-                            } else if (msgType == "req:process:activate") {
-                                controller->activate();
-                            } else if (msgType == "req:process:deactivate") {
-                                controller->deactivate();
-                            } else if (msgType == "req:process:clear") {
-                                controller->clear();
-                            } else if (msgType == "req:change-mode") {
-                                if (doc["mode"].is<uint8_t>()) {
-                                    auto mode = doc["mode"].as<uint8_t>();
-                                    controller->deactivate();
-                                    controller->clear();
-                                    controller->setMode(mode);
-                                }
-                            } else if (msgType == "req:change-brew-target") {
-                                if (doc["target"].is<uint8_t>()) {
-                                    auto target = doc["target"].as<uint8_t>();
-                                    controller->getSettings().setVolumetricTarget(target);
-                                }
-                            } else if (msgType.startsWith("req:history")) {
-                                JsonDocument resp;
-                                ShotHistory.handleRequest(doc, resp);
-                                String msg;
-                                serializeJson(resp, msg);
-                                ws.text(client->id(), msg);
-                            } else if (msgType == "req:flush:start") {
-                                handleFlushStart(client->id(), doc);
-                            }
-                        }
-                    }
-                }
+                handleWebSocketData(server, client, type, arg, data, len);
             }
         });
     server.addHandler(&ws);
@@ -230,6 +189,74 @@ void WebUIPlugin::stop() {
         dnsServer = nullptr;
     }
     serverRunning = false;
+}
+
+void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg,
+                                      uint8_t *data, size_t len) {
+
+    auto *info = static_cast<AwsFrameInfo *>(arg);
+    const uint32_t cid = client->id();
+
+    if (info->index == 0) {
+        auto &buf = rxBuffers[cid];
+        buf.clear();
+        if (info->len <= 64 * 1024) {
+            buf.reserve(info->len);
+        }
+    }
+
+    auto &buf = rxBuffers[cid];
+    buf.append(reinterpret_cast<const char *>(data), len);
+    const bool isFinal = info->final && (info->index + len) == info->len;
+
+    // If this is the final frame of the message, process and clear
+    if (isFinal) {
+        if (info->opcode == WS_TEXT) {
+            ESP_LOGV("WebUIPlugin", "Received request: %.*s", (int)buf.size(), buf.c_str());
+            JsonDocument doc;
+            DeserializationError err = deserializeJson(doc, buf.c_str());
+            if (!err) {
+                String msgType = doc["tp"].as<String>();
+                if (msgType.startsWith("req:profiles:")) {
+                    handleProfileRequest(client->id(), doc);
+                } else if (msgType == "req:ota-settings") {
+                    handleOTASettings(client->id(), doc);
+                } else if (msgType == "req:ota-start") {
+                    handleOTAStart(client->id(), doc);
+                } else if (msgType == "req:autotune-start") {
+                    handleAutotuneStart(client->id(), doc);
+                } else if (msgType == "req:process:activate") {
+                    controller->activate();
+                } else if (msgType == "req:process:deactivate") {
+                    controller->deactivate();
+                } else if (msgType == "req:process:clear") {
+                    controller->clear();
+                } else if (msgType == "req:change-mode") {
+                    if (doc["mode"].is<uint8_t>()) {
+                        auto mode = doc["mode"].as<uint8_t>();
+                        controller->deactivate();
+                        controller->clear();
+                        controller->setMode(mode);
+                    }
+                } else if (msgType == "req:change-brew-target") {
+                    if (doc["target"].is<uint8_t>()) {
+                        auto target = doc["target"].as<uint8_t>();
+                        controller->getSettings().setVolumetricTarget(target);
+                    }
+                } else if (msgType.startsWith("req:history")) {
+                    JsonDocument resp;
+                    ShotHistory.handleRequest(doc, resp);
+                    String msg;
+                    serializeJson(resp, msg);
+                    ws.text(client->id(), msg);
+                } else if (msgType == "req:flush:start") {
+                    handleFlushStart(client->id(), doc);
+                }
+            }
+        }
+        // Done with this message
+        rxBuffers.erase(cid);
+    }
 }
 
 void WebUIPlugin::handleOTASettings(uint32_t clientId, JsonDocument &request) {

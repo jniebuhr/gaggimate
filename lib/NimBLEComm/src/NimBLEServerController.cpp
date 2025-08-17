@@ -169,7 +169,9 @@ void NimBLEServerController::setInfo(const String infoString) {
 
 void NimBLEServerController::registerPidControlCallback(const pid_control_callback_t &callback) { pidControlCallback = callback; }
 
-void NimBLEServerController::registerPumpModelCoeffsCallback(const pump_model_coeffs_callback_t &callback) { pumpModelCoeffsCallback = callback; }
+void NimBLEServerController::registerPumpModelCoeffsCallback(const pump_model_coeffs_callback_t &callback) {
+    pumpModelCoeffsCallback = callback;
+}
 
 // BLEServerCallbacks override
 void NimBLEServerController::onConnect(NimBLEServer *pServer) {
