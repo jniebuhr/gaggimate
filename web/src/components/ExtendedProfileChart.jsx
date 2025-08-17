@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(annotationPlugin);
 
 const POINT_INTERVAL = 0.1; // s
 
@@ -111,7 +114,7 @@ function prepareData(phases, target) {
   return data;
 }
 
-function makeChartData(data) {
+function makeChartData(data, selectedPhase) {
   let duration = 0;
   for (const phase of data.phases) {
     duration += parseFloat(phase.duration);
@@ -135,6 +138,7 @@ function makeChartData(data) {
       interaction: {
         intersect: false,
       },
+      plugins: {},
       animations: false,
       radius: 0,
       scales: {
@@ -181,13 +185,38 @@ function makeChartData(data) {
       },
     },
   };
+  if (selectedPhase !== null) {
+    let start = 0;
+    for (let i = 0; i < selectedPhase; i++) {
+      start += parseFloat(data.phases[i].duration);
+    }
+    let end = start + parseFloat(data.phases[selectedPhase].duration);
+    chartData.options.plugins.annotation = {
+      drawTime: 'afterDraw',
+      annotations: [
+        {
+          id: 'box1',
+          type: 'box',
+          xMin: start,
+          xMax: end,
+          backgroundColor: 'rgba(129, 207, 209, 0.2)',
+          borderColor: 'rgba(100, 100, 100, 0)',
+        },
+      ],
+    };
+  }
+  console.log(chartData);
   return chartData;
 }
 
-export function ExtendedProfileChart({ data, className = 'max-h-36 w-full' }) {
+export function ExtendedProfileChart({
+  data,
+  className = 'max-h-36 w-full',
+  selectedPhase = null,
+}) {
   const ref = useRef();
   const [chart, setChart] = useState(null);
-  const config = makeChartData(data);
+  const config = makeChartData(data, selectedPhase);
 
   useEffect(() => {
     const ct = new Chart(ref.current, config);
@@ -204,11 +233,11 @@ export function ExtendedProfileChart({ data, className = 'max-h-36 w-full' }) {
     if (!chart) {
       return;
     }
-    const config = makeChartData(data);
+    const config = makeChartData(data, selectedPhase);
     chart.data = config.data;
     chart.options = config.options;
     chart.update();
-  }, [data, chart]);
+  }, [data, chart, selectedPhase]);
   return (
     <div className={`flex-grow`}>
       <canvas className={className} ref={ref} />

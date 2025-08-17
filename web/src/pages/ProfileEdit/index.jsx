@@ -34,6 +34,7 @@ export function ProfileEdit() {
               transition: {
                 type: 'instant',
                 duration: 0,
+                adaptive: true,
               },
             },
             {
@@ -45,6 +46,7 @@ export function ProfileEdit() {
               transition: {
                 type: 'instant',
                 duration: 0,
+                adaptive: true,
               },
             },
             {
@@ -62,6 +64,7 @@ export function ProfileEdit() {
               transition: {
                 type: 'instant',
                 duration: 0,
+                adaptive: true,
               },
               w,
             },

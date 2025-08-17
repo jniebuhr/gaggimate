@@ -44,7 +44,7 @@ function parseJsonProfile(input) {
           type: p.target.curve.toLowerCase().replace('_', '-'),
           duration: p.target.time / 1000,
           adaptive: true,
-        }
+        },
       };
       if (p.target.end > 0) {
         if (p.type == 'PRESSURE') {
