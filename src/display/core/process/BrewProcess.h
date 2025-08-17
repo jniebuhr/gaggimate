@@ -202,6 +202,11 @@ class BrewProcess : public Process {
         effectivePressure =
             (currentPhase.pumpAdvanced.pressure == -1.0f) ? phaseStartPressure : currentPhase.pumpAdvanced.pressure;
         effectiveFlow = (currentPhase.pumpAdvanced.flow == -1.0f) ? phaseStartFlow : currentPhase.pumpAdvanced.flow;
+        if (currentPhase.pumpAdvanced.target == PumpTarget::PUMP_TARGET_FLOW) {
+            phaseStartPressure = effectivePressure;
+        } else {
+            phaseStartFlow = effectiveFlow;
+        }
     }
 
     float transitionAlpha() const {
