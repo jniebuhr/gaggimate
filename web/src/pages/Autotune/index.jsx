@@ -48,7 +48,7 @@ export function Autotune() {
                   <Spinner size={8} />
                   <span className='text-lg font-medium'>Autotune in Progress</span>
                 </div>
-                <div className='alert alert-info max-w-md'>
+                <div className='alert alert-warning max-w-md'>
                   <span>
                     Please wait while the system optimizes your PID settings. This may take up to 30
                     seconds.

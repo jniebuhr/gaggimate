@@ -767,7 +767,7 @@ export function Settings() {
         </div>
 
         <div className='pt-4 lg:col-span-10'>
-          <div className='alert alert-info'>
+          <div className='alert alert-warning'>
             <span>Some options like WiFi, NTP and managing Plugins require a restart.</span>
           </div>
 
