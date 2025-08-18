@@ -25440,7 +25440,7 @@
                                 "flags": 17,
                                 "strtype": "OBJECT/Size",
                                 "intarray": [
-                                  72,
+                                  90,
                                   30
                                 ],
                                 "InheritedType": 7
@@ -25513,7 +25513,7 @@
                               {
                                 "nid": 1745792815,
                                 "strtype": "LABEL/Text",
-                                "strval": "100g",
+                                "strval": "100.5g",
                                 "InheritedType": 10
                               },
                               {
@@ -55006,10 +55006,10 @@
     "theme_dark": false,
     "theme_color1": 5,
     "theme_color2": 0,
-    "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
-    "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
+    "uiExportFolderPath": "/home/drag/gitprojects/gaggimate/src/display/ui/default/lvgl",
+    "projectExportFolderPath": "/home/drag/gitprojects/gaggimate",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 424,
+    "backup_cnt": 425,
     "autosave_cnt": 0,
     "group_color_cnt": 0,
     "lvgl_version": "8.3.11",
