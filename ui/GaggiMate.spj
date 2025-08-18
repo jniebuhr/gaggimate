@@ -24327,7 +24327,7 @@
                             "flags": 17,
                             "strtype": "OBJECT/Size",
                             "intarray": [
-                              315,
+                              400,
                               30
                             ],
                             "InheritedType": 7
@@ -24439,7 +24439,7 @@
                                   {
                                     "nid": 10450,
                                     "strtype": "_style/Text_Font",
-                                    "strval": "montserrat_24",
+                                    "strval": "montserrat_26",
                                     "InheritedType": 3
                                   }
                                 ],
@@ -24696,7 +24696,7 @@
                                 "flags": 17,
                                 "strtype": "OBJECT/Size",
                                 "intarray": [
-                                  80,
+                                  72,
                                   30
                                 ],
                                 "InheritedType": 7
@@ -24769,7 +24769,7 @@
                               {
                                 "nid": 2101794351,
                                 "strtype": "LABEL/Text",
-                                "strval": "93°C",
+                                "strval": "100°C",
                                 "InheritedType": 10
                               },
                               {
@@ -24801,7 +24801,7 @@
                                       {
                                         "nid": 10430,
                                         "strtype": "_style/Text_Align",
-                                        "strval": "CENTER",
+                                        "strval": "LEFT",
                                         "InheritedType": 3
                                       },
                                       {
@@ -25078,7 +25078,7 @@
                                 "flags": 17,
                                 "strtype": "OBJECT/Size",
                                 "intarray": [
-                                  80,
+                                  60,
                                   30
                                 ],
                                 "InheritedType": 7
@@ -25183,7 +25183,7 @@
                                       {
                                         "nid": 10430,
                                         "strtype": "_style/Text_Align",
-                                        "strval": "CENTER",
+                                        "strval": "LEFT",
                                         "InheritedType": 3
                                       },
                                       {
@@ -25191,6 +25191,17 @@
                                         "strtype": "_style/Text_Font",
                                         "strval": "montserrat_24",
                                         "InheritedType": 3
+                                      },
+                                      {
+                                        "nid": 11110,
+                                        "strtype": "_style/Padding",
+                                        "intarray": [
+                                          2,
+                                          0,
+                                          0,
+                                          0
+                                        ],
+                                        "InheritedType": 7
                                       }
                                     ],
                                     "InheritedType": 1
@@ -25418,7 +25429,7 @@
                                 "flags": 17,
                                 "strtype": "OBJECT/Position",
                                 "intarray": [
-                                  80,
+                                  104,
                                   -120
                                 ],
                                 "InheritedType": 7
@@ -25428,7 +25439,7 @@
                                 "flags": 17,
                                 "strtype": "OBJECT/Size",
                                 "intarray": [
-                                  66,
+                                  72,
                                   30
                                 ],
                                 "InheritedType": 7
@@ -25501,7 +25512,7 @@
                               {
                                 "nid": 1745792815,
                                 "strtype": "LABEL/Text",
-                                "strval": "0:30",
+                                "strval": "100g",
                                 "InheritedType": 10
                               },
                               {
@@ -25533,7 +25544,7 @@
                                       {
                                         "nid": 10430,
                                         "strtype": "_style/Text_Align",
-                                        "strval": "CENTER",
+                                        "strval": "LEFT",
                                         "InheritedType": 3
                                       },
                                       {
@@ -25541,6 +25552,17 @@
                                         "strtype": "_style/Text_Font",
                                         "strval": "montserrat_24",
                                         "InheritedType": 3
+                                      },
+                                      {
+                                        "nid": 11110,
+                                        "strtype": "_style/Padding",
+                                        "intarray": [
+                                          5,
+                                          0,
+                                          0,
+                                          0
+                                        ],
+                                        "InheritedType": 7
                                       }
                                     ],
                                     "InheritedType": 1
@@ -25603,8 +25625,8 @@
                             "flags": 17,
                             "strtype": "OBJECT/Size",
                             "intarray": [
-                              400,
-                              50
+                              420,
+                              65
                             ],
                             "InheritedType": 7
                           },
@@ -25670,7 +25692,27 @@
                           },
                           {
                             "part": "lv.PART.MAIN",
-                            "childs": [],
+                            "childs": [
+                              {
+                                "nid": 10000,
+                                "strtype": "_style/StyleState",
+                                "strval": "DEFAULT",
+                                "childs": [
+                                  {
+                                    "nid": 11110,
+                                    "strtype": "_style/Padding",
+                                    "intarray": [
+                                      0,
+                                      0,
+                                      25,
+                                      0
+                                    ],
+                                    "InheritedType": 7
+                                  }
+                                ],
+                                "InheritedType": 1
+                              }
+                            ],
                             "nid": 1010,
                             "strtype": "CONTAINER/Style_main",
                             "strval": "lv.PART.MAIN, Rectangle, Pad, Text, Transform",
@@ -25735,7 +25777,7 @@
                         "flags": 17,
                         "strtype": "OBJECT/Size",
                         "intarray": [
-                          400,
+                          410,
                           120
                         ],
                         "InheritedType": 7
@@ -25802,25 +25844,7 @@
                       },
                       {
                         "part": "lv.PART.MAIN",
-                        "childs": [
-                          {
-                            "nid": 10000,
-                            "strtype": "_style/StyleState",
-                            "strval": "DEFAULT",
-                            "childs": [
-                              {
-                                "nid": 11120,
-                                "strtype": "_style/Padding_RowCol",
-                                "intarray": [
-                                  10,
-                                  0
-                                ],
-                                "InheritedType": 7
-                              }
-                            ],
-                            "InheritedType": 1
-                          }
-                        ],
+                        "childs": [],
                         "nid": 1010,
                         "strtype": "CONTAINER/Style_main",
                         "strval": "lv.PART.MAIN, Rectangle, Pad, Text, Transform",
@@ -54965,7 +54989,7 @@
     "rotation": 0,
     "offset_x": 0,
     "offset_y": 0,
-    "shape": "CIRCLE",
+    "shape": "RECTANGLE",
     "multilang": "DISABLE",
     "description": "",
     "board": "Arduino with TFT_eSPI",
@@ -54974,17 +54998,17 @@
     "image": "",
     "export_temp_image": false,
     "force_export_images": false,
-    "flat_export": true,
+    "flat_export": false,
     "advanced_alpha": false,
     "pointfilter": false,
     "theme_simplified": false,
     "theme_dark": false,
     "theme_color1": 5,
     "theme_color2": 0,
-    "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
-    "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
+    "uiExportFolderPath": "/home/drag/gitprojects/gaggimate/src/display/ui/default/lvgl",
+    "projectExportFolderPath": "/home/drag/gitprojects/gaggimate",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 419,
+    "backup_cnt": 423,
     "autosave_cnt": 0,
     "group_color_cnt": 0,
     "lvgl_version": "8.3.11",

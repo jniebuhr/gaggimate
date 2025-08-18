@@ -23,28 +23,25 @@ extern "C" {
 #endif
 
 #include "ui_helpers.h"
-#include "ui_comp.h"
-#include "ui_comp_hook.h"
+#include "components/ui_comp.h"
+#include "components/ui_comp_hook.h"
 #include "ui_events.h"
 #include "ui_theme_manager.h"
 #include "ui_themes.h"
 
 ///////////////////// SCREENS ////////////////////
-
-#include "ui_InitScreen.h"
-#include "ui_ProfileScreen.h"
-#include "ui_MenuScreen.h"
-#include "ui_BrewScreen.h"
-#include "ui_SimpleProcessScreen.h"
-#include "ui_StandbyScreen.h"
-#include "ui_StatusScreen.h"
-#include "ui_GrindScreen.h"
+#include "screens/ui_InitScreen.h"
+#include "screens/ui_ProfileScreen.h"
+#include "screens/ui_MenuScreen.h"
+#include "screens/ui_BrewScreen.h"
+#include "screens/ui_SimpleProcessScreen.h"
+#include "screens/ui_StandbyScreen.h"
+#include "screens/ui_StatusScreen.h"
+#include "screens/ui_GrindScreen.h"
 
 ///////////////////// VARIABLES ////////////////////
 
-
 // EVENTS
-
 extern lv_obj_t * ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
