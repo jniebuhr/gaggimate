@@ -25078,7 +25078,7 @@
                                 "flags": 17,
                                 "strtype": "OBJECT/Size",
                                 "intarray": [
-                                  60,
+                                  72,
                                   30
                                 ],
                                 "InheritedType": 7
@@ -25327,6 +25327,7 @@
                               },
                               {
                                 "nid": 1010,
+                                "flags": 1048576,
                                 "strtype": "IMAGE/Image",
                                 "InheritedType": 1
                               },
@@ -55008,7 +55009,7 @@
     "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
     "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 423,
+    "backup_cnt": 424,
     "autosave_cnt": 0,
     "group_color_cnt": 0,
     "lvgl_version": "8.3.11",

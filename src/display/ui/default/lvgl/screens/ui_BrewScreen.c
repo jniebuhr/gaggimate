@@ -362,7 +362,7 @@ void ui_BrewScreen_screen_init(void)
                                            _ui_theme_alpha_NiceWhite);
 
     ui_BrewScreen_brewTargetDuration = lv_label_create(ui_BrewScreen_Container2);
-    lv_obj_set_width(ui_BrewScreen_brewTargetDuration, 60);
+    lv_obj_set_width(ui_BrewScreen_brewTargetDuration, 72);
     lv_obj_set_height(ui_BrewScreen_brewTargetDuration, 30);
     lv_obj_set_x(ui_BrewScreen_brewTargetDuration, 80);
     lv_obj_set_y(ui_BrewScreen_brewTargetDuration, -120);
