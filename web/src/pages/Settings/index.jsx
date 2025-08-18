@@ -390,8 +390,9 @@ export function Settings() {
                 }}
               >
                 <option value='en'>English</option>
-                <option value='cs'>Čeština</option>
-                <option value='de'>Deutsch</option>
+                <option value='fr'>French</option>
+                <option value='es'>Spanish</option>
+                <option value='de'>German</option>
               </select>
             </div>
           </Card>
