@@ -43,7 +43,7 @@ export function Header() {
           <div className='flex items-center gap-1 lg:gap-5'>
             <div className='relative inline-block'>
               <a
-                aria-label='github'
+                aria-label={t`github`}
                 rel='noopener noreferrer'
                 href='https://github.com/jniebuhr/gaggimate'
                 target='_blank'
@@ -55,7 +55,7 @@ export function Header() {
 
             <div className='relative inline-block'>
               <a
-                aria-label='discord'
+                aria-label={t`discord`}
                 rel='noopener noreferrer'
                 href='https://discord.gaggimate.eu/'
                 target='_blank'

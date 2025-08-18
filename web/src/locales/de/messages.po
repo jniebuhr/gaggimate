@@ -19,8 +19,16 @@ msgstr ""
 msgid "(Update available: {0})"
 msgstr ""
 
+#: src/pages/Settings/index.jsx
+msgid "0 °C"
+msgstr ""
+
 #: src/pages/Autotune/index.jsx
 msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
+msgstr ""
+
+#: src/pages/Settings/index.jsx
+msgid "0.0 bar"
 msgstr ""
 
 #: src/pages/Settings/index.jsx
@@ -137,6 +145,10 @@ msgstr ""
 msgid "Click \"Scan for Scales\" to discover Bluetooth scales nearby"
 msgstr ""
 
+#: src/pages/Home/ProcessControls.jsx
+msgid "Click to flush water"
+msgstr ""
+
 #: src/pages/Settings/index.jsx
 msgid "Clock"
 msgstr ""
@@ -249,6 +261,10 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
+#: src/components/Header.jsx
+msgid "discord"
+msgstr ""
+
 #: src/pages/Settings/index.jsx
 msgid "Display settings"
 msgstr ""
@@ -354,6 +370,7 @@ msgid "Export"
 msgstr ""
 
 #: src/pages/ProfileList/index.jsx
+#: src/pages/ProfileList/index.jsx
 msgid "Export all profiles"
 msgstr ""
 
@@ -394,12 +411,20 @@ msgstr ""
 msgid "Flow rate in grams per second"
 msgstr ""
 
+#: src/pages/Home/ProcessControls.jsx
+msgid "Flush"
+msgstr ""
+
 #: src/pages/Settings/index.jsx
 msgid "French"
 msgstr ""
 
 #: src/pages/Settings/index.jsx
 msgid "German"
+msgstr ""
+
+#: src/components/Header.jsx
+msgid "github"
 msgstr ""
 
 #: src/pages/_404.jsx
@@ -440,6 +465,7 @@ msgstr ""
 msgid "Hostname"
 msgstr ""
 
+#: src/pages/ProfileList/index.jsx
 #: src/pages/ProfileList/index.jsx
 msgid "Import profiles"
 msgstr ""
@@ -744,6 +770,10 @@ msgstr ""
 msgid "Profile Information"
 msgstr ""
 
+#: src/pages/ProfileList/index.jsx
+msgid "Profile list"
+msgstr ""
+
 #: src/components/Header.jsx
 #: src/components/Navigation.jsx
 #: src/pages/ProfileList/index.jsx
@@ -852,6 +882,10 @@ msgstr ""
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "seconds"
+msgstr ""
+
+#: src/pages/ProfileList/index.jsx
+msgid "Select a JSON file containing profile data to import"
 msgstr ""
 
 #: src/pages/Home/ProcessControls.jsx
@@ -1231,9 +1265,11 @@ msgid "White (0 - 255)"
 msgstr ""
 
 #: src/pages/Settings/index.jsx
+#: src/pages/Settings/index.jsx
 msgid "WiFi Password"
 msgstr ""
 
+#: src/pages/Settings/index.jsx
 #: src/pages/Settings/index.jsx
 msgid "WiFi SSID"
 msgstr ""

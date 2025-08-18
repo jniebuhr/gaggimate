@@ -407,7 +407,7 @@ export function Settings() {
                 name='wifiSsid'
                 type='text'
                 className='input input-bordered w-full'
-                placeholder='WiFi SSID'
+                placeholder={t`WiFi SSID`}
                 value={formData.wifiSsid}
                 onChange={onChange('wifiSsid')}
               />
@@ -422,7 +422,7 @@ export function Settings() {
                 name='wifiPassword'
                 type='password'
                 className='input input-bordered w-full'
-                placeholder='WiFi Password'
+                placeholder={t`WiFi Password`}
                 value={formData.wifiPassword}
                 onChange={onChange('wifiPassword')}
               />

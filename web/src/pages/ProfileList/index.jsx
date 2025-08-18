@@ -346,7 +346,7 @@ export function ProfileList() {
           onClick={onExport}
           className='btn btn-ghost btn-sm'
           title={t`Export all profiles`}
-          aria-label='Export all profiles'
+          aria-label={t`Export all profiles`}
         >
           <i className='fa fa-file-export' aria-hidden='true' />
         </button>
@@ -354,7 +354,7 @@ export function ProfileList() {
           htmlFor='profileImport'
           className='btn btn-ghost btn-sm cursor-pointer'
           title={t`Import profiles`}
-          aria-label='Import profiles'
+          aria-label={t`Import profiles`}
         >
           <i className='fa fa-file-import' aria-hidden='true' />
         </label>
@@ -364,11 +364,11 @@ export function ProfileList() {
           id='profileImport'
           type='file'
           accept='.json,application/json,.tcl'
-          aria-label='Select a JSON file containing profile data to import'
+          aria-label={t`Select a JSON file containing profile data to import`}
         />
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label='Profile list'>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label={t`Profile list`}>
         {profiles.map(data => (
           <ProfileCard
             key={data.id}

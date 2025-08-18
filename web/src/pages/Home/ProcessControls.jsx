@@ -270,10 +270,10 @@ const ProcessControls = props => {
               <button
                 className='btn text-base-content/60 hover:text-base-content transition-colors rounded-full text-sm duration-200'
                 onClick={startFlush}
-                title='Click to flush water'
+                title={t`Click to flush water`}
               >
                 <i className='fa-solid fa-tint' />
-                Flush
+                {t`Flush`}
               </button>
             )}
           </div>
