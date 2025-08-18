@@ -13,13 +13,49 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: formData.latestVersion
+#: src/pages/OTA/index.jsx
+#: src/pages/OTA/index.jsx
+msgid "(Update available: {0})"
+msgstr "(Update available: {0})"
+
 #: src/pages/Autotune/index.jsx
 msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
 msgstr "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
 
+#: src/pages/Settings/index.jsx
+msgid "24 Hour Clock"
+msgstr "24 Hour Clock"
+
 #: src/pages/_404.jsx
 msgid "404"
 msgstr "404"
+
+#. placeholder {0}: data.label
+#: src/pages/ProfileList/index.jsx
+msgid "Actions for {0} profile"
+msgstr "Actions for {0} profile"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Add new brew phase"
+msgstr "Add new brew phase"
+
+#: src/pages/ProfileList/ProfileAddCard.jsx
+msgid "Add new profile"
+msgstr "Add new profile"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Add phase"
+msgstr "Add phase"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Add target"
+msgstr "Add target"
+
+#: src/pages/Settings/index.jsx
+msgid "Auto Adjust"
+msgstr "Auto Adjust"
 
 #: src/pages/Autotune/index.jsx
 msgid "Autotune Complete!"
@@ -34,6 +70,9 @@ msgid "Available Scales"
 msgstr "Available Scales"
 
 #: src/pages/OTA/index.jsx
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/index.jsx
 msgid "Back"
 msgstr "Back"
 
@@ -41,13 +80,30 @@ msgstr "Back"
 msgid "Back to Settings"
 msgstr "Back to Settings"
 
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "bar"
+msgstr "bar"
+
+#: src/pages/Settings/index.jsx
+msgid "Blue (0 - 255)"
+msgstr "Blue (0 - 255)"
+
 #: src/components/Header.jsx
 #: src/components/Navigation.jsx
 #: src/pages/Scales/index.jsx
 msgid "Bluetooth Scales"
 msgstr "Bluetooth Scales"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Boiler Refill Plugin"
+msgstr "Boiler Refill Plugin"
+
 #: src/pages/Home/ProcessControls.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/Settings/index.jsx
 msgid "Brew"
 msgstr "Brew"
 
@@ -55,9 +111,44 @@ msgstr "Brew"
 msgid "Brew Mode"
 msgstr "Brew Mode"
 
+#: src/pages/ProfileList/index.jsx
+msgid "Brew phases"
+msgstr "Brew phases"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Brew Phases"
+msgstr "Brew Phases"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Brew phases configuration"
+msgstr "Brew phases configuration"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "celsius"
+msgstr "celsius"
+
+#: src/pages/Settings/index.jsx
+msgid "Chart First"
+msgstr "Chart First"
+
 #: src/pages/Scales/index.jsx
 msgid "Click \"Scan for Scales\" to discover Bluetooth scales nearby"
 msgstr "Click \"Scan for Scales\" to discover Bluetooth scales nearby"
+
+#: src/pages/Settings/index.jsx
+msgid "Clock"
+msgstr "Clock"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Closed"
+msgstr "Closed"
+
+#: src/pages/Settings/index.jsx
+msgid "Coffee"
+msgstr "Coffee"
 
 #: src/pages/Scales/index.jsx
 msgid "Connect"
@@ -74,6 +165,10 @@ msgstr "Controller version"
 #: src/components/Footer.jsx
 msgid "Crafted with"
 msgstr "Crafted with"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Create Profile"
+msgstr "Create Profile"
 
 #: src/components/OverviewChart.jsx
 msgid "Current Flow"
@@ -101,23 +196,154 @@ msgstr "Current Pump Flow"
 msgid "Current Temperature"
 msgstr "Current Temperature"
 
+#: src/pages/Settings/index.jsx
+msgid "Dark"
+msgstr "Dark"
+
+#: src/pages/Settings/index.jsx
+msgid "Dark Theme"
+msgstr "Dark Theme"
+
 #: src/components/Header.jsx
 #: src/components/Navigation.jsx
 #: src/pages/Home/index.jsx
 msgid "Dashboard"
 msgstr "Dashboard"
 
+#: src/pages/Settings/index.jsx
+msgid "Dashboard Layout"
+msgstr "Dashboard Layout"
+
+#: src/pages/Settings/index.jsx
+msgid "Default Steam Temperature (°C)"
+msgstr "Default Steam Temperature (°C)"
+
+#: src/pages/Settings/index.jsx
+msgid "Default Water Temperature (°C)"
+msgstr "Default Water Temperature (°C)"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "degrees Celsius"
+msgstr "degrees Celsius"
+
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Delete"
 msgstr "Delete"
+
+#. placeholder {0}: index + 1
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Delete phase {0}"
+msgstr "Delete phase {0}"
 
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Delete shot"
 msgstr "Delete shot"
 
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Delete this phase"
+msgstr "Delete this phase"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Description"
+msgstr "Description"
+
+#: src/pages/Settings/index.jsx
+msgid "Display settings"
+msgstr "Display settings"
+
+#: src/pages/Settings/index.jsx
+msgid "Display Theme"
+msgstr "Display Theme"
+
 #: src/pages/OTA/index.jsx
 msgid "Display version"
 msgstr "Display version"
+
+#: src/pages/Settings/index.jsx
+msgid "Distance from sensor to bottom of the tank"
+msgstr "Distance from sensor to bottom of the tank"
+
+#: src/pages/Settings/index.jsx
+msgid "Distance from sensor to the fill line"
+msgstr "Distance from sensor to the fill line"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Duration"
+msgstr "Duration"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Duration in seconds"
+msgstr "Duration in seconds"
+
+#. placeholder {0}: props.duration
+#: src/pages/ProfileList/index.jsx
+msgid "Duration: {0}s"
+msgstr "Duration: {0}s"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease In"
+msgstr "Ease In"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease In Out"
+msgstr "Ease In Out"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease Out"
+msgstr "Ease Out"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Edit"
+msgstr "Edit"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Boiler Refill"
+msgstr "Enable Boiler Refill"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Home Assistant"
+msgstr "Enable Home Assistant"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Homekit"
+msgstr "Enable Homekit"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Smart Grind"
+msgstr "Enable Smart Grind"
+
+#: src/pages/Settings/index.jsx
+msgid "Enable Standby Display"
+msgstr "Enable Standby Display"
+
+#: src/pages/Settings/index.jsx
+msgid "English"
+msgstr "English"
+
+#: src/pages/Settings/index.jsx
+msgid "Enter 2 values (flow at 1bar, flow at 9bar)"
+msgstr "Enter 2 values (flow at 1bar, flow at 9bar)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Enter a name for this phase"
+msgstr "Enter a name for this phase"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Enter a name for this profile"
+msgstr "Enter a name for this profile"
+
+#: src/pages/Settings/index.jsx
+msgid "Enter the bar rating of the pressure sensor being used"
+msgstr "Enter the bar rating of the pressure sensor being used"
 
 #: src/pages/Scales/index.jsx
 msgid "Error loading scales. Please try again."
@@ -127,22 +353,100 @@ msgstr "Error loading scales. Please try again."
 msgid "Export"
 msgstr "Export"
 
+#: src/pages/ProfileList/index.jsx
+msgid "Export all profiles"
+msgstr "Export all profiles"
+
+#: src/pages/Settings/index.jsx
+msgid "Export Settings"
+msgstr "Export Settings"
+
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Export shot data"
 msgstr "Export shot data"
+
+#: src/pages/Settings/index.jsx
+msgid "External LED (0 - 255)"
+msgstr "External LED (0 - 255)"
 
 #: src/pages/Home/ProcessControls.jsx
 #: src/pages/OTA/index.jsx
 msgid "Finished"
 msgstr "Finished"
 
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow"
+msgstr "Flow"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Flow above"
+msgstr "Flow above"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Flow below"
+msgstr "Flow below"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow rate in grams per second"
+msgstr "Flow rate in grams per second"
+
+#: src/pages/Settings/index.jsx
+msgid "French"
+msgstr "French"
+
+#: src/pages/Settings/index.jsx
+msgid "German"
+msgstr "German"
+
 #: src/pages/_404.jsx
 msgid "Go Home"
 msgstr "Go Home"
 
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "grams"
+msgstr "grams"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "grams per second"
+msgstr "grams per second"
+
+#: src/pages/Settings/index.jsx
+msgid "Green (0 - 255)"
+msgstr "Green (0 - 255)"
+
 #: src/pages/OTA/index.jsx
 msgid "Hardware"
 msgstr "Hardware"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Home Assistant (MQTT)"
+msgstr "Home Assistant (MQTT)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Homekit"
+msgstr "Homekit"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Homekit Setup Code"
+msgstr "Homekit Setup Code"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/index.jsx
+msgid "Hostname"
+msgstr "Hostname"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Import profiles"
+msgstr "Import profiles"
+
+#: src/pages/Settings/index.jsx
+msgid "Import Settings"
+msgstr "Import Settings"
 
 #: src/components/Footer.jsx
 msgid "in Italy by"
@@ -151,6 +455,43 @@ msgstr "in Italy by"
 #: src/pages/Home/ProcessControls.jsx
 msgid "INFUSION"
 msgstr "INFUSION"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Instant"
+msgstr "Instant"
+
+#: src/pages/Settings/index.jsx
+msgid "Language"
+msgstr "Language"
+
+#: src/pages/Settings/index.jsx
+msgid "Light"
+msgstr "Light"
+
+#: src/pages/Settings/index.jsx
+msgid "Light Theme"
+msgstr "Light Theme"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Limit"
+msgstr "Limit"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Linear"
+msgstr "Linear"
+
+#: src/components/Spinner.jsx
+msgid "Loading"
+msgstr "Loading"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Loading profiles"
+msgstr "Loading profiles"
 
 #: src/pages/Scales/index.jsx
 msgid "Loading scales..."
@@ -161,9 +502,55 @@ msgstr "Loading scales..."
 msgid "Machine is ready"
 msgstr "Machine is ready"
 
+#: src/pages/Settings/index.jsx
+msgid "Machine settings"
+msgstr "Machine settings"
+
+#: src/pages/Settings/index.jsx
+msgid "Main Brightness (1-16)"
+msgstr "Main Brightness (1-16)"
+
 #: src/pages/OTA/index.jsx
 msgid "Make sure to backup your profiles from the profile screen before updating the display."
 msgstr "Make sure to backup your profiles from the profile screen before updating the display."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Mode"
+msgstr "Mode"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT IP"
+msgstr "MQTT IP"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT Password"
+msgstr "MQTT Password"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT Port"
+msgstr "MQTT Port"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT User"
+msgstr "MQTT User"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Name..."
+msgstr "Name..."
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "New Phase"
+msgstr "New Phase"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "New Profile"
+msgstr "New Profile"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Next"
+msgstr "Next"
 
 #: src/pages/OTA/index.jsx
 msgid "Nightly"
@@ -177,13 +564,77 @@ msgstr "No scales found"
 msgid "No shots available"
 msgstr "No shots available"
 
+#: src/pages/Settings/index.jsx
+msgid "Nord"
+msgstr "Nord"
+
 #: src/pages/Autotune/index.jsx
 msgid "Number of samples. More samples provide better accuracy but take longer."
 msgstr "Number of samples. More samples provide better accuracy but take longer."
 
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Off"
+msgstr "Off"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On startup (s)"
+msgstr "On startup (s)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On steam deactivate (s)"
+msgstr "On steam deactivate (s)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Open"
+msgstr "Open"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Open the Homekit App, find your GaggiMate device and scan the setup code above to add it."
+msgstr "Open the Homekit App, find your GaggiMate device and scan the setup code above to add it."
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Optional description for this profile"
+msgstr "Optional description for this profile"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "OR"
+msgstr "OR"
+
 #: src/pages/_404.jsx
 msgid "Page not found"
 msgstr "Page not found"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "password"
+msgstr "password"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "percent"
+msgstr "percent"
+
+#. placeholder {0}: index + 1
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase {0} configuration"
+msgstr "Phase {0} configuration"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase Name"
+msgstr "Phase Name"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Phase navigation"
+msgstr "Phase navigation"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase Type"
+msgstr "Phase Type"
 
 #: src/components/Header.jsx
 #: src/components/Navigation.jsx
@@ -195,6 +646,10 @@ msgstr "PID Autotune"
 msgid "PID Autotune Settings"
 msgstr "PID Autotune Settings"
 
+#: src/pages/Settings/index.jsx
+msgid "PID Values (Kp, Ki, Kd)"
+msgstr "PID Values (Kp, Ki, Kd)"
+
 #: src/pages/Autotune/index.jsx
 msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
 msgstr "Please ensure the boiler temperature is below 50°C before starting the autotune process."
@@ -202,6 +657,25 @@ msgstr "Please ensure the boiler temperature is below 50°C before starting the 
 #: src/pages/Autotune/index.jsx
 msgid "Please wait while the system optimizes your PID settings. This may take up to 30 seconds."
 msgstr "Please wait while the system optimizes your PID settings. This may take up to 30 seconds."
+
+#: src/pages/Settings/index.jsx
+msgid "Plugins"
+msgstr "Plugins"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Power"
+msgstr "Power"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileList/index.jsx
+msgid "Pre-Infusion"
+msgstr "Pre-Infusion"
+
+#: src/pages/Settings/index.jsx
+msgid "Predictive scale delay"
+msgstr "Predictive scale delay"
 
 #: src/pages/Home/ProcessControls.jsx
 #: src/pages/Home/ProcessControls.jsx
@@ -212,19 +686,155 @@ msgstr "Preheating"
 msgid "PREINFUSION"
 msgstr "PREINFUSION"
 
-#: src/pages/Home/index.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure"
+msgstr "Pressure"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Pressure above"
+msgstr "Pressure above"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Pressure below"
+msgstr "Pressure below"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure in bar"
+msgstr "Pressure in bar"
+
+#: src/pages/Settings/index.jsx
+msgid "Pressure sensor rating"
+msgstr "Pressure sensor rating"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Previous"
+msgstr "Previous"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Pro"
+msgstr "Pro"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Pro profile"
+msgstr "Pro profile"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Pro Profile"
+msgstr "Pro Profile"
+
 #: src/pages/Home/index.jsx
 msgid "Process Controls"
 msgstr "Process Controls"
 
+#: src/pages/Settings/index.jsx
+msgid "Process Controls First"
+msgstr "Process Controls First"
+
+#. placeholder {0}: data.label
+#: src/pages/ProfileList/index.jsx
+msgid "Profile details for {0}"
+msgstr "Profile details for {0}"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Profile Information"
+msgstr "Profile Information"
+
 #: src/components/Header.jsx
 #: src/components/Navigation.jsx
+#: src/pages/ProfileList/index.jsx
 msgid "Profiles"
 msgstr "Profiles"
+
+#: src/pages/Settings/index.jsx
+msgid "Pump Flow Coefficients"
+msgstr "Pump Flow Coefficients"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump flow mode (PRO feature)"
+msgstr "Pump flow mode (PRO feature)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump Mode"
+msgstr "Pump Mode"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump mode selection"
+msgstr "Pump mode selection"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump off"
+msgstr "Pump off"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump Power"
+msgstr "Pump Power"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump power as percentage"
+msgstr "Pump power as percentage"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump power mode"
+msgstr "Pump power mode"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump pressure mode (PRO feature)"
+msgstr "Pump pressure mode (PRO feature)"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Pumped water"
+msgstr "Pumped water"
+
+#: src/pages/Settings/index.jsx
+msgid "Red (0 - 255)"
+msgstr "Red (0 - 255)"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Remove phase"
+msgstr "Remove phase"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Remove target"
+msgstr "Remove target"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/index.jsx
+msgid "Save"
+msgstr "Save"
 
 #: src/pages/OTA/index.jsx
 msgid "Save & Refresh"
 msgstr "Save & Refresh"
+
+#: src/pages/Settings/index.jsx
+msgid "Save and Restart"
+msgstr "Save and Restart"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Save profile"
+msgstr "Save profile"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Saving profile..."
+msgstr "Saving profile..."
 
 #: src/pages/Scales/index.jsx
 msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
@@ -238,12 +848,36 @@ msgstr "Scan for Scales"
 msgid "Scanning..."
 msgstr "Scanning..."
 
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "seconds"
+msgstr "seconds"
+
 #: src/pages/Home/ProcessControls.jsx
 msgid "Select brew target to start"
 msgstr "Select brew target to start"
 
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Select Pro profile type"
+msgstr "Select Pro profile type"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Select simple profile type"
+msgstr "Select simple profile type"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Select the type of brew phase"
+msgstr "Select the type of brew phase"
+
+#: src/pages/Settings/index.jsx
+msgid "Set the colors for the LEDs when in idle mode with no warnings."
+msgstr "Set the colors for the LEDs when in idle mode with no warnings."
+
 #: src/components/Header.jsx
 #: src/components/Navigation.jsx
+#: src/pages/Settings/index.jsx
 msgid "Settings"
 msgstr "Settings"
 
@@ -253,18 +887,63 @@ msgstr "Settings"
 msgid "Shot History"
 msgstr "Shot History"
 
+#: src/pages/Settings/index.jsx
+msgid "Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control."
+msgstr "Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control."
+
+#: src/pages/ProfileList/index.jsx
+msgid "Simple"
+msgstr "Simple"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Simple profile"
+msgstr "Simple profile"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Simple Profile"
+msgstr "Simple Profile"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Smart Grind Plugin"
+msgstr "Smart Grind Plugin"
+
+#: src/pages/Settings/index.jsx
+msgid "Some options like WiFi, NTP and managing Plugins require a restart."
+msgstr "Some options like WiFi, NTP and managing Plugins require a restart."
+
+#: src/pages/Settings/index.jsx
+msgid "Spanish"
+msgstr "Spanish"
+
 #: src/pages/OTA/index.jsx
 msgid "Stable"
 msgstr "Stable"
 
 #: src/pages/Home/ProcessControls.jsx
 #: src/pages/Home/ProcessControls.jsx
+#: src/pages/Settings/index.jsx
 msgid "Standby"
 msgstr "Standby"
+
+#: src/pages/Settings/index.jsx
+msgid "Standby Brightness (0-16)"
+msgstr "Standby Brightness (0-16)"
+
+#: src/pages/Settings/index.jsx
+msgid "Standby Brightness Timeout (seconds)"
+msgstr "Standby Brightness Timeout (seconds)"
+
+#: src/pages/Settings/index.jsx
+msgid "Standby Display"
+msgstr "Standby Display"
 
 #: src/pages/Home/ProcessControls.jsx
 msgid "Standby Mode"
 msgstr "Standby Mode"
+
+#: src/pages/Settings/index.jsx
+msgid "Standby Timeout (s)"
+msgstr "Standby Timeout (s)"
 
 #: src/pages/Home/ProcessControls.jsx
 #: src/pages/Home/ProcessControls.jsx
@@ -274,6 +953,10 @@ msgstr "Start and open steam valve to pull water"
 #: src/pages/Autotune/index.jsx
 msgid "Start Autotune"
 msgstr "Start Autotune"
+
+#: src/pages/Settings/index.jsx
+msgid "Startup Mode"
+msgstr "Startup Mode"
 
 #: src/pages/Home/ProcessControls.jsx
 #: src/pages/Home/ProcessControls.jsx
@@ -289,6 +972,26 @@ msgstr "Steam is ready"
 msgid "Steam Mode"
 msgstr "Steam Mode"
 
+#: src/pages/Settings/index.jsx
+msgid "Steam Pump Assist"
+msgstr "Steam Pump Assist"
+
+#: src/pages/Settings/index.jsx
+msgid "Sunrise Settings"
+msgstr "Sunrise Settings"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Supports advanced pressure and flow controlled phases with ramps, different targets and further visualization."
+msgstr "Supports advanced pressure and flow controlled phases with ramps, different targets and further visualization."
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Supports creating of profiles with different brew phases and targets."
+msgstr "Supports creating of profiles with different brew phases and targets."
+
+#: src/pages/Settings/index.jsx
+msgid "Switch control"
+msgstr "Switch control"
+
 #: src/components/Header.jsx
 #: src/components/Navigation.jsx
 #: src/pages/OTA/index.jsx
@@ -299,6 +1002,17 @@ msgstr "System & Updates"
 msgid "System Information"
 msgstr "System Information"
 
+#: src/pages/Settings/index.jsx
+msgid "System preferences"
+msgstr "System preferences"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Target"
+msgstr "Target"
+
 #: src/components/OverviewChart.jsx
 #: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Pressure"
@@ -308,12 +1022,41 @@ msgstr "Target Pressure"
 msgid "Target Pump Flow"
 msgstr "Target Pump Flow"
 
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Target temperature"
+msgstr "Target temperature"
+
 #: src/components/OverviewChart.jsx
 #: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Temperature"
 msgstr "Target Temperature"
 
-#: src/pages/Home/index.jsx
+#. placeholder {0}: targetType.unit
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Target value in {0}"
+msgstr "Target value in {0}"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Target weight in grams"
+msgstr "Target weight in grams"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Targets"
+msgstr "Targets"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Tasmota IP"
+msgstr "Tasmota IP"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Temperature"
+msgstr "Temperature"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Temperature (0 = Default)"
+msgstr "Temperature (0 = Default)"
+
 #: src/pages/Home/index.jsx
 msgid "Temperature & Pressure Chart"
 msgstr "Temperature & Pressure Chart"
@@ -323,19 +1066,76 @@ msgstr "Temperature & Pressure Chart"
 msgid "Temperature History"
 msgstr "Temperature History"
 
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Temperature in degrees Celsius"
+msgstr "Temperature in degrees Celsius"
+
+#: src/pages/Settings/index.jsx
+msgid "Temperature Offset"
+msgstr "Temperature Offset"
+
+#: src/pages/Settings/index.jsx
+msgid "Temperature settings"
+msgstr "Temperature settings"
+
+#: src/pages/Settings/index.jsx
+msgid "Theme"
+msgstr "Theme"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "This feature allows connection to a Home Assistant or MQTT installation and push the current state."
+msgstr "This feature allows connection to a Home Assistant or MQTT installation and push the current state."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
+msgstr "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
+
 #: src/pages/Home/ProcessControls.jsx
 msgid "Time"
 msgstr "Time"
+
+#: src/pages/Settings/index.jsx
+msgid "Timezone"
+msgstr "Timezone"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Title"
+msgstr "Title"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Toggle off and on at target"
+msgstr "Toggle off and on at target"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Transition"
+msgstr "Transition"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Transition Duration"
+msgstr "Transition Duration"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Transition duration in seconds"
+msgstr "Transition duration in seconds"
 
 #: src/pages/Autotune/index.jsx
 msgid "Tuning Goal"
 msgstr "Tuning Goal"
 
-#. placeholder {0}: formData.latestVersion
+#: src/pages/Settings/PluginCard.jsx
+msgid "Turn off at target"
+msgstr "Turn off at target"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Turn on at start, off at target"
+msgstr "Turn on at start, off at target"
+
 #: src/pages/OTA/index.jsx
 #: src/pages/OTA/index.jsx
-msgid "Update available: {0}"
-msgstr "Update available: {0}"
+#~ msgid "Update available: {0}"
+#~ msgstr "Update available: {0}"
 
 #: src/pages/OTA/index.jsx
 msgid "Update Channel"
@@ -361,6 +1161,50 @@ msgstr "Updating Display filesystem"
 msgid "Updating Display firmware"
 msgstr "Updating Display firmware"
 
+#: src/pages/Settings/index.jsx
+msgid "Use momentary switches"
+msgstr "Use momentary switches"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "user"
+msgstr "user"
+
+#: src/pages/Settings/index.jsx
+msgid "User preferences"
+msgstr "User preferences"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Value"
+msgstr "Value"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve"
+msgstr "Valve"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve closed"
+msgstr "Valve closed"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve open"
+msgstr "Valve open"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve state selection"
+msgstr "Valve state selection"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Volume"
+msgstr "Volume"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Volumetric Target"
+msgstr "Volumetric Target"
+
 #: src/pages/Home/ProcessControls.jsx
 #: src/pages/Home/ProcessControls.jsx
 msgid "Water"
@@ -370,9 +1214,29 @@ msgstr "Water"
 msgid "Water Mode"
 msgstr "Water Mode"
 
+#: src/pages/Settings/index.jsx
+msgid "Web Settings"
+msgstr "Web Settings"
+
 #: src/pages/Home/ProcessControls.jsx
 msgid "Weight"
 msgstr "Weight"
+
+#: src/pages/Settings/index.jsx
+msgid "What percentage to run the pump at during steaming"
+msgstr "What percentage to run the pump at during steaming"
+
+#: src/pages/Settings/index.jsx
+msgid "White (0 - 255)"
+msgstr "White (0 - 255)"
+
+#: src/pages/Settings/index.jsx
+msgid "WiFi Password"
+msgstr "WiFi Password"
+
+#: src/pages/Settings/index.jsx
+msgid "WiFi SSID"
+msgstr "WiFi SSID"
 
 #: src/pages/Autotune/index.jsx
 msgid "Window Size"
