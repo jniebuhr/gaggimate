@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+
 export function Footer() {
   return (
     <>
@@ -5,7 +7,7 @@ export function Footer() {
         <div className='container mx-auto px-4 lg:px-8 xl:max-w-7xl'>
           <div className='border-base-content/10 text-base-content/60 flex flex-col gap-2 border-t-2 py-2 text-center text-sm font-medium md:flex-row md:justify-between md:gap-0 md:text-start xl:py-6'>
             <div className='inline-flex items-center justify-center'>
-              <span>Crafted with</span>
+              <span>{t`Crafted with`}</span>
               <svg
                 xmlns='http://www.w3.org/2000/svg'
                 viewBox='0 0 20 20'
@@ -17,7 +19,7 @@ export function Footer() {
               </svg>
               <span>
                 {' '}
-                in Italy by&nbsp;
+                {t`in Italy by`}&nbsp;
                 <a
                   className='text-primary hover:text-primary/80 font-medium transition'
                   href='https://gaggimate.eu'

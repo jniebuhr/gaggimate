@@ -1,6 +1,7 @@
 import { machine } from '../services/ApiService.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
+import { t } from '@lingui/core/macro';
 
 function getChartData(data) {
   let end = new Date();
@@ -10,13 +11,13 @@ function getChartData(data) {
     data: {
       datasets: [
         {
-          label: 'Current Temperature',
+          label: t`Current Temperature`,
           borderColor: '#F0561D',
           pointStyle: false,
           data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentTemperature })),
         },
         {
-          label: 'Target Temperature',
+          label: t`Target Temperature`,
           fill: true,
           borderColor: '#731F00',
           borderDash: [6, 6],
@@ -24,14 +25,14 @@ function getChartData(data) {
           data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetTemperature })),
         },
         {
-          label: 'Current Pressure',
+          label: t`Current Pressure`,
           borderColor: '#0066CC',
           pointStyle: false,
           yAxisID: 'y1',
           data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentPressure })),
         },
         {
-          label: 'Target Pressure',
+          label: t`Target Pressure`,
           fill: true,
           borderColor: '#003366',
           borderDash: [6, 6],
@@ -40,7 +41,7 @@ function getChartData(data) {
           data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetPressure })),
         },
         {
-          label: 'Current Flow',
+          label: t`Current Flow`,
           borderColor: '#63993D',
           pointStyle: false,
           yAxisID: 'y1',
@@ -65,7 +66,7 @@ function getChartData(data) {
         },
         title: {
           display: true,
-          text: 'Temperature History',
+          text: t`Temperature History`,
           font: {
             size: window.innerWidth < 640 ? 14 : 16,
           },

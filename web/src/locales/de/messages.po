@@ -17,6 +17,10 @@ msgstr ""
 msgid "0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot."
 msgstr ""
 
+#: src/pages/_404.jsx
+msgid "404"
+msgstr ""
+
 #: src/pages/Autotune/index.jsx
 msgid "Autotune Complete!"
 msgstr ""
@@ -37,8 +41,18 @@ msgstr ""
 msgid "Back to Settings"
 msgstr ""
 
+#: src/components/Header.jsx
+#: src/components/Navigation.jsx
 #: src/pages/Scales/index.jsx
 msgid "Bluetooth Scales"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "Brew"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "Brew Mode"
 msgstr ""
 
 #: src/pages/Scales/index.jsx
@@ -57,8 +71,21 @@ msgstr ""
 msgid "Controller version"
 msgstr ""
 
+#: src/components/Footer.jsx
+msgid "Crafted with"
+msgstr ""
+
+#: src/components/OverviewChart.jsx
+msgid "Current Flow"
+msgstr ""
+
+#: src/components/OverviewChart.jsx
 #: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Pressure"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "Current Profile"
 msgstr ""
 
 #: src/pages/ShotHistory/HistoryChart.jsx
@@ -69,8 +96,15 @@ msgstr ""
 msgid "Current Pump Flow"
 msgstr ""
 
+#: src/components/OverviewChart.jsx
 #: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Temperature"
+msgstr ""
+
+#: src/components/Header.jsx
+#: src/components/Navigation.jsx
+#: src/pages/Home/index.jsx
+msgid "Dashboard"
 msgstr ""
 
 #: src/pages/ShotHistory/HistoryCard.jsx
@@ -97,16 +131,34 @@ msgstr ""
 msgid "Export shot data"
 msgstr ""
 
+#: src/pages/Home/ProcessControls.jsx
 #: src/pages/OTA/index.jsx
 msgid "Finished"
+msgstr ""
+
+#: src/pages/_404.jsx
+msgid "Go Home"
 msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Hardware"
 msgstr ""
 
+#: src/components/Footer.jsx
+msgid "in Italy by"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "INFUSION"
+msgstr ""
+
 #: src/pages/Scales/index.jsx
 msgid "Loading scales..."
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+#: src/pages/Home/ProcessControls.jsx
+msgid "Machine is ready"
 msgstr ""
 
 #: src/pages/OTA/index.jsx
@@ -129,6 +181,12 @@ msgstr ""
 msgid "Number of samples. More samples provide better accuracy but take longer."
 msgstr ""
 
+#: src/pages/_404.jsx
+msgid "Page not found"
+msgstr ""
+
+#: src/components/Header.jsx
+#: src/components/Navigation.jsx
 #: src/pages/Autotune/index.jsx
 msgid "PID Autotune"
 msgstr ""
@@ -143,6 +201,25 @@ msgstr ""
 
 #: src/pages/Autotune/index.jsx
 msgid "Please wait while the system optimizes your PID settings. This may take up to 30 seconds."
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+#: src/pages/Home/ProcessControls.jsx
+msgid "Preheating"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "PREINFUSION"
+msgstr ""
+
+#: src/pages/Home/index.jsx
+#: src/pages/Home/index.jsx
+msgid "Process Controls"
+msgstr ""
+
+#: src/components/Header.jsx
+#: src/components/Navigation.jsx
+msgid "Profiles"
 msgstr ""
 
 #: src/pages/OTA/index.jsx
@@ -161,6 +238,17 @@ msgstr ""
 msgid "Scanning..."
 msgstr ""
 
+#: src/pages/Home/ProcessControls.jsx
+msgid "Select brew target to start"
+msgstr ""
+
+#: src/components/Header.jsx
+#: src/components/Navigation.jsx
+msgid "Settings"
+msgstr ""
+
+#: src/components/Header.jsx
+#: src/components/Navigation.jsx
 #: src/pages/ShotHistory/index.jsx
 msgid "Shot History"
 msgstr ""
@@ -169,10 +257,40 @@ msgstr ""
 msgid "Stable"
 msgstr ""
 
+#: src/pages/Home/ProcessControls.jsx
+#: src/pages/Home/ProcessControls.jsx
+msgid "Standby"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "Standby Mode"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+#: src/pages/Home/ProcessControls.jsx
+msgid "Start and open steam valve to pull water"
+msgstr ""
+
 #: src/pages/Autotune/index.jsx
 msgid "Start Autotune"
 msgstr ""
 
+#: src/pages/Home/ProcessControls.jsx
+#: src/pages/Home/ProcessControls.jsx
+msgid "Steam"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+#: src/pages/Home/ProcessControls.jsx
+msgid "Steam is ready"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "Steam Mode"
+msgstr ""
+
+#: src/components/Header.jsx
+#: src/components/Navigation.jsx
 #: src/pages/OTA/index.jsx
 msgid "System & Updates"
 msgstr ""
@@ -181,6 +299,7 @@ msgstr ""
 msgid "System Information"
 msgstr ""
 
+#: src/components/OverviewChart.jsx
 #: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Pressure"
 msgstr ""
@@ -189,12 +308,23 @@ msgstr ""
 msgid "Target Pump Flow"
 msgstr ""
 
+#: src/components/OverviewChart.jsx
 #: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Temperature"
 msgstr ""
 
+#: src/pages/Home/index.jsx
+#: src/pages/Home/index.jsx
+msgid "Temperature & Pressure Chart"
+msgstr ""
+
+#: src/components/OverviewChart.jsx
 #: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Temperature History"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "Time"
 msgstr ""
 
 #: src/pages/Autotune/index.jsx
@@ -229,6 +359,19 @@ msgstr ""
 
 #: src/pages/OTA/index.jsx
 msgid "Updating Display firmware"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+#: src/pages/Home/ProcessControls.jsx
+msgid "Water"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "Water Mode"
+msgstr ""
+
+#: src/pages/Home/ProcessControls.jsx
+msgid "Weight"
 msgstr ""
 
 #: src/pages/Autotune/index.jsx

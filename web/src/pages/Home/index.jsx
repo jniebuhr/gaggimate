@@ -15,6 +15,7 @@ import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import ProcessControls from './ProcessControls.jsx';
 import { getDashboardLayout } from '../../utils/dashboardManager.js';
+import { t } from '@lingui/core/macro';
 
 Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
@@ -52,13 +53,13 @@ export function Home() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h2>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>{t`Dashboard`}</h2>
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
         {dashboardLayout === 'process-first' ? (
           <>
-            <Card sm={10} lg={4} className='landscape:sm:col-span-5' title='Process Controls'>
+            <Card sm={10} lg={4} className='landscape:sm:col-span-5' title={t`Process Controls`}>
               <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
             </Card>
 
@@ -66,7 +67,7 @@ export function Home() {
               sm={10}
               lg={6}
               className='landscape:sm:col-span-5'
-              title='Temperature & Pressure Chart'
+              title={t`Temperature & Pressure Chart`}
               fullHeight={true}
             >
               <OverviewChart />
@@ -78,13 +79,13 @@ export function Home() {
               sm={10}
               lg={6}
               className='landscape:sm:col-span-5'
-              title='Temperature & Pressure Chart'
+              title={t`Temperature & Pressure Chart`}
               fullHeight={true}
             >
               <OverviewChart />
             </Card>
 
-            <Card sm={10} lg={4} className='landscape:sm:col-span-5' title='Process Controls'>
+            <Card sm={10} lg={4} className='landscape:sm:col-span-5' title={t`Process Controls`}>
               <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
             </Card>
           </>

@@ -1,4 +1,5 @@
-import { useLocation, useRoute } from 'preact-iso';
+import { useLocation } from 'preact-iso';
+import { t } from '@lingui/core/macro';
 
 function MenuItem(props) {
   let className =
@@ -16,24 +17,24 @@ function MenuItem(props) {
   );
 }
 
-export function Navigation(props) {
+export function Navigation() {
   return (
     <nav className='hidden lg:col-span-2 lg:block'>
-      <MenuItem label='Dashboard' link='/' iconClass='fa fa-home' />
+      <MenuItem label={t`Dashboard`} link='/' iconClass='fa fa-home' />
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
-        <MenuItem label='Profiles' link='/profiles' iconClass='fa fa-list' />
-        <MenuItem label='Shot History' link='/history' iconClass='fa fa-timeline' />
+        <MenuItem label={t`Profiles`} link='/profiles' iconClass='fa fa-list' />
+        <MenuItem label={t`Shot History`} link='/history' iconClass='fa fa-timeline' />
       </div>
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
-        <MenuItem label='PID Autotune' link='/pidtune' iconClass='fa fa-temperature-half' />
-        <MenuItem label='Bluetooth Scales' link='/scales' iconClass='fa-brands fa-bluetooth-b' />
-        <MenuItem label='Settings' link='/settings' iconClass='fa fa-cog' />
+        <MenuItem label={t`PID Autotune`} link='/pidtune' iconClass='fa fa-temperature-half' />
+        <MenuItem label={t`Bluetooth Scales`} link='/scales' iconClass='fa-brands fa-bluetooth-b' />
+        <MenuItem label={t`Settings`} link='/settings' iconClass='fa fa-cog' />
       </div>
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
-        <MenuItem label='System & Updates' link='/ota' iconClass='fa fa-rotate' />
+        <MenuItem label={t`System & Updates`} link='/ota' iconClass='fa fa-rotate' />
       </div>
     </nav>
   );

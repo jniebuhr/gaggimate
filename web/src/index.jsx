@@ -19,6 +19,7 @@ import { ProfileList } from './pages/ProfileList/index.jsx';
 import { ProfileEdit } from './pages/ProfileEdit/index.jsx';
 import { Autotune } from './pages/Autotune/index.jsx';
 import { ShotHistory } from './pages/ShotHistory/index.jsx';
+import { initI18n } from './utils/i18n.js';
 
 const apiService = new ApiService();
 
@@ -63,4 +64,6 @@ export function App() {
 // Must be called before render
 initializeTheme();
 
-render(<App />, document.getElementById('app'));
+initI18n().finally(() => {
+  render(<App />, document.getElementById('app'));
+});
