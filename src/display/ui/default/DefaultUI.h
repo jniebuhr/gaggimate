@@ -101,6 +101,7 @@ class DefaultUI {
     float pressure = 0.0f;
     int pressureScaling = DEFAULT_PRESSURE_SCALING;
     int heatingFlash = 0;
+    double bluetoothWeight = 0.0;
 
     int currentProfileIdx;
     String currentProfileId;
