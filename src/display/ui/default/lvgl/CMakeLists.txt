@@ -33,7 +33,6 @@ SET(SOURCES ui_comp_dials.c
     ui_img_363557387.c
     ui_img_445946954.c
     ui_img_1424216268.c
-    ui_img_207915003.c
     ui_img_834125362.c
     ui_img_390988422.c
     ui_img_364513079.c

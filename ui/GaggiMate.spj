@@ -160,12 +160,6 @@
                 "InheritedType": 6
               },
               {
-                "nid": 1060,
-                "strtype": "IMAGE/Inner_align",
-                "strval": "CENTER",
-                "InheritedType": 3
-              },
-              {
                 "part": "lv.PART.MAIN",
                 "childs": [
                   {
@@ -323,6 +317,12 @@
                 "strtype": "LABEL/Text",
                 "strval": "Starting...",
                 "InheritedType": 10
+              },
+              {
+                "nid": 1040,
+                "strtype": "LABEL/Recolor",
+                "strval": "False",
+                "InheritedType": 2
               },
               {
                 "part": "lv.PART.MAIN",
@@ -1726,15 +1726,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -1747,7 +1738,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -1863,12 +1853,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -3026,15 +3010,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -3047,7 +3022,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -3163,12 +3137,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE",
@@ -3523,6 +3491,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "9 bar",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -4027,6 +4002,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "92°C",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -4555,15 +4537,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -4690,12 +4663,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -5060,15 +5027,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -5195,12 +5153,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -5554,6 +5506,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "36g",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -6652,6 +6611,12 @@
                     "InheritedType": 10
                   },
                   {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -6815,6 +6780,12 @@
                     "strtype": "LABEL/Text",
                     "strval": "Cremina Lever",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -7014,12 +6985,6 @@
                     "InheritedType": 6
                   },
                   {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "TILE",
-                    "InheritedType": 3
-                  },
-                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -7206,12 +7171,6 @@
                     "InheritedType": 6
                   },
                   {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "TILE",
-                    "InheritedType": 3
-                  },
-                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -7369,6 +7328,12 @@
                     "strtype": "LABEL/Text",
                     "strval": "80°C",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -7540,6 +7505,12 @@
                     "strtype": "LABEL/Text",
                     "strval": "0:30",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -8210,6 +8181,12 @@
                         "InheritedType": 10
                       },
                       {
+                        "nid": 1040,
+                        "strtype": "LABEL/Recolor",
+                        "strval": "False",
+                        "InheritedType": 2
+                      },
+                      {
                         "part": "lv.PART.MAIN",
                         "childs": [
                           {
@@ -8373,6 +8350,12 @@
                         "strtype": "LABEL/Text",
                         "strval": "3 Steps",
                         "InheritedType": 10
+                      },
+                      {
+                        "nid": 1040,
+                        "strtype": "LABEL/Recolor",
+                        "strval": "False",
+                        "InheritedType": 2
                       },
                       {
                         "part": "lv.PART.MAIN",
@@ -9461,7 +9444,7 @@
           }
         ],
         "isPage": true,
-        "editor_posx": 4770,
+        "editor_posx": 6840,
         "editor_posy": -600,
         "dont_export": false,
         "locked": false,
@@ -11020,15 +11003,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -11041,7 +11015,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -11157,12 +11130,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -12322,15 +12289,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -12343,7 +12301,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -12459,12 +12416,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE",
@@ -12820,6 +12771,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "9 bar",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -13325,6 +13283,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "92°C",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -13853,15 +13818,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -13988,12 +13944,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -14358,15 +14308,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -14493,12 +14434,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -14853,6 +14788,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "36g",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -17008,7 +16950,7 @@
           }
         ],
         "isPage": true,
-        "editor_posx": 1770,
+        "editor_posx": 2340,
         "editor_posy": -600,
         "dont_export": false,
         "locked": false,
@@ -18370,15 +18312,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -18391,7 +18324,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -18507,12 +18439,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -19670,15 +19596,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -19691,7 +19608,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -19807,12 +19723,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE",
@@ -20167,6 +20077,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "9 bar",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -20671,6 +20588,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "92°C",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -21199,15 +21123,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -21334,12 +21249,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -21704,15 +21613,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -21839,12 +21739,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -22198,6 +22092,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "36g",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -23042,31 +22943,31 @@
               {
                 "nid": 939638989,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -1072451500,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -1217254746,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1794841552,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -533421980,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
@@ -23298,6 +23199,12 @@
                     "InheritedType": 10
                   },
                   {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -23459,31 +23366,31 @@
                   {
                     "nid": -2094117598,
                     "strtype": "IMGBUTTON/Image_pressed",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": 1755909524,
                     "strtype": "IMGBUTTON/Image_disabled",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": -261413535,
                     "strtype": "IMGBUTTON/Image_checked_released",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": -300058726,
                     "strtype": "IMGBUTTON/Image_checked_pressed",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": -1034059470,
                     "strtype": "IMGBUTTON/Image_checked_disabled",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
@@ -24363,15 +24270,23 @@
                     "deepid": 1924479239,
                     "children": [
                       {
-                        "guid": "GUID48330118-585975S540624150",
-                        "deepid": -470396676,
+                        "guid": "GUID7174849-559787S62644230",
+                        "deepid": -1628804227,
                         "dont_export": false,
                         "locked": false,
                         "properties": [
                           {
                             "nid": 10,
                             "strtype": "OBJECT/Name",
-                            "strval": "Label1",
+                            "strval": "profileName",
+                            "childs": [
+                              {
+                                "nid": 15,
+                                "strtype": "_codename/Codename",
+                                "strval": "profileName",
+                                "InheritedType": 10
+                              }
+                            ],
                             "InheritedType": 10
                           },
                           {
@@ -24403,17 +24318,17 @@
                             "strtype": "OBJECT/Position",
                             "intarray": [
                               0,
-                              0
+                              -90
                             ],
                             "InheritedType": 7
                           },
                           {
                             "nid": 60,
-                            "flags": 51,
+                            "flags": 17,
                             "strtype": "OBJECT/Size",
                             "intarray": [
-                              1,
-                              1
+                              315,
+                              30
                             ],
                             "InheritedType": 7
                           },
@@ -24436,6 +24351,12 @@
                             "InheritedType": 2
                           },
                           {
+                            "nid": 225,
+                            "flags": 1048576,
+                            "strtype": "OBJECT/Scrolling",
+                            "InheritedType": 1
+                          },
+                          {
                             "nid": 300,
                             "strtype": "OBJECT/Scrollbar_mode",
                             "strval": "AUTO",
@@ -24445,6 +24366,18 @@
                             "nid": 310,
                             "strtype": "OBJECT/Scroll_direction",
                             "strval": "ALL",
+                            "InheritedType": 3
+                          },
+                          {
+                            "nid": 314,
+                            "strtype": "OBJECT/Scroll_snap_x",
+                            "strval": "NONE",
+                            "InheritedType": 3
+                          },
+                          {
+                            "nid": 315,
+                            "strtype": "OBJECT/Scroll_snap_y",
+                            "strval": "NONE",
                             "InheritedType": 3
                           },
                           {
@@ -24461,13 +24394,13 @@
                           {
                             "nid": 1020,
                             "strtype": "LABEL/Long_mode",
-                            "strval": "WRAP",
+                            "strval": "SCROLL_CIRCULAR",
                             "InheritedType": 3
                           },
                           {
                             "nid": 1030,
                             "strtype": "LABEL/Text",
-                            "strval": "Selected profile",
+                            "strval": "Cremina Lever",
                             "InheritedType": 10
                           },
                           {
@@ -24498,9 +24431,15 @@
                                     "InheritedType": 7
                                   },
                                   {
+                                    "nid": 10430,
+                                    "strtype": "_style/Text_Align",
+                                    "strval": "CENTER",
+                                    "InheritedType": 3
+                                  },
+                                  {
                                     "nid": 10450,
                                     "strtype": "_style/Text_Font",
-                                    "strval": "montserrat_18",
+                                    "strval": "montserrat_24",
                                     "InheritedType": 3
                                   }
                                 ],
@@ -24675,12 +24614,6 @@
                                 "InheritedType": 6
                               },
                               {
-                                "nid": 1060,
-                                "strtype": "IMAGE/Inner_align",
-                                "strval": "TILE",
-                                "InheritedType": 3
-                              },
-                              {
                                 "part": "lv.PART.MAIN",
                                 "childs": [
                                   {
@@ -24838,6 +24771,12 @@
                                 "strtype": "LABEL/Text",
                                 "strval": "93°C",
                                 "InheritedType": 10
+                              },
+                              {
+                                "nid": 1040,
+                                "strtype": "LABEL/Recolor",
+                                "strval": "False",
+                                "InheritedType": 2
                               },
                               {
                                 "part": "lv.PART.MAIN",
@@ -25216,6 +25155,12 @@
                                 "InheritedType": 10
                               },
                               {
+                                "nid": 1040,
+                                "strtype": "LABEL/Recolor",
+                                "strval": "False",
+                                "InheritedType": 2
+                              },
+                              {
                                 "part": "lv.PART.MAIN",
                                 "childs": [
                                   {
@@ -25401,12 +25346,6 @@
                                 "InheritedType": 6
                               },
                               {
-                                "nid": 1060,
-                                "strtype": "IMAGE/Inner_align",
-                                "strval": "CENTER",
-                                "InheritedType": 3
-                              },
-                              {
                                 "part": "lv.PART.MAIN",
                                 "childs": [
                                   {
@@ -25564,6 +25503,12 @@
                                 "strtype": "LABEL/Text",
                                 "strval": "0:30",
                                 "InheritedType": 10
+                              },
+                              {
+                                "nid": 1040,
+                                "strtype": "LABEL/Recolor",
+                                "strval": "False",
+                                "InheritedType": 2
                               },
                               {
                                 "part": "lv.PART.MAIN",
@@ -26025,6 +25970,12 @@
                                 "strtype": "LABEL/Text",
                                 "strval": "93°C",
                                 "InheritedType": 10
+                              },
+                              {
+                                "nid": 1040,
+                                "strtype": "LABEL/Recolor",
+                                "strval": "False",
+                                "InheritedType": 2
                               },
                               {
                                 "part": "lv.PART.MAIN",
@@ -26720,12 +26671,6 @@
                                 "InheritedType": 6
                               },
                               {
-                                "nid": 1060,
-                                "strtype": "IMAGE/Inner_align",
-                                "strval": "TILE",
-                                "InheritedType": 3
-                              },
-                              {
                                 "part": "lv.PART.MAIN",
                                 "childs": [
                                   {
@@ -27019,6 +26964,12 @@
                                 "strtype": "LABEL/Text",
                                 "strval": "0:30",
                                 "InheritedType": 10
+                              },
+                              {
+                                "nid": 1040,
+                                "strtype": "LABEL/Recolor",
+                                "strval": "False",
+                                "InheritedType": 2
                               },
                               {
                                 "part": "lv.PART.MAIN",
@@ -27714,12 +27665,6 @@
                                 "InheritedType": 6
                               },
                               {
-                                "nid": 1060,
-                                "strtype": "IMAGE/Inner_align",
-                                "strval": "TILE",
-                                "InheritedType": 3
-                              },
-                              {
                                 "part": "lv.PART.MAIN",
                                 "childs": [
                                   {
@@ -28361,7 +28306,7 @@
           }
         ],
         "isPage": true,
-        "editor_posx": 2970,
+        "editor_posx": 4140,
         "editor_posy": -600,
         "dont_export": false,
         "locked": false,
@@ -29788,15 +29733,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -29809,7 +29745,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -29925,12 +29860,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -31088,15 +31017,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -31109,7 +31029,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -31225,12 +31144,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE",
@@ -31585,6 +31498,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "9 bar",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -32089,6 +32009,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "92°C",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -32617,15 +32544,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -32752,12 +32670,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -33122,15 +33034,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -33257,12 +33160,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -33616,6 +33513,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "36g",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -34714,6 +34618,12 @@
                     "InheritedType": 10
                   },
                   {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -35623,6 +35533,12 @@
                     "InheritedType": 10
                   },
                   {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -35818,12 +35734,6 @@
                     "strtype": "IMAGE/Scale",
                     "integer": 256,
                     "InheritedType": 6
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "TILE",
-                    "InheritedType": 3
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -36029,7 +35939,7 @@
           }
         ],
         "isPage": true,
-        "editor_posx": 3570,
+        "editor_posx": 5040,
         "editor_posy": -600,
         "dont_export": false,
         "locked": false,
@@ -36449,12 +36359,6 @@
                 "InheritedType": 6
               },
               {
-                "nid": 1060,
-                "strtype": "IMAGE/Inner_align",
-                "strval": "CENTER",
-                "InheritedType": 3
-              },
-              {
                 "part": "lv.PART.MAIN",
                 "childs": [
                   {
@@ -36612,6 +36516,12 @@
                 "strtype": "LABEL/Text",
                 "strval": "0:00",
                 "InheritedType": 10
+              },
+              {
+                "nid": 1040,
+                "strtype": "LABEL/Recolor",
+                "strval": "False",
+                "InheritedType": 2
               },
               {
                 "part": "lv.PART.MAIN",
@@ -36813,12 +36723,6 @@
                     "strtype": "IMAGE/Scale",
                     "integer": 256,
                     "InheritedType": 6
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -37024,12 +36928,6 @@
                     "InheritedType": 6
                   },
                   {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
-                  },
-                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -37231,12 +37129,6 @@
                     "strtype": "IMAGE/Scale",
                     "integer": 256,
                     "InheritedType": 6
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -37574,12 +37466,6 @@
                 "InheritedType": 6
               },
               {
-                "nid": 1060,
-                "strtype": "IMAGE/Inner_align",
-                "strval": "CENTER",
-                "InheritedType": 3
-              },
-              {
                 "part": "lv.PART.MAIN",
                 "childs": [
                   {
@@ -37614,7 +37500,7 @@
           }
         ],
         "isPage": true,
-        "editor_posx": 1170,
+        "editor_posx": 1440,
         "editor_posy": -600,
         "dont_export": false,
         "locked": false,
@@ -38979,15 +38865,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -39000,7 +38877,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -39116,12 +38992,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -40281,15 +40151,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -40302,7 +40163,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -40418,12 +40278,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE",
@@ -40779,6 +40633,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "9 bar",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -41284,6 +41145,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "92°C",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -41812,15 +41680,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -41947,12 +41806,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -42317,15 +42170,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -42452,12 +42296,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -42812,6 +42650,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "36g",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -43912,6 +43757,12 @@
                     "InheritedType": 10
                   },
                   {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -44081,6 +43932,12 @@
                     "strtype": "LABEL/Text",
                     "strval": "93°C",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -44570,12 +44427,6 @@
                     "InheritedType": 6
                   },
                   {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "TILE",
-                    "InheritedType": 3
-                  },
-                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -44764,12 +44615,6 @@
                     "InheritedType": 6
                   },
                   {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "TILE",
-                    "InheritedType": 3
-                  },
-                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -44927,6 +44772,12 @@
                     "strtype": "LABEL/Text",
                     "strval": "0:15",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -45101,6 +44952,12 @@
                     "InheritedType": 10
                   },
                   {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -45271,6 +45128,12 @@
                     "strtype": "LABEL/Text",
                     "strval": "Brew",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -45805,6 +45668,12 @@
                         "InheritedType": 10
                       },
                       {
+                        "nid": 1040,
+                        "strtype": "LABEL/Recolor",
+                        "strval": "False",
+                        "InheritedType": 2
+                      },
+                      {
                         "part": "lv.PART.MAIN",
                         "childs": [
                           {
@@ -46127,6 +45996,12 @@
                     "InheritedType": 10
                   },
                   {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -46330,7 +46205,7 @@
           }
         ],
         "isPage": true,
-        "editor_posx": 2370,
+        "editor_posx": 3240,
         "editor_posy": -600,
         "dont_export": false,
         "locked": false,
@@ -47757,15 +47632,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -47778,7 +47644,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -47894,12 +47759,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -49057,15 +48916,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -49078,7 +48928,6 @@
                             "compnid": 11210,
                             "strtype": "_style/Image_reColor",
                             "strval": "NiceWhite",
-                            "integer": 1000206,
                             "intarray": [
                               250,
                               250,
@@ -49194,12 +49043,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE",
@@ -49554,6 +49397,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "9 bar",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -50058,6 +49908,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "92°C",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -50586,15 +50443,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -50721,12 +50569,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -51091,15 +50933,6 @@
                   },
                   {
                     "part": "lv.PART.MAIN",
-                    "childs": [],
-                    "nid": 1060,
-                    "compnid": 1060,
-                    "strtype": "IMAGE/Style_main",
-                    "strval": "CENTER",
-                    "InheritedType": 11
-                  },
-                  {
-                    "part": "lv.PART.MAIN",
                     "childs": [
                       {
                         "nid": 10000,
@@ -51226,12 +51059,6 @@
                     "strtype": "IMAGE/Style_main",
                     "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                     "InheritedType": 11
-                  },
-                  {
-                    "nid": 1060,
-                    "strtype": "IMAGE/Inner_align",
-                    "strval": "CENTER",
-                    "InheritedType": 3
                   }
                 ],
                 "saved_objtypeKey": "IMAGE"
@@ -51585,6 +51412,13 @@
                     "strtype": "LABEL/Text",
                     "strval": "36g",
                     "InheritedType": 10
+                  },
+                  {
+                    "nid": 1040,
+                    "compnid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "part": "lv.PART.MAIN",
@@ -52683,6 +52517,12 @@
                     "InheritedType": 10
                   },
                   {
+                    "nid": 1040,
+                    "strtype": "LABEL/Recolor",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
                     "part": "lv.PART.MAIN",
                     "childs": [
                       {
@@ -53098,6 +52938,12 @@
                         "strtype": "LABEL/Text",
                         "strval": "0:30",
                         "InheritedType": 10
+                      },
+                      {
+                        "nid": 1040,
+                        "strtype": "LABEL/Recolor",
+                        "strval": "False",
+                        "InheritedType": 2
                       },
                       {
                         "part": "lv.PART.MAIN",
@@ -53791,12 +53637,6 @@
                         "strtype": "IMAGE/Scale",
                         "integer": 256,
                         "InheritedType": 6
-                      },
-                      {
-                        "nid": 1060,
-                        "strtype": "IMAGE/Inner_align",
-                        "strval": "TILE",
-                        "InheritedType": 3
                       },
                       {
                         "part": "lv.PART.MAIN",
@@ -54839,7 +54679,7 @@
           }
         ],
         "isPage": true,
-        "editor_posx": 5430,
+        "editor_posx": 7830,
         "editor_posy": -600,
         "dont_export": false,
         "locked": false,
@@ -55129,7 +54969,7 @@
     "multilang": "DISABLE",
     "description": "",
     "board": "Arduino with TFT_eSPI",
-    "board_version": "v2.0.0",
+    "board_version": "v1.1.3",
     "editor_version": "1.5.3",
     "image": "",
     "export_temp_image": false,
@@ -55144,10 +54984,10 @@
     "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
     "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 416,
+    "backup_cnt": 419,
     "autosave_cnt": 0,
     "group_color_cnt": 0,
-    "lvgl_version": "9.1.0",
+    "lvgl_version": "8.3.11",
     "callfuncsexport": "CPP_FILE",
     "imageexport": "SOURCE",
     "lvgl_include_path": "",
@@ -55161,7 +55001,8 @@
     "drive_fatfs_path": "",
     "naming": "_Screen_Name",
     "naming_force_lowercase": false,
-    "nidcnt": 1000560,
+    "naming_add_subcomponent": false,
+    "nidcnt": 1000912,
     "BitDepth": 16,
     "Name": "GaggiMate"
   }
