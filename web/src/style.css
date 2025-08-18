@@ -147,7 +147,7 @@
 }
 
 @theme {
-  --font-logo: 'Montserrat';
+  --font-logo: 'Montserrat', sans-serif;
 }
 
 @source inline("{,sm:,md:,lg:,xl:}col-span-{1..12}");

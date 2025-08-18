@@ -4,6 +4,10 @@
 #include <ctime>
 #include <display/config.h>
 #include <display/core/constants.h>
+#include <display/core/process/BrewProcess.h>
+#include <display/core/process/GrindProcess.h>
+#include <display/core/process/PumpProcess.h>
+#include <display/core/process/SteamProcess.h>
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
 #include <display/plugins/BLEScalePlugin.h>
@@ -118,11 +122,8 @@ void Controller::setupBluetooth() {
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
     });
-    clientController.registerVolumetricMeasurementCallback([this](const float value) {
-        if (!volumetricOverride) {
-            onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
-        }
-    });
+    clientController.registerVolumetricMeasurementCallback(
+        [this](const float value) { onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION); });
     clientController.registerTofMeasurementCallback([this](const int value) {
         tofDistance = value;
         ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", value);
@@ -242,6 +243,11 @@ void Controller::loop() {
 
         // Handle current process
         if (currentProcess != nullptr) {
+            if (currentProcess->getType() == MODE_BREW) {
+                auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+                brewProcess->updatePressure(pressure);
+                brewProcess->updateFlow(currentPumpFlow);
+            }
             currentProcess->progress();
             if (!isActive()) {
                 deactivate();
@@ -316,10 +322,14 @@ void Controller::startProcess(Process *process) {
     updateLastAction();
 }
 
-int Controller::getTargetTemp() {
+int Controller::getTargetTemp() const {
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
+        if (isActive() && currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+            auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+            return brewProcess->getTemperature();
+        }
         return profileManager->getSelectedProfile().temperature;
     case MODE_STEAM:
         return settings.getTargetSteamTemp();
@@ -500,6 +510,8 @@ void Controller::activate() {
         return;
     clear();
     clientController.tare();
+    if (isVolumetricAvailable())
+        pluginManager->trigger("controller:brew:prestart");
     delay(100);
     switch (mode) {
     case MODE_BREW:
@@ -607,6 +619,10 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
                                ? F("controller:volumetric-measurement:estimation:change")
                                : F("controller:volumetric-measurement:bluetooth:change"),
                            "value", static_cast<float>(measurement));
+    // Bluetooth volume override is active, ignore volume estimation
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION && volumetricOverride) {
+        return;
+    }
     if (currentProcess != nullptr) {
         currentProcess->updateVolume(measurement);
     }

@@ -10,13 +10,14 @@ import {
   CategoryScale,
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
-import { ExtendedContent } from './ExtendedContent.jsx';
+import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
+import { parseProfile } from './utils.js';
 
 Chart.register(
   LineController,
@@ -156,7 +157,11 @@ function ProfileCard({
             className='flex flex-row items-center gap-2 overflow-auto py-2'
             aria-label={`Profile details for ${data.label}`}
           >
-            {data.type === 'pro' ? <ExtendedContent data={data} /> : <SimpleContent data={data} />}
+            {data.type === 'pro' ? (
+              <ExtendedProfileChart data={data} className='max-h-36' />
+            ) : (
+              <SimpleContent data={data} />
+            )}
           </div>
         </div>
       </div>
@@ -308,10 +313,7 @@ export function ProfileList() {
       reader.onload = async e => {
         const result = e.target.result;
         if (typeof result === 'string') {
-          let profiles = JSON.parse(result);
-          if (!Array.isArray(profiles)) {
-            profiles = [profiles];
-          }
+          const profiles = parseProfile(result);
           for (const p of profiles) {
             await apiService.request({ tp: 'req:profiles:save', profile: p });
           }
@@ -360,7 +362,7 @@ export function ProfileList() {
           className='hidden'
           id='profileImport'
           type='file'
-          accept='.json,application/json'
+          accept='.json,application/json,.tcl'
           aria-label='Select a JSON file containing profile data to import'
         />
       </div>
