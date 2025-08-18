@@ -1,6 +1,7 @@
 import { ExtendedPhaseTarget } from './ExtendedPhaseTarget.jsx';
 import { isNumber } from 'chart.js/helpers';
 import { useCallback } from 'preact/hooks';
+import { t } from '@lingui/core/macro';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const onFieldChange = (field, value) => {
@@ -56,36 +57,36 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
     <div
       className='grid grid-cols-1 gap-2 p-2'
       role='group'
-      aria-label={`Phase ${index + 1} configuration`}
+      aria-label={t`Phase ${index + 1} configuration`}
     >
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-type`} className='mb-2 block text-sm font-medium'>
-            Phase Type
+            {t`Phase Type`}
           </label>
           <select
             id={`phase-${index}-type`}
             className='select select-bordered w-full'
             onChange={e => onFieldChange('phase', e.target.value)}
             value={phase.phase}
-            aria-label='Select the type of brew phase'
+            aria-label={t`Select the type of brew phase`}
           >
-            <option value='preinfusion'>Pre-Infusion</option>
-            <option value='brew'>Brew</option>
+            <option value='preinfusion'>{t`Pre-Infusion`}</option>
+            <option value='brew'>{t`Brew`}</option>
           </select>
         </div>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-name`} className='mb-2 block text-sm font-medium'>
-            Phase Name
+            {t`Phase Name`}
           </label>
           <div className='flex gap-2'>
             <input
               id={`phase-${index}-name`}
               className='input input-bordered flex-1'
-              placeholder='Name...'
+              placeholder={t`Name...`}
               value={phase.name}
               onChange={e => onFieldChange('name', e.target.value)}
-              aria-label='Enter a name for this phase'
+              aria-label={t`Enter a name for this phase`}
             />
           </div>
         </div>
@@ -94,7 +95,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-duration`} className='mb-2 block text-sm font-medium'>
-            Duration
+            {t`Duration`}
           </label>
           <div className='input-group'>
             <label htmlFor={`phase-${index}-duration`} className='input w-full'>
@@ -105,15 +106,15 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 min='1'
                 value={phase.duration}
                 onChange={e => onFieldChange('duration', e.target.value)}
-                aria-label='Duration in seconds'
+                aria-label={t`Duration in seconds`}
               />
-              <span aria-label='seconds'>s</span>
+              <span aria-label={t`seconds`}>s</span>
             </label>
           </div>
         </div>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-temperature`} className='mb-2 block text-sm font-medium'>
-            Temperature (0 = Default)
+            {t`Temperature (0 = Default)`}
           </label>
           <div className='input-group'>
             <label htmlFor={`phase-${index}-temperature`} className='input w-full'>
@@ -123,11 +124,11 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 type='number'
                 value={phase.temperature || 0}
                 onChange={e => onFieldChange('temperature', parseFloat(e.target.value))}
-                aria-label='Target temperature'
+                aria-label={t`Target temperature`}
                 min='0'
                 step='0.1'
               />
-              <span aria-label='celsius'>°C</span>
+              <span aria-label={t`celsius`}>°C</span>
             </label>
           </div>
         </div>
@@ -135,25 +136,25 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
 
       <div className='form-control'>
         <fieldset>
-          <legend className='mb-2 block text-sm font-medium'>Valve</legend>
-          <div className='join' role='group' aria-label='Valve state selection'>
+          <legend className='mb-2 block text-sm font-medium'>{t`Valve`}</legend>
+          <div className='join' role='group' aria-label={t`Valve state selection`}>
             <button
               type='button'
               className={`join-item btn btn-sm ${!phase.valve ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => onFieldChange('valve', 0)}
               aria-pressed={!phase.valve}
-              aria-label='Valve closed'
+              aria-label={t`Valve closed`}
             >
-              Closed
+              {t`Closed`}
             </button>
             <button
               type='button'
               className={`join-item btn btn-sm ${phase.valve ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => onFieldChange('valve', 1)}
               aria-pressed={phase.valve}
-              aria-label='Valve open'
+              aria-label={t`Valve open`}
             >
-              Open
+              {t`Open`}
             </button>
           </div>
         </fieldset>
@@ -161,25 +162,25 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
 
       <div className='form-control'>
         <fieldset>
-          <legend className='mb-2 block text-sm font-medium'>Pump Mode</legend>
-          <div className='join' role='group' aria-label='Pump mode selection'>
+          <legend className='mb-2 block text-sm font-medium'>{t`Pump Mode`}</legend>
+          <div className='join' role='group' aria-label={t`Pump mode selection`}>
             <button
               type='button'
               className={`join-item btn btn-sm ${mode === 'off' ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => onFieldChange('pump', 0)}
               aria-pressed={mode === 'off'}
-              aria-label='Pump off'
+              aria-label={t`Pump off`}
             >
-              Off
+              {t`Off`}
             </button>
             <button
               type='button'
               className={`join-item btn btn-sm ${mode === 'power' ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => mode !== 'power' && onFieldChange('pump', 100)}
               aria-pressed={mode === 'power'}
-              aria-label='Pump power mode'
+              aria-label={t`Pump power mode`}
             >
-              Power
+              {t`Power`}
             </button>
             {pressureAvailable && (
               <>
@@ -191,9 +192,9 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     onFieldChange('pump', { target: 'pressure', pressure: 0, flow: 0 })
                   }
                   aria-pressed={mode === 'pressure'}
-                  aria-label='Pump pressure mode (PRO feature)'
+                  aria-label={t`Pump pressure mode (PRO feature)`}
                 >
-                  Pressure <sup>PRO</sup>
+                  {t`Pressure`} <sup>PRO</sup>
                 </button>
                 <button
                   type='button'
@@ -203,9 +204,9 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     onFieldChange('pump', { target: 'flow', pressure: 0, flow: 0 })
                   }
                   aria-pressed={mode === 'flow'}
-                  aria-label='Pump flow mode (PRO feature)'
+                  aria-label={t`Pump flow mode (PRO feature)`}
                 >
-                  Flow <sup>PRO</sup>
+                  {t`Flow`} <sup>PRO</sup>
                 </button>
               </>
             )}
@@ -216,7 +217,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       {mode === 'power' && (
         <div className='form-control'>
           <label htmlFor={`phase-${index}-power`} className='mb-2 block text-sm font-medium'>
-            Pump Power
+            {t`Pump Power`}
           </label>
           <div className='input-group'>
             <label htmlFor={`phase-${index}-power`} className='input w-full'>
@@ -229,9 +230,9 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 max={100}
                 value={pumpPower}
                 onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
-                aria-label='Pump power as percentage'
+                aria-label={t`Pump power as percentage`}
               />
-              <span aria-label='percent'>%</span>
+              <span aria-label={t`percent`}>%</span>
             </label>
           </div>
         </div>
@@ -241,7 +242,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <div className='form-control'>
             <label htmlFor={`phase-${index}-pressure`} className='mb-2 block text-sm font-medium'>
-              Pressure {mode === 'pressure' ? 'Target' : 'Limit'}
+              {t`Pressure`} {mode === 'pressure' ? t`Target` : t`Limit`}
             </label>
             <div className='input-group'>
               <label htmlFor={`phase-${index}-pressure`} className='input w-full'>
@@ -254,16 +255,16 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   onChange={e =>
                     onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
                   }
-                  aria-label='Pressure in bar'
+                  aria-label={t`Pressure in bar`}
                   min='0'
                 />
-                <span aria-label='bar'>bar</span>
+                <span aria-label={t`bar`}>bar</span>
               </label>
             </div>
           </div>
           <div className='form-control'>
             <label htmlFor={`phase-${index}-flow`} className='mb-2 block text-sm font-medium'>
-              Flow {mode === 'flow' ? 'Target' : 'Limit'}
+              {t`Flow`} {mode === 'flow' ? t`Target` : t`Limit`}
             </label>
             <div className='input-group'>
               <label htmlFor={`phase-${index}-flow`} className='input w-full'>
@@ -276,10 +277,10 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   onChange={e =>
                     onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
                   }
-                  aria-label='Flow rate in grams per second'
+                  aria-label={t`Flow rate in grams per second`}
                   min='0'
                 />
-                <span aria-label='grams per second'>g/s</span>
+                <span aria-label={t`grams per second`}>g/s</span>
               </label>
             </div>
           </div>
@@ -289,8 +290,8 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       <div className='grid grid-cols-1 gap-4'>
         <div className='form-control'>
           <fieldset>
-            <legend className='mb-2 block text-sm font-medium'>Transition</legend>
-            <div className='join' role='group' aria-label='Pump mode selection'>
+            <legend className='mb-2 block text-sm font-medium'>{t`Transition`}</legend>
+            <div className='join' role='group' aria-label={t`Pump mode selection`}>
               <button
                 type='button'
                 className={`join-item btn btn-sm ${(phase.transition?.type || 'instant') === 'instant' ? 'btn-primary' : 'btn-outline'}`}
@@ -298,18 +299,18 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   onFieldChange('transition', { ...phase.transition, type: 'instant', duration: 0 })
                 }
                 aria-pressed={mode === 'off'}
-                aria-label='Instant'
+                aria-label={t`Instant`}
               >
-                Instant
+                {t`Instant`}
               </button>
               <button
                 type='button'
                 className={`join-item btn btn-sm ${phase.transition?.type === 'linear' ? 'btn-primary' : 'btn-outline'}`}
                 onClick={() => onFieldChange('transition', { ...phase.transition, type: 'linear' })}
                 aria-pressed={phase.transition?.type === 'linear'}
-                aria-label='Linear'
+                aria-label={t`Linear`}
               >
-                Linear
+                {t`Linear`}
               </button>
               <button
                 type='button'
@@ -318,9 +319,9 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   onFieldChange('transition', { ...phase.transition, type: 'ease-in' })
                 }
                 aria-pressed={phase.transition?.type === 'ease-in'}
-                aria-label='Ease In'
+                aria-label={t`Ease In`}
               >
-                Ease In
+                {t`Ease In`}
               </button>
               <button
                 type='button'
@@ -329,9 +330,9 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   onFieldChange('transition', { ...phase.transition, type: 'ease-out' })
                 }
                 aria-pressed={phase.transition?.type === 'ease-out'}
-                aria-label='Ease Out'
+                aria-label={t`Ease Out`}
               >
-                Ease Out
+                {t`Ease Out`}
               </button>
               <button
                 type='button'
@@ -340,9 +341,9 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   onFieldChange('transition', { ...phase.transition, type: 'ease-in-out' })
                 }
                 aria-pressed={phase.transition?.type === 'ease-in-out'}
-                aria-label='Ease In Out'
+                aria-label={t`Ease In Out`}
               >
-                Ease In Out
+                {t`Ease In Out`}
               </button>
             </div>
           </fieldset>
@@ -355,7 +356,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
               htmlFor={`phase-${index}-transition-duration`}
               className='mb-2 block text-sm font-medium'
             >
-              Transition Duration
+              {t`Transition Duration`}
             </label>
             <div className='input-group'>
               <label htmlFor={`phase-${index}-transition-duration`} className='input w-full'>
@@ -370,11 +371,11 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                       duration: parseFloat(e.target.value),
                     })
                   }
-                  aria-label='Transition duration in seconds'
+                  aria-label={t`Transition duration in seconds`}
                   min='0'
                   step='0.1'
                 />
-                <span aria-label='grams'>s</span>
+                <span aria-label={t`seconds`}>s</span>
               </label>
             </div>
           </div>
@@ -382,11 +383,11 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       )}
 
       <div className='flex flex-row gap-4'>
-        <h3 className='text-lg font-medium'>Targets</h3>
+        <h3 className='text-lg font-medium'>{t`Targets`}</h3>
         <button
           type='button'
           className={`join-item btn btn-sm btn-outline`}
-          aria-label='Add target'
+          aria-label={t`Add target`}
           onClick={() => onTargetAdd()}
         >
           <i className='fa fa-plus' aria-hidden='true' />
@@ -396,7 +397,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
         <>
           {idx !== 0 && (
             <div key={`sep-${idx}`} className='divider'>
-              OR
+              {t`OR`}
             </div>
           )}
           <ExtendedPhaseTarget

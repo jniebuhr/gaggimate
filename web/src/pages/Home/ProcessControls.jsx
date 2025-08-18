@@ -2,6 +2,7 @@ import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
+import { t } from '@lingui/core/macro';
 
 const status = computed(() => machine.value.status);
 
@@ -25,7 +26,7 @@ const BrewProgress = props => {
         <>
           <div className='space-y-2 text-center'>
             <div className='text-base-content/60 text-xs font-light tracking-wider sm:text-sm'>
-              {processInfo.s === 'brew' ? 'INFUSION' : 'PREINFUSION'}
+              {processInfo.s === 'brew' ? t`INFUSION` : t`PREINFUSION`}
             </div>
             <div className='text-base-content text-2xl font-bold sm:text-4xl'>{processInfo.l}</div>
           </div>
@@ -52,7 +53,7 @@ const BrewProgress = props => {
       )}
       {!active && (
         <div className='space-y-2 text-center'>
-          <div className='text-base-content text-xl font-bold sm:text-2xl'>Finished</div>
+          <div className='text-base-content text-xl font-bold sm:text-2xl'>{t`Finished`}</div>
           <div className='text-base-content text-2xl font-bold sm:text-3xl'>
             {formatDuration(elapsed)}
           </div>
@@ -144,10 +145,10 @@ const ProcessControls = props => {
       <div className='mb-2 flex justify-center'>
         <div className='bg-base-300 flex w-full max-w-md rounded-full p-1'>
           {[
-            { id: 0, label: 'Standby' },
-            { id: 1, label: 'Brew' },
-            { id: 2, label: 'Steam' },
-            { id: 3, label: 'Water' },
+            { id: 0, label: t`Standby` },
+            { id: 1, label: t`Brew` },
+            { id: 2, label: t`Steam` },
+            { id: 3, label: t`Water` },
           ].map(tab => (
             <button
               key={tab.id}
@@ -183,7 +184,7 @@ const ProcessControls = props => {
       </div>
       {brew && (
         <div className='mb-2 text-center'>
-          <div className='text-base-content/60 text-sm'>Current Profile</div>
+          <div className='text-base-content/60 text-sm'>{t`Current Profile`}</div>
           <a href='/profiles' className='mb-2 flex items-center justify-center gap-2'>
             <span className='text-base-content text-xl font-semibold sm:text-2xl'>
               {status.value.selectedProfile || 'Default'}
@@ -200,17 +201,17 @@ const ProcessControls = props => {
             {!brew && (
               <div className='space-y-2 text-center'>
                 <div className='text-xl font-bold sm:text-2xl'>
-                  {mode === 0 && 'Standby Mode'}
-                  {mode === 2 && 'Steam Mode'}
-                  {mode === 3 && 'Water Mode'}
+                  {mode === 0 && t`Standby Mode`}
+                  {mode === 2 && t`Steam Mode`}
+                  {mode === 3 && t`Water Mode`}
                 </div>
                 <div className='text-base-content/60 text-sm'>
-                  {mode === 0 && 'Machine is ready'}
-                  {mode === 3 && 'Start and open steam valve to pull water'}
+                  {mode === 0 && t`Machine is ready`}
+                  {mode === 3 && t`Start and open steam valve to pull water`}
                   {mode === 2 &&
                     (Math.abs(status.value.targetTemperature - status.value.currentTemperature) < 5
-                      ? 'Steam is ready'
-                      : 'Preheating')}
+                      ? t`Steam is ready`
+                      : t`Preheating`)}
                 </div>
               </div>
             )}
@@ -222,19 +223,19 @@ const ProcessControls = props => {
         <div className='flex flex-1 items-center justify-center'>
           <div className='space-y-2 text-center'>
             <div className='text-lg font-semibold sm:text-xl'>
-              {mode === 0 && 'Standby'}
-              {mode === 1 && 'Brew Mode'}
-              {mode === 2 && 'Steam'}
-              {mode === 3 && 'Water'}
+              {mode === 0 && t`Standby`}
+              {mode === 1 && t`Brew Mode`}
+              {mode === 2 && t`Steam`}
+              {mode === 3 && t`Water`}
             </div>
             <div className='text-base-content/60 text-sm'>
-              {mode === 0 && 'Machine is ready'}
-              {mode === 1 && 'Select brew target to start'}
+              {mode === 0 && t`Machine is ready`}
+              {mode === 1 && t`Select brew target to start`}
               {mode === 2 &&
                 (Math.abs(status.value.targetTemperature - status.value.currentTemperature) < 5
-                  ? 'Steam is ready'
-                  : 'Preheating')}
-              {mode === 3 && 'Start and open steam valve to pull water'}
+                  ? t`Steam is ready`
+                  : t`Preheating`)}
+              {mode === 3 && t`Start and open steam valve to pull water`}
             </div>
           </div>
         </div>
@@ -248,14 +249,14 @@ const ProcessControls = props => {
               onClick={() => changeTarget(0)}
             >
               <i className='fa-solid fa-clock' />
-              <span className='ml-1'>Time</span>
+              <span className='ml-1'>{t`Time`}</span>
             </button>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(1)}
             >
               <i className='fa-solid fa-weight-scale' />
-              <span className='ml-1'>Weight</span>
+              <span className='ml-1'>{t`Weight`}</span>
             </button>
           </div>
         )}
@@ -269,10 +270,10 @@ const ProcessControls = props => {
               <button
                 className='btn text-base-content/60 hover:text-base-content rounded-full text-sm transition-colors duration-200'
                 onClick={startFlush}
-                title='Click to flush water'
+                title={t`Click to flush water`}
               >
                 <i className='fa-solid fa-tint' />
-                Flush
+                {t`Flush`}
               </button>
             )}
           </div>

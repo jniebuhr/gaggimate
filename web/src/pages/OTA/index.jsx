@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useContext } from 'preact/hoo
 import { Spinner } from '../../components/Spinner.jsx';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import Card from '../../components/Card.jsx';
+import { t } from '@lingui/core/macro';
 
 export function OTA() {
   const apiService = useContext(ApiServiceContext);
@@ -70,17 +71,17 @@ export function OTA() {
         <Spinner size={8} />
         <span className='text-xl font-medium'>
           {phase === 1
-            ? 'Updating Display firmware'
+            ? t`Updating Display firmware`
             : phase === 2
-              ? 'Updating Display filesystem'
+              ? t`Updating Display filesystem`
               : phase === 3
-                ? 'Updating controller firmware'
-                : 'Finished'}
+                ? t`Updating controller firmware`
+                : t`Finished`}
         </span>
         <span className='text-lg font-medium'>{phase === 4 ? 100 : progress}%</span>
         {phase === 4 && (
           <a href='/' className='btn btn-primary'>
-            Back
+            {t`Back`}
           </a>
         )}
       </div>
@@ -90,52 +91,52 @@ export function OTA() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>System & Updates</h2>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>{t`System & Updates`}</h2>
       </div>
 
       <form key='ota' method='post' action='/api/ota' ref={formRef} onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
-          <Card sm={12} title='System Information'>
+          <Card sm={12} title={t`System Information`}>
             <div className='flex flex-col space-y-4'>
               <label htmlFor='channel' className='text-sm font-medium'>
-                Update Channel
+                {t`Update Channel`}
               </label>
               <select id='channel' name='channel' className='select select-bordered w-full'>
                 <option value='latest' selected={formData.channel === 'latest'}>
-                  Stable
+                  {t`Stable`}
                 </option>
                 <option value='nightly' selected={formData.channel === 'nightly'}>
-                  Nightly
+                  {t`Nightly`}
                 </option>
               </select>
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Hardware</label>
+              <label className='text-sm font-medium'>{t`Hardware`}</label>
               <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
                 {formData.hardware}
               </div>
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Controller version</label>
+              <label className='text-sm font-medium'>{t`Controller version`}</label>
               <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
                 <span className='break-all'>{formData.controllerVersion}</span>
                 {formData.controllerUpdateAvailable && (
                   <span className='text-primary font-bold break-all'>
-                    (Update available: {formData.latestVersion})
+                    {t`(Update available: ${formData.latestVersion})`}
                   </span>
                 )}
               </div>
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Display version</label>
+              <label className='text-sm font-medium'>{t`Display version`}</label>
               <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
                 <span className='break-all'>{formData.displayVersion}</span>
                 {formData.displayUpdateAvailable && (
                   <span className='text-primary font-bold break-all'>
-                    (Update available: {formData.latestVersion})
+                    {t`(Update available: ${formData.latestVersion})`}
                   </span>
                 )}
               </div>
@@ -143,8 +144,7 @@ export function OTA() {
 
             <div className='alert alert-warning'>
               <span>
-                Make sure to backup your profiles from the profile screen before updating the
-                display.
+                {t`Make sure to backup your profiles from the profile screen before updating the display.`}
               </span>
             </div>
           </Card>
@@ -153,7 +153,7 @@ export function OTA() {
         <div className='pt-4 lg:col-span-12'>
           <div className='flex flex-col flex-wrap gap-2 sm:flex-row'>
             <button type='submit' className='btn btn-primary' disabled={submitting}>
-              Save & Refresh
+              {t`Save & Refresh`}
             </button>
             <button
               type='submit'
@@ -162,7 +162,7 @@ export function OTA() {
               disabled={!formData.displayUpdateAvailable || submitting}
               onClick={() => onUpdate('display')}
             >
-              Update Display
+              {t`Update Display`}
             </button>
             <button
               type='submit'
@@ -171,7 +171,7 @@ export function OTA() {
               disabled={!formData.controllerUpdateAvailable || submitting}
               onClick={() => onUpdate('controller')}
             >
-              Update Controller
+              {t`Update Controller`}
             </button>
           </div>
         </div>

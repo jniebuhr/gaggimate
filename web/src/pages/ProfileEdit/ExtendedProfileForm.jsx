@@ -3,6 +3,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { useState } from 'preact/hooks';
 import { ExtendedPhase } from './ExtendedPhase.jsx';
+import { t } from '@lingui/core/macro';
 
 export function ExtendedProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
@@ -30,7 +31,7 @@ export function ExtendedProfileForm(props) {
         ...data.phases,
         {
           phase: 'brew',
-          name: 'New Phase',
+          name: t`New Phase`,
           pump: 100,
           valve: 1,
           duration: 0,
@@ -68,10 +69,10 @@ export function ExtendedProfileForm(props) {
       }}
     >
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
-        <Card sm={10} title='Profile Information'>
+        <Card sm={10} title={t`Profile Information`}>
           <div className='form-control'>
             <label htmlFor='label' className='mb-2 block text-sm font-medium'>
-              Title
+              {t`Title`}
             </label>
             <input
               id='label'
@@ -79,13 +80,13 @@ export function ExtendedProfileForm(props) {
               className='input input-bordered w-full'
               value={data?.label}
               onChange={e => onFieldChange('label', e.target.value)}
-              aria-label='Enter a name for this profile'
+              aria-label={t`Enter a name for this profile`}
               required
             />
           </div>
           <div className='form-control'>
             <label htmlFor='description' className='mb-2 block text-sm font-medium'>
-              Description
+              {t`Description`}
             </label>
             <input
               id='description'
@@ -93,12 +94,12 @@ export function ExtendedProfileForm(props) {
               className='input input-bordered w-full'
               value={data?.description}
               onChange={e => onFieldChange('description', e.target.value)}
-              aria-label='Optional description for this profile'
+              aria-label={t`Optional description for this profile`}
             />
           </div>
           <div className='form-control'>
             <label htmlFor='temperature' className='mb-2 block text-sm font-medium'>
-              Temperature
+              {t`Temperature`}
             </label>
             <div className='input-group'>
               <label htmlFor='temperature' className='input w-full'>
@@ -109,12 +110,12 @@ export function ExtendedProfileForm(props) {
                   className='grow'
                   value={data?.temperature}
                   onChange={e => onFieldChange('temperature', e.target.value)}
-                  aria-label='Temperature in degrees Celsius'
+                  aria-label={t`Temperature in degrees Celsius`}
                   min='0'
                   max='150'
                   step='0.1'
                 />
-                <span aria-label='degrees Celsius'>°C</span>
+                <span aria-label={t`degrees Celsius`}>°C</span>
               </label>
             </div>
           </div>
@@ -128,16 +129,16 @@ export function ExtendedProfileForm(props) {
         </Card>
         <Card sm={10}>
           <div className='card-header flex items-center gap-4'>
-            <h2 className='card-title flex-grow text-lg sm:text-xl'>Brew Phases</h2>
+            <h2 className='card-title flex-grow text-lg sm:text-xl'>{t`Brew Phases`}</h2>
             <h5 className='card-subtitle text-sm sm:text-base'>
               {currentPhaseIndex + 1} / {data.phases.length}
             </h5>
             <div>
-              <div className='join' role='group' aria-label='Phase navigation'>
+              <div className='join' role='group' aria-label={t`Phase navigation`}>
                 <button
                   type='button'
                   className={`join-item btn btn-outline`}
-                  aria-label='Previous'
+                  aria-label={t`Previous`}
                   disabled={currentPhaseIndex === 0}
                   onClick={() => setCurrentPhaseIndex(currentPhaseIndex - 1)}
                 >
@@ -146,7 +147,7 @@ export function ExtendedProfileForm(props) {
                 <button
                   type='button'
                   className={`join-item btn btn-outline`}
-                  aria-label='Next'
+                  aria-label={t`Next`}
                   disabled={currentPhaseIndex === data.phases.length - 1}
                   onClick={() => setCurrentPhaseIndex(currentPhaseIndex + 1)}
                 >
@@ -157,7 +158,7 @@ export function ExtendedProfileForm(props) {
             <button
               type='button'
               className={`join-item btn btn-outline`}
-              aria-label='Add phase'
+              aria-label={t`Add phase`}
               onClick={() => onPhaseAdd()}
             >
               <i className='fa fa-plus' aria-hidden='true' />
@@ -165,13 +166,13 @@ export function ExtendedProfileForm(props) {
             <button
               type='button'
               className={`join-item btn btn-outline text-error`}
-              aria-label='Remove phase'
+              aria-label={t`Remove phase`}
               onClick={() => onPhaseRemove(currentPhaseIndex)}
             >
               <i className='fa fa-trash-can' aria-hidden='true' />
             </button>
           </div>
-          <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
+          <div className='space-y-4' role='group' aria-label={t`Brew phases configuration`}>
             <ExtendedPhase
               phase={currentPhase}
               index={currentPhaseIndex}
@@ -186,15 +187,15 @@ export function ExtendedProfileForm(props) {
       <div className='pt-4 lg:col-span-10'>
         <div className='flex flex-col gap-2 sm:flex-row'>
           <a href='/profiles' className='btn btn-outline'>
-            Back
+            {t`Back`}
           </a>
           <button
             type='submit'
             className='btn btn-primary gap-2'
             disabled={saving}
-            aria-label={saving ? 'Saving profile...' : 'Save profile'}
+            aria-label={saving ? t`Saving profile...` : t`Save profile`}
           >
-            <span>Save</span>
+            <span>{t`Save`}</span>
             {saving && <Spinner size={4} />}
           </button>
         </div>

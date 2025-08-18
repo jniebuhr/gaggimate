@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
+import { t } from '@lingui/core/macro';
 
 function HeaderItem(props) {
   const { path } = useLocation();
@@ -42,7 +43,7 @@ export function Header() {
           <div className='flex items-center gap-1 lg:gap-5'>
             <div className='relative inline-block'>
               <a
-                aria-label='github'
+                aria-label={t`github`}
                 rel='noopener noreferrer'
                 href='https://github.com/jniebuhr/gaggimate'
                 target='_blank'
@@ -54,7 +55,7 @@ export function Header() {
 
             <div className='relative inline-block'>
               <a
-                aria-label='discord'
+                aria-label={t`discord`}
                 rel='noopener noreferrer'
                 href='https://discord.gaggimate.eu/'
                 target='_blank'
@@ -89,7 +90,7 @@ export function Header() {
 
         <nav className={`${open ? 'flex' : 'hidden'} flex-col py-4 lg:hidden`}>
           <HeaderItem
-            label='Dashboard'
+            label={t`Dashboard`}
             link='/'
             iconClass='fa fa-home'
             onClick={() => openCb(false)}
@@ -97,13 +98,13 @@ export function Header() {
           <hr className='h-5 border-0' />
           <div className='space-y-1.5'>
             <HeaderItem
-              label='Profiles'
+              label={t`Profiles`}
               link='/profiles'
               iconClass='fa fa-list'
               onClick={() => openCb(false)}
             />
             <HeaderItem
-              label='Shot History'
+              label={t`Shot History`}
               link='/history'
               iconClass='fa fa-timeline'
               onClick={() => openCb(false)}
@@ -112,19 +113,19 @@ export function Header() {
           <hr className='h-5 border-0' />
           <div className='space-y-1.5'>
             <HeaderItem
-              label='PID Autotune'
+              label={t`PID Autotune`}
               link='/pidtune'
               iconClass='fa fa-temperature-half'
               onClick={() => openCb(false)}
             />
             <HeaderItem
-              label='Bluetooth Scales'
+              label={t`Bluetooth Scales`}
               link='/scales'
               iconClass='fa-brands fa-bluetooth-b'
               onClick={() => openCb(false)}
             />
             <HeaderItem
-              label='Settings'
+              label={t`Settings`}
               link='/settings'
               iconClass='fa fa-cog'
               onClick={() => openCb(false)}
@@ -133,7 +134,7 @@ export function Header() {
           <hr className='h-5 border-0' />
           <div className='space-y-1.5'>
             <HeaderItem
-              label='System & Updates'
+              label={t`System & Updates`}
               link='/ota'
               iconClass='fa fa-rotate'
               onClick={() => openCb(false)}
