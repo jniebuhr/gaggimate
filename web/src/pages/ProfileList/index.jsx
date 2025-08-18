@@ -18,6 +18,7 @@ import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
+import { t } from '@lingui/core/macro';
 
 Chart.register(
   LineController,
@@ -31,8 +32,8 @@ Chart.register(
 );
 
 const PhaseLabels = {
-  preinfusion: 'Pre-Infusion',
-  brew: 'Brew',
+  preinfusion: t`Pre-Infusion`,
+  brew: t`Brew`,
 };
 
 const connected = computed(() => machine.value.connected);
@@ -48,7 +49,7 @@ function ProfileCard({
   unfavoriteDisabled,
 }) {
   const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
-  const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
+  const typeText = data.type === 'pro' ? t`Pro` : t`Simple`;
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
   const favoriteToggleDisabled = data.favorite ? unfavoriteDisabled : favoriteDisabled;
   const favoriteToggleClass = favoriteToggleDisabled ? 'opacity-50 cursor-not-allowed' : '';
@@ -108,7 +109,7 @@ function ProfileCard({
             <div
               className='flex flex-row justify-end gap-2'
               role='group'
-              aria-label={`Actions for ${data.label} profile`}
+              aria-label={t`Actions for ${data.label} profile`}
             >
               <button
                 onClick={onFavoriteToggle}
@@ -155,7 +156,7 @@ function ProfileCard({
           </div>
           <div
             className='flex flex-row items-center gap-2 overflow-auto py-2'
-            aria-label={`Profile details for ${data.label}`}
+            aria-label={t`Profile details for ${data.label}`}
           >
             {data.type === 'pro' ? (
               <ExtendedProfileChart data={data} className='max-h-36' />
@@ -171,7 +172,7 @@ function ProfileCard({
 
 function SimpleContent({ data }) {
   return (
-    <div className='flex flex-row items-center gap-2' role='list' aria-label='Brew phases'>
+            <div className='flex flex-row items-center gap-2' role='list' aria-label={t`Brew phases`}>
       {data.phases.map((phase, i) => (
         <div key={i} className='flex flex-row items-center gap-2' role='listitem'>
           {i > 0 && <SimpleDivider />}
@@ -199,10 +200,10 @@ function SimpleStep(props) {
         <span className='text-base-content/70 text-sm'>{props.type}</span>
       </div>
       <div className='text-base-content/60 text-sm italic'>
-        {props.targets.length === 0 && <span>Duration: {props.duration}s</span>}
+        {props.targets.length === 0 && <span>{t`Duration: ${props.duration}s`}</span>}
         {props.targets.map((t, i) => (
           <span key={i}>
-            Exit on: {t.value}
+            {t`Exit on: ${t.value}`}
             {t.type === 'volumetric' && 'g'}
           </span>
         ))}
@@ -330,7 +331,7 @@ export function ProfileList() {
         className='flex w-full flex-row items-center justify-center py-16'
         role='status'
         aria-live='polite'
-        aria-label='Loading profiles'
+        aria-label={t`Loading profiles`}
       >
         <Spinner size={8} />
       </div>
@@ -340,11 +341,11 @@ export function ProfileList() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Profiles</h1>
+        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>{t`Profiles`}</h1>
         <button
           onClick={onExport}
           className='btn btn-ghost btn-sm'
-          title='Export all profiles'
+          title={t`Export all profiles`}
           aria-label='Export all profiles'
         >
           <i className='fa fa-file-export' aria-hidden='true' />
@@ -352,7 +353,7 @@ export function ProfileList() {
         <label
           htmlFor='profileImport'
           className='btn btn-ghost btn-sm cursor-pointer'
-          title='Import profiles'
+          title={t`Import profiles`}
           aria-label='Import profiles'
         >
           <i className='fa fa-file-import' aria-hidden='true' />

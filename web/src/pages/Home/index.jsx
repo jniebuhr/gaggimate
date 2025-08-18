@@ -15,6 +15,7 @@ import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import ProcessControls from './ProcessControls.jsx';
 import { getDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
+import { t } from '@lingui/core/macro';
 
 Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
@@ -52,7 +53,7 @@ export function Home() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
+        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>{t`Dashboard`}</h1>
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
@@ -60,7 +61,7 @@ export function Home() {
           sm={10}
           lg={4}
           className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
-          title='Process Controls'
+          title={t`Process Controls`}
         >
           <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
         </Card>
@@ -69,7 +70,7 @@ export function Home() {
           sm={10}
           lg={6}
           className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
-          title='Temperature & Pressure Chart'
+          title={t`Temperature & Pressure Chart`}
           fullHeight={true}
         >
           <OverviewChart />

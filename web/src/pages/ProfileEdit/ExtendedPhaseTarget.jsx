@@ -1,36 +1,38 @@
+import { t } from '@lingui/core/macro';
+
 const TargetTypes = [
   {
-    label: 'Volume',
+    label: t`Volume`,
     type: 'volumetric',
     operator: 'gte',
     unit: 'g',
   },
   {
-    label: 'Pumped water',
+    label: t`Pumped water`,
     type: 'pumped',
     operator: 'gte',
     unit: 'ml',
   },
   {
-    label: 'Pressure above',
+    label: t`Pressure above`,
     type: 'pressure',
     operator: 'gte',
     unit: 'bar',
   },
   {
-    label: 'Pressure below',
+    label: t`Pressure below`,
     type: 'pressure',
     operator: 'lte',
     unit: 'bar',
   },
   {
-    label: 'Flow above',
+    label: t`Flow above`,
     type: 'flow',
     operator: 'gte',
     unit: 'ml/s',
   },
   {
-    label: 'Flow below',
+    label: t`Flow below`,
     type: 'flow',
     operator: 'lte',
     unit: 'ml/s',
@@ -46,7 +48,7 @@ export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
       <div className='grid grid-cols-1 gap-4'>
         <div className='form-control flex flex-row gap-4'>
           <fieldset className='flex-grow'>
-            <div className='join' role='group' aria-label='Pump mode selection'>
+            <div className='join' role='group' aria-label={t`Pump mode selection`}>
               {TargetTypes.map((tt, idx) => (
                 <button
                   type='button'
@@ -65,7 +67,7 @@ export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
           <button
             type='button'
             className={`join-item btn btn-sm btn-outline text-error`}
-            aria-label='Remove target'
+            aria-label={t`Remove target`}
             onClick={() => onRemove()}
           >
             <i className='fa fa-trash-can' aria-hidden='true' />
@@ -75,7 +77,7 @@ export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
       <div className='grid grid-cols-1 gap-4'>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-target-value`} className='mb-2 block text-sm font-medium'>
-            Value
+            {t`Value`}
           </label>
           <div className='input-group'>
             <label htmlFor={`phase-${index}-target-value`} className='input w-full'>
@@ -90,7 +92,7 @@ export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
                     value: parseFloat(e.target.value),
                   })
                 }
-                aria-label={`Target value in ${targetType.unit}`}
+                aria-label={t`Target value in ${targetType.unit}`}
                 min='0'
                 step='0.1'
               />
