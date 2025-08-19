@@ -77,6 +77,8 @@ class Settings {
     int getSunriseExtBrightness() const { return sunriseExtBrightness; }
     int getEmptyTankDistance() const { return emptyTankDistance; }
     int getFullTankDistance() const { return fullTankDistance; }
+    int getLanguage() const { return language; }
+    void setLanguage(int language);
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -205,6 +207,7 @@ class Settings {
     int sunriseExtBrightness = 255;
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
+    int language = DEFAULT_LANGUAGE;
 
     void doSave();
     xTaskHandle taskHandle;
