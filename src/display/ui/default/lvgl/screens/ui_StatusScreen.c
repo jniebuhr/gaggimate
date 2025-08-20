@@ -90,6 +90,18 @@ void ui_StatusScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_StatusScreen_pauseButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
                                            _ui_theme_alpha_NiceWhite);
 
+    ui_StatusScreen_upDurationButton = lv_imgbtn_create(ui_StatusScreen_contentPanel2);
+    lv_imgbtn_set_src(ui_StatusScreen_upDurationButton, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_390988422, NULL);
+    lv_obj_set_width(ui_StatusScreen_upDurationButton, 40);
+    lv_obj_set_height(ui_StatusScreen_upDurationButton, 40);
+    lv_obj_set_x(ui_StatusScreen_upDurationButton, 115);
+    lv_obj_set_y(ui_StatusScreen_upDurationButton, 65);
+    lv_obj_set_align(ui_StatusScreen_upDurationButton, LV_ALIGN_CENTER);
+    ui_object_set_themeable_style_property(ui_StatusScreen_upDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                           LV_STYLE_IMG_RECOLOR, _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_StatusScreen_upDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                           LV_STYLE_IMG_RECOLOR_OPA, _ui_theme_alpha_NiceWhite);
+
     ui_StatusScreen_Image7 = lv_img_create(ui_StatusScreen_contentPanel2);
     lv_img_set_src(ui_StatusScreen_Image7, &ui_img_1951499226);
     lv_obj_set_width(ui_StatusScreen_Image7, 40);
@@ -230,6 +242,7 @@ void ui_StatusScreen_screen_init(void) {
 
     lv_obj_add_event_cb(ui_StatusScreen_ImgButton8, ui_event_StatusScreen_ImgButton8, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_StatusScreen_pauseButton, ui_event_StatusScreen_pauseButton, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_StatusScreen_upDurationButton, ui_event_StatusScreen_upDurationButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_StatusScreen, ui_event_StatusScreen, LV_EVENT_ALL, NULL);
     uic_StatusScreen_dials_tempGauge = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_TEMPGAUGE);
     uic_StatusScreen_dials_tempTarget = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_TEMPTARGET);

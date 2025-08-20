@@ -34,6 +34,7 @@ void onSteamTempLower(lv_event_t *e);
 void onSteamTempRaise(lv_event_t *e);
 void onWakeup(lv_event_t *e);
 void onBrewCancel(lv_event_t *e);
+void onUpDuration(lv_event_t *e);
 void onGrindToggle(lv_event_t *e);
 void onGrindTimeRaise(lv_event_t *e);
 void onGrindTimeLower(lv_event_t *e);

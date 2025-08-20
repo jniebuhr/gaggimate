@@ -168,6 +168,8 @@ lv_obj_t *ui_StatusScreen_targetDuration;
 lv_obj_t *ui_StatusScreen_targetTemp;
 void ui_event_StatusScreen_pauseButton(lv_event_t *e);
 lv_obj_t *ui_StatusScreen_pauseButton;
+void ui_event_StatusScreen_upDurationButton(lv_event_t *e);
+lv_obj_t *ui_StatusScreen_upDurationButton;
 lv_obj_t *ui_StatusScreen_Image7;
 lv_obj_t *ui_StatusScreen_Image8;
 lv_obj_t *ui_StatusScreen_currentDuration;
@@ -509,6 +511,14 @@ void ui_event_StatusScreen_pauseButton(lv_event_t *e) {
     if (event_code == LV_EVENT_CLICKED) {
         onBrewCancel(e);
         (e);
+    }
+}
+
+void ui_event_StatusScreen_upDurationButton(lv_event_t *e) {
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if (event_code == LV_EVENT_CLICKED) {
+        onUpDuration(e);
     }
 }
 

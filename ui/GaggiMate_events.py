@@ -130,3 +130,7 @@ def onFlush(event_struct):
 def onSimpleProcessToggle(event_struct):
     return
 
+
+def onUpDuration(event_struct):
+    return
+

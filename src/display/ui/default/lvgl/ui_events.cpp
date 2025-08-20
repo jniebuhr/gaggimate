@@ -96,3 +96,5 @@ void onSimpleProcessToggle(lv_event_t *e) {
         controller.isActive() ? controller.deactivate() : controller.activate();
     }
 }
+
+void onUpDuration(lv_event_t *e) { controller.raisePhaseDuration(); }
