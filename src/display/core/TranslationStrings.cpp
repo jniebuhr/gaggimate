@@ -2,7 +2,7 @@
 
 namespace TranslationStrings {
     // English
-    const char* const ENGLISH[] = {
+    const char* const ENGLISH[NUM_KEYS] = {
         "Brew",                    // BREW
         "Steam",                   // STEAM
         "Water",                   // WATER
@@ -24,7 +24,7 @@ namespace TranslationStrings {
     };
 
     // German
-    const char* const GERMAN[] = {
+    const char* const GERMAN[NUM_KEYS] = {
         "Kaffee",                  // BREW
         "Dampf",                   // STEAM
         "Wasser",                  // WATER
@@ -46,7 +46,7 @@ namespace TranslationStrings {
     };
 
     // French
-    const char* const FRENCH[] = {
+    const char* const FRENCH[NUM_KEYS] = {
         "Brew",                    // BREW
         "Steam",                   // STEAM
         "Water",                   // WATER
@@ -68,7 +68,7 @@ namespace TranslationStrings {
     };
 
     // Spanish
-    const char* const SPANISH[] = {
+    const char* const SPANISH[NUM_KEYS] = {
         "Elaborar",                     // BREW
         "Vapor",                        // STEAM
         "Agua",                         // WATER
