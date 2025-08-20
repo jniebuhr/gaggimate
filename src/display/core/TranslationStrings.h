@@ -1,9 +1,20 @@
 #ifndef TRANSLATION_STRINGS_H
 #define TRANSLATION_STRINGS_H
 
-#include "Translation.h"
+enum class TranslationKey;
 
 namespace TranslationStrings {
+    // Calculate array size
+    static constexpr size_t NUM_KEYS = sizeof(ENGLISH) / sizeof(ENGLISH[0]);
+    
+    // Ensure all arrays have the same size
+    static_assert(sizeof(GERMAN) / sizeof(GERMAN[0]) == NUM_KEYS, "GERMAN array size mismatch");
+    static_assert(sizeof(FRENCH) / sizeof(FRENCH[0]) == NUM_KEYS, "FRENCH array size mismatch");
+    static_assert(sizeof(SPANISH) / sizeof(SPANISH[0]) == NUM_KEYS, "SPANISH array size mismatch");
+    
+    // Ensure enum count matches array size. Make sure to update this when adding new keys.
+    static_assert(NUM_KEYS == 18, "TranslationKey enum count doesn't match array size");
+    
     // English
     static const char* const ENGLISH[] = {
         "Brew",                    // BREW

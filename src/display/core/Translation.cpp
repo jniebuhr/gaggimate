@@ -13,8 +13,12 @@ Language Translation::getLanguage() {
 }
 
 const char* Translation::get(TranslationKey key) {
-    const char* const* strings = nullptr;
+    int index = static_cast<int>(key);
+    if (index < 0 || index >= static_cast<int>(TranslationStrings::NUM_KEYS)) {
+        return "Unknown";
+    }
     
+    const char* const* strings = nullptr;
     switch (currentLanguage) {
         case Language::GERMAN:
             strings = TranslationStrings::GERMAN;
@@ -31,16 +35,13 @@ const char* Translation::get(TranslationKey key) {
             break;
     }
     
-    int index = static_cast<int>(key);
-    if (index >= 0 && index < 18) { // 18 translation keys
-        const char* text = strings[index];
-        if (text != nullptr && text[0] != '\0') {
-            return text;
-        }
+    const char* text = strings[index];
+    if (text != nullptr && text[0] != '\0') {
+        return text;
     }
     
     // Fallback to English
-    return TranslationStrings::ENGLISH[static_cast<int>(key)];
+    return TranslationStrings::ENGLISH[index];
 }
 
 String Translation::format(const char* format, ...) {
