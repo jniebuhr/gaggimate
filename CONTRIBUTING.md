@@ -89,3 +89,9 @@ When building the firmware, the scripts/build_spiffs.sh script installs the web 
 ## Reporting Issues
 
 If you encounter a problem, open an issue describing the steps to reproduce and any relevant logs.
+
+## Adding Translations
+
+### Controller
+
+### WebUI

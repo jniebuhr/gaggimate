@@ -38,12 +38,8 @@ public:
     static const char* get(TranslationKey key);
     static String format(const char* format, ...);
     
-private:
-    static Language currentLanguage;
-    static const char* getEnglish(TranslationKey key);
-    static const char* getGerman(TranslationKey key);
-    static const char* getFrench(TranslationKey key);
-    static const char* getSpanish(TranslationKey key);
+    private:
+        static Language currentLanguage;
 };
 
 #define TR(key) Translation::get(TranslationKey::key)
