@@ -173,10 +173,11 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         loadNotes(id, notes);
         response["notes"] = notes;
     } else if (type == "req:history:notes:save") {
-        String id = request["id"].as<String>();
-        SPIFFS.remove("/h/" + id + ".dat");
-        SPIFFS.remove("/h/" + id + ".json"); // Also remove notes file if it exists
-        response["msg"] = "Ok";
+        const String id = request["id"].as<String>();
+        const JsonDocument& notesDoc = request["notes"];
+        
+        saveNotes(id, notesDoc);
+
     } 
 }
 
