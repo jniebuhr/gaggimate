@@ -63,7 +63,6 @@ void ShotHistoryPlugin::record() {
         if (extendedRecording) {
             const unsigned long now = millis();
             
-            // Explicit safety checks instead of try/catch for embedded systems
             bool canProcessWeight = (controller != nullptr);
             if (canProcessWeight) {
                 canProcessWeight = controller->isVolumetricAvailable();
