@@ -14,6 +14,7 @@ extern "C" {
 #define UI_THEME_COLOR_DARK 1
 #define UI_THEME_COLOR_SEMIDARK 2
 #define UI_THEME_COLOR_PROGRESS 3
+#define UI_THEME_COLOR_HEATING 4
 
 #define UI_THEME_DEFAULT 0
 
@@ -30,6 +31,9 @@ extern const ui_theme_variable_t _ui_theme_alpha_SemiDark[2];
 
 extern const ui_theme_variable_t _ui_theme_color_Progress[2];
 extern const ui_theme_variable_t _ui_theme_alpha_Progress[2];
+
+extern const ui_theme_variable_t _ui_theme_color_Heating[2];
+extern const ui_theme_variable_t _ui_theme_alpha_Heating[2];
 
 extern const uint32_t *ui_theme_colors[2];
 extern const uint8_t *ui_theme_alphas[2];

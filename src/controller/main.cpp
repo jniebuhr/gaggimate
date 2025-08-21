@@ -6,7 +6,6 @@ GaggiMateController controller;
 
 void setup() {
     Serial.begin(115200);
-    delay(5000);
     controller.setup();
 }
 

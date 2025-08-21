@@ -14,6 +14,10 @@ void ui_StatusScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_StatusScreen, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA,
                                            _ui_theme_alpha_Dark);
 
+    ui_StatusScreen_dials = ui_dials_create(ui_StatusScreen);
+    lv_obj_set_x(ui_StatusScreen_dials, 0);
+    lv_obj_set_y(ui_StatusScreen_dials, 0);
+
     ui_StatusScreen_ImgButton8 = lv_imgbtn_create(ui_StatusScreen);
     lv_imgbtn_set_src(ui_StatusScreen_ImgButton8, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_295763949, NULL);
     lv_obj_set_width(ui_StatusScreen_ImgButton8, 40);
@@ -34,10 +38,7 @@ void ui_StatusScreen_screen_init(void) {
     lv_obj_set_style_radius(ui_StatusScreen_contentPanel2, 180, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_StatusScreen_contentPanel2, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_StatusScreen_contentPanel2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    ui_object_set_themeable_style_property(ui_StatusScreen_contentPanel2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BORDER_COLOR,
-                                           _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_StatusScreen_contentPanel2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BORDER_OPA,
-                                           _ui_theme_alpha_NiceWhite);
+    lv_obj_set_style_border_width(ui_StatusScreen_contentPanel2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_StatusScreen_targetDuration = lv_label_create(ui_StatusScreen_contentPanel2);
     lv_obj_set_width(ui_StatusScreen_targetDuration, 80);
@@ -74,12 +75,6 @@ void ui_StatusScreen_screen_init(void) {
     lv_obj_set_x(ui_StatusScreen_pauseButton, 0);
     lv_obj_set_y(ui_StatusScreen_pauseButton, 130);
     lv_obj_set_align(ui_StatusScreen_pauseButton, LV_ALIGN_CENTER);
-    ui_object_set_themeable_style_property(ui_StatusScreen_pauseButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_OUTLINE_COLOR,
-                                           _ui_theme_color_Dark);
-    ui_object_set_themeable_style_property(ui_StatusScreen_pauseButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_OUTLINE_OPA,
-                                           _ui_theme_alpha_Dark);
-    lv_obj_set_style_outline_width(ui_StatusScreen_pauseButton, 25, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_pad(ui_StatusScreen_pauseButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     ui_object_set_themeable_style_property(ui_StatusScreen_pauseButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_StatusScreen_pauseButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
@@ -144,12 +139,13 @@ void ui_StatusScreen_screen_init(void) {
     lv_obj_set_style_text_font(ui_StatusScreen_stepLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_StatusScreen_phaseLabel = lv_label_create(ui_StatusScreen_contentPanel2);
-    lv_obj_set_width(ui_StatusScreen_phaseLabel, 200);
+    lv_obj_set_width(ui_StatusScreen_phaseLabel, 335);
     lv_obj_set_height(ui_StatusScreen_phaseLabel, 30);
     lv_obj_set_x(ui_StatusScreen_phaseLabel, 0);
     lv_obj_set_y(ui_StatusScreen_phaseLabel, -40);
     lv_obj_set_align(ui_StatusScreen_phaseLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_StatusScreen_phaseLabel, "Blooming");
+    lv_label_set_long_mode(ui_StatusScreen_phaseLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(ui_StatusScreen_phaseLabel, "Brew");
     ui_object_set_themeable_style_property(ui_StatusScreen_phaseLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_StatusScreen_phaseLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
@@ -167,40 +163,6 @@ void ui_StatusScreen_screen_init(void) {
     lv_obj_clear_flag(ui_StatusScreen_barContainer, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_pad_row(ui_StatusScreen_barContainer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(ui_StatusScreen_barContainer, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_StatusScreen_preinfusePumpBar = lv_bar_create(ui_StatusScreen_barContainer);
-    lv_bar_set_range(ui_StatusScreen_preinfusePumpBar, 0, 2);
-    lv_obj_set_height(ui_StatusScreen_preinfusePumpBar, 10);
-    lv_obj_set_flex_grow(ui_StatusScreen_preinfusePumpBar, 1);
-    lv_obj_set_x(ui_StatusScreen_preinfusePumpBar, -130);
-    lv_obj_set_y(ui_StatusScreen_preinfusePumpBar, 0);
-    lv_obj_set_align(ui_StatusScreen_preinfusePumpBar, LV_ALIGN_CENTER);
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfusePumpBar, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
-                                           _ui_theme_color_SemiDark);
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfusePumpBar, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA,
-                                           _ui_theme_alpha_SemiDark);
-
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfusePumpBar, LV_PART_INDICATOR | LV_STATE_DEFAULT,
-                                           LV_STYLE_BG_COLOR, _ui_theme_color_Progress);
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfusePumpBar, LV_PART_INDICATOR | LV_STATE_DEFAULT,
-                                           LV_STYLE_BG_OPA, _ui_theme_alpha_Progress);
-
-    ui_StatusScreen_preinfuseBloomBar = lv_bar_create(ui_StatusScreen_barContainer);
-    lv_bar_set_range(ui_StatusScreen_preinfuseBloomBar, 0, 15);
-    lv_obj_set_height(ui_StatusScreen_preinfuseBloomBar, 10);
-    lv_obj_set_flex_grow(ui_StatusScreen_preinfuseBloomBar, 5);
-    lv_obj_set_x(ui_StatusScreen_preinfuseBloomBar, -35);
-    lv_obj_set_y(ui_StatusScreen_preinfuseBloomBar, 0);
-    lv_obj_set_align(ui_StatusScreen_preinfuseBloomBar, LV_ALIGN_CENTER);
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfuseBloomBar, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
-                                           _ui_theme_color_SemiDark);
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfuseBloomBar, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA,
-                                           _ui_theme_alpha_SemiDark);
-
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfuseBloomBar, LV_PART_INDICATOR | LV_STATE_DEFAULT,
-                                           LV_STYLE_BG_COLOR, _ui_theme_color_Progress);
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfuseBloomBar, LV_PART_INDICATOR | LV_STATE_DEFAULT,
-                                           LV_STYLE_BG_OPA, _ui_theme_alpha_Progress);
 
     ui_StatusScreen_brewBar = lv_bar_create(ui_StatusScreen_barContainer);
     lv_bar_set_range(ui_StatusScreen_brewBar, 0, 27);
@@ -232,29 +194,6 @@ void ui_StatusScreen_screen_init(void) {
     lv_obj_set_style_pad_row(ui_StatusScreen_labelContainer, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(ui_StatusScreen_labelContainer, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_StatusScreen_preinfusePumpLabel = lv_label_create(ui_StatusScreen_labelContainer);
-    lv_obj_set_height(ui_StatusScreen_preinfusePumpLabel, 20);
-    lv_obj_set_flex_grow(ui_StatusScreen_preinfusePumpLabel, 1);
-    lv_obj_set_align(ui_StatusScreen_preinfusePumpLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_StatusScreen_preinfusePumpLabel, "2s");
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfusePumpLabel, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                           LV_STYLE_TEXT_COLOR, _ui_theme_color_SemiDark);
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfusePumpLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
-                                           _ui_theme_alpha_SemiDark);
-    lv_obj_set_style_text_align(ui_StatusScreen_preinfusePumpLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_StatusScreen_preinfuseBloomLabel = lv_label_create(ui_StatusScreen_labelContainer);
-    lv_obj_set_height(ui_StatusScreen_preinfuseBloomLabel, 20);
-    lv_obj_set_flex_grow(ui_StatusScreen_preinfuseBloomLabel, 5);
-    lv_obj_set_align(ui_StatusScreen_preinfuseBloomLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_StatusScreen_preinfuseBloomLabel, "15s");
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfuseBloomLabel, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                           LV_STYLE_TEXT_COLOR, _ui_theme_color_SemiDark);
-    ui_object_set_themeable_style_property(ui_StatusScreen_preinfuseBloomLabel, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                           LV_STYLE_TEXT_OPA, _ui_theme_alpha_SemiDark);
-    lv_obj_set_style_text_align(ui_StatusScreen_preinfuseBloomLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_StatusScreen_preinfuseBloomLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
-
     ui_StatusScreen_brewLabel = lv_label_create(ui_StatusScreen_labelContainer);
     lv_obj_set_height(ui_StatusScreen_brewLabel, 20);
     lv_obj_set_flex_grow(ui_StatusScreen_brewLabel, 10);
@@ -279,16 +218,13 @@ void ui_StatusScreen_screen_init(void) {
     lv_obj_set_style_text_align(ui_StatusScreen_brewVolume, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_StatusScreen_brewVolume, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_StatusScreen_dials = ui_dials_create(ui_StatusScreen);
-    lv_obj_set_x(ui_StatusScreen_dials, 0);
-    lv_obj_set_y(ui_StatusScreen_dials, 0);
-
+    lv_obj_add_event_cb(ui_StatusScreen_ImgButton8, ui_event_StatusScreen_ImgButton8, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_StatusScreen_pauseButton, ui_event_StatusScreen_pauseButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_StatusScreen, ui_event_StatusScreen, LV_EVENT_ALL, NULL);
-    uic_StatusScreen_dials_tempTarget = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_TEMPTARGET);
     uic_StatusScreen_dials_tempGauge = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_TEMPGAUGE);
-    uic_StatusScreen_dials_pressureTarget = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_PRESSURETARGET);
+    uic_StatusScreen_dials_tempTarget = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_TEMPTARGET);
     uic_StatusScreen_dials_pressureGauge = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_PRESSUREGAUGE);
+    uic_StatusScreen_dials_pressureTarget = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_PRESSURETARGET);
     uic_StatusScreen_dials_pressureText = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_PRESSURETEXT);
     uic_StatusScreen_dials_tempText = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_TEMPTEXT);
 }

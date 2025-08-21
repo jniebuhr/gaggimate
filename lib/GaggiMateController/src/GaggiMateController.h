@@ -2,13 +2,13 @@
 #define GAGGIMATECONTROLLER_H
 #include "ControllerConfig.h"
 #include "NimBLEServerController.h"
-#include <MAX31855.h>
 #include <peripherals/DigitalInput.h>
-#include <peripherals/DimmedPump.h>
+#include <peripherals/DistanceSensor.h>
 #include <peripherals/Heater.h>
+#include <peripherals/LedController.h>
 #include <peripherals/Max31855Thermocouple.h>
 #include <peripherals/PressureSensor.h>
-#include <peripherals/SimplePump.h>
+#include <peripherals/Pump.h>
 #include <peripherals/SimpleRelay.h>
 #include <vector>
 
@@ -45,6 +45,8 @@ class GaggiMateController {
     DigitalInput *brewBtn = nullptr;
     DigitalInput *steamBtn = nullptr;
     PressureSensor *pressureSensor = nullptr;
+    LedController *ledController = nullptr;
+    DistanceSensor *distanceSensor = nullptr;
 
     std::vector<ControllerConfig> configs;
 

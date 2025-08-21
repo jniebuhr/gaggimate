@@ -23,6 +23,8 @@ function convert() {
 
 convert "angle-down.svg" 40
 convert "angle-up.svg" 40
+convert "angle-left.svg" 40
+convert "angle-right.svg" 40
 convert "bluetooth-alt.svg" 20
 convert "check.svg" 40
 convert "coffee-bean.svg" 80
@@ -40,7 +42,11 @@ convert "raindrops.svg" 80
 convert "raindrops.svg" 40
 convert "wifi.svg" 20
 convert "wind.svg" 80
+convert "wind.svg" 40
 convert "clock.svg" 40
 convert "thermometer-half.svg" 40
 convert "refresh.svg" 20
+convert "dropdown-bar.svg" 40
 convert "tap.svg" 60
+convert "settings.svg" 40
+convert "tachometer-fast.svg" 40

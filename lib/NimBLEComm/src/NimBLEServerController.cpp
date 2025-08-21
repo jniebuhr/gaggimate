@@ -31,6 +31,10 @@ void NimBLEServerController::initServer(const String infoString) {
     pidControlChar = pService->createCharacteristic(PID_CONTROL_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
     pidControlChar->setCallbacks(this); // Use this class as the callback handler
 
+    // Pump Model Coefficients Characteristic (Client writes pump model coefficients, Server reads)
+    pumpModelCoeffsChar = pService->createCharacteristic(PUMP_MODEL_COEFFS_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
+    pumpModelCoeffsChar->setCallbacks(this); // Use this class as the callback handler
+
     // Error Characteristic (Server writes error, Client reads)
     errorChar = pService->createCharacteristic(ERROR_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
 
@@ -55,6 +59,14 @@ void NimBLEServerController::initServer(const String infoString) {
     pressureScaleChar = pService->createCharacteristic(PRESSURE_SCALE_UUID, NIMBLE_PROPERTY::WRITE);
     pressureScaleChar->setCallbacks(this); // Use this class as the callback handler
 
+    volumetricMeasurementChar = pService->createCharacteristic(VOLUMETRIC_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY);
+    volumetricTareChar = pService->createCharacteristic(VOLUMETRIC_TARE_UUID, NIMBLE_PROPERTY::WRITE);
+    volumetricTareChar->setCallbacks(this);
+
+    tofMeasurementChar = pService->createCharacteristic(TOF_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY);
+    ledControlChar = pService->createCharacteristic(LED_CONTROL_UUID, NIMBLE_PROPERTY::WRITE);
+    ledControlChar->setCallbacks(this);
+
     pService->start();
 
     ota_dfu_ble.configure_OTA(pServer);
@@ -67,10 +79,10 @@ void NimBLEServerController::initServer(const String infoString) {
     ESP_LOGI(LOG_TAG, "BLE Server started, advertising...\n");
 }
 
-void NimBLEServerController::sendSensorData(float temperature, float pressure) {
+void NimBLEServerController::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow) {
     if (deviceConnected && sensorChar != nullptr) {
         char str[30];
-        snprintf(str, sizeof(str), "%.3f,%.3f", temperature, pressure);
+        snprintf(str, sizeof(str), "%.3f,%.3f,%.3f,%.3f", temperature, pressure, puckFlow, pumpFlow);
         sensorChar->setValue(str);
         sensorChar->notify();
     }
@@ -115,13 +127,40 @@ void NimBLEServerController::sendAutotuneResult(float Kp, float Ki, float Kd) {
     }
 }
 
+void NimBLEServerController::sendVolumetricMeasurement(float value) {
+    if (deviceConnected) {
+        char data[8];
+        snprintf(data, sizeof(data), "%.2f", value);
+        volumetricMeasurementChar->setValue(data);
+        volumetricMeasurementChar->notify();
+    }
+}
+
+void NimBLEServerController::sendTofMeasurement(int value) {
+    if (deviceConnected) {
+        char data[8];
+        snprintf(data, sizeof(data), "%d", value);
+        tofMeasurementChar->setValue(data);
+        tofMeasurementChar->notify();
+    }
+}
+
 void NimBLEServerController::registerOutputControlCallback(const simple_output_callback_t &callback) {
     outputControlCallback = callback;
 }
+
+void NimBLEServerController::registerAdvancedOutputControlCallback(const advanced_output_callback_t &callback) {
+    advancedControlCallback = callback;
+}
+
 void NimBLEServerController::registerAltControlCallback(const pin_control_callback_t &callback) { altControlCallback = callback; }
 void NimBLEServerController::registerPingCallback(const ping_callback_t &callback) { pingCallback = callback; }
 void NimBLEServerController::registerAutotuneCallback(const autotune_callback_t &callback) { autotuneCallback = callback; }
 void NimBLEServerController::registerPressureScaleCallback(const float_callback_t &callback) { pressureScaleCallback = callback; }
+
+void NimBLEServerController::registerTareCallback(const void_callback_t &callback) { tareCallback = callback; }
+
+void NimBLEServerController::registerLedControlCallback(const led_control_callback_t &callback) { ledControlCallback = callback; }
 
 void NimBLEServerController::setInfo(const String infoString) {
     this->infoString = infoString;
@@ -129,6 +168,10 @@ void NimBLEServerController::setInfo(const String infoString) {
 }
 
 void NimBLEServerController::registerPidControlCallback(const pid_control_callback_t &callback) { pidControlCallback = callback; }
+
+void NimBLEServerController::registerPumpModelCoeffsCallback(const pump_model_coeffs_callback_t &callback) {
+    pumpModelCoeffsCallback = callback;
+}
 
 // BLEServerCallbacks override
 void NimBLEServerController::onConnect(NimBLEServer *pServer) {
@@ -150,13 +193,23 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         auto control = String(pCharacteristic->getValue().c_str());
         uint8_t type = get_token(control, 0, ',').toInt();
         uint8_t valve = get_token(control, 1, ',').toInt();
-        float pumpSetpoint = get_token(control, 2, ',').toFloat();
         float boilerSetpoint = get_token(control, 3, ',').toFloat();
-
-        ESP_LOGI(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, boiler=%.1f", type, valve, pumpSetpoint,
-                 boilerSetpoint);
-        if (outputControlCallback != nullptr) {
-            outputControlCallback(valve == 1, pumpSetpoint, boilerSetpoint);
+        if (type == 0) {
+            float pumpSetpoint = get_token(control, 2, ',').toFloat();
+            ESP_LOGV(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, boiler=%.1f", type, valve, pumpSetpoint,
+                     boilerSetpoint);
+            if (outputControlCallback != nullptr) {
+                outputControlCallback(valve == 1, pumpSetpoint, boilerSetpoint);
+            }
+        } else if (type == 1) {
+            bool pressureTarget = get_token(control, 4, ',').toInt() == 1;
+            float pumpPressure = get_token(control, 5, ',').toFloat();
+            float pumpFlow = get_token(control, 6, ',').toFloat();
+            ESP_LOGV(LOG_TAG, "Received advanced output control: type=%d, valve=%d, pressure_target=%d, pressure=%.1f, flow=%.1f",
+                     type, valve, pressureTarget, pumpPressure, pumpFlow);
+            if (advancedControlCallback != nullptr) {
+                advancedControlCallback(valve == 1, boilerSetpoint, pressureTarget, pumpPressure, pumpFlow);
+            }
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(ALT_CONTROL_CHAR_UUID))) {
         bool pinState = (pCharacteristic->getValue()[0] == '1');
@@ -186,14 +239,36 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         if (pidControlCallback != nullptr) {
             pidControlCallback(Kp, Ki, Kd);
         }
+    } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PUMP_MODEL_COEFFS_CHAR_UUID))) {
+        auto pumpModelCoeffs = String(pCharacteristic->getValue().c_str());
+        float a = get_token(pumpModelCoeffs, 0, ',').toFloat();
+        float b = get_token(pumpModelCoeffs, 1, ',').toFloat();
+        float c = get_token(pumpModelCoeffs, 2, ',', "nan").toFloat();
+        float d = get_token(pumpModelCoeffs, 3, ',', "nan").toFloat();
+        ESP_LOGV(LOG_TAG, "Received pump flow polynomial coefficients: %.6f, %.6f, %.6f, %.6f", a, b, c, d);
+        if (pumpModelCoeffsCallback != nullptr) {
+            pumpModelCoeffsCallback(a, b, c, d);
+        }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PRESSURE_SCALE_UUID))) {
-        const uint8_t *data = pCharacteristic->getValue().data();
-        float scale;
-        std::memcpy(&scale, data + 0, sizeof(scale));
+        String scale_string = pCharacteristic->getValue().c_str();
+        float scale_value = scale_string.toFloat();
 
-        ESP_LOGI(LOG_TAG, "Received pressure scale: %.1f", scale);
+        ESP_LOGV(LOG_TAG, "Received pressure scale: %.2f", scale_value);
         if (pressureScaleCallback != nullptr) {
-            pressureScaleCallback(scale);
+            pressureScaleCallback(scale_value);
+        }
+    } else if (pCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_TARE_UUID))) {
+        ESP_LOGV(LOG_TAG, "Received tare");
+        if (tareCallback != nullptr) {
+            tareCallback();
+        }
+    } else if (pCharacteristic->getUUID().equals(NimBLEUUID(LED_CONTROL_UUID))) {
+        if (ledControlCallback != nullptr) {
+            auto msg = String(pCharacteristic->getValue().c_str());
+            uint8_t channel = get_token(msg, 0, ',').toInt();
+            uint8_t brightness = get_token(msg, 1, ',').toInt();
+            ledControlCallback(channel, brightness);
+            ESP_LOGV(LOG_TAG, "Received led control, %d: %d", channel, brightness);
         }
     }
 }

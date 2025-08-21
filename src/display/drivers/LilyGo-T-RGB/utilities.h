@@ -8,7 +8,7 @@
  */
 #pragma once
 
-#define RGB_MAX_PIXEL_CLOCK_HZ (8000000UL)
+#define RGB_MAX_PIXEL_CLOCK_HZ (7000000UL)
 
 #define BOARD_TFT_WIDTH (480)
 #define BOARD_TFT_HEIGHT (480)

@@ -1,6 +1,9 @@
-import './style.css';
+import 'preact/debug';
 
-import { render, createContext } from 'preact';
+import './style.css';
+import { initializeTheme } from './utils/themeManager.js';
+
+import { render } from 'preact';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
@@ -15,6 +18,7 @@ import { Navigation } from './components/Navigation.jsx';
 import { ProfileList } from './pages/ProfileList/index.jsx';
 import { ProfileEdit } from './pages/ProfileEdit/index.jsx';
 import { Autotune } from './pages/Autotune/index.jsx';
+import { ShotHistory } from './pages/ShotHistory/index.jsx';
 
 const apiService = new ApiService();
 
@@ -22,28 +26,25 @@ export function App() {
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div x-data="{ userDropdownOpen: false, mobileNavOpen: false }">
-          <div
-            id="page-container"
-            className="mx-auto flex min-h-screen w-full min-w-[320px] flex-col bg-slate-100 dark:bg-slate-900"
-          >
+        <div className='bg-base-300 min-h-screen'>
+          <div className='flex min-h-screen flex-col'>
             <Header />
 
-
-            <main id="page-content" class="flex max-w-full flex-auto flex-col">
-              <div class="container mx-auto p-4 lg:p-8 xl:max-w-7xl">
-                <div class="grid grid-cols-1 md:gap-20 lg:grid-cols-12">
+            <main className='flex-1'>
+              <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
+                <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
                   <Navigation />
-                  <div class="lg:col-span-9">
+                  <div className='lg:col-span-10'>
                     <ErrorBoundary>
                       <Router>
-                        <Route path="/" component={Home} />
-                        <Route path="/profiles" component={ProfileList} />
-                        <Route path="/profiles/:id" component={ProfileEdit} />
-                        <Route path="/settings" component={Settings} />
-                        <Route path="/ota" component={OTA} />
-                        <Route path="/scales" component={Scales} />
-                        <Route path="/pidtune" component={Autotune} />
+                        <Route path='/' component={Home} />
+                        <Route path='/profiles' component={ProfileList} />
+                        <Route path='/profiles/:id' component={ProfileEdit} />
+                        <Route path='/settings' component={Settings} />
+                        <Route path='/ota' component={OTA} />
+                        <Route path='/scales' component={Scales} />
+                        <Route path='/pidtune' component={Autotune} />
+                        <Route path='/history' component={ShotHistory} />
                         <Route default component={NotFound} />
                       </Router>
                     </ErrorBoundary>
@@ -56,9 +57,10 @@ export function App() {
         </div>
       </ApiServiceContext.Provider>
     </LocationProvider>
-);
+  );
 }
 
-render(
-  <App />
-, document.getElementById('app'));
+// Must be called before render
+initializeTheme();
+
+render(<App />, document.getElementById('app'));

@@ -1,6 +1,6 @@
 #pragma once
 
-#define ESP_PANEL_LCD_RGB_TIMING_FREQ_HZ (8000000UL)
+#define ESP_PANEL_LCD_RGB_TIMING_FREQ_HZ (7000000UL)
 
 #define WS_BOARD_TFT_WIDTH (480)
 #define WS_BOARD_TFT_HEIGHT (480)
@@ -11,6 +11,13 @@
 #define WS_BOARD_TFT_VSYNC (39)
 #define WS_BOARD_TFT_DE (40)
 #define WS_BOARD_TFT_PCLK (41)
+
+// Backlight
+#define WS_PWM_CHANNEL 0      // PWM Channel
+#define WS_PWM_FREQ 20000     // PWM frequencyconst
+#define WS_PWM_RESOLUTION 4   // PWM resolution ratio     MAX:13
+#define WS_PWM_DUTYFACTOR 500 // PWM Dutyfactor
+#define WS_BACKLIGHT_MAX 16
 
 // T-RGB physical connection is RGB666, but ESP only supports RGB565
 

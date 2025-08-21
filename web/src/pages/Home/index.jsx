@@ -1,88 +1,80 @@
-import './style.css';
-import { useContext } from 'react';
+import { useCallback, useContext, useState, useEffect } from 'preact/hooks';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { computed } from '@preact/signals';
-import { Chart, LineController, TimeScale, LinearScale, PointElement, LineElement, Legend, Filler } from 'chart.js';
+import {
+  Chart,
+  LineController,
+  TimeScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Legend,
+  Filler,
+} from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
-Chart.register(LineController);
-Chart.register(TimeScale);
-Chart.register(LinearScale);
-Chart.register(PointElement);
-Chart.register(LineElement);
-Chart.register(Filler);
-Chart.register(Legend);
+import Card from '../../components/Card.jsx';
+import ProcessControls from './ProcessControls.jsx';
+import { getDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
 
-const modeMap = {
-  0: 'Standby',
-  1: 'Brew',
-  2: 'Steam',
-  3: 'Water',
-};
-
-const status = computed(() => machine.value.status);
+Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
 export function Home() {
+  const [dashboardLayout, setDashboardLayout] = useState(DASHBOARD_LAYOUTS.ORDER_FIRST);
   const apiService = useContext(ApiServiceContext);
-  return (
-    <div key="home" className="grid grid-cols-1 gap-2 sm:grid-cols-12 md:gap-2">
-        <div className="sm:col-span-12">
-          <h2 className="text-2xl font-bold">Dashboard</h2>
-        </div>
-        <div
-          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-4 xl:col-span-4"
-        >
-          <dl>
-            <dt className="text-2xl font-bold">{modeMap[status.value.mode] || 'Standby'}</dt>
-            <dd className="text-sm font-medium text-slate-500">
-              Mode
-            </dd>
-          </dl>
-        </div>
-        <div
-          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-4 xl:col-span-4"
-        >
-          <dl>
-            <dt className="text-2xl font-bold">{status.value.currentTemperature || 0} °C</dt>
-            <dd className="text-sm font-medium text-slate-500">
-              Current Temperature
-            </dd>
-          </dl>
-        </div>
-        <div
-          className="rounded-lg border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6 sm:col-span-4 xl:col-span-4"
-        >
-          <dl>
-            <dt className="text-2xl font-bold">{status.value.targetTemperature || 0} °C</dt>
-            <dd className="text-sm font-medium text-slate-500">
-              Target Temperature
-            </dd>
-          </dl>
-        </div>
-        {/*
-        <div
-          className="rounded-lg border border-slate-200 bg-white p-6 sm:col-span-6 xl:col-span-3"
-        >
-          <dl>
-            <dt className="text-2xl font-bold">{status?.profile || 'LM Leva 2'}</dt>
-            <dd className="text-sm font-medium text-slate-500">
-              Current Profile
-            </dd>
-          </dl>
-        </div>
-        */ }
-        <div
-          className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:bg-gray-800 dark:border-gray-600 sm:col-span-12"
-        >
-          <div className="px-6 pt-6">
-            <h2 className="text-2xl font-bold">Overview</h2>
-          </div>
 
-          <div className="p-6">
-            <OverviewChart />
-          </div>
-        </div>
+  useEffect(() => {
+    setDashboardLayout(getDashboardLayout());
+
+    const handleStorageChange = e => {
+      if (e.key === 'dashboardLayout') {
+        setDashboardLayout(e.newValue || DASHBOARD_LAYOUTS.ORDER_FIRST);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  const changeMode = useCallback(
+    mode => {
+      apiService.send({
+        tp: 'req:change-mode',
+        mode,
+      });
+    },
+    [apiService],
+  );
+  const mode = machine.value.status.mode;
+
+  return (
+    <>
+      <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
+        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
       </div>
+
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
+        <Card
+          sm={10}
+          lg={4}
+          className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
+          title='Process Controls'
+        >
+          <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
+        </Card>
+
+        <Card
+          sm={10}
+          lg={6}
+          className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
+          title='Temperature & Pressure Chart'
+          fullHeight={true}
+        >
+          <OverviewChart />
+        </Card>
+      </div>
+    </>
   );
 }

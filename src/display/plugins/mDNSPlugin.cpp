@@ -13,6 +13,6 @@ void mDNSPlugin::start(Event const &event) const {
     if (apMode)
         return;
     if (!MDNS.begin(controller->getSettings().getMdnsName().c_str())) {
-        Serial.println("Error setting up MDNS responder!");
+        Serial.println(F("Error setting up MDNS responder!"));
     }
 }

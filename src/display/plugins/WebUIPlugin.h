@@ -7,17 +7,21 @@
 
 #include "../core/Plugin.h"
 #include "GitHubOTA.h"
+#include "ShotHistoryPlugin.h"
 #include <ArduinoJson.h>
 #include <AsyncJson.h>
 #include <ESPAsyncWebServer.h>
+#include <vector>
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
-constexpr size_t CLEANUP_PERIOD = 30 * 1000;
-constexpr size_t STATUS_PERIOD = 1000;
+constexpr size_t CLEANUP_PERIOD = 5 * 1000;
+constexpr size_t STATUS_PERIOD = 500;
 constexpr size_t DNS_PERIOD = 10;
 
 const String LOCAL_URL = "http://4.4.4.1/";
 const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
+
+class ProfileManager;
 
 class WebUIPlugin : public Plugin {
   public:
@@ -26,11 +30,20 @@ class WebUIPlugin : public Plugin {
     void loop() override;
 
   private:
-    void start(bool apMode);
+    void setupServer();
+    void start();
+    void stop();
 
+    // Websocket handlers
+    void handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
+                             size_t len);
     void handleOTASettings(uint32_t clientId, JsonDocument &request);
     void handleOTAStart(uint32_t clientId, JsonDocument &request);
     void handleAutotuneStart(uint32_t clientId, JsonDocument &request);
+    void handleProfileRequest(uint32_t clientId, JsonDocument &request);
+    void handleFlushStart(uint32_t clientId, JsonDocument &request);
+
+    // HTTP handlers
     void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
@@ -46,12 +59,15 @@ class WebUIPlugin : public Plugin {
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
     DNSServer *dnsServer = nullptr;
+    ProfileManager *profileManager = nullptr;
 
     long lastUpdateCheck = 0;
     long lastStatus = 0;
     long lastCleanup = 0;
     long lastDns = 0;
     bool updating = false;
+    bool apMode = false;
+    bool serverRunning = false;
     String updateComponent = "";
 };
 

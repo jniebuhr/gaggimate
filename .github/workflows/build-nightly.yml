@@ -1,0 +1,107 @@
+on:
+  push:
+    branches:
+      - "master"
+
+permissions:
+  contents: write
+name: Build Nightly
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+          submodules: 'recursive'
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+      - name: Add version
+        run: |
+          mkdir -p out
+          git tag -d nightly
+          git describe --tags --dirty > out/version.txt
+      - name: Build Web
+        run: ./scripts/build_spiffs.sh
+      - name: Build controller
+        run: |
+          export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
+          pio run -e controller
+      - name: Build display
+        run: |
+          export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
+          pio run -e display
+      - name: Build headless
+        run: |
+          export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
+          pio run -e display-headless
+      - name: Rename firmware files
+        run: |
+          mv .pio/build/controller/firmware.bin out/board-firmware.bin
+          mv .pio/build/controller/partitions.bin out/board-partitions.bin
+          mv .pio/build/controller/bootloader.bin out/board-bootloader.bin
+          mv .pio/build/display/firmware.bin out/display-firmware.bin
+          mv .pio/build/display/partitions.bin out/display-partitions.bin
+          mv .pio/build/display/bootloader.bin out/display-bootloader.bin
+          mv .pio/build/display-headless/firmware.bin out/display-headless-firmware.bin
+          mv .pio/build/display-headless/partitions.bin out/display-headless-partitions.bin
+          mv .pio/build/display-headless/bootloader.bin out/display-headless-bootloader.bin
+      - name: Build display FS
+        run: |
+          pio run -t buildfs -e display
+      - name: Rename FS files
+        run: |
+          cp .pio/build/display/spiffs.bin out/display-filesystem.bin
+          cp .pio/build/display/spiffs.bin out/display-headless-filesystem.bin
+      - name: Archive Firmware Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaggimate-firmware
+          path: "out/*"
+  release-nightly:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      pull-requests: write
+    steps:
+      - name: Download Firmware Files
+        uses: actions/download-artifact@v4
+        with:
+          name: gaggimate-firmware
+          path: release
+      - name: Update Nightly Release
+        uses: andelf/nightly-release@c5ed4bdb7c1da04a4fa1e40bc5e67306f682563b
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: nightly
+          name: 'Nightly Release $$'
+          prerelease: true
+          body: 'Latest nightly release, use the nightly channel in the UI to download this firmware.'
+          files: |
+            release/*
+      - name: Deploy to GitHub Pages subdirectory
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./release
+          destination_dir: nightly
+          publish_branch: gh-pages

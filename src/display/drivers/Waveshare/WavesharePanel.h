@@ -58,7 +58,7 @@ class WavesharePanel : public Display {
 
     WavesharePanelType getModel();
 
-    const char *getTouchModelName();
+    const char *getTouchModelName() const;
 
     void enableTouchWakeup();
 
@@ -76,11 +76,13 @@ class WavesharePanel : public Display {
 
     uint8_t getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point = 1) override;
 
-    bool isPressed();
+    bool isPressed() const;
 
     uint16_t getBattVoltage();
 
     void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data) override;
+
+    bool supportsDirectMode() { return false; }
 
   private:
     void writeData(uint8_t data);

@@ -111,7 +111,7 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
         lastSignal = 0x00;
         if (signal == 0xAA || signal == 0xF1) {
             // Start update or send next part
-            ESP_LOGI("ControllerOTA", "Sending part %d / %d", currentPart + 1, fileParts);
+            ESP_LOGV("ControllerOTA", "Sending part %d / %d", currentPart + 1, fileParts);
             sendPart(in, size);
             currentPart++;
             notifyUpdate();
@@ -177,7 +177,7 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
         for (uint32_t i = 0; i < MTU; i++) {
             partData[i + 2] = buffer[i];
         }
-        ESP_LOGI("ControllerOTA", "Sending part %d / %d - package %d / %d", currentPart + 1, fileParts, part + 1, parts);
+        ESP_LOGV("ControllerOTA", "Sending part %d / %d - package %d / %d", currentPart + 1, fileParts, part + 1, parts);
         sendData(partData, MTU + 2);
     }
     if (partLength % MTU > 0) {

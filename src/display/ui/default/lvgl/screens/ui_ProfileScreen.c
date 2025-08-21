@@ -14,6 +14,10 @@ void ui_ProfileScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_ProfileScreen, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA,
                                            _ui_theme_alpha_Dark);
 
+    ui_ProfileScreen_dials = ui_dials_create(ui_ProfileScreen);
+    lv_obj_set_x(ui_ProfileScreen_dials, 0);
+    lv_obj_set_y(ui_ProfileScreen_dials, 0);
+
     ui_ProfileScreen_ImgButton1 = lv_imgbtn_create(ui_ProfileScreen);
     lv_imgbtn_set_src(ui_ProfileScreen_ImgButton1, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_295763949, NULL);
     lv_obj_set_width(ui_ProfileScreen_ImgButton1, 40);
@@ -36,100 +40,112 @@ void ui_ProfileScreen_screen_init(void) {
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_ProfileScreen_contentPanel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BORDER_OPA,
                                            _ui_theme_alpha_NiceWhite);
+    lv_obj_set_style_border_width(ui_ProfileScreen_contentPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_ProfileScreen_mainLabel = lv_label_create(ui_ProfileScreen_contentPanel);
-    lv_obj_set_width(ui_ProfileScreen_mainLabel, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(ui_ProfileScreen_mainLabel, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_x(ui_ProfileScreen_mainLabel, 0);
-    lv_obj_set_y(ui_ProfileScreen_mainLabel, -140);
-    lv_obj_set_align(ui_ProfileScreen_mainLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_ProfileScreen_mainLabel, "Select profile");
-    ui_object_set_themeable_style_property(ui_ProfileScreen_mainLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+    ui_ProfileScreen_previousProfileBtn = lv_imgbtn_create(ui_ProfileScreen_contentPanel);
+    lv_imgbtn_set_src(ui_ProfileScreen_previousProfileBtn, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_98036921, NULL);
+    lv_obj_set_width(ui_ProfileScreen_previousProfileBtn, 40);
+    lv_obj_set_height(ui_ProfileScreen_previousProfileBtn, 40);
+    lv_obj_set_x(ui_ProfileScreen_previousProfileBtn, -150);
+    lv_obj_set_y(ui_ProfileScreen_previousProfileBtn, 0);
+    lv_obj_set_align(ui_ProfileScreen_previousProfileBtn, LV_ALIGN_CENTER);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                           LV_STYLE_IMG_RECOLOR, _ui_theme_color_SemiDark);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                           LV_STYLE_IMG_RECOLOR_OPA, _ui_theme_alpha_SemiDark);
+
+    ui_ProfileScreen_nextProfileBtn = lv_imgbtn_create(ui_ProfileScreen_contentPanel);
+    lv_imgbtn_set_src(ui_ProfileScreen_nextProfileBtn, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_944513416, NULL);
+    lv_obj_set_width(ui_ProfileScreen_nextProfileBtn, 40);
+    lv_obj_set_height(ui_ProfileScreen_nextProfileBtn, 40);
+    lv_obj_set_x(ui_ProfileScreen_nextProfileBtn, 150);
+    lv_obj_set_y(ui_ProfileScreen_nextProfileBtn, 0);
+    lv_obj_set_align(ui_ProfileScreen_nextProfileBtn, LV_ALIGN_CENTER);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_mainLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
-                                           _ui_theme_alpha_NiceWhite);
-    lv_obj_set_style_text_font(ui_ProfileScreen_mainLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                           LV_STYLE_IMG_RECOLOR_OPA, _ui_theme_alpha_NiceWhite);
 
-    ui_ProfileScreen_profileName = lv_label_create(ui_ProfileScreen_contentPanel);
-    lv_obj_set_width(ui_ProfileScreen_profileName, 280);
-    lv_obj_set_height(ui_ProfileScreen_profileName, 30);
-    lv_obj_set_x(ui_ProfileScreen_profileName, 0);
-    lv_obj_set_y(ui_ProfileScreen_profileName, -90);
-    lv_obj_set_align(ui_ProfileScreen_profileName, LV_ALIGN_CENTER);
-    lv_label_set_long_mode(ui_ProfileScreen_profileName, LV_LABEL_LONG_DOT);
-    lv_label_set_text(ui_ProfileScreen_profileName, "LM Leva 1");
-    ui_object_set_themeable_style_property(ui_ProfileScreen_profileName, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+    ui_ProfileScreen_loadingSpinner = lv_spinner_create(ui_ProfileScreen_contentPanel, 1000, 90);
+    lv_obj_set_width(ui_ProfileScreen_loadingSpinner, 80);
+    lv_obj_set_height(ui_ProfileScreen_loadingSpinner, 80);
+    lv_obj_set_align(ui_ProfileScreen_loadingSpinner, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_ProfileScreen_loadingSpinner, LV_OBJ_FLAG_CLICKABLE); /// Flags
+    ui_object_set_themeable_style_property(ui_ProfileScreen_loadingSpinner, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
+                                           _ui_theme_color_Dark);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_loadingSpinner, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA,
+                                           _ui_theme_alpha_Dark);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_loadingSpinner, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_ARC_COLOR,
+                                           _ui_theme_color_Dark);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_loadingSpinner, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_ARC_OPA,
+                                           _ui_theme_alpha_Dark);
+
+    ui_object_set_themeable_style_property(ui_ProfileScreen_loadingSpinner, LV_PART_INDICATOR | LV_STATE_DEFAULT,
+                                           LV_STYLE_ARC_COLOR, _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_loadingSpinner, LV_PART_INDICATOR | LV_STATE_DEFAULT,
+                                           LV_STYLE_ARC_OPA, _ui_theme_alpha_NiceWhite);
+
+    ui_ProfileScreen_profileDetails = lv_obj_create(ui_ProfileScreen_contentPanel);
+    lv_obj_remove_style_all(ui_ProfileScreen_profileDetails);
+    lv_obj_set_width(ui_ProfileScreen_profileDetails, 360);
+    lv_obj_set_height(ui_ProfileScreen_profileDetails, 360);
+    lv_obj_set_align(ui_ProfileScreen_profileDetails, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_ProfileScreen_profileDetails, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+    ui_ProfileScreen_chooseButton = lv_imgbtn_create(ui_ProfileScreen_profileDetails);
+    lv_imgbtn_set_src(ui_ProfileScreen_chooseButton, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_631115820, NULL);
+    lv_obj_set_width(ui_ProfileScreen_chooseButton, 40);
+    lv_obj_set_height(ui_ProfileScreen_chooseButton, 40);
+    lv_obj_set_x(ui_ProfileScreen_chooseButton, 0);
+    lv_obj_set_y(ui_ProfileScreen_chooseButton, 130);
+    lv_obj_set_align(ui_ProfileScreen_chooseButton, LV_ALIGN_CENTER);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_chooseButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_profileName, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
-                                           _ui_theme_alpha_NiceWhite);
-    lv_obj_set_style_text_align(ui_ProfileScreen_profileName, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_ProfileScreen_profileName, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_chooseButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                           LV_STYLE_IMG_RECOLOR_OPA, _ui_theme_alpha_NiceWhite);
 
-    ui_ProfileScreen_tempIcon = lv_img_create(ui_ProfileScreen_contentPanel);
-    lv_img_set_src(ui_ProfileScreen_tempIcon, &ui_img_1951499226);
-    lv_obj_set_width(ui_ProfileScreen_tempIcon, 40);
-    lv_obj_set_height(ui_ProfileScreen_tempIcon, 40);
-    lv_obj_set_x(ui_ProfileScreen_tempIcon, -100);
-    lv_obj_set_y(ui_ProfileScreen_tempIcon, -50);
-    lv_obj_set_align(ui_ProfileScreen_tempIcon, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_ProfileScreen_tempIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_ProfileScreen_tempIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-    lv_img_set_zoom(ui_ProfileScreen_tempIcon, 150);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_tempIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+    ui_ProfileScreen_simpleContent = lv_obj_create(ui_ProfileScreen_profileDetails);
+    lv_obj_remove_style_all(ui_ProfileScreen_simpleContent);
+    lv_obj_set_width(ui_ProfileScreen_simpleContent, 250);
+    lv_obj_set_height(ui_ProfileScreen_simpleContent, 130);
+    lv_obj_set_x(ui_ProfileScreen_simpleContent, 0);
+    lv_obj_set_y(ui_ProfileScreen_simpleContent, 30);
+    lv_obj_set_align(ui_ProfileScreen_simpleContent, LV_ALIGN_CENTER);
+    lv_obj_set_flex_flow(ui_ProfileScreen_simpleContent, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(ui_ProfileScreen_simpleContent, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER,
+                          LV_FLEX_ALIGN_SPACE_BETWEEN);
+    lv_obj_clear_flag(ui_ProfileScreen_simpleContent, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+    ui_ProfileScreen_phasesLabel = lv_label_create(ui_ProfileScreen_simpleContent);
+    lv_obj_set_width(ui_ProfileScreen_phasesLabel, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(ui_ProfileScreen_phasesLabel, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_align(ui_ProfileScreen_phasesLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_ProfileScreen_phasesLabel, "2 Phases");
+    ui_object_set_themeable_style_property(ui_ProfileScreen_phasesLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_tempIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
+    ui_object_set_themeable_style_property(ui_ProfileScreen_phasesLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
                                            _ui_theme_alpha_NiceWhite);
+    lv_obj_set_style_text_font(ui_ProfileScreen_phasesLabel, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_ProfileScreen_targetIcon = lv_img_create(ui_ProfileScreen_contentPanel);
-    lv_img_set_src(ui_ProfileScreen_targetIcon, &ui_img_360122106);
-    lv_obj_set_width(ui_ProfileScreen_targetIcon, 40);
-    lv_obj_set_height(ui_ProfileScreen_targetIcon, 40);
-    lv_obj_set_x(ui_ProfileScreen_targetIcon, 0);
-    lv_obj_set_y(ui_ProfileScreen_targetIcon, -50);
-    lv_obj_set_align(ui_ProfileScreen_targetIcon, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_ProfileScreen_targetIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_ProfileScreen_targetIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-    lv_img_set_zoom(ui_ProfileScreen_targetIcon, 150);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_targetIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+    ui_ProfileScreen_stepsLabel = lv_label_create(ui_ProfileScreen_simpleContent);
+    lv_obj_set_width(ui_ProfileScreen_stepsLabel, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(ui_ProfileScreen_stepsLabel, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_align(ui_ProfileScreen_stepsLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_ProfileScreen_stepsLabel, "3 Steps");
+    ui_object_set_themeable_style_property(ui_ProfileScreen_stepsLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_targetIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
+    ui_object_set_themeable_style_property(ui_ProfileScreen_stepsLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
                                            _ui_theme_alpha_NiceWhite);
+    lv_obj_set_style_text_font(ui_ProfileScreen_stepsLabel, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_ProfileScreen_targetTemp2 = lv_label_create(ui_ProfileScreen_contentPanel);
-    lv_obj_set_width(ui_ProfileScreen_targetTemp2, 60);
-    lv_obj_set_height(ui_ProfileScreen_targetTemp2, 20);
-    lv_obj_set_x(ui_ProfileScreen_targetTemp2, -50);
-    lv_obj_set_y(ui_ProfileScreen_targetTemp2, -50);
-    lv_obj_set_align(ui_ProfileScreen_targetTemp2, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_ProfileScreen_targetTemp2, "80°C");
-    ui_object_set_themeable_style_property(ui_ProfileScreen_targetTemp2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
-                                           _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_targetTemp2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
-                                           _ui_theme_alpha_NiceWhite);
-    lv_obj_set_style_text_align(ui_ProfileScreen_targetTemp2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_ProfileScreen_targetTemp2, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_ProfileScreen_targetDuration2 = lv_label_create(ui_ProfileScreen_contentPanel);
-    lv_obj_set_width(ui_ProfileScreen_targetDuration2, 60);
-    lv_obj_set_height(ui_ProfileScreen_targetDuration2, 20);
-    lv_obj_set_x(ui_ProfileScreen_targetDuration2, 50);
-    lv_obj_set_y(ui_ProfileScreen_targetDuration2, -50);
-    lv_obj_set_align(ui_ProfileScreen_targetDuration2, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_ProfileScreen_targetDuration2, "0:30");
-    ui_object_set_themeable_style_property(ui_ProfileScreen_targetDuration2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
-                                           _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_targetDuration2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
-                                           _ui_theme_alpha_NiceWhite);
-    lv_obj_set_style_text_align(ui_ProfileScreen_targetDuration2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_ProfileScreen_targetDuration2, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_ProfileScreen_extendedContent = lv_obj_create(ui_ProfileScreen_contentPanel);
+    ui_ProfileScreen_extendedContent = lv_obj_create(ui_ProfileScreen_profileDetails);
     lv_obj_remove_style_all(ui_ProfileScreen_extendedContent);
     lv_obj_set_width(ui_ProfileScreen_extendedContent, 250);
     lv_obj_set_height(ui_ProfileScreen_extendedContent, 130);
     lv_obj_set_x(ui_ProfileScreen_extendedContent, 0);
     lv_obj_set_y(ui_ProfileScreen_extendedContent, 30);
     lv_obj_set_align(ui_ProfileScreen_extendedContent, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_ProfileScreen_extendedContent, LV_OBJ_FLAG_HIDDEN);                               /// Flags
     lv_obj_clear_flag(ui_ProfileScreen_extendedContent, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
     ui_ProfileScreen_Chart1 = lv_chart_create(ui_ProfileScreen_extendedContent);
@@ -163,91 +179,101 @@ void ui_ProfileScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_ProfileScreen_Chart1, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BORDER_OPA,
                                            _ui_theme_alpha_Dark);
 
-    ui_ProfileScreen_simpleContent = lv_obj_create(ui_ProfileScreen_contentPanel);
-    lv_obj_remove_style_all(ui_ProfileScreen_simpleContent);
-    lv_obj_set_width(ui_ProfileScreen_simpleContent, 250);
-    lv_obj_set_height(ui_ProfileScreen_simpleContent, 130);
-    lv_obj_set_x(ui_ProfileScreen_simpleContent, 0);
-    lv_obj_set_y(ui_ProfileScreen_simpleContent, 30);
-    lv_obj_set_align(ui_ProfileScreen_simpleContent, LV_ALIGN_CENTER);
-    lv_obj_set_flex_flow(ui_ProfileScreen_simpleContent, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(ui_ProfileScreen_simpleContent, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER,
-                          LV_FLEX_ALIGN_SPACE_BETWEEN);
-    lv_obj_add_flag(ui_ProfileScreen_simpleContent, LV_OBJ_FLAG_HIDDEN);                               /// Flags
-    lv_obj_clear_flag(ui_ProfileScreen_simpleContent, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE); /// Flags
-
-    ui_ProfileScreen_phasesLabel = lv_label_create(ui_ProfileScreen_simpleContent);
-    lv_obj_set_width(ui_ProfileScreen_phasesLabel, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(ui_ProfileScreen_phasesLabel, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_align(ui_ProfileScreen_phasesLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_ProfileScreen_phasesLabel, "2 Phases");
-    ui_object_set_themeable_style_property(ui_ProfileScreen_phasesLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+    ui_ProfileScreen_mainLabel = lv_label_create(ui_ProfileScreen_profileDetails);
+    lv_obj_set_width(ui_ProfileScreen_mainLabel, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(ui_ProfileScreen_mainLabel, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_x(ui_ProfileScreen_mainLabel, 0);
+    lv_obj_set_y(ui_ProfileScreen_mainLabel, -140);
+    lv_obj_set_align(ui_ProfileScreen_mainLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_ProfileScreen_mainLabel, "Select profile");
+    ui_object_set_themeable_style_property(ui_ProfileScreen_mainLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_phasesLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
+    ui_object_set_themeable_style_property(ui_ProfileScreen_mainLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
                                            _ui_theme_alpha_NiceWhite);
-    lv_obj_set_style_text_font(ui_ProfileScreen_phasesLabel, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_ProfileScreen_mainLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_ProfileScreen_stepsLabel = lv_label_create(ui_ProfileScreen_simpleContent);
-    lv_obj_set_width(ui_ProfileScreen_stepsLabel, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(ui_ProfileScreen_stepsLabel, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_align(ui_ProfileScreen_stepsLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_ProfileScreen_stepsLabel, "3 Steps");
-    ui_object_set_themeable_style_property(ui_ProfileScreen_stepsLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+    ui_ProfileScreen_profileName = lv_label_create(ui_ProfileScreen_profileDetails);
+    lv_obj_set_width(ui_ProfileScreen_profileName, 315);
+    lv_obj_set_height(ui_ProfileScreen_profileName, 30);
+    lv_obj_set_x(ui_ProfileScreen_profileName, 0);
+    lv_obj_set_y(ui_ProfileScreen_profileName, -90);
+    lv_obj_set_align(ui_ProfileScreen_profileName, LV_ALIGN_CENTER);
+    lv_label_set_long_mode(ui_ProfileScreen_profileName, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(ui_ProfileScreen_profileName, "Cremina Lever");
+    ui_object_set_themeable_style_property(ui_ProfileScreen_profileName, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_stepsLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
+    ui_object_set_themeable_style_property(ui_ProfileScreen_profileName, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
                                            _ui_theme_alpha_NiceWhite);
-    lv_obj_set_style_text_font(ui_ProfileScreen_stepsLabel, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(ui_ProfileScreen_profileName, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_ProfileScreen_profileName, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_ProfileScreen_previousProfileBtn = lv_imgbtn_create(ui_ProfileScreen);
-    lv_imgbtn_set_src(ui_ProfileScreen_previousProfileBtn, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_1829139226, NULL);
-    lv_obj_set_width(ui_ProfileScreen_previousProfileBtn, 40);
-    lv_obj_set_height(ui_ProfileScreen_previousProfileBtn, 40);
-    lv_obj_set_x(ui_ProfileScreen_previousProfileBtn, -110);
-    lv_obj_set_y(ui_ProfileScreen_previousProfileBtn, 0);
-    lv_obj_set_align(ui_ProfileScreen_previousProfileBtn, LV_ALIGN_CENTER);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                           LV_STYLE_IMG_RECOLOR, _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                           LV_STYLE_IMG_RECOLOR_OPA, _ui_theme_alpha_NiceWhite);
-    lv_obj_set_style_transform_angle(ui_ProfileScreen_previousProfileBtn, 900, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_ProfileScreen_nextProfileBtn = lv_imgbtn_create(ui_ProfileScreen);
-    lv_imgbtn_set_src(ui_ProfileScreen_nextProfileBtn, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_295763949, NULL);
-    lv_obj_set_width(ui_ProfileScreen_nextProfileBtn, 40);
-    lv_obj_set_height(ui_ProfileScreen_nextProfileBtn, 40);
-    lv_obj_set_x(ui_ProfileScreen_nextProfileBtn, 190);
-    lv_obj_set_y(ui_ProfileScreen_nextProfileBtn, 0);
-    lv_obj_set_align(ui_ProfileScreen_nextProfileBtn, LV_ALIGN_CENTER);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+    ui_ProfileScreen_tempIcon = lv_img_create(ui_ProfileScreen_profileDetails);
+    lv_img_set_src(ui_ProfileScreen_tempIcon, &ui_img_1951499226);
+    lv_obj_set_width(ui_ProfileScreen_tempIcon, 40);
+    lv_obj_set_height(ui_ProfileScreen_tempIcon, 40);
+    lv_obj_set_x(ui_ProfileScreen_tempIcon, -100);
+    lv_obj_set_y(ui_ProfileScreen_tempIcon, -50);
+    lv_obj_set_align(ui_ProfileScreen_tempIcon, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_ProfileScreen_tempIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+    lv_obj_clear_flag(ui_ProfileScreen_tempIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_img_set_zoom(ui_ProfileScreen_tempIcon, 150);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_tempIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                           LV_STYLE_IMG_RECOLOR_OPA, _ui_theme_alpha_NiceWhite);
-    lv_obj_set_style_transform_angle(ui_ProfileScreen_nextProfileBtn, 900, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_ProfileScreen_ImgButton4 = lv_imgbtn_create(ui_ProfileScreen);
-    lv_imgbtn_set_src(ui_ProfileScreen_ImgButton4, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_631115820, NULL);
-    lv_obj_set_width(ui_ProfileScreen_ImgButton4, 40);
-    lv_obj_set_height(ui_ProfileScreen_ImgButton4, 40);
-    lv_obj_set_x(ui_ProfileScreen_ImgButton4, 0);
-    lv_obj_set_y(ui_ProfileScreen_ImgButton4, 130);
-    lv_obj_set_align(ui_ProfileScreen_ImgButton4, LV_ALIGN_CENTER);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_ImgButton4, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
-                                           _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_ProfileScreen_ImgButton4, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
+    ui_object_set_themeable_style_property(ui_ProfileScreen_tempIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
                                            _ui_theme_alpha_NiceWhite);
 
-    ui_ProfileScreen_dials = ui_dials_create(ui_ProfileScreen);
-    lv_obj_set_x(ui_ProfileScreen_dials, 0);
-    lv_obj_set_y(ui_ProfileScreen_dials, 0);
+    ui_ProfileScreen_targetIcon = lv_img_create(ui_ProfileScreen_profileDetails);
+    lv_img_set_src(ui_ProfileScreen_targetIcon, &ui_img_360122106);
+    lv_obj_set_width(ui_ProfileScreen_targetIcon, 40);
+    lv_obj_set_height(ui_ProfileScreen_targetIcon, 40);
+    lv_obj_set_x(ui_ProfileScreen_targetIcon, 0);
+    lv_obj_set_y(ui_ProfileScreen_targetIcon, -50);
+    lv_obj_set_align(ui_ProfileScreen_targetIcon, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_ProfileScreen_targetIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+    lv_obj_clear_flag(ui_ProfileScreen_targetIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_img_set_zoom(ui_ProfileScreen_targetIcon, 150);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_targetIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+                                           _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_targetIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
+                                           _ui_theme_alpha_NiceWhite);
 
+    ui_ProfileScreen_targetTemp2 = lv_label_create(ui_ProfileScreen_profileDetails);
+    lv_obj_set_width(ui_ProfileScreen_targetTemp2, 60);
+    lv_obj_set_height(ui_ProfileScreen_targetTemp2, 20);
+    lv_obj_set_x(ui_ProfileScreen_targetTemp2, -50);
+    lv_obj_set_y(ui_ProfileScreen_targetTemp2, -50);
+    lv_obj_set_align(ui_ProfileScreen_targetTemp2, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_ProfileScreen_targetTemp2, "80°C");
+    ui_object_set_themeable_style_property(ui_ProfileScreen_targetTemp2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+                                           _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_targetTemp2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
+                                           _ui_theme_alpha_NiceWhite);
+    lv_obj_set_style_text_align(ui_ProfileScreen_targetTemp2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_ProfileScreen_targetTemp2, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_ProfileScreen_targetDuration2 = lv_label_create(ui_ProfileScreen_profileDetails);
+    lv_obj_set_width(ui_ProfileScreen_targetDuration2, 60);
+    lv_obj_set_height(ui_ProfileScreen_targetDuration2, 20);
+    lv_obj_set_x(ui_ProfileScreen_targetDuration2, 50);
+    lv_obj_set_y(ui_ProfileScreen_targetDuration2, -50);
+    lv_obj_set_align(ui_ProfileScreen_targetDuration2, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_ProfileScreen_targetDuration2, "0:30");
+    ui_object_set_themeable_style_property(ui_ProfileScreen_targetDuration2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+                                           _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_ProfileScreen_targetDuration2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
+                                           _ui_theme_alpha_NiceWhite);
+    lv_obj_set_style_text_align(ui_ProfileScreen_targetDuration2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_ProfileScreen_targetDuration2, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_add_event_cb(ui_ProfileScreen_ImgButton1, ui_event_ProfileScreen_ImgButton1, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ProfileScreen_previousProfileBtn, ui_event_ProfileScreen_previousProfileBtn, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ProfileScreen_nextProfileBtn, ui_event_ProfileScreen_nextProfileBtn, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(ui_ProfileScreen_ImgButton4, ui_event_ProfileScreen_ImgButton4, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_ProfileScreen_chooseButton, ui_event_ProfileScreen_chooseButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ProfileScreen, ui_event_ProfileScreen, LV_EVENT_ALL, NULL);
-    uic_ProfileScreen_dials_tempTarget = ui_comp_get_child(ui_ProfileScreen_dials, UI_COMP_DIALS_TEMPTARGET);
     uic_ProfileScreen_dials_tempGauge = ui_comp_get_child(ui_ProfileScreen_dials, UI_COMP_DIALS_TEMPGAUGE);
-    uic_ProfileScreen_dials_pressureTarget = ui_comp_get_child(ui_ProfileScreen_dials, UI_COMP_DIALS_PRESSURETARGET);
+    uic_ProfileScreen_dials_tempTarget = ui_comp_get_child(ui_ProfileScreen_dials, UI_COMP_DIALS_TEMPTARGET);
     uic_ProfileScreen_dials_pressureGauge = ui_comp_get_child(ui_ProfileScreen_dials, UI_COMP_DIALS_PRESSUREGAUGE);
+    uic_ProfileScreen_dials_pressureTarget = ui_comp_get_child(ui_ProfileScreen_dials, UI_COMP_DIALS_PRESSURETARGET);
     uic_ProfileScreen_dials_pressureText = ui_comp_get_child(ui_ProfileScreen_dials, UI_COMP_DIALS_PRESSURETEXT);
     uic_ProfileScreen_dials_tempText = ui_comp_get_child(ui_ProfileScreen_dials, UI_COMP_DIALS_TEMPTEXT);
 }

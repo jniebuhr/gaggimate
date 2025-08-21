@@ -70,8 +70,11 @@ void beginLvglHelper(Display &board, bool debug) {
     size_t lv_buffer_size = board.width() * board.height() * sizeof(lv_color_t);
     buf = (lv_color_t *)ps_malloc(lv_buffer_size);
     assert(buf);
-    buf1 = (lv_color_t *)ps_malloc(lv_buffer_size);
-    assert(buf1);
+
+    if (!board.supportsDirectMode()) {
+        buf1 = (lv_color_t *)ps_malloc(lv_buffer_size);
+        assert(buf1);
+    }
 
     lv_disp_draw_buf_init(&draw_buf, buf, buf1, board.width() * board.height());
 
@@ -83,6 +86,7 @@ void beginLvglHelper(Display &board, bool debug) {
     disp_drv.flush_cb = disp_flush;
     disp_drv.draw_buf = &draw_buf;
     disp_drv.full_refresh = 0;
+    disp_drv.direct_mode = board.supportsDirectMode();
     disp_drv.user_data = &board;
     lv_disp_drv_register(&disp_drv);
 

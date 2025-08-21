@@ -11,7 +11,7 @@ PressureSensor::PressureSensor(uint8_t sda_pin, uint8_t scl_pin, const pressure_
 
 void PressureSensor::setup() {
     Wire1.begin(_sda_pin, _scl_pin);
-    ESP_LOGI(LOG_TAG, "Initializing pressure sensor on SDA: %d, SCL: %d", _sda_pin, _scl_pin);
+    ESP_LOGV(LOG_TAG, "Initializing pressure sensor on SDA: %d, SCL: %d", _sda_pin, _scl_pin);
     delay(100);
     ads = new ADS1115(0x48, &Wire1);
     if (!ads->begin()) {
@@ -29,7 +29,9 @@ void PressureSensor::loop() {
         int16_t reading = ads->readADC();
         reading = reading - _adc_floor;
         float pressure = reading * _pressure_step;
-        _pressure = 0.1f * pressure + 0.9f * _pressure;
+        _raw_pressure = pressure;
+        _pressure = 0.05f * pressure + 0.95f * _pressure;
+        _raw_pressure = std::clamp(_raw_pressure, 0.0f, _pressure_scale);
         _pressure = std::clamp(_pressure, 0.0f, _pressure_scale);
         ESP_LOGV(LOG_TAG, "ADC Reading: %d, Pressure Reading: %f, Pressure Step: %f, Floor: %d", reading, _pressure,
                  _pressure_step, _adc_floor);
@@ -43,9 +45,10 @@ void PressureSensor::setScale(float pressure_scale) {
 }
 
 [[noreturn]] void PressureSensor::loopTask(void *arg) {
+    TickType_t lastWake = xTaskGetTickCount();
     auto *sensor = static_cast<PressureSensor *>(arg);
     while (true) {
         sensor->loop();
-        vTaskDelay(PRESSURE_READ_INTERVAL_MS / portTICK_PERIOD_MS);
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(PRESSURE_READ_INTERVAL_MS));
     }
 }

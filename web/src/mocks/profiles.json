@@ -4,6 +4,7 @@
     "label": "GaggiMate Classic",
     "type": "standard",
     "favorite": false,
+    "temperature": 93,
     "description": "Standard profile with pre-infusion phase",
     "phases": [
       {
@@ -39,6 +40,7 @@
     "id": "a81d74c6-58a8-4140-9c4d-07c9b377913c",
     "label": "LM Leva",
     "type": "pro",
+    "temperature": 93,
     "selected": true,
     "favorite": true,
     "description": "Ramps up pressure and flow to achieve similar results to a lever operated machine.",
@@ -111,6 +113,7 @@
     "id": "d7295f5e-3e53-4949-bc7f-26885c6fd164",
     "label": "LM Leva 2",
     "type": "pro",
+    "temperature": 93,
     "favorite": true,
     "description": "Ramps up pressure and flow to achieve similar results to a lever operated machine.",
     "phases": [

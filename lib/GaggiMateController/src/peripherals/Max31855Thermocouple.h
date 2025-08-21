@@ -18,7 +18,7 @@ class Max31855Thermocouple : public TemperatureSensor {
     Max31855Thermocouple(int csPin, int misoPin, int sckPin, const temperature_callback_t &callback,
                          const temperature_error_callback_t &error_callback);
     float read() override;
-    bool hasError() override;
+    bool isErrorState() override;
 
     void setup();
     void loop();

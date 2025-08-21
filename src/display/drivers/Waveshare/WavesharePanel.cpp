@@ -1,6 +1,7 @@
 #include "WavesharePanel.h"
 #include "I2C_Driver.h"
 #include "TCA9554PWR.h"
+#include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "utilities.h"
 #include <display/drivers/common/RGBPanelInit.h>
@@ -28,17 +29,17 @@ void ST7701_Reset() {
 }
 
 WavesharePanel::WavesharePanel(/* args */)
-    : _brightness(0), _panelDrv(NULL), _touchDrv(NULL), _order(WS_T_RGB_ORDER_RGB), _has_init(false),
+    : _brightness(0), _panelDrv(nullptr), _touchDrv(nullptr), _order(WS_T_RGB_ORDER_RGB), _has_init(false),
       _wakeupMethod(WS_T_RGB_WAKEUP_FORM_BUTTON), _sleepTimeUs(0), _touchType(WS_T_RGB_TOUCH_UNKNOWN) {}
 
 WavesharePanel::~WavesharePanel() {
     if (_panelDrv) {
         esp_lcd_panel_del(_panelDrv);
-        _panelDrv = NULL;
+        _panelDrv = nullptr;
     }
     if (_touchDrv) {
         delete _touchDrv;
-        _touchDrv = NULL;
+        _touchDrv = nullptr;
     }
 }
 
@@ -49,8 +50,8 @@ bool WavesharePanel::begin(WS_RGBPanel_Color_Order order) {
 
     _order = order;
 
-    pinMode(WS_BOARD_TFT_BL, OUTPUT);
-    digitalWrite(WS_BOARD_TFT_BL, LOW);
+    ledcSetup(WS_PWM_CHANNEL, WS_PWM_FREQ, WS_PWM_RESOLUTION);
+    ledcAttachPin(WS_BOARD_TFT_BL, WS_PWM_CHANNEL);
 
     I2C_Init();
     delay(120);
@@ -58,14 +59,12 @@ bool WavesharePanel::begin(WS_RGBPanel_Color_Order order) {
     Set_EXIO(EXIO_PIN8, Low);
 
     if (!initTouch()) {
-        Serial.println("Touch chip not found.");
+        Serial.println(F("Touch chip not found."));
         return false;
     }
 
     initBUS();
-
     getModel();
-
     return true;
 }
 
@@ -78,15 +77,15 @@ bool WavesharePanel::installSD() {
     if (SD_MMC.begin("/sdcard", true, false)) {
         uint8_t cardType = SD_MMC.cardType();
         if (cardType != CARD_NONE) {
-            Serial.print("SD Card Type: ");
+            Serial.print(F("SD Card Type: "));
             if (cardType == CARD_MMC)
-                Serial.println("MMC");
+                Serial.println(F("MMC"));
             else if (cardType == CARD_SD)
-                Serial.println("SDSC");
+                Serial.println(F("SDSC"));
             else if (cardType == CARD_SDHC)
-                Serial.println("SDHC");
+                Serial.println(F("SDHC"));
             else
-                Serial.println("UNKNOWN");
+                Serial.println(F("UNKNOWN"));
             uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
             Serial.printf("SD Card Size: %lluMB\n", cardSize);
         }
@@ -102,34 +101,9 @@ void WavesharePanel::uninstallSD() {
 }
 
 void WavesharePanel::setBrightness(uint8_t value) {
-    static uint8_t steps = 16;
-
-    if (_brightness == value) {
-        return;
-    }
-
-    if (value > 16) {
-        value = 16;
-    }
-    if (value == 0) {
-        digitalWrite(WS_BOARD_TFT_BL, 0);
-        delay(3);
-        _brightness = 0;
-        return;
-    }
-    if (_brightness == 0) {
-        digitalWrite(WS_BOARD_TFT_BL, 1);
-        _brightness = steps;
-        delayMicroseconds(30);
-    }
-    int from = steps - _brightness;
-    int to = steps - value;
-    int num = (steps + to - from) % steps;
-    for (int i = 0; i < num; i++) {
-        digitalWrite(WS_BOARD_TFT_BL, 0);
-        digitalWrite(WS_BOARD_TFT_BL, 1);
-    }
+    value = constrain(value, 0, WS_BACKLIGHT_MAX);
     _brightness = value;
+    ledcWrite(WS_PWM_CHANNEL, _brightness);
 }
 
 uint8_t WavesharePanel::getBrightness() const { return _brightness; }
@@ -152,7 +126,7 @@ WavesharePanelType WavesharePanel::getModel() {
     return WS_UNKNOWN;
 }
 
-const char *WavesharePanel::getTouchModelName() {
+const char *WavesharePanel::getTouchModelName() const {
     if (_touchDrv) {
         return _touchDrv->getModelName();
     }
@@ -204,17 +178,17 @@ void WavesharePanel::sleep() {
         // Wait for the interrupt level to stabilize
         delay(2000);
         // Set touch irq wakeup
-        esp_sleep_enable_ext1_wakeup(_BV(WS_BOARD_TOUCH_IRQ), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(WS_BOARD_TOUCH_IRQ), ESP_EXT1_WAKEUP_ANY_LOW);
     } break;
     case WS_T_RGB_WAKEUP_FORM_BUTTON:
-        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
     case WS_T_RGB_WAKEUP_FORM_TIMER:
         esp_sleep_enable_timer_wakeup(_sleepTimeUs);
         break;
     default:
         // Default GPIO0 Wakeup
-        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
     }
 
@@ -262,7 +236,7 @@ uint8_t WavesharePanel::getPoint(int16_t *x_array, int16_t *y_array, uint8_t get
     return 0;
 }
 
-bool WavesharePanel::isPressed() {
+bool WavesharePanel::isPressed() const {
     if (_touchDrv) {
         return _touchDrv->isPressed();
     }
@@ -271,7 +245,7 @@ bool WavesharePanel::isPressed() {
 
 uint16_t WavesharePanel::getBattVoltage() {
     esp_adc_cal_characteristics_t adc_chars;
-    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
 
     const int number_of_samples = 20;
     uint32_t sum = 0;
@@ -295,14 +269,13 @@ void WavesharePanel::initBUS() {
 
     ST7701_Reset();
 
-    spi_bus_config_t buscfg = {
-        .mosi_io_num = WS_BOARD_TFT_MOSI,
-        .miso_io_num = -1,
-        .sclk_io_num = WS_BOARD_TFT_SCLK,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = 64, // ESP32 S3 max size is 64Kbytes
-    };
+    spi_bus_config_t buscfg = {.mosi_io_num = WS_BOARD_TFT_MOSI,
+                               .miso_io_num = -1,
+                               .sclk_io_num = WS_BOARD_TFT_SCLK,
+                               .quadwp_io_num = -1,
+                               .quadhd_io_num = -1,
+                               .max_transfer_sz = 64, // ESP32 S3 max size is 64Kbytes
+                               .intr_flags = ESP_INTR_FLAG_SHARED};
     spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
     spi_device_interface_config_t devcfg = {
         .command_bits = 1,
@@ -882,6 +855,7 @@ void WavesharePanel::initBUS() {
                 ESP_PANEL_LCD_PIN_NUM_RGB_DATA14,
                 ESP_PANEL_LCD_PIN_NUM_RGB_DATA15,
             },
+        .disp_gpio_num = GPIO_NUM_NC,
         .on_frame_trans_done = NULL,
         .user_ctx = NULL,
         .flags =
@@ -898,6 +872,10 @@ void WavesharePanel::initBUS() {
 bool WavesharePanel::initTouch() {
     const uint8_t touch_irq_pin = WS_BOARD_TOUCH_IRQ;
     bool result = false;
+
+    TouchDrvDigitalWrite(0, Low);
+    delay(100);
+    TouchDrvDigitalWrite(0, High);
 
     log_i("=================initTouch====================");
     _touchDrv = new TouchDrvCSTXXX();

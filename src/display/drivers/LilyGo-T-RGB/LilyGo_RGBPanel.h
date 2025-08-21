@@ -63,7 +63,7 @@ class LilyGo_RGBPanel : public Display {
 
     void setBrightness(uint8_t level);
 
-    uint8_t getBrightness();
+    uint8_t getBrightness() const;
 
     LilyGo_RGBPanel_Type getModel();
 
@@ -88,6 +88,8 @@ class LilyGo_RGBPanel : public Display {
     uint16_t getBattVoltage(void);
 
     void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data);
+
+    bool supportsDirectMode() { return false; }
 
   private:
     void writeData(const uint8_t *data, int len);

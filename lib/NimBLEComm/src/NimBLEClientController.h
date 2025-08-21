@@ -9,20 +9,28 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLEClientController();
     void initClient();
     bool connectToServer();
+
+    void sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure, float flow);
+
     void sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint);
     void sendAltControl(bool pinState);
     void sendPing();
     void sendAutotune(int testTime, int samples);
     void sendPidSettings(const String &pid);
+    void sendPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPressureScale(float scale);
+    void sendLedControl(uint8_t channel, uint8_t brightness);
     bool isReadyForConnection() const;
     bool isConnected();
     void scan();
+    void tare();
     void registerRemoteErrorCallback(const remote_err_callback_t &callback);
     void registerBrewBtnCallback(const brew_callback_t &callback);
     void registerSteamBtnCallback(const steam_callback_t &callback);
     void registerSensorCallback(const sensor_read_callback_t &callback);
     void registerAutotuneResultCallback(const pid_control_callback_t &callback);
+    void registerVolumetricMeasurementCallback(const float_callback_t &callback);
+    void registerTofMeasurementCallback(const int_callback_t &callback);
     std::string readInfo() const;
     NimBLEClient *getClient() const { return client; };
 
@@ -36,6 +44,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *tempReadChar = nullptr;
     NimBLERemoteCharacteristic *pingChar = nullptr;
     NimBLERemoteCharacteristic *pidControlChar = nullptr;
+    NimBLERemoteCharacteristic *pumpModelCoeffsChar = nullptr;
     NimBLERemoteCharacteristic *errorChar = nullptr;
     NimBLERemoteCharacteristic *autotuneChar = nullptr;
     NimBLERemoteCharacteristic *autotuneResultChar = nullptr;
@@ -45,6 +54,10 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *sensorChar = nullptr;
     NimBLERemoteCharacteristic *outputControlChar = nullptr;
     NimBLERemoteCharacteristic *pressureScaleChar = nullptr;
+    NimBLERemoteCharacteristic *volumetricMeasurementChar = nullptr;
+    NimBLERemoteCharacteristic *volumetricTareChar = nullptr;
+    NimBLERemoteCharacteristic *ledControlChar = nullptr;
+    NimBLERemoteCharacteristic *tofMeasurementChar = nullptr;
     NimBLEAdvertisedDevice *serverDevice = nullptr;
     bool readyForConnection = false;
 
@@ -53,6 +66,10 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     steam_callback_t steamBtnCallback = nullptr;
     pid_control_callback_t autotuneResultCallback = nullptr;
     sensor_read_callback_t sensorCallback = nullptr;
+    float_callback_t volumetricMeasurementCallback = nullptr;
+    int_callback_t tofMeasurementCallback = nullptr;
+
+    String _lastOutputControl = "";
 
     // BLEAdvertisedDeviceCallbacks override
     void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;
