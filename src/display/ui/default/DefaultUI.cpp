@@ -95,6 +95,13 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
+    pluginManager->on("controller:volumetric-measurement:bluetooth:change", [=](Event const &event) {
+        double newWeight = event.getFloat("value");
+        if (round(newWeight * 10.0) != round(bluetoothWeight * 10.0)) {
+            bluetoothWeight = newWeight;
+            rerender = true;
+        }
+    });
     pluginManager->on("boiler:targetTemperature:change", [=](Event const &event) {
         int newTemp = static_cast<int>(event.getFloat("value"));
         if (newTemp != targetTemp) {
@@ -314,17 +321,17 @@ void DefaultUI::setupState() {
 
 void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; }, [=]() { adjustDials(ui_MenuScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; }, [=]() { adjustDials(ui_StatusScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; }, [=]() { adjustDials(ui_BrewScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; }, [=]() { adjustDials(ui_GrindScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { adjustDials(ui_SimpleProcessScreen_dials); }, &pressureAvailable);
+                          [=]() { adjustDials(ui_SimpleProcessScreen_dials); }, &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustDials(ui_ProfileScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; }, [=]() { adjustHeatingIndicator(ui_BrewScreen_dials); },
                           &isTemperatureStable, &heatingFlash);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
@@ -436,6 +443,49 @@ void DefaultUI::setupReactive() {
                               lv_label_set_text_fmt(uic_ProfileScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
+    // Weight effects for all screens (only when volumetric available)
+    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_MenuScreen_dials_weightText, "%.1fg", bluetoothWeight);
+                              }
+                          },
+                          &bluetoothWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_StatusScreen_dials_weightText, "%.1fg", bluetoothWeight);
+                              }
+                          },
+                          &bluetoothWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_BrewScreen_dials_weightText, "%.1fg", bluetoothWeight);
+                              }
+                          },
+                          &bluetoothWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_GrindScreen_dials_weightText, "%.1fg", bluetoothWeight);
+                              }
+                          },
+                          &bluetoothWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_weightText, "%.1fg", bluetoothWeight);
+                              }
+                          },
+                          &bluetoothWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_ProfileScreen_dials_weightText, "%.1fg", bluetoothWeight);
+                              }
+                          },
+                          &bluetoothWeight, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
                           [=]() {
                               updateAvailable ? lv_obj_clear_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN)
@@ -536,7 +586,7 @@ void DefaultUI::setupReactive() {
                               if (mode == MODE_STEAM) {
                                   _ui_flag_modify(ui_SimpleProcessScreen_goButton, LV_OBJ_FLAG_HIDDEN, active);
                                   lv_imgbtn_set_src(ui_SimpleProcessScreen_goButton, LV_IMGBTN_STATE_RELEASED, nullptr,
-                                                    &ui_img_691326438, nullptr);
+                                                    &ui_img_1456692430, nullptr);
                               } else {
                                   lv_imgbtn_set_src(ui_SimpleProcessScreen_goButton, LV_IMGBTN_STATE_RELEASED, nullptr,
                                                     active ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
@@ -551,6 +601,39 @@ void DefaultUI::setupReactive() {
                           &grindActive);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=] { lv_label_set_text(ui_BrewScreen_profileName, selectedProfile.label.c_str()); },
+                          &selectedProfileId);
+
+    // Brew target effects based on selected profile
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              // Brew Target Temperature (first phase temp or default)
+                              double targetTemp = selectedProfile.temperature;
+                              if (!selectedProfile.phases.empty() && selectedProfile.phases[0].temperature > 0.0f) {
+                                  targetTemp = selectedProfile.phases[0].temperature;
+                              }
+                              lv_label_set_text_fmt(ui_BrewScreen_brewTargetTemp, "%.0f°C", targetTemp);
+                              
+                              // Brew Target Duration (sum of all phases)
+                              double totalDuration = selectedProfile.getTotalDuration();
+                              const auto minutes = static_cast<int>(totalDuration / 60.0);
+                              const auto seconds = static_cast<int>(totalDuration) % 60;
+                              lv_label_set_text_fmt(ui_BrewScreen_brewTargetDuration, "%2d:%02d", minutes, seconds);
+                              
+                              // Brew Target Weight (last phase with volumetric target)
+                              double targetWeight = 0.0;
+                              for (auto it = selectedProfile.phases.rbegin(); it != selectedProfile.phases.rend(); ++it) {
+                                  if (it->hasVolumetricTarget()) {
+                                      Target target = it->getVolumetricTarget();
+                                      targetWeight = target.value;
+                                      break;
+                                  }
+                              }
+                              if (targetWeight > 0.0) {
+                                  lv_label_set_text_fmt(ui_BrewScreen_brewTargetWeight, "%.1fg", targetWeight);
+                              } else {
+                                  lv_label_set_text(ui_BrewScreen_brewTargetWeight, "--");
+                              }
+                          },
                           &selectedProfileId);
 
     effect_mgr.use_effect(
@@ -709,9 +792,13 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
     lv_obj_t *pressureTarget = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETARGET);
     lv_obj_t *pressureGauge = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSUREGAUGE);
     lv_obj_t *pressureText = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETEXT);
+    lv_obj_t *weightText = ui_comp_get_child(dials, UI_COMP_DIALS_WEIGHTTEXT);
+    
     _ui_flag_modify(pressureTarget, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     _ui_flag_modify(pressureGauge, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     _ui_flag_modify(pressureText, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
+    _ui_flag_modify(weightText, LV_OBJ_FLAG_HIDDEN, volumetricAvailable);
+    
     lv_obj_set_x(tempText, pressureAvailable ? -50 : 0);
     lv_obj_set_y(tempText, pressureAvailable ? -205 : -180);
     lv_arc_set_bg_angles(tempGauge, 118, pressureAvailable ? 242 : 62);
