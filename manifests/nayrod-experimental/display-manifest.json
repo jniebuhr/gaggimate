@@ -1,0 +1,18 @@
+{
+  "name": "GaggiMate Display",
+  "version": "feature/improve-pid",
+  "funding_url": "https://ko-fi.com/jniebuhr",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "/gaggimate/pr-375/display-bootloader.bin", "offset": 0 },
+        { "path": "/gaggimate/pr-375/display-partitions.bin", "offset": 32768 },
+        { "path": "/gaggimate/boot_app0.bin", "offset": 57344 },
+        { "path": "/gaggimate/pr-375/display-firmware.bin", "offset": 65536 },
+        { "path": "/gaggimate/pr-375/display-filesystem.bin", "offset": 13172736 }
+      ]
+    }
+  ]
+}
