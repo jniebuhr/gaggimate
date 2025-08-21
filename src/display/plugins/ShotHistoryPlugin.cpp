@@ -71,7 +71,6 @@ void ShotHistoryPlugin::record() {
             if (!canProcessWeight) {
                 // If BLE connection is unstable, end extended recording early
                 extendedRecording = false;
-                finalizeRecording();
                 return;
             }
             
@@ -84,7 +83,6 @@ void ShotHistoryPlugin::record() {
                 // Weight has been stable for the threshold time, stop extended recording
                 if (now - lastWeightChangeTime >= WEIGHT_STABILIZATION_TIME) {
                     extendedRecording = false;
-                    finalizeRecording();
                 }
             } else {
                 // Weight changed, reset stabilization timer
@@ -95,7 +93,6 @@ void ShotHistoryPlugin::record() {
             // Also stop extended recording after maximum duration
             if (now - extendedRecordingStart >= EXTENDED_RECORDING_DURATION) {
                 extendedRecording = false;
-                finalizeRecording();
             }
         }
     }
@@ -159,7 +156,7 @@ void ShotHistoryPlugin::endRecording() {
 
 void ShotHistoryPlugin::finalizeRecording() {
     unsigned long duration = millis() - shotStart;
-    if (duration <= 5000) {
+    if (duration <= 7500) { // Exclude failed shots and flushes
         SPIFFS.remove("/h/" + currentId + ".dat");
     } else {
         controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
