@@ -2,6 +2,7 @@ export function parseHistoryData(shot) {
   const data = {
     id: shot.id,
   };
+  if (!shot.history) return null;
   const lines = shot.history.split('\n');
   const header = lines[0].split(',');
   data['version'] = header[0];

@@ -96,3 +96,43 @@ void onSimpleProcessToggle(lv_event_t *e) {
         controller.isActive() ? controller.deactivate() : controller.activate();
     }
 }
+
+void onProfileScreenLoad(lv_event_t *e) {
+    lv_obj_set_ext_click_area(ui_ProfileScreen_previousProfileBtn, 30);
+    lv_obj_set_ext_click_area(ui_ProfileScreen_nextProfileBtn, 30);
+    lv_obj_set_ext_click_area(ui_ProfileScreen_chooseButton, 30);
+    lv_obj_set_ext_click_area(ui_ProfileScreen_ImgButton1, 20);
+}
+
+void onMenuScreenLoad(lv_event_t *e) {
+    lv_obj_set_ext_click_area(ui_MenuScreen_btnBrew, 15);
+    lv_obj_set_ext_click_area(ui_MenuScreen_btnSteam, 15);
+    lv_obj_set_ext_click_area(ui_MenuScreen_waterBtn, 15);
+    lv_obj_set_ext_click_area(ui_MenuScreen_grindBtn, 15);
+    lv_obj_set_ext_click_area(ui_MenuScreen_standbyButton, 20);
+}
+
+void onBrewScreenLoad(lv_event_t *e) {
+    lv_obj_set_ext_click_area(ui_BrewScreen_startButton, 25);
+    lv_obj_set_ext_click_area(ui_BrewScreen_profileSelectBtn, 25);
+    lv_obj_set_ext_click_area(ui_BrewScreen_ImgButton5, 20);
+}
+
+void onSimpleProcessScreenLoad(lv_event_t *e) {
+    lv_obj_set_ext_click_area(ui_SimpleProcessScreen_downTempButton, 40);
+    lv_obj_set_ext_click_area(ui_SimpleProcessScreen_upTempButton, 40);
+    lv_obj_set_ext_click_area(ui_SimpleProcessScreen_goButton, 25);
+    lv_obj_set_ext_click_area(ui_SimpleProcessScreen_ImgButton6, 20);
+}
+
+void onStatusScreenLoad(lv_event_t *e) {
+    lv_obj_set_ext_click_area(ui_StatusScreen_pauseButton, 25);
+    lv_obj_set_ext_click_area(ui_StatusScreen_ImgButton8, 20);
+}
+
+void onGrindScreenLoad(lv_event_t *e) {
+    lv_obj_set_ext_click_area(ui_GrindScreen_upDurationButton, 40);
+    lv_obj_set_ext_click_area(ui_GrindScreen_downDurationButton, 40);
+    lv_obj_set_ext_click_area(ui_GrindScreen_startButton, 25);
+    lv_obj_set_ext_click_area(ui_GrindScreen_ImgButton2, 20);
+}

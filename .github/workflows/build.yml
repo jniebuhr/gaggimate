@@ -77,7 +77,7 @@ jobs:
           name: gaggimate-firmware
           path: release
       - name: Release Firmware
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@bcfe5470707e8832e12347755757cec0eb3c22af
         if: startsWith(github.ref, 'refs/tags/')
         with:
           artifacts: release/*.bin

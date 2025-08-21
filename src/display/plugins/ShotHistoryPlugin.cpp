@@ -20,7 +20,8 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
         if (lastVolumeSample != 0) {
             const unsigned long timeDiff = now - lastVolumeSample;
             const float volumeDiff = weight - currentBluetoothWeight;
-            currentBluetoothFlow = volumeDiff / static_cast<float>(timeDiff) * 1000.0f;
+            const float volumeFlow = volumeDiff / static_cast<float>(timeDiff) * 1000.0f;
+            currentBluetoothFlow = currentBluetoothFlow * 0.9f + volumeFlow * 0.1f;
         }
         lastVolumeSample = now;
         currentBluetoothWeight = weight;
@@ -63,6 +64,13 @@ void ShotHistoryPlugin::record() {
     if (!recording && isFileOpen) {
         file.close();
         isFileOpen = false;
+        unsigned long duration = millis() - shotStart;
+        if (duration <= 7500) { // Exclude failed shots and flushes
+            SPIFFS.remove("/h/" + currentId + ".dat");
+        } else {
+            controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
+            cleanupHistory();
+        }
     }
 }
 
@@ -83,24 +91,11 @@ void ShotHistoryPlugin::startRecording() {
 
 unsigned long ShotHistoryPlugin::getTime() {
     time_t now;
-    struct tm timeinfo;
-    if (!getLocalTime(&timeinfo, 100)) {
-        return 0;
-    }
     time(&now);
     return now;
 }
 
-void ShotHistoryPlugin::endRecording() {
-    recording = false;
-    unsigned long duration = millis() - shotStart;
-    if (duration <= 5000) {
-        SPIFFS.remove("/h/" + currentId + ".dat");
-    } else {
-        controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
-        cleanupHistory();
-    }
-}
+void ShotHistoryPlugin::endRecording() { recording = false; }
 
 void ShotHistoryPlugin::cleanupHistory() {
     File directory = SPIFFS.open("/h");
@@ -131,8 +126,8 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             File file = root.openNextFile();
             while (file) {
                 if (String(file.name()).endsWith(".dat")) {
-                    JsonObject o = arr.createNestedObject();
-                    String name = String(file.name());
+                    auto o = arr.add<JsonObject>();
+                    auto name = String(file.name());
                     int start = name.lastIndexOf('/') + 1;
                     int end = name.lastIndexOf('.');
                     o["id"] = name.substring(start, end);
@@ -142,7 +137,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             }
         }
     } else if (type == "req:history:get") {
-        String id = request["id"].as<String>();
+        auto id = request["id"].as<String>();
         File file = SPIFFS.open("/h/" + id + ".dat", "r");
         if (file) {
             String data = file.readString();
@@ -152,7 +147,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             response["error"] = "not found";
         }
     } else if (type == "req:history:delete") {
-        String id = request["id"].as<String>();
+        auto id = request["id"].as<String>();
         SPIFFS.remove("/h/" + id + ".dat");
         response["msg"] = "Ok";
     }

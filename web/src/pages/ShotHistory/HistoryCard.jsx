@@ -56,7 +56,7 @@ export default function HistoryCard({ shot, onDelete }) {
           <span className='fa fa-clock'></span>
           {(shot.duration / 1000).toFixed(1)}s
         </div>
-        {shot.volume && (
+        {shot.volume && shot.volume > 0 && (
           <div className='flex flex-row items-center gap-2'>
             <span className='fa fa-scale-balanced'></span>
             {shot.volume}g

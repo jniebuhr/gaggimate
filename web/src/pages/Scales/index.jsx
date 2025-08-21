@@ -140,7 +140,7 @@ export function Scales() {
 
       {scaleData.length > 0 && (
         <div className='space-y-4 lg:col-span-12'>
-          <div className='alert alert-info'>
+          <div className='alert alert-warning'>
             <span>
               Scales are automatically refreshed every 10 seconds. Use the scan button to discover
               new devices.

@@ -2,14 +2,14 @@ const DASHBOARD_LAYOUT_KEY = 'dashboardLayout';
 
 export const getDashboardLayout = () => {
   if (typeof window === 'undefined' || !window.localStorage) {
-    return 'process-first';
+    return DASHBOARD_LAYOUTS.ORDER_FIRST;
   }
 
   try {
-    return localStorage.getItem(DASHBOARD_LAYOUT_KEY) || 'process-first';
+    return localStorage.getItem(DASHBOARD_LAYOUT_KEY) || DASHBOARD_LAYOUTS.ORDER_FIRST;
   } catch (error) {
     console.warn('getDashboardLayout: localStorage access failed:', error);
-    return 'process-first';
+    return DASHBOARD_LAYOUTS.ORDER_FIRST;
   }
 };
 
@@ -19,16 +19,8 @@ export const setDashboardLayout = layout => {
     return false;
   }
 
-  let serializedLayout;
   try {
-    serializedLayout = JSON.stringify(layout);
-  } catch (error) {
-    console.error('setDashboardLayout: Layout is not JSON-serializable:', error);
-    return false;
-  }
-
-  try {
-    localStorage.setItem(DASHBOARD_LAYOUT_KEY, serializedLayout);
+    localStorage.setItem(DASHBOARD_LAYOUT_KEY, layout);
     return true;
   } catch (error) {
     console.error('setDashboardLayout: Failed to store layout in localStorage:', error);
@@ -37,6 +29,6 @@ export const setDashboardLayout = layout => {
 };
 
 export const DASHBOARD_LAYOUTS = {
-  PROCESS_FIRST: 'process-first',
-  CHART_FIRST: 'chart-first',
+  ORDER_FIRST: 'order-first',
+  ORDER_LAST: 'order-last',
 };

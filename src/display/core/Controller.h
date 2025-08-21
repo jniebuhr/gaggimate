@@ -6,8 +6,8 @@
 #include "PluginManager.h"
 #include "Settings.h"
 #include <WiFi.h>
-#include <display/core/Process.h>
 #include <display/core/ProfileManager.h>
+#include <display/core/process/Process.h>
 #ifndef GAGGIMATE_HEADLESS
 #include <display/ui/default/DefaultUI.h>
 #endif
@@ -27,7 +27,7 @@ class Controller {
     void loopControl();
 
     void setMode(int newMode);
-    void setTargetTemp(int temperature);
+    void setTargetTemp(float temperature);
     void setPressureScale();
     void setPumpModelCoeffs();
     void setTargetDuration(int duration);
@@ -36,10 +36,11 @@ class Controller {
     void setTargetGrindVolume(double volume);
 
     int getMode() const;
-    int getTargetTemp();
+
+    float getTargetTemp() const;
     int getTargetDuration() const;
     int getTargetGrindDuration() const;
-    virtual int getCurrentTemp() const { return currentTemp; }
+    virtual float getCurrentTemp() const { return currentTemp; }
     bool isActive() const;
     bool isGrindActive() const;
     bool isUpdating() const;
@@ -128,7 +129,7 @@ class Controller {
     ProfileManager *profileManager{};
 
     int mode = MODE_BREW;
-    int currentTemp = 0;
+    float currentTemp = 0;
     float pressure = 0.0f;
     float targetPressure = 0.0f;
     float currentPuckFlow = 0.0f;

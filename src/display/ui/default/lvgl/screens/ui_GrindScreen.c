@@ -25,10 +25,6 @@ void ui_GrindScreen_screen_init(void) {
     lv_obj_set_x(ui_GrindScreen_ImgButton2, 0);
     lv_obj_set_y(ui_GrindScreen_ImgButton2, 210);
     lv_obj_set_align(ui_GrindScreen_ImgButton2, LV_ALIGN_CENTER);
-    lv_obj_set_style_outline_color(ui_GrindScreen_ImgButton2, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_opa(ui_GrindScreen_ImgButton2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_width(ui_GrindScreen_ImgButton2, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_pad(ui_GrindScreen_ImgButton2, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_img_recolor(ui_GrindScreen_ImgButton2, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_img_recolor_opa(ui_GrindScreen_ImgButton2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -66,12 +62,6 @@ void ui_GrindScreen_screen_init(void) {
     lv_obj_set_x(ui_GrindScreen_startButton, 0);
     lv_obj_set_y(ui_GrindScreen_startButton, 130);
     lv_obj_set_align(ui_GrindScreen_startButton, LV_ALIGN_CENTER);
-    ui_object_set_themeable_style_property(ui_GrindScreen_startButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_OUTLINE_COLOR,
-                                           _ui_theme_color_Dark);
-    ui_object_set_themeable_style_property(ui_GrindScreen_startButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_OUTLINE_OPA,
-                                           _ui_theme_alpha_Dark);
-    lv_obj_set_style_outline_width(ui_GrindScreen_startButton, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_pad(ui_GrindScreen_startButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     ui_object_set_themeable_style_property(ui_GrindScreen_startButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_GrindScreen_startButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
@@ -105,10 +95,6 @@ void ui_GrindScreen_screen_init(void) {
     lv_obj_set_x(ui_GrindScreen_upDurationButton, 120);
     lv_obj_set_y(ui_GrindScreen_upDurationButton, 0);
     lv_obj_set_align(ui_GrindScreen_upDurationButton, LV_ALIGN_CENTER);
-    lv_obj_set_style_outline_color(ui_GrindScreen_upDurationButton, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_opa(ui_GrindScreen_upDurationButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_width(ui_GrindScreen_upDurationButton, 25, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_pad(ui_GrindScreen_upDurationButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     ui_object_set_themeable_style_property(ui_GrindScreen_upDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_GrindScreen_upDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT,
@@ -121,10 +107,6 @@ void ui_GrindScreen_screen_init(void) {
     lv_obj_set_x(ui_GrindScreen_downDurationButton, -60);
     lv_obj_set_y(ui_GrindScreen_downDurationButton, 0);
     lv_obj_set_align(ui_GrindScreen_downDurationButton, LV_ALIGN_CENTER);
-    lv_obj_set_style_outline_color(ui_GrindScreen_downDurationButton, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_opa(ui_GrindScreen_downDurationButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_width(ui_GrindScreen_downDurationButton, 25, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_pad(ui_GrindScreen_downDurationButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     ui_object_set_themeable_style_property(ui_GrindScreen_downDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT,
                                            LV_STYLE_IMG_RECOLOR, _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_GrindScreen_downDurationButton, LV_PART_MAIN | LV_STATE_DEFAULT,

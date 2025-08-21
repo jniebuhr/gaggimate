@@ -1,6 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext } from 'preact/hooks';
+import { useCallback, useContext, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
 
 const status = computed(() => machine.value.status);
@@ -70,6 +70,7 @@ const ProcessControls = props => {
   const active = !!processInfo?.a;
   const finished = !!processInfo && !active;
   const apiService = useContext(ApiServiceContext);
+  const [isFlushing, setIsFlushing] = useState(false);
 
   // Determine if we should show expanded view
   const shouldExpand = brew && (active || finished || (brew && !active && !finished));
@@ -102,9 +103,26 @@ const ProcessControls = props => {
     });
   }, [apiService]);
 
+  const startFlush = useCallback(() => {
+    setIsFlushing(true);
+    apiService
+      .request({
+        tp: 'req:flush:start',
+      })
+      .catch(error => {
+        console.error('Flush start failed:', error);
+        setIsFlushing(false);
+      });
+  }, [apiService]);
+
   const handleButtonClick = () => {
     if (active) {
       deactivate();
+
+      if (isFlushing) {
+        clear();
+        setIsFlushing(false);
+      }
     } else if (finished) {
       clear();
     } else {
@@ -149,7 +167,9 @@ const ProcessControls = props => {
       <div className='mt-1 mb-2 flex flex-col items-center justify-between space-y-2 sm:flex-row sm:space-y-0'>
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
           <i className='fa fa-thermometer-half text-base-content/60' />
-          <span className='text-base-content'>{status.value.currentTemperature || 0}</span>
+          <span className='text-base-content'>
+            {status.value.currentTemperature.toFixed(1) || 0}
+          </span>
           <span className='text-success font-semibold'>
             {' '}
             / {status.value.targetTemperature || 0}°C
@@ -158,8 +178,8 @@ const ProcessControls = props => {
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
           <i className='fa fa-gauge text-base-content/60' />
           <span className='text-base-content'>
-            {status.value.currentPressure?.toFixed(0) || 0} /{' '}
-            {status.value.targetPressure?.toFixed(0) || 0} bar
+            {status.value.currentPressure?.toFixed(1) || 0} /{' '}
+            {status.value.targetPressure?.toFixed(1) || 0} bar
           </span>
         </div>
       </div>
@@ -223,7 +243,7 @@ const ProcessControls = props => {
       )}
 
       <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {brew && !active && !finished && (
+        {brew && !active && !finished && status.value.volumetricAvailable && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
@@ -242,9 +262,22 @@ const ProcessControls = props => {
           </div>
         )}
         {(mode === 1 || mode === 3) && (
-          <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
-            <i className={`text-2xl ${getButtonIcon()}`} />
-          </button>
+          <div className='flex flex-col items-center gap-4 space-y-4'>
+            <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
+              <i className={`text-2xl ${getButtonIcon()}`} />
+            </button>
+
+            {brew && !active && !finished && (
+              <button
+                className='btn text-base-content/60 hover:text-base-content rounded-full text-sm transition-colors duration-200'
+                onClick={startFlush}
+                title='Click to flush water'
+              >
+                <i className='fa-solid fa-tint' />
+                Flush
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
