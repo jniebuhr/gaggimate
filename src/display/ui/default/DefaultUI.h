@@ -4,6 +4,7 @@
 #include <display/core/PluginManager.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/constants.h>
+#include <display/core/Translation.h>
 #include <display/drivers/Driver.h>
 #include <display/models/profile.h>
 

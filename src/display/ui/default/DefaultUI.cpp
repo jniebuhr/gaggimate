@@ -77,6 +77,8 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
 DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
     : controller(controller), pluginManager(pluginManager) {
     profileManager = controller->getProfileManager();
+
+    Translation::setLanguage(static_cast<Language>(controller->getSettings().getLanguage()));
 }
 
 void DefaultUI::init() {
@@ -338,18 +340,16 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() { adjustHeatingIndicator(ui_StatusScreen_dials); }, &isTemperatureStable, &heatingFlash);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, mode == MODE_STEAM ? "Steam" : "Water"); },
+                          [=]() { lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, mode == MODE_STEAM ? TR(STEAM) : TR(WATER)); },
                           &mode);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
                               lv_arc_set_value(uic_MenuScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_MenuScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() {
                               lv_arc_set_value(uic_StatusScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_StatusScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
@@ -445,13 +445,13 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_InitScreen; },
                           [=]() {
                               if (updateActive) {
-                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Updating...");
+                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "%s", TR(UPDATING));
                               } else if (error) {
                                   if (controller->getError() == ERROR_CODE_RUNAWAY) {
-                                      lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Temperature error, please restart");
+                                      lv_label_set_text_fmt(ui_InitScreen_mainLabel, "%s", TR(TEMPERATURE_ERROR));
                                   }
                               } else if (autotuning) {
-                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Autotuning...");
+                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "%s", TR(AUTOTUNING));
                               }
                           },
                           &updateAvailable, &error, &autotuning);
@@ -550,7 +550,10 @@ void DefaultUI::setupReactive() {
                           },
                           &grindActive);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=] { lv_label_set_text(ui_BrewScreen_profileName, selectedProfile.label.c_str()); },
+                          [=] { 
+                              lv_label_set_text(ui_BrewScreen_profileName, selectedProfile.label.c_str());
+                              lv_label_set_text(ui_BrewScreen_Label1, TR(SELECTED_PROFILE));
+                          },
                           &selectedProfileId);
 
     effect_mgr.use_effect(
@@ -561,11 +564,11 @@ void DefaultUI::setupReactive() {
             const auto minutes = static_cast<int>(currentProfileChoice.getTotalDuration() / 60.0 - 0.5);
             const auto seconds = static_cast<int>(currentProfileChoice.getTotalDuration()) % 60;
             lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
-            lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C", static_cast<int>(currentProfileChoice.temperature));
+                         lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C", static_cast<int>(currentProfileChoice.temperature));
             unsigned int phaseCount = currentProfileChoice.getPhaseCount();
             unsigned int stepCount = currentProfileChoice.phases.size();
-            lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d step%s", stepCount, stepCount > 1 ? "s" : "");
-            lv_label_set_text_fmt(ui_ProfileScreen_phasesLabel, "%d phase%s", phaseCount, phaseCount > 1 ? "s" : "");
+            lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d %s%s", stepCount, TR(STEP), stepCount > 1 ? "s" : "");
+            lv_label_set_text_fmt(ui_ProfileScreen_phasesLabel, "%d %s%s", phaseCount, TR(PHASE), phaseCount > 1 ? "s" : "");
 
             ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
                                                    LV_STYLE_IMG_RECOLOR,
@@ -648,8 +651,8 @@ void DefaultUI::updateStatusScreen() const {
         now = brewProcess->finished;
     }
 
-    lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
-    lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess->isActive() ? phase.name.c_str() : "Finished");
+            lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? TR(BREW_PHASE) : TR(INFUSION));
+    lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess->isActive() ? phase.name.c_str() : TR(FINISHED));
 
     const unsigned long processDuration = now - brewProcess->processStarted;
     const double processSecondsDouble = processDuration / 1000.0;
@@ -661,12 +664,12 @@ void DefaultUI::updateStatusScreen() const {
         Target target = phase.getVolumetricTarget();
         lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume, LV_ANIM_OFF);
         lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value + 1);
-        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1fg", target.value);
+                 lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1fg", target.value);
     } else {
         const unsigned long progress = now - brewProcess->currentPhaseStarted;
         lv_bar_set_value(ui_StatusScreen_brewBar, progress, LV_ANIM_OFF);
         lv_bar_set_range(ui_StatusScreen_brewBar, 0, std::max(static_cast<int>(brewProcess->getPhaseDuration()), 1));
-        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%ds", brewProcess->getPhaseDuration() / 1000);
+                 lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%ds", brewProcess->getPhaseDuration() / 1000);
     }
 
     if (brewProcess->target == ProcessTarget::TIME) {
@@ -698,7 +701,7 @@ void DefaultUI::updateStatusScreen() const {
         }
         lv_obj_add_flag(ui_StatusScreen_barContainer, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(ui_StatusScreen_labelContainer, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text_fmt(ui_StatusScreen_brewVolume, "%.1lfg", brewProcess->currentVolume);
+                 lv_label_set_text_fmt(ui_StatusScreen_brewVolume, "%.1lfg", brewProcess->currentVolume);
         lv_imgbtn_set_src(ui_StatusScreen_pauseButton, LV_IMGBTN_STATE_RELEASED, nullptr, &ui_img_631115820, nullptr);
     }
 }

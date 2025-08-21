@@ -66,6 +66,7 @@ Settings::Settings() {
     sunriseExtBrightness = preferences.getInt("sr_exb", 255);
     emptyTankDistance = preferences.getInt("sr_ed", 200);
     fullTankDistance = preferences.getInt("sr_fd", 50);
+    language = preferences.getInt("lang", DEFAULT_LANGUAGE);
 
     preferences.end();
 
@@ -379,6 +380,11 @@ void Settings::setFullTankDistance(int full_tank_distance) {
     save();
 }
 
+void Settings::setLanguage(int language) {
+    this->language = language;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -448,6 +454,7 @@ void Settings::doSave() {
     preferences.putInt("sr_exb", sunriseExtBrightness);
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);
+    preferences.putInt("lang", language);
 
     preferences.end();
 }

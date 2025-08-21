@@ -630,6 +630,24 @@ export function Settings() {
                 <option value={1}>Light Theme</option>
               </select>
             </div>
+
+            <div className='form-control'>
+              <label htmlFor='displayLanguage' className='mb-2 block text-sm font-medium'>
+                Display Language
+              </label>
+              <select
+                id='displayLanguage'
+                name='language'
+                className='select select-bordered w-full'
+                value={formData.language}
+                onChange={onChange('language')}
+              >
+                <option value={0}>English</option>
+                <option value={1}>German</option>
+                <option value={2}>French</option>
+                <option value={3}>Spanish</option>
+              </select>
+            </div>
           </Card>
 
           {ledControl.value && (
