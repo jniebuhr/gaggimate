@@ -25333,12 +25333,12 @@
                               {
                                 "nid": 1163451064,
                                 "strtype": "OBJECT/Name",
-                                "strval": "targetTemp2",
+                                "strval": "brewTargetTemp",
                                 "childs": [
                                   {
                                     "nid": 15,
                                     "strtype": "_codename/Codename",
-                                    "strval": "targetTemp2",
+                                    "strval": "brewTargetTemp",
                                     "InheritedType": 10
                                   }
                                 ],
@@ -25703,12 +25703,12 @@
                               {
                                 "nid": 106213166,
                                 "strtype": "OBJECT/Name",
-                                "strval": "targetDuration2",
+                                "strval": "brewTargetDuration",
                                 "childs": [
                                   {
                                     "nid": 15,
                                     "strtype": "_codename/Codename",
-                                    "strval": "targetDuration2",
+                                    "strval": "brewTargetDuration",
                                     "InheritedType": 10
                                   }
                                 ],
@@ -26074,12 +26074,12 @@
                               {
                                 "nid": 106213166,
                                 "strtype": "OBJECT/Name",
-                                "strval": "targetWeight2",
+                                "strval": "brewTargetWeight",
                                 "childs": [
                                   {
                                     "nid": 15,
                                     "strtype": "_codename/Codename",
-                                    "strval": "targetWeight2",
+                                    "strval": "brewTargetWeight",
                                     "InheritedType": 10
                                   }
                                 ],
@@ -55627,7 +55627,7 @@
     "editor_version": "1.5.3",
     "image": "",
     "export_temp_image": false,
-    "force_export_images": false,
+    "force_export_images": true,
     "flat_export": false,
     "advanced_alpha": false,
     "pointfilter": false,
@@ -55638,7 +55638,7 @@
     "uiExportFolderPath": "/home/drag/gitprojects/gaggimate/src/display/ui/default/lvgl",
     "projectExportFolderPath": "/home/drag/gitprojects/gaggimate",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 425,
+    "backup_cnt": 427,
     "autosave_cnt": 0,
     "group_color_cnt": 0,
     "lvgl_version": "8.3.11",

@@ -330,17 +330,17 @@ void DefaultUI::setupState() {
 
 void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; }, [=]() { adjustDials(ui_MenuScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; }, [=]() { adjustDials(ui_StatusScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; }, [=]() { adjustDials(ui_BrewScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; }, [=]() { adjustDials(ui_GrindScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { adjustDials(ui_SimpleProcessScreen_dials); }, &pressureAvailable);
+                          [=]() { adjustDials(ui_SimpleProcessScreen_dials); }, &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustDials(ui_ProfileScreen_dials); },
-                          &pressureAvailable);
+                          &pressureAvailable, &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; }, [=]() { adjustHeatingIndicator(ui_BrewScreen_dials); },
                           &isTemperatureStable, &heatingFlash);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
@@ -582,6 +582,41 @@ void DefaultUI::setupReactive() {
                               }
                           },
                           &volumetricAvailable);
+    // Brew target effects based on selected profile
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              // Brew Target Temperature (first phase temp or default)
+                              double targetTemp = selectedProfile.temperature;
+                              if (!selectedProfile.phases.empty() && selectedProfile.phases[0].temperature > 0.0f) {
+                                  targetTemp = selectedProfile.phases[0].temperature;
+                              }
+                              lv_label_set_text_fmt(ui_BrewScreen_brewTargetTemp, "%.0f°C", targetTemp);
+
+                              // Brew Target Duration (sum of all phases)
+                              double totalDuration = selectedProfile.getTotalDuration();
+                              const auto minutes = static_cast<int>(totalDuration / 60.0);
+                              const auto seconds = static_cast<int>(totalDuration) % 60;
+                              lv_label_set_text_fmt(ui_BrewScreen_brewTargetDuration, "%2d:%02d", minutes, seconds);
+
+                              // Brew Target Weight (last phase with volumetric target)
+                              double targetWeight = 0.0;
+                              for (auto it = selectedProfile.phases.rbegin(); it != selectedProfile.phases.rend(); ++it) {
+                                  if (it->hasVolumetricTarget()) {
+                                      Target target = it->getVolumetricTarget();
+                                      targetWeight = target.value;
+                                      break;
+                                  }
+                              }
+                              if (targetWeight > 0.0) {
+                                  lv_label_set_text_fmt(ui_BrewScreen_brewTargetWeight, "%.1fg", targetWeight);
+                              } else {
+                                  lv_label_set_text(ui_BrewScreen_brewTargetWeight, "--");
+                              }
+                          },
+                          &selectedProfileId);
+
+
+
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
                           [=]() {
                               if (volumetricAvailable) {
@@ -612,6 +647,9 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=] { lv_label_set_text(ui_BrewScreen_profileName, selectedProfile.label.c_str()); },
                           &selectedProfileId);
+
+
+
 
     effect_mgr.use_effect(
         [=] { return currentScreen == ui_ProfileScreen; },
@@ -827,9 +865,11 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
     lv_obj_t *pressureTarget = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETARGET);
     lv_obj_t *pressureGauge = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSUREGAUGE);
     lv_obj_t *pressureText = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETEXT);
+    lv_obj_t *weightText = ui_comp_get_child(dials, UI_COMP_DIALS_WEIGHTTEXT);
     _ui_flag_modify(pressureTarget, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     _ui_flag_modify(pressureGauge, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     _ui_flag_modify(pressureText, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
+    _ui_flag_modify(weightText, LV_OBJ_FLAG_HIDDEN, volumetricAvailable);
     lv_obj_set_x(tempText, pressureAvailable ? -50 : 0);
     lv_obj_set_y(tempText, pressureAvailable ? -205 : -180);
     lv_arc_set_bg_angles(tempGauge, 118, pressureAvailable ? 242 : 62);

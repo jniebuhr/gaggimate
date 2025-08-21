@@ -35,11 +35,11 @@ extern void ui_event_BrewScreen_profileSelectBtn(lv_event_t * e);
 extern lv_obj_t * ui_BrewScreen_profileSelectBtn;
 extern lv_obj_t * ui_BrewScreen_Container2;
 extern lv_obj_t * ui_BrewScreen_Image11;
-extern lv_obj_t * ui_BrewScreen_targetTemp2;
+extern lv_obj_t * ui_BrewScreen_brewTargetTemp;
 extern lv_obj_t * ui_BrewScreen_Image12;
-extern lv_obj_t * ui_BrewScreen_targetDuration2;
+extern lv_obj_t * ui_BrewScreen_brewTargetDuration;
 extern lv_obj_t * ui_BrewScreen_Image10;
-extern lv_obj_t * ui_BrewScreen_targetWeight2;
+extern lv_obj_t * ui_BrewScreen_brewTargetWeight;
 extern lv_obj_t * ui_BrewScreen_adjustments;
 extern lv_obj_t * ui_BrewScreen_tempContainer;
 extern lv_obj_t * ui_BrewScreen_targetTemp;
@@ -63,9 +63,9 @@ extern lv_obj_t * uic_BrewScreen_dials_pressureTarget;
 extern lv_obj_t * uic_BrewScreen_dials_pressureText;
 extern lv_obj_t * uic_BrewScreen_dials_tempText;
 extern lv_obj_t * uic_BrewScreen_dials_weightText;
-extern lv_obj_t * uic_BrewScreen_targetTemp2;
-extern lv_obj_t * uic_BrewScreen_targetDuration2;
-extern lv_obj_t * uic_BrewScreen_targetWeight2;
+extern lv_obj_t * uic_BrewScreen_brewTargetTemp;
+extern lv_obj_t * uic_BrewScreen_brewTargetDuration;
+extern lv_obj_t * uic_BrewScreen_brewTargetWeight;
 
 #ifdef __cplusplus
 } /*extern "C"*/
