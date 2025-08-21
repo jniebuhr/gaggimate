@@ -67,6 +67,7 @@ void ShotHistoryPlugin::record() {
         unsigned long duration = millis() - shotStart;
         if (duration <= 7500) { // Exclude failed shots and flushes
             SPIFFS.remove("/h/" + currentId + ".dat");
+            SPIFFS.remove("/h/" + currentId + ".json"); // Also remove notes file if it exists
         } else {
             controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
             cleanupHistory();
