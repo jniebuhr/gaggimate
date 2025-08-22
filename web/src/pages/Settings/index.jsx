@@ -21,6 +21,7 @@ export function Settings() {
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
+  const [autoBrewTimes, setAutoBrewTimes] = useState(['07:00']);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
