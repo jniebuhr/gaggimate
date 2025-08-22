@@ -97,6 +97,7 @@ function ProfileCard({
               disabled={isFirst}
               className='btn btn-xs btn-ghost'
               aria-label={`Move ${data.label} up`}
+              aria-disabled={isFirst}
               title='Move up'
             >
               <i className='fa fa-arrow-up' aria-hidden='true' />
@@ -106,6 +107,7 @@ function ProfileCard({
               disabled={isLast}
               className='btn btn-xs btn-ghost'
               aria-label={`Move ${data.label} down`}
+              aria-disabled={isLast}
               title='Move down'
             >
               <i className='fa fa-arrow-down' aria-hidden='true' />
