@@ -110,7 +110,8 @@ std::vector<String> ProfileManager::listProfiles() {
     std::vector<String> ordered;
     auto stored = _settings.getProfileOrder();
     for (auto const &id : stored) {
-        if (std::find(uuids.begin(), uuids.end(), id) != uuids.end()) {
+        if (std::find(uuids.begin(), uuids.end(), id) != uuids.end() &&
+            std::find(ordered.begin(), ordered.end(), id) == ordered.end()) {
             ordered.push_back(id);
         }
     }

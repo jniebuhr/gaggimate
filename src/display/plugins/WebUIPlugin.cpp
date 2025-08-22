@@ -8,6 +8,7 @@
 
 #include "BLEScalePlugin.h"
 #include "ShotHistoryPlugin.h"
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -339,7 +340,10 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
             std::vector<String> order;
             for (JsonVariant v : request["order"].as<JsonArray>()) {
                 if (v.is<String>()) {
-                    order.emplace_back(v.as<String>());
+                    String id = v.as<String>();
+                    if (!id.isEmpty() && std::find(order.begin(), order.end(), id) == order.end()) {
+                        order.emplace_back(std::move(id));
+                    }
                 }
             }
             controller->getSettings().setProfileOrder(order);

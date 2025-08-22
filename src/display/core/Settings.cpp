@@ -316,7 +316,14 @@ void Settings::removeFavoritedProfile(String profile) {
 }
 
 void Settings::setProfileOrder(std::vector<String> profile_order) {
-    profileOrder = std::move(profile_order);
+    std::vector<String> cleaned;
+    for (auto &id : profile_order) {
+        if (!id.isEmpty() &&
+            std::find(cleaned.begin(), cleaned.end(), id) == cleaned.end()) {
+            cleaned.emplace_back(std::move(id));
+        }
+    }
+    profileOrder = std::move(cleaned);
     save();
 }
 
