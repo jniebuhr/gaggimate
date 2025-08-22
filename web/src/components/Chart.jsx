@@ -53,6 +53,9 @@ export function ChartComponent({ data, className, chartClassName }) {
       // Update maxTicksLimit for x-axis
       chart.options.scales.x.ticks.maxTicksLimit = isSmallScreen ? 5 : 10;
 
+      // Force chart to resize and recalculate dimensions
+      chart.resize();
+
       // Update the chart to apply changes
       chart.update('none'); // Use 'none' mode for better performance
     };
