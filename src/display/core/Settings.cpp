@@ -54,6 +54,9 @@ Settings::Settings() {
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
     steamPumpCutoff = preferences.getFloat("spc", DEFAULT_STEAM_PUMP_CUTOFF);
     historyIndex = preferences.getInt("hi", 0);
+    autoBrewEnabled = preferences.getBool("ab_en", false);
+    String timesStr = preferences.getString("ab_times", "07:00");
+    autoBrewTimes = explode(timesStr, ',');    
 
     // Display settings
     mainBrightness = preferences.getInt("main_b", 16);
@@ -407,6 +410,16 @@ void Settings::setFullTankDistance(int full_tank_distance) {
     save();
 }
 
+void Settings::setAutoBrewEnabled(bool enabled) {
+    autoBrewEnabled = enabled;
+    save();
+}
+
+void Settings::setAutoBrewTimes(const std::vector<String> &times) {
+    autoBrewTimes = times;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -463,6 +476,8 @@ void Settings::doSave() {
     preferences.putFloat("spp", steamPumpPercentage);
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
+    preferences.putBool("ab_en", autoBrewEnabled);
+    preferences.putString("ab_times", implode(autoBrewTimes, ","));    
 
     // Display settings
     preferences.putInt("main_b", mainBrightness);

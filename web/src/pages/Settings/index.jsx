@@ -41,9 +41,16 @@ export function Settings() {
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
+      // Initialize auto-brew times
+      if (fetchedSettings.autoBrewTimes && Array.isArray(fetchedSettings.autoBrewTimes)) {
+        setAutoBrewTimes(fetchedSettings.autoBrewTimes);
+      } else if (fetchedSettings.autoBrewTimes && typeof fetchedSettings.autoBrewTimes === 'string') {
+        setAutoBrewTimes(fetchedSettings.autoBrewTimes.split(',').filter(t => t.trim()));
+      }      
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
+      setAutoBrewTimes(['07:00']);
     }
   }, [fetchedSettings]);
 
@@ -79,6 +86,9 @@ export function Settings() {
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
       }
+      if (key === 'autoBrewEnabled') {
+        value = !formData.autoBrewEnabled;
+      }      
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
         // Set standby brightness to 0 when toggle is off
@@ -102,6 +112,23 @@ export function Settings() {
     };
   };
 
+  const addAutoBrewTime = () => {
+    setAutoBrewTimes([...autoBrewTimes, '07:00']);
+  };
+
+  const removeAutoBrewTime = (index) => {
+    if (autoBrewTimes.length > 1) {
+      const newTimes = autoBrewTimes.filter((_, i) => i !== index);
+      setAutoBrewTimes(newTimes);
+    }
+  };
+
+  const updateAutoBrewTime = (index, value) => {
+    const newTimes = [...autoBrewTimes];
+    newTimes[index] = value;
+    setAutoBrewTimes(newTimes);
+  };  
+
   const onSubmit = useCallback(
     async (e, restart = false) => {
       e.preventDefault();
@@ -109,6 +136,9 @@ export function Settings() {
       const form = formRef.current;
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
+
+      // Add auto-brew times
+      formDataToSubmit.set('autoBrewTimes', autoBrewTimes.join(','));
 
       // Ensure standbyBrightness is included even when the field is disabled
       if (!formData.standbyDisplayEnabled) {
@@ -134,7 +164,7 @@ export function Settings() {
       setFormData(updatedData);
       setSubmitting(false);
     },
-    [setFormData, formRef, formData],
+    [setFormData, formRef, formData, autoBrewTimes],
   );
 
   const onExport = useCallback(() => {
@@ -255,6 +285,64 @@ export function Settings() {
                 value={formData.standbyTimeout}
                 onChange={onChange('standbyTimeout')}
               />
+            </div>
+
+            <div className='divider'>Auto Brew</div>
+            <div className='mb-2 text-sm opacity-70'>
+              Automatically switch to brew mode at specific times
+            </div>
+
+            <div className='form-control'>
+              <label className='label cursor-pointer'>
+                <span className='label-text'>Enable Auto Brew</span>
+                <input
+                  id='autoBrewEnabled'
+                  name='autoBrewEnabled'
+                  value='autoBrewEnabled'
+                  type='checkbox'
+                  className='toggle toggle-primary'
+                  checked={!!formData.autoBrewEnabled}
+                  onChange={onChange('autoBrewEnabled')}
+                />
+              </label>
+            </div>
+
+            <div className='form-control'>
+              <label className='mb-2 block text-sm font-medium'>
+                Auto Brew Times
+              </label>
+              <div className='space-y-2'>
+                {autoBrewTimes.map((time, index) => (
+                  <div key={index} className='flex items-center gap-2'>
+                    <input
+                      type='time'
+                      className='input input-bordered flex-1'
+                      value={time}
+                      onChange={(e) => updateAutoBrewTime(index, e.target.value)}
+                      disabled={!formData.autoBrewEnabled}
+                    />
+                    {autoBrewTimes.length > 1 && (
+                      <button
+                        type='button'
+                        onClick={() => removeAutoBrewTime(index)}
+                        className='btn btn-ghost btn-sm'
+                        disabled={!formData.autoBrewEnabled}
+                      >
+                        <i className='fa fa-trash' />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type='button'
+                  onClick={addAutoBrewTime}
+                  className='btn btn-ghost btn-sm'
+                  disabled={!formData.autoBrewEnabled}
+                >
+                  <i className='fa fa-plus mr-1' />
+                  Add Time
+                </button>
+              </div>
             </div>
 
             <div className='divider'>Predictive scale delay</div>
