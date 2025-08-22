@@ -163,12 +163,12 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             response["error"] = "not found";
         }
     } else if (type == "req:history:delete") {
-        String id = request["id"].as<String>();
+        auto id = request["id"].as<String>();
         SPIFFS.remove("/h/" + id + ".dat");
         SPIFFS.remove("/h/" + id + ".json"); // Also remove notes file if it exists
         response["msg"] = "Ok";
     } else if (type == "req:history:notes:get") {
-        String id = request["id"].as<String>();
+        auto id = request["id"].as<String>();
         JsonDocument notes;
         loadNotes(id, notes);
         response["notes"] = notes;
