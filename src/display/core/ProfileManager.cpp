@@ -198,12 +198,20 @@ void ProfileManager::loadSelectedProfile(Profile &outProfile) { loadProfile(_set
 
 std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
     std::vector<String> favoritedProfiles;
+    auto stored = _settings.getProfileOrder();
     for (const String &profile : _settings.getFavoritedProfiles()) {
         if (!validate || profileExists(profile))
             favoritedProfiles.push_back(profile);
     }
-    if (favoritedProfiles.empty()) {
-        favoritedProfiles.push_back(_settings.getSelectedProfile());
+
+    std::vector<String> orderedFavorites;
+    for (const auto &id : stored) {
+        if (std::find(favoritedProfiles.begin(), favoritedProfiles.end(), id) != favoritedProfiles.end()) {
+            orderedFavorites.push_back(id);
+        }
     }
-    return favoritedProfiles;
+    if (orderedFavorites.empty()) {
+        orderedFavorites.push_back(_settings.getSelectedProfile());
+    }
+    return orderedFavorites;
 }
