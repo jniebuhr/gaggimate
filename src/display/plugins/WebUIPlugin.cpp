@@ -437,9 +437,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
-            settings->setAutoBrewEnabled(request->hasArg("autoBrewEnabled"));
-            if (request->hasArg("autoBrewTimes")) {
-                String timesStr = request->arg("autoBrewTimes");
+            settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
+            if (request->hasArg("autowakeupTimes")) {
+                String timesStr = request->arg("autowakeupTimes");
                 std::vector<String> times;
                 if (timesStr.length() > 0) {
                     // Split comma-separated times
@@ -464,10 +464,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 if (times.empty()) {
                     times.push_back("07:00"); // Default fallback
                 }
-                settings->setAutoBrewTimes(times);
-            }                
+                settings->setAutoWakeupTimes(times);
+            }
             settings->save(true);
         });
+        pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
     }
@@ -519,16 +520,16 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
     // Add auto-brew settings to response
-    doc["autoBrewEnabled"] = settings.isAutoBrewEnabled();
+    doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
     
     // Convert vector of times to comma-separated string
-    std::vector<String> autoBrewTimes = settings.getAutoBrewTimes();
+    std::vector<String> autowakeupTimes = settings.getAutoWakeupTimes();
     String timesStr = "";
-    for (size_t i = 0; i < autoBrewTimes.size(); i++) {
+    for (size_t i = 0; i < autowakeupTimes.size(); i++) {
         if (i > 0) timesStr += ",";
-        timesStr += autoBrewTimes[i];
+        timesStr += autowakeupTimes[i];
     }
-    doc["autoBrewTimes"] = timesStr;    
+    doc["autowakeupTimes"] = timesStr;    
     serializeJson(doc, *response);
     request->send(response);
 

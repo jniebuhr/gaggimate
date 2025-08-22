@@ -19,6 +19,7 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#include <display/plugins/AutoWakeupPlugin.h>
 
 const String LOG_TAG = F("Controller");
 
@@ -48,6 +49,9 @@ void Controller::setup() {
     if (settings.isHomeAssistant()) {
         pluginManager->registerPlugin(new MQTTPlugin());
     }
+    if (settings.isAutoWakeupEnabled()) {
+        pluginManager->registerPlugin(new AutoWakeupPlugin());
+    }    
     pluginManager->registerPlugin(new WebUIPlugin());
     pluginManager->registerPlugin(&ShotHistory);
     pluginManager->registerPlugin(&BLEScales);
@@ -503,12 +507,7 @@ void Controller::updateControl() {
     targetPressure = 0.0f;
     targetFlow = 0.0f;
     clientController.sendOutputControl(isActive() && currentProcess->isRelayActive(),
-                                       isActive() ? currentProcess->getPumpValue() : 0, targetTemp);
-
-    if (now - lastAutoBrewCheck > 60000) { // 60 seconds
-        lastAutoBrewCheck = now;
-        checkAutoBrew();
-    }                                       
+                                       isActive() ? currentProcess->getPumpValue() : 0, targetTemp);                                     
 }
 
 void Controller::activate() {
@@ -707,43 +706,6 @@ void Controller::handleSteamButton(int steamButtonStatus) {
 
 void Controller::handleProfileUpdate() {
     pluginManager->trigger("boiler:targetTemperature:change", "value", profileManager->getSelectedProfile().temperature);
-}
-
-void Controller::checkAutoBrew() {
-    if (!settings.isAutoBrewEnabled() || settings.getAutoBrewTimes().empty()) {
-        return;
-    }
-    
-    // Only attempt if in standby mode
-    if (mode != MODE_STANDBY) {
-        return;
-    }
-    
-    // Get current time
-    time_t now;
-    struct tm timeinfo;
-    time(&now);
-    localtime_r(&now, &timeinfo);
-    
-    // Format current time as HH:MM
-    char currentTime[6];
-    strftime(currentTime, sizeof(currentTime), "%H:%M", &timeinfo);
-    
-    // Don't check the same minute twice
-    if (lastCheckedTime == String(currentTime)) {
-        return;
-    }
-    lastCheckedTime = String(currentTime);
-    
-    // Check if current time matches any of the target times
-    for (const String &targetTime : settings.getAutoBrewTimes()) {
-        if (targetTime == String(currentTime)) {
-            ESP_LOGI(LOG_TAG, "Auto-brew time reached (%s), switching to brew mode", targetTime.c_str());
-            setMode(MODE_BREW);
-            pluginManager->trigger("controller:auto-brew:activated", "time", targetTime);
-            return;
-        }
-    }
 }
 
 void Controller::loopTask(void *arg) {

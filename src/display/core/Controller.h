@@ -118,7 +118,6 @@ class Controller {
     void handleSteamButton(int steamButtonStatus);
     void handleProfileUpdate();
 
-    void checkAutoBrew();
     // Private Attributes
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *ui = nullptr;
@@ -164,7 +163,7 @@ class Controller {
     
     // Scheduled auto brew
     
-    unsigned long lastAutoBrewCheck = 0;
+    unsigned long lastAutoWakeupCheck = 0;
     String lastCheckedTime = "";    
 
 };

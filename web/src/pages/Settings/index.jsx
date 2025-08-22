@@ -21,7 +21,7 @@ export function Settings() {
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
-  const [autoBrewTimes, setAutoBrewTimes] = useState(['07:00']);
+  const [autowakeupTimes, setAutoWakeupTimes] = useState(['07:00']);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -43,21 +43,21 @@ export function Settings() {
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
       // Initialize auto-brew times
-      if (fetchedSettings.autoBrewTimes) {
-        if (Array.isArray(fetchedSettings.autoBrewTimes)) {
-          setAutoBrewTimes(fetchedSettings.autoBrewTimes);
-        } else if (typeof fetchedSettings.autoBrewTimes === 'string' && fetchedSettings.autoBrewTimes.trim()) {
-          setAutoBrewTimes(fetchedSettings.autoBrewTimes.split(',').filter(t => t.trim()));
+      if (fetchedSettings.autowakeupTimes) {
+        if (Array.isArray(fetchedSettings.autowakeupTimes)) {
+          setAutoWakeupTimes(fetchedSettings.autowakeupTimes);
+        } else if (typeof fetchedSettings.autowakeupTimes === 'string' && fetchedSettings.autowakeupTimes.trim()) {
+          setAutoWakeupTimes(fetchedSettings.autowakeupTimes.split(',').filter(t => t.trim()));
         } else {
-          setAutoBrewTimes(['07:00']); // Default fallback
+          setAutoWakeupTimes(['07:00']); // Default fallback
         }
       } else {
-        setAutoBrewTimes(['07:00']); // Default fallback
+        setAutoWakeupTimes(['07:00']); // Default fallback
       }      
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
-      setAutoBrewTimes(['07:00']);
+      setAutoWakeupTimes(['07:00']);
     }
 
     
@@ -95,8 +95,8 @@ export function Settings() {
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
       }
-      if (key === 'autoBrewEnabled') {
-        value = !formData.autoBrewEnabled;
+      if (key === 'autowakeupEnabled') {
+        value = !formData.autowakeupEnabled;
       }      
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
@@ -121,21 +121,21 @@ export function Settings() {
     };
   };
 
-  const addAutoBrewTime = () => {
-    setAutoBrewTimes([...autoBrewTimes, '07:00']);
+  const addAutoWakeupTime = () => {
+    setAutoWakeupTimes([...autowakeupTimes, '07:00']);
   };
 
-  const removeAutoBrewTime = (index) => {
-    if (autoBrewTimes.length > 1) {
-      const newTimes = autoBrewTimes.filter((_, i) => i !== index);
-      setAutoBrewTimes(newTimes);
+  const removeAutoWakeupTime = (index) => {
+    if (autowakeupTimes.length > 1) {
+      const newTimes = autowakeupTimes.filter((_, i) => i !== index);
+      setAutoWakeupTimes(newTimes);
     }
   };
 
-  const updateAutoBrewTime = (index, value) => {
-    const newTimes = [...autoBrewTimes];
+  const updateAutoWakeupTime = (index, value) => {
+    const newTimes = [...autowakeupTimes];
     newTimes[index] = value;
-    setAutoBrewTimes(newTimes);
+    setAutoWakeupTimes(newTimes);
   };  
 
   const onSubmit = useCallback(
@@ -147,7 +147,7 @@ export function Settings() {
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
 
       // Add auto-brew times
-      formDataToSubmit.set('autoBrewTimes', autoBrewTimes.join(','));
+      formDataToSubmit.set('autowakeupTimes', autowakeupTimes.join(','));
 
       // Ensure standbyBrightness is included even when the field is disabled
       if (!formData.standbyDisplayEnabled) {
@@ -173,7 +173,7 @@ export function Settings() {
       setFormData(updatedData);
       setSubmitting(false);
     },
-    [setFormData, formRef, formData, autoBrewTimes],
+    [setFormData, formRef, formData, autowakeupTimes],
   );
 
   const onExport = useCallback(() => {
@@ -305,13 +305,13 @@ export function Settings() {
               <label className='label cursor-pointer'>
                 <span className='label-text'>Enable Auto Warmup</span>
                 <input
-                  id='autoBrewEnabled'
-                  name='autoBrewEnabled'
-                  value='autoBrewEnabled'
+                  id='autowakeupEnabled'
+                  name='autowakeupEnabled'
+                  value='autowakeupEnabled'
                   type='checkbox'
                   className='toggle toggle-primary'
-                  checked={!!formData.autoBrewEnabled}
-                  onChange={onChange('autoBrewEnabled')}
+                  checked={!!formData.autowakeupEnabled}
+                  onChange={onChange('autowakeupEnabled')}
                 />
               </label>
             </div>
@@ -321,21 +321,21 @@ export function Settings() {
                 Auto Warmup Time(s)
               </label>
               <div className='space-y-2'>
-                {autoBrewTimes.map((time, index) => (
+                {autowakeupTimes.map((time, index) => (
                   <div key={index} className='flex items-center gap-2'>
                     <input
                       type='time'
                       className='input input-bordered flex-1'
                       value={time}
-                      onChange={(e) => updateAutoBrewTime(index, e.target.value)}
-                      disabled={!formData.autoBrewEnabled}
+                      onChange={(e) => updateAutoWakeupTime(index, e.target.value)}
+                      disabled={!formData.autowakeupEnabled}
                     />
-                    {autoBrewTimes.length > 1 && (
+                    {autowakeupTimes.length > 1 && (
                       <button
                         type='button'
-                        onClick={() => removeAutoBrewTime(index)}
+                        onClick={() => removeAutoWakeupTime(index)}
                         className='btn btn-ghost btn-sm'
-                        disabled={!formData.autoBrewEnabled}
+                        disabled={!formData.autowakeupEnabled}
                       >
                         <i className='fa fa-trash' />
                       </button>
@@ -344,9 +344,9 @@ export function Settings() {
                 ))}
                 <button
                   type='button'
-                  onClick={addAutoBrewTime}
+                  onClick={addAutoWakeupTime}
                   className='btn btn-ghost btn-sm'
-                  disabled={!formData.autoBrewEnabled}
+                  disabled={!formData.autowakeupEnabled}
                 >
                   <i className='fa fa-plus mr-1' />
                   Add Time

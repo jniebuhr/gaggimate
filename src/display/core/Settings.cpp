@@ -54,9 +54,9 @@ Settings::Settings() {
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
     steamPumpCutoff = preferences.getFloat("spc", DEFAULT_STEAM_PUMP_CUTOFF);
     historyIndex = preferences.getInt("hi", 0);
-    autoBrewEnabled = preferences.getBool("ab_en", false);
+    autowakeupEnabled = preferences.getBool("ab_en", false);
     String timesStr = preferences.getString("ab_times", "07:00");
-    autoBrewTimes.clear();
+    autowakeupTimes.clear();
     if (timesStr.length() > 0) {
         int start = 0;
         int end = timesStr.indexOf(',');
@@ -64,7 +64,7 @@ Settings::Settings() {
             String time = timesStr.substring(start, end);
             time.trim();
             if (time.length() > 0) {
-                autoBrewTimes.push_back(time);
+                autowakeupTimes.push_back(time);
             }
             start = end + 1;
             end = timesStr.indexOf(',', start);
@@ -72,11 +72,11 @@ Settings::Settings() {
         String lastTime = timesStr.substring(start);
         lastTime.trim();
         if (lastTime.length() > 0) {
-            autoBrewTimes.push_back(lastTime);
+            autowakeupTimes.push_back(lastTime);
         }
     }
-    if (autoBrewTimes.empty()) {
-        autoBrewTimes.push_back("07:00");
+    if (autowakeupTimes.empty()) {
+        autowakeupTimes.push_back("07:00");
     }
 
     // Display settings
@@ -431,13 +431,13 @@ void Settings::setFullTankDistance(int full_tank_distance) {
     save();
 }
 
-void Settings::setAutoBrewEnabled(bool enabled) {
-    autoBrewEnabled = enabled;
+void Settings::setAutoWakeupEnabled(bool enabled) {
+    autowakeupEnabled = enabled;
     save();
 }
 
-void Settings::setAutoBrewTimes(const std::vector<String> &times) {
-    autoBrewTimes = times;
+void Settings::setAutoWakeupTimes(const std::vector<String> &times) {
+    autowakeupTimes = times;
     save();
 }
 
@@ -497,11 +497,11 @@ void Settings::doSave() {
     preferences.putFloat("spp", steamPumpPercentage);
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
-    preferences.putBool("ab_en", autoBrewEnabled);
+    preferences.putBool("ab_en", autowakeupEnabled);
     String timesForSave = "";
-    for (size_t i = 0; i < autoBrewTimes.size(); i++) {
+    for (size_t i = 0; i < autowakeupTimes.size(); i++) {
         if (i > 0) timesForSave += ",";
-        timesForSave += autoBrewTimes[i];
+        timesForSave += autowakeupTimes[i];
     }
     preferences.putString("ab_times", timesForSave);   
 
