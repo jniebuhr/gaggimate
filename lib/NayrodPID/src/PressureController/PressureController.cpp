@@ -150,7 +150,7 @@ void PressureController::virtualScale() {
             coffeeOutput += flowPerSecond * _dt;  
         }
     }
-    // ESP_LOGI("","%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e",badFlow, coffeeBadVolume, R_estimator->getPressure(),_filteredPressureSensor,R_estimator->getResistance(),R_estimator->getQout(),R_estimator->getCovarianceK());
+    ESP_LOGI("","%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e",badFlow, coffeeBadVolume, R_estimator->getPressure(),_filteredPressureSensor,R_estimator->getResistance(),R_estimator->getQout(),R_estimator->getCovarianceK());
 }
 
 
