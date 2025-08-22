@@ -296,14 +296,14 @@ export function Settings() {
               />
             </div>
 
-            <div className='divider'>Auto Brew</div>
+            <div className='divider'>Auto Warmup Schedule</div>
             <div className='mb-2 text-sm opacity-70'>
-              Automatically switch to brew mode at specific times
+              Automatically switch to brew mode at specific time(s) each day. 
             </div>
 
             <div className='form-control'>
               <label className='label cursor-pointer'>
-                <span className='label-text'>Enable Auto Brew</span>
+                <span className='label-text'>Enable Auto Warmup</span>
                 <input
                   id='autoBrewEnabled'
                   name='autoBrewEnabled'
@@ -318,7 +318,7 @@ export function Settings() {
 
             <div className='form-control'>
               <label className='mb-2 block text-sm font-medium'>
-                Auto Brew Times
+                Auto Warmup Time(s)
               </label>
               <div className='space-y-2'>
                 {autoBrewTimes.map((time, index) => (
