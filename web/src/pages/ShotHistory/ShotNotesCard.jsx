@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'preact/hooks';
+import { useState, useEffect, useContext, useCallback } from 'preact/hooks';
 import { ApiServiceContext } from '../../services/ApiService.js';
 
 export default function ShotNotesCard({ shot, onNotesUpdate }) {
@@ -17,46 +17,96 @@ export default function ShotNotesCard({ shot, onNotesUpdate }) {
   
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [initialLoaded, setInitialLoaded] = useState(false);
 
-  // Calculate ratio when doseIn or doseOut changes
-  useEffect(() => {
-    if (notes.doseIn && notes.doseOut) {
-      const ratio = (parseFloat(notes.doseOut) / parseFloat(notes.doseIn)).toFixed(2);
-      setNotes(prev => ({ ...prev, ratio }));
+  // Calculate ratio function
+  const calculateRatio = useCallback((doseIn, doseOut) => {
+    if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
+      return (parseFloat(doseOut) / parseFloat(doseIn)).toFixed(2);
     }
-  }, [notes.doseIn, notes.doseOut]);
+    return '';
+  }, []);
 
-  // Load notes on component mount
+  // Load notes ONLY on component mount
   useEffect(() => {
+    if (initialLoaded) return; // Prevent reloading
+    
     const loadNotes = async () => {
       try {
         const response = await apiService.request({ 
           tp: 'req:history:notes:get', 
           id: shot.id 
         });
+        
+        let loadedNotes = {
+          id: shot.id,
+          rating: 0,
+          doseIn: '',
+          doseOut: '',
+          ratio: '',
+          grindSetting: '',
+          balanceTaste: 'balanced',
+          notes: '',
+        };
+        
         if (response.notes && Object.keys(response.notes).length > 0) {
-          // Load existing notes, but if doseOut is empty and shot.volume exists, use shot.volume
-          const loadedNotes = { ...response.notes };
-          if (!loadedNotes.doseOut && shot.volume) {
-            loadedNotes.doseOut = shot.volume.toFixed(1);
+          // Parse response.notes if it's a string
+          let parsedNotes = response.notes;
+          if (typeof response.notes === 'string') {
+            try {
+              parsedNotes = JSON.parse(response.notes);
+            } catch (e) {
+              console.warn('Failed to parse notes JSON:', e);
+              parsedNotes = {};
+            }
           }
-          setNotes(prev => ({ ...prev, ...loadedNotes }));
-        } else {
-          // No existing notes, pre-populate doseOut with shot.volume if available
-          if (shot.volume) {
-            setNotes(prev => ({ ...prev, doseOut: shot.volume.toFixed(1) }));
-          }
+          
+          // Merge loaded notes with defaults
+          loadedNotes = { ...loadedNotes, ...parsedNotes };
         }
+        
+        // Pre-populate doseOut with shot.volume if it's empty and shot.volume exists
+        if (!loadedNotes.doseOut && shot.volume) {
+          loadedNotes.doseOut = shot.volume.toFixed(1);
+        }
+        
+        // Calculate ratio from loaded data
+        if (loadedNotes.doseIn && loadedNotes.doseOut) {
+          loadedNotes.ratio = calculateRatio(loadedNotes.doseIn, loadedNotes.doseOut);
+        }
+        
+        setNotes(loadedNotes);
+        setInitialLoaded(true);
       } catch (error) {
         console.error('Failed to load notes:', error);
-        // Even if loading fails, pre-populate doseOut with shot.volume if available
-        if (shot.volume) {
-          setNotes(prev => ({ ...prev, doseOut: shot.volume.toFixed(1) }));
-        }
+        
+        // Even if loading fails, set up defaults
+        const defaultNotes = {
+          id: shot.id,
+          rating: 0,
+          doseIn: '',
+          doseOut: shot.volume ? shot.volume.toFixed(1) : '',
+          ratio: '',
+          grindSetting: '',
+          balanceTaste: 'balanced',
+          notes: '',
+        };
+        
+        setNotes(defaultNotes);
+        setInitialLoaded(true);
       }
     };
+    
     loadNotes();
-  }, [shot.id, shot.volume, apiService]);
+  }, []); // No dependencies - only run once
+
+  // Reset if shot changes
+  useEffect(() => {
+    if (notes.id !== shot.id) {
+      setInitialLoaded(false);
+      setIsEditing(false);
+    }
+  }, [shot.id, notes.id]);
 
   const saveNotes = async () => {
     setLoading(true);
@@ -78,7 +128,18 @@ export default function ShotNotesCard({ shot, onNotesUpdate }) {
   };
 
   const handleInputChange = (field, value) => {
-    setNotes(prev => ({ ...prev, [field]: value }));
+    setNotes(prev => {
+      const newNotes = { ...prev, [field]: value };
+      
+      // Only recalculate ratio if we're changing doseIn or doseOut
+      if ((field === 'doseIn' || field === 'doseOut') && initialLoaded) {
+        const doseIn = field === 'doseIn' ? value : prev.doseIn;
+        const doseOut = field === 'doseOut' ? value : prev.doseOut;
+        newNotes.ratio = calculateRatio(doseIn, doseOut);
+      }
+      
+      return newNotes;
+    });
   };
 
   const renderStars = (rating, editable = false) => {
@@ -109,6 +170,17 @@ export default function ShotNotesCard({ shot, onNotesUpdate }) {
       default: return '';
     }
   };
+
+  // Don't render until initial load is complete
+  if (!initialLoaded) {
+    return (
+      <div className="mt-6 border-t pt-6">
+        <div className="flex justify-center items-center py-8">
+          <span className="loading loading-spinner loading-md"></span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 border-t pt-6">
