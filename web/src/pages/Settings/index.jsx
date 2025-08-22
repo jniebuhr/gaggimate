@@ -43,16 +43,24 @@ export function Settings() {
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
       // Initialize auto-brew times
-      if (fetchedSettings.autoBrewTimes && Array.isArray(fetchedSettings.autoBrewTimes)) {
-        setAutoBrewTimes(fetchedSettings.autoBrewTimes);
-      } else if (fetchedSettings.autoBrewTimes && typeof fetchedSettings.autoBrewTimes === 'string') {
-        setAutoBrewTimes(fetchedSettings.autoBrewTimes.split(',').filter(t => t.trim()));
+      if (fetchedSettings.autoBrewTimes) {
+        if (Array.isArray(fetchedSettings.autoBrewTimes)) {
+          setAutoBrewTimes(fetchedSettings.autoBrewTimes);
+        } else if (typeof fetchedSettings.autoBrewTimes === 'string' && fetchedSettings.autoBrewTimes.trim()) {
+          setAutoBrewTimes(fetchedSettings.autoBrewTimes.split(',').filter(t => t.trim()));
+        } else {
+          setAutoBrewTimes(['07:00']); // Default fallback
+        }
+      } else {
+        setAutoBrewTimes(['07:00']); // Default fallback
       }      
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
       setAutoBrewTimes(['07:00']);
     }
+
+    
   }, [fetchedSettings]);
 
   // Initialize theme

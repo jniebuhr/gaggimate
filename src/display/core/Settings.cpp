@@ -56,7 +56,28 @@ Settings::Settings() {
     historyIndex = preferences.getInt("hi", 0);
     autoBrewEnabled = preferences.getBool("ab_en", false);
     String timesStr = preferences.getString("ab_times", "07:00");
-    autoBrewTimes = explode(timesStr, ',');    
+    autoBrewTimes.clear();
+    if (timesStr.length() > 0) {
+        int start = 0;
+        int end = timesStr.indexOf(',');
+        while (end != -1) {
+            String time = timesStr.substring(start, end);
+            time.trim();
+            if (time.length() > 0) {
+                autoBrewTimes.push_back(time);
+            }
+            start = end + 1;
+            end = timesStr.indexOf(',', start);
+        }
+        String lastTime = timesStr.substring(start);
+        lastTime.trim();
+        if (lastTime.length() > 0) {
+            autoBrewTimes.push_back(lastTime);
+        }
+    }
+    if (autoBrewTimes.empty()) {
+        autoBrewTimes.push_back("07:00");
+    }
 
     // Display settings
     mainBrightness = preferences.getInt("main_b", 16);
@@ -477,7 +498,12 @@ void Settings::doSave() {
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
     preferences.putBool("ab_en", autoBrewEnabled);
-    preferences.putString("ab_times", implode(autoBrewTimes, ","));    
+    String timesForSave = "";
+    for (size_t i = 0; i < autoBrewTimes.size(); i++) {
+        if (i > 0) timesForSave += ",";
+        timesForSave += autoBrewTimes[i];
+    }
+    preferences.putString("ab_times", timesForSave);   
 
     // Display settings
     preferences.putInt("main_b", mainBrightness);
