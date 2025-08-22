@@ -106,7 +106,20 @@ std::vector<String> ProfileManager::listProfiles() {
         }
         file = root.openNextFile();
     }
-    return uuids;
+
+    std::vector<String> ordered;
+    auto stored = _settings.getProfileOrder();
+    for (auto const &id : stored) {
+        if (std::find(uuids.begin(), uuids.end(), id) != uuids.end()) {
+            ordered.push_back(id);
+        }
+    }
+    for (auto const &id : uuids) {
+        if (std::find(ordered.begin(), ordered.end(), id) == ordered.end()) {
+            ordered.push_back(id);
+        }
+    }
+    return ordered;
 }
 
 bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {

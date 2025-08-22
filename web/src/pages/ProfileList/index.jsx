@@ -13,7 +13,7 @@ import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
+import { useCallback, useEffect, useState, useContext, useRef } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
@@ -246,9 +246,40 @@ export function ProfileList() {
   };
 
   // Placeholder for future persistence of order (intentionally empty)
-  const persistProfileOrder = useCallback(() => {
-    // no-op now; hook for future implementation
-  }, []);
+  // Debounced persistence of profile order (300ms)
+  const orderDebounceRef = useRef(null);
+  const pendingOrderRef = useRef(null);
+  const persistProfileOrder = useCallback(
+    orderedProfiles => {
+      pendingOrderRef.current = orderedProfiles.map(p => p.id);
+      if (orderDebounceRef.current) {
+        clearTimeout(orderDebounceRef.current);
+      }
+      orderDebounceRef.current = setTimeout(async () => {
+        const orderedIds = pendingOrderRef.current;
+        if (!orderedIds) return;
+        try {
+          await apiService.request({ tp: 'req:profiles:reorder', order: orderedIds });
+        } catch (e) {
+          // optional: log or surface error
+        }
+      }, 300);
+    },
+    [apiService],
+  );
+
+  // Cleanup: flush pending order on unmount
+  useEffect(() => {
+    return () => {
+      if (orderDebounceRef.current) {
+        clearTimeout(orderDebounceRef.current);
+        if (pendingOrderRef.current) {
+          // fire and forget; no await during unmount
+          apiService.request({ tp: 'req:profiles:reorder', order: pendingOrderRef.current }).catch(() => {});
+        }
+      }
+    };
+  }, [apiService]);
 
   const moveProfileUp = useCallback(id => {
     setProfiles(prev => {

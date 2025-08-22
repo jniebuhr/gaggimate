@@ -84,6 +84,29 @@ components:
           description: Indicates pressure capability
         cd:
           type: boolean
+          description: Persist a new ordering of profile IDs.
+          direction: client->server
+          payload:
+            type: object
+            required: [tp, order]
+            properties:
+              tp:
+                type: string
+                enum: ['req:profiles:reorder']
+              order:
+                type: array
+                description: Array of profile IDs in desired order (all known IDs).
+                items:
+                  type: string
+          response:
+            type: object
+            properties:
+              tp:
+                type: string
+                enum: ['res:profiles:reorder']
+              rid:
+                type: string
+              # No additional fields; success implied
           description: Indicates dimming capability
       required: [tp]
     OtaSettingsPayload:

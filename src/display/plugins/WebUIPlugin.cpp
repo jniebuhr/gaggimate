@@ -333,6 +333,17 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
     } else if (type == "req:profiles:unfavorite") {
         auto id = request["id"].as<String>();
         controller->getSettings().removeFavoritedProfile(id);
+    } else if (type == "req:profiles:reorder") {
+        // Expect an array of profile IDs in desired order
+        if (request["order"].is<JsonArray>()) {
+            std::vector<String> order;
+            for (JsonVariant v : request["order"].as<JsonArray>()) {
+                if (v.is<String>()) {
+                    order.emplace_back(v.as<String>());
+                }
+            }
+            controller->getSettings().setProfileOrder(order);
+        }
     }
 
     String msg;
