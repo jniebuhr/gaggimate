@@ -1,6 +1,7 @@
 #include "Settings.h"
 
 #include <utility>
+#include <algorithm>
 
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);
@@ -317,14 +318,17 @@ void Settings::removeFavoritedProfile(String profile) {
 
 void Settings::setProfileOrder(std::vector<String> profile_order) {
     std::vector<String> cleaned;
+    cleaned.reserve(profile_order.size());
     for (auto &id : profile_order) {
-        if (!id.isEmpty() &&
-            std::find(cleaned.begin(), cleaned.end(), id) == cleaned.end()) {
+        if (id.isEmpty()) continue;
+        if (std::find(cleaned.begin(), cleaned.end(), id) == cleaned.end()) {
             cleaned.emplace_back(std::move(id));
         }
     }
+
     profileOrder = std::move(cleaned);
     save();
+
 }
 
 void Settings::setMainBrightness(int main_brightness) {
