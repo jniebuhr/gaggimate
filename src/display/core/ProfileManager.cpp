@@ -197,21 +197,36 @@ Profile ProfileManager::getSelectedProfile() const { return selectedProfile; }
 void ProfileManager::loadSelectedProfile(Profile &outProfile) { loadProfile(_settings.getSelectedProfile(), outProfile); }
 
 std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
-    std::vector<String> favoritedProfiles;
-    auto stored = _settings.getProfileOrder();
-    for (const String &profile : _settings.getFavoritedProfiles()) {
-        if (!validate || profileExists(profile))
-            favoritedProfiles.push_back(profile);
-    }
 
-    std::vector<String> orderedFavorites;
-    for (const auto &id : stored) {
-        if (std::find(favoritedProfiles.begin(), favoritedProfiles.end(), id) != favoritedProfiles.end()) {
-            orderedFavorites.push_back(id);
+    auto rawFavorites = _settings.getFavoritedProfiles();
+    std::vector<String> result;
+
+    auto storedProfileOrder = _settings.getProfileOrder();
+    for (const auto &id : storedProfileOrder) {
+        if (std::find(rawFavorites.begin(), rawFavorites.end(), id) != rawFavorites.end()) {
+            if (!validate || profileExists(id)) {
+                if (std::find(result.begin(), result.end(), id) == result.end()) {
+                    result.push_back(id);
+                }
+            }
         }
     }
-    if (orderedFavorites.empty()) {
-        orderedFavorites.push_back(_settings.getSelectedProfile());
+
+    for (const auto &fav : rawFavorites) {
+        if (std::find(result.begin(), result.end(), fav) == result.end()) {
+            if (!validate || profileExists(fav)) {
+                result.push_back(fav);
+            }
+        }
     }
-    return orderedFavorites;
+
+    if (result.empty()) {
+        String sel = _settings.getSelectedProfile();
+        bool selValid =
+            (!validate) || (std::find(rawFavorites.begin(), rawFavorites.end(), sel) != rawFavorites.end()) || profileExists(sel);
+        if (selValid) {
+            result.push_back(sel);
+        }
+    }
+    return result;
 }
