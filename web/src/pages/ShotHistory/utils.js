@@ -51,9 +51,11 @@ export function parseHistoryData(shot) {
     
     // Track valid volume values (prefer bluetooth weight 'v', fall back to estimated 'ev')
     let currentVolume = sample.v;
-    if (isNaN(currentVolume) || currentVolume <= 0) {
-      currentVolume = sample.ev;
-    }
+    
+    // Never take estimated volume (until fixed)
+    //if (isNaN(currentVolume) || currentVolume <= 0) {
+    //  currentVolume = sample.ev;
+    //}
     
     if (!isNaN(currentVolume) && currentVolume > 0) {
       lastValidVolume = currentVolume;
