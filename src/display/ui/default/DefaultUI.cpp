@@ -586,10 +586,12 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
                               // Brew Target Temperature (first phase temp or default)
-                              double targetTemp = selectedProfile.temperature;
-                              if (!selectedProfile.phases.empty() && selectedProfile.phases[0].temperature > 0.0f) {
-                                  targetTemp = selectedProfile.phases[0].temperature;
-                              }
+                              //double targetTemp = selectedProfile.temperature;
+                              //if (!selectedProfile.phases.empty() && selectedProfile.phases[0].temperature > 0.0f) {
+                              //    targetTemp = selectedProfile.phases[0].temperature;
+                              //}
+
+                              // Display current target temperature
                               lv_label_set_text_fmt(ui_BrewScreen_brewTargetTemp, "%.0f°C", targetTemp);
 
                               // Brew Target Duration (sum of all phases)
