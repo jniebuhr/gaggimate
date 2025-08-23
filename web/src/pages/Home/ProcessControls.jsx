@@ -2,6 +2,16 @@ import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
+import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faThermometerHalf } from '@fortawesome/free-solid-svg-icons/faThermometerHalf';
+import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
+import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
+import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 
 const status = computed(() => machine.value.status);
 
@@ -132,11 +142,11 @@ const ProcessControls = props => {
 
   const getButtonIcon = () => {
     if (active) {
-      return 'fa fa-pause';
+      return faPause;
     } else if (finished) {
-      return 'fa fa-check';
+      return faCheck;
     }
-    return 'fa fa-play';
+    return faPlay;
   };
 
   return (
@@ -166,7 +176,7 @@ const ProcessControls = props => {
 
       <div className='mt-1 mb-2 flex flex-col items-center justify-between space-y-2 sm:flex-row sm:space-y-0'>
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
-          <i className='fa fa-thermometer-half text-base-content/60' />
+          <FontAwesomeIcon icon={faThermometerHalf} className='text-base-content/60' />
           <span className='text-base-content'>
             {status.value.currentTemperature.toFixed(1) || 0}
           </span>
@@ -176,7 +186,7 @@ const ProcessControls = props => {
           </span>
         </div>
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
-          <i className='fa fa-gauge text-base-content/60' />
+          <FontAwesomeIcon icon={faGauge} className='text-base-content/60' />
           <span className='text-base-content'>
             {status.value.currentPressure?.toFixed(1) || 0} /{' '}
             {status.value.targetPressure?.toFixed(1) || 0} bar
@@ -190,7 +200,7 @@ const ProcessControls = props => {
             <span className='text-base-content text-xl font-semibold sm:text-2xl'>
               {status.value.selectedProfile || 'Default'}
             </span>
-            <i className='fa-solid fa-rectangle-list text-base-content/60' />
+            <FontAwesomeIcon icon={faRectangleList} className='text-base-content/60 text-xl' />
           </a>
         </div>
       )}
@@ -249,14 +259,14 @@ const ProcessControls = props => {
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(0)}
             >
-              <i className='fa-solid fa-clock' />
+              <FontAwesomeIcon icon={faClock} />
               <span className='ml-1'>Time</span>
             </button>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(1)}
             >
-              <i className='fa-solid fa-weight-scale' />
+              <FontAwesomeIcon icon={faWeightScale} />
               <span className='ml-1'>Weight</span>
             </button>
           </div>
@@ -264,7 +274,7 @@ const ProcessControls = props => {
         {(mode === 1 || mode === 3) && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
             <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
-              <i className={`text-2xl ${getButtonIcon()}`} />
+              <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
             </button>
 
             {brew && !active && !finished && (
@@ -273,7 +283,7 @@ const ProcessControls = props => {
                 onClick={startFlush}
                 title='Click to flush water'
               >
-                <i className='fa-solid fa-tint' />
+                <FontAwesomeIcon icon={faTint} />
                 Flush
               </button>
             )}

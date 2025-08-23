@@ -1,6 +1,8 @@
 import { ExtendedPhaseTarget, TargetTypes } from './ExtendedPhaseTarget.jsx';
 import { isNumber } from 'chart.js/helpers';
 import { useCallback } from 'preact/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const onFieldChange = (field, value) => {
@@ -395,11 +397,11 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
             className='join-item btn btn-sm btn-outline'
             aria-label='Add target'
           >
-            <i className='fa fa-plus' aria-hidden='true' />
+            <FontAwesomeIcon icon={faPlus} />
           </div>
           <ul className='menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm'>
             {availableTargetTypes.map(t => (
-              <li key={t.type}>
+              <li key={`${t.type}-${t.operator}`}>
                 <a
                   onClick={() =>
                     onTargetAdd({

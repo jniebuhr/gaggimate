@@ -1,3 +1,6 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+
 export const TargetTypes = [
   {
     label: 'Water drawn',
@@ -75,7 +78,7 @@ export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
               aria-label='Remove target'
               onClick={() => onRemove()}
             >
-              <i className='fa fa-trash-can' aria-hidden='true' />
+              <FontAwesomeIcon icon={faTrashCan} />
             </button>
           </div>
         </div>

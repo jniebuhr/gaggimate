@@ -2,6 +2,11 @@ import Card from '../../components/Card.jsx';
 import { useCallback } from 'preact/hooks';
 import { HistoryChart } from './HistoryChart.jsx';
 import { downloadJson } from '../../utils/download.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 
 export default function HistoryCard({ shot, onDelete }) {
   const date = new Date(shot.timestamp * 1000);
@@ -22,7 +27,7 @@ export default function HistoryCard({ shot, onDelete }) {
               className='group text-info hover:bg-info/10 active:border-info/20 inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold'
               aria-label='Export shot data'
             >
-              <span className='fa fa-file-export' />
+              <FontAwesomeIcon icon={faFileExport} />
             </button>
           </div>
           <div className='tooltip tooltip-left' data-tip='Delete'>
@@ -31,19 +36,19 @@ export default function HistoryCard({ shot, onDelete }) {
               className='group text-error hover:bg-error/10 active:border-error/20 inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold'
               aria-label='Delete shot'
             >
-              <span className='fa fa-trash' />
+              <FontAwesomeIcon icon={faTrashCan} />
             </button>
           </div>
         </div>
       </div>
       <div className='flex flex-row items-center gap-4'>
         <div className='flex flex-row items-center gap-2'>
-          <span className='fa fa-clock'></span>
+          <FontAwesomeIcon icon={faClock} />
           {(shot.duration / 1000).toFixed(1)}s
         </div>
         {shot.volume && shot.volume > 0 && (
           <div className='flex flex-row items-center gap-2'>
-            <span className='fa fa-scale-balanced'></span>
+            <FontAwesomeIcon icon={faWeightScale} />
             {shot.volume}g
           </div>
         )}

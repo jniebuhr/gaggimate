@@ -70,6 +70,7 @@ class Settings {
     int getStandbyBrightnessTimeout() const { return standbyBrightnessTimeout; }
     int getWifiApTimeout() const { return wifiApTimeout; }
     float getSteamPumpPercentage() const { return steamPumpPercentage; }
+    float getSteamPumpCutoff() const { return steamPumpCutoff; }
     int getThemeMode() const { return themeMode; }
     int getHistoryIndex() const { return historyIndex; }
     int getSunriseR() const { return sunriseR; }
@@ -131,6 +132,7 @@ class Settings {
     void setStandbyBrightnessTimeout(int standby_brightness_timeout);
     void setWifiApTimeout(int timeout);
     void setSteamPumpPercentage(float steam_pump_percentage);
+    void setSteamPumpCutoff(float steam_pump_cutoff);
     void setThemeMode(int theme_mode);
     void setHistoryIndex(int history_index);
     void setSunriseR(int sunrise_r);
@@ -186,6 +188,7 @@ class Settings {
     std::vector<String> favoritedProfiles;
     std::vector<String> profileOrder; // persisted profile ordering
     float steamPumpPercentage = DEFAULT_STEAM_PUMP_PERCENTAGE;
+    float steamPumpCutoff = DEFAULT_STEAM_PUMP_CUTOFF;
     int historyIndex = 0;
 
     // Deprecated, use profiles

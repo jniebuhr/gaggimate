@@ -1,6 +1,10 @@
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { isNumber } from 'chart.js/helpers';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 
 export function StandardProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
@@ -115,7 +119,10 @@ export function StandardProfileForm(props) {
               <div key={index}>
                 {index > 0 && (
                   <div className='flex flex-col items-center py-2' aria-hidden='true'>
-                    <i className='fa fa-chevron-down text-base-content/60 text-lg' />
+                    <FontAwesomeIcon
+                      icon={faChevronDown}
+                      className='text-base-content/60 text-lg'
+                    />
                   </div>
                 )}
                 <Phase
@@ -134,7 +141,7 @@ export function StandardProfileForm(props) {
                 onClick={onPhaseAdd}
                 aria-label='Add new brew phase'
               >
-                <i className='fa fa-plus' aria-hidden='true' />
+                <FontAwesomeIcon icon={faPlus} />
                 <span>Add phase</span>
               </button>
             </div>
@@ -240,7 +247,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
               title='Delete this phase'
               aria-label={`Delete phase ${index + 1}`}
             >
-              <i className='fa fa-trash' aria-hidden='true' />
+              <FontAwesomeIcon icon={faTrashCan} />
             </button>
           </div>
         </div>
@@ -343,7 +350,11 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   className={`join-item btn btn-sm ${mode === 'pressure' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() =>
                     mode !== 'pressure' &&
-                    onFieldChange('pump', { target: 'pressure', pressure: 0, flow: 0 })
+                    onFieldChange('pump', {
+                      target: 'pressure',
+                      pressure: phase.pump?.pressure || 0,
+                      flow: phase.pump?.flow || 0,
+                    })
                   }
                   aria-pressed={mode === 'pressure'}
                   aria-label='Pump pressure mode (PRO feature)'
@@ -355,7 +366,11 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   className={`join-item btn btn-sm ${mode === 'flow' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() =>
                     mode !== 'flow' &&
-                    onFieldChange('pump', { target: 'flow', pressure: 0, flow: 0 })
+                    onFieldChange('pump', {
+                      target: 'flow',
+                      pressure: phase.pump?.pressure || 0,
+                      flow: phase.pump?.flow || 0,
+                    })
                   }
                   aria-pressed={mode === 'flow'}
                   aria-label='Pump flow mode (PRO feature)'

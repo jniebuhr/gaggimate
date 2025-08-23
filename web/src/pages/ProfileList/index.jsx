@@ -19,6 +19,16 @@ import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
 import { downloadJson } from '../../utils/download.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 
 Chart.register(
   LineController,
@@ -71,7 +81,7 @@ function ProfileCard({
     delete download.selected;
     delete download.favorite;
 
-  downloadJson(download, `profile-${data.id}.json`);
+    downloadJson(download, `profile-${data.id}.json`);
   }, [data]);
 
   return (
@@ -100,7 +110,7 @@ function ProfileCard({
               aria-disabled={isFirst}
               title='Move up'
             >
-              <i className='fa fa-arrow-up' aria-hidden='true' />
+              <FontAwesomeIcon icon={faArrowUp} />
             </button>
             <button
               onClick={() => onMoveDown(data.id)}
@@ -110,7 +120,7 @@ function ProfileCard({
               aria-disabled={isLast}
               title='Move down'
             >
-              <i className='fa fa-arrow-down' aria-hidden='true' />
+              <FontAwesomeIcon icon={faArrowDown} />
             </button>
           </div>
         </div>
@@ -143,35 +153,35 @@ function ProfileCard({
                 }
                 aria-pressed={data.favorite}
               >
-                <i className={`fa fa-star ${bookmarkClass}`} aria-hidden='true' />
+                <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
               </button>
               <a
                 href={`/profiles/${data.id}`}
                 className='btn btn-sm btn-ghost'
                 aria-label={`Edit ${data.label} profile`}
               >
-                <i className='fa fa-pen' aria-hidden='true' />
+                <FontAwesomeIcon icon={faPen} />
               </a>
               <button
                 onClick={onDownload}
                 className='btn btn-sm btn-ghost text-primary'
                 aria-label={`Export ${data.label} profile`}
               >
-                <i className='fa fa-file-export' aria-hidden='true' />
+                <FontAwesomeIcon icon={faFileExport} />
               </button>
               <button
                 onClick={() => onDuplicate(data.id)}
                 className='btn btn-sm btn-ghost text-success'
                 aria-label={`Duplicate ${data.label} profile`}
               >
-                <i className='fa fa-copy' aria-hidden='true' />
+                <FontAwesomeIcon icon={faCopy} />
               </button>
               <button
                 onClick={() => onDelete(data.id)}
                 className='btn btn-sm btn-ghost text-error'
                 aria-label={`Delete ${data.label} profile`}
               >
-                <i className='fa fa-trash' aria-hidden='true' />
+                <FontAwesomeIcon icon={faTrashCan} />
               </button>
             </div>
           </div>
@@ -210,7 +220,9 @@ function SimpleContent({ data }) {
 }
 
 function SimpleDivider() {
-  return <i className='fa-solid fa-chevron-right text-base-content/60' aria-hidden='true' />;
+  return (
+    <FontAwesomeIcon icon={faChevronRight} className='text-base-content/60' aria-hidden='true' />
+  );
 }
 
 function SimpleStep(props) {
@@ -277,37 +289,45 @@ export function ProfileList() {
         clearTimeout(orderDebounceRef.current);
         if (pendingOrderRef.current) {
           // fire and forget; no await during unmount
-          apiService.request({ tp: 'req:profiles:reorder', order: pendingOrderRef.current }).catch(() => {});
+          apiService
+            .request({ tp: 'req:profiles:reorder', order: pendingOrderRef.current })
+            .catch(() => {});
         }
       }
     };
   }, [apiService]);
 
-  const moveProfileUp = useCallback(id => {
-    setProfiles(prev => {
-      const idx = prev.findIndex(p => p.id === id);
-      if (idx > 0) {
-        const next = [...prev];
-        [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-        persistProfileOrder(next);
-        return next;
-      }
-      return prev;
-    });
-  }, [persistProfileOrder]);
+  const moveProfileUp = useCallback(
+    id => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.id === id);
+        if (idx > 0) {
+          const next = [...prev];
+          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+          persistProfileOrder(next);
+          return next;
+        }
+        return prev;
+      });
+    },
+    [persistProfileOrder],
+  );
 
-  const moveProfileDown = useCallback(id => {
-    setProfiles(prev => {
-      const idx = prev.findIndex(p => p.id === id);
-      if (idx !== -1 && idx < prev.length - 1) {
-        const next = [...prev];
-        [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-        persistProfileOrder(next);
-        return next;
-      }
-      return prev;
-    });
-  }, [persistProfileOrder]);
+  const moveProfileDown = useCallback(
+    id => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.id === id);
+        if (idx !== -1 && idx < prev.length - 1) {
+          const next = [...prev];
+          [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+          persistProfileOrder(next);
+          return next;
+        }
+        return prev;
+      });
+    },
+    [persistProfileOrder],
+  );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -432,7 +452,7 @@ export function ProfileList() {
           title='Export all profiles'
           aria-label='Export all profiles'
         >
-          <i className='fa fa-file-export' aria-hidden='true' />
+          <FontAwesomeIcon icon={faFileExport} />
         </button>
         <label
           htmlFor='profileImport'
@@ -440,7 +460,7 @@ export function ProfileList() {
           title='Import profiles'
           aria-label='Import profiles'
         >
-          <i className='fa fa-file-import' aria-hidden='true' />
+          <FontAwesomeIcon icon={faFileImport} />
         </label>
         <input
           onChange={onUpload}
@@ -453,7 +473,7 @@ export function ProfileList() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label='Profile list'>
-    {profiles.map((data, idx) => (
+        {profiles.map((data, idx) => (
           <ProfileCard
             key={data.id}
             data={data}
@@ -464,10 +484,10 @@ export function ProfileList() {
             onUnfavorite={onUnfavorite}
             onFavorite={onFavorite}
             onDuplicate={onDuplicate}
-      onMoveUp={moveProfileUp}
-      onMoveDown={moveProfileDown}
-      isFirst={idx === 0}
-      isLast={idx === profiles.length - 1}
+            onMoveUp={moveProfileUp}
+            onMoveDown={moveProfileDown}
+            isFirst={idx === 0}
+            isLast={idx === profiles.length - 1}
           />
         ))}
 

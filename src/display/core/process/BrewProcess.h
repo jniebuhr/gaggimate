@@ -62,7 +62,7 @@ class BrewProcess : public Process {
         }
         float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
         return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
-                                       waterPumped);
+                                       waterPumped, profile.type);
     }
 
     double getBrewVolume() const {

@@ -222,7 +222,7 @@ std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
 
     if (result.empty()) {
         String sel = _settings.getSelectedProfile();
-        bool selValid = (!validate) ||  profileExists(sel);
+        bool selValid = (!validate) || profileExists(sel);
         if (selValid) {
             result.push_back(sel);
         }

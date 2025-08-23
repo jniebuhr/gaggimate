@@ -482,7 +482,7 @@ void Controller::updateControl() {
     clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
     if (isActive() && systemInfo.capabilities.pressure) {
         if (currentProcess->getType() == MODE_STEAM) {
-            targetPressure = 4;
+            targetPressure = settings.getSteamPumpCutoff();
             targetFlow = currentProcess->getPumpValue() * 0.1f;
             clientController.sendAdvancedOutputControl(false, targetTemp, false, targetPressure, targetFlow);
             return;

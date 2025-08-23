@@ -1,7 +1,7 @@
 #include "Settings.h"
 
-#include <utility>
 #include <algorithm>
+#include <utility>
 
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);
@@ -52,6 +52,7 @@ Settings::Settings() {
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
     profileOrder = explode(preferences.getString("po", ""), ',');
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
+    steamPumpCutoff = preferences.getFloat("spc", DEFAULT_STEAM_PUMP_CUTOFF);
     historyIndex = preferences.getInt("hi", 0);
 
     // Display settings
@@ -320,7 +321,8 @@ void Settings::setProfileOrder(std::vector<String> profile_order) {
     std::vector<String> cleaned;
     cleaned.reserve(profile_order.size());
     for (auto &id : profile_order) {
-        if (id.isEmpty()) continue;
+        if (id.isEmpty())
+            continue;
         if (std::find(cleaned.begin(), cleaned.end(), id) == cleaned.end()) {
             cleaned.emplace_back(std::move(id));
         }
@@ -328,7 +330,6 @@ void Settings::setProfileOrder(std::vector<String> profile_order) {
 
     profileOrder = std::move(cleaned);
     save();
-
 }
 
 void Settings::setMainBrightness(int main_brightness) {
@@ -353,6 +354,11 @@ void Settings::setWifiApTimeout(int timeout) {
 
 void Settings::setSteamPumpPercentage(float steam_pump_percentage) {
     steamPumpPercentage = steam_pump_percentage;
+    save();
+}
+
+void Settings::setSteamPumpCutoff(float steam_pump_cutoff) {
+    steamPumpCutoff = steam_pump_cutoff;
     save();
 }
 
@@ -455,6 +461,7 @@ void Settings::doSave() {
     preferences.putString("fp", implode(favoritedProfiles, ","));
     preferences.putString("po", implode(profileOrder, ","));
     preferences.putFloat("spp", steamPumpPercentage);
+    preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
 
     // Display settings

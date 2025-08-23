@@ -419,6 +419,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setStandbyBrightnessTimeout(request->arg("standbyBrightnessTimeout").toInt() * 1000);
             if (request->hasArg("steamPumpPercentage"))
                 settings->setSteamPumpPercentage(request->arg("steamPumpPercentage").toFloat());
+            if (request->hasArg("steamPumpCutoff"))
+                settings->setSteamPumpCutoff(request->arg("steamPumpCutoff").toFloat());
             if (request->hasArg("themeMode"))
                 settings->setThemeMode(request->arg("themeMode").toInt());
             if (request->hasArg("sunriseR"))
@@ -478,6 +480,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["standbyBrightness"] = settings.getStandbyBrightness();
     doc["standbyBrightnessTimeout"] = settings.getStandbyBrightnessTimeout() / 1000;
     doc["steamPumpPercentage"] = settings.getSteamPumpPercentage();
+    doc["steamPumpCutoff"] = settings.getSteamPumpCutoff();
     doc["themeMode"] = settings.getThemeMode();
     doc["sunriseR"] = settings.getSunriseR();
     doc["sunriseG"] = settings.getSunriseG();

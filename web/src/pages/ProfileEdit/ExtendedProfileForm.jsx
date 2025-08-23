@@ -3,6 +3,11 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { useState } from 'preact/hooks';
 import { ExtendedPhase } from './ExtendedPhase.jsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 
 export function ExtendedProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
@@ -56,6 +61,7 @@ export function ExtendedProfileForm(props) {
       }
     }
     onChange(newData);
+    setCurrentPhaseIndex(0);
   };
 
   const currentPhase = data.phases[currentPhaseIndex];
@@ -141,7 +147,7 @@ export function ExtendedProfileForm(props) {
                   disabled={currentPhaseIndex === 0}
                   onClick={() => setCurrentPhaseIndex(currentPhaseIndex - 1)}
                 >
-                  <i className='fa fa-chevron-left' aria-hidden='true' />
+                  <FontAwesomeIcon icon={faChevronLeft} />
                 </button>
                 <button
                   type='button'
@@ -150,7 +156,7 @@ export function ExtendedProfileForm(props) {
                   disabled={currentPhaseIndex === data.phases.length - 1}
                   onClick={() => setCurrentPhaseIndex(currentPhaseIndex + 1)}
                 >
-                  <i className='fa fa-chevron-right' aria-hidden='true' />
+                  <FontAwesomeIcon icon={faChevronRight} />
                 </button>
               </div>
             </div>
@@ -160,7 +166,7 @@ export function ExtendedProfileForm(props) {
               aria-label='Add phase'
               onClick={() => onPhaseAdd()}
             >
-              <i className='fa fa-plus' aria-hidden='true' />
+              <FontAwesomeIcon icon={faPlus} />
             </button>
             <button
               type='button'
@@ -168,7 +174,7 @@ export function ExtendedProfileForm(props) {
               aria-label='Remove phase'
               onClick={() => onPhaseRemove(currentPhaseIndex)}
             >
-              <i className='fa fa-trash-can' aria-hidden='true' />
+              <FontAwesomeIcon icon={faTrashCan} />
             </button>
           </div>
           <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
