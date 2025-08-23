@@ -64,10 +64,11 @@ export function ChartComponent({ data, className, chartClassName }) {
     window.addEventListener('resize', handleResize);
     
     // iOS PWA specific: orientationchange event
-    window.addEventListener('orientationchange', () => {
+    const handleOrientationChange = () => {
       // Use a small delay to ensure the orientation change is complete
       setTimeout(handleResize, 100);
-    });
+    };
+    window.addEventListener('orientationchange', handleOrientationChange);
 
     // iOS PWA specific: visualViewport change (for newer iOS versions)
     if (window.visualViewport) {
@@ -80,7 +81,7 @@ export function ChartComponent({ data, className, chartClassName }) {
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', handleResize);
       }
