@@ -91,7 +91,7 @@ void ui_StatusScreen_screen_init(void) {
                                            _ui_theme_alpha_NiceWhite);
 
     ui_StatusScreen_upDurationButton = lv_imgbtn_create(ui_StatusScreen_contentPanel2);
-    lv_imgbtn_set_src(ui_StatusScreen_upDurationButton, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_390988422, NULL);
+    lv_imgbtn_set_src(ui_StatusScreen_upDurationButton, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_375882848, NULL);
     lv_obj_set_width(ui_StatusScreen_upDurationButton, 40);
     lv_obj_set_height(ui_StatusScreen_upDurationButton, 40);
     lv_obj_set_x(ui_StatusScreen_upDurationButton, 115);
