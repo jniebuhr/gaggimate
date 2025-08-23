@@ -156,6 +156,29 @@ void Controller::setupInfos() {
 void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.mode(WIFI_STA);
+        
+        // Configure static IP if enabled
+        if (settings.isStaticIpEnabled() && !settings.getStaticIp().isEmpty()) {
+            IPAddress ip, netmask, gateway, dns;
+            
+            if (ip.fromString(settings.getStaticIp()) && 
+                netmask.fromString(settings.getStaticNetmask()) && 
+                gateway.fromString(settings.getStaticGateway())) {
+                
+                if (settings.getStaticDns().isEmpty() || !dns.fromString(settings.getStaticDns())) {
+                    dns = gateway; // Use gateway as DNS if no DNS specified
+                }
+                
+                ESP_LOGI(LOG_TAG, "Configuring static IP: %s", settings.getStaticIp().c_str());
+                WiFi.config(ip, gateway, netmask, dns);
+            } else {
+                ESP_LOGE(LOG_TAG, "Invalid static IP configuration, using DHCP");
+            }
+        } else {
+            // Reset to DHCP
+            WiFi.config(0U, 0U, 0U);
+        }
+        
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
         WiFi.setAutoReconnect(true);
