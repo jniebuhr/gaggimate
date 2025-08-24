@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext, useCallback } from 'preact/hooks';
 import { ApiServiceContext } from '../../services/ApiService.js';
 
-export default function ShotNotesCard({ shot, onNotesUpdate }) {
+export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded  }) {
   const apiService = useContext(ApiServiceContext);
   
   const [notes, setNotes] = useState({
