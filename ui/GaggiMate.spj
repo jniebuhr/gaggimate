@@ -26237,6 +26237,17 @@
                                         "strtype": "_style/Text_Font",
                                         "strval": "montserrat_24",
                                         "InheritedType": 3
+                                      },
+                                      {
+                                        "nid": 11110,
+                                        "strtype": "_style/Padding",
+                                        "intarray": [
+                                          5,
+                                          0,
+                                          0,
+                                          0
+                                        ],
+                                        "InheritedType": 7
                                       }
                                     ],
                                     "InheritedType": 1
