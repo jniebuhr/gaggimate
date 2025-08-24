@@ -403,7 +403,7 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
                               lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%d°C", targetTemp);
-                              lv_label_set_text_fmt(ui_BrewScreen_brewTargetTemp, "%.0f°C", targetTemp);
+                              lv_label_set_text_fmt(ui_BrewScreen_brewTargetTemp, "%d°C", targetTemp);
                               adjustTempTarget(ui_BrewScreen_dials);
                           },
                           &targetTemp);
