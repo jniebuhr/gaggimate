@@ -23658,31 +23658,31 @@
                   {
                     "nid": -2094117598,
                     "strtype": "IMGBUTTON/Image_pressed",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": 1755909524,
                     "strtype": "IMGBUTTON/Image_disabled",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": -261413535,
                     "strtype": "IMGBUTTON/Image_checked_released",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": -300058726,
                     "strtype": "IMGBUTTON/Image_checked_pressed",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
                     "nid": -1034059470,
                     "strtype": "IMGBUTTON/Image_checked_disabled",
-                    "strval": "",
+                    "strval": "-",
                     "InheritedType": 5
                   },
                   {
@@ -25382,7 +25382,7 @@
                                 "flags": 17,
                                 "strtype": "OBJECT/Size",
                                 "intarray": [
-                                  70,
+                                  90,
                                   30
                                 ],
                                 "InheritedType": 7
@@ -25443,6 +25443,7 @@
                               },
                               {
                                 "nid": -291406427,
+                                "flags": 1048576,
                                 "strtype": "LABEL/Label",
                                 "InheritedType": 1
                               },
@@ -25487,7 +25488,7 @@
                                       {
                                         "nid": 10430,
                                         "strtype": "_style/Text_Align",
-                                        "strval": "CENTER",
+                                        "strval": "LEFT",
                                         "InheritedType": 3
                                       },
                                       {
@@ -25752,7 +25753,7 @@
                                 "flags": 17,
                                 "strtype": "OBJECT/Size",
                                 "intarray": [
-                                  70,
+                                  90,
                                   30
                                 ],
                                 "InheritedType": 7
@@ -25857,7 +25858,7 @@
                                       {
                                         "nid": 10430,
                                         "strtype": "_style/Text_Align",
-                                        "strval": "CENTER",
+                                        "strval": "LEFT",
                                         "InheritedType": 3
                                       },
                                       {
@@ -26123,7 +26124,7 @@
                                 "flags": 17,
                                 "strtype": "OBJECT/Size",
                                 "intarray": [
-                                  70,
+                                  90,
                                   30
                                 ],
                                 "InheritedType": 7
@@ -26196,7 +26197,7 @@
                               {
                                 "nid": 1745792815,
                                 "strtype": "LABEL/Text",
-                                "strval": "100g",
+                                "strval": "100.0 g",
                                 "InheritedType": 10
                               },
                               {
@@ -26228,7 +26229,7 @@
                                       {
                                         "nid": 10430,
                                         "strtype": "_style/Text_Align",
-                                        "strval": "CENTER",
+                                        "strval": "LEFT",
                                         "InheritedType": 3
                                       },
                                       {
@@ -28870,7 +28871,7 @@
                 "strtype": "OBJECT/Position",
                 "intarray": [
                   0,
-                  0
+                  -1
                 ],
                 "InheritedType": 7
               },
