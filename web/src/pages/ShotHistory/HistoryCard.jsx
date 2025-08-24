@@ -24,6 +24,10 @@ export default function HistoryCard({ shot, onDelete }) {
   const handleNotesLoaded = useCallback((notes) => {
     setShotNotes(notes);
   }, []);
+
+  const handleNotesUpdate = useCallback((notes) => {
+    setShotNotes(notes);
+  }, []);
   return (
     <Card sm={12}>
       <div className='flex flex-row'>
@@ -70,6 +74,7 @@ export default function HistoryCard({ shot, onDelete }) {
       <ShotNotesCard 
         shot={shot} 
         onNotesLoaded={handleNotesLoaded}
+        onNotesUpdate={handleNotesUpdate}
       />
     </Card>
   );
