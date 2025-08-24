@@ -7,12 +7,27 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import ShotNotesCard from './ShotNotesCard.jsx';
+import { useState } from 'preact/hooks';
 
 export default function HistoryCard({ shot, onDelete }) {
+  const [shotNotes, setShotNotes] = useState(null);
   const date = new Date(shot.timestamp * 1000);
   const onExport = useCallback(() => {
-    downloadJson(shot, 'shot-' + shot.id + '.json');
-  });
+    const exportData = {
+      ...shot,
+      notes: shotNotes
+    };
+    downloadJson(exportData, 'shot-' + shot.id + '.json');
+  }, [shot, shotNotes]);
+
+  const handleNotesLoaded = useCallback((notes) => {
+    setShotNotes(notes);
+  }, []);
+
+  const handleNotesUpdate = useCallback((notes) => {
+    setShotNotes(notes);
+  }, []);
   return (
     <Card sm={12}>
       <div className='flex flex-row'>
@@ -56,6 +71,11 @@ export default function HistoryCard({ shot, onDelete }) {
       <div>
         <HistoryChart shot={shot} />
       </div>
+      <ShotNotesCard 
+        shot={shot} 
+        onNotesLoaded={handleNotesLoaded}
+        onNotesUpdate={handleNotesUpdate}
+      />
     </Card>
   );
 }

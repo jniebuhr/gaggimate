@@ -67,6 +67,7 @@ void ShotHistoryPlugin::record() {
         unsigned long duration = millis() - shotStart;
         if (duration <= 7500) { // Exclude failed shots and flushes
             SPIFFS.remove("/h/" + currentId + ".dat");
+            SPIFFS.remove("/h/" + currentId + ".json"); // Also remove notes file if it exists
         } else {
             controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
             cleanupHistory();
@@ -130,8 +131,16 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
                     auto name = String(file.name());
                     int start = name.lastIndexOf('/') + 1;
                     int end = name.lastIndexOf('.');
-                    o["id"] = name.substring(start, end);
+                    String id = name.substring(start, end);
+                    o["id"] = id;
                     o["history"] = file.readString();
+                    
+                    // Also include notes if they exist
+                    JsonDocument notes;
+                    loadNotes(id, notes);
+                    if (!notes.isNull() && notes.size() > 0) {
+                        o["notes"] = notes;
+                    }
                 }
                 file = root.openNextFile();
             }
@@ -143,13 +152,51 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             String data = file.readString();
             response["history"] = data;
             file.close();
+            
+            // Also include notes if they exist
+            JsonDocument notes;
+            loadNotes(id, notes);
+            if (!notes.isNull() && notes.size() > 0) {
+                response["notes"] = notes;
+            }
         } else {
             response["error"] = "not found";
         }
     } else if (type == "req:history:delete") {
         auto id = request["id"].as<String>();
         SPIFFS.remove("/h/" + id + ".dat");
+        SPIFFS.remove("/h/" + id + ".json"); // Also remove notes file if it exists
         response["msg"] = "Ok";
+    } else if (type == "req:history:notes:get") {
+        auto id = request["id"].as<String>();
+        JsonDocument notes;
+        loadNotes(id, notes);
+        response["notes"] = notes;
+    } else if (type == "req:history:notes:save") {
+        const String id = request["id"].as<String>();
+        const JsonDocument& notesDoc = request["notes"];
+        
+        saveNotes(id, notesDoc);
+
+    } 
+}
+
+void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
+    File file = SPIFFS.open("/h/" + id + ".json", FILE_WRITE);
+    if (file) {
+        String notesStr;
+        serializeJson(notes, notesStr);
+        file.print(notesStr);
+        file.close();
+    }
+}
+
+void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
+    File file = SPIFFS.open("/h/" + id + ".json", "r");
+    if (file) {
+        String notesStr = file.readString();
+        file.close();
+        deserializeJson(notes, notesStr);
     }
 }
 
