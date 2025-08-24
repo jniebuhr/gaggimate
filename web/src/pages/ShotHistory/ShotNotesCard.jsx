@@ -77,6 +77,10 @@ export default function ShotNotesCard({ shot, onNotesUpdate }) {
         
         setNotes(loadedNotes);
         setInitialLoaded(true);
+        // Pass loaded notes to parent
+        if (onNotesLoaded) {
+          onNotesLoaded(loadedNotes);
+        }
       } catch (error) {
         console.error('Failed to load notes:', error);
         
@@ -94,6 +98,9 @@ export default function ShotNotesCard({ shot, onNotesUpdate }) {
         
         setNotes(defaultNotes);
         setInitialLoaded(true);
+        if (onNotesLoaded) {
+          onNotesLoaded(defaultNotes);
+        }        
       }
     };
     
