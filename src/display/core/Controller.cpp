@@ -94,7 +94,7 @@ void Controller::connect() {
 void Controller::setupBluetooth() {
     clientController.initClient();
     clientController.registerSensorCallback(
-        [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow) {
+        [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow, const float puckResistance) {
             onTempRead(temp);
             this->pressure = pressure;
             this->currentPuckFlow = puckFlow;
@@ -102,6 +102,7 @@ void Controller::setupBluetooth() {
             pluginManager->trigger("boiler:pressure:change", "value", pressure);
             pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
             pluginManager->trigger("pump:flow:change", "value", pumpFlow);
+            pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
         });
     clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
     clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });

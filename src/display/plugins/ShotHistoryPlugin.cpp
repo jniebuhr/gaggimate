@@ -27,6 +27,7 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
         currentBluetoothWeight = weight;
     });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
+    pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 3, this, 1, &taskHandle, 0);
 }
 
@@ -56,7 +57,8 @@ void ShotHistoryPlugin::record() {
                      controller->getCurrentPuckFlow(),
                      currentBluetoothFlow,
                      currentBluetoothWeight,
-                     currentEstimatedWeight};
+                     currentEstimatedWeight,
+                     currentPuckResistance};
         if (isFileOpen) {
             file.println(s.serialize().c_str());
         }
@@ -157,6 +159,6 @@ void ShotHistoryPlugin::loopTask(void *arg) {
     auto *plugin = static_cast<ShotHistoryPlugin *>(arg);
     while (true) {
         plugin->record();
-        vTaskDelay(250 / portTICK_PERIOD_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }

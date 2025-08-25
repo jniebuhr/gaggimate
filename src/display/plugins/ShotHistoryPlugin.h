@@ -33,10 +33,11 @@ class ShotHistoryPlugin : public Plugin {
         float vf;
         float v;
         float ev;
+        float pr;
 
         std::string serialize() {
-            return string_format("%d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", t, tt, ct, tp, cp, fl, tf, pf, vf, v,
-                                 ev);
+            return string_format("%d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", t, tt, ct, tp, cp, fl, tf, pf, vf,
+                                 v, ev, pr);
         }
     };
 
@@ -60,6 +61,7 @@ class ShotHistoryPlugin : public Plugin {
     float currentBluetoothWeight = 0.0f;
     float currentBluetoothFlow = 0.0f;
     float currentEstimatedWeight = 0.0f;
+    float currentPuckResistance = 0.0f;
     String currentProfileName;
 
     xTaskHandle taskHandle;

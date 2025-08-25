@@ -26,6 +26,7 @@ export function parseHistoryData(shot) {
       vf: parseFloat(numbers[8]),
       v: parseFloat(numbers[9]),
       ev: parseFloat(numbers[10]),
+      pr: parseFloat(numbers[11]),
     });
   }
 

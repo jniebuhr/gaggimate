@@ -9,37 +9,38 @@ class HydraulicParameterEstimator {
     HydraulicParameterEstimator(float dt_ = 0.03f);
 
     bool update(float Q_in, float P_raw);
-    bool updateFilteredPressure(float P_raw);
     void reset();
     bool hasConverged();
-    float getResistance() { return K_est; };
-    float getCovariance() { return P_cov[1][1]; };
+    void setPhysicalNoises(float sigmaQin, float kDrift, float qOutDrift, float pressureNoise);
+    float getEffectiveCompliance(float Vin);
+    float getResistance() { return X_state[1]; };   // k
+    float getQout() { return X_state[2]; };        // Qout
+    float getPressure() { return X_state[0]; };    // P
 
+    float getCovarianceK() { return P_cov[1][1]; };
+    float getCovarianceQout() { return P_cov[2][2]; };
+    float getCeff(){return C_eff;};
     float C_fixed;
     float K_est_init;
     float K_est;
+    float C_eff;
 
-    // Valeurs filtrées
     float P_filtered;
     float dPdt_filtered;
-    float R_filtered;
-    float dRdt_filtered;
 
     // === Etat & hyperparamètres EKF ===
-    float X_state[2] = {0.0f, 0.0f}; // [P, k]
-    float P_cov[2][2] = {0};
-    float Qk[2][2] = { // Model noise [Qin,Wk]
-        {0.0, 0.0f},
-        {0.0f, 1e-18f}};
-    float meas_noise_var = 1e-4f; // Bruit mesure P
-    float lambda = 0.8f;          // Forget factor
+    float X_state[3] = {0.0f, 0.0f, 0.0f}; // [P, k, Qout]
+    float P_cov[3][3] = {0};
+    float Qk[3][3] = {0};   // process noise
+    float meas_noise_var;   // noise on P
+    float lambda;           // forget factor
 
   private:
     float dt;
-    float epsilon = 1e-12f;
+    float epsilon = 1e-6f;
     int counter;
-
     bool isValid(float x) { return fabs(x) < 1e30f; }
+    float Vin_cum = 0.0f; 
 };
 
 #endif
