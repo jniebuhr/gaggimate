@@ -21,6 +21,9 @@ export function Settings() {
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
+  const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
+    { time: '07:00', days: [true, true, true, true, true, true, true] } // Default: all days enabled
+  ]);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -41,10 +44,49 @@ export function Settings() {
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
+      
+      // Initialize auto-wakeup schedules
+      if (fetchedSettings.autowakeupSchedules) {
+        // Parse new schedule format: "time1|days1;time2|days2"
+        const schedules = [];
+        if (typeof fetchedSettings.autowakeupSchedules === 'string' && fetchedSettings.autowakeupSchedules.trim()) {
+          const scheduleStrings = fetchedSettings.autowakeupSchedules.split(';');
+          for (const scheduleStr of scheduleStrings) {
+            const [time, daysStr] = scheduleStr.split('|');
+            if (time && daysStr && daysStr.length === 7) {
+              const days = daysStr.split('').map(d => d === '1');
+              schedules.push({ time, days });
+            }
+          }
+        }
+        if (schedules.length === 0) {
+          schedules.push({ time: '07:00', days: [true, true, true, true, true, true, true] });
+        }
+        setAutoWakeupSchedules(schedules);
+      } else if (fetchedSettings.autowakeupTimes) {
+        // Fall back to old format for backward compatibility
+        const times = Array.isArray(fetchedSettings.autowakeupTimes) 
+          ? fetchedSettings.autowakeupTimes
+          : (typeof fetchedSettings.autowakeupTimes === 'string' && fetchedSettings.autowakeupTimes.trim())
+            ? fetchedSettings.autowakeupTimes.split(',').filter(t => t.trim())
+            : ['07:00'];
+        
+        const schedules = times.map(time => ({
+          time: time.trim(),
+          days: [true, true, true, true, true, true, true] // Default to all days
+        }));
+        setAutoWakeupSchedules(schedules);
+      } else {
+        setAutoWakeupSchedules([{ time: '07:00', days: [true, true, true, true, true, true, true] }]);
+      }
+      
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
+      setAutoWakeupSchedules([{ time: '07:00', days: [true, true, true, true, true, true, true] }]);
     }
+
+    
   }, [fetchedSettings]);
 
   // Initialize theme
@@ -79,6 +121,9 @@ export function Settings() {
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
       }
+      if (key === 'autowakeupEnabled') {
+        value = !formData.autowakeupEnabled;
+      }      
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
         // Set standby brightness to 0 when toggle is off
@@ -102,6 +147,32 @@ export function Settings() {
     };
   };
 
+  const addAutoWakeupSchedule = () => {
+    setAutoWakeupSchedules([...autowakeupSchedules, { 
+      time: '07:00', 
+      days: [true, true, true, true, true, true, true] 
+    }]);
+  };
+
+  const removeAutoWakeupSchedule = (index) => {
+    if (autowakeupSchedules.length > 1) {
+      const newSchedules = autowakeupSchedules.filter((_, i) => i !== index);
+      setAutoWakeupSchedules(newSchedules);
+    }
+  };
+
+  const updateAutoWakeupTime = (index, value) => {
+    const newSchedules = [...autowakeupSchedules];
+    newSchedules[index].time = value;
+    setAutoWakeupSchedules(newSchedules);
+  };
+
+  const updateAutoWakeupDay = (scheduleIndex, dayIndex, enabled) => {
+    const newSchedules = [...autowakeupSchedules];
+    newSchedules[scheduleIndex].days[dayIndex] = enabled;
+    setAutoWakeupSchedules(newSchedules);
+  };  
+
   const onSubmit = useCallback(
     async (e, restart = false) => {
       e.preventDefault();
@@ -109,6 +180,16 @@ export function Settings() {
       const form = formRef.current;
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
+
+      // Add auto-wakeup schedules in new format
+      const schedulesStr = autowakeupSchedules.map(schedule => 
+        `${schedule.time}|${schedule.days.map(d => d ? '1' : '0').join('')}`
+      ).join(';');
+      formDataToSubmit.set('autowakeupSchedules', schedulesStr);
+      
+      // Also add backward compatibility format
+      const timesStr = autowakeupSchedules.map(schedule => schedule.time).join(',');
+      formDataToSubmit.set('autowakeupTimes', timesStr);
 
       // Ensure standbyBrightness is included even when the field is disabled
       if (!formData.standbyDisplayEnabled) {
@@ -134,7 +215,7 @@ export function Settings() {
       setFormData(updatedData);
       setSubmitting(false);
     },
-    [setFormData, formRef, formData],
+    [setFormData, formRef, formData, autowakeupSchedules],
   );
 
   const onExport = useCallback(() => {
@@ -255,6 +336,89 @@ export function Settings() {
                 value={formData.standbyTimeout}
                 onChange={onChange('standbyTimeout')}
               />
+            </div>
+
+            <div className='divider'>Auto Warmup Schedule</div>
+            <div className='mb-2 text-sm opacity-70'>
+              Automatically switch to brew mode at specific time(s) of day. 
+            </div>
+
+            <div className='form-control'>
+              <label className='label cursor-pointer'>
+                <span className='label-text'>Enable Auto Warmup</span>
+                <input
+                  id='autowakeupEnabled'
+                  name='autowakeupEnabled'
+                  value='autowakeupEnabled'
+                  type='checkbox'
+                  className='toggle toggle-primary'
+                  checked={!!formData.autowakeupEnabled}
+                  onChange={onChange('autowakeupEnabled')}
+                />
+              </label>
+            </div>
+
+            <div className='form-control'>
+              <label className='mb-2 block text-sm font-medium'>
+                Auto Warmup Schedule
+              </label>
+              <div className='space-y-4'>
+                {autowakeupSchedules.map((schedule, scheduleIndex) => (
+                  <div key={scheduleIndex} className='border border-base-300 rounded-lg p-4 space-y-3'>
+                    <div className='flex items-center gap-2'>
+                      <input
+                        type='time'
+                        className='input input-bordered flex-1'
+                        value={schedule.time}
+                        onChange={(e) => updateAutoWakeupTime(scheduleIndex, e.target.value)}
+                        disabled={!formData.autowakeupEnabled}
+                      />
+                      {autowakeupSchedules.length > 1 && (
+                        <button
+                          type='button'
+                          onClick={() => removeAutoWakeupSchedule(scheduleIndex)}
+                          className='btn btn-ghost btn-sm'
+                          disabled={!formData.autowakeupEnabled}
+                          title='Delete this schedule'
+                        >
+                          🗑️
+                        </button>
+                      )}
+                      {autowakeupSchedules.length === 1 && (
+                        <div className='btn btn-ghost btn-sm opacity-30 cursor-not-allowed' title='Cannot delete the last schedule'>
+                          🗑️
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className='space-y-2'>
+                      <div className='text-sm font-medium opacity-70'>Active Days:</div>
+                      <div className='flex gap-1'>
+                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((dayLabel, dayIndex) => (
+                          <label key={dayIndex} className='flex flex-col items-center gap-1 cursor-pointer'>
+                            <span className='text-xs font-medium'>{dayLabel}</span>
+                            <input
+                              type='checkbox'
+                              className='checkbox checkbox-sm checkbox-primary'
+                              checked={schedule.days[dayIndex]}
+                              onChange={(e) => updateAutoWakeupDay(scheduleIndex, dayIndex, e.target.checked)}
+                              disabled={!formData.autowakeupEnabled}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type='button'
+                  onClick={addAutoWakeupSchedule}
+                  className='btn btn-primary btn-sm'
+                  disabled={!formData.autowakeupEnabled}
+                >
+                  ➕ Add Schedule
+                </button>
+              </div>
             </div>
 
             <div className='divider'>Predictive scale delay</div>

@@ -54,6 +54,72 @@ Settings::Settings() {
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
     steamPumpCutoff = preferences.getFloat("spc", DEFAULT_STEAM_PUMP_CUTOFF);
     historyIndex = preferences.getInt("hi", 0);
+    autowakeupEnabled = preferences.getBool("ab_en", false);
+    
+    // Try to load new schedule format first
+    String schedulesStr = preferences.getString("ab_schedules", "");
+    autowakeupSchedules.clear();
+    autowakeupTimes.clear();
+    
+    if (schedulesStr.length() > 0) {
+        // Parse new format: "time1|days1;time2|days2" where days is 7-bit string (e.g., "1111100" for weekdays only)
+        int start = 0;
+        int end = schedulesStr.indexOf(';');
+        
+        while (end != -1 || start < schedulesStr.length()) {
+            String scheduleStr = (end != -1) ? schedulesStr.substring(start, end) : schedulesStr.substring(start);
+            
+            int pipePos = scheduleStr.indexOf('|');
+            if (pipePos != -1) {
+                String timeStr = scheduleStr.substring(0, pipePos);
+                String daysStr = scheduleStr.substring(pipePos + 1);
+                
+                AutoWakeupSchedule schedule;
+                schedule.time = timeStr;
+                
+                if (daysStr.length() == 7) {
+                    for (int i = 0; i < 7; i++) {
+                        schedule.days[i] = (daysStr.charAt(i) == '1');
+                    }
+                }
+                
+                autowakeupSchedules.push_back(schedule);
+                autowakeupTimes.push_back(schedule.time);
+            }
+            
+            if (end == -1) break;
+            start = end + 1;
+            end = schedulesStr.indexOf(';', start);
+        }
+    } else {
+        // Fall back to old format for migration
+        String timesStr = preferences.getString("ab_times", "07:00");
+        if (timesStr.length() > 0) {
+            int start = 0;
+            int end = timesStr.indexOf(',');
+            while (end != -1) {
+                String time = timesStr.substring(start, end);
+                time.trim();
+                if (time.length() > 0) {
+                    autowakeupSchedules.push_back(AutoWakeupSchedule(time));
+                    autowakeupTimes.push_back(time);
+                }
+                start = end + 1;
+                end = timesStr.indexOf(',', start);
+            }
+            String lastTime = timesStr.substring(start);
+            lastTime.trim();
+            if (lastTime.length() > 0) {
+                autowakeupSchedules.push_back(AutoWakeupSchedule(lastTime));
+                autowakeupTimes.push_back(lastTime);
+            }
+        }
+    }
+    
+    if (autowakeupSchedules.empty()) {
+        autowakeupSchedules.push_back(AutoWakeupSchedule("07:00"));
+        autowakeupTimes.push_back("07:00");
+    }
 
     // Display settings
     mainBrightness = preferences.getInt("main_b", 16);
@@ -407,6 +473,33 @@ void Settings::setFullTankDistance(int full_tank_distance) {
     save();
 }
 
+void Settings::setAutoWakeupEnabled(bool enabled) {
+    autowakeupEnabled = enabled;
+    save();
+}
+
+void Settings::setAutoWakeupTimes(const std::vector<String> &times) {
+    autowakeupTimes = times;
+    
+    // Convert to new format for backward compatibility
+    autowakeupSchedules.clear();
+    for (const String &time : times) {
+        autowakeupSchedules.push_back(AutoWakeupSchedule(time));
+    }
+    save();
+}
+
+void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules) {
+    autowakeupSchedules = schedules;
+    
+    // Update backward compatibility list
+    autowakeupTimes.clear();
+    for (const AutoWakeupSchedule &schedule : schedules) {
+        autowakeupTimes.push_back(schedule.time);
+    }
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -463,6 +556,28 @@ void Settings::doSave() {
     preferences.putFloat("spp", steamPumpPercentage);
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
+    preferences.putBool("ab_en", autowakeupEnabled);
+    
+    // Save new schedule format
+    String schedulesForSave = "";
+    for (size_t i = 0; i < autowakeupSchedules.size(); i++) {
+        if (i > 0) schedulesForSave += ";";
+        schedulesForSave += autowakeupSchedules[i].time + "|";
+        
+        // Convert days array to 7-bit string
+        for (int j = 0; j < 7; j++) {
+            schedulesForSave += autowakeupSchedules[i].days[j] ? "1" : "0";
+        }
+    }
+    preferences.putString("ab_schedules", schedulesForSave);
+    
+    // Also save old format for backward compatibility
+    String timesForSave = "";
+    for (size_t i = 0; i < autowakeupTimes.size(); i++) {
+        if (i > 0) timesForSave += ",";
+        timesForSave += autowakeupTimes[i];
+    }
+    preferences.putString("ab_times", timesForSave);   
 
     // Display settings
     preferences.putInt("main_b", mainBrightness);
@@ -481,6 +596,11 @@ void Settings::doSave() {
     preferences.putInt("sr_fd", fullTankDistance);
 
     preferences.end();
+}
+
+std::vector<String> Settings::getAutoWakeupTimes() const {
+    // Backward compatibility method
+    return autowakeupTimes;
 }
 
 void Settings::loopTask(void *arg) {
