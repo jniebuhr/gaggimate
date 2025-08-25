@@ -437,8 +437,38 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
+            settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
+            if (request->hasArg("autowakeupTimes")) {
+                String timesStr = request->arg("autowakeupTimes");
+                std::vector<String> times;
+                if (timesStr.length() > 0) {
+                    // Split comma-separated times
+                    int start = 0;
+                    int end = timesStr.indexOf(',');
+                    while (end != -1) {
+                        String time = timesStr.substring(start, end);
+                        time.trim();
+                        if (time.length() > 0) {
+                            times.push_back(time);
+                        }
+                        start = end + 1;
+                        end = timesStr.indexOf(',', start);
+                    }
+                    // Add the last time
+                    String lastTime = timesStr.substring(start);
+                    lastTime.trim();
+                    if (lastTime.length() > 0) {
+                        times.push_back(lastTime);
+                    }
+                }
+                if (times.empty()) {
+                    times.push_back("07:00"); // Default fallback
+                }
+                settings->setAutoWakeupTimes(times);
+            }
             settings->save(true);
         });
+        pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
     }
@@ -489,6 +519,17 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["sunriseExtBrightness"] = settings.getSunriseExtBrightness();
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
+    // Add auto-wakeup settings to response
+    doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
+    
+    // Convert vector of times to comma-separated string
+    std::vector<String> autowakeupTimes = settings.getAutoWakeupTimes();
+    String timesStr = "";
+    for (size_t i = 0; i < autowakeupTimes.size(); i++) {
+        if (i > 0) timesStr += ",";
+        timesStr += autowakeupTimes[i];
+    }
+    doc["autowakeupTimes"] = timesStr;    
     serializeJson(doc, *response);
     request->send(response);
 

@@ -54,6 +54,30 @@ Settings::Settings() {
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
     steamPumpCutoff = preferences.getFloat("spc", DEFAULT_STEAM_PUMP_CUTOFF);
     historyIndex = preferences.getInt("hi", 0);
+    autowakeupEnabled = preferences.getBool("ab_en", false);
+    String timesStr = preferences.getString("ab_times", "07:00");
+    autowakeupTimes.clear();
+    if (timesStr.length() > 0) {
+        int start = 0;
+        int end = timesStr.indexOf(',');
+        while (end != -1) {
+            String time = timesStr.substring(start, end);
+            time.trim();
+            if (time.length() > 0) {
+                autowakeupTimes.push_back(time);
+            }
+            start = end + 1;
+            end = timesStr.indexOf(',', start);
+        }
+        String lastTime = timesStr.substring(start);
+        lastTime.trim();
+        if (lastTime.length() > 0) {
+            autowakeupTimes.push_back(lastTime);
+        }
+    }
+    if (autowakeupTimes.empty()) {
+        autowakeupTimes.push_back("07:00");
+    }
 
     // Display settings
     mainBrightness = preferences.getInt("main_b", 16);
@@ -407,6 +431,16 @@ void Settings::setFullTankDistance(int full_tank_distance) {
     save();
 }
 
+void Settings::setAutoWakeupEnabled(bool enabled) {
+    autowakeupEnabled = enabled;
+    save();
+}
+
+void Settings::setAutoWakeupTimes(const std::vector<String> &times) {
+    autowakeupTimes = times;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -463,6 +497,13 @@ void Settings::doSave() {
     preferences.putFloat("spp", steamPumpPercentage);
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
+    preferences.putBool("ab_en", autowakeupEnabled);
+    String timesForSave = "";
+    for (size_t i = 0; i < autowakeupTimes.size(); i++) {
+        if (i > 0) timesForSave += ",";
+        timesForSave += autowakeupTimes[i];
+    }
+    preferences.putString("ab_times", timesForSave);   
 
     // Display settings
     preferences.putInt("main_b", mainBrightness);

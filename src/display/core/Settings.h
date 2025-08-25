@@ -6,6 +6,7 @@
 #include <Preferences.h>
 #include <display/core/constants.h>
 #include <display/core/utils.h>
+#include <vector>
 
 #define PREFERENCES_KEY "controller"
 
@@ -80,6 +81,8 @@ class Settings {
     int getSunriseExtBrightness() const { return sunriseExtBrightness; }
     int getEmptyTankDistance() const { return emptyTankDistance; }
     int getFullTankDistance() const { return fullTankDistance; }
+    bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
+    std::vector<String> getAutoWakeupTimes() const { return autowakeupTimes; }    
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -142,6 +145,8 @@ class Settings {
     void setSunriseExtBrightness(int sunrise_ext_brightness);
     void setEmptyTankDistance(int empty_tank_distance);
     void setFullTankDistance(int full_tank_distance);
+    void setAutoWakeupEnabled(bool enabled);
+    void setAutoWakeupTimes(const std::vector<String> &times);    
 
   private:
     Preferences preferences;
@@ -159,6 +164,8 @@ class Settings {
     double grindDelay = 1000.0;
     bool delayAdjust = true;
     int startupMode = MODE_STANDBY;
+    bool autowakeupEnabled = false;
+    std::vector<String> autowakeupTimes;
     int standbyTimeout = DEFAULT_STANDBY_TIMEOUT_MS;
     String pid = DEFAULT_PID;
     String pumpModelCoeffs = DEFAULT_PUMP_MODEL_COEFFS;

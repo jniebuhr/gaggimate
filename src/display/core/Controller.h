@@ -159,7 +159,7 @@ class Controller {
 
     xTaskHandle taskHandle;
 
-    static void loopTask(void *arg);
+    static void loopTask(void *arg); 
 };
 
 #endif // CONTROLLER_H

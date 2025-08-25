@@ -21,6 +21,7 @@ export function Settings() {
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
+  const [autowakeupTimes, setAutoWakeupTimes] = useState(['07:00']);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -41,10 +42,25 @@ export function Settings() {
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
+      // Initialize auto-wakeup times
+      if (fetchedSettings.autowakeupTimes) {
+        if (Array.isArray(fetchedSettings.autowakeupTimes)) {
+          setAutoWakeupTimes(fetchedSettings.autowakeupTimes);
+        } else if (typeof fetchedSettings.autowakeupTimes === 'string' && fetchedSettings.autowakeupTimes.trim()) {
+          setAutoWakeupTimes(fetchedSettings.autowakeupTimes.split(',').filter(t => t.trim()));
+        } else {
+          setAutoWakeupTimes(['07:00']); // Default fallback
+        }
+      } else {
+        setAutoWakeupTimes(['07:00']); // Default fallback
+      }      
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
+      setAutoWakeupTimes(['07:00']);
     }
+
+    
   }, [fetchedSettings]);
 
   // Initialize theme
@@ -79,6 +95,9 @@ export function Settings() {
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
       }
+      if (key === 'autowakeupEnabled') {
+        value = !formData.autowakeupEnabled;
+      }      
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
         // Set standby brightness to 0 when toggle is off
@@ -102,6 +121,23 @@ export function Settings() {
     };
   };
 
+  const addAutoWakeupTime = () => {
+    setAutoWakeupTimes([...autowakeupTimes, '07:00']);
+  };
+
+  const removeAutoWakeupTime = (index) => {
+    if (autowakeupTimes.length > 1) {
+      const newTimes = autowakeupTimes.filter((_, i) => i !== index);
+      setAutoWakeupTimes(newTimes);
+    }
+  };
+
+  const updateAutoWakeupTime = (index, value) => {
+    const newTimes = [...autowakeupTimes];
+    newTimes[index] = value;
+    setAutoWakeupTimes(newTimes);
+  };  
+
   const onSubmit = useCallback(
     async (e, restart = false) => {
       e.preventDefault();
@@ -109,6 +145,9 @@ export function Settings() {
       const form = formRef.current;
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
+
+      // Add auto-wakeup times
+      formDataToSubmit.set('autowakeupTimes', autowakeupTimes.join(','));
 
       // Ensure standbyBrightness is included even when the field is disabled
       if (!formData.standbyDisplayEnabled) {
@@ -134,7 +173,7 @@ export function Settings() {
       setFormData(updatedData);
       setSubmitting(false);
     },
-    [setFormData, formRef, formData],
+    [setFormData, formRef, formData, autowakeupTimes],
   );
 
   const onExport = useCallback(() => {
@@ -255,6 +294,64 @@ export function Settings() {
                 value={formData.standbyTimeout}
                 onChange={onChange('standbyTimeout')}
               />
+            </div>
+
+            <div className='divider'>Auto Warmup Schedule</div>
+            <div className='mb-2 text-sm opacity-70'>
+              Automatically switch to brew mode at specific time(s) each day. 
+            </div>
+
+            <div className='form-control'>
+              <label className='label cursor-pointer'>
+                <span className='label-text'>Enable Auto Warmup</span>
+                <input
+                  id='autowakeupEnabled'
+                  name='autowakeupEnabled'
+                  value='autowakeupEnabled'
+                  type='checkbox'
+                  className='toggle toggle-primary'
+                  checked={!!formData.autowakeupEnabled}
+                  onChange={onChange('autowakeupEnabled')}
+                />
+              </label>
+            </div>
+
+            <div className='form-control'>
+              <label className='mb-2 block text-sm font-medium'>
+                Auto Warmup Time(s)
+              </label>
+              <div className='space-y-2'>
+                {autowakeupTimes.map((time, index) => (
+                  <div key={index} className='flex items-center gap-2'>
+                    <input
+                      type='time'
+                      className='input input-bordered flex-1'
+                      value={time}
+                      onChange={(e) => updateAutoWakeupTime(index, e.target.value)}
+                      disabled={!formData.autowakeupEnabled}
+                    />
+                    {autowakeupTimes.length > 1 && (
+                      <button
+                        type='button'
+                        onClick={() => removeAutoWakeupTime(index)}
+                        className='btn btn-ghost btn-sm'
+                        disabled={!formData.autowakeupEnabled}
+                      >
+                        <i className='fa fa-trash' />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type='button'
+                  onClick={addAutoWakeupTime}
+                  className='btn btn-ghost btn-sm'
+                  disabled={!formData.autowakeupEnabled}
+                >
+                  <i className='fa fa-plus mr-1' />
+                  Add Time
+                </button>
+              </div>
             </div>
 
             <div className='divider'>Predictive scale delay</div>
