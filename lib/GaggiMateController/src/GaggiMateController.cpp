@@ -183,9 +183,9 @@ void GaggiMateController::sendSensorData() {
     if (_config.capabilites.pressure) {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         _ble.sendSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getPuckFlow(),
-                            dimmedPump->getPumpFlow());
+                            dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
         _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
     } else {
-        _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f);
+        _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
     }
 }

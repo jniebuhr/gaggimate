@@ -214,6 +214,19 @@ export function PluginCard({ formData, onChange }) {
                 onChange={onChange('haPassword')}
               />
             </div>
+            <div className='form-control'>
+              <label htmlFor='haTopic' className='mb-2 block text-sm font-medium'>
+                Home Assistant Autodiscovery Topic
+              </label>
+              <input
+                id='haTopic'
+                name='haTopic'
+                type='text'
+                className='input input-bordered w-full'
+                value={formData.haTopic}
+                onChange={onChange('haTopic')}
+              />
+            </div>
           </div>
         )}
       </div>

@@ -133,4 +133,29 @@ def onSimpleProcessToggle(event_struct):
 
 def onUpDuration(event_struct):
     return
+  
+  
+def onMenuScreenLoad(event_struct):
+    return
+
+
+def onStatusScreenLoad(event_struct):
+    return
+
+
+def onBrewScreenLoad(event_struct):
+    return
+
+
+def onSimpleProcessScreenLoad(event_struct):
+    return
+
+
+def onProfileScreenLoad(event_struct):
+    return
+
+
+def onGrindScreenLoad(event_struct):
+
+    return
 

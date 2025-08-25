@@ -21,7 +21,9 @@
 #define DEFAULT_MDNS_NAME "gaggimate"
 #define DEFAULT_OTA_CHANNEL "latest"
 #define DEFAULT_TIMEZONE "Europe/Rome"
+#define DEFAULT_HOME_ASSISTANT_TOPIC "homeassistant"
 #define DEFAULT_STEAM_PUMP_PERCENTAGE 4.f
+#define DEFAULT_STEAM_PUMP_CUTOFF 3.f
 #define WIFI_CONNECT_ATTEMPTS 20
 
 #define MODE_STANDBY 0

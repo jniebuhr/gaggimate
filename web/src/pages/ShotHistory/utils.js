@@ -2,6 +2,7 @@ export function parseHistoryData(shot) {
   const data = {
     id: shot.id,
   };
+  if (!shot.history) return null;
   const lines = shot.history.split('\n');
   const header = lines[0].split(',');
   data['version'] = header[0];
@@ -25,6 +26,7 @@ export function parseHistoryData(shot) {
       vf: parseFloat(numbers[8]),
       v: parseFloat(numbers[9]),
       ev: parseFloat(numbers[10]),
+      pr: parseFloat(numbers[11]),
     });
   }
 
@@ -33,5 +35,10 @@ export function parseHistoryData(shot) {
     data.duration = lastSample.t;
     data.volume = lastSample.v;
   }
+  
+  if (shot.notes) {
+    data.notes = shot.notes;
+  }
+  
   return data;
 }

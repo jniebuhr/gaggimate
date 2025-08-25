@@ -8,8 +8,13 @@ import { machine } from '../../services/ApiService.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { setDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
 import { PluginCard } from './PluginCard.jsx';
+import { downloadJson } from '../../utils/download.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
+const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
@@ -103,6 +108,7 @@ export function Settings() {
       setSubmitting(true);
       const form = formRef.current;
       const formDataToSubmit = new FormData(form);
+      formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
 
       // Ensure standbyBrightness is included even when the field is disabled
       if (!formData.standbyDisplayEnabled) {
@@ -132,13 +138,7 @@ export function Settings() {
   );
 
   const onExport = useCallback(() => {
-    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(formData, undefined, 2))}`;
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', 'settings.json');
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    downloadJson(formData, 'settings.json');
   }, [formData]);
 
   const onUpload = function (evt) {
@@ -171,14 +171,14 @@ export function Settings() {
           className='btn btn-ghost btn-sm'
           title='Export Settings'
         >
-          <i className='fa fa-file-export' />
+          <FontAwesomeIcon icon={faFileExport} />
         </button>
         <label
           htmlFor='settingsImport'
           className='btn btn-ghost btn-sm cursor-pointer'
           title='Import Settings'
         >
-          <i className='fa fa-file-import' />
+          <FontAwesomeIcon icon={faFileImport} />
         </label>
         <input
           onChange={onUpload}
@@ -504,47 +504,82 @@ export function Settings() {
               />
             </div>
 
-            <div className='form-control'>
-              <label htmlFor='pressureScaling' className='mb-2 block text-sm font-medium'>
-                Pressure sensor rating
-              </label>
-              <div className='mb-2 text-xs opacity-70'>
-                Enter the bar rating of the pressure sensor being used
+            {pressureAvailable.value && (
+              <div className='form-control'>
+                <label htmlFor='pressureScaling' className='mb-2 block text-sm font-medium'>
+                  Pressure sensor rating
+                </label>
+                <div className='mb-2 text-xs opacity-70'>
+                  Enter the bar rating of the pressure sensor being used
+                </div>
+                <input
+                  id='pressureScaling'
+                  name='pressureScaling'
+                  type='number'
+                  inputMode='decimal'
+                  className='input input-bordered w-full'
+                  placeholder='0.0 bar'
+                  min='0'
+                  step='any'
+                  value={formData.pressureScaling}
+                  onChange={onChange('pressureScaling')}
+                />
               </div>
-              <input
-                id='pressureScaling'
-                name='pressureScaling'
-                type='number'
-                inputMode='decimal'
-                className='input input-bordered w-full'
-                placeholder='0.0 bar'
-                min='0'
-                step='any'
-                value={formData.pressureScaling}
-                onChange={onChange('pressureScaling')}
-              />
-            </div>
+            )}
 
             <div className='form-control'>
               <label htmlFor='steamPumpPercentage' className='mb-2 block text-sm font-medium'>
                 Steam Pump Assist
               </label>
               <div className='mb-2 text-xs opacity-70'>
-                What percentage to run the pump at during steaming
+                {pressureAvailable.value
+                  ? 'How many ml/s to pump into the boiler during steaming'
+                  : 'What percentage to run the pump at during steaming'}
               </div>
               <input
                 id='steamPumpPercentage'
                 name='steamPumpPercentage'
                 type='number'
-                inputMode='decimal'
+                inputmode='decimal'
                 className='input input-bordered w-full'
-                placeholder='0.0 %'
+                placeholder={pressureAvailable.value ? '0.0 ml/s' : '0.0 %'}
                 min='0'
-                step='any'
-                value={formData.steamPumpPercentage}
-                onChange={onChange('steamPumpPercentage')}
+                step='0.1'
+                value={String(formData.steamPumpPercentage * (pressureAvailable.value ? 0.1 : 1))}
+                onBlur={e =>
+                  setFormData({
+                    ...formData,
+                    steamPumpPercentage: (
+                      parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)
+                    ).toFixed(0),
+                  })
+                }
               />
             </div>
+
+            {pressureAvailable.value && (
+              <div className='form-control'>
+                <label htmlFor='steamPumpCutoff' className='mb-2 block text-sm font-medium'>
+                  Pump Assist Cutoff
+                </label>
+                <div className='mb-2 text-xs opacity-70'>
+                  At how many bars should the pump assist stop. This makes it so the pump will only
+                  run when steam is flowing.
+                </div>
+                <input
+                  id='steamPumpCutoff'
+                  name='steamPumpCutoff'
+                  type='number'
+                  inputMode='decimal'
+                  className='input input-bordered w-full'
+                  placeholder='0.0 bar'
+                  min='0'
+                  step='any'
+                  value={formData.steamPumpCutoff}
+                  onChange={onChange('steamPumpCutoff')}
+                />
+              </div>
+            )}
           </Card>
 
           <Card sm={10} lg={5} title='Display settings'>

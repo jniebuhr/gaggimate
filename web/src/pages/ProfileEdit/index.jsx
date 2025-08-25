@@ -6,6 +6,8 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 
 const connected = computed(() => machine.value.connected);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -36,6 +38,7 @@ export function ProfileEdit() {
                 duration: 0,
                 adaptive: true,
               },
+              targets: [],
             },
             {
               name: 'Bloom',
@@ -48,6 +51,7 @@ export function ProfileEdit() {
                 duration: 0,
                 adaptive: true,
               },
+              targets: [],
             },
             {
               name: 'Pump',
@@ -88,6 +92,12 @@ export function ProfileEdit() {
     },
     [apiService, params.id, location],
   );
+  const onConvert = useCallback(() => {
+    setData({
+      ...data,
+      type: 'pro',
+    });
+  }, [data, setData]);
 
   if (loading) {
     return (
@@ -103,6 +113,16 @@ export function ProfileEdit() {
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>
           {params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}
         </h2>
+        {data?.type === 'standard' && pressureAvailable.value && (
+          <button
+            onClick={() => onConvert()}
+            className='btn'
+            title='Convert to Pro'
+            aria-label='Convert to Pro'
+          >
+            Convert to Pro
+          </button>
+        )}
       </div>
 
       {!data?.type && <ProfileTypeSelection onSelect={type => setData({ ...data, type })} />}

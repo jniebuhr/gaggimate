@@ -69,10 +69,12 @@ struct Phase {
     }
 
     bool isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow, float current_pressure,
-                    float water_pumped) const {
+                    float water_pumped, String type) const {
+        bool volumetricTested = false;
         for (const auto &target : targets) {
             switch (target.type) {
             case TargetType::TARGET_TYPE_VOLUMETRIC:
+                volumetricTested = enableVolumetric;
                 if (enableVolumetric && target.isReached(volume)) {
                     return true;
                 }
@@ -93,6 +95,9 @@ struct Phase {
                 }
                 break;
             }
+        }
+        if (type == "standard" && volumetricTested) {
+            return false;
         }
         return time_in_phase > duration;
     }

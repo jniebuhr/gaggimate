@@ -94,7 +94,7 @@ void Controller::connect() {
 void Controller::setupBluetooth() {
     clientController.initClient();
     clientController.registerSensorCallback(
-        [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow) {
+        [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow, const float puckResistance) {
             onTempRead(temp);
             this->pressure = pressure;
             this->currentPuckFlow = puckFlow;
@@ -102,6 +102,7 @@ void Controller::setupBluetooth() {
             pluginManager->trigger("boiler:pressure:change", "value", pressure);
             pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
             pluginManager->trigger("pump:flow:change", "value", pumpFlow);
+            pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
         });
     clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
     clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
@@ -236,7 +237,7 @@ void Controller::loop() {
 
     if (now - lastProgress > PROGRESS_INTERVAL) {
         // Check if steam is ready
-        if (mode == MODE_STEAM && !steamReady && currentTemp + 5 > getTargetTemp()) {
+        if (mode == MODE_STEAM && !steamReady && currentTemp + 5.f > getTargetTemp()) {
             activate();
             steamReady = true;
         }
@@ -261,12 +262,12 @@ void Controller::loop() {
         if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
             processCompleted = true;
             if (lastProcess->getType() == MODE_BREW) {
-                if (auto const *brewProcess = static_cast<BrewProcess *>(lastProcess);
+                if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
                     brewProcess->target == ProcessTarget::VOLUMETRIC) {
                     settings.setBrewDelay(brewProcess->getNewDelayTime());
                 }
             } else if (lastProcess->getType() == MODE_GRIND) {
-                if (auto const *grindProcess = static_cast<GrindProcess *>(lastProcess);
+                if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
                     grindProcess->target == ProcessTarget::VOLUMETRIC) {
                     settings.setGrindDelay(grindProcess->getNewDelayTime());
                 }
@@ -322,7 +323,7 @@ void Controller::startProcess(Process *process) {
     updateLastAction();
 }
 
-int Controller::getTargetTemp() const {
+float Controller::getTargetTemp() const {
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
@@ -340,7 +341,7 @@ int Controller::getTargetTemp() const {
     }
 }
 
-void Controller::setTargetTemp(int temperature) {
+void Controller::setTargetTemp(float temperature) {
     pluginManager->trigger("boiler:targetTemperature:change", "value", temperature);
     switch (mode) {
     case MODE_BREW:
@@ -348,10 +349,10 @@ void Controller::setTargetTemp(int temperature) {
         // Update current profile
         break;
     case MODE_STEAM:
-        settings.setTargetSteamTemp(temperature);
+        settings.setTargetSteamTemp(static_cast<int>(temperature));
         break;
     case MODE_WATER:
-        settings.setTargetWaterTemp(temperature);
+        settings.setTargetWaterTemp(static_cast<int>(temperature));
         break;
     default:;
     }
@@ -408,14 +409,14 @@ void Controller::raisePhaseDuration() {
 }
 
 void Controller::raiseTemp() {
-    int temp = getTargetTemp();
-    temp = max(MIN_TEMP, min(temp + 1, MAX_TEMP));
+    float temp = getTargetTemp();
+    temp = constrain(temp + 1.0f, MIN_TEMP, MAX_TEMP);
     setTargetTemp(temp);
 }
 
 void Controller::lowerTemp() {
-    int temp = getTargetTemp();
-    temp = max(MIN_TEMP, min(temp - 1, MAX_TEMP));
+    float temp = getTargetTemp();
+    temp = constrain(temp - 1.0f, MIN_TEMP, MAX_TEMP);
     setTargetTemp(temp);
 }
 
@@ -484,22 +485,22 @@ void Controller::lowerGrindTarget() {
 }
 
 void Controller::updateControl() {
-    int targetTemp = getTargetTemp();
-    if (targetTemp > 0) {
-        targetTemp = targetTemp + settings.getTemperatureOffset();
+    float targetTemp = getTargetTemp();
+    if (targetTemp > .0f) {
+        targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
     clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
     if (isActive() && systemInfo.capabilities.pressure) {
         if (currentProcess->getType() == MODE_STEAM) {
-            targetPressure = 4;
+            targetPressure = settings.getSteamPumpCutoff();
             targetFlow = currentProcess->getPumpValue() * 0.1f;
-            clientController.sendAdvancedOutputControl(false, static_cast<float>(targetTemp), false, targetPressure, targetFlow);
+            clientController.sendAdvancedOutputControl(false, targetTemp, false, targetPressure, targetFlow);
             return;
         }
         if (currentProcess->getType() == MODE_BREW) {
             auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
             if (brewProcess->isAdvancedPump()) {
-                clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), static_cast<float>(targetTemp),
+                clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), targetTemp,
                                                            brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
                                                            brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
                 targetPressure = brewProcess->getPumpPressure();
@@ -511,7 +512,7 @@ void Controller::updateControl() {
     targetPressure = 0.0f;
     targetFlow = 0.0f;
     clientController.sendOutputControl(isActive() && currentProcess->isRelayActive(),
-                                       isActive() ? currentProcess->getPumpValue() : 0, static_cast<float>(targetTemp));
+                                       isActive() ? currentProcess->getPumpValue() : 0, targetTemp);
 }
 
 void Controller::activate() {
@@ -611,7 +612,7 @@ void Controller::setMode(int newMode) {
 }
 
 void Controller::onTempRead(float temperature) {
-    float temp = temperature - settings.getTemperatureOffset();
+    float temp = temperature - static_cast<float>(settings.getTemperatureOffset());
     Event event = pluginManager->trigger("boiler:currentTemperature:change", "value", temp);
     currentTemp = event.getFloat("value");
 }
@@ -709,8 +710,7 @@ void Controller::handleSteamButton(int steamButtonStatus) {
 }
 
 void Controller::handleProfileUpdate() {
-    pluginManager->trigger("boiler:targetTemperature:change", "value",
-                           static_cast<int>(profileManager->getSelectedProfile().temperature));
+    pluginManager->trigger("boiler:targetTemperature:change", "value", profileManager->getSelectedProfile().temperature);
 }
 
 void Controller::loopTask(void *arg) {

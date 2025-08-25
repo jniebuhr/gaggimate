@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { Chart } from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
-
-Chart.register(annotationPlugin);
+import { ChartComponent } from './Chart';
 
 const POINT_INTERVAL = 0.1; // s
 
@@ -114,7 +111,7 @@ function prepareData(phases, target) {
   return data;
 }
 
-function makeChartData(data, selectedPhase) {
+function makeChartData(data, selectedPhase, isDarkMode = false) {
   let duration = 0;
   for (const phase of data.phases) {
     duration += parseFloat(phase.duration);
@@ -138,7 +135,26 @@ function makeChartData(data, selectedPhase) {
       interaction: {
         intersect: false,
       },
-      plugins: {},
+      plugins: {
+        legend: {
+          position: 'top',
+          display: true,
+          labels: {
+            boxWidth: 12,
+            padding: 8,
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12,
+            },
+          },
+        },
+        title: {
+          display: false,
+          text: 'Temperature History',
+          font: {
+            size: window.innerWidth < 640 ? 14 : 16,
+          },
+        },
+      },
       animations: false,
       radius: 0,
       scales: {
@@ -157,7 +173,7 @@ function makeChartData(data, selectedPhase) {
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            maxTicksLimit: window.innerWidth < 640 ? 5 : 5,
+            maxTicksLimit: 10,
           },
         },
         y: {
@@ -170,6 +186,11 @@ function makeChartData(data, selectedPhase) {
           },
           min: 0,
           max: 12,
+          ticks: {
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12,
+            },
+          },
         },
         y1: {
           type: 'linear',
@@ -181,6 +202,11 @@ function makeChartData(data, selectedPhase) {
           },
           min: 0,
           max: 10,
+          ticks: {
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12,
+            },
+          },
         },
       },
     },
@@ -197,15 +223,35 @@ function makeChartData(data, selectedPhase) {
         {
           id: 'box1',
           type: 'box',
-          xMin: start,
-          xMax: end,
-          backgroundColor: 'rgba(129, 207, 209, 0.2)',
+          xMin: start + 0.1,
+          xMax: end + 0.1,
+          backgroundColor: 'rgba(0,105,255,0.2)',
           borderColor: 'rgba(100, 100, 100, 0)',
         },
       ],
     };
+    start = 0;
+    for (let i = 0; i < data.phases.length; i++) {
+      chartData.options.plugins.annotation.annotations.push({
+        type: 'label',
+        xValue: start + data.phases[i].duration / 2,
+        yValue: 11,
+        content: [i + 1],
+        color: isDarkMode ? 'rgb(205,208,212)' : 'rgb(57,78,106)',
+        font: {
+          size: 14,
+          weight: 500,
+        },
+      });
+      start += parseFloat(data.phases[i].duration);
+      chartData.options.plugins.annotation.annotations.push({
+        type: 'line',
+        xMin: start + 0.1,
+        xMax: start + 0.1,
+        borderColor: 'rgb(128,128,128)',
+      });
+    }
   }
-  console.log(chartData);
   return chartData;
 }
 
@@ -214,33 +260,15 @@ export function ExtendedProfileChart({
   className = 'max-h-36 w-full',
   selectedPhase = null,
 }) {
-  const ref = useRef();
-  const [chart, setChart] = useState(null);
-  const config = makeChartData(data, selectedPhase);
+  const isDarkMode = () =>
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const config = makeChartData(data, selectedPhase, isDarkMode());
 
-  useEffect(() => {
-    const ct = new Chart(ref.current, config);
-    setChart(ct);
-
-    return () => {
-      if (ct) {
-        ct.destroy();
-      }
-    };
-  }, [ref]);
-
-  useEffect(() => {
-    if (!chart) {
-      return;
-    }
-    const config = makeChartData(data, selectedPhase);
-    chart.data = config.data;
-    chart.options = config.options;
-    chart.update();
-  }, [data, chart, selectedPhase]);
   return (
-    <div className={`flex-grow`}>
-      <canvas className={className} ref={ref} />
-    </div>
+    <ChartComponent
+      className='max-w-full flex-shrink flex-grow'
+      chartClassName={className}
+      data={config}
+    />
   );
 }

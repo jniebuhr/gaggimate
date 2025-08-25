@@ -23,7 +23,7 @@ class BrewProcess : public Process {
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
     float waterPumped = 0.0f;
-    VolumetricRateCalculator volumetricRateCalculator{static_cast<double>(PREDICTIVE_TIME)};
+    VolumetricRateCalculator volumetricRateCalculator{PREDICTIVE_TIME};
 
     explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
         : profile(profile), target(target), brewDelay(brewDelay) {
@@ -58,11 +58,11 @@ class BrewProcess : public Process {
         if (volume > 0.0) {
             double currentRate = volumetricRateCalculator.getRate();
             const double predictedAddedVolume = currentRate * brewDelay;
-            volume += predictedAddedVolume;
+            volume = currentVolume + predictedAddedVolume;
         }
         float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
         return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
-                                       waterPumped);
+                                       waterPumped, profile.type);
     }
 
     double getBrewVolume() const {
@@ -77,7 +77,7 @@ class BrewProcess : public Process {
     }
 
     double getNewDelayTime() {
-        double newDelay = brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(double(getBrewVolume()), currentVolume);
+        double newDelay = brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(getBrewVolume(), currentVolume);
         newDelay = std::clamp(newDelay, 0.0, PREDICTIVE_TIME);
         return newDelay;
     }
@@ -210,7 +210,10 @@ class BrewProcess : public Process {
     }
 
     float transitionAlpha() const {
-        const float dur_s = currentPhase.transition.duration;
+        float dur_s = currentPhase.transition.duration;
+        if (dur_s <= 0.0f) {
+            dur_s = currentPhase.duration; // If the transition has no duration, use the phase duration
+        }
         if (currentPhase.transition.type == TransitionType::INSTANT || dur_s <= 0.0f) {
             return 1.0f;
         }

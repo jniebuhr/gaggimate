@@ -31,10 +31,10 @@ function parseJsonProfile(input) {
       return typeof v === 'number' && v > 0 && Number.isFinite(v);
     };
 
-    for (var i = 0; i < input.phases.length; i++) {
+    for (let i = 0; i < input.phases.length; i++) {
       let p = input.phases[i];
       let phase = {
-        name: p && typeof p.name === 'string' && p.name.trim() ? p.name : 'Phase ' + (i + 1),
+        name: p && typeof p.name === 'string' && p.name.trim() ? p.name : `Phase ${i + 1}`,
         valve: 1,
         pump: 0,
         duration: Math.max(p.target.time, p.stopConditions.time) / 1000,

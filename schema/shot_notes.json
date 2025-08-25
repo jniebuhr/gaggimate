@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Shot Notes Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "Shot ID matching the .dat file",
+      "type": "string"
+    },
+    "rating": {
+      "description": "Star rating out of 5",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "doseIn": {
+      "description": "Dose in grams",
+      "type": "number",
+      "minimum": 0
+    },
+    "doseOut": {
+      "description": "Dose out in grams",
+      "type": "number",
+      "minimum": 0
+    },
+    "ratio": {
+      "description": "Ratio (dose out / dose in)",
+      "type": "number",
+      "minimum": 0
+    },
+    "grindSetting": {
+      "description": "Grind setting as string",
+      "type": "string"
+    },
+    "balanceTaste": {
+      "description": "Balance/taste selector",
+      "type": "string",
+      "enum": ["bitter", "balanced", "sour"]
+    },
+    "notes": {
+      "description": "User notes",
+      "type": "string"
+    },
+    "timestamp": {
+      "description": "Timestamp when notes were last updated",
+      "type": "integer"
+    }
+  },
+  "required": ["id"]
+}

@@ -24,23 +24,25 @@ lv_obj_t *ui_ProfileScreen_dials;
 void ui_event_ProfileScreen_ImgButton1(lv_event_t *e);
 lv_obj_t *ui_ProfileScreen_ImgButton1;
 lv_obj_t *ui_ProfileScreen_contentPanel;
+void ui_event_ProfileScreen_previousProfileBtn(lv_event_t *e);
+lv_obj_t *ui_ProfileScreen_previousProfileBtn;
+void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e);
+lv_obj_t *ui_ProfileScreen_nextProfileBtn;
+lv_obj_t *ui_ProfileScreen_loadingSpinner;
+lv_obj_t *ui_ProfileScreen_profileDetails;
+void ui_event_ProfileScreen_chooseButton(lv_event_t *e);
+lv_obj_t *ui_ProfileScreen_chooseButton;
+lv_obj_t *ui_ProfileScreen_simpleContent;
+lv_obj_t *ui_ProfileScreen_phasesLabel;
+lv_obj_t *ui_ProfileScreen_stepsLabel;
+lv_obj_t *ui_ProfileScreen_extendedContent;
+lv_obj_t *ui_ProfileScreen_Chart1;
 lv_obj_t *ui_ProfileScreen_mainLabel;
 lv_obj_t *ui_ProfileScreen_profileName;
 lv_obj_t *ui_ProfileScreen_tempIcon;
 lv_obj_t *ui_ProfileScreen_targetIcon;
 lv_obj_t *ui_ProfileScreen_targetTemp2;
 lv_obj_t *ui_ProfileScreen_targetDuration2;
-lv_obj_t *ui_ProfileScreen_extendedContent;
-lv_obj_t *ui_ProfileScreen_Chart1;
-lv_obj_t *ui_ProfileScreen_simpleContent;
-lv_obj_t *ui_ProfileScreen_phasesLabel;
-lv_obj_t *ui_ProfileScreen_stepsLabel;
-void ui_event_ProfileScreen_previousProfileBtn(lv_event_t *e);
-lv_obj_t *ui_ProfileScreen_previousProfileBtn;
-void ui_event_ProfileScreen_nextProfileBtn(lv_event_t *e);
-lv_obj_t *ui_ProfileScreen_nextProfileBtn;
-void ui_event_ProfileScreen_chooseButton(lv_event_t *e);
-lv_obj_t *ui_ProfileScreen_chooseButton;
 // CUSTOM VARIABLES
 lv_obj_t *uic_ProfileScreen_dials_tempGauge;
 lv_obj_t *uic_ProfileScreen_dials_tempTarget;
@@ -51,6 +53,7 @@ lv_obj_t *uic_ProfileScreen_dials_tempText;
 
 // SCREEN: ui_MenuScreen
 void ui_MenuScreen_screen_init(void);
+void ui_event_MenuScreen(lv_event_t *e);
 lv_obj_t *ui_MenuScreen;
 lv_obj_t *ui_MenuScreen_dials;
 void ui_event_MenuScreen_standbyButton(lv_event_t *e);
@@ -231,6 +234,7 @@ const lv_img_dsc_t *ui_imgset_1091184723[1] = {&ui_img_1091371356};
 const lv_img_dsc_t *ui_imgset_960046369[1] = {&ui_img_631115820};
 const lv_img_dsc_t *ui_imgset_1525119997[1] = {&ui_img_360122106};
 const lv_img_dsc_t *ui_imgset_1812359778[1] = {&ui_img_363557387};
+const lv_img_dsc_t *ui_imgset_1682378366[1] = {&ui_img_332059803};
 const lv_img_dsc_t *ui_imgset_359218129[1] = {&ui_img_1424216268};
 const lv_img_dsc_t *ui_imgset_403384789[1] = {&ui_img_834125362};
 const lv_img_dsc_t *ui_imgset_359534444[1] = {&ui_img_979979123};
@@ -239,7 +243,7 @@ const lv_img_dsc_t *ui_imgset_1612577215[1] = {&ui_img_445946954};
 const lv_img_dsc_t *ui_imgset_1166435085[1] = {&ui_img_390988422};
 const lv_img_dsc_t *ui_imgset_1010926578[1] = {&ui_img_2044104741};
 const lv_img_dsc_t *ui_imgset_1155213431[1] = {&ui_img_545340440};
-const lv_img_dsc_t *ui_imgset_524469952[2] = {&ui_img_1765671371, &ui_img_207915003};
+const lv_img_dsc_t *ui_imgset_524469952[1] = {&ui_img_1765671371};
 const lv_img_dsc_t *ui_imgset_648927478[1] = {&ui_img_340148213};
 const lv_img_dsc_t *ui_imgset_616600488[1] = {&ui_img_1220767159};
 const lv_img_dsc_t *ui_imgset_690294202[1] = {&ui_img_1732953241};
@@ -281,6 +285,9 @@ void ui_event_ProfileScreen(lv_event_t *e) {
         lv_indev_wait_release(lv_indev_get_act());
         onPreviousProfile(e);
     }
+    if (event_code == LV_EVENT_SCREEN_LOADED) {
+        onProfileScreenLoad(e);
+    }
 }
 
 void ui_event_ProfileScreen_ImgButton1(lv_event_t *e) {
@@ -312,6 +319,14 @@ void ui_event_ProfileScreen_chooseButton(lv_event_t *e) {
 
     if (event_code == LV_EVENT_CLICKED) {
         onProfileLoad(e);
+    }
+}
+
+void ui_event_MenuScreen(lv_event_t *e) {
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if (event_code == LV_EVENT_SCREEN_LOADED) {
+        onMenuScreenLoad(e);
     }
 }
 
@@ -361,6 +376,9 @@ void ui_event_BrewScreen(lv_event_t *e) {
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_TOP) {
         lv_indev_wait_release(lv_indev_get_act());
         onMenuClick(e);
+    }
+    if (event_code == LV_EVENT_SCREEN_LOADED) {
+        onBrewScreenLoad(e);
     }
 }
 
@@ -446,6 +464,9 @@ void ui_event_SimpleProcessScreen(lv_event_t *e) {
         lv_indev_wait_release(lv_indev_get_act());
         onMenuClick(e);
     }
+    if (event_code == LV_EVENT_SCREEN_LOADED) {
+        onSimpleProcessScreenLoad(e);
+    }
 }
 
 void ui_event_SimpleProcessScreen_ImgButton6(lv_event_t *e) {
@@ -495,6 +516,9 @@ void ui_event_StatusScreen(lv_event_t *e) {
         lv_indev_wait_release(lv_indev_get_act());
         onMenuClick(e);
     }
+    if (event_code == LV_EVENT_SCREEN_LOADED) {
+        onStatusScreenLoad(e);
+    }
 }
 
 void ui_event_StatusScreen_ImgButton8(lv_event_t *e) {
@@ -528,6 +552,9 @@ void ui_event_GrindScreen(lv_event_t *e) {
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_TOP) {
         lv_indev_wait_release(lv_indev_get_act());
         onMenuClick(e);
+    }
+    if (event_code == LV_EVENT_SCREEN_LOADED) {
+        onGrindScreenLoad(e);
     }
 }
 
