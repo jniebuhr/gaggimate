@@ -504,7 +504,7 @@ void Controller::updateControl() {
     targetPressure = 0.0f;
     targetFlow = 0.0f;
     clientController.sendOutputControl(isActive() && currentProcess->isRelayActive(),
-                                       isActive() ? currentProcess->getPumpValue() : 0, targetTemp);                                     
+                                       isActive() ? currentProcess->getPumpValue() : 0, targetTemp);
 }
 
 void Controller::activate() {

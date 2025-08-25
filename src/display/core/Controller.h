@@ -159,13 +159,7 @@ class Controller {
 
     xTaskHandle taskHandle;
 
-    static void loopTask(void *arg);
-    
-    // Scheduled auto brew
-    
-    unsigned long lastAutoWakeupCheck = 0;
-    String lastCheckedTime = "";    
-
+    static void loopTask(void *arg); 
 };
 
 #endif // CONTROLLER_H
