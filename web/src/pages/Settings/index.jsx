@@ -42,7 +42,7 @@ export function Settings() {
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
-      // Initialize auto-brew times
+      // Initialize auto-wakeup times
       if (fetchedSettings.autowakeupTimes) {
         if (Array.isArray(fetchedSettings.autowakeupTimes)) {
           setAutoWakeupTimes(fetchedSettings.autowakeupTimes);
@@ -146,7 +146,7 @@ export function Settings() {
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
 
-      // Add auto-brew times
+      // Add auto-wakeup times
       formDataToSubmit.set('autowakeupTimes', autowakeupTimes.join(','));
 
       // Ensure standbyBrightness is included even when the field is disabled
