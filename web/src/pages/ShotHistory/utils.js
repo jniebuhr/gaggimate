@@ -3,18 +3,32 @@ export function parseHistoryData(shot) {
     id: shot.id,
   };
   if (!shot.history) return null;
+  
   const lines = shot.history.split('\n');
   const header = lines[0].split(',');
   data['version'] = header[0];
   data['profile'] = header[1];
   data['timestamp'] = parseInt(header[2], 10);
   data['samples'] = [];
+  
+  let lastValidVolume = 0;
+  let maxVolume = 0;
+  
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i]) {
       continue;
     }
+    
     const numbers = lines[i].split(',');
-    data['samples'].push({
+    
+    // Skip incomplete lines (should have 11 columns)
+    if (numbers.length !== 11) {
+      console.warn(`Skipping incomplete line ${i}: "${lines[i]}" (${numbers.length}/11 columns)`);
+      continue;
+    }
+    
+    // Parse the sample
+    const sample = {
       t: parseInt(numbers[0], 10),
       tt: parseFloat(numbers[1]),
       ct: parseFloat(numbers[2]),
@@ -26,13 +40,51 @@ export function parseHistoryData(shot) {
       vf: parseFloat(numbers[8]),
       v: parseFloat(numbers[9]),
       ev: parseFloat(numbers[10]),
-    });
+    };
+    
+    // Validate that essential fields are valid numbers
+    if (isNaN(sample.t)) {
+      console.warn(`Skipping sample with invalid time: "${lines[i]}"`);
+      continue;
+    }
+    
+    // Track valid volume values (prefer bluetooth weight 'v', fall back to estimated 'ev')
+    let currentVolume = sample.v;
+    
+    // Never take estimated volume (until fixed)
+    //if (isNaN(currentVolume) || currentVolume <= 0) {
+    //  currentVolume = sample.ev;
+    //}
+    
+    if (!isNaN(currentVolume) && currentVolume > 0) {
+      lastValidVolume = currentVolume;
+      maxVolume = Math.max(maxVolume, currentVolume);
+    }
+    
+    data['samples'].push(sample);
   }
 
-  if (data['samples']) {
+  if (data['samples'] && data['samples'].length > 0) {
     const lastSample = data['samples'][data['samples'].length - 1];
     data.duration = lastSample.t;
-    data.volume = lastSample.v;
+    
+    // Use the maximum volume seen during the shot, or fall back to last valid volume
+    // This handles cases where the final measurement might be slightly lower due to timing
+    let finalVolume = maxVolume > 0 ? maxVolume : lastValidVolume;
+    
+    // If we still don't have a valid volume, try the last sample's volume
+    if (finalVolume <= 0 && !isNaN(lastSample.v) && lastSample.v > 0) {
+      finalVolume = lastSample.v;
+    } else if (finalVolume <= 0 && !isNaN(lastSample.ev) && lastSample.ev > 0) {
+      finalVolume = lastSample.ev;
+    }
+    
+    data.volume = finalVolume > 0 ? parseFloat(finalVolume.toFixed(1)) : null;
+    
+    console.log(`Parsed shot ${shot.id}: duration=${data.duration}ms, volume=${data.volume}g, samples=${data['samples'].length}, maxVol=${maxVolume.toFixed(1)}`);
+  } else {
+    console.warn(`No valid samples found for shot ${shot.id}`);
+    return null;
   }
   return data;
 }
