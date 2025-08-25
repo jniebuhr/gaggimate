@@ -274,6 +274,7 @@ LV_IMG_DECLARE(ui_img_1456692430);   // assets/pause-40x40.png
 LV_IMG_DECLARE(ui_img_1829139226);   // assets/angle-down-40x40.png
 LV_IMG_DECLARE(ui_img_340148213);    // assets/settings-40x40.png
 LV_IMG_DECLARE(ui_img_691326438);    // assets/wind-40x40.png
+LV_IMG_DECLARE(ui_img_375882848);    // assets/timeAdd-40x40.png
 
 // UI INIT
 void ui_init(void);
