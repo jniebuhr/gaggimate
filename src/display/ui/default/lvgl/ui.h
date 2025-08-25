@@ -192,6 +192,8 @@ extern lv_obj_t *ui_StatusScreen_targetDuration;
 extern lv_obj_t *ui_StatusScreen_targetTemp;
 void ui_event_StatusScreen_pauseButton(lv_event_t *e);
 extern lv_obj_t *ui_StatusScreen_pauseButton;
+void ui_event_StatusScreen_upDurationButton(lv_event_t *e);
+extern lv_obj_t *ui_StatusScreen_upDurationButton;
 extern lv_obj_t *ui_StatusScreen_Image7;
 extern lv_obj_t *ui_StatusScreen_Image8;
 extern lv_obj_t *ui_StatusScreen_currentDuration;
@@ -275,6 +277,7 @@ LV_IMG_DECLARE(ui_img_1456692430);   // assets/pause-40x40.png
 LV_IMG_DECLARE(ui_img_1829139226);   // assets/angle-down-40x40.png
 LV_IMG_DECLARE(ui_img_340148213);    // assets/settings-40x40.png
 LV_IMG_DECLARE(ui_img_691326438);    // assets/wind-40x40.png
+LV_IMG_DECLARE(ui_img_375882848);    // assets/timeAdd-40x40.png
 
 // UI INIT
 void ui_init(void);

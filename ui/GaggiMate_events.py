@@ -131,6 +131,10 @@ def onSimpleProcessToggle(event_struct):
     return
 
 
+def onUpDuration(event_struct):
+    return
+  
+
 def onMenuScreenLoad(event_struct):
     return
 
