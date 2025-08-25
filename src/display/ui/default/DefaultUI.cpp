@@ -14,6 +14,8 @@
 #include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
 
+#include "esp_sntp.h"
+
 static EffectManager effect_mgr;
 
 int16_t calculate_angle(int set_temp, int range, int offset) {
@@ -64,12 +66,11 @@ void DefaultUI::updateTempStableFlag() {
 
 void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     lv_obj_t *heatingIcon = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPICON);
-    lv_obj_set_style_img_recolor(heatingIcon,
-                                 lv_color_hex(isTemperatureStable ? 0xF62C2C : _ui_theme_color_NiceWhite[ui_theme_idx]),
+    lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(isTemperatureStable ? 0x00D100 : 0xF62C2C),
                                  LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    lv_obj_set_style_opa(heatingIcon, isTemperatureStable || heatingFlash ? LV_OPA_100 : LV_OPA_50,
-                         LV_PART_MAIN | LV_STATE_DEFAULT);
+    if (!isTemperatureStable) {
+        lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
 }
 
 DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
@@ -80,8 +81,8 @@ DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
 void DefaultUI::init() {
     auto triggerRender = [this](Event const &) { rerender = true; };
     pluginManager->on("boiler:currentTemperature:change", [=](Event const &event) {
-        float newTemp = event.getFloat("value");
-        if (static_cast<int>(newTemp) != currentTemp) {
+        int newTemp = static_cast<int>(event.getFloat("value"));
+        if (newTemp != currentTemp) {
             currentTemp = newTemp;
             rerender = true;
         }
@@ -94,7 +95,7 @@ void DefaultUI::init() {
         }
     });
     pluginManager->on("boiler:targetTemperature:change", [=](Event const &event) {
-        int newTemp = event.getInt("value");
+        int newTemp = static_cast<int>(event.getFloat("value"));
         if (newTemp != targetTemp) {
             targetTemp = newTemp;
             rerender = true;
@@ -150,6 +151,11 @@ void DefaultUI::init() {
     });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         configTzTime(resolve_timezone(controller->getSettings().getTimezone()), NTP_SERVER);
+        setenv("TZ", resolve_timezone(controller->getSettings().getTimezone()), 1);
+        tzset();
+        sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
+        sntp_setservername(0, NTP_SERVER);
+        sntp_init();
         rerender = true;
         apActive = event.getInt("AP");
     });
@@ -184,6 +190,8 @@ void DefaultUI::init() {
     setupState();
     setupReactive();
     xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
+    xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
+                            0);
 }
 
 void DefaultUI::loop() {
@@ -226,6 +234,13 @@ void DefaultUI::loop() {
     lv_task_handler();
 }
 
+void DefaultUI::loopProfiles() {
+    if (!profileLoaded && currentProfileId != "") {
+        profileManager->loadProfile(currentProfileId, currentProfileChoice);
+        profileLoaded = 1;
+    }
+}
+
 void DefaultUI::changeScreen(lv_obj_t **screen, void (*target_init)()) {
     targetScreen = screen;
     targetScreenInit = target_init;
@@ -236,8 +251,8 @@ void DefaultUI::onProfileSwitch() {
     favoritedProfiles = profileManager->getFavoritedProfiles();
     currentProfileIdx = 0;
     currentProfileId = favoritedProfiles[currentProfileIdx];
+    profileLoaded = 0;
     currentProfileChoice = Profile{};
-    profileManager->loadProfile(currentProfileId, currentProfileChoice);
     changeScreen(&ui_ProfileScreen, ui_ProfileScreen_screen_init);
 }
 
@@ -245,8 +260,8 @@ void DefaultUI::onNextProfile() {
     if (currentProfileIdx < favoritedProfiles.size() - 1) {
         currentProfileIdx++;
         currentProfileId = favoritedProfiles.at(currentProfileIdx);
+        profileLoaded = 0;
         currentProfileChoice = Profile{};
-        profileManager->loadProfile(currentProfileId, currentProfileChoice);
     }
 }
 
@@ -254,8 +269,8 @@ void DefaultUI::onPreviousProfile() {
     if (currentProfileIdx > 0) {
         currentProfileIdx--;
         currentProfileId = favoritedProfiles.at(currentProfileIdx);
+        profileLoaded = 0;
         currentProfileChoice = Profile{};
-        profileManager->loadProfile(currentProfileId, currentProfileChoice);
     }
 }
 
@@ -293,8 +308,8 @@ void DefaultUI::setupState() {
     grindActive = controller->isGrindActive();
     active = controller->isActive();
     mode = controller->getMode();
-    currentTemp = controller->getCurrentTemp();
-    targetTemp = controller->getTargetTemp();
+    currentTemp = static_cast<int>(controller->getCurrentTemp());
+    targetTemp = static_cast<int>(controller->getTargetTemp());
     targetDuration = controller->getTargetDuration();
     targetVolume = settings.getTargetVolume();
     grindDuration = settings.getTargetGrindDuration();
@@ -549,16 +564,23 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect(
         [=] { return currentScreen == ui_ProfileScreen; },
         [=] {
-            lv_label_set_text(ui_ProfileScreen_profileName, currentProfileChoice.label.c_str());
+            if (profileLoaded) {
+                _ui_flag_modify(ui_ProfileScreen_profileDetails, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+                _ui_flag_modify(ui_ProfileScreen_loadingSpinner, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                lv_label_set_text(ui_ProfileScreen_profileName, currentProfileChoice.label.c_str());
 
-            const auto minutes = static_cast<int>(currentProfileChoice.getTotalDuration() / 60.0 - 0.5);
-            const auto seconds = static_cast<int>(currentProfileChoice.getTotalDuration()) % 60;
-            lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
-            lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C", static_cast<int>(currentProfileChoice.temperature));
-            unsigned int phaseCount = currentProfileChoice.getPhaseCount();
-            unsigned int stepCount = currentProfileChoice.phases.size();
-            lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d step%s", stepCount, stepCount > 1 ? "s" : "");
-            lv_label_set_text_fmt(ui_ProfileScreen_phasesLabel, "%d phase%s", phaseCount, phaseCount > 1 ? "s" : "");
+                const auto minutes = static_cast<int>(currentProfileChoice.getTotalDuration() / 60.0 - 0.5);
+                const auto seconds = static_cast<int>(currentProfileChoice.getTotalDuration()) % 60;
+                lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
+                lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C", static_cast<int>(currentProfileChoice.temperature));
+                unsigned int phaseCount = currentProfileChoice.getPhaseCount();
+                unsigned int stepCount = currentProfileChoice.phases.size();
+                lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d step%s", stepCount, stepCount > 1 ? "s" : "");
+                lv_label_set_text_fmt(ui_ProfileScreen_phasesLabel, "%d phase%s", phaseCount, phaseCount > 1 ? "s" : "");
+            } else {
+                _ui_flag_modify(ui_ProfileScreen_profileDetails, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ProfileScreen_loadingSpinner, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+            }
 
             ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
                                                    LV_STYLE_IMG_RECOLOR,
@@ -573,7 +595,7 @@ void DefaultUI::setupReactive() {
                 ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
                 currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
         },
-        &currentProfileId);
+        &currentProfileId, &profileLoaded);
 }
 
 void DefaultUI::handleScreenChange() {
@@ -603,9 +625,12 @@ void DefaultUI::updateStandbyScreen() {
     }
 
     if (!apActive && WiFi.status() == WL_CONNECTED) {
-        tm timeinfo;
-        if (getLocalTime(&timeinfo, 50)) {
-            // allocate enough space for both 12h/24h time formats
+        time_t now;
+        struct tm timeinfo;
+
+        localtime_r(&now, &timeinfo);
+        // allocate enough space for both 12h/24h time formats
+        if (getLocalTime(&timeinfo, 500)) {
             char time[9];
             Settings &settings = controller->getSettings();
             const char *format = settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p";
@@ -739,6 +764,14 @@ void DefaultUI::loopTask(void *arg) {
     auto *ui = static_cast<DefaultUI *>(arg);
     while (true) {
         ui->loop();
+        vTaskDelay(25 / portTICK_PERIOD_MS);
+    }
+}
+
+void DefaultUI::profileLoopTask(void *arg) {
+    auto *ui = static_cast<DefaultUI *>(arg);
+    while (true) {
+        ui->loopProfiles();
         vTaskDelay(25 / portTICK_PERIOD_MS);
     }
 }

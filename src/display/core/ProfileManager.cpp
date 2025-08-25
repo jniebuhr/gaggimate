@@ -1,8 +1,10 @@
 #include "ProfileManager.h"
 #include <ArduinoJson.h>
 
-ProfileManager::ProfileManager(fs::FS &fs, char *dir, Settings &settings, PluginManager *plugin_manager)
-    : _plugin_manager(plugin_manager), _settings(settings), _fs(fs), _dir(dir) {}
+#include <utility>
+
+ProfileManager::ProfileManager(fs::FS &fs, String dir, Settings &settings, PluginManager *plugin_manager)
+    : _plugin_manager(plugin_manager), _settings(settings), _fs(fs), _dir(std::move(dir)) {}
 
 void ProfileManager::setup() {
     ensureDirectory();
@@ -12,16 +14,17 @@ void ProfileManager::setup() {
         _settings.setProfilesMigrated(true);
     }
     loadSelectedProfile(selectedProfile);
+    _settings.setFavoritedProfiles(getFavoritedProfiles(true));
 }
 
-bool ProfileManager::ensureDirectory() {
+bool ProfileManager::ensureDirectory() const {
     if (!_fs.exists(_dir)) {
         return _fs.mkdir(_dir);
     }
     return true;
 }
 
-String ProfileManager::profilePath(const String &uuid) { return _dir + "/" + uuid + ".json"; }
+String ProfileManager::profilePath(const String &uuid) const { return _dir + "/" + uuid + ".json"; }
 
 void ProfileManager::migrate() {
     Profile profile{};
@@ -103,7 +106,21 @@ std::vector<String> ProfileManager::listProfiles() {
         }
         file = root.openNextFile();
     }
-    return uuids;
+
+    std::vector<String> ordered;
+    auto stored = _settings.getProfileOrder();
+    for (auto const &id : stored) {
+        if (std::find(uuids.begin(), uuids.end(), id) != uuids.end() &&
+            std::find(ordered.begin(), ordered.end(), id) == ordered.end()) {
+            ordered.push_back(id);
+        }
+    }
+    for (auto const &id : uuids) {
+        if (std::find(ordered.begin(), ordered.end(), id) == ordered.end()) {
+            ordered.push_back(id);
+        }
+    }
+    return ordered;
 }
 
 bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
@@ -129,12 +146,14 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
 bool ProfileManager::saveProfile(Profile &profile) {
     if (!ensureDirectory())
         return false;
-
-    ESP_LOGI("ProfileManager", "Saving profile %s", profile.id.c_str());
+    bool isNew = false;
 
     if (profile.id == nullptr || profile.id.isEmpty()) {
         profile.id = generateShortID();
+        isNew = true;
     }
+
+    ESP_LOGI("ProfileManager", "Saving profile %s", profile.id.c_str());
 
     File file = _fs.open(profilePath(profile.id), "w");
     if (!file)
@@ -152,6 +171,9 @@ bool ProfileManager::saveProfile(Profile &profile) {
     }
     selectProfile(_settings.getSelectedProfile());
     _plugin_manager->trigger("profiles:profile:save", "id", profile.id);
+    if (isNew) {
+        _settings.addFavoritedProfile(profile.id);
+    }
     return ok;
 }
 
@@ -174,12 +196,36 @@ Profile ProfileManager::getSelectedProfile() const { return selectedProfile; }
 
 void ProfileManager::loadSelectedProfile(Profile &outProfile) { loadProfile(_settings.getSelectedProfile(), outProfile); }
 
-std::vector<String> ProfileManager::getFavoritedProfiles() {
-    std::vector<String> favoritedProfiles;
-    for (String profile : _settings.getFavoritedProfiles()) {
-        if (profileExists(profile)) {
-            favoritedProfiles.push_back(profile);
+std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
+
+    auto rawFavorites = _settings.getFavoritedProfiles();
+    std::vector<String> result;
+
+    auto storedProfileOrder = _settings.getProfileOrder();
+    for (const auto &id : storedProfileOrder) {
+        if (std::find(rawFavorites.begin(), rawFavorites.end(), id) != rawFavorites.end()) {
+            if (!validate || profileExists(id)) {
+                if (std::find(result.begin(), result.end(), id) == result.end()) {
+                    result.push_back(id);
+                }
+            }
         }
     }
-    return favoritedProfiles;
+
+    for (const auto &fav : rawFavorites) {
+        if (std::find(result.begin(), result.end(), fav) == result.end()) {
+            if (!validate || profileExists(fav)) {
+                result.push_back(fav);
+            }
+        }
+    }
+
+    if (result.empty()) {
+        String sel = _settings.getSelectedProfile();
+        bool selValid = (!validate) || profileExists(sel);
+        if (selValid) {
+            result.push_back(sel);
+        }
+    }
+    return result;
 }

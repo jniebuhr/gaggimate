@@ -1,6 +1,7 @@
 import { machine } from '../services/ApiService.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
+import { ChartComponent } from './Chart.jsx';
 
 function getChartData(data) {
   let end = new Date();
@@ -129,75 +130,13 @@ function getChartData(data) {
 }
 
 export function OverviewChart() {
-  const [chart, setChart] = useState(null);
-  const ref = useRef();
-
-  // Create chart on mount
-  useEffect(() => {
-    if (!ref.current) return;
-
-    const chartData = getChartData(machine.value.history);
-    const newChart = new Chart(ref.current, chartData);
-    setChart(newChart);
-
-    // Cleanup function to destroy chart on unmount
-    return () => {
-      if (newChart) {
-        newChart.destroy();
-      }
-    };
-  }, []); // Empty dependency array - only run on mount
-
-  // Update chart data when history changes
-  useEffect(() => {
-    if (!chart) return;
-
-    const chartData = getChartData(machine.value.history);
-    chart.data = chartData.data;
-    chart.options = chartData.options;
-    chart.update();
-  }, [machine.value.history, chart]);
-
-  // Add resize event listener to update chart options dynamically
-  useEffect(() => {
-    if (!chart) return;
-
-    const handleResize = () => {
-      const isSmallScreen = window.innerWidth < 640;
-
-      // Update legend font size
-      chart.options.plugins.legend.labels.font.size = isSmallScreen ? 10 : 12;
-
-      // Update title font size
-      chart.options.plugins.title.font.size = isSmallScreen ? 14 : 16;
-
-      // Update axis font sizes
-      chart.options.scales.y.ticks.font.size = isSmallScreen ? 10 : 12;
-      chart.options.scales.y1.ticks.font.size = isSmallScreen ? 10 : 12;
-      chart.options.scales.x.ticks.font.size = isSmallScreen ? 10 : 12;
-
-      // Update maxTicksLimit for x-axis
-      chart.options.scales.x.ticks.maxTicksLimit = isSmallScreen ? 5 : 10;
-
-      // Update the chart to apply changes
-      chart.update('none'); // Use 'none' mode for better performance
-    };
-
-    // Add event listener
-    window.addEventListener('resize', handleResize);
-
-    // Initial call to ensure correct sizing
-    handleResize();
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [chart]);
+  const chartData = getChartData(machine.value.history);
 
   return (
-    <div className='h-full min-h-[200px] w-full flex-1 lg:min-h-[350px]'>
-      <canvas className='h-full w-full' ref={ref} />
-    </div>
+    <ChartComponent
+      className='h-full min-h-[200px] w-full flex-1 lg:min-h-[350px]'
+      chartClassName='h-full w-full'
+      data={chartData}
+    />
   );
 }

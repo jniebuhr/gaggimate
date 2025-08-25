@@ -22,10 +22,10 @@ SET(SOURCES components/ui_comp_dials.c
     images/ui_img_1951499226.c
     images/ui_img_1220767159.c
     images/ui_img_295763949.c
-    images/ui_img_360122106.c
     images/ui_img_98036921.c
     images/ui_img_944513416.c
     images/ui_img_631115820.c
+    images/ui_img_360122106.c
     images/ui_img_2044104741.c
     images/ui_img_979979123.c
     images/ui_img_783005998.c
@@ -33,7 +33,7 @@ SET(SOURCES components/ui_comp_dials.c
     images/ui_img_363557387.c
     images/ui_img_445946954.c
     images/ui_img_1424216268.c
-    images/ui_img_207915003.c
+    images/ui_img_332059803.c
     images/ui_img_834125362.c
     images/ui_img_390988422.c
     images/ui_img_364513079.c

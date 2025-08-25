@@ -16,6 +16,12 @@ void SimplePump::loop() {
         return;
     }
 
+    if (_setpoint == 100.0f) {
+        digitalWrite(_pin, _pumpOn);
+        relayStatus = true;
+        return;
+    }
+
     float output = _setpoint / 100.0f * _windowSize;
 
     // software PWM timer
@@ -45,6 +51,10 @@ void SimplePump::setPower(float setpoint) {
     if (_setpoint == .0f) {
         digitalWrite(_pin, !_pumpOn);
         relayStatus = false;
+    }
+    if (_setpoint == 100.0f) {
+        digitalWrite(_pin, _pumpOn);
+        relayStatus = true;
     }
 }
 

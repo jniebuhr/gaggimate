@@ -46,7 +46,7 @@ convert "wind.svg" 40
 convert "clock.svg" 40
 convert "thermometer-half.svg" 40
 convert "refresh.svg" 20
-convert "refresh.svg" 40
+convert "dropdown-bar.svg" 40
 convert "tap.svg" 60
 convert "settings.svg" 40
 convert "tachometer-fast.svg" 40

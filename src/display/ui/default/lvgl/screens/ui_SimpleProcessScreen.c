@@ -25,10 +25,6 @@ void ui_SimpleProcessScreen_screen_init(void) {
     lv_obj_set_x(ui_SimpleProcessScreen_ImgButton6, 0);
     lv_obj_set_y(ui_SimpleProcessScreen_ImgButton6, 210);
     lv_obj_set_align(ui_SimpleProcessScreen_ImgButton6, LV_ALIGN_CENTER);
-    lv_obj_set_style_outline_color(ui_SimpleProcessScreen_ImgButton6, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_opa(ui_SimpleProcessScreen_ImgButton6, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_width(ui_SimpleProcessScreen_ImgButton6, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_pad(ui_SimpleProcessScreen_ImgButton6, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_img_recolor(ui_SimpleProcessScreen_ImgButton6, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_img_recolor_opa(ui_SimpleProcessScreen_ImgButton6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -66,10 +62,6 @@ void ui_SimpleProcessScreen_screen_init(void) {
     lv_obj_set_x(ui_SimpleProcessScreen_goButton, 0);
     lv_obj_set_y(ui_SimpleProcessScreen_goButton, 130);
     lv_obj_set_align(ui_SimpleProcessScreen_goButton, LV_ALIGN_CENTER);
-    lv_obj_set_style_outline_color(ui_SimpleProcessScreen_goButton, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_opa(ui_SimpleProcessScreen_goButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_width(ui_SimpleProcessScreen_goButton, 25, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_pad(ui_SimpleProcessScreen_goButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     ui_object_set_themeable_style_property(ui_SimpleProcessScreen_goButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_SimpleProcessScreen_goButton, LV_PART_MAIN | LV_STATE_DEFAULT,
@@ -82,11 +74,6 @@ void ui_SimpleProcessScreen_screen_init(void) {
     lv_obj_set_x(ui_SimpleProcessScreen_downTempButton, -90);
     lv_obj_set_y(ui_SimpleProcessScreen_downTempButton, 0);
     lv_obj_set_align(ui_SimpleProcessScreen_downTempButton, LV_ALIGN_CENTER);
-    lv_obj_set_style_outline_color(ui_SimpleProcessScreen_downTempButton, lv_color_hex(0x000000),
-                                   LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_opa(ui_SimpleProcessScreen_downTempButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_width(ui_SimpleProcessScreen_downTempButton, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_pad(ui_SimpleProcessScreen_downTempButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     ui_object_set_themeable_style_property(ui_SimpleProcessScreen_downTempButton, LV_PART_MAIN | LV_STATE_DEFAULT,
                                            LV_STYLE_IMG_RECOLOR, _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_SimpleProcessScreen_downTempButton, LV_PART_MAIN | LV_STATE_DEFAULT,
@@ -99,10 +86,6 @@ void ui_SimpleProcessScreen_screen_init(void) {
     lv_obj_set_x(ui_SimpleProcessScreen_upTempButton, 90);
     lv_obj_set_y(ui_SimpleProcessScreen_upTempButton, 0);
     lv_obj_set_align(ui_SimpleProcessScreen_upTempButton, LV_ALIGN_CENTER);
-    lv_obj_set_style_outline_color(ui_SimpleProcessScreen_upTempButton, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_opa(ui_SimpleProcessScreen_upTempButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_width(ui_SimpleProcessScreen_upTempButton, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_outline_pad(ui_SimpleProcessScreen_upTempButton, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     ui_object_set_themeable_style_property(ui_SimpleProcessScreen_upTempButton, LV_PART_MAIN | LV_STATE_DEFAULT,
                                            LV_STYLE_IMG_RECOLOR, _ui_theme_color_NiceWhite);
     ui_object_set_themeable_style_property(ui_SimpleProcessScreen_upTempButton, LV_PART_MAIN | LV_STATE_DEFAULT,

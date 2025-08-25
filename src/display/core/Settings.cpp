@@ -1,5 +1,6 @@
 #include "Settings.h"
 
+#include <algorithm>
 #include <utility>
 
 Settings::Settings() {
@@ -40,6 +41,7 @@ Settings::Settings() {
     homeAssistant = preferences.getBool("ha_a", false);
     homeAssistantIP = preferences.getString("ha_i", "");
     homeAssistantPort = preferences.getInt("ha_p", 1883);
+    homeAssistantTopic = preferences.getString("ha_t", DEFAULT_HOME_ASSISTANT_TOPIC);
     homeAssistantUser = preferences.getString("ha_u", "");
     homeAssistantPassword = preferences.getString("ha_pw", "");
     standbyTimeout = preferences.getInt("sbt", DEFAULT_STANDBY_TIMEOUT_MS);
@@ -48,7 +50,9 @@ Settings::Settings() {
     selectedProfile = preferences.getString("sp", "");
     profilesMigrated = preferences.getBool("pm", false);
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
+    profileOrder = explode(preferences.getString("po", ""), ',');
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
+    steamPumpCutoff = preferences.getFloat("spc", DEFAULT_STEAM_PUMP_CUTOFF);
     historyIndex = preferences.getInt("hi", 0);
 
     // Display settings
@@ -259,6 +263,10 @@ void Settings::setHomeAssistantPort(const int homeAssistantPort) {
     this->homeAssistantPort = homeAssistantPort;
     save();
 }
+void Settings::setHomeAssistantTopic(const String &homeAssistantTopic) {
+    this->homeAssistantTopic = homeAssistantTopic;
+    save();
+}
 void Settings::setHomeAssistantUser(const String &homeAssistantUser) {
     this->homeAssistantUser = homeAssistantUser;
     save();
@@ -309,6 +317,21 @@ void Settings::removeFavoritedProfile(String profile) {
     save();
 }
 
+void Settings::setProfileOrder(std::vector<String> profile_order) {
+    std::vector<String> cleaned;
+    cleaned.reserve(profile_order.size());
+    for (auto &id : profile_order) {
+        if (id.isEmpty())
+            continue;
+        if (std::find(cleaned.begin(), cleaned.end(), id) == cleaned.end()) {
+            cleaned.emplace_back(std::move(id));
+        }
+    }
+
+    profileOrder = std::move(cleaned);
+    save();
+}
+
 void Settings::setMainBrightness(int main_brightness) {
     mainBrightness = main_brightness;
     save();
@@ -331,6 +354,11 @@ void Settings::setWifiApTimeout(int timeout) {
 
 void Settings::setSteamPumpPercentage(float steam_pump_percentage) {
     steamPumpPercentage = steam_pump_percentage;
+    save();
+}
+
+void Settings::setSteamPumpCutoff(float steam_pump_cutoff) {
+    steamPumpCutoff = steam_pump_cutoff;
     save();
 }
 
@@ -421,6 +449,7 @@ void Settings::doSave() {
     preferences.putBool("ha_a", homeAssistant);
     preferences.putString("ha_i", homeAssistantIP);
     preferences.putInt("ha_p", homeAssistantPort);
+    preferences.putString("ha_t", homeAssistantTopic);
     preferences.putString("ha_u", homeAssistantUser);
     preferences.putString("ha_pw", homeAssistantPassword);
     preferences.putString("tz", timezone);
@@ -430,7 +459,9 @@ void Settings::doSave() {
     preferences.putBool("pm", profilesMigrated);
     preferences.putBool("mb", momentaryButtons);
     preferences.putString("fp", implode(favoritedProfiles, ","));
+    preferences.putString("po", implode(profileOrder, ","));
     preferences.putFloat("spp", steamPumpPercentage);
+    preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
 
     // Display settings

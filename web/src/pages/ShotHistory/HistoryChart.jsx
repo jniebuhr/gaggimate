@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { Chart } from 'chart.js';
+import { ChartComponent } from '../../components/Chart.jsx';
 
 function getChartData(data) {
   let start = 0;
@@ -67,21 +67,32 @@ function getChartData(data) {
         legend: {
           position: 'top',
           display: true,
+          labels: {
+            boxWidth: 12,
+            padding: 8,
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12,
+            },
+          },
         },
         title: {
-          display: true,
+          display: false,
           text: 'Temperature History',
+          font: {
+            size: window.innerWidth < 640 ? 14 : 16,
+          },
         },
       },
       animation: false,
       scales: {
         y: {
           type: 'linear',
-          min: 0,
-          max: 160,
           ticks: {
             callback: value => {
               return `${value} °C`;
+            },
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12,
             },
           },
         },
@@ -94,11 +105,17 @@ function getChartData(data) {
             callback: value => {
               return `${value} bar / g/s`;
             },
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12,
+            },
           },
         },
         x: {
           ticks: {
             source: 'auto',
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12,
+            },
           },
         },
       },
@@ -107,22 +124,7 @@ function getChartData(data) {
 }
 
 export function HistoryChart({ shot }) {
-  const [chart, setChart] = useState(null);
-  const ref = useRef();
   const chartData = getChartData(shot.samples);
-  useEffect(() => {
-    const ct = new Chart(ref.current, chartData);
-    setChart(ct);
-  }, [ref]);
-  useEffect(() => {
-    if (!chart) {
-      return;
-    }
-    const cd = getChartData(shot.samples);
-    chart.data = cd.data;
-    chart.options = cd.options;
-    chart.update();
-  }, [shot, chart]);
 
-  return <canvas className='w-full' ref={ref} />;
+  return <ChartComponent className='' chartClassName='w-full' data={chartData} />;
 }

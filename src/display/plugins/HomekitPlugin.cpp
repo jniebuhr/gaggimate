@@ -73,7 +73,7 @@ void HomekitPlugin::setup(Controller *controller, PluginManager *pluginManager) 
     pluginManager->on("boiler:targetTemperature:change", [this](Event const &event) {
         if (accessory == nullptr)
             return;
-        accessory->setTargetTemperature(event.getInt("value"));
+        accessory->setTargetTemperature(event.getFloat("value"));
     });
 
     pluginManager->on("boiler:currentTemperature:change", [this](Event const &event) {

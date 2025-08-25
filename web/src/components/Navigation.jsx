@@ -1,4 +1,12 @@
 import { useLocation, useRoute } from 'preact-iso';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
+import { faList } from '@fortawesome/free-solid-svg-icons/faList';
+import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
+import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
+import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 
 function MenuItem(props) {
   let className =
@@ -10,7 +18,7 @@ function MenuItem(props) {
   }
   return (
     <a href={props.link} className={className}>
-      <i className={props.iconClass || ''} aria-hidden='true' />
+      <FontAwesomeIcon icon={props.icon} />
       <span>{props.label}</span>
     </a>
   );
@@ -19,21 +27,21 @@ function MenuItem(props) {
 export function Navigation(props) {
   return (
     <nav className='hidden lg:col-span-2 lg:block'>
-      <MenuItem label='Dashboard' link='/' iconClass='fa fa-home' />
+      <MenuItem label='Dashboard' link='/' icon={faHome} />
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
-        <MenuItem label='Profiles' link='/profiles' iconClass='fa fa-list' />
-        <MenuItem label='Shot History' link='/history' iconClass='fa fa-timeline' />
+        <MenuItem label='Profiles' link='/profiles' icon={faList} />
+        <MenuItem label='Shot History' link='/history' icon={faTimeline} />
       </div>
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
-        <MenuItem label='PID Autotune' link='/pidtune' iconClass='fa fa-temperature-half' />
-        <MenuItem label='Bluetooth Scales' link='/scales' iconClass='fa-brands fa-bluetooth-b' />
-        <MenuItem label='Settings' link='/settings' iconClass='fa fa-cog' />
+        <MenuItem label='PID Autotune' link='/pidtune' icon={faTemperatureHalf} />
+        <MenuItem label='Bluetooth Scales' link='/scales' icon={faBluetoothB} />
+        <MenuItem label='Settings' link='/settings' icon={faCog} />
       </div>
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
-        <MenuItem label='System & Updates' link='/ota' iconClass='fa fa-rotate' />
+        <MenuItem label='System & Updates' link='/ota' icon={faRotate} />
       </div>
     </nav>
   );

@@ -2,7 +2,6 @@
 #define PUMPPROCESS_H
 
 #include <display/core/constants.h>
-#include <display/core/predictive.h>
 #include <display/core/process/Process.h>
 
 class PumpProcess : public Process {

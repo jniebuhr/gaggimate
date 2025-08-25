@@ -1,5 +1,15 @@
 import { useCallback, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faList } from '@fortawesome/free-solid-svg-icons/faList';
+import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
+import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
+import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
+import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
+import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
+import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 
 function HeaderItem(props) {
   const { path } = useLocation();
@@ -13,7 +23,7 @@ function HeaderItem(props) {
 
   return (
     <a href={props.link} onClick={props.onClick} className={className}>
-      <i className={props.iconClass} />
+      <FontAwesomeIcon icon={props.icon} />
       <span>{props.label}</span>
     </a>
   );
@@ -48,7 +58,7 @@ export function Header() {
                 target='_blank'
                 className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
               >
-                <i className='fa-brands fa-github text-lg' />
+                <FontAwesomeIcon icon={faGithub} className='text-lg' />
               </a>
             </div>
 
@@ -60,7 +70,7 @@ export function Header() {
                 target='_blank'
                 className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
               >
-                <i className='fa-brands fa-discord text-lg' />
+                <FontAwesomeIcon icon={faDiscord} className='text-lg' />
               </a>
             </div>
 
@@ -88,24 +98,19 @@ export function Header() {
         </div>
 
         <nav className={`${open ? 'flex' : 'hidden'} flex-col py-4 lg:hidden`}>
-          <HeaderItem
-            label='Dashboard'
-            link='/'
-            iconClass='fa fa-home'
-            onClick={() => openCb(false)}
-          />
+          <HeaderItem label='Dashboard' link='/' icon={faHome} onClick={() => openCb(false)} />
           <hr className='h-5 border-0' />
           <div className='space-y-1.5'>
             <HeaderItem
               label='Profiles'
               link='/profiles'
-              iconClass='fa fa-list'
+              icon={faList}
               onClick={() => openCb(false)}
             />
             <HeaderItem
               label='Shot History'
               link='/history'
-              iconClass='fa fa-timeline'
+              icon={faTimeline}
               onClick={() => openCb(false)}
             />
           </div>
@@ -114,19 +119,19 @@ export function Header() {
             <HeaderItem
               label='PID Autotune'
               link='/pidtune'
-              iconClass='fa fa-temperature-half'
+              icon={faTemperatureHalf}
               onClick={() => openCb(false)}
             />
             <HeaderItem
               label='Bluetooth Scales'
               link='/scales'
-              iconClass='fa-brands fa-bluetooth-b'
+              icon={faBluetoothB}
               onClick={() => openCb(false)}
             />
             <HeaderItem
               label='Settings'
               link='/settings'
-              iconClass='fa fa-cog'
+              icon={faCog}
               onClick={() => openCb(false)}
             />
           </div>
@@ -135,7 +140,7 @@ export function Header() {
             <HeaderItem
               label='System & Updates'
               link='/ota'
-              iconClass='fa fa-rotate'
+              icon={faRotate}
               onClick={() => openCb(false)}
             />
           </div>

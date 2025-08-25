@@ -1,10 +1,12 @@
 {
-  "theme_color": "#0069FF",
+  "theme_color": "#0A1120",
   "background_color": "#E3E9F4",
   "orientation": "any",
   "display": "fullscreen",
   "dir": "auto",
   "lang": "en-US",
   "name": "GaggiMate Web UI",
-  "short_name": "GaggiMate"
+  "short_name": "GaggiMate",
+  "start_url": "/",
+  "scope": "/"
 }
