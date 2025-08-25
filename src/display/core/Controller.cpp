@@ -19,6 +19,7 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#include <display/plugins/AutoWakeupPlugin.h>
 
 const String LOG_TAG = F("Controller");
 
@@ -52,6 +53,7 @@ void Controller::setup() {
     pluginManager->registerPlugin(&ShotHistory);
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->registerPlugin(new LedControlPlugin());
+    pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->setup(this);
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
