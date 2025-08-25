@@ -477,7 +477,6 @@ void Controller::lowerGrindTarget() {
 }
 
 void Controller::updateControl() {
-    unsigned long now = millis();
     float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
