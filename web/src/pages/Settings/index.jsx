@@ -352,7 +352,7 @@ export function Settings() {
                     {/* Time input */}
                     <input
                       type='time'
-                      className='input input-bordered input-sm w-24'
+                      className='input input-bordered input-sm w-auto min-w-0'
                       value={schedule.time}
                       onChange={(e) => updateAutoWakeupTime(scheduleIndex, e.target.value)}
                       disabled={!formData.autowakeupEnabled}
