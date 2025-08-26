@@ -21,9 +21,9 @@ export function parseHistoryData(shot) {
     
     const numbers = lines[i].split(',');
     
-    // Skip incomplete lines (should have 11 columns)
-    if (numbers.length !== 11) {
-      console.warn(`Skipping incomplete line ${i}: "${lines[i]}" (${numbers.length}/11 columns)`);
+    // Skip incomplete lines (should have 12 columns: t,tt,ct,tp,cp,fl,tf,pf,vf,v,ev,pr)
+    if (numbers.length !== 12) {
+      console.warn(`Skipping incomplete line ${i}: "${lines[i]}" (${numbers.length}/12 columns)`);
       continue;
     }
     
