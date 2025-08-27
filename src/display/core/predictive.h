@@ -46,7 +46,6 @@ class VolumetricRateCalculator {
             tdev2 += pow(measurementTimes[j] - t_mean, 2.0);
         }
         
-        // Prevent division by zero
         if (tdev2 < 1e-10) {
             return 0.0;
         }
@@ -61,7 +60,6 @@ class VolumetricRateCalculator {
         double overshoot = actualVolume - expectedVolume;
         double rate = getRate(measurementTimes.back());
         
-        // Prevent division by zero
         if (rate < 1e-10) {
             return 0.0;
         }
