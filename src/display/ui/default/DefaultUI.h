@@ -49,6 +49,7 @@ class DefaultUI {
     void setupPanel();
     void setupState();
     void setupReactive();
+    void overrideDarkColorsForTDisplay();
 
     void handleScreenChange();
 

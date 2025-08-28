@@ -229,6 +229,7 @@ void DefaultUI::loop() {
         if (lv_scr_act() == ui_StatusScreen)
             updateStatusScreen();
         effect_mgr.evaluate_all();
+        overrideDarkColorsForTDisplay();
     }
 
     lv_task_handler();
@@ -297,6 +298,36 @@ void DefaultUI::setupPanel() {
     // Set initial brightness based on settings
     const Settings &settings = controller->getSettings();
     setBrightness(settings.getMainBrightness());
+}
+
+void DefaultUI::overrideDarkColorsForTDisplay() {
+    // For T-Display AMOLED panel, only override dark theme to true black
+    if (panelDriver == LilyGoTDisplayDriver::getInstance() && currentThemeMode == UI_THEME_DEFAULT) {
+        if (ui_InitScreen && lv_obj_is_valid(ui_InitScreen)) {
+            lv_obj_set_style_bg_color(ui_InitScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        if (ui_ProfileScreen && lv_obj_is_valid(ui_ProfileScreen)) {
+            lv_obj_set_style_bg_color(ui_ProfileScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        if (ui_MenuScreen && lv_obj_is_valid(ui_MenuScreen)) {
+            lv_obj_set_style_bg_color(ui_MenuScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        if (ui_BrewScreen && lv_obj_is_valid(ui_BrewScreen)) {
+            lv_obj_set_style_bg_color(ui_BrewScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        if (ui_SimpleProcessScreen && lv_obj_is_valid(ui_SimpleProcessScreen)) {
+            lv_obj_set_style_bg_color(ui_SimpleProcessScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        if (ui_StandbyScreen && lv_obj_is_valid(ui_StandbyScreen)) {
+            lv_obj_set_style_bg_color(ui_StandbyScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        if (ui_StatusScreen && lv_obj_is_valid(ui_StatusScreen)) {
+            lv_obj_set_style_bg_color(ui_StatusScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        if (ui_GrindScreen && lv_obj_is_valid(ui_GrindScreen)) {
+            lv_obj_set_style_bg_color(ui_GrindScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+    }
 }
 
 void DefaultUI::setupState() {
