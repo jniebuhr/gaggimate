@@ -326,6 +326,23 @@ export function Settings() {
                 />
               </label>
             </div>
+            <div className='divider'>Flush</div>
+            <div className='form-control'>
+              <label htmlFor='flushDuration' className='mb-2 block text-sm font-medium'>
+                Flush Duration (s)
+              </label>
+              <input
+                id='flushDuration'
+                name='flushDuration'
+                type='number'
+                className='input input-bordered w-full'
+                min='1'
+                step='1'
+                placeholder='5'
+                value={formData.flushDuration || 5}
+                onChange={onChange('flushDuration')}
+              />
+            </div>
           </Card>
 
           <Card sm={10} lg={5} title='Web Settings'>
