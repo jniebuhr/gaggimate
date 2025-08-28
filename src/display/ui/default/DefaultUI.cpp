@@ -301,6 +301,7 @@ void DefaultUI::setupPanel() {
 }
 
 void DefaultUI::overrideDarkColorsForTDisplay() {
+    // TODO: remove this once we find a way to have more than two themes
     if (panelDriver == LilyGoTDisplayDriver::getInstance() && currentThemeMode == UI_THEME_DEFAULT) {
         // Override main screen backgrounds
         if (ui_InitScreen && lv_obj_is_valid(ui_InitScreen)) {
