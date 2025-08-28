@@ -637,7 +637,9 @@ void Controller::onFlush() {
         return;
     }
     clear();
-    startProcess(new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay()));
+    // Rebuild flush profile each invocation to respect updated settings
+    auto flushProfile = makeFlushProfile(settings);
+    startProcess(new BrewProcess(flushProfile, ProcessTarget::TIME, settings.getBrewDelay()));
     pluginManager->trigger("controller:brew:start");
 }
 
