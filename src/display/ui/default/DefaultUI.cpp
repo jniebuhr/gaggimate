@@ -301,8 +301,8 @@ void DefaultUI::setupPanel() {
 }
 
 void DefaultUI::overrideDarkColorsForTDisplay() {
-    // For T-Display AMOLED panel, only override dark theme to true black
     if (panelDriver == LilyGoTDisplayDriver::getInstance() && currentThemeMode == UI_THEME_DEFAULT) {
+        // Override main screen backgrounds
         if (ui_InitScreen && lv_obj_is_valid(ui_InitScreen)) {
             lv_obj_set_style_bg_color(ui_InitScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
         }
@@ -326,6 +326,45 @@ void DefaultUI::overrideDarkColorsForTDisplay() {
         }
         if (ui_GrindScreen && lv_obj_is_valid(ui_GrindScreen)) {
             lv_obj_set_style_bg_color(ui_GrindScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+
+        // Override temperature and pressure text backgrounds in dials components
+        // Get the dials components from each screen and override their text backgrounds
+        if (ui_BrewScreen_dials && lv_obj_is_valid(ui_BrewScreen_dials)) {
+            lv_obj_t *tempText = ui_comp_get_child(ui_BrewScreen_dials, UI_COMP_DIALS_TEMPTEXT);
+            if (tempText && lv_obj_is_valid(tempText)) {
+                lv_obj_set_style_bg_color(tempText, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+        }
+        if (ui_GrindScreen_dials && lv_obj_is_valid(ui_GrindScreen_dials)) {
+            lv_obj_t *tempText = ui_comp_get_child(ui_GrindScreen_dials, UI_COMP_DIALS_TEMPTEXT);
+            if (tempText && lv_obj_is_valid(tempText)) {
+                lv_obj_set_style_bg_color(tempText, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+        }
+        if (ui_SimpleProcessScreen_dials && lv_obj_is_valid(ui_SimpleProcessScreen_dials)) {
+            lv_obj_t *tempText = ui_comp_get_child(ui_SimpleProcessScreen_dials, UI_COMP_DIALS_TEMPTEXT);
+            if (tempText && lv_obj_is_valid(tempText)) {
+                lv_obj_set_style_bg_color(tempText, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+        }
+        if (ui_ProfileScreen_dials && lv_obj_is_valid(ui_ProfileScreen_dials)) {
+            lv_obj_t *tempText = ui_comp_get_child(ui_ProfileScreen_dials, UI_COMP_DIALS_TEMPTEXT);
+            if (tempText && lv_obj_is_valid(tempText)) {
+                lv_obj_set_style_bg_color(tempText, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+        }
+        if (ui_MenuScreen_dials && lv_obj_is_valid(ui_MenuScreen_dials)) {
+            lv_obj_t *tempText = ui_comp_get_child(ui_MenuScreen_dials, UI_COMP_DIALS_TEMPTEXT);
+            if (tempText && lv_obj_is_valid(tempText)) {
+                lv_obj_set_style_bg_color(tempText, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+        }
+        if (ui_StatusScreen_dials && lv_obj_is_valid(ui_StatusScreen_dials)) {
+            lv_obj_t *tempText = ui_comp_get_child(ui_StatusScreen_dials, UI_COMP_DIALS_TEMPTEXT);
+            if (tempText && lv_obj_is_valid(tempText)) {
+                lv_obj_set_style_bg_color(tempText, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
         }
     }
 }
