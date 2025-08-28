@@ -70,7 +70,7 @@ Settings::Settings() {
     sunriseExtBrightness = preferences.getInt("sr_exb", 255);
     emptyTankDistance = preferences.getInt("sr_ed", 200);
     fullTankDistance = preferences.getInt("sr_fd", 50);
-    flushDuration = preferences.getInt("flush_d", 10);
+    flushDuration = preferences.getInt("flush_d", DEFAULT_FLUSH_DURATION);
 
     preferences.end();
 
@@ -409,6 +409,10 @@ void Settings::setFullTankDistance(int full_tank_distance) {
 }
 
 void Settings::setFlushDuration(int flush_duration) {
+    // Enforce a sane minimum (seconds)
+    if (flush_duration < MIN_FLUSH_DURATION) {
+        flush_duration = DEFAULT_FLUSH_DURATION; // fall back to default if invalid/non-positive
+    }
     flushDuration = flush_duration;
     save();
 }

@@ -216,7 +216,7 @@ class Settings {
     int sunriseExtBrightness = 255;
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
-    int flushDuration = 5;
+  int flushDuration = DEFAULT_FLUSH_DURATION;
 
     void doSave();
     xTaskHandle taskHandle;
