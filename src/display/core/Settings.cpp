@@ -70,7 +70,7 @@ Settings::Settings() {
     sunriseExtBrightness = preferences.getInt("sr_exb", 255);
     emptyTankDistance = preferences.getInt("sr_ed", 200);
     fullTankDistance = preferences.getInt("sr_fd", 50);
-    flushDuration = preferences.getInt("flush_d", DEFAULT_FLUSH_DURATION);
+    flushDuration = std::max(MIN_FLUSH_DURATION,  preferences.getInt("flush_d", DEFAULT_FLUSH_DURATION));
 
     preferences.end();
 
