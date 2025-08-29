@@ -58,6 +58,7 @@ class DefaultUI {
     void adjustDials(lv_obj_t *dials);
     void adjustTempTarget(lv_obj_t *dials);
     void adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const;
+    void override_theme_colors_for_amoled();
 
     int tempHistory[TEMP_HISTORY_LENGTH] = {0};
     int tempHistoryIndex = 0;

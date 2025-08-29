@@ -18,6 +18,16 @@
 
 static EffectManager effect_mgr;
 
+void set_black_background_recursive(lv_obj_t *obj)
+{
+    lv_obj_set_style_bg_color(obj, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    
+    for (uint32_t i = 0; i < lv_obj_get_child_cnt(obj); i++) {
+        lv_obj_t *child = lv_obj_get_child(obj, i);
+        set_black_background_recursive(child);
+    }
+}
+
 int16_t calculate_angle(int set_temp, int range, int offset) {
     const double percentage = static_cast<double>(set_temp) / static_cast<double>(MAX_TEMP);
     return (percentage * ((double)range)) - range / 2 - offset;
@@ -229,6 +239,8 @@ void DefaultUI::loop() {
         if (lv_scr_act() == ui_StatusScreen)
             updateStatusScreen();
         effect_mgr.evaluate_all();
+        
+        override_theme_colors_for_amoled();
     }
 
     lv_task_handler();
@@ -773,5 +785,11 @@ void DefaultUI::profileLoopTask(void *arg) {
     while (true) {
         ui->loopProfiles();
         vTaskDelay(25 / portTICK_PERIOD_MS);
+    }
+}
+
+void DefaultUI::override_theme_colors_for_amoled() {
+    if (currentThemeMode == UI_THEME_DEFAULT && panelDriver == LilyGoTDisplayDriver::getInstance()) {
+        set_black_background_recursive(currentScreen);
     }
 }
