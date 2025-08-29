@@ -3,12 +3,13 @@
 #define STATIC_PROFILES_H
 #include <display/models/profile.h>
 #include <display/core/Settings.h>
+#include <display/core/constants.h>
 #include <algorithm>
 inline Profile makeFlushProfile(const Settings &settings) {
     Profile p{.label = "Flush", .type = "standard", .temperature = 93};
     float d = static_cast<float>(settings.getFlushDuration());
-    // Safety: ensure non-negative duration (old preference values might be invalid)
-    d = std::max(0.0f, d);
+    o/ Safety: enforce configured minimum (seconds)
+    d = std::max(static_cast<float>(MIN_FLUSH_DURATION), d);
     Phase phase{.name = "Flush",
                 .phase = PhaseType::PHASE_TYPE_BREW,
                 .valve = 1,
