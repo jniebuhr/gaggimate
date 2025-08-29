@@ -8,7 +8,7 @@
 inline Profile makeFlushProfile(const Settings &settings) {
     Profile p{.label = "Flush", .type = "standard", .temperature = 93};
     float d = static_cast<float>(settings.getFlushDuration());
-    o/ Safety: enforce configured minimum (seconds)
+    //Safety: enforce configured minimum (seconds)
     d = std::max(static_cast<float>(MIN_FLUSH_DURATION), d);
     Phase phase{.name = "Flush",
                 .phase = PhaseType::PHASE_TYPE_BREW,
