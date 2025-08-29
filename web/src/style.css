@@ -151,18 +151,3 @@
 }
 
 @source inline("{,sm:,md:,lg:,xl:}col-span-{1..12}");
-
-/* Hide time input clock icon */
-input[type="time"]::-webkit-calendar-picker-indicator {
-  display: none;
-}
-
-input[type="time"]::-webkit-inner-spin-button,
-input[type="time"]::-webkit-outer-spin-button {
-  display: none;
-}
-
-/* Firefox */
-input[type="time"] {
-  -moz-appearance: textfield;
-}
