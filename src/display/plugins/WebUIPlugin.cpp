@@ -52,6 +52,17 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         ota->init(controller->getClientController()->getClient());
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
+    
+    // Subscribe to Bluetooth scale weight updates
+    pluginManager->on("controller:volumetric-measurement:bluetooth:change", [this](Event const &event) {
+        this->currentBluetoothWeight = event.getFloat("value");
+    });
+    
+    // Subscribe to Hardware scale weight updates
+    pluginManager->on("controller:volumetric-measurement:hardware:change", [this](Event const &event) {
+        this->currentHardwareWeight = event.getFloat("value");
+    });
+    
     setupServer();
 }
 
@@ -81,9 +92,6 @@ void WebUIPlugin::loop() {
         doc["pr"] = controller->getCurrentPressure();
         doc["fl"] = controller->getCurrentPumpFlow();
         doc["pt"] = controller->getTargetPressure();
-        if (HardwareScales.isConnected()) {
-            doc["cw"] = HardwareScales.getWeight();
-        }
         doc["m"] = controller->getMode();
         doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;
@@ -92,6 +100,41 @@ void WebUIPlugin::loop() {
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
+        
+        // Add scale weight information - respect user preference with persistent display
+        bool hasHardwareScale = controller->getSystemInfo().capabilities.hwScale;
+        bool hasBluetoothScale = BLEScales.isConnected();
+        String preference = controller->getSettings().getPreferredScaleSource();
+        
+        // Get current weight directly from scale plugins to ensure we have the latest values
+        float hardwareWeight = hasHardwareScale ? HardwareScales.getWeight() : this->currentHardwareWeight;
+        float bluetoothWeight = hasBluetoothScale ? BLEScales.getWeight() : this->currentBluetoothWeight;
+        
+        if (preference == "hardware" && hasHardwareScale) {
+            // User prefers hardware scale and it's available - always show hardware weight
+            doc["cw"] = hardwareWeight;
+            doc["scaleSource"] = "hardware";
+        } else if (preference == "bluetooth" && hasBluetoothScale) {
+            // User prefers bluetooth scale and it's connected - always show bluetooth weight
+            doc["cw"] = bluetoothWeight;
+            doc["scaleSource"] = "bluetooth";
+        } else if (hasHardwareScale) {
+            // Fallback to hardware scale if available
+            doc["cw"] = hardwareWeight;
+            doc["scaleSource"] = "hardware_fallback";
+        } else if (hasBluetoothScale) {
+            // Fallback to bluetooth scale if available
+            doc["cw"] = bluetoothWeight;
+            doc["scaleSource"] = "bluetooth_fallback";
+        } else {
+            // No scale available
+            doc["cw"] = 0.0f;
+            doc["scaleSource"] = "none";
+        }
+        
+        doc["bc"] = hasBluetoothScale; // bluetooth scale connected status
+        doc["hc"] = hasHardwareScale; // hardware scale available
+        doc["preferredScaleSource"] = controller->getSettings().getPreferredScaleSource(); // user preference
 
         Process *process = controller->getProcess();
         if (process == nullptr) {
@@ -155,9 +198,29 @@ void WebUIPlugin::setupServer() {
         doc["mode"] = controller->getMode();
         doc["tt"] = controller->getTargetTemp();
         doc["ct"] = controller->getCurrentTemp();
-        if (HardwareScales.isConnected()) {
-            doc["cw"] = HardwareScales.getWeight();
+        
+        // Show weight from available scale - respect user preference with persistent display
+        bool hasHardwareScale = controller->getSystemInfo().capabilities.hwScale;
+        bool hasBluetoothScale = BLEScales.isConnected();
+        String preference = controller->getSettings().getPreferredScaleSource();
+        
+        if (preference == "hardware" && hasHardwareScale) {
+            // User prefers hardware scale and it's available - always show hardware weight
+            doc["cw"] = currentHardwareWeight;
+        } else if (preference == "bluetooth" && hasBluetoothScale) {
+            // User prefers bluetooth scale and it's connected - always show bluetooth weight
+            doc["cw"] = currentBluetoothWeight;
+        } else if (hasHardwareScale) {
+            // Fallback to hardware scale if available
+            doc["cw"] = currentHardwareWeight;
+        } else if (hasBluetoothScale) {
+            // Fallback to bluetooth scale if available
+            doc["cw"] = currentBluetoothWeight;
+        } else {
+            // No scale available - ensure field is always present
+            doc["cw"] = 0.0f;
         }
+        
         serializeJson(doc, *response);
         request->send(response);
     });
@@ -169,60 +232,17 @@ void WebUIPlugin::setupServer() {
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
     ws.onEvent(
-        [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-            if (type == WS_EVT_CONNECT) {
-                client->setCloseClientOnQueueFull(true);
-                ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
-            } else if (type == WS_EVT_DISCONNECT) {
-                ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
-                rxBuffers.erase(client->id());
-            } else if (type == WS_EVT_DATA) {
-                auto *info = static_cast<AwsFrameInfo *>(arg);
-                if (info->final && info->index == 0 && info->len == len) {
-                    if (info->opcode == WS_TEXT) {
-                        data[len] = 0;
-                        ESP_LOGI("WebUIPlugin", "Received request: %", (char *)data);
-                        JsonDocument doc;
-                        DeserializationError err = deserializeJson(doc, data);
-                        if (!err) {
-                            String msgType = doc["tp"].as<String>();
-                            if (msgType.startsWith("req:profiles:")) {
-                                handleProfileRequest(client->id(), doc);
-                            } else if (msgType == "req:ota-settings") {
-                                handleOTASettings(client->id(), doc);
-                            } else if (msgType == "req:ota-start") {
-                                handleOTAStart(client->id(), doc);
-                            } else if (msgType == "req:autotune-start") {
-                                handleAutotuneStart(client->id(), doc);
-                            } else if (msgType == "req:process:activate") {
-                                controller->activate();
-                            } else if (msgType == "req:process:deactivate") {
-                                controller->deactivate();
-                            } else if (msgType == "req:process:clear") {
-                                controller->clear();
-                            } else if (msgType == "req:change-mode") {
-                                if (doc["mode"].is<uint8_t>()) {
-                                    auto mode = doc["mode"].as<uint8_t>();
-                                    controller->deactivate();
-                                    controller->setMode(mode);
-                                }
-                            } else if (msgType == "req:change-brew-target") {
-                                if (doc["target"].is<uint8_t>()) {
-                                    auto target = doc["target"].as<uint8_t>();
-                                    controller->getSettings().setVolumetricTarget(target);
-                                }
-                            } else if (msgType.startsWith("req:history")) {
-                                JsonDocument resp;
-                                ShotHistory.handleRequest(doc, resp);
-                                String msg;
-                                serializeJson(resp, msg);
-                                ws.text(client->id(), msg);
-                            }
-                        }
-                    }
+            [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+                if (type == WS_EVT_CONNECT) {
+                    client->setCloseClientOnQueueFull(true);
+                    ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
+                } else if (type == WS_EVT_DISCONNECT) {
+                    ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
+                    rxBuffers.erase(client->id());
+                } else if (type == WS_EVT_DATA) {
+                    handleWebSocketData(server, client, type, arg, data, len);
                 }
-            }
-        });
+            });
     server.addHandler(&ws);
 }
 
@@ -315,14 +335,14 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     client->text(buffer);
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
-                } else if (msgType == "req:scale:tare") {
-                        if (HardwareScales.isConnected()) {
-                            HardwareScales.tare();
-                        }
                 } else if (msgType == "req:scale:calibrate") {
                     if (HardwareScales.isConnected() && doc["cell"].is<uint8_t>() && doc["calWeight"].is<float>()) {
                         HardwareScales.calibrate(doc["cell"].as<uint8_t>(), doc["calWeight"].as<float>());
                     }
+                } else if (msgType == "req:scale:tare") {
+                                if (controller->getSystemInfo().capabilities.hwScale) {
+                                    controller->getClientController()->sendScaleTare();
+                                }
                 }
             }
         }
@@ -428,7 +448,21 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     if (request->method() == HTTP_POST) {
-        controller->getSettings().batchUpdate([request](Settings *settings) {
+        // Handle scale factors separately since they need access to controller/pluginManager
+        bool scaleFactorsChanged = false;
+        float newScaleFactor1 = 0.0f, newScaleFactor2 = 0.0f;
+        
+        if (request->hasArg("scaleFactor1") || request->hasArg("scaleFactor2")) {
+            newScaleFactor1 = controller->getSettings().getScaleFactor1();
+            newScaleFactor2 = controller->getSettings().getScaleFactor2();
+            if (request->hasArg("scaleFactor1"))
+                newScaleFactor1 = request->arg("scaleFactor1").toFloat();
+            if (request->hasArg("scaleFactor2"))   
+                newScaleFactor2 = request->arg("scaleFactor2").toFloat();
+            scaleFactorsChanged = true;
+        }
+        
+        controller->getSettings().batchUpdate([request, scaleFactorsChanged, newScaleFactor1, newScaleFactor2](Settings *settings) {
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
             if (request->hasArg("targetSteamTemp"))
@@ -494,6 +528,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setSteamPumpCutoff(request->arg("steamPumpCutoff").toFloat());
             if (request->hasArg("themeMode"))
                 settings->setThemeMode(request->arg("themeMode").toInt());
+            if (request->hasArg("preferredScaleSource"))
+                settings->setPreferredScaleSource(request->arg("preferredScaleSource"));
             if (request->hasArg("sunriseR"))
                 settings->setSunriseR(request->arg("sunriseR").toInt());
             if (request->hasArg("sunriseG"))
@@ -508,17 +544,29 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
-            if (request->hasArg("scaleFactor1") || request->hasArg("scaleFactor2")) {
-                float scaleFactor1 = settings->getScaleFactor1();
-                float scaleFactor2 = settings->getScaleFactor2();
-                if (request->hasArg("scaleFactor1"))
-                    scaleFactor1 = request->arg("scaleFactor1").toFloat();
-                if (request->hasArg("scaleFactor2"))   
-                    scaleFactor2 = request->arg("scaleFactor2").toFloat();
-                settings->setScaleFactors(scaleFactor1, scaleFactor2);
+            if (scaleFactorsChanged) {
+                settings->setScaleFactors(newScaleFactor1, newScaleFactor2);
             }
+            if (request->hasArg("preferredScaleSource"))
+                settings->setPreferredScaleSource(request->arg("preferredScaleSource"));
             settings->save(true);
         });
+        
+        // Handle scale factor notifications outside the batchUpdate lambda
+        if (scaleFactorsChanged) {
+            // Trigger the cal_update event so HardwareScalePlugin can handle the update
+            Event scaleEvent;
+            scaleEvent.id = "controller:scale:cal_update";
+            scaleEvent.setFloat("scaleFactor1", newScaleFactor1);
+            scaleEvent.setFloat("scaleFactor2", newScaleFactor2);
+            pluginManager->trigger(scaleEvent);
+            
+            // Also immediately update the hardware scale with new factors (backup in case event fails)
+            if (controller->getSystemInfo().capabilities.hwScale) {
+                controller->getClientController()->sendScaleCalibration(newScaleFactor1, newScaleFactor2);
+            }
+        }
+        
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
     }
@@ -562,6 +610,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["steamPumpPercentage"] = settings.getSteamPumpPercentage();
     doc["steamPumpCutoff"] = settings.getSteamPumpCutoff();
     doc["themeMode"] = settings.getThemeMode();
+    doc["preferredScaleSource"] = settings.getPreferredScaleSource();
     doc["sunriseR"] = settings.getSunriseR();
     doc["sunriseG"] = settings.getSunriseG();
     doc["sunriseB"] = settings.getSunriseB();
@@ -571,6 +620,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["fullTankDistance"] = settings.getFullTankDistance();
     doc["scaleFactor1"] = settings.getScaleFactor1();
     doc["scaleFactor2"] = settings.getScaleFactor2();
+    doc["preferredScaleSource"] = settings.getPreferredScaleSource();
     serializeJson(doc, *response);
     request->send(response);
 
@@ -582,7 +632,7 @@ void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
     JsonDocument doc;
     JsonArray scalesArray = doc.to<JsonArray>();
     std::vector<DiscoveredDevice> devices = BLEScales.getDiscoveredScales();
-    for (const DiscoveredDevice &device : BLEScales.getDiscoveredScales()) {
+    for (const DiscoveredDevice &device : devices) {
         JsonDocument scale;
         scale["uuid"] = device.getAddress().toString();
         scale["name"] = device.getName();

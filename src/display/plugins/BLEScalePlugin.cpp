@@ -52,6 +52,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     }
     
     this->controller = controller;
+    this->pluginManager = manager;
     this->pluginRegistry = RemoteScalesPluginRegistry::getInstance();
     
     // Apply scale plugins with error checking
@@ -196,6 +197,7 @@ void BLEScalePlugin::disconnect() {
         uuid = "";
         doConnect = false;
         reconnectionTries = 0;
+        lastWeight = 0.0f;
     }
 }
 
@@ -209,6 +211,7 @@ void BLEScalePlugin::onProcessStart() const {
         if (scale != nullptr && scale->isConnected()) {
             scale->tare();
         }
+        const_cast<BLEScalePlugin*>(this)->lastWeight = 0.0f;
     }
 }
 
@@ -309,6 +312,7 @@ void BLEScalePlugin::onMeasurement(float value) const {
     }
     
     // Safe to call controller method
+    lastWeight = value;
     controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::BLUETOOTH);
 }
 

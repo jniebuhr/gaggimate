@@ -69,6 +69,8 @@ class WebUIPlugin : public Plugin {
     bool apMode = false;
     bool serverRunning = false;
     String updateComponent = "";
+    float currentBluetoothWeight = 0.0f;
+    float currentHardwareWeight = 0.0f;
 };
 
 #endif // WEBUIPLUGIN_H

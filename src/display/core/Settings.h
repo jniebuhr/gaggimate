@@ -82,6 +82,7 @@ class Settings {
     int getFullTankDistance() const { return fullTankDistance; }
     float getScaleFactor1() const { return scaleFactor1; }
     float getScaleFactor2() const { return scaleFactor2; }
+    String getPreferredScaleSource() const { return preferredScaleSource; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -145,6 +146,7 @@ class Settings {
     void setEmptyTankDistance(int empty_tank_distance);
     void setFullTankDistance(int full_tank_distance);
     void setScaleFactors(float scale_factor_1, float scale_factor_2);
+    void setPreferredScaleSource(const String &scaleSource);
 
   private:
     Preferences preferences;
@@ -221,6 +223,9 @@ class Settings {
     // Hardware scale settings
     float scaleFactor1 = 0.0f;
     float scaleFactor2 = 0.0f;
+    
+    // Scale source preference ("hardware", "bluetooth")
+    String preferredScaleSource = "hardware";
 
     void doSave();
     xTaskHandle taskHandle;

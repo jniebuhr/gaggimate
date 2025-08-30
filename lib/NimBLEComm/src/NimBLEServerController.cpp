@@ -306,7 +306,6 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
             ESP_LOGV(LOG_TAG, "Received led control, %d: %d", channel, brightness);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(SCALE_TARE_UUID))) {
-        ESP_LOGV(LOG_TAG, "Received scale tare");
         if (scaleTareCallback != nullptr) {
             scaleTareCallback();
         }

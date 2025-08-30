@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 #define HX711_GAIN 128
-#define MAX_SCALE_GRAMS 1500.0f
+#define MAX_SCALE_GRAMS 750.0f
 #define MAX_WAIT_READ_MS 250
 #define MAX_STARTUP_WAIT_MS 1200
 
@@ -12,7 +12,7 @@ HardwareScale::HardwareScale(uint8_t data_pin1, uint8_t data_pin2, uint8_t clock
     const scale_reading_callback_t &reading_callback, 
     const scale_configuration_callback_t &config_callback)
     : _data_pin1(data_pin1), _data_pin2(data_pin2), _clock_pin(clock_pin),
-    _scale_factor1(1.0f), _scale_factor2(1.0f),
+    _scale_factor1(-2500.0f), _scale_factor2(2500.0f), _scale_factors_ready(false),
     _offset1(0.0f), _offset2(0.0f), _is_taring_or_calibrating(false),
     _reading_callback(reading_callback),
     _configuration_callback(config_callback),
@@ -25,7 +25,7 @@ void HardwareScale::setup() {
     pinMode(_data_pin2, INPUT);
     pinMode(_clock_pin, OUTPUT);
     digitalWrite(_clock_pin, LOW);
-    ESP_LOGV(LOG_TAG, "Initializing hardware scale on DATA: %d, CLOCK: %d", _data_pin, _clock_pin);
+    ESP_LOGV(LOG_TAG, "Initializing hardware scale on DATA1: %d, DATA2: %d, CLOCK: %d", _data_pin1, _data_pin2, _clock_pin);
     
     long start = millis();
     while (!isReady() && (millis() - start) < MAX_STARTUP_WAIT_MS) {
@@ -59,7 +59,11 @@ void HardwareScale::setup() {
     // ensure we setup an initial value for the scale factors in the BLE server
     _configuration_callback(_scale_factor1, _scale_factor2);
 
-    xTaskCreate(loopTask, "HardwareScale::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
+    // Add small delay to ensure system stability before starting scale task
+    delay(500);
+    
+    // Create task with lower priority (0 instead of 1) to not interfere with Bluetooth
+    xTaskCreate(loopTask, "HardwareScale::loop", configMINIMAL_STACK_SIZE * 3, this, 0, &taskHandle);
 }
 
 bool HardwareScale::isReady() { return digitalRead(_data_pin1) == LOW && digitalRead(_data_pin2) == LOW; }
@@ -71,7 +75,10 @@ HardwareScale::RawReading HardwareScale::readRaw() {
     // Ensure that the read process is not interrupted. The timing of the SCK signal is critical for the HX711.
     // If an interrupt occurs during the read, and the pulse time exceeds 60 microseconds, the HX711 may enter power-down mode.
     // This can lead to corrupted readings.
-    noInterrupts();
+    
+    // Use critical section with shorter blocking time
+    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+    portENTER_CRITICAL(&mux);
 
     // Read 24 bits
     for (int8_t i = 23; i >= 0; i--) {
@@ -91,7 +98,7 @@ HardwareScale::RawReading HardwareScale::readRaw() {
         delayMicroseconds(1);
     }
 
-    interrupts();
+    portEXIT_CRITICAL(&mux);
 
     // Convert to signed 24-bit
     if (value1 & 0x800000) {
@@ -117,23 +124,40 @@ float HardwareScale::getWeight() const {
 }
 
 void HardwareScale::loop() {
+    // Wait for scale factors to be properly set before starting weight calculations
+    // Use a reasonable timeout to prevent indefinite waiting
+    unsigned long startWait = millis();
+    const unsigned long SCALE_FACTOR_TIMEOUT_MS = 10000; // 10 seconds should be enough for BLE connection
+    
+    ESP_LOGV(LOG_TAG, "Waiting for scale factors from display controller...");
+    
+    while (!_scale_factors_ready) {
+        if (millis() - startWait > SCALE_FACTOR_TIMEOUT_MS) {
+            ESP_LOGW(LOG_TAG, "⚠️ Timeout waiting for scale factors after %lu ms, proceeding with defaults (readings will be inaccurate until calibrated)", SCALE_FACTOR_TIMEOUT_MS);
+            _scale_factors_ready = true; // Allow operation with default factors
+            break;
+        }
+        vTaskDelay(pdMS_TO_TICKS(250)); // Check every 250ms for scale factors
+    }
+    
     while (!isReady() || _is_taring_or_calibrating) {
         vTaskDelay(1);
     }
 
     _raw_weight = readRaw();
-    ESP_LOGI(LOG_TAG, "Raw Scale Reading: %ld, %ld", _raw_weight.value1, _raw_weight.value2);
+    ESP_LOGV(LOG_TAG, "Raw Scale Reading: %ld, %ld", _raw_weight.value1, _raw_weight.value2);
     float reading = convertRawToWeight(_raw_weight);
     _weight = 0.5f * reading + 0.5f * _weight;
     _weight = std::clamp(_weight, -1.0f * MAX_SCALE_GRAMS, MAX_SCALE_GRAMS);
-    ESP_LOGI(LOG_TAG, "Scale Reading: %0.2f, Smoothed Weight: %0.2f", reading, _weight);
+    ESP_LOGV(LOG_TAG, "Scale Reading: %0.2f, Smoothed Weight: %0.2f", reading, _weight);
     _reading_callback(_weight);
 }
 
 void HardwareScale::setScaleFactors(float scale_factor1, float scale_factor2) {
     _scale_factor1 = scale_factor1;
     _scale_factor2 = scale_factor2;
-    ESP_LOGI(LOG_TAG, "Set scale factors: %.3f, %.3f", _scale_factor1, _scale_factor2);
+    _scale_factors_ready = true;
+    ESP_LOGI(LOG_TAG, "✓ Scale factors received and applied: %.3f, %.3f - scale readings now calibrated", _scale_factor1, _scale_factor2);
 }
 
 void HardwareScale::tare() {
@@ -164,7 +188,7 @@ void HardwareScale::calibrateScale(uint8_t scale, float calibrationWeight) {
     value /= 10;
 
     if (scale == 0) {
-        _scale_factor1 = (static_cast<float>(value) - _offset1) / calibrationWeight; // 2225.767
+        _scale_factor1 = (static_cast<float>(value) - _offset1) / calibrationWeight; // t7
     } else if (scale == 1) {
         _scale_factor2 = (static_cast<float>(value) - _offset2) / calibrationWeight; // -2159.782
     }

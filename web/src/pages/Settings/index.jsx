@@ -1,10 +1,10 @@
 import { useQuery } from 'preact-fetching';
 import { Spinner } from '../../components/Spinner.jsx';
-import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef, useContext } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { timezones } from '../../config/zones.js';
 import { computed } from '@preact/signals';
-import { machine } from '../../services/ApiService.js';
+import { machine, ApiServiceContext } from '../../services/ApiService.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { setDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
 import { PluginCard } from './PluginCard.jsx';
@@ -12,16 +12,22 @@ import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
-const hwScale = computed(() => machine.value.capabilities.hardwareScale);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
+const hwScale = computed(() => machine.value.capabilities.hardwareScale);
 
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
+  const [calibrationWeight, setCalibrationWeight] = useState('');
+  const apiService = useContext(ApiServiceContext);
+  const status = computed(() => machine.value.status);
+  
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -102,6 +108,37 @@ export function Settings() {
       });
     };
   };
+
+  // Calibration helper functions
+  const tareScale = useCallback(() => {
+    apiService.send({
+      tp: 'req:scale:tare',
+    });
+  }, [apiService]);
+
+  const calibrateLoadCell = useCallback((cellNumber) => {
+    const currentWeight = status.value?.currentWeight;
+    const actualWeight = parseFloat(calibrationWeight);
+    
+    if (!currentWeight || !actualWeight || actualWeight <= 0) {
+      alert('Please ensure the scale is showing a weight and enter a valid calibration weight.');
+      return;
+    }
+
+    // Calculate new scale factor using the formula: Scale_Factor_New = (Current_Weight * Factor_Old) / Actual_Weight_Of_Calibration_Object
+    const currentFactor = cellNumber === 1 ? parseFloat(formData.scaleFactor1) || 1 : parseFloat(formData.scaleFactor2) || 1;
+    const newFactor = (currentWeight * currentFactor) / actualWeight;
+    
+    // Update the appropriate scale factor in the form
+    if (cellNumber === 1) {
+      setFormData(prev => ({ ...prev, scaleFactor1: newFactor.toFixed(2) }));
+    } else {
+      setFormData(prev => ({ ...prev, scaleFactor2: newFactor.toFixed(2) }));
+    }
+    
+    // Clear the calibration weight input
+    setCalibrationWeight('');
+  }, [status, calibrationWeight, formData.scaleFactor1, formData.scaleFactor2, setFormData]);
 
   const onSubmit = useCallback(
     async (e, restart = false) => {
@@ -617,375 +654,330 @@ export function Settings() {
               </label>
             </div>
 
-        <div>
-          <label htmlFor="standbyBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
-            Standby Brightness (0-16)
-          </label>
-          <input
-            id="standbyBrightness"
-            name="standbyBrightness"
-            type="number"
-            className="input-field"
-            placeholder="8"
-            min="0"
-            max="16"
-            value={formData.standbyBrightness}
-            onChange={onChange('standbyBrightness')}
-            disabled={!formData.standbyDisplayEnabled}
-          />
-        </div>
-        <div>
-          <label htmlFor="standbyBrightnessTimeout" className="block font-medium text-gray-700 dark:text-gray-400">
-            Standby Brightness Timeout (seconds)
-          </label>
-          <input
-            id="standbyBrightnessTimeout"
-            name="standbyBrightnessTimeout"
-            type="number"
-            className="input-field"
-            placeholder="60"
-            min="1"
-            value={formData.standbyBrightnessTimeout}
-            onChange={onChange('standbyBrightnessTimeout')}
-          />
-        </div>
-        <div>
-          <label htmlFor="themeMode" className="block font-medium text-gray-700 dark:text-gray-400">
-            Theme
-          </label>
-          <select
-            id="themeMode"
-            name="themeMode"
-            className="input-field"
-            value={formData.themeMode}
-            onChange={onChange('themeMode')}
-          >
-            <option value={0}>Dark Theme</option>
-            <option value={1}>Light Theme</option>
-          </select>
-        </div>
-      </Card>
-      {ledControl.value && (
-        <Card xs={12} lg={6} title="Sunrise Settings">
-          <div>
-            <span>Set the colors for the LEDs when in idle mode with no warnings.</span>
-          </div>
-          <div className="flex flex-row gap-2">
-            <div className="flex-auto">
-              <label htmlFor="sunriseR" className="block font-medium text-gray-700 dark:text-gray-400">
-                Red (0 - 255)
+            <div className='form-control'>
+              <label htmlFor='standbyBrightness' className='mb-2 block text-sm font-medium'>
+                Standby Brightness (0-16)
               </label>
               <input
-                id="sunriseR"
-                name="sunriseR"
-                type="number"
-                className="input-field"
-                placeholder="16"
-                min="0"
-                max="255"
-                value={formData.sunriseR}
-                onChange={onChange('sunriseR')}
+                id='standbyBrightness'
+                name='standbyBrightness'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='8'
+                min='0'
+                max='16'
+                value={formData.standbyBrightness}
+                onChange={onChange('standbyBrightness')}
+                disabled={!formData.standbyDisplayEnabled}
               />
             </div>
-            <div className="flex-auto">
-              <label htmlFor="sunriseG" className="block font-medium text-gray-700 dark:text-gray-400">
-                Green (0 - 255)
+
+            <div className='form-control'>
+              <label htmlFor='standbyBrightnessTimeout' className='mb-2 block text-sm font-medium'>
+                Standby Brightness Timeout (seconds)
               </label>
               <input
-                id="sunriseG"
-                name="sunriseG"
-                type="number"
-                className="input-field"
-                placeholder="16"
-                min="0"
-                max="255"
-                value={formData.sunriseG}
-                onChange={onChange('sunriseG')}
+                id='standbyBrightnessTimeout'
+                name='standbyBrightnessTimeout'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='60'
+                min='1'
+                value={formData.standbyBrightnessTimeout}
+                onChange={onChange('standbyBrightnessTimeout')}
               />
             </div>
-          </div>
-          <div className="flex flex-row gap-2">
-            <div className="flex-auto">
-              <label htmlFor="sunriseB" className="block font-medium text-gray-700 dark:text-gray-400">
-                Blue (0 - 255)
+
+            <div className='form-control'>
+              <label htmlFor='themeMode' className='mb-2 block text-sm font-medium'>
+                Theme
               </label>
-              <input
-                id="sunriseB"
-                name="sunriseB"
-                type="number"
-                className="input-field"
-                placeholder="16"
-                min="0"
-                max="255"
-                value={formData.sunriseB}
-                onChange={onChange('sunriseB')}
-              />
+              <select
+                id='themeMode'
+                name='themeMode'
+                className='select select-bordered w-full'
+                value={formData.themeMode}
+                onChange={onChange('themeMode')}
+              >
+                <option value={0}>Dark Theme</option>
+                <option value={1}>Light Theme</option>
+              </select>
             </div>
-            <div className="flex-auto">
-              <label htmlFor="sunriseW" className="block font-medium text-gray-700 dark:text-gray-400">
-                White (0 - 255)
-              </label>
-              <input
-                id="sunriseW"
-                name="sunriseW"
-                type="number"
-                className="input-field"
-                placeholder="16"
-                min="0"
-                max="255"
-                value={formData.sunriseW}
-                onChange={onChange('sunriseW')}
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="sunriseExtBrightness" className="block font-medium text-gray-700 dark:text-gray-400">
-              External LED (0 - 255)
-            </label>
-            <input
-              id="sunriseExtBrightness"
-              name="sunriseExtBrightness"
-              type="number"
-              className="input-field"
-              placeholder="16"
-              min="0"
-              max="255"
-              value={formData.sunriseExtBrightness}
-              onChange={onChange('sunriseExtBrightness')}
-            />
-          </div>
-          <div>
-            <label htmlFor="emptyTankDistance" className="block font-medium text-gray-700 dark:text-gray-400">
-              Distance from sensor to bottom of the tank
-            </label>
-            <input
-              id="emptyTankDistance"
-              name="emptyTankDistance"
-              type="number"
-              className="input-field"
-              placeholder="16"
-              min="0"
-              max="1000"
-              value={formData.emptyTankDistance}
-              onChange={onChange('emptyTankDistance')}
-            />
-          </div>
-          <div>
-            <label htmlFor="fullTankDistance" className="block font-medium text-gray-700 dark:text-gray-400">
-              Distance from sensor to the fill line
-            </label>
-            <input
-              id="fullTankDistance"
-              name="fullTankDistance"
-              type="number"
-              className="input-field"
-              placeholder="16"
-              min="0"
-              max="1000"
-              value={formData.fullTankDistance}
-              onChange={onChange('fullTankDistance')}
-            />
-          </div>
-        </Card>
-      )}
-      {hwScale.value && (
-        <Card xs={12} lg={6} title="Hardware Scale Settings">
-          <div>
-            <span>Set the calibration factors for the hardware scale</span>
-          </div>
-          <div>
-            <label htmlFor="scaleFactor1" className="block font-medium text-gray-700 dark:text-gray-400">
-              Load Cell 1 Scale Factor
-            </label>
-            <input
-              id="scaleFactor1"
-              name="scaleFactor1"
-              type="number"
-              className="input-field"
-              placeholder="200.00"
-              min="-50000.00"
-              max="50000.00"
-              step="0.01"
-              value={formData.scaleFactor1}
-              onChange={onChange('scaleFactor1')}
-            />
-          </div>
-          <div>
-            <label htmlFor="scaleFactor2" className="block font-medium text-gray-700 dark:text-gray-400">
-              Load Cell 2 Scale Factor
-            </label>
-            <input
-              id="scaleFactor2"
-              name="scaleFactor2"
-              type="number"
-              className="input-field"
-              placeholder="200.00"
-              min="-50000.00"
-              max="50000.00"
-              step="0.01"
-              value={formData.scaleFactor2}
-              onChange={onChange('scaleFactor2')}
-            />
-          </div>
-        </Card>
-      )}
-      <Card xs={12} title="Plugins">
-        <div className="flex flex-col rounded-lg divide-y divide-[#ccc] border-[#ccc] dark:border-gray-600 dark:divide-gray-600 border">
-          <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                id="homekit"
-                name="homekit"
-                value="homekit"
-                type="checkbox"
-                className="sr-only peer"
-                checked={!!formData.homekit}
-                onChange={onChange('homekit')}
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-            <p>Homekit</p>
-          </div>
-          {formData.homekit && (
-            <div className="p-4 flex flex-col gap-4 items-center justify-center">
-              <img src={homekitImage} alt="Homekit Setup Code" />
-              <p>Open the Homekit App, find your GaggiMate device and scan the setup code above to add it.</p>
-            </div>
-          )}
-          <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                id="boilerFillActive"
-                name="boilerFillActive"
-                value="boilerFillActive"
-                type="checkbox"
-                className="sr-only peer"
-                checked={!!formData.boilerFillActive}
-                onChange={onChange('boilerFillActive')}
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-            <p>Boiler Refill Plugin</p>
-          </div>
-          {formData.boilerFillActive && (
-            <div className="p-4 flex flex-row gap-4">
-              <div className="flex-auto">
-                <label htmlFor="startupFillTime" className="block font-medium text-gray-700 dark:text-gray-400">
-                  On startup (s)
+          </Card>
+
+          {ledControl.value && (
+            <Card sm={10} lg={5} title='Sunrise Settings'>
+              <div className='mb-2 text-sm opacity-70'>
+                Set the colors for the LEDs when in idle mode with no warnings.
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='form-control'>
+                  <label htmlFor='sunriseR' className='mb-2 block text-sm font-medium'>
+                    Red (0 - 255)
+                  </label>
+                  <input
+                    id='sunriseR'
+                    name='sunriseR'
+                    type='number'
+                    className='input input-bordered w-full'
+                    placeholder='16'
+                    min='0'
+                    max='255'
+                    value={formData.sunriseR}
+                    onChange={onChange('sunriseR')}
+                  />
+                </div>
+                <div className='form-control'>
+                  <label htmlFor='sunriseG' className='mb-2 block text-sm font-medium'>
+                    Green (0 - 255)
+                  </label>
+                  <input
+                    id='sunriseG'
+                    name='sunriseG'
+                    type='number'
+                    className='input input-bordered w-full'
+                    placeholder='16'
+                    min='0'
+                    max='255'
+                    value={formData.sunriseG}
+                    onChange={onChange('sunriseG')}
+                  />
+                </div>
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='form-control'>
+                  <label htmlFor='sunriseB' className='mb-2 block text-sm font-medium'>
+                    Blue (0 - 255)
+                  </label>
+                  <input
+                    id='sunriseB'
+                    name='sunriseB'
+                    type='number'
+                    className='input input-bordered w-full'
+                    placeholder='16'
+                    min='0'
+                    max='255'
+                    value={formData.sunriseB}
+                    onChange={onChange('sunriseB')}
+                  />
+                </div>
+                <div className='form-control'>
+                  <label htmlFor='sunriseW' className='mb-2 block text-sm font-medium'>
+                    White (0 - 255)
+                  </label>
+                  <input
+                    id='sunriseW'
+                    name='sunriseW'
+                    type='number'
+                    className='input input-bordered w-full'
+                    placeholder='16'
+                    min='0'
+                    max='255'
+                    value={formData.sunriseW}
+                    onChange={onChange('sunriseW')}
+                  />
+                </div>
+              </div>
+
+              <div className='form-control'>
+                <label htmlFor='sunriseExtBrightness' className='mb-2 block text-sm font-medium'>
+                  External LED (0 - 255)
                 </label>
                 <input
-                  id="startupFillTime"
-                  name="startupFillTime"
-                  type="number"
-                  className="input-field"
-                  placeholder="0"
-                  value={formData.startupFillTime}
-                  onChange={onChange('startupFillTime')}
+                  id='sunriseExtBrightness'
+                  name='sunriseExtBrightness'
+                  type='number'
+                  className='input input-bordered w-full'
+                  placeholder='16'
+                  min='0'
+                  max='255'
+                  value={formData.sunriseExtBrightness}
+                  onChange={onChange('sunriseExtBrightness')}
                 />
               </div>
-              <div className="flex-auto">
-                <label htmlFor="infuseBloomTime" className="block font-medium text-gray-700 dark:text-gray-400">
-                  On steam deactivate (s)
+
+              <div className='form-control'>
+                <label htmlFor='emptyTankDistance' className='mb-2 block text-sm font-medium'>
+                  Distance from sensor to bottom of the tank
                 </label>
                 <input
-                  id="steamFillTime"
-                  name="steamFillTime"
-                  type="number"
-                  className="input-field"
-                  placeholder="0"
-                  value={formData.steamFillTime}
-                  onChange={onChange('steamFillTime')}
+                  id='emptyTankDistance'
+                  name='emptyTankDistance'
+                  type='number'
+                  className='input input-bordered w-full'
+                  placeholder='16'
+                  min='0'
+                  max='1000'
+                  value={formData.emptyTankDistance}
+                  onChange={onChange('emptyTankDistance')}
                 />
               </div>
-            </div>
-          )}
-          <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                id="smartGrindActive"
-                name="smartGrindActive"
-                value="smartGrindActive"
-                type="checkbox"
-                className="sr-only peer"
-                checked={!!formData.smartGrindActive}
-                onChange={onChange('smartGrindActive')}
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-            <p>Smart Grind Plugin</p>
-          </div>
-          {formData.smartGrindActive && (
-            <div className="p-4 flex flex-col gap-4">
-              <p className="flex-auto">
-                This feature controls a Tasmota Plug to turn off your grinder after the target has been reached.
-              </p>
-              <div className="flex-auto">
-                <label htmlFor="smartGrindIp" className="block font-medium text-gray-700 dark:text-gray-400">
-                  Tasmota IP
+
+              <div className='form-control'>
+                <label htmlFor='fullTankDistance' className='mb-2 block text-sm font-medium'>
+                  Distance from sensor to the fill line
                 </label>
                 <input
-                  id="smartGrindIp"
-                  name="smartGrindIp"
-                  type="text"
-                  className="input-field"
-                  placeholder="0"
-                  value={formData.smartGrindIp}
-                  onChange={onChange('smartGrindIp')}
+                  id='fullTankDistance'
+                  name='fullTankDistance'
+                  type='number'
+                  className='input input-bordered w-full'
+                  placeholder='16'
+                  min='0'
+                  max='1000'
+                  value={formData.fullTankDistance}
+                  onChange={onChange('fullTankDistance')}
                 />
               </div>
-              <div className="flex-auto">
-                <label htmlFor="smartGrindMode" className="block font-medium text-gray-700 dark:text-gray-400">
-                  Mode
-                </label>
-                <select id="smartGrindMode" name="smartGrindMode" className="input-field" onChange={onChange('smartGrindMode')}>
-                  <option value="0" selected={formData.smartGrindMode?.toString() === '0'}>
-                    Turn off at target
-                  </option>
-                  <option value="1" selected={formData.smartGrindMode?.toString() === '1'}>
-                    Toggle off and on at target
-                  </option>
-                  <option value="2" selected={formData.smartGrindMode?.toString() === '2'}>
-                    Turn on at start, off at target
-                  </option>
-                </select>
-              </div>
-            </div>
+            </Card>
           )}
 
-          <div className="flex flex-row w-full gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                id="homeAssistant"
-                name="homeAssistant"
-                value="homeAssistant"
-                type="checkbox"
-                className="sr-only peer"
-                checked={!!formData.homeAssistant}
-                onChange={onChange('homeAssistant')}
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-            <p>Home Assistant (MQTT)</p>
-          </div>
-          {formData.homeAssistant && (
-            <div className="p-4 flex flex-col gap-4">
-              <p className="flex-auto">
-                This feature allows connection to a Home Assistant or MQTT installation and push the current state.
-              </p>
-              <div className="flex-auto">
-                <label htmlFor="haIP" className="block font-medium text-gray-700 dark:text-gray-400">
-                  MQTT IP
-                </label>
-                <input
-                  id="haIP"
-                  name="haIP"
-                  type="text"
-                  className="input-field"
-                  placeholder="0"
-                  value={formData.haIP}
-                  onChange={onChange('haIP')}
-                />
-              </div>
+          <Card sm={10} lg={5} title='Scales'>
+            <div className='mb-2 text-sm opacity-70'>
+              Choose which scale to use when both hardware and Bluetooth scales are available
+            </div>
+            
+            <div className='form-control'>
+              <label htmlFor='preferredScaleSource' className='mb-2 block text-sm font-medium'>
+                Preferred Scale Source
+              </label>
+              <select
+                id='preferredScaleSource'
+                name='preferredScaleSource'
+                className='select select-bordered w-full'
+                value={formData.preferredScaleSource || 'hardware'}
+                onChange={onChange('preferredScaleSource')}
+              >
+                <option value='hardware'>Prefer Hardware Scale (Built-in)</option>
+                <option value='bluetooth'>Prefer Bluetooth Scale</option>
+              </select>
+            </div>
+            
+            <div className='mt-2 text-xs opacity-60'>
+              Note: Grinding by weight will always use Bluetooth scale regardless of this setting
+            </div>
+
+            {/* Hardware Scale Calibration */}
+            {hwScale.value && (
+              <>
+                <div className='divider'>Hardware Scale Calibration</div>
+                <div className='mb-4 text-sm opacity-70'>
+                  Use this tool to calibrate your load cells with a known weight object.
+                </div>
+                
+                {/* Current Weight Display */}
+                <div className='form-control'>
+                  <label className='mb-2 block text-sm font-medium'>Current Weight</label>
+                  <div className='flex items-center justify-between rounded-lg border border-base-300 bg-base-100 p-3'>
+                    <div className='flex items-center space-x-2'>
+                      <FontAwesomeIcon icon={faWeightScale} className='text-primary' />
+                      <span className='text-2xl font-bold'>
+                        {status.value?.currentWeight?.toFixed(1) || '0.0'}g
+                      </span>
+                    </div>
+                    <button
+                      type='button'
+                      className='btn btn-outline btn-sm'
+                      onClick={tareScale}
+                    >
+                      Tare
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Calibration Weight Input */}
+                <div className='form-control'>
+                  <label className='mb-2 block text-sm font-medium'>
+                    Actual Weight of Calibration Object
+                  </label>
+                  <div className='flex items-center space-x-3'>
+                    <input
+                      type='number'
+                      className='input input-bordered flex-1'
+                      placeholder='100.0'
+                      min='0.1'
+                      step='0.1'
+                      value={calibrationWeight}
+                      onChange={(e) => setCalibrationWeight(e.target.value)}
+                    />
+                    <span className='text-sm opacity-70'>grams</span>
+                  </div>
+                </div>
+                
+                {/* Calibration Buttons */}
+                <div className='grid grid-cols-2 gap-4'>
+                  <button
+                    type='button'
+                    className='btn btn-primary btn-sm'
+                    onClick={() => calibrateLoadCell(1)}
+                    disabled={!status.value?.currentWeight || !calibrationWeight}
+                  >
+                    Calibrate Load Cell 1
+                  </button>
+                  <button
+                    type='button'
+                    className='btn btn-primary btn-sm'
+                    onClick={() => calibrateLoadCell(2)}
+                    disabled={!status.value?.currentWeight || !calibrationWeight}
+                  >
+                    Calibrate Load Cell 2
+                  </button>
+                </div>
+                
+                <div className='text-xs opacity-60'>
+                  Tare the scale.Place a known weight on one load cell, enter its actual weight above, then click the appropriate load cell calibration button. Repeat for the other load cell.
+                </div>
+                
+                <div className='divider'>Manual Scale Factors</div>
+                <div className='mb-2 text-sm opacity-70'>
+                  Or manually set the calibration factors for the hardware scale
+                </div>
+                
+                <div className='form-control mb-3'>
+                  <label htmlFor='scaleFactor1' className='mb-2 block text-sm font-medium'>
+                    Load Cell 1 Scale Factor
+                  </label>
+                  <input
+                    id='scaleFactor1'
+                    name='scaleFactor1'
+                    type='number'
+                    className='input input-bordered w-full'
+                    placeholder='-2500.00'
+                    min='-50000.00'
+                    max='50000.00'
+                    step='0.01'
+                    value={formData.scaleFactor1}
+                    onChange={onChange('scaleFactor1')}
+                  />
+                </div>
+                
+                <div className='form-control'>
+                  <label htmlFor='scaleFactor2' className='mb-2 block text-sm font-medium'>
+                    Load Cell 2 Scale Factor
+                  </label>
+                  <input
+                    id='scaleFactor2'
+                    name='scaleFactor2'
+                    type='number'
+                    className='input input-bordered w-full'
+                    placeholder='2500.00'
+                    min='-50000.00'
+                    max='50000.00'
+                    step='0.01'
+                    value={formData.scaleFactor2}
+                    onChange={onChange('scaleFactor2')}
+                  />
+                </div>
+              </>
+            )}
+          </Card>
+
+          <Card sm={10} title='Plugins'>
+            <PluginCard formData={formData} onChange={onChange} />
+          </Card>
+        </div>
 
         <div className='pt-4 lg:col-span-10'>
           <div className='alert alert-warning'>

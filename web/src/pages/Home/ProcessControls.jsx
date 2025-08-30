@@ -14,6 +14,7 @@ import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 
 const status = computed(() => machine.value.status);
+const capabilities = computed(() => machine.value.capabilities);
 
 const zeroPad = (num, places) => String(num).padStart(places, '0');
 
@@ -113,6 +114,12 @@ const ProcessControls = props => {
     });
   }, [apiService]);
 
+  const tareScale = useCallback(() => {
+    apiService.send({
+      tp: 'req:scale:tare',
+    });
+  }, [apiService]);
+
   const startFlush = useCallback(() => {
     setIsFlushing(true);
     apiService
@@ -185,6 +192,31 @@ const ProcessControls = props => {
             / {status.value.targetTemperature || 0}°C
           </span>
         </div>
+        
+        {/* Single unified weight display based on active scale source */}
+        {status.value.currentWeight !== undefined && (
+          <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
+            <button 
+              className='text-base-content/60 hover:text-base-content transition-colors p-1' 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                tareScale();
+              }} 
+              title='Tare scale'
+              type='button'
+            >
+              <FontAwesomeIcon icon={faWeightScale} />
+            </button>
+            <span className='text-base-content'>{status.value.currentWeight?.toFixed(1) || 0.0}g</span>
+            {isWeightTarget && (
+              <span className='text-success font-semibold'>
+                {' '}
+                / {brewTarget?.toFixed(0)}g
+              </span>
+            )}
+          </div>
+        )}        
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
           <FontAwesomeIcon icon={faGauge} className='text-base-content/60' />
           <span className='text-base-content'>

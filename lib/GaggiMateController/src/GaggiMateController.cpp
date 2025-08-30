@@ -42,22 +42,13 @@ void GaggiMateController::setup() {
     this->hardwareScale = new HardwareScale(_config.scaleSdaPin, _config.scaleSda1Pin, _config.scaleSclPin,
                                               [this](float weight) { _ble.sendScaleMeasurement(weight); },
                                               [this](float scaleFactor1, float scaleFactor2) { _ble.sendScaleCalibration(scaleFactor1, scaleFactor2); });
-    this->hardwareScale->setup();
-    if (this->hardwareScale->isAvailable()) {
-        _config.capabilites.hwScale = true;
-        _ble.registerScaleTareCallback([this]() {
-            this->hardwareScale->tare();
-        });
+    
 
-        _ble.registerScaleCalibrationCallback([this](float scaleFactor1, float scaleFactor2) {
-            this->hardwareScale->setScaleFactors(scaleFactor1, scaleFactor2);
-        });
-        _ble.registerScaleCalibrateCallback([this](uint8_t scale, float calibration_weight) {
-            this->hardwareScale->calibrateScale(scale, calibration_weight);
-        });
-    }
 // 5-Pin peripheral port
+
     Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000);
+    
+    
     this->ledController = new LedController(&Wire);
     this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _ble.sendTofMeasurement(distance); });
     if (this->ledController->isAvailable()) {
@@ -90,6 +81,25 @@ void GaggiMateController::setup() {
 
     // Initialize last ping time
     lastPingTime = millis();
+
+    // Now setup hardware scale after BLE is initialized to avoid interference
+
+    this->hardwareScale->setup();
+    if (this->hardwareScale->isAvailable()) {
+        _config.capabilites.hwScale = true;
+        ESP_LOGI(LOG_TAG, "Hardware scales available");
+        _ble.registerScaleTareCallback([this]() {
+            this->hardwareScale->tare();
+        });
+
+        _ble.registerScaleCalibrationCallback([this](float scaleFactor1, float scaleFactor2) {
+            this->hardwareScale->setScaleFactors(scaleFactor1, scaleFactor2);
+        });
+        _ble.registerScaleCalibrateCallback([this](uint8_t scale, float calibration_weight) {
+            this->hardwareScale->calibrateScale(scale, calibration_weight);
+        });
+    }
+
 
     _ble.registerOutputControlCallback([this](bool valve, float pumpSetpoint, float heaterSetpoint) {
         this->pump->setPower(pumpSetpoint);

@@ -101,6 +101,13 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
+    pluginManager->on("controller:volumetric-measurement:active:change", [=](Event const &event) {
+        double newWeight = event.getFloat("value");
+        if (round(newWeight * 10.0) != round(currentWeight * 10.0)) {
+            currentWeight = newWeight;
+            rerender = true;
+        }
+    });    
     pluginManager->on("controller:grindDuration:change", [=](Event const &event) {
         grindDuration = event.getInt("value");
         rerender = true;
@@ -445,6 +452,7 @@ void DefaultUI::setupReactive() {
                               lv_label_set_text_fmt(uic_ProfileScreen_dials_pressureText, "%.1f bar", pressure);
                           },
                           &pressure);
+
     effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
                           [=]() {
                               updateAvailable ? lv_obj_clear_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN)

@@ -34,6 +34,7 @@ class HardwareScale {
 
     private:
         bool is_initialized;
+        bool _scale_factors_ready;
         uint8_t _data_pin1;
         uint8_t _data_pin2;
         uint8_t _clock_pin;

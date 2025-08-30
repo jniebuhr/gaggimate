@@ -46,13 +46,6 @@ function getChartData(data) {
           pointStyle: false,
           yAxisID: 'y1',
           data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentFlow })),
-        },
-        {
-          label: 'Current Weight',
-          borderColor: '#A0522D',
-          pointStyle: false,
-          yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: i.timestamp.toISOString(), y: i.currentWeight })),
         }
       ],
     },

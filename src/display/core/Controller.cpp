@@ -51,7 +51,7 @@ void Controller::setup() {
     }
     pluginManager->registerPlugin(new WebUIPlugin());
     pluginManager->registerPlugin(&ShotHistory);
-    // pluginManager->registerPlugin(&BLEScales);
+    pluginManager->registerPlugin(&BLEScales);
     pluginManager->registerPlugin(&HardwareScales);
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->setup(this);
@@ -313,6 +313,16 @@ bool Controller::isAutotuning() const { return autotuning; }
 bool Controller::isReady() const { return !isUpdating() && !isErrorState() && !isAutotuning(); }
 
 bool Controller::isVolumetricAvailable() const {
+    // Check if hardware scale is available
+    if (systemInfo.capabilities.hwScale) {
+        return true;
+    }
+    
+    // Check if BLE scale is connected
+    if (BLEScales.isConnected()) {
+        return true;
+    }
+    
 #ifdef NIGHTLY_BUILD
     return isBluetoothScaleHealthy() || systemInfo.capabilities.dimming;
 #else
@@ -530,11 +540,6 @@ void Controller::activate() {
     clear();
     clientController.tare();
     if (isVolumetricAvailable()) {
-#ifdef NIGHTLY_BUILD
-        currentVolumetricSource = isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::FLOW_ESTIMATION;
-#else
-        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
-#endif
         pluginManager->trigger("controller:brew:prestart");
     }
     delay(200);
@@ -641,23 +646,50 @@ void Controller::onOTAUpdate() {
 }
 
 void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
-    pluginManager->trigger(source == VolumetricMeasurementSource::FLOW_ESTIMATION
-                               ? F("controller:volumetric-measurement:estimation:change")
-                               : F("controller:volumetric-measurement:bluetooth:change"),
-                           "value", static_cast<float>(measurement));
-    if (source == VolumetricMeasurementSource::BLUETOOTH) {
-        lastBluetoothMeasurement = millis();
+    // Determine which events to trigger based on source
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+        pluginManager->trigger(F("controller:volumetric-measurement:estimation:change"), "value", static_cast<float>(measurement));
+    } else if (source == VolumetricMeasurementSource::BLUETOOTH) {
+        pluginManager->trigger(F("controller:volumetric-measurement:bluetooth:change"), "value", static_cast<float>(measurement));
+    } else if (source == VolumetricMeasurementSource::HARDWARE) {
+        pluginManager->trigger(F("controller:volumetric-measurement:hardware:change"), "value", static_cast<float>(measurement));
     }
-
-    if (currentVolumetricSource != source) {
-        ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
+    
+    // Get the active scale source preference
+    VolumetricMeasurementSource activeSource = getActiveScaleSource();
+    
+    // Trigger unified event if this measurement is from the active source
+    if (source == activeSource) {
+        pluginManager->trigger(F("controller:volumetric-measurement:active:change"), "value", static_cast<float>(measurement));
+    }
+    
+    // For grind mode, always use Bluetooth scale if available, otherwise fall back to active source
+    if (getMode() == MODE_GRIND) {
+        if (source == VolumetricMeasurementSource::BLUETOOTH) {
+            // Use Bluetooth scale for grinding
+            if (currentProcess != nullptr) {
+                currentProcess->updateVolume(measurement);
+            }
+            if (lastProcess != nullptr) {
+                lastProcess->updateVolume(measurement);
+            }
+        }
         return;
     }
-    if (currentProcess != nullptr) {
-        currentProcess->updateVolume(measurement);
+    
+    // For brewing, use the preferred scale source
+    if (source == activeSource) {
+        if (currentProcess != nullptr) {
+            currentProcess->updateVolume(measurement);
+        }
+        if (lastProcess != nullptr) {
+            lastProcess->updateVolume(measurement);
+        }
     }
-    if (lastProcess != nullptr) {
-        lastProcess->updateVolume(measurement);
+    
+    // Ignore flow estimation if we have a scale override
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION && volumetricOverride) {
+        return;
     }
 }
 
@@ -673,6 +705,26 @@ void Controller::onFlush() {
     clear();
     startProcess(new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay()));
     pluginManager->trigger("controller:brew:start");
+}
+
+VolumetricMeasurementSource Controller::getActiveScaleSource() const {
+    String preference = settings.getPreferredScaleSource();
+    
+    if (preference == "hardware" && systemInfo.capabilities.hwScale) {
+        return VolumetricMeasurementSource::HARDWARE;
+    } else if (preference == "bluetooth" && BLEScales.isConnected()) {
+        return VolumetricMeasurementSource::BLUETOOTH;
+    }
+    
+    // Fallback logic when preferred source isn't available
+    if (systemInfo.capabilities.hwScale) {
+        return VolumetricMeasurementSource::HARDWARE;
+    } else if (BLEScales.isConnected()) {
+        return VolumetricMeasurementSource::BLUETOOTH;
+    }
+    
+    // Final fallback to flow estimation if no scales are available
+    return VolumetricMeasurementSource::FLOW_ESTIMATION;
 }
 
 void Controller::handleBrewButton(int brewButtonStatus) {

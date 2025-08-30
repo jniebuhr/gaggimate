@@ -49,8 +49,8 @@ void ShotHistoryPlugin::record() {
                      controller->getCurrentPumpFlow(),
                      controller->getTargetFlow(),
                      controller->getCurrentPuckFlow(),
-                     currentBluetoothFlow,
-                     currentBluetoothWeight,
+                     currentActiveFlow,
+                     currentActiveWeight,
                      currentEstimatedWeight,
                      currentPuckResistance};
         if (isFileOpen) {
@@ -77,9 +77,9 @@ void ShotHistoryPlugin::startRecording() {
         currentId = "0" + currentId;
     }
     shotStart = millis();
-    currentBluetoothWeight = 0.0f;
+    currentActiveWeight = 0.0f;        // Changed from currentBluetoothWeight
     currentEstimatedWeight = 0.0f;
-    currentBluetoothFlow = 0.0f;
+    currentActiveFlow = 0.0f;          // Changed from currentBluetoothFlow
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
     headerWritten = false;
