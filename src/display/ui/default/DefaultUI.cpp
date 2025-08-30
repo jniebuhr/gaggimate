@@ -748,6 +748,10 @@ void DefaultUI::applyTheme() {
     if (newThemeMode != currentThemeMode) {
         currentThemeMode = newThemeMode;
         ui_theme_set(currentThemeMode);
+
+        if(LilyGoTDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
+            enable_amoled_black_theme_override(lv_disp_get_default());
+        }
     }
 }
 
