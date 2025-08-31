@@ -322,14 +322,14 @@ export function Settings() {
               />
             </div>
 
-            <div className='divider'>Auto Warmup Schedule</div>
+            <div className='divider'>Auto Wakeup Schedule</div>
             <div className='mb-2 text-sm opacity-70'>
-              Automatically switch to brew mode at specific time(s) of day. 
+              Automatically switch to brew mode at specified time(s) of day. 
             </div>
 
             <div className='form-control'>
               <label className='label cursor-pointer'>
-                <span className='label-text'>Enable Auto Warmup</span>
+                <span className='label-text'>Enable Auto Wakeup</span>
                 <input
                   id='autowakeupEnabled'
                   name='autowakeupEnabled'
@@ -352,7 +352,7 @@ export function Settings() {
                     {/* Time input */}
                     <input
                       type='time'
-                      className='input input-bordered input-sm w-auto min-w-0'
+                      className='input input-bordered input-sm w-auto min-w-0 pr-6'
                       value={schedule.time}
                       onChange={(e) => updateAutoWakeupTime(scheduleIndex, e.target.value)}
                       disabled={!formData.autowakeupEnabled}
