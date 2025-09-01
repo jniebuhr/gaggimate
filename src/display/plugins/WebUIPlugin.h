@@ -19,9 +19,6 @@ constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 5 * 1000;
 constexpr size_t STATUS_PERIOD = 500;
 constexpr size_t DNS_PERIOD = 10;
-constexpr size_t CRASH_LOG_MAX_SIZE = 32 * 1024; // 32KB max crash log file
-constexpr size_t CRASH_LOG_TRIM_SIZE = 16 * 1024; // Trim to 16KB when max exceeded
-const String CRASH_LOG_PATH = "/crashlog.json";
 
 const String LOCAL_URL = "http://4.4.4.1/";
 const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
@@ -58,16 +55,8 @@ class WebUIPlugin : public Plugin {
     void updateOTAProgress(uint8_t phase, int progress);
     void sendAutotuneResult();
 
-    // Crash logging
-    void setupCrashHandler();
-    void logCrash(const String &crashInfo);
-    void logDetailedCrash(const String &panicReason, const String &registers, const String &backtrace);
-    void handleCrashLogDownload(AsyncWebServerRequest *request);
+    // Core dump download
     void handleCoreDumpDownload(AsyncWebServerRequest *request);
-    void trimCrashLog();
-    void checkForCrashOnStartup();
-    String extractCrashInfoFromCoreDump(size_t coreAddr, size_t coreSize);
-    static void crashHandler(void *data);
 
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
