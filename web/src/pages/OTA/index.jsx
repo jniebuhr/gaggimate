@@ -10,6 +10,14 @@ export function OTA() {
   const [formData, setFormData] = useState({});
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
+  
+  const downloadCrashLog = useCallback(() => {
+    window.open('/api/crash-log', '_blank');
+  }, []);
+  
+  const downloadCoreDump = useCallback(() => {
+    window.open('/api/core-dump', '_blank');
+  }, []);
   useEffect(() => {
     const listenerId = apiService.on('res:ota-settings', msg => {
       setFormData(msg);
@@ -172,6 +180,20 @@ export function OTA() {
               onClick={() => onUpdate('controller')}
             >
               Update Controller
+            </button>
+            <button
+              type='button'
+              className='btn btn-outline'
+              onClick={downloadCrashLog}
+            >
+              Download Crash Log
+            </button>
+            <button
+              type='button'
+              className='btn btn-outline'
+              onClick={downloadCoreDump}
+            >
+              Download Core Dump
             </button>
           </div>
         </div>
