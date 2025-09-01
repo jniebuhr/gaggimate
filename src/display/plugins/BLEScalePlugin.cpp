@@ -52,7 +52,9 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
         } else {
             active = false;
             disconnect();
-            scanner->stopAsyncScan();
+            if (scanner != nullptr) {
+                scanner->stopAsyncScan();
+            }
             ESP_LOGI("BLEScalePlugin", "Stopping scanning, disconnecting");
         }
     });
@@ -79,7 +81,9 @@ void BLEScalePlugin::update() {
             reconnectionTries++;
             if (reconnectionTries > RECONNECTION_TRIES) {
                 disconnect();
-                this->scanner->initializeAsyncScan();
+                if (scanner != nullptr) {
+                    this->scanner->initializeAsyncScan();
+                }
             }
         }
     } else if (controller->getSettings().getSavedScale() != "") {
@@ -102,11 +106,17 @@ void BLEScalePlugin::scan() const {
     if (scale != nullptr && scale->isConnected()) {
         return;
     }
+    if (scanner == nullptr) {
+        ESP_LOGE("BLEScalePlugin", "Scanner not initialized, cannot start scan");
+        return;
+    }
     scanner->initializeAsyncScan();
 }
 
 void BLEScalePlugin::disconnect() {
     if (scale != nullptr) {
+        // Add small delay to let any pending callbacks complete
+        delay(50);
         scale->disconnect();
         scale = nullptr;
         uuid = "";
@@ -124,6 +134,10 @@ void BLEScalePlugin::onProcessStart() const {
 
 void BLEScalePlugin::establishConnection() {
     ESP_LOGI("BLEScalePlugin", "Connecting to %s", uuid.c_str());
+    if (scanner == nullptr) {
+        ESP_LOGE("BLEScalePlugin", "Scanner not initialized, cannot establish connection");
+        return;
+    }
     scanner->stopAsyncScan();
     for (const auto &d : scanner->getDiscoveredScales()) {
         if (d.getAddress().toString() == uuid) {
@@ -136,7 +150,12 @@ void BLEScalePlugin::establishConnection() {
 
             scale->setLogCallback([](std::string message) { Serial.print(message.c_str()); });
 
-            scale->setWeightUpdatedCallback([](float weight) { BLEScales.onMeasurement(weight); });
+            scale->setWeightUpdatedCallback([](float weight) { 
+                // Add a safety check before calling onMeasurement
+                if (&BLEScales != nullptr) {
+                    BLEScales.onMeasurement(weight); 
+                }
+            });
 
             if (!scale->connect()) {
                 disconnect();
@@ -153,4 +172,10 @@ void BLEScalePlugin::onMeasurement(float value) const {
     }
 }
 
-std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const { return scanner->getDiscoveredScales(); }
+std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const { 
+    if (scanner == nullptr) {
+        ESP_LOGW("BLEScalePlugin", "Scanner not initialized, returning empty device list");
+        return std::vector<DiscoveredDevice>();
+    }
+    return scanner->getDiscoveredScales(); 
+}
