@@ -680,21 +680,27 @@ void DefaultUI::updateStatusScreen() const {
         return;
     }
     
+    // Final safety check before accessing brewProcess members
+    if (!brewProcess) {
+        ESP_LOGE("DefaultUI", "brewProcess became null after validation");
+        return;
+    }
+    
     const auto phase = brewProcess->currentPhase;
 
     unsigned long now = millis();
     if (!process->isActive()) {
         // Add bounds check for finished timestamp
-        if (brewProcess->finished > 0) {
+        if (brewProcess && brewProcess->finished > 0) {
             now = brewProcess->finished;
         }
     }
 
     lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
-    lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess->isActive() ? phase.name.c_str() : "Finished");
+    lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess && brewProcess->isActive() ? phase.name.c_str() : "Finished");
 
     // Add bounds check for processStarted timestamp
-    if (brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
+    if (brewProcess && brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
         const unsigned long processDuration = now - brewProcess->processStarted;
         const double processSecondsDouble = processDuration / 1000.0;
         const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0);
@@ -704,12 +710,12 @@ void DefaultUI::updateStatusScreen() const {
         lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "00:00");
     }
 
-    if (brewProcess->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget()) {
+    if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget()) {
         Target target = phase.getVolumetricTarget();
         lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume, LV_ANIM_OFF);
         lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value + 1);
         lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1fg", target.value);
-    } else {
+    } else if (brewProcess) {
         // Add bounds check for currentPhaseStarted timestamp
         if (brewProcess->currentPhaseStarted > 0 && now >= brewProcess->currentPhaseStarted) {
             const unsigned long progress = now - brewProcess->currentPhaseStarted;
@@ -723,18 +729,20 @@ void DefaultUI::updateStatusScreen() const {
         }
     }
 
-    if (brewProcess->target == ProcessTarget::TIME) {
+    if (brewProcess && brewProcess->target == ProcessTarget::TIME) {
         const unsigned long targetDuration = brewProcess->getTotalDuration();
         const double targetSecondsDouble = targetDuration / 1000.0;
         const auto targetMinutes = static_cast<int>(targetSecondsDouble / 60.0);
         const auto targetSeconds = static_cast<int>(targetSecondsDouble) % 60;
         lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%2d:%02d", targetMinutes, targetSeconds);
-    } else {
+    } else if (brewProcess) {
         lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%.1fg", brewProcess->getBrewVolume());
     }
-    lv_img_set_src(ui_StatusScreen_Image8, brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
+    if (brewProcess) {
+        lv_img_set_src(ui_StatusScreen_Image8, brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
+    }
 
-    if (brewProcess->isAdvancedPump()) {
+    if (brewProcess && brewProcess->isAdvancedPump()) {
         float pressure = brewProcess->getPumpPressure();
         const double percentage = 1.0 - static_cast<double>(pressure) / static_cast<double>(pressureScaling);
         adjustTarget(uic_StatusScreen_dials_pressureTarget, percentage, -62.0, 124.0);
@@ -747,12 +755,15 @@ void DefaultUI::updateStatusScreen() const {
     if (process->isActive()) {
         lv_obj_add_flag(ui_StatusScreen_brewVolume, LV_OBJ_FLAG_HIDDEN);
     } else {
-        if (brewProcess->target == ProcessTarget::VOLUMETRIC) {
+        // Re-validate brewProcess pointer before accessing members
+        if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC) {
             lv_obj_clear_flag(ui_StatusScreen_brewVolume, LV_OBJ_FLAG_HIDDEN);
         }
         lv_obj_add_flag(ui_StatusScreen_barContainer, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(ui_StatusScreen_labelContainer, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text_fmt(ui_StatusScreen_brewVolume, "%.1lfg", brewProcess->currentVolume);
+        if (brewProcess) {
+            lv_label_set_text_fmt(ui_StatusScreen_brewVolume, "%.1lfg", brewProcess->currentVolume);
+        }
         lv_imgbtn_set_src(ui_StatusScreen_pauseButton, LV_IMGBTN_STATE_RELEASED, nullptr, &ui_img_631115820, nullptr);
     }
 }
