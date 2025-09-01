@@ -11,10 +11,6 @@ export function OTA() {
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
   
-  const downloadCrashLog = useCallback(() => {
-    window.open('/api/crash-log', '_blank');
-  }, []);
-  
   const downloadCoreDump = useCallback(() => {
     window.open('/api/core-dump', '_blank');
   }, []);
@@ -180,13 +176,6 @@ export function OTA() {
               onClick={() => onUpdate('controller')}
             >
               Update Controller
-            </button>
-            <button
-              type='button'
-              className='btn btn-outline'
-              onClick={downloadCrashLog}
-            >
-              Download Crash Log
             </button>
             <button
               type='button'
