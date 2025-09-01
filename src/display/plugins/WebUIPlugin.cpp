@@ -3,7 +3,6 @@
 #include <SPIFFS.h>
 #include <esp_system.h>
 #include <esp_core_dump.h>
-#include <esp_debug_helpers.h>
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_partition.h>
