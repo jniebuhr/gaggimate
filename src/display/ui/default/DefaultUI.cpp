@@ -648,29 +648,61 @@ void DefaultUI::updateStandbyScreen() {
 }
 
 void DefaultUI::updateStatusScreen() const {
+    // Copy process pointers to avoid race conditions with controller thread
     Process *process = controller->getProcess();
+    Process *lastProcess = controller->getLastProcess();
+    
     if (process == nullptr) {
-        process = controller->getLastProcess();
+        process = lastProcess;
     }
-    if (process->getType() != MODE_BREW) {
+    if (process == nullptr || process->getType() != MODE_BREW) {
         return;
     }
+    
+    // Additional safety: Validate that the process pointer is still valid
+    // by checking if it matches either current or last process
+    if (process != controller->getProcess() && process != controller->getLastProcess()) {
+        ESP_LOGW("DefaultUI", "Process pointer became invalid during access, skipping update");
+        return;
+    }
+    
     auto *brewProcess = static_cast<BrewProcess *>(process);
+    if (brewProcess == nullptr) {
+        ESP_LOGE("DefaultUI", "brewProcess is null after cast");
+        return;
+    }
+    
+    // Validate the brewProcess object before accessing its members
+    // Check if the object is in a reasonable state by validating key fields
+    if (brewProcess->profile.phases.empty() || brewProcess->phaseIndex >= brewProcess->profile.phases.size()) {
+        ESP_LOGE("DefaultUI", "brewProcess phaseIndex out of bounds: %u >= %zu", 
+                 brewProcess->phaseIndex, brewProcess->profile.phases.size());
+        return;
+    }
+    
     const auto phase = brewProcess->currentPhase;
 
     unsigned long now = millis();
     if (!process->isActive()) {
-        now = brewProcess->finished;
+        // Add bounds check for finished timestamp
+        if (brewProcess->finished > 0) {
+            now = brewProcess->finished;
+        }
     }
 
     lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
     lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess->isActive() ? phase.name.c_str() : "Finished");
 
-    const unsigned long processDuration = now - brewProcess->processStarted;
-    const double processSecondsDouble = processDuration / 1000.0;
-    const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0);
-    const auto processSeconds = static_cast<int>(processSecondsDouble) % 60;
-    lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "%2d:%02d", processMinutes, processSeconds);
+    // Add bounds check for processStarted timestamp
+    if (brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
+        const unsigned long processDuration = now - brewProcess->processStarted;
+        const double processSecondsDouble = processDuration / 1000.0;
+        const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0);
+        const auto processSeconds = static_cast<int>(processSecondsDouble) % 60;
+        lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "%2d:%02d", processMinutes, processSeconds);
+    } else {
+        lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "00:00");
+    }
 
     if (brewProcess->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget()) {
         Target target = phase.getVolumetricTarget();
@@ -678,10 +710,17 @@ void DefaultUI::updateStatusScreen() const {
         lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value + 1);
         lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1fg", target.value);
     } else {
-        const unsigned long progress = now - brewProcess->currentPhaseStarted;
-        lv_bar_set_value(ui_StatusScreen_brewBar, progress, LV_ANIM_OFF);
-        lv_bar_set_range(ui_StatusScreen_brewBar, 0, std::max(static_cast<int>(brewProcess->getPhaseDuration()), 1));
-        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%ds", brewProcess->getPhaseDuration() / 1000);
+        // Add bounds check for currentPhaseStarted timestamp
+        if (brewProcess->currentPhaseStarted > 0 && now >= brewProcess->currentPhaseStarted) {
+            const unsigned long progress = now - brewProcess->currentPhaseStarted;
+            lv_bar_set_value(ui_StatusScreen_brewBar, progress, LV_ANIM_OFF);
+            lv_bar_set_range(ui_StatusScreen_brewBar, 0, std::max(static_cast<int>(brewProcess->getPhaseDuration()), 1));
+            lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%ds", brewProcess->getPhaseDuration() / 1000);
+        } else {
+            lv_bar_set_value(ui_StatusScreen_brewBar, 0, LV_ANIM_OFF);
+            lv_bar_set_range(ui_StatusScreen_brewBar, 0, 1);
+            lv_label_set_text(ui_StatusScreen_brewLabel, "0s");
+        }
     }
 
     if (brewProcess->target == ProcessTarget::TIME) {
