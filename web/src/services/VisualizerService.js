@@ -13,10 +13,11 @@ export class VisualizerService {
   /**
    * Convert shot data from gaggimate format to visualizer.coffee format
    * @param {Object} shot - Shot data from gaggimate
+   * @param {Object} profileData - Optional full profile data from ProfileManager
    * @returns {Object} - Formatted data for visualizer.coffee
    */
   // Format shot data as a Gaggimate-style shot file for visualizer.coffee API
-  formatShotData(shotData) {
+  formatShotData(shotData, profileData = null) {
     // Debug: log the actual structure we're receiving
     console.log('formatShotData received:', {
       hasData: !!shotData,
@@ -25,7 +26,9 @@ export class VisualizerService {
       samplesLength: shotData && shotData.samples ? shotData.samples.length : 0,
       shotDataKeys: shotData ? Object.keys(shotData) : [],
       firstSample: shotData && shotData.samples && shotData.samples[0] ? shotData.samples[0] : null,
-      notesData: shotData.notes
+      notesData: shotData.notes,
+      profileData: profileData,
+      hasProfileData: !!profileData
     });
 
     if (!shotData || !shotData.samples || !Array.isArray(shotData.samples)) {
@@ -75,27 +78,36 @@ export class VisualizerService {
     };
     
     // Create Gaggimate-style shot file with enhanced metadata from shot notes
-    return {
+    const shotFile = {
       timestamp: timestamp,
-      profile: {
+      profile: profileData ? {
+        label: profileData.label || shotData.profile || "GaggiMate Shot",
+        id: profileData.id,
+        type: profileData.type,
+        description: profileData.description,
+        temperature: profileData.temperature,
+        phases: profileData.phases || []
+      } : {
         label: shotData.profile || "GaggiMate Shot",
-        // Add other profile fields if needed
       },
-      samples: samples,
-      // Map shot notes fields to visualizer.coffee schema
-      bean_weight: parseNumeric(notes.doseIn), // Input dose (grams)
-      drink_weight: parseNumeric(notes.doseOut), // Output weight (grams)  
-      grinder_model: "GaggiMate", // Fixed grinder model
-      grinder_setting: notes.grindSetting || "", // Grind setting from notes
-      espresso_enjoyment: enjoyment, // Convert 0-5 stars to 0-100 scale
-      espresso_notes: notes.notes || "", // Free-form tasting notes
-      bean_brand: "Unknown roaster", // Default since we don't track this in notes
-      bean_type: "Unknown bean", // Default since we don't track this in notes
-      barista: "GaggiMate User", // Default barista name
-      // Additional metadata that could be useful
-      roast_level: "", // Not tracked in current notes schema
-      roast_date: "" // Not tracked in current notes schema
+      samples: samples
     };
+
+    // Add metadata fields that will be parsed by the Gaggimate parser
+    // Based on the GitHub source, these should be added to the root level for the parser to extract
+    shotFile.bean_weight = parseNumeric(notes.doseIn); // Input dose (grams)
+    shotFile.drink_weight = parseNumeric(notes.doseOut); // Output weight (grams)
+    shotFile.grinder_model = "GaggiMate"; // Fixed grinder model
+    shotFile.grinder_setting = notes.grindSetting || ""; // Grind setting from notes
+    shotFile.espresso_enjoyment = enjoyment; // Convert 0-5 stars to 0-100 scale
+    shotFile.espresso_notes = notes.notes || ""; // Free-form tasting notes
+    shotFile.bean_brand = "Unknown roaster"; // Default since we don't track this in notes
+    shotFile.bean_type = "Unknown bean"; // Default since we don't track this in notes
+    shotFile.barista = "GaggiMate User"; // Default barista name
+    shotFile.roast_level = ""; // Not tracked in current notes schema
+    shotFile.roast_date = ""; // Not tracked in current notes schema
+
+    return shotFile;
   }
 
   /**
@@ -103,14 +115,15 @@ export class VisualizerService {
    * @param {Object} shot - Shot data from gaggimate
    * @param {string} username - Visualizer.coffee username
    * @param {string} password - Visualizer.coffee password
+   * @param {Object} profileData - Optional full profile data from ProfileManager
    * @returns {Promise<Object>} - Upload response
    */
-  async uploadShot(shot, username, password) {
+  async uploadShot(shot, username, password, profileData = null) {
     if (!username || !password) {
       throw new Error('Username and password are required');
     }
 
-    const formattedData = this.formatShotData(shot);
+    const formattedData = this.formatShotData(shot, profileData);
     
     // Log the data being sent for debugging
     console.log('Uploading to visualizer.coffee:', {
@@ -126,7 +139,9 @@ export class VisualizerService {
         espresso_notes: formattedData.espresso_notes?.substring(0, 50) + (formattedData.espresso_notes?.length > 50 ? '...' : ''),
         bean_brand: formattedData.bean_brand,
         bean_type: formattedData.bean_type,
-        barista: formattedData.barista
+        barista: formattedData.barista,
+        roast_level: formattedData.roast_level,
+        roast_date: formattedData.roast_date
       },
       sampleData: {
         firstTime: formattedData.samples[0]?.t || 0,
@@ -207,6 +222,7 @@ export class VisualizerService {
     
     return hasData;
   }
+
 }
 
 export const visualizerService = new VisualizerService();
