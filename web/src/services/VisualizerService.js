@@ -11,88 +11,69 @@ export class VisualizerService {
   }
 
   /**
+   * Get CSRF token from the visualizer.coffee site
+   */
+  async getCSRFToken() {
+    try {
+      const response = await fetch('https://visualizer.coffee/shots/new', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const text = await response.text();
+        const csrfMatch = text.match(/name="csrf-token" content="([^"]+)"/);
+        return csrfMatch ? csrfMatch[1] : null;
+      }
+    } catch (error) {
+      console.warn('Could not get CSRF token:', error);
+    }
+    return null;
+  }
+
+  /**
    * Convert shot data from gaggimate format to visualizer.coffee format
    * @param {Object} shot - Shot data from gaggimate
    * @returns {Object} - Formatted data for visualizer.coffee
    */
-  formatShotData(shot) {
-    if (!shot.samples || shot.samples.length === 0) {
-      throw new Error('No shot data available');
+  // Format shot data as a Gaggimate-style shot file for visualizer.coffee API
+  formatShotData(shotData) {
+    if (!shotData || !shotData.time_array || !shotData.pressure_array) {
+      throw new Error('Invalid shot data: missing required arrays');
     }
 
-    // Extract all available data arrays from samples
-    const time = [];
-    const targetTemp = [];
-    const currentTemp = [];
-    const targetPressure = [];
-    const currentPressure = [];
-    const pumpFlow = [];
-    const targetFlow = [];
-    const puckFlow = [];
-    const volumetricFlow = [];
-    const volume = [];
-    const estimatedVolume = [];
-    const puckResistance = [];
+    // Calculate timestamp (Unix timestamp in seconds)
+    const startTime = shotData.start_time ? new Date(shotData.start_time) : new Date();
+    const timestamp = Math.floor(startTime.getTime() / 1000);
 
-    shot.samples.forEach(sample => {
-      // Convert time from milliseconds to seconds for visualizer.coffee
-      time.push(sample.t / 1000);
-      
-      // Temperature data
-      targetTemp.push(sample.tt || 0);
-      currentTemp.push(sample.ct || 0);
-      
-      // Pressure data
-      targetPressure.push(sample.tp || 0);
-      currentPressure.push(sample.cp || 0);
-      
-      // Flow data
-      pumpFlow.push(sample.fl || 0);
-      targetFlow.push(sample.tf || 0);
-      puckFlow.push(sample.pf || 0);
-      volumetricFlow.push(sample.vf || 0);
-      
-      // Volume data
-      volume.push(sample.v || 0);
-      estimatedVolume.push(sample.ev || 0);
-      
-      // Resistance data
-      puckResistance.push(sample.pr || 0);
-    });
+    // Convert arrays to Gaggimate sample format
+    const samples = shotData.time_array.map((time, index) => ({
+      t: time * 1000, // Convert to milliseconds
+      cp: shotData.pressure_array[index] || 0, // Current pressure
+      fl: shotData.flow_array ? shotData.flow_array[index] || 0 : 0, // Flow
+      tp: shotData.pressure_array[index] || 0, // Target pressure (same as current for now)
+      tf: shotData.flow_array ? shotData.flow_array[index] || 0 : 0, // Target flow
+      tt: shotData.temperature_array ? shotData.temperature_array[index] || 92 : 92, // Target temp
+      ct: shotData.temperature_array ? shotData.temperature_array[index] || 92 : 92, // Current temp
+      v: shotData.weight_array ? shotData.weight_array[index] || (index * 0.5) : (index * 0.5), // Scale weight
+      ev: shotData.weight_array ? shotData.weight_array[index] || (index * 0.5) : (index * 0.5), // Estimated weight
+      vf: shotData.flow_array ? shotData.flow_array[index] || 0 : 0, // Scale flow
+      pf: shotData.flow_array ? shotData.flow_array[index] || 0 : 0 // Predicted flow
+    }));
 
-    // Include all shot data that would be in the JSON export
+    // Create Gaggimate-style shot file
     return {
-      // Core data arrays (what the API example showed)
-      time,
-      pressure: currentPressure,
-      flow: volumetricFlow,
-      
-      // Extended data arrays (full dataset)
-      targetTemp,
-      currentTemp,
-      targetPressure,
-      currentPressure,
-      pumpFlow,
-      targetFlow,
-      puckFlow,
-      volumetricFlow,
-      volume,
-      estimatedVolume,
-      puckResistance,
-      
-      // Shot metadata
-      id: shot.id,
-      profile: shot.profile,
-      timestamp: shot.timestamp,
-      duration: shot.duration,
-      version: shot.version,
-      
-      // Final values for summary
-      finalVolume: shot.volume,
-      finalDuration: shot.duration,
-      
-      // Notes if available
-      ...(shot.notes && { notes: shot.notes })
+      timestamp: timestamp,
+      profile: {
+        label: shotData.profile_title || "GaggiMate Shot",
+        // Add other profile fields if needed
+      },
+      samples: samples,
+      // Add metadata
+      bean_brand: shotData.bean_brand || "",
+      bean_type: shotData.bean_type || "",
+      grinder_model: shotData.grinder_model || "",
+      espresso_enjoyment: shotData.espresso_enjoyment || 75
     };
   }
 
@@ -110,24 +91,93 @@ export class VisualizerService {
 
     const formattedData = this.formatShotData(shot);
     
+    // Log the data being sent for debugging
+    console.log('Uploading to visualizer.coffee:', {
+      dataSize: JSON.stringify(formattedData).length,
+      timePoints: formattedData.time.length,
+      sampleData: {
+        firstTime: formattedData.time[0],
+        lastTime: formattedData.time[formattedData.time.length - 1],
+        maxPressure: Math.max(...formattedData.pressure),
+        maxFlow: Math.max(...formattedData.flow)
+      }
+    });
+    
     // Create basic auth header
     const credentials = btoa(`${username}:${password}`);
     
-    const response = await fetch(this.baseUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${credentials}`
-      },
-      body: JSON.stringify(formattedData)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+    // Try to get CSRF token (for Rails CSRF protection)
+    const csrfToken = await this.getCSRFToken();
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${credentials}`,
+      'Accept': 'application/json',
+      'User-Agent': 'GaggiMate-WebUI/1.0'
+    };
+    
+    // Add CSRF token if we got one
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+      console.log('Using CSRF token:', csrfToken.substring(0, 10) + '...');
     }
+    
+    try {
+      // First attempt: with potential CSRF token
+      let response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include', // Include cookies for session
+        body: JSON.stringify(formattedData)
+      });
 
-    return await response.json();
+      // If that fails with 422 (unprocessable entity), try without CSRF
+      if (!response.ok && response.status === 422) {
+        console.log('Retrying without CSRF token...');
+        delete headers['X-CSRF-Token'];
+        
+        response = await fetch(this.baseUrl, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(formattedData)
+        });
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed response:', {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+          bodyPreview: errorText.substring(0, 500)
+        });
+        
+        // Check if it's an authentication error
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Authentication failed - please check your username and password');
+        }
+        
+        // Check if it's a validation error
+        if (response.status === 422) {
+          throw new Error('Data validation failed - the shot data format may be incorrect');
+        }
+        
+        // Try to extract useful error info from HTML response
+        let errorMsg = `HTTP ${response.status}`;
+        if (errorText.includes('No coffee for you')) {
+          errorMsg = 'Server error - the API may not support this data format or account type';
+        }
+        
+        throw new Error(errorMsg);
+      }
+
+      return await response.json();
+    } catch (fetchError) {
+      if (fetchError.name === 'TypeError') {
+        throw new Error('Network error: Unable to connect to visualizer.coffee');
+      }
+      throw fetchError;
+    }
   }
 
   /**
