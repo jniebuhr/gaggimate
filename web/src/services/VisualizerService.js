@@ -11,33 +11,22 @@ export class VisualizerService {
   }
 
   /**
-   * Get CSRF token from the visualizer.coffee site
-   */
-  async getCSRFToken() {
-    try {
-      const response = await fetch('https://visualizer.coffee/shots/new', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const text = await response.text();
-        const csrfMatch = text.match(/name="csrf-token" content="([^"]+)"/);
-        return csrfMatch ? csrfMatch[1] : null;
-      }
-    } catch (error) {
-      console.warn('Could not get CSRF token:', error);
-    }
-    return null;
-  }
-
-  /**
    * Convert shot data from gaggimate format to visualizer.coffee format
    * @param {Object} shot - Shot data from gaggimate
    * @returns {Object} - Formatted data for visualizer.coffee
    */
   // Format shot data as a Gaggimate-style shot file for visualizer.coffee API
   formatShotData(shotData) {
+    // Debug: log the actual structure we're receiving
+    console.log('formatShotData received:', {
+      hasData: !!shotData,
+      hasSamples: !!(shotData && shotData.samples),
+      samplesIsArray: !!(shotData && shotData.samples && Array.isArray(shotData.samples)),
+      samplesLength: shotData && shotData.samples ? shotData.samples.length : 0,
+      shotDataKeys: shotData ? Object.keys(shotData) : [],
+      firstSample: shotData && shotData.samples && shotData.samples[0] ? shotData.samples[0] : null
+    });
+
     if (!shotData || !shotData.samples || !Array.isArray(shotData.samples)) {
       throw new Error('Invalid shot data: missing required samples array');
     }
@@ -111,9 +100,6 @@ export class VisualizerService {
     // Create basic auth header
     const credentials = btoa(`${username}:${password}`);
     
-    // Try to get CSRF token (for Rails CSRF protection)
-    const csrfToken = await this.getCSRFToken();
-    
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Basic ${credentials}`,
@@ -121,32 +107,12 @@ export class VisualizerService {
       'User-Agent': 'GaggiMate-WebUI/1.0'
     };
     
-    // Add CSRF token if we got one
-    if (csrfToken) {
-      headers['X-CSRF-Token'] = csrfToken;
-      console.log('Using CSRF token:', csrfToken.substring(0, 10) + '...');
-    }
-    
     try {
-      // First attempt: with potential CSRF token
-      let response = await fetch(this.baseUrl, {
+      const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: headers,
-        credentials: 'include', // Include cookies for session
         body: JSON.stringify(formattedData)
       });
-
-      // If that fails with 422 (unprocessable entity), try without CSRF
-      if (!response.ok && response.status === 422) {
-        console.log('Retrying without CSRF token...');
-        delete headers['X-CSRF-Token'];
-        
-        response = await fetch(this.baseUrl, {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify(formattedData)
-        });
-      }
 
       if (!response.ok) {
         const errorText = await response.text();
