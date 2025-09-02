@@ -38,42 +38,46 @@ export class VisualizerService {
    */
   // Format shot data as a Gaggimate-style shot file for visualizer.coffee API
   formatShotData(shotData) {
-    if (!shotData || !shotData.time_array || !shotData.pressure_array) {
-      throw new Error('Invalid shot data: missing required arrays');
+    if (!shotData || !shotData.samples || !Array.isArray(shotData.samples)) {
+      throw new Error('Invalid shot data: missing required samples array');
+    }
+
+    if (shotData.samples.length === 0) {
+      throw new Error('Invalid shot data: samples array is empty');
     }
 
     // Calculate timestamp (Unix timestamp in seconds)
-    const startTime = shotData.start_time ? new Date(shotData.start_time) : new Date();
+    const startTime = shotData.timestamp ? new Date(shotData.timestamp * 1000) : new Date();
     const timestamp = Math.floor(startTime.getTime() / 1000);
 
-    // Convert arrays to Gaggimate sample format
-    const samples = shotData.time_array.map((time, index) => ({
-      t: time * 1000, // Convert to milliseconds
-      cp: shotData.pressure_array[index] || 0, // Current pressure
-      fl: shotData.flow_array ? shotData.flow_array[index] || 0 : 0, // Flow
-      tp: shotData.pressure_array[index] || 0, // Target pressure (same as current for now)
-      tf: shotData.flow_array ? shotData.flow_array[index] || 0 : 0, // Target flow
-      tt: shotData.temperature_array ? shotData.temperature_array[index] || 92 : 92, // Target temp
-      ct: shotData.temperature_array ? shotData.temperature_array[index] || 92 : 92, // Current temp
-      v: shotData.weight_array ? shotData.weight_array[index] || (index * 0.5) : (index * 0.5), // Scale weight
-      ev: shotData.weight_array ? shotData.weight_array[index] || (index * 0.5) : (index * 0.5), // Estimated weight
-      vf: shotData.flow_array ? shotData.flow_array[index] || 0 : 0, // Scale flow
-      pf: shotData.flow_array ? shotData.flow_array[index] || 0 : 0 // Predicted flow
+    // The samples are already in the correct Gaggimate format, just need to ensure all fields are present
+    const samples = shotData.samples.map(sample => ({
+      t: sample.t || 0, // Time in milliseconds
+      cp: sample.cp || 0, // Current pressure
+      fl: sample.fl || 0, // Flow
+      tp: sample.tp || sample.cp || 0, // Target pressure
+      tf: sample.tf || sample.fl || 0, // Target flow  
+      tt: sample.tt || 92, // Target temperature
+      ct: sample.ct || sample.tt || 92, // Current temperature
+      v: sample.v || 0, // Scale weight
+      ev: sample.ev || sample.v || 0, // Estimated weight
+      vf: sample.vf || 0, // Scale flow
+      pf: sample.pf || sample.fl || 0 // Predicted flow
     }));
 
     // Create Gaggimate-style shot file
     return {
       timestamp: timestamp,
       profile: {
-        label: shotData.profile_title || "GaggiMate Shot",
+        label: shotData.profile || "GaggiMate Shot",
         // Add other profile fields if needed
       },
       samples: samples,
-      // Add metadata
-      bean_brand: shotData.bean_brand || "",
-      bean_type: shotData.bean_type || "",
-      grinder_model: shotData.grinder_model || "",
-      espresso_enjoyment: shotData.espresso_enjoyment || 75
+      // Add metadata from notes if available
+      bean_brand: shotData.notes?.bean_brand || "",
+      bean_type: shotData.notes?.bean_type || "",
+      grinder_model: shotData.notes?.grinder_model || "",
+      espresso_enjoyment: shotData.notes?.espresso_enjoyment || 75
     };
   }
 
@@ -94,12 +98,13 @@ export class VisualizerService {
     // Log the data being sent for debugging
     console.log('Uploading to visualizer.coffee:', {
       dataSize: JSON.stringify(formattedData).length,
-      timePoints: formattedData.time.length,
+      sampleCount: formattedData.samples.length,
+      profile: formattedData.profile.label,
       sampleData: {
-        firstTime: formattedData.time[0],
-        lastTime: formattedData.time[formattedData.time.length - 1],
-        maxPressure: Math.max(...formattedData.pressure),
-        maxFlow: Math.max(...formattedData.flow)
+        firstTime: formattedData.samples[0]?.t || 0,
+        lastTime: formattedData.samples[formattedData.samples.length - 1]?.t || 0,
+        maxPressure: Math.max(...formattedData.samples.map(s => s.cp || 0)),
+        maxFlow: Math.max(...formattedData.samples.map(s => s.fl || 0))
       }
     });
     
