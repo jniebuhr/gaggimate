@@ -116,6 +116,7 @@ export default function VisualizerUploadModal({
                 disabled={isUploading}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
                 placeholder="Enter your username"
+                autocomplete="username"
                 required
               />
             </div>
@@ -133,6 +134,7 @@ export default function VisualizerUploadModal({
                   disabled={isUploading}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
                   placeholder="Enter your password"
+                  autocomplete="current-password"
                   required
                 />
                 <button

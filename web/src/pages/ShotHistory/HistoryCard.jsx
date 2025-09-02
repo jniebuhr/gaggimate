@@ -1,5 +1,5 @@
 import Card from '../../components/Card.jsx';
-import { useCallback, useState } from 'preact/hooks';
+import { useCallback, useState, useContext } from 'preact/hooks';
 import { HistoryChart } from './HistoryChart.jsx';
 import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,6 +14,8 @@ import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import ShotNotesCard from './ShotNotesCard.jsx';
 import VisualizerUploadModal from '../../components/VisualizerUploadModal.jsx';
 import { visualizerService } from '../../services/VisualizerService.js';
+import { ApiServiceContext } from '../../services/ApiService.js';
+
 
 
 
@@ -25,6 +27,7 @@ function round2(v) {
 
 
 export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) {
+  const apiService = useContext(ApiServiceContext);
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
   const [expanded, setExpanded] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -80,13 +83,37 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
         throw new Error('Shot data is invalid or incomplete');
       }
 
+      // Fetch profile data if profileId is available
+      let profileData = null;
+      if (shot.profileId && apiService) {
+        console.log('Attempting to fetch profile with ID:', shot.profileId);
+        try {
+          const profileResponse = await apiService.request({ 
+            tp: 'req:profiles:load', 
+            id: shot.profileId 
+          });
+          console.log('Profile fetch response:', profileResponse);
+          if (profileResponse.profile) {
+            profileData = profileResponse.profile;
+            console.log('Profile data extracted:', profileData);
+          } else {
+            console.warn('No profile data in response:', profileResponse);
+          }
+        } catch (error) {
+          console.warn('Failed to fetch profile data:', error);
+          // Continue without profile data
+        }
+      } else {
+        console.log('No profile fetch needed:', { hasProfileId: !!shot.profileId, hasApiService: !!apiService });
+      }
+
       // Include notes in shot data
       const shotWithNotes = {
         ...shot,
         notes: shotNotes
       };
 
-      await visualizerService.uploadShot(shotWithNotes, username, password);
+      await visualizerService.uploadShot(shotWithNotes, username, password, profileData);
       
       // Show success message
       alert('Shot uploaded successfully to visualizer.coffee!');
@@ -97,7 +124,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
     } finally {
       setIsUploading(false);
     }
-  }, [shot, shotNotes]);
+  }, [shot, shotNotes, apiService]);
 
   const canUpload = visualizerService.validateShot(shot);
 
