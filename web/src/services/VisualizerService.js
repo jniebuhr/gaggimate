@@ -24,7 +24,8 @@ export class VisualizerService {
       samplesIsArray: !!(shotData && shotData.samples && Array.isArray(shotData.samples)),
       samplesLength: shotData && shotData.samples ? shotData.samples.length : 0,
       shotDataKeys: shotData ? Object.keys(shotData) : [],
-      firstSample: shotData && shotData.samples && shotData.samples[0] ? shotData.samples[0] : null
+      firstSample: shotData && shotData.samples && shotData.samples[0] ? shotData.samples[0] : null,
+      notesData: shotData.notes
     });
 
     if (!shotData || !shotData.samples || !Array.isArray(shotData.samples)) {
@@ -54,7 +55,26 @@ export class VisualizerService {
       pf: sample.pf || sample.fl || 0 // Predicted flow
     }));
 
-    // Create Gaggimate-style shot file
+    // Extract shot notes data for enhanced metadata
+    const notes = shotData.notes || {};
+    
+    // Convert 0-5 rating to 0-100 enjoyment scale
+    // Default to 75 (3.75 stars) if no rating provided
+    let enjoyment = 75;
+    if (notes.rating && notes.rating > 0) {
+      enjoyment = Math.round(notes.rating * 20);
+      // Ensure it's within valid range
+      enjoyment = Math.max(0, Math.min(100, enjoyment));
+    }
+    
+    // Parse numeric values safely
+    const parseNumeric = (value) => {
+      if (!value || value === '') return '';
+      const parsed = parseFloat(value);
+      return isNaN(parsed) ? value : parsed.toString();
+    };
+    
+    // Create Gaggimate-style shot file with enhanced metadata from shot notes
     return {
       timestamp: timestamp,
       profile: {
@@ -62,11 +82,19 @@ export class VisualizerService {
         // Add other profile fields if needed
       },
       samples: samples,
-      // Add metadata from notes if available
-      bean_brand: shotData.notes?.bean_brand || "",
-      bean_type: shotData.notes?.bean_type || "",
-      grinder_model: shotData.notes?.grinder_model || "",
-      espresso_enjoyment: shotData.notes?.espresso_enjoyment || 75
+      // Map shot notes fields to visualizer.coffee schema
+      bean_weight: parseNumeric(notes.doseIn), // Input dose (grams)
+      drink_weight: parseNumeric(notes.doseOut), // Output weight (grams)  
+      grinder_model: "GaggiMate", // Fixed grinder model
+      grinder_setting: notes.grindSetting || "", // Grind setting from notes
+      espresso_enjoyment: enjoyment, // Convert 0-5 stars to 0-100 scale
+      espresso_notes: notes.notes || "", // Free-form tasting notes
+      bean_brand: "Unknown roaster", // Default since we don't track this in notes
+      bean_type: "Unknown bean", // Default since we don't track this in notes
+      barista: "GaggiMate User", // Default barista name
+      // Additional metadata that could be useful
+      roast_level: "", // Not tracked in current notes schema
+      roast_date: "" // Not tracked in current notes schema
     };
   }
 
@@ -89,6 +117,17 @@ export class VisualizerService {
       dataSize: JSON.stringify(formattedData).length,
       sampleCount: formattedData.samples.length,
       profile: formattedData.profile.label,
+      shotMetadata: {
+        bean_weight: formattedData.bean_weight,
+        drink_weight: formattedData.drink_weight,
+        grinder_model: formattedData.grinder_model,
+        grinder_setting: formattedData.grinder_setting,
+        espresso_enjoyment: formattedData.espresso_enjoyment,
+        espresso_notes: formattedData.espresso_notes?.substring(0, 50) + (formattedData.espresso_notes?.length > 50 ? '...' : ''),
+        bean_brand: formattedData.bean_brand,
+        bean_type: formattedData.bean_type,
+        barista: formattedData.barista
+      },
       sampleData: {
         firstTime: formattedData.samples[0]?.t || 0,
         lastTime: formattedData.samples[formattedData.samples.length - 1]?.t || 0,
