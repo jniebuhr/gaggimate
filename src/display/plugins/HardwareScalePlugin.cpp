@@ -41,7 +41,7 @@ void HardwareScalePlugin::setup(Controller *controller, PluginManager *pluginMan
         this->controller->setVolumetricOverride(_isAvailable);
     });
 
-    pluginManager->on("controller:brew:start", [this](Event const &) {
+    pluginManager->on("controller:brew:prestart", [this](Event const &) {
        onProcessStart();
     });
 
