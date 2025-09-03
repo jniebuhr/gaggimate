@@ -77,8 +77,9 @@ void HardwareScalePlugin::calibrate(uint8_t cell, float calibrationWeight) {
 
 void HardwareScalePlugin::onProcessStart() {
     if (_isAvailable) {
-        controller->getClientController()->sendScaleTare();
-        delay(200);
+        // Hardware scale already tared by Controller::activate()
+        // Just ensure we're ready to receive measurements
+        ESP_LOGD(LOG_TAG, "Hardware scale ready for brewing process");
     }
 }
 
