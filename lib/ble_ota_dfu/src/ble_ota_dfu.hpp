@@ -39,7 +39,7 @@ constexpr uint32_t UPDATER_SIZE = 20000;
 /* Dummy class */
 class BLE_OTA_DFU;
 
-class BLEOverTheAirDeviceFirmwareUpdate final : public BLECharacteristicCallbacks {
+class BLEOverTheAirDeviceFirmwareUpdate final : public NimBLECharacteristicCallbacks {
 private:
   bool selected_updater = true;
   bool file_open = false;
@@ -56,8 +56,7 @@ public:
 
   uint16_t write_binary(fs::FS *file_system, const char *path, uint8_t *data,
                         uint16_t length, bool keep_open = true);
-  void onNotify(BLECharacteristic *pCharacteristic) override;
-  void onWrite(BLECharacteristic *pCharacteristic) override;
+  void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo& connInfo) override;
 };
 
 class BLE_OTA_DFU {
