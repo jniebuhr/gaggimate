@@ -15,16 +15,7 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
     pm->on("controller:volumetric-measurement:bluetooth:change", [this](Event const &event) {
-        const float weight = event.getFloat("value");
-        const unsigned long now = millis();
-        if (lastVolumeSample != 0) {
-            const unsigned long timeDiff = now - lastVolumeSample;
-            const float volumeDiff = weight - currentBluetoothWeight;
-            const float volumeFlow = volumeDiff / static_cast<float>(timeDiff) * 1000.0f;
-            currentBluetoothFlow = currentBluetoothFlow * 0.9f + volumeFlow * 0.1f;
-        }
-        lastVolumeSample = now;
-        currentBluetoothWeight = weight;
+        currentBluetoothWeight= event.getFloat("value");
     });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
@@ -47,6 +38,10 @@ void ShotHistoryPlugin::record() {
             file.printf("1,%s,%ld\n", currentProfileName.c_str(), getTime());
             headerWritten = true;
         }
+        float btDiff = currentBluetoothWeight - lastBluetoothWeight;
+        float btFlow = btDiff / 0.25f;
+        currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
+        lastBluetoothWeight = currentBluetoothWeight;
         ShotSample s{millis() - shotStart,
                      controller->getTargetTemp(),
                      currentTemperature,

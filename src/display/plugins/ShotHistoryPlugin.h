@@ -61,6 +61,7 @@ class ShotHistoryPlugin : public Plugin {
     unsigned long lastVolumeSample = 0;
     float currentTemperature = 0.0f;
     float currentBluetoothWeight = 0.0f;
+    float lastBluetoothWeight = 0.0f;
     float currentBluetoothFlow = 0.0f;
     float currentEstimatedWeight = 0.0f;
     float currentPuckResistance = 0.0f;
