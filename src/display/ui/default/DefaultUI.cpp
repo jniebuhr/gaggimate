@@ -651,41 +651,41 @@ void DefaultUI::updateStatusScreen() const {
     // Copy process pointers to avoid race conditions with controller thread
     Process *process = controller->getProcess();
     Process *lastProcess = controller->getLastProcess();
-    
+
     if (process == nullptr) {
         process = lastProcess;
     }
     if (process == nullptr || process->getType() != MODE_BREW) {
         return;
     }
-    
+
     // Additional safety: Validate that the process pointer is still valid
     // by checking if it matches either current or last process
     if (process != controller->getProcess() && process != controller->getLastProcess()) {
         ESP_LOGW("DefaultUI", "Process pointer became invalid during access, skipping update");
         return;
     }
-    
+
     auto *brewProcess = static_cast<BrewProcess *>(process);
     if (brewProcess == nullptr) {
         ESP_LOGE("DefaultUI", "brewProcess is null after cast");
         return;
     }
-    
+
     // Validate the brewProcess object before accessing its members
     // Check if the object is in a reasonable state by validating key fields
     if (brewProcess->profile.phases.empty() || brewProcess->phaseIndex >= brewProcess->profile.phases.size()) {
-        ESP_LOGE("DefaultUI", "brewProcess phaseIndex out of bounds: %u >= %zu", 
-                 brewProcess->phaseIndex, brewProcess->profile.phases.size());
+        ESP_LOGE("DefaultUI", "brewProcess phaseIndex out of bounds: %u >= %zu", brewProcess->phaseIndex,
+                 brewProcess->profile.phases.size());
         return;
     }
-    
+
     // Final safety check before accessing brewProcess members
     if (!brewProcess) {
         ESP_LOGE("DefaultUI", "brewProcess became null after validation");
         return;
     }
-    
+
     const auto phase = brewProcess->currentPhase;
 
     unsigned long now = millis();
@@ -739,7 +739,8 @@ void DefaultUI::updateStatusScreen() const {
         lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%.1fg", brewProcess->getBrewVolume());
     }
     if (brewProcess) {
-        lv_img_set_src(ui_StatusScreen_Image8, brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
+        lv_img_set_src(ui_StatusScreen_Image8,
+                       brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
     }
 
     if (brewProcess && brewProcess->isAdvancedPump()) {
@@ -799,7 +800,7 @@ void DefaultUI::applyTheme() {
         currentThemeMode = newThemeMode;
         ui_theme_set(currentThemeMode);
 
-        if(LilyGoTDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
+        if (LilyGoTDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
             enable_amoled_black_theme_override(lv_disp_get_default());
         }
     }

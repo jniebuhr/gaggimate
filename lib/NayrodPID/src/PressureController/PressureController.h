@@ -27,7 +27,7 @@ class PressureController {
     void tare();
     void reset();
 
-    float getcoffeeOutputEstimate() { return  std::fmax(0.0f, coffeeOutput -0.0f); };
+    float getcoffeeOutputEstimate() { return std::fmax(0.0f, coffeeOutput - 0.0f); };
     float getFilteredPressure() { return _filteredPressureSensor; };
     void setPumpFlowCoeff(float oneBarFlow, float nineBarFlow);
     void setPumpFlowPolyCoeffs(float a, float b, float c, float d);
@@ -37,7 +37,6 @@ class PressureController {
     float getEstimatorCovariance() { return R_estimator->getCovarianceQout(); };
     float getPumpDutyCycleForFlowRate() const;
     float getFilteredPressureDerivative() const { return _dFilteredPressure; };
-
 
   private:
     float getPumpDutyCycleForPressure();
@@ -95,9 +94,9 @@ class PressureController {
     float lastGoodEstimatedR = 0.0f;
     float puckResistance = 1e-8f; // Estimation of puck conductance
     float timer = 0.0f;
-    float _dFilteredPressure = 0.0f; // dérivée de la pression filtrée
+    float _dFilteredPressure = 0.0f;    // dérivée de la pression filtrée
     float _lastFilteredPressure = 0.0f; // mémorise la valeur précédente
-    
+
     float deadVolume = 8.0f;
     float pumpFlowInstant = 0.0f;
     float pressureDerivative = 0.0f;

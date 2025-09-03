@@ -20,22 +20,20 @@ static lv_color_t *buf = NULL;
 static lv_color_t *buf1 = NULL;
 
 static lv_color_filter_dsc_t s_map_filter;
-static lv_style_t            s_map_style;
-static lv_theme_t            s_theme;
-static lv_theme_t           *s_parent_theme;
+static lv_style_t s_map_style;
+static lv_theme_t s_theme;
+static lv_theme_t *s_parent_theme;
 
-static lv_color_t map_color_cb(const lv_color_filter_dsc_t *dsc,
-                               lv_color_t c, lv_opa_t opa)
-{
-    LV_UNUSED(dsc); LV_UNUSED(opa);
+static lv_color_t map_color_cb(const lv_color_filter_dsc_t *dsc, lv_color_t c, lv_opa_t opa) {
+    LV_UNUSED(dsc);
+    LV_UNUSED(opa);
     if (c.full == lv_color_hex(0x131313).full) {
         return lv_color_black();
     }
     return c;
 }
 
-static void theme_apply_cb(lv_theme_t *th, lv_obj_t *obj)
-{
+static void theme_apply_cb(lv_theme_t *th, lv_obj_t *obj) {
     LV_UNUSED(th);
     if (s_parent_theme && s_parent_theme->apply_cb) {
         s_parent_theme->apply_cb(s_parent_theme, obj);
@@ -46,8 +44,7 @@ static void theme_apply_cb(lv_theme_t *th, lv_obj_t *obj)
     }
 }
 
-void enable_amoled_black_theme_override(lv_disp_t *disp)
-{
+void enable_amoled_black_theme_override(lv_disp_t *disp) {
     lv_color_filter_dsc_init(&s_map_filter, map_color_cb);
 
     lv_style_init(&s_map_style);

@@ -58,7 +58,6 @@ class ShotHistoryPlugin : public Plugin {
     bool recording = false;
     bool headerWritten = false;
     unsigned long shotStart = 0;
-    unsigned long lastVolumeSample = 0;
     float currentTemperature = 0.0f;
     float currentBluetoothWeight = 0.0f;
     float lastBluetoothWeight = 0.0f;
