@@ -539,7 +539,10 @@ void Controller::activate() {
         return;
     clear();
     clientController.tare();
-    if (isVolumetricAvailable()) {
+    if (systemInfo.capabilities.hwScale) {
+        clientController.sendScaleTare(); // Tare hardware scale
+    }
+    if (isVolumetricAvailable())
         pluginManager->trigger("controller:brew:prestart");
     }
     delay(200);
