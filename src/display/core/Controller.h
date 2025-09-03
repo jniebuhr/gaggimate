@@ -160,7 +160,7 @@ class Controller {
 
     // Bluetooth scale connection monitoring
     unsigned long lastBluetoothMeasurement = 0;
-    static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 2000; // 2 second grace period
+    static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
 
     xTaskHandle taskHandle;
 
