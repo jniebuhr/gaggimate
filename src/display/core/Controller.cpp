@@ -324,10 +324,14 @@ bool Controller::isVolumetricAvailable() const {
     }
     
 #ifdef NIGHTLY_BUILD
-    return isBluetoothScaleHealthy() || systemInfo.capabilities.dimming;
-#else
-    return isBluetoothScaleHealthy();
+    // In nightly builds, also check for dimming capability (flow estimation)
+    if (systemInfo.capabilities.dimming) {
+        return true;
+    }
 #endif
+
+    // Check the old volumetricOverride flag for backward compatibility
+    return volumetricOverride;
 }
 
 void Controller::autotune(int testTime, int samples) {
@@ -544,8 +548,7 @@ void Controller::activate() {
     }
     if (isVolumetricAvailable())
         pluginManager->trigger("controller:brew:prestart");
-    }
-    delay(200);
+    delay(500);
     switch (mode) {
     case MODE_BREW:
         startProcess(new BrewProcess(profileManager->getSelectedProfile(),
@@ -703,11 +706,6 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     }
     
     // Note: Removed legacy volumetricOverride check as it conflicts with activeSource logic
-}
-
-bool Controller::isBluetoothScaleHealthy() const {
-    unsigned long timeSinceLastBluetooth = millis() - lastBluetoothMeasurement;
-    return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
 }
 
 void Controller::onFlush() {
