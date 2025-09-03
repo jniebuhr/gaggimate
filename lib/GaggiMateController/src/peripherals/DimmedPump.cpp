@@ -2,10 +2,47 @@
 
 #include <GaggiMateController.h>
 
-DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor)
+#define MCP_VOLTAGE 3.3f
+
+DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor, uint8_t scl_pin, uint8_t sda_pin)
     : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 2, 4), _pressureSensor(pressure_sensor),
       _pressureController(0.03f, &_ctrlPressure, &_ctrlFlow, &_currentPressure, &_controllerPower, &_valveStatus) {
     _psm.set(0);
+    Wire.begin(sda_pin, scl_pin, 400000);
+    int nDevices;
+    printf("Scanning...");
+    byte error, address;
+    nDevices = 0;
+    for(address = 1; address < 127; address++ ) {
+        Wire.beginTransmission(address);
+        error = Wire.endTransmission();
+        if (error == 0) {
+            printf("I2C device found at address 0x");
+            if (address<16) {
+                printf("0");
+            }
+            printf("%x", address);
+            nDevices++;
+        }
+        else if (error==4) {
+            printf("Unknow error at address 0x");
+            if (address<16) {
+                printf("0");
+            }
+            printf("%x", address);
+        }
+    }
+    if (nDevices == 0) {
+        printf("No I2C devices found\n");
+    }
+    else {
+        printf("done\n");
+    }
+    mcp = new MCP4725(0x60);
+    if (!mcp->isConnected()) {
+        ESP_LOGE(LOG_TAG, "Failed to initialize MCP4725");
+    }
+    mcp->setMaxVoltage(MCP_VOLTAGE);
 }
 
 void DimmedPump::setup() {
@@ -32,6 +69,7 @@ void DimmedPump::setPower(float setpoint) {
         _currentFlow = 0.0f;
     }
     _psm.set(static_cast<int>(_power));
+    mcp->setVoltage(MCP_VOLTAGE * _power / 100.0f);
 }
 
 float DimmedPump::getCoffeeVolume() { return _pressureController.getcoffeeOutputEstimate(); }
@@ -62,6 +100,7 @@ void DimmedPump::updatePower() {
         _power = _controllerPower;
     }
     _psm.set(static_cast<int>(_power));
+    mcp->setVoltage(MCP_VOLTAGE * _power / 100.0f);
 }
 
 void DimmedPump::setFlowTarget(float targetFlow, float pressureLimit) {

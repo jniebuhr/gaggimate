@@ -24,6 +24,8 @@
     "Wire": "*",
     "NayrodPID": "file://lib/NayrodPID",
     "robtillaart/PCA9634": "0.4.1",
-    "PWFusion_VL53L3C": "https://github.com/PlayingWithFusion/PWFusion_VL53L3C"
+    "PWFusion_VL53L3C": "https://github.com/PlayingWithFusion/PWFusion_VL53L3C",
+    "robtillaart/MCP4725": "0.4.1",
+    "qqqlab/ESP32_SoftWire": "1.0.2"
   }
 }
