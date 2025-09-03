@@ -86,6 +86,8 @@ class Controller {
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     VolumetricMeasurementSource getActiveScaleSource() const;
+    VolumetricMeasurementSource getPreferredScaleSource() const;
+    bool isScaleSourceHealthy(VolumetricMeasurementSource source) const;
     void onFlush();
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
@@ -158,10 +160,11 @@ class Controller {
     bool steamReady = false;
     int error = 0;
 
-    // Bluetooth scale connection monitoring
-    VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
-    unsigned long lastBluetoothMeasurement = 0;
-    static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
+    // Scale health monitoring
+    unsigned long lastHardwareScaleTime = 0;
+    unsigned long lastBluetoothScaleTime = 0;
+    static const unsigned long SCALE_TIMEOUT_MS = 1000; // 1 second timeout before considering scale failed
+    static const unsigned long SCALE_RECOVERY_MS = 500; // 500ms of stable readings before trusting again
 
     xTaskHandle taskHandle;
 

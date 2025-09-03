@@ -646,6 +646,14 @@ void Controller::onOTAUpdate() {
 }
 
 void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
+    // Track last measurement times for scale health monitoring
+    unsigned long now = millis();
+    if (source == VolumetricMeasurementSource::HARDWARE) {
+        lastHardwareScaleTime = now;
+    } else if (source == VolumetricMeasurementSource::BLUETOOTH) {
+        lastBluetoothScaleTime = now;
+    }
+    
     // Determine which events to trigger based on source
     if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
         pluginManager->trigger(F("controller:volumetric-measurement:estimation:change"), "value", static_cast<float>(measurement));
@@ -655,7 +663,10 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         pluginManager->trigger(F("controller:volumetric-measurement:hardware:change"), "value", static_cast<float>(measurement));
     }
     
-    // Get the active scale source preference
+    // Get the preferred scale source (ignoring temporary failures)
+    VolumetricMeasurementSource preferredSource = getPreferredScaleSource();
+    
+    // Get the currently active source (with health-based fallback)
     VolumetricMeasurementSource activeSource = getActiveScaleSource();
     
     // Trigger unified event if this measurement is from the active source
@@ -677,8 +688,9 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         return;
     }
     
-    // For brewing, use the preferred scale source
-    if (source == activeSource) {
+    // For brewing, use robust scale source selection with health monitoring
+    // Only update volume if this measurement is from a healthy, preferred source
+    if (isScaleSourceHealthy(source) && (source == preferredSource || !isScaleSourceHealthy(preferredSource))) {
         if (currentProcess != nullptr) {
             currentProcess->updateVolume(measurement);
         }
@@ -687,10 +699,7 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         }
     }
     
-    // Ignore flow estimation if we have a scale override
-    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION && volumetricOverride) {
-        return;
-    }
+    // Note: Removed legacy volumetricOverride check as it conflicts with activeSource logic
 }
 
 bool Controller::isBluetoothScaleHealthy() const {
@@ -710,21 +719,62 @@ void Controller::onFlush() {
 VolumetricMeasurementSource Controller::getActiveScaleSource() const {
     String preference = settings.getPreferredScaleSource();
     
-    if (preference == "hardware" && systemInfo.capabilities.hwScale) {
+    // Check preferred source first, but only if it's healthy
+    if (preference == "hardware" && systemInfo.capabilities.hwScale && isScaleSourceHealthy(VolumetricMeasurementSource::HARDWARE)) {
         return VolumetricMeasurementSource::HARDWARE;
-    } else if (preference == "bluetooth" && BLEScales.isConnected()) {
+    } else if (preference == "bluetooth" && BLEScales.isConnected() && isScaleSourceHealthy(VolumetricMeasurementSource::BLUETOOTH)) {
         return VolumetricMeasurementSource::BLUETOOTH;
     }
     
-    // Fallback logic when preferred source isn't available
+    // Fallback logic when preferred source isn't available or unhealthy
+    if (systemInfo.capabilities.hwScale && isScaleSourceHealthy(VolumetricMeasurementSource::HARDWARE)) {
+        return VolumetricMeasurementSource::HARDWARE;
+    } else if (BLEScales.isConnected() && isScaleSourceHealthy(VolumetricMeasurementSource::BLUETOOTH)) {
+        return VolumetricMeasurementSource::BLUETOOTH;
+    }
+    
+    // Final fallback to flow estimation if no scales are available or healthy
+    return VolumetricMeasurementSource::FLOW_ESTIMATION;
+}
+
+VolumetricMeasurementSource Controller::getPreferredScaleSource() const {
+    String preference = settings.getPreferredScaleSource();
+    
+    if (preference == "hardware" && systemInfo.capabilities.hwScale) {
+        return VolumetricMeasurementSource::HARDWARE;
+    } else if (preference == "bluetooth") {
+        return VolumetricMeasurementSource::BLUETOOTH;
+    }
+    
+    // Default fallback based on availability (ignoring health)
     if (systemInfo.capabilities.hwScale) {
         return VolumetricMeasurementSource::HARDWARE;
     } else if (BLEScales.isConnected()) {
         return VolumetricMeasurementSource::BLUETOOTH;
     }
     
-    // Final fallback to flow estimation if no scales are available
     return VolumetricMeasurementSource::FLOW_ESTIMATION;
+}
+
+bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const {
+    unsigned long now = millis();
+    
+    switch (source) {
+        case VolumetricMeasurementSource::HARDWARE:
+            // Hardware scale is healthy if we've received measurements recently
+            return systemInfo.capabilities.hwScale && (now - lastHardwareScaleTime) < SCALE_TIMEOUT_MS;
+            
+        case VolumetricMeasurementSource::BLUETOOTH:
+            // Bluetooth scale is healthy if connected and we've received measurements recently
+            return BLEScales.isConnected() && (now - lastBluetoothScaleTime) < SCALE_TIMEOUT_MS;
+            
+        case VolumetricMeasurementSource::FLOW_ESTIMATION:
+            // Flow estimation is always considered "healthy" as a fallback
+            return systemInfo.capabilities.dimming;
+            
+        default:
+            return false;
+    }
 }
 
 void Controller::handleBrewButton(int brewButtonStatus) {
