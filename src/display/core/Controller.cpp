@@ -296,9 +296,9 @@ bool Controller::isReady() const { return !isUpdating() && !isErrorState() && !i
 
 bool Controller::isVolumetricAvailable() const {
 #ifdef NIGHTLY_BUILD
-    return volumetricOverride || systemInfo.capabilities.dimming;
+    return isBluetoothScaleHealthy() || systemInfo.capabilities.dimming;
 #else
-    return volumetricOverride;
+    return isBluetoothScaleHealthy();
 #endif
 }
 
@@ -513,7 +513,7 @@ void Controller::activate() {
     clientController.tare();
     if (isVolumetricAvailable())
         pluginManager->trigger("controller:brew:prestart");
-    delay(100);
+    delay(200);
     switch (mode) {
     case MODE_BREW:
         startProcess(new BrewProcess(profileManager->getSelectedProfile(),
@@ -620,8 +620,11 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
                                ? F("controller:volumetric-measurement:estimation:change")
                                : F("controller:volumetric-measurement:bluetooth:change"),
                            "value", static_cast<float>(measurement));
-    // Bluetooth volume override is active, ignore volume estimation
-    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION && volumetricOverride) {
+    if (source == VolumetricMeasurementSource::BLUETOOTH) {
+        lastBluetoothMeasurement = millis();
+    }
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION && isBluetoothScaleHealthy()) {
+        ESP_LOGD(LOG_TAG, "Ignoring flow estimation, bluetooth scale available (%lums ago)", timeSinceLastBluetooth);
         return;
     }
     if (currentProcess != nullptr) {
@@ -630,6 +633,10 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     if (lastProcess != nullptr) {
         lastProcess->updateVolume(measurement);
     }
+}
+bool Controller::isBluetoothScaleHealthy() const {
+    unsigned long timeSinceLastBluetooth = millis() - lastBluetoothMeasurement;
+    return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
 }
 
 void Controller::onFlush() {
