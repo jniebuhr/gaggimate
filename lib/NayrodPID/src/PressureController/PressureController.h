@@ -75,7 +75,7 @@ class PressureController {
     float _lambda = 1.0f;  // Convergence gain
     float _epsilon = 3.0f; // Limite band
     float deadband = 0.3f; // Dead band
-    float _Ki = 0.05f;     // dt/tau
+    float _Ki = 0.13f;     // dt/tau
     float _integLimit = 0.8f;
     // === Controller states ===
     float _P_previous = 0.0f;

@@ -189,7 +189,7 @@ float PressureController::getPumpDutyCycleForPressure() {
     _P_previous = P;
 
     // Switching surface
-    _epsilon = 0.15f * _r;
+    _epsilon = 0.3f * _r;
     deadband = 0.1f * _r;
 
     float s = _lambda * error;
