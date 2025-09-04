@@ -38,6 +38,7 @@ class PressureController {
     float getPumpDutyCycleForFlowRate() const;
     float getFilteredPressureDerivative() const { return _dFilteredPressure; };
 
+
   private:
     float getPumpDutyCycleForPressure();
     void virtualScale();
@@ -92,12 +93,13 @@ class PressureController {
     float retroCoffeeOutputPressureHistory = 0.0f;
     int estimationConvergenceCounter = false;
     float lastGoodEstimatedR = 0.0f;
-    float puckResistance = 1e-8f; // Estimation of puck conductance
+    float puckResistance = 1e-8f; 
     float timer = 0.0f;
-    float _dFilteredPressure = 0.0f;    // dérivée de la pression filtrée
-    float _lastFilteredPressure = 0.0f; // mémorise la valeur précédente
-
-    float deadVolume = 8.0f;
+    float _dFilteredPressure = 0.0f;
+    float _lastFilteredPressure = 0.0f; 
+    float _V;
+    
+    float deadVolume = 23.0f;
     float pumpFlowInstant = 0.0f;
     float pressureDerivative = 0.0f;
 
