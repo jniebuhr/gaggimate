@@ -76,19 +76,19 @@ class PressureController {
     float _lambda = 1.0f;  // Convergence gain
     float _epsilon = 3.0f; // Limite band
     float deadband = 0.3f; // Dead band
-    float _Ki = 0.05f;     // dt/tau
+    float _Ki = 0.13f;     // dt/tau
     float _integLimit = 0.8f;
     // === Controller states ===
     float _P_previous = 0.0f;
     float _dP_previous = 0.0f;
     float _errorInteg = 0.0f;
-    float alpha = 0.0f;
+    float alpha;
 
     // === Flow estimation  ===
     float flowPerSecond = 0.0f;
     float pumpFlowRate = 0.0f;
     float pumpVolume = 0.0f;
-    float coffeeBadVolume = 0.0f;
+    float coffeePuckSaturationVolume = 0.0f;
     float coffeeOutput = 0.0f;
     float retroCoffeeOutputPressureHistory = 0.0f;
     int estimationConvergenceCounter = false;

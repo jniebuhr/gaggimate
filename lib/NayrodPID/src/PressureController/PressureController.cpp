@@ -47,7 +47,7 @@ void PressureController::setupSetpointFilter(float freq, float damping) {
 
 void PressureController::filterSensor() { 
     float newFiltered = this->pressureKF->updateEstimate(*_rawPressure);
-    float alpha = 0.5f/(0.5f +_dt); 
+    float alpha = 0.3f/(0.3f +_dt); 
     _dFilteredPressure = alpha * _dFilteredPressure 
                     + (1.0f - alpha) * ((newFiltered - _lastFilteredPressure) / _dt);
     _lastFilteredPressure = newFiltered;
@@ -56,8 +56,9 @@ void PressureController::filterSensor() {
 
 void PressureController::tare() { 
     coffeeOutput = 0.0; 
-    coffeeBadVolume = 0.0f;
+    coffeePuckSaturationVolume = 0.0f;
     pumpVolume = 0.0f;
+    _V = 0.0f;
 }
 
 void PressureController::update(ControlMode mode) {
@@ -127,32 +128,27 @@ void PressureController::setPumpFlowPolyCoeffs(float a, float b, float c, float 
 }
 
 void PressureController::virtualScale() {
-    // Estimate puck input flow
-    if(pumpVolume < deadVolume ){  // Proportionnaly increase flow rate at the beginning  
-        float flow = pumpFlowModel(*_ctrlOutput)*1e6f;
-        pumpFlowInstant += flow *_dt;
-        pumpFlowRate = pumpFlowInstant * flow /8.0f;     
-    }else{
-        // pumpFlowRate = pumpFlowModel(*_ctrlOutput)*1e6f;
-        float alpha = 0.3/(0.3+_dt);
-        pumpFlowRate = pumpFlowModel(*_ctrlOutput)*1e6f *alpha + pumpFlowRate * (1-alpha);
-    }
-    pumpVolume += pumpFlowRate *_dt;
-    
-    // Update puck resistance estimation:
-    float badFlow = 0.0f;
-    bool isPpressurized = this->R_estimator->update(pumpFlowRate, _filteredPressureSensor);
-    flowPerSecond = R_estimator->getQout();
-    if (flowPerSecond > 0.0f) {
-        badFlow = pumpFlowRate - R_estimator->getCeff()*_dFilteredPressure;
-        coffeeBadVolume += badFlow * _dt;
-        if (coffeeBadVolume > 15.0f){
-            coffeeOutput += flowPerSecond * _dt;  
+
+    float al = 0.2/(0.2+_dt);
+    pumpFlowRate = pumpFlowModel(*_ctrlOutput)*1e6f*al + pumpFlowRate*(1 - al);
+    pumpVolume  += pumpFlowRate * _dt;
+
+    float Ceff = 4.2f / _filteredPressureSensor;
+    float flowRaw  = pumpFlowRate - Ceff * _dFilteredPressure; 
+
+    if(flowRaw>0){// negative means water has not reached the puck yet and pressure is not really building up 
+        coffeePuckSaturationVolume += flowRaw * _dt;
+        if (coffeePuckSaturationVolume > deadVolume) {
+             _V += flowRaw * _dt;
+            float soft = (1.0f - expf(-_V / 0.5f)) * flowRaw; 
+            float A = 1.2f/(1.2f + _dt);                    
+            flowPerSecond = A*flowPerSecond + (1-A)*soft;    
+            coffeeOutput += flowPerSecond * _dt;           
         } else {
-            flowPerSecond = 0.0f;
+            flowPerSecond = 0.0f; 
+            _V = 0.0f;
         }
     }
-    ESP_LOGI("","%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e",badFlow, coffeeBadVolume, R_estimator->getPressure(),_filteredPressureSensor,R_estimator->getResistance(),R_estimator->getQout(),R_estimator->getCovarianceK());
 }
 
 
@@ -180,17 +176,11 @@ float PressureController::getPumpDutyCycleForPressure() {
     // control that pressure now that all conditions are reunited
     float P = _filteredPressureSensor;
     float P_ref = _r;
-    float dP_ref = _dr;
-
     float error = P - P_ref;
-    float dP_actual = 0.3f * _dP_previous + 0.7f * (P - _P_previous) / _dt;
-    _dP_previous = dP_actual;
-    float error_dot = dP_actual - dP_ref;
-
     _P_previous = P;
 
     // Switching surface
-    _epsilon = 0.15f * _r;
+    _epsilon = 0.3f * _r;
     deadband = 0.1f * _r;
     
     float s = _lambda * error;
@@ -230,5 +220,6 @@ void PressureController::reset() {
     estimationConvergenceCounter = 0;
     timer = 0.0f;
     pumpFlowInstant = 0.0f;
+    _V = 0.0f;
     ESP_LOGI("","RESET");
 }
