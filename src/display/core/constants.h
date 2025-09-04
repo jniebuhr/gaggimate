@@ -26,6 +26,10 @@
 #define DEFAULT_STEAM_PUMP_CUTOFF 3.f
 #define WIFI_CONNECT_ATTEMPTS 20
 
+// Flush process settings (seconds)
+#define MIN_FLUSH_DURATION 1
+#define DEFAULT_FLUSH_DURATION 5
+
 #define MODE_STANDBY 0
 #define MODE_BREW 1
 #define MODE_STEAM 2
