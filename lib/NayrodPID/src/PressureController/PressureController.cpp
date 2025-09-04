@@ -135,13 +135,14 @@ void PressureController::virtualScale() {
 
     float Ceff = 4.2f / _filteredPressureSensor;
     float flowRaw  = pumpFlowRate - Ceff * _dFilteredPressure; 
-
+    
     if(flowRaw>0){// negative means water has not reached the puck yet and pressure is not really building up 
+        puckResistance = flowRaw/sqrt(_filteredPressureSensor);
         coffeePuckSaturationVolume += flowRaw * _dt;
-        if (coffeePuckSaturationVolume > deadVolume) {
+        if (true) {
              _V += flowRaw * _dt;
-            float soft = (1.0f - expf(-_V / 0.5f)) * flowRaw; 
-            float A = 1.2f/(1.2f + _dt);                    
+            float soft = (1.0f - expf(-_V / deadVolume)) * flowRaw; 
+            float A = 0.3f/(0.3f + _dt);                    
             flowPerSecond = A*flowPerSecond + (1-A)*soft;    
             coffeeOutput += flowPerSecond * _dt;           
         } else {
@@ -179,17 +180,16 @@ float PressureController::getPumpDutyCycleForPressure() {
     _P_previous = P;
 
     // Switching surface
-    _epsilon = 0.3f * _r;
-    _epsilon = 0.3f * _r;
-    deadband = 0.1f * _r;
+    float epsilon = _epsilon_coef * _r;
+    float deadband = _deadband_coef * _r;
 
     float s = _lambda * error;
     float sat_s = 0.0f;
     if (error > 0) {
-        float tan = tanhf(s / _epsilon - deadband * _lambda / _epsilon);
+        float tan = tanhf(s / epsilon - deadband * _lambda / epsilon);
         sat_s = std::max(0.0f, tan);
     } else if (error < 0) {
-        float tan = tanhf(s / _epsilon + deadband * _lambda / _epsilon);
+        float tan = tanhf(s / epsilon + deadband * _lambda / epsilon);
         sat_s = std::min(0.0f, tan);
     }
 
@@ -199,8 +199,10 @@ float PressureController::getPumpDutyCycleForPressure() {
     float iterm = Ki * _errorInteg;
 
     float Qa = pumpFlowModel();
-    float K = _K / (1 - P / _Pmax) * Qa / _Co;
-    alpha = _Co / Qa * (-_lambda * error - K * sat_s) - iterm;
+    float Ceq = fmax(10.0f, 4.2f/_P)*1e-6;
+    Ceq = _Co;
+    float K = _K / (1 - P / _Pmax) * Qa / Ceq;
+    alpha = Ceq / Qa * (-_lambda * error - K * sat_s) - iterm;
 
     // Anti-windup
     if ((sign(error) == -sign(alpha)) && (fabs(alpha) > 1.0f)) {
@@ -208,7 +210,7 @@ float PressureController::getPumpDutyCycleForPressure() {
         iterm = Ki * _errorInteg;
     }
 
-    alpha = _Co / Qa * (-_lambda * error - K * sat_s) - iterm;
+    alpha = Ceq / Qa * (-_lambda * error - K * sat_s) - iterm;
     return constrain(alpha * 100.0f, 0.0f, 100.0f);
 }
 
@@ -216,9 +218,6 @@ void PressureController::reset() {
     this->R_estimator->reset();
     initSetpointFilter(_filteredPressureSensor);
     _errorInteg = 0.0f;
-    retroCoffeeOutputPressureHistory = 0;
-    estimationConvergenceCounter = 0;
-    timer = 0.0f;
     pumpFlowInstant = 0.0f;
     _V = 0.0f;
     ESP_LOGI("","RESET");
