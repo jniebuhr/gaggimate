@@ -77,7 +77,6 @@ void ShotHistoryPlugin::startRecording() {
         currentId = "0" + currentId;
     }
     shotStart = millis();
-    lastVolumeSample = 0;
     currentBluetoothWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
