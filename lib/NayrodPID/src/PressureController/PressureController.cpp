@@ -45,7 +45,7 @@ void PressureController::setupSetpointFilter(float freq, float damping) {
     _filtxi = damping;
 }
 
-void PressureController::filterSensor() { 
+void PressureController::filterSensor() {
     float newFiltered = this->pressureKF->updateEstimate(*_rawPressure);
     float alpha = 0.3f/(0.3f +_dt); 
     _dFilteredPressure = alpha * _dFilteredPressure 
@@ -151,7 +151,6 @@ void PressureController::virtualScale() {
     }
 }
 
-
 float PressureController::getPumpDutyCycleForPressure() {
 
     // BOILER NOT PRESSURISED : Do not start control before the boiler is filled up.
@@ -181,8 +180,9 @@ float PressureController::getPumpDutyCycleForPressure() {
 
     // Switching surface
     _epsilon = 0.3f * _r;
+    _epsilon = 0.3f * _r;
     deadband = 0.1f * _r;
-    
+
     float s = _lambda * error;
     float sat_s = 0.0f;
     if (error > 0) {

@@ -82,6 +82,7 @@ void ProfileManager::migrate() {
     brewPhase.pumpSimple = 100;
     Target target{};
     target.type = TargetType::TARGET_TYPE_VOLUMETRIC;
+    target.operator_ = TargetOperator::GTE;
     target.value = _settings.getTargetVolume();
     brewPhase.targets.push_back(target);
     profile.phases.push_back(brewPhase);

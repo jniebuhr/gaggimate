@@ -11,6 +11,7 @@
 #include <Arduino.h>
 #include <lvgl.h>
 
+void enable_amoled_black_theme_override(lv_disp_t *disp);
 void beginLvglHelper(Display &board, bool debug = false);
 String lvgl_helper_get_fs_filename(String filename);
 const char *lvgl_helper_get_fs_filename(const char *filename);

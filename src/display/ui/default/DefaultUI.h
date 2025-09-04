@@ -108,7 +108,7 @@ class DefaultUI {
     int profileLoaded = 0;
     Profile currentProfileChoice{};
     std::vector<String> favoritedProfiles;
-    int currentThemeMode = 0; // Track current theme mode
+    int currentThemeMode = -1; // Force applyTheme on first loop
 
     // Screen change
     lv_obj_t **targetScreen = &ui_InitScreen;
