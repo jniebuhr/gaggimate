@@ -7,13 +7,15 @@ It extracts the ELF core dump from ESP32's proprietary format and uses
 GDB to provide detailed crash analysis.
 
 Usage:
-    python3 scripts/analyze_coredump.py <coredump_file> [environment]
+    python3 scripts/analyze_coredump.py <coredump_file> [environment_or_elf_file] [elf_file]
     
 Examples:
     python3 scripts/analyze_coredump.py /path/to/coredump.bin
     python3 scripts/analyze_coredump.py /path/to/coredump.bin display
     python3 scripts/analyze_coredump.py /path/to/coredump.bin controller
     python3 scripts/analyze_coredump.py /path/to/coredump.bin display-headless
+    python3 scripts/analyze_coredump.py /path/to/coredump.bin /path/to/firmware.elf
+    python3 scripts/analyze_coredump.py /path/to/coredump.bin display /path/to/firmware.elf
 
 Environments:
     display           - Main display controller (default)
@@ -197,7 +199,7 @@ def print_crash_summary(coredump_file):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 scripts/analyze_coredump.py <coredump_file> [environment]")
+        print("Usage: python3 scripts/analyze_coredump.py <coredump_file> [environment_or_elf_file] [elf_file]")
         print("")
         print("Available environments:")
         print("  display           - Main display controller (default)")
@@ -208,15 +210,34 @@ def main():
         print("  python3 scripts/analyze_coredump.py ~/Downloads/coredump.bin")
         print("  python3 scripts/analyze_coredump.py ~/Downloads/coredump.bin display")
         print("  python3 scripts/analyze_coredump.py ~/Downloads/coredump.bin controller")
+        print("  python3 scripts/analyze_coredump.py ~/Downloads/coredump.bin /path/to/firmware.elf")
+        print("  python3 scripts/analyze_coredump.py ~/Downloads/coredump.bin display /path/to/firmware.elf")
         sys.exit(1)
     
     coredump_file = sys.argv[1]
-    environment = sys.argv[2] if len(sys.argv) > 2 else "display"
+    
+    # Parse arguments - support both environment and direct ELF file specification
+    environment = "display"  # default
+    custom_elf_file = None
+    
+    if len(sys.argv) >= 3:
+        second_arg = sys.argv[2]
+        # Check if second argument is an ELF file (has .elf extension or is an absolute/relative path)
+        if second_arg.endswith('.elf') or '/' in second_arg or '\\' in second_arg:
+            custom_elf_file = second_arg
+        else:
+            environment = second_arg
+    
+    if len(sys.argv) >= 4:
+        custom_elf_file = sys.argv[3]
     
     print("🚀 ESP32 Core Dump Analyzer")
     print("="*50)
     print(f"Core dump: {coredump_file}")
-    print(f"Environment: {environment}")
+    if custom_elf_file:
+        print(f"ELF file: {custom_elf_file}")
+    else:
+        print(f"Environment: {environment}")
     print()
     
     # Validate input file
@@ -224,14 +245,22 @@ def main():
         print(f"❌ Core dump file not found: {coredump_file}")
         sys.exit(1)
     
-    # Find build artifacts
-    build_dir = find_pio_build_dir(environment)
-    if not build_dir:
-        sys.exit(1)
-    
-    firmware_elf = find_firmware_elf(build_dir)
-    if not firmware_elf:
-        sys.exit(1)
+    # Determine firmware ELF file
+    if custom_elf_file:
+        if not os.path.exists(custom_elf_file):
+            print(f"❌ Custom ELF file not found: {custom_elf_file}")
+            sys.exit(1)
+        firmware_elf = Path(custom_elf_file)
+        print(f"✅ Using custom ELF file: {firmware_elf}")
+    else:
+        # Find build artifacts using environment
+        build_dir = find_pio_build_dir(environment)
+        if not build_dir:
+            sys.exit(1)
+        
+        firmware_elf = find_firmware_elf(build_dir)
+        if not firmware_elf:
+            sys.exit(1)
     
     # Find GDB
     gdb_path = find_gdb_executable()
