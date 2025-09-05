@@ -190,7 +190,7 @@ const ProcessControls = props => {
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
           <i className='fa fa-weight-scale text-base-content/60' />
           <span className='text-base-content'>{status.value.bluetoothWeight?.toFixed(1) || 0.0}g</span>
-          {isWeightTarget && (
+          {isWeightTarget && (mode === 1 || mode === 3) && (
             <span className='text-success font-semibold'>
               {' '}
               / {brewTarget?.toFixed(0)}g
