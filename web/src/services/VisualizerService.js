@@ -18,19 +18,6 @@ export class VisualizerService {
    */
   // Format shot data as a Gaggimate-style shot file for visualizer.coffee API
   formatShotData(shotData, profileData = null) {
-    // Debug: log the actual structure we're receiving
-    console.log('formatShotData received:', {
-      hasData: !!shotData,
-      hasSamples: !!(shotData && shotData.samples),
-      samplesIsArray: !!(shotData && shotData.samples && Array.isArray(shotData.samples)),
-      samplesLength: shotData && shotData.samples ? shotData.samples.length : 0,
-      shotDataKeys: shotData ? Object.keys(shotData) : [],
-      firstSample: shotData && shotData.samples && shotData.samples[0] ? shotData.samples[0] : null,
-      notesData: shotData.notes,
-      profileData: profileData,
-      hasProfileData: !!profileData
-    });
-
     if (!shotData || !shotData.samples || !Array.isArray(shotData.samples)) {
       throw new Error('Invalid shot data: missing required samples array');
     }
@@ -125,32 +112,6 @@ export class VisualizerService {
 
     const formattedData = this.formatShotData(shot, profileData);
     
-    // Log the data being sent for debugging
-    console.log('Uploading to visualizer.coffee:', {
-      dataSize: JSON.stringify(formattedData).length,
-      sampleCount: formattedData.samples.length,
-      profile: formattedData.profile.label,
-      shotMetadata: {
-        bean_weight: formattedData.bean_weight,
-        drink_weight: formattedData.drink_weight,
-        grinder_model: formattedData.grinder_model,
-        grinder_setting: formattedData.grinder_setting,
-        espresso_enjoyment: formattedData.espresso_enjoyment,
-        espresso_notes: formattedData.espresso_notes?.substring(0, 50) + (formattedData.espresso_notes?.length > 50 ? '...' : ''),
-        bean_brand: formattedData.bean_brand,
-        bean_type: formattedData.bean_type,
-        barista: formattedData.barista,
-        roast_level: formattedData.roast_level,
-        roast_date: formattedData.roast_date
-      },
-      sampleData: {
-        firstTime: formattedData.samples[0]?.t || 0,
-        lastTime: formattedData.samples[formattedData.samples.length - 1]?.t || 0,
-        maxPressure: Math.max(...formattedData.samples.map(s => s.cp || 0)),
-        maxFlow: Math.max(...formattedData.samples.map(s => s.fl || 0))
-      }
-    });
-    
     // Create basic auth header
     const credentials = btoa(`${username}:${password}`);
     
@@ -170,12 +131,6 @@ export class VisualizerService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Upload failed response:', {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-          bodyPreview: errorText.substring(0, 500)
-        });
         
         // Check if it's an authentication error
         if (response.status === 401 || response.status === 403) {
