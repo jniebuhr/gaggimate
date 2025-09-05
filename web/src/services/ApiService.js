@@ -163,7 +163,8 @@ export default class ApiService {
       mode: message.m,
       selectedProfile: message.p,
       brewTarget: message.bt || 0,
-      volumetricAvailable: message.bta || false,
+      bluetoothWeight: message.bw || 0,
+      bluetoothConnected: message.bc || false,
       process: message.process || null,
       timestamp: new Date(),
     };
