@@ -86,25 +86,18 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
       // Fetch profile data if profileId is available
       let profileData = null;
       if (shot.profileId && apiService) {
-        console.log('Attempting to fetch profile with ID:', shot.profileId);
         try {
           const profileResponse = await apiService.request({ 
             tp: 'req:profiles:load', 
             id: shot.profileId 
           });
-          console.log('Profile fetch response:', profileResponse);
           if (profileResponse.profile) {
             profileData = profileResponse.profile;
-            console.log('Profile data extracted:', profileData);
-          } else {
-            console.warn('No profile data in response:', profileResponse);
           }
         } catch (error) {
           console.warn('Failed to fetch profile data:', error);
           // Continue without profile data
         }
-      } else {
-        console.log('No profile fetch needed:', { hasProfileId: !!shot.profileId, hasApiService: !!apiService });
       }
 
       // Include notes in shot data
