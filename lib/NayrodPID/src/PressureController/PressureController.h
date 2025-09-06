@@ -33,6 +33,7 @@ class PressureController {
     float getCoffeeFlowRate() { return *_valveStatus == 1 ? _coffeeFlowRate : 0.0f; };
     float getPuckResistance() { return _puckResistance; }
 
+    void setDeadVolume(float deadVol){_puckSaturatedVolume = deadVol;};
 
   private:
     float getPumpDutyCycleForPressure();
@@ -92,9 +93,11 @@ class PressureController {
     float _lastFilteredPressure = 0.0f; // Previous filtered pressure for derivative calculation
     float _filterEstimatorFrequency = 1.0f; // Filter frequency for estimator
     float _puckSaturationVolume = 0.0f;// Total volume to saturate the puck(ml)
-    float _puckSaturatedVolume = 0.0f; // Volume at puck saturation (ml)
+    float _puckSaturatedVolume = 38.0f; // Volume at puck saturation (ml)
     float _lastPuckResistance = 0.0f; // Previous puck resistance for derivative calculation
     float _puckResistanceDerivative = 0.0f; // Derivative of puck resistance
+    bool _coffeStartedToFlow  = false;
+    float _missedDops = 0.0f; // Coffee volume first drip compensation
 
     SimpleKalmanFilter *_pressureKalmanFilter;
 };

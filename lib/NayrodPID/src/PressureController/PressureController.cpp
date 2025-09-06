@@ -61,6 +61,8 @@ void PressureController::tare() {
     _coffeeOutput = 0.0f; 
     _pumpVolume = 0.0f;
     _puckSaturationVolume = 0.0f;
+    _coffeStartedToFlow = false;
+    _missedDops = 0.0f;
 }
 
 void PressureController::update(ControlMode mode) {
@@ -141,7 +143,16 @@ void PressureController::virtualScale() {
 
         if(_puckSaturationVolume > _puckSaturatedVolume){
             _coffeeFlowRate = _waterThroughPuckFlowRate;
-            _coffeeOutput += _waterThroughPuckFlowRate * _dt;
+            if(!_coffeStartedToFlow){
+                float timeMissedDrops = 2; // First drop occured ~3s ago
+                _missedDops = _coffeeFlowRate*timeMissedDrops/2;// Assumption that flow was linearly increasing (triangle integral)
+                _coffeStartedToFlow = true;
+                _coffeeOutput += _coffeeFlowRate * _dt +_missedDops;
+            }else{
+            _coffeeOutput += _coffeeFlowRate * _dt;
+            }
+            
+            
         }
     }
 }
@@ -203,5 +214,8 @@ void PressureController::reset() {
     _errorIntegral = 0.0f;
     _pumpFlowRate = 0.0f;
     _puckSaturationVolume = 0.0f;
+    _coffeStartedToFlow = false;
+    _missedDops = 0.0f; // Coffee volume first drip compensation
+
     ESP_LOGI("","RESET");
 }
