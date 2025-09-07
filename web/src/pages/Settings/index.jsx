@@ -149,6 +149,9 @@ export function Settings() {
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
       
+      // Explicitly set the temperature unit boolean value
+      formDataToSubmit.set('temperatureUnitFahrenheit', formData.temperatureUnitFahrenheit ? 'true' : 'false');
+      
       // Convert temperature values to Celsius for backend
       formDataToSubmit.set('targetSteamTemp', 
         convertInputToCelsius(formData.targetSteamTemp, formData.temperatureUnitFahrenheit));
