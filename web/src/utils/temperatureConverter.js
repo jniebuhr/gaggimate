@@ -6,19 +6,37 @@
 /**
  * Convert Celsius to Fahrenheit
  * @param {number} celsius - Temperature in Celsius
- * @returns {number} Temperature in Fahrenheit (rounded to nearest integer)
+ * @returns {number} Temperature in Fahrenheit (full precision)
  */
 export function celsiusToFahrenheit(celsius) {
-  return Math.round((celsius * 9) / 5 + 32);
+  return (celsius * 9) / 5 + 32;
 }
 
 /**
  * Convert Fahrenheit to Celsius
  * @param {number} fahrenheit - Temperature in Fahrenheit
- * @returns {number} Temperature in Celsius (rounded to nearest integer)
+ * @returns {number} Temperature in Celsius (full precision)
  */
 export function fahrenheitToCelsius(fahrenheit) {
-  return Math.round(((fahrenheit - 32) * 5) / 9);
+  return ((fahrenheit - 32) * 5) / 9;
+}
+
+/**
+ * Convert Celsius to Fahrenheit for display (rounded)
+ * @param {number} celsius - Temperature in Celsius
+ * @returns {number} Temperature in Fahrenheit (rounded to nearest integer)
+ */
+export function celsiusToFahrenheitDisplay(celsius) {
+  return Math.round(celsiusToFahrenheit(celsius));
+}
+
+/**
+ * Convert Fahrenheit to Celsius for display (rounded)
+ * @param {number} fahrenheit - Temperature in Fahrenheit
+ * @returns {number} Temperature in Celsius (rounded to nearest integer)
+ */
+export function fahrenheitToCelsiusDisplay(fahrenheit) {
+  return Math.round(fahrenheitToCelsius(fahrenheit));
 }
 
 /**
@@ -39,7 +57,7 @@ export function formatTemperature(tempCelsius, useFahrenheit = false, precision 
     return `0${unit}`;
   }
   
-  const temp = useFahrenheit ? celsiusToFahrenheit(tempCelsius) : Math.round(tempCelsius);
+  const temp = useFahrenheit ? celsiusToFahrenheitDisplay(tempCelsius) : Math.round(tempCelsius);
   const unit = useFahrenheit ? '°F' : '°C';
   
   return `${temp.toFixed(precision)}${unit}`;
@@ -62,7 +80,7 @@ export function formatTemperatureValue(tempCelsius, useFahrenheit = false, preci
     return 0;
   }
   
-  const temp = useFahrenheit ? celsiusToFahrenheit(tempCelsius) : Math.round(tempCelsius);
+  const temp = useFahrenheit ? celsiusToFahrenheitDisplay(tempCelsius) : Math.round(tempCelsius);
   return Number(temp.toFixed(precision));
 }
 
@@ -112,5 +130,5 @@ export function convertCelsiusToDisplay(tempCelsius, displayInFahrenheit = false
     return 0;
   }
   
-  return displayInFahrenheit ? celsiusToFahrenheit(tempCelsius) : Math.round(tempCelsius);
+  return displayInFahrenheit ? celsiusToFahrenheitDisplay(tempCelsius) : Math.round(tempCelsius);
 }
