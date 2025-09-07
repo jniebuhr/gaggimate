@@ -82,7 +82,7 @@ DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
 void DefaultUI::init() {
     auto triggerRender = [this](Event const &) { rerender = true; };
     pluginManager->on("boiler:currentTemperature:change", [=](Event const &event) {
-        int newTemp = static_cast<int>(event.getFloat("value"));
+        float newTemp = event.getFloat("value");
         if (newTemp != currentTemp) {
             currentTemp = newTemp;
             rerender = true;
@@ -309,7 +309,7 @@ void DefaultUI::setupState() {
     grindActive = controller->isGrindActive();
     active = controller->isActive();
     mode = controller->getMode();
-    currentTemp = static_cast<int>(controller->getCurrentTemp());
+    currentTemp = controller->getCurrentTemp();
     targetTemp = controller->getTargetTemp();
     targetDuration = controller->getTargetDuration();
     targetVolume = settings.getTargetVolume();
