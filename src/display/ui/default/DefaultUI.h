@@ -59,7 +59,7 @@ class DefaultUI {
     void adjustTempTarget(lv_obj_t *dials);
     void adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const;
 
-    int tempHistory[TEMP_HISTORY_LENGTH] = {0};
+    float tempHistory[TEMP_HISTORY_LENGTH] = {0};
     int tempHistoryIndex = 0;
     float prevTargetTemp = 0;
     bool isTempHistoryInitialized = false;
