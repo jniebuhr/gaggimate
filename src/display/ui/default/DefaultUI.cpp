@@ -13,6 +13,7 @@
 #include <display/ui/default/lvgl/ui_theme_manager.h>
 #include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
+#include <display/utils/temperatureConverter.h>
 
 #include "esp_sntp.h"
 
@@ -350,51 +351,107 @@ void DefaultUI::setupReactive() {
                           &mode);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_MenuScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_MenuScreen_dials_tempText, "%d°C", currentTemp);
+                              const Settings &settings = controller->getSettings();
+                              bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                              // Scale gauge value to 0-160 range regardless of display unit
+                              float gaugeValue = useFahrenheit ? 
+                                  (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
+                                  currentTemp;
+                              lv_arc_set_value(uic_MenuScreen_dials_tempGauge, gaugeValue);
+                              lv_label_set_text_fmt(uic_MenuScreen_dials_tempText, "%d%s", 
+                                  formatTemperatureForDisplay(currentTemp, useFahrenheit), 
+                                  getTemperatureUnit(useFahrenheit));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_StatusScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_StatusScreen_dials_tempText, "%d°C", currentTemp);
+                              const Settings &settings = controller->getSettings();
+                              bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                              // Scale gauge value to 0-160 range regardless of display unit
+                              float gaugeValue = useFahrenheit ? 
+                                  (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
+                                  currentTemp;
+                              lv_arc_set_value(uic_StatusScreen_dials_tempGauge, gaugeValue);
+                              lv_label_set_text_fmt(uic_StatusScreen_dials_tempText, "%d%s", 
+                                  formatTemperatureForDisplay(currentTemp, useFahrenheit), 
+                                  getTemperatureUnit(useFahrenheit));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_BrewScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_BrewScreen_dials_tempText, "%d°C", currentTemp);
+                              const Settings &settings = controller->getSettings();
+                              bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                              // Scale gauge value to 0-160 range regardless of display unit
+                              float gaugeValue = useFahrenheit ? 
+                                  (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
+                                  currentTemp;
+                              lv_arc_set_value(uic_BrewScreen_dials_tempGauge, gaugeValue);
+                              lv_label_set_text_fmt(uic_BrewScreen_dials_tempText, "%d%s", 
+                                  formatTemperatureForDisplay(currentTemp, useFahrenheit), 
+                                  getTemperatureUnit(useFahrenheit));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_GrindScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_GrindScreen_dials_tempText, "%d°C", currentTemp);
+                              const Settings &settings = controller->getSettings();
+                              bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                              // Scale gauge value to 0-160 range regardless of display unit
+                              float gaugeValue = useFahrenheit ? 
+                                  (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
+                                  currentTemp;
+                              lv_arc_set_value(uic_GrindScreen_dials_tempGauge, gaugeValue);
+                              lv_label_set_text_fmt(uic_GrindScreen_dials_tempText, "%d%s", 
+                                  formatTemperatureForDisplay(currentTemp, useFahrenheit), 
+                                  getTemperatureUnit(useFahrenheit));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_SimpleProcessScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%d°C", currentTemp);
+                              const Settings &settings = controller->getSettings();
+                              bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                              // Scale gauge value to 0-160 range regardless of display unit
+                              float gaugeValue = useFahrenheit ? 
+                                  (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
+                                  currentTemp;
+                              lv_arc_set_value(uic_SimpleProcessScreen_dials_tempGauge, gaugeValue);
+                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%d%s", 
+                                  formatTemperatureForDisplay(currentTemp, useFahrenheit), 
+                                  getTemperatureUnit(useFahrenheit));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%d°C", currentTemp);
+                              const Settings &settings = controller->getSettings();
+                              bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                              // Scale gauge value to 0-160 range regardless of display unit
+                              float gaugeValue = useFahrenheit ? 
+                                  (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
+                                  currentTemp;
+                              lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, gaugeValue);
+                              lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%d%s", 
+                                  formatTemperatureForDisplay(currentTemp, useFahrenheit), 
+                                  getTemperatureUnit(useFahrenheit));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; }, [=]() { adjustTempTarget(ui_MenuScreen_dials); },
                           &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() {
-                              lv_label_set_text_fmt(ui_StatusScreen_targetTemp, "%d°C", targetTemp);
+                              const Settings &settings = controller->getSettings();
+                              bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                              lv_label_set_text_fmt(ui_StatusScreen_targetTemp, "%d%s", 
+                                  formatTemperatureForDisplay(targetTemp, useFahrenheit), 
+                                  getTemperatureUnit(useFahrenheit));
                               adjustTempTarget(ui_StatusScreen_dials);
                           },
                           &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
-                              lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%d°C", targetTemp);
+                              const Settings &settings = controller->getSettings();
+                              bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                              lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%d%s", 
+                                  formatTemperatureForDisplay(targetTemp, useFahrenheit), 
+                                  getTemperatureUnit(useFahrenheit));
                               adjustTempTarget(ui_BrewScreen_dials);
                           },
                           &targetTemp);
@@ -402,7 +459,11 @@ void DefaultUI::setupReactive() {
                           &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() {
-                              lv_label_set_text_fmt(ui_SimpleProcessScreen_targetTemp, "%d°C", targetTemp);
+                              const Settings &settings = controller->getSettings();
+                              bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                              lv_label_set_text_fmt(ui_SimpleProcessScreen_targetTemp, "%d%s", 
+                                  formatTemperatureForDisplay(targetTemp, useFahrenheit), 
+                                  getTemperatureUnit(useFahrenheit));
                               adjustTempTarget(ui_SimpleProcessScreen_dials);
                           },
                           &targetTemp);
@@ -572,7 +633,11 @@ void DefaultUI::setupReactive() {
                 const auto minutes = static_cast<int>(currentProfileChoice.getTotalDuration() / 60.0 - 0.5);
                 const auto seconds = static_cast<int>(currentProfileChoice.getTotalDuration()) % 60;
                 lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
-                lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C", static_cast<int>(currentProfileChoice.temperature));
+                const Settings &settings = controller->getSettings();
+                bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+                lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d%s", 
+                    formatTemperatureForDisplay(currentProfileChoice.temperature, useFahrenheit), 
+                    getTemperatureUnit(useFahrenheit));
                 unsigned int phaseCount = currentProfileChoice.getPhaseCount();
                 unsigned int stepCount = currentProfileChoice.phases.size();
                 lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d step%s", stepCount, stepCount > 1 ? "s" : "");
@@ -787,7 +852,22 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
 inline void DefaultUI::adjustTempTarget(lv_obj_t *dials) {
     double gaugeAngle = pressureAvailable ? 124.0 : 304;
     double gaugeStart = pressureAvailable ? 118.0 : -62;
-    double percentage = static_cast<double>(targetTemp) / 160.0;
+    
+    const Settings &settings = controller->getSettings();
+    bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
+    
+    // Calculate percentage based on appropriate temperature scale
+    // Always use 0-160 as the gauge range (equivalent to 32-320°F)
+    double percentage;
+    if (useFahrenheit) {
+        // For Fahrenheit display, we need to scale the target position to match the gauge
+        // Since gauge shows Fahrenheit values but is scaled to 0-160 range
+        float targetTempF = formatTemperatureForDisplay(targetTemp, true);
+        percentage = (targetTempF - 32.0) / (320.0 - 32.0);
+    } else {
+        percentage = static_cast<double>(targetTemp) / 160.0;
+    }
+    
     lv_obj_t *tempTarget = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTARGET);
     adjustTarget(tempTarget, percentage, gaugeStart, gaugeAngle);
 }

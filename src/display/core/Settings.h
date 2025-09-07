@@ -61,6 +61,7 @@ class Settings {
     bool isMomentaryButtons() const { return momentaryButtons; }
     String getTimezone() const { return timezone; }
     bool isClock24hFormat() const { return clock24hFormat; }
+    bool isTemperatureUnitFahrenheit() const { return temperatureUnitFahrenheit; }
     String getSelectedProfile() const { return selectedProfile; }
     bool isProfilesMigrated() const { return profilesMigrated; }
     std::vector<String> getFavoritedProfiles() const { return favoritedProfiles; }
@@ -121,6 +122,7 @@ class Settings {
     void setMomentaryButtons(bool momentary_buttons);
     void setTimezone(String timezone);
     void setClockFormat(bool format_24h);
+    void setTemperatureUnit(bool fahrenheit);
     void setSelectedProfile(String selected_profile);
     void setProfilesMigrated(bool profiles_migrated);
     void setFavoritedProfiles(std::vector<String> favorited_profiles);
@@ -184,6 +186,7 @@ class Settings {
     bool momentaryButtons = false;
     String timezone = DEFAULT_TIMEZONE;
     bool clock24hFormat = true;
+    bool temperatureUnitFahrenheit = false;
     String otaChannel = DEFAULT_OTA_CHANNEL;
     std::vector<String> favoritedProfiles;
     std::vector<String> profileOrder; // persisted profile ordering
