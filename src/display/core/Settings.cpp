@@ -6,9 +6,35 @@
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);
     startupMode = preferences.getInt("sm", MODE_STANDBY);
-    targetBrewTemp = preferences.getInt("tb", 90);
-    targetSteamTemp = preferences.getInt("ts", 145);
-    targetWaterTemp = preferences.getInt("tw", 80);
+    
+    // Migrate temperature settings from int to float if needed
+    if (preferences.isKey("tb_f")) {
+        targetBrewTemp = preferences.getFloat("tb_f", 90.0f);
+    } else {
+        // Migrate from old int value
+        targetBrewTemp = static_cast<float>(preferences.getInt("tb", 90));
+        preferences.putFloat("tb_f", targetBrewTemp);
+        preferences.remove("tb");
+    }
+    
+    if (preferences.isKey("ts_f")) {
+        targetSteamTemp = preferences.getFloat("ts_f", 145.0f);
+    } else {
+        // Migrate from old int value
+        targetSteamTemp = static_cast<float>(preferences.getInt("ts", 145));
+        preferences.putFloat("ts_f", targetSteamTemp);
+        preferences.remove("ts");
+    }
+    
+    if (preferences.isKey("tw_f")) {
+        targetWaterTemp = preferences.getFloat("tw_f", 80.0f);
+    } else {
+        // Migrate from old int value
+        targetWaterTemp = static_cast<float>(preferences.getInt("tw", 80));
+        preferences.putFloat("tw_f", targetWaterTemp);
+        preferences.remove("tw");
+    }
+    
     targetDuration = preferences.getInt("td", 25000);
     targetVolume = preferences.getInt("tv", 36);
     targetGrindVolume = preferences.getDouble("tgv", 18.0);
@@ -90,17 +116,17 @@ void Settings::save(bool noDelay) {
     dirty = true;
 }
 
-void Settings::setTargetBrewTemp(const int target_brew_temp) {
+void Settings::setTargetBrewTemp(const float target_brew_temp) {
     targetBrewTemp = target_brew_temp;
     save();
 }
 
-void Settings::setTargetSteamTemp(const int target_steam_temp) {
+void Settings::setTargetSteamTemp(const float target_steam_temp) {
     targetSteamTemp = target_steam_temp;
     save();
 }
 
-void Settings::setTargetWaterTemp(const int target_water_temp) {
+void Settings::setTargetWaterTemp(const float target_water_temp) {
     targetWaterTemp = target_water_temp;
     save();
 }
@@ -421,9 +447,9 @@ void Settings::doSave() {
     ESP_LOGI("Settings", "Saving settings");
     preferences.begin(PREFERENCES_KEY, false);
     preferences.putInt("sm", startupMode);
-    preferences.putInt("tb", targetBrewTemp);
-    preferences.putInt("ts", targetSteamTemp);
-    preferences.putInt("tw", targetWaterTemp);
+    preferences.putFloat("tb_f", targetBrewTemp);
+    preferences.putFloat("ts_f", targetSteamTemp);
+    preferences.putFloat("tw_f", targetWaterTemp);
     preferences.putInt("td", targetDuration);
     preferences.putInt("tv", targetVolume);
     preferences.putDouble("tgv", targetGrindVolume);
