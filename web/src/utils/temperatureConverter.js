@@ -6,19 +6,19 @@
 /**
  * Convert Celsius to Fahrenheit
  * @param {number} celsius - Temperature in Celsius
- * @returns {number} Temperature in Fahrenheit
+ * @returns {number} Temperature in Fahrenheit (rounded to nearest integer)
  */
 export function celsiusToFahrenheit(celsius) {
-  return (celsius * 9) / 5 + 32;
+  return Math.round((celsius * 9) / 5 + 32);
 }
 
 /**
  * Convert Fahrenheit to Celsius
  * @param {number} fahrenheit - Temperature in Fahrenheit
- * @returns {number} Temperature in Celsius
+ * @returns {number} Temperature in Celsius (rounded to nearest integer)
  */
 export function fahrenheitToCelsius(fahrenheit) {
-  return ((fahrenheit - 32) * 5) / 9;
+  return Math.round(((fahrenheit - 32) * 5) / 9);
 }
 
 /**
@@ -39,7 +39,7 @@ export function formatTemperature(tempCelsius, useFahrenheit = false, precision 
     return `0${unit}`;
   }
   
-  const temp = useFahrenheit ? celsiusToFahrenheit(tempCelsius) : tempCelsius;
+  const temp = useFahrenheit ? celsiusToFahrenheit(tempCelsius) : Math.round(tempCelsius);
   const unit = useFahrenheit ? '°F' : '°C';
   
   return `${temp.toFixed(precision)}${unit}`;
@@ -62,7 +62,7 @@ export function formatTemperatureValue(tempCelsius, useFahrenheit = false, preci
     return 0;
   }
   
-  const temp = useFahrenheit ? celsiusToFahrenheit(tempCelsius) : tempCelsius;
+  const temp = useFahrenheit ? celsiusToFahrenheit(tempCelsius) : Math.round(tempCelsius);
   return Number(temp.toFixed(precision));
 }
 
@@ -112,5 +112,5 @@ export function convertCelsiusToDisplay(tempCelsius, displayInFahrenheit = false
     return 0;
   }
   
-  return displayInFahrenheit ? Math.round(celsiusToFahrenheit(tempCelsius)) : tempCelsius;
+  return displayInFahrenheit ? celsiusToFahrenheit(tempCelsius) : Math.round(tempCelsius);
 }
