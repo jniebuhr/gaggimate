@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback, useContext } from 'preact/hooks';
-import { ApiServiceContext } from '../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
+import { 
+  formatTemperatureValue, 
+  getTemperatureUnit 
+} from '../../utils/temperatureConverter.js';
 
 export function Autotune() {
   const apiService = useContext(ApiServiceContext);
@@ -78,7 +82,7 @@ export function Autotune() {
             <div className='space-y-4'>
               <div className='alert alert-warning'>
                 <span>
-                  Please ensure the boiler temperature is below 50°C before starting the autotune
+                  Please ensure the boiler temperature is below {formatTemperatureValue(50, machine.value.status.temperatureUnitFahrenheit, 0)} before starting the autotune
                   process.
                 </span>
               </div>

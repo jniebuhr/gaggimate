@@ -47,6 +47,7 @@ Settings::Settings() {
     standbyTimeout = preferences.getInt("sbt", DEFAULT_STANDBY_TIMEOUT_MS);
     timezone = preferences.getString("tz", DEFAULT_TIMEZONE);
     clock24hFormat = preferences.getBool("clk_24h", true);
+    temperatureUnitFahrenheit = preferences.getBool("temp_f", false);
     selectedProfile = preferences.getString("sp", "");
     profilesMigrated = preferences.getBool("pm", false);
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
@@ -291,6 +292,11 @@ void Settings::setClockFormat(bool clock_24h_format) {
     save();
 }
 
+void Settings::setTemperatureUnit(bool fahrenheit) {
+    this->temperatureUnitFahrenheit = fahrenheit;
+    save();
+}
+
 void Settings::setSelectedProfile(String selected_profile) {
     this->selectedProfile = std::move(selected_profile);
     save();
@@ -454,6 +460,7 @@ void Settings::doSave() {
     preferences.putString("ha_pw", homeAssistantPassword);
     preferences.putString("tz", timezone);
     preferences.putBool("clk_24h", clock24hFormat);
+    preferences.putBool("temp_f", temperatureUnitFahrenheit);
     preferences.putString("sp", selectedProfile);
     preferences.putInt("sbt", standbyTimeout);
     preferences.putBool("pm", profilesMigrated);

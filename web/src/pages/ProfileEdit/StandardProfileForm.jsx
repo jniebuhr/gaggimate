@@ -5,11 +5,27 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { useEffect } from 'preact/hooks';
+import { 
+  convertCelsiusToDisplay, 
+  convertInputToCelsius, 
+  getTemperatureUnit 
+} from '../../utils/temperatureConverter.js';
+import { machine } from '../../services/ApiService.js';
 
 export function StandardProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
 
+  // Load settings on component mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
   const onFieldChange = (field, value) => {
+    // Handle temperature conversion for temperature field
+    if (field === 'temperature') {
+      value = convertInputToCelsius(value, machine.value.status.temperatureUnitFahrenheit);
+    }
     onChange({
       ...data,
       [field]: value,
@@ -92,7 +108,7 @@ export function StandardProfileForm(props) {
           </div>
           <div className='form-control'>
             <label htmlFor='temperature' className='mb-2 block text-sm font-medium'>
-              Temperature
+              Temperature ({getTemperatureUnit(machine.value.status.temperatureUnitFahrenheit)})
             </label>
             <div className='input-group'>
               <label htmlFor='temperature' className='input w-full'>
@@ -101,14 +117,16 @@ export function StandardProfileForm(props) {
                   name='temperature'
                   type='number'
                   className='grow'
-                  value={data?.temperature}
+                  value={convertCelsiusToDisplay(data?.temperature, machine.value.status.temperatureUnitFahrenheit)}
                   onChange={e => onFieldChange('temperature', e.target.value)}
-                  aria-label='Temperature in degrees Celsius'
+                  aria-label={`Temperature in degrees ${machine.value.status.temperatureUnitFahrenheit ? 'Fahrenheit' : 'Celsius'}`}
                   min='0'
-                  max='150'
+                  max={machine.value.status.temperatureUnitFahrenheit ? '302' : '150'}
                   step='0.1'
                 />
-                <span aria-label='degrees Celsius'>°C</span>
+                <span aria-label={`degrees ${machine.value.status.temperatureUnitFahrenheit ? 'Fahrenheit' : 'Celsius'}`}>
+                  {getTemperatureUnit(machine.value.status.temperatureUnitFahrenheit)}
+                </span>
               </label>
             </div>
           </div>

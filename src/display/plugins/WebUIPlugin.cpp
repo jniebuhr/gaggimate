@@ -87,6 +87,7 @@ void WebUIPlugin::loop() {
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
+        doc["tempUnit"] = controller->getSettings().isTemperatureUnitFahrenheit() ? 1 : 0;
 
         Process *process = controller->getProcess();
         if (process == nullptr) {
@@ -421,6 +422,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("timezone"))
                 settings->setTimezone(request->arg("timezone"));
             settings->setClockFormat(request->hasArg("clock24hFormat"));
+            settings->setTemperatureUnit(request->hasArg("temperatureUnitFahrenheit"));
             if (request->hasArg("standbyTimeout"))
                 settings->setStandbyTimeout(request->arg("standbyTimeout").toInt() * 1000);
             if (request->hasArg("mainBrightness"))
@@ -487,6 +489,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["delayAdjust"] = settings.isDelayAdjust();
     doc["timezone"] = settings.getTimezone();
     doc["clock24hFormat"] = settings.isClock24hFormat();
+    doc["temperatureUnitFahrenheit"] = settings.isTemperatureUnitFahrenheit();
     doc["standbyTimeout"] = settings.getStandbyTimeout() / 1000;
     doc["mainBrightness"] = settings.getMainBrightness();
     doc["standbyBrightness"] = settings.getStandbyBrightness();

@@ -1,25 +1,38 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { ChartComponent } from '../../components/Chart.jsx';
+import { 
+  formatTemperatureValue, 
+  getTemperatureUnit 
+} from '../../utils/temperatureConverter.js';
+import { machine } from '../../services/ApiService.js';
 
 function getChartData(data) {
   let start = 0;
+  const useFahrenheit = machine.value.status.temperatureUnitFahrenheit;
+  
   return {
     type: 'line',
     data: {
       datasets: [
         {
-          label: 'Current Temperature',
+          label: `Current Temperature (${getTemperatureUnit(useFahrenheit)})`,
           borderColor: '#F0561D',
           pointStyle: false,
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.ct })),
+          data: data.map((i, idx) => ({ 
+            x: (i.t / 1000).toFixed(1), 
+            y: formatTemperatureValue(i.ct, useFahrenheit, 1)
+          })),
         },
         {
-          label: 'Target Temperature',
+          label: `Target Temperature (${getTemperatureUnit(useFahrenheit)})`,
           fill: true,
           borderColor: '#731F00',
           borderDash: [6, 6],
           pointStyle: false,
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tt })),
+          data: data.map((i, idx) => ({ 
+            x: (i.t / 1000).toFixed(1), 
+            y: formatTemperatureValue(i.tt, useFahrenheit, 1)
+          })),
         },
         {
           label: 'Current Pressure',
@@ -87,9 +100,11 @@ function getChartData(data) {
       scales: {
         y: {
           type: 'linear',
+          min: useFahrenheit ? 32 : 0,
+          max: useFahrenheit ? 320 : 160,
           ticks: {
             callback: value => {
-              return `${value} °C`;
+              return `${value} ${getTemperatureUnit(useFahrenheit)}`;
             },
             font: {
               size: window.innerWidth < 640 ? 10 : 12,

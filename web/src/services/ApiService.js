@@ -165,6 +165,7 @@ export default class ApiService {
       brewTarget: message.bt || 0,
       volumetricAvailable: message.bta || false,
       process: message.process || null,
+      temperatureUnitFahrenheit: message.tempUnit || false,
       timestamp: new Date(),
     };
     const historyEntry = { ...newStatus };
@@ -199,6 +200,7 @@ export const machine = signal({
     mode: 0,
     selectedProfile: '',
     process: null,
+    temperatureUnitFahrenheit: false,
   },
   capabilities: {
     pressure: false,
