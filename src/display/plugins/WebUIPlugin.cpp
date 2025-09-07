@@ -422,7 +422,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("timezone"))
                 settings->setTimezone(request->arg("timezone"));
             settings->setClockFormat(request->hasArg("clock24hFormat"));
-            settings->setTemperatureUnit(request->hasArg("temperatureUnitFahrenheit"));
+            if (request->hasArg("temperatureUnitFahrenheit"))
+                settings->setTemperatureUnit(request->arg("temperatureUnitFahrenheit") == "true");
             if (request->hasArg("standbyTimeout"))
                 settings->setStandbyTimeout(request->arg("standbyTimeout").toInt() * 1000);
             if (request->hasArg("mainBrightness"))
