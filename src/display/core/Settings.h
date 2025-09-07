@@ -20,9 +20,9 @@ class Settings {
     void save(bool noDelay = false);
 
     // Getters and setters
-    int getTargetBrewTemp() const { return targetBrewTemp; }
-    int getTargetSteamTemp() const { return targetSteamTemp; }
-    int getTargetWaterTemp() const { return targetWaterTemp; }
+    float getTargetBrewTemp() const { return targetBrewTemp; }
+    float getTargetSteamTemp() const { return targetSteamTemp; }
+    float getTargetWaterTemp() const { return targetWaterTemp; }
     int getTemperatureOffset() const { return temperatureOffset; }
     float getPressureScaling() const { return pressureScaling; }
     int getTargetDuration() const { return targetDuration; }
@@ -81,9 +81,9 @@ class Settings {
     int getSunriseExtBrightness() const { return sunriseExtBrightness; }
     int getEmptyTankDistance() const { return emptyTankDistance; }
     int getFullTankDistance() const { return fullTankDistance; }
-    void setTargetBrewTemp(int target_brew_temp);
-    void setTargetSteamTemp(int target_steam_temp);
-    void setTargetWaterTemp(int target_water_temp);
+    void setTargetBrewTemp(float target_brew_temp);
+    void setTargetSteamTemp(float target_steam_temp);
+    void setTargetWaterTemp(float target_water_temp);
     void setTemperatureOffset(int temperature_offset);
     void setPressureScaling(float pressure_scaling);
     void setTargetDuration(int target_duration);
@@ -151,8 +151,8 @@ class Settings {
 
     String selectedProfile;
     bool profilesMigrated = false;
-    int targetSteamTemp = 155;
-    int targetWaterTemp = 80;
+    float targetSteamTemp = 155.0f;
+    float targetWaterTemp = 80.0f;
     int temperatureOffset = DEFAULT_TEMPERATURE_OFFSET;
     float pressureScaling = DEFAULT_PRESSURE_SCALING;
     double targetGrindVolume = 18;
@@ -195,7 +195,7 @@ class Settings {
     int historyIndex = 0;
 
     // Deprecated, use profiles
-    int targetBrewTemp = 93;
+    float targetBrewTemp = 93.0f;
     int targetDuration = 25000;
     int targetVolume = 36;
     int infuseBloomTime = 0;

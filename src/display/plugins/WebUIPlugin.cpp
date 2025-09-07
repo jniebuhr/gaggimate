@@ -374,9 +374,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
             if (request->hasArg("targetSteamTemp"))
-                settings->setTargetSteamTemp(request->arg("targetSteamTemp").toInt());
+                settings->setTargetSteamTemp(request->arg("targetSteamTemp").toFloat());
             if (request->hasArg("targetWaterTemp"))
-                settings->setTargetWaterTemp(request->arg("targetWaterTemp").toInt());
+                settings->setTargetWaterTemp(request->arg("targetWaterTemp").toFloat());
             if (request->hasArg("temperatureOffset"))
                 settings->setTemperatureOffset(request->arg("temperatureOffset").toInt());
             if (request->hasArg("pressureScaling"))
