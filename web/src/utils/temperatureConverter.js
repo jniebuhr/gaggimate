@@ -57,7 +57,7 @@ export function formatTemperature(tempCelsius, useFahrenheit = false, precision 
     return `0${unit}`;
   }
   
-  const temp = useFahrenheit ? celsiusToFahrenheitDisplay(tempCelsius) : Math.round(tempCelsius);
+  const temp = useFahrenheit ? celsiusToFahrenheit(tempCelsius) : tempCelsius;
   const unit = useFahrenheit ? '°F' : '°C';
   
   return `${temp.toFixed(precision)}${unit}`;
@@ -80,7 +80,7 @@ export function formatTemperatureValue(tempCelsius, useFahrenheit = false, preci
     return 0;
   }
   
-  const temp = useFahrenheit ? celsiusToFahrenheitDisplay(tempCelsius) : Math.round(tempCelsius);
+  const temp = useFahrenheit ? celsiusToFahrenheit(tempCelsius) : tempCelsius;
   return Number(temp.toFixed(precision));
 }
 
