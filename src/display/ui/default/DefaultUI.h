@@ -92,7 +92,7 @@ class DefaultUI {
     unsigned long lastRender = 0;
 
     int mode = MODE_STANDBY;
-    int currentTemp = 0;
+    float currentTemp = 0;
     float targetTemp = 0;
     int targetDuration = 0;
     int targetVolume = 0;
