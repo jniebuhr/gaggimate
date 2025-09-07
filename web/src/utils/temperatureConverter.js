@@ -33,6 +33,12 @@ export function formatTemperature(tempCelsius, useFahrenheit = false, precision 
     return useFahrenheit ? '0°F' : '0°C';
   }
   
+  // Special case: 0 means "default" regardless of temperature unit
+  if (tempCelsius === 0) {
+    const unit = useFahrenheit ? '°F' : '°C';
+    return `0${unit}`;
+  }
+  
   const temp = useFahrenheit ? celsiusToFahrenheit(tempCelsius) : tempCelsius;
   const unit = useFahrenheit ? '°F' : '°C';
   
@@ -48,6 +54,11 @@ export function formatTemperature(tempCelsius, useFahrenheit = false, precision 
  */
 export function formatTemperatureValue(tempCelsius, useFahrenheit = false, precision = 0) {
   if (tempCelsius === null || tempCelsius === undefined) {
+    return 0;
+  }
+  
+  // Special case: 0 means "default" regardless of temperature unit
+  if (tempCelsius === 0) {
     return 0;
   }
   
@@ -75,7 +86,14 @@ export function convertInputToCelsius(inputTemp, inputInFahrenheit = false) {
     return 0;
   }
   
-  return inputInFahrenheit ? fahrenheitToCelsius(Number(inputTemp)) : Number(inputTemp);
+  const numTemp = Number(inputTemp);
+  
+  // Special case: 0 means "default" regardless of temperature unit
+  if (numTemp === 0) {
+    return 0;
+  }
+  
+  return inputInFahrenheit ? fahrenheitToCelsius(numTemp) : numTemp;
 }
 
 /**
@@ -86,6 +104,11 @@ export function convertInputToCelsius(inputTemp, inputInFahrenheit = false) {
  */
 export function convertCelsiusToDisplay(tempCelsius, displayInFahrenheit = false) {
   if (tempCelsius === null || tempCelsius === undefined) {
+    return 0;
+  }
+  
+  // Special case: 0 means "default" regardless of temperature unit
+  if (tempCelsius === 0) {
     return 0;
   }
   
