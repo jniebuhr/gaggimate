@@ -100,8 +100,6 @@ function getChartData(data) {
       scales: {
         y: {
           type: 'linear',
-          min: useFahrenheit ? 32 : 0,
-          max: useFahrenheit ? 320 : 160,
           ticks: {
             callback: value => {
               return `${value} ${getTemperatureUnit(useFahrenheit)}`;
