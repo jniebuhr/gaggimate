@@ -29,12 +29,11 @@ inline float fahrenheitToCelsius(float fahrenheit) {
  * @param precision Number of decimal places (default: 0)
  * @return Formatted temperature value for display
  */
-inline int formatTemperatureForDisplay(float tempCelsius, bool useFahrenheit, int precision = 0) {
+inline float formatTemperatureForDisplay(float tempCelsius, bool useFahrenheit, int precision = 0) {
     if (useFahrenheit) {
-        float tempF = celsiusToFahrenheit(tempCelsius);
-        return static_cast<int>(std::round(tempF));
+        return celsiusToFahrenheit(tempCelsius);
     }
-    return static_cast<int>(std::round(tempCelsius));
+    return tempCelsius;
 }
 
 /**

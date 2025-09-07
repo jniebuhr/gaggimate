@@ -358,7 +358,7 @@ void DefaultUI::setupReactive() {
                                   (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
                                   currentTemp;
                               lv_arc_set_value(uic_MenuScreen_dials_tempGauge, gaugeValue);
-                              lv_label_set_text_fmt(uic_MenuScreen_dials_tempText, "%d%s", 
+                              lv_label_set_text_fmt(uic_MenuScreen_dials_tempText, "%.0f%s", 
                                   formatTemperatureForDisplay(currentTemp, useFahrenheit), 
                                   getTemperatureUnit(useFahrenheit));
                           },
@@ -372,7 +372,7 @@ void DefaultUI::setupReactive() {
                                   (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
                                   currentTemp;
                               lv_arc_set_value(uic_StatusScreen_dials_tempGauge, gaugeValue);
-                              lv_label_set_text_fmt(uic_StatusScreen_dials_tempText, "%d%s", 
+                              lv_label_set_text_fmt(uic_StatusScreen_dials_tempText, "%.0f%s", 
                                   formatTemperatureForDisplay(currentTemp, useFahrenheit), 
                                   getTemperatureUnit(useFahrenheit));
                           },
@@ -386,7 +386,7 @@ void DefaultUI::setupReactive() {
                                   (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
                                   currentTemp;
                               lv_arc_set_value(uic_BrewScreen_dials_tempGauge, gaugeValue);
-                              lv_label_set_text_fmt(uic_BrewScreen_dials_tempText, "%d%s", 
+                              lv_label_set_text_fmt(uic_BrewScreen_dials_tempText, "%.0f%s", 
                                   formatTemperatureForDisplay(currentTemp, useFahrenheit), 
                                   getTemperatureUnit(useFahrenheit));
                           },
@@ -400,7 +400,7 @@ void DefaultUI::setupReactive() {
                                   (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
                                   currentTemp;
                               lv_arc_set_value(uic_GrindScreen_dials_tempGauge, gaugeValue);
-                              lv_label_set_text_fmt(uic_GrindScreen_dials_tempText, "%d%s", 
+                              lv_label_set_text_fmt(uic_GrindScreen_dials_tempText, "%.0f%s", 
                                   formatTemperatureForDisplay(currentTemp, useFahrenheit), 
                                   getTemperatureUnit(useFahrenheit));
                           },
@@ -414,7 +414,7 @@ void DefaultUI::setupReactive() {
                                   (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
                                   currentTemp;
                               lv_arc_set_value(uic_SimpleProcessScreen_dials_tempGauge, gaugeValue);
-                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%d%s", 
+                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%.0f%s", 
                                   formatTemperatureForDisplay(currentTemp, useFahrenheit), 
                                   getTemperatureUnit(useFahrenheit));
                           },
@@ -428,7 +428,7 @@ void DefaultUI::setupReactive() {
                                   (formatTemperatureForDisplay(currentTemp, true) - 32) * 160.0f / (320.0f - 32.0f) :
                                   currentTemp;
                               lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, gaugeValue);
-                              lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%d%s", 
+                              lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%.0f%s", 
                                   formatTemperatureForDisplay(currentTemp, useFahrenheit), 
                                   getTemperatureUnit(useFahrenheit));
                           },
@@ -439,7 +439,7 @@ void DefaultUI::setupReactive() {
                           [=]() {
                               const Settings &settings = controller->getSettings();
                               bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
-                              lv_label_set_text_fmt(ui_StatusScreen_targetTemp, "%d%s", 
+                              lv_label_set_text_fmt(ui_StatusScreen_targetTemp, "%.0f%s", 
                                   formatTemperatureForDisplay(targetTemp, useFahrenheit), 
                                   getTemperatureUnit(useFahrenheit));
                               adjustTempTarget(ui_StatusScreen_dials);
@@ -449,7 +449,7 @@ void DefaultUI::setupReactive() {
                           [=]() {
                               const Settings &settings = controller->getSettings();
                               bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
-                              lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%d%s", 
+                              lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%.0f%s", 
                                   formatTemperatureForDisplay(targetTemp, useFahrenheit), 
                                   getTemperatureUnit(useFahrenheit));
                               adjustTempTarget(ui_BrewScreen_dials);
@@ -461,7 +461,7 @@ void DefaultUI::setupReactive() {
                           [=]() {
                               const Settings &settings = controller->getSettings();
                               bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
-                              lv_label_set_text_fmt(ui_SimpleProcessScreen_targetTemp, "%d%s", 
+                              lv_label_set_text_fmt(ui_SimpleProcessScreen_targetTemp, "%.0f%s", 
                                   formatTemperatureForDisplay(targetTemp, useFahrenheit), 
                                   getTemperatureUnit(useFahrenheit));
                               adjustTempTarget(ui_SimpleProcessScreen_dials);
@@ -635,7 +635,7 @@ void DefaultUI::setupReactive() {
                 lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
                 const Settings &settings = controller->getSettings();
                 bool useFahrenheit = settings.isTemperatureUnitFahrenheit();
-                lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d%s", 
+                lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%.0f%s", 
                     formatTemperatureForDisplay(currentProfileChoice.temperature, useFahrenheit), 
                     getTemperatureUnit(useFahrenheit));
                 unsigned int phaseCount = currentProfileChoice.getPhaseCount();
