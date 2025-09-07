@@ -52,7 +52,7 @@ void DefaultUI::updateTempStableFlag() {
         }
 
         const float avgError = totalError / TEMP_HISTORY_LENGTH;
-        const float errorMargin = max(2.0f, static_cast<float>(targetTemp) * 0.02f);
+        const float errorMargin = max(2.0f, targetTemp * 0.02f);
 
         isTemperatureStable = avgError < errorMargin && maxError <= errorMargin;
     }
@@ -96,7 +96,7 @@ void DefaultUI::init() {
         }
     });
     pluginManager->on("boiler:targetTemperature:change", [=](Event const &event) {
-        int newTemp = static_cast<int>(event.getFloat("value"));
+        float newTemp = event.getFloat("value");
         if (newTemp != targetTemp) {
             targetTemp = newTemp;
             rerender = true;
@@ -310,7 +310,7 @@ void DefaultUI::setupState() {
     active = controller->isActive();
     mode = controller->getMode();
     currentTemp = static_cast<int>(controller->getCurrentTemp());
-    targetTemp = static_cast<int>(controller->getTargetTemp());
+    targetTemp = controller->getTargetTemp();
     targetDuration = controller->getTargetDuration();
     targetVolume = settings.getTargetVolume();
     grindDuration = settings.getTargetGrindDuration();

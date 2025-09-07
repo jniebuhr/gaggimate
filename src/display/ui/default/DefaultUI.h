@@ -61,7 +61,7 @@ class DefaultUI {
 
     int tempHistory[TEMP_HISTORY_LENGTH] = {0};
     int tempHistoryIndex = 0;
-    int prevTargetTemp = 0;
+    float prevTargetTemp = 0;
     bool isTempHistoryInitialized = false;
     int isTemperatureStable = false;
     unsigned long lastTempLog = 0;
@@ -93,7 +93,7 @@ class DefaultUI {
 
     int mode = MODE_STANDBY;
     int currentTemp = 0;
-    int targetTemp = 0;
+    float targetTemp = 0;
     int targetDuration = 0;
     int targetVolume = 0;
     int grindDuration = 0;
