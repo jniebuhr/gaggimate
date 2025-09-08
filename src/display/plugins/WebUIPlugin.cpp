@@ -105,7 +105,7 @@ void WebUIPlugin::loop() {
         } else {
             doc["bt"] = 0;
         }
-        
+        doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
         
         // Add Bluetooth scale weight information
