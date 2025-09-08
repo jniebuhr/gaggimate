@@ -312,7 +312,7 @@ const ProcessControls = props => {
             )}
             {grind && !active && !finished && (
               <div className='space-y-2 text-center'>
-                <div className='text-xl font-bold sm:text-2xl'>Grind Mode</div>
+                <div className='text-xl font-bold sm:text-2xl'>Grind</div>
                 <div className='text-base-content/60 text-sm'>Select grind target to start</div>
               </div>
             )}
