@@ -165,6 +165,7 @@ export default class ApiService {
       selectedProfile: message.p,
       brewTarget: message.bt || 0,
       bluetoothConnected: message.bc || false,
+      isVolumetricAvailable: message.bta || false,
       process: message.process || null,
       timestamp: new Date(),
     };
