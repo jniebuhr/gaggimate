@@ -12,6 +12,8 @@ import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleLi
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 
 const status = computed(() => machine.value.status);
 
@@ -22,6 +24,55 @@ function formatDuration(duration) {
   const seconds = duration % 60;
   return `${zeroPad(minutes, 1)}:${zeroPad(seconds, 2)}`;
 }
+
+const GrindProgress = props => {
+  const { processInfo } = props;
+  const active = !!processInfo.a;
+  const progress = (processInfo.pp / processInfo.pt) * 100.0;
+  const elapsed = Math.floor(processInfo.e / 1000);
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
+      {active && (
+        <>
+          <div className='space-y-2 text-center'>
+            <div className='text-base-content/60 text-xs font-light tracking-wider sm:text-sm'>
+              GRINDING
+            </div>
+            <div className='text-base-content text-2xl font-bold sm:text-4xl'>{processInfo.l}</div>
+          </div>
+
+          <div className='w-full max-w-md'>
+            <div className='bg-base-content/20 h-2 w-full rounded-full'>
+              <div
+                className='bg-primary h-2 rounded-full transition-all duration-300 ease-out'
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          <div className='space-y-2 text-center'>
+            <div className='text-base-content/60 text-xs sm:text-sm'>
+              {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(0)}s`}
+              {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(1)}g`}
+            </div>
+            <div className='text-base-content text-2xl font-bold sm:text-3xl'>
+              {formatDuration(elapsed)}
+            </div>
+          </div>
+        </>
+      )}
+      {!active && (
+        <div className='space-y-2 text-center'>
+          <div className='text-base-content text-xl font-bold sm:text-2xl'>Finished</div>
+          <div className='text-base-content text-2xl font-bold sm:text-3xl'>
+            {formatDuration(elapsed)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const BrewProgress = props => {
   const { processInfo } = props;
@@ -79,39 +130,70 @@ const ProcessControls = props => {
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
+  const grind = mode === 4; // Grind mode
   const apiService = useContext(ApiServiceContext);
   const [isFlushing, setIsFlushing] = useState(false);
 
   // Determine if we should show expanded view
-  const shouldExpand = brew && (active || finished || (brew && !active && !finished));
+  const shouldExpand = (brew && (active || finished || (brew && !active && !finished))) || 
+                      (grind && (active || finished || (grind && !active && !finished)));
 
   const changeTarget = useCallback(
     target => {
+      const messageType = grind ? 'req:change-grind-target' : 'req:change-brew-target';
       apiService.send({
-        tp: 'req:change-brew-target',
+        tp: messageType,
         target,
       });
     },
-    [apiService],
+    [apiService, grind],
   );
 
   const activate = useCallback(() => {
+    const messageType = grind ? 'req:grind:activate' : 'req:process:activate';
     apiService.send({
-      tp: 'req:process:activate',
+      tp: messageType,
     });
-  }, [apiService]);
+  }, [apiService, grind]);
 
   const deactivate = useCallback(() => {
+    const messageType = grind ? 'req:grind:deactivate' : 'req:process:deactivate';
     apiService.send({
-      tp: 'req:process:deactivate',
+      tp: messageType,
     });
-  }, [apiService]);
+  }, [apiService, grind]);
 
   const clear = useCallback(() => {
     apiService.send({
       tp: 'req:process:clear',
     });
   }, [apiService]);
+
+  const raiseTemp = useCallback(() => {
+    apiService.send({
+      tp: 'req:raise-temp',
+    });
+  }, [apiService]);
+
+  const lowerTemp = useCallback(() => {
+    apiService.send({
+      tp: 'req:lower-temp',
+    });
+  }, [apiService]);
+
+  const raiseTarget = useCallback(() => {
+    const messageType = grind ? 'req:raise-grind-target' : 'req:raise-brew-target';
+    apiService.send({
+      tp: messageType,
+    });
+  }, [apiService, grind]);
+
+  const lowerTarget = useCallback(() => {
+    const messageType = grind ? 'req:lower-grind-target' : 'req:lower-brew-target';
+    apiService.send({
+      tp: messageType,
+    });
+  }, [apiService, grind]);
 
   const startFlush = useCallback(() => {
     setIsFlushing(true);
@@ -158,6 +240,7 @@ const ProcessControls = props => {
             { id: 1, label: 'Brew' },
             { id: 2, label: 'Steam' },
             { id: 3, label: 'Water' },
+            { id: 4, label: 'Grind' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -209,7 +292,8 @@ const ProcessControls = props => {
         <>
           <div className='flex flex-1 items-center justify-center'>
             {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
-            {!brew && (
+            {(active || finished) && grind && <GrindProgress processInfo={processInfo} />}
+            {!brew && !grind && (
               <div className='space-y-2 text-center'>
                 <div className='text-xl font-bold sm:text-2xl'>
                   {mode === 0 && 'Standby Mode'}
@@ -226,6 +310,12 @@ const ProcessControls = props => {
                 </div>
               </div>
             )}
+            {grind && !active && !finished && (
+              <div className='space-y-2 text-center'>
+                <div className='text-xl font-bold sm:text-2xl'>Grind Mode</div>
+                <div className='text-base-content/60 text-sm'>Select grind target to start</div>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -235,9 +325,10 @@ const ProcessControls = props => {
           <div className='space-y-2 text-center'>
             <div className='text-lg font-semibold sm:text-xl'>
               {mode === 0 && 'Standby'}
-              {mode === 1 && 'Brew Mode'}
+              {mode === 1 && 'Brew'}
               {mode === 2 && 'Steam'}
               {mode === 3 && 'Water'}
+              {mode === 4 && 'Grind'}
             </div>
             <div className='text-base-content/60 text-sm'>
               {mode === 0 && 'Machine is ready'}
@@ -247,6 +338,7 @@ const ProcessControls = props => {
                   ? 'Steam is ready'
                   : 'Preheating')}
               {mode === 3 && 'Start and open steam valve to pull water'}
+              {mode === 4 && 'Select grind target to start'}
             </div>
           </div>
         </div>
@@ -262,8 +354,28 @@ const ProcessControls = props => {
               <FontAwesomeIcon icon={faClock} />
               <span className='ml-1'>Time</span>
             </button>
+            {status.value.volumetricAvailable && (
+              <button
+                className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+                onClick={() => changeTarget(1)}
+              >
+                <FontAwesomeIcon icon={faWeightScale} />
+                <span className='ml-1'>Weight</span>
+              </button>
+            )}
+          </div>
+        )}
+        {grind && !active && !finished && status.value.volumetricAvailable && (
+          <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${status.value.grindTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              onClick={() => changeTarget(0)}
+            >
+              <FontAwesomeIcon icon={faClock} />
+              <span className='ml-1'>Time</span>
+            </button>
+            <button
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${status.value.grindTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(1)}
             >
               <FontAwesomeIcon icon={faWeightScale} />
@@ -271,7 +383,8 @@ const ProcessControls = props => {
             </button>
           </div>
         )}
-        {(mode === 1 || mode === 3) && (
+        {/* Controls for different modes */}
+        {mode === 1 && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
             <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
               <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
@@ -289,6 +402,99 @@ const ProcessControls = props => {
             )}
           </div>
         )}
+        {mode === 2 && (
+          <div className='flex flex-col items-center gap-4 space-y-4'>
+            {/* Temperature adjustment controls for steam mode */}
+            <div className='flex flex-col items-center gap-2'>
+              <div className='text-base-content/60 text-xs font-light tracking-wider'>
+                TEMPERATURE
+              </div>
+              <div className='flex items-center space-x-2'>
+                <button
+                  onClick={lowerTemp}
+                  className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                >
+                  <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
+                </button>
+                <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
+                  {status.value.targetTemperature}°C
+                </div>
+                <button
+                  onClick={raiseTemp}
+                  className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                >
+                  <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {mode === 3 && (
+          <div className='flex flex-col items-center gap-4 space-y-4'>
+            {/* Temperature adjustment controls for water mode */}
+            <div className='flex flex-col items-center gap-2'>
+              <div className='text-base-content/60 text-xs font-light tracking-wider'>
+                TEMPERATURE
+              </div>
+              <div className='flex items-center space-x-2'>
+                <button
+                  onClick={lowerTemp}
+                  className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                >
+                  <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
+                </button>
+                <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
+                  {status.value.targetTemperature}°C
+                </div>
+                <button
+                  onClick={raiseTemp}
+                  className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                >
+                  <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
+                </button>
+              </div>
+            </div>
+
+            <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
+              <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
+            </button>
+          </div>
+        )}
+        {mode === 4 && (
+          <div className='flex flex-col items-center gap-4 space-y-4'>
+            {/* Target adjustment controls for grind mode */}
+            {grind && !active && !finished && (
+              <div className='flex flex-col items-center gap-2'>
+                <div className='text-base-content/60 text-xs font-light tracking-wider'>
+                  GRIND TARGET
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <button
+                    onClick={lowerTarget}
+                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                  >
+                    <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
+                  </button>
+                  <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
+                    {(status.value.grindTarget === 1 && status.value.volumetricAvailable)
+                      ? `${status.value.grindTargetVolume}g` 
+                      : `${Math.round(status.value.grindTargetDuration / 1000)}s`}
+                  </div>
+                  <button
+                    onClick={raiseTarget}
+                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                  >
+                    <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
+              <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -296,7 +502,7 @@ const ProcessControls = props => {
 
 ProcessControls.propTypes = {
   brew: PropTypes.bool.isRequired,
-  mode: PropTypes.oneOf([0, 1, 2, 3]).isRequired,
+  mode: PropTypes.oneOf([0, 1, 2, 3, 4]).isRequired,
   changeMode: PropTypes.func.isRequired,
 };
 
