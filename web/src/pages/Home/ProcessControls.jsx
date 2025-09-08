@@ -345,37 +345,25 @@ const ProcessControls = props => {
       )}
 
       <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {brew && !active && !finished && status.value.volumetricAvailable && (
+        {(brew || grind) && !active && !finished && status.value.volumetricAvailable && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
-              onClick={() => changeTarget(0)}
-            >
-              <FontAwesomeIcon icon={faClock} />
-              <span className='ml-1'>Time</span>
-            </button>
-            {status.value.volumetricAvailable && (
-              <button
-                className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
-                onClick={() => changeTarget(1)}
-              >
-                <FontAwesomeIcon icon={faWeightScale} />
-                <span className='ml-1'>Weight</span>
-              </button>
-            )}
-          </div>
-        )}
-        {grind && !active && !finished && status.value.volumetricAvailable && (
-          <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
-            <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${status.value.grindTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
+                (brew && brewTarget === 0) || (grind && status.value.grindTarget === 0) 
+                  ? 'bg-primary text-primary-content font-medium' 
+                  : 'text-base-content/60 hover:text-base-content'
+              }`}
               onClick={() => changeTarget(0)}
             >
               <FontAwesomeIcon icon={faClock} />
               <span className='ml-1'>Time</span>
             </button>
             <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${status.value.grindTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
+                (brew && brewTarget === 1) || (grind && status.value.grindTarget === 1) 
+                  ? 'bg-primary text-primary-content font-medium' 
+                  : 'text-base-content/60 hover:text-base-content'
+              }`}
               onClick={() => changeTarget(1)}
             >
               <FontAwesomeIcon icon={faWeightScale} />
@@ -386,20 +374,7 @@ const ProcessControls = props => {
         {/* Controls for different modes */}
         {mode === 1 && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
-            <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
-              <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
-            </button>
-
-            {brew && !active && !finished && (
-              <button
-                className='btn text-base-content/60 hover:text-base-content rounded-full text-sm transition-colors duration-200'
-                onClick={startFlush}
-                title='Click to flush water'
-              >
-                <FontAwesomeIcon icon={faTint} />
-                Flush
-              </button>
-            )}
+            {/* Brew mode has no additional controls beyond common ones */}
           </div>
         )}
         {mode === 2 && (
@@ -454,10 +429,6 @@ const ProcessControls = props => {
                 </button>
               </div>
             </div>
-
-            <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
-              <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
-            </button>
           </div>
         )}
         {mode === 4 && (
@@ -489,10 +460,26 @@ const ProcessControls = props => {
                 </div>
               </div>
             )}
+          </div>
+        )}
 
+        {/* Common controls for all modes that need them */}
+        {(mode === 1 || mode === 3 || mode === 4) && (
+          <div className='flex flex-col items-center gap-4 space-y-4'>
             <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
               <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
             </button>
+
+            {brew && !active && !finished && (
+              <button
+                className='btn text-base-content/60 hover:text-base-content rounded-full text-sm transition-colors duration-200'
+                onClick={startFlush}
+                title='Click to flush water'
+              >
+                <FontAwesomeIcon icon={faTint} />
+                Flush
+              </button>
+            )}
           </div>
         )}
       </div>
