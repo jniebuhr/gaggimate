@@ -12,16 +12,43 @@
 #include <AsyncJson.h>
 #include <ESPAsyncWebServer.h>
 #include <vector>
+#include <unordered_map>
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 5 * 1000;
 constexpr size_t STATUS_PERIOD = 500;
 constexpr size_t DNS_PERIOD = 10;
+constexpr size_t HEARTBEAT_PERIOD = 30 * 1000;  // 30 seconds
+constexpr size_t CLIENT_TIMEOUT = 60 * 1000;    // 60 seconds
 
 const String LOCAL_URL = "http://4.4.4.1/";
 const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
 
 class ProfileManager;
+
+// Status cache structure for delta updates
+struct StatusCache {
+    float currentTemp = -999;
+    float targetTemp = -999;
+    float currentPressure = -999;
+    float targetPressure = -999;
+    float currentFlow = -999;
+    uint8_t mode = 255;
+    String selectedProfile = "";
+    bool brewTarget = false;
+    bool volumetricAvailable = false;
+    bool connected = false;
+    bool processActive = false;
+    String processState = "";
+    String processLabel = "";
+    unsigned long processElapsed = 0;
+    String processTargetType = "";
+    float processTarget = -999;
+    float processProgress = -999;
+    bool capabilityPressure = false;
+    bool capabilityDimming = false;
+    bool capabilityLedControl = false;
+};
 
 class WebUIPlugin : public Plugin {
   public:
@@ -42,6 +69,11 @@ class WebUIPlugin : public Plugin {
     void handleAutotuneStart(uint32_t clientId, JsonDocument &request);
     void handleProfileRequest(uint32_t clientId, JsonDocument &request);
     void handleFlushStart(uint32_t clientId, JsonDocument &request);
+    void sendHeartbeat();
+    void checkClientTimeouts();
+    void sendStatusUpdate();
+    void sendFullStatus();
+    bool hasStatusChanged(const StatusCache& newStatus) const;
 
     // HTTP handlers
     void handleSettings(AsyncWebServerRequest *request) const;
@@ -65,6 +97,12 @@ class WebUIPlugin : public Plugin {
     long lastStatus = 0;
     long lastCleanup = 0;
     long lastDns = 0;
+    long lastHeartbeat = 0;
+    std::unordered_map<uint32_t, long> clientLastSeen;
+    
+    // Delta update tracking
+    StatusCache lastSentStatus;
+    
     bool updating = false;
     bool apMode = false;
     bool serverRunning = false;

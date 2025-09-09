@@ -94,9 +94,18 @@ export default class ApiService {
 
   _onMessage(event) {
     const message = JSON.parse(event.data);
+    
+    // Handle ping messages by responding with pong
+    if (message.tp === 'ping') {
+      this.send({ tp: 'pong', ts: message.ts });
+      return;
+    }
+    
     const listeners = Object.values(this.listeners[message.tp] || {});
-    if (message.tp === 'evt:status') {
+    if (message.tp === 'evt:status' || message.tp === 'evt:status:full') {
       this._onStatus(message);
+    } else if (message.tp === 'evt:status:delta') {
+      this._onStatusDelta(message);
     }
     for (const listener of listeners) {
       listener(message);
@@ -185,6 +194,58 @@ export default class ApiService {
       history: [...machine.value.history, historyEntry],
     };
     newValue.history = newValue.history.slice(-600);
+    machine.value = newValue;
+  }
+
+  _onStatusDelta(message) {
+    // Create a partial status update with only the changed fields
+    const deltaStatus = {
+      timestamp: new Date(),
+    };
+    
+    // Only update fields that are present in the delta message
+    if (message.ct !== undefined) deltaStatus.currentTemperature = message.ct;
+    if (message.tt !== undefined) deltaStatus.targetTemperature = message.tt;
+    if (message.pr !== undefined) deltaStatus.currentPressure = message.pr;
+    if (message.pt !== undefined) deltaStatus.targetPressure = message.pt;
+    if (message.fl !== undefined) deltaStatus.currentFlow = message.fl;
+    if (message.m !== undefined) deltaStatus.mode = message.m;
+    if (message.p !== undefined) deltaStatus.selectedProfile = message.p;
+    if (message.bt !== undefined) deltaStatus.brewTarget = message.bt;
+    if (message.bta !== undefined) deltaStatus.volumetricAvailable = message.bta;
+    if (message.process !== undefined) deltaStatus.process = message.process;
+    
+    const capabilities = {};
+    if (message.cd !== undefined) capabilities.dimming = message.cd;
+    if (message.cp !== undefined) capabilities.pressure = message.cp;
+    if (message.led !== undefined) capabilities.ledControl = message.led;
+    
+    // Create history entry only if we have significant changes
+    let historyEntry = null;
+    if (message.ct !== undefined || message.pr !== undefined || message.fl !== undefined) {
+      historyEntry = { 
+        ...machine.value.status,
+        ...deltaStatus 
+      };
+      delete historyEntry.process;
+    }
+    
+    const newValue = {
+      ...machine.value,
+      connected: true,
+      status: {
+        ...machine.value.status,
+        ...deltaStatus,
+      },
+      capabilities: {
+        ...machine.value.capabilities,
+        ...capabilities,
+      },
+      history: historyEntry ? 
+        [...machine.value.history, historyEntry].slice(-600) : 
+        machine.value.history,
+    };
+    
     machine.value = newValue;
   }
 }

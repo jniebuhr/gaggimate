@@ -64,53 +64,16 @@ void WebUIPlugin::loop() {
     }
     if (now > lastStatus + STATUS_PERIOD) {
         lastStatus = now;
-        JsonDocument doc;
-        doc["tp"] = "evt:status";
-        doc["ct"] = controller->getCurrentTemp();
-        doc["tt"] = controller->getTargetTemp();
-        doc["pr"] = controller->getCurrentPressure();
-        doc["fl"] = controller->getCurrentPumpFlow();
-        doc["pt"] = controller->getTargetPressure();
-        doc["m"] = controller->getMode();
-        doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
-        doc["cp"] = controller->getSystemInfo().capabilities.pressure;
-        doc["cd"] = controller->getSystemInfo().capabilities.dimming;
-        doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
-        doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
-        doc["led"] = controller->getSystemInfo().capabilities.ledControl;
-
-        Process *process = controller->getProcess();
-        if (process == nullptr) {
-            process = controller->getLastProcess();
-        }
-        if (process != nullptr) {
-            auto pObj = doc["process"].to<JsonObject>();
-            pObj["a"] = controller->isActive() ? 1 : 0;
-            if (process->getType() == MODE_BREW) {
-                auto *brew = static_cast<BrewProcess *>(process);
-                unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
-                pObj["s"] = brew->currentPhase.phase == PhaseType::PHASE_TYPE_BREW ? "brew" : "infusion";
-                pObj["l"] = brew->isActive() ? brew->currentPhase.name.c_str() : "Finished";
-                pObj["e"] = ts - brew->processStarted;
-                const bool isVolumetric = brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget() &&
-                                          controller->isVolumetricAvailable();
-                pObj["tt"] = isVolumetric ? "volumetric" : "time";
-                if (isVolumetric) {
-                    Target t = brew->currentPhase.getVolumetricTarget();
-                    pObj["pt"] = t.value;
-                    pObj["pp"] = brew->currentVolume;
-                } else {
-                    pObj["pt"] = brew->getPhaseDuration();
-                    pObj["pp"] = ts - brew->currentPhaseStarted;
-                }
-            }
-        }
-
-        ws.textAll(doc.as<String>());
+        sendStatusUpdate();
     }
     if (now > lastCleanup + CLEANUP_PERIOD) {
         lastCleanup = now;
         ws.cleanupClients();
+    }
+    if (now > lastHeartbeat + HEARTBEAT_PERIOD) {
+        lastHeartbeat = now;
+        sendHeartbeat();
+        checkClientTimeouts();
     }
     if (now > lastDns + DNS_PERIOD && dnsServer != nullptr) {
         lastDns = now;
@@ -154,12 +117,20 @@ void WebUIPlugin::setupServer() {
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
             if (type == WS_EVT_CONNECT) {
                 client->setCloseClientOnQueueFull(true);
+                clientLastSeen[client->id()] = millis();
                 ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
+                
+                // Send full status to new client
+                sendFullStatus();
             } else if (type == WS_EVT_DISCONNECT) {
                 ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
                 rxBuffers.erase(client->id());
+                clientLastSeen.erase(client->id());
             } else if (type == WS_EVT_DATA) {
                 handleWebSocketData(server, client, type, arg, data, len);
+            } else if (type == WS_EVT_PONG) {
+                clientLastSeen[client->id()] = millis();
+                ESP_LOGV("WebUIPlugin", "Received pong from client %u", client->id());
             }
         });
     server.addHandler(&ws);
@@ -176,6 +147,7 @@ void WebUIPlugin::start() {
         ESP_LOGI("WebUIPlugin", "Started catchall DNS for captive portal");
     }
     lastUpdateCheck = millis();
+    lastHeartbeat = millis();
     serverRunning = true;
 }
 
@@ -184,6 +156,7 @@ void WebUIPlugin::stop() {
         return;
     server.end();
     ws.closeAll();
+    clientLastSeen.clear();
     if (dnsServer != nullptr) {
         dnsServer->stop();
         delete dnsServer;
@@ -213,12 +186,18 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
     // If this is the final frame of the message, process and clear
     if (isFinal) {
         if (info->opcode == WS_TEXT) {
+            // Update last seen timestamp for any text message
+            clientLastSeen[cid] = millis();
+            
             ESP_LOGV("WebUIPlugin", "Received request: %.*s", (int)buf.size(), buf.c_str());
             JsonDocument doc;
             DeserializationError err = deserializeJson(doc, buf.c_str());
             if (!err) {
                 String msgType = doc["tp"].as<String>();
-                if (msgType.startsWith("req:profiles:")) {
+                if (msgType == "pong") {
+                    // Handle pong response - timestamp already updated above
+                    ESP_LOGV("WebUIPlugin", "Received pong response from client %u", cid);
+                } else if (msgType.startsWith("req:profiles:")) {
                     handleProfileRequest(client->id(), doc);
                 } else if (msgType == "req:ota-settings") {
                     handleOTASettings(client->id(), doc);
@@ -593,4 +572,262 @@ void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
     String msg;
     serializeJson(response, msg);
     ws.text(clientId, msg);
+}
+
+void WebUIPlugin::sendHeartbeat() {
+    if (!serverRunning || ws.getClients().empty()) {
+        return;
+    }
+    
+    JsonDocument ping;
+    ping["tp"] = "ping";
+    ping["ts"] = millis();
+    
+    String message = ping.as<String>();
+    ws.pingAll(reinterpret_cast<const uint8_t*>(message.c_str()), message.length());
+    ESP_LOGV("WebUIPlugin", "Sent heartbeat ping to %d clients", ws.getClients().size());
+}
+
+void WebUIPlugin::checkClientTimeouts() {
+    if (!serverRunning) {
+        return;
+    }
+    
+    const long now = millis();
+    std::vector<uint32_t> timedOutClients;
+    
+    // Check each tracked client for timeout
+    for (auto& [clientId, lastSeen] : clientLastSeen) {
+        if (now - lastSeen > CLIENT_TIMEOUT) {
+            timedOutClients.push_back(clientId);
+        }
+    }
+    
+    // Close timed out clients
+    for (uint32_t clientId : timedOutClients) {
+        ESP_LOGI("WebUIPlugin", "Client %u timed out, closing connection", clientId);
+        AsyncWebSocketClient* client = ws.client(clientId);
+        if (client) {
+            client->close();
+        }
+        clientLastSeen.erase(clientId);
+        rxBuffers.erase(clientId);
+    }
+    
+    if (!timedOutClients.empty()) {
+        ESP_LOGI("WebUIPlugin", "Closed %d timed out clients", timedOutClients.size());
+    }
+}
+
+void WebUIPlugin::sendStatusUpdate() {
+    if (!serverRunning || ws.getClients().empty()) {
+        return;
+    }
+    
+    // Build current status
+    StatusCache currentStatus;
+    currentStatus.currentTemp = controller->getCurrentTemp();
+    currentStatus.targetTemp = controller->getTargetTemp();
+    currentStatus.currentPressure = controller->getCurrentPressure();
+    currentStatus.targetPressure = controller->getTargetPressure();
+    currentStatus.currentFlow = controller->getCurrentPumpFlow();
+    currentStatus.mode = controller->getMode();
+    currentStatus.selectedProfile = controller->getProfileManager()->getSelectedProfile().label;
+    currentStatus.brewTarget = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget();
+    currentStatus.volumetricAvailable = controller->isVolumetricAvailable();
+    currentStatus.capabilityPressure = controller->getSystemInfo().capabilities.pressure;
+    currentStatus.capabilityDimming = controller->getSystemInfo().capabilities.dimming;
+    currentStatus.capabilityLedControl = controller->getSystemInfo().capabilities.ledControl;
+    currentStatus.connected = true;
+    
+    // Process information
+    Process *process = controller->getProcess();
+    if (process == nullptr) {
+        process = controller->getLastProcess();
+    }
+    
+    if (process != nullptr) {
+        currentStatus.processActive = controller->isActive();
+        if (process->getType() == MODE_BREW) {
+            auto *brew = static_cast<BrewProcess *>(process);
+            unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
+            currentStatus.processState = brew->currentPhase.phase == PhaseType::PHASE_TYPE_BREW ? "brew" : "infusion";
+            currentStatus.processLabel = brew->isActive() ? brew->currentPhase.name.c_str() : "Finished";
+            currentStatus.processElapsed = ts - brew->processStarted;
+            
+            const bool isVolumetric = brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget() &&
+                                      controller->isVolumetricAvailable();
+            currentStatus.processTargetType = isVolumetric ? "volumetric" : "time";
+            if (isVolumetric) {
+                Target t = brew->currentPhase.getVolumetricTarget();
+                currentStatus.processTarget = t.value;
+                currentStatus.processProgress = brew->currentVolume;
+            } else {
+                currentStatus.processTarget = brew->getPhaseDuration();
+                currentStatus.processProgress = ts - brew->currentPhaseStarted;
+            }
+        }
+    } else {
+        currentStatus.processActive = false;
+        currentStatus.processState = "";
+        currentStatus.processLabel = "";
+        currentStatus.processElapsed = 0;
+        currentStatus.processTargetType = "";
+        currentStatus.processTarget = 0;
+        currentStatus.processProgress = 0;
+    }
+    
+    // Check if anything has changed
+    if (!hasStatusChanged(currentStatus)) {
+        return;
+    }
+    
+    // Build delta update
+    JsonDocument doc;
+    doc["tp"] = "evt:status:delta";
+    
+    // Only include changed fields
+    if (abs(currentStatus.currentTemp - lastSentStatus.currentTemp) > 0.1) {
+        doc["ct"] = currentStatus.currentTemp;
+    }
+    if (abs(currentStatus.targetTemp - lastSentStatus.targetTemp) > 0.1) {
+        doc["tt"] = currentStatus.targetTemp;
+    }
+    if (abs(currentStatus.currentPressure - lastSentStatus.currentPressure) > 0.01) {
+        doc["pr"] = currentStatus.currentPressure;
+    }
+    if (abs(currentStatus.targetPressure - lastSentStatus.targetPressure) > 0.01) {
+        doc["pt"] = currentStatus.targetPressure;
+    }
+    if (abs(currentStatus.currentFlow - lastSentStatus.currentFlow) > 0.01) {
+        doc["fl"] = currentStatus.currentFlow;
+    }
+    if (currentStatus.mode != lastSentStatus.mode) {
+        doc["m"] = currentStatus.mode;
+    }
+    if (currentStatus.selectedProfile != lastSentStatus.selectedProfile) {
+        doc["p"] = currentStatus.selectedProfile;
+    }
+    if (currentStatus.brewTarget != lastSentStatus.brewTarget) {
+        doc["bt"] = currentStatus.brewTarget ? 1 : 0;
+    }
+    if (currentStatus.volumetricAvailable != lastSentStatus.volumetricAvailable) {
+        doc["bta"] = currentStatus.volumetricAvailable ? 1 : 0;
+    }
+    if (currentStatus.capabilityPressure != lastSentStatus.capabilityPressure) {
+        doc["cp"] = currentStatus.capabilityPressure;
+    }
+    if (currentStatus.capabilityDimming != lastSentStatus.capabilityDimming) {
+        doc["cd"] = currentStatus.capabilityDimming;
+    }
+    if (currentStatus.capabilityLedControl != lastSentStatus.capabilityLedControl) {
+        doc["led"] = currentStatus.capabilityLedControl;
+    }
+    
+    // Process changes
+    bool processChanged = (currentStatus.processActive != lastSentStatus.processActive ||
+                          currentStatus.processState != lastSentStatus.processState ||
+                          currentStatus.processLabel != lastSentStatus.processLabel ||
+                          abs((long)(currentStatus.processElapsed - lastSentStatus.processElapsed)) > 100 ||
+                          currentStatus.processTargetType != lastSentStatus.processTargetType ||
+                          abs(currentStatus.processTarget - lastSentStatus.processTarget) > 0.01 ||
+                          abs(currentStatus.processProgress - lastSentStatus.processProgress) > 0.01);
+    
+    if (processChanged && (currentStatus.processActive || lastSentStatus.processActive)) {
+        auto pObj = doc["process"].to<JsonObject>();
+        pObj["a"] = currentStatus.processActive ? 1 : 0;
+        if (currentStatus.processActive) {
+            pObj["s"] = currentStatus.processState;
+            pObj["l"] = currentStatus.processLabel;
+            pObj["e"] = currentStatus.processElapsed;
+            pObj["tt"] = currentStatus.processTargetType;
+            pObj["pt"] = currentStatus.processTarget;
+            pObj["pp"] = currentStatus.processProgress;
+        }
+    }
+    
+    // Only send if we have changes
+    if (doc.size() > 1) { // More than just "tp"
+        ws.textAll(doc.as<String>());
+        ESP_LOGV("WebUIPlugin", "Sent delta status update with %d fields", doc.size() - 1);
+    }
+    
+    // Update cache
+    lastSentStatus = currentStatus;
+}
+
+void WebUIPlugin::sendFullStatus() {
+    if (!serverRunning) {
+        return;
+    }
+    
+    JsonDocument doc;
+    doc["tp"] = "evt:status:full";
+    doc["ct"] = controller->getCurrentTemp();
+    doc["tt"] = controller->getTargetTemp();
+    doc["pr"] = controller->getCurrentPressure();
+    doc["fl"] = controller->getCurrentPumpFlow();
+    doc["pt"] = controller->getTargetPressure();
+    doc["m"] = controller->getMode();
+    doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
+    doc["cp"] = controller->getSystemInfo().capabilities.pressure;
+    doc["cd"] = controller->getSystemInfo().capabilities.dimming;
+    doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
+    doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+    doc["led"] = controller->getSystemInfo().capabilities.ledControl;
+
+    Process *process = controller->getProcess();
+    if (process == nullptr) {
+        process = controller->getLastProcess();
+    }
+    if (process != nullptr) {
+        auto pObj = doc["process"].to<JsonObject>();
+        pObj["a"] = controller->isActive() ? 1 : 0;
+        if (process->getType() == MODE_BREW) {
+            auto *brew = static_cast<BrewProcess *>(process);
+            unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
+            pObj["s"] = brew->currentPhase.phase == PhaseType::PHASE_TYPE_BREW ? "brew" : "infusion";
+            pObj["l"] = brew->isActive() ? brew->currentPhase.name.c_str() : "Finished";
+            pObj["e"] = ts - brew->processStarted;
+            const bool isVolumetric = brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget() &&
+                                      controller->isVolumetricAvailable();
+            pObj["tt"] = isVolumetric ? "volumetric" : "time";
+            if (isVolumetric) {
+                Target t = brew->currentPhase.getVolumetricTarget();
+                pObj["pt"] = t.value;
+                pObj["pp"] = brew->currentVolume;
+            } else {
+                pObj["pt"] = brew->getPhaseDuration();
+                pObj["pp"] = ts - brew->currentPhaseStarted;
+            }
+        }
+    }
+
+    ws.textAll(doc.as<String>());
+    ESP_LOGI("WebUIPlugin", "Sent full status update to %d clients", ws.getClients().size());
+    
+    // Update cache with current values
+    sendStatusUpdate(); // This will populate the cache
+}
+
+bool WebUIPlugin::hasStatusChanged(const StatusCache& newStatus) const {
+    return (abs(newStatus.currentTemp - lastSentStatus.currentTemp) > 0.1 ||
+            abs(newStatus.targetTemp - lastSentStatus.targetTemp) > 0.1 ||
+            abs(newStatus.currentPressure - lastSentStatus.currentPressure) > 0.01 ||
+            abs(newStatus.targetPressure - lastSentStatus.targetPressure) > 0.01 ||
+            abs(newStatus.currentFlow - lastSentStatus.currentFlow) > 0.01 ||
+            newStatus.mode != lastSentStatus.mode ||
+            newStatus.selectedProfile != lastSentStatus.selectedProfile ||
+            newStatus.brewTarget != lastSentStatus.brewTarget ||
+            newStatus.volumetricAvailable != lastSentStatus.volumetricAvailable ||
+            newStatus.processActive != lastSentStatus.processActive ||
+            newStatus.processState != lastSentStatus.processState ||
+            newStatus.processLabel != lastSentStatus.processLabel ||
+            abs((long)(newStatus.processElapsed - lastSentStatus.processElapsed)) > 100 ||
+            newStatus.processTargetType != lastSentStatus.processTargetType ||
+            abs(newStatus.processTarget - lastSentStatus.processTarget) > 0.01 ||
+            abs(newStatus.processProgress - lastSentStatus.processProgress) > 0.01 ||
+            newStatus.capabilityPressure != lastSentStatus.capabilityPressure ||
+            newStatus.capabilityDimming != lastSentStatus.capabilityDimming ||
+            newStatus.capabilityLedControl != lastSentStatus.capabilityLedControl);
 }
