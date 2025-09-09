@@ -12,6 +12,10 @@ import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleLi
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { 
+  formatTemperature, 
+  formatTemperatureValue 
+} from '../../utils/temperatureConverter.js';
 
 const status = computed(() => machine.value.status);
 
@@ -178,11 +182,10 @@ const ProcessControls = props => {
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
           <FontAwesomeIcon icon={faThermometerHalf} className='text-base-content/60' />
           <span className='text-base-content'>
-            {status.value.currentTemperature.toFixed(1) || 0}
+            {formatTemperatureValue(status.value.currentTemperature, status.value.temperatureUnitFahrenheit, 1)}
           </span>
           <span className='text-success font-semibold'>
-            {' '}
-            / {status.value.targetTemperature || 0}°C
+            / {formatTemperature(status.value.targetTemperature, status.value.temperatureUnitFahrenheit)}
           </span>
         </div>
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>

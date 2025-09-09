@@ -349,10 +349,10 @@ void Controller::setTargetTemp(float temperature) {
         // Update current profile
         break;
     case MODE_STEAM:
-        settings.setTargetSteamTemp(static_cast<int>(temperature));
+        settings.setTargetSteamTemp(temperature);
         break;
     case MODE_WATER:
-        settings.setTargetWaterTemp(static_cast<int>(temperature));
+        settings.setTargetWaterTemp(temperature);
         break;
     default:;
     }
@@ -401,13 +401,15 @@ void Controller::setTargetGrindVolume(double volume) {
 
 void Controller::raiseTemp() {
     float temp = getTargetTemp();
-    temp = constrain(temp + 1.0f, MIN_TEMP, MAX_TEMP);
+    float increment = settings.isTemperatureUnitFahrenheit() ? (5.0f / 9.0f) : 1.0f; // 1°F = 1/1.8°C
+    temp = constrain(temp + increment, MIN_TEMP, MAX_TEMP);
     setTargetTemp(temp);
 }
 
 void Controller::lowerTemp() {
     float temp = getTargetTemp();
-    temp = constrain(temp - 1.0f, MIN_TEMP, MAX_TEMP);
+    float increment = settings.isTemperatureUnitFahrenheit() ? (5.0f / 9.0f) : 1.0f; // 1°F = 1/1.8°C
+    temp = constrain(temp - increment, MIN_TEMP, MAX_TEMP);
     setTargetTemp(temp);
 }
 

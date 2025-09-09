@@ -59,9 +59,9 @@ class DefaultUI {
     void adjustTempTarget(lv_obj_t *dials);
     void adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const;
 
-    int tempHistory[TEMP_HISTORY_LENGTH] = {0};
+    float tempHistory[TEMP_HISTORY_LENGTH] = {0};
     int tempHistoryIndex = 0;
-    int prevTargetTemp = 0;
+    float prevTargetTemp = 0;
     bool isTempHistoryInitialized = false;
     int isTemperatureStable = false;
     unsigned long lastTempLog = 0;
@@ -92,8 +92,8 @@ class DefaultUI {
     unsigned long lastRender = 0;
 
     int mode = MODE_STANDBY;
-    int currentTemp = 0;
-    int targetTemp = 0;
+    float currentTemp = 0;
+    float targetTemp = 0;
     int targetDuration = 0;
     int targetVolume = 0;
     int grindDuration = 0;
