@@ -1,6 +1,7 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useState } from 'preact/hooks';
+import { useQuery } from 'preact-fetching';
 import PropTypes from 'prop-types';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
@@ -134,9 +135,24 @@ const ProcessControls = props => {
   const apiService = useContext(ApiServiceContext);
   const [isFlushing, setIsFlushing] = useState(false);
 
+  // Get settings to check if SmartGrind is enabled
+  const { data: settings } = useQuery('settings-cache', async () => {
+    const response = await fetch('/api/settings');
+    return response.json();
+  }, {
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnWindowFocus: false,
+  });
+
+  const isSmartGrindEnabled = settings?.smartGrindActive || false;
+  
+  // If currently in grind mode, always show it even if SmartGrind is disabled
+  // to avoid confusion for users who might be in grind mode when settings change
+  const showGrindTab = isSmartGrindEnabled || mode === 4;
+
   // Determine if we should show expanded view
   const shouldExpand = (brew && (active || finished || (brew && !active && !finished))) || 
-                      (grind && (active || finished || (grind && !active && !finished)));
+                      (grind && showGrindTab && (active || finished || (grind && !active && !finished)));
 
   const changeTarget = useCallback(
     target => {
@@ -240,7 +256,7 @@ const ProcessControls = props => {
             { id: 1, label: 'Brew' },
             { id: 2, label: 'Steam' },
             { id: 3, label: 'Water' },
-            { id: 4, label: 'Grind' },
+            ...(showGrindTab ? [{ id: 4, label: 'Grind' }] : []),
           ].map(tab => (
             <button
               key={tab.id}
@@ -292,8 +308,8 @@ const ProcessControls = props => {
         <>
           <div className='flex flex-1 items-center justify-center'>
             {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
-            {(active || finished) && grind && <GrindProgress processInfo={processInfo} />}
-            {!brew && !grind && (
+            {(active || finished) && grind && showGrindTab && <GrindProgress processInfo={processInfo} />}
+            {!brew && !(grind && showGrindTab) && (
               <div className='space-y-2 text-center'>
                 <div className='text-xl font-bold sm:text-2xl'>
                   {mode === 0 && 'Standby Mode'}
@@ -310,10 +326,14 @@ const ProcessControls = props => {
                 </div>
               </div>
             )}
-            {grind && !active && !finished && (
+            {grind && showGrindTab && !active && !finished && (
               <div className='space-y-2 text-center'>
                 <div className='text-xl font-bold sm:text-2xl'>Grind</div>
-                <div className='text-base-content/60 text-sm'>Select grind target to start</div>
+                <div className='text-base-content/60 text-sm'>
+                  {isSmartGrindEnabled 
+                    ? 'Select grind target to start' 
+                    : 'SmartGrind plugin is disabled'}
+                </div>
               </div>
             )}
           </div>
@@ -328,7 +348,7 @@ const ProcessControls = props => {
               {mode === 1 && 'Brew'}
               {mode === 2 && 'Steam'}
               {mode === 3 && 'Water'}
-              {mode === 4 && 'Grind'}
+              {mode === 4 && showGrindTab && 'Grind'}
             </div>
             <div className='text-base-content/60 text-sm'>
               {mode === 0 && 'Machine is ready'}
@@ -338,14 +358,16 @@ const ProcessControls = props => {
                   ? 'Steam is ready'
                   : 'Preheating')}
               {mode === 3 && 'Start and open steam valve to pull water'}
-              {mode === 4 && 'Select grind target to start'}
+              {mode === 4 && showGrindTab && (isSmartGrindEnabled 
+                ? 'Select grind target to start' 
+                : 'SmartGrind plugin is disabled')}
             </div>
           </div>
         </div>
       )}
 
       <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {(brew || grind) && !active && !finished && status.value.volumetricAvailable && (
+        {(brew || (grind && showGrindTab)) && !active && !finished && status.value.volumetricAvailable && isSmartGrindEnabled && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
@@ -431,10 +453,10 @@ const ProcessControls = props => {
             </div>
           </div>
         )}
-        {mode === 4 && (
+        {mode === 4 && showGrindTab && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
             {/* Target adjustment controls for grind mode */}
-            {grind && !active && !finished && (
+            {grind && !active && !finished && isSmartGrindEnabled && (
               <div className='flex flex-col items-center gap-2'>
                 <div className='text-base-content/60 text-xs font-light tracking-wider'>
                   GRIND TARGET
@@ -464,7 +486,7 @@ const ProcessControls = props => {
         )}
 
         {/* Common controls for all modes that need them */}
-        {(mode === 1 || mode === 3 || mode === 4) && (
+        {(mode === 1 || mode === 3 || (mode === 4 && showGrindTab && isSmartGrindEnabled)) && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
             <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
               <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />

@@ -87,6 +87,7 @@ class DefaultUI {
     int volumetricMode = false;
     int grindActive = false;
     int active = false;
+    int smartGrindActive = false;
 
     bool rerender = false;
     unsigned long lastRender = 0;
