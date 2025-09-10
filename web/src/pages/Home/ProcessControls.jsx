@@ -1,6 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext, useState } from 'preact/hooks';
+import { useCallback, useContext, useState, useEffect } from 'preact/hooks';
 import PropTypes from 'prop-types';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
@@ -12,6 +12,7 @@ import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleLi
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 
 const status = computed(() => machine.value.status);
 
@@ -81,6 +82,45 @@ const ProcessControls = props => {
   const finished = !!processInfo?.e && !active;
   const apiService = useContext(ApiServiceContext);
   const [isFlushing, setIsFlushing] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  // Fetch profile data when selectedProfile changes
+  useEffect(() => {
+    const selectedProfile = status.value.selectedProfile;
+    
+    if (!selectedProfile || !apiService) {
+      setProfileData(null);
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        setProfileLoading(true);
+        // First get the list of profiles to find the ID for the selected profile
+        const profilesResponse = await apiService.request({ tp: 'req:profiles:list' });
+        const profile = profilesResponse.profiles.find(p => 
+          p.label === selectedProfile || 
+          (p.selected && p.label === selectedProfile)
+        );
+        
+        if (profile && profile.type === 'pro') {
+          // Load the full profile data with phases
+          const profileResponse = await apiService.request({ tp: 'req:profiles:load', id: profile.id });
+          setProfileData(profileResponse.profile);
+        } else {
+          setProfileData(null);
+        }
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+        setProfileData(null);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [status.value.selectedProfile, apiService]);
 
   // Determine if we should show expanded view
   const shouldExpand = brew && (active || finished || (brew && !active && !finished));
@@ -202,6 +242,21 @@ const ProcessControls = props => {
             </span>
             <FontAwesomeIcon icon={faRectangleList} className='text-base-content/60 text-xl' />
           </a>
+          {status.value.selectedProfile && (
+            <div className='mb-2'>
+              {profileLoading && (
+                <div className="flex items-center justify-center max-h-20 w-full">
+                  <div className="loading loading-spinner loading-xs opacity-60"></div>
+                </div>
+              )}
+              {!profileLoading && profileData && (
+                <ExtendedProfileChart 
+                  data={profileData} 
+                  className='max-h-36 w-full'
+                />
+              )}
+            </div>
+          )}
         </div>
       )}
 
