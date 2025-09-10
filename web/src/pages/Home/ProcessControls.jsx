@@ -85,9 +85,10 @@ const ProcessControls = props => {
   const [profileData, setProfileData] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Fetch profile data when selectedProfileId changes
+  // Fetch profile data when selectedProfileId or selectedProfile changes
   useEffect(() => {
     const selectedProfileId = status.value.selectedProfileId;
+    const selectedProfileName = status.value.selectedProfile;
     
     if (!selectedProfileId || !apiService) {
       setProfileData(null);
@@ -113,7 +114,7 @@ const ProcessControls = props => {
     };
 
     fetchProfile();
-  }, [status.value.selectedProfileId, apiService]);
+  }, [status.value.selectedProfileId, status.value.selectedProfile, apiService]);
 
   // Determine if we should show expanded view
   const shouldExpand = brew && (active || finished || (brew && !active && !finished));
