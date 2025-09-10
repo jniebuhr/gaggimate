@@ -88,6 +88,7 @@ class DefaultUI {
     int grindActive = false;
     int active = false;
     int smartGrindActive = false;
+    int grindAvailable = false;
 
     bool rerender = false;
     unsigned long lastRender = 0;
