@@ -85,11 +85,11 @@ const ProcessControls = props => {
   const [profileData, setProfileData] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Fetch profile data when selectedProfile changes
+  // Fetch profile data when selectedProfileId changes
   useEffect(() => {
-    const selectedProfile = status.value.selectedProfile;
+    const selectedProfileId = status.value.selectedProfileId;
     
-    if (!selectedProfile || !apiService) {
+    if (!selectedProfileId || !apiService) {
       setProfileData(null);
       return;
     }
@@ -97,16 +97,9 @@ const ProcessControls = props => {
     const fetchProfile = async () => {
       try {
         setProfileLoading(true);
-        // First get the list of profiles to find the ID for the selected profile
-        const profilesResponse = await apiService.request({ tp: 'req:profiles:list' });
-        const profile = profilesResponse.profiles.find(p => 
-          p.label === selectedProfile || 
-          (p.selected && p.label === selectedProfile)
-        );
-        
-        if (profile && profile.type === 'pro') {
-          // Load the full profile data with phases
-          const profileResponse = await apiService.request({ tp: 'req:profiles:load', id: profile.id });
+        // Load profile directly by ID
+        const profileResponse = await apiService.request({ tp: 'req:profiles:load', id: selectedProfileId });
+        if (profileResponse.profile && profileResponse.profile.type === 'pro') {
           setProfileData(profileResponse.profile);
         } else {
           setProfileData(null);
@@ -120,7 +113,7 @@ const ProcessControls = props => {
     };
 
     fetchProfile();
-  }, [status.value.selectedProfile, apiService]);
+  }, [status.value.selectedProfileId, apiService]);
 
   // Determine if we should show expanded view
   const shouldExpand = brew && (active || finished || (brew && !active && !finished));
@@ -242,7 +235,7 @@ const ProcessControls = props => {
             </span>
             <FontAwesomeIcon icon={faRectangleList} className='text-base-content/60 text-xl' />
           </a>
-          {status.value.selectedProfile && (
+          {status.value.selectedProfileId && (
             <div className='mb-2'>
               {profileLoading && (
                 <div className="flex items-center justify-center max-h-20 w-full">

@@ -162,6 +162,7 @@ export default class ApiService {
       currentFlow: message.fl,
       mode: message.m,
       selectedProfile: message.p,
+      selectedProfileId: message.puid,
       brewTarget: message.bt || 0,
       volumetricAvailable: message.bta || false,
       process: message.process || null,
@@ -198,6 +199,7 @@ export const machine = signal({
     targetTemperature: 0,
     mode: 0,
     selectedProfile: '',
+    selectedProfileId: null,
     process: null,
   },
   capabilities: {
