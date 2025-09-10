@@ -1,5 +1,9 @@
 import { useState, useEffect, useContext, useCallback } from 'preact/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ApiServiceContext } from '../../services/ApiService.js';
+import { Spinner } from '../../components/Spinner.jsx';
+import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 
 export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded  }) {
   const apiService = useContext(ApiServiceContext);
@@ -190,7 +194,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded  }) {
   }
 
   return (
-    <div className="mt-6 border-t pt-6">
+    <div className="mt-6 border-t-2 border-t-base-content/10 accent pt-6">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Shot Notes</h3>
         {!isEditing ? (
@@ -198,14 +202,14 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded  }) {
             onClick={() => setIsEditing(true)}
             className="btn btn-sm btn-outline"
           >
-            <span className="fa fa-edit mr-1"></span>
+            <FontAwesomeIcon icon={faEdit} />
             Edit
           </button>
         ) : (
-          <div className="flex gap-2">
+          <div className='flex gap-2'>
             <button
               onClick={() => setIsEditing(false)}
-              className="btn btn-sm btn-ghost"
+              className='btn btn-sm btn-ghost'
               disabled={loading}
             >
               Cancel
@@ -216,10 +220,10 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded  }) {
               disabled={loading}
             >
               {loading ? (
-                <span className="loading loading-spinner loading-xs"></span>
+                <Spinner size={4} />
               ) : (
                 <>
-                  <span className="fa fa-save mr-1"></span>
+                  <FontAwesomeIcon icon={faSave} />
                   Save
                 </>
               )}
