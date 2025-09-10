@@ -145,10 +145,14 @@ const ProcessControls = props => {
   });
 
   const isSmartGrindEnabled = settings?.smartGrindActive || false;
+  const altRelayFunction = settings?.altRelayFunction !== undefined ? settings.altRelayFunction : 1; 
   
-  // If currently in grind mode, always show it even if SmartGrind is disabled
+  // Show grind elements if SmartGrind is enabled OR if Alt Relay is set to grind
+  const isGrindAvailable = isSmartGrindEnabled || altRelayFunction === 1; // ALT_RELAY_GRIND = 1
+  
+  // If currently in grind mode, always show it even if both SmartGrind is disabled and Alt Relay is not grind
   // to avoid confusion for users who might be in grind mode when settings change
-  const showGrindTab = isSmartGrindEnabled || mode === 4;
+  const showGrindTab = isGrindAvailable || mode === 4;
 
   // Determine if we should show expanded view
   const shouldExpand = (brew && (active || finished || (brew && !active && !finished))) || 
@@ -330,9 +334,9 @@ const ProcessControls = props => {
               <div className='space-y-2 text-center'>
                 <div className='text-xl font-bold sm:text-2xl'>Grind</div>
                 <div className='text-base-content/60 text-sm'>
-                  {isSmartGrindEnabled 
+                  {isGrindAvailable 
                     ? 'Select grind target to start' 
-                    : 'SmartGrind plugin is disabled'}
+                    : 'Grind function not available'}
                 </div>
               </div>
             )}
@@ -358,16 +362,16 @@ const ProcessControls = props => {
                   ? 'Steam is ready'
                   : 'Preheating')}
               {mode === 3 && 'Start and open steam valve to pull water'}
-              {mode === 4 && showGrindTab && (isSmartGrindEnabled 
+              {mode === 4 && showGrindTab && (isGrindAvailable 
                 ? 'Select grind target to start' 
-                : 'SmartGrind plugin is disabled')}
+                : 'Grind function not available')}
             </div>
           </div>
         </div>
       )}
 
       <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {(brew || (grind && showGrindTab)) && !active && !finished && status.value.volumetricAvailable && isSmartGrindEnabled && (
+        {(brew || (grind && showGrindTab)) && !active && !finished && status.value.volumetricAvailable && isGrindAvailable && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
@@ -456,7 +460,7 @@ const ProcessControls = props => {
         {mode === 4 && showGrindTab && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
             {/* Target adjustment controls for grind mode */}
-            {grind && !active && !finished && isSmartGrindEnabled && (
+            {grind && !active && !finished && isGrindAvailable && (
               <div className='flex flex-col items-center gap-2'>
                 <div className='text-base-content/60 text-xs font-light tracking-wider'>
                   GRIND TARGET
@@ -486,7 +490,7 @@ const ProcessControls = props => {
         )}
 
         {/* Common controls for all modes that need them */}
-        {(mode === 1 || mode === 3 || (mode === 4 && showGrindTab && isSmartGrindEnabled)) && (
+        {(mode === 1 || mode === 3 || (mode === 4 && showGrindTab && isGrindAvailable)) && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
             <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
               <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />

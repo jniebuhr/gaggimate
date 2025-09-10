@@ -218,6 +218,7 @@ void DefaultUI::loop() {
         grindActive = controller->isGrindActive();
         active = controller->isActive();
         smartGrindActive = settings.isSmartGrindActive();
+        grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
         applyTheme();
         if (controller->isErrorState()) {
             changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
@@ -309,6 +310,7 @@ void DefaultUI::setupState() {
     grindActive = controller->isGrindActive();
     active = controller->isActive();
     smartGrindActive = settings.isSmartGrindActive();
+    grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
     mode = controller->getMode();
     currentTemp = static_cast<int>(controller->getCurrentTemp());
     targetTemp = static_cast<int>(controller->getTargetTemp());
@@ -599,13 +601,13 @@ void DefaultUI::setupReactive() {
         },
         &currentProfileId, &profileLoaded);
 
-    // Show/hide grind button based on SmartGrind setting
+    // Show/hide grind button based on SmartGrind setting or Alt Relay function
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
-                              smartGrindActive ? lv_obj_clear_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN)
-                                               : lv_obj_add_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN);
+                              grindAvailable ? lv_obj_clear_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN)
+                                             : lv_obj_add_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN);
                           },
-                          &smartGrindActive);
+                          &grindAvailable);
 }
 
 void DefaultUI::handleScreenChange() {
