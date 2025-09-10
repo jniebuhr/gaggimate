@@ -209,7 +209,7 @@ const ProcessControls = props => {
               <FontAwesomeIcon icon={faWeightScale} />
             </button>
             <span className='text-base-content'>{status.value.currentWeight?.toFixed(1) || 0.0}g</span>
-            {isWeightTarget && (mode === 1 || mode === 3) && (
+            {brewTarget === 1 && (mode === 1 || mode === 3) && (
               <span className='text-success font-semibold'>
                 {' '}
                 / {brewTarget?.toFixed(0)}g
