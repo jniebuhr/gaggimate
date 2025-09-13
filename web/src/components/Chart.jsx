@@ -27,8 +27,21 @@ export function ChartComponent({ data, className, chartClassName }) {
   useEffect(() => {
     if (!chart) return;
 
+    // Preserve dataset visibility state when updating data
+    const hiddenDatasets = chart.data.datasets.map((dataset, index) => {
+      return chart.getDatasetMeta(index).hidden;
+    });
+
     chart.data = data.data;
     chart.options = data.options;
+
+    // Restore dataset visibility state
+    chart.data.datasets.forEach((dataset, index) => {
+      if (hiddenDatasets[index] !== undefined) {
+        chart.getDatasetMeta(index).hidden = hiddenDatasets[index];
+      }
+    });
+
     chart.update();
   }, [data, chart]);
 
