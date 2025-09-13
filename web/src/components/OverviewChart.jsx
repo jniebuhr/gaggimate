@@ -57,10 +57,26 @@ function getChartData(data) {
           position: 'top',
           display: true,
           labels: {
-            boxWidth: 12,
+            usePointStyle: true,
+            pointStyle: 'line',
+            pointStyleWidth: 20,
             padding: 8,
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
+            },
+            generateLabels: function(chart) {
+              const original = Chart.defaults.plugins.legend.labels.generateLabels;
+              const labels = original.call(this, chart);
+              
+              labels.forEach((label, index) => {
+                const dataset = chart.data.datasets[index];
+                label.lineWidth = 3; 
+                if (dataset.borderDash && dataset.borderDash.length > 0) {
+                  label.lineDash = dataset.borderDash; 
+                }
+              });
+              
+              return labels;
             },
           },
         },
