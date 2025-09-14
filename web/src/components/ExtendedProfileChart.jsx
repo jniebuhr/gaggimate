@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { ChartComponent } from './Chart';
+import { Chart } from 'chart.js';
 
 const POINT_INTERVAL = 0.1; // s
 
@@ -111,7 +112,7 @@ function prepareData(phases, target) {
   return data;
 }
 
-function makeChartData(data, selectedPhase, isDarkMode = false, onPointClick = null, selectedPointIndex = null) {
+function makeChartData(data, selectedPhase, isDarkMode = false, _, selectedPointIndex = null) {
   let duration = 0;
   for (const phase of data.phases) {
     duration += parseFloat(phase.duration);
@@ -209,7 +210,6 @@ function makeChartData(data, selectedPhase, isDarkMode = false, onPointClick = n
       },
       animations: false,
       radius: 0,
-      onClick: onPointClick,
       scales: {
         x: {
           type: 'linear',
@@ -321,6 +321,9 @@ export function ExtendedProfileChart({
   selectedPhase = null,
 }) {
   const [selectedPoint, setSelectedPoint] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const chartRef = useRef(null);
   
   // Handle clicks outside the tooltip to dismiss it
   useEffect(() => {
@@ -340,29 +343,137 @@ export function ExtendedProfileChart({
       document.removeEventListener('click', handleClickOutside);
     };
   }, [selectedPoint]);
-  
-  const handlePointClick = (event, elements, chart) => {
-    if (elements.length > 0) {
-      const dataIndex = elements[0].index;
-      const datasets = chart.data.datasets;
+
+  // Handle mouse/touch move events for dragging
+  useEffect(() => {
+    if (!isDragging || !chartRef.current) return;
+
+    const handleMove = (event) => {
+      event.preventDefault();
       
-      // Get values from all datasets at this index
-      const pointData = {
-        time: datasets[0].data[dataIndex].x.toFixed(1),
-        pressure: datasets[0].data[dataIndex].y,
-        flow: datasets[1].data[dataIndex].y,
-        dataIndex // Store the index for visual indicator
-      };
+      const rect = chartRef.current.getBoundingClientRect();
+      let clientX, clientY;
       
-      setSelectedPoint(pointData);
-    } else {
-      setSelectedPoint(null);
-    }
-  };
+      if (event.type.includes('touch')) {
+        if (!event.touches || event.touches.length === 0) return;
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+      } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      }
+      
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      
+      // Find closest data point and update selected point
+      const chart = chartRef.current.chart;
+      if (chart && chart.scales && chart.scales.x && chart.chartArea) {
+        // Constrain x to chart area bounds
+        const chartArea = chart.chartArea;
+        const constrainedX = Math.max(chartArea.left, Math.min(chartArea.right, x));
+        
+        // Convert constrained position to data value
+        const dataX = chart.scales.x.getValueForPixel(constrainedX);
+        
+        // Update tooltip position to the constrained mouse position
+        setTooltipPosition({ x: constrainedX, y });
+        
+        // Find closest data point
+        const datasets = chart.data.datasets;
+        if (datasets.length > 0 && datasets[0].data) {
+          let closestIndex = 0;
+          let minDistance = Infinity;
+          
+          datasets[0].data.forEach((point, index) => {
+            const distance = Math.abs(point.x - dataX);
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestIndex = index;
+            }
+          });
+          
+          // Update selected point
+          const pointData = {
+            time: datasets[0].data[closestIndex].x.toFixed(1),
+            pressure: datasets[0].data[closestIndex].y,
+            flow: datasets[1] && datasets[1].data[closestIndex] ? datasets[1].data[closestIndex].y : 0,
+            dataIndex: closestIndex
+          };
+          
+          setSelectedPoint(pointData);
+        }
+      }
+    };
+
+    const handleEnd = () => {
+      setIsDragging(false);
+    };
+
+    // Add event listeners
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDragging]);
   
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const config = makeChartData(data, selectedPhase, isDarkMode(), handlePointClick, selectedPoint?.dataIndex);
+  const config = makeChartData(data, selectedPhase, isDarkMode(), null, selectedPoint?.dataIndex);
+
+  // Calculate tooltip position with left/right logic
+  const getTooltipStyle = () => {
+    if (!selectedPoint || !chartRef.current?.chart) return {};
+    
+    const chart = chartRef.current.chart;
+    const tooltipWidth = 120;
+    const padding = 15; // Position tooltip 15px away from the data line
+    
+    // Get the pixel position of the selected data point on the chart
+    const selectedTime = parseFloat(selectedPoint.time);
+    const dataPointX = chart.scales.x.getPixelForValue(selectedTime);
+    
+    // Fallback if dataPointX is invalid
+    if (!dataPointX || isNaN(dataPointX)) {
+      return {
+        fontSize: '11px',
+        lineHeight: '1.2',
+        left: '100px', // Fallback position
+        top: `${tooltipPosition.y - 50}px`, // Use mouse Y position even for fallback
+        minWidth: 'auto',
+        maxWidth: '120px'
+      };
+    }
+    
+    // Determine if tooltip should be to the left or right of the data point
+    // Show to the left if there's enough space, otherwise show to the right
+    const chartArea = chart.chartArea;
+    const distanceFromLeft = dataPointX - chartArea.left;
+    
+    const showLeft = distanceFromLeft > (tooltipWidth + padding);
+    
+    // Position tooltip just beside the vertical line (data point)
+    const containerWidth = chartRef.current.getBoundingClientRect().width;
+    const positioning = showLeft ? 
+      { right: `${containerWidth - dataPointX + padding}px` } :
+      { left: `${dataPointX + padding}px` };
+    
+    return {
+      fontSize: '11px',
+      lineHeight: '1.2',
+      ...positioning,
+      top: `${tooltipPosition.y - 50}px`, // Follow mouse Y position, offset upward to center tooltip
+      minWidth: 'auto',
+      maxWidth: '120px'
+    };
+  };
 
   return (
     <div className="relative w-full">
@@ -370,23 +481,108 @@ export function ExtendedProfileChart({
         className='w-full'
         chartClassName={className}
         data={config}
+        onMouseDown={(e) => {
+          const rect = e.target.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          // Store chart reference
+          chartRef.current = { chart: e.target.chart, getBoundingClientRect: () => rect };
+          
+          // Find data point at click position
+          if (e.target.chart && e.target.chart.scales && e.target.chart.scales.x) {
+            // Manual relative position calculation
+            const canvasX = x;
+            const dataX = e.target.chart.scales.x.getValueForPixel(canvasX);
+            
+            const datasets = e.target.chart.data.datasets;
+            if (datasets.length > 0 && datasets[0].data) {
+              let closestIndex = 0;
+              let minDistance = Infinity;
+              
+              datasets[0].data.forEach((point, index) => {
+                const distance = Math.abs(point.x - dataX);
+                if (distance < minDistance) {
+                  minDistance = distance;
+                  closestIndex = index;
+                }
+              });
+              
+              // Update selected point and start dragging
+              const pointData = {
+                time: datasets[0].data[closestIndex].x.toFixed(1),
+                pressure: datasets[0].data[closestIndex].y,
+                flow: datasets[1] && datasets[1].data[closestIndex] ? datasets[1].data[closestIndex].y : 0,
+                dataIndex: closestIndex
+              };
+              
+              // Calculate constrained tooltip position relative to data point
+              const dataPointX = e.target.chart.scales.x.getPixelForValue(datasets[0].data[closestIndex].x);
+              const constrainedX = Math.max(e.target.chart.chartArea.left, Math.min(dataPointX, e.target.chart.chartArea.right));
+              
+              setSelectedPoint(pointData);
+              setTooltipPosition({ x: constrainedX, y });
+              setIsDragging(true);
+            }
+          }
+        }}
+        onTouchStart={(e) => {
+          if (e.touches.length === 1) {
+            const rect = e.target.getBoundingClientRect();
+            const x = e.touches[0].clientX - rect.left;
+            const y = e.touches[0].clientY - rect.top;
+            
+            // Store chart reference
+            chartRef.current = { chart: e.target.chart, getBoundingClientRect: () => rect };
+            
+            // Find data point at touch position
+            if (e.target.chart && e.target.chart.scales && e.target.chart.scales.x) {
+              // Manual relative position calculation
+              const canvasX = x;
+              const dataX = e.target.chart.scales.x.getValueForPixel(canvasX);
+              
+              const datasets = e.target.chart.data.datasets;
+              if (datasets.length > 0 && datasets[0].data) {
+                let closestIndex = 0;
+                let minDistance = Infinity;
+                
+                datasets[0].data.forEach((point, index) => {
+                  const distance = Math.abs(point.x - dataX);
+                  if (distance < minDistance) {
+                    minDistance = distance;
+                    closestIndex = index;
+                  }
+                });
+                
+                // Update selected point and start dragging
+                const pointData = {
+                  time: datasets[0].data[closestIndex].x.toFixed(1),
+                  pressure: datasets[0].data[closestIndex].y,
+                  flow: datasets[1] && datasets[1].data[closestIndex] ? datasets[1].data[closestIndex].y : 0,
+                  dataIndex: closestIndex
+                };
+                
+                // Calculate constrained tooltip position relative to data point
+                const dataPointX = e.target.chart.scales.x.getPixelForValue(datasets[0].data[closestIndex].x);
+                const constrainedX = Math.max(e.target.chart.chartArea.left, Math.min(dataPointX, e.target.chart.chartArea.right));
+                
+                setSelectedPoint(pointData);
+                setTooltipPosition({ x: constrainedX, y });
+                setIsDragging(true);
+              }
+            }
+          }
+        }}
       />
       
       {selectedPoint && (
         <div 
-          className="chart-tooltip absolute bg-black/90 p-1.5 rounded border border-gray-400/20 pointer-events-none"
-          style={{
-            fontSize: '11px',
-            lineHeight: '1.2',
-            left: '60px',
-            top: '60px',
-            minWidth: 'auto',
-            maxWidth: '120px'
-          }}
+          className="chart-tooltip absolute bg-black/90 p-1.5 rounded border border-gray-400/20 pointer-events-none z-10"
+          style={getTooltipStyle()}
         >
           <div className="font-medium mb-0.5 text-white">{selectedPoint.time}s</div>
           <div style={{ color: '#81C784' }}>P: {selectedPoint.pressure.toFixed(1)} bar</div>
-          <div style={{ color: '#FFB74D' }}>F: {selectedPoint.flow.toFixed(1)} g/s</div>
+          <div style={{ color: '#FFB74D' }}>F: {selectedPoint.flow.toFixed(1)} ml/s</div>
         </div>
       )}
     </div>
