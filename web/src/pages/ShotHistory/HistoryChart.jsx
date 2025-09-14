@@ -219,8 +219,18 @@ export function HistoryChart({ shot }) {
   useEffect(() => {
     if (!isDragging || !chartRef.current) return;
 
+    let lastUpdateTime = 0;
+    const throttleMs = 33; // ~30fps
+
     const handleMove = (event) => {
       event.preventDefault();
+      
+      // Throttle mouse events but allow touch events to run unthrottled
+      const now = Date.now();
+      if (!event.type.includes('touch') && now - lastUpdateTime < throttleMs) {
+        return;
+      }
+      lastUpdateTime = now;
       
       const rect = chartRef.current.getBoundingClientRect();
       let clientX, clientY;
