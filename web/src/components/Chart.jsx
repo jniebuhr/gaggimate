@@ -89,8 +89,16 @@ export function ChartComponent({ data, className, chartClassName }) {
   }, [chart]);
 
   return (
-    <div className={className}>
-      <canvas className={chartClassName} ref={ref} />
+    <div className={className} style={{ position: 'relative' }}>
+      <canvas 
+        className={chartClassName} 
+        ref={ref}
+        style={{ 
+          width: '100%', 
+          height: '100%',
+          display: 'block'
+        }}
+      />
     </div>
   );
 }

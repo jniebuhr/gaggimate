@@ -111,11 +111,60 @@ function prepareData(phases, target) {
   return data;
 }
 
-function makeChartData(data, selectedPhase, isDarkMode = false) {
+function makeChartData(data, selectedPhase, isDarkMode = false, onPointClick = null, selectedPointIndex = null) {
   let duration = 0;
   for (const phase of data.phases) {
     duration += parseFloat(phase.duration);
   }
+  
+  // Create annotations object for visual indicators
+  const annotations = [];
+  
+  // Add selected point indicators
+  if (selectedPointIndex !== null) {
+    const pressureData = prepareData(data.phases, 'pressure');
+    const flowData = prepareData(data.phases, 'flow');
+    
+    if (selectedPointIndex < pressureData.length) {
+      const selectedTime = pressureData[selectedPointIndex].x;
+      const selectedPressure = pressureData[selectedPointIndex].y;
+      const selectedFlow = flowData[selectedPointIndex].y;
+      
+      // Add vertical line at selected point
+      annotations.push({
+        type: 'line',
+        xMin: selectedTime,
+        xMax: selectedTime,
+        borderColor: '#6366F1', // Indigo color
+        borderWidth: 2,
+        borderDash: [5, 5]
+      });
+      
+      // Add point indicators
+      annotations.push({
+        type: 'point',
+        xValue: selectedTime,
+        yValue: selectedPressure,
+        yScaleID: 'y',
+        backgroundColor: 'rgb(75, 192, 192)',
+        borderColor: '#FFFFFF',
+        borderWidth: 2,
+        radius: 4
+      });
+      
+      annotations.push({
+        type: 'point',
+        xValue: selectedTime,
+        yValue: selectedFlow,
+        yScaleID: 'y1',
+        backgroundColor: 'rgb(255, 192, 192)',
+        borderColor: '#FFFFFF',
+        borderWidth: 2,
+        radius: 4
+      });
+    }
+  }
+  
   const chartData = {
     type: 'line',
     data: {
@@ -131,9 +180,12 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
       ],
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       fill: false,
       interaction: {
         intersect: false,
+        mode: 'index',
       },
       plugins: {
         legend: {
@@ -157,6 +209,7 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
       },
       animations: false,
       radius: 0,
+      onClick: onPointClick,
       scales: {
         x: {
           type: 'linear',
@@ -220,6 +273,7 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
     chartData.options.plugins.annotation = {
       drawTime: 'afterDraw',
       annotations: [
+        ...annotations,
         {
           id: 'box1',
           type: 'box',
@@ -251,6 +305,12 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
         borderColor: 'rgb(128,128,128)',
       });
     }
+  } else if (annotations.length > 0) {
+    // Add annotations even if no selected phase
+    chartData.options.plugins.annotation = {
+      drawTime: 'afterDraw',
+      annotations: annotations
+    };
   }
   return chartData;
 }
@@ -260,15 +320,75 @@ export function ExtendedProfileChart({
   className = 'max-h-36 w-full',
   selectedPhase = null,
 }) {
+  const [selectedPoint, setSelectedPoint] = useState(null);
+  
+  // Handle clicks outside the tooltip to dismiss it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if the click is outside the tooltip
+      const tooltip = event.target.closest('.chart-tooltip');
+      const chart = event.target.closest('canvas');
+      
+      // If clicking outside tooltip but not on chart, dismiss
+      if (!tooltip && !chart && selectedPoint) {
+        setSelectedPoint(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [selectedPoint]);
+  
+  const handlePointClick = (event, elements, chart) => {
+    if (elements.length > 0) {
+      const dataIndex = elements[0].index;
+      const datasets = chart.data.datasets;
+      
+      // Get values from all datasets at this index
+      const pointData = {
+        time: datasets[0].data[dataIndex].x.toFixed(1),
+        pressure: datasets[0].data[dataIndex].y,
+        flow: datasets[1].data[dataIndex].y,
+        dataIndex // Store the index for visual indicator
+      };
+      
+      setSelectedPoint(pointData);
+    } else {
+      setSelectedPoint(null);
+    }
+  };
+  
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const config = makeChartData(data, selectedPhase, isDarkMode());
+  const config = makeChartData(data, selectedPhase, isDarkMode(), handlePointClick, selectedPoint?.dataIndex);
 
   return (
-    <ChartComponent
-      className='max-w-full flex-shrink flex-grow'
-      chartClassName={className}
-      data={config}
-    />
+    <div className="relative w-full">
+      <ChartComponent
+        className='w-full'
+        chartClassName={className}
+        data={config}
+      />
+      
+      {selectedPoint && (
+        <div 
+          className="chart-tooltip absolute bg-black/90 p-1.5 rounded border border-gray-400/20 pointer-events-none"
+          style={{
+            fontSize: '11px',
+            lineHeight: '1.2',
+            left: '60px',
+            top: '60px',
+            minWidth: 'auto',
+            maxWidth: '120px'
+          }}
+        >
+          <div className="font-medium mb-0.5 text-white">{selectedPoint.time}s</div>
+          <div style={{ color: '#81C784' }}>P: {selectedPoint.pressure.toFixed(1)} bar</div>
+          <div style={{ color: '#FFB74D' }}>F: {selectedPoint.flow.toFixed(1)} g/s</div>
+        </div>
+      )}
+    </div>
   );
 }
