@@ -140,12 +140,12 @@ void PressureController::virtualScale() {
     _pumpVolume += _pumpFlowRate * _dt;
 
     // Raw entering water puck flow 
-    float effectiveCompliance = 2.4f / fmax(0.2f, _filteredPressureSensor); // ml/bar
+    float effectiveCompliance = 3.0f / fmax(0.2f, _filteredPressureSensor); // ml*s/bar
     float flowRaw = _pumpFlowRate - effectiveCompliance * _filteredPressureDerivative;
-    applyLowPassFilter(&_waterThroughPuckFlowRate, flowRaw, _filterEstimatorFrequency, _dt);
-
-
-    if(_waterThroughPuckFlowRate > 0 && *_valveStatus==1 && _filteredPressureSensor>0.8){
+    
+    
+    applyLowPassFilter(&_waterThroughPuckFlowRate, flowRaw, 0.3f, _dt);
+    if(_waterThroughPuckFlowRate > 0.0f && *_valveStatus==1 && _filteredPressureSensor>0.8f){
         _puckCounter ++;
         _puckSaturationVolume += _waterThroughPuckFlowRate * _dt;
         
@@ -163,14 +163,14 @@ void PressureController::virtualScale() {
         /* Because there is a bit of headspace to be filled up the pressure is not rising fast compare to 
         the amount of water pumped in. As per the equation used for estimation C dP/dt = Pumpflow - PuckFlow,
         everything that is not building up pressure is exciting as PuckFlow. Therefore the conductivity of 
-        the puck is estimated as crazy high at first. Then plummits to negative values before going back to zero. 
-        We use this strang behavior to determine that an equilibrium is established and the equations is 
+        the puck is estimated as crazy high at first, then plummits to negative values before going back to zero. 
+        We use this strange behavior to determine that an equilibrium is established and the equations is 
         becoming valid to trigger estimation output.
 
         We expect the puck to follow three states : 
-            State 1 : conductivity decreases 
-            State 2 : conductivity settle down to a certain value ()
-            State 3 : puck first drop 
+            State 0 : conductivity decreases 
+            State 1 : conductivity settle down to a certain value ()
+            State 2 : puck first drop 
 
         Additionnaly if the first drop would be a user input then to trigger the coffee estimation start one 
         would just nee to pass all the state to true. 
@@ -188,15 +188,15 @@ void PressureController::virtualScale() {
             o Puck states says puck conductivity is plateau-ing so could be dripping or pouring 
             o Saturation volume has been filled so ... maybe it's time to pull the triger on estimation 
         */
-
-        if(_puckState[1] || _puckSaturationVolume > _puckSaturatedVolume){
+        _puckResistance = 1.0/_puckConductance;
+        if(_puckState[1] ){
             if (_puckCounter == timeStamp){
                 _coffeeFlowRate = flowRaw; // Initiate the flow immediatly to the instantaneous flow to now waist time
-                _puckResistance = 1.0/_puckConductance; // Same for the puck resistance
+                _puckResistance = 1.0f/_puckConductance; // Same for the puck resistance
             }
-            applyLowPassFilter(&_puckResistance, 1.0/_puckConductance, 0.4, _dt); // Filter for cosmetic purpose
+            applyLowPassFilter(&_puckResistance, 1.0f/_puckConductance, 0.2f, _dt); // Filter for cosmetic purpose
             // Reset the puck flow rate to avoid slow decay filter response by using the raw flow value for coffee flow
-            applyLowPassFilter(&_coffeeFlowRate, flowRaw, 0.4, _dt);
+            applyLowPassFilter(&_coffeeFlowRate, flowRaw, 0.15f, _dt);
             // Account for missed drops 
             if(!_puckState[2]){
                 float timeMissedDrops = 2; // First drop occured X second ago

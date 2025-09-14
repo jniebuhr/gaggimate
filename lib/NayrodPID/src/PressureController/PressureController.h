@@ -94,12 +94,13 @@ class PressureController {
     float _filterEstimatorFrequency = 1.0f; // Filter frequency for estimator
     float _pressureFilterEstimator = 0.0f;
     float _puckSaturationVolume = 0.0f;// Total volume to saturate the puck(ml)
-    float _puckSaturatedVolume = 38.0f; // Volume at puck saturation (ml)
+    float _puckSaturatedVolume = 45.0f; // Volume at puck saturation (ml)
     float _lastPuckConductance = 0.0f; // Previous puck resistance for derivative calculation
     float _puckConductance = 0.0f;
     float _puckConductanceDerivative = 0.0f; // Derivative of puck resistance
     bool _puckState[3] = {};
     int _puckCounter  = 0;
+    
     SimpleKalmanFilter *_pressureKalmanFilter;
 };
 
