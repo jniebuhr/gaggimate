@@ -12,7 +12,7 @@ import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleLi
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
-import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
+import { ProcessProfileChart } from '../../components/ProcessProfileChart.jsx';
 
 const status = computed(() => machine.value.status);
 
@@ -244,8 +244,9 @@ const ProcessControls = props => {
                 </div>
               )}
               {!profileLoading && profileData && (
-                <ExtendedProfileChart 
+                <ProcessProfileChart 
                   data={profileData} 
+                  processInfo={processInfo}
                   className='max-h-36 w-full'
                 />
               )}
