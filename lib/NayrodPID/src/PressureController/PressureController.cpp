@@ -138,6 +138,7 @@ void PressureController::virtualScale() {
     float newPumpFlowRate = pumpFlowModel(*_ctrlOutput);
     applyLowPassFilter(&_pumpFlowRate, newPumpFlowRate, _filterEstimatorFrequency, _dt);
     _pumpVolume += _pumpFlowRate * _dt;
+    applyLowPassFilter(&exportPumpFlowRate, newPumpFlowRate,_filterEstimatorFrequency/2,_dt);
 
     // Raw entering water puck flow 
     float effectiveCompliance = 3.0f / fmax(0.2f, _filteredPressureSensor); // ml*s/bar
@@ -184,28 +185,25 @@ void PressureController::virtualScale() {
             _puckState[1] = true; 
             timeStamp = _puckCounter; 
         }
-        /* Whatever comes first :
-            o Puck states says puck conductivity is plateau-ing so could be dripping or pouring 
-            o Saturation volume has been filled so ... maybe it's time to pull the triger on estimation 
-        */
+
         _puckResistance = 1.0/_puckConductance;
         if(_puckState[1] ){
-            if (_puckCounter == timeStamp){
-                _coffeeFlowRate = flowRaw; // Initiate the flow immediatly to the instantaneous flow to now waist time
+            if (_puckCounter == timeStamp){ // Intialise values
+                _coffeeFlowRate =_waterThroughPuckFlowRate; // Initiate the flow immediatly to the instantaneous flow to not waist time
                 _puckResistance = 1.0f/_puckConductance; // Same for the puck resistance
             }
             applyLowPassFilter(&_puckResistance, 1.0f/_puckConductance, 0.1f, _dt); // Filter for cosmetic purpose
             // Reset the puck flow rate to avoid slow decay filter response by using the raw flow value for coffee flow
-            applyLowPassFilter(&_coffeeFlowRate, flowRaw, 0.05f, _dt);
-            // Account for missed drops 
-            // if(!_puckState[2]){
-            //     float timeMissedDrops = 2.0f; // First drop occured X second ago
-            //     float missedDops = _coffeeFlowRate*timeMissedDrops/2;// Assumption that flow was linearly increasing (triangle integral) that's BS but ... something. 
-            //     _puckState[2] = true;
-            //     _coffeeOutput += _coffeeFlowRate * _dt + missedDops;
-            // }else{
+            applyLowPassFilter(&_coffeeFlowRate, _waterThroughPuckFlowRate, 0.2f, _dt);
+            // Account for missed drops (WIP)
+            if(!_puckState[2]){
+                float timeMissedDrops = 2.0f; // First drop occured X second ago
+                float missedDops = _coffeeFlowRate*timeMissedDrops/2;// Assumption that flow was linearly increasing (triangle integral) that's BS but ... something. 
+                _puckState[2] = true;
+                _coffeeOutput += _coffeeFlowRate * _dt + missedDops;
+            }else{
             _coffeeOutput += _coffeeFlowRate * _dt;
-            // }
+            }
         }
         // ESP_LOGI("","%d;\t %1.3e;\t %1.3e;\t %1.3e;\t %1.3e;\t %1.3e", millis(),_puckConductance, _puckConductanceDerivative, _waterThroughPuckFlowRate, _coffeeFlowRate, _puckResistance);
     }

@@ -29,7 +29,7 @@ class PressureController {
     float getCoffeeOutputEstimate() { return std::fmax(0.0f, _coffeeOutput); };
     void setPumpFlowCoeff(float oneBarFlow, float nineBarFlow);
     void setPumpFlowPolyCoeffs(float a, float b, float c, float d);
-    float getPumpFlowRate() { return _pumpFlowRate; };
+    float getPumpFlowRate() { return exportPumpFlowRate; };
     float getCoffeeFlowRate() { return *_valveStatus == 1 ? _coffeeFlowRate : 0.0f; };
     float getPuckResistance() { return _puckResistance; }
 
@@ -100,7 +100,7 @@ class PressureController {
     float _puckConductanceDerivative = 0.0f; // Derivative of puck resistance
     bool _puckState[3] = {};
     int _puckCounter  = 0;
-    
+    float exportPumpFlowRate = 0.0f; // To disociate the exported value from the internal because of filtering (cosmetic) purpose
     SimpleKalmanFilter *_pressureKalmanFilter;
 };
 
