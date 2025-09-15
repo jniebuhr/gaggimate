@@ -228,46 +228,90 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
       },
     },
   };
+  
+  // Always show phase dividers and labels
+  chartData.options.plugins.annotation = {
+    drawTime: 'afterDraw',
+    annotations: [],
+  };
+  
+  // Add highlighting box only if a phase is selected
   if (selectedPhase !== null) {
     let start = 0;
     for (let i = 0; i < selectedPhase; i++) {
       start += parseFloat(data.phases[i].duration);
     }
     let end = start + parseFloat(data.phases[selectedPhase].duration);
-    chartData.options.plugins.annotation = {
-      drawTime: 'afterDraw',
-      annotations: [
-        {
-          id: 'box1',
-          type: 'box',
-          xMin: start + 0.1,
-          xMax: end + 0.1,
-          backgroundColor: 'rgba(0,105,255,0.2)',
-          borderColor: 'rgba(100, 100, 100, 0)',
-        },
-      ],
-    };
-    start = 0;
-    for (let i = 0; i < data.phases.length; i++) {
-      chartData.options.plugins.annotation.annotations.push({
-        type: 'label',
-        xValue: start + data.phases[i].duration / 2,
-        yValue: 11,
-        content: [i + 1],
-        color: isDarkMode ? 'rgb(205,208,212)' : 'rgb(57,78,106)',
+    chartData.options.plugins.annotation.annotations.push({
+      id: 'box1',
+      type: 'box',
+      xMin: start + 0.1,
+      xMax: end + 0.1,
+      backgroundColor: 'rgba(0,105,255,0.2)',
+      borderColor: 'rgba(100, 100, 100, 0)',
+    });
+  }
+  
+  // Always show phase dividers and labels
+  chartData.options.plugins.annotation = {
+    drawTime: 'afterDatasetsDraw',
+    clip: false,
+    annotations: [],
+  };
+  
+  // Add highlighting box only if a phase is selected
+  if (selectedPhase !== null) {
+    let start = 0;
+    for (let i = 0; i < selectedPhase; i++) {
+      start += parseFloat(data.phases[i].duration);
+    }
+    let end = start + parseFloat(data.phases[selectedPhase].duration);
+    chartData.options.plugins.annotation.annotations.push({
+      id: 'box1',
+      type: 'box',
+      xMin: start + 0.1,
+      xMax: end + 0.1,
+      backgroundColor: 'rgba(0,105,255,0.2)',
+      borderColor: 'rgba(100, 100, 100, 0)',
+    });
+  }
+  
+  const chartWidth = window.innerWidth;
+  const showLabels = chartWidth >= 520;
+  const isSmall = window.innerWidth < 640;
+  const yMax = chartData.options.scales.y.max ?? 12;
+
+  let phaseStart = 0;
+  for (let i = 0; i < data.phases.length; i++) {
+    const phase = data.phases[i];
+    const phaseName = phase.name || `Phase ${i + 1}`;
+
+    chartData.options.plugins.annotation.annotations.push({
+      type: 'line',
+      xMin: phaseStart,
+      xMax: phaseStart,
+      borderColor: 'rgb(128,128,128)',
+      borderWidth: 1,
+      label: showLabels ? {
+        display: true,
+        content: phaseName,
+        rotation: -90,
+        position: 'end', // anchor at top of line
+        xAdjust: i === 0 ? 2 : 8, // tweak first label inward to compensate for y-axis padding
+        yAdjust: 0,
+        padding: 0,
+        color: isDarkMode ? 'rgb(255,255,255)' : 'rgb(0,0,0)',
+        backgroundColor: isDarkMode ? 'rgba(22,33,50,0.65)' : 'rgba(255,255,255,0.65)',
+        textAlign: 'start',
         font: {
-          size: 14,
+          size: isSmall ? 9 : 11,
           weight: 500,
         },
-      });
-      start += parseFloat(data.phases[i].duration);
-      chartData.options.plugins.annotation.annotations.push({
-        type: 'line',
-        xMin: start + 0.1,
-        xMax: start + 0.1,
-        borderColor: 'rgb(128,128,128)',
-      });
-    }
+        clip: false,
+      } : undefined,
+    });
+
+    phaseStart += parseFloat(phase.duration);
   }
   return chartData;
 }
