@@ -322,13 +322,11 @@ bool Controller::isVolumetricAvailable() const {
     if (BLEScales.isConnected()) {
         return true;
     }
-    
-#ifdef NIGHTLY_BUILD
-    // In nightly builds, also check for dimming capability (flow estimation)
+
     if (systemInfo.capabilities.dimming) {
         return true;
     }
-#endif
+
 
     // Check the old volumetricOverride flag for backward compatibility
     return volumetricOverride;
@@ -676,7 +674,9 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     VolumetricMeasurementSource activeSource = getActiveScaleSource();
     
     // Trigger unified event if this measurement is from the active source
-    if (source == activeSource) {
+    // Special case: if flow estimation is preferred, always trigger active event for flow estimation
+    if (source == activeSource || 
+        (source == VolumetricMeasurementSource::FLOW_ESTIMATION && settings.getPreferredScaleSource() == "flow_estimation")) {
         pluginManager->trigger(F("controller:volumetric-measurement:active:change"), "value", static_cast<float>(measurement));
     }
     
@@ -725,13 +725,30 @@ VolumetricMeasurementSource Controller::getActiveScaleSource() const {
         return VolumetricMeasurementSource::HARDWARE;
     } else if (preference == "bluetooth" && BLEScales.isConnected() && isScaleSourceHealthy(VolumetricMeasurementSource::BLUETOOTH)) {
         return VolumetricMeasurementSource::BLUETOOTH;
+    } else if (preference == "flow_estimation") {
+        // For flow estimation preference, always return it as active if dimming is available
+        // This ensures flow estimation measurements trigger the active change events
+        if (systemInfo.capabilities.dimming) {
+            return VolumetricMeasurementSource::FLOW_ESTIMATION;
+        }
     }
     
     // Fallback logic when preferred source isn't available or unhealthy
-    if (systemInfo.capabilities.hwScale && isScaleSourceHealthy(VolumetricMeasurementSource::HARDWARE)) {
-        return VolumetricMeasurementSource::HARDWARE;
-    } else if (BLEScales.isConnected() && isScaleSourceHealthy(VolumetricMeasurementSource::BLUETOOTH)) {
-        return VolumetricMeasurementSource::BLUETOOTH;
+    if (preference == "flow_estimation") {
+        // For flow estimation preference, fallback to hardware first, then bluetooth
+        if (systemInfo.capabilities.hwScale && isScaleSourceHealthy(VolumetricMeasurementSource::HARDWARE)) {
+            return VolumetricMeasurementSource::HARDWARE;
+        } else if (BLEScales.isConnected() && isScaleSourceHealthy(VolumetricMeasurementSource::BLUETOOTH)) {
+            return VolumetricMeasurementSource::BLUETOOTH;
+        }
+        return VolumetricMeasurementSource::FLOW_ESTIMATION;
+    } else {
+        // For hardware/bluetooth preference, keep existing fallback logic
+        if (systemInfo.capabilities.hwScale && isScaleSourceHealthy(VolumetricMeasurementSource::HARDWARE)) {
+            return VolumetricMeasurementSource::HARDWARE;
+        } else if (BLEScales.isConnected() && isScaleSourceHealthy(VolumetricMeasurementSource::BLUETOOTH)) {
+            return VolumetricMeasurementSource::BLUETOOTH;
+        }
     }
     
     // Final fallback to flow estimation if no scales are available or healthy
@@ -745,6 +762,8 @@ VolumetricMeasurementSource Controller::getPreferredScaleSource() const {
         return VolumetricMeasurementSource::HARDWARE;
     } else if (preference == "bluetooth") {
         return VolumetricMeasurementSource::BLUETOOTH;
+    } else if (preference == "flow_estimation") {
+        return VolumetricMeasurementSource::FLOW_ESTIMATION;
     }
     
     // Default fallback based on availability (ignoring health)
@@ -770,8 +789,9 @@ bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const 
             return BLEScales.isConnected() && (now - lastBluetoothScaleTime) < SCALE_TIMEOUT_MS;
             
         case VolumetricMeasurementSource::FLOW_ESTIMATION:
-            // Flow estimation is always considered "healthy" as a fallback
-            return systemInfo.capabilities.dimming;
+            // Flow estimation is always considered "healthy" if dimming is available
+            // or if it's the preferred source (to ensure it gets used when selected)
+            return systemInfo.capabilities.dimming || settings.getPreferredScaleSource() == "flow_estimation";
             
         default:
             return false;

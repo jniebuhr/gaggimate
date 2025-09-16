@@ -63,6 +63,11 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         this->currentHardwareWeight = event.getFloat("value");
     });
     
+    // Subscribe to Flow estimation weight updates
+    pluginManager->on("controller:volumetric-measurement:estimation:change", [this](Event const &event) {
+        this->currentFlowEstimationWeight = event.getFloat("value");
+    });
+    
     setupServer();
 }
 
@@ -109,6 +114,7 @@ void WebUIPlugin::loop() {
         // Get current weight directly from scale plugins to ensure we have the latest values
         float hardwareWeight = hasHardwareScale ? HardwareScales.getWeight() : this->currentHardwareWeight;
         float bluetoothWeight = hasBluetoothScale ? BLEScales.getWeight() : this->currentBluetoothWeight;
+        float flowEstimationWeight = this->currentFlowEstimationWeight;
         
         if (preference == "hardware" && hasHardwareScale) {
             // User prefers hardware scale and it's available - always show hardware weight
@@ -126,6 +132,10 @@ void WebUIPlugin::loop() {
             // Fallback to bluetooth scale if available
             doc["cw"] = bluetoothWeight;
             doc["scaleSource"] = "bluetooth_fallback";
+        } else if (preference == "flow_estimation") {
+        // User prefers flow estimation - show flow estimation weight
+        doc["cw"] = flowEstimationWeight;
+        doc["scaleSource"] = "flow_estimation";
         } else {
             // No scale available
             doc["cw"] = 0.0f;
@@ -210,12 +220,19 @@ void WebUIPlugin::setupServer() {
         } else if (preference == "bluetooth" && hasBluetoothScale) {
             // User prefers bluetooth scale and it's connected - always show bluetooth weight
             doc["cw"] = currentBluetoothWeight;
+        } else if (preference == "flow_estimation") {
+            // User prefers flow estimation - show flow estimation weight
+            doc["cw"] = currentFlowEstimationWeight;
         } else if (hasHardwareScale) {
             // Fallback to hardware scale if available
             doc["cw"] = currentHardwareWeight;
         } else if (hasBluetoothScale) {
             // Fallback to bluetooth scale if available
             doc["cw"] = currentBluetoothWeight;
+        } else if (preference == "flow_estimation") {
+        // User prefers flow estimation - show flow estimation weight
+        doc["cw"] = flowEstimationWeight;
+        doc["scaleSource"] = "flow_estimation";
         } else {
             // No scale available - ensure field is always present
             doc["cw"] = 0.0f;

@@ -852,6 +852,7 @@ export function Settings() {
               >
                 <option value='hardware'>Prefer Hardware Scale (Built-in)</option>
                 <option value='bluetooth'>Prefer Bluetooth Scale</option>
+                <option value='flow_estimation'>Prefer Flow Estimation</option>
               </select>
             </div>
             
