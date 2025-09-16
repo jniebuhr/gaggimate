@@ -4,7 +4,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 Chart.register(annotationPlugin);
 
-export function ChartComponent({ data, className, chartClassName }) {
+export function ChartComponent({ data, className, chartClassName, onMouseDown, onTouchStart }) {
   const [chart, setChart] = useState(null);
   const ref = useRef();
 
@@ -13,6 +13,10 @@ export function ChartComponent({ data, className, chartClassName }) {
     if (!ref.current) return;
 
     const newChart = new Chart(ref.current, data);
+    
+    // Store chart reference on canvas element for event handlers
+    ref.current.chart = newChart;
+    
     setChart(newChart);
 
     // Cleanup function to destroy chart on unmount
@@ -102,8 +106,18 @@ export function ChartComponent({ data, className, chartClassName }) {
   }, [chart]);
 
   return (
-    <div className={className}>
-      <canvas className={chartClassName} ref={ref} />
+    <div className={className} style={{ position: 'relative' }}>
+      <canvas 
+        className={chartClassName} 
+        ref={ref}
+        onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
+        style={{ 
+          width: '100%', 
+          height: '100%',
+          display: 'block'
+        }}
+      />
     </div>
   );
 }
