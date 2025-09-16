@@ -38,6 +38,19 @@ void GaggiMateController::setup() {
     }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
+    // Simple LED Controller
+    
+    this->simpleLedController = new SimpleLedController();
+
+    if (_config.capabilites.simpleLed) {
+        if (this->simpleLedController->isAvailable()) {
+            _ble.registerSimpleLedControlCallback(
+                [this](uint8_t r, uint8_t g, uint8_t b, uint8_t w) { simpleLedController->setChannel(r, g, b, w); });
+                ESP_LOGI(LOG_TAG, "Registered Simple LED Controls");
+        }
+
+    } 
+
 
     this->hardwareScale = new HardwareScale(_config.scaleSdaPin, _config.scaleSda1Pin, _config.scaleSclPin,
                                               [this](float weight) { _ble.sendScaleMeasurement(weight); },

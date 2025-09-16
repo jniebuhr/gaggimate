@@ -67,6 +67,11 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         this->currentHardwareWeight = event.getFloat("value");
     });
     
+    // Subscribe to Flow estimation weight updates
+    pluginManager->on("controller:volumetric-measurement:estimation:change", [this](Event const &event) {
+        this->currentFlowEstimationWeight = event.getFloat("value");
+    });
+    
     setupServer();
 }
 
