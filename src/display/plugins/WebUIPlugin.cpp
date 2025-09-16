@@ -231,7 +231,7 @@ void WebUIPlugin::setupServer() {
             doc["cw"] = currentBluetoothWeight;
         } else if (preference == "flow_estimation") {
         // User prefers flow estimation - show flow estimation weight
-        doc["cw"] = flowEstimationWeight;
+        doc["cw"] = currentFlowEstimationWeight;
         doc["scaleSource"] = "flow_estimation";
         } else {
             // No scale available - ensure field is always present
