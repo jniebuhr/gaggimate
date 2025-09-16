@@ -53,19 +53,18 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
     
-    // Subscribe to Bluetooth scale weight updates
+    // Subscribe to the unified active weight measurement
+    pluginManager->on("controller:volumetric-measurement:active:change", [this](Event const &event) {
+        this->currentActiveWeight = event.getFloat("value");
+    });
+    
+    // Keep individual subscriptions for specific debugging/monitoring needs
     pluginManager->on("controller:volumetric-measurement:bluetooth:change", [this](Event const &event) {
         this->currentBluetoothWeight = event.getFloat("value");
     });
     
-    // Subscribe to Hardware scale weight updates
     pluginManager->on("controller:volumetric-measurement:hardware:change", [this](Event const &event) {
         this->currentHardwareWeight = event.getFloat("value");
-    });
-    
-    // Subscribe to Flow estimation weight updates
-    pluginManager->on("controller:volumetric-measurement:estimation:change", [this](Event const &event) {
-        this->currentFlowEstimationWeight = event.getFloat("value");
     });
     
     setupServer();
@@ -114,34 +113,29 @@ void WebUIPlugin::loop() {
         // Get current weight directly from scale plugins to ensure we have the latest values
         float hardwareWeight = hasHardwareScale ? HardwareScales.getWeight() : this->currentHardwareWeight;
         float bluetoothWeight = hasBluetoothScale ? BLEScales.getWeight() : this->currentBluetoothWeight;
-        float flowEstimationWeight = this->currentFlowEstimationWeight;
-        
+           // Use the unified active weight that Controller already calculated
+    doc["cw"] = currentActiveWeight;
+    
+    // Get the active scale source info from Controller
+    String preference = controller->getSettings().getPreferredScaleSource();
+    bool hasHardwareScale = controller->getSystemInfo().capabilities.hwScale;
+    bool hasBluetoothScale = BLEScales.isConnected();
+    
+    // Determine which source is currently active (this mirrors Controller logic)
+        String activeSource = "none";
         if (preference == "hardware" && hasHardwareScale) {
-            // User prefers hardware scale and it's available - always show hardware weight
-            doc["cw"] = hardwareWeight;
-            doc["scaleSource"] = "hardware";
+            activeSource = "hardware";
         } else if (preference == "bluetooth" && hasBluetoothScale) {
-            // User prefers bluetooth scale and it's connected - always show bluetooth weight
-            doc["cw"] = bluetoothWeight;
-            doc["scaleSource"] = "bluetooth";
-        } else if (hasHardwareScale) {
-            // Fallback to hardware scale if available
-            doc["cw"] = hardwareWeight;
-            doc["scaleSource"] = "hardware_fallback";
-        } else if (hasBluetoothScale) {
-            // Fallback to bluetooth scale if available
-            doc["cw"] = bluetoothWeight;
-            doc["scaleSource"] = "bluetooth_fallback";
+            activeSource = "bluetooth";
         } else if (preference == "flow_estimation") {
-        // User prefers flow estimation - show flow estimation weight
-        doc["cw"] = flowEstimationWeight;
-        doc["scaleSource"] = "flow_estimation";
-        } else {
-            // No scale available
-            doc["cw"] = 0.0f;
-            doc["scaleSource"] = "none";
-        }
-        
+            activeSource = "flow_estimation";
+        } else if (hasHardwareScale) {
+            activeSource = "hardware_fallback";
+        } else if (hasBluetoothScale) {
+            activeSource = "bluetooth_fallback";
+    }
+    
+        doc["scaleSource"] = activeSource;       
         doc["bc"] = hasBluetoothScale; // bluetooth scale connected status
         doc["hc"] = hasHardwareScale; // hardware scale available
         doc["preferredScaleSource"] = controller->getSettings().getPreferredScaleSource(); // user preference
@@ -209,34 +203,8 @@ void WebUIPlugin::setupServer() {
         doc["tt"] = controller->getTargetTemp();
         doc["ct"] = controller->getCurrentTemp();
         
-        // Show weight from available scale - respect user preference with persistent display
-        bool hasHardwareScale = controller->getSystemInfo().capabilities.hwScale;
-        bool hasBluetoothScale = BLEScales.isConnected();
-        String preference = controller->getSettings().getPreferredScaleSource();
-        
-        if (preference == "hardware" && hasHardwareScale) {
-            // User prefers hardware scale and it's available - always show hardware weight
-            doc["cw"] = currentHardwareWeight;
-        } else if (preference == "bluetooth" && hasBluetoothScale) {
-            // User prefers bluetooth scale and it's connected - always show bluetooth weight
-            doc["cw"] = currentBluetoothWeight;
-        } else if (preference == "flow_estimation") {
-            // User prefers flow estimation - show flow estimation weight
-            doc["cw"] = currentFlowEstimationWeight;
-        } else if (hasHardwareScale) {
-            // Fallback to hardware scale if available
-            doc["cw"] = currentHardwareWeight;
-        } else if (hasBluetoothScale) {
-            // Fallback to bluetooth scale if available
-            doc["cw"] = currentBluetoothWeight;
-        } else if (preference == "flow_estimation") {
-        // User prefers flow estimation - show flow estimation weight
-        doc["cw"] = currentFlowEstimationWeight;
-        doc["scaleSource"] = "flow_estimation";
-        } else {
-            // No scale available - ensure field is always present
-            doc["cw"] = 0.0f;
-        }
+        // Use the unified active weight that Controller already calculated
+        doc["cw"] = currentActiveWeight;
         
         serializeJson(doc, *response);
         request->send(response);

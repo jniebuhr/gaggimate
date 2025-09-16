@@ -71,7 +71,7 @@ class WebUIPlugin : public Plugin {
     String updateComponent = "";
     float currentBluetoothWeight = 0.0f;
     float currentHardwareWeight = 0.0f;
-    float currentFlowEstimationWeight = 0.0f;
+    float currentActiveWeight = 0.0f; // Unified active weight from Controller
 };
 
 #endif // WEBUIPLUGIN_H
