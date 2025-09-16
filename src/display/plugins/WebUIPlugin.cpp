@@ -112,27 +112,13 @@ void WebUIPlugin::loop() {
         
            // Use the unified active weight that Controller already calculated
         doc["cw"] = currentActiveWeight;
-    
-    
-    // Determine which source is currently active (this mirrors Controller logic)
-        String activeSource = "none";
-        if (preference == "hardware" && hasHardwareScale) {
-            activeSource = "hardware";
-        } else if (preference == "bluetooth" && hasBluetoothScale) {
-            activeSource = "bluetooth";
-        } else if (preference == "flow_estimation") {
-            activeSource = "flow_estimation";
-        } else if (hasHardwareScale) {
-            activeSource = "hardware_fallback";
-        } else if (hasBluetoothScale) {
-            activeSource = "bluetooth_fallback";
-    }
-    
-        doc["scaleSource"] = activeSource;       
-        doc["bc"] = hasBluetoothScale; // bluetooth scale connected status
-        doc["hc"] = hasHardwareScale; // hardware scale available
-        doc["preferredScaleSource"] = controller->getSettings().getPreferredScaleSource(); // user preference
 
+
+        doc["scaleSource"] = controller->getActiveScaleSourceName();
+        doc["bc"] = BLEScales.isConnected(); // bluetooth scale connected status
+        doc["hc"] = controller->getSystemInfo().capabilities.hwScale; // hardware scale available
+        doc["preferredScaleSource"] = controller->getSettings().getPreferredScaleSource(); // user preference
+        
         Process *process = controller->getProcess();
         if (process == nullptr) {
             process = controller->getLastProcess();

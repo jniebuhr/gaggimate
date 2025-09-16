@@ -798,6 +798,29 @@ bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const 
     }
 }
 
+String Controller::getActiveScaleSourceName() const {
+    VolumetricMeasurementSource activeSource = getActiveScaleSource();
+    String preference = settings.getPreferredScaleSource();
+    bool hasHardwareScale = systemInfo.capabilities.hwScale;
+    bool hasBluetoothScale = BLEScales.isConnected();
+    
+    switch (activeSource) {
+        case VolumetricMeasurementSource::HARDWARE:
+            // Check if this is preferred or fallback
+            return (preference == "hardware") ? "hardware" : "hardware_fallback";
+            
+        case VolumetricMeasurementSource::BLUETOOTH:
+            // Check if this is preferred or fallback
+            return (preference == "bluetooth") ? "bluetooth" : "bluetooth_fallback";
+            
+        case VolumetricMeasurementSource::FLOW_ESTIMATION:
+            return "flow_estimation";
+            
+        default:
+            return "none";
+    }
+}
+
 void Controller::handleBrewButton(int brewButtonStatus) {
     printf("current screen %d, brew button %d\n", getMode(), brewButtonStatus);
     if (brewButtonStatus) {

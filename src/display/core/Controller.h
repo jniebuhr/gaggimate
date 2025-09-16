@@ -88,6 +88,7 @@ class Controller {
     VolumetricMeasurementSource getActiveScaleSource() const;
     VolumetricMeasurementSource getPreferredScaleSource() const;
     bool isScaleSourceHealthy(VolumetricMeasurementSource source) const;
+    String getActiveScaleSourceName() const;
     void onFlush();
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
