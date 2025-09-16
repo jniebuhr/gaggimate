@@ -287,7 +287,7 @@ void BLEScalePlugin::establishConnection() {
     }
 }
 
-void BLEScalePlugin::onMeasurement(float value) const {
+void BLEScalePlugin::onMeasurement(float value) {
     // Rate limiting to prevent callback flooding
     unsigned long now = millis();
     if (now - lastMeasurementTime < MIN_MEASUREMENT_INTERVAL_MS) {

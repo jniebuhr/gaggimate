@@ -110,16 +110,9 @@ void WebUIPlugin::loop() {
         bool hasBluetoothScale = BLEScales.isConnected();
         String preference = controller->getSettings().getPreferredScaleSource();
         
-        // Get current weight directly from scale plugins to ensure we have the latest values
-        float hardwareWeight = hasHardwareScale ? HardwareScales.getWeight() : this->currentHardwareWeight;
-        float bluetoothWeight = hasBluetoothScale ? BLEScales.getWeight() : this->currentBluetoothWeight;
            // Use the unified active weight that Controller already calculated
-    doc["cw"] = currentActiveWeight;
+        doc["cw"] = currentActiveWeight;
     
-    // Get the active scale source info from Controller
-    String preference = controller->getSettings().getPreferredScaleSource();
-    bool hasHardwareScale = controller->getSystemInfo().capabilities.hwScale;
-    bool hasBluetoothScale = BLEScales.isConnected();
     
     // Determine which source is currently active (this mirrors Controller logic)
         String activeSource = "none";
@@ -753,44 +746,5 @@ void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {
     response->addHeader("Content-Disposition", "attachment; filename=\"coredump.bin\"");
     response->addHeader("Cache-Control", "no-cache");
     
-    request->send(response);
-}
-
-void WebUIPlugin::handleScaleTare(AsyncWebServerRequest *request) {
-    if (request->method() != HTTP_POST) {
-        request->send(404);
-        return;
-    }
-    HardwareScales.tare();
-    JsonDocument doc;
-    doc["success"] = true;
-    AsyncResponseStream *response = request->beginResponseStream("application/json");
-    serializeJson(doc, *response);
-    request->send(response);
-}
-
-void WebUIPlugin::handleScaleCalibrate(AsyncWebServerRequest *request) {
-    if (request->method() != HTTP_POST) {
-        request->send(404);
-        return;
-    }
-    if (!request->hasArg("c")) {
-        request->send(400, "Missing cell index argument");
-        return;
-    } 
-    if (!request->hasArg("cw")) {
-        request->send(400, "Missing calibration weight argument");
-        return;
-    }
-
-    uint8_t cellIndex = request->arg("c").toInt();
-    float calibrationWeight = request->arg("cw").toFloat();
-    
-    HardwareScales.calibrate(cellIndex, calibrationWeight);
-
-    JsonDocument doc;
-    doc["success"] = true;
-    AsyncResponseStream *response = request->beginResponseStream("application/json");
-    serializeJson(doc, *response);
     request->send(response);
 }
