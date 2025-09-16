@@ -379,15 +379,16 @@ export function ExtendedProfileChart({
       // Find closest data point and update selected point
       const chart = chartRef.current.chart;
       if (chart && chart.scales && chart.scales.x && chart.chartArea) {
-        // Constrain x to chart area bounds
+        // Constrain x and y to chart area bounds
         const chartArea = chart.chartArea;
         const constrainedX = Math.max(chartArea.left, Math.min(chartArea.right, x));
+        const constrainedY = Math.max(chartArea.top, Math.min(chartArea.bottom, y));
         
         // Convert constrained position to data value
         const dataX = chart.scales.x.getValueForPixel(constrainedX);
         
         // Update tooltip position to the constrained mouse position
-        setTooltipPosition({ x: constrainedX, y });
+        setTooltipPosition({ x: constrainedX, y: constrainedY });
         
         // Find closest data point
         const datasets = chart.data.datasets;
@@ -529,9 +530,10 @@ export function ExtendedProfileChart({
               // Calculate constrained tooltip position relative to data point
               const dataPointX = e.target.chart.scales.x.getPixelForValue(datasets[0].data[closestIndex].x);
               const constrainedX = Math.max(e.target.chart.chartArea.left, Math.min(dataPointX, e.target.chart.chartArea.right));
+              const constrainedY = Math.max(e.target.chart.chartArea.top, Math.min(y, e.target.chart.chartArea.bottom));
               
               setSelectedPoint(pointData);
-              setTooltipPosition({ x: constrainedX, y });
+              setTooltipPosition({ x: constrainedX, y: constrainedY });
               setIsDragging(true);
             }
           }
@@ -575,9 +577,10 @@ export function ExtendedProfileChart({
                 // Calculate constrained tooltip position relative to data point
                 const dataPointX = e.target.chart.scales.x.getPixelForValue(datasets[0].data[closestIndex].x);
                 const constrainedX = Math.max(e.target.chart.chartArea.left, Math.min(dataPointX, e.target.chart.chartArea.right));
+                const constrainedY = Math.max(e.target.chart.chartArea.top, Math.min(y, e.target.chart.chartArea.bottom));
                 
                 setSelectedPoint(pointData);
-                setTooltipPosition({ x: constrainedX, y });
+                setTooltipPosition({ x: constrainedX, y: constrainedY });
                 setIsDragging(true);
               }
             }

@@ -241,15 +241,16 @@ export function OverviewChart() {
       // Find closest data point and update selected point
       const chart = chartRef.current.chart;
       if (chart && chart.scales && chart.scales.x && chart.chartArea) {
-        // Constrain x to chart area bounds
+        // Constrain x and y to chart area bounds
         const chartArea = chart.chartArea;
         const constrainedX = Math.max(chartArea.left, Math.min(chartArea.right, x));
+        const constrainedY = Math.max(chartArea.top, Math.min(chartArea.bottom, y));
         
         // Convert constrained position to data value
         const dataX = chart.scales.x.getValueForPixel(constrainedX);
         
         // Update tooltip position to the constrained mouse position
-        setTooltipPosition({ x: constrainedX, y });
+        setTooltipPosition({ x: constrainedX, y: constrainedY });
         
         // Find closest data point
         const datasets = chart.data.datasets;
@@ -391,9 +392,13 @@ export function OverviewChart() {
             // Constrain click to chart area bounds
             const chartArea = e.target.chart.chartArea;
             const constrainedX = Math.max(chartArea.left, Math.min(chartArea.right, x));
+            const constrainedY = Math.max(chartArea.top, Math.min(chartArea.bottom, y));
             
             // Convert constrained position to data value
             const dataX = e.target.chart.scales.x.getValueForPixel(constrainedX);
+            
+            // Update tooltip position immediately to constrained position
+            setTooltipPosition({ x: constrainedX, y: constrainedY });
             
             const datasets = e.target.chart.data.datasets;
             if (datasets.length > 0 && datasets[0].data) {
@@ -421,7 +426,7 @@ export function OverviewChart() {
               };
               
               setSelectedPoint(pointData);
-              setTooltipPosition({ x: constrainedX, y });
+              setTooltipPosition({ x: constrainedX, y: constrainedY });
               setIsDragging(true);
             }
           }
@@ -440,9 +445,13 @@ export function OverviewChart() {
               // Constrain touch to chart area bounds
               const chartArea = e.target.chart.chartArea;
               const constrainedX = Math.max(chartArea.left, Math.min(chartArea.right, x));
+              const constrainedY = Math.max(chartArea.top, Math.min(chartArea.bottom, y));
               
               // Convert constrained position to data value
               const dataX = e.target.chart.scales.x.getValueForPixel(constrainedX);
+              
+              // Update tooltip position immediately to constrained position
+              setTooltipPosition({ x: constrainedX, y: constrainedY });
               
               const datasets = e.target.chart.data.datasets;
               if (datasets.length > 0 && datasets[0].data) {
@@ -470,7 +479,7 @@ export function OverviewChart() {
                 };
                 
                 setSelectedPoint(pointData);
-                setTooltipPosition({ x: constrainedX, y });
+                setTooltipPosition({ x: constrainedX, y: constrainedY });
                 setIsDragging(true);
               }
             }

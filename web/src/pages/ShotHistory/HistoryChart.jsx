@@ -286,9 +286,10 @@ export function HistoryChart({ shot }) {
             // Calculate constrained tooltip position relative to data point
             const dataPointX = chart.scales.x.getPixelForValue(datasets[0].data[closestIndex].x);
             const constrainedX = Math.max(chart.chartArea.left, Math.min(dataPointX, chart.chartArea.right));
+            const constrainedY = Math.max(chart.chartArea.top, Math.min(y, chart.chartArea.bottom));
             
             setSelectedPoint(pointData);
-            setTooltipPosition({ x: constrainedX, y });
+            setTooltipPosition({ x: constrainedX, y: constrainedY });
           }
         }
       }
@@ -435,9 +436,10 @@ export function HistoryChart({ shot }) {
                 // Calculate constrained tooltip position relative to data point
                 const dataPointX = e.target.chart.scales.x.getPixelForValue(datasets[0].data[closestIndex].x);
                 const constrainedX = Math.max(e.target.chart.chartArea.left, Math.min(dataPointX, e.target.chart.chartArea.right));
+                const constrainedY = Math.max(e.target.chart.chartArea.top, Math.min(y, e.target.chart.chartArea.bottom));
                 
                 setSelectedPoint(pointData);
-                setTooltipPosition({ x: constrainedX, y });
+                setTooltipPosition({ x: constrainedX, y: constrainedY });
                 setIsDragging(true);
               }
             }
@@ -489,9 +491,10 @@ export function HistoryChart({ shot }) {
                   // Calculate constrained tooltip position relative to data point
                   const dataPointX = e.target.chart.scales.x.getPixelForValue(datasets[0].data[closestIndex].x);
                   const constrainedX = Math.max(e.target.chart.chartArea.left, Math.min(dataPointX, e.target.chart.chartArea.right));
+                  const constrainedY = Math.max(e.target.chart.chartArea.top, Math.min(y, e.target.chart.chartArea.bottom));
                   
                   setSelectedPoint(pointData);
-                  setTooltipPosition({ x: constrainedX, y });
+                  setTooltipPosition({ x: constrainedX, y: constrainedY });
                   setIsDragging(true);
                 }
               }
