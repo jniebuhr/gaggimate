@@ -58,19 +58,6 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         this->currentActiveWeight = event.getFloat("value");
     });
     
-    // Keep individual subscriptions for specific debugging/monitoring needs
-    pluginManager->on("controller:volumetric-measurement:bluetooth:change", [this](Event const &event) {
-        this->currentBluetoothWeight = event.getFloat("value");
-    });
-    
-    pluginManager->on("controller:volumetric-measurement:hardware:change", [this](Event const &event) {
-        this->currentHardwareWeight = event.getFloat("value");
-    });
-    
-    // Subscribe to Flow estimation weight updates
-    pluginManager->on("controller:volumetric-measurement:estimation:change", [this](Event const &event) {
-        this->currentFlowEstimationWeight = event.getFloat("value");
-    });
     
     setupServer();
 }
