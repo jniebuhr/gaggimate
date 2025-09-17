@@ -95,9 +95,7 @@ void print_update_result(Updater updater, HTTPUpdateResult result, const char *T
 bool update_required(semver_t _new_version, semver_t _current_version) {
     ESP_LOGI("update_required", "Comparing versions %s > %s", render_to_string(_new_version).c_str(),
              render_to_string(_current_version).c_str());
-    // Allow updates if new version is greater OR if versions are different and current is prerelease
-    return semver_gt(_new_version, _current_version) || 
-           (semver_neq(_new_version, _current_version) && _current_version.prerelease != nullptr);
+    return _new_version > _current_version;
 }
 
 void update_started() { ESP_LOGI("update_started", "HTTP update process started\n"); }
