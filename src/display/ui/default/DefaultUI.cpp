@@ -453,6 +453,49 @@ void DefaultUI::setupReactive() {
                           },
                           &pressure);
 
+    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_MenuScreen_dials_weightText, "%.1fg", currentWeight);
+                              }
+                          },
+                          &currentWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_StatusScreen_dials_weightText, "%.1fg", currentWeight);
+                              }
+                          },
+                          &currentWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_BrewScreen_dials_weightText, "%.1fg", currentWeight);
+                              }
+                          },
+                          &currentWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_GrindScreen_dials_weightText, "%.1fg", currentWeight);
+                              }
+                          },
+                          &currentWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_weightText, "%.1fg", currentWeight);
+                              }
+                          },
+                          &currentWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(uic_ProfileScreen_dials_weightText, "%.1fg", currentWeight);
+                              }
+                          },
+                          &currentWeight, &volumetricAvailable);
+
     effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
                           [=]() {
                               updateAvailable ? lv_obj_clear_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN)
