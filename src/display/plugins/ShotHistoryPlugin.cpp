@@ -14,18 +14,8 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("controller:brew:end", [this](Event const &) { endRecording(); });
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
-    pm->on("controller:volumetric-measurement:bluetooth:change", [this](Event const &event) {
-        const float weight = event.getFloat("value");
-        const unsigned long now = millis();
-        if (lastVolumeSample != 0) {
-            const unsigned long timeDiff = now - lastVolumeSample;
-            const float volumeDiff = weight - currentBluetoothWeight;
-            const float volumeFlow = volumeDiff / static_cast<float>(timeDiff) * 1000.0f;
-            currentBluetoothFlow = currentBluetoothFlow * 0.9f + volumeFlow * 0.1f;
-        }
-        lastVolumeSample = now;
-        currentBluetoothWeight = weight;
-    });
+    pm->on("controller:volumetric-measurement:bluetooth:change",
+           [this](Event const &event) { currentBluetoothWeight = event.getFloat("value"); });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 3, this, 1, &taskHandle, 0);
@@ -47,6 +37,10 @@ void ShotHistoryPlugin::record() {
             file.printf("1,%s,%ld\n", currentProfileName.c_str(), getTime());
             headerWritten = true;
         }
+        float btDiff = currentBluetoothWeight - lastBluetoothWeight;
+        float btFlow = btDiff / 0.25f;
+        currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
+        lastBluetoothWeight = currentBluetoothWeight;
         ShotSample s{millis() - shotStart,
                      controller->getTargetTemp(),
                      currentTemperature,
@@ -83,7 +77,6 @@ void ShotHistoryPlugin::startRecording() {
         currentId = "0" + currentId;
     }
     shotStart = millis();
-    lastVolumeSample = 0;
     currentBluetoothWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
@@ -136,7 +129,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
                     String id = name.substring(start, end);
                     o["id"] = id;
                     o["history"] = file.readString();
-                    
+
                     // Also include notes if they exist
                     JsonDocument notes;
                     loadNotes(id, notes);
@@ -154,7 +147,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             String data = file.readString();
             response["history"] = data;
             file.close();
-            
+
             // Also include notes if they exist
             JsonDocument notes;
             loadNotes(id, notes);
@@ -176,11 +169,10 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         response["notes"] = notes;
     } else if (type == "req:history:notes:save") {
         const String id = request["id"].as<String>();
-        const JsonDocument& notesDoc = request["notes"];
-        
-        saveNotes(id, notesDoc);
+        const JsonDocument &notesDoc = request["notes"];
 
-    } 
+        saveNotes(id, notesDoc);
+    }
 }
 
 void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {

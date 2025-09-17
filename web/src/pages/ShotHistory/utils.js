@@ -35,10 +35,10 @@ export function parseHistoryData(shot) {
     data.duration = lastSample.t;
     data.volume = lastSample.v;
   }
-  
+
   if (shot.notes) {
     data.notes = shot.notes;
   }
-  
+
   return data;
 }

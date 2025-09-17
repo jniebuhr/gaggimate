@@ -85,6 +85,7 @@ class Controller {
     void onTargetChange(ProcessTarget target);
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
+    bool isBluetoothScaleHealthy() const;
     void onFlush();
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
@@ -156,6 +157,10 @@ class Controller {
     bool processCompleted = false;
     bool steamReady = false;
     int error = 0;
+
+    // Bluetooth scale connection monitoring
+    unsigned long lastBluetoothMeasurement = 0;
+    static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
 
     xTaskHandle taskHandle;
 

@@ -4,6 +4,8 @@
 #define ELEGANTOTA_USE_ASYNC_WEBSERVER 1
 
 #include <DNSServer.h>
+#include <esp_system.h>
+#include <esp_log.h>
 
 #include "../core/Plugin.h"
 #include "GitHubOTA.h"
@@ -52,6 +54,9 @@ class WebUIPlugin : public Plugin {
     void updateOTAStatus(const String &version);
     void updateOTAProgress(uint8_t phase, int progress);
     void sendAutotuneResult();
+
+    // Core dump download
+    void handleCoreDumpDownload(AsyncWebServerRequest *request);
 
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;

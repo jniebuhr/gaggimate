@@ -12,6 +12,7 @@ constexpr unsigned int RECONNECTION_TRIES = 15;
 class BLEScalePlugin : public Plugin {
   public:
     BLEScalePlugin();
+    ~BLEScalePlugin();
 
     void setup(Controller *controller, PluginManager *pluginManager) override;
     void loop() override;
@@ -22,8 +23,18 @@ class BLEScalePlugin : public Plugin {
     void disconnect();
     void onMeasurement(float value) const;
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
-    std::string getName() { return isConnected() ? scale->getDeviceName() : ""; };
-    std::string getUUID() { return isConnected() ? scale->getDeviceAddress() : ""; };
+    std::string getName() { 
+        if (scale != nullptr && scale->isConnected()) {
+            return scale->getDeviceName();
+        }
+        return "";
+    };
+    std::string getUUID() { 
+        if (scale != nullptr && scale->isConnected()) {
+            return scale->getDeviceAddress();
+        }
+        return "";
+    };
 
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
 
@@ -39,6 +50,10 @@ class BLEScalePlugin : public Plugin {
 
     unsigned long lastUpdate = 0;
     unsigned int reconnectionTries = 0;
+    
+    // Rate limiting for callbacks
+    mutable unsigned long lastMeasurementTime = 0;
+    static constexpr unsigned long MIN_MEASUREMENT_INTERVAL_MS = 10; // Max 100 measurements per second
 
     Controller *controller = nullptr;
     RemoteScalesPluginRegistry *pluginRegistry = nullptr;

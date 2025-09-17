@@ -1,6 +1,11 @@
 #include "WebUIPlugin.h"
 #include <DNSServer.h>
 #include <SPIFFS.h>
+#include <esp_system.h>
+#include <esp_core_dump.h>
+#include <esp_err.h>
+#include <esp_log.h>
+#include <esp_partition.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
@@ -13,8 +18,11 @@
 #include <unordered_map>
 #include <vector>
 static std::unordered_map<uint32_t, std::string> rxBuffers;
+static WebUIPlugin* g_webUIPlugin = nullptr;
 
-WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
+WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {
+    g_webUIPlugin = this;
+}
 
 void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) {
     this->controller = _controller;
@@ -148,6 +156,7 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
+    server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
     ws.onEvent(
@@ -594,3 +603,51 @@ void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
     serializeJson(response, msg);
     ws.text(clientId, msg);
 }
+
+void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {
+    // Check if core dump is available
+    size_t coreAddr, coreSize;
+    if (esp_core_dump_image_get(&coreAddr, &coreSize) != ESP_OK || coreSize == 0) {
+        request->send(404, "text/plain", "No core dump available");
+        return;
+    }
+    
+    // Find the coredump partition
+    const esp_partition_t* coredump_partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
+    if (coredump_partition == NULL) {
+        request->send(500, "text/plain", "Core dump partition not found");
+        return;
+    }
+    
+    ESP_LOGI("WebUIPlugin", "Streaming core dump: %d bytes from 0x%x", coreSize, coreAddr);
+    
+    // Create a streaming response
+    AsyncWebServerResponse *response = request->beginResponse(
+        "application/octet-stream", 
+        coreSize,
+        [coredump_partition, coreSize](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+            // Calculate how much to read
+            size_t remaining = coreSize - index;
+            size_t toRead = (remaining < maxLen) ? remaining : maxLen;
+            
+            if (toRead == 0) return 0;
+            
+            // Read from partition
+            esp_err_t err = esp_partition_read(coredump_partition, index, buffer, toRead);
+            if (err != ESP_OK) {
+                ESP_LOGE("WebUIPlugin", "Failed to read core dump: %s", esp_err_to_name(err));
+                return 0;
+            }
+            
+            return toRead;
+        }
+    );
+    
+    // Set appropriate headers
+    response->addHeader("Content-Disposition", "attachment; filename=\"coredump.bin\"");
+    response->addHeader("Cache-Control", "no-cache");
+    
+    request->send(response);
+}
+
+

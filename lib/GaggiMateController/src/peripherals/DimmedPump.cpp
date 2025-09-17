@@ -56,7 +56,8 @@ void DimmedPump::setup() {
 void DimmedPump::loop() {
     _currentPressure = _pressureSensor->getRawPressure();
     updatePower();
-    _currentFlow = 0.1f * _pressureController.getPumFlowRate()  + 0.9f * _currentFlow;
+    // _currentFlow = 0.1f * _pressureController.getPumpFlowRate() + 0.9f * _currentFlow; 
+    _currentFlow = _pressureController.getPumpFlowRate();
 }
 
 void DimmedPump::setPower(float setpoint) {
@@ -72,7 +73,7 @@ void DimmedPump::setPower(float setpoint) {
     mcp->setVoltage(MCP_VOLTAGE * _power / 100.0f);
 }
 
-float DimmedPump::getCoffeeVolume() { return _pressureController.getcoffeeOutputEstimate(); }
+float DimmedPump::getCoffeeVolume() { return _pressureController.getCoffeeOutputEstimate(); }
 
 float DimmedPump::getPumpFlow() { return _currentFlow; }
 

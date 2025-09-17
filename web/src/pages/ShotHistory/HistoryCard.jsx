@@ -16,16 +16,16 @@ export default function HistoryCard({ shot, onDelete }) {
   const onExport = useCallback(() => {
     const exportData = {
       ...shot,
-      notes: shotNotes
+      notes: shotNotes,
     };
     downloadJson(exportData, 'shot-' + shot.id + '.json');
   }, [shot, shotNotes]);
 
-  const handleNotesLoaded = useCallback((notes) => {
+  const handleNotesLoaded = useCallback(notes => {
     setShotNotes(notes);
   }, []);
 
-  const handleNotesUpdate = useCallback((notes) => {
+  const handleNotesUpdate = useCallback(notes => {
     setShotNotes(notes);
   }, []);
   return (
@@ -71,8 +71,8 @@ export default function HistoryCard({ shot, onDelete }) {
       <div>
         <HistoryChart shot={shot} />
       </div>
-      <ShotNotesCard 
-        shot={shot} 
+      <ShotNotesCard
+        shot={shot}
         onNotesLoaded={handleNotesLoaded}
         onNotesUpdate={handleNotesUpdate}
       />
