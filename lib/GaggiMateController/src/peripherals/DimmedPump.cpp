@@ -2,7 +2,7 @@
 
 #include <GaggiMateController.h>
 
-#define MCP_VOLTAGE 5f
+#define MCP_VOLTAGE 5.0f
 
 DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor, uint8_t scl_pin, uint8_t sda_pin)
     : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 2, 4), _pressureSensor(pressure_sensor),
