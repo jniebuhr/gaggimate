@@ -97,15 +97,8 @@ void WebUIPlugin::loop() {
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
         
-        // Add scale weight information - respect user preference with persistent display
-        bool hasHardwareScale = controller->getSystemInfo().capabilities.hwScale;
-        bool hasBluetoothScale = BLEScales.isConnected();
-        String preference = controller->getSettings().getPreferredScaleSource();
-        
            // Use the unified active weight that Controller already calculated
         doc["cw"] = currentActiveWeight;
-
-
         doc["scaleSource"] = controller->getActiveScaleSourceName();
         doc["bc"] = BLEScales.isConnected(); // bluetooth scale connected status
         doc["hc"] = controller->getSystemInfo().capabilities.hwScale; // hardware scale available
