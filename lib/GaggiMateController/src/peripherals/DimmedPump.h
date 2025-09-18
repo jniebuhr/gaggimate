@@ -5,12 +5,14 @@
 #include "PressureSensor.h"
 #include "Pump.h"
 #include <Arduino.h>
+#include "ESP32_SoftWire.h"
+#include "MCP4725.h"
 
 class DimmedPump : public Pump {
-  public:
+public:
     enum class ControlMode { POWER, PRESSURE, FLOW };
 
-    DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressureSensor);
+    DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressureSensor, uint8_t sclPin, uint8_t sdaPin);
     ~DimmedPump() = default;
 
     void setup() override;
@@ -31,12 +33,15 @@ class DimmedPump : public Pump {
     void fullPower();
     void setValveState(bool open);
 
-  private:
+private:
     uint8_t _ssr_pin;
     uint8_t _sense_pin;
     PSM _psm;
     PressureSensor *_pressureSensor;
     PressureController _pressureController;
+    SoftWire *i2c;
+    MCP4725 *mcp;
+
     xTaskHandle taskHandle;
 
     ControlMode _mode = ControlMode::POWER;
