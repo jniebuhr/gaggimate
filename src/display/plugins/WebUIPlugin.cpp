@@ -101,7 +101,6 @@ void WebUIPlugin::loop() {
         doc["cw"] = currentActiveWeight;
         doc["scaleSource"] = controller->getActiveScaleSourceName();
         doc["bc"] = BLEScales.isConnected(); // bluetooth scale connected status
-        doc["hc"] = controller->getSystemInfo().capabilities.hwScale; // hardware scale available
         doc["preferredScaleSource"] = controller->getSettings().getPreferredScaleSource(); // user preference
         
         Process *process = controller->getProcess();
@@ -496,8 +495,6 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (scaleFactorsChanged) {
                 settings->setScaleFactors(newScaleFactor1, newScaleFactor2);
             }
-            if (request->hasArg("preferredScaleSource"))
-                settings->setPreferredScaleSource(request->arg("preferredScaleSource"));
             settings->save(true);
         });
         
@@ -569,7 +566,6 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["fullTankDistance"] = settings.getFullTankDistance();
     doc["scaleFactor1"] = settings.getScaleFactor1();
     doc["scaleFactor2"] = settings.getScaleFactor2();
-    doc["preferredScaleSource"] = settings.getPreferredScaleSource();
     serializeJson(doc, *response);
     request->send(response);
 
