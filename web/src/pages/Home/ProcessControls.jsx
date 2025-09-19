@@ -77,6 +77,7 @@ const ProcessControls = props => {
   // brew is true when mode equals 1 (Brew mode), false otherwise
   const { brew, mode, changeMode } = props;
   const brewTarget = status.value.brewTarget;
+  const targetWeight = status.value.targetWeight;
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
@@ -212,7 +213,7 @@ const ProcessControls = props => {
             {brewTarget === 1 && (mode === 1 || mode === 3) && (
               <span className='text-success font-semibold'>
                 {' '}
-                / {brewTarget?.toFixed(0)}g
+                / {targetWeight?.toFixed(0)}g
               </span>
             )}
           </div>
@@ -285,7 +286,7 @@ const ProcessControls = props => {
       )}
 
       <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {brew && !active && !finished && status.value.volumetricAvailable && (
+        {brew && !active && !finished && status.value.isVolumetricAvailable && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}

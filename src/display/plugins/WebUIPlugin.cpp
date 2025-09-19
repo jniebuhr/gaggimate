@@ -96,9 +96,18 @@ void WebUIPlugin::loop() {
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
-        
+        // Calculate total volumetric target weight from all phases
+        double totalVolumetricTarget = 0.0;
+        Profile selectedProfile = controller->getProfileManager()->getSelectedProfile();
+        for (const auto &phase : selectedProfile.phases) {
+            if (phase.hasVolumetricTarget()) {
+                totalVolumetricTarget = phase.getVolumetricTarget().value;
+            }
+        }
            // Use the unified active weight that Controller already calculated
+        
         doc["cw"] = currentActiveWeight;
+        doc["tw"] = totalVolumetricTarget;
         doc["scaleSource"] = controller->getActiveScaleSourceName();
         doc["bc"] = BLEScales.isConnected(); // bluetooth scale connected status
         doc["preferredScaleSource"] = controller->getSettings().getPreferredScaleSource(); // user preference

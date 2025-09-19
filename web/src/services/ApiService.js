@@ -161,6 +161,7 @@ export default class ApiService {
       targetPressure: message.pt,
       currentFlow: message.fl,
       currentWeight: message.cw,
+      targetWeight: message.tw,
       mode: message.m,
       selectedProfile: message.p,
       brewTarget: message.bt || 0,
