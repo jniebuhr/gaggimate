@@ -75,7 +75,8 @@ const BrewProgress = props => {
 const ProcessControls = props => {
   // brew is true when mode equals 1 (Brew mode), false otherwise
   const { brew, mode, changeMode } = props;
-  const brewTarget = status.value.brewTarget;
+  // Coerce brewTarget to strict boolean
+  const brewTarget = !!status.value.brewTarget;
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
@@ -185,6 +186,17 @@ const ProcessControls = props => {
             / {status.value.targetTemperature || 0}°C
           </span>
         </div>
+      {status.value.volumetricAvailable && (
+        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
+          <i className='fa fa-weight-scale text-base-content/60' />
+          <span className='text-base-content'>{(status.value.currentWeight ?? 0).toFixed(1)}g</span>
+          {brewTarget && (mode === 1 || mode === 3) && (
+            <span className='text-success font-semibold'>
+              {' '} / {(status.value.targetWeight ?? 0).toFixed(0)}g
+            </span>
+          )}
+        </div>
+      )}        
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
           <FontAwesomeIcon icon={faGauge} className='text-base-content/60' />
           <span className='text-base-content'>
@@ -256,14 +268,14 @@ const ProcessControls = props => {
         {brew && !active && !finished && status.value.volumetricAvailable && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 0 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${!brewTarget ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(0)}
             >
               <FontAwesomeIcon icon={faClock} />
               <span className='ml-1'>Time</span>
             </button>
             <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget === 1 ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${brewTarget ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
               onClick={() => changeTarget(1)}
             >
               <FontAwesomeIcon icon={faWeightScale} />
