@@ -6,48 +6,77 @@ import { ChartComponent } from './Chart.jsx';
 function getChartData(data) {
   let end = new Date();
   let start = new Date(end.getTime() - 300000);
+  
+  // Check if we should show weight data (based on latest data point)
+  const latestData = data[data.length - 1];
+  const showWeights = latestData && latestData.volumetricAvailable && latestData.brewTarget;
+  
+  const datasets = [
+    {
+      label: 'Current Temperature',
+      borderColor: '#F0561D',
+      pointStyle: false,
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentTemperature })),
+    },
+    {
+      label: 'Target Temperature',
+      fill: true,
+      borderColor: '#731F00',
+      borderDash: [6, 6],
+      pointStyle: false,
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetTemperature })),
+    },
+    {
+      label: 'Current Pressure',
+      borderColor: '#0066CC',
+      pointStyle: false,
+      yAxisID: 'y1',
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentPressure })),
+    },
+    {
+      label: 'Target Pressure',
+      fill: true,
+      borderColor: '#003366',
+      borderDash: [6, 6],
+      pointStyle: false,
+      yAxisID: 'y1',
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetPressure })),
+    },
+    {
+      label: 'Current Flow',
+      borderColor: '#63993D',
+      pointStyle: false,
+      yAxisID: 'y1',
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentFlow })),
+    },
+  ];
+
+  // Add weight datasets if conditions are met
+  if (showWeights) {
+    datasets.push(
+      {
+        label: 'Current Weight',
+        borderColor: '#8B5CF6',
+        pointStyle: false,
+        yAxisID: 'y2',
+        data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentWeight || 0 })),
+      },
+      {
+        label: 'Target Weight',
+        fill: true,
+        borderColor: '#4C1D95',
+        borderDash: [6, 6],
+        pointStyle: false,
+        yAxisID: 'y2',
+        data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetWeight || 0 })),
+      }
+    );
+  }
+
   return {
     type: 'line',
     data: {
-      datasets: [
-        {
-          label: 'Current Temperature',
-          borderColor: '#F0561D',
-          pointStyle: false,
-          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentTemperature })),
-        },
-        {
-          label: 'Target Temperature',
-          fill: true,
-          borderColor: '#731F00',
-          borderDash: [6, 6],
-          pointStyle: false,
-          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetTemperature })),
-        },
-        {
-          label: 'Current Pressure',
-          borderColor: '#0066CC',
-          pointStyle: false,
-          yAxisID: 'y1',
-          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentPressure })),
-        },
-        {
-          label: 'Target Pressure',
-          fill: true,
-          borderColor: '#003366',
-          borderDash: [6, 6],
-          pointStyle: false,
-          yAxisID: 'y1',
-          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetPressure })),
-        },
-        {
-          label: 'Current Flow',
-          borderColor: '#63993D',
-          pointStyle: false,
-          yAxisID: 'y1',
-          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentFlow })),
-        }
-      ],
+      datasets: datasets,
     },
     options: {
       responsive: true,
@@ -117,6 +146,25 @@ function getChartData(data) {
             },
           },
         },
+        ...(showWeights && {
+          y2: {
+            type: 'linear',
+            min: 0,
+            max: 100,
+            position: 'right',
+            grid: {
+              drawOnChartArea: false,
+            },
+            ticks: {
+              font: {
+                size: window.innerWidth < 640 ? 10 : 12,
+              },
+              callback: value => {
+                return `${value}g`;
+              },
+            },
+          },
+        }),
         x: {
           type: 'time',
           min: start,
