@@ -1,19 +1,33 @@
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { ExtendedPhase } from './ExtendedPhase.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { 
+  convertCelsiusToDisplay, 
+  convertInputToCelsius, 
+  getTemperatureUnit 
+} from '../../utils/temperatureConverter.js';
+import { machine } from '../../services/ApiService.js';
 
 export function ExtendedProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
 
+  // Load settings on component mount
+  useEffect(() => {
+  }, []);
+
   const onFieldChange = (field, value) => {
+    // Handle temperature conversion for temperature field
+    if (field === 'temperature') {
+      value = convertInputToCelsius(value, machine.value.status.temperatureUnitFahrenheit);
+    }
     onChange({
       ...data,
       [field]: value,
@@ -105,7 +119,7 @@ export function ExtendedProfileForm(props) {
           </div>
           <div className='form-control'>
             <label htmlFor='temperature' className='mb-2 block text-sm font-medium'>
-              Temperature
+              Temperature ({getTemperatureUnit(machine.value.status.temperatureUnitFahrenheit)})
             </label>
             <div className='input-group'>
               <label htmlFor='temperature' className='input w-full'>
@@ -114,14 +128,16 @@ export function ExtendedProfileForm(props) {
                   name='temperature'
                   type='number'
                   className='grow'
-                  value={data?.temperature}
+                  value={convertCelsiusToDisplay(data?.temperature, machine.value.status.temperatureUnitFahrenheit)}
                   onChange={e => onFieldChange('temperature', e.target.value)}
-                  aria-label='Temperature in degrees Celsius'
+                  aria-label={`Temperature in degrees ${machine.value.status.temperatureUnitFahrenheit ? 'Fahrenheit' : 'Celsius'}`}
                   min='0'
-                  max='150'
+                  max={machine.value.status.temperatureUnitFahrenheit ? '302' : '150'}
                   step='0.1'
                 />
-                <span aria-label='degrees Celsius'>°C</span>
+                <span aria-label={`degrees ${machine.value.status.temperatureUnitFahrenheit ? 'Fahrenheit' : 'Celsius'}`}>
+                  {getTemperatureUnit(machine.value.status.temperatureUnitFahrenheit)}
+                </span>
               </label>
             </div>
           </div>

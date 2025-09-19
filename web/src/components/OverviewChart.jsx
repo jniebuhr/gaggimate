@@ -2,27 +2,39 @@ import { machine } from '../services/ApiService.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart.jsx';
+import { 
+  formatTemperatureValue, 
+  getTemperatureUnit 
+} from '../utils/temperatureConverter.js';
 
 function getChartData(data) {
   let end = new Date();
   let start = new Date(end.getTime() - 300000);
+  const useFahrenheit = machine.value.status.temperatureUnitFahrenheit;
+  
   return {
     type: 'line',
     data: {
       datasets: [
         {
-          label: 'Current Temperature',
+          label: `Current Temperature (${getTemperatureUnit(useFahrenheit)})`,
           borderColor: '#F0561D',
           pointStyle: false,
-          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentTemperature })),
+          data: data.map(i => ({ 
+            x: i.timestamp.toISOString(), 
+            y: formatTemperatureValue(i.currentTemperature, useFahrenheit, 1)
+          })),
         },
         {
-          label: 'Target Temperature',
+          label: `Target Temperature (${getTemperatureUnit(useFahrenheit)})`,
           fill: true,
           borderColor: '#731F00',
           borderDash: [6, 6],
           pointStyle: false,
-          data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetTemperature })),
+          data: data.map(i => ({ 
+            x: i.timestamp.toISOString(), 
+            y: formatTemperatureValue(i.targetTemperature, useFahrenheit, 1)
+          })),
         },
         {
           label: 'Current Pressure',
@@ -92,14 +104,14 @@ function getChartData(data) {
       scales: {
         y: {
           type: 'linear',
-          min: 0,
-          max: 160,
+          min: useFahrenheit ? 32 : 0,
+          max: useFahrenheit ? 320 : 160,
           ticks: {
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
             callback: value => {
-              return `${value} °C`;
+              return `${value} ${getTemperatureUnit(useFahrenheit)}`;
             },
           },
         },

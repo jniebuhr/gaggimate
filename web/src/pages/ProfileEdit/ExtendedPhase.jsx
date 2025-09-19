@@ -1,11 +1,25 @@
 import { ExtendedPhaseTarget, TargetTypes } from './ExtendedPhaseTarget.jsx';
 import { isNumber } from 'chart.js/helpers';
-import { useCallback } from 'preact/hooks';
+import { useCallback, useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { 
+  convertCelsiusToDisplay, 
+  convertInputToCelsius, 
+  getTemperatureUnit 
+} from '../../utils/temperatureConverter.js';
+import { machine } from '../../services/ApiService.js';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
+  // Load settings on component mount
+  useEffect(() => {
+  }, []);
+
   const onFieldChange = (field, value) => {
+    // Handle temperature conversion for temperature field
+    if (field === 'temperature') {
+      value = convertInputToCelsius(value, machine.value.status.temperatureUnitFahrenheit);
+    }
     onChange({
       ...phase,
       [field]: value,
@@ -111,7 +125,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
         </div>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-temperature`} className='mb-2 block text-sm font-medium'>
-            Temperature (0 = Default)
+            Temperature (0 = Default) ({getTemperatureUnit(machine.value.status.temperatureUnitFahrenheit)})
           </label>
           <div className='input-group'>
             <label htmlFor={`phase-${index}-temperature`} className='input w-full'>
@@ -119,13 +133,15 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 id={`phase-${index}-target`}
                 className='grow'
                 type='number'
-                value={phase.temperature || 0}
-                onChange={e => onFieldChange('temperature', parseFloat(e.target.value))}
+                value={convertCelsiusToDisplay(phase.temperature || 0, machine.value.status.temperatureUnitFahrenheit)}
+                onChange={e => onFieldChange('temperature', parseFloat(e.target.value) || 0)}
                 aria-label='Target temperature'
                 min='0'
                 step='0.1'
               />
-              <span aria-label='celsius'>°C</span>
+              <span aria-label={machine.value.status.temperatureUnitFahrenheit ? 'fahrenheit' : 'celsius'}>
+                {getTemperatureUnit(machine.value.status.temperatureUnitFahrenheit)}
+              </span>
             </label>
           </div>
         </div>

@@ -12,6 +12,11 @@ import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { 
+  convertCelsiusToDisplay, 
+  convertInputToCelsius, 
+  getTemperatureUnit 
+} from '../../utils/temperatureConverter.js';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -40,6 +45,19 @@ export function Settings() {
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
+        // Convert temperature values for display based on user preference
+        targetSteamTemp: convertCelsiusToDisplay(
+          fetchedSettings.targetSteamTemp, 
+          fetchedSettings.temperatureUnitFahrenheit
+        ),
+        targetWaterTemp: convertCelsiusToDisplay(
+          fetchedSettings.targetWaterTemp, 
+          fetchedSettings.temperatureUnitFahrenheit
+        ),
+        temperatureOffset: convertCelsiusToDisplay(
+          fetchedSettings.temperatureOffset, 
+          fetchedSettings.temperatureUnitFahrenheit
+        ),
       };
       setFormData(settingsWithToggle);
     } else {
@@ -79,6 +97,27 @@ export function Settings() {
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
       }
+      if (key === 'temperatureUnitFahrenheit') {
+        const newUseFahrenheit = !formData.temperatureUnitFahrenheit;
+        // Convert existing temperature values when unit changes
+        setFormData({
+          ...formData,
+          temperatureUnitFahrenheit: newUseFahrenheit,
+          targetSteamTemp: convertCelsiusToDisplay(
+            convertInputToCelsius(formData.targetSteamTemp, formData.temperatureUnitFahrenheit),
+            newUseFahrenheit
+          ),
+          targetWaterTemp: convertCelsiusToDisplay(
+            convertInputToCelsius(formData.targetWaterTemp, formData.temperatureUnitFahrenheit),
+            newUseFahrenheit
+          ),
+          temperatureOffset: convertCelsiusToDisplay(
+            convertInputToCelsius(formData.temperatureOffset, formData.temperatureUnitFahrenheit),
+            newUseFahrenheit
+          ),
+        });
+        return;
+      }
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
         // Set standby brightness to 0 when toggle is off
@@ -109,6 +148,17 @@ export function Settings() {
       const form = formRef.current;
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
+      
+      // Explicitly set the temperature unit boolean value
+      formDataToSubmit.set('temperatureUnitFahrenheit', formData.temperatureUnitFahrenheit ? 'true' : 'false');
+      
+      // Convert temperature values to Celsius for backend
+      formDataToSubmit.set('targetSteamTemp', 
+        convertInputToCelsius(formData.targetSteamTemp, formData.temperatureUnitFahrenheit));
+      formDataToSubmit.set('targetWaterTemp', 
+        convertInputToCelsius(formData.targetWaterTemp, formData.temperatureUnitFahrenheit));
+      formDataToSubmit.set('temperatureOffset', 
+        convertInputToCelsius(formData.temperatureOffset, formData.temperatureUnitFahrenheit));
 
       // Ensure standbyBrightness is included even when the field is disabled
       if (!formData.standbyDisplayEnabled) {
@@ -129,6 +179,19 @@ export function Settings() {
       const updatedData = {
         ...data,
         standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
+        // Convert temperature values for display based on user preference
+        targetSteamTemp: convertCelsiusToDisplay(
+          data.targetSteamTemp, 
+          data.temperatureUnitFahrenheit
+        ),
+        targetWaterTemp: convertCelsiusToDisplay(
+          data.targetWaterTemp, 
+          data.temperatureUnitFahrenheit
+        ),
+        temperatureOffset: convertCelsiusToDisplay(
+          data.temperatureOffset, 
+          data.temperatureUnitFahrenheit
+        ),
       };
 
       setFormData(updatedData);
@@ -192,15 +255,33 @@ export function Settings() {
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
           <Card sm={10} lg={5} title='Temperature settings'>
             <div className='form-control'>
+              <label className='label cursor-pointer'>
+                <span className='label-text'>Temperature Unit</span>
+                <div className='flex items-center gap-2'>
+                  <span className={`text-sm ${!formData.temperatureUnitFahrenheit ? 'font-bold' : ''}`}>°C</span>
+                  <input
+                    id='temperatureUnitFahrenheit'
+                    name='temperatureUnitFahrenheit'
+                    value='temperatureUnitFahrenheit'
+                    type='checkbox'
+                    className='toggle toggle-primary'
+                    checked={!!formData.temperatureUnitFahrenheit}
+                    onChange={onChange('temperatureUnitFahrenheit')}
+                  />
+                  <span className={`text-sm ${formData.temperatureUnitFahrenheit ? 'font-bold' : ''}`}>°F</span>
+                </div>
+              </label>
+            </div>
+            <div className='form-control'>
               <label htmlFor='targetSteamTemp' className='mb-2 block text-sm font-medium'>
-                Default Steam Temperature (°C)
+                Default Steam Temperature ({getTemperatureUnit(formData.temperatureUnitFahrenheit)})
               </label>
               <input
                 id='targetSteamTemp'
                 name='targetSteamTemp'
                 type='number'
                 className='input input-bordered w-full'
-                placeholder='135'
+                placeholder={formData.temperatureUnitFahrenheit ? '275' : '135'}
                 value={formData.targetSteamTemp}
                 onChange={onChange('targetSteamTemp')}
               />
@@ -208,14 +289,14 @@ export function Settings() {
 
             <div className='form-control'>
               <label htmlFor='targetWaterTemp' className='mb-2 block text-sm font-medium'>
-                Default Water Temperature (°C)
+                Default Water Temperature ({getTemperatureUnit(formData.temperatureUnitFahrenheit)})
               </label>
               <input
                 id='targetWaterTemp'
                 name='targetWaterTemp'
                 type='number'
                 className='input input-bordered w-full'
-                placeholder='80'
+                placeholder={formData.temperatureUnitFahrenheit ? '176' : '80'}
                 value={formData.targetWaterTemp}
                 onChange={onChange('targetWaterTemp')}
               />
@@ -256,6 +337,7 @@ export function Settings() {
                 onChange={onChange('standbyTimeout')}
               />
             </div>
+
 
             <div className='divider'>Predictive scale delay</div>
             <div className='mb-2 text-sm opacity-70'>
@@ -488,7 +570,7 @@ export function Settings() {
 
             <div className='form-control'>
               <label htmlFor='temperatureOffset' className='mb-2 block text-sm font-medium'>
-                Temperature Offset
+                Temperature Offset ({getTemperatureUnit(formData.temperatureUnitFahrenheit)})
               </label>
               <input
                 id='temperatureOffset'
@@ -496,7 +578,7 @@ export function Settings() {
                 type='number'
                 inputMode='decimal'
                 className='input input-bordered w-full'
-                placeholder='0 °C'
+                placeholder={formData.temperatureUnitFahrenheit ? '0 °F' : '0 °C'}
                 min='0'
                 step='any'
                 value={formData.temperatureOffset}

@@ -87,6 +87,7 @@ void WebUIPlugin::loop() {
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
+        doc["tempUnit"] = controller->getSettings().isTemperatureUnitFahrenheit() ? 1 : 0;
 
         Process *process = controller->getProcess();
         if (process == nullptr) {
@@ -373,9 +374,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
             if (request->hasArg("targetSteamTemp"))
-                settings->setTargetSteamTemp(request->arg("targetSteamTemp").toInt());
+                settings->setTargetSteamTemp(request->arg("targetSteamTemp").toFloat());
             if (request->hasArg("targetWaterTemp"))
-                settings->setTargetWaterTemp(request->arg("targetWaterTemp").toInt());
+                settings->setTargetWaterTemp(request->arg("targetWaterTemp").toFloat());
             if (request->hasArg("temperatureOffset"))
                 settings->setTemperatureOffset(request->arg("temperatureOffset").toInt());
             if (request->hasArg("pressureScaling"))
@@ -421,6 +422,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("timezone"))
                 settings->setTimezone(request->arg("timezone"));
             settings->setClockFormat(request->hasArg("clock24hFormat"));
+            if (request->hasArg("temperatureUnitFahrenheit"))
+                settings->setTemperatureUnit(request->arg("temperatureUnitFahrenheit") == "true");
             if (request->hasArg("standbyTimeout"))
                 settings->setStandbyTimeout(request->arg("standbyTimeout").toInt() * 1000);
             if (request->hasArg("mainBrightness"))
@@ -487,6 +490,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["delayAdjust"] = settings.isDelayAdjust();
     doc["timezone"] = settings.getTimezone();
     doc["clock24hFormat"] = settings.isClock24hFormat();
+    doc["temperatureUnitFahrenheit"] = settings.isTemperatureUnitFahrenheit();
     doc["standbyTimeout"] = settings.getStandbyTimeout() / 1000;
     doc["mainBrightness"] = settings.getMainBrightness();
     doc["standbyBrightness"] = settings.getStandbyBrightness();
