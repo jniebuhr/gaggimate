@@ -186,7 +186,7 @@ const ProcessControls = props => {
             / {status.value.targetTemperature || 0}°C
           </span>
         </div>
-      {status.value.isVolumetricAvailable && (
+      {status.value.volumetricAvailable && (
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
           <i className='fa fa-weight-scale text-base-content/60' />
           <span className='text-base-content'>{(status.value.currentWeight ?? 0).toFixed(1)}g</span>
