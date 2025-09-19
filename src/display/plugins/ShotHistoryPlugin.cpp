@@ -34,7 +34,8 @@ void ShotHistoryPlugin::record() {
             }
         }
         if (!headerWritten) {
-            file.printf("1,%s,%ld\n", currentProfileName.c_str(), getTime());
+            String profileId = controller->getProfileManager()->getSelectedProfile().id;
+            file.printf("1,%s,%s,%ld\n", currentProfileName.c_str(), profileId.c_str(), getTime());
             headerWritten = true;
         }
         float btDiff = currentBluetoothWeight - lastBluetoothWeight;

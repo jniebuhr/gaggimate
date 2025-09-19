@@ -7,7 +7,18 @@ export function parseHistoryData(shot) {
   const header = lines[0].split(',');
   data['version'] = header[0];
   data['profile'] = header[1];
-  data['timestamp'] = parseInt(header[2], 10);
+  
+  // Handle both old format (version, profile, timestamp) and new format (version, profile, profileId, timestamp)
+  if (header.length >= 4) {
+    // New format with profile ID
+    data['profileId'] = header[2];
+    data['timestamp'] = parseInt(header[3], 10);
+  } else {
+    // Old format without profile ID
+    data['profileId'] = null;
+    data['timestamp'] = parseInt(header[2], 10);
+  }
+  
   data['samples'] = [];
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i]) {
