@@ -75,7 +75,8 @@ const BrewProgress = props => {
 const ProcessControls = props => {
   // brew is true when mode equals 1 (Brew mode), false otherwise
   const { brew, mode, changeMode } = props;
-  const brewTarget = status.value.brewTarget;
+  // Coerce brewTarget to strict boolean
+  const brewTarget = !!status.value.brewTarget;
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
@@ -188,11 +189,10 @@ const ProcessControls = props => {
       {status.value.isVolumetricAvailable && (
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
           <i className='fa fa-weight-scale text-base-content/60' />
-          <span className='text-base-content'>{status.value.currentWeight?.toFixed(1) || 0.0}g</span>
+          <span className='text-base-content'>{(status.value.currentWeight ?? 0).toFixed(1)}g</span>
           {brewTarget && (mode === 1 || mode === 3) && (
             <span className='text-success font-semibold'>
-              {' '}
-              / {status.value.targetWeight?.toFixed(0)}g
+              {' '} / {(status.value.targetWeight ?? 0).toFixed(0)}g
             </span>
           )}
         </div>
@@ -265,7 +265,7 @@ const ProcessControls = props => {
       )}
 
       <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {brew && !active && !finished && status.value.isVolumetricAvailable && (
+        {brew && !active && !finished && status.value.volumetricAvailable && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${!brewTarget ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`}
