@@ -100,16 +100,14 @@ void WebUIPlugin::loop() {
             }
         }
 
-        if (controller->getSettings().isVolumetricTarget() && controller->isVolumetricAvailable()) {
-            doc["bt"] = totalVolumetricTarget;
-        } else {
-            doc["bt"] = 0;
-        }
+        doc["tw"] = totalVolumetricTarget; // total target weight for the process
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
+        doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
         
         // Add Bluetooth scale weight information
         doc["bw"] = this->currentBluetoothWeight; // current bluetooth weight
+        doc["cw"] = this->currentBluetoothWeight; // Use 'currentWeight' for forward compatbility
         doc["bc"] = BLEScales.isConnected(); // bluetooth scale connected status
 
         Process *process = controller->getProcess();
