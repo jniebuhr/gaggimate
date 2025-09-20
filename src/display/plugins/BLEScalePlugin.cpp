@@ -105,6 +105,11 @@ bool BLEScalePlugin::shouldEnableScanning() const {
         return false;
     }
     
+    // Always enable scanning in grind mode regardless of hardware scale preference
+    if (controller->getMode() == MODE_GRIND) {
+        return true;
+    }
+    
     // Get the preferred scale source
     VolumetricMeasurementSource preferredSource = controller->getPreferredScaleSource();
     
