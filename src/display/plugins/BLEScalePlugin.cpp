@@ -76,7 +76,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     }
     
     manager->on("controller:ready", [this](Event const &) {
-        if (this->controller != nullptr && this->controller->getMode() != MODE_STANDBY) {
+        if (this->controller != nullptr && this->controller->getMode() != MODE_STANDBY && shouldEnableScanning()) {
             ESP_LOGI("BLEScalePlugin", "Resuming scanning");
             scan();
             active = true;
@@ -85,7 +85,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     manager->on("controller:brew:prestart", [this](Event const &) { onProcessStart(); });
     manager->on("controller:grind:start", [this](Event const &) { onProcessStart(); });
     manager->on("controller:mode:change", [this](Event const &event) {
-        if (event.getInt("value") != MODE_STANDBY) {
+        if (event.getInt("value") != MODE_STANDBY && shouldEnableScanning()) {
             ESP_LOGI("BLEScalePlugin", "Resuming scanning");
             scan();
             active = true;
@@ -98,6 +98,26 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
             ESP_LOGI("BLEScalePlugin", "Stopping scanning, disconnecting");
         }
     });
+}
+
+bool BLEScalePlugin::shouldEnableScanning() const {
+    if (controller == nullptr) {
+        return false;
+    }
+    
+    // Get the preferred scale source
+    VolumetricMeasurementSource preferredSource = controller->getPreferredScaleSource();
+    
+    // Only enable BLE scanning if:
+    // 1. Hardware scale is NOT the preferred source, OR
+    // 2. Hardware scale IS the preferred source but it's not healthy/available
+    if (preferredSource == VolumetricMeasurementSource::HARDWARE) {
+        // Hardware scale is preferred, only scan if it's not healthy
+        return !controller->isScaleSourceHealthy(VolumetricMeasurementSource::HARDWARE);
+    }
+    
+    // For bluetooth or flow estimation preferences, always allow scanning
+    return true;
 }
 
 void BLEScalePlugin::loop() {
@@ -128,7 +148,7 @@ void BLEScalePlugin::update() {
     
     controller->setVolumetricOverride(hasConnectedScale);
     
-    if (!active)
+    if (!active || !shouldEnableScanning())
         return;
         
     if (scale != nullptr) {
@@ -139,12 +159,12 @@ void BLEScalePlugin::update() {
             if (reconnectionTries > RECONNECTION_TRIES) {
                 ESP_LOGW("BLEScalePlugin", "Max reconnection attempts reached, disconnecting");
                 disconnect();
-                if (scanner != nullptr) {
+                if (scanner != nullptr && shouldEnableScanning()) {
                     scanner->initializeAsyncScan();
                 }
             }
         }
-    } else if (controller->getSettings().getSavedScale() != "" && scanner != nullptr) {
+    } else if (controller->getSettings().getSavedScale() != "" && scanner != nullptr && shouldEnableScanning()) {
         // Protected scanner access with null checks
         auto discoveredScales = scanner->getDiscoveredScales();
         for (const auto &d : discoveredScales) {
@@ -174,6 +194,10 @@ void BLEScalePlugin::connect(const std::string &uuid) {
 
 void BLEScalePlugin::scan() const {
     if (scale != nullptr && scale->isConnected()) {
+        return;
+    }
+    if (!shouldEnableScanning()) {
+        ESP_LOGI("BLEScalePlugin", "Scanning disabled - hardware scale is preferred and healthy");
         return;
     }
     if (scanner == nullptr) {
@@ -271,7 +295,7 @@ void BLEScalePlugin::establishConnection() {
             if (!connectResult) {
                 ESP_LOGW("BLEScalePlugin", "Failed to connect to scale, retrying scan");
                 disconnect();
-                if (scanner != nullptr) {
+                if (scanner != nullptr && shouldEnableScanning()) {
                     scanner->initializeAsyncScan();
                 }
             }
@@ -281,7 +305,7 @@ void BLEScalePlugin::establishConnection() {
     
     if (!deviceFound) {
         ESP_LOGW("BLEScalePlugin", "Device %s not found in discovered scales", uuid.c_str());
-        if (scanner != nullptr) {
+        if (scanner != nullptr && shouldEnableScanning()) {
             scanner->initializeAsyncScan();
         }
     }

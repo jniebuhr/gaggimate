@@ -43,6 +43,7 @@ class BLEScalePlugin : public Plugin {
     void update();
     void onProcessStart() const;
     void establishConnection();
+    bool shouldEnableScanning() const;
     bool active = false;
     bool doConnect = false;
     std::string uuid;
