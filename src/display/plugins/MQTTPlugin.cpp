@@ -105,7 +105,7 @@ void MQTTPlugin::publishDiscovery(Controller *controller) {
     payload["qos"] = 2;
 
     char publishTopic[120];
-    snprintf(publishTopic, sizeof(publishTopic), "%s/device/%s/config", haTopic.c_str(), cmac);
+    snprintf(publishTopic, sizeof(publishTopic), "%s/%s/config", haTopic.c_str(), cmac);
 
     client.publish(publishTopic, payload.as<String>());
 }
