@@ -8,4 +8,4 @@ node_modules/
 __pycache__
 data/
 .codebuddy
-src/version.h
+src/version.cpp
