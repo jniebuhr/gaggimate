@@ -65,7 +65,7 @@ void MQTTPlugin::publishDiscovery(Controller *controller) {
     boilerTemperature["unit_of_measurement"] = "°C";
     boilerTemperature["value_template"] = "{{ value_json.temperature | round(2) }}";
     boilerTemperature["unique_id"] = "boiler0Tmp";
-    boilerTemperature["state_topic"] = "gaggimate/" + String(cmac) + "/boilers/0/temperature";
+    boilerTemperature["state_topic"] = haTopic + "/" + String(cmac) + "/boilers/0/temperature";
 
     boilerTargetTemperature["name"] = "Boiler Target Temperature";
     boilerTargetTemperature["p"] = "sensor";
@@ -73,14 +73,14 @@ void MQTTPlugin::publishDiscovery(Controller *controller) {
     boilerTargetTemperature["unit_of_measurement"] = "°C";
     boilerTargetTemperature["value_template"] = "{{ value_json.temperature | round(2) }}";
     boilerTargetTemperature["unique_id"] = "boiler0TargetTmp";
-    boilerTargetTemperature["state_topic"] = "gaggimate/" + String(cmac) + "/boilers/0/targetTemperature";
+    boilerTargetTemperature["state_topic"] = haTopic + "/" + String(cmac) + "/boilers/0/targetTemperature";
 
     mode["name"] = "Mode";
     mode["p"] = "text";
     mode["device_class"] = "text";
     mode["value_template"] = "{{ value_json.mode_str }}";
     mode["unique_id"] = "mode";
-    mode["state_topic"] = "gaggimate/" + String(cmac) + "/controller/mode";
+    mode["state_topic"] = haTopic + "/" + String(cmac) + "/controller/mode";
 
     cmps["boiler"] = boilerTemperature;
     cmps["boiler_target"] = boilerTargetTemperature;
@@ -91,30 +91,37 @@ void MQTTPlugin::publishDiscovery(Controller *controller) {
     payload["dev"] = device;
     payload["o"] = origin;
     payload["cmps"] = cmps;
-    payload["state_topic"] = "gaggimate/" + String(cmac) + "/state";
+    payload["state_topic"] = haTopic + "/" + String(cmac) + "/state";
     payload["qos"] = 2;
 
-    char publishTopic[80];
+    char publishTopic[120];
     snprintf(publishTopic, sizeof(publishTopic), "%s/device/%s/config", haTopic.c_str(), cmac);
 
     client.publish(publishTopic, payload.as<String>());
 }
 
-void MQTTPlugin::publish(const std::string &topic, const std::string &message) {
+void MQTTPlugin::publish(Controller *controller, const std::string &subTopic, const std::string &message) {
     if (!client.connected())
         return;
+
+    const Settings settings = controller->getSettings();
+    const String haTopic = settings.getHomeAssistantTopic();
+
     String mac = WiFi.macAddress();
     mac.replace(":", "_");
     const char *cmac = mac.c_str();
-    char publishTopic[80];
-    snprintf(publishTopic, sizeof(publishTopic), "gaggimate/%s/%s", cmac, topic.c_str());
+
+    char publishTopic[120];
+    snprintf(publishTopic, sizeof(publishTopic), "%s/%s/%s", haTopic.c_str(), cmac, subTopic.c_str());
+
     client.publish(publishTopic, message.c_str());
 }
-void MQTTPlugin::publishBrewState(const char *state) {
+
+void MQTTPlugin::publishBrewState(Controller *controller, const char *state) {
     char json[100];
-    std::time_t now = std::time(nullptr); // Get current timestame
+    std::time_t now = std::time(nullptr); // Get current timestamp
     snprintf(json, sizeof(json), R"({"state":"%s","timestamp":%ld})", state, now);
-    publish("controller/brew/state", json);
+    publish(controller, "controller/brew/state", json);
 }
 
 void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
@@ -124,53 +131,84 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
         publishDiscovery(controller);
     });
 
-    pluginManager->on("boiler:currentTemperature:change", [this](Event const &event) {
+    pluginManager->on("boiler:currentTemperature:change", [this, controller](Event const &event) {
         if (!client.connected())
             return;
         char json[50];
         const float temp = event.getFloat("value");
         if (temp != lastTemperature) {
             snprintf(json, sizeof(json), R"***({"temperature":%02f})***", temp);
-            publish("boilers/0/temperature", json);
+            publish(controller, "boilers/0/temperature", json);
         }
         lastTemperature = temp;
     });
-    pluginManager->on("boiler:targetTemperature:change", [this](Event const &event) {
+
+    pluginManager->on("boiler:targetTemperature:change", [this, controller](Event const &event) {
         if (!client.connected())
             return;
         char json[50];
         const float temp = event.getFloat("value");
         snprintf(json, sizeof(json), R"***({"temperature":%02f})***", temp);
-        publish("boilers/0/targetTemperature", json);
+        publish(controller, "boilers/0/targetTemperature", json);
     });
-    pluginManager->on("controller:mode:change", [this](Event const &event) {
+
+    pluginManager->on("boiler:pressure:change", [this, controller](Event const &event) {
+        if (!client.connected())
+            return;
+        char json[50];
+        const float temp = event.getFloat("value");
+        snprintf(json, sizeof(json), R"***({"pressure":%02f})***", temp);
+        publish(controller, "boilers/0/pressure", json);
+    });
+
+    pluginManager->on("boiler:puck-flow:change", [this, controller](Event const &event) {
+        if (!client.connected())
+            return;
+        char json[50];
+        const float temp = event.getFloat("value");
+        snprintf(json, sizeof(json), R"***({"puck flow":%02f})***", temp);
+        publish(controller, "boilers/0/puck-flow", json);
+    });
+
+    pluginManager->on("boiler:flow:change", [this, controller](Event const &event) {
+        if (!client.connected())
+            return;
+        char json[50];
+        const float temp = event.getFloat("value");
+        snprintf(json, sizeof(json), R"***({"flow":%02f})***", temp);
+        publish(controller, "boilers/0/flow", json);
+    });
+
+    pluginManager->on("boiler:puck-resistance:change", [this, controller](Event const &event) {
+        if (!client.connected())
+            return;
+        char json[50];
+        const float temp = event.getFloat("value");
+        snprintf(json, sizeof(json), R"***({"puck resistance":%02f})***", temp);
+        publish(controller, "boilers/0/puck-resistance", json);
+    });
+
+    pluginManager->on("controller:mode:change", [this, controller](Event const &event) {
         int newMode = event.getInt("value");
         const char *modeStr;
         switch (newMode) {
-        case 0:
-            modeStr = "Standby";
-            break;
-        case 1:
-            modeStr = "Brew";
-            break;
-        case 2:
-            modeStr = "Steam";
-            break;
-        case 3:
-            modeStr = "Water";
-            break;
-        case 4:
-            modeStr = "Grind";
-            break;
-        default:
-            modeStr = "Unknown";
-            break; // Fallback in case of unexpected value
+        case 0: modeStr = "Standby"; break;
+        case 1: modeStr = "Brew"; break;
+        case 2: modeStr = "Steam"; break;
+        case 3: modeStr = "Water"; break;
+        case 4: modeStr = "Grind"; break;
+        default: modeStr = "Unknown"; break;
         }
         char json[100];
         snprintf(json, sizeof(json), R"({"mode":%d,"mode_str":"%s"})", newMode, modeStr);
-        publish("controller/mode", json);
+        publish(controller, "controller/mode", json);
     });
-    pluginManager->on("controller:brew:start", [this](Event const &) { publishBrewState("brewing"); });
 
-    pluginManager->on("controller:brew:end", [this](Event const &) { publishBrewState("not brewing"); });
+    pluginManager->on("controller:brew:start", [this, controller](Event const &) {
+        publishBrewState(controller, "brewing");
+    });
+
+    pluginManager->on("controller:brew:end", [this, controller](Event const &) {
+        publishBrewState(controller, "not brewing");
+    });
 }
