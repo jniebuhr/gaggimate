@@ -216,7 +216,7 @@ void NimBLEClientController::sendAutotune(int testTime, int samples) {
 
 bool NimBLEClientController::isReadyForConnection() const { return readyForConnection; }
 
-bool NimBLEClientController::isConnected() { return client->isConnected(); }
+bool NimBLEClientController::isConnected() { return client != nullptr && client->isConnected(); }
 
 // BLEAdvertisedDeviceCallbacks override
 void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) {

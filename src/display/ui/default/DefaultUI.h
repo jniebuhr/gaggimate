@@ -6,6 +6,8 @@
 #include <display/core/constants.h>
 #include <display/drivers/Driver.h>
 #include <display/models/profile.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 
 #include "./lvgl/ui.h"
 
@@ -17,7 +19,50 @@ constexpr int RERENDER_INTERVAL_ACTIVE = 100;
 constexpr int TEMP_HISTORY_INTERVAL = 250;
 constexpr int TEMP_HISTORY_LENGTH = 20 * 1000 / TEMP_HISTORY_INTERVAL;
 
+constexpr int UI_COMMAND_QUEUE_SIZE = 16;
+
 int16_t calculate_angle(int set_temp, int range, int offset);
+
+// UI Command types for thread-safe communication
+enum class UICommandType {
+    CHANGE_SCREEN,
+    SET_VARIABLE_INT,
+    SET_VARIABLE_FLOAT,
+    SET_VARIABLE_DOUBLE,
+    SET_VARIABLE_BOOL,
+    SET_VARIABLE_STRING,
+    TRIGGER_RERENDER
+};
+
+struct UICommand {
+    UICommandType type;
+    union {
+        struct {
+            lv_obj_t **screen;
+            void (*init_func)(void);
+        } changeScreen;
+        struct {
+            void *target;
+            int value;
+        } setInt;
+        struct {
+            void *target;
+            float value;
+        } setFloat;
+        struct {
+            void *target;
+            double value;
+        } setDouble;
+        struct {
+            void *target;
+            bool value;
+        } setBool;
+        struct {
+            void *target;
+            char value[64]; // Max string length
+        } setString;
+    } data;
+};
 
 class DefaultUI {
   public:
@@ -28,7 +73,16 @@ class DefaultUI {
     void loop();
     void loopProfiles();
 
-    // Interface methods
+    // Thread-safe interface methods
+    void enqueueChangeScreen(lv_obj_t **screen, void (*target_init)(void));
+    void enqueueSetInt(void *target, int value);
+    void enqueueSetFloat(void *target, float value);
+    void enqueueSetDouble(void *target, double value);
+    void enqueueSetBool(void *target, bool value);
+    void enqueueSetString(void *target, const String &value);
+    void enqueueTriggerRerender();
+
+    // Legacy interface (deprecated, use enqueue methods)
     void changeScreen(lv_obj_t **screen, void (*target_init)(void));
 
     void onProfileSwitch();
@@ -41,7 +95,7 @@ class DefaultUI {
         }
     };
 
-    void markDirty() { rerender = true; }
+    void markDirty() { enqueueTriggerRerender(); }
 
     void applyTheme();
 
@@ -49,6 +103,10 @@ class DefaultUI {
     void setupPanel();
     void setupState();
     void setupReactive();
+
+    // Command processing
+    void processUICommands();
+    bool enqueueCommand(const UICommand &cmd);
 
     void handleScreenChange();
 
@@ -63,7 +121,7 @@ class DefaultUI {
     int tempHistoryIndex = 0;
     int prevTargetTemp = 0;
     bool isTempHistoryInitialized = false;
-    int isTemperatureStable = false;
+    bool isTemperatureStable = false;
     unsigned long lastTempLog = 0;
 
     void updateTempHistory();
@@ -75,18 +133,21 @@ class DefaultUI {
     PluginManager *pluginManager;
     ProfileManager *profileManager;
 
+    // UI Command Queue
+    QueueHandle_t uiCommandQueue;
+
     // Screen state
     String selectedProfileId = "";
     Profile selectedProfile{};
-    int updateAvailable = false;
-    int updateActive = false;
-    int apActive = false;
-    int error = false;
-    int autotuning = false;
-    int volumetricAvailable = false;
-    int volumetricMode = false;
-    int grindActive = false;
-    int active = false;
+    bool updateAvailable = false;
+    bool updateActive = false;
+    bool apActive = false;
+    bool error = false;
+    bool autotuning = false;
+    bool volumetricAvailable = false;
+    bool volumetricMode = false;
+    bool grindActive = false;
+    bool active = false;
 
     bool rerender = false;
     unsigned long lastRender = 0;
@@ -98,14 +159,14 @@ class DefaultUI {
     int targetVolume = 0;
     int grindDuration = 0;
     float grindVolume = 0.0f;
-    int pressureAvailable = 0;
+    bool pressureAvailable = false;
     float pressure = 0.0f;
     int pressureScaling = DEFAULT_PRESSURE_SCALING;
-    int heatingFlash = 0;
+    bool heatingFlash = false;
 
     int currentProfileIdx;
     String currentProfileId = "";
-    int profileLoaded = 0;
+    bool profileLoaded = false;
     Profile currentProfileChoice{};
     std::vector<String> favoritedProfiles;
     int currentThemeMode = -1; // Force applyTheme on first loop

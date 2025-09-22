@@ -76,78 +76,69 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
 DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
     : controller(controller), pluginManager(pluginManager) {
     profileManager = controller->getProfileManager();
+    // Create UI command queue for thread-safe communication
+    uiCommandQueue = xQueueCreate(UI_COMMAND_QUEUE_SIZE, sizeof(UICommand));
+    if (uiCommandQueue == nullptr) {
+        ESP_LOGE("DefaultUI", "Failed to create UI command queue!");
+    }
 }
 
 void DefaultUI::init() {
-    auto triggerRender = [this](Event const &) { rerender = true; };
-    pluginManager->on("boiler:currentTemperature:change", [=](Event const &event) {
+    auto triggerRender = [this](Event const &) { enqueueTriggerRerender(); };
+    pluginManager->on("boiler:currentTemperature:change", [this](Event const &event) {
         int newTemp = static_cast<int>(event.getFloat("value"));
-        if (newTemp != currentTemp) {
-            currentTemp = newTemp;
-            rerender = true;
-        }
+        enqueueSetInt(&currentTemp, newTemp);
     });
-    pluginManager->on("boiler:pressure:change", [=](Event const &event) {
+    pluginManager->on("boiler:pressure:change", [this](Event const &event) {
         float newPressure = event.getFloat("value");
-        if (round(newPressure * 10.0f) != round(pressure * 10.0f)) {
-            pressure = newPressure;
-            rerender = true;
-        }
+        enqueueSetFloat(&pressure, newPressure);
     });
-    pluginManager->on("boiler:targetTemperature:change", [=](Event const &event) {
+    pluginManager->on("boiler:targetTemperature:change", [this](Event const &event) {
         int newTemp = static_cast<int>(event.getFloat("value"));
-        if (newTemp != targetTemp) {
-            targetTemp = newTemp;
-            rerender = true;
-        }
+        enqueueSetInt(&targetTemp, newTemp);
     });
-    pluginManager->on("controller:grindDuration:change", [=](Event const &event) {
-        grindDuration = event.getInt("value");
-        rerender = true;
+    pluginManager->on("controller:grindDuration:change", [this](Event const &event) {
+        enqueueSetInt(&grindDuration, event.getInt("value"));
     });
-    pluginManager->on("controller:grindVolume:change", [=](Event const &event) {
-        grindVolume = event.getFloat("value");
-        rerender = true;
+    pluginManager->on("controller:grindVolume:change", [this](Event const &event) {
+        enqueueSetFloat(&grindVolume, event.getFloat("value"));
     });
     pluginManager->on("controller:process:end", triggerRender);
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
-        mode = event.getInt("value");
-        switch (mode) {
+        int newMode = event.getInt("value");
+        enqueueSetInt(&mode, newMode);
+        
+        // Enqueue screen change based on mode
+        switch (newMode) {
         case MODE_STANDBY:
-            changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
+            enqueueChangeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
             break;
         case MODE_BREW:
-            changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
+            enqueueChangeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
             break;
         case MODE_GRIND:
-            changeScreen(&ui_GrindScreen, &ui_GrindScreen_screen_init);
+            enqueueChangeScreen(&ui_GrindScreen, &ui_GrindScreen_screen_init);
             break;
         case MODE_STEAM:
-            changeScreen(&ui_SimpleProcessScreen, &ui_SimpleProcessScreen_screen_init);
+            enqueueChangeScreen(&ui_SimpleProcessScreen, &ui_SimpleProcessScreen_screen_init);
             break;
         case MODE_WATER:
-            changeScreen(&ui_SimpleProcessScreen, &ui_SimpleProcessScreen_screen_init);
+            enqueueChangeScreen(&ui_SimpleProcessScreen, &ui_SimpleProcessScreen_screen_init);
             break;
         default:
             break;
         };
     });
     pluginManager->on("controller:brew:start",
-                      [this](Event const &event) { changeScreen(&ui_StatusScreen, &ui_StatusScreen_screen_init); });
+                      [this](Event const &event) { enqueueChangeScreen(&ui_StatusScreen, &ui_StatusScreen_screen_init); });
     pluginManager->on("controller:brew:clear", [this](Event const &event) {
-        if (lv_scr_act() == ui_StatusScreen) {
-            changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
-        }
+        // Note: This check will be done in the UI thread when the command is processed
+        enqueueChangeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
     });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
-        rerender = true;
-        if (lv_scr_act() == ui_InitScreen) {
-            Settings &settings = controller->getSettings();
-            settings.getStartupMode() == MODE_BREW ? changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init)
-                                                   : changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
-        }
-        pressureAvailable = controller->getSystemInfo().capabilities.pressure;
+        enqueueTriggerRerender();
+        // Screen change logic will be handled in UI thread during rerender
     });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         configTzTime(resolve_timezone(controller->getSettings().getTimezone()), NTP_SERVER);
@@ -156,35 +147,30 @@ void DefaultUI::init() {
         sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
         sntp_setservername(0, NTP_SERVER);
         sntp_init();
-        rerender = true;
-        apActive = event.getInt("AP");
+        enqueueSetBool(&apActive, event.getInt("AP") != 0);
     });
     pluginManager->on("ota:update:start", [this](Event const &) {
-        updateActive = true;
-        rerender = true;
-        changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+        enqueueSetBool(&updateActive, true);
+        enqueueChangeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
     });
     pluginManager->on("ota:update:end", [this](Event const &) {
-        updateActive = false;
-        rerender = true;
-        changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+        enqueueSetBool(&updateActive, false);
+        enqueueChangeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
     });
     pluginManager->on("ota:update:status", [this](Event const &event) {
-        rerender = true;
-        updateAvailable = event.getInt("value");
+        enqueueSetBool(&updateAvailable, event.getInt("value") != 0);
     });
     pluginManager->on("controller:error", [this](Event const &) {
-        rerender = true;
-        changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+        enqueueChangeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
     });
     pluginManager->on("controller:autotune:start",
-                      [this](Event const &) { changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init); });
+                      [this](Event const &) { enqueueChangeScreen(&ui_InitScreen, &ui_InitScreen_screen_init); });
     pluginManager->on("controller:autotune:result",
-                      [this](Event const &) { changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
+                      [this](Event const &) { enqueueChangeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
 
     pluginManager->on("profiles:profile:select", [this](Event const &event) {
-        selectedProfileId = event.getString("id");
-        profileManager->loadSelectedProfile(selectedProfile);
+        enqueueSetString(&selectedProfileId, event.getString("id"));
+        // Profile loading will be handled in UI thread
     });
     setupPanel();
     setupState();
@@ -197,6 +183,8 @@ void DefaultUI::init() {
 void DefaultUI::loop() {
     const unsigned long now = millis();
     const unsigned long diff = now - lastRender;
+    // Process any pending UI commands from other cores
+    processUICommands();
 
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
         updateTempHistory();
@@ -217,9 +205,27 @@ void DefaultUI::loop() {
         volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
         grindActive = controller->isGrindActive();
         active = controller->isActive();
+        pressureAvailable = controller->getSystemInfo().capabilities.pressure;
+        
+        // Handle Bluetooth connect screen change logic that was moved from event handler
+        if (lv_scr_act() == ui_InitScreen && controller->getClientController()->isConnected()) {
+            const Settings &settings = controller->getSettings();
+            if (settings.getStartupMode() == MODE_BREW) {
+                targetScreen = &ui_BrewScreen;
+                targetScreenInit = &ui_BrewScreen_screen_init;
+            } else {
+                targetScreen = &ui_StandbyScreen;
+                targetScreenInit = &ui_StandbyScreen_screen_init;
+            }
+        }
+        
+        // Handle brew:clear logic - if we're being asked to go to BrewScreen but currently on StatusScreen, allow it
+        // This logic was moved from the event handler for thread safety
+        
         applyTheme();
         if (controller->isErrorState()) {
-            changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+            targetScreen = &ui_InitScreen;
+            targetScreenInit = &ui_InitScreen_screen_init;
         }
         updateTempStableFlag();
         handleScreenChange();
@@ -234,24 +240,136 @@ void DefaultUI::loop() {
     lv_task_handler();
 }
 
+// Thread-safe command processing
+void DefaultUI::processUICommands() {
+    UICommand cmd;
+    // Process all pending commands (non-blocking)
+    while (xQueueReceive(uiCommandQueue, &cmd, 0) == pdTRUE) {
+        switch (cmd.type) {
+            case UICommandType::CHANGE_SCREEN:
+                targetScreen = cmd.data.changeScreen.screen;
+                targetScreenInit = cmd.data.changeScreen.init_func;
+                rerender = true;
+                break;
+            
+            case UICommandType::SET_VARIABLE_INT:
+                *(static_cast<int*>(cmd.data.setInt.target)) = cmd.data.setInt.value;
+                rerender = true;
+                break;
+                
+            case UICommandType::SET_VARIABLE_FLOAT:
+                *(static_cast<float*>(cmd.data.setFloat.target)) = cmd.data.setFloat.value;
+                rerender = true;
+                break;
+                
+            case UICommandType::SET_VARIABLE_DOUBLE:
+                *(static_cast<double*>(cmd.data.setDouble.target)) = cmd.data.setDouble.value;
+                rerender = true;
+                break;
+                
+            case UICommandType::SET_VARIABLE_BOOL:
+                *(static_cast<bool*>(cmd.data.setBool.target)) = cmd.data.setBool.value;
+                rerender = true;
+                break;
+                
+            case UICommandType::SET_VARIABLE_STRING:
+                *(static_cast<String*>(cmd.data.setString.target)) = String(cmd.data.setString.value);
+                rerender = true;
+                break;
+                
+            case UICommandType::TRIGGER_RERENDER:
+                rerender = true;
+                break;
+                
+            default:
+                ESP_LOGW("DefaultUI", "Unknown UI command type: %d", static_cast<int>(cmd.type));
+                break;
+        }
+    }
+}
+
+bool DefaultUI::enqueueCommand(const UICommand &cmd) {
+    BaseType_t result = xQueueSend(uiCommandQueue, &cmd, 0); // Non-blocking
+    if (result != pdTRUE) {
+        ESP_LOGW("DefaultUI", "UI command queue full, dropping command type %d", static_cast<int>(cmd.type));
+        return false;
+    }
+    return true;
+}
+
+// Thread-safe interface methods
+void DefaultUI::enqueueChangeScreen(lv_obj_t **screen, void (*target_init)(void)) {
+    UICommand cmd;
+    cmd.type = UICommandType::CHANGE_SCREEN;
+    cmd.data.changeScreen.screen = screen;
+    cmd.data.changeScreen.init_func = target_init;
+    enqueueCommand(cmd);
+}
+
+void DefaultUI::enqueueSetInt(void *target, int value) {
+    UICommand cmd;
+    cmd.type = UICommandType::SET_VARIABLE_INT;
+    cmd.data.setInt.target = target;
+    cmd.data.setInt.value = value;
+    enqueueCommand(cmd);
+}
+
+void DefaultUI::enqueueSetFloat(void *target, float value) {
+    UICommand cmd;
+    cmd.type = UICommandType::SET_VARIABLE_FLOAT;
+    cmd.data.setFloat.target = target;
+    cmd.data.setFloat.value = value;
+    enqueueCommand(cmd);
+}
+
+void DefaultUI::enqueueSetDouble(void *target, double value) {
+    UICommand cmd;
+    cmd.type = UICommandType::SET_VARIABLE_DOUBLE;
+    cmd.data.setDouble.target = target;
+    cmd.data.setDouble.value = value;
+    enqueueCommand(cmd);
+}
+
+void DefaultUI::enqueueSetBool(void *target, bool value) {
+    UICommand cmd;
+    cmd.type = UICommandType::SET_VARIABLE_BOOL;
+    cmd.data.setBool.target = target;
+    cmd.data.setBool.value = value;
+    enqueueCommand(cmd);
+}
+
+void DefaultUI::enqueueSetString(void *target, const String &value) {
+    UICommand cmd;
+    cmd.type = UICommandType::SET_VARIABLE_STRING;
+    cmd.data.setString.target = target;
+    strncpy(cmd.data.setString.value, value.c_str(), sizeof(cmd.data.setString.value) - 1);
+    cmd.data.setString.value[sizeof(cmd.data.setString.value) - 1] = '\0'; // Ensure null termination
+    enqueueCommand(cmd);
+}
+
+void DefaultUI::enqueueTriggerRerender() {
+    UICommand cmd;
+    cmd.type = UICommandType::TRIGGER_RERENDER;
+    enqueueCommand(cmd);
+}
+
 void DefaultUI::loopProfiles() {
     if (!profileLoaded && currentProfileId != "") {
         profileManager->loadProfile(currentProfileId, currentProfileChoice);
-        profileLoaded = 1;
+        profileLoaded = true;
     }
 }
 
 void DefaultUI::changeScreen(lv_obj_t **screen, void (*target_init)()) {
-    targetScreen = screen;
-    targetScreenInit = target_init;
-    rerender = true;
+    // Legacy interface - just delegate to enqueue method
+    enqueueChangeScreen(screen, target_init);
 }
 
 void DefaultUI::onProfileSwitch() {
     favoritedProfiles = profileManager->getFavoritedProfiles();
     currentProfileIdx = 0;
     currentProfileId = favoritedProfiles[currentProfileIdx];
-    profileLoaded = 0;
+    profileLoaded = false;
     currentProfileChoice = Profile{};
     changeScreen(&ui_ProfileScreen, ui_ProfileScreen_screen_init);
 }
@@ -260,7 +378,7 @@ void DefaultUI::onNextProfile() {
     if (currentProfileIdx < favoritedProfiles.size() - 1) {
         currentProfileIdx++;
         currentProfileId = favoritedProfiles.at(currentProfileIdx);
-        profileLoaded = 0;
+        profileLoaded = false;
         currentProfileChoice = Profile{};
     }
 }
@@ -269,7 +387,7 @@ void DefaultUI::onPreviousProfile() {
     if (currentProfileIdx > 0) {
         currentProfileIdx--;
         currentProfileId = favoritedProfiles.at(currentProfileIdx);
-        profileLoaded = 0;
+        profileLoaded = false;
         currentProfileChoice = Profile{};
     }
 }
@@ -314,7 +432,7 @@ void DefaultUI::setupState() {
     targetVolume = settings.getTargetVolume();
     grindDuration = settings.getTargetGrindDuration();
     grindVolume = settings.getTargetGrindVolume();
-    pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
+    pressureAvailable = controller->getSystemInfo().capabilities.pressure;
     pressureScaling = std::ceil(settings.getPressureScaling());
     selectedProfileId = settings.getSelectedProfile();
     profileManager->loadSelectedProfile(selectedProfile);
@@ -487,6 +605,15 @@ void DefaultUI::setupReactive() {
                               }
                           },
                           &grindDuration, &grindVolume, &volumetricMode);
+    // Reactive effect to reload selected profile when selectedProfileId changes
+    effect_mgr.use_effect([=] { return true; },  // Always active
+                          [=]() {
+                              // Reload the selected profile when selectedProfileId changes
+                              profileManager->loadSelectedProfile(selectedProfile);
+                              rerender = true;  // Trigger UI update
+                          },
+                          &selectedProfileId);
+
     effect_mgr.use_effect(
         [=] { return currentScreen == ui_BrewScreen; },
         [=]() {
@@ -610,7 +737,7 @@ void DefaultUI::handleScreenChange() {
         }
 
         _ui_screen_change(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0, targetScreenInit);
-        _ui_screen_delete(&current);
+        //_ui_screen_delete(&current); // Don't think this is necessary
         rerender = true;
     }
 }
