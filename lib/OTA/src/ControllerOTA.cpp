@@ -57,6 +57,12 @@ bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &re
     WiFiClient *tcp = http.getStreamPtr();
     delay(100);
 
+    if (tcp == nullptr || !tcp->connected()) {
+        ESP_LOGE("ControllerOTA", "Invalid or disconnected stream pointer");
+        http.end();
+        return false;
+    }
+
     if (tcp->peek() != 0xE9) {
         ESP_LOGE("ControllerOTA", "Magic header does not start with 0xE9");
         http.end();
@@ -66,9 +72,10 @@ bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &re
     File file = SPIFFS.open("/board-firmware.bin", FILE_WRITE, true);
 
     int written = 0;
+    const size_t MAX_BUFFER_SIZE = 1024;  // Fixed buffer size
     while (written < len) {
-        int bufferSize = min(1024, len - written);
-        uint8_t buffer[bufferSize];
+        int bufferSize = min(static_cast<int>(MAX_BUFFER_SIZE), len - written);
+        uint8_t buffer[MAX_BUFFER_SIZE];  // Fixed size array
         fillBuffer(*tcp, buffer, bufferSize);
         file.write(buffer, bufferSize);
         written += bufferSize;
@@ -163,8 +170,12 @@ void ControllerOTA::notifyUpdate() const {
 }
 
 void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
-    uint8_t partData[MTU + 2];
-    uint8_t buffer[MTU];
+    const uint16_t MTU = 244;  // Make MTU a compile-time constant
+    const size_t MAX_PART_DATA_SIZE = MTU + 2;
+    const size_t MAX_REMAINING_SIZE = 50;
+    
+    uint8_t partData[MAX_PART_DATA_SIZE];  // Fixed size array
+    uint8_t buffer[MTU];                   // Fixed size array
     partData[0] = 0xFB;
     uint32_t partLength = PART_SIZE;
     if ((currentPart + 1) * PART_SIZE > totalSize) {
@@ -182,7 +193,12 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
     }
     if (partLength % MTU > 0) {
         uint32_t remaining = partLength % MTU;
-        uint8_t remainingData[remaining + 2];
+        const size_t MAX_REMAINING_SIZE = 256;  // Safety limit
+        if (remaining > MAX_REMAINING_SIZE - 2) {
+            ESP_LOGE("ControllerOTA", "Remaining data too large: %d", remaining);
+            return;
+        }
+        uint8_t remainingData[MAX_REMAINING_SIZE];  // Fixed size array
         remainingData[0] = 0xFB;
         remainingData[1] = parts;
         fillBuffer(in, buffer, remaining);

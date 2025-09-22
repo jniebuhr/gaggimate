@@ -34,8 +34,11 @@ semver_t from_string(const string &version) {
     if (split_at != string::npos) {
         patch = atoi(numbers.at(2).substr(0, split_at).c_str());
         auto prerelease = numbers.at(2).substr(split_at + 1);
-        prerelease_ptr = (char *)malloc(prerelease.length());
-        prerelease.copy(prerelease_ptr, prerelease.length());
+        prerelease_ptr = (char *)malloc(prerelease.length() + 1);  // +1 for null terminator
+        if (prerelease_ptr != nullptr) {
+            prerelease.copy(prerelease_ptr, prerelease.length());
+            prerelease_ptr[prerelease.length()] = '\0';  // Null terminate
+        }
     } else {
         patch = atoi(numbers.at(2).c_str());
     }

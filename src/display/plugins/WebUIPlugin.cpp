@@ -211,8 +211,13 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
     if (info->index == 0) {
         auto &buf = rxBuffers[cid];
         buf.clear();
-        if (info->len <= 64 * 1024) {
+        const size_t MAX_WS_MESSAGE_SIZE = 128 * 1024;  // 128KB max
+        if (info->len <= MAX_WS_MESSAGE_SIZE) {
             buf.reserve(info->len);
+        } else {
+            ESP_LOGE("WebUIPlugin", "WebSocket message too large: %zu bytes (max %zu)", info->len, MAX_WS_MESSAGE_SIZE);
+            client->close(1009, "Message too large");
+            return;
         }
     }
 
