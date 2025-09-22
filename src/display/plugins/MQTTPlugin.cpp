@@ -11,11 +11,21 @@ bool MQTTPlugin::connect(Controller *controller) {
     const String haUser = settings.getHomeAssistantUser();
     const String haPassword = settings.getHomeAssistantPassword();
 
+    String mac = WiFi.macAddress();
+    mac.replace(":", "_");
+    const char *cmac = mac.c_str();
+    const String haTopic = settings.getHomeAssistantTopic();
+    String lwtTopic = haTopic + "/" + String(cmac) + "/status";
+
+    // Set Last Will (offline)
+    client.setWill(lwtTopic.c_str(), "offline", true, 1);
+
     client.begin(ip.c_str(), haPort, net);
     client.setKeepAlive(10);
     printf("Connecting to MQTT");
     for (int i = 0; i < MQTT_CONNECTION_RETRIES; i++) {
         if (client.connect(clientId.c_str(), haUser.c_str(), haPassword.c_str())) {
+            client.publish(lwtTopic.c_str(), "online", true, 1);
             printf("\n");
             return true;
         }
