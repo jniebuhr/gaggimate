@@ -204,6 +204,25 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
+    
+    // Cleaning schedule events
+    pluginManager->on("cleaning:backflush:due", [this](Event const &) {
+        backflushDue = true;
+        rerender = true;
+    });
+    pluginManager->on("cleaning:descaling:due", [this](Event const &) {
+        descalingDue = true;
+        rerender = true;
+    });
+    pluginManager->on("cleaning:backflush:timer:reset", [this](Event const &) {
+        backflushDue = false;
+        rerender = true;
+    });
+    pluginManager->on("cleaning:descaling:timer:reset", [this](Event const &) {
+        descalingDue = false;
+        rerender = true;
+    });
+    
     setupPanel();
     setupState();
     setupReactive();
@@ -469,6 +488,19 @@ void DefaultUI::setupReactive() {
                                               : lv_obj_add_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN);
                           },
                           &updateAvailable);
+    
+    // For now, we'll log cleaning notifications until UI elements are added
+    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
+                          [=]() {
+                              if (backflushDue) {
+                                  ESP_LOGI("DefaultUI", "Backflush is due - notification should be shown");
+                              }
+                              if (descalingDue) {
+                                  ESP_LOGI("DefaultUI", "Descaling is due - notification should be shown");
+                              }
+                          },
+                          &backflushDue, &descalingDue);
+                          
     effect_mgr.use_effect([=] { return currentScreen == ui_InitScreen; },
                           [=]() {
                               if (updateActive) {

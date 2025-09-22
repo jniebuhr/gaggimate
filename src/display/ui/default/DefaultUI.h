@@ -93,6 +93,10 @@ class DefaultUI {
     int active = false;
     int smartGrindActive = false;
     int grindAvailable = false;
+    
+    // Cleaning schedule flags
+    bool backflushDue = false;
+    bool descalingDue = false;
 
     bool rerender = false;
     unsigned long lastRender = 0;

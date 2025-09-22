@@ -112,6 +112,12 @@ Settings::Settings() {
     fullTankDistance = preferences.getInt("sr_fd", 50);
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
 
+    // Cleaning schedule settings
+    backflushIntervalDays = preferences.getInt("cl_bid", 14);      // 14 days default
+    descalingIntervalWeeks = preferences.getInt("cl_diw", 6);      // 6 weeks default
+    lastBackflushTime = preferences.getULong("cl_lbt", 0);        // 0 = never performed
+    lastDescalingTime = preferences.getULong("cl_ldt", 0);        // 0 = never performed
+
     preferences.end();
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
@@ -460,6 +466,26 @@ void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &sch
     save();
 }
 
+void Settings::setBackflushIntervalDays(int backflush_interval_days) {
+    backflushIntervalDays = backflush_interval_days;
+    save();
+}
+
+void Settings::setDescalingIntervalWeeks(int descaling_interval_weeks) {
+    descalingIntervalWeeks = descaling_interval_weeks;
+    save();
+}
+
+void Settings::setLastBackflushTime(unsigned long last_backflush_time) {
+    lastBackflushTime = last_backflush_time;
+    save();
+}
+
+void Settings::setLastDescalingTime(unsigned long last_descaling_time) {
+    lastDescalingTime = last_descaling_time;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -548,6 +574,12 @@ void Settings::doSave() {
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);
     preferences.putInt("alt_relay", altRelayFunction);
+
+    // Cleaning schedule settings
+    preferences.putInt("cl_bid", backflushIntervalDays);
+    preferences.putInt("cl_diw", descalingIntervalWeeks);
+    preferences.putULong("cl_lbt", lastBackflushTime);
+    preferences.putULong("cl_ldt", lastDescalingTime);
 
     preferences.end();
 }

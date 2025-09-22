@@ -676,6 +676,117 @@ export function Settings() {
             </div>
           </Card>
 
+          <Card sm={10} lg={5} title='Cleaning Schedule'>
+            <div className='form-control'>
+              <label htmlFor='backflushIntervalDays' className='mb-2 block text-sm font-medium'>
+                Backflush Interval (Days)
+              </label>
+              <input
+                id='backflushIntervalDays'
+                name='backflushIntervalDays'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='14'
+                min='1'
+                max='365'
+                value={formData.backflushIntervalDays}
+                onChange={onChange('backflushIntervalDays')}
+              />
+            </div>
+            <div className='form-control'>
+              <label htmlFor='descalingIntervalWeeks' className='mb-2 block text-sm font-medium'>
+                Descaling Interval (Weeks)
+              </label>
+              <input
+                id='descalingIntervalWeeks'
+                name='descalingIntervalWeeks'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='6'
+                min='1'
+                max='52'
+                value={formData.descalingIntervalWeeks}
+                onChange={onChange('descalingIntervalWeeks')}
+              />
+            </div>
+            <div className='mt-4 space-y-2'>
+              <div className='flex items-center justify-between rounded-lg bg-base-200 p-3'>
+                <div>
+                  <div className='text-sm font-medium'>Last Backflush</div>
+                  <div className='text-xs text-base-content/70'>
+                    {formData.lastBackflushTime > 0 
+                      ? `${Math.floor((Date.now() / 1000 - formData.lastBackflushTime) / (24 * 60 * 60))} days ago`
+                      : 'Never performed'
+                    }
+                  </div>
+                </div>
+                <button
+                  type='button'
+                  className='btn btn-outline btn-sm'
+                  onClick={() => {
+                    if (confirm('Reset backflush timer? This will mark backflush as just completed.')) {
+                      setFormData(prev => ({...prev, lastBackflushTime: Math.floor(Date.now() / 1000)}));
+                    }
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+              <div className='flex items-center justify-between rounded-lg bg-base-200 p-3'>
+                <div>
+                  <div className='text-sm font-medium'>Last Descaling</div>
+                  <div className='text-xs text-base-content/70'>
+                    {formData.lastDescalingTime > 0 
+                      ? `${Math.floor((Date.now() / 1000 - formData.lastDescalingTime) / (7 * 24 * 60 * 60))} weeks ago`
+                      : 'Never performed'
+                    }
+                  </div>
+                </div>
+                <button
+                  type='button'
+                  className='btn btn-outline btn-sm'
+                  onClick={() => {
+                    if (confirm('Reset descaling timer? This will mark descaling as just completed.')) {
+                      setFormData(prev => ({...prev, lastDescalingTime: Math.floor(Date.now() / 1000)}));
+                    }
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+            <div className='mt-4 space-y-2'>
+              <button
+                type='button'
+                className='btn btn-primary btn-sm w-full'
+                onClick={() => {
+                  // This will be handled by the cleaning plugin events
+                  fetch('/api/event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event: 'cleaning:backflush:start' })
+                  });
+                }}
+              >
+                Start Backflush Now
+              </button>
+              <button
+                type='button'
+                className='btn btn-secondary btn-sm w-full'
+                onClick={() => {
+                  // This will be handled by the cleaning plugin events
+                  fetch('/api/event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event: 'cleaning:descaling:start' })
+                  });
+                }}
+              >
+                Start Descaling Now
+              </button>
+            </div>
+          </Card>
+
           <Card sm={10} lg={5} title='Display settings'>
             <div className='form-control'>
               <label htmlFor='mainBrightness' className='mb-2 block text-sm font-medium'>
