@@ -16,7 +16,6 @@ def get_time_specifier():
 
 with open('src/version.cpp', 'w') as f:
     f.write(
-        f"""#include <Arduino.h>
-extern const String BUILD_GIT_VERSION = "{get_firmware_specifier()}";
-extern const String BUILD_TIMESTAMP = "{get_time_specifier()}";
+        f"""extern const char BUILD_GIT_VERSION[] = "{get_firmware_specifier()}";
+extern const char BUILD_TIMESTAMP[] = "{get_time_specifier()}";
 """)
