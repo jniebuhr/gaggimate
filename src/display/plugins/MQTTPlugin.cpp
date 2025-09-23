@@ -22,19 +22,79 @@ bool MQTTPlugin::connect(Controller *controller) {
 
     client.begin(ip.c_str(), haPort, net);
     client.setKeepAlive(10);
+    client.onMessage([this, controller](String &topic, String &payload) {
+        handleCommand(controller, topic, payload);
+        Serial.print("[MQTT] Command received. Topic: ");
+        Serial.print(topic);
+        Serial.print(" | Payload: ");
+        Serial.println(payload);
+    });
     printf("Connecting to MQTT");
     for (int i = 0; i < MQTT_CONNECTION_RETRIES; i++) {
         if (client.connect(clientId.c_str(), haUser.c_str(), haPassword.c_str())) {
             client.publish(lwtTopic.c_str(), "online", true, 1);
+
+            String commandTopic = haTopic + "/" + String(cmac) + "/controller/command/#";
+
+            if (client.subscribe(commandTopic.c_str())) {
+                Serial.print("[MQTT] Subscribed to: ");
+                Serial.println(commandTopic);
+            } else {
+                Serial.print("[MQTT] Failed to subscribe: ");
+                Serial.println(commandTopic);
+            }
+
+
             printf("\n");
             return true;
         }
         printf(".");
         delay(MQTT_CONNECTION_DELAY);
     }
+    
+
     printf("\nConnection to MQTT failed.\n");
     return false;
 }
+
+void MQTTPlugin::handleCommand(Controller *controller, const String &topic, const String &payload) {
+    Serial.print("[CMD-HNDL] Command received. Topic: ");
+    Serial.print(topic);
+    Serial.print(" | Payload: ");
+    Serial.println(payload);
+
+    if (topic.endsWith("/controller/command/mode")) {
+        Serial.println("[CMD-HNDL] Handling mode change...");
+
+        if (payload.equalsIgnoreCase("Standby")) {
+            Serial.println("[CMD-HNDL] -> Standby");
+            controller->activateStandby();
+        } else if (payload.equalsIgnoreCase("Brew")) {
+            Serial.println("[CMD-HNDL] -> Brew");
+            controller->setMode(MODE_BREW);
+        } else if (payload.equalsIgnoreCase("Steam")) {
+            Serial.println("[CMD-HNDL] -> Steam");
+            controller->setMode(MODE_STEAM);
+        } else if (payload.equalsIgnoreCase("Water")) {
+            Serial.println("[CMD-HNDL] -> Water");
+            controller->setMode(MODE_WATER);
+        } else if (payload.equalsIgnoreCase("Grind")) {
+            Serial.println("[CMD-HNDL] -> Grind");
+            controller->setMode(MODE_GRIND);
+        } else {
+            Serial.println("[CMD-HNDL] -> Unknown, defaulting to Standby");
+            controller->activateStandby();
+        }
+    }
+
+    else if (topic.endsWith("/controller/command/targetTemperature")) {
+        float temp = payload.toFloat();
+        Serial.print("[CMD-HNDL] Setting target temperature: ");
+        Serial.println(temp);
+        controller->setTargetTemp(temp);
+    }
+}
+
 
 void MQTTPlugin::publishDiscovery(Controller *controller) {
     if (!client.connected())
@@ -167,35 +227,47 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
             return;
         char json[50];
         const float temp = event.getFloat("value");
-        snprintf(json, sizeof(json), R"***({"pressure":%02f})***", temp);
-        publish(controller, "boilers/0/pressure", json);
+        if (temp != lastPressure) {
+            snprintf(json, sizeof(json), R"***({"pressure":%02f})***", temp);
+            publish(controller, "boilers/0/pressure", json);
+        }
+        lastPressure = temp;
     });
 
-    pluginManager->on("boiler:puck-flow:change", [this, controller](Event const &event) {
+    pluginManager->on("pump:puck-flow:change", [this, controller](Event const &event) {
         if (!client.connected())
             return;
         char json[50];
         const float temp = event.getFloat("value");
-        snprintf(json, sizeof(json), R"***({"puck flow":%02f})***", temp);
-        publish(controller, "boilers/0/puck-flow", json);
+        if (temp != lastPuckFlow) {
+            snprintf(json, sizeof(json), R"***({"puck flow":%02f})***", temp);
+            publish(controller, "pump/0/puck-flow", json);
+        }
+        lastPuckFlow = temp;
     });
 
-    pluginManager->on("boiler:flow:change", [this, controller](Event const &event) {
+    pluginManager->on("pump:flow:change", [this, controller](Event const &event) {
         if (!client.connected())
             return;
         char json[50];
         const float temp = event.getFloat("value");
-        snprintf(json, sizeof(json), R"***({"flow":%02f})***", temp);
-        publish(controller, "boilers/0/flow", json);
+        if (temp != lastFlow) {
+            snprintf(json, sizeof(json), R"***({"flow":%02f})***", temp);
+            publish(controller, "pump/0/flow", json);
+        }
+        lastFlow = temp;
     });
 
-    pluginManager->on("boiler:puck-resistance:change", [this, controller](Event const &event) {
+    pluginManager->on("pump:puck-resistance:change", [this, controller](Event const &event) {
         if (!client.connected())
             return;
         char json[50];
         const float temp = event.getFloat("value");
-        snprintf(json, sizeof(json), R"***({"puck resistance":%02f})***", temp);
-        publish(controller, "boilers/0/puck-resistance", json);
+        if (temp != lastPuckResistance) {
+            snprintf(json, sizeof(json), R"***({"puck-resistance":%02f})***", temp);
+            publish(controller, "pump/0/puck-resistance", json);
+        }
+        lastPuckResistance = temp;
     });
 
     pluginManager->on("controller:mode:change", [this, controller](Event const &event) {
