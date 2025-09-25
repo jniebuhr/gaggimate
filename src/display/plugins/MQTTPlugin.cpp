@@ -93,6 +93,23 @@ void MQTTPlugin::handleCommand(Controller *controller, const String &topic, cons
         Serial.println(temp);
         controller->setTargetTemp(temp);
     }
+    else if (topic.endsWith("/controller/command/start")) {
+        if (payload.equalsIgnoreCase("brew")) {
+            Serial.println("[CMD-HNDL] -> Start brew");
+            controller->setMode(MODE_BREW);
+        } else if (payload.equalsIgnoreCase("grind")) {
+            Serial.println("[CMD-HNDL] -> Start grind");
+            controller->setMode(MODE_GRIND);
+        }
+        else if (payload.equalsIgnoreCase("flush")) {
+            Serial.println("[CMD-HNDL] -> Start flush");
+            controller->setMode(MODE_BREW);
+        }
+        else if (payload.equalsIgnoreCase("water")) {
+            Serial.println("[CMD-HNDL] -> Start water");
+            controller->setMode(MODE_WATER);
+        }
+    }
 }
 
 
@@ -264,7 +281,12 @@ void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
         char json[50];
         const float temp = event.getFloat("value");
         if (temp != lastPuckResistance) {
-            snprintf(json, sizeof(json), R"***({"puck-resistance":%02f})***", temp);
+            if (isnan(temp) || isinf(temp)) {
+                snprintf(json, sizeof(json), R"***({"puck-resistance":null})***");
+            } else {
+                snprintf(json, sizeof(json), R"***({"puck-resistance":%.2f})***", temp);
+            }
+            publish(controller, "pump/0/puck-resistance", json);
             publish(controller, "pump/0/puck-resistance", json);
         }
         lastPuckResistance = temp;

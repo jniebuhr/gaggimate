@@ -16,7 +16,7 @@ class MQTTPlugin : public Plugin {
         if (!client.connected()) return;
 
         unsigned long now = millis();
-        if (now - lastMQTTLoop >= 100) {   // every 100ms
+        if (now - lastMQTTLoop >= 250) {   // every 100ms
             client.loop();
             lastMQTTLoop = now;
         }
