@@ -148,6 +148,7 @@ const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.x",
                                             .ssrPump = false,
                                             .ledControls = false,
                                             .tof = false,
+                                            .hwScale =true
                                         }};
 
 const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
