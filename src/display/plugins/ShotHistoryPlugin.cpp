@@ -74,7 +74,7 @@ void ShotHistoryPlugin::record() {
                 return;
             }
             
-            const float weightDiff = abs(currentBluetoothWeight - lastStableWeight);
+            const float weightDiff = abs(currentActiveWeight - lastStableWeight);
             
             if (weightDiff < WEIGHT_STABILIZATION_THRESHOLD) {
                 if (lastWeightChangeTime == 0) {
@@ -87,7 +87,7 @@ void ShotHistoryPlugin::record() {
             } else {
                 // Weight changed, reset stabilization timer
                 lastWeightChangeTime = 0;
-                lastStableWeight = currentBluetoothWeight;
+                lastStableWeight = currentActiveWeight;
             }
             
             // Also stop extended recording after maximum duration
