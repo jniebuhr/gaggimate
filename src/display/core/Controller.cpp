@@ -515,7 +515,7 @@ void Controller::activate() {
 #ifdef NIGHTLY_BUILD
         currentVolumetricSource = isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::FLOW_ESTIMATION;
 #else
-        currentVolumetricSource = VolumetricMeasurementSource::FLOW_ESTIMATION;
+        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
 #endif
         pluginManager->trigger("controller:brew:prestart");
     }
