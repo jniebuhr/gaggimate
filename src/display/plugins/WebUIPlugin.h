@@ -4,16 +4,11 @@
 #define ELEGANTOTA_USE_ASYNC_WEBSERVER 1
 
 #include <DNSServer.h>
-#include <esp_system.h>
-#include <esp_log.h>
 
-#include "../core/Plugin.h"
+#include <display/core/Plugin.h>
 #include "GitHubOTA.h"
-#include "ShotHistoryPlugin.h"
 #include <ArduinoJson.h>
-#include <AsyncJson.h>
 #include <ESPAsyncWebServer.h>
-#include <vector>
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 5 * 1000;

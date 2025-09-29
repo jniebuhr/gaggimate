@@ -2,6 +2,19 @@ import { useState, useEffect, useRef, useCallback, useContext } from 'preact/hoo
 import { Spinner } from '../../components/Spinner.jsx';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import Card from '../../components/Card.jsx';
+import { downloadJson } from '../../utils/download.js';
+
+const imageUrlToBase64 = async (blob) => {
+  return new Promise((onSuccess, onError) => {
+    try {
+      const reader = new FileReader() ;
+      reader.onload = function(){ onSuccess(this.result) } ;
+      reader.readAsDataURL(blob);
+    } catch(e) {
+      onError(e);
+    }
+  });
+};
 
 export function OTA() {
   const apiService = useContext(ApiServiceContext);
@@ -11,8 +24,21 @@ export function OTA() {
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
   
-  const downloadCoreDump = useCallback(() => {
-    window.open('/api/core-dump', '_blank');
+  const downloadSupportData = useCallback(async() => {
+    const settingsResponse = await fetch(`/api/settings`);
+    const data = await settingsResponse.json();
+    delete data.wifiPassword;
+    delete data.haPassword;
+    const coredumpBlob = await fetch(`/api/core-dump`).then(r => r.blob());
+    let coredump = await imageUrlToBase64(coredumpBlob);
+    coredump = coredump.substring(coredump.indexOf("base64,") + 7);
+    const supportFile = {
+      settings: data,
+      versions: formData,
+      coredump
+    };
+    const ts = Date.now();
+    downloadJson(supportFile, `support-${ts}.dat`);
   }, []);
   useEffect(() => {
     const listenerId = apiService.on('res:ota-settings', msg => {
@@ -180,9 +206,9 @@ export function OTA() {
             <button
               type='button'
               className='btn btn-outline'
-              onClick={downloadCoreDump}
+              onClick={downloadSupportData}
             >
-              Download Core Dump
+              Download Support Data
             </button>
           </div>
         </div>

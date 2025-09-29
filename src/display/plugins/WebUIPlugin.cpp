@@ -4,20 +4,20 @@
 #include <esp_system.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
-#include <esp_log.h>
 #include <esp_partition.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/models/profile.h>
 
-#include "BLEScalePlugin.h"
-#include "ShotHistoryPlugin.h"
+#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/ShotHistoryPlugin.h>
 #include <algorithm>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <version.h>
+
 static std::unordered_map<uint32_t, std::string> rxBuffers;
 static WebUIPlugin* g_webUIPlugin = nullptr;
 
@@ -639,7 +639,7 @@ void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {
                 ESP_LOGE("WebUIPlugin", "Failed to read core dump: %s", esp_err_to_name(err));
                 return 0;
             }
-            
+
             return toRead;
         }
     );

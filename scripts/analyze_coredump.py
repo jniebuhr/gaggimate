@@ -10,12 +10,12 @@ Usage:
     python3 scripts/analyze_coredump.py <coredump_file> [environment_or_elf_file] [elf_file]
     
 Examples:
-    python3 scripts/analyze_coredump.py /path/to/coredump.bin
-    python3 scripts/analyze_coredump.py /path/to/coredump.bin display
-    python3 scripts/analyze_coredump.py /path/to/coredump.bin controller
-    python3 scripts/analyze_coredump.py /path/to/coredump.bin display-headless
-    python3 scripts/analyze_coredump.py /path/to/coredump.bin /path/to/firmware.elf
-    python3 scripts/analyze_coredump.py /path/to/coredump.bin display /path/to/firmware.elf
+    python3 scripts/analyze_coredump.py /path/to/support.bin
+    python3 scripts/analyze_coredump.py /path/to/support.bin display
+    python3 scripts/analyze_coredump.py /path/to/support.bin controller
+    python3 scripts/analyze_coredump.py /path/to/support.bin display-headless
+    python3 scripts/analyze_coredump.py /path/to/support.bin /path/to/firmware.elf
+    python3 scripts/analyze_coredump.py /path/to/support.bin display /path/to/firmware.elf
 
 Environments:
     display           - Main display controller (default)
@@ -30,6 +30,8 @@ import sys
 import subprocess
 import tempfile
 import shutil
+import json
+import base64
 from pathlib import Path
 
 def find_pio_build_dir(environment="display"):
@@ -214,8 +216,23 @@ def main():
         print("  python3 scripts/analyze_coredump.py ~/Downloads/coredump.bin display /path/to/firmware.elf")
         sys.exit(1)
     
-    coredump_file = sys.argv[1]
-    
+    support_file = sys.argv[1]
+    support_data = {
+        'versions': {
+            'displayVersion': 'unknown'
+        }
+    }
+
+    coredump_file = "coredump.bin"
+    with open(support_file, 'r') as f:
+        support_data = json.load(f)
+        coredump = support_data['coredump']
+        coredump_binary = base64.b64decode(coredump)
+        with open(coredump_file, 'wb') as f2:
+            f2.write(coredump_binary)
+
+
+
     # Parse arguments - support both environment and direct ELF file specification
     environment = "display"  # default
     custom_elf_file = None
@@ -233,6 +250,8 @@ def main():
     
     print("🚀 ESP32 Core Dump Analyzer")
     print("="*50)
+    print(f"Version: {support_data['versions']['displayVersion']}")
+    print(f"Support file: {support_file}")
     print(f"Core dump: {coredump_file}")
     if custom_elf_file:
         print(f"ELF file: {custom_elf_file}")
