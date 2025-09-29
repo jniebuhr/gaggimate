@@ -511,8 +511,14 @@ void Controller::activate() {
         return;
     clear();
     clientController.tare();
-    if (isVolumetricAvailable())
+    if (isVolumetricAvailable()) {
+#ifdef NIGHTLY_BUILD
+        currentVolumetricSource = isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::FLOW_ESTIMATION;
+#else
+        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
+#endif
         pluginManager->trigger("controller:brew:prestart");
+    }
     delay(200);
     switch (mode) {
     case MODE_BREW:
@@ -557,6 +563,7 @@ void Controller::clear() {
     }
     delete lastProcess;
     lastProcess = nullptr;
+    currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
 }
 
 void Controller::activateGrind() {
@@ -624,16 +631,10 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         lastBluetoothMeasurement = millis();
     }
 
-#ifdef NIGHTLY_BUILD
-    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION && isBluetoothScaleHealthy()) {
-        ESP_LOGD(LOG_TAG, "Ignoring flow estimation, bluetooth scale available (%lums ago)", timeSinceLastBluetooth);
+    if (currentVolumetricSource != source) {
+        ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
         return;
     }
-#else
-    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
-        return;
-    }
-#endif
     if (currentProcess != nullptr) {
         currentProcess->updateVolume(measurement);
     }
