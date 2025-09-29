@@ -632,7 +632,7 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     }
 
     if (currentVolumetricSource != source) {
-        ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match", timeSinceLastBluetooth);
+        ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
         return;
     }
     if (currentProcess != nullptr) {
