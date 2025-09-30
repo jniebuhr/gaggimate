@@ -171,6 +171,23 @@ export function OTA() {
               </div>
             </div>
 
+            {formData.spiffsTotal !== undefined && (
+              <div className='flex flex-col space-y-2'>
+                <label className='text-sm font-medium'>Storage (SPIFFS)</label>
+                <div className='flex flex-col gap-1'>
+                  <div className='w-full h-3 rounded bg-base-300 overflow-hidden'>
+                    <div
+                      className='h-full bg-primary transition-all'
+                      style={{ width: `${formData.spiffsUsedPct || 0}%` }}
+                    />
+                  </div>
+                  <div className='text-xs opacity-75'>
+                    {((formData.spiffsUsed || 0) / 1024).toFixed(1)} KB / {(formData.spiffsTotal / 1024).toFixed(1)} KB ({formData.spiffsUsedPct}%)
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className='alert alert-warning'>
               <span>
                 Make sure to backup your profiles from the profile screen before updating the

@@ -5,9 +5,9 @@
 #include <SPIFFS.h>
 #include <display/core/Plugin.h>
 #include <display/core/utils.h>
+#include <display/models/shot_log_format.h>
 
-constexpr size_t SHOT_HISTORY_INTERVAL = 100;
-constexpr size_t MAX_HISTORY_ENTRIES = 3;
+constexpr size_t MAX_HISTORY_ENTRIES = 10;
 
 class ShotHistoryPlugin : public Plugin {
   public:
@@ -23,26 +23,6 @@ class ShotHistoryPlugin : public Plugin {
   private:
     void saveNotes(const String &id, const JsonDocument &notes);
     void loadNotes(const String &id, JsonDocument &notes);
-    struct ShotSample {
-        unsigned long t;
-        float tt;
-        float ct;
-        float tp;
-        float cp;
-        float fl;
-        float tf;
-        float pf;
-        float vf;
-        float v;
-        float ev;
-        float pr;
-
-        std::string serialize() {
-            return string_format("%d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", t, tt, ct, tp, cp, fl, tf, pf, vf,
-                                 v, ev, pr);
-        }
-    };
-
     void startRecording();
 
     unsigned long getTime();
@@ -54,9 +34,13 @@ class ShotHistoryPlugin : public Plugin {
     PluginManager *pluginManager = nullptr;
     String currentId = "";
     bool isFileOpen = false;
+    File currentFile;
+    ShotLogHeader header{};
+    uint32_t sampleCount = 0;
+    uint8_t ioBuffer[4096];
+    size_t ioBufferPos = 0; // bytes used
 
     bool recording = false;
-    bool headerWritten = false;
     unsigned long shotStart = 0;
     float currentTemperature = 0.0f;
     float currentBluetoothWeight = 0.0f;
@@ -67,6 +51,7 @@ class ShotHistoryPlugin : public Plugin {
     String currentProfileName;
 
     xTaskHandle taskHandle;
+    void flushBuffer();
     static void loopTask(void *arg);
 };
 

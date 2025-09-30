@@ -21,6 +21,13 @@
 static std::unordered_map<uint32_t, std::string> rxBuffers;
 static WebUIPlugin* g_webUIPlugin = nullptr;
 
+// Safe JSON send helper: serialize to String to guarantee null termination
+static void wsSendJson(AsyncWebSocket *ws, uint32_t clientId, JsonDocument &doc) {
+    String out;
+    serializeJson(doc, out);
+    ws->text(clientId, out);
+}
+
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {
     g_webUIPlugin = this;
 }
@@ -157,6 +164,46 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
+    server.on("/api/history", [this](AsyncWebServerRequest *request) {
+        if (!request->hasArg("id")) {
+            request->send(400, "text/plain", "missing id");
+            return;
+        }
+        String id = request->arg("id");
+        String path = "/h/" + id + ".slog";
+        if (!SPIFFS.exists(path)) {
+            request->send(404, "text/plain", "not found");
+            return;
+        }
+        File file = SPIFFS.open(path, "r");
+        if (!file) {
+            request->send(500, "text/plain", "open failed");
+            return;
+        }
+            // Peek at header to see if shot is complete
+            ShotLogHeader hdr{};
+            size_t availableSize = file.size();
+            size_t sendSize = availableSize; // default entire file
+            if (availableSize >= sizeof(hdr)) {
+                if (file.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) && hdr.magic == SHOT_LOG_MAGIC) {
+                    if (hdr.sampleCount == 0) {
+                        // Incomplete: trim any trailing partial sample bytes.
+                        size_t dataBytes = availableSize - sizeof(hdr);
+                        size_t fullSamplesBytes = (dataBytes / SHOT_LOG_SAMPLE_SIZE) * SHOT_LOG_SAMPLE_SIZE;
+                        sendSize = sizeof(hdr) + fullSamplesBytes;
+                    }
+                }
+                file.seek(0, SeekSet); // rewind for streaming
+            } else {
+                file.seek(0, SeekSet);
+            }
+            AsyncWebServerResponse *response = request->beginResponse(file, path, "application/octet-stream", sendSize);
+            response->addHeader("Content-Disposition", "attachment; filename=\"" + id + ".slog\"");
+            if (hdr.sampleCount == 0) {
+                response->addHeader("X-GaggiMate-Incomplete", "1");
+            }
+            request->send(response);
+    });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
@@ -258,10 +305,7 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                 } else if (msgType.startsWith("req:history")) {
                     JsonDocument resp;
                     ShotHistory.handleRequest(doc, resp);
-                    size_t bufferSize = measureJson(resp);
-                    auto *buffer = ws.makeBuffer(bufferSize);
-                    serializeJson(resp, buffer->get(), bufferSize);
-                    client->text(buffer);
+                    wsSendJson(&ws, client->id(), resp);
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
                 }
@@ -361,10 +405,8 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
         }
     }
 
-    size_t bufferSize = measureJson(response);
-    auto *buffer = ws.makeBuffer(bufferSize);
-    serializeJson(response, buffer->get(), bufferSize);
-    ws.text(clientId, buffer);
+    // Allocate +1 for null terminator to avoid overwrite/corruption
+    wsSendJson(&ws, clientId, response);
 }
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
@@ -572,6 +614,19 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;
+    // SPIFFS usage metrics
+    {
+        size_t total = SPIFFS.totalBytes();
+        size_t used = SPIFFS.usedBytes();
+        size_t freeBytes = total > used ? (total - used) : 0;
+        doc["spiffsTotal"] = static_cast<uint32_t>(total);
+        doc["spiffsUsed"] = static_cast<uint32_t>(used);
+        doc["spiffsFree"] = static_cast<uint32_t>(freeBytes);
+        if (total > 0) {
+            // Provide integer percentage to avoid float JSON
+            doc["spiffsUsedPct"] = static_cast<uint8_t>((used * 100) / total);
+        }
+    }
     ws.textAll(doc.as<String>());
 }
 

@@ -49,22 +49,37 @@ export function ChartComponent({ data, className, chartClassName }) {
   useEffect(() => {
     if (!chart) return;
 
-    const handleResize = () => {
+  // Generic "get or create" helper for nested option objects.
+  const ensure = (obj, key, def) => {
+      if (!obj[key]) obj[key] = def;
+      return obj[key];
+    };
+
+  // Walk a path (array of keys) under chart.options creating objects.
+  // Guarantees a font object exists so we can safely assign size.
+  const ensureFont = path => {
+      const target = path.reduce((acc, key) => ensure(acc, key, {}), chart.options);
+      if (!target.font) target.font = {}; // for scale tick objects that may embed font deeper
+      return target;
+    };
+
+  const handleResize = () => {
       const isSmallScreen = window.innerWidth < 640;
 
       // Update legend font size
-      chart.options.plugins.legend.labels.font.size = isSmallScreen ? 10 : 12;
+      ensureFont(['plugins', 'legend', 'labels']).font.size = isSmallScreen ? 10 : 12;
 
       // Update title font size
-      chart.options.plugins.title.font.size = isSmallScreen ? 14 : 16;
+      ensureFont(['plugins', 'title']).font.size = isSmallScreen ? 14 : 16;
 
       // Update axis font sizes
-      chart.options.scales.y.ticks.font.size = isSmallScreen ? 10 : 12;
-      chart.options.scales.y1.ticks.font.size = isSmallScreen ? 10 : 12;
-      chart.options.scales.x.ticks.font.size = isSmallScreen ? 10 : 12;
+      ensureFont(['scales', 'y', 'ticks']).font.size = isSmallScreen ? 10 : 12;
+      ensureFont(['scales', 'y1', 'ticks']).font.size = isSmallScreen ? 10 : 12;
+      ensureFont(['scales', 'x', 'ticks']).font.size = isSmallScreen ? 10 : 12;
 
       // Update maxTicksLimit for x-axis
-      chart.options.scales.x.ticks.maxTicksLimit = isSmallScreen ? 5 : 10;
+      const xTicks = ensureFont(['scales', 'x', 'ticks']);
+      xTicks.maxTicksLimit = isSmallScreen ? 5 : 10;
 
       // Force chart to resize and recalculate dimensions
       chart.resize();

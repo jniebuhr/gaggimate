@@ -2,7 +2,25 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { ChartComponent } from '../../components/Chart.jsx';
 
 function getChartData(data) {
-  let start = 0;
+  // Build sample point arrays once (numeric x for linear scale)
+  const ct = [];
+  const tt = [];
+  const cp = [];
+  const tp = [];
+  const fl = [];
+  const pf = [];
+  const tf = [];
+  for (let i = 0; i < data.length; i++) {
+    const s = data[i];
+    const x = s.t / 1000.0; // seconds (number)
+    ct.push({ x, y: s.ct });
+    tt.push({ x, y: s.tt });
+    cp.push({ x, y: s.cp });
+    tp.push({ x, y: s.tp });
+    fl.push({ x, y: s.fl });
+    pf.push({ x, y: s.pf });
+    tf.push({ x, y: s.tf });
+  }
   return {
     type: 'line',
     data: {
@@ -11,7 +29,7 @@ function getChartData(data) {
           label: 'Current Temperature',
           borderColor: '#F0561D',
           pointStyle: false,
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.ct })),
+          data: ct,
         },
         {
           label: 'Target Temperature',
@@ -19,14 +37,14 @@ function getChartData(data) {
           borderColor: '#731F00',
           borderDash: [6, 6],
           pointStyle: false,
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tt })),
+          data: tt,
         },
         {
           label: 'Current Pressure',
           borderColor: '#0066CC',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.cp })),
+          data: cp,
         },
         {
           label: 'Target Pressure',
@@ -35,21 +53,21 @@ function getChartData(data) {
           borderDash: [6, 6],
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tp })),
+          data: tp,
         },
         {
           label: 'Current Pump Flow',
           borderColor: '#63993D',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.fl })),
+          data: fl,
         },
         {
           label: 'Current Puck Flow',
           borderColor: '#204D00',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.pf })),
+          data: pf,
         },
         {
           label: 'Target Pump Flow',
@@ -57,41 +75,58 @@ function getChartData(data) {
           borderDash: [6, 6],
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tf })),
+          data: tf,
         },
       ],
     },
     options: {
       responsive: true,
+      parsing: false, // We already provide x/y objects
+      spanGaps: true,
       plugins: {
         legend: {
           position: 'top',
           display: true,
           labels: {
-            boxWidth: 12,
+            usePointStyle: true,
+            pointStyle: 'line',
+            pointStyleWidth: 20,
             padding: 8,
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
+            },
+            generateLabels: function(chart) {
+              const original = Chart.defaults.plugins.legend.labels.generateLabels;
+              const labels = original.call(this, chart);
+              
+              labels.forEach((label, index) => {
+                const dataset = chart.data.datasets[index];
+                label.lineWidth = 3;
+                if (dataset.borderDash && dataset.borderDash.length > 0) {
+                  label.lineDash = dataset.borderDash;
+                }
+              });
+              
+              return labels;
             },
           },
         },
         title: {
           display: false,
-          text: 'Temperature History',
-          font: {
-            size: window.innerWidth < 640 ? 14 : 16,
-          },
         },
       },
       animation: false,
       scales: {
+        x: {
+          type: 'linear',
+          title: { display: true, text: 'Time (s)' },
+          ticks: { font: { size: window.innerWidth < 640 ? 10 : 12 } },
+        },
         y: {
           type: 'linear',
           ticks: {
-            callback: value => {
-              return `${value} °C`;
-            },
-            font: {
+            callback: value => `${value} °C`,
+            font: { 
               size: window.innerWidth < 640 ? 10 : 12,
             },
           },
@@ -102,21 +137,12 @@ function getChartData(data) {
           max: 16,
           position: 'right',
           ticks: {
-            callback: value => {
-              return `${value} bar / g/s`;
-            },
+            callback: value => `${value} bar / g/s`,
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
           },
-        },
-        x: {
-          ticks: {
-            source: 'auto',
-            font: {
-              size: window.innerWidth < 640 ? 10 : 12,
-            },
-          },
+          grid: { drawOnChartArea: false },
         },
       },
     },

@@ -4,6 +4,7 @@
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/utils.h>
+#include <display/models/shot_log_format.h>
 
 ShotHistoryPlugin ShotHistory;
 
@@ -22,48 +23,71 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
 }
 
 void ShotHistoryPlugin::record() {
-    static File file;
     if (recording && controller->getMode() == MODE_BREW) {
         if (!isFileOpen) {
             if (!SPIFFS.exists("/h")) {
                 SPIFFS.mkdir("/h");
             }
-            file = SPIFFS.open("/h/" + currentId + ".dat", FILE_APPEND);
-            if (file) {
+            currentFile = SPIFFS.open("/h/" + currentId + ".slog", FILE_WRITE);
+            if (currentFile) {
                 isFileOpen = true;
+                // Prepare header
+                memset(&header, 0, sizeof(header));
+                header.magic = SHOT_LOG_MAGIC;
+                header.version = SHOT_LOG_VERSION;
+                header.reserved0 = (uint8_t)SHOT_LOG_SAMPLE_SIZE; // record sample size actually used
+                header.headerSize = SHOT_LOG_HEADER_SIZE;
+                header.sampleInterval = SHOT_LOG_SAMPLE_INTERVAL_MS;
+                header.fieldsMask = SHOT_LOG_FIELDS_MASK_ALL;
+                header.startEpoch = getTime();
+                Profile profile = controller->getProfileManager()->getSelectedProfile();
+                strncpy(header.profileId, profile.id.c_str(), sizeof(header.profileId) - 1);
+                strncpy(header.profileName, profile.label.c_str(), sizeof(header.profileName) - 1);
+                // Write header placeholder
+                currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
-        }
-        if (!headerWritten) {
-            file.printf("1,%s,%ld\n", currentProfileName.c_str(), getTime());
-            headerWritten = true;
         }
         float btDiff = currentBluetoothWeight - lastBluetoothWeight;
         float btFlow = btDiff / 0.25f;
         currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
         lastBluetoothWeight = currentBluetoothWeight;
-        ShotSample s{millis() - shotStart,
-                     controller->getTargetTemp(),
-                     currentTemperature,
-                     controller->getTargetPressure(),
-                     controller->getCurrentPressure(),
-                     controller->getCurrentPumpFlow(),
-                     controller->getTargetFlow(),
-                     controller->getCurrentPuckFlow(),
-                     currentBluetoothFlow,
-                     currentBluetoothWeight,
-                     currentEstimatedWeight,
-                     currentPuckResistance};
+
+        ShotLogSample sample{};
+        sample.t = millis() - shotStart;
+        sample.tt = controller->getTargetTemp();
+        sample.ct = currentTemperature;
+        sample.tp = controller->getTargetPressure();
+        sample.cp = controller->getCurrentPressure();
+        sample.fl = controller->getCurrentPumpFlow();
+        sample.tf = controller->getTargetFlow();
+        sample.pf = controller->getCurrentPuckFlow();
+        sample.vf = currentBluetoothFlow;
+        sample.v = currentBluetoothWeight;
+        sample.ev = currentEstimatedWeight;
+        sample.pr = currentPuckResistance;
+
         if (isFileOpen) {
-            file.println(s.serialize().c_str());
+            if (ioBufferPos + sizeof(sample) > sizeof(ioBuffer)) {
+                flushBuffer();
+            }
+            memcpy(ioBuffer + ioBufferPos, &sample, sizeof(sample));
+            ioBufferPos += sizeof(sample);
+            sampleCount++;
         }
     }
     if (!recording && isFileOpen) {
-        file.close();
+        flushBuffer();
+        // Patch header with sampleCount and duration
+        header.sampleCount = sampleCount;
+        header.durationMs = millis() - shotStart;
+        currentFile.seek(0, SeekSet);
+        currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
+        currentFile.close();
         isFileOpen = false;
-        unsigned long duration = millis() - shotStart;
+        unsigned long duration = header.durationMs;
         if (duration <= 7500) { // Exclude failed shots and flushes
-            SPIFFS.remove("/h/" + currentId + ".dat");
-            SPIFFS.remove("/h/" + currentId + ".json"); // Also remove notes file if it exists
+            SPIFFS.remove("/h/" + currentId + ".slog");
+            SPIFFS.remove("/h/" + currentId + ".json");
         } else {
             controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
             cleanupHistory();
@@ -82,7 +106,8 @@ void ShotHistoryPlugin::startRecording() {
     currentBluetoothFlow = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
-    headerWritten = false;
+    sampleCount = 0;
+    ioBufferPos = 0;
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -121,46 +146,67 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         if (root && root.isDirectory()) {
             File file = root.openNextFile();
             while (file) {
-                if (String(file.name()).endsWith(".dat")) {
-                    auto o = arr.add<JsonObject>();
-                    auto name = String(file.name());
-                    int start = name.lastIndexOf('/') + 1;
-                    int end = name.lastIndexOf('.');
-                    String id = name.substring(start, end);
-                    o["id"] = id;
-                    o["history"] = file.readString();
-
-                    // Also include notes if they exist
-                    JsonDocument notes;
-                    loadNotes(id, notes);
-                    if (!notes.isNull() && notes.size() > 0) {
-                        o["notes"] = notes;
+                String fname = String(file.name());
+                if (fname.endsWith(".slog")) {
+                    // Read header only
+                    ShotLogHeader hdr{};
+                    if (file.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) && hdr.magic == SHOT_LOG_MAGIC) {
+                        uint32_t effectiveSamples = hdr.sampleCount;
+                        uint32_t effectiveDuration = hdr.durationMs;
+                        size_t totalSize = file.size();
+                        if (effectiveSamples == 0 || effectiveDuration == 0) {
+                            // Interrupted shot (header not patched). Infer from file length.
+                            if (totalSize > sizeof(hdr)) {
+                                size_t dataBytes = totalSize - sizeof(hdr);
+                                uint32_t inferredSamples = dataBytes / SHOT_LOG_SAMPLE_SIZE;
+                                if (inferredSamples > 0) {
+                                    effectiveSamples = inferredSamples;
+                                    // Read last full sample to get actual t
+                                    size_t lastOffset = sizeof(hdr) + (static_cast<size_t>(inferredSamples) - 1) * SHOT_LOG_SAMPLE_SIZE;
+                                    if (file.seek(lastOffset, SeekSet)) {
+                                        ShotLogSample lastSample{};
+                                        if (file.read(reinterpret_cast<uint8_t *>(&lastSample), sizeof(lastSample)) == sizeof(lastSample)) {
+                                            effectiveDuration = lastSample.t;
+                                        } else {
+                                            // Fallback: approximate duration from count * interval
+                                            effectiveDuration = inferredSamples * SHOT_LOG_SAMPLE_INTERVAL_MS;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        auto o = arr.add<JsonObject>();
+                        int start = fname.lastIndexOf('/') + 1;
+                        int end = fname.lastIndexOf('.');
+                        String id = fname.substring(start, end);
+                        o["id"] = id;
+                        o["version"] = hdr.version;
+                        o["timestamp"] = hdr.startEpoch;
+                        o["profile"] = hdr.profileName;
+                        o["profileId"] = hdr.profileId;
+                        o["samples"] = effectiveSamples;
+                        o["duration"] = effectiveDuration;
+                        if (hdr.sampleCount == 0 && effectiveSamples > 0) {
+                            o["incomplete"] = true; // flag partial shot
+                        }
+                        // Notes
+                        JsonDocument notes;
+                        loadNotes(id, notes);
+                        if (!notes.isNull() && notes.size() > 0) {
+                            o["notes"] = notes;
+                        }
                     }
                 }
                 file = root.openNextFile();
             }
         }
     } else if (type == "req:history:get") {
-        auto id = request["id"].as<String>();
-        File file = SPIFFS.open("/h/" + id + ".dat", "r");
-        if (file) {
-            String data = file.readString();
-            response["history"] = data;
-            file.close();
-
-            // Also include notes if they exist
-            JsonDocument notes;
-            loadNotes(id, notes);
-            if (!notes.isNull() && notes.size() > 0) {
-                response["notes"] = notes;
-            }
-        } else {
-            response["error"] = "not found";
-        }
+        // Return error: binary must be fetched via HTTP endpoint
+        response["error"] = "use HTTP /api/history?id=<id>";
     } else if (type == "req:history:delete") {
         auto id = request["id"].as<String>();
-        SPIFFS.remove("/h/" + id + ".dat");
-        SPIFFS.remove("/h/" + id + ".json"); // Also remove notes file if it exists
+        SPIFFS.remove("/h/" + id + ".slog");
+        SPIFFS.remove("/h/" + id + ".json");
         response["msg"] = "Ok";
     } else if (type == "req:history:notes:get") {
         auto id = request["id"].as<String>();
@@ -198,6 +244,14 @@ void ShotHistoryPlugin::loopTask(void *arg) {
     auto *plugin = static_cast<ShotHistoryPlugin *>(arg);
     while (true) {
         plugin->record();
-        vTaskDelay(250 / portTICK_PERIOD_MS);
+    // Use canonical interval from shot log format to avoid divergence.
+    vTaskDelay(SHOT_LOG_SAMPLE_INTERVAL_MS / portTICK_PERIOD_MS);
+    }
+}
+
+void ShotHistoryPlugin::flushBuffer() {
+    if (isFileOpen && ioBufferPos > 0) {
+        currentFile.write(ioBuffer, ioBufferPos);
+        ioBufferPos = 0;
     }
 }
