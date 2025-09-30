@@ -14,7 +14,7 @@ Max31855Thermocouple::Max31855Thermocouple(const int csPin, const int misoPin, c
 
 float Max31855Thermocouple::read() { return isErrorState() ? 0.0f : temperature; }
 
-bool Max31855Thermocouple::isErrorState() { return temperature <= 0 || errors >= MAX31855_MAX_ERRORS; }
+bool Max31855Thermocouple::isErrorState() { return temperature <= 0 || errorCount >= MAX31855_MAX_ERRORS; }
 
 void Max31855Thermocouple::setup() {
     SPI.begin();
@@ -27,25 +27,32 @@ void Max31855Thermocouple::setup() {
 }
 
 void Max31855Thermocouple::loop() {
-    if (errors >= MAX31855_MAX_ERRORS || temperature > MAX_SAFE_TEMP) {
+    if (errorCount >= MAX31855_MAX_ERRORS || temperature > MAX_SAFE_TEMP) {
         error_callback();
         return;
     }
+    // If buffer has been filled up, remove the previous result from the error count
+    if (resultCount == MAX31855_ERROR_WINDOW) {
+        errorCount -= resultBuffer[bufferIndex];
+    } else {
+        ++resultCount;
+    }
 
-    // Slowly decrease error counter so occasional ones won't trip the error detection
-    errors = max(0.0f, errors - 0.1f);
+    float temp;
     int status = max31855->read();
     if (status != STATUS_OK) {
         ESP_LOGE(LOG_TAG, "Failed to read temperature: %d\n", status);
-        errors++;
-        return;
+        temp = 0.0f;
+    } else {
+        temp = max31855->getTemperature();
     }
 
-    float temp = max31855->getTemperature();
-    if (temp <= 0) {
-        errors++;
+    resultBuffer[bufferIndex] = temp <= 0.0f ? 1 : 0;
+    errorCount += resultBuffer[bufferIndex];
+    bufferIndex = (bufferIndex + 1) % MAX31855_ERROR_WINDOW;
+
+    if (temp <= 0.0f)
         return;
-    }
     temperature = 0.2f * temp + 0.8f * temperature;
     ESP_LOGV(LOG_TAG, "Updated temperature: %2f\n", temperature);
     callback(temperature);
