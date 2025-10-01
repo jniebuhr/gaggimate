@@ -42,7 +42,9 @@ void ShotHistoryPlugin::record() {
                 header.startEpoch = getTime();
                 Profile profile = controller->getProfileManager()->getSelectedProfile();
                 strncpy(header.profileId, profile.id.c_str(), sizeof(header.profileId) - 1);
+                header.profileId[sizeof(header.profileId) - 1] = '\0';
                 strncpy(header.profileName, profile.label.c_str(), sizeof(header.profileName) - 1);
+                header.profileName[sizeof(header.profileName) - 1] = '\0';
                 // Write header placeholder
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }

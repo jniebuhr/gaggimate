@@ -41,10 +41,12 @@ export function parseBinaryShot(arrayBuffer, id) {
 
   const samples = [];
   const dataBytes = view.byteLength - headerSize;
-  if (dataBytes < 0 || dataBytes % SAMPLE_SIZE !== 0) {
+  if (dataBytes < 0) {
     throw new Error('Data size misaligned');
   }
-  const inferredSamples = dataBytes / SAMPLE_SIZE;
+  const fullSampleBytes = Math.floor(dataBytes / SAMPLE_SIZE) * SAMPLE_SIZE;
+  const trailingBytes = dataBytes - fullSampleBytes;
+  const inferredSamples = fullSampleBytes / SAMPLE_SIZE;
   const maxSamples = sampleCountHeader ? Math.min(sampleCountHeader, inferredSamples) : inferredSamples;
   for (let i = 0; i < maxSamples; i++) {
     const base = headerSize + i * SAMPLE_SIZE;
@@ -64,8 +66,10 @@ export function parseBinaryShot(arrayBuffer, id) {
   }
 
   const lastT = samples.length ? samples[samples.length - 1].t : 0;
-  const effectiveDuration = durationHeader || lastT;
-  const incomplete = sampleCountHeader === 0;
+  const headerIncomplete = sampleCountHeader === 0;
+  const inferredIncomplete = trailingBytes !== 0 || (sampleCountHeader && sampleCountHeader > inferredSamples);
+  const incomplete = headerIncomplete || inferredIncomplete;
+  const effectiveDuration = !incomplete && durationHeader ? durationHeader : lastT;
 
   return {
     id,
@@ -79,5 +83,7 @@ export function parseBinaryShot(arrayBuffer, id) {
     incomplete,
     sampleInterval,
     fieldsMask,
+    trailingBytes,
+    samplesExpected: sampleCountHeader,
   };
 }

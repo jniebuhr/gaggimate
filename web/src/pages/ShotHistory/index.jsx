@@ -91,13 +91,23 @@ export function ShotHistory() {
               const target = history.find(h => h.id === id);
               if (!target || target.loaded) return;
               try {
-                const resp = await fetch(`/api/history?id=${id}`);
+                const resp = await fetch(`/history/${id}.slog`);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const buf = await resp.arrayBuffer();
                 const parsed = parseBinaryShot(buf, id);
-                // Merge notes if existed from list
-                if (target.notes) parsed.notes = target.notes;
-                const updated = history.map(h => (h.id === id ? { ...parsed, loaded: true } : h));
-                setHistory(updated);
+                parsed.incomplete = (target?.incomplete ?? false) || parsed.incomplete;
+                if (target?.notes) parsed.notes = target.notes;
+                setHistory(prev =>
+                  prev.map(h =>
+                    h.id === id
+                      ? {
+                          ...h,
+                          ...parsed,
+                          loaded: true,
+                        }
+                      : h,
+                  ),
+                );
               } catch (e) {
                 console.error('Failed loading shot', e);
               }
