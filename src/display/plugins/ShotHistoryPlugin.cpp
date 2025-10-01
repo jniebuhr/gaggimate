@@ -1,10 +1,62 @@
 #include "ShotHistoryPlugin.h"
 
 #include <SPIFFS.h>
+#include <cmath>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
+
+namespace {
+constexpr float TEMP_SCALE = 10.0f;
+constexpr float PRESSURE_SCALE = 10.0f;
+constexpr float FLOW_SCALE = 100.0f;
+constexpr float WEIGHT_SCALE = 10.0f;
+constexpr float RESISTANCE_SCALE = 100.0f;
+
+constexpr uint16_t TEMP_MAX_VALUE = 2000;       // 200.0 °C
+constexpr uint16_t PRESSURE_MAX_VALUE = 200;    // 20.0 bar
+constexpr uint16_t WEIGHT_MAX_VALUE = 10000;    // 1000.0 g
+constexpr uint16_t RESISTANCE_MAX_VALUE = 0xFFFF;
+constexpr int16_t FLOW_MIN_VALUE = -2000;       // -20.00 ml/s
+constexpr int16_t FLOW_MAX_VALUE = 2000;        //  20.00 ml/s
+
+uint16_t encodeUnsigned(float value, float scale, uint16_t maxValue) {
+    if (!std::isfinite(value)) {
+        return 0;
+    }
+    float scaled = value * scale;
+    if (scaled < 0.0f) {
+        scaled = 0.0f;
+    }
+    scaled += 0.5f;
+    uint32_t fixed = static_cast<uint32_t>(scaled);
+    if (fixed > maxValue) {
+        fixed = maxValue;
+    }
+    return static_cast<uint16_t>(fixed);
+}
+
+int16_t encodeSigned(float value, float scale, int16_t minValue, int16_t maxValue) {
+    if (!std::isfinite(value)) {
+        return 0;
+    }
+    float scaled = value * scale;
+    if (scaled >= 0.0f) {
+        scaled += 0.5f;
+    } else {
+        scaled -= 0.5f;
+    }
+    int32_t fixed = static_cast<int32_t>(scaled);
+    if (fixed < minValue) {
+        fixed = minValue;
+    }
+    if (fixed > maxValue) {
+        fixed = maxValue;
+    }
+    return static_cast<int16_t>(fixed);
+}
+} // namespace
 
 ShotHistoryPlugin ShotHistory;
 
@@ -54,19 +106,20 @@ void ShotHistoryPlugin::record() {
         currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
         lastBluetoothWeight = currentBluetoothWeight;
 
-        ShotLogSample sample{};
-        sample.t = millis() - shotStart;
-        sample.tt = controller->getTargetTemp();
-        sample.ct = currentTemperature;
-        sample.tp = controller->getTargetPressure();
-        sample.cp = controller->getCurrentPressure();
-        sample.fl = controller->getCurrentPumpFlow();
-        sample.tf = controller->getTargetFlow();
-        sample.pf = controller->getCurrentPuckFlow();
-        sample.vf = currentBluetoothFlow;
-        sample.v = currentBluetoothWeight;
-        sample.ev = currentEstimatedWeight;
-        sample.pr = currentPuckResistance;
+    ShotLogSample sample{};
+    uint32_t tick = sampleCount <= 0xFFFF ? sampleCount : 0xFFFF;
+    sample.t = static_cast<uint16_t>(tick);
+    sample.tt = encodeUnsigned(controller->getTargetTemp(), TEMP_SCALE, TEMP_MAX_VALUE);
+    sample.ct = encodeUnsigned(currentTemperature, TEMP_SCALE, TEMP_MAX_VALUE);
+    sample.tp = encodeUnsigned(controller->getTargetPressure(), PRESSURE_SCALE, PRESSURE_MAX_VALUE);
+    sample.cp = encodeUnsigned(controller->getCurrentPressure(), PRESSURE_SCALE, PRESSURE_MAX_VALUE);
+    sample.fl = encodeSigned(controller->getCurrentPumpFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
+    sample.tf = encodeSigned(controller->getTargetFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
+    sample.pf = encodeSigned(controller->getCurrentPuckFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
+    sample.vf = encodeSigned(currentBluetoothFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
+    sample.v = encodeUnsigned(currentBluetoothWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+    sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+    sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
 
         if (isFileOpen) {
             if (ioBufferPos + sizeof(sample) > sizeof(ioBuffer)) {
@@ -104,6 +157,7 @@ void ShotHistoryPlugin::startRecording() {
     }
     shotStart = millis();
     currentBluetoothWeight = 0.0f;
+    lastBluetoothWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
@@ -168,10 +222,12 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
                                     if (file.seek(lastOffset, SeekSet)) {
                                         ShotLogSample lastSample{};
                                         if (file.read(reinterpret_cast<uint8_t *>(&lastSample), sizeof(lastSample)) == sizeof(lastSample)) {
-                                            effectiveDuration = lastSample.t;
+                                            effectiveDuration = static_cast<uint32_t>(lastSample.t) * SHOT_LOG_SAMPLE_INTERVAL_MS;
                                         } else {
                                             // Fallback: approximate duration from count * interval
-                                            effectiveDuration = inferredSamples * SHOT_LOG_SAMPLE_INTERVAL_MS;
+                                            effectiveDuration = inferredSamples > 0
+                                                                     ? (inferredSamples - 1) * SHOT_LOG_SAMPLE_INTERVAL_MS
+                                                                     : 0;
                                         }
                                     }
                                 }

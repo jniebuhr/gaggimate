@@ -4,8 +4,14 @@
 // Strict single format (no backward compatibility)
 
 const HEADER_SIZE = 128;
-const SAMPLE_SIZE = 48; // uint32 + 11 floats
+const SAMPLE_SIZE = 24; // 12 packed 16-bit values
 const MAGIC = 0x544F4853; // 'SHOT'
+
+const TEMP_SCALE = 10;
+const PRESSURE_SCALE = 10;
+const FLOW_SCALE = 100;
+const WEIGHT_SCALE = 10;
+const RESISTANCE_SCALE = 100;
 
 function decodeCString(bytes) {
   let out = '';
@@ -50,18 +56,19 @@ export function parseBinaryShot(arrayBuffer, id) {
   const maxSamples = sampleCountHeader ? Math.min(sampleCountHeader, inferredSamples) : inferredSamples;
   for (let i = 0; i < maxSamples; i++) {
     const base = headerSize + i * SAMPLE_SIZE;
-    const t = view.getUint32(base + 0, true);
-    const tt = view.getFloat32(base + 4, true);
-    const ct = view.getFloat32(base + 8, true);
-    const tp = view.getFloat32(base + 12, true);
-    const cp = view.getFloat32(base + 16, true);
-    const fl = view.getFloat32(base + 20, true);
-    const tf = view.getFloat32(base + 24, true);
-    const pf = view.getFloat32(base + 28, true);
-    const vf = view.getFloat32(base + 32, true);
-    const v = view.getFloat32(base + 36, true);
-    const ev = view.getFloat32(base + 40, true);
-    const pr = view.getFloat32(base + 44, true);
+    const tick = view.getUint16(base + 0, true);
+    const t = tick * sampleInterval;
+    const tt = view.getUint16(base + 2, true) / TEMP_SCALE;
+    const ct = view.getUint16(base + 4, true) / TEMP_SCALE;
+    const tp = view.getUint16(base + 6, true) / PRESSURE_SCALE;
+    const cp = view.getUint16(base + 8, true) / PRESSURE_SCALE;
+    const fl = view.getInt16(base + 10, true) / FLOW_SCALE;
+    const tf = view.getInt16(base + 12, true) / FLOW_SCALE;
+    const pf = view.getInt16(base + 14, true) / FLOW_SCALE;
+    const vf = view.getInt16(base + 16, true) / FLOW_SCALE;
+    const v = view.getUint16(base + 18, true) / WEIGHT_SCALE;
+    const ev = view.getUint16(base + 20, true) / WEIGHT_SCALE;
+    const pr = view.getUint16(base + 22, true) / RESISTANCE_SCALE;
     samples.push({ t, tt, ct, tp, cp, fl, tf, pf, vf, v, ev, pr });
   }
 
