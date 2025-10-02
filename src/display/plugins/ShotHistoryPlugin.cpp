@@ -135,6 +135,8 @@ void ShotHistoryPlugin::record() {
         // Patch header with sampleCount and duration
         header.sampleCount = sampleCount;
         header.durationMs = millis() - shotStart;
+        float finalWeight = currentBluetoothWeight;
+        header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
         currentFile.seek(0, SeekSet);
         currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
         currentFile.close();
@@ -207,32 +209,10 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
                     // Read header only
                     ShotLogHeader hdr{};
                     if (file.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) && hdr.magic == SHOT_LOG_MAGIC) {
-                        uint32_t effectiveSamples = hdr.sampleCount;
-                        uint32_t effectiveDuration = hdr.durationMs;
-                        size_t totalSize = file.size();
-                        if (effectiveSamples == 0 || effectiveDuration == 0) {
-                            // Interrupted shot (header not patched). Infer from file length.
-                            if (totalSize > sizeof(hdr)) {
-                                size_t dataBytes = totalSize - sizeof(hdr);
-                                uint32_t inferredSamples = dataBytes / SHOT_LOG_SAMPLE_SIZE;
-                                if (inferredSamples > 0) {
-                                    effectiveSamples = inferredSamples;
-                                    // Read last full sample to get actual t
-                                    size_t lastOffset = sizeof(hdr) + (static_cast<size_t>(inferredSamples) - 1) * SHOT_LOG_SAMPLE_SIZE;
-                                    if (file.seek(lastOffset, SeekSet)) {
-                                        ShotLogSample lastSample{};
-                                        if (file.read(reinterpret_cast<uint8_t *>(&lastSample), sizeof(lastSample)) == sizeof(lastSample)) {
-                                            effectiveDuration = static_cast<uint32_t>(lastSample.t) * SHOT_LOG_SAMPLE_INTERVAL_MS;
-                                        } else {
-                                            // Fallback: approximate duration from count * interval
-                                            effectiveDuration = inferredSamples > 0
-                                                                     ? (inferredSamples - 1) * SHOT_LOG_SAMPLE_INTERVAL_MS
-                                                                     : 0;
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        float finalWeight = hdr.finalWeight > 0 ? static_cast<float>(hdr.finalWeight) / WEIGHT_SCALE : 0.0f;
+
+                        bool headerIncomplete = hdr.sampleCount == 0;
+
                         auto o = arr.add<JsonObject>();
                         int start = fname.lastIndexOf('/') + 1;
                         int end = fname.lastIndexOf('.');
@@ -242,16 +222,13 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
                         o["timestamp"] = hdr.startEpoch;
                         o["profile"] = hdr.profileName;
                         o["profileId"] = hdr.profileId;
-                        o["samples"] = effectiveSamples;
-                        o["duration"] = effectiveDuration;
-                        if (hdr.sampleCount == 0 && effectiveSamples > 0) {
-                            o["incomplete"] = true; // flag partial shot
+                        o["samples"] = hdr.sampleCount;
+                        o["duration"] = hdr.durationMs;
+                        if (finalWeight > 0.0f) {
+                            o["volume"] = finalWeight;
                         }
-                        // Notes
-                        JsonDocument notes;
-                        loadNotes(id, notes);
-                        if (!notes.isNull() && notes.size() > 0) {
-                            o["notes"] = notes;
+                        if (headerIncomplete) {
+                            o["incomplete"] = true; // flag partial shot
                         }
                     }
                 }

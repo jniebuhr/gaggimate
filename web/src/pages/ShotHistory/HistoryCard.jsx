@@ -50,6 +50,8 @@ export default function HistoryCard({ shot, onDelete, onLoad }) {
   const handleNotesUpdate = useCallback(notes => {
     setShotNotes(notes);
   }, []);
+  const profileTitle = shot.profile || 'Unknown Profile';
+  const displayTitle = shot.incomplete ? `${profileTitle} (Interrupted)` : profileTitle;
   return (
     <Card sm={12}>
       <div className='flex flex-col'>
@@ -66,11 +68,11 @@ export default function HistoryCard({ shot, onDelete, onLoad }) {
           </button>
           <div className='flex-grow'>
             <div className='flex flex-row'>
-              <span className='flex-grow text-xl leading-tight font-bold'>
-                {shot.profile} - {date.toLocaleString()}
+              <span className='flex-grow text-lg leading-tight font-bold'>
+                {displayTitle} - {date.toLocaleString()}
               </span>
               {shot.incomplete && (
-                <span className='bg-warning/20 text-warning border-warning/40 ml-2 shrink-0 rounded border px-2 py-1 text-xs font-semibold'>
+                <span className='ml-2 shrink-0 inline-flex items-center justify-center rounded border border-warning/40 bg-warning/20 px-2 py-1 text-xs font-semibold text-warning leading-none'>
                   INCOMPLETE
                 </span>
               )}

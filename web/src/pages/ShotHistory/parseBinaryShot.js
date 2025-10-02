@@ -37,6 +37,7 @@ export function parseBinaryShot(arrayBuffer, id) {
   const startEpoch = view.getUint32(24, true);
   const profileIdBytes = new Uint8Array(arrayBuffer, 28, 32);
   const profileNameBytes = new Uint8Array(arrayBuffer, 60, 48);
+  const finalWeightHeader = view.getUint16(108, true);
   const profileId = decodeCString(profileIdBytes);
   const profileName = decodeCString(profileNameBytes);
 
@@ -81,6 +82,10 @@ export function parseBinaryShot(arrayBuffer, id) {
   const incomplete = headerIncomplete || inferredIncomplete;
   const effectiveDuration = !incomplete && durationHeader ? durationHeader : lastT;
 
+  const headerVolume = finalWeightHeader ? finalWeightHeader / WEIGHT_SCALE : 0;
+  const sampleVolume = samples.length ? samples[samples.length - 1].v : 0;
+  const volume = headerVolume > 0 ? headerVolume : sampleVolume > 0 ? sampleVolume : null;
+
   return {
     id,
     version,
@@ -89,7 +94,7 @@ export function parseBinaryShot(arrayBuffer, id) {
     timestamp: startEpoch,
     duration: effectiveDuration,
     samples,
-    volume: samples.length ? samples[samples.length - 1].v : 0,
+    volume,
     incomplete,
     sampleInterval,
     fieldsMask,

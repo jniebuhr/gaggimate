@@ -36,7 +36,8 @@ struct ShotLogHeader {
     uint32_t startEpoch;     // epoch seconds
     char     profileId[32];  // null-terminated
     char     profileName[48];// null-terminated
-    uint8_t  reserved[128 - 4 -1 -1 -2 -2 -2 -4 -4 -4 -4 -32 -48]; // pad to 128
+    uint16_t finalWeight;    // final beverage weight (g * 10)
+    uint8_t  reserved[128 - 4 -1 -1 -2 -2 -2 -4 -4 -4 -4 -32 -48 -2]; // pad to 128
 };
 #pragma pack(pop)
 

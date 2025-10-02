@@ -43,7 +43,9 @@ export function ShotHistory() {
         timestamp: item.timestamp,
         duration: item.duration,
         samples: item.samples, // count only
-        notes: item.notes || null,
+        volume: item.volume ?? null,
+        incomplete: !!item.incomplete,
+        notes: null,
         loaded: false,
         data: null,
       }))
@@ -91,7 +93,7 @@ export function ShotHistory() {
               const target = history.find(h => h.id === id);
               if (!target || target.loaded) return;
               try {
-                const resp = await fetch(`/history/${id}.slog`);
+                const resp = await fetch(`/api/history/${id}.slog`);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const buf = await resp.arrayBuffer();
                 const parsed = parseBinaryShot(buf, id);
