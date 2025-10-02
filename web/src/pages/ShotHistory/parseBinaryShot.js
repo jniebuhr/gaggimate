@@ -5,7 +5,7 @@
 
 const HEADER_SIZE = 128;
 const SAMPLE_SIZE = 24; // 12 packed 16-bit values
-const MAGIC = 0x544f4853; // 'SHOT'
+const MAGIC = 0x544F4853; // 'SHOT' - matches backend SHOT_LOG_MAGIC
 
 const TEMP_SCALE = 10;
 const PRESSURE_SCALE = 10;
@@ -26,7 +26,7 @@ export function parseBinaryShot(arrayBuffer, id) {
   const view = new DataView(arrayBuffer);
   if (view.byteLength < HEADER_SIZE) throw new Error('File too small');
   const magic = view.getUint32(0, true);
-  if (magic !== MAGIC) throw new Error('Bad magic');
+  if (magic !== MAGIC) throw new Error(`Bad magic: expected 0x${MAGIC.toString(16)}, got 0x${magic.toString(16)}`);
   const version = view.getUint8(4);
   const deviceSampleSize = view.getUint8(5); // reserved0 holds sample size
   const headerSize = view.getUint16(6, true);

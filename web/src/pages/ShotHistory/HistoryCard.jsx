@@ -7,6 +7,7 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import ShotNotesCard from './ShotNotesCard.jsx';
 
 const DECIMALS = 2;
@@ -15,7 +16,7 @@ function round2(v) {
   return Math.round((v + Number.EPSILON) * 100) / 100;
 }
 
-export default function HistoryCard({ shot, onDelete, onLoad }) {
+export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) {
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
   const [expanded, setExpanded] = useState(false);
   const date = new Date(shot.timestamp * 1000);
@@ -49,7 +50,11 @@ export default function HistoryCard({ shot, onDelete, onLoad }) {
 
   const handleNotesUpdate = useCallback(notes => {
     setShotNotes(notes);
-  }, []);
+    // Notify parent that notes changed (so it can reload the index)
+    if (onNotesChanged) {
+      onNotesChanged();
+    }
+  }, [onNotesChanged]);
   const profileTitle = shot.profile || 'Unknown Profile';
   const displayTitle = shot.incomplete ? `${profileTitle} (Interrupted)` : profileTitle;
   return (
@@ -114,6 +119,12 @@ export default function HistoryCard({ shot, onDelete, onLoad }) {
               )}
             </div>
           </div>
+            {shot.rating && shot.rating > 0 && (
+              <div className='flex flex-row items-center gap-2'>
+                <FontAwesomeIcon icon={faStar} className="text-yellow-500" />
+                {shot.rating}/5
+              </div>
+            )}
         </div>
         {expanded && (
           <div className='mt-2'>

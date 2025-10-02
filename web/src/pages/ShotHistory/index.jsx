@@ -25,6 +25,7 @@ import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import HistoryCard from './HistoryCard.jsx';
 import { parseBinaryShot } from './parseBinaryShot.js';
+import { parseBinaryIndex, indexToShotList } from './parseBinaryIndex.js';
 
 const connected = computed(() => machine.value.connected);
 
@@ -33,25 +34,48 @@ export function ShotHistory() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const loadHistory = async () => {
-    const response = await apiService.request({ tp: 'req:history:list' });
-    // Response now only includes metadata items
-    const list = (response.history || [])
-      .map(item => ({
-        id: item.id,
-        profile: item.profile,
-        profileId: item.profileId,
-        timestamp: item.timestamp,
-        duration: item.duration,
-        samples: item.samples, // count only
-        volume: item.volume ?? null,
-        incomplete: !!item.incomplete,
-        notes: null,
-        loaded: false,
-        data: null,
-      }))
-      .sort((a, b) => b.timestamp - a.timestamp);
-    setHistory(list);
-    setLoading(false);
+    try {
+      // Fetch binary index instead of websocket request
+      const response = await fetch('/api/history/index.bin');
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Index doesn't exist, show empty list with option to rebuild
+          console.log('Shot index not found. You may need to rebuild it if shots exist.');
+          setHistory([]);
+          setLoading(false);
+          return;
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const indexData = parseBinaryIndex(arrayBuffer);
+      const shotList = indexToShotList(indexData);
+      
+      // Preserve loaded state and data from existing shots
+      setHistory(prev => {
+        const existingMap = new Map(prev.map(shot => [shot.id, shot]));
+        return shotList.map(newShot => {
+          const existing = existingMap.get(newShot.id);
+          if (existing && existing.loaded) {
+            // Preserve loaded data but update metadata from index
+            return {
+              ...existing,
+              // Update metadata that might have changed (like rating and volume)
+              rating: newShot.rating,
+              volume: newShot.volume,
+              incomplete: newShot.incomplete,
+            };
+          }
+          return newShot;
+        });
+      });
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load shot history:', error);
+      setHistory([]);
+      setLoading(false);
+    }
   };
   useEffect(() => {
     if (connected.value) {
@@ -63,10 +87,16 @@ export function ShotHistory() {
     async id => {
       setLoading(true);
       await apiService.request({ tp: 'req:history:delete', id });
+      // Reload the index after deletion
       await loadHistory();
     },
-    [apiService, setLoading],
+    [apiService],
   );
+
+  const onNotesChanged = useCallback(async () => {
+    // Reload the index to get updated ratings
+    await loadHistory();
+  }, []);
 
   if (loading) {
     return (
@@ -88,12 +118,15 @@ export function ShotHistory() {
             key={item.id}
             shot={item}
             onDelete={id => onDelete(id)}
+            onNotesChanged={onNotesChanged}
             onLoad={async id => {
               // Fetch binary only if not loaded
               const target = history.find(h => h.id === id);
               if (!target || target.loaded) return;
               try {
-                const resp = await fetch(`/api/history/${id}.slog`);
+                // Pad ID to 6 digits with zeros to match backend filename format
+                const paddedId = id.padStart(6, '0');
+                const resp = await fetch(`/api/history/${paddedId}.slog`);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const buf = await resp.arrayBuffer();
                 const parsed = parseBinaryShot(buf, id);
@@ -105,6 +138,10 @@ export function ShotHistory() {
                       ? {
                           ...h,
                           ...parsed,
+                          // Preserve index metadata over shot file data
+                          volume: h.volume ?? parsed.volume, // Use index volume if available, fallback to shot volume
+                          rating: h.rating ?? parsed.rating, // Use index rating if available
+                          incomplete: h.incomplete ?? parsed.incomplete,
                           loaded: true,
                         }
                       : h,
