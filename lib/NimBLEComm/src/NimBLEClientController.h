@@ -4,7 +4,7 @@
 #include "NimBLEComm.h"
 #include "cstring"
 
-class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLEClientCallbacks {
+class NimBLEClientController : public NimBLEScanCallbacks, NimBLEClientCallbacks {
   public:
     NimBLEClientController();
     void initClient();
@@ -71,11 +71,11 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
 
     String _lastOutputControl = "";
 
-    // BLEAdvertisedDeviceCallbacks override
-    void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;
+    // NimBLEScanCallbacks override
+    void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override;
 
     // NimBLEClientCallbacks override
-    void onDisconnect(NimBLEClient *pServer) override;
+    void onDisconnect(NimBLEClient *pServer, int reason) override;
 
     // Notification callback
     void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) const;
