@@ -399,6 +399,15 @@ void Controller::setTargetGrindVolume(double volume) {
     updateLastAction();
 }
 
+void Controller::raisePhaseDuration() {
+    if (currentProcess != nullptr) {
+        if (currentProcess->getType() == MODE_BREW) {
+            auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+            brewProcess->currentPhase.duration += 1;
+        }
+    }
+}
+
 void Controller::raiseTemp() {
     float temp = getTargetTemp();
     temp = constrain(temp + 1.0f, MIN_TEMP, MAX_TEMP);
