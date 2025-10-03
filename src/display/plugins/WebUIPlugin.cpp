@@ -155,7 +155,15 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
-    server.serveStatic("/history/", SPIFFS, "/h/").setCacheControl("no-store");
+    server.serveStatic("/api/history/", SPIFFS, "/h/").setCacheControl("no-store");
+    server.on("/api/history/index.bin", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        // Serve the binary index file directly
+        if (SPIFFS.exists("/h/index.bin")) {
+            request->send(SPIFFS, "/h/index.bin", "application/octet-stream");
+        } else {
+            request->send(404, "text/plain", "Index not found");
+        }
+    });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");

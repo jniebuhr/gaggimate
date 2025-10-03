@@ -36,7 +36,8 @@ struct ShotLogHeader {
     uint32_t startEpoch;     // epoch seconds
     char     profileId[32];  // null-terminated
     char     profileName[48];// null-terminated
-    uint8_t  reserved[128 - 4 -1 -1 -2 -2 -2 -4 -4 -4 -4 -32 -48]; // pad to 128
+    uint16_t finalWeight;    // final beverage weight (g * 10)
+    uint8_t  reserved[128 - 4 -1 -1 -2 -2 -2 -4 -4 -4 -4 -32 -48 -2]; // pad to 128
 };
 #pragma pack(pop)
 
@@ -64,5 +65,46 @@ struct ShotLogSample {
 
 static_assert(sizeof(ShotLogHeader) == SHOT_LOG_HEADER_SIZE, "ShotLogHeader size mismatch");
 static_assert(sizeof(ShotLogSample) == SHOT_LOG_SAMPLE_SIZE, "ShotLogSample size mismatch");
+
+// Binary shot index format
+// File: /h/index.bin
+// Layout: ShotIndexHeader followed by contiguous ShotIndexEntry records
+// All values little-endian
+
+static constexpr uint32_t SHOT_INDEX_MAGIC = 0x58444953; // 'S''I''D''X' little-endian
+static constexpr uint16_t SHOT_INDEX_VERSION = 1;
+static constexpr uint16_t SHOT_INDEX_HEADER_SIZE = 32;
+static constexpr uint16_t SHOT_INDEX_ENTRY_SIZE = 128;
+
+// Index entry flags
+static constexpr uint8_t SHOT_FLAG_COMPLETED = 0x01;
+static constexpr uint8_t SHOT_FLAG_DELETED = 0x02;
+static constexpr uint8_t SHOT_FLAG_HAS_NOTES = 0x04;
+
+#pragma pack(push,1)
+struct ShotIndexHeader {
+    uint32_t magic;          // SHOT_INDEX_MAGIC
+    uint16_t version;        // SHOT_INDEX_VERSION
+    uint16_t entrySize;      // SHOT_INDEX_ENTRY_SIZE
+    uint32_t entryCount;     // Number of entries in file
+    uint32_t nextId;         // Next shot ID to use
+    uint8_t  reserved[16];   // Future expansion
+};
+
+struct ShotIndexEntry {
+    uint32_t id;             // Shot ID
+    uint32_t timestamp;      // Unix timestamp
+    uint32_t duration;       // Duration in ms
+    uint16_t volume;         // Final weight (g * 10)
+    uint8_t  rating;         // 0-5 star rating from notes
+    uint8_t  flags;          // Bit flags (completed, deleted, etc.)
+    char     profileId[32];  // Profile ID, null-terminated
+    char     profileName[48];// Profile name, null-terminated
+    uint8_t  reserved[32];   // Future expansion
+};
+#pragma pack(pop)
+
+static_assert(sizeof(ShotIndexHeader) == SHOT_INDEX_HEADER_SIZE, "ShotIndexHeader size mismatch");
+static_assert(sizeof(ShotIndexEntry) == SHOT_INDEX_ENTRY_SIZE, "ShotIndexEntry size mismatch");
 
 #endif // SHOT_LOG_FORMAT_H
