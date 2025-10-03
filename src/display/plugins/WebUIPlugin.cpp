@@ -4,6 +4,7 @@
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
+#include <display/core/process/GrindProcess.h>
 #include <display/models/profile.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
@@ -84,7 +85,13 @@ void WebUIPlugin::loop() {
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+        doc["btd"] = controller->getTargetDuration();
+        doc["btv"] = controller->getSettings().getTargetVolume();
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
+        doc["gtd"] = controller->getTargetGrindDuration();
+        doc["gtv"] = controller->getSettings().getTargetGrindVolume();
+        doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+        doc["gact"] = controller->isGrindActive() ? 1 : 0;
 
         Process *process = controller->getProcess();
         if (process == nullptr) {
@@ -109,6 +116,21 @@ void WebUIPlugin::loop() {
                 } else {
                     pObj["pt"] = brew->getPhaseDuration();
                     pObj["pp"] = ts - brew->currentPhaseStarted;
+                }
+            } else if (process->getType() == MODE_GRIND) {
+                auto *grind = static_cast<GrindProcess *>(process);
+                unsigned long ts = grind->isActive() && controller->isActive() ? millis() : grind->finished;
+                pObj["s"] = "grind";
+                pObj["l"] = grind->isActive() ? "Grinding" : "Finished";
+                pObj["e"] = ts - grind->started;
+                const bool isVolumetric = grind->target == ProcessTarget::VOLUMETRIC && controller->isVolumetricAvailable();
+                pObj["tt"] = isVolumetric ? "volumetric" : "time";
+                if (isVolumetric) {
+                    pObj["pt"] = grind->grindVolume;
+                    pObj["pp"] = grind->currentVolume;
+                } else {
+                    pObj["pt"] = grind->time;
+                    pObj["pp"] = ts - grind->started;
                 }
             }
         }
@@ -242,6 +264,23 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     controller->clear();
                 } else if (msgType == "req:process:clear") {
                     controller->clear();
+                } else if (msgType == "req:grind:activate") {
+                    controller->activateGrind();
+                } else if (msgType == "req:grind:deactivate") {
+                    controller->deactivateGrind();
+                } else if (msgType == "req:change-grind-target") {
+                    if (doc["target"].is<uint8_t>()) {
+                        auto target = doc["target"].as<uint8_t>();
+                        controller->getSettings().setVolumetricTarget(target);
+                    }
+                } else if (msgType == "req:raise-temp") {
+                    controller->raiseTemp();
+                } else if (msgType == "req:lower-temp") {
+                    controller->lowerTemp();
+                } else if (msgType == "req:raise-grind-target") {
+                    controller->raiseGrindTarget();
+                } else if (msgType == "req:lower-grind-target") {
+                    controller->lowerGrindTarget();
                 } else if (msgType == "req:change-mode") {
                     if (doc["mode"].is<uint8_t>()) {
                         auto mode = doc["mode"].as<uint8_t>();
@@ -448,6 +487,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
+            if (request->hasArg("altRelayFunction"))
+                settings->setAltRelayFunction(request->arg("altRelayFunction").toInt());
             settings->save(true);
         });
         controller->setTargetTemp(controller->getTargetTemp());
@@ -500,6 +541,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["sunriseExtBrightness"] = settings.getSunriseExtBrightness();
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
+    doc["altRelayFunction"] = settings.getAltRelayFunction();
     serializeJson(doc, *response);
     request->send(response);
 
