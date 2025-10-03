@@ -54,11 +54,25 @@ export function StandardProfileForm(props) {
     onChange(newData);
   };
 
+  const handleSave = () => {
+    const normalized = {
+      ...data,
+      phases: data.phases.map(p => {
+        let pump = p.pump;
+        if (typeof pump === 'number' && Number.isNaN(pump)) {
+          pump = 0;
+        }
+        return { ...p, pump };
+      }),
+    };
+    onSave(normalized);
+  };
+
   return (
     <form
       onSubmit={e => {
         e.preventDefault();
-        onSave(data);
+        handleSave();
       }}
     >
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
@@ -171,6 +185,7 @@ export function StandardProfileForm(props) {
 }
 
 function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
+  const isNumeric = v => typeof v === 'number';
   const onFieldChange = (field, value) => {
     onChange({
       ...phase,
@@ -200,11 +215,10 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const targets = phase?.targets || [];
   const volumetricTarget = targets.find(t => t.type === 'volumetric') || {};
   const targetWeight = volumetricTarget?.value || 0;
-
-  const pumpPower = isNumber(phase.pump) ? phase.pump : 100;
+  const pumpPower = isNumeric(phase.pump) ? phase.pump : 100;
   const pressure = !isNumber(phase.pump) ? phase.pump.pressure : 0;
   const flow = !isNumber(phase.pump) ? phase.pump.flow : 0;
-  const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
+  const mode = isNumeric(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
 
   return (
     <div
