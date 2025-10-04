@@ -217,11 +217,6 @@ def main():
         sys.exit(1)
     
     support_file = sys.argv[1]
-    support_data = {
-        'versions': {
-            'displayVersion': 'unknown'
-        }
-    }
 
     coredump_file = "coredump.bin"
     with open(support_file, 'r') as f:
@@ -250,7 +245,13 @@ def main():
     
     print("🚀 ESP32 Core Dump Analyzer")
     print("="*50)
-    print(f"Version: {support_data['versions']['displayVersion']}")
+    
+    # Safely get version information
+    version = "unknown"
+    if 'versions' in support_data and 'displayVersion' in support_data['versions']:
+        version = support_data['versions']['displayVersion']
+    
+    print(f"Version: {version}")
     print(f"Support file: {support_file}")
     print(f"Core dump: {coredump_file}")
     if custom_elf_file:
