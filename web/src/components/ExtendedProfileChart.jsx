@@ -299,9 +299,9 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
         position: 'end', // anchor at top of line
         xAdjust: i === 0 ? 2 : 8, // tweak first label inward to compensate for y-axis padding
         yAdjust: 0,
-        padding: 0,
+        padding: { x: 4, y: 0 },
         color: isDarkMode ? 'rgb(255,255,255)' : 'rgb(0,0,0)',
-        backgroundColor: isDarkMode ? 'rgba(22,33,50,0.65)' : 'rgba(255,255,255,0.65)',
+        backgroundColor: isDarkMode ? 'rgba(22,33,50,0.75)' : 'rgba(255,255,255,0.75)',
         textAlign: 'start',
         font: {
           size: isSmall ? 9 : 11,
