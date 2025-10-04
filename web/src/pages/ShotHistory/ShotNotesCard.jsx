@@ -11,6 +11,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
   const [notes, setNotes] = useState({
     id: shot.id,
     rating: 0,
+    beanType: '',
     doseIn: '',
     doseOut: '',
     ratio: '',
@@ -45,6 +46,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
         let loadedNotes = {
           id: shot.id,
           rating: 0,
+          beanType: '',
           doseIn: '',
           doseOut: '',
           ratio: '',
@@ -92,6 +94,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
         const defaultNotes = {
           id: shot.id,
           rating: 0,
+          beanType: '',
           doseIn: '',
           doseOut: shot.volume ? shot.volume.toFixed(1) : '',
           ratio: '',
@@ -229,11 +232,29 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
         )}
       </div>
 
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
         {/* Rating */}
         <div className='form-control'>
           <label className='mb-2 block text-sm font-medium'>Rating</label>
           <div className='flex gap-1'>{renderStars(notes.rating, isEditing)}</div>
+        </div>
+
+        {/* Bean Type */}
+        <div className='form-control'>
+          <label className='mb-2 block text-sm font-medium'>Bean Type</label>
+          {isEditing ? (
+            <input
+              type='text'
+              className='input input-bordered w-full'
+              value={notes.beanType}
+              onChange={e => handleInputChange('beanType', e.target.value)}
+              placeholder='e.g., Single Origin, Blend'
+            />
+          ) : (
+            <div className='input input-bordered bg-base-200 w-full cursor-default'>
+              {notes.beanType || '—'}
+            </div>
+          )}
         </div>
 
         {/* Dose In */}
