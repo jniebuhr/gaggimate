@@ -151,7 +151,7 @@ function getChartData(data) {
           position: 'end', // anchor at top of line
           xAdjust: -10, // tweak first label inward to compensate for y-axis padding
           yAdjust: 0,
-          padding: { x: 6, y: 2 },
+          padding: { x: 6, y: 0 },
           color: 'rgb(255,255,255)',
           backgroundColor: 'rgba(22,33,50,0.75)',
           textAlign: 'start',
@@ -185,7 +185,7 @@ function getChartData(data) {
           position: 'end', // anchor at top of line
           xAdjust: -10, // tweak first label inward to compensate for y-axis padding
           yAdjust: 0,
-          padding: { x: 6, y: 2 },
+          padding: { x: 6, y: 0 },
           color: 'rgb(255,255,255)',
           backgroundColor: 'rgba(22,33,50,0.75)',
           textAlign: 'start',
