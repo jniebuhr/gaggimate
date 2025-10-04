@@ -590,7 +590,6 @@ void Controller::clear() {
     }
     delete lastProcess;
     lastProcess = nullptr;
-    currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
 }
 
 void Controller::activateGrind() {
