@@ -23,8 +23,8 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
-import { parseHistoryData } from './utils.js';
 import HistoryCard from './HistoryCard.jsx';
+import { parseBinaryShot } from './parseBinaryShot.js';
 
 const connected = computed(() => machine.value.connected);
 
@@ -34,11 +34,21 @@ export function ShotHistory() {
   const [loading, setLoading] = useState(true);
   const loadHistory = async () => {
     const response = await apiService.request({ tp: 'req:history:list' });
-    const history = response.history
-      .map(parseHistoryData)
-      .filter(e => !!e)
-      .reverse();
-    setHistory(history);
+    // Response now only includes metadata items
+    const list = (response.history || [])
+      .map(item => ({
+        id: item.id,
+        profile: item.profile,
+        profileId: item.profileId,
+        timestamp: item.timestamp,
+        duration: item.duration,
+        samples: item.samples, // count only
+        notes: item.notes || null,
+        loaded: false,
+        data: null,
+      }))
+      .sort((a, b) => b.timestamp - a.timestamp);
+    setHistory(list);
     setLoading(false);
   };
   useEffect(() => {
@@ -72,7 +82,37 @@ export function ShotHistory() {
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
         {history.map((item, idx) => (
-          <HistoryCard shot={item} key={idx} onDelete={id => onDelete(id)} />
+          <HistoryCard
+            key={item.id}
+            shot={item}
+            onDelete={id => onDelete(id)}
+            onLoad={async id => {
+              // Fetch binary only if not loaded
+              const target = history.find(h => h.id === id);
+              if (!target || target.loaded) return;
+              try {
+                const resp = await fetch(`/history/${id}.slog`);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const buf = await resp.arrayBuffer();
+                const parsed = parseBinaryShot(buf, id);
+                parsed.incomplete = (target?.incomplete ?? false) || parsed.incomplete;
+                if (target?.notes) parsed.notes = target.notes;
+                setHistory(prev =>
+                  prev.map(h =>
+                    h.id === id
+                      ? {
+                          ...h,
+                          ...parsed,
+                          loaded: true,
+                        }
+                      : h,
+                  ),
+                );
+              } catch (e) {
+                console.error('Failed loading shot', e);
+              }
+            }}
+          />
         ))}
         {history.length === 0 && (
           <div className='flex flex-row items-center justify-center py-20 lg:col-span-12'>
