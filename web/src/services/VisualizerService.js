@@ -170,12 +170,7 @@ export class VisualizerService {
     if (!shot.samples || !Array.isArray(shot.samples)) return false;
     if (shot.samples.length === 0) return false;
     
-    // Check if we have at least some pressure or flow data
-    const hasData = shot.samples.some(sample => 
-      (sample.cp && sample.cp > 0) || (sample.vf && sample.vf > 0)
-    );
-    
-    return hasData;
+    return true;
   }
 
 }

@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
@@ -54,7 +54,7 @@ export default function VisualizerUploadModal({
   };
 
   // Load saved credentials when modal opens
-  useState(() => {
+  useEffect(() => {
     if (isOpen) {
       const savedUsername = localStorage.getItem('visualizer_username');
       const savedRemember = localStorage.getItem('visualizer_remember') === 'true';
@@ -103,20 +103,21 @@ export default function VisualizerUploadModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" name="visualizer-login" method="post">
             <div>
               <label htmlFor="username" className="block text-sm font-medium mb-1">
                 Visualizer.coffee Username
               </label>
               <input
                 id="username"
+                name="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={isUploading}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
                 placeholder="Enter your username"
-                autocomplete="username"
+                autoComplete="username"
                 required
               />
             </div>
@@ -128,13 +129,14 @@ export default function VisualizerUploadModal({
               <div className="relative">
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isUploading}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
                   placeholder="Enter your password"
-                  autocomplete="current-password"
+                  autoComplete="current-password"
                   required
                 />
                 <button
