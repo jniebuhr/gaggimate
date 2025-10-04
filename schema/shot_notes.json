@@ -44,7 +44,8 @@
     },
     "notes": {
       "description": "User notes",
-      "type": "string"
+      "type": "string",
+      "maxLength": 100
     },
     "timestamp": {
       "description": "Timestamp when notes were last updated",
