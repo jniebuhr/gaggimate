@@ -20,7 +20,9 @@ export const clearPhaseTransitions = () => {
 };
 
 function getChartData(data) {
+  // Stabilize the end time by rounding to the nearest second to prevent jiggling
   let end = new Date();
+  end.setMilliseconds(0); // Round to nearest second for stability
   
   // Track phase transitions for brew process
   const currentProcess = machine.value.status.process;
@@ -33,19 +35,19 @@ function getChartData(data) {
   let maxTicksLimit = 5;
   
   if (isBrewActive) {
-    // During brewing: start with 10s window, grow to 60s as brew progresses
+    // During brewing: start with 30s window, grow to 45s and 60s for longer shots
     const brewElapsedMs = currentProcess.e || 0;
     const brewElapsedSeconds = brewElapsedMs / 1000;
     
-    if (brewElapsedSeconds < 10) {
-      // First 10 seconds: show 10s window
-      timeWindowMs = 10000;
-    } else if (brewElapsedSeconds < 30) {
-      // 10-30 seconds: grow from 10s to 30s
-      timeWindowMs = Math.min(30000, brewElapsedMs + 5000);
+    if (brewElapsedSeconds < 30) {
+      // First 30 seconds: show 30s window
+      timeWindowMs = 30000;
+    } else if (brewElapsedSeconds < 45) {
+      // 30-45 seconds: show 45s window
+      timeWindowMs = 45000;
     } else {
-      // After 30 seconds: grow from 30s to 60s
-      timeWindowMs = Math.min(60000, brewElapsedMs + 10000);
+      // After 45 seconds: show 60s window
+      timeWindowMs = 60000;
     }
     
     maxTicksLimit = 8; // More ticks for better resolution
@@ -60,6 +62,8 @@ function getChartData(data) {
   }
   
   let start = new Date(end.getTime() - timeWindowMs);
+  // Stabilize start time by rounding to nearest second for consistency
+  start.setMilliseconds(0);
   
   // Filter data to the current time window for auto-scaling
   const filteredData = data.filter(item => 
@@ -74,12 +78,12 @@ function getChartData(data) {
   pressureFlowValues = pressureFlowValues.concat(filteredData.map(i => i.targetPressure));
   pressureFlowValues = pressureFlowValues.concat(filteredData.map(i => i.currentFlow));
   
-  // Calculate ranges with some padding
-  const tempMin = tempValues.length > 0 ? Math.max(0, Math.min(...tempValues) - 5) : 0;
-  const tempMax = tempValues.length > 0 ? Math.max(...tempValues) + 10 : 160;
+  // Calculate ranges with some padding and round to integers for clean scales
+  const tempMin = tempValues.length > 0 ? Math.max(0, Math.floor(Math.min(...tempValues) - 5)) : 0;
+  const tempMax = tempValues.length > 0 ? Math.ceil(Math.max(...tempValues) + 10) : 160;
   
   const pressureFlowMin = 0; // Always start at 0 for pressure/flow
-  const pressureFlowMax = pressureFlowValues.length > 0 ? Math.max(...pressureFlowValues) + 2 : 16;
+  const pressureFlowMax = pressureFlowValues.length > 0 ? Math.ceil(Math.max(...pressureFlowValues) + 2) : 16;
   
   // Create a state key to detect when a new brew starts
   const processState = currentProcess ? `${currentProcess.s}_${currentProcess.a}_${currentProcess.e || 0}` : null;
@@ -147,9 +151,9 @@ function getChartData(data) {
           position: 'end', // anchor at top of line
           xAdjust: -10, // tweak first label inward to compensate for y-axis padding
           yAdjust: 0,
-          padding: 0,
+          padding: { x: 6, y: 2 },
           color: 'rgb(255,255,255)',
-          backgroundColor: 'rgba(22,33,50,0.65)',
+          backgroundColor: 'rgba(22,33,50,0.75)',
           textAlign: 'start',
           font: {
             size: isSmall ? 9 : 11,
@@ -181,9 +185,9 @@ function getChartData(data) {
           position: 'end', // anchor at top of line
           xAdjust: -10, // tweak first label inward to compensate for y-axis padding
           yAdjust: 0,
-          padding: 0,
+          padding: { x: 6, y: 2 },
           color: 'rgb(255,255,255)',
-          backgroundColor: 'rgba(22,33,50,0.65)',
+          backgroundColor: 'rgba(22,33,50,0.75)',
           textAlign: 'start',
           font: {
             size: isSmall ? 9 : 11,
@@ -282,7 +286,7 @@ function getChartData(data) {
           },
         },
         annotation: {
-          annotations: annotations
+          annotations: phaseAnnotations
         }
       },
       animation: false,
@@ -292,11 +296,12 @@ function getChartData(data) {
           min: tempMin,
           max: tempMax,
           ticks: {
+            stepSize: 5, // Force 5-degree increments for clean scale
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
             callback: value => {
-              return `${value} °C`;
+              return `${Math.round(value)} °C`; // Round displayed values to integers
             },
           },
         },
@@ -306,11 +311,12 @@ function getChartData(data) {
           max: pressureFlowMax,
           position: 'right',
           ticks: {
+            stepSize: pressureFlowMax <= 10 ? 1 : 2, // Use smaller steps for smaller ranges
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
             callback: value => {
-              return `${value} bar / g/s`;
+              return `${Math.round(value * 10) / 10} bar / g/s`; // Round to 1 decimal place
             },
           },
         },
@@ -320,17 +326,20 @@ function getChartData(data) {
           max: end,
           time: {
             unit: timeUnit,
+            stepSize: 1, // Force consistent step size
             displayFormats: {
               second: isBrewActive ? 'mm:ss' : 'HH:mm:ss',
             },
           },
           ticks: {
             source: 'auto',
+            autoSkip: true,
+            autoSkipPadding: 0,
             callback: (value, index, ticks) => {
               if (isBrewActive) {
-                // For brewing: show relative time from now in a clean format
-                const now = new Date().getTime();
-                const diffSeconds = Math.ceil((now - value) / 1000);
+                // For brewing: show relative time from chart end in a clean format
+                const chartEnd = end.getTime();
+                const diffSeconds = Math.ceil((chartEnd - value) / 1000);
                 if (diffSeconds < 60) {
                   return `${diffSeconds}s`;
                 } else {
@@ -339,9 +348,9 @@ function getChartData(data) {
                   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
                 }
               } else {
-                // For normal view: show time ago
-                const now = new Date().getTime();
-                const diff = Math.ceil((now - value) / 1000);
+                // For normal view: show time ago from chart end
+                const chartEnd = end.getTime();
+                const diff = Math.ceil((chartEnd - value) / 1000);
                 return `-${diff}s`;
               }
             },
