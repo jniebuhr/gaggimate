@@ -173,7 +173,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                       <FontAwesomeIcon icon={faFileExport} className='w-4 h-4' />
                     </button>
                 </div>
-                <div className='tooltip tooltip-left' data-tip={canUpload ? 'Upload to Visualizer.coffee' : 'No data available for upload'}>
+                <div className='tooltip tooltip-left' data-tip={canUpload ? 'Upload to Visualizer.coffee' : 'Load shot data first by expanding the shot'}>
             <button
               onClick={() => setShowUploadModal(true)}
               disabled={!canUpload}
