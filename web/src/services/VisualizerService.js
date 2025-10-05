@@ -89,7 +89,7 @@ export class VisualizerService {
     shotFile.espresso_enjoyment = enjoyment; // Convert 0-5 stars to 0-100 scale
     shotFile.espresso_notes = notes.notes || ""; // Free-form tasting notes
     shotFile.bean_brand = "Unknown roaster"; // Default since we don't track this in notes
-    shotFile.bean_type = "Unknown bean"; // Default since we don't track this in notes
+    shotFile.bean_type = notes.beanType; // Default since we don't track this in notes
     shotFile.barista = "GaggiMate User"; // Default barista name
     shotFile.roast_level = ""; // Not tracked in current notes schema
     shotFile.roast_date = ""; // Not tracked in current notes schema

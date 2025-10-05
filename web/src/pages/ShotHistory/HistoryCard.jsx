@@ -17,9 +17,6 @@ import { visualizerService } from '../../services/VisualizerService.js';
 import { ApiServiceContext } from '../../services/ApiService.js';
 
 
-
-
-
 function round2(v) {
   if (v == null || Number.isNaN(v)) return v;
   return Math.round((v + Number.EPSILON) * 100) / 100;
