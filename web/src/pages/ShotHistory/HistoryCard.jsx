@@ -8,6 +8,8 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import ShotNotesCard from './ShotNotesCard.jsx';
 
 
@@ -66,14 +68,18 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
       <div className='flex flex-col gap-2'>
         <div className='flex flex-row items-start gap-2'>
           <button
-            className='shrink-0 rounded-md border px-2 py-1 text-xs font-medium text-base-content hover:bg-base-content/10 transition-colors'
+            className='p-2 border border-base-content/20 text-base-content/60 hover:text-base-content hover:bg-base-content/10 hover:border-base-content/40 rounded-md transition-all duration-200'
             onClick={() => {
               const next = !expanded;
               setExpanded(next);
               if (next && !shot.loaded && onLoad) onLoad(shot.id);
             }}
+            aria-label={expanded ? 'Collapse shot details' : 'Expand shot details'}
           >
-            {expanded ? '−' : '+'}
+            <FontAwesomeIcon 
+              icon={expanded ? faMinus : faPlus} 
+              className='w-3 h-3'
+            />
           </button>
 
           <div className='flex-grow min-w-0'>
