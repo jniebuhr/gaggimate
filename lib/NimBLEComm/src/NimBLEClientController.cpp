@@ -20,10 +20,9 @@ void NimBLEClientController::initClient() {
 
 void NimBLEClientController::scan() {
     NimBLEScan *pBLEScan = NimBLEDevice::getScan();
-    pBLEScan->clearDuplicateCache();
-    pBLEScan->setAdvertisedDeviceCallbacks(this); // Use this class as the callback handler
+    pBLEScan->setScanCallbacks(this); // Use this class as the callback handler
     pBLEScan->setActiveScan(true);
-    pBLEScan->start(BLE_SCAN_DURATION_SECONDS, nullptr, false);
+    pBLEScan->start(BLE_SCAN_DURATION_SECONDS * 1000, false); // Convert to milliseconds
 }
 
 void NimBLEClientController::tare() {
@@ -218,8 +217,8 @@ bool NimBLEClientController::isReadyForConnection() const { return readyForConne
 
 bool NimBLEClientController::isConnected() { return client->isConnected(); }
 
-// BLEAdvertisedDeviceCallbacks override
-void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
+// NimBLEScanCallbacks override
+void NimBLEClientController::onResult(const NimBLEAdvertisedDevice *advertisedDevice) {
     ESP_LOGV(LOG_TAG, "Advertised Device found: %s \n", advertisedDevice->toString().c_str());
 
     // Check if this is the device we're looking for
@@ -228,14 +227,14 @@ void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) 
         if (advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))) {
             ESP_LOGI(LOG_TAG, "Found target BLE device. Connecting...");
             NimBLEDevice::getScan()->stop(); // Stop scanning once we find the correct device
-            serverDevice = advertisedDevice;
+            serverDevice = const_cast<NimBLEAdvertisedDevice*>(advertisedDevice);
             readyForConnection = true;
         }
     }
 }
 
-void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
-    ESP_LOGI(LOG_TAG, "Disconnected from server, trying to reconnect...");
+void NimBLEClientController::onDisconnect(NimBLEClient *pServer, int reason) {
+    ESP_LOGI(LOG_TAG, "Disconnected from server (reason: %d), trying to reconnect...", reason);
     scan();
 }
 

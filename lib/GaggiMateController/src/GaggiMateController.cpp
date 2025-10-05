@@ -6,7 +6,9 @@
 #include <peripherals/DimmedPump.h>
 #include <peripherals/SimplePump.h>
 
-GaggiMateController::GaggiMateController() {
+#include <utility>
+
+GaggiMateController::GaggiMateController(String version) : _version(std::move(version)) {
     configs.push_back(GM_STANDARD_REV_1X);
     configs.push_back(GM_STANDARD_REV_2X);
     configs.push_back(GM_PRO_REV_1x);
@@ -50,7 +52,7 @@ void GaggiMateController::setup() {
     }
     */
 
-    String systemInfo = make_system_info(_config);
+    String systemInfo = make_system_info(_config, _version);
     _ble.initServer(systemInfo);
 
     this->thermocouple->setup();

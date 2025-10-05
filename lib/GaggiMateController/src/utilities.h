@@ -4,10 +4,10 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-inline String make_system_info(ControllerConfig config) {
+inline String make_system_info(ControllerConfig config, String version) {
     JsonDocument doc;
     doc["hw"] = config.name;
-    doc["v"] = BUILD_GIT_VERSION;
+    doc["v"] = version;
     JsonDocument capabilities;
     capabilities["ps"] = config.capabilites.pressure;
     capabilities["dm"] = config.capabilites.dimming;

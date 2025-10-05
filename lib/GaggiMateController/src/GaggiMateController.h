@@ -19,7 +19,7 @@ constexpr int DETECT_VALUE_PIN = 11;
 
 class GaggiMateController {
   public:
-    GaggiMateController();
+    GaggiMateController(String version);
     void setup(void);
     void loop(void);
 
@@ -50,6 +50,7 @@ class GaggiMateController {
 
     std::vector<ControllerConfig> configs;
 
+    String _version;
     unsigned long lastPingTime = 0;
 
     const char *LOG_TAG = "GaggiMateController";
