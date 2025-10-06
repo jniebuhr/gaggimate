@@ -80,6 +80,7 @@ void WebUIPlugin::loop() {
         doc["pt"] = controller->getTargetPressure();
         doc["m"] = controller->getMode();
         doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
+        doc["puid"] = controller->getProfileManager()->getSelectedProfile().id;
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
