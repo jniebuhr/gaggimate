@@ -74,8 +74,7 @@ void NimBLEServerController::initServer(const String infoString) {
 
     NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID);
-    // setScanResponseData(true) is no longer available in NimBLE 2.x
-    // The scan response data is handled automatically
+    pAdvertising->setScanResponse(true);
     NimBLEDevice::startAdvertising();
     ESP_LOGI(LOG_TAG, "BLE Server started, advertising...\n");
 }
@@ -176,19 +175,19 @@ void NimBLEServerController::registerPumpModelCoeffsCallback(const pump_model_co
 }
 
 // BLEServerCallbacks override
-void NimBLEServerController::onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo) {
+void NimBLEServerController::onConnect(NimBLEServer *pServer) {
     ESP_LOGI(LOG_TAG, "Client connected.");
     deviceConnected = true;
     pServer->stopAdvertising();
 }
 
-void NimBLEServerController::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason) {
+void NimBLEServerController::onDisconnect(NimBLEServer *pServer) {
     ESP_LOGI(LOG_TAG, "Client disconnected.");
     deviceConnected = false;
     pServer->startAdvertising(); // Restart advertising so clients can reconnect
 }
 
-void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) {
+void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
     ESP_LOGV(LOG_TAG, "Write received!");
 
     if (pCharacteristic->getUUID().equals(NimBLEUUID(OUTPUT_CONTROL_UUID))) {

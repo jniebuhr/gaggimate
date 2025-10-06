@@ -20,9 +20,10 @@ void NimBLEClientController::initClient() {
 
 void NimBLEClientController::scan() {
     NimBLEScan *pBLEScan = NimBLEDevice::getScan();
-    pBLEScan->setScanCallbacks(this); // Use this class as the callback handler
+    pBLEScan->clearDuplicateCache();
+    pBLEScan->setAdvertisedDeviceCallbacks(this); // Use this class as the callback handler
     pBLEScan->setActiveScan(true);
-    pBLEScan->start(BLE_SCAN_DURATION_SECONDS * 1000, false); // Convert to milliseconds
+    pBLEScan->start(BLE_SCAN_DURATION_SECONDS, nullptr, false);
 }
 
 void NimBLEClientController::tare() {
@@ -217,8 +218,8 @@ bool NimBLEClientController::isReadyForConnection() const { return readyForConne
 
 bool NimBLEClientController::isConnected() { return client->isConnected(); }
 
-// NimBLEScanCallbacks override
-void NimBLEClientController::onResult(const NimBLEAdvertisedDevice *advertisedDevice) {
+// BLEAdvertisedDeviceCallbacks override
+void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
     ESP_LOGV(LOG_TAG, "Advertised Device found: %s \n", advertisedDevice->toString().c_str());
 
     // Check if this is the device we're looking for
@@ -227,14 +228,14 @@ void NimBLEClientController::onResult(const NimBLEAdvertisedDevice *advertisedDe
         if (advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))) {
             ESP_LOGI(LOG_TAG, "Found target BLE device. Connecting...");
             NimBLEDevice::getScan()->stop(); // Stop scanning once we find the correct device
-            serverDevice = const_cast<NimBLEAdvertisedDevice*>(advertisedDevice);
+            serverDevice = advertisedDevice;
             readyForConnection = true;
         }
     }
 }
 
-void NimBLEClientController::onDisconnect(NimBLEClient *pServer, int reason) {
-    ESP_LOGI(LOG_TAG, "Disconnected from server (reason: %d), trying to reconnect...", reason);
+void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
+    ESP_LOGI(LOG_TAG, "Disconnected from server, trying to reconnect...");
     scan();
 }
 
