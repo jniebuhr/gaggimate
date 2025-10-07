@@ -73,6 +73,7 @@ class Controller {
     void lowerBrewTarget();
     void raiseGrindTarget();
     void lowerGrindTarget();
+    void raisePhaseDuration();
     void activate();
     void deactivate();
     void clear();
