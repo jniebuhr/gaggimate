@@ -3,25 +3,19 @@ import datetime
 
 Import("env")
 
-def get_firmware_specifier_build_flag():
+def get_firmware_specifier():
     ret = subprocess.run(["git", "describe", "--tags", "--dirty", "--exclude", "nightly"], stdout=subprocess.PIPE, text=True) #Uses any tags
     build_version = ret.stdout.strip()
-    build_flag = "#define BUILD_GIT_VERSION \"" + build_version + "\""
     print ("Build version: " + build_version)
-    return build_flag
+    return build_version
 
-def get_time_specifier_build_flag():
+def get_time_specifier():
     build_timestamp = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-    build_flag = "#define BUILD_TIMESTAMP \"" + build_timestamp + "\""
     print ("Build date: " + build_timestamp)
-    return build_flag
+    return build_timestamp
 
-with open('src/version.h', 'w') as f:
+with open('src/version.cpp', 'w') as f:
     f.write(
-        '#pragma once\n' +
-        '#ifndef GIT_VERSION_H\n' +
-        '#define GIT_VERSION_H\n' +
-        get_firmware_specifier_build_flag() + '\n' +
-        get_time_specifier_build_flag() + '\n'
-        '#endif\n'
-    )
+        f"""extern const char BUILD_GIT_VERSION[] = "{get_firmware_specifier()}";
+extern const char BUILD_TIMESTAMP[] = "{get_time_specifier()}";
+""")
