@@ -1,0 +1,148 @@
+syntax = "proto3";
+
+// GaggiMate Protocol Messages
+// Simplified version mapping existing string-based messages to binary format
+
+message GaggiMessage {
+  uint32 msg_id = 1;
+  MessageType type = 2;
+  
+  oneof payload {
+    // Commands (Display → Base Controller)
+    PingRequest ping = 10;
+    OutputControlRequest output_control = 11;
+    PidSettingsRequest pid_settings = 12;
+    PumpModelCoeffsRequest pump_model = 13;
+    AutotuneRequest autotune = 14;
+    PressureScaleRequest pressure_scale = 15;
+    TareRequest tare = 16;
+    LedControlRequest led_control = 17;
+    AltControlRequest alt_control = 18;
+    
+    // Responses (Base Controller → Display)
+    ErrorResponse error = 20;
+    SensorDataResponse sensor_data = 21;
+    BrewButtonResponse brew_button = 22;
+    SteamButtonResponse steam_button = 23;
+    AutotuneResultResponse autotune_result = 24;
+    VolumetricMeasurementResponse volumetric = 25;
+    TofMeasurementResponse tof = 26;
+    SystemInfoResponse system_info = 27;
+  }
+}
+
+enum MessageType {
+  MSG_UNKNOWN = 0;
+  
+  // Commands
+  MSG_PING = 10;
+  MSG_OUTPUT_CONTROL = 11;
+  MSG_PID_SETTINGS = 12;
+  MSG_PUMP_MODEL = 13;
+  MSG_AUTOTUNE = 14;
+  MSG_PRESSURE_SCALE = 15;
+  MSG_TARE = 16;
+  MSG_LED_CONTROL = 17;
+  MSG_ALT_CONTROL = 18;
+  
+  // Responses
+  MSG_ERROR = 20;
+  MSG_SENSOR_DATA = 21;
+  MSG_BREW_BUTTON = 22;
+  MSG_STEAM_BUTTON = 23;
+  MSG_AUTOTUNE_RESULT = 24;
+  MSG_VOLUMETRIC = 25;
+  MSG_TOF = 26;
+  MSG_SYSTEM_INFO = 27;
+}
+
+// Command Messages (Display → Base)
+message PingRequest {
+  // Empty message, just for connectivity testing
+}
+
+message OutputControlRequest {
+  uint32 mode = 1;              // 0=simple, 1=advanced
+  bool valve_open = 2;
+  float pump_setpoint = 3;       // For simple mode
+  float boiler_setpoint = 4;
+  
+  // Advanced mode fields
+  bool pressure_target = 5;      // For advanced mode
+  float pressure = 6;            // For advanced mode
+  float flow = 7;                // For advanced mode
+}
+
+message PidSettingsRequest {
+  float kp = 1;
+  float ki = 2;
+  float kd = 3;
+}
+
+message PumpModelCoeffsRequest {
+  float a = 1;
+  float b = 2;
+  float c = 3;
+  float d = 4;
+}
+
+message AutotuneRequest {
+  uint32 test_time = 1;
+  uint32 samples = 2;
+}
+
+message PressureScaleRequest {
+  float scale = 1;
+}
+
+message TareRequest {
+  // Empty - just triggers tare
+}
+
+message LedControlRequest {
+  uint32 channel = 1;
+  uint32 brightness = 2;
+}
+
+message AltControlRequest {
+  bool pin_state = 1;
+}
+
+// Response Messages (Base → Display)
+message ErrorResponse {
+  uint32 error_code = 1;
+}
+
+message SensorDataResponse {
+  float temperature = 1;
+  float pressure = 2;
+  float puck_flow = 3;
+  float pump_flow = 4;
+  float puck_resistance = 5;
+}
+
+message BrewButtonResponse {
+  bool button_state = 1;
+}
+
+message SteamButtonResponse {
+  bool button_state = 1;
+}
+
+message AutotuneResultResponse {
+  float kp = 1;
+  float ki = 2;
+  float kd = 3;
+}
+
+message VolumetricMeasurementResponse {
+  float volume = 1;
+}
+
+message TofMeasurementResponse {
+  uint32 distance = 1;
+}
+
+message SystemInfoResponse {
+  string info = 1;
+}

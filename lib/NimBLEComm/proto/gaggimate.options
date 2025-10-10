@@ -1,0 +1,15 @@
+# Nanopb options for GaggiMate protocol
+# These options control code generation for embedded systems
+
+# Set maximum string lengths
+SystemInfoResponse.info max_size:128
+
+# Use fixed-size arrays instead of dynamic allocation
+* max_count:10
+
+# Generate smaller code
+* packed_struct:false
+* skip_message:false
+
+# Use 32-bit fields for compatibility
+* int_size:IS_32
