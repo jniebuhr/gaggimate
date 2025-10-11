@@ -6,9 +6,6 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
-PB_BIND(GaggiMessage, GaggiMessage, AUTO)
-
-
 PB_BIND(PingRequest, PingRequest, AUTO)
 
 

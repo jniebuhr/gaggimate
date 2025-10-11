@@ -15,7 +15,7 @@ def generate_nanopb():
     # Get the project root directory
     project_root = Path(__file__).parent.parent
     proto_dir = project_root / "lib" / "NimBLEComm" / "proto"
-    src_dir = project_root / "lib" / "NimBLEComm" / "src"
+    src_dir = project_root / "lib" / "NimBLEComm" / "src" / "protocol"
     
     # Check if proto files exist
     proto_file = proto_dir / "gaggimate.proto"

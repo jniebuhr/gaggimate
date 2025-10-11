@@ -10,7 +10,7 @@
 #endif
 
 /* Enum definitions */
-typedef enum _MessageType {
+typedef enum _MessageType: uint8_t {
     MessageType_MSG_UNKNOWN = 0,
     MessageType_MSG_PING = 10,
     MessageType_MSG_OUTPUT_CONTROL = 11,
@@ -119,31 +119,6 @@ typedef struct _SystemInfoResponse {
     char info[128];
 } SystemInfoResponse;
 
-typedef struct _GaggiMessage {
-    uint32_t msg_id;
-    MessageType type;
-    pb_size_t which_payload;
-    union {
-        PingRequest ping;
-        OutputControlRequest output_control;
-        PidSettingsRequest pid_settings;
-        PumpModelCoeffsRequest pump_model;
-        AutotuneRequest autotune;
-        PressureScaleRequest pressure_scale;
-        TareRequest tare;
-        LedControlRequest led_control;
-        AltControlRequest alt_control;
-        ErrorResponse error;
-        SensorDataResponse sensor_data;
-        BrewButtonResponse brew_button;
-        SteamButtonResponse steam_button;
-        AutotuneResultResponse autotune_result;
-        VolumetricMeasurementResponse volumetric;
-        TofMeasurementResponse tof;
-        SystemInfoResponse system_info;
-    } payload;
-} GaggiMessage;
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -153,8 +128,6 @@ extern "C" {
 #define _MessageType_MIN MessageType_MSG_UNKNOWN
 #define _MessageType_MAX MessageType_MSG_SYSTEM_INFO
 #define _MessageType_ARRAYSIZE ((MessageType)(MessageType_MSG_SYSTEM_INFO+1))
-
-#define GaggiMessage_type_ENUMTYPE MessageType
 
 
 
@@ -175,7 +148,6 @@ extern "C" {
 
 
 /* Initializer values for message structs */
-#define GaggiMessage_init_default                {0, _MessageType_MIN, 0, {PingRequest_init_default}}
 #define PingRequest_init_default                 {0}
 #define OutputControlRequest_init_default        {0, 0, 0, 0, 0, 0, 0}
 #define PidSettingsRequest_init_default          {0, 0, 0}
@@ -193,7 +165,6 @@ extern "C" {
 #define VolumetricMeasurementResponse_init_default {0}
 #define TofMeasurementResponse_init_default      {0}
 #define SystemInfoResponse_init_default          {""}
-#define GaggiMessage_init_zero                   {0, _MessageType_MIN, 0, {PingRequest_init_zero}}
 #define PingRequest_init_zero                    {0}
 #define OutputControlRequest_init_zero           {0, 0, 0, 0, 0, 0, 0}
 #define PidSettingsRequest_init_zero             {0, 0, 0}
@@ -247,67 +218,8 @@ extern "C" {
 #define VolumetricMeasurementResponse_volume_tag 1
 #define TofMeasurementResponse_distance_tag      1
 #define SystemInfoResponse_info_tag              1
-#define GaggiMessage_msg_id_tag                  1
-#define GaggiMessage_type_tag                    2
-#define GaggiMessage_ping_tag                    10
-#define GaggiMessage_output_control_tag          11
-#define GaggiMessage_pid_settings_tag            12
-#define GaggiMessage_pump_model_tag              13
-#define GaggiMessage_autotune_tag                14
-#define GaggiMessage_pressure_scale_tag          15
-#define GaggiMessage_tare_tag                    16
-#define GaggiMessage_led_control_tag             17
-#define GaggiMessage_alt_control_tag             18
-#define GaggiMessage_error_tag                   20
-#define GaggiMessage_sensor_data_tag             21
-#define GaggiMessage_brew_button_tag             22
-#define GaggiMessage_steam_button_tag            23
-#define GaggiMessage_autotune_result_tag         24
-#define GaggiMessage_volumetric_tag              25
-#define GaggiMessage_tof_tag                     26
-#define GaggiMessage_system_info_tag             27
 
 /* Struct field encoding specification for nanopb */
-#define GaggiMessage_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, UINT32,   msg_id,            1) \
-X(a, STATIC,   SINGULAR, UENUM,    type,              2) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,ping,payload.ping),  10) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,output_control,payload.output_control),  11) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,pid_settings,payload.pid_settings),  12) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,pump_model,payload.pump_model),  13) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,autotune,payload.autotune),  14) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,pressure_scale,payload.pressure_scale),  15) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,tare,payload.tare),  16) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,led_control,payload.led_control),  17) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,alt_control,payload.alt_control),  18) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,error,payload.error),  20) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,sensor_data,payload.sensor_data),  21) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,brew_button,payload.brew_button),  22) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,steam_button,payload.steam_button),  23) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,autotune_result,payload.autotune_result),  24) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,volumetric,payload.volumetric),  25) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,tof,payload.tof),  26) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,system_info,payload.system_info),  27)
-#define GaggiMessage_CALLBACK NULL
-#define GaggiMessage_DEFAULT NULL
-#define GaggiMessage_payload_ping_MSGTYPE PingRequest
-#define GaggiMessage_payload_output_control_MSGTYPE OutputControlRequest
-#define GaggiMessage_payload_pid_settings_MSGTYPE PidSettingsRequest
-#define GaggiMessage_payload_pump_model_MSGTYPE PumpModelCoeffsRequest
-#define GaggiMessage_payload_autotune_MSGTYPE AutotuneRequest
-#define GaggiMessage_payload_pressure_scale_MSGTYPE PressureScaleRequest
-#define GaggiMessage_payload_tare_MSGTYPE TareRequest
-#define GaggiMessage_payload_led_control_MSGTYPE LedControlRequest
-#define GaggiMessage_payload_alt_control_MSGTYPE AltControlRequest
-#define GaggiMessage_payload_error_MSGTYPE ErrorResponse
-#define GaggiMessage_payload_sensor_data_MSGTYPE SensorDataResponse
-#define GaggiMessage_payload_brew_button_MSGTYPE BrewButtonResponse
-#define GaggiMessage_payload_steam_button_MSGTYPE SteamButtonResponse
-#define GaggiMessage_payload_autotune_result_MSGTYPE AutotuneResultResponse
-#define GaggiMessage_payload_volumetric_MSGTYPE VolumetricMeasurementResponse
-#define GaggiMessage_payload_tof_MSGTYPE TofMeasurementResponse
-#define GaggiMessage_payload_system_info_MSGTYPE SystemInfoResponse
-
 #define PingRequest_FIELDLIST(X, a) \
 
 #define PingRequest_CALLBACK NULL
@@ -412,7 +324,6 @@ X(a, STATIC,   SINGULAR, STRING,   info,              1)
 #define SystemInfoResponse_CALLBACK NULL
 #define SystemInfoResponse_DEFAULT NULL
 
-extern const pb_msgdesc_t GaggiMessage_msg;
 extern const pb_msgdesc_t PingRequest_msg;
 extern const pb_msgdesc_t OutputControlRequest_msg;
 extern const pb_msgdesc_t PidSettingsRequest_msg;
@@ -432,7 +343,6 @@ extern const pb_msgdesc_t TofMeasurementResponse_msg;
 extern const pb_msgdesc_t SystemInfoResponse_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
-#define GaggiMessage_fields &GaggiMessage_msg
 #define PingRequest_fields &PingRequest_msg
 #define OutputControlRequest_fields &OutputControlRequest_msg
 #define PidSettingsRequest_fields &PidSettingsRequest_msg
@@ -457,8 +367,7 @@ extern const pb_msgdesc_t SystemInfoResponse_msg;
 #define AutotuneResultResponse_size              15
 #define BrewButtonResponse_size                  2
 #define ErrorResponse_size                       6
-#define GAGGIMATE_PB_H_MAX_SIZE                  GaggiMessage_size
-#define GaggiMessage_size                        142
+#define GAGGIMATE_PB_H_MAX_SIZE                  SystemInfoResponse_size
 #define LedControlRequest_size                   12
 #define OutputControlRequest_size                30
 #define PidSettingsRequest_size                  15

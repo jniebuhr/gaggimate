@@ -6,11 +6,32 @@ NanopbProtocol::NanopbProtocol() {
     // Constructor
 }
 
-GaggiMessage NanopbProtocol::createBaseMessage(MessageType type) {
-    GaggiMessage message = GaggiMessage_init_zero;
-    message.type = type;
-    message.msg_id = generateMessageId();
-    return message;
+template<typename T>
+ProtocolMessage<T> NanopbProtocol::wrap(MessageType type, T message, const pb_msgdesc_t *descriptor) {
+    ProtocolMessage<T> wrapped_message;
+    wrapped_message.type = type;
+    wrapped_message.seq = generateMessageId();
+    wrapped_message.priority = 0;
+    wrapped_message.content = message;
+    wrapped_message.descriptor = descriptor;
+    return wrapped_message;
+}
+
+template<typename T>
+bool NanopbProtocol::encodeMessage(uint8_t *buffer, size_t buffer_size, size_t *message_length, const ProtocolMessage<T> *message) {
+    uint8_t* p = buffer;
+    // Encode into a scratch buffer after header
+    FrameHeader hdr {
+        .seq = message->seq,
+        .mt = message->type,
+    };
+    pb_ostream_t os = pb_ostream_from_buffer(buffer + sizeof(FrameHeader), buffer_size - sizeof(FrameHeader) - 2);
+    if (!pb_encode(&os, message->descriptor, &message->content)) return false;
+    size_t pb_len = os.bytes_written;
+    hdr.len = static_cast<uint16_t>(pb_len);
+    memcpy(p, &hdr, sizeof(hdr));
+    *message_length = sizeof(FrameHeader) + pb_len + 2;
+    return true;
 }
 
 uint32_t NanopbProtocol::generateMessageId() {
@@ -40,38 +61,24 @@ String NanopbProtocol::messageTypeToString(MessageType type) {
 }
 
 bool NanopbProtocol::encodePing(uint8_t* buffer, size_t buffer_size, size_t* message_length) {
-    GaggiMessage message = GaggiMessage_init_default;
-    message.type = MessageType_MSG_PING;
-    message.which_payload = GaggiMessage_ping_tag;
-    // PingRequest has only a dummy_field, no timestamp needed
-    
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, GaggiMessage_fields, &message);
-    *message_length = stream.bytes_written;
-    return status;
+    PingRequest message = PingRequest_init_default;
+    ProtocolMessage<PingRequest> wrapper = wrap(MessageType_MSG_PING, message, &PingRequest_msg);
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeOutputControl(uint8_t* buffer, size_t buffer_size, size_t* message_length,
                                            uint32_t mode, bool valve, float pump_setpoint, float boiler_setpoint,
                                            bool pressure_target, float pressure, float flow) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_OUTPUT_CONTROL);
-    message.which_payload = GaggiMessage_output_control_tag;
-    message.payload.output_control.mode = mode;
-    message.payload.output_control.valve_open = valve;
-    message.payload.output_control.pump_setpoint = pump_setpoint;
-    message.payload.output_control.boiler_setpoint = boiler_setpoint;
-    message.payload.output_control.pressure_target = pressure_target;
-    message.payload.output_control.pressure = pressure;
-    message.payload.output_control.flow = flow;
-    
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    OutputControlRequest message = OutputControlRequest_init_default;
+    message.mode = mode;
+    message.valve_open = valve;
+    message.pump_setpoint = pump_setpoint;
+    message.boiler_setpoint = boiler_setpoint;
+    message.pressure_target = pressure_target;
+    message.pressure = pressure;
+    message.flow = flow;
+    ProtocolMessage<OutputControlRequest> wrapper = wrap(MessageType_MSG_OUTPUT_CONTROL, message, &OutputControlRequest_msg);
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeAdvancedOutputControl(uint8_t* buffer, size_t buffer_size, size_t* message_length,
@@ -86,231 +93,137 @@ bool NanopbProtocol::encodeAdvancedOutputControl(uint8_t* buffer, size_t buffer_
 
 bool NanopbProtocol::encodePidSettings(uint8_t* buffer, size_t buffer_size, size_t* message_length,
                                          float kp, float ki, float kd) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_PID_SETTINGS);
-    message.which_payload = GaggiMessage_pid_settings_tag;
-    message.payload.pid_settings.kp = kp;
-    message.payload.pid_settings.ki = ki;
-    message.payload.pid_settings.kd = kd;
-    
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    PidSettingsRequest message = PidSettingsRequest_init_default;
+    message.kp = kp;
+    message.ki = ki;
+    message.kd = kd;
+    ProtocolMessage<PidSettingsRequest> wrapper = wrap(MessageType_MSG_PID_SETTINGS, message, &PidSettingsRequest_msg);
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodePumpModelCoeffs(uint8_t* buffer, size_t buffer_size, size_t* message_length,
                                              float a, float b, float c, float d) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_OUTPUT_CONTROL);
-    message.which_payload = GaggiMessage_output_control_tag;
-    // Note: Pump model coeffs might need their own message type in the future
+    PumpModelCoeffsRequest message = PumpModelCoeffsRequest_init_default;
+    message.a = a;
+    message.b = b;
+    message.c = c;
+    message.d = d;
+    ProtocolMessage<PumpModelCoeffsRequest> wrapper = wrap(MessageType_MSG_PUMP_MODEL, message, &PumpModelCoeffsRequest_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeAutotune(uint8_t* buffer, size_t buffer_size, size_t* message_length,
                                       uint32_t test_time, uint32_t samples) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_AUTOTUNE);
-    message.which_payload = GaggiMessage_autotune_tag;
-    message.payload.autotune.test_time = test_time;
-    message.payload.autotune.samples = samples;
+    AutotuneRequest message = AutotuneRequest_init_default;
+    message.test_time = test_time;
+    message.samples = samples;
+    ProtocolMessage<AutotuneRequest> wrapper = wrap(MessageType_MSG_AUTOTUNE, message, &AutotuneRequest_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodePressureScale(uint8_t* buffer, size_t buffer_size, size_t* message_length, float scale) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_PRESSURE_SCALE);
-    message.which_payload = GaggiMessage_pressure_scale_tag;
-    message.payload.pressure_scale.scale = scale;
+    PressureScaleRequest message = PressureScaleRequest_init_default;
+    message.scale = scale;
+    ProtocolMessage<PressureScaleRequest> wrapper = wrap(MessageType_MSG_PRESSURE_SCALE, message, &PressureScaleRequest_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeTare(uint8_t* buffer, size_t buffer_size, size_t* message_length) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_TARE);
-    message.which_payload = GaggiMessage_tare_tag;
+    TareRequest message = TareRequest_init_default;
+    ProtocolMessage<TareRequest> wrapper = wrap(MessageType_MSG_TARE, message, &TareRequest_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeLedControl(uint8_t* buffer, size_t buffer_size, size_t* message_length,
                                         uint32_t channel, uint32_t brightness) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_LED_CONTROL);
-    message.which_payload = GaggiMessage_led_control_tag;
-    message.payload.led_control.channel = channel;
-    message.payload.led_control.brightness = brightness;
+    LedControlRequest message = LedControlRequest_init_default;
+    message.channel = channel;
+    message.brightness = brightness;
+    ProtocolMessage<LedControlRequest> wrapper = wrap(MessageType_MSG_LED_CONTROL, message, &LedControlRequest_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeError(uint8_t* buffer, size_t buffer_size, size_t* message_length, uint32_t error_code) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_ERROR);
-    message.which_payload = GaggiMessage_error_tag;
-    message.payload.error.error_code = error_code;
+    ErrorResponse message = ErrorResponse_init_default;
+    message.error_code = error_code;
+    ProtocolMessage<ErrorResponse> wrapper = wrap(MessageType_MSG_ERROR, message, &ErrorResponse_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeSensorData(uint8_t* buffer, size_t buffer_size, size_t* message_length,
                                         float temp, float pressure, float puck_flow, float pump_flow, float resistance) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_SENSOR_DATA);
-    message.which_payload = GaggiMessage_sensor_data_tag;
-    message.payload.sensor_data.temperature = temp;
-    message.payload.sensor_data.pressure = pressure;
-    message.payload.sensor_data.puck_flow = puck_flow;
-    message.payload.sensor_data.pump_flow = pump_flow;
-    message.payload.sensor_data.puck_resistance = resistance;
+    SensorDataResponse message = SensorDataResponse_init_default;
+    message.temperature = temp;
+    message.pressure = pressure;
+    message.puck_flow = puck_flow;
+    message.pump_flow = pump_flow;
+    message.puck_resistance = resistance;
+    ProtocolMessage<SensorDataResponse> wrapper = wrap(MessageType_MSG_SENSOR_DATA, message, &SensorDataResponse_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeBrewButton(uint8_t* buffer, size_t buffer_size, size_t* message_length, bool state) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_BREW_BUTTON);
-    message.which_payload = GaggiMessage_brew_button_tag;
-    message.payload.brew_button.button_state = state;
+    BrewButtonResponse message = BrewButtonResponse_init_default;
+    message.button_state = state;
+    ProtocolMessage<BrewButtonResponse> wrapper = wrap(MessageType_MSG_BREW_BUTTON, message, &BrewButtonResponse_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeSteamButton(uint8_t* buffer, size_t buffer_size, size_t* message_length, bool state) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_STEAM_BUTTON);
-    message.which_payload = GaggiMessage_steam_button_tag;
-    message.payload.steam_button.button_state = state;
+    SteamButtonResponse message = SteamButtonResponse_init_default;
+    message.button_state = state;
+    ProtocolMessage<SteamButtonResponse> wrapper = wrap(MessageType_MSG_STEAM_BUTTON, message, &SteamButtonResponse_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeAutotuneResult(uint8_t* buffer, size_t buffer_size, size_t* message_length,
                                             float kp, float ki, float kd) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_AUTOTUNE_RESULT);
-    message.which_payload = GaggiMessage_autotune_result_tag;
-    message.payload.autotune_result.kp = kp;
-    message.payload.autotune_result.ki = ki;
-    message.payload.autotune_result.kd = kd;
+    AutotuneResultResponse message = AutotuneResultResponse_init_default;
+    message.kp = kp;
+    message.ki = ki;
+    message.kd = kd;
+    ProtocolMessage<AutotuneResultResponse> wrapper = wrap(MessageType_MSG_AUTOTUNE_RESULT, message, &AutotuneRequest_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeVolumetricMeasurement(uint8_t* buffer, size_t buffer_size, size_t* message_length, float volume) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_VOLUMETRIC);
-    message.which_payload = GaggiMessage_volumetric_tag;
-    message.payload.volumetric.volume = volume;
+    VolumetricMeasurementResponse message = VolumetricMeasurementResponse_init_default;
+    message.volume = volume;
+    ProtocolMessage<VolumetricMeasurementResponse> wrapper = wrap(MessageType_MSG_VOLUMETRIC, message, &VolumetricMeasurementResponse_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeTofMeasurement(uint8_t* buffer, size_t buffer_size, size_t* message_length, uint32_t distance) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_TOF);
-    message.which_payload = GaggiMessage_tof_tag;
-    message.payload.tof.distance = distance;
+    TofMeasurementResponse message = TofMeasurementResponse_init_default;
+    message.distance = distance;
+    ProtocolMessage<TofMeasurementResponse> wrapper = wrap(MessageType_MSG_TOF, message, &TofMeasurementResponse_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
 bool NanopbProtocol::encodeSystemInfo(uint8_t* buffer, size_t buffer_size, size_t* message_length, const String& info) {
-    GaggiMessage message = createBaseMessage(MessageType_MSG_SYSTEM_INFO);
-    message.which_payload = GaggiMessage_system_info_tag;
-    strncpy(message.payload.system_info.info, info.c_str(), sizeof(message.payload.system_info.info) - 1);
-    message.payload.system_info.info[sizeof(message.payload.system_info.info) - 1] = '\0';
+    SystemInfoResponse message = SystemInfoResponse_init_default;
+    strncpy(message.info, info.c_str(), sizeof(message.info) - 1);
+    message.info[sizeof(message.info) - 1] = '\0';
+    ProtocolMessage<SystemInfoResponse> wrapper = wrap(MessageType_MSG_SYSTEM_INFO, message, &SystemInfoResponse_msg);
     
-    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buffer_size);
-    bool status = pb_encode(&stream, &GaggiMessage_msg, &message);
-    
-    if (status) {
-        *message_length = stream.bytes_written;
-    }
-    
-    return status;
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
-bool NanopbProtocol::decodeMessage(const uint8_t* data, size_t length, GaggiMessage* message) {
-    pb_istream_t stream = pb_istream_from_buffer(data, length);
-    return pb_decode(&stream, &GaggiMessage_msg, message);
+template <typename T> bool NanopbProtocol::decodeMessage(const uint8_t* data, size_t length, ProtocolMessage<T>* message) {
+    // TODO: Implement
+    // pb_istream_t stream = pb_istream_from_buffer(data, length);
+    // return pb_decode(&stream, &GaggiMessage_msg, message);
+    return true;
 }

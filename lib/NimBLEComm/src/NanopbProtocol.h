@@ -5,10 +5,19 @@
 #include <functional>
 #include <pb_encode.h>
 #include <pb_decode.h>
-#include "gaggimate.pb.h"
+#include "protocol/gaggimate.pb.h"
+#include "protocol/header.h"
+
+template <typename T> struct ProtocolMessage {
+    MessageType type;
+    uint16_t seq;
+    uint8_t priority;
+    T content;
+    pb_msgdesc_t* descriptor;
+};
 
 // Transport-agnostic protocol callback type
-using protocol_message_callback_t = std::function<void(const GaggiMessage&)>;
+template <typename T> typedef std::function<void(const ProtocolMessage<T> &)> protocol_message_callback_t;
 
 /**
  * Pure protocol layer for GaggiMate communication using nanopb.
@@ -53,7 +62,7 @@ public:
     static bool encodeSystemInfo(uint8_t* buffer, size_t buffer_size, size_t* message_length, const String& info);
     
     // Message decoding (for receiving)
-    static bool decodeMessage(const uint8_t* buffer, size_t length, GaggiMessage* message);
+    template <typename T> static bool decodeMessage(const uint8_t* buffer, size_t length, ProtocolMessage<T>* message);
     
     // Utility functions
     static MessageType getMessageType(const uint8_t* buffer, size_t length);
@@ -66,11 +75,13 @@ public:
     
 private:
     static uint32_t message_counter;
-    
+
     // Helper to create base message
-    static GaggiMessage createBaseMessage(MessageType type);
-    static bool encodeGaggiMessage(uint8_t* buffer, size_t buffer_size, size_t* message_length, 
-                                  const GaggiMessage* message);
+    template <typename T> static ProtocolMessage<T> wrap(MessageType type, T message, const pb_msgdesc_t *descriptor);
+    template <typename T> static bool encodeMessage(uint8_t* buffer, size_t buffer_size, size_t* message_length,
+                                  const ProtocolMessage<T>* message);
 };
+
+
 
 #endif // GAGGIMATE_PROTOCOL_H

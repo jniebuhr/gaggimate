@@ -1,37 +1,12 @@
 syntax = "proto3";
+import 'nanopb.proto';
 
 // GaggiMate Protocol Messages
 // Simplified version mapping existing string-based messages to binary format
 
-message GaggiMessage {
-  uint32 msg_id = 1;
-  MessageType type = 2;
-  
-  oneof payload {
-    // Commands (Display → Base Controller)
-    PingRequest ping = 10;
-    OutputControlRequest output_control = 11;
-    PidSettingsRequest pid_settings = 12;
-    PumpModelCoeffsRequest pump_model = 13;
-    AutotuneRequest autotune = 14;
-    PressureScaleRequest pressure_scale = 15;
-    TareRequest tare = 16;
-    LedControlRequest led_control = 17;
-    AltControlRequest alt_control = 18;
-    
-    // Responses (Base Controller → Display)
-    ErrorResponse error = 20;
-    SensorDataResponse sensor_data = 21;
-    BrewButtonResponse brew_button = 22;
-    SteamButtonResponse steam_button = 23;
-    AutotuneResultResponse autotune_result = 24;
-    VolumetricMeasurementResponse volumetric = 25;
-    TofMeasurementResponse tof = 26;
-    SystemInfoResponse system_info = 27;
-  }
-}
-
 enum MessageType {
+  option (nanopb_enumopt).enum_intsize = IS_8;
+
   MSG_UNKNOWN = 0;
   
   // Commands
