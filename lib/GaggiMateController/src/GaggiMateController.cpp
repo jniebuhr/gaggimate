@@ -5,6 +5,7 @@
 #include <freertos/task.h>
 #include <peripherals/DimmedPump.h>
 #include <peripherals/SimplePump.h>
+#include <ProtocolTypes.h> // For ERROR_CODE_* constants
 
 #include <utility>
 
@@ -25,7 +26,7 @@ void GaggiMateController::setup() {
         [this]() { thermalRunawayShutdown(); });
     this->heater = new Heater(
         this->thermocouple, _config.heaterPin, [this]() { thermalRunawayShutdown(); },
-        [this](float Kp, float Ki, float Kd) { _ble.sendAutotuneResult(Kp, Ki, Kd); });
+        [this](float Kp, float Ki, float Kd) { _comms.sendAutotuneResult(Kp, Ki, Kd); });
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
     if (_config.capabilites.pressure) {
@@ -36,22 +37,23 @@ void GaggiMateController::setup() {
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
-    this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
-    this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
+    this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _comms.sendBrewButton(state); });
+    this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _comms.sendSteamButton(state); });
 
     // 5-Pin peripheral port
     Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000);
     this->ledController = new LedController(&Wire);
-    this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _ble.sendTofMeasurement(distance); });
+    this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _comms.sendTofMeasurement(distance); });
     if (this->ledController->isAvailable()) {
         _config.capabilites.ledControls = true;
         _config.capabilites.tof = true;
-        _ble.registerLedControlCallback(
-            [this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
     }
 
     String systemInfo = make_system_info(_config, _version);
-    _ble.initServer(systemInfo);
+    ESP_LOGI(LOG_TAG, "Generated system info: %s", systemInfo.c_str());
+    _comms.init(String(_config.name.c_str()));  // Use device name for BLE advertising
+    _comms.setDeviceInfo(systemInfo);  // Store system info for automatic sending on client connect
+    ESP_LOGI(LOG_TAG, "Set device info on BLE server");
 
     this->thermocouple->setup();
     this->heater->setup();
@@ -62,7 +64,6 @@ void GaggiMateController::setup() {
     this->steamBtn->setup();
     if (_config.capabilites.pressure) {
         pressureSensor->setup();
-        _ble.registerPressureScaleCallback([this](float scale) { this->pressureSensor->setScale(scale); });
     }
     if (_config.capabilites.ledControls) {
         this->ledController->setup();
@@ -74,55 +75,89 @@ void GaggiMateController::setup() {
     // Initialize last ping time
     lastPingTime = millis();
 
-    _ble.registerOutputControlCallback([this](bool valve, float pumpSetpoint, float heaterSetpoint) {
-        this->pump->setPower(pumpSetpoint);
-        this->valve->set(valve);
-        this->heater->setSetpoint(heaterSetpoint);
-        if (!_config.capabilites.dimming) {
-            return;
-        }
-        auto dimmedPump = static_cast<DimmedPump *>(pump);
-        dimmedPump->setValveState(valve);
-    });
-    _ble.registerAdvancedOutputControlCallback(
-        [this](bool valve, float heaterSetpoint, bool pressureTarget, float pressure, float flow) {
-            this->valve->set(valve);
-            this->heater->setSetpoint(heaterSetpoint);
-            if (!_config.capabilites.dimming) {
-                return;
+    // Register unified message callback
+    _comms.registerMessageCallback([this](const GaggiMessage& message) {
+        switch (message.which_payload) {
+            case GaggiMessage_output_control_tag: {
+                const auto& req = message.payload.output_control;
+                this->pump->setPower(req.pump_setpoint);
+                this->valve->set(req.valve_open);
+                this->heater->setSetpoint(req.boiler_setpoint);
+                if (!_config.capabilites.dimming) {
+                    return;
+                }
+                auto dimmedPump = static_cast<DimmedPump *>(pump);
+                dimmedPump->setValveState(req.valve_open);
+                
+                // Handle advanced mode
+                if (req.mode == 1) { // Advanced mode
+                    if (req.pressure_target) {
+                        dimmedPump->setPressureTarget(req.pressure, req.flow);
+                    } else {
+                        dimmedPump->setFlowTarget(req.flow, req.pressure);
+                    }
+                }
+                break;
             }
-            auto dimmedPump = static_cast<DimmedPump *>(pump);
-            if (pressureTarget) {
-                dimmedPump->setPressureTarget(pressure, flow);
-            } else {
-                dimmedPump->setFlowTarget(flow, pressure);
+            case GaggiMessage_alt_control_tag: {
+                const auto& req = message.payload.alt_control;
+                this->alt->set(req.pin_state);
+                break;
             }
-            dimmedPump->setValveState(valve);
-        });
-    _ble.registerAltControlCallback([this](bool state) { this->alt->set(state); });
-    _ble.registerPidControlCallback([this](float Kp, float Ki, float Kd) { this->heater->setTunings(Kp, Ki, Kd); });
-    _ble.registerPumpModelCoeffsCallback([this](float a, float b, float c, float d) {
-        if (_config.capabilites.dimming) {
-            auto dimmedPump = static_cast<DimmedPump *>(pump);
-            // Check if this is a flow measurement call (a and b are flow measurements, c and d are nan)
-            if (isnan(c) && isnan(d)) {
-                dimmedPump->setPumpFlowCoeff(a, b); // a = oneBarFlow, b = nineBarFlow
-            } else {
-                dimmedPump->setPumpFlowPolyCoeffs(a, b, c, d); // a, b, c, d are polynomial coefficients
+            case GaggiMessage_pid_settings_tag: {
+                const auto& req = message.payload.pid_settings;
+                this->heater->setTunings(req.kp, req.ki, req.kd);
+                break;
             }
+            case GaggiMessage_pump_model_tag: {
+                const auto& req = message.payload.pump_model;
+                if (_config.capabilites.dimming) {
+                    auto dimmedPump = static_cast<DimmedPump *>(pump);
+                    // Check if this is a flow measurement call (a and b are flow measurements, c and d are nan)
+                    if (isnan(req.c) && isnan(req.d)) {
+                        dimmedPump->setPumpFlowCoeff(req.a, req.b); // a = oneBarFlow, b = nineBarFlow
+                    } else {
+                        dimmedPump->setPumpFlowPolyCoeffs(req.a, req.b, req.c, req.d); // a, b, c, d are polynomial coefficients
+                    }
+                }
+                break;
+            }
+            case GaggiMessage_ping_tag: {
+                lastPingTime = millis();
+                ESP_LOGV(LOG_TAG, "Ping received, system is alive");
+                break;
+            }
+            case GaggiMessage_autotune_tag: {
+                const auto& req = message.payload.autotune;
+                this->heater->autotune(req.test_time, req.samples);
+                break;
+            }
+            case GaggiMessage_tare_tag: {
+                if (!_config.capabilites.dimming) {
+                    return;
+                }
+                auto dimmedPump = static_cast<DimmedPump *>(pump);
+                dimmedPump->tare();
+                break;
+            }
+            case GaggiMessage_pressure_scale_tag: {
+                if (_config.capabilites.pressure) {
+                    const auto& req = message.payload.pressure_scale;
+                    this->pressureSensor->setScale(req.scale);
+                }
+                break;
+            }
+            case GaggiMessage_led_control_tag: {
+                if (_config.capabilites.ledControls) {
+                    const auto& req = message.payload.led_control;
+                    ledController->setChannel(req.channel, req.brightness);
+                }
+                break;
+            }
+            default:
+                ESP_LOGW(LOG_TAG, "Unhandled message type: %d", message.which_payload);
+                break;
         }
-    });
-    _ble.registerPingCallback([this]() {
-        lastPingTime = millis();
-        ESP_LOGV(LOG_TAG, "Ping received, system is alive");
-    });
-    _ble.registerAutotuneCallback([this](int goal, int windowSize) { this->heater->autotune(goal, windowSize); });
-    _ble.registerTareCallback([this]() {
-        if (!_config.capabilites.dimming) {
-            return;
-        }
-        auto dimmedPump = static_cast<DimmedPump *>(pump);
-        dimmedPump->tare();
     });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }
@@ -132,6 +167,10 @@ void GaggiMateController::loop() {
     if ((now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
         handlePingTimeout();
     }
+    
+    // Check if we need to send system info to newly connected client
+    _comms.checkSystemInfoSend();
+    
     sendSensorData();
     delay(250);
 }
@@ -178,16 +217,21 @@ void GaggiMateController::thermalRunawayShutdown() {
     this->pump->setPower(0);
     this->valve->set(false);
     this->alt->set(false);
-    _ble.sendError(ERROR_CODE_RUNAWAY);
+    _comms.sendError(ERROR_CODE_RUNAWAY);
 }
 
 void GaggiMateController::sendSensorData() {
+    // Don't send sensor data if no client is connected
+    if (!_comms.isConnected()) {
+        return;
+    }
+    
     if (_config.capabilites.pressure) {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
-        _ble.sendSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getPuckFlow(),
+        _comms.sendSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getPuckFlow(),
                             dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
-        _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+        _comms.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
     } else {
-        _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
+        _comms.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
     }
 }

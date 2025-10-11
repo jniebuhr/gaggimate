@@ -68,6 +68,8 @@ class WebUIPlugin : public Plugin {
     bool updating = false;
     bool apMode = false;
     bool serverRunning = false;
+    bool otaInitScheduled = false;
+    unsigned long otaInitTime = 0;
     String updateComponent = "";
 };
 

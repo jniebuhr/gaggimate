@@ -46,7 +46,16 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     pluginManager->on("controller:wifi:disconnect", [this](Event const &) { stop(); });
     pluginManager->on("controller:ready", [this](Event const &) {
         ota->setControllerVersion(controller->getSystemInfo().version);
-        ota->init(controller->getClientController()->getClient());
+    });
+    pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
+        // Delay OTA initialization to ensure BLE connection is stable
+        static unsigned long lastConnectionTime = 0;
+        lastConnectionTime = millis();
+        
+        // Schedule OTA initialization after a short delay
+        // This will be handled in the main loop
+        otaInitScheduled = true;
+        otaInitTime = lastConnectionTime + 1000; // 1 second delay
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
     setupServer();
@@ -62,7 +71,36 @@ void WebUIPlugin::loop() {
     if (!serverRunning) {
         return;
     }
+    
+    // Handle delayed OTA initialization
     const long now = millis();
+    if (otaInitScheduled && now >= otaInitTime) {
+        auto clientController = controller->getClientController();
+        if (clientController && clientController->isConnected() && clientController->getNativeClient()) {
+
+            bool initSuccess = false;
+            auto nativeClient = clientController->getNativeClient();
+            
+            if (nativeClient != nullptr && ota != nullptr) {
+
+                ota->init(nativeClient);
+                
+                initSuccess = true; 
+            }
+            
+            if (initSuccess) {
+                Serial.println("[WebUIPlugin] OTA initialized successfully");
+                otaInitScheduled = false;
+            } else {
+                Serial.println("[WebUIPlugin] OTA initialization failed - invalid state or null pointer");
+                otaInitScheduled = false;
+            }
+        } else {
+            Serial.println("[WebUIPlugin] BLE connection not ready for OTA initialization, retrying in 1 second");
+            otaInitTime = now + 1000; // Retry in 1 second
+        }
+    }
+    
     if ((lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL)) {
         ota->checkForUpdates();
         pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());

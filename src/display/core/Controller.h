@@ -1,8 +1,8 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include "NimBLEClientController.h"
-#include "NimBLEComm.h"
+#include "GaggiMateClient.h"
+#include "ProtocolTypes.h"
 #include "PluginManager.h"
 #include "Settings.h"
 #include <WiFi.h>
@@ -97,13 +97,13 @@ class Controller {
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    NimBLEClientController *getClientController() { return &clientController; }
+    GaggiMateClient *getClientController() { return &clientController; }
 
   private:
     // Initialization methods
     void setupPanel();
     void setupBluetooth();
-    void setupInfos();
+    void parseSystemInfo(const String& info);
     void setupWifi();
 
     // Functional methods
@@ -123,7 +123,7 @@ class Controller {
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *ui = nullptr;
 #endif
-    NimBLEClientController clientController;
+    GaggiMateClient clientController;
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};
@@ -144,7 +144,6 @@ class Controller {
     Process *lastProcess = nullptr;
 
     unsigned long grindActiveUntil = 0;
-    unsigned long lastPing = 0;
     unsigned long lastProgress = 0;
     unsigned long lastAction = 0;
     bool loaded = false;
@@ -162,6 +161,9 @@ class Controller {
     VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
     unsigned long lastBluetoothMeasurement = 0;
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
+
+    // Ping handling
+    unsigned long lastPing = 0;
 
     xTaskHandle taskHandle;
 
