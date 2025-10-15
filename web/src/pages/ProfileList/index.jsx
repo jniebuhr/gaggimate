@@ -312,14 +312,28 @@ function ProfileCard({
                     <button
                       role='menuitem'
                       onClick={() => {
-                        onDelete(data.id);
-                        closeMenu();
+                        if (!confirmDelete) {
+                          setConfirmDelete(true);
+                        } else {
+                          if (confirmTimerRef.current) {
+                            clearTimeout(confirmTimerRef.current);
+                            confirmTimerRef.current = null;
+                          }
+                          setConfirmDelete(false);
+                          onDelete(data.id);
+                          closeMenu();
+                        }
                       }}
-                      className='text-error justify-start'
-                      aria-label={`Delete ${data.label} profile`}
+                      className={`justify-start ${confirmDelete ? 'bg-error text-error-content font-semibold rounded' : 'text-error'}`}
+                      aria-label={
+                        confirmDelete
+                          ? `Confirm deletion of ${data.label} profile`
+                          : `Delete ${data.label} profile`
+                      }
+                      title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
                     >
                       <FontAwesomeIcon icon={faTrashCan} />
-                      <span>Delete</span>
+                      <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
                     </button>
                   </li>
                 </ul>
