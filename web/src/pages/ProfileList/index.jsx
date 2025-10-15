@@ -63,6 +63,22 @@ function ProfileCard({
   isFirst,
   isLast,
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const confirmTimerRef = useRef(null);
+
+  // Reset confirmation after a short delay to avoid accidental deletes
+  useEffect(() => {
+    if (confirmDelete) {
+      if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+      confirmTimerRef.current = setTimeout(() => setConfirmDelete(false), 4000);
+    }
+    return () => {
+      if (confirmTimerRef.current) {
+        clearTimeout(confirmTimerRef.current);
+        confirmTimerRef.current = null;
+      }
+    };
+  }, [confirmDelete]);
   const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
@@ -308,7 +324,7 @@ function ProfileCard({
                   </li>
                 </ul>
               </div>
-              
+
 
               {/* Desktop: inline actions */}
               <div
@@ -351,11 +367,27 @@ function ProfileCard({
                   <FontAwesomeIcon icon={faCopy} />
                 </button>
                 <button
-                  onClick={() => onDelete(data.id)}
-                  className='btn btn-sm btn-ghost text-error'
-                  aria-label={`Delete ${data.label} profile`}
-                >
-                  <FontAwesomeIcon icon={faTrashCan} />
+                  onClick={() => {
+                  if (!confirmDelete) {
+                    setConfirmDelete(true);
+                  } else {
+                    if (confirmTimerRef.current) {
+                      clearTimeout(confirmTimerRef.current);
+                      confirmTimerRef.current = null;
+                    }
+                    setConfirmDelete(false);
+                    onDelete(data.id);
+                  }
+                }}
+                className={`btn btn-sm btn-ghost ${confirmDelete ? 'btn-error text-error-content' : 'text-error'}`}
+                  aria-label={confirmDelete
+                    ? `Confirm deletion of ${data.label} profile`
+                    : `Delete ${data.label} profile`
+                }
+                  title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
+              >
+                <FontAwesomeIcon icon={faTrashCan} />
+                {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
                 </button>
               </div>
             </div>
