@@ -97,6 +97,9 @@ void onSimpleProcessToggle(lv_event_t *e) {
     }
 }
 
+
+void onUpDuration(lv_event_t *e) { controller.raisePhaseDuration(); }
+
 void onProfileScreenLoad(lv_event_t *e) {
     lv_obj_set_ext_click_area(ui_ProfileScreen_previousProfileBtn, 30);
     lv_obj_set_ext_click_area(ui_ProfileScreen_nextProfileBtn, 30);
