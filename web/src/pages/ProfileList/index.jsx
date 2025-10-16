@@ -11,6 +11,7 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
+import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useEffect, useState, useContext, useRef } from 'preact/hooks';
@@ -63,22 +64,7 @@ function ProfileCard({
   isFirst,
   isLast,
 }) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const confirmTimerRef = useRef(null);
-
-  // Reset confirmation after a short delay to avoid accidental deletes
-  useEffect(() => {
-    if (confirmDelete) {
-      if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
-      confirmTimerRef.current = setTimeout(() => setConfirmDelete(false), 4000);
-    }
-    return () => {
-      if (confirmTimerRef.current) {
-        clearTimeout(confirmTimerRef.current);
-        confirmTimerRef.current = null;
-      }
-    };
-  }, [confirmDelete]);
+  const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
   const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
@@ -312,17 +298,10 @@ function ProfileCard({
                     <button
                       role='menuitem'
                       onClick={() => {
-                        if (!confirmDelete) {
-                          setConfirmDelete(true);
-                        } else {
-                          if (confirmTimerRef.current) {
-                            clearTimeout(confirmTimerRef.current);
-                            confirmTimerRef.current = null;
-                          }
-                          setConfirmDelete(false);
+                        confirmOrDelete(() => {
                           onDelete(data.id);
                           closeMenu();
-                        }
+                        });
                       }}
                       className={`justify-start ${confirmDelete ? 'bg-error text-error-content font-semibold rounded' : 'text-error'}`}
                       aria-label={
@@ -382,26 +361,18 @@ function ProfileCard({
                 </button>
                 <button
                   onClick={() => {
-                  if (!confirmDelete) {
-                    setConfirmDelete(true);
-                  } else {
-                    if (confirmTimerRef.current) {
-                      clearTimeout(confirmTimerRef.current);
-                      confirmTimerRef.current = null;
-                    }
-                    setConfirmDelete(false);
-                    onDelete(data.id);
+                    confirmOrDelete(() => onDelete(data.id));
+                  }}
+                  className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
+                  aria-label={
+                    confirmDelete
+                      ? `Confirm deletion of ${data.label} profile`
+                      : `Delete ${data.label} profile`
                   }
-                }}
-                className={`btn btn-sm btn-ghost ${confirmDelete ? 'btn-error text-error-content' : 'text-error'}`}
-                  aria-label={confirmDelete
-                    ? `Confirm deletion of ${data.label} profile`
-                    : `Delete ${data.label} profile`
-                }
                   title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
-              >
-                <FontAwesomeIcon icon={faTrashCan} />
-                {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
+                >
+                  <FontAwesomeIcon icon={faTrashCan} />
+                  {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
                 </button>
               </div>
             </div>
