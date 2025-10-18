@@ -162,10 +162,10 @@ void Controller::setupBluetooth() {
             ESP_LOGE(LOG_TAG, "Received error %d", error);
         }
     });
-    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd) {
-        ESP_LOGI(LOG_TAG, "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
+    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd, const float FF) {
+        ESP_LOGI(LOG_TAG, "Received new autotune values: %.3f, %.3f, %.3f, %.3f", Kp, Ki, Kd, FF);
         char pid[30];
-        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f", Kp, Ki, Kd);
+        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, FF);
         settings.setPid(String(pid));
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;

@@ -20,7 +20,7 @@ void Heater::setupPid() {
     simplePid->setSamplingFrequency(TUNER_OUTPUT_SPAN / 1000.0f);
     simplePid->setCtrlOutputLimits(0.0f, TUNER_OUTPUT_SPAN);
     simplePid->activateSetPointFilter(false);
-    simplePid->activateFeedForward(false);
+    simplePid->activateFeedForward(true);
     simplePid->reset();
 }
 
@@ -57,11 +57,19 @@ void Heater::setSetpoint(float setpoint) {
     }
 }
 
-void Heater::setTunings(float Kp, float Ki, float Kd) {
-    if (simplePid->getKp() != Kp || simplePid->getKi() != Ki || simplePid->getKd() != Kd) {
-        simplePid->setControllerPIDGains(Kp, Ki, Kd, 0.0f);
+// void Heater::setTunings(float Kp, float Ki, float Kd) {
+//     if (simplePid->getKp() != Kp || simplePid->getKi() != Ki || simplePid->getKd() != Kd) {
+//         simplePid->setControllerPIDGains(Kp, Ki, Kd, 0.0f);
+//         simplePid->reset();
+//         ESP_LOGV(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f, FF: %f", Kp, Ki, Kd, FF);
+//     }
+// }
+
+void Heater::setTunings(float Kp, float Ki, float Kd, float FF) {
+    if (simplePid->getKp() != Kp || simplePid->getKi() != Ki || simplePid->getKd() != Kd || simplePid->getKFF() != FF) {
+        simplePid->setControllerPIDGains(Kp, Ki, Kd, FF);
         simplePid->reset();
-        ESP_LOGV(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f", Kp, Ki, Kd);
+        ESP_LOGV(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f, FF: %f", Kp, Ki, Kd, FF);
     }
 }
 
@@ -110,7 +118,7 @@ void Heater::loopAutotune() {
 
     pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
 
-    setTunings(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
+    setTunings(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, autotuner->getKff());
 
     ESP_LOGI(LOG_TAG, "Autotuning finished: Kp=%.4f, Ki=%.4f, Kd=%.4f, Kff=%.4f\n", autotuner->getKp() * 1000.0f,
              autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, autotuner->getKff() * 1000.0f);
