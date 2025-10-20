@@ -10,6 +10,7 @@
 #include <display/core/process/SteamProcess.h>
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
+#include <display/plugins/AutoWakeupPlugin.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/HomekitPlugin.h>
@@ -19,7 +20,6 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
-#include <display/plugins/AutoWakeupPlugin.h>
 
 const String LOG_TAG = F("Controller");
 
