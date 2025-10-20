@@ -24,13 +24,15 @@
 #include <display/drivers/common/ext.h>
 
 enum LilyGo_TDisplayPanel_Type {
-    LILYGO_T_TDISPLAY_UNKNOWN,
-    LILYGO_T_TDISPLAY_1_43_INCHES,
+    LILYGO_T_DISPLAY_UNKNOWN,
+    LILYGO_T_DISPLAY_1_43_INCHES,
+    LILYGO_T_DISPLAY_1_75_INCHES,
 };
 
 enum LilyGo_TDisplayPanel_TouchType {
     LILYGO_T_DISPLAY_TOUCH_UNKNOWN,
     LILYGO_T_DISPLAY_TOUCH_FT3168,
+    LILYGO_T_DISPLAY_TOUCH_CST92XX,
 };
 
 enum LilyGo_TDisplayPanel_Color_Order {
@@ -101,6 +103,9 @@ class LilyGo_TDisplayPanel : public Display {
 
   private:
     uint8_t currentBrightness = 0;
+
+    LilyGo_TDisplayPanel_Type panelType = LILYGO_T_DISPLAY_UNKNOWN;
+    LilyGo_TDisplayPanel_TouchType touchType = LILYGO_T_DISPLAY_TOUCH_UNKNOWN;
 
     LilyGo_TDisplayPanel_Wakeup_Method _wakeupMethod;
     uint64_t _sleepTimeUs;
