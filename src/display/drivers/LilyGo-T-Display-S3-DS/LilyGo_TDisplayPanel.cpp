@@ -225,6 +225,7 @@ bool LilyGo_TDisplayPanel::initTouch() {
         panelType = LILYGO_T_DISPLAY_1_75_INCHES;
         return true;
     }
+    delete tmp;
 
     TouchDrvFT6X36 *tmp2 = new TouchDrvFT6X36();
     tmp2->setPins(TP_RST, TP_INT);
@@ -239,6 +240,7 @@ bool LilyGo_TDisplayPanel::initTouch() {
         panelType = LILYGO_T_DISPLAY_1_43_INCHES;
         return true;
     }
+    delete tmp2;
 
     ESP_LOGE("LilyGo_TDisplayPanel", "Unable to find touch device.");
     return false;
@@ -265,16 +267,14 @@ bool LilyGo_TDisplayPanel::initDisplay(LilyGo_TDisplayPanel_Color_Order colorOrd
 
     switch (panelType) {
     case LILYGO_T_DISPLAY_1_75_INCHES:
-        _rotation = 2;
+        setRotation(2);
         break;
     case LILYGO_T_DISPLAY_1_43_INCHES:
     case LILYGO_T_DISPLAY_UNKNOWN:
     default:
-        _rotation = 0;
+        setRotation(0);
         break;
-    }   
-
-    this->setRotation(_rotation);
+    }
 
     // required for correct GRAM initialization
     displayBus->writeCommand(CO5300_C_PTLON);

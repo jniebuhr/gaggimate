@@ -35,11 +35,11 @@ bool LilyGoTDisplayDriver::isCompatible() {
                       detectI2CDevice(FT3168_DEVICE_ADDRESS, "FT3168 Touch Sensor");
     
     Wire.end();
-    return pcf8563Found && sy6970Found && touchFound;;
+    return pcf8563Found && sy6970Found && touchFound;
 }
 
 void LilyGoTDisplayDriver::init() {
-    ESP_LOGI("LilyGoTDisplayDriver", "initialzing");
+    ESP_LOGI("LilyGoTDisplayDriver", "Initializing LilyGo T-Display...");
 
     if (!panel.begin()) {
         for (uint8_t i = 0; i < 20; i++) {
