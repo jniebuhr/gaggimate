@@ -110,7 +110,7 @@ void ui_StandbyScreen_screen_init(void) {
                                            _ui_theme_alpha_NiceWhite);
 
     ui_StandbyScreen_Image3 = lv_img_create(ui_StandbyScreen);
-    lv_img_set_src(ui_StandbyScreen_Image3, &ui_img_1732953241);
+    lv_img_set_src(ui_StandbyScreen_Image3, &ui_img_1186668522);
     lv_obj_set_width(ui_StandbyScreen_Image3, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_StandbyScreen_Image3, LV_SIZE_CONTENT); /// 1
     lv_obj_set_x(ui_StandbyScreen_Image3, 0);

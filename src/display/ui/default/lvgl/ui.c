@@ -96,6 +96,7 @@ lv_obj_t *ui_BrewScreen_profileInfo;
 lv_obj_t *ui_BrewScreen_Label1;
 lv_obj_t *ui_BrewScreen_Container3;
 lv_obj_t *ui_BrewScreen_profileName;
+lv_obj_t *ui_BrewScreen_settingsButton;
 void ui_event_BrewScreen_profileSelectBtn(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_profileSelectBtn;
 lv_obj_t *ui_BrewScreen_adjustments;
@@ -121,6 +122,19 @@ lv_obj_t *uic_BrewScreen_dials_pressureTarget;
 lv_obj_t *uic_BrewScreen_dials_pressureText;
 lv_obj_t *uic_BrewScreen_dials_tempText;
 
+// SCREEN: ui_StandbyScreen
+void ui_StandbyScreen_screen_init(void);
+void ui_event_StandbyScreen(lv_event_t *e);
+lv_obj_t *ui_StandbyScreen;
+lv_obj_t *ui_StandbyScreen_Image1;
+lv_obj_t *ui_StandbyScreen_time;
+lv_obj_t *ui_StandbyScreen_Container1;
+lv_obj_t *ui_StandbyScreen_wifiIcon;
+lv_obj_t *ui_StandbyScreen_bluetoothIcon;
+lv_obj_t *ui_StandbyScreen_updateIcon;
+lv_obj_t *ui_StandbyScreen_Image3;
+// CUSTOM VARIABLES
+
 // SCREEN: ui_SimpleProcessScreen
 void ui_SimpleProcessScreen_screen_init(void);
 void ui_event_SimpleProcessScreen(lv_event_t *e);
@@ -145,19 +159,6 @@ lv_obj_t *uic_SimpleProcessScreen_dials_pressureGauge;
 lv_obj_t *uic_SimpleProcessScreen_dials_pressureTarget;
 lv_obj_t *uic_SimpleProcessScreen_dials_pressureText;
 lv_obj_t *uic_SimpleProcessScreen_dials_tempText;
-
-// SCREEN: ui_StandbyScreen
-void ui_StandbyScreen_screen_init(void);
-void ui_event_StandbyScreen(lv_event_t *e);
-lv_obj_t *ui_StandbyScreen;
-lv_obj_t *ui_StandbyScreen_Image1;
-lv_obj_t *ui_StandbyScreen_time;
-lv_obj_t *ui_StandbyScreen_Container1;
-lv_obj_t *ui_StandbyScreen_wifiIcon;
-lv_obj_t *ui_StandbyScreen_bluetoothIcon;
-lv_obj_t *ui_StandbyScreen_updateIcon;
-lv_obj_t *ui_StandbyScreen_Image3;
-// CUSTOM VARIABLES
 
 // SCREEN: ui_StatusScreen
 void ui_StatusScreen_screen_init(void);
@@ -229,6 +230,7 @@ const lv_img_dsc_t *ui_imgset_849879536[1] = {&ui_img_98036921};
 const lv_img_dsc_t *ui_imgset_1382826243[1] = {&ui_img_944513416};
 const lv_img_dsc_t *ui_imgset_434888472[1] = {&ui_img_295763949};
 const lv_img_dsc_t *ui_imgset_1091184723[1] = {&ui_img_1091371356};
+const lv_img_dsc_t *ui_imgset_1872568961[1] = {&ui_img_1186668522};
 const lv_img_dsc_t *ui_imgset_960046369[1] = {&ui_img_631115820};
 const lv_img_dsc_t *ui_imgset_1525119997[1] = {&ui_img_360122106};
 const lv_img_dsc_t *ui_imgset_1812359778[1] = {&ui_img_363557387};
@@ -455,6 +457,14 @@ void ui_event_BrewScreen_downDurationButton(lv_event_t *e) {
     }
 }
 
+void ui_event_StandbyScreen(lv_event_t *e) {
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if (event_code == LV_EVENT_CLICKED) {
+        onWakeup(e);
+    }
+}
+
 void ui_event_SimpleProcessScreen(lv_event_t *e) {
     lv_event_code_t event_code = lv_event_get_code(e);
 
@@ -496,14 +506,6 @@ void ui_event_SimpleProcessScreen_upTempButton(lv_event_t *e) {
 
     if (event_code == LV_EVENT_CLICKED) {
         onSteamTempRaise(e);
-    }
-}
-
-void ui_event_StandbyScreen(lv_event_t *e) {
-    lv_event_code_t event_code = lv_event_get_code(e);
-
-    if (event_code == LV_EVENT_CLICKED) {
-        onWakeup(e);
     }
 }
 

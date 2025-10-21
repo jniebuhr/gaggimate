@@ -117,6 +117,7 @@ extern lv_obj_t *ui_BrewScreen_profileInfo;
 extern lv_obj_t *ui_BrewScreen_Label1;
 extern lv_obj_t *ui_BrewScreen_Container3;
 extern lv_obj_t *ui_BrewScreen_profileName;
+extern lv_obj_t *ui_BrewScreen_settingsButton;
 void ui_event_BrewScreen_profileSelectBtn(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_profileSelectBtn;
 extern lv_obj_t *ui_BrewScreen_adjustments;
@@ -142,6 +143,19 @@ extern lv_obj_t *uic_BrewScreen_dials_pressureTarget;
 extern lv_obj_t *uic_BrewScreen_dials_pressureText;
 extern lv_obj_t *uic_BrewScreen_dials_tempText;
 
+// SCREEN: ui_StandbyScreen
+void ui_StandbyScreen_screen_init(void);
+void ui_event_StandbyScreen(lv_event_t *e);
+extern lv_obj_t *ui_StandbyScreen;
+extern lv_obj_t *ui_StandbyScreen_Image1;
+extern lv_obj_t *ui_StandbyScreen_time;
+extern lv_obj_t *ui_StandbyScreen_Container1;
+extern lv_obj_t *ui_StandbyScreen_wifiIcon;
+extern lv_obj_t *ui_StandbyScreen_bluetoothIcon;
+extern lv_obj_t *ui_StandbyScreen_updateIcon;
+extern lv_obj_t *ui_StandbyScreen_Image3;
+// CUSTOM VARIABLES
+
 // SCREEN: ui_SimpleProcessScreen
 void ui_SimpleProcessScreen_screen_init(void);
 void ui_event_SimpleProcessScreen(lv_event_t *e);
@@ -166,19 +180,6 @@ extern lv_obj_t *uic_SimpleProcessScreen_dials_pressureGauge;
 extern lv_obj_t *uic_SimpleProcessScreen_dials_pressureTarget;
 extern lv_obj_t *uic_SimpleProcessScreen_dials_pressureText;
 extern lv_obj_t *uic_SimpleProcessScreen_dials_tempText;
-
-// SCREEN: ui_StandbyScreen
-void ui_StandbyScreen_screen_init(void);
-void ui_event_StandbyScreen(lv_event_t *e);
-extern lv_obj_t *ui_StandbyScreen;
-extern lv_obj_t *ui_StandbyScreen_Image1;
-extern lv_obj_t *ui_StandbyScreen_time;
-extern lv_obj_t *ui_StandbyScreen_Container1;
-extern lv_obj_t *ui_StandbyScreen_wifiIcon;
-extern lv_obj_t *ui_StandbyScreen_bluetoothIcon;
-extern lv_obj_t *ui_StandbyScreen_updateIcon;
-extern lv_obj_t *ui_StandbyScreen_Image3;
-// CUSTOM VARIABLES
 
 // SCREEN: ui_StatusScreen
 void ui_StatusScreen_screen_init(void);
@@ -264,16 +265,17 @@ LV_IMG_DECLARE(ui_img_545340440);    // assets/raindrops-80x80.png
 LV_IMG_DECLARE(ui_img_363557387);    // assets/coffee-bean-80x80.png
 LV_IMG_DECLARE(ui_img_445946954);    // assets/play-40x40.png
 LV_IMG_DECLARE(ui_img_1424216268);   // assets/equality-40x40.png
+LV_IMG_DECLARE(ui_img_340148213);    // assets/settings-40x40.png
 LV_IMG_DECLARE(ui_img_332059803);    // assets/dropdown-bar-40x40.png
 LV_IMG_DECLARE(ui_img_834125362);    // assets/minus-small-40x40.png
 LV_IMG_DECLARE(ui_img_390988422);    // assets/plus-small-40x40.png
 LV_IMG_DECLARE(ui_img_364513079);    // assets/wifi-20x20.png
 LV_IMG_DECLARE(ui_img_1091371356);   // assets/bluetooth-alt-20x20.png
 LV_IMG_DECLARE(ui_img_1765671371);   // assets/refresh-20x20.png
-LV_IMG_DECLARE(ui_img_1732953241);   // assets/tap-60x60.png
+LV_IMG_DECLARE(ui_img_1186668522);   // assets/cake-birthday-60x60.png
 LV_IMG_DECLARE(ui_img_1456692430);   // assets/pause-40x40.png
 LV_IMG_DECLARE(ui_img_1829139226);   // assets/angle-down-40x40.png
-LV_IMG_DECLARE(ui_img_340148213);    // assets/settings-40x40.png
+LV_IMG_DECLARE(ui_img_1732953241);   // assets/tap-60x60.png
 LV_IMG_DECLARE(ui_img_691326438);    // assets/wind-40x40.png
 
 // UI INIT
