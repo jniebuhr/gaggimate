@@ -39,8 +39,33 @@ void GaggiMateController::setup() {
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
 
-    // 5-Pin peripheral port
-    Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000);
+    // 4-Pin peripheral port
+    if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
+        ESP_LOGE(LOG_TAG, "Failed to initialize I2C bus");
+    }
+    delay(500);
+    int nDevices;
+    ESP_LOGI("", "Scanning...");
+    byte error, address;
+    nDevices = 0;
+    for(address = 1; address < 127; address++ ) {
+        ESP_LOGV(LOG_TAG, "Scanning 0x%02x", address);
+        Wire.beginTransmission(address);
+        error = Wire.endTransmission();
+        if (error == 0) {
+            ESP_LOGI("", "I2C device found at address 0x%02x", address);
+            nDevices++;
+        }
+        else if (error==4) {
+            ESP_LOGI("", "Unknow error at address 0x%02x", address);
+        }
+    }
+    if (nDevices == 0) {
+        ESP_LOGI("", "No I2C devices found");
+    }
+    else {
+        ESP_LOGI("", "done");
+    }
     this->ledController = new LedController(&Wire);
     this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _ble.sendTofMeasurement(distance); });
     if (this->ledController->isAvailable()) {
@@ -68,7 +93,7 @@ void GaggiMateController::setup() {
         this->ledController->setup();
     }
     if (_config.capabilites.tof) {
-        this->distanceSensor->setup();
+        // this->distanceSensor->setup();
     }
 
     // Initialize last ping time
