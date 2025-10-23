@@ -25,15 +25,15 @@ void LedControlPlugin::updateControl() {
         return;
     }
     if (this->controller->isActive() && mode == MODE_BREW) {
-        sendControl(0, 0, 255, 20, 255);
+        sendControl(0, 0, 255, 20, settings.getSunriseExtBrightness());
         return;
     }
-    if (this->controller->getLastProcess() != nullptr && mode == MODE_BREW) {
-        sendControl(0, 255, 0, 20, 255);
+    if (this->controller->getLastProcess() != nullptr && this->controller->getLastProcess()->getType() == MODE_BREW && mode == MODE_BREW) {
+        sendControl(0, 255, 0, 20, settings.getSunriseExtBrightness());
         return;
     }
     if (this->controller->isLowWaterLevel()) {
-        sendControl(255, 0, 0, 20, 255);
+        sendControl(255, 0, 0, 20, settings.getSunriseExtBrightness());
         return;
     }
     sendControl(settings.getSunriseR(), settings.getSunriseG(), settings.getSunriseB(), settings.getSunriseW(),
@@ -49,8 +49,12 @@ void LedControlPlugin::sendControl(uint8_t r, uint8_t g, uint8_t b, uint8_t w, u
         this->controller->getClientController()->sendLedControl(2, b);
     if (w != last_w)
         this->controller->getClientController()->sendLedControl(3, w);
-    if (ext != last_ext)
-        this->controller->getClientController()->sendLedControl(5, ext);
+    if (ext != last_ext) {
+        this->controller->getClientController()->sendLedControl(4, 255 - ext);
+        this->controller->getClientController()->sendLedControl(5, 255 - ext);
+        this->controller->getClientController()->sendLedControl(6, 255 - ext);
+        this->controller->getClientController()->sendLedControl(7, 255 - ext);
+    }
     last_r = r;
     last_g = g;
     last_b = b;
