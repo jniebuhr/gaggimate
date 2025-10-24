@@ -11,6 +11,7 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
+import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useEffect, useState, useContext, useRef } from 'preact/hooks';
@@ -29,6 +30,7 @@ import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 
 Chart.register(
   LineController,
@@ -62,6 +64,7 @@ function ProfileCard({
   isFirst,
   isLast,
 }) {
+  const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
   const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
@@ -84,6 +87,96 @@ function ProfileCard({
     downloadJson(download, `profile-${data.id}.json`);
   }, [data]);
 
+  // Popover (mobile actions) state and positioning
+  const kebabRef = useRef(null);
+  const popoverRef = useRef(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const positionPopover = useCallback(() => {
+    const btn = kebabRef.current;
+    const pop = popoverRef.current;
+    if (!btn || !pop) return;
+    const rect = btn.getBoundingClientRect();
+    // Ensure width is measured: temporarily show if needed
+    if (!pop.matches(':popover-open')) {
+      try {
+        pop.showPopover();
+      } catch (_) {}
+    }
+    // Measure size
+    const w = pop.offsetWidth || 224; // ~w-56
+    const h = pop.offsetHeight || 0;
+    // Preferred to the right-end of button, below it
+    const gap = 6;
+    let top = rect.bottom + gap;
+    let left = rect.right - w; // right align
+    // Clamp within viewport with small margin
+    const margin = 8;
+    if (left < margin) left = margin;
+    const maxLeft = window.innerWidth - w - margin;
+    if (left > maxLeft) left = maxLeft;
+    const maxTop = window.innerHeight - h - margin;
+    if (top > maxTop) top = Math.max(margin, rect.top - h - gap);
+
+    pop.style.position = 'fixed';
+    pop.style.inset = 'auto auto auto auto';
+    pop.style.left = `${left}px`;
+    pop.style.top = `${top}px`;
+  }, []);
+
+  const closeMenu = useCallback(() => {
+    const pop = popoverRef.current;
+    if (pop && pop.matches(':popover-open')) {
+      try {
+        pop.hidePopover();
+      } catch (_) {}
+    }
+    setMenuOpen(false);
+  }, []);
+
+  const toggleMenu = useCallback(
+    e => {
+      e?.preventDefault?.();
+      const pop = popoverRef.current;
+      if (!pop) return;
+      if (pop.matches(':popover-open')) {
+        closeMenu();
+      } else {
+        positionPopover();
+        try {
+          pop.showPopover();
+          setMenuOpen(true);
+        } catch (_) {}
+      }
+    },
+    [closeMenu, positionPopover],
+  );
+
+  useEffect(() => {
+    const pop = popoverRef.current;
+    if (!pop) return;
+
+    const onToggle = () => {
+      const isOpen = pop.matches(':popover-open');
+      setMenuOpen(isOpen);
+      if (isOpen) positionPopover();
+    };
+
+    const onResize = () => {
+      if (pop.matches(':popover-open')) positionPopover();
+    };
+
+    pop.addEventListener('toggle', onToggle);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onResize, true);
+
+    return () => {
+      pop.removeEventListener('toggle', onToggle);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onResize, true);
+    };
+  }, [positionPopover]);
+
   return (
     <Card sm={12} role='listitem'>
       <div
@@ -91,43 +184,20 @@ function ProfileCard({
         role='group'
         aria-labelledby={`profile-${data.id}-title`}
       >
-        <div className='mr-4 flex flex-row items-center justify-center'>
-          <label className='relative flex cursor-pointer items-center'>
-            <input
-              checked={data.selected}
-              type='checkbox'
-              onClick={() => onSelect(data.id)}
-              className='checkbox checkbox-success'
-              aria-label={`Select ${data.label} profile`}
-            />
-          </label>
-          <div className='ml-2 flex flex-col gap-1'>
-            <button
-              onClick={() => onMoveUp(data.id)}
-              disabled={isFirst}
-              className='btn btn-xs btn-ghost'
-              aria-label={`Move ${data.label} up`}
-              aria-disabled={isFirst}
-              title='Move up'
-            >
-              <FontAwesomeIcon icon={faArrowUp} />
-            </button>
-            <button
-              onClick={() => onMoveDown(data.id)}
-              disabled={isLast}
-              className='btn btn-xs btn-ghost'
-              aria-label={`Move ${data.label} down`}
-              aria-disabled={isLast}
-              title='Move down'
-            >
-              <FontAwesomeIcon icon={faArrowDown} />
-            </button>
-          </div>
-        </div>
-        <div className='flex flex-grow flex-col overflow-auto'>
-          <div className='flex flex-row flex-wrap gap-2'>
-            <div className='flex flex-grow flex-row items-center gap-4'>
-              <span id={`profile-${data.id}-title`} className='text-xl leading-tight font-bold'>
+
+        <div className='flex flex-grow flex-col overflow-hidden'>
+          <div className='flex flex-row items-center gap-2'>
+            <div className='flex flex-grow flex-row ml-2 items-center gap-4 min-w-0'>
+              <label className='relative flex cursor-pointer items-center'>
+                <input
+                  checked={data.selected}
+                  type='checkbox'
+                  onClick={() => onSelect(data.id)}
+                  className='checkbox checkbox-success checkbox-sm'
+                  aria-label={`Select ${data.label} profile`}
+                />
+              </label>
+              <span id={`profile-${data.id}-title`} className='text-xl leading-tight font-bold flex-1 min-w-0 truncate'>
                 {data.label}
               </span>
               <span
@@ -138,62 +208,210 @@ function ProfileCard({
               </span>
             </div>
             <div
-              className='flex flex-row justify-end gap-2'
+              className='flex flex-row justify-end gap-2 flex-shrink-0'
               role='group'
               aria-label={`Actions for ${data.label} profile`}
             >
+              {/* Mobile: Popover actions menu */}
               <button
-                onClick={onFavoriteToggle}
-                disabled={favoriteToggleDisabled}
-                className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
-                aria-label={
-                  data.favorite
-                    ? `Remove ${data.label} from favorites`
-                    : `Add ${data.label} to favorites`
-                }
-                aria-pressed={data.favorite}
+                ref={kebabRef}
+                onClick={toggleMenu}
+                className='btn btn-sm btn-ghost sm:hidden'
+                aria-label={`Open actions menu for ${data.label} profile`}
+                aria-haspopup='menu'
+                aria-expanded={menuOpen}
+                aria-controls={`profile-${data.id}-menu`}
               >
-                <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                <FontAwesomeIcon icon={faEllipsisVertical} />
               </button>
-              <a
-                href={`/profiles/${data.id}`}
-                className='btn btn-sm btn-ghost'
-                aria-label={`Edit ${data.label} profile`}
+              <div
+                id={`profile-${data.id}-menu`}
+                ref={popoverRef}
+                popover='auto'
+                role='menu'
+                className='z-50 p-2 shadow bg-base-100 rounded-box w-56'
+                onKeyDown={e => {
+                  if (e.key === 'Escape') closeMenu();
+                }}
               >
-                <FontAwesomeIcon icon={faPen} />
-              </a>
-              <button
-                onClick={onDownload}
-                className='btn btn-sm btn-ghost text-primary'
-                aria-label={`Export ${data.label} profile`}
+                <ul className='menu' role='none'>
+                  <li role='none'>
+                    <button
+                      role='menuitem'
+                      onClick={() => {
+                        onFavoriteToggle();
+                        closeMenu();
+                      }}
+                      disabled={favoriteToggleDisabled}
+                      className={`justify-start ${favoriteToggleClass}`}
+                      aria-label={
+                        data.favorite
+                          ? `Remove ${data.label} from favorites`
+                          : `Add ${data.label} to favorites`
+                      }
+                      aria-pressed={data.favorite}
+                    >
+                      <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                      <span>{data.favorite ? 'Unfavorite' : 'Favorite'}</span>
+                    </button>
+                  </li>
+                  <li role='none'>
+                    <a
+                      role='menuitem'
+                      href={`/profiles/${data.id}`}
+                      onClick={closeMenu}
+                      aria-label={`Edit ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faPen} />
+                      <span>Edit</span>
+                    </a>
+                  </li>
+                  <li role='none'>
+                    <button
+                      role='menuitem'
+                      onClick={() => {
+                        onDownload();
+                        closeMenu();
+                      }}
+                      className='text-primary justify-start'
+                      aria-label={`Export ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faFileExport} />
+                      <span>Export</span>
+                    </button>
+                  </li>
+                  <li role='none'>
+                    <button
+                      role='menuitem'
+                      onClick={() => {
+                        onDuplicate(data.id);
+                        closeMenu();
+                      }}
+                      className='text-success justify-start'
+                      aria-label={`Duplicate ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faCopy} />
+                      <span>Duplicate</span>
+                    </button>
+                  </li>
+                  <li role='none'>
+                    <button
+                      role='menuitem'
+                      onClick={() => {
+                        confirmOrDelete(() => {
+                          onDelete(data.id);
+                          closeMenu();
+                        });
+                      }}
+                      className={`justify-start ${confirmDelete ? 'bg-error text-error-content font-semibold rounded' : 'text-error'}`}
+                      aria-label={
+                        confirmDelete
+                          ? `Confirm deletion of ${data.label} profile`
+                          : `Delete ${data.label} profile`
+                      }
+                      title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
+                    >
+                      <FontAwesomeIcon icon={faTrashCan} />
+                      <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+
+
+              {/* Desktop: inline actions */}
+              <div
+                className='hidden sm:flex flex-row justify-end gap-2'
+                role='group'
+                aria-label={`Actions for ${data.label} profile`}
               >
-                <FontAwesomeIcon icon={faFileExport} />
-              </button>
-              <button
-                onClick={() => onDuplicate(data.id)}
-                className='btn btn-sm btn-ghost text-success'
-                aria-label={`Duplicate ${data.label} profile`}
-              >
-                <FontAwesomeIcon icon={faCopy} />
-              </button>
-              <button
-                onClick={() => onDelete(data.id)}
-                className='btn btn-sm btn-ghost text-error'
-                aria-label={`Delete ${data.label} profile`}
-              >
-                <FontAwesomeIcon icon={faTrashCan} />
-              </button>
+                <button
+                  onClick={onFavoriteToggle}
+                  disabled={favoriteToggleDisabled}
+                  className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
+                  aria-label={
+                    data.favorite
+                      ? `Remove ${data.label} from favorites`
+                      : `Add ${data.label} to favorites`
+                  }
+                  aria-pressed={data.favorite}
+                >
+                  <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                </button>
+                <a
+                  href={`/profiles/${data.id}`}
+                  className='btn btn-sm btn-ghost'
+                  aria-label={`Edit ${data.label} profile`}
+                >
+                  <FontAwesomeIcon icon={faPen} />
+                </a>
+                <button
+                  onClick={onDownload}
+                  className='btn btn-sm btn-ghost text-primary'
+                  aria-label={`Export ${data.label} profile`}
+                >
+                  <FontAwesomeIcon icon={faFileExport} />
+                </button>
+                <button
+                  onClick={() => onDuplicate(data.id)}
+                  className='btn btn-sm btn-ghost text-success'
+                  aria-label={`Duplicate ${data.label} profile`}
+                >
+                  <FontAwesomeIcon icon={faCopy} />
+                </button>
+                <button
+                  onClick={() => {
+                    confirmOrDelete(() => onDelete(data.id));
+                  }}
+                  className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
+                  aria-label={
+                    confirmDelete
+                      ? `Confirm deletion of ${data.label} profile`
+                      : `Delete ${data.label} profile`
+                  }
+                  title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
+                >
+                  <FontAwesomeIcon icon={faTrashCan} />
+                  {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
+                </button>
+              </div>
             </div>
           </div>
           <div
-            className='flex flex-row items-center gap-2 overflow-auto py-2'
+            className='flex flex-row items-center gap-2 py-2'
             aria-label={`Profile details for ${data.label}`}
           >
+            <div className='flex flex-row h-full items-end'>
+              <div className='flex flex-col gap-4'>
+                <button
+                  onClick={() => onMoveUp(data.id)}
+                  disabled={isFirst}
+                  className='btn btn-xs btn-ghost'
+                  aria-label={`Move ${data.label} up`}
+                  aria-disabled={isFirst}
+                  title='Move up'
+                >
+                  <FontAwesomeIcon icon={faArrowUp} />
+                </button>
+                <button
+                  onClick={() => onMoveDown(data.id)}
+                  disabled={isLast}
+                  className='btn btn-xs btn-ghost'
+                  aria-label={`Move ${data.label} down`}
+                  aria-disabled={isLast}
+                  title='Move down'
+                >
+                  <FontAwesomeIcon icon={faArrowDown} />
+                </button>
+              </div>
+            </div>
+            <div className='flex-grow overflow-x-auto'>
             {data.type === 'pro' ? (
               <ExtendedProfileChart data={data} className='max-h-36' />
             ) : (
               <SimpleContent data={data} />
             )}
+            </div>
           </div>
         </div>
       </div>

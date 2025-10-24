@@ -11,6 +11,7 @@ import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import ShotNotesCard from './ShotNotesCard.jsx';
+import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 
 
 function round2(v) {
@@ -21,6 +22,7 @@ function round2(v) {
 export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) {
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
   const [expanded, setExpanded] = useState(false);
+  const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
 
   const date = new Date(shot.timestamp * 1000);
 
@@ -115,13 +117,17 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                       <FontAwesomeIcon icon={faFileExport} className='w-4 h-4' />
                     </button>
                   </div>
-                  <div className='tooltip tooltip-left' data-tip='Delete'>
+                  <div className='tooltip tooltip-left' data-tip={confirmDelete ? 'Click to confirm delete' : 'Delete'}>
                     <button
-                      onClick={() => onDelete(shot.id)}
-                      className='p-2 text-base-content/50 hover:text-error hover:bg-error/10 rounded-md transition-colors'
-                      aria-label='Delete shot'
+                      onClick={() => {
+                        confirmOrDelete(() => onDelete(shot.id));
+                      }}
+                      className={`p-2 rounded-md transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
+                      aria-label={confirmDelete ? 'Confirm deletion of shot' : 'Delete shot'}
+                      title={confirmDelete ? 'Click to confirm delete' : 'Delete shot'}
                     >
                       <FontAwesomeIcon icon={faTrashCan} className='w-4 h-4' />
+                      {confirmDelete && <span className='ml-2 hidden sm:inline'>Confirm</span>}
                     </button>
                   </div>
                 </div>
