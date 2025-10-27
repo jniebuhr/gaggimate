@@ -28,7 +28,8 @@ void LedControlPlugin::updateControl() {
         sendControl(0, 0, 255, 20, settings.getSunriseExtBrightness());
         return;
     }
-    if (this->controller->getLastProcess() != nullptr && this->controller->getLastProcess()->getType() == MODE_BREW && mode == MODE_BREW) {
+    if (this->controller->getLastProcess() != nullptr && this->controller->getLastProcess()->getType() == MODE_BREW &&
+        mode == MODE_BREW) {
         sendControl(0, 255, 0, 20, settings.getSunriseExtBrightness());
         return;
     }
