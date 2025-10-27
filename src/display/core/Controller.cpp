@@ -520,7 +520,9 @@ void Controller::activate() {
 #else
         currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
 #endif
-        pluginManager->trigger("controller:brew:prestart");
+        if (mode == MODE_BREW) {
+            pluginManager->trigger("controller:brew:prestart");
+        }
     }
     delay(200);
     switch (mode) {
