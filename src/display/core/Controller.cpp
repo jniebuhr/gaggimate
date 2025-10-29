@@ -227,8 +227,9 @@ void Controller::loop() {
         }
     }
 
+    unsigned long now = millis();
+
     // Disable ping as we send output control frequently
-    // unsigned long now = millis();
     // if (now - lastPing > PING_INTERVAL) {
     //     lastPing = now;
     //     clientController.sendPing();
