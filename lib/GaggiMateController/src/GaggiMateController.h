@@ -28,6 +28,7 @@ class GaggiMateController {
   private:
     void detectBoard();
     void detectAddon();
+    void handlePing();
     void handlePingTimeout(void);
     void thermalRunawayShutdown(void);
     void startPidAutotune(void);

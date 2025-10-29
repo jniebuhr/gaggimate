@@ -98,6 +98,7 @@ void GaggiMateController::setup() {
     lastPingTime = millis();
 
     _ble.registerOutputControlCallback([this](bool valve, float pumpSetpoint, float heaterSetpoint) {
+        handlePing();
         if (errorState != ERROR_CODE_NONE) {
             return;
         }
@@ -112,6 +113,7 @@ void GaggiMateController::setup() {
     });
     _ble.registerAdvancedOutputControlCallback(
         [this](bool valve, float heaterSetpoint, bool pressureTarget, float pressure, float flow) {
+            handlePing();
             if (errorState != ERROR_CODE_NONE) {
                 return;
             }
@@ -141,13 +143,7 @@ void GaggiMateController::setup() {
             }
         }
     });
-    _ble.registerPingCallback([this]() {
-        if (errorState == ERROR_CODE_TIMEOUT) {
-            errorState = ERROR_CODE_NONE;
-        }
-        lastPingTime = millis();
-        ESP_LOGV(LOG_TAG, "Ping received, system is alive");
-    });
+    _ble.registerPingCallback([this]() { handlePing(); });
     _ble.registerAutotuneCallback([this](int goal, int windowSize) { this->heater->autotune(goal, windowSize); });
     _ble.registerTareCallback([this]() {
         if (!_config.capabilites.dimming) {
@@ -161,7 +157,7 @@ void GaggiMateController::setup() {
 
 void GaggiMateController::loop() {
     unsigned long now = millis();
-    if ((now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
+    if (lastPingTime < now && (now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
         handlePingTimeout();
     }
     sendSensorData();
@@ -192,6 +188,14 @@ void GaggiMateController::detectBoard() {
 
 void GaggiMateController::detectAddon() {
     // TODO: Add I2C scanning for extensions
+}
+
+void GaggiMateController::handlePing() {
+    if (errorState == ERROR_CODE_TIMEOUT) {
+        errorState = ERROR_CODE_NONE;
+    }
+    lastPingTime = millis();
+    ESP_LOGV(LOG_TAG, "Ping received, system is alive");
 }
 
 void GaggiMateController::handlePingTimeout() {

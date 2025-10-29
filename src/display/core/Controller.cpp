@@ -227,11 +227,12 @@ void Controller::loop() {
         }
     }
 
-    unsigned long now = millis();
-    if (now - lastPing > PING_INTERVAL) {
-        lastPing = now;
-        clientController.sendPing();
-    }
+    // Disable ping as we send output control frequently
+    // unsigned long now = millis();
+    // if (now - lastPing > PING_INTERVAL) {
+    //     lastPing = now;
+    //     clientController.sendPing();
+    // }
 
     if (isErrorState()) {
         return;
@@ -727,9 +728,10 @@ void Controller::handleProfileUpdate() {
 }
 
 void Controller::loopTask(void *arg) {
+    TickType_t lastWake = xTaskGetTickCount();
     auto *controller = static_cast<Controller *>(arg);
     while (true) {
         controller->loopControl();
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : 100));
     }
 }
