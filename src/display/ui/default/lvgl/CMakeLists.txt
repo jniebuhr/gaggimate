@@ -40,9 +40,10 @@ SET(SOURCES components/ui_comp_dials.c
     images/ui_img_364513079.c
     images/ui_img_1091371356.c
     images/ui_img_1765671371.c
-    images/ui_img_1186668522.c
+    images/ui_img_pumpkin_png.c
     images/ui_img_1456692430.c
     images/ui_img_1829139226.c
+    images/ui_img_1186668522.c
     images/ui_img_1732953241.c
     images/ui_img_691326438.c)
 

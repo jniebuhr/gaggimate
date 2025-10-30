@@ -51,3 +51,4 @@ convert "tap.svg" 60
 convert "cake-birthday.svg" 60
 convert "settings.svg" 40
 convert "tachometer-fast.svg" 40
+convert "pumpkin-alt-2.svg" 60
