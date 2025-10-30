@@ -154,6 +154,9 @@ extern lv_obj_t *ui_StandbyScreen_wifiIcon;
 extern lv_obj_t *ui_StandbyScreen_bluetoothIcon;
 extern lv_obj_t *ui_StandbyScreen_updateIcon;
 extern lv_obj_t *ui_StandbyScreen_Image3;
+extern lv_obj_t *ui_StandbyScreen_halloweenSpider;
+extern lv_obj_t *ui_StandbyScreen_halloweenBats;
+extern lv_obj_t *ui_StandbyScreen_halloweenPumpkin;
 // CUSTOM VARIABLES
 
 // SCREEN: ui_SimpleProcessScreen
@@ -272,11 +275,12 @@ LV_IMG_DECLARE(ui_img_390988422);    // assets/plus-small-40x40.png
 LV_IMG_DECLARE(ui_img_364513079);    // assets/wifi-20x20.png
 LV_IMG_DECLARE(ui_img_1091371356);   // assets/bluetooth-alt-20x20.png
 LV_IMG_DECLARE(ui_img_1765671371);   // assets/refresh-20x20.png
+LV_IMG_DECLARE(ui_img_1732953241);   // assets/tap-60x60.png
+LV_IMG_DECLARE(ui_img_spider2_png);  // assets/spider2.png
+LV_IMG_DECLARE(ui_img_bats_png);     // assets/bats.png
 LV_IMG_DECLARE(ui_img_pumpkin_png);  // assets/pumpkin.png
 LV_IMG_DECLARE(ui_img_1456692430);   // assets/pause-40x40.png
 LV_IMG_DECLARE(ui_img_1829139226);   // assets/angle-down-40x40.png
-LV_IMG_DECLARE(ui_img_1186668522);   // assets/cake-birthday-60x60.png
-LV_IMG_DECLARE(ui_img_1732953241);   // assets/tap-60x60.png
 LV_IMG_DECLARE(ui_img_691326438);    // assets/wind-40x40.png
 
 // UI INIT

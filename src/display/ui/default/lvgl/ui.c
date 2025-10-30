@@ -133,6 +133,9 @@ lv_obj_t *ui_StandbyScreen_wifiIcon;
 lv_obj_t *ui_StandbyScreen_bluetoothIcon;
 lv_obj_t *ui_StandbyScreen_updateIcon;
 lv_obj_t *ui_StandbyScreen_Image3;
+lv_obj_t *ui_StandbyScreen_halloweenSpider;
+lv_obj_t *ui_StandbyScreen_halloweenBats;
+lv_obj_t *ui_StandbyScreen_halloweenPumpkin;
 // CUSTOM VARIABLES
 
 // SCREEN: ui_SimpleProcessScreen
@@ -230,7 +233,6 @@ const lv_img_dsc_t *ui_imgset_849879536[1] = {&ui_img_98036921};
 const lv_img_dsc_t *ui_imgset_1382826243[1] = {&ui_img_944513416};
 const lv_img_dsc_t *ui_imgset_434888472[1] = {&ui_img_295763949};
 const lv_img_dsc_t *ui_imgset_1091184723[1] = {&ui_img_1091371356};
-const lv_img_dsc_t *ui_imgset_1872568961[1] = {&ui_img_1186668522};
 const lv_img_dsc_t *ui_imgset_960046369[1] = {&ui_img_631115820};
 const lv_img_dsc_t *ui_imgset_1525119997[1] = {&ui_img_360122106};
 const lv_img_dsc_t *ui_imgset_1812359778[1] = {&ui_img_363557387};
@@ -245,6 +247,7 @@ const lv_img_dsc_t *ui_imgset_1010926578[1] = {&ui_img_2044104741};
 const lv_img_dsc_t *ui_imgset_1155213431[1] = {&ui_img_545340440};
 const lv_img_dsc_t *ui_imgset_524469952[1] = {&ui_img_1765671371};
 const lv_img_dsc_t *ui_imgset_648927478[1] = {&ui_img_340148213};
+const lv_img_dsc_t *ui_imgset_spider[1] = {&ui_img_spider2_png};
 const lv_img_dsc_t *ui_imgset_616600488[1] = {&ui_img_1220767159};
 const lv_img_dsc_t *ui_imgset_690294202[1] = {&ui_img_1732953241};
 const lv_img_dsc_t *ui_imgset_1252186405[1] = {&ui_img_1951499226};
