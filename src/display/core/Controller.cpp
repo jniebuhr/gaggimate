@@ -71,6 +71,7 @@ void Controller::setup() {
     this->onScreenReady();
 #endif
 
+    updateLastAction();
     xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
@@ -248,6 +249,7 @@ void Controller::loop() {
 
         // Handle current process
         if (currentProcess != nullptr) {
+            updateLastAction();
             if (currentProcess->getType() == MODE_BREW) {
                 auto brewProcess = static_cast<BrewProcess *>(currentProcess);
                 brewProcess->updatePressure(pressure);

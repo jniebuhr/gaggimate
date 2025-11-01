@@ -397,7 +397,7 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
     // Check for existing entry with same ID to prevent duplicates
     int existingPos = findEntryPosition(indexFile, header, entry.id);
     if (existingPos >= 0) {
-        ESP_LOGW("ShotHistoryPlugin", "Attempt to add duplicate entry for shot %u - entry already exists at position %d", 
+        ESP_LOGW("ShotHistoryPlugin", "Attempt to add duplicate entry for shot %u - entry already exists at position %d",
                  entry.id, existingPos);
         indexFile.close();
         return;
@@ -468,24 +468,24 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
 
     // Find ALL entries with this shot ID and mark them as deleted
     uint32_t duplicatesFound = 0;
-    
+
     for (uint32_t i = 0; i < header.entryCount; i++) {
         size_t entryPos = sizeof(ShotIndexHeader) + i * sizeof(ShotIndexEntry);
         ShotIndexEntry entry{};
         if (readEntryAtPosition(indexFile, entryPos, entry)) {
             if (entry.id == shotId) {
                 duplicatesFound++;
-                
+
                 // Mark this entry as deleted
                 entry.flags |= SHOT_FLAG_DELETED;
-                
+
                 if (writeEntryAtPosition(indexFile, entryPos, entry)) {
                     ESP_LOGD("ShotHistoryPlugin", "Marked shot %u as deleted in index (duplicate #%u)", shotId, duplicatesFound);
                 }
             }
         }
     }
-    
+
     if (duplicatesFound == 0) {
         ESP_LOGW("ShotHistoryPlugin", "Shot %u not found in index for deletion marking", shotId);
     } else if (duplicatesFound > 1) {
