@@ -272,8 +272,12 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         response["error"] = "use HTTP /api/history?id=<id>";
     } else if (type == "req:history:delete") {
         auto id = request["id"].as<String>();
-        SPIFFS.remove("/h/" + id + ".slog");
-        SPIFFS.remove("/h/" + id + ".json");
+        String paddedId = id;
+        while (paddedId.length() < 6) {
+            paddedId = "0" + paddedId;
+        }
+        SPIFFS.remove("/h/" + paddedId + ".slog");
+        SPIFFS.remove("/h/" + paddedId + ".json");
 
         // Mark as deleted in index
         markIndexDeleted(id.toInt());
@@ -390,6 +394,15 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
         return;
     }
 
+    // Check for existing entry with same ID to prevent duplicates
+    int existingPos = findEntryPosition(indexFile, header, entry.id);
+    if (existingPos >= 0) {
+        ESP_LOGW("ShotHistoryPlugin", "Attempt to add duplicate entry for shot %u - entry already exists at position %d", 
+                 entry.id, existingPos);
+        indexFile.close();
+        return;
+    }
+
     // Append entry
     indexFile.seek(0, SeekEnd);
     indexFile.write(reinterpret_cast<const uint8_t *>(&entry), sizeof(entry));
@@ -453,18 +466,30 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
         return;
     }
 
-    int entryPos = findEntryPosition(indexFile, header, shotId);
-    if (entryPos >= 0) {
+    // Find ALL entries with this shot ID and mark them as deleted
+    uint32_t duplicatesFound = 0;
+    
+    for (uint32_t i = 0; i < header.entryCount; i++) {
+        size_t entryPos = sizeof(ShotIndexHeader) + i * sizeof(ShotIndexEntry);
         ShotIndexEntry entry{};
         if (readEntryAtPosition(indexFile, entryPos, entry)) {
-            entry.flags |= SHOT_FLAG_DELETED;
-
-            if (writeEntryAtPosition(indexFile, entryPos, entry)) {
-                ESP_LOGD("ShotHistoryPlugin", "Marked shot %u as deleted in index", shotId);
+            if (entry.id == shotId) {
+                duplicatesFound++;
+                
+                // Mark this entry as deleted
+                entry.flags |= SHOT_FLAG_DELETED;
+                
+                if (writeEntryAtPosition(indexFile, entryPos, entry)) {
+                    ESP_LOGD("ShotHistoryPlugin", "Marked shot %u as deleted in index (duplicate #%u)", shotId, duplicatesFound);
+                }
             }
         }
-    } else {
+    }
+    
+    if (duplicatesFound == 0) {
         ESP_LOGW("ShotHistoryPlugin", "Shot %u not found in index for deletion marking", shotId);
+    } else if (duplicatesFound > 1) {
+        ESP_LOGW("ShotHistoryPlugin", "Found and marked %u duplicate entries for shot %u as deleted", duplicatesFound, shotId);
     }
 
     indexFile.close();
@@ -669,7 +694,13 @@ void ShotHistoryPlugin::updateIndexCompletion(uint32_t shotId, const ShotLogHead
             if (writeEntryAtPosition(indexFile, entryPos, entry)) {
                 ESP_LOGD("ShotHistoryPlugin", "Updated shot %u completion: duration=%u, volume=%u", shotId, entry.duration,
                          entry.volume);
+                indexFile.close();
+                return;
+            } else {
+                ESP_LOGE("ShotHistoryPlugin", "Failed to write completion data for shot %u", shotId);
             }
+        } else {
+            ESP_LOGE("ShotHistoryPlugin", "Failed to read entry for shot %u at position %d", shotId, entryPos);
         }
     } else {
         ESP_LOGW("ShotHistoryPlugin", "Shot %u not found in index for completion update", shotId);
