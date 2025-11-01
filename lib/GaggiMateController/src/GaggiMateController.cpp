@@ -39,9 +39,32 @@ void GaggiMateController::setup() {
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
 
-    // 5-Pin peripheral port
-    // Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000);
+    // 4-Pin peripheral port
     /*
+    if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
+        ESP_LOGE(LOG_TAG, "Failed to initialize I2C bus");
+    }
+    delay(500);
+    int nDevices;
+    ESP_LOGI("", "Scanning...");
+    byte error, address;
+    nDevices = 0;
+    for (address = 1; address < 127; address++) {
+        ESP_LOGV(LOG_TAG, "Scanning 0x%02x", address);
+        Wire.beginTransmission(address);
+        error = Wire.endTransmission();
+        if (error == 0) {
+            ESP_LOGI("", "I2C device found at address 0x%02x", address);
+            nDevices++;
+        } else if (error == 4) {
+            ESP_LOGI("", "Unknow error at address 0x%02x", address);
+        }
+    }
+    if (nDevices == 0) {
+        ESP_LOGI("", "No I2C devices found");
+    } else {
+        ESP_LOGI("", "done");
+    }
     this->ledController = new LedController(&Wire);
     this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _ble.sendTofMeasurement(distance); });
     if (this->ledController->isAvailable()) {
@@ -70,13 +93,17 @@ void GaggiMateController::setup() {
         this->ledController->setup();
     }
     if (_config.capabilites.tof) {
-        this->distanceSensor->setup();
+        // this->distanceSensor->setup();
     }
 
     // Initialize last ping time
     lastPingTime = millis();
 
     _ble.registerOutputControlCallback([this](bool valve, float pumpSetpoint, float heaterSetpoint) {
+        handlePing();
+        if (errorState != ERROR_CODE_NONE) {
+            return;
+        }
         this->pump->setPower(pumpSetpoint);
         this->valve->set(valve);
         this->heater->setSetpoint(heaterSetpoint);
@@ -88,6 +115,10 @@ void GaggiMateController::setup() {
     });
     _ble.registerAdvancedOutputControlCallback(
         [this](bool valve, float heaterSetpoint, bool pressureTarget, float pressure, float flow) {
+            handlePing();
+            if (errorState != ERROR_CODE_NONE) {
+                return;
+            }
             this->valve->set(valve);
             this->heater->setSetpoint(heaterSetpoint);
             if (!_config.capabilites.dimming) {
@@ -114,10 +145,7 @@ void GaggiMateController::setup() {
             }
         }
     });
-    _ble.registerPingCallback([this]() {
-        lastPingTime = millis();
-        ESP_LOGV(LOG_TAG, "Ping received, system is alive");
-    });
+    _ble.registerPingCallback([this]() { handlePing(); });
     _ble.registerAutotuneCallback([this](int goal, int windowSize) { this->heater->autotune(goal, windowSize); });
     _ble.registerTareCallback([this]() {
         if (!_config.capabilites.dimming) {
@@ -131,7 +159,7 @@ void GaggiMateController::setup() {
 
 void GaggiMateController::loop() {
     unsigned long now = millis();
-    if ((now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
+    if (lastPingTime < now && (now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
         handlePingTimeout();
     }
     sendSensorData();
@@ -164,6 +192,14 @@ void GaggiMateController::detectAddon() {
     // TODO: Add I2C scanning for extensions
 }
 
+void GaggiMateController::handlePing() {
+    if (errorState == ERROR_CODE_TIMEOUT) {
+        errorState = ERROR_CODE_NONE;
+    }
+    lastPingTime = millis();
+    ESP_LOGV(LOG_TAG, "Ping received, system is alive");
+}
+
 void GaggiMateController::handlePingTimeout() {
     ESP_LOGE(LOG_TAG, "Ping timeout detected. Turning off heater and pump for safety.\n");
     // Turn off the heater and pump as a safety measure
@@ -171,6 +207,7 @@ void GaggiMateController::handlePingTimeout() {
     this->pump->setPower(0);
     this->valve->set(false);
     this->alt->set(false);
+    errorState = ERROR_CODE_TIMEOUT;
 }
 
 void GaggiMateController::thermalRunawayShutdown() {
@@ -180,6 +217,7 @@ void GaggiMateController::thermalRunawayShutdown() {
     this->pump->setPower(0);
     this->valve->set(false);
     this->alt->set(false);
+    errorState = ERROR_CODE_RUNAWAY;
     _ble.sendError(ERROR_CODE_RUNAWAY);
 }
 

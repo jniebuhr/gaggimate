@@ -150,7 +150,29 @@ uint16_t BLEOverTheAirDeviceFirmwareUpdate::write_binary(fs::FS *file_system, co
     }
 }
 
-void BLEOverTheAirDeviceFirmwareUpdate::onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo& connInfo) {
+void BLEOverTheAirDeviceFirmwareUpdate::onNotify(BLECharacteristic *pCharacteristic) {
+#ifdef DEBUG_BLE_OTA_DFU_TX
+    // uint8_t *pData;
+    std::string value = pCharacteristic->getValue();
+    uint16_t len = value.length();
+    // pData = pCharacteristic->getData();
+    uint8_t *pData = (uint8_t *)value.data();
+
+    if (pData != NULL) {
+        ESP_LOGD(TAG, "Notify callback for characteristic %s  of data length %d", pCharacteristic->getUUID().toString().c_str(),
+                 len);
+
+        // Print transferred packets
+        Serial.print("TX  ");
+        for (uint16_t i = 0; i < len; i++) {
+            Serial.printf("%02X ", pData[i]);
+        }
+        Serial.println();
+    }
+#endif
+}
+
+void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacteristic) {
     // uint8_t *pData;
     std::string value = pCharacteristic->getValue();
     uint16_t len = value.length();
