@@ -193,7 +193,7 @@ void ProfileManager::selectProfile(const String &uuid) {
     _plugin_manager->trigger("profiles:profile:select", "id", uuid);
 }
 
-Profile ProfileManager::getSelectedProfile() const { return selectedProfile; }
+Profile &ProfileManager::getSelectedProfile() { return selectedProfile; }
 
 bool ProfileManager::loadSelectedProfile(Profile &outProfile) { return loadProfile(_settings.getSelectedProfile(), outProfile); }
 

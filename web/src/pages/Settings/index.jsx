@@ -23,7 +23,7 @@ export function Settings() {
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
-    { time: '07:00', days: [true, true, true, true, true, true, true] } // Default: all days enabled
+    { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
@@ -45,12 +45,15 @@ export function Settings() {
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
-      
+
       // Initialize auto-wakeup schedules
       if (fetchedSettings.autowakeupSchedules) {
         // Parse new schedule format: "time1|days1;time2|days2"
         const schedules = [];
-        if (typeof fetchedSettings.autowakeupSchedules === 'string' && fetchedSettings.autowakeupSchedules.trim()) {
+        if (
+          typeof fetchedSettings.autowakeupSchedules === 'string' &&
+          fetchedSettings.autowakeupSchedules.trim()
+        ) {
           const scheduleStrings = fetchedSettings.autowakeupSchedules.split(';');
           for (const scheduleStr of scheduleStrings) {
             const [time, daysStr] = scheduleStr.split('|');
@@ -65,16 +68,16 @@ export function Settings() {
         }
         setAutoWakeupSchedules(schedules);
       } else {
-        setAutoWakeupSchedules([{ time: '07:00', days: [true, true, true, true, true, true, true] }]);
+        setAutoWakeupSchedules([
+          { time: '07:00', days: [true, true, true, true, true, true, true] },
+        ]);
       }
-      
+
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
       setAutoWakeupSchedules([{ time: '07:00', days: [true, true, true, true, true, true, true] }]);
     }
-
-    
   }, [fetchedSettings]);
 
   // Initialize theme
@@ -111,7 +114,7 @@ export function Settings() {
       }
       if (key === 'autowakeupEnabled') {
         value = !formData.autowakeupEnabled;
-      }      
+      }
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
         // Set standby brightness to 0 when toggle is off
@@ -136,13 +139,16 @@ export function Settings() {
   };
 
   const addAutoWakeupSchedule = () => {
-    setAutoWakeupSchedules([...autowakeupSchedules, { 
-      time: '07:00', 
-      days: [true, true, true, true, true, true, true] 
-    }]);
+    setAutoWakeupSchedules([
+      ...autowakeupSchedules,
+      {
+        time: '07:00',
+        days: [true, true, true, true, true, true, true],
+      },
+    ]);
   };
 
-  const removeAutoWakeupSchedule = (index) => {
+  const removeAutoWakeupSchedule = index => {
     if (autowakeupSchedules.length > 1) {
       const newSchedules = autowakeupSchedules.filter((_, i) => i !== index);
       setAutoWakeupSchedules(newSchedules);
@@ -159,7 +165,7 @@ export function Settings() {
     const newSchedules = [...autowakeupSchedules];
     newSchedules[scheduleIndex].days[dayIndex] = enabled;
     setAutoWakeupSchedules(newSchedules);
-  };  
+  };
 
   const onSubmit = useCallback(
     async (e, restart = false) => {
@@ -168,11 +174,15 @@ export function Settings() {
       const form = formRef.current;
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
+      formDataToSubmit.set(
+        'altRelayFunction',
+        formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
+      );
 
       // Add auto-wakeup schedules
-      const schedulesStr = autowakeupSchedules.map(schedule => 
-        `${schedule.time}|${schedule.days.map(d => d ? '1' : '0').join('')}`
-      ).join(';');
+      const schedulesStr = autowakeupSchedules
+        .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
+        .join(';');
       formDataToSubmit.set('autowakeupSchedules', schedulesStr);
 
       // Ensure standbyBrightness is included even when the field is disabled
@@ -645,6 +655,25 @@ export function Settings() {
                 />
               </div>
             )}
+
+            <div className='form-control'>
+              <label htmlFor='altRelayFunction' className='mb-2 block text-sm font-medium'>
+                Alt Relay / SSR2 Function
+              </label>
+              <select
+                id='altRelayFunction'
+                name='altRelayFunction'
+                className='select select-bordered w-full'
+                value={formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1}
+                onChange={onChange('altRelayFunction')}
+              >
+                <option value={0}>None</option>
+                <option value={1}>Grind</option>
+                <option value={2} disabled className='text-gray-400'>
+                  Steam Boiler (Coming Soon)
+                </option>
+              </select>
+            </div>
           </Card>
 
           <Card sm={10} lg={5} title='Display settings'>
@@ -862,8 +891,8 @@ export function Settings() {
           )}
 
           <Card sm={10} title='Plugins'>
-            <PluginCard 
-              formData={formData} 
+            <PluginCard
+              formData={formData}
               onChange={onChange}
               autowakeupSchedules={autowakeupSchedules}
               addAutoWakeupSchedule={addAutoWakeupSchedule}

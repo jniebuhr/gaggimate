@@ -57,11 +57,11 @@ export function ShotHistory() {
         }
         throw new Error(`HTTP ${response.status}`);
       }
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const indexData = parseBinaryIndex(arrayBuffer);
       const shotList = indexToShotList(indexData);
-      
+
       // Preserve loaded state and data from existing shots
       setHistory(prev => {
         const existingMap = new Map(prev.map(shot => [shot.id, shot]));
@@ -115,9 +115,8 @@ export function ShotHistory() {
     // Apply search filter
     if (searchTerm.trim()) {
       const search = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(shot => 
-        shot.profile?.toLowerCase().includes(search) ||
-        shot.id.toString().includes(search)
+      filtered = filtered.filter(
+        shot => shot.profile?.toLowerCase().includes(search) || shot.id.toString().includes(search),
       );
     }
 
@@ -136,7 +135,7 @@ export function ShotHistory() {
     // Apply sorting
     filtered.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
         case 'date':
           comparison = a.timestamp - b.timestamp;
@@ -162,7 +161,7 @@ export function ShotHistory() {
 
     const totalFilteredItems = filtered.length;
     const totalPages = Math.ceil(totalFilteredItems / itemsPerPage);
-    
+
     // Apply pagination
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
@@ -184,28 +183,29 @@ export function ShotHistory() {
       <div className='mb-6'>
         <div className='mb-4 flex flex-row items-center gap-2'>
           <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
-          <span className='text-sm text-base-content/70'>
-            {totalFilteredItems} of {history.length} shots {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
+          <span className='text-base-content/70 text-sm'>
+            {totalFilteredItems} of {history.length} shots{' '}
+            {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
           </span>
         </div>
 
         {/* Controls Row */}
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
           {/* Search */}
-          <div className='relative flex-grow max-w-md'>
-            <FontAwesomeIcon 
-              icon={faSearch} 
-              className='absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50 text-sm'
+          <div className='relative max-w-md flex-grow'>
+            <FontAwesomeIcon
+              icon={faSearch}
+              className='text-base-content/50 absolute top-1/2 left-3 -translate-y-1/2 transform text-sm'
             />
             <input
               type='text'
               placeholder='Search...'
               value={searchTerm}
-              onChange={(e) => {
+              onChange={e => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1); // Reset to page 1 when searching
               }}
-              className='input input-bordered w-full pl-10 pr-4 text-sm'
+              className='input input-bordered w-full pr-4 pl-10 text-sm'
             />
           </div>
 
@@ -214,7 +214,7 @@ export function ShotHistory() {
             <FontAwesomeIcon icon={faSort} className='text-base-content/50' />
             <select
               value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
+              onChange={e => {
                 const [newSortBy, newSortOrder] = e.target.value.split('-');
                 setSortBy(newSortBy);
                 setSortOrder(newSortOrder);
@@ -240,7 +240,7 @@ export function ShotHistory() {
             <FontAwesomeIcon icon={faFilter} className='text-base-content/50' />
             <select
               value={filterBy}
-              onChange={(e) => {
+              onChange={e => {
                 setFilterBy(e.target.value);
                 setCurrentPage(1); // Reset to page 1 when filtering
               }}
@@ -308,7 +308,7 @@ export function ShotHistory() {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className='mt-6 flex justify-center items-center gap-2'>
+        <div className='mt-6 flex items-center justify-center gap-2'>
           <button
             className='btn btn-sm btn-outline'
             disabled={currentPage === 1}
@@ -316,7 +316,7 @@ export function ShotHistory() {
           >
             Previous
           </button>
-          
+
           <div className='flex items-center gap-1'>
             {/* Show page numbers */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -330,7 +330,7 @@ export function ShotHistory() {
               } else {
                 pageNum = currentPage - 2 + i;
               }
-              
+
               return (
                 <button
                   key={pageNum}
@@ -342,7 +342,7 @@ export function ShotHistory() {
               );
             })}
           </div>
-          
+
           <button
             className='btn btn-sm btn-outline'
             disabled={currentPage === totalPages}

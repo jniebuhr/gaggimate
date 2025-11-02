@@ -48,5 +48,9 @@ convert "thermometer-half.svg" 40
 convert "refresh.svg" 20
 convert "dropdown-bar.svg" 40
 convert "tap.svg" 60
+convert "cake-birthday.svg" 60
 convert "settings.svg" 40
 convert "tachometer-fast.svg" 40
+convert "pumpkin-alt-2.svg" 60
+convert "disk.svg" 30
+convert "floppy-disks.svg" 30

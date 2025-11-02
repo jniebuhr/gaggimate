@@ -28,6 +28,7 @@ void Max31855Thermocouple::setup() {
 
 void Max31855Thermocouple::loop() {
     if (errorCount >= MAX31855_MAX_ERRORS || temperature > MAX_SAFE_TEMP) {
+        ESP_LOGE(LOG_TAG, "Thermocouple failure! Error Count: %d, Temperature: %.2f\n", errorCount, temperature);
         error_callback();
         return;
     }
@@ -45,6 +46,10 @@ void Max31855Thermocouple::loop() {
         temp = 0.0f;
     } else {
         temp = max31855->getTemperature();
+    }
+
+    if (temp <= 0.0f) {
+        ESP_LOGE(LOG_TAG, "Temperature reported below 0°C: %.2f\n", temp);
     }
 
     resultBuffer[bufferIndex] = temp <= 0.0f ? 1 : 0;

@@ -18,7 +18,7 @@ class ProfileManager {
     bool deleteProfile(const String &uuid);
     bool profileExists(const String &uuid);
     void selectProfile(const String &uuid);
-    Profile getSelectedProfile() const;
+    Profile &getSelectedProfile();
     bool loadSelectedProfile(Profile &outProfile);
     std::vector<String> getFavoritedProfiles(bool validate = false);
 

@@ -25,8 +25,10 @@ void ui_SimpleProcessScreen_screen_init(void) {
     lv_obj_set_x(ui_SimpleProcessScreen_ImgButton6, 0);
     lv_obj_set_y(ui_SimpleProcessScreen_ImgButton6, 210);
     lv_obj_set_align(ui_SimpleProcessScreen_ImgButton6, LV_ALIGN_CENTER);
-    lv_obj_set_style_img_recolor(ui_SimpleProcessScreen_ImgButton6, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_img_recolor_opa(ui_SimpleProcessScreen_ImgButton6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_object_set_themeable_style_property(ui_SimpleProcessScreen_ImgButton6, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                           LV_STYLE_IMG_RECOLOR, _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_SimpleProcessScreen_ImgButton6, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                           LV_STYLE_IMG_RECOLOR_OPA, _ui_theme_alpha_NiceWhite);
 
     ui_SimpleProcessScreen_contentPanel5 = lv_obj_create(ui_SimpleProcessScreen);
     lv_obj_set_width(ui_SimpleProcessScreen_contentPanel5, 360);

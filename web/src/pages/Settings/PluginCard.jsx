@@ -2,14 +2,14 @@ import homekitImage from '../../assets/homekit.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 
-export function PluginCard({ 
-  formData, 
-  onChange, 
-  autowakeupSchedules, 
-  addAutoWakeupSchedule, 
-  removeAutoWakeupSchedule, 
-  updateAutoWakeupTime, 
-  updateAutoWakeupDay 
+export function PluginCard({
+  formData,
+  onChange,
+  autowakeupSchedules,
+  addAutoWakeupSchedule,
+  removeAutoWakeupSchedule,
+  updateAutoWakeupTime,
+  updateAutoWakeupDay,
 }) {
   return (
     <div className='space-y-4'>
@@ -33,18 +33,16 @@ export function PluginCard({
               Automatically switch to brew mode at specified time(s) of day.
             </p>
             <div className='form-control'>
-              <label className='mb-2 block text-sm font-medium'>
-                Auto Wakeup Schedule
-              </label>
+              <label className='mb-2 block text-sm font-medium'>Auto Wakeup Schedule</label>
               <div className='space-y-2'>
                 {autowakeupSchedules?.map((schedule, scheduleIndex) => (
-                  <div key={scheduleIndex} className='flex items-center gap-1 flex-wrap'>
+                  <div key={scheduleIndex} className='flex flex-wrap items-center gap-1'>
                     {/* Time input */}
                     <input
                       type='time'
                       className='input input-bordered input-sm w-auto min-w-0 pr-6'
                       value={schedule.time}
-                      onChange={(e) => updateAutoWakeupTime(scheduleIndex, e.target.value)}
+                      onChange={e => updateAutoWakeupTime(scheduleIndex, e.target.value)}
                       disabled={!formData.autowakeupEnabled}
                     />
 
@@ -55,11 +53,33 @@ export function PluginCard({
                           key={dayIndex}
                           type='button'
                           className={`join-item btn btn-xs ${schedule.days[dayIndex] ? 'btn-primary' : 'btn-outline'}`}
-                          onClick={() => updateAutoWakeupDay(scheduleIndex, dayIndex, !schedule.days[dayIndex])}
+                          onClick={() =>
+                            updateAutoWakeupDay(scheduleIndex, dayIndex, !schedule.days[dayIndex])
+                          }
                           disabled={!formData.autowakeupEnabled}
                           aria-pressed={schedule.days[dayIndex]}
-                          aria-label={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex]}
-                          title={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex]}
+                          aria-label={
+                            [
+                              'Monday',
+                              'Tuesday',
+                              'Wednesday',
+                              'Thursday',
+                              'Friday',
+                              'Saturday',
+                              'Sunday',
+                            ][dayIndex]
+                          }
+                          title={
+                            [
+                              'Monday',
+                              'Tuesday',
+                              'Wednesday',
+                              'Thursday',
+                              'Friday',
+                              'Saturday',
+                              'Sunday',
+                            ][dayIndex]
+                          }
                         >
                           {dayLabel}
                         </button>
@@ -75,11 +95,14 @@ export function PluginCard({
                         disabled={!formData.autowakeupEnabled}
                         title='Delete this schedule'
                       >
-                        <FontAwesomeIcon icon={faTrashCan} className='text-xs'/>
+                        <FontAwesomeIcon icon={faTrashCan} className='text-xs' />
                       </button>
                     ) : (
-                      <div className='btn btn-ghost btn-xs opacity-30 cursor-not-allowed' title='Cannot delete the last schedule'>
-                        <FontAwesomeIcon icon={faTrashCan} className='text-xs'/>
+                      <div
+                        className='btn btn-ghost btn-xs cursor-not-allowed opacity-30'
+                        title='Cannot delete the last schedule'
+                      >
+                        <FontAwesomeIcon icon={faTrashCan} className='text-xs' />
                       </div>
                     )}
                   </div>
