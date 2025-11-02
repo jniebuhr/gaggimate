@@ -23,22 +23,25 @@ function getChartData(data) {
   // Stabilize the end time by rounding to the nearest second to prevent jiggling
   let end = new Date();
   end.setMilliseconds(0); // Round to nearest second for stability
-  
+
   // Track phase transitions for brew process
   const currentProcess = machine.value.status.process;
-  const isBrewActive = currentProcess && currentProcess.s && 
-    (currentProcess.s === 'brew' || currentProcess.s === 'infusion') && currentProcess.a;
-  
+  const isBrewActive =
+    currentProcess &&
+    currentProcess.s &&
+    (currentProcess.s === 'brew' || currentProcess.s === 'infusion') &&
+    currentProcess.a;
+
   // Determine time window based on brewing state
   let timeWindowMs;
   let timeUnit = 'second';
   let maxTicksLimit = 5;
-  
+
   if (isBrewActive) {
     // During brewing: start with 30s window, grow to 45s and 60s for longer shots
     const brewElapsedMs = currentProcess.e || 0;
     const brewElapsedSeconds = brewElapsedMs / 1000;
-    
+
     if (brewElapsedSeconds < 30) {
       // First 30 seconds: show 30s window
       timeWindowMs = 30000;
@@ -49,7 +52,7 @@ function getChartData(data) {
       // After 45 seconds: show 60s window
       timeWindowMs = 60000;
     }
-    
+
     maxTicksLimit = 8; // More ticks for better resolution
   } else if (phaseTransitions.length > 0) {
     // Recently finished brewing: show a bit more context
@@ -60,34 +63,35 @@ function getChartData(data) {
     timeWindowMs = 60000;
     maxTicksLimit = 5;
   }
-  
+
   let start = new Date(end.getTime() - timeWindowMs);
   // Stabilize start time by rounding to nearest second for consistency
   start.setMilliseconds(0);
-  
+
   // Filter data to the current time window for auto-scaling
-  const filteredData = data.filter(item => 
-    item.timestamp >= start && item.timestamp <= end
-  );
-  
+  const filteredData = data.filter(item => item.timestamp >= start && item.timestamp <= end);
+
   // Calculate auto-scale ranges from visible data
   let tempValues = filteredData.map(i => i.currentTemperature);
   tempValues = tempValues.concat(filteredData.map(i => i.targetTemperature));
-  
+
   let pressureFlowValues = filteredData.map(i => i.currentPressure);
   pressureFlowValues = pressureFlowValues.concat(filteredData.map(i => i.targetPressure));
   pressureFlowValues = pressureFlowValues.concat(filteredData.map(i => i.currentFlow));
-  
+
   // Calculate ranges with some padding and round to integers for clean scales
   const tempMin = tempValues.length > 0 ? Math.max(0, Math.floor(Math.min(...tempValues) - 5)) : 0;
   const tempMax = tempValues.length > 0 ? Math.ceil(Math.max(...tempValues) + 10) : 160;
-  
+
   const pressureFlowMin = 0; // Always start at 0 for pressure/flow
-  const pressureFlowMax = pressureFlowValues.length > 0 ? Math.ceil(Math.max(...pressureFlowValues) + 2) : 16;
-  
+  const pressureFlowMax =
+    pressureFlowValues.length > 0 ? Math.ceil(Math.max(...pressureFlowValues) + 2) : 16;
+
   // Create a state key to detect when a new brew starts
-  const processState = currentProcess ? `${currentProcess.s}_${currentProcess.a}_${currentProcess.e || 0}` : null;
-  
+  const processState = currentProcess
+    ? `${currentProcess.s}_${currentProcess.a}_${currentProcess.e || 0}`
+    : null;
+
   // Detect brew start/restart - check if we transitioned to active or if process restarted
   if (isBrewActive && (!brewStartTime || processState !== lastProcessState)) {
     // If elapsed time is very small (< 2 seconds), this is likely a new brew
@@ -98,18 +102,18 @@ function getChartData(data) {
       initialPhaseName = currentProcess.l; // Capture the initial phase name
     }
   }
-  
+
   // Detect brew end - process stopped being active
   if (!isBrewActive && brewStartTime) {
     // Don't immediately clear - let the user see the phase markers for a while
     // They will be cleared when a new brew starts
   }
-  
+
   // Track phase changes during brewing
   if (isBrewActive && currentProcess.l && brewStartTime) {
     const currentPhase = currentProcess.l;
     const currentPhaseType = currentProcess.s;
-    
+
     // Only add transition if phase name actually changed and we're not on the first phase
     if (lastKnownPhase !== null && lastKnownPhase !== currentPhase) {
       // Check if we already have this transition (avoid duplicates)
@@ -118,15 +122,15 @@ function getChartData(data) {
         phaseTransitions.push({
           timestamp: new Date(),
           phaseName: currentPhase,
-          phaseType: currentPhaseType
+          phaseType: currentPhaseType,
         });
       }
     }
     lastKnownPhase = currentPhase;
   }
-  
+
   lastProcessState = processState;
-  
+
   // Create phase annotations for Chart.js
   const phaseAnnotations = {};
   const isSmall = window.innerWidth < 640;
@@ -135,7 +139,7 @@ function getChartData(data) {
     const transitionTime = transition.timestamp.getTime();
     const chartStart = start.getTime();
     const chartEnd = end.getTime();
-    
+
     // Only show transitions within chart timeframe
     if (transitionTime >= chartStart && transitionTime <= chartEnd) {
       phaseAnnotations[`phase_line_${index}`] = {
@@ -160,17 +164,17 @@ function getChartData(data) {
             weight: 500,
           },
           clip: false,
-        }
+        },
       };
     }
   });
-  
+
   // Add brew start line if within timeframe
   if (brewStartTime) {
     const brewStartMs = brewStartTime.getTime();
     const chartStart = start.getTime();
     const chartEnd = end.getTime();
-    
+
     if (brewStartMs >= chartStart && brewStartMs <= chartEnd) {
       phaseAnnotations['brew_start'] = {
         type: 'line',
@@ -194,7 +198,7 @@ function getChartData(data) {
             weight: 500,
           },
           clip: false,
-        }
+        },
       };
     }
   }
@@ -241,28 +245,24 @@ function getChartData(data) {
     },
   ];
   if (showWeights) {
-    datasets.push(
-      {
-        label: 'Current Weight',
-        borderColor: '#8B5CF6',
-        pointStyle: false,
-        yAxisID: 'y2',
-        data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentWeight || 0 })),
-      }
-    );
-    datasets.push(
-      {
-        label: 'Target Weight',
-        fill: true,
-        borderColor: '#4C1D95',
-        borderDash: [6, 6],
-        pointStyle: false,
-        yAxisID: 'y2',
-        data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetWeight || 0 })),
-      }
-    );
+    datasets.push({
+      label: 'Current Weight',
+      borderColor: '#8B5CF6',
+      pointStyle: false,
+      yAxisID: 'y2',
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentWeight || 0 })),
+    });
+    datasets.push({
+      label: 'Target Weight',
+      fill: true,
+      borderColor: '#4C1D95',
+      borderDash: [6, 6],
+      pointStyle: false,
+      yAxisID: 'y2',
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetWeight || 0 })),
+    });
   }
-  
+
   return {
     type: 'line',
     data: {
@@ -301,18 +301,18 @@ function getChartData(data) {
         },
         title: {
           display: true,
-          text: isBrewActive ? 
-            `Brew Progress - ${Math.round(timeWindowMs/1000)}s View` :
-            (phaseTransitions.length > 0 ? 
-              'Temperature History - Recent Brew' : 
-              'Temperature History'),
+          text: isBrewActive
+            ? `Brew Progress - ${Math.round(timeWindowMs / 1000)}s View`
+            : phaseTransitions.length > 0
+              ? 'Temperature History - Recent Brew'
+              : 'Temperature History',
           font: {
             size: window.innerWidth < 640 ? 14 : 16,
           },
         },
         annotation: {
-          annotations: phaseAnnotations
-        }
+          annotations: phaseAnnotations,
+        },
       },
       animation: false,
       scales: {

@@ -143,7 +143,7 @@ const ProcessControls = props => {
   useEffect(() => {
     const selectedProfileId = status.value.selectedProfileId;
     const selectedProfileName = status.value.selectedProfile;
-    
+
     if (!selectedProfileId || !apiService) {
       setProfileData(null);
       return;
@@ -153,7 +153,10 @@ const ProcessControls = props => {
       try {
         setProfileLoading(true);
         // Load profile directly by ID
-        const profileResponse = await apiService.request({ tp: 'req:profiles:load', id: selectedProfileId });
+        const profileResponse = await apiService.request({
+          tp: 'req:profiles:load',
+          id: selectedProfileId,
+        });
         if (profileResponse.profile && profileResponse.profile.type === 'pro') {
           setProfileData(profileResponse.profile);
         } else {
@@ -171,27 +174,32 @@ const ProcessControls = props => {
   }, [status.value.selectedProfileId, status.value.selectedProfile, apiService]);
 
   // Get settings to check if SmartGrind is enabled
-  const { data: settings } = useQuery('settings-cache', async () => {
-    const response = await fetch('/api/settings');
-    return response.json();
-  }, {
-    staleTime: 30000, // Cache for 30 seconds
-    refetchOnWindowFocus: false,
-  });
+  const { data: settings } = useQuery(
+    'settings-cache',
+    async () => {
+      const response = await fetch('/api/settings');
+      return response.json();
+    },
+    {
+      staleTime: 30000, // Cache for 30 seconds
+      refetchOnWindowFocus: false,
+    },
+  );
 
   const isSmartGrindEnabled = settings?.smartGrindActive || false;
-  const altRelayFunction = settings?.altRelayFunction !== undefined ? settings.altRelayFunction : 1; 
-  
+  const altRelayFunction = settings?.altRelayFunction !== undefined ? settings.altRelayFunction : 1;
+
   // Show grind elements if SmartGrind is enabled OR if Alt Relay is set to grind
   const isGrindAvailable = isSmartGrindEnabled || altRelayFunction === 1; // ALT_RELAY_GRIND = 1
-  
+
   // If currently in grind mode, always show it even if both SmartGrind is disabled and Alt Relay is not grind
   // to avoid confusion for users who might be in grind mode when settings change
   const showGrindTab = isGrindAvailable || mode === 4;
 
   // Determine if we should show expanded view
-  const shouldExpand = (brew && (active || finished || (brew && !active && !finished))) || 
-                      (grind && showGrindTab && (active || finished || (grind && !active && !finished)));
+  const shouldExpand =
+    (brew && (active || finished || (brew && !active && !finished))) ||
+    (grind && showGrindTab && (active || finished || (grind && !active && !finished)));
 
   const changeTarget = useCallback(
     target => {
@@ -323,17 +331,20 @@ const ProcessControls = props => {
             / {status.value.targetTemperature || 0}°C
           </span>
         </div>
-      {status.value.volumetricAvailable && (
-        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
-          <i className='fa fa-weight-scale text-base-content/60' />
-          <span className='text-base-content'>{(status.value.currentWeight ?? 0).toFixed(1)}g</span>
-          {brewTarget && (mode === 1 || mode === 3) && (
-            <span className='text-success font-semibold'>
-              {' '} / {(status.value.targetWeight ?? 0).toFixed(0)}g
+        {status.value.volumetricAvailable && (
+          <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
+            <i className='fa fa-weight-scale text-base-content/60' />
+            <span className='text-base-content'>
+              {(status.value.currentWeight ?? 0).toFixed(1)}g
             </span>
-          )}
-        </div>
-      )}        
+            {brewTarget && (mode === 1 || mode === 3) && (
+              <span className='text-success font-semibold'>
+                {' '}
+                / {(status.value.targetWeight ?? 0).toFixed(0)}g
+              </span>
+            )}
+          </div>
+        )}
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
           <FontAwesomeIcon icon={faGauge} className='text-base-content/60' />
           <span className='text-base-content'>
@@ -354,13 +365,13 @@ const ProcessControls = props => {
           {status.value.selectedProfileId && (
             <div className='mb-2'>
               {profileLoading && (
-                <div className="flex items-center justify-center max-h-20 w-full">
-                  <div className="loading loading-spinner loading-xs opacity-60"></div>
+                <div className='flex max-h-20 w-full items-center justify-center'>
+                  <div className='loading loading-spinner loading-xs opacity-60'></div>
                 </div>
               )}
               {!profileLoading && profileData && (
-                <ProcessProfileChart 
-                  data={profileData} 
+                <ProcessProfileChart
+                  data={profileData}
                   processInfo={processInfo}
                   className='max-h-36 w-full'
                 />
@@ -374,7 +385,9 @@ const ProcessControls = props => {
         <>
           <div className='flex flex-1 items-center justify-center'>
             {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
-            {(active || finished) && grind && showGrindTab && <GrindProgress processInfo={processInfo} />}
+            {(active || finished) && grind && showGrindTab && (
+              <GrindProgress processInfo={processInfo} />
+            )}
             {!brew && !(grind && showGrindTab) && (
               <div className='space-y-2 text-center'>
                 <div className='text-xl font-bold sm:text-2xl'>
@@ -396,8 +409,8 @@ const ProcessControls = props => {
               <div className='space-y-2 text-center'>
                 <div className='text-xl font-bold sm:text-2xl'>Grind</div>
                 <div className='text-base-content/60 text-sm'>
-                  {isGrindAvailable 
-                    ? 'Select grind target to start' 
+                  {isGrindAvailable
+                    ? 'Select grind target to start'
                     : 'Grind function not available'}
                 </div>
               </div>
@@ -424,22 +437,29 @@ const ProcessControls = props => {
                   ? 'Steam is ready'
                   : 'Preheating')}
               {mode === 3 && 'Start and open steam valve to pull water'}
-              {mode === 4 && showGrindTab && (isGrindAvailable 
-                ? 'Select grind target to start' 
-                : 'Grind function not available')}
+              {mode === 4 &&
+                showGrindTab &&
+                (isGrindAvailable
+                  ? 'Select grind target to start'
+                  : 'Grind function not available')}
             </div>
           </div>
         </div>
       )}
 
       <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {((brew && !active && !finished && status.value.volumetricAvailable) || 
-          (grind && showGrindTab && !active && !finished && isGrindAvailable && status.value.volumetricAvailable)) && (
+        {((brew && !active && !finished && status.value.volumetricAvailable) ||
+          (grind &&
+            showGrindTab &&
+            !active &&
+            !finished &&
+            isGrindAvailable &&
+            status.value.volumetricAvailable)) && (
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
-                (brew && brewTarget === 0) || (grind && status.value.grindTarget === 0) 
-                  ? 'bg-primary text-primary-content font-medium' 
+                (brew && brewTarget === 0) || (grind && status.value.grindTarget === 0)
+                  ? 'bg-primary text-primary-content font-medium'
                   : 'text-base-content/60 hover:text-base-content'
               }`}
               onClick={() => changeTarget(0)}
@@ -449,8 +469,8 @@ const ProcessControls = props => {
             </button>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
-                (brew && brewTarget === 1) || (grind && status.value.grindTarget === 1) 
-                  ? 'bg-primary text-primary-content font-medium' 
+                (brew && brewTarget === 1) || (grind && status.value.grindTarget === 1)
+                  ? 'bg-primary text-primary-content font-medium'
                   : 'text-base-content/60 hover:text-base-content'
               }`}
               onClick={() => changeTarget(1)}
@@ -536,8 +556,8 @@ const ProcessControls = props => {
                     <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
                   </button>
                   <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
-                    {(status.value.grindTarget === 1 && status.value.volumetricAvailable)
-                      ? `${status.value.grindTargetVolume}g` 
+                    {status.value.grindTarget === 1 && status.value.volumetricAvailable
+                      ? `${status.value.grindTargetVolume}g`
                       : `${Math.round(status.value.grindTargetDuration / 1000)}s`}
                   </div>
                   <button
