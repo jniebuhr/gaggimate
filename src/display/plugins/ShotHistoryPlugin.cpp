@@ -75,7 +75,9 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
 }
 
 void ShotHistoryPlugin::record() {
-    if (recording && controller->getMode() == MODE_BREW) {
+    bool shouldRecord = recording || extendedRecording;
+    
+    if (shouldRecord && (controller->getMode() == MODE_BREW || extendedRecording)) {
         if (!isFileOpen) {
             if (!SPIFFS.exists("/h")) {
                 SPIFFS.mkdir("/h");
@@ -135,8 +137,45 @@ void ShotHistoryPlugin::record() {
             createEarlyIndexEntry();
             indexEntryCreated = true;
         }
+        
+        // Check for weight stabilization during extended recording
+        if (extendedRecording) {
+            const unsigned long now = millis();
+            
+            bool canProcessWeight = (controller != nullptr);
+            if (canProcessWeight) {
+                canProcessWeight = controller->isVolumetricAvailable();
+            }
+            
+            if (!canProcessWeight) {
+                // If BLE connection is unstable, end extended recording early
+                extendedRecording = false;
+                return;
+            }
+            
+            const float weightDiff = abs(currentBluetoothWeight - lastStableWeight);
+            
+            if (weightDiff < WEIGHT_STABILIZATION_THRESHOLD) {
+                if (lastWeightChangeTime == 0) {
+                    lastWeightChangeTime = now;
+                }
+                // Weight has been stable for the threshold time, stop extended recording
+                if (now - lastWeightChangeTime >= WEIGHT_STABILIZATION_TIME) {
+                    extendedRecording = false;
+                }
+            } else {
+                // Weight changed, reset stabilization timer
+                lastWeightChangeTime = 0;
+                lastStableWeight = currentBluetoothWeight;
+            }
+            
+            // Also stop extended recording after maximum duration
+            if (now - extendedRecordingStart >= EXTENDED_RECORDING_DURATION) {
+                extendedRecording = false;
+            }
+        }
     }
-    if (!recording && isFileOpen) {
+    if (!recording && !extendedRecording && isFileOpen) {
         flushBuffer();
         // Patch header with sampleCount and duration
         header.sampleCount = sampleCount;
@@ -189,12 +228,15 @@ void ShotHistoryPlugin::startRecording() {
         currentId = "0" + currentId;
     }
     shotStart = millis();
+    lastWeightChangeTime = 0;
+    extendedRecordingStart = 0;
     currentBluetoothWeight = 0.0f;
-    lastBluetoothWeight = 0.0f;
+    lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
+    extendedRecording = false;
     indexEntryCreated = false; // Reset flag for new shot
     sampleCount = 0;
     ioBufferPos = 0;
@@ -206,7 +248,34 @@ unsigned long ShotHistoryPlugin::getTime() {
     return now;
 }
 
-void ShotHistoryPlugin::endRecording() { recording = false; }
+void ShotHistoryPlugin::endRecording() {
+    recording = false;
+    
+    
+    if (controller &&
+        controller->isVolumetricAvailable() &&
+        currentBluetoothWeight > 0) {
+        // Start extended recording for any shot with active weight data
+        extendedRecording = true;
+        extendedRecordingStart = millis();
+        lastStableWeight = currentBluetoothWeight;
+        lastWeightChangeTime = 0;
+        return; // Don't finalize the recording yet
+    }
+    
+    // For shots without weight data, finalize immediately
+    finalizeRecording();
+}
+
+void ShotHistoryPlugin::finalizeRecording() {
+    unsigned long duration = millis() - shotStart;
+    if (duration <= 7500) { // Exclude failed shots and flushes
+        SPIFFS.remove("/h/" + currentId + ".dat");
+    } else {
+        controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
+        cleanupHistory();
+    }
+}
 
 void ShotHistoryPlugin::cleanupHistory() {
     File directory = SPIFFS.open("/h");
