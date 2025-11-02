@@ -10,6 +10,7 @@ jobs:
       contents: write
       pages: write
       pull-requests: write
+    continue-on-error: true
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
@@ -41,22 +42,21 @@ jobs:
     - name: Build Web
       run: ./scripts/build_spiffs.sh
     - name: Build controller
-      run: pio run -e controller
-    - name: Build display
-      run: pio run -e display
-    - name: Rename firmware files
       run: |
+        pio run -e controller
         mv .pio/build/controller/firmware.bin out/board-firmware.bin
         mv .pio/build/controller/partitions.bin out/board-partitions.bin
         mv .pio/build/controller/bootloader.bin out/board-bootloader.bin
+    - name: Build display
+      run: |
+        pio run -e display
         mv .pio/build/display/firmware.bin out/display-firmware.bin
         mv .pio/build/display/partitions.bin out/display-partitions.bin
         mv .pio/build/display/bootloader.bin out/display-bootloader.bin
     - name: Build display FS
-      run: pio run -t buildfs -e display
-    - name: Rename FS files
       run: |
-        mv .pio/build/display/spiffs.bin out/display-filesystem.bin
+        pio run -t buildfs -e display
+        cp .pio/build/display/spiffs.bin out/display-filesystem.bin
     - name: Deploy to GitHub Pages subdirectory
       uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
       with:

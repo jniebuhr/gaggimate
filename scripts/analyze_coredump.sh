@@ -8,15 +8,15 @@
 #   ./scripts/analyze_coredump.sh <coredump_file> [environment]
 #
 # Examples:
-#   ./scripts/analyze_coredump.sh ~/Downloads/coredump.bin
-#   ./scripts/analyze_coredump.sh ~/Downloads/coredump.bin display
-#   ./scripts/analyze_coredump.sh ~/Downloads/coredump.bin controller
-#   ./scripts/analyze_coredump.sh ~/Downloads/coredump.bin display-headless
+#   ./scripts/analyze_coredump.sh ~/Downloads/support.bin
+#   ./scripts/analyze_coredump.sh ~/Downloads/support.bin display
+#   ./scripts/analyze_coredump.sh ~/Downloads/support.bin controller
+#   ./scripts/analyze_coredump.sh ~/Downloads/support.bin display-headless
 #
 
 # Check if at least one argument is provided
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 <coredump_file> [environment]"
+    echo "Usage: $0 <support_file> [environment]"
     echo ""
     echo "Available environments:"
     echo "  display           - Main display controller (default)"
@@ -24,9 +24,9 @@ if [ $# -lt 1 ]; then
     echo "  display-headless  - Headless display mode"
     echo ""
     echo "Examples:"
-    echo "  $0 ~/Downloads/coredump.bin"
-    echo "  $0 ~/Downloads/coredump.bin display"
-    echo "  $0 ~/Downloads/coredump.bin controller"
+    echo "  $0 ~/Downloads/support.bin"
+    echo "  $0 ~/Downloads/support.bin display"
+    echo "  $0 ~/Downloads/support.bin controller"
     exit 1
 fi
 

@@ -2,7 +2,7 @@
 #define DISTANCESENSOR_H
 
 #include <Arduino.h>
-#include <PWFusion_VL53L3C.h>
+#include <VL53L0X.h>
 #include <Wire.h>
 
 using distance_callback_t = std::function<void(int)>;
@@ -16,7 +16,7 @@ class DistanceSensor {
     void loop();
 
     TwoWire *i2c;
-    VL53L3C *tof;
+    VL53L0X *tof;
     xTaskHandle taskHandle;
     distance_callback_t _callback;
     int measurements = 0;

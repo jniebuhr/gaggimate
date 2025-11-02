@@ -1,0 +1,178 @@
+{
+  "id": "lmleva",
+  "label": "Damian's LM Leva",
+  "type": "pro",
+  "description": "Light to Medium Roasts - Very Fine - 20-45 - 1:2.0 - 2.5 | Simulates La Marzocco Leva",
+  "temperature": 89,
+  "phases": [
+    {
+      "name": "fill start",
+      "phase": "preinfusion",
+      "valve": 1,
+      "duration": 2,
+      "temperature": 89,
+      "transition": {
+        "type": "instant",
+        "duration": 0,
+        "adaptive": false
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 1.8,
+        "flow": 0
+      },
+      "targets": [
+        {
+          "type": "pumped",
+          "operator": "gte",
+          "value": 100
+        }
+      ]
+    },
+    {
+      "name": "fill",
+      "phase": "preinfusion",
+      "valve": 1,
+      "duration": 20,
+      "temperature": 89,
+      "transition": {
+        "type": "instant",
+        "duration": 0,
+        "adaptive": false
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 1.8,
+        "flow": 0
+      },
+      "targets": [
+        {
+          "type": "pumped",
+          "operator": "gte",
+          "value": 100
+        },
+        {
+          "type": "pressure",
+          "operator": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "name": "preinfusion",
+      "phase": "preinfusion",
+      "valve": 1,
+      "duration": 10,
+      "temperature": 88.5,
+      "transition": {
+        "type": "instant",
+        "duration": 0,
+        "adaptive": false
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 2.2,
+        "flow": 0
+      },
+      "targets": [
+        {
+          "type": "pumped",
+          "operator": "gte",
+          "value": 100
+        },
+        {
+          "type": "pressure",
+          "operator": "gte",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "name": "rise",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 5,
+      "temperature": 88,
+      "transition": {
+        "type": "instant",
+        "duration": 0,
+        "adaptive": false
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 8,
+        "flow": 0
+      },
+      "targets": [
+        {
+          "type": "pumped",
+          "operator": "gte",
+          "value": 100
+        },
+        {
+          "type": "pressure",
+          "operator": "gte",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "name": "hold",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 5,
+      "temperature": 88,
+      "transition": {
+        "type": "instant",
+        "duration": 0,
+        "adaptive": false
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 8,
+        "flow": 0
+      },
+      "targets": [
+        {
+          "type": "pumped",
+          "operator": "gte",
+          "value": 100
+        },
+        {
+          "type": "flow",
+          "operator": "gte",
+          "value": 1.5
+        }
+      ]
+    },
+    {
+      "name": "decline",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 58,
+      "temperature": 88,
+      "transition": {
+        "type": "linear",
+        "duration": 58,
+        "adaptive": true
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 2.2,
+        "flow": 0
+      },
+      "targets": [
+        {
+          "type": "pumped",
+          "operator": "gte",
+          "value": 100
+        },
+        {
+          "type": "volumetric",
+          "operator": "gte",
+          "value": 36
+        }
+      ]
+    }
+  ]
+}

@@ -1,8 +1,103 @@
 import homekitImage from '../../assets/homekit.png';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 
-export function PluginCard({ formData, onChange }) {
+export function PluginCard({ 
+  formData, 
+  onChange, 
+  autowakeupSchedules, 
+  addAutoWakeupSchedule, 
+  removeAutoWakeupSchedule, 
+  updateAutoWakeupTime, 
+  updateAutoWakeupDay 
+}) {
   return (
     <div className='space-y-4'>
+      <div className='bg-base-200 rounded-lg p-4'>
+        <div className='flex items-center justify-between'>
+          <span className='text-xl font-medium'>Automatic Wakeup Schedule</span>
+          <input
+            id='autowakeupEnabled'
+            name='autowakeupEnabled'
+            value='autowakeupEnabled'
+            type='checkbox'
+            className='toggle toggle-primary'
+            checked={!!formData.autowakeupEnabled}
+            onChange={onChange('autowakeupEnabled')}
+            aria-label='Enable Auto Wakeup'
+          />
+        </div>
+        {formData.autowakeupEnabled && (
+          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            <p className='text-sm opacity-70'>
+              Automatically switch to brew mode at specified time(s) of day.
+            </p>
+            <div className='form-control'>
+              <label className='mb-2 block text-sm font-medium'>
+                Auto Wakeup Schedule
+              </label>
+              <div className='space-y-2'>
+                {autowakeupSchedules?.map((schedule, scheduleIndex) => (
+                  <div key={scheduleIndex} className='flex items-center gap-1 flex-wrap'>
+                    {/* Time input */}
+                    <input
+                      type='time'
+                      className='input input-bordered input-sm w-auto min-w-0 pr-6'
+                      value={schedule.time}
+                      onChange={(e) => updateAutoWakeupTime(scheduleIndex, e.target.value)}
+                      disabled={!formData.autowakeupEnabled}
+                    />
+
+                    {/* Days toggle buttons */}
+                    <div className='join' role='group' aria-label='Days of week selection'>
+                      {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((dayLabel, dayIndex) => (
+                        <button
+                          key={dayIndex}
+                          type='button'
+                          className={`join-item btn btn-xs ${schedule.days[dayIndex] ? 'btn-primary' : 'btn-outline'}`}
+                          onClick={() => updateAutoWakeupDay(scheduleIndex, dayIndex, !schedule.days[dayIndex])}
+                          disabled={!formData.autowakeupEnabled}
+                          aria-pressed={schedule.days[dayIndex]}
+                          aria-label={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex]}
+                          title={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex]}
+                        >
+                          {dayLabel}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Delete button */}
+                    {autowakeupSchedules.length > 1 ? (
+                      <button
+                        type='button'
+                        onClick={() => removeAutoWakeupSchedule(scheduleIndex)}
+                        className='btn btn-ghost btn-xs'
+                        disabled={!formData.autowakeupEnabled}
+                        title='Delete this schedule'
+                      >
+                        <FontAwesomeIcon icon={faTrashCan} className='text-xs'/>
+                      </button>
+                    ) : (
+                      <div className='btn btn-ghost btn-xs opacity-30 cursor-not-allowed' title='Cannot delete the last schedule'>
+                        <FontAwesomeIcon icon={faTrashCan} className='text-xs'/>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type='button'
+                  onClick={addAutoWakeupSchedule}
+                  className='btn btn-primary btn-sm'
+                  disabled={!formData.autowakeupEnabled}
+                >
+                  Add Schedule
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>
           <span className='text-xl font-medium'>Homekit</span>

@@ -14,6 +14,10 @@
       "minimum": 0,
       "maximum": 5
     },
+    "beanType": {
+      "description": "Type or origin of coffee beans",
+      "type": "string"
+    },
     "doseIn": {
       "description": "Dose in grams",
       "type": "number",
@@ -40,7 +44,8 @@
     },
     "notes": {
       "description": "User notes",
-      "type": "string"
+      "type": "string",
+      "maxLength": 100
     },
     "timestamp": {
       "description": "Timestamp when notes were last updated",

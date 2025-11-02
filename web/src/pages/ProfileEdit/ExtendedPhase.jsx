@@ -297,7 +297,11 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
         <div className='form-control'>
           <fieldset>
             <legend className='mb-2 block text-sm font-medium'>Ramp Style</legend>
-            <div className='join' role='group' aria-label='Pump mode selection'>
+            <div
+              className='join max-sm:join-vertical min-w-[50%]'
+              role='group'
+              aria-label='Pump mode selection'
+            >
               <button
                 type='button'
                 className={`join-item btn btn-sm ${(phase.transition?.type || 'instant') === 'instant' ? 'btn-primary' : 'btn-outline'}`}

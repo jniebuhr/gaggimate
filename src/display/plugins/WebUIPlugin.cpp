@@ -1,29 +1,27 @@
 #include "WebUIPlugin.h"
 #include <DNSServer.h>
 #include <SPIFFS.h>
-#include <esp_system.h>
-#include <esp_core_dump.h>
-#include <esp_err.h>
-#include <esp_log.h>
-#include <esp_partition.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/models/profile.h>
+#include <esp_core_dump.h>
+#include <esp_err.h>
+#include <esp_partition.h>
+#include <esp_system.h>
 
-#include "BLEScalePlugin.h"
-#include "ShotHistoryPlugin.h"
 #include <algorithm>
+#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/ShotHistoryPlugin.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <version.h>
-static std::unordered_map<uint32_t, std::string> rxBuffers;
-static WebUIPlugin* g_webUIPlugin = nullptr;
 
-WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {
-    g_webUIPlugin = this;
-}
+static std::unordered_map<uint32_t, std::string> rxBuffers;
+static WebUIPlugin *g_webUIPlugin = nullptr;
+
+WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") { g_webUIPlugin = this; }
 
 void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) {
     this->controller = _controller;
@@ -157,6 +155,15 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
+    server.serveStatic("/api/history/", SPIFFS, "/h/").setCacheControl("no-store");
+    server.on("/api/history/index.bin", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        // Serve the binary index file directly
+        if (SPIFFS.exists("/h/index.bin")) {
+            request->send(SPIFFS, "/h/index.bin", "application/octet-stream");
+        } else {
+            request->send(404, "text/plain", "Index not found");
+        }
+    });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
@@ -449,8 +456,52 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
+            settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
+            if (request->hasArg("autowakeupSchedules")) {
+                // Handle schedule format with days
+                String schedulesStr = request->arg("autowakeupSchedules");
+                std::vector<AutoWakeupSchedule> schedules;
+
+                if (schedulesStr.length() > 0) {
+                    // Split semicolon-separated schedules
+                    int start = 0;
+                    int end = schedulesStr.indexOf(';');
+
+                    while (end != -1 || start < schedulesStr.length()) {
+                        String scheduleStr = (end != -1) ? schedulesStr.substring(start, end) : schedulesStr.substring(start);
+
+                        int pipePos = scheduleStr.indexOf('|');
+                        if (pipePos != -1) {
+                            String timeStr = scheduleStr.substring(0, pipePos);
+                            String daysStr = scheduleStr.substring(pipePos + 1);
+
+                            AutoWakeupSchedule schedule;
+                            schedule.time = timeStr;
+
+                            if (daysStr.length() == 7) {
+                                for (int i = 0; i < 7; i++) {
+                                    schedule.days[i] = (daysStr.charAt(i) == '1');
+                                }
+                            }
+
+                            schedules.push_back(schedule);
+                        }
+
+                        if (end == -1)
+                            break;
+                        start = end + 1;
+                        end = schedulesStr.indexOf(';', start);
+                    }
+                }
+
+                if (schedules.empty()) {
+                    schedules.push_back(AutoWakeupSchedule("07:00")); // Default fallback
+                }
+                settings->setAutoWakeupSchedules(schedules);
+            }
             settings->save(true);
         });
+        pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
     }
@@ -501,6 +552,23 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["sunriseExtBrightness"] = settings.getSunriseExtBrightness();
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
+    // Add auto-wakeup settings to response
+    doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
+
+    // Add schedule format with days
+    std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();
+    String schedulesStr = "";
+    for (size_t i = 0; i < autowakeupSchedules.size(); i++) {
+        if (i > 0)
+            schedulesStr += ";";
+        schedulesStr += autowakeupSchedules[i].time + "|";
+
+        // Convert days array to 7-bit string
+        for (int j = 0; j < 7; j++) {
+            schedulesStr += autowakeupSchedules[i].days[j] ? "1" : "0";
+        }
+    }
+    doc["autowakeupSchedules"] = schedulesStr;
     serializeJson(doc, *response);
     request->send(response);
 
@@ -572,6 +640,19 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;
+    // SPIFFS usage metrics
+    {
+        size_t total = SPIFFS.totalBytes();
+        size_t used = SPIFFS.usedBytes();
+        size_t freeBytes = total > used ? (total - used) : 0;
+        doc["spiffsTotal"] = static_cast<uint32_t>(total);
+        doc["spiffsUsed"] = static_cast<uint32_t>(used);
+        doc["spiffsFree"] = static_cast<uint32_t>(freeBytes);
+        if (total > 0) {
+            // Provide integer percentage to avoid float JSON
+            doc["spiffsUsedPct"] = static_cast<uint8_t>((used * 100) / total);
+        }
+    }
     ws.textAll(doc.as<String>());
 }
 
@@ -612,43 +693,41 @@ void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {
         request->send(404, "text/plain", "No core dump available");
         return;
     }
-    
+
     // Find the coredump partition
-    const esp_partition_t* coredump_partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
+    const esp_partition_t *coredump_partition =
+        esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
     if (coredump_partition == NULL) {
         request->send(500, "text/plain", "Core dump partition not found");
         return;
     }
-    
+
     ESP_LOGI("WebUIPlugin", "Streaming core dump: %d bytes from 0x%x", coreSize, coreAddr);
-    
+
     // Create a streaming response
-    AsyncWebServerResponse *response = request->beginResponse(
-        "application/octet-stream", 
-        coreSize,
-        [coredump_partition, coreSize](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-            // Calculate how much to read
-            size_t remaining = coreSize - index;
-            size_t toRead = (remaining < maxLen) ? remaining : maxLen;
-            
-            if (toRead == 0) return 0;
-            
-            // Read from partition
-            esp_err_t err = esp_partition_read(coredump_partition, index, buffer, toRead);
-            if (err != ESP_OK) {
-                ESP_LOGE("WebUIPlugin", "Failed to read core dump: %s", esp_err_to_name(err));
-                return 0;
-            }
-            
-            return toRead;
-        }
-    );
-    
+    AsyncWebServerResponse *response =
+        request->beginResponse("application/octet-stream", coreSize,
+                               [coredump_partition, coreSize](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+                                   // Calculate how much to read
+                                   size_t remaining = coreSize - index;
+                                   size_t toRead = (remaining < maxLen) ? remaining : maxLen;
+
+                                   if (toRead == 0)
+                                       return 0;
+
+                                   // Read from partition
+                                   esp_err_t err = esp_partition_read(coredump_partition, index, buffer, toRead);
+                                   if (err != ESP_OK) {
+                                       ESP_LOGE("WebUIPlugin", "Failed to read core dump: %s", esp_err_to_name(err));
+                                       return 0;
+                                   }
+
+                                   return toRead;
+                               });
+
     // Set appropriate headers
     response->addHeader("Content-Disposition", "attachment; filename=\"coredump.bin\"");
     response->addHeader("Cache-Control", "no-cache");
-    
+
     request->send(response);
 }
-
-

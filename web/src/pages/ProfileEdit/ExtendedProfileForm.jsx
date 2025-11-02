@@ -135,7 +135,7 @@ export function ExtendedProfileForm(props) {
         </Card>
         <Card sm={10}>
           <div className='card-header flex items-center gap-4'>
-            <h2 className='card-title flex-grow text-lg sm:text-xl'>Brew Phases</h2>
+            <h2 className='card-title flex-grow text-lg sm:text-xl'>Phases</h2>
             <h5 className='card-subtitle text-sm sm:text-base'>
               {currentPhaseIndex + 1} / {data.phases.length}
             </h5>
@@ -143,7 +143,7 @@ export function ExtendedProfileForm(props) {
               <div className='join' role='group' aria-label='Phase navigation'>
                 <button
                   type='button'
-                  className={`join-item btn btn-outline`}
+                  className={`join-item btn btn-outline max-sm:btn-sm`}
                   aria-label='Previous'
                   disabled={currentPhaseIndex === 0}
                   onClick={() => setCurrentPhaseIndex(currentPhaseIndex - 1)}
@@ -152,7 +152,7 @@ export function ExtendedProfileForm(props) {
                 </button>
                 <button
                   type='button'
-                  className={`join-item btn btn-outline`}
+                  className={`join-item btn btn-outline max-sm:btn-sm`}
                   aria-label='Next'
                   disabled={currentPhaseIndex === data.phases.length - 1}
                   onClick={() => setCurrentPhaseIndex(currentPhaseIndex + 1)}
@@ -163,7 +163,7 @@ export function ExtendedProfileForm(props) {
             </div>
             <button
               type='button'
-              className={`join-item btn btn-outline`}
+              className={`join-item btn btn-outline max-sm:btn-sm`}
               aria-label='Add phase'
               onClick={() => onPhaseAdd()}
             >
@@ -171,7 +171,7 @@ export function ExtendedProfileForm(props) {
             </button>
             <button
               type='button'
-              className={`join-item btn btn-outline text-error`}
+              className={`join-item btn btn-outline text-error max-sm:btn-sm`}
               aria-label='Remove phase'
               onClick={() => onPhaseRemove(currentPhaseIndex)}
             >
