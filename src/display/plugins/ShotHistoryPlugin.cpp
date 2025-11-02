@@ -76,7 +76,7 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
 
 void ShotHistoryPlugin::record() {
     bool shouldRecord = recording || extendedRecording;
-    
+
     if (shouldRecord && (controller->getMode() == MODE_BREW || extendedRecording)) {
         if (!isFileOpen) {
             if (!SPIFFS.exists("/h")) {
@@ -137,24 +137,24 @@ void ShotHistoryPlugin::record() {
             createEarlyIndexEntry();
             indexEntryCreated = true;
         }
-        
+
         // Check for weight stabilization during extended recording
         if (extendedRecording) {
             const unsigned long now = millis();
-            
+
             bool canProcessWeight = (controller != nullptr);
             if (canProcessWeight) {
                 canProcessWeight = controller->isVolumetricAvailable();
             }
-            
+
             if (!canProcessWeight) {
                 // If BLE connection is unstable, end extended recording early
                 extendedRecording = false;
                 return;
             }
-            
+
             const float weightDiff = abs(currentBluetoothWeight - lastStableWeight);
-            
+
             if (weightDiff < WEIGHT_STABILIZATION_THRESHOLD) {
                 if (lastWeightChangeTime == 0) {
                     lastWeightChangeTime = now;
@@ -168,7 +168,7 @@ void ShotHistoryPlugin::record() {
                 lastWeightChangeTime = 0;
                 lastStableWeight = currentBluetoothWeight;
             }
-            
+
             // Also stop extended recording after maximum duration
             if (now - extendedRecordingStart >= EXTENDED_RECORDING_DURATION) {
                 extendedRecording = false;
@@ -250,11 +250,8 @@ unsigned long ShotHistoryPlugin::getTime() {
 
 void ShotHistoryPlugin::endRecording() {
     recording = false;
-    
-    
-    if (controller &&
-        controller->isVolumetricAvailable() &&
-        currentBluetoothWeight > 0) {
+
+    if (controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
         extendedRecordingStart = millis();
@@ -262,7 +259,7 @@ void ShotHistoryPlugin::endRecording() {
         lastWeightChangeTime = 0;
         return; // Don't finalize the recording yet
     }
-    
+
     // For shots without weight data, finalize immediately
     finalizeRecording();
 }

@@ -448,9 +448,7 @@ void Settings::setFullTankDistance(int full_tank_distance) {
     save();
 }
 
-void Settings::setAltRelayFunction(int alt_relay_function) {
-    altRelayFunction = alt_relay_function;
-}
+void Settings::setAltRelayFunction(int alt_relay_function) { altRelayFunction = alt_relay_function; }
 
 void Settings::setAutoWakeupEnabled(bool enabled) {
     autowakeupEnabled = enabled;

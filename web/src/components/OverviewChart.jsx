@@ -199,6 +199,69 @@ function getChartData(data) {
     }
   }
 
+  const latestData = data[data.length - 1];
+  const showWeights = latestData && latestData.volumetricAvailable && latestData.brewTarget;
+  const datasets = [
+    {
+      label: 'Current Temperature',
+      borderColor: '#F0561D',
+      pointStyle: false,
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentTemperature })),
+    },
+    {
+      label: 'Target Temperature',
+      fill: true,
+      borderColor: '#731F00',
+      borderDash: [6, 6],
+      pointStyle: false,
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetTemperature })),
+    },
+    {
+      label: 'Current Pressure',
+      borderColor: '#0066CC',
+      pointStyle: false,
+      yAxisID: 'y1',
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentPressure })),
+    },
+    {
+      label: 'Target Pressure',
+      fill: true,
+      borderColor: '#003366',
+      borderDash: [6, 6],
+      pointStyle: false,
+      yAxisID: 'y1',
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetPressure })),
+    },
+    {
+      label: 'Current Flow',
+      borderColor: '#63993D',
+      pointStyle: false,
+      yAxisID: 'y1',
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentFlow })),
+    },
+  ];
+  if (showWeights) {
+    datasets.push(
+      {
+        label: 'Current Weight',
+        borderColor: '#8B5CF6',
+        pointStyle: false,
+        yAxisID: 'y2',
+        data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentWeight || 0 })),
+      }
+    );
+    datasets.push(
+      {
+        label: 'Target Weight',
+        fill: true,
+        borderColor: '#4C1D95',
+        borderDash: [6, 6],
+        pointStyle: false,
+        yAxisID: 'y2',
+        data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetWeight || 0 })),
+      }
+    );
+  }
   
   return {
     type: 'line',

@@ -50,12 +50,11 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         ota->init(controller->getClientController()->getClient());
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
-    
+
     // Subscribe to Bluetooth scale weight updates
-    pluginManager->on("controller:volumetric-measurement:bluetooth:change", [this](Event const &event) {
-        this->currentBluetoothWeight = event.getFloat("value");
-    });
-    
+    pluginManager->on("controller:volumetric-measurement:bluetooth:change",
+                      [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
+
     setupServer();
 }
 
@@ -90,31 +89,21 @@ void WebUIPlugin::loop() {
         doc["puid"] = controller->getProfileManager()->getSelectedProfile().id;
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
-        
-       // Calculate total volumetric target weight from all phases
-        double totalVolumetricTarget = 0.0;
-        Profile selectedProfile = controller->getProfileManager()->getSelectedProfile();
-        for (const auto &phase : selectedProfile.phases) {
-            if (phase.hasVolumetricTarget()) {
-                totalVolumetricTarget = phase.getVolumetricTarget().value;
-            }
-        }
-
-        doc["tw"] = totalVolumetricTarget; // total target weight for the process
+        doc["tw"] = profileManager->getSelectedProfile().getTotalVolume(); // total target weight for the process
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
-        doc["btd"] = controller->getTargetDuration();
+        doc["btd"] = profileManager->getSelectedProfile().getTotalDuration();
         doc["btv"] = controller->getSettings().getTargetVolume();
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
         doc["gtd"] = controller->getTargetGrindDuration();
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
         doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["gact"] = controller->isGrindActive() ? 1 : 0;
-        
+
         // Add Bluetooth scale weight information
         doc["bw"] = this->currentBluetoothWeight; // current bluetooth weight
         doc["cw"] = this->currentBluetoothWeight; // Use 'currentWeight' for forward compatbility
-        doc["bc"] = BLEScales.isConnected(); // bluetooth scale connected status
+        doc["bc"] = BLEScales.isConnected();      // bluetooth scale connected status
 
         Process *process = controller->getProcess();
         if (process == nullptr) {

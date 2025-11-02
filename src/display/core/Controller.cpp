@@ -460,7 +460,7 @@ void Controller::updateControl() {
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
-    
+
     // Check if alt relay should be active based on process type and alt relay function setting
     bool altRelayActive = false;
     if (isActive() && currentProcess->isAltRelayActive()) {
@@ -468,7 +468,7 @@ void Controller::updateControl() {
             altRelayActive = true;
         }
     }
-    
+
     clientController.sendAltControl(altRelayActive);
     if (isActive() && systemInfo.capabilities.pressure) {
         if (currentProcess->getType() == MODE_STEAM) {

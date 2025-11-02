@@ -228,31 +228,6 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
       },
     },
   };
-
-  // TODO: Fix overwriting everything
-  
-  // Always show phase dividers and labels
-  chartData.options.plugins.annotation = {
-    drawTime: 'afterDraw',
-    annotations: [],
-  };
-  
-  // Add highlighting box only if a phase is selected
-  if (selectedPhase !== null) {
-    let start = 0;
-    for (let i = 0; i < selectedPhase; i++) {
-      start += parseFloat(data.phases[i].duration);
-    }
-    let end = start + parseFloat(data.phases[selectedPhase].duration);
-    chartData.options.plugins.annotation.annotations.push({
-      id: 'box1',
-      type: 'box',
-      xMin: start + 0.1,
-      xMax: end + 0.1,
-      backgroundColor: 'rgba(0,105,255,0.2)',
-      borderColor: 'rgba(100, 100, 100, 0)',
-    });
-  }
   
   // Always show phase dividers and labels
   chartData.options.plugins.annotation = {
