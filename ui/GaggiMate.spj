@@ -5573,31 +5573,31 @@
               {
                 "nid": -1924829204,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": 1215187854,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -1657431588,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": 1385818574,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": 197124523,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
@@ -5611,6 +5611,8 @@
                       {
                         "nid": 161424932,
                         "strtype": "_style/Image_reColor",
+                        "strval": "NiceWhite",
+                        "integer": 1000206,
                         "intarray": [
                           250,
                           250,
@@ -20582,31 +20584,31 @@
               {
                 "nid": 939638989,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -1072451500,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -1217254746,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": 1794841552,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -533421980,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
@@ -23038,31 +23040,31 @@
                               {
                                 "nid": -235345489,
                                 "strtype": "IMGBUTTON/Image_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -1626749229,
                                 "strtype": "IMGBUTTON/Image_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 1266790269,
                                 "strtype": "IMGBUTTON/Image_checked_released",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 1081475283,
                                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -1412123709,
                                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
@@ -23268,31 +23270,31 @@
                               {
                                 "nid": 1870452489,
                                 "strtype": "IMGBUTTON/Image_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 199121593,
                                 "strtype": "IMGBUTTON/Image_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -1123046269,
                                 "strtype": "IMGBUTTON/Image_checked_released",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -487922156,
                                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 197472643,
                                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
@@ -23942,31 +23944,31 @@
                               {
                                 "nid": -61409765,
                                 "strtype": "IMGBUTTON/Image_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -1272771944,
                                 "strtype": "IMGBUTTON/Image_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 1798385124,
                                 "strtype": "IMGBUTTON/Image_checked_released",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -1865530141,
                                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -1918771136,
                                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
@@ -24172,31 +24174,31 @@
                               {
                                 "nid": 1818514568,
                                 "strtype": "IMGBUTTON/Image_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -2019235858,
                                 "strtype": "IMGBUTTON/Image_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -1729574391,
                                 "strtype": "IMGBUTTON/Image_checked_released",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": 824458078,
                                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
                                 "nid": -530315678,
                                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                                "strval": "",
+                                "strval": "-",
                                 "InheritedType": 5
                               },
                               {
@@ -32372,31 +32374,31 @@
               {
                 "nid": -671763828,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -174754756,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -22642740,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": 805244448,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": 1092324352,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
@@ -32410,6 +32412,8 @@
                       {
                         "nid": 884920089,
                         "strtype": "_style/Image_reColor",
+                        "strval": "NiceWhite",
+                        "integer": 1000206,
                         "intarray": [
                           250,
                           250,
@@ -39138,31 +39142,31 @@
               {
                 "nid": 939638989,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -1072451500,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -1217254746,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": 1794841552,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -533421980,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
@@ -46882,31 +46886,31 @@
               {
                 "nid": 939638989,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -1072451500,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -1217254746,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": 1794841552,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
                 "nid": -533421980,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "-",
+                "strval": "",
                 "InheritedType": 5
               },
               {
@@ -46920,6 +46924,8 @@
                       {
                         "nid": 1443696336,
                         "strtype": "_style/Image_reColor",
+                        "strval": "NiceWhite",
+                        "integer": 1000206,
                         "intarray": [
                           250,
                           250,
@@ -49287,7 +49293,7 @@
     "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
     "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 503,
+    "backup_cnt": 504,
     "autosave_cnt": 0,
     "lvgl_version": "8.3.11",
     "callfuncsexport": "CPP_FILE",

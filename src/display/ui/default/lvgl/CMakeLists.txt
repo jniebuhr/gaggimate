@@ -45,7 +45,7 @@ SET(SOURCES components/ui_comp_dials.c
     images/ui_img_1732953241.c
     images/ui_img_1456692430.c
     images/ui_img_1829139226.c
-    images/ui_img_691326438.c
-    images/ui_img_spider2_png.c)
+    images/ui_img_spider2_png.c
+    images/ui_img_691326438.c)
 
 add_library(ui ${SOURCES})

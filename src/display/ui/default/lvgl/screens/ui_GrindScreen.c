@@ -25,8 +25,10 @@ void ui_GrindScreen_screen_init(void) {
     lv_obj_set_x(ui_GrindScreen_ImgButton2, 0);
     lv_obj_set_y(ui_GrindScreen_ImgButton2, 210);
     lv_obj_set_align(ui_GrindScreen_ImgButton2, LV_ALIGN_CENTER);
-    lv_obj_set_style_img_recolor(ui_GrindScreen_ImgButton2, lv_color_hex(0xFAFAFA), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_img_recolor_opa(ui_GrindScreen_ImgButton2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_object_set_themeable_style_property(ui_GrindScreen_ImgButton2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+                                           _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_GrindScreen_ImgButton2, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
+                                           _ui_theme_alpha_NiceWhite);
 
     ui_GrindScreen_contentPanel7 = lv_obj_create(ui_GrindScreen);
     lv_obj_set_width(ui_GrindScreen_contentPanel7, 360);

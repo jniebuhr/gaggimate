@@ -238,8 +238,10 @@ const lv_img_dsc_t *ui_imgset_1091184723[1] = {&ui_img_1091371356};
 const lv_img_dsc_t *ui_imgset_960046369[1] = {&ui_img_631115820};
 const lv_img_dsc_t *ui_imgset_1525119997[1] = {&ui_img_360122106};
 const lv_img_dsc_t *ui_imgset_1812359778[1] = {&ui_img_363557387};
+const lv_img_dsc_t *ui_imgset_1098148634[1] = {&ui_img_1594943393};
 const lv_img_dsc_t *ui_imgset_1682378366[1] = {&ui_img_332059803};
 const lv_img_dsc_t *ui_imgset_359218129[1] = {&ui_img_1424216268};
+const lv_img_dsc_t *ui_imgset_568482326[1] = {&ui_img_1464184441};
 const lv_img_dsc_t *ui_imgset_403384789[1] = {&ui_img_834125362};
 const lv_img_dsc_t *ui_imgset_359534444[1] = {&ui_img_979979123};
 const lv_img_dsc_t *ui_imgset_794559649[1] = {&ui_img_1456692430};
@@ -249,14 +251,12 @@ const lv_img_dsc_t *ui_imgset_1010926578[1] = {&ui_img_2044104741};
 const lv_img_dsc_t *ui_imgset_1155213431[1] = {&ui_img_545340440};
 const lv_img_dsc_t *ui_imgset_524469952[1] = {&ui_img_1765671371};
 const lv_img_dsc_t *ui_imgset_648927478[1] = {&ui_img_340148213};
+const lv_img_dsc_t *ui_imgset_spider[1] = {&ui_img_spider2_png};
 const lv_img_dsc_t *ui_imgset_616600488[1] = {&ui_img_1220767159};
 const lv_img_dsc_t *ui_imgset_690294202[1] = {&ui_img_1732953241};
 const lv_img_dsc_t *ui_imgset_1252186405[1] = {&ui_img_1951499226};
 const lv_img_dsc_t *ui_imgset_2074400918[1] = {&ui_img_364513079};
 const lv_img_dsc_t *ui_imgset_506671969[2] = {&ui_img_691326438, &ui_img_783005998};
-const lv_img_dsc_t *ui_imgset_spider[1] = {&ui_img_spider2_png};
-const lv_img_dsc_t *ui_imgset_1098148634[1] = {&ui_img_1594943393};
-const lv_img_dsc_t *ui_imgset_568482326[1] = {&ui_img_1464184441};
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
