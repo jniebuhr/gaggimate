@@ -1,6 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext, useState } from 'preact/hooks';
+import { useCallback, useContext, useState, useEffect } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import PropTypes from 'prop-types';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
@@ -13,6 +13,7 @@ import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleLi
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { ProcessProfileChart } from '../../components/ProcessProfileChart.jsx';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 
@@ -135,6 +136,39 @@ const ProcessControls = props => {
   const grind = mode === 4; // Grind mode
   const apiService = useContext(ApiServiceContext);
   const [isFlushing, setIsFlushing] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  // Fetch profile data when selectedProfileId or selectedProfile changes
+  useEffect(() => {
+    const selectedProfileId = status.value.selectedProfileId;
+    const selectedProfileName = status.value.selectedProfile;
+    
+    if (!selectedProfileId || !apiService) {
+      setProfileData(null);
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        setProfileLoading(true);
+        // Load profile directly by ID
+        const profileResponse = await apiService.request({ tp: 'req:profiles:load', id: selectedProfileId });
+        if (profileResponse.profile && profileResponse.profile.type === 'pro') {
+          setProfileData(profileResponse.profile);
+        } else {
+          setProfileData(null);
+        }
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+        setProfileData(null);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [status.value.selectedProfileId, status.value.selectedProfile, apiService]);
 
   // Get settings to check if SmartGrind is enabled
   const { data: settings } = useQuery('settings-cache', async () => {
@@ -317,6 +351,22 @@ const ProcessControls = props => {
             </span>
             <FontAwesomeIcon icon={faRectangleList} className='text-base-content/60 text-xl' />
           </a>
+          {status.value.selectedProfileId && (
+            <div className='mb-2'>
+              {profileLoading && (
+                <div className="flex items-center justify-center max-h-20 w-full">
+                  <div className="loading loading-spinner loading-xs opacity-60"></div>
+                </div>
+              )}
+              {!profileLoading && profileData && (
+                <ProcessProfileChart 
+                  data={profileData} 
+                  processInfo={processInfo}
+                  className='max-h-36 w-full'
+                />
+              )}
+            </div>
+          )}
         </div>
       )}
 
