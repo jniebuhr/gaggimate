@@ -168,6 +168,7 @@ export function Settings() {
       const form = formRef.current;
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
+      formDataToSubmit.set('altRelayFunction', formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1);
 
       // Add auto-wakeup schedules
       const schedulesStr = autowakeupSchedules.map(schedule => 
@@ -645,6 +646,25 @@ export function Settings() {
                 />
               </div>
             )}
+
+            <div className='form-control'>
+              <label htmlFor='altRelayFunction' className='mb-2 block text-sm font-medium'>
+                Alt Relay / SSR2 Function
+              </label>
+              <select
+                id='altRelayFunction'
+                name='altRelayFunction'
+                className='select select-bordered w-full'
+                value={formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1}
+                onChange={onChange('altRelayFunction')}
+              >
+                <option value={0}>None</option>
+                <option value={1}>Grind</option>
+                <option value={2} disabled className='text-gray-400'>
+                  Steam Boiler (Coming Soon)
+                </option>
+              </select>
+            </div>
           </Card>
 
           <Card sm={10} lg={5} title='Display settings'>

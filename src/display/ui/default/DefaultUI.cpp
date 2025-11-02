@@ -218,6 +218,8 @@ void DefaultUI::loop() {
         volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
         grindActive = controller->isGrindActive();
         active = controller->isActive();
+        smartGrindActive = settings.isSmartGrindActive();
+        grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
         applyTheme();
         if (controller->isErrorState()) {
             changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
@@ -308,6 +310,8 @@ void DefaultUI::setupState() {
     volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
     grindActive = controller->isGrindActive();
     active = controller->isActive();
+    smartGrindActive = settings.isSmartGrindActive();
+    grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
     mode = controller->getMode();
     currentTemp = static_cast<int>(controller->getCurrentTemp());
     targetTemp = static_cast<int>(controller->getTargetTemp());
@@ -597,6 +601,14 @@ void DefaultUI::setupReactive() {
                 currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
         },
         &currentProfileId, &profileLoaded);
+
+    // Show/hide grind button based on SmartGrind setting or Alt Relay function
+    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
+                          [=]() {
+                              grindAvailable ? lv_obj_clear_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN)
+                                             : lv_obj_add_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN);
+                          },
+                          &grindAvailable);
 }
 
 void DefaultUI::handleScreenChange() {
