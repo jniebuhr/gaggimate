@@ -7,9 +7,10 @@
 inline float sign(float x) { return (x > 0.0f) - (x < 0.0f); }
 
 // Static utility function for first-order low-pass filtering
-void PressureController::applyLowPassFilter(float* filteredValue, float rawValue, float cutoffFreq, float dt) {
-    if (filteredValue == nullptr) return;
-    
+void PressureController::applyLowPassFilter(float *filteredValue, float rawValue, float cutoffFreq, float dt) {
+    if (filteredValue == nullptr)
+        return;
+
     float alpha = dt / (1.0f / (2.0f * M_PI * cutoffFreq) + dt);
     *filteredValue = alpha * rawValue + (1.0f - alpha) * (*filteredValue);
 }
@@ -30,7 +31,8 @@ void PressureController::filterSetpoint(float rawSetpoint) {
     if (!_setpointFilterInitialized)
         initSetpointFilter();
     float omega = 2.0 * M_PI * _setpointFilterFreq;
-    float d2r = (omega * omega) * (rawSetpoint - _filteredSetpoint) - 2.0f * _setpointFilterDamping * omega * _filteredSetpointDerivative;
+    float d2r =
+        (omega * omega) * (rawSetpoint - _filteredSetpoint) - 2.0f * _setpointFilterDamping * omega * _filteredSetpointDerivative;
     _filteredSetpointDerivative += std::clamp(d2r * _dt, -_maxPressureRate, _maxPressureRate);
     _filteredSetpoint += _filteredSetpointDerivative * _dt;
 }
@@ -43,20 +45,17 @@ void PressureController::initSetpointFilter(float val) {
     _setpointFilterInitialized = true;
 }
 
-
 void PressureController::filterSensor() {
     // Use Kalman filter for pressure (as originally intended)
     float newFiltered = this->_pressureKalmanFilter->updateEstimate(*_rawPressure);
-    
+
     // Calculate pressure derivative using the filtered pressure
     float pressureDerivative = (newFiltered - _lastFilteredPressure) / _dt;
     applyLowPassFilter(&_filteredPressureDerivative, pressureDerivative, _filterEstimatorFrequency, _dt);
-    
+
     _lastFilteredPressure = newFiltered;
     _filteredPressureSensor = newFiltered;
 }
-
-
 
 void PressureController::update(ControlMode mode) {
     filterSetpoint(*_rawPressureSetpoint);
@@ -78,7 +77,6 @@ void PressureController::update(ControlMode mode) {
     virtualScale();
 }
 
-
 float PressureController::pumpFlowModel(float alpha) const {
     const float availableFlow = getAvailableFlow();
     return availableFlow * alpha / 100.0f;
@@ -88,7 +86,8 @@ float PressureController::getAvailableFlow() const {
     const float P = _filteredPressureSensor;
     const float P2 = P * P;
     const float P3 = P2 * P;
-    const float Q = _pumpFlowCoefficients[0] * P3 + _pumpFlowCoefficients[1] * P2 + _pumpFlowCoefficients[2] * P + _pumpFlowCoefficients[3];
+    const float Q =
+        _pumpFlowCoefficients[0] * P3 + _pumpFlowCoefficients[1] * P2 + _pumpFlowCoefficients[2] * P + _pumpFlowCoefficients[3];
 
     return Q;
 }
@@ -117,12 +116,11 @@ void PressureController::setPumpFlowPolyCoeffs(float a, float b, float c, float 
     _pumpFlowCoefficients[3] = d;
 }
 
-
-void PressureController::tare() { 
-    _coffeeOutput = 0.0f; 
+void PressureController::tare() {
+    _coffeeOutput = 0.0f;
     _pumpVolume = 0.0f;
     _puckSaturationVolume = 0.0f;
-    _puckState[0]= false;
+    _puckState[0] = false;
     _puckState[1] = false;
     _puckState[2] = false;
     _puckCounter = 0;
@@ -136,74 +134,77 @@ void PressureController::virtualScale() {
     float newPumpFlowRate = pumpFlowModel(*_ctrlOutput);
     applyLowPassFilter(&_pumpFlowRate, newPumpFlowRate, _filterEstimatorFrequency, _dt);
     _pumpVolume += _pumpFlowRate * _dt;
-    applyLowPassFilter(&exportPumpFlowRate, newPumpFlowRate,_filterEstimatorFrequency/2,_dt);
+    applyLowPassFilter(&exportPumpFlowRate, newPumpFlowRate, _filterEstimatorFrequency / 2, _dt);
 
-    // Raw entering water puck flow 
+    // Raw entering water puck flow
     float effectiveCompliance = 3.0f / fmax(0.2f, _filteredPressureSensor); // ml*s/bar
     float flowRaw = _pumpFlowRate - effectiveCompliance * _filteredPressureDerivative;
-    
-    
+
     applyLowPassFilter(&_waterThroughPuckFlowRate, flowRaw, 0.3f, _dt);
-    if(_waterThroughPuckFlowRate > 0.0f && *_valveStatus==1 && _filteredPressureSensor>0.8f){
-        _puckCounter ++;
+    if (_waterThroughPuckFlowRate > 0.0f && *_valveStatus == 1 && _filteredPressureSensor > 0.8f) {
+        _puckCounter++;
         _puckSaturationVolume += _waterThroughPuckFlowRate * _dt;
-        
+
         // PUCK CONDUCTANCE
         // applyLowPassFilter(&_pressureFilterEstimator, _filteredPressureSensor, 1.0f, _dt);
-        _puckConductance = _waterThroughPuckFlowRate/sqrtf(_filteredPressureSensor);
+        _puckConductance = _waterThroughPuckFlowRate / sqrtf(_filteredPressureSensor);
         // PUCK CONDUCTANCE DERIVATIVE
-        if(_puckCounter <=1)// To avoid spike we set the derivative to 0 just for init
+        if (_puckCounter <= 1) // To avoid spike we set the derivative to 0 just for init
             _lastPuckConductance = _puckConductance;
-        float newPuckConductanceDerivative = (_puckConductance - _lastPuckConductance)/_dt;
+        float newPuckConductanceDerivative = (_puckConductance - _lastPuckConductance) / _dt;
         applyLowPassFilter(&_puckConductanceDerivative, newPuckConductanceDerivative, 0.2f, _dt);
         _lastPuckConductance = _puckConductance;
 
         // Monitoring the puck resistance behavior
-        /* Because there is a bit of headspace to be filled up the pressure is not rising fast compare to 
+        /* Because there is a bit of headspace to be filled up the pressure is not rising fast compare to
         the amount of water pumped in. As per the equation used for estimation C dP/dt = Pumpflow - PuckFlow,
-        everything that is not building up pressure is exciting as PuckFlow. Therefore the conductivity of 
-        the puck is estimated as crazy high at first, then plummits to negative values before going back to zero. 
-        We use this strange behavior to determine that an equilibrium is established and the equations is 
+        everything that is not building up pressure is exciting as PuckFlow. Therefore the conductivity of
+        the puck is estimated as crazy high at first, then plummits to negative values before going back to zero.
+        We use this strange behavior to determine that an equilibrium is established and the equations is
         becoming valid to trigger estimation output.
 
-        We expect the puck to follow three states : 
-            State 0 : conductivity decreases 
+        We expect the puck to follow three states :
+            State 0 : conductivity decreases
             State 1 : conductivity settle down to a certain value ()
-            State 2 : puck first drop 
+            State 2 : puck first drop
 
-        Additionnaly if the first drop would be a user input then to trigger the coffee estimation start one 
-        would just nee to pass all the state to true. 
+        Additionnaly if the first drop would be a user input then to trigger the coffee estimation start one
+        would just nee to pass all the state to true.
         */
-       
-        if (_puckConductanceDerivative < - 0.5f && float(_puckCounter)*_dt> 1.0f) // Puck conductivity is decreasing fast 
-            _puckState[0] = true; 
+
+        if (_puckConductanceDerivative < -0.5f && float(_puckCounter) * _dt > 1.0f) // Puck conductivity is decreasing fast
+            _puckState[0] = true;
 
         int timeStamp = 0;
-        if ( _puckState[0] && _puckConductanceDerivative > -0.1f && !_puckState[1] ){// Puck conductivity is settling down
-            _puckState[1] = true; 
-            timeStamp = _puckCounter; 
+        if (_puckState[0] && _puckConductanceDerivative > -0.1f && !_puckState[1]) { // Puck conductivity is settling down
+            _puckState[1] = true;
+            timeStamp = _puckCounter;
         }
 
-        _puckResistance = 1.0/_puckConductance;
-        if(_puckState[1] ){
-            if (_puckCounter == timeStamp){ // Intialise values
-                _coffeeFlowRate =_waterThroughPuckFlowRate; // Initiate the flow immediatly to the instantaneous flow to not waist time
-                _puckResistance = 1.0f/_puckConductance; // Same for the puck resistance
+        _puckResistance = 1.0 / _puckConductance;
+        if (_puckState[1]) {
+            if (_puckCounter == timeStamp) { // Intialise values
+                _coffeeFlowRate =
+                    _waterThroughPuckFlowRate; // Initiate the flow immediatly to the instantaneous flow to not waist time
+                _puckResistance = 1.0f / _puckConductance; // Same for the puck resistance
             }
-            applyLowPassFilter(&_puckResistance, 1.0f/_puckConductance, 0.1f, _dt); // Filter for cosmetic purpose
+            applyLowPassFilter(&_puckResistance, 1.0f / _puckConductance, 0.1f, _dt); // Filter for cosmetic purpose
             // Reset the puck flow rate to avoid slow decay filter response by using the raw flow value for coffee flow
             applyLowPassFilter(&_coffeeFlowRate, _waterThroughPuckFlowRate, 0.2f, _dt);
             // Account for missed drops (WIP)
-            if(!_puckState[2]){
+            if (!_puckState[2]) {
                 float timeMissedDrops = 2.0f; // First drop occured X second ago
-                float missedDops = _coffeeFlowRate*timeMissedDrops/2;// Assumption that flow was linearly increasing (triangle integral) that's BS but ... something. 
+                float missedDops =
+                    _coffeeFlowRate * timeMissedDrops /
+                    2; // Assumption that flow was linearly increasing (triangle integral) that's BS but ... something.
                 _puckState[2] = true;
                 _coffeeOutput += _coffeeFlowRate * _dt + missedDops;
-            }else{
-            _coffeeOutput += _coffeeFlowRate * _dt;
+            } else {
+                _coffeeOutput += _coffeeFlowRate * _dt;
             }
         }
-        // ESP_LOGI("","%d;\t %1.3e;\t %1.3e;\t %1.3e;\t %1.3e;\t %1.3e", millis(),_puckConductance, _puckConductanceDerivative, _waterThroughPuckFlowRate, _coffeeFlowRate, _puckResistance);
+        // ESP_LOGI("","%d;\t %1.3e;\t %1.3e;\t %1.3e;\t %1.3e;\t %1.3e", millis(),_puckConductance, _puckConductanceDerivative,
+        // _waterThroughPuckFlowRate, _coffeeFlowRate, _puckResistance);
     }
 }
 
@@ -220,8 +221,7 @@ float PressureController::getPumpDutyCycleForPressure() {
 
     // CONTROL: The boiler is pressurised, the profile is something specific, let's try to
     // control that pressure now that all conditions are reunited
-    float 
-    P = _filteredPressureSensor;
+    float P = _filteredPressureSensor;
     float P_ref = _filteredSetpoint;
     float error = P - P_ref;
     _previousPressure = P;
@@ -247,7 +247,7 @@ float PressureController::getPumpDutyCycleForPressure() {
 
     float Qa = getAvailableFlow();
     Qa = fmaxf(Qa, 1e-3f);
-    float Ceq = _systemCompliance; 
+    float Ceq = _systemCompliance;
     float K = _commutationGain / (1 - P / _maxPressure) * Qa / Ceq;
     _pumpDutyCycle = Ceq / Qa * (-_convergenceGain * error - K * sat_s) - iterm;
 
@@ -266,9 +266,9 @@ void PressureController::reset() {
     _errorIntegral = 0.0f;
     _pumpFlowRate = 0.0f;
     _puckSaturationVolume = 0.0f;
-    _puckState[0]= false;
+    _puckState[0] = false;
     _puckState[1] = false;
     _puckState[2] = false;
     _puckCounter = 0;
-    ESP_LOGI("","RESET");
+    ESP_LOGI("", "RESET");
 }

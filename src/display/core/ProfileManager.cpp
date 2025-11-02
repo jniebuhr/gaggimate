@@ -9,11 +9,11 @@ ProfileManager::ProfileManager(fs::FS &fs, String dir, Settings &settings, Plugi
 void ProfileManager::setup() {
     ensureDirectory();
     auto profiles = listProfiles();
-    if (!_settings.isProfilesMigrated() || profiles.empty()) {
+    if (!_settings.isProfilesMigrated() || profiles.empty() || !loadSelectedProfile(selectedProfile)) {
         migrate();
         _settings.setProfilesMigrated(true);
+        loadSelectedProfile(selectedProfile);
     }
-    loadSelectedProfile(selectedProfile);
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));
 }
 
@@ -195,7 +195,7 @@ void ProfileManager::selectProfile(const String &uuid) {
 
 Profile ProfileManager::getSelectedProfile() const { return selectedProfile; }
 
-void ProfileManager::loadSelectedProfile(Profile &outProfile) { loadProfile(_settings.getSelectedProfile(), outProfile); }
+bool ProfileManager::loadSelectedProfile(Profile &outProfile) { return loadProfile(_settings.getSelectedProfile(), outProfile); }
 
 std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
 
