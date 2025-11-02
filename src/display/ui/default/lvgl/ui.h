@@ -109,14 +109,14 @@ void ui_event_BrewScreen_startButton(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_startButton;
 extern lv_obj_t *ui_BrewScreen_controlContainer;
 extern lv_obj_t *ui_BrewScreen_modeSwitch;
-void ui_event_BrewScreen_timedButton(lv_event_t *e);
-extern lv_obj_t *ui_BrewScreen_timedButton;
 void ui_event_BrewScreen_volumetricButton(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_volumetricButton;
+extern lv_obj_t *ui_BrewScreen_weightLabel;
 extern lv_obj_t *ui_BrewScreen_profileInfo;
 extern lv_obj_t *ui_BrewScreen_Label1;
 extern lv_obj_t *ui_BrewScreen_Container3;
 extern lv_obj_t *ui_BrewScreen_profileName;
+void ui_event_BrewScreen_settingsButton(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_settingsButton;
 void ui_event_BrewScreen_profileSelectBtn(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_profileSelectBtn;
@@ -135,6 +135,12 @@ extern lv_obj_t *ui_BrewScreen_upDurationButton;
 void ui_event_BrewScreen_downDurationButton(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_downDurationButton;
 extern lv_obj_t *ui_BrewScreen_Image4;
+void ui_event_BrewScreen_saveButton(lv_event_t *e);
+extern lv_obj_t *ui_BrewScreen_saveButton;
+void ui_event_BrewScreen_acceptButton(lv_event_t *e);
+extern lv_obj_t *ui_BrewScreen_acceptButton;
+void ui_event_BrewScreen_saveAsNewButton(lv_event_t *e);
+extern lv_obj_t *ui_BrewScreen_saveAsNewButton;
 // CUSTOM VARIABLES
 extern lv_obj_t *uic_BrewScreen_dials_tempGauge;
 extern lv_obj_t *uic_BrewScreen_dials_tempTarget;
@@ -154,9 +160,6 @@ extern lv_obj_t *ui_StandbyScreen_wifiIcon;
 extern lv_obj_t *ui_StandbyScreen_bluetoothIcon;
 extern lv_obj_t *ui_StandbyScreen_updateIcon;
 extern lv_obj_t *ui_StandbyScreen_Image3;
-extern lv_obj_t *ui_StandbyScreen_halloweenSpider;
-extern lv_obj_t *ui_StandbyScreen_halloweenBats;
-extern lv_obj_t *ui_StandbyScreen_halloweenPumpkin;
 // CUSTOM VARIABLES
 
 // SCREEN: ui_SimpleProcessScreen
@@ -233,10 +236,9 @@ void ui_event_GrindScreen_downDurationButton(lv_event_t *e);
 extern lv_obj_t *ui_GrindScreen_downDurationButton;
 extern lv_obj_t *ui_GrindScreen_targetSymbol;
 extern lv_obj_t *ui_GrindScreen_modeSwitch;
-void ui_event_GrindScreen_timedButton(lv_event_t *e);
-extern lv_obj_t *ui_GrindScreen_timedButton;
 void ui_event_GrindScreen_volumetricButton(lv_event_t *e);
 extern lv_obj_t *ui_GrindScreen_volumetricButton;
+extern lv_obj_t *ui_GrindScreen_weightLabel;
 // CUSTOM VARIABLES
 extern lv_obj_t *uic_GrindScreen_dials_tempGauge;
 extern lv_obj_t *uic_GrindScreen_dials_tempTarget;
@@ -272,16 +274,16 @@ LV_IMG_DECLARE(ui_img_340148213);    // assets/settings-40x40.png
 LV_IMG_DECLARE(ui_img_332059803);    // assets/dropdown-bar-40x40.png
 LV_IMG_DECLARE(ui_img_834125362);    // assets/minus-small-40x40.png
 LV_IMG_DECLARE(ui_img_390988422);    // assets/plus-small-40x40.png
+LV_IMG_DECLARE(ui_img_1594943393);   // assets/disk-30x30.png
+LV_IMG_DECLARE(ui_img_1464184441);   // assets/floppy-disks-30x30.png
 LV_IMG_DECLARE(ui_img_364513079);    // assets/wifi-20x20.png
 LV_IMG_DECLARE(ui_img_1091371356);   // assets/bluetooth-alt-20x20.png
 LV_IMG_DECLARE(ui_img_1765671371);   // assets/refresh-20x20.png
 LV_IMG_DECLARE(ui_img_1732953241);   // assets/tap-60x60.png
-LV_IMG_DECLARE(ui_img_spider2_png);  // assets/spider2.png
-LV_IMG_DECLARE(ui_img_bats_png);     // assets/bats.png
-LV_IMG_DECLARE(ui_img_pumpkin_png);  // assets/pumpkin.png
 LV_IMG_DECLARE(ui_img_1456692430);   // assets/pause-40x40.png
 LV_IMG_DECLARE(ui_img_1829139226);   // assets/angle-down-40x40.png
 LV_IMG_DECLARE(ui_img_691326438);    // assets/wind-40x40.png
+LV_IMG_DECLARE(ui_img_spider2_png);  // assets/spider2.png
 
 // UI INIT
 void ui_init(void);

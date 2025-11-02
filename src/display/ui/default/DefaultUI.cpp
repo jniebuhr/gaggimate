@@ -101,6 +101,14 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
+    pluginManager->on("controller:targetVolume:change", [=](Event const &event) {
+        targetVolume = event.getFloat("value");
+        rerender = true;
+    });
+    pluginManager->on("controller:targetDuration:change", [=](Event const &event) {
+        targetDuration = event.getFloat("value");
+        rerender = true;
+    });
     pluginManager->on("controller:grindDuration:change", [=](Event const &event) {
         grindDuration = event.getInt("value");
         rerender = true;
@@ -248,6 +256,14 @@ void DefaultUI::changeScreen(lv_obj_t **screen, void (*target_init)()) {
     targetScreen = screen;
     targetScreenInit = target_init;
     rerender = true;
+
+    // Reset some submenus
+    brewScreenState = BrewScreenState::Brew;
+}
+
+void DefaultUI::changeBrewScreenMode(BrewScreenState state) {
+    brewScreenState = state;
+    rerender = true;
 }
 
 void DefaultUI::onProfileSwitch() {
@@ -315,8 +331,8 @@ void DefaultUI::setupState() {
     mode = controller->getMode();
     currentTemp = static_cast<int>(controller->getCurrentTemp());
     targetTemp = static_cast<int>(controller->getTargetTemp());
-    targetDuration = controller->getTargetDuration();
-    targetVolume = settings.getTargetVolume();
+    targetDuration = profileManager->getSelectedProfile().getTotalDuration();
+    targetVolume = profileManager->getSelectedProfile().getTotalVolume();
     grindDuration = settings.getTargetGrindDuration();
     grindVolume = settings.getTargetGrindVolume();
     pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
@@ -473,8 +489,8 @@ void DefaultUI::setupReactive() {
                               if (volumetricMode) {
                                   lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%dg", targetVolume);
                               } else {
-                                  const double secondsDouble = targetDuration / 1000.0;
-                                  const auto minutes = static_cast<int>(secondsDouble / 60.0 - 0.5);
+                                  const double secondsDouble = targetDuration;
+                                  const auto minutes = static_cast<int>(secondsDouble / 60.0);
                                   const auto seconds = static_cast<int>(secondsDouble) % 60;
                                   lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%2d:%02d", minutes, seconds);
                               }
@@ -486,7 +502,7 @@ void DefaultUI::setupReactive() {
                                   lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%.1fg", grindVolume);
                               } else {
                                   const double secondsDouble = grindDuration / 1000.0;
-                                  const auto minutes = static_cast<int>(secondsDouble / 60.0 - 0.5);
+                                  const auto minutes = static_cast<int>(secondsDouble / 60.0);
                                   const auto seconds = static_cast<int>(secondsDouble) % 60;
                                   lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%2d:%02d", minutes, seconds);
                               }
@@ -496,16 +512,13 @@ void DefaultUI::setupReactive() {
         [=] { return currentScreen == ui_BrewScreen; },
         [=]() {
             lv_img_set_src(ui_BrewScreen_Image4, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
-            ui_object_set_themeable_style_property(ui_BrewScreen_timedButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_BG_IMG_RECOLOR,
-                                                   volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
+            ui_object_set_themeable_style_property(ui_BrewScreen_weightLabel, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_TEXT_COLOR,
+                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_BrewScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
                                                    LV_STYLE_BG_IMG_RECOLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_BrewScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
-                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-            ui_object_set_themeable_style_property(ui_BrewScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_BG_GRAD_COLOR,
                                                    volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
         },
         &volumetricMode);
@@ -513,36 +526,18 @@ void DefaultUI::setupReactive() {
         [=] { return currentScreen == ui_GrindScreen; },
         [=]() {
             lv_img_set_src(ui_GrindScreen_targetSymbol, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
-            ui_object_set_themeable_style_property(ui_GrindScreen_timedButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_BG_IMG_RECOLOR,
-                                                   volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
+            ui_object_set_themeable_style_property(ui_GrindScreen_weightLabel, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_TEXT_COLOR,
+                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_GrindScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
                                                    LV_STYLE_BG_IMG_RECOLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_GrindScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
-                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-            ui_object_set_themeable_style_property(ui_GrindScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_BG_GRAD_COLOR,
                                                    volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
         },
         &volumetricMode);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=]() {
-                              if (volumetricAvailable) {
-                                  lv_obj_clear_flag(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
-                              } else {
-                                  lv_obj_add_flag(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
-                              }
-                          },
-                          &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() {
-                              if (volumetricAvailable) {
-                                  lv_obj_clear_flag(ui_GrindScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
-                              } else {
-                                  lv_obj_add_flag(ui_GrindScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN);
-                              }
-                          },
+                          [=]() { _ui_flag_modify(ui_GrindScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN, volumetricAvailable); },
                           &volumetricAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() {
@@ -609,6 +604,37 @@ void DefaultUI::setupReactive() {
                                              : lv_obj_add_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN);
                           },
                           &grindAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(ui_BrewScreen_weightLabel, "%.1fg", bluetoothWeight);
+                              } else {
+                                  lv_label_set_text_fmt(ui_BrewScreen_weightLabel, "%.1fg", 0.0f);
+                              }
+                          },
+                          &bluetoothWeight, &volumetricAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
+                          [=]() {
+                              if (volumetricAvailable) {
+                                  lv_label_set_text_fmt(ui_GrindScreen_weightLabel, "%.1fg", bluetoothWeight);
+                              } else {
+                                  lv_label_set_text_fmt(ui_GrindScreen_weightLabel, "%.1fg", 0.0f);
+                              }
+                          },
+                          &bluetoothWeight, &volumetricAvailable);
+    effect_mgr.use_effect(
+        [=] { return currentScreen == ui_BrewScreen; },
+        [=]() {
+            _ui_flag_modify(ui_BrewScreen_adjustments, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Settings);
+            _ui_flag_modify(ui_BrewScreen_acceptButton, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Settings);
+            _ui_flag_modify(ui_BrewScreen_saveButton, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Settings);
+            _ui_flag_modify(ui_BrewScreen_saveAsNewButton, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Settings);
+            _ui_flag_modify(ui_BrewScreen_startButton, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Brew);
+            _ui_flag_modify(ui_BrewScreen_profileInfo, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Brew);
+            _ui_flag_modify(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN,
+                            brewScreenState == BrewScreenState::Brew && volumetricAvailable);
+        },
+        &brewScreenState, &volumetricAvailable);
 }
 
 void DefaultUI::handleScreenChange() {
@@ -788,9 +814,11 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
     lv_obj_t *pressureTarget = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETARGET);
     lv_obj_t *pressureGauge = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSUREGAUGE);
     lv_obj_t *pressureText = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETEXT);
+    lv_obj_t *pressureSymbol = ui_comp_get_child(dials, UI_COMP_DIALS_IMAGE6);
     _ui_flag_modify(pressureTarget, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     _ui_flag_modify(pressureGauge, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     _ui_flag_modify(pressureText, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
+    _ui_flag_modify(pressureSymbol, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     lv_obj_set_x(tempText, pressureAvailable ? -50 : 0);
     lv_obj_set_y(tempText, pressureAvailable ? -205 : -180);
     lv_arc_set_bg_angles(tempGauge, 118, pressureAvailable ? 242 : 62);

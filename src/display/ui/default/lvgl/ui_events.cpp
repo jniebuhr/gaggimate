@@ -71,13 +71,8 @@ void onGrindScreen(lv_event_t *e) {
     controller.setMode(MODE_GRIND);
 }
 
-void onTimedClick(lv_event_t *e) {
-    controller.onTargetChange(ProcessTarget::TIME);
-    controller.getUI()->markDirty();
-}
-
 void onVolumetricClick(lv_event_t *e) {
-    controller.onTargetChange(ProcessTarget::VOLUMETRIC);
+    controller.onTargetToggle();
     controller.getUI()->markDirty();
 }
 
@@ -135,4 +130,18 @@ void onGrindScreenLoad(lv_event_t *e) {
     lv_obj_set_ext_click_area(ui_GrindScreen_downDurationButton, 40);
     lv_obj_set_ext_click_area(ui_GrindScreen_startButton, 25);
     lv_obj_set_ext_click_area(ui_GrindScreen_ImgButton2, 20);
+}
+
+void onProfileSettings(lv_event_t *e) { controller.getUI()->changeBrewScreenMode(BrewScreenState::Settings); }
+
+void onProfileSave(lv_event_t *e) {
+    controller.onProfileSave();
+    controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew);
+}
+
+void onProfileAccept(lv_event_t *e) { controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew); }
+
+void onProfileSaveAsNew(lv_event_t *e) {
+    controller.onProfileSaveAsNew();
+    controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew);
 }
