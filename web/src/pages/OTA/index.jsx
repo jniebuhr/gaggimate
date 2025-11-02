@@ -41,7 +41,7 @@ export function OTA() {
     };
     const ts = Date.now();
     downloadJson(supportFile, `support-${ts}.dat`);
-  }, []);
+  }, [formData]);
   useEffect(() => {
     const listenerId = apiService.on('res:ota-settings', msg => {
       setFormData(msg);

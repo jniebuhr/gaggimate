@@ -10,6 +10,7 @@
 #include <display/core/process/SteamProcess.h>
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
+#include <display/plugins/AutoWakeupPlugin.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/HomekitPlugin.h>
@@ -52,6 +53,7 @@ void Controller::setup() {
     pluginManager->registerPlugin(&ShotHistory);
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->registerPlugin(new LedControlPlugin());
+    pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->setup(this);
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
@@ -69,6 +71,7 @@ void Controller::setup() {
     this->onScreenReady();
 #endif
 
+    updateLastAction();
     xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
@@ -226,10 +229,12 @@ void Controller::loop() {
     }
 
     unsigned long now = millis();
-    if (now - lastPing > PING_INTERVAL) {
-        lastPing = now;
-        clientController.sendPing();
-    }
+
+    // Disable ping as we send output control frequently
+    // if (now - lastPing > PING_INTERVAL) {
+    //     lastPing = now;
+    //     clientController.sendPing();
+    // }
 
     if (isErrorState()) {
         return;
@@ -244,6 +249,7 @@ void Controller::loop() {
 
         // Handle current process
         if (currentProcess != nullptr) {
+            updateLastAction();
             if (currentProcess->getType() == MODE_BREW) {
                 auto brewProcess = static_cast<BrewProcess *>(currentProcess);
                 brewProcess->updatePressure(pressure);
@@ -480,7 +486,16 @@ void Controller::updateControl() {
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
-    clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
+    
+    // Check if alt relay should be active based on process type and alt relay function setting
+    bool altRelayActive = false;
+    if (isActive() && currentProcess->isAltRelayActive()) {
+        if (currentProcess->getType() == MODE_GRIND && settings.getAltRelayFunction() == ALT_RELAY_GRIND) {
+            altRelayActive = true;
+        }
+    }
+    
+    clientController.sendAltControl(altRelayActive);
     if (isActive() && systemInfo.capabilities.pressure) {
         if (currentProcess->getType() == MODE_STEAM) {
             targetPressure = settings.getSteamPumpCutoff();
@@ -518,7 +533,9 @@ void Controller::activate() {
 #else
         currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
 #endif
-        pluginManager->trigger("controller:brew:prestart");
+        if (mode == MODE_BREW) {
+            pluginManager->trigger("controller:brew:prestart");
+        }
     }
     delay(200);
     switch (mode) {
@@ -573,6 +590,7 @@ void Controller::activateGrind() {
         return;
     clear();
     if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
+        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
         startProcess(new GrindProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetGrindVolume(), settings.getGrindDelay()));
     } else {
         startProcess(
@@ -722,9 +740,10 @@ void Controller::handleProfileUpdate() {
 }
 
 void Controller::loopTask(void *arg) {
+    TickType_t lastWake = xTaskGetTickCount();
     auto *controller = static_cast<Controller *>(arg);
     while (true) {
         controller->loopControl();
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : 100));
     }
 }

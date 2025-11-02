@@ -250,7 +250,10 @@ def main():
     
     print("🚀 ESP32 Core Dump Analyzer")
     print("="*50)
-    print(f"Version: {support_data['versions']['displayVersion']}")
+    displayVersion = 'unknown'
+    if 'displayVersion' in support_data['versions']:
+        displayVersion = support_data['versions']['displayVersion']
+    print(f"Version: {displayVersion}")
     print(f"Support file: {support_file}")
     print(f"Core dump: {coredump_file}")
     if custom_elf_file:

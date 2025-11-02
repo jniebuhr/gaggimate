@@ -1,0 +1,72 @@
+{
+  "id": "flush",
+  "label": "[Utility] Backflush",
+  "type": "standard",
+  "description": "",
+  "temperature": 93,
+  "phases": [
+    {
+      "name": "Pressurize",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 10,
+      "pump": 100
+    },
+    {
+      "name": "Depressurize",
+      "phase": "brew",
+      "valve": 0,
+      "duration": 10,
+      "pump": 0
+    },
+    {
+      "name": "Pressurize",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 10,
+      "pump": 100
+    },
+    {
+      "name": "Depressurize",
+      "phase": "brew",
+      "valve": 0,
+      "duration": 10,
+      "pump": 0
+    },
+    {
+      "name": "Pressurize",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 10,
+      "pump": 100
+    },
+    {
+      "name": "Depressurize",
+      "phase": "brew",
+      "valve": 0,
+      "duration": 10,
+      "pump": 0
+    },
+    {
+      "name": "Pressurize",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 10,
+      "pump": 100
+    },
+    {
+      "name": "Depressurize",
+      "phase": "brew",
+      "valve": 0,
+      "duration": 10,
+      "pump": 0
+    },
+    {
+      "name": "Pressurize",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 10,
+      "pump": 100
+    }
+  ]
+}

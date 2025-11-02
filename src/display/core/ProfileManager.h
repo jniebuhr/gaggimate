@@ -19,7 +19,7 @@ class ProfileManager {
     bool profileExists(const String &uuid);
     void selectProfile(const String &uuid);
     Profile getSelectedProfile() const;
-    void loadSelectedProfile(Profile &outProfile);
+    bool loadSelectedProfile(Profile &outProfile);
     std::vector<String> getFavoritedProfiles(bool validate = false);
 
   private:
