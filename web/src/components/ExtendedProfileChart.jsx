@@ -228,6 +228,8 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
       },
     },
   };
+
+  // TODO: Fix overwriting everything
   
   // Always show phase dividers and labels
   chartData.options.plugins.annotation = {
