@@ -183,8 +183,9 @@ void DefaultUI::init() {
                       [this](Event const &) { changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
 
     pluginManager->on("profiles:profile:select", [this](Event const &event) {
-        selectedProfileId = event.getString("id");
         profileManager->loadSelectedProfile(selectedProfile);
+        selectedProfileId = event.getString("id");
+        rerender = true;
     });
     setupPanel();
     setupState();

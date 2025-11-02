@@ -23,13 +23,13 @@ class BLEScalePlugin : public Plugin {
     void disconnect();
     void onMeasurement(float value) const;
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
-    std::string getName() { 
+    std::string getName() {
         if (scale != nullptr && scale->isConnected()) {
             return scale->getDeviceName();
         }
         return "";
     };
-    std::string getUUID() { 
+    std::string getUUID() {
         if (scale != nullptr && scale->isConnected()) {
             return scale->getDeviceAddress();
         }
@@ -50,7 +50,7 @@ class BLEScalePlugin : public Plugin {
 
     unsigned long lastUpdate = 0;
     unsigned int reconnectionTries = 0;
-    
+
     // Rate limiting for callbacks
     mutable unsigned long lastMeasurementTime = 0;
     static constexpr unsigned long MIN_MEASUREMENT_INTERVAL_MS = 10; // Max 100 measurements per second
