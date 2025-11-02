@@ -30,15 +30,12 @@ class Controller {
     void setTargetTemp(float temperature);
     void setPressureScale();
     void setPumpModelCoeffs();
-    void setTargetDuration(int duration);
-    void setTargetVolume(int volume);
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
 
     int getMode() const;
 
     float getTargetTemp() const;
-    int getTargetDuration() const;
     int getTargetGrindDuration() const;
     virtual float getCurrentTemp() const { return currentTemp; }
     bool isActive() const;
@@ -82,7 +79,10 @@ class Controller {
     void deactivateStandby();
     void onOTAUpdate();
     void onScreenReady();
+    void onTargetToggle();
     void onTargetChange(ProcessTarget target);
+    void onProfileSave() const;
+    void onProfileSaveAsNew();
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     bool isBluetoothScaleHealthy() const;
