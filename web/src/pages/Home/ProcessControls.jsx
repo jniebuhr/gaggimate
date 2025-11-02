@@ -126,7 +126,8 @@ const BrewProgress = props => {
 const ProcessControls = props => {
   // brew is true when mode equals 1 (Brew mode), false otherwise
   const { brew, mode, changeMode } = props;
-  const brewTarget = status.value.brewTarget;
+  // Coerce brewTarget to strict boolean
+  const brewTarget = !!status.value.brewTarget;
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
@@ -268,6 +269,17 @@ const ProcessControls = props => {
             / {status.value.targetTemperature || 0}°C
           </span>
         </div>
+      {status.value.volumetricAvailable && (
+        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
+          <i className='fa fa-weight-scale text-base-content/60' />
+          <span className='text-base-content'>{(status.value.currentWeight ?? 0).toFixed(1)}g</span>
+          {brewTarget && (mode === 1 || mode === 3) && (
+            <span className='text-success font-semibold'>
+              {' '} / {(status.value.targetWeight ?? 0).toFixed(0)}g
+            </span>
+          )}
+        </div>
+      )}        
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
           <FontAwesomeIcon icon={faGauge} className='text-base-content/60' />
           <span className='text-base-content'>

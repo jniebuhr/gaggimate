@@ -12,6 +12,7 @@ import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -21,6 +22,9 @@ export function Settings() {
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
+  const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
+    { time: '07:00', days: [true, true, true, true, true, true, true] } // Default: all days enabled
+  ]);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -41,10 +45,36 @@ export function Settings() {
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
+      
+      // Initialize auto-wakeup schedules
+      if (fetchedSettings.autowakeupSchedules) {
+        // Parse new schedule format: "time1|days1;time2|days2"
+        const schedules = [];
+        if (typeof fetchedSettings.autowakeupSchedules === 'string' && fetchedSettings.autowakeupSchedules.trim()) {
+          const scheduleStrings = fetchedSettings.autowakeupSchedules.split(';');
+          for (const scheduleStr of scheduleStrings) {
+            const [time, daysStr] = scheduleStr.split('|');
+            if (time && daysStr && daysStr.length === 7) {
+              const days = daysStr.split('').map(d => d === '1');
+              schedules.push({ time, days });
+            }
+          }
+        }
+        if (schedules.length === 0) {
+          schedules.push({ time: '07:00', days: [true, true, true, true, true, true, true] });
+        }
+        setAutoWakeupSchedules(schedules);
+      } else {
+        setAutoWakeupSchedules([{ time: '07:00', days: [true, true, true, true, true, true, true] }]);
+      }
+      
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
+      setAutoWakeupSchedules([{ time: '07:00', days: [true, true, true, true, true, true, true] }]);
     }
+
+    
   }, [fetchedSettings]);
 
   // Initialize theme
@@ -79,6 +109,9 @@ export function Settings() {
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
       }
+      if (key === 'autowakeupEnabled') {
+        value = !formData.autowakeupEnabled;
+      }      
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
         // Set standby brightness to 0 when toggle is off
@@ -102,6 +135,32 @@ export function Settings() {
     };
   };
 
+  const addAutoWakeupSchedule = () => {
+    setAutoWakeupSchedules([...autowakeupSchedules, { 
+      time: '07:00', 
+      days: [true, true, true, true, true, true, true] 
+    }]);
+  };
+
+  const removeAutoWakeupSchedule = (index) => {
+    if (autowakeupSchedules.length > 1) {
+      const newSchedules = autowakeupSchedules.filter((_, i) => i !== index);
+      setAutoWakeupSchedules(newSchedules);
+    }
+  };
+
+  const updateAutoWakeupTime = (index, value) => {
+    const newSchedules = [...autowakeupSchedules];
+    newSchedules[index].time = value;
+    setAutoWakeupSchedules(newSchedules);
+  };
+
+  const updateAutoWakeupDay = (scheduleIndex, dayIndex, enabled) => {
+    const newSchedules = [...autowakeupSchedules];
+    newSchedules[scheduleIndex].days[dayIndex] = enabled;
+    setAutoWakeupSchedules(newSchedules);
+  };  
+
   const onSubmit = useCallback(
     async (e, restart = false) => {
       e.preventDefault();
@@ -109,6 +168,12 @@ export function Settings() {
       const form = formRef.current;
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
+
+      // Add auto-wakeup schedules
+      const schedulesStr = autowakeupSchedules.map(schedule => 
+        `${schedule.time}|${schedule.days.map(d => d ? '1' : '0').join('')}`
+      ).join(';');
+      formDataToSubmit.set('autowakeupSchedules', schedulesStr);
 
       // Ensure standbyBrightness is included even when the field is disabled
       if (!formData.standbyDisplayEnabled) {
@@ -134,7 +199,7 @@ export function Settings() {
       setFormData(updatedData);
       setSubmitting(false);
     },
-    [setFormData, formRef, formData],
+    [setFormData, formRef, formData, autowakeupSchedules],
   );
 
   const onExport = useCallback(() => {
@@ -797,7 +862,15 @@ export function Settings() {
           )}
 
           <Card sm={10} title='Plugins'>
-            <PluginCard formData={formData} onChange={onChange} />
+            <PluginCard 
+              formData={formData} 
+              onChange={onChange}
+              autowakeupSchedules={autowakeupSchedules}
+              addAutoWakeupSchedule={addAutoWakeupSchedule}
+              removeAutoWakeupSchedule={removeAutoWakeupSchedule}
+              updateAutoWakeupTime={updateAutoWakeupTime}
+              updateAutoWakeupDay={updateAutoWakeupDay}
+            />
           </Card>
         </div>
 
