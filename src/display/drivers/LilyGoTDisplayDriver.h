@@ -8,6 +8,8 @@ class LilyGoTDisplayDriver : public Driver {
     bool isCompatible() override;
     void init() override;
     void setBrightness(int brightness) override { panel.setBrightness(brightness); };
+    bool supportsSDCard() override;
+    bool installSDCard() override;
 
     static LilyGoTDisplayDriver *getInstance() {
         if (instance == nullptr) {

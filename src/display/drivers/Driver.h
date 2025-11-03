@@ -9,6 +9,8 @@ class Driver {
     virtual bool isCompatible();
     virtual void init();
     virtual void setBrightness(int brightness);
+    virtual bool supportsSDCard();
+    virtual bool installSDCard();
 };
 
 #endif // DRIVER_H

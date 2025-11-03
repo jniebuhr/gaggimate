@@ -23,7 +23,7 @@ enum class BrewScreenState { Brew, Settings };
 
 class DefaultUI {
   public:
-    DefaultUI(Controller *controller, PluginManager *pluginManager);
+    DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager);
 
     // Default work methods
     void init();

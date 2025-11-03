@@ -73,8 +73,8 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     }
 }
 
-DefaultUI::DefaultUI(Controller *controller, PluginManager *pluginManager)
-    : controller(controller), pluginManager(pluginManager) {
+DefaultUI::DefaultUI(Controller *controller, Driver* driver, PluginManager *pluginManager)
+    : controller(controller), panelDriver(driver), pluginManager(pluginManager) {
     profileManager = controller->getProfileManager();
 }
 
@@ -308,18 +308,6 @@ void DefaultUI::onProfileSelect() {
 }
 
 void DefaultUI::setupPanel() {
-    if (LilyGoTDisplayDriver::getInstance()->isCompatible()) {
-        panelDriver = LilyGoTDisplayDriver::getInstance();
-    } else if (LilyGoDriver::getInstance()->isCompatible()) {
-        panelDriver = LilyGoDriver::getInstance();
-    } else if (WaveshareDriver::getInstance()->isCompatible()) {
-        panelDriver = WaveshareDriver::getInstance();
-    } else {
-        Serial.println("No compatible display driver found");
-        delay(10000);
-        ESP.restart();
-    }
-    panelDriver->init();
     ui_init();
 
     // Set initial brightness based on settings

@@ -50,3 +50,11 @@ void LilyGoTDisplayDriver::init() {
 
     panel.setBrightness(16);
 }
+
+bool LilyGoTDisplayDriver::supportsSDCard() {
+    return true;
+}
+
+bool LilyGoTDisplayDriver::installSDCard() {
+    return panel.installSD();
+}

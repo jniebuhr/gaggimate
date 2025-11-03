@@ -10,6 +10,7 @@
 #include <display/core/process/Process.h>
 #ifndef GAGGIMATE_HEADLESS
 #include <display/ui/default/DefaultUI.h>
+#include <display/drivers/Driver.h>
 #endif
 
 const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space
@@ -44,6 +45,7 @@ class Controller {
     bool isAutotuning() const;
     bool isReady() const;
     bool isVolumetricAvailable() const;
+    bool isSDCard() const { return sdcard; }
     virtual float getTargetPressure() const { return targetPressure; }
     virtual float getTargetFlow() const { return targetFlow; }
     virtual float getCurrentPressure() const { return pressure; }
@@ -101,7 +103,9 @@ class Controller {
 
   private:
     // Initialization methods
+#ifndef GAGGIMATE_HEADLESS
     void setupPanel();
+#endif
     void setupBluetooth();
     void setupInfos();
     void setupWifi();
@@ -122,6 +126,7 @@ class Controller {
     // Private Attributes
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *ui = nullptr;
+    Driver *driver = nullptr;
 #endif
     NimBLEClientController clientController;
     hw_timer_t *timer = nullptr;
@@ -156,6 +161,7 @@ class Controller {
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
+    bool sdcard = false;
     int error = 0;
 
     // Bluetooth scale connection monitoring
