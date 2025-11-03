@@ -20,6 +20,11 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#ifndef GAGGIMATE_HEADLESS
+#include <display/drivers/WaveshareDriver.h>
+#include <display/drivers/LilyGoDriver.h>
+#include <display/drivers/LilyGoTDisplayDriver.h>
+#endif
 
 const String LOG_TAG = F("Controller");
 
@@ -30,11 +35,19 @@ void Controller::setup() {
         Serial.println(F("An Error has occurred while mounting SPIFFS"));
     }
 
+#ifndef GAGGIMATE_HEADLESS
+    setupPanel();
+#endif
+
     pluginManager = new PluginManager();
-    profileManager = new ProfileManager(SPIFFS, "/p", settings, pluginManager);
+    FS *fs = &SPIFFS;
+    if (sdcard) {
+        fs = &SD_MMC;
+    }
+    profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
 #ifndef GAGGIMATE_HEADLESS
-    ui = new DefaultUI(this, pluginManager);
+    ui = new DefaultUI(this, driver, pluginManager);
 #endif
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
@@ -95,6 +108,32 @@ void Controller::connect() {
     updateLastAction();
     initialized = true;
 }
+
+#ifndef GAGGIMATE_HEADLESS
+void Controller::setupPanel() {
+    if (LilyGoTDisplayDriver::getInstance()->isCompatible()) {
+        driver = LilyGoTDisplayDriver::getInstance();
+    } else if (LilyGoDriver::getInstance()->isCompatible()) {
+        driver = LilyGoDriver::getInstance();
+    } else if (WaveshareDriver::getInstance()->isCompatible()) {
+        driver = WaveshareDriver::getInstance();
+    } else {
+        Serial.println("No compatible display driver found");
+        delay(10000);
+        ESP.restart();
+    }
+    driver->init();
+    if (!driver->supportsSDCard()) {
+        ESP_LOGV(LOG_TAG, "Display driver does not support SD card");
+        return;
+    }
+    if (driver->installSDCard()) {
+        sdcard = true;
+        ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
+        ESP_LOGI(LOG_TAG, "Used: %lluMB, Capacity: %lluMB", SD_MMC.usedBytes() / 1024 / 1024, SD_MMC.cardSize() / 1024 / 1024);
+    }
+}
+#endif
 
 void Controller::setupBluetooth() {
     clientController.initClient();

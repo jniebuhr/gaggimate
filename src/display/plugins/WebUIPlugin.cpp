@@ -12,6 +12,7 @@
 #include <esp_system.h>
 
 #include <algorithm>
+#include <SD_MMC.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <string>
@@ -705,6 +706,18 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
         if (total > 0) {
             // Provide integer percentage to avoid float JSON
             doc["spiffsUsedPct"] = static_cast<uint8_t>((used * 100) / total);
+        }
+    }
+    if (controller->isSDCard()) {
+        const uint64_t total = SD_MMC.cardSize();
+        const uint64_t used = SD_MMC.usedBytes();
+        const uint64_t freeBytes = total > used ? (total - used) : 0;
+        doc["sdTotal"] = total;
+        doc["ssdUsed"] = used;
+        doc["sdFree"] = freeBytes;
+        if (total > 0) {
+            // Provide integer percentage to avoid float JSON
+            doc["sdUsedPct"] = static_cast<uint8_t>((used * 100) / total);
         }
     }
     ws.textAll(doc.as<String>());

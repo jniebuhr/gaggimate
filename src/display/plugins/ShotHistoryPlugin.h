@@ -51,6 +51,7 @@ class ShotHistoryPlugin : public Plugin {
 
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
+    FS *fs = &SPIFFS;
     String currentId = "";
     bool isFileOpen = false;
     File currentFile;

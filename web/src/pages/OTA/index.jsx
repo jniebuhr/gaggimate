@@ -191,6 +191,24 @@ export function OTA() {
               </div>
             )}
 
+            {formData.sdTotal !== undefined && (
+              <div className='flex flex-col space-y-2'>
+                <label className='text-sm font-medium'>Storage (SD-Card)</label>
+                <div className='flex flex-col gap-1'>
+                  <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+                    <div
+                      className='bg-primary h-full transition-all'
+                      style={{ width: `${formData.sdUsedPct || 0}%` }}
+                    />
+                  </div>
+                  <div className='text-xs opacity-75'>
+                    {((formData.sdUsed || 0) / 1024 / 1024).toFixed(1)} MB /{' '}
+                    {(formData.sdTotal / 1024 / 1024).toFixed(1)} MB ({formData.sdUsedPct}%)
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className='alert alert-warning'>
               <span>
                 Make sure to backup your profiles from the profile screen before updating the

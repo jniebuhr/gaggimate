@@ -2,6 +2,7 @@
 
 #include <SPIFFS.h>
 #include <cmath>
+#include <SD_MMC.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/utils.h>
@@ -63,6 +64,9 @@ ShotHistoryPlugin ShotHistory;
 void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     controller = c;
     pluginManager = pm;
+    if (controller->isSDCard()) {
+        fs = &SD_MMC;
+    }
     pm->on("controller:brew:start", [this](Event const &) { startRecording(); });
     pm->on("controller:brew:end", [this](Event const &) { endRecording(); });
     pm->on("controller:volumetric-measurement:estimation:change",
@@ -79,10 +83,10 @@ void ShotHistoryPlugin::record() {
 
     if (shouldRecord && (controller->getMode() == MODE_BREW || extendedRecording)) {
         if (!isFileOpen) {
-            if (!SPIFFS.exists("/h")) {
-                SPIFFS.mkdir("/h");
+            if (!fs->exists("/h")) {
+                fs->mkdir("/h");
             }
-            currentFile = SPIFFS.open("/h/" + currentId + ".slog", FILE_WRITE);
+            currentFile = fs->open("/h/" + currentId + ".slog", FILE_WRITE);
             if (currentFile) {
                 isFileOpen = true;
                 // Prepare header
@@ -188,8 +192,8 @@ void ShotHistoryPlugin::record() {
         isFileOpen = false;
         unsigned long duration = header.durationMs;
         if (duration <= 7500) { // Exclude failed shots and flushes
-            SPIFFS.remove("/h/" + currentId + ".slog");
-            SPIFFS.remove("/h/" + currentId + ".json");
+            fs->remove("/h/" + currentId + ".slog");
+            fs->remove("/h/" + currentId + ".json");
 
             // If we created an early index entry, mark it as deleted
             if (indexEntryCreated) {
@@ -267,7 +271,7 @@ void ShotHistoryPlugin::endRecording() {
 void ShotHistoryPlugin::finalizeRecording() {
     unsigned long duration = millis() - shotStart;
     if (duration <= 7500) { // Exclude failed shots and flushes
-        SPIFFS.remove("/h/" + currentId + ".dat");
+        fs->remove("/h/" + currentId + ".dat");
     } else {
         controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
         cleanupHistory();
@@ -275,7 +279,7 @@ void ShotHistoryPlugin::finalizeRecording() {
 }
 
 void ShotHistoryPlugin::cleanupHistory() {
-    File directory = SPIFFS.open("/h");
+    File directory = fs->open("/h");
     std::vector<String> entries;
     String filename = directory.getNextFileName();
     while (filename != "") {
@@ -286,7 +290,7 @@ void ShotHistoryPlugin::cleanupHistory() {
     if (entries.size() > MAX_HISTORY_ENTRIES) {
         for (unsigned int i = 0; i < entries.size() - MAX_HISTORY_ENTRIES; i++) {
             String name = entries[i];
-            SPIFFS.remove(name);
+            fs->remove(name);
         }
     }
 }
@@ -298,7 +302,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
 
     if (type == "req:history:list") {
         JsonArray arr = response["history"].to<JsonArray>();
-        File root = SPIFFS.open("/h");
+        File root = fs->open("/h");
         if (root && root.isDirectory()) {
             File file = root.openNextFile();
             while (file) {
@@ -342,8 +346,8 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         while (paddedId.length() < 6) {
             paddedId = "0" + paddedId;
         }
-        SPIFFS.remove("/h/" + paddedId + ".slog");
-        SPIFFS.remove("/h/" + paddedId + ".json");
+        fs->remove("/h/" + paddedId + ".slog");
+        fs->remove("/h/" + paddedId + ".json");
 
         // Mark as deleted in index
         markIndexDeleted(id.toInt());
@@ -382,7 +386,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
 }
 
 void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
-    File file = SPIFFS.open("/h/" + id + ".json", FILE_WRITE);
+    File file = fs->open("/h/" + id + ".json", FILE_WRITE);
     if (file) {
         String notesStr;
         serializeJson(notes, notesStr);
@@ -392,7 +396,7 @@ void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
 }
 
 void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
-    File file = SPIFFS.open("/h/" + id + ".json", "r");
+    File file = fs->open("/h/" + id + ".json", "r");
     if (file) {
         String notesStr = file.readString();
         file.close();
@@ -418,12 +422,12 @@ void ShotHistoryPlugin::flushBuffer() {
 
 // Index management methods
 bool ShotHistoryPlugin::ensureIndexExists() {
-    if (SPIFFS.exists("/h/index.bin")) {
+    if (fs->exists("/h/index.bin")) {
         return true;
     }
 
     // Create new empty index
-    File indexFile = SPIFFS.open("/h/index.bin", FILE_WRITE);
+    File indexFile = fs->open("/h/index.bin", FILE_WRITE);
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to create index file");
         return false;
@@ -448,7 +452,7 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
         return;
     }
 
-    File indexFile = SPIFFS.open("/h/index.bin", "r+");
+    File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for append");
         return;
@@ -484,7 +488,7 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
 }
 
 void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume) {
-    File indexFile = SPIFFS.open("/h/index.bin", "r+");
+    File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for metadata update");
         return;
@@ -520,7 +524,7 @@ void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uin
 }
 
 void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
-    File indexFile = SPIFFS.open("/h/index.bin", "r+");
+    File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for deletion marking");
         return;
@@ -565,7 +569,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     ESP_LOGI("ShotHistoryPlugin", "Starting index rebuild...");
 
     // Delete existing index
-    SPIFFS.remove("/h/index.bin");
+    fs->remove("/h/index.bin");
 
     // Create new empty index
     if (!ensureIndexExists()) {
@@ -573,7 +577,7 @@ void ShotHistoryPlugin::rebuildIndex() {
         return;
     }
 
-    File directory = SPIFFS.open("/h");
+    File directory = fs->open("/h");
     if (!directory || !directory.isDirectory()) {
         ESP_LOGW("ShotHistoryPlugin", "No history directory found");
         return;
@@ -597,7 +601,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     ESP_LOGI("ShotHistoryPlugin", "Rebuilding index from %d shot files", slogFiles.size());
 
     for (const String &fileName : slogFiles) {
-        File shotFile = SPIFFS.open(fileName, "r");
+        File shotFile = fs->open(fileName, "r");
         if (!shotFile) {
             continue;
         }
@@ -635,10 +639,10 @@ void ShotHistoryPlugin::rebuildIndex() {
 
         // Check for notes and extract rating and volume override
         String notesPath = "/h/" + String(shotId, 10) + ".json";
-        if (SPIFFS.exists(notesPath)) {
+        if (fs->exists(notesPath)) {
             entry.flags |= SHOT_FLAG_HAS_NOTES;
 
-            File notesFile = SPIFFS.open(notesPath, "r");
+            File notesFile = fs->open(notesPath, "r");
             if (notesFile) {
                 String notesStr = notesFile.readString();
                 notesFile.close();
@@ -736,7 +740,7 @@ void ShotHistoryPlugin::createEarlyIndexEntry() {
 }
 
 void ShotHistoryPlugin::updateIndexCompletion(uint32_t shotId, const ShotLogHeader &finalHeader) {
-    File indexFile = SPIFFS.open("/h/index.bin", "r+");
+    File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for completion update");
         return;
