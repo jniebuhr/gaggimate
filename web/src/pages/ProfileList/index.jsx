@@ -184,10 +184,9 @@ function ProfileCard({
         role='group'
         aria-labelledby={`profile-${data.id}-title`}
       >
-
         <div className='flex flex-grow flex-col overflow-hidden'>
           <div className='flex flex-row items-center gap-2'>
-            <div className='flex flex-grow flex-row ml-2 items-center gap-4 min-w-0'>
+            <div className='ml-2 flex min-w-0 flex-grow flex-row items-center gap-4'>
               <label className='relative flex cursor-pointer items-center'>
                 <input
                   checked={data.selected}
@@ -197,7 +196,10 @@ function ProfileCard({
                   aria-label={`Select ${data.label} profile`}
                 />
               </label>
-              <span id={`profile-${data.id}-title`} className='text-xl leading-tight font-bold flex-1 min-w-0 truncate'>
+              <span
+                id={`profile-${data.id}-title`}
+                className='min-w-0 flex-1 truncate text-xl leading-tight font-bold'
+              >
                 {data.label}
               </span>
               <span
@@ -208,7 +210,7 @@ function ProfileCard({
               </span>
             </div>
             <div
-              className='flex flex-row justify-end gap-2 flex-shrink-0'
+              className='flex flex-shrink-0 flex-row justify-end gap-2'
               role='group'
               aria-label={`Actions for ${data.label} profile`}
             >
@@ -229,7 +231,7 @@ function ProfileCard({
                 ref={popoverRef}
                 popover='auto'
                 role='menu'
-                className='z-50 p-2 shadow bg-base-100 rounded-box w-56'
+                className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
                 onKeyDown={e => {
                   if (e.key === 'Escape') closeMenu();
                 }}
@@ -303,7 +305,7 @@ function ProfileCard({
                           closeMenu();
                         });
                       }}
-                      className={`justify-start ${confirmDelete ? 'bg-error text-error-content font-semibold rounded' : 'text-error'}`}
+                      className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
                       aria-label={
                         confirmDelete
                           ? `Confirm deletion of ${data.label} profile`
@@ -318,10 +320,9 @@ function ProfileCard({
                 </ul>
               </div>
 
-
               {/* Desktop: inline actions */}
               <div
-                className='hidden sm:flex flex-row justify-end gap-2'
+                className='hidden flex-row justify-end gap-2 sm:flex'
                 role='group'
                 aria-label={`Actions for ${data.label} profile`}
               >
@@ -381,7 +382,7 @@ function ProfileCard({
             className='flex flex-row items-center gap-2 py-2'
             aria-label={`Profile details for ${data.label}`}
           >
-            <div className='flex flex-row h-full items-end'>
+            <div className='flex h-full flex-row items-end'>
               <div className='flex flex-col gap-4'>
                 <button
                   onClick={() => onMoveUp(data.id)}
@@ -406,11 +407,11 @@ function ProfileCard({
               </div>
             </div>
             <div className='flex-grow overflow-x-auto'>
-            {data.type === 'pro' ? (
-              <ExtendedProfileChart data={data} className='max-h-36' />
-            ) : (
-              <SimpleContent data={data} />
-            )}
+              {data.type === 'pro' ? (
+                <ExtendedProfileChart data={data} className='max-h-36' />
+              ) : (
+                <SimpleContent data={data} />
+              )}
             </div>
           </div>
         </div>

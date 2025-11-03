@@ -42,7 +42,7 @@ export function useConfirmAction(timeoutMs = 4000) {
   }, []);
 
   const armOrRun = useCallback(
-    (fn) => {
+    fn => {
       if (!armed) {
         setArmed(true);
       } else {

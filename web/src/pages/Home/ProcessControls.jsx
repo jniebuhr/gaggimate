@@ -334,14 +334,16 @@ const ProcessControls = props => {
         {status.value.volumetricAvailable && mode !== 0 && (
           <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
             <i className='fa fa-weight-scale text-base-content/60' />
-            <span className='text-base-content'>
-              {(status.value.currentWeight ?? 0).toFixed(1)}g
-            </span>
             {brewTarget && (mode === 1 || mode === 3) && (
-              <span className='text-success font-semibold'>
-                {' '}
-                / {(status.value.targetWeight ?? 0).toFixed(0)}g
-              </span>
+              <>
+                <span className='text-base-content'>
+                  {(status.value.currentWeight ?? 0).toFixed(1)}g
+                </span>
+                <span className='text-success font-semibold'>
+                  {' '}
+                  / {(status.value.targetWeight ?? 0).toFixed(0)}g
+                </span>
+              </>
             )}
           </div>
         )}
@@ -458,7 +460,7 @@ const ProcessControls = props => {
           <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
-                (brew && brewTarget === 0) || (grind && status.value.grindTarget === 0)
+                (brew && !brewTarget) || (grind && status.value.grindTarget === 0)
                   ? 'bg-primary text-primary-content font-medium'
                   : 'text-base-content/60 hover:text-base-content'
               }`}
@@ -469,7 +471,7 @@ const ProcessControls = props => {
             </button>
             <button
               className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
-                (brew && brewTarget === 1) || (grind && status.value.grindTarget === 1)
+                (brew && brewTarget) || (grind && status.value.grindTarget === 1)
                   ? 'bg-primary text-primary-content font-medium'
                   : 'text-base-content/60 hover:text-base-content'
               }`}

@@ -194,16 +194,19 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                       <FontAwesomeIcon icon={faUpload} />
                     </button>
                   </div>
-                  <div className='tooltip tooltip-left' data-tip={confirmDelete ? 'Click to confirm delete' : 'Delete'}>
+                  <div
+                    className='tooltip tooltip-left'
+                    data-tip={confirmDelete ? 'Click to confirm delete' : 'Delete'}
+                  >
                     <button
                       onClick={() => {
                         confirmOrDelete(() => onDelete(shot.id));
                       }}
-                      className={`p-2 rounded-md transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
+                      className={`rounded-md p-2 transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
                       aria-label={confirmDelete ? 'Confirm deletion of shot' : 'Delete shot'}
                       title={confirmDelete ? 'Click to confirm delete' : 'Delete shot'}
                     >
-                      <FontAwesomeIcon icon={faTrashCan} className='w-4 h-4' />
+                      <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
                       {confirmDelete && <span className='ml-2 hidden sm:inline'>Confirm</span>}
                     </button>
                   </div>
