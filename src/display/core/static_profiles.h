@@ -5,8 +5,8 @@
 
 Profile FLUSH_PROFILE{.label = "Flush",
                       .type = "standard",
-                      .temperature = 93,
                       .utility = true,
+                      .temperature = 93,
                       .phases = {Phase{.name = "Flush",
                                        .phase = PhaseType::PHASE_TYPE_BREW,
                                        .valve = 1,
