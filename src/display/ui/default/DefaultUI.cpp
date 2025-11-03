@@ -193,7 +193,16 @@ void DefaultUI::init() {
     pluginManager->on("profiles:profile:select", [this](Event const &event) {
         profileManager->loadSelectedProfile(selectedProfile);
         selectedProfileId = event.getString("id");
+        targetDuration = profileManager->getSelectedProfile().getTotalDuration();
+        targetVolume = profileManager->getSelectedProfile().getTotalVolume();
         rerender = true;
+    });
+    pluginManager->on("controller:volumetric-measurement:bluetooth:change", [=](Event const &event) {
+        double newWeight = event.getFloat("value");
+        if (round(newWeight * 10.0) != round(bluetoothWeight * 10.0)) {
+            bluetoothWeight = newWeight;
+            rerender = true;
+        }
     });
     setupPanel();
     setupState();
@@ -487,7 +496,7 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
                               if (volumetricMode) {
-                                  lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%dg", targetVolume);
+                                  lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%.1fg", targetVolume);
                               } else {
                                   const double secondsDouble = targetDuration;
                                   const auto minutes = static_cast<int>(secondsDouble / 60.0);
