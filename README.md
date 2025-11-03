@@ -13,7 +13,7 @@
 
 This project upgrades a Gaggia espresso machine with smart controls to improve your coffee-making experience. By adding a display and custom electronics, you can monitor and control the machine more easily.
 
-<img src="docs/assets/gaggimate-render.png" alt="Gaggia Classic Installation" width="500" />
+<img src="docs/assets/gaggimate_poster.jpg" alt="Gaggia Classic Installation" width="500" />
 
 ## Features
 
@@ -25,9 +25,9 @@ This project upgrades a Gaggia espresso machine with smart controls to improve y
 
 ## Screenshots and Images
 
-<img src="docs/assets/standby-screen.png" alt="Standby Screen" width="250px" />
-<img src="docs/assets/brew-screen.png" alt="Brew Screen" width="250px" />
-<img src="docs/assets/pcb_render.jpg" alt="PCB Render" width="250px" />
+<img src="docs/assets/standby-screen.png" alt="Standby Screen" width="300px" />
+<img src="docs/assets/brew-screen.png" alt="Brew Screen" width="300px" />
+<img src="docs/assets/pcb_render.png" alt="PCB Render" width="300px" />
 
 ### How to buy
 
