@@ -1,10 +1,11 @@
 #include "ShotHistoryPlugin.h"
 
+#include <SD_MMC.h>
 #include <SPIFFS.h>
 #include <cmath>
-#include <SD_MMC.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
+#include <display/core/process/BrewProcess.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
 
@@ -227,6 +228,13 @@ void ShotHistoryPlugin::record() {
 }
 
 void ShotHistoryPlugin::startRecording() {
+    Process *process = controller->getProcess();
+    if (process->getType() == MODE_BREW) {
+        BrewProcess *brewProcess = static_cast<BrewProcess *>(process);
+        if (brewProcess->isUtility()) {
+            return;
+        }
+    }
     currentId = controller->getSettings().getHistoryIndex();
     while (currentId.length() < 6) {
         currentId = "0" + currentId;

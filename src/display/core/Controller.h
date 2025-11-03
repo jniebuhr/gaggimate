@@ -9,8 +9,8 @@
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
 #ifndef GAGGIMATE_HEADLESS
-#include <display/ui/default/DefaultUI.h>
 #include <display/drivers/Driver.h>
+#include <display/ui/default/DefaultUI.h>
 #endif
 
 const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space

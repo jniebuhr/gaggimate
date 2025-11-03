@@ -21,9 +21,9 @@
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
 #ifndef GAGGIMATE_HEADLESS
-#include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/LilyGoTDisplayDriver.h>
+#include <display/drivers/WaveshareDriver.h>
 #endif
 
 const String LOG_TAG = F("Controller");

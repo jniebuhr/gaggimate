@@ -11,8 +11,8 @@
 #include <esp_partition.h>
 #include <esp_system.h>
 
-#include <algorithm>
 #include <SD_MMC.h>
+#include <algorithm>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <string>

@@ -73,7 +73,7 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     }
 }
 
-DefaultUI::DefaultUI(Controller *controller, Driver* driver, PluginManager *pluginManager)
+DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
     : controller(controller), panelDriver(driver), pluginManager(pluginManager) {
     profileManager = controller->getProfileManager();
 }

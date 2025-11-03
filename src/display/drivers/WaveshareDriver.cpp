@@ -16,10 +16,6 @@ void WaveshareDriver::init() {
     panel.setBrightness(16);
 }
 
-bool WaveshareDriver::supportsSDCard() {
-    return true;
-}
+bool WaveshareDriver::supportsSDCard() { return true; }
 
-bool WaveshareDriver::installSDCard() {
-    return panel.installSD();
-}
+bool WaveshareDriver::installSDCard() { return panel.installSD(); }
