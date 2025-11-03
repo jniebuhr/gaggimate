@@ -12,6 +12,8 @@ import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import ShotNotesCard from './ShotNotesCard.jsx';
+import { useConfirmAction } from '../../hooks/useConfirmAction.js';
+
 import VisualizerUploadModal from '../../components/VisualizerUploadModal.jsx';
 import { visualizerService } from '../../services/VisualizerService.js';
 import { ApiServiceContext } from '../../services/ApiService.js';
@@ -25,6 +27,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
   const apiService = useContext(ApiServiceContext);
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
   const [expanded, setExpanded] = useState(false);
+  const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -191,13 +194,17 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                       <FontAwesomeIcon icon={faUpload} />
                     </button>
                   </div>
-                  <div className='tooltip tooltip-left' data-tip='Delete'>
+                  <div className='tooltip tooltip-left' data-tip={confirmDelete ? 'Click to confirm delete' : 'Delete'}>
                     <button
-                      onClick={() => onDelete(shot.id)}
-                      className='text-base-content/50 hover:text-error hover:bg-error/10 rounded-md p-2 transition-colors'
-                      aria-label='Delete shot'
+                      onClick={() => {
+                        confirmOrDelete(() => onDelete(shot.id));
+                      }}
+                      className={`p-2 rounded-md transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
+                      aria-label={confirmDelete ? 'Confirm deletion of shot' : 'Delete shot'}
+                      title={confirmDelete ? 'Click to confirm delete' : 'Delete shot'}
                     >
-                      <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
+                      <FontAwesomeIcon icon={faTrashCan} className='w-4 h-4' />
+                      {confirmDelete && <span className='ml-2 hidden sm:inline'>Confirm</span>}
                     </button>
                   </div>
                 </div>
