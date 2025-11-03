@@ -415,7 +415,7 @@ function ProfileCard({
             </div>
           </div>
           {!detailsCollapsed && (
-            <div className='mt-2 ml-14 flex flex-col items-start gap-2'>
+            <div id={detailsSectionId} className='mt-2 ml-14 flex flex-col items-start gap-2'>
               <span className='text-base-content/60 text-xs md:text-sm'>{data.description}</span>
               <div className='flex flex-row gap-2'>
                 <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
