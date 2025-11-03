@@ -31,6 +31,7 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
+import { ConfirmButton } from '../../components/ConfirmButton.jsx';
 
 Chart.register(
   LineController,
@@ -648,6 +649,15 @@ export function ProfileList() {
     }
   };
 
+  const onClear = useCallback(async () => {
+    for (const p of profiles) {
+      if (!p.selected) {
+        await apiService.request({ tp: 'req:profiles:delete', id: p.id });
+      }
+      await loadProfiles();
+    }
+  }, [profiles, apiService]);
+
   if (loading) {
     return (
       <div
@@ -688,6 +698,12 @@ export function ProfileList() {
           type='file'
           accept='.json,application/json,.tcl'
           aria-label='Select a JSON file containing profile data to import'
+        />
+        <ConfirmButton
+          onAction={onClear}
+          icon={faTrashCan}
+          tooltip='Delete all profiles'
+          confirmTooltip='Confirm deletion'
         />
       </div>
 
