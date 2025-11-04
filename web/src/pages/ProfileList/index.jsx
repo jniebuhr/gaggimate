@@ -34,7 +34,7 @@ import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsis
 import { ConfirmButton } from '../../components/ConfirmButton.jsx';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
-import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons';
+import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 
 Chart.register(
   LineController,
