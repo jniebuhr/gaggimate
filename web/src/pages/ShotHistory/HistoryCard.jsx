@@ -129,7 +129,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
       <div className='flex flex-col gap-2'>
         <div className='flex flex-row items-start gap-2'>
           <button
-            className='border-base-content/20 text-base-content/60 hover:text-base-content hover:bg-base-content/10 hover:border-base-content/40 rounded-md border p-2 transition-all duration-200'
+            className='border-base-content/20 text-base-content/60 hover:text-base-content hover:bg-base-content/10 hover:border-base-content/40 cursor-pointer rounded-md border p-2 transition-all duration-200'
             onClick={() => {
               const next = !expanded;
               setExpanded(next);

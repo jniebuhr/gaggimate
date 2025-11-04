@@ -754,8 +754,8 @@ void DefaultUI::updateStatusScreen() const {
 
     if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget()) {
         Target target = phase.getVolumetricTarget();
-        lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume, LV_ANIM_OFF);
-        lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value + 1);
+        lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume * 10.0, LV_ANIM_OFF);
+        lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value * 10.0 + 1.0);
         lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1fg", target.value);
     } else if (brewProcess) {
         // Add bounds check for currentPhaseStarted timestamp

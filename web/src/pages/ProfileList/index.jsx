@@ -200,8 +200,8 @@ function ProfileCard({
         aria-labelledby={`profile-${data.id}-title`}
       >
         <div className='flex flex-grow flex-col overflow-hidden'>
-          <div className='mx-2 flex flex-row items-center align-middle gap-2 '>
-            <div className='flex min-w-0 flex-grow items-center flex-row gap-4'>
+          <div className='mx-2 flex flex-row items-center gap-2 align-middle'>
+            <div className='flex min-w-0 flex-grow flex-row items-center gap-4'>
               {/* CheckBox */}
               <div>
                 <label className='cursor-pointer'>
@@ -215,7 +215,7 @@ function ProfileCard({
                 </label>
               </div>
               {/* Label and Type */}
-              <div className='flex flex-row flex-wrap gap-4 items-center'>
+              <div className='flex flex-row flex-wrap items-center gap-4'>
                 <span
                   id={`profile-${data.id}-title`}
                   className='min-w-0 flex-1 truncate text-sm leading-tight font-bold lg:text-xl'
@@ -244,7 +244,7 @@ function ProfileCard({
               </div>
               {/*- Actions -*/}
               <div
-                className='flex-1 flex flex-row justify-end gap-2'
+                className='flex flex-1 flex-row justify-end gap-2'
                 role='group'
                 aria-label={`Actions for ${data.label} profile`}
               >
@@ -416,7 +416,7 @@ function ProfileCard({
             </div>
           </div>
           {!detailsCollapsed && (
-            <div id={detailsSectionId} className='mt-2 mx-2 flex flex-col items-start gap-2'>
+            <div id={detailsSectionId} className='mx-2 mt-2 flex flex-col items-start gap-2'>
               <span className='text-base-content/60 text-xs md:text-sm'>{data.description}</span>
               <div className='flex flex-row gap-2'>
                 <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
@@ -447,26 +447,26 @@ function ProfileCard({
             aria-label={`Profile details for ${data.label}`}
           >
             <div className='flex flex-col justify-evenly'>
-                <button
-                  onClick={() => onMoveUp(data.id)}
-                  disabled={isFirst}
-                  className='btn btn-xs btn-ghost'
-                  aria-label={`Move ${data.label} up`}
-                  aria-disabled={isFirst}
-                  title='Move up'
-                >
-                  <FontAwesomeIcon icon={faArrowUp} />
-                </button>
-                <button
-                  onClick={() => onMoveDown(data.id)}
-                  disabled={isLast}
-                  className='btn btn-xs btn-ghost'
-                  aria-label={`Move ${data.label} down`}
-                  aria-disabled={isLast}
-                  title='Move down'
-                >
-                  <FontAwesomeIcon icon={faArrowDown} />
-                </button>
+              <button
+                onClick={() => onMoveUp(data.id)}
+                disabled={isFirst}
+                className='btn btn-xs btn-ghost'
+                aria-label={`Move ${data.label} up`}
+                aria-disabled={isFirst}
+                title='Move up'
+              >
+                <FontAwesomeIcon icon={faArrowUp} />
+              </button>
+              <button
+                onClick={() => onMoveDown(data.id)}
+                disabled={isLast}
+                className='btn btn-xs btn-ghost'
+                aria-label={`Move ${data.label} down`}
+                aria-disabled={isLast}
+                title='Move down'
+              >
+                <FontAwesomeIcon icon={faArrowDown} />
+              </button>
             </div>
             <div className='flex-grow overflow-x-auto'>
               {data.type === 'pro' ? (

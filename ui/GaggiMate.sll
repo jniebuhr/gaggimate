@@ -25,7 +25,7 @@
     "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
     "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 508,
+    "backup_cnt": 509,
     "autosave_cnt": 0,
     "lvgl_version": "8.3.11",
     "callfuncsexport": "CPP_FILE",
@@ -41,5 +41,5 @@
     "drive_fatfs_path": "",
     "naming": "_Screen_Name",
     "naming_force_lowercase": false,
-    "nidcnt": 1000610
+    "nidcnt": 1000620
 }

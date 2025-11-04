@@ -67,6 +67,7 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pluginManager = pm;
     if (controller->isSDCard()) {
         fs = &SD_MMC;
+        ESP_LOGI("ShotHistoryPlugin", "Logging shot history to SD card");
     }
     pm->on("controller:brew:start", [this](Event const &) { startRecording(); });
     pm->on("controller:brew:end", [this](Event const &) { endRecording(); });

@@ -190,11 +190,15 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
-    server.serveStatic("/api/history/", SPIFFS, "/h/").setCacheControl("no-store");
-    server.on("/api/history/index.bin", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    FS *fs = &SPIFFS;
+    if (controller->isSDCard()) {
+        fs = &SD_MMC;
+    }
+    server.serveStatic("/api/history/", *fs, "/h/").setCacheControl("no-store");
+    server.on("/api/history/index.bin", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
         // Serve the binary index file directly
-        if (SPIFFS.exists("/h/index.bin")) {
-            request->send(SPIFFS, "/h/index.bin", "application/octet-stream");
+        if (fs->exists("/h/index.bin")) {
+            request->send(*fs, "/h/index.bin", "application/octet-stream");
         } else {
             request->send(404, "text/plain", "Index not found");
         }

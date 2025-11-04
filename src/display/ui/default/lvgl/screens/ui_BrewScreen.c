@@ -382,7 +382,7 @@ void ui_BrewScreen_screen_init(void) {
 
     lv_obj_add_event_cb(ui_BrewScreen_ImgButton5, ui_event_BrewScreen_ImgButton5, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_BrewScreen_startButton, ui_event_BrewScreen_startButton, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(ui_BrewScreen_modeSwitch, ui_event_BrewScreen_modeSwitch, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_BrewScreen_volumetricButton, ui_event_BrewScreen_volumetricButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_BrewScreen_settingsButton, ui_event_BrewScreen_settingsButton, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_BrewScreen_profileSelectBtn, ui_event_BrewScreen_profileSelectBtn, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_BrewScreen_downTempButton, ui_event_BrewScreen_downTempButton, LV_EVENT_ALL, NULL);

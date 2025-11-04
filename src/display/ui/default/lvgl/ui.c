@@ -87,8 +87,8 @@ lv_obj_t *ui_BrewScreen_mainLabel3;
 void ui_event_BrewScreen_startButton(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_startButton;
 lv_obj_t *ui_BrewScreen_controlContainer;
-void ui_event_BrewScreen_modeSwitch(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_modeSwitch;
+void ui_event_BrewScreen_volumetricButton(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_volumetricButton;
 lv_obj_t *ui_BrewScreen_weightLabel;
 lv_obj_t *ui_BrewScreen_profileInfo;
@@ -407,7 +407,7 @@ void ui_event_BrewScreen_startButton(lv_event_t *e) {
     }
 }
 
-void ui_event_BrewScreen_modeSwitch(lv_event_t *e) {
+void ui_event_BrewScreen_volumetricButton(lv_event_t *e) {
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if (event_code == LV_EVENT_CLICKED) {
