@@ -87,8 +87,8 @@ lv_obj_t *ui_BrewScreen_mainLabel3;
 void ui_event_BrewScreen_startButton(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_startButton;
 lv_obj_t *ui_BrewScreen_controlContainer;
+void ui_event_BrewScreen_modeSwitch(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_modeSwitch;
-void ui_event_BrewScreen_volumetricButton(lv_event_t *e);
 lv_obj_t *ui_BrewScreen_volumetricButton;
 lv_obj_t *ui_BrewScreen_weightLabel;
 lv_obj_t *ui_BrewScreen_profileInfo;
@@ -251,7 +251,6 @@ const lv_img_dsc_t *ui_imgset_1010926578[1] = {&ui_img_2044104741};
 const lv_img_dsc_t *ui_imgset_1155213431[1] = {&ui_img_545340440};
 const lv_img_dsc_t *ui_imgset_524469952[1] = {&ui_img_1765671371};
 const lv_img_dsc_t *ui_imgset_648927478[1] = {&ui_img_340148213};
-const lv_img_dsc_t *ui_imgset_spider[1] = {&ui_img_spider2_png};
 const lv_img_dsc_t *ui_imgset_616600488[1] = {&ui_img_1220767159};
 const lv_img_dsc_t *ui_imgset_690294202[1] = {&ui_img_1732953241};
 const lv_img_dsc_t *ui_imgset_1252186405[1] = {&ui_img_1951499226};
@@ -408,7 +407,7 @@ void ui_event_BrewScreen_startButton(lv_event_t *e) {
     }
 }
 
-void ui_event_BrewScreen_volumetricButton(lv_event_t *e) {
+void ui_event_BrewScreen_modeSwitch(lv_event_t *e) {
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if (event_code == LV_EVENT_CLICKED) {

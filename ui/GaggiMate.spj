@@ -5573,31 +5573,31 @@
               {
                 "nid": -1924829204,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1215187854,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -1657431588,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1385818574,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 197124523,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
@@ -20584,31 +20584,31 @@
               {
                 "nid": 939638989,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -1072451500,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -1217254746,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1794841552,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -533421980,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
@@ -21322,71 +21322,6 @@
                             "strtype": "BUTTON/Style_main",
                             "strval": "lv.PART.MAIN, Rectangle, Pad, Text, Transform",
                             "InheritedType": 11
-                          },
-                          {
-                            "disabled": false,
-                            "nid": 1000178,
-                            "strtype": "_event/EventHandler",
-                            "strval": "CLICKED",
-                            "childs": [
-                              {
-                                "nid": 1000179,
-                                "strtype": "_event/name",
-                                "strval": "onVolumetricClick",
-                                "InheritedType": 10
-                              },
-                              {
-                                "nid": 1000180,
-                                "strtype": "_event/condition_C",
-                                "strval": "",
-                                "InheritedType": 10
-                              },
-                              {
-                                "nid": 1000181,
-                                "strtype": "_event/condition_P",
-                                "strval": "",
-                                "InheritedType": 10
-                              },
-                              {
-                                "nid": 1000182,
-                                "strtype": "_event/action",
-                                "strval": "CALL FUNCTION",
-                                "childs": [
-                                  {
-                                    "nid": 1000183,
-                                    "strtype": "CALL FUNCTION/Name",
-                                    "strval": "CALL FUNCTION",
-                                    "InheritedType": 10
-                                  },
-                                  {
-                                    "nid": 1000184,
-                                    "strtype": "CALL FUNCTION/Call",
-                                    "strval": "<{Function_name}>( event_struct )",
-                                    "InheritedType": 10
-                                  },
-                                  {
-                                    "nid": 1000185,
-                                    "strtype": "CALL FUNCTION/CallC",
-                                    "strval": "<{Function_name}>( e );",
-                                    "InheritedType": 10
-                                  },
-                                  {
-                                    "nid": 1000186,
-                                    "strtype": "CALL FUNCTION/Function_name",
-                                    "strval": "onVolumetricClick",
-                                    "InheritedType": 10
-                                  },
-                                  {
-                                    "nid": 1000187,
-                                    "strtype": "CALL FUNCTION/Dont_export_function",
-                                    "strval": "False",
-                                    "InheritedType": 2
-                                  }
-                                ],
-                                "InheritedType": 10
-                              }
-                            ],
-                            "InheritedType": 4
                           }
                         ],
                         "saved_objtypeKey": "BUTTON",
@@ -21442,7 +21377,7 @@
                             "flags": 17,
                             "strtype": "OBJECT/Size",
                             "intarray": [
-                              100,
+                              90,
                               24
                             ],
                             "InheritedType": 7
@@ -21497,7 +21432,7 @@
                           {
                             "nid": 1030,
                             "strtype": "LABEL/Text",
-                            "strval": "513.0g",
+                            "strval": "-",
                             "InheritedType": 10
                           },
                           {
@@ -21530,7 +21465,7 @@
                                   {
                                     "nid": 10430,
                                     "strtype": "_style/Text_Align",
-                                    "strval": "RIGHT",
+                                    "strval": "CENTER",
                                     "InheritedType": 3
                                   },
                                   {
@@ -21720,11 +21655,94 @@
                       },
                       {
                         "part": "lv.PART.SCROLLBAR",
-                        "childs": [],
+                        "childs": [
+                          {
+                            "nid": 10000,
+                            "strtype": "_style/StyleState",
+                            "strval": "DEFAULT",
+                            "childs": [
+                              {
+                                "nid": 11120,
+                                "strtype": "_style/Padding_RowCol",
+                                "intarray": [
+                                  0,
+                                  10
+                                ],
+                                "InheritedType": 7
+                              }
+                            ],
+                            "InheritedType": 1
+                          }
+                        ],
                         "nid": 1020,
                         "strtype": "CONTAINER/Style_scrollbar",
                         "strval": "lv.PART.SCROLLBAR, Rectangle, Pad",
                         "InheritedType": 11
+                      },
+                      {
+                        "disabled": false,
+                        "nid": 1000600,
+                        "strtype": "_event/EventHandler",
+                        "strval": "CLICKED",
+                        "childs": [
+                          {
+                            "nid": 1000601,
+                            "strtype": "_event/name",
+                            "strval": "onVolumetricClick",
+                            "InheritedType": 10
+                          },
+                          {
+                            "nid": 1000602,
+                            "strtype": "_event/condition_C",
+                            "strval": "",
+                            "InheritedType": 10
+                          },
+                          {
+                            "nid": 1000603,
+                            "strtype": "_event/condition_P",
+                            "strval": "",
+                            "InheritedType": 10
+                          },
+                          {
+                            "nid": 1000604,
+                            "strtype": "_event/action",
+                            "strval": "CALL FUNCTION",
+                            "childs": [
+                              {
+                                "nid": 1000605,
+                                "strtype": "CALL FUNCTION/Name",
+                                "strval": "CALL FUNCTION",
+                                "InheritedType": 10
+                              },
+                              {
+                                "nid": 1000606,
+                                "strtype": "CALL FUNCTION/Call",
+                                "strval": "<{Function_name}>( event_struct )",
+                                "InheritedType": 10
+                              },
+                              {
+                                "nid": 1000607,
+                                "strtype": "CALL FUNCTION/CallC",
+                                "strval": "<{Function_name}>( e );",
+                                "InheritedType": 10
+                              },
+                              {
+                                "nid": 1000608,
+                                "strtype": "CALL FUNCTION/Function_name",
+                                "strval": "onVolumetricClick",
+                                "InheritedType": 10
+                              },
+                              {
+                                "nid": 1000609,
+                                "strtype": "CALL FUNCTION/Dont_export_function",
+                                "strval": "False",
+                                "InheritedType": 2
+                              }
+                            ],
+                            "InheritedType": 10
+                          }
+                        ],
+                        "InheritedType": 4
                       }
                     ],
                     "saved_objtypeKey": "CONTAINER"
@@ -32374,31 +32392,31 @@
               {
                 "nid": -671763828,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -174754756,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -22642740,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 805244448,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1092324352,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
@@ -39142,31 +39160,31 @@
               {
                 "nid": 939638989,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -1072451500,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -1217254746,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1794841552,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -533421980,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
@@ -46886,31 +46904,31 @@
               {
                 "nid": 939638989,
                 "strtype": "IMGBUTTON/Image_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -1072451500,
                 "strtype": "IMGBUTTON/Image_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -1217254746,
                 "strtype": "IMGBUTTON/Image_checked_released",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": 1794841552,
                 "strtype": "IMGBUTTON/Image_checked_pressed",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
                 "nid": -533421980,
                 "strtype": "IMGBUTTON/Image_checked_disabled",
-                "strval": "",
+                "strval": "-",
                 "InheritedType": 5
               },
               {
@@ -49282,7 +49300,7 @@
     "editor_version": "1.5.0",
     "image": "",
     "export_temp_image": false,
-    "force_export_images": false,
+    "force_export_images": true,
     "flat_export": false,
     "advanced_alpha": false,
     "pointfilter": false,
@@ -49293,7 +49311,7 @@
     "uiExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default/lvgl",
     "projectExportFolderPath": "/Users/jniebuhr/work/3d/projects/paros-control",
     "custom_variable_prefix": "uic",
-    "backup_cnt": 504,
+    "backup_cnt": 507,
     "autosave_cnt": 0,
     "lvgl_version": "8.3.11",
     "callfuncsexport": "CPP_FILE",
@@ -49309,7 +49327,7 @@
     "drive_fatfs_path": "",
     "naming": "_Screen_Name",
     "naming_force_lowercase": false,
-    "nidcnt": 1000600,
+    "nidcnt": 1000610,
     "BitDepth": 16,
     "Name": "GaggiMate"
   }
