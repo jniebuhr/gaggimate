@@ -1,5 +1,6 @@
 #include "Controller.h"
 #include "ArduinoJson.h"
+#include <SD_MMC.h>
 #include <SPIFFS.h>
 #include <ctime>
 #include <display/config.h>
@@ -20,7 +21,6 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
-#include <SD_MMC.h>
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/LilyGoTDisplayDriver.h>
