@@ -7,7 +7,7 @@
 #include <time.h>
 
 // Static profile ID constants
-const String CleaningSchedulePlugin::BACKFLUSH_PROFILE_ID = "backflush_cleaning";
+const String CleaningSchedulePlugin::BACKFLUSH_PROFILE_ID = "flush";
 const String CleaningSchedulePlugin::DESCALING_PROFILE_ID = "descaling_cleaning";
 
 void CleaningSchedulePlugin::setup(Controller *controller, PluginManager *pluginManager) {
@@ -144,54 +144,55 @@ int CleaningSchedulePlugin::getWeeksSinceLastDescaling() const {
 Profile CleaningSchedulePlugin::createBackflushProfile() const {
     Profile profile{};
     profile.id = BACKFLUSH_PROFILE_ID;
-    profile.label = "Backflush";
-    profile.description = "Automated backflushing cleaning cycle";
-    profile.temperature = 93; // Standard brew temperature
+    profile.label = "[Utility] Backflush";
+    profile.utility = true;
+    profile.description = "";
+    profile.temperature = 93;
     profile.type = "standard";
     
-    // Phase 1: Initial flush (5 seconds)
+    // Phase 1: Pressurize (10 seconds)
     Phase phase1{};
-    phase1.name = "Initial Flush";
+    phase1.name = "Pressurize";
     phase1.phase = PhaseType::PHASE_TYPE_BREW;
-    phase1.valve = 1; // Open valve
-    phase1.duration = 5.0f;
+    phase1.valve = 1;
+    phase1.duration = 10.0f;
     phase1.pumpIsSimple = true;
-    phase1.pumpSimple = 100; // Full pump power
+    phase1.pumpSimple = 100;
     profile.phases.push_back(phase1);
     
-    // Phase 2: Pause (3 seconds)
+    // Phase 2: Depressurize (10 seconds)
     Phase phase2{};
-    phase2.name = "Pause";
+    phase2.name = "Depressurize";
     phase2.phase = PhaseType::PHASE_TYPE_BREW;
-    phase2.valve = 1;
-    phase2.duration = 3.0f;
+    phase2.valve = 0;
+    phase2.duration = 10.0f;
     phase2.pumpIsSimple = true;
-    phase2.pumpSimple = 0; // No pump
+    phase2.pumpSimple = 0;
     profile.phases.push_back(phase2);
     
-    // Phase 3: Second flush (5 seconds)
+    // Phase 3: Pressurize (10 seconds)
     Phase phase3{};
-    phase3.name = "Second Flush";
+    phase3.name = "Pressurize";
     phase3.phase = PhaseType::PHASE_TYPE_BREW;
     phase3.valve = 1;
-    phase3.duration = 5.0f;
+    phase3.duration = 10.0f;
     phase3.pumpIsSimple = true;
     phase3.pumpSimple = 100;
     profile.phases.push_back(phase3);
     
-    // Phase 4: Final pause (3 seconds)
+    // Phase 4: Depressurize (10 seconds)
     Phase phase4{};
-    phase4.name = "Final Pause";
+    phase4.name = "Depressurize";
     phase4.phase = PhaseType::PHASE_TYPE_BREW;
-    phase4.valve = 1;
-    phase4.duration = 3.0f;
+    phase4.valve = 0;
+    phase4.duration = 10.0f;
     phase4.pumpIsSimple = true;
     phase4.pumpSimple = 0;
     profile.phases.push_back(phase4);
     
-    // Phase 5: Final flush (10 seconds)
+    // Phase 5: Pressurize (10 seconds)
     Phase phase5{};
-    phase5.name = "Final Flush";
+    phase5.name = "Pressurize";
     phase5.phase = PhaseType::PHASE_TYPE_BREW;
     phase5.valve = 1;
     phase5.duration = 10.0f;
@@ -199,65 +200,144 @@ Profile CleaningSchedulePlugin::createBackflushProfile() const {
     phase5.pumpSimple = 100;
     profile.phases.push_back(phase5);
     
+    // Phase 6: Depressurize (10 seconds)
+    Phase phase6{};
+    phase6.name = "Depressurize";
+    phase6.phase = PhaseType::PHASE_TYPE_BREW;
+    phase6.valve = 0;
+    phase6.duration = 10.0f;
+    phase6.pumpIsSimple = true;
+    phase6.pumpSimple = 0;
+    profile.phases.push_back(phase6);
+    
+    // Phase 7: Pressurize (10 seconds)
+    Phase phase7{};
+    phase7.name = "Pressurize";
+    phase7.phase = PhaseType::PHASE_TYPE_BREW;
+    phase7.valve = 1;
+    phase7.duration = 10.0f;
+    phase7.pumpIsSimple = true;
+    phase7.pumpSimple = 100;
+    profile.phases.push_back(phase7);
+    
+    // Phase 8: Depressurize (10 seconds)
+    Phase phase8{};
+    phase8.name = "Depressurize";
+    phase8.phase = PhaseType::PHASE_TYPE_BREW;
+    phase8.valve = 0;
+    phase8.duration = 10.0f;
+    phase8.pumpIsSimple = true;
+    phase8.pumpSimple = 0;
+    profile.phases.push_back(phase8);
+    
+    // Phase 9: Pressurize (10 seconds)
+    Phase phase9{};
+    phase9.name = "Pressurize";
+    phase9.phase = PhaseType::PHASE_TYPE_BREW;
+    phase9.valve = 1;
+    phase9.duration = 10.0f;
+    phase9.pumpIsSimple = true;
+    phase9.pumpSimple = 100;
+    profile.phases.push_back(phase9);
+    
     return profile;
 }
 
 Profile CleaningSchedulePlugin::createDescalingProfile() const {
     Profile profile{};
     profile.id = DESCALING_PROFILE_ID;
-    profile.label = "Descaling";
-    profile.description = "Automated descaling cleaning cycle";
-    profile.temperature = 93; // Standard brew temperature
-    profile.type = "standard";
+    profile.label = "[Utility] Descale";
+    profile.utility = true;
+    profile.description = "";
+    profile.temperature = 0;
+    profile.type = "pro";
     
-    // Phase 1: Long initial flush (20 seconds)
+    // Phase 1: 300ml Steam Flush
     Phase phase1{};
-    phase1.name = "Long Flush";
+    phase1.name = "300ml Steam Flush";
     phase1.phase = PhaseType::PHASE_TYPE_BREW;
-    phase1.valve = 1;
-    phase1.duration = 20.0f;
+    phase1.valve = 0;
+    phase1.duration = 40.0f;
+    phase1.temperature = 0.0f;
+    phase1.transition.type = TransitionType::INSTANT;
+    phase1.transition.duration = 0.0f;
+    phase1.transition.adaptive = false;
     phase1.pumpIsSimple = true;
     phase1.pumpSimple = 100;
+    
+    Target target1{};
+    target1.type = TargetType::TARGET_TYPE_PUMPED;
+    target1.operator_ = TargetOperator::GTE;
+    target1.value = 300.0f;
+    phase1.targets.push_back(target1);
     profile.phases.push_back(phase1);
     
-    // Phase 2: Extended pause for descaling agent (30 seconds)
+    // Phase 2: Wait
     Phase phase2{};
-    phase2.name = "Descaling Agent Contact";
-    phase2.phase = PhaseType::PHASE_TYPE_BREW;
-    phase2.valve = 1;
-    phase2.duration = 30.0f;
+    phase2.name = "Wait";
+    phase2.phase = PhaseType::PHASE_TYPE_PREINFUSION;
+    phase2.valve = 0;
+    phase2.duration = 600.0f;
+    phase2.temperature = 0.0f;
+    phase2.transition.type = TransitionType::INSTANT;
+    phase2.transition.duration = 0.0f;
+    phase2.transition.adaptive = false;
     phase2.pumpIsSimple = true;
     phase2.pumpSimple = 0;
     profile.phases.push_back(phase2);
     
-    // Phase 3: Medium flush (15 seconds)
+    // Phase 3: 300ml Steam Flush
     Phase phase3{};
-    phase3.name = "Medium Flush";
+    phase3.name = "300ml Steam Flush";
     phase3.phase = PhaseType::PHASE_TYPE_BREW;
-    phase3.valve = 1;
-    phase3.duration = 15.0f;
+    phase3.valve = 0;
+    phase3.duration = 40.0f;
+    phase3.temperature = 0.0f;
+    phase3.transition.type = TransitionType::INSTANT;
+    phase3.transition.duration = 0.0f;
+    phase3.transition.adaptive = false;
     phase3.pumpIsSimple = true;
     phase3.pumpSimple = 100;
+    
+    Target target3{};
+    target3.type = TargetType::TARGET_TYPE_PUMPED;
+    target3.operator_ = TargetOperator::GTE;
+    target3.value = 300.0f;
+    phase3.targets.push_back(target3);
     profile.phases.push_back(phase3);
     
-    // Phase 4: Another pause (15 seconds)
+    // Phase 4: Rinse and Refill
     Phase phase4{};
-    phase4.name = "Second Contact";
-    phase4.phase = PhaseType::PHASE_TYPE_BREW;
-    phase4.valve = 1;
-    phase4.duration = 15.0f;
+    phase4.name = "Rinse and Refill";
+    phase4.phase = PhaseType::PHASE_TYPE_PREINFUSION;
+    phase4.valve = 0;
+    phase4.duration = 120.0f;
+    phase4.temperature = 0.0f;
+    phase4.transition.type = TransitionType::INSTANT;
+    phase4.transition.duration = 0.0f;
+    phase4.transition.adaptive = false;
     phase4.pumpIsSimple = true;
     phase4.pumpSimple = 0;
     profile.phases.push_back(phase4);
     
-    // Phase 5: Final long flush (25 seconds)
+    // Phase 5: 1lt Flush
     Phase phase5{};
-    phase5.name = "Final Rinse";
+    phase5.name = "1lt Flush";
     phase5.phase = PhaseType::PHASE_TYPE_BREW;
-    phase5.valve = 1;
-    phase5.duration = 25.0f;
+    phase5.valve = 0;
+    phase5.duration = 120.0f;
+    phase5.temperature = 0.0f;
+    phase5.transition.type = TransitionType::INSTANT;
+    phase5.transition.duration = 0.0f;
+    phase5.transition.adaptive = false;
     phase5.pumpIsSimple = true;
     phase5.pumpSimple = 100;
+    
+    Target target5{};
+    target5.type = TargetType::TARGET_TYPE_PUMPED;
+    target5.operator_ = TargetOperator::GTE;
+    target5.value = 1000.0f;
+    phase5.targets.push_back(target5);
     profile.phases.push_back(phase5);
     
     return profile;

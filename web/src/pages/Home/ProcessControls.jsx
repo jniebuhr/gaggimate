@@ -1,6 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext, useState, useEffect } from 'preact/hooks';
+import { useCallback, useContext, useState, useEffect} from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import PropTypes from 'prop-types';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
@@ -16,6 +16,8 @@ import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { ProcessProfileChart } from '../../components/ProcessProfileChart.jsx';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
+import { faSoap } from '@fortawesome/free-solid-svg-icons/faSoap';
+import { faLemon } from '@fortawesome/free-solid-svg-icons/faLemon';
 
 const status = computed(() => machine.value.status);
 
@@ -195,6 +197,39 @@ const ProcessControls = props => {
   // If currently in grind mode, always show it even if both SmartGrind is disabled and Alt Relay is not grind
   // to avoid confusion for users who might be in grind mode when settings change
   const showGrindTab = isGrindAvailable || mode === 4;
+  const [cleaningSettings, setCleaningSettings] = useState({});
+
+  // Fetch cleaning schedule settings
+  useEffect(() => {
+    const fetchCleaningSettings = async () => {
+      try {
+        const response = await fetch('/api/settings');
+        const data = await response.json();
+        setCleaningSettings({
+          backflushIntervalDays: data.backflushIntervalDays || 14,
+          descalingIntervalWeeks: data.descalingIntervalWeeks || 6,
+          lastBackflushTime: data.lastBackflushTime || 0,
+          lastDescalingTime: data.lastDescalingTime || 0,
+        });
+      } catch (error) {
+        console.error('Failed to fetch cleaning settings:', error);
+      }
+    };
+    fetchCleaningSettings();
+  }, []);
+
+  // Check if cleaning is due
+  const isBackflushDue = () => {
+    if (!cleaningSettings.lastBackflushTime) return true;
+    const daysSince = Math.floor((Date.now() / 1000 - cleaningSettings.lastBackflushTime) / (24 * 60 * 60));
+    return daysSince > cleaningSettings.backflushIntervalDays;
+  };
+
+  const isDescalingDue = () => {
+    if (!cleaningSettings.lastDescalingTime) return true;
+    const weeksSince = Math.floor((Date.now() / 1000 - cleaningSettings.lastDescalingTime) / (7 * 24 * 60 * 60));
+    return weeksSince > cleaningSettings.descalingIntervalWeeks;
+  };
 
   // Determine if we should show expanded view
   const shouldExpand =
@@ -257,6 +292,18 @@ const ProcessControls = props => {
       tp: messageType,
     });
   }, [apiService, grind]);
+
+  const startBackflush = useCallback(() => {
+    apiService.send({
+      tp: 'req:cleaning:backflush:start',
+    });
+  }, [apiService]);
+
+  const startDescaling = useCallback(() => {
+    apiService.send({
+      tp: 'req:cleaning:descaling:start',
+    });
+  }, [apiService]);
 
   const startFlush = useCallback(() => {
     setIsFlushing(true);
@@ -398,7 +445,47 @@ const ProcessControls = props => {
                   {mode === 3 && 'Water Mode'}
                 </div>
                 <div className='text-base-content/60 text-sm'>
-                  {mode === 0 && 'Machine is ready'}
+                  {mode === 0 && (() => {
+                    const backflushDue = isBackflushDue();
+                    const descalingDue = isDescalingDue();
+                    const cleaningItems = [];
+                    
+                    if (descalingDue) {
+                      cleaningItems.push(
+                        <button 
+                          key="descaling"
+                          onClick={startDescaling}
+                          className='flex items-center gap-2 text-orange-500 hover:text-orange-400 transition-colors'
+                        >
+                          <FontAwesomeIcon icon={faLemon} className='text-base-content/60' />
+                          <span className='text-base-content'>Descaling Due</span>
+                        </button>
+                      );
+                    }
+                    
+                    if (backflushDue) {
+                      cleaningItems.push(
+                        <button 
+                          key="backflush"
+                          onClick={startBackflush}
+                          className='flex items-center gap-2 text-orange-500 hover:text-orange-400 transition-colors'
+                        >
+                          <FontAwesomeIcon icon={faSoap} className='text-base-content/60' />
+                          <span className='text-base-content'>Backflush Due</span>
+                        </button>
+                      );
+                    }
+                    
+                    if (cleaningItems.length > 0) {
+                      return (
+                        <div className='flex flex-col gap-3'>
+                          {cleaningItems}
+                        </div>
+                      );
+                    }
+                    
+                    return 'Machine is ready';
+                  })()}
                   {mode === 3 && 'Start and open steam valve to pull water'}
                   {mode === 2 &&
                     (Math.abs(status.value.targetTemperature - status.value.currentTemperature) < 5
@@ -432,7 +519,49 @@ const ProcessControls = props => {
               {mode === 4 && showGrindTab && 'Grind'}
             </div>
             <div className='text-base-content/60 text-sm'>
-              {mode === 0 && 'Machine is ready'}
+              {mode === 0 && (() => {
+                const backflushDue = isBackflushDue();
+                const descalingDue = isDescalingDue();
+                const cleaningItems = [];
+                
+                if (descalingDue) {
+                  cleaningItems.push(
+                    <button 
+                      key="descaling"
+                      onClick={startDescaling}
+                      className='flex items-center gap-2 text-orange-500 hover:text-orange-400 transition-colors'
+                      title='Descaling due - Click to start'
+                    >
+                      <FontAwesomeIcon icon={faLemon} className='text-base-content/60' />
+                      <span className='text-base-content text-sm'>Descaling Due</span>
+                    </button>
+                  );
+                }
+                
+                if (backflushDue) {
+                  cleaningItems.push(
+                    <button 
+                      key="backflush"
+                      onClick={startBackflush}
+                      className='flex items-center gap-2 text-orange-500 hover:text-orange-400 transition-colors'
+                      title='Backflush due - Click to start'
+                    >
+                      <FontAwesomeIcon icon={faSoap} className='text-base-content/60' />
+                      <span className='text-base-content text-sm'>Backflush Due</span>
+                    </button>
+                  );
+                }
+                
+                if (cleaningItems.length > 0) {
+                  return (
+                    <div className='flex flex-col items-center gap-2'>
+                      {cleaningItems}
+                    </div>
+                  );
+                }
+                
+                return 'Machine is ready';
+              })()}
               {mode === 1 && 'Select brew target to start'}
               {mode === 2 &&
                 (Math.abs(status.value.targetTemperature - status.value.currentTemperature) < 5
