@@ -97,6 +97,9 @@ function ProfileCard({
   const chevronRotation = detailsCollapsed ? '' : 'rotate-90';
   const detailsSectionId = `profile-${data.id}-summary`;
 
+  // Favorite/Unfavorite profile background color
+  const bgProfileFavorite = data.favorite ? 'bg-primary/10' : 'bg-base-200';
+
   // Sum total duration from phases (in seconds)
   const totalDurationSeconds = Array.isArray(data?.phases)
     ? data.phases.reduce((sum, p) => sum + (Number.isFinite(p?.duration) ? p.duration : 0), 0)
@@ -193,7 +196,7 @@ function ProfileCard({
   }, [positionPopover]);
 
   return (
-    <Card sm={12} role='listitem'>
+    <Card sm={12} role='listitem' className={`${bgProfileFavorite}`}>
       <div
         className='flex flex-row items-center'
         role='group'
