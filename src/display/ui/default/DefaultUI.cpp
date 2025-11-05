@@ -6,8 +6,8 @@
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
 #include <display/core/zones.h>
+#include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
-#include <display/drivers/LilyGoTDisplayDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
 #include <display/ui/default/lvgl/ui_theme_manager.h>
@@ -844,7 +844,7 @@ void DefaultUI::applyTheme() {
         currentThemeMode = newThemeMode;
         ui_theme_set(currentThemeMode);
 
-        if (LilyGoTDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
+        if (AmoledDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
             enable_amoled_black_theme_override(lv_disp_get_default());
         }
     }
