@@ -652,7 +652,7 @@ void DefaultUI::handleScreenChange() {
         }
 
         _ui_screen_change(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0, targetScreenInit);
-        _ui_screen_delete(&current);
+        lv_obj_del(current);
         rerender = true;
     }
 }
