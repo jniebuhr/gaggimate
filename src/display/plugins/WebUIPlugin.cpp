@@ -4,12 +4,14 @@
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
+#include <display/core/process/GrindProcess.h>
 #include <display/models/profile.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
 #include <esp_partition.h>
 #include <esp_system.h>
 
+#include <SD_MMC.h>
 #include <algorithm>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
@@ -49,6 +51,11 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         ota->init(controller->getClientController()->getClient());
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
+
+    // Subscribe to Bluetooth scale weight updates
+    pluginManager->on("controller:volumetric-measurement:bluetooth:change",
+                      [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
+
     setupServer();
 }
 
@@ -80,11 +87,24 @@ void WebUIPlugin::loop() {
         doc["pt"] = controller->getTargetPressure();
         doc["m"] = controller->getMode();
         doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
+        doc["puid"] = controller->getProfileManager()->getSelectedProfile().id;
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
+        doc["tw"] = profileManager->getSelectedProfile().getTotalVolume(); // total target weight for the process
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+        doc["btd"] = profileManager->getSelectedProfile().getTotalDuration();
+        doc["btv"] = controller->getSettings().getTargetVolume();
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
+        doc["gtd"] = controller->getTargetGrindDuration();
+        doc["gtv"] = controller->getSettings().getTargetGrindVolume();
+        doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+        doc["gact"] = controller->isGrindActive() ? 1 : 0;
+
+        // Add Bluetooth scale weight information
+        doc["bw"] = this->currentBluetoothWeight; // current bluetooth weight
+        doc["cw"] = this->currentBluetoothWeight; // Use 'currentWeight' for forward compatbility
+        doc["bc"] = BLEScales.isConnected();      // bluetooth scale connected status
 
         Process *process = controller->getProcess();
         if (process == nullptr) {
@@ -109,6 +129,21 @@ void WebUIPlugin::loop() {
                 } else {
                     pObj["pt"] = brew->getPhaseDuration();
                     pObj["pp"] = ts - brew->currentPhaseStarted;
+                }
+            } else if (process->getType() == MODE_GRIND) {
+                auto *grind = static_cast<GrindProcess *>(process);
+                unsigned long ts = grind->isActive() && controller->isActive() ? millis() : grind->finished;
+                pObj["s"] = "grind";
+                pObj["l"] = grind->isActive() ? "Grinding" : "Finished";
+                pObj["e"] = ts - grind->started;
+                const bool isVolumetric = grind->target == ProcessTarget::VOLUMETRIC && controller->isVolumetricAvailable();
+                pObj["tt"] = isVolumetric ? "volumetric" : "time";
+                if (isVolumetric) {
+                    pObj["pt"] = grind->grindVolume;
+                    pObj["pp"] = grind->currentVolume;
+                } else {
+                    pObj["pt"] = grind->time;
+                    pObj["pp"] = ts - grind->started;
                 }
             }
         }
@@ -155,11 +190,15 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
-    server.serveStatic("/api/history/", SPIFFS, "/h/").setCacheControl("no-store");
-    server.on("/api/history/index.bin", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    FS *fs = &SPIFFS;
+    if (controller->isSDCard()) {
+        fs = &SD_MMC;
+    }
+    server.serveStatic("/api/history/", *fs, "/h/").setCacheControl("no-store");
+    server.on("/api/history/index.bin", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
         // Serve the binary index file directly
-        if (SPIFFS.exists("/h/index.bin")) {
-            request->send(SPIFFS, "/h/index.bin", "application/octet-stream");
+        if (fs->exists("/h/index.bin")) {
+            request->send(*fs, "/h/index.bin", "application/octet-stream");
         } else {
             request->send(404, "text/plain", "Index not found");
         }
@@ -250,6 +289,23 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     controller->clear();
                 } else if (msgType == "req:process:clear") {
                     controller->clear();
+                } else if (msgType == "req:grind:activate") {
+                    controller->activateGrind();
+                } else if (msgType == "req:grind:deactivate") {
+                    controller->deactivateGrind();
+                } else if (msgType == "req:change-grind-target") {
+                    if (doc["target"].is<uint8_t>()) {
+                        auto target = doc["target"].as<uint8_t>();
+                        controller->getSettings().setVolumetricTarget(target);
+                    }
+                } else if (msgType == "req:raise-temp") {
+                    controller->raiseTemp();
+                } else if (msgType == "req:lower-temp") {
+                    controller->lowerTemp();
+                } else if (msgType == "req:raise-grind-target") {
+                    controller->raiseGrindTarget();
+                } else if (msgType == "req:lower-grind-target") {
+                    controller->lowerGrindTarget();
                 } else if (msgType == "req:change-mode") {
                     if (doc["mode"].is<uint8_t>()) {
                         auto mode = doc["mode"].as<uint8_t>();
@@ -456,6 +512,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
+            if (request->hasArg("altRelayFunction"))
+                settings->setAltRelayFunction(request->arg("altRelayFunction").toInt());
             settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
             if (request->hasArg("autowakeupSchedules")) {
                 // Handle schedule format with days
@@ -552,6 +610,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["sunriseExtBrightness"] = settings.getSunriseExtBrightness();
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
+    doc["altRelayFunction"] = settings.getAltRelayFunction();
     // Add auto-wakeup settings to response
     doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
 
@@ -651,6 +710,18 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
         if (total > 0) {
             // Provide integer percentage to avoid float JSON
             doc["spiffsUsedPct"] = static_cast<uint8_t>((used * 100) / total);
+        }
+    }
+    if (controller->isSDCard()) {
+        const uint64_t total = SD_MMC.cardSize();
+        const uint64_t used = SD_MMC.usedBytes();
+        const uint64_t freeBytes = total > used ? (total - used) : 0;
+        doc["sdTotal"] = total;
+        doc["ssdUsed"] = used;
+        doc["sdFree"] = freeBytes;
+        if (total > 0) {
+            // Provide integer percentage to avoid float JSON
+            doc["sdUsedPct"] = static_cast<uint8_t>((used * 100) / total);
         }
     }
     ws.textAll(doc.as<String>());

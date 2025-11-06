@@ -7,7 +7,11 @@
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
 
-constexpr size_t MAX_HISTORY_ENTRIES = 100; // Increased from 10
+constexpr size_t SHOT_HISTORY_INTERVAL = 100;
+constexpr size_t MAX_HISTORY_ENTRIES = 100;                 // Increased from 10
+constexpr unsigned long EXTENDED_RECORDING_DURATION = 3000; // 3 seconds
+constexpr unsigned long WEIGHT_STABILIZATION_TIME = 1000;   // 1 second
+constexpr float WEIGHT_STABILIZATION_THRESHOLD = 0.1f;      // 0.1g threshold
 
 class ShotHistoryPlugin : public Plugin {
   public:
@@ -42,10 +46,12 @@ class ShotHistoryPlugin : public Plugin {
     unsigned long getTime();
 
     void endRecording();
+    void finalizeRecording();
     void cleanupHistory();
 
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
+    FS *fs = &SPIFFS;
     String currentId = "";
     bool isFileOpen = false;
     File currentFile;
@@ -55,10 +61,14 @@ class ShotHistoryPlugin : public Plugin {
     size_t ioBufferPos = 0; // bytes used
 
     bool recording = false;
+    bool extendedRecording = false;
     bool indexEntryCreated = false; // Track if early index entry was created
     unsigned long shotStart = 0;
+    unsigned long extendedRecordingStart = 0;
+    unsigned long lastWeightChangeTime = 0;
     float currentTemperature = 0.0f;
     float currentBluetoothWeight = 0.0f;
+    float lastStableWeight = 0.0f;
     float lastBluetoothWeight = 0.0f;
     float currentBluetoothFlow = 0.0f;
     float currentEstimatedWeight = 0.0f;

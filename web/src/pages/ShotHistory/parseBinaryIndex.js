@@ -28,52 +28,54 @@ function decodeCString(bytes) {
  */
 export function parseBinaryIndex(arrayBuffer) {
   const view = new DataView(arrayBuffer);
-  
+
   if (view.byteLength < INDEX_HEADER_SIZE) {
     throw new Error('Index file too small');
   }
-  
+
   // Parse header
   const magic = view.getUint32(0, true);
   if (magic !== INDEX_MAGIC) {
-    throw new Error(`Invalid index magic: 0x${magic.toString(16)} (expected 0x${INDEX_MAGIC.toString(16)})`);
+    throw new Error(
+      `Invalid index magic: 0x${magic.toString(16)} (expected 0x${INDEX_MAGIC.toString(16)})`,
+    );
   }
-  
+
   const version = view.getUint16(4, true);
   const entrySize = view.getUint16(6, true);
   const entryCount = view.getUint32(8, true);
   const nextId = view.getUint32(12, true);
-  
+
   if (entrySize !== INDEX_ENTRY_SIZE) {
     throw new Error(`Unsupported entry size ${entrySize} (expected ${INDEX_ENTRY_SIZE})`);
   }
-  
+
   const expectedSize = INDEX_HEADER_SIZE + entryCount * INDEX_ENTRY_SIZE;
   if (view.byteLength < expectedSize) {
     throw new Error(`Index file truncated: ${view.byteLength} bytes (expected ${expectedSize})`);
   }
-  
+
   // Parse entries
   const entries = [];
   for (let i = 0; i < entryCount; i++) {
     const base = INDEX_HEADER_SIZE + i * INDEX_ENTRY_SIZE;
-    
+
     const id = view.getUint32(base + 0, true);
     const timestamp = view.getUint32(base + 4, true);
     const duration = view.getUint32(base + 8, true);
     const volume = view.getUint16(base + 12, true);
     const rating = view.getUint8(base + 14);
     const flags = view.getUint8(base + 15);
-    
+
     const profileIdBytes = new Uint8Array(arrayBuffer, base + 16, 32);
     const profileNameBytes = new Uint8Array(arrayBuffer, base + 48, 48);
-    
+
     const profileId = decodeCString(profileIdBytes);
     const profileName = decodeCString(profileNameBytes);
-    
+
     // Convert volume from scaled integer to float
     const volumeFloat = volume > 0 ? volume / WEIGHT_SCALE : null;
-    
+
     entries.push({
       id,
       timestamp,
@@ -90,7 +92,7 @@ export function parseBinaryIndex(arrayBuffer) {
       incomplete: !(flags & SHOT_FLAG_COMPLETED),
     });
   }
-  
+
   return {
     header: {
       magic,

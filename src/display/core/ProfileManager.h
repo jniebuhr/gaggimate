@@ -9,7 +9,7 @@
 
 class ProfileManager {
   public:
-    ProfileManager(fs::FS &fs, String dir, Settings &settings, PluginManager *plugin_manager);
+    ProfileManager(fs::FS *fs, String dir, Settings &settings, PluginManager *plugin_manager);
 
     void setup();
     std::vector<String> listProfiles();
@@ -18,7 +18,7 @@ class ProfileManager {
     bool deleteProfile(const String &uuid);
     bool profileExists(const String &uuid);
     void selectProfile(const String &uuid);
-    Profile getSelectedProfile() const;
+    Profile &getSelectedProfile();
     bool loadSelectedProfile(Profile &outProfile);
     std::vector<String> getFavoritedProfiles(bool validate = false);
 
@@ -26,7 +26,7 @@ class ProfileManager {
     Profile selectedProfile{};
     PluginManager *_plugin_manager;
     Settings &_settings;
-    fs::FS &_fs;
+    fs::FS *_fs;
     String _dir;
     bool ensureDirectory() const;
     String profilePath(const String &uuid) const;
