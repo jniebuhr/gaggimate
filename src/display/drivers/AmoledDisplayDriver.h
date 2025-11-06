@@ -1,5 +1,5 @@
-#ifndef LILYGOTDISPLAYDRIVER_H
-#define LILYGOTDISPLAYDRIVER_H
+#ifndef AMOLEDDISPLAYDRIVER_H
+#define AMOLEDDISPLAYDRIVER_H
 #include "Driver.h"
 #include <display/drivers/AmoledDisplay/Amoled_DisplayPanel.h>
 
@@ -29,4 +29,4 @@ class AmoledDisplayDriver : public Driver {
     AmoledDisplayDriver() {};
 };
 
-#endif // LILYGOTDISPLAYDRIVER_H
+#endif // AMOLEDDISPLAYDRIVER_H

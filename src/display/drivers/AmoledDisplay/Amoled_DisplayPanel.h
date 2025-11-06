@@ -1,5 +1,5 @@
 /**
- * @file      LilyGo_TDisplayPanel.h
+ * @file      Amoled_DisplayPanel.h
  * @author    Borys Tymchenko
  * @license   MIT
  * @copyright

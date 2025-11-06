@@ -1,9 +1,3 @@
-/*
- * @Description: None
- * @Author: LILYGO_L
- * @Date: 2023-06-05 13:01:59
- * @LastEditTime: 2025-04-26 11:53:07
- */
 #pragma once
 
 struct AmoledHwConfig {
