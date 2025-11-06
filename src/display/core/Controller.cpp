@@ -22,8 +22,8 @@
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
 #ifndef GAGGIMATE_HEADLESS
+#include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
-#include <display/drivers/LilyGoTDisplayDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #endif
 
@@ -112,8 +112,8 @@ void Controller::connect() {
 
 #ifndef GAGGIMATE_HEADLESS
 void Controller::setupPanel() {
-    if (LilyGoTDisplayDriver::getInstance()->isCompatible()) {
-        driver = LilyGoTDisplayDriver::getInstance();
+    if (AmoledDisplayDriver::getInstance()->isCompatible()) {
+        driver = AmoledDisplayDriver::getInstance();
     } else if (LilyGoDriver::getInstance()->isCompatible()) {
         driver = LilyGoDriver::getInstance();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
