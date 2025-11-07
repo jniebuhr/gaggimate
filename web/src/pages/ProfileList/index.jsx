@@ -196,7 +196,7 @@ function ProfileCard({
   }, [positionPopover]);
 
   return (
-    <Card sm={12} role='listitem' className={`${bgProfileFavorite}`}>
+    <Card sm={12} role='listitem' bgColorClass={bgProfileFavorite}>
       <div
         className='flex flex-row items-center'
         role='group'
