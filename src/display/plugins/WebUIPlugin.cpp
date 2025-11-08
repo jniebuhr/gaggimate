@@ -453,6 +453,15 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMdnsName(request->arg("mdnsName"));
             if (request->hasArg("wifiPassword") && request->arg("wifiPassword") != "---unchanged---")
                 settings->setWifiPassword(request->arg("wifiPassword"));
+            settings->setStaticIpEnabled(request->hasArg("staticIpEnabled"));
+            if (request->hasArg("staticIp"))
+                settings->setStaticIp(request->arg("staticIp"));
+            if (request->hasArg("staticNetmask"))
+                settings->setStaticNetmask(request->arg("staticNetmask"));
+            if (request->hasArg("staticGateway"))
+                settings->setStaticGateway(request->arg("staticGateway"));
+            if (request->hasArg("staticDns"))
+                settings->setStaticDns(request->arg("staticDns"));
             settings->setHomekit(request->hasArg("homekit"));
             settings->setBoilerFillActive(request->hasArg("boilerFillActive"));
             if (request->hasArg("startupFillTime"))
@@ -581,6 +590,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["wifiSsid"] = settings.getWifiSsid();
     doc["wifiPassword"] = apMode ? "---unchanged---" : settings.getWifiPassword();
+    doc["staticIpEnabled"] = settings.isStaticIpEnabled();
+    doc["staticIp"] = settings.getStaticIp();
+    doc["staticNetmask"] = settings.getStaticNetmask();
+    doc["staticGateway"] = settings.getStaticGateway();
+    doc["staticDns"] = settings.getStaticDns();
     doc["mdnsName"] = settings.getMdnsName();
     doc["temperatureOffset"] = String(settings.getTemperatureOffset());
     doc["pressureScaling"] = String(settings.getPressureScaling());
