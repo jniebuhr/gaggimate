@@ -14,12 +14,16 @@ const WEIGHT_SCALE = 10;
 const RESISTANCE_SCALE = 100;
 
 function decodeCString(bytes) {
-  let out = '';
+  // Find null terminator
+  let length = bytes.length;
   for (let i = 0; i < bytes.length; i++) {
-    if (bytes[i] === 0) break;
-    out += String.fromCharCode(bytes[i]);
+    if (bytes[i] === 0) {
+      length = i;
+      break;
+    }
   }
-  return out;
+  const decoder = new TextDecoder('utf-8');
+  return decoder.decode(bytes.subarray(0, length));
 }
 
 export function parseBinaryShot(arrayBuffer, id) {
