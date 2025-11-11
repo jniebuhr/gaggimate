@@ -1,9 +1,9 @@
-#ifndef PURGEVALVELPLUGIN_H
+#ifndef PURGEVALVEPLUGIN_H
 #define PURGEVALVEPLUGIN_H
 
 #include <display/core/Plugin.h>
 
-#define PURGE_TIME_MS 1500
+const int purge_time_ms = 1500;
 
 struct Event;
 

@@ -23,11 +23,11 @@ void PurgeValvePlugin::setup(Controller *controller, PluginManager *pluginManage
 void PurgeValvePlugin::loop() {
     if (!_is_purging && _brew_started && _brew_finished) {
         // _controller->getClientController()->sendAltControl(true);
-        this->_controller->startProcess(new GrindProcess(ProcessTarget::TIME, PURGE_TIME_MS, 0.0, 0.0));
+        this->_controller->startProcess(new GrindProcess(ProcessTarget::TIME, purge_time_ms, 0.0, 0.0));
         _is_purging = true;
     }
 
-    if (_is_purging && millis() > _last_brew_finished + PURGE_TIME_MS) {
+    if (_is_purging && millis() > _last_brew_finished + purge_time_ms) {
         _is_purging = false;
         _brew_started = false;
         _brew_finished = false;
