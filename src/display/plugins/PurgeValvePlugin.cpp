@@ -1,6 +1,6 @@
 #include "PurgeValvePlugin.h"
-// #include <WiFi.h>
 #include <display/core/Controller.h>
+#include <display/core/process/GrindProcess.h>
 #include <display/core/Event.h>
 
 const String LOG_TAG = F("PurgeValvePlugin");
@@ -22,12 +22,12 @@ void PurgeValvePlugin::setup(Controller *controller, PluginManager *pluginManage
 
 void PurgeValvePlugin::loop() {
     if (!_is_purging && _brew_started && _brew_finished) {
-        _controller->getClientController()->sendAltControl(true);
+        // _controller->getClientController()->sendAltControl(true);
+        this->_controller->startProcess(new GrindProcess(ProcessTarget::TIME, PURGE_TIME_MS, 0.0, 0.0));
         _is_purging = true;
     }
 
     if (_is_purging && millis() > _last_brew_finished + PURGE_TIME_MS) {
-        _controller->getClientController()->sendAltControl(false);
         _is_purging = false;
         _brew_started = false;
         _brew_finished = false;
