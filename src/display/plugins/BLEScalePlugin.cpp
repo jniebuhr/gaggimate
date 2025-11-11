@@ -3,17 +3,17 @@
 #include "remote_scales_plugin_registry.h"
 #include <cmath> // For isfinite()
 #include <display/core/Controller.h>
-#include <scales/acaia.h>
+// #include <scales/acaia.h>
 #include <scales/bookoo.h>
-#include <scales/decent.h>
-#include <scales/difluid.h>
-#include <scales/eclair.h>
-#include <scales/eureka.h>
-#include <scales/felicitaScale.h>
-#include <scales/myscale.h>
-#include <scales/timemore.h>
-#include <scales/varia.h>
-#include <scales/weighmybru.h>
+// #include <scales/decent.h>
+// #include <scales/difluid.h>
+// #include <scales/eclair.h>
+// #include <scales/eureka.h>
+// #include <scales/felicitaScale.h>
+// #include <scales/myscale.h>
+// #include <scales/timemore.h>
+// #include <scales/varia.h>
+// #include <scales/weighmybru.h>
 
 void on_ble_measurement(float value) {
     if (&BLEScales != nullptr) {
@@ -55,17 +55,17 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     this->pluginRegistry = RemoteScalesPluginRegistry::getInstance();
 
     // Apply scale plugins with error checking
-    AcaiaScalesPlugin::apply();
+    // AcaiaScalesPlugin::apply();
     BookooScalesPlugin::apply();
-    DecentScalesPlugin::apply();
-    DifluidScalesPlugin::apply();
-    EclairScalesPlugin::apply();
-    EurekaScalesPlugin::apply();
-    FelicitaScalePlugin::apply();
-    TimemoreScalesPlugin::apply();
-    VariaScalesPlugin::apply();
-    WeighMyBrewScalePlugin::apply();
-    myscalePlugin::apply();
+    // DecentScalesPlugin::apply();
+    // DifluidScalesPlugin::apply();
+    // EclairScalesPlugin::apply();
+    // EurekaScalesPlugin::apply();
+    // FelicitaScalePlugin::apply();
+    // TimemoreScalesPlugin::apply();
+    // VariaScalesPlugin::apply();
+    // WeighMyBrewScalePlugin::apply();
+    // myscalePlugin::apply();
 
     // Initialize scanner with error handling
     this->scanner = new (std::nothrow) RemoteScalesScanner();
