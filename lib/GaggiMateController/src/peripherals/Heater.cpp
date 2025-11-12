@@ -57,13 +57,7 @@ void Heater::setSetpoint(float setpoint) {
     }
 }
 
-// void Heater::setTunings(float Kp, float Ki, float Kd) {
-//     if (simplePid->getKp() != Kp || simplePid->getKi() != Ki || simplePid->getKd() != Kd) {
-//         simplePid->setControllerPIDGains(Kp, Ki, Kd, 0.0f);
-//         simplePid->reset();
-//         ESP_LOGV(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f, FF: %f", Kp, Ki, Kd, FF);
-//     }
-// }
+
 
 void Heater::setTunings(float Kp, float Ki, float Kd, float FF) {
     if (simplePid->getKp() != Kp || simplePid->getKi() != Ki || simplePid->getKd() != Kd || simplePid->getKFF() != FF) {
