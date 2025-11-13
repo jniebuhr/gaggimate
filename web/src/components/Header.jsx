@@ -11,6 +11,7 @@ import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faTerminal } from '@fortawesome/free-solid-svg-icons/faTerminal';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
+import { WSStatusIndicator } from './WSStatusIndicator.jsx';
 
 function HeaderItem(props) {
   const { path } = useLocation();
@@ -51,6 +52,10 @@ export function Header() {
           </div>
 
           <div className='flex items-center gap-1 lg:gap-5'>
+            <div className='relative inline-block'>
+              <WSStatusIndicator />
+            </div>
+
             <div className='relative inline-block'>
               <a
                 aria-label='github'
