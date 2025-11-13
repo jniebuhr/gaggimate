@@ -14,6 +14,7 @@
 #include <SD_MMC.h>
 #include <algorithm>
 #include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/DebugLogPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <string>
 #include <unordered_map>
@@ -150,6 +151,20 @@ void WebUIPlugin::loop() {
 
         ws.textAll(doc.as<String>());
     }
+
+    if (now > lastDebugLog + DEBUG_LOG_WS_INTERVAL && ws.count() > 0) {
+        lastDebugLog = now;
+        String newLogs = DebugLog.getNewLogs();
+
+        if (newLogs.length() > 0) {
+            JsonDocument logDoc;
+            logDoc["tp"] = "evt:logs";
+            logDoc["data"] = newLogs;
+
+            ws.textAll(logDoc.as<String>());
+        }
+    }
+
     if (now > lastCleanup + CLEANUP_PERIOD) {
         lastCleanup = now;
         ws.cleanupClients();
@@ -204,6 +219,35 @@ void WebUIPlugin::setupServer() {
         }
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
+
+    server.on("/api/logs", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
+        String allLogs = "";
+
+        // Read old log if it exists
+        if (fs->exists("/logs.old.txt")) {
+            File oldLog = fs->open("/logs.old.txt", "r");
+            if (oldLog) {
+                allLogs = oldLog.readString();
+                oldLog.close();
+            }
+        }
+
+        // Append current log if it exists
+        if (fs->exists("/logs.txt")) {
+            File currentLog = fs->open("/logs.txt", "r");
+            if (currentLog) {
+                allLogs += currentLog.readString();
+                currentLog.close();
+            }
+        }
+
+        if (allLogs.length() > 0) {
+            request->send(200, "text/plain", allLogs);
+        } else {
+            request->send(404, "text/plain", "No log files found");
+        }
+    });
+
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
     ws.onEvent(

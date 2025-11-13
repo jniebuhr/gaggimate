@@ -197,6 +197,16 @@ export default class ApiService {
     newValue.history = newValue.history.slice(-600);
     machine.value = newValue;
   }
+
+  _onLogs(message) {
+    if (!message.data || typeof message.data !== 'string') {
+      return;
+    }
+
+    // Append raw log text (keep last ~1MB of logs)
+    const currentText = logs.value;
+    logs.value = (currentText + message.data).slice(-1000000);
+  }
 }
 
 export const ApiServiceContext = createContext(null);
@@ -223,3 +233,5 @@ export const machine = signal({
   },
   history: [],
 });
+
+export const logs = signal('');

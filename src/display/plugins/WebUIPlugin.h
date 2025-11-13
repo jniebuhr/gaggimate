@@ -65,6 +65,7 @@ class WebUIPlugin : public Plugin {
     long lastStatus = 0;
     long lastCleanup = 0;
     long lastDns = 0;
+    long lastDebugLog = 0;
     bool updating = false;
     bool apMode = false;
     bool serverRunning = false;

@@ -8,6 +8,7 @@ import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
+import { faTerminal } from '@fortawesome/free-solid-svg-icons/faTerminal';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 
@@ -141,6 +142,12 @@ export function Header() {
               label='System & Updates'
               link='/ota'
               icon={faRotate}
+              onClick={() => openCb(false)}
+            />
+            <HeaderItem
+              label='System Logs'
+              link='/logs'
+              icon={faTerminal}
               onClick={() => openCb(false)}
             />
           </div>
