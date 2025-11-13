@@ -16,11 +16,16 @@ export default class ApiService {
   maxReconnectDelay = 30000; // Maximum delay of 30 seconds
   baseReconnectDelay = 1000; // Start with 1 second delay
   reconnectTimeout = null;
+  reconnectScheduledAt = null;
   isConnecting = false;
+  lastMessageTime = Date.now();
+  heartbeatInterval = null;
+  heartbeatTimeout = 8000; // Force reconnect after not getting a WS packet for X sec
 
   constructor() {
     console.log('Established websocket connection');
     this.connect();
+    this._startHeartbeat();
   }
 
   async connect() {
@@ -51,6 +56,8 @@ export default class ApiService {
   _onOpen() {
     console.log('WebSocket connected successfully');
     this.reconnectAttempts = 0;
+    this.reconnectScheduledAt = null;
+    this.lastMessageTime = Date.now();
     machine.value = {
       ...machine.value,
       connected: true,
@@ -86,21 +93,44 @@ export default class ApiService {
 
     console.log(`Scheduling reconnect attempt ${this.reconnectAttempts + 1} in ${delay}ms`);
 
+    this.reconnectScheduledAt = Date.now() + delay;
     this.reconnectTimeout = setTimeout(() => {
       this.reconnectAttempts++;
+      this.reconnectScheduledAt = null;
       this.connect();
     }, delay);
   }
 
   _onMessage(event) {
+    this.lastMessageTime = Date.now();
     const message = JSON.parse(event.data);
     const listeners = Object.values(this.listeners[message.tp] || {});
     if (message.tp === 'evt:status') {
       this._onStatus(message);
+    } else if (message.tp === 'evt:logs') {
+      this._onLogs(message);
     }
     for (const listener of listeners) {
       listener(message);
     }
+  }
+
+  _startHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+
+    this.heartbeatInterval = setInterval(() => {
+      const timeSinceLastMessage = Date.now() - this.lastMessageTime;
+      const isConnected = this.socket?.readyState === WebSocket.OPEN;
+
+      if (isConnected && timeSinceLastMessage > this.heartbeatTimeout) {
+        console.log(`Connection stale (${timeSinceLastMessage}ms since last message), forcing reconnect`);
+        if (this.socket) {
+          this.socket.close();
+        }
+      }
+    }, 1000); 
   }
 
   send(event) {
