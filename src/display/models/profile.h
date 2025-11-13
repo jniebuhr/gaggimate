@@ -38,6 +38,11 @@ struct Transition {
     bool adaptive;
 };
 
+struct PhaseCompletionResult {
+    bool isFinished;
+    const char *reason;
+};
+
 struct Phase {
     String name;
     PhaseType phase; // "preinfusion" | "brew"
@@ -78,38 +83,43 @@ struct Phase {
         }
     }
 
-    bool isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow, float current_pressure,
-                    float water_pumped, String type) const {
+    PhaseCompletionResult checkFinished(
+        bool enableVolumetric, float volume, float time_in_phase, float current_flow, float current_pressure, float water_pumped,
+        String type
+    ) const {
         bool volumetricTested = false;
         for (const auto &target : targets) {
             switch (target.type) {
             case TargetType::TARGET_TYPE_VOLUMETRIC:
                 volumetricTested = enableVolumetric;
                 if (enableVolumetric && target.isReached(volume)) {
-                    return true;
+                    return {true, "volume_target"};
                 }
                 break;
             case TargetType::TARGET_TYPE_PRESSURE:
                 if (target.isReached(current_pressure)) {
-                    return true;
+                    return {true, "pressure_target"};
                 }
                 break;
             case TargetType::TARGET_TYPE_FLOW:
                 if (target.isReached(current_flow)) {
-                    return true;
+                    return {true, "flow_target"};
                 }
                 break;
             case TargetType::TARGET_TYPE_PUMPED:
                 if (target.isReached(water_pumped)) {
-                    return true;
+                    return {true, "water_pumped_target"};
                 }
                 break;
             }
         }
         if (type == "standard" && volumetricTested) {
-            return false;
+            return {false, nullptr};
         }
-        return time_in_phase > duration;
+        if (time_in_phase > duration) {
+            return {true, "time_duration"};
+        }
+        return {false, nullptr};
     }
 };
 
