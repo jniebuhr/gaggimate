@@ -12,7 +12,6 @@ import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -102,6 +101,9 @@ export function Settings() {
       }
       if (key === 'homeAssistant') {
         value = !formData.homeAssistant;
+      }
+      if (key === 'debugLoggingEnabled') {
+        value = !formData.debugLoggingEnabled;
       }
       if (key === 'momentaryButtons') {
         value = !formData.momentaryButtons;

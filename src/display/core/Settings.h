@@ -183,6 +183,9 @@ class Settings {
     void setAutoWakeupEnabled(bool enabled);
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
 
+    void setDebugLoggingEnabled(bool enabled);
+    bool isDebugLoggingEnabled() const { return debugLoggingEnabled; }
+
   private:
     Preferences preferences;
     bool dirty = false;
@@ -200,6 +203,7 @@ class Settings {
     bool delayAdjust = true;
     int startupMode = MODE_STANDBY;
     bool autowakeupEnabled = false;
+    bool debugLoggingEnabled = false;
     std::vector<AutoWakeupSchedule> autowakeupSchedules;
     int standbyTimeout = DEFAULT_STANDBY_TIMEOUT_MS;
     String pid = DEFAULT_PID;

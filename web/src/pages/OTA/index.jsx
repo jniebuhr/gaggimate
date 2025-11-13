@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useContext } from 'preact/hooks';
 import { Spinner } from '../../components/Spinner.jsx';
-import { ApiServiceContext } from '../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import Card from '../../components/Card.jsx';
 import { downloadJson } from '../../utils/download.js';
+import DebugLogs from '../../components/DebugLogs.jsx';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -25,6 +26,7 @@ export function OTA() {
   const [formData, setFormData] = useState({});
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
+  const hasRequestedOtaSettings = useRef(false);
 
   const downloadSupportData = useCallback(async () => {
     const settingsResponse = await fetch(`/api/settings`);
@@ -62,10 +64,12 @@ export function OTA() {
     };
   }, [apiService]);
   useEffect(() => {
-    setTimeout(() => {
+    // Wait for WebSocket to be connected before requesting OTA settings
+    if (machine.value.connected && !hasRequestedOtaSettings.current) {
+      hasRequestedOtaSettings.current = true;
       apiService.send({ tp: 'req:ota-settings' });
-    }, 500);
-  }, [apiService]);
+    }
+  }, [apiService, machine.value.connected]);
 
   const formRef = useRef();
 
@@ -87,14 +91,6 @@ export function OTA() {
     },
     [apiService],
   );
-
-  if (isLoading) {
-    return (
-      <div className='flex w-full flex-row items-center justify-center py-16'>
-        <Spinner size={8} />
-      </div>
-    );
-  }
 
   if (phase > 0) {
     return (
@@ -128,6 +124,12 @@ export function OTA() {
       <form key='ota' method='post' action='/api/ota' ref={formRef} onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
           <Card sm={12} title='System Information'>
+            {isLoading ? (
+              <div className='flex w-full flex-row items-center justify-center py-16'>
+                <Spinner size={8} />
+              </div>
+            ) : (
+              <>
             <div className='flex flex-col space-y-4'>
               <label htmlFor='channel' className='text-sm font-medium'>
                 Update Channel
@@ -215,36 +217,40 @@ export function OTA() {
                 display.
               </span>
             </div>
-          </Card>
-        </div>
 
-        <div className='pt-4 lg:col-span-12'>
-          <div className='flex flex-col flex-wrap gap-2 sm:flex-row'>
-            <button type='submit' className='btn btn-primary' disabled={submitting}>
-              Save & Refresh
-            </button>
-            <button
-              type='submit'
-              name='update'
-              className='btn btn-secondary'
-              disabled={!formData.displayUpdateAvailable || submitting}
-              onClick={() => onUpdate('display')}
-            >
-              Update Display
-            </button>
-            <button
-              type='submit'
-              name='update'
-              className='btn btn-accent'
-              disabled={!formData.controllerUpdateAvailable || submitting}
-              onClick={() => onUpdate('controller')}
-            >
-              Update Controller
-            </button>
-            <button type='button' className='btn btn-outline' onClick={downloadSupportData}>
-              Download Support Data
-            </button>
-          </div>
+            <div className='flex flex-col flex-wrap gap-2 sm:flex-row'>
+              <button type='submit' className='btn btn-primary' disabled={submitting}>
+                Save & Refresh
+              </button>
+              <button
+                type='submit'
+                name='update'
+                className='btn btn-secondary'
+                disabled={!formData.displayUpdateAvailable || submitting}
+                onClick={() => onUpdate('display')}
+              >
+                Update Display
+              </button>
+              <button
+                type='submit'
+                name='update'
+                className='btn btn-accent'
+                disabled={!formData.controllerUpdateAvailable || submitting}
+                onClick={() => onUpdate('controller')}
+              >
+                Update Controller
+              </button>
+              <button type='button' className='btn btn-outline' onClick={downloadSupportData}>
+                Download Support Data
+              </button>
+            </div>
+              </>
+            )}
+          </Card>
+
+          <Card sm={12} title='Debug Logs'>
+            <DebugLogs />
+          </Card>
         </div>
       </form>
     </>
