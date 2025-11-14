@@ -10,6 +10,8 @@ function getChartData(data) {
   const fl = [];
   const pf = [];
   const tf = [];
+  const v = [];
+  const vf = [];
   for (let i = 0; i < data.length; i++) {
     const s = data[i];
     const x = s.t / 1000.0; // seconds (number)
@@ -20,6 +22,8 @@ function getChartData(data) {
     fl.push({ x, y: s.fl });
     pf.push({ x, y: s.pf });
     tf.push({ x, y: s.tf });
+    v.push({ x, y: s.v || 0 });
+    vf.push({ x, y: s.vf || 0 });
   }
   const tempValues = ct.map(i => i.y).concat(tt.map(i => i.y));
   const timeValues = ct.map(i => i.x);
@@ -28,6 +32,10 @@ function getChartData(data) {
   const minX = Math.min(...timeValues);
   const maxX = Math.max(...timeValues);
   const padding = maxTemp - minTemp > 10 ? 2 : 5;
+  
+  // Check if weight data has any non-zero values
+  const hasWeight = v.some(point => point.y > 0);
+  const hasWeightFlow = vf.some(point => point.y > 0);
   return {
     type: 'line',
     data: {
@@ -84,6 +92,21 @@ function getChartData(data) {
           yAxisID: 'y1',
           data: tf,
         },
+        // Only include weight datasets if they have non-zero values
+        ...(hasWeight ? [{
+          label: 'Weight',
+          borderColor: '#8B5CF6',
+          pointStyle: false,
+          yAxisID: 'y2',
+          data: v,
+        }] : []),
+        ...(hasWeightFlow ? [{
+          label: 'Weight Flow',
+          borderColor: '#4b2e8dff',
+          pointStyle: false,
+          yAxisID: 'y1',
+          data: vf,
+        }] : []),
       ],
     },
     options: {
@@ -156,6 +179,21 @@ function getChartData(data) {
           },
           grid: { drawOnChartArea: false },
         },
+        ...(hasWeight ? {
+          y2: {
+            type: 'linear',
+            min: 0,
+            position: 'right',
+            offset: true,
+            ticks: {
+              callback: value => `${value.toFixed()} g`,
+              font: {
+                size: window.innerWidth < 640 ? 10 : 12,
+              },
+            },
+            grid: { drawOnChartArea: false },
+          },
+        } : {}),
       },
     },
   };
