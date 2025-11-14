@@ -5,7 +5,7 @@ DistanceSensor::DistanceSensor(TwoWire *wire, distance_callback_t callback) : i2
 }
 
 void DistanceSensor::setup() {
-    this->tof->setAddress(0x70);
+    this->tof->setAddress(0x7E);
     this->tof->setBus(i2c);
     this->tof->setTimeout(1000);
     if (!this->tof->init()) {
