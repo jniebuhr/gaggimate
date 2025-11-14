@@ -33,6 +33,9 @@ class BrewProcess : public Process {
         phaseStartPressure = currentPhase.transition.adaptive ? currentPressure : 0;
         phaseStartFlow = currentPhase.transition.adaptive ? currentFlow : 0;
         computeEffectiveTargetsForCurrentPhase();
+
+        ESP_LOGI("BrewProcess", "BREW START Profile: %s, Phases: %zu", profile.label.c_str(), profile.phases.size());
+        ESP_LOGD("BrewProcess", "Starting phase 0/%zu", profile.phases.size() - 1);
     }
 
     void updateVolume(double volume) override { // called even after the Process is no longer active
@@ -51,18 +54,37 @@ class BrewProcess : public Process {
     unsigned long getPhaseDuration() const { return static_cast<long>(currentPhase.duration) * 1000L; }
 
     bool isCurrentPhaseFinished() {
-        if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
+        unsigned long phaseDuration = millis() - currentPhaseStarted;
+
+        if (phaseDuration > BREW_SAFETY_DURATION_MS) {
+            ESP_LOGI("BrewProcess",
+                     "Phase %u completed: duration=%lu ms, reason=safety_timeout, volume=%.1fg, time=%.1fs, flow=%.2f ml/s, "
+                     "pressure=%.1f bar, water=%.1f ml",
+                     phaseIndex, phaseDuration, currentVolume, phaseDuration / 1000.0f, currentFlow, currentPressure,
+                     waterPumped);
             return true;
         }
+
         double volume = currentVolume;
         if (volume > 0.0) {
             double currentRate = volumetricRateCalculator.getRate();
             const double predictedAddedVolume = currentRate * brewDelay;
             volume = currentVolume + predictedAddedVolume;
         }
-        float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
-        return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
-                                       waterPumped, profile.type);
+        float timeInPhase = static_cast<float>(phaseDuration) / 1000.0f;
+
+        PhaseCompletionResult result = currentPhase.checkFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase,
+                                                                  currentFlow, currentPressure, waterPumped, profile.type);
+
+        if (result.isFinished) {
+            ESP_LOGI(
+                "BrewProcess",
+                "Phase %u completed: duration=%lu ms, reason=%s, volume=%.1fg, time=%.1fs, flow=%.2f ml/s, pressure=%.1f bar, "
+                "water=%.1f ml",
+                phaseIndex, phaseDuration, result.reason, volume, timeInPhase, currentFlow, currentPressure, waterPumped);
+        }
+
+        return result.isFinished;
     }
 
     bool isUtility() const { return profile.utility; }
@@ -132,11 +154,17 @@ class BrewProcess : public Process {
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
         waterPumped += currentFlow / 10.0f; // Add current flow divided to 100ms to water pumped counter
+
         while (isCurrentPhaseFinished() && processPhase == ProcessPhase::RUNNING) {
             previousPhaseFinished = millis();
+
             if (phaseIndex + 1 < profile.phases.size()) {
+                unsigned int oldPhaseIndex = phaseIndex;
                 waterPumped = 0.0f;
                 phaseIndex++;
+
+                ESP_LOGI("BrewProcess", "Transitioning from phase %u to phase %u", oldPhaseIndex, phaseIndex);
+
                 Phase nextPhase = profile.phases.at(phaseIndex);
                 phaseStartPressure = nextPhase.transition.adaptive ? currentPressure : getPumpPressure();
                 phaseStartFlow = nextPhase.transition.adaptive ? currentFlow : getPumpFlow();
@@ -146,6 +174,8 @@ class BrewProcess : public Process {
             } else {
                 processPhase = ProcessPhase::FINISHED;
                 finished = millis();
+                unsigned long totalDuration = finished - processStarted;
+                ESP_LOGI("BrewProcess", "BREW END - Total duration: %lu ms", totalDuration);
             }
         }
     }
