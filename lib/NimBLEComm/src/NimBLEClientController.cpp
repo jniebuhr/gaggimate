@@ -285,7 +285,8 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             float Kp = get_token(settings, 0, ',').toFloat();
             float Ki = get_token(settings, 1, ',').toFloat();
             float Kd = get_token(settings, 2, ',').toFloat();
-            autotuneResultCallback(Kp, Ki, Kd);
+            float FF = get_token(settings, 3, ',', "0").toFloat();
+            autotuneResultCallback(Kp, Ki, Kd, FF);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
