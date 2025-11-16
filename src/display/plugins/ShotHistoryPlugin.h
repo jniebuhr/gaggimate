@@ -46,7 +46,6 @@ class ShotHistoryPlugin : public Plugin {
     unsigned long getTime();
 
     void endRecording();
-    void finalizeRecording();
     void cleanupHistory();
 
     Controller *controller = nullptr;
