@@ -21,6 +21,8 @@ class DimmedPump : public Pump {
     float getPumpFlow();
     float getPuckFlow();
     float getPuckResistance();
+    float* getPumpFlowPtr() { return &_currentFlow; }  // For thermal feedforward
+    bool* getValveStatusPtr() { return reinterpret_cast<bool*>(&_valveStatus); }  // For thermal feedforward valve state
     void tare();
 
     void setFlowTarget(float targetFlow, float pressureLimit);
