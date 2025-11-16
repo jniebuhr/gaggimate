@@ -262,29 +262,15 @@ unsigned long ShotHistoryPlugin::getTime() {
 }
 
 void ShotHistoryPlugin::endRecording() {
-    recording = false;
-
     if (controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
         extendedRecordingStart = millis();
         lastStableWeight = currentBluetoothWeight;
         lastWeightChangeTime = 0;
-        return; // Don't finalize the recording yet
     }
 
-    // For shots without weight data, finalize immediately
-    finalizeRecording();
-}
-
-void ShotHistoryPlugin::finalizeRecording() {
-    unsigned long duration = millis() - shotStart;
-    if (duration <= 7500) { // Exclude failed shots and flushes
-        fs->remove("/h/" + currentId + ".dat");
-    } else {
-        controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
-        cleanupHistory();
-    }
+    recording = false;
 }
 
 void ShotHistoryPlugin::cleanupHistory() {
