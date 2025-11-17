@@ -124,6 +124,12 @@ float HardwareScale::getWeight() const {
 }
 
 void HardwareScale::loop() {
+    // Send sentinel value if scale is not initialized
+    if (!is_initialized) {
+        _reading_callback(HARDWARE_SCALE_UNAVAILABLE); // Sentinel value to signal scale unavailable
+        return;
+    }
+    
     // Wait for scale factors to be properly set before starting weight calculations
     // Use a reasonable timeout to prevent indefinite waiting
     unsigned long startWait = millis();

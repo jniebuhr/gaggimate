@@ -1,5 +1,6 @@
 #include "HardwareScalePlugin.h"
 #include <display/core/Controller.h>
+#include <peripherals/HardwareScale.h>  // For HARDWARE_SCALE_UNAVAILABLE constant
 
 HardwareScalePlugin HardwareScales;
 
@@ -84,6 +85,18 @@ void HardwareScalePlugin::onProcessStart() {
 }
 
 void HardwareScalePlugin::onMeasurement(float value) {
+    // Check for sentinel value indicating hardware scale is not available
+    if (value == HARDWARE_SCALE_UNAVAILABLE) {
+        if (_isAvailable) {
+            ESP_LOGW(LOG_TAG, "Hardware scale not available (received sentinel value), disabling capability");
+            _isAvailable = false;
+            // Dynamically update the system capabilities
+            controller->getSystemInfo().capabilities.hwScale = false;
+        }
+        return; // Don't process sentinel values as real measurements
+    }
+    
+    // Process valid measurement
     this->_lastMeasurement = value;
     controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::HARDWARE);
 }

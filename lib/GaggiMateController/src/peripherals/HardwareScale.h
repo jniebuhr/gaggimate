@@ -5,6 +5,7 @@
 #include <functional>
 
 constexpr int SCALE_READ_INTERVAL_MS = 100;
+constexpr float HARDWARE_SCALE_UNAVAILABLE = -9999.0f;  // Sentinel value to signal scale not available
 
 using scale_reading_callback_t = std::function<void(float)>;
 using scale_configuration_callback_t = std::function<void(float scaleFactor1, float scaleFactor2)>;

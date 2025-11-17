@@ -98,7 +98,7 @@ class Controller {
     };
     bool isLowWaterLevel() const { return getWaterLevel() < 20; };
 
-    SystemInfo getSystemInfo() const { return systemInfo; }
+    SystemInfo& getSystemInfo() { return systemInfo; }
 
     NimBLEClientController *getClientController() { return &clientController; }
 
