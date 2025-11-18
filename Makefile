@@ -1,4 +1,4 @@
-.PHONY: help shell build-display build-controller build-all upload-display upload-controller upload-fs install-display install-controller monitor-display monitor-controller web-install web-dev web-build web-preview format clean
+.PHONY: help shell build-display build-controller build-headless build-all upload-display upload-controller upload-headless upload-fs web-install web-dev web-build web-preview build-fs install-display install-controller monitor-display monitor-controller format format-web lint-web format-lint-all check-display check-controller check-all clean clean-web dev flash-display flash-controller
 
 # Default target
 .DEFAULT_GOAL := help
