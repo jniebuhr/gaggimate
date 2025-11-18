@@ -271,6 +271,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
           <div className='form-control'>
             <label htmlFor={`phase-${index}-flow`} className='mb-2 block text-sm font-medium'>
               {mode === 'flow' ? 'Target' : 'Maximum'} Flow {mode === 'pressure' && '(0 = Ignore)'}
+              {mode === 'flow' && '(-1 = Keep current flow)'}
             </label>
             <div className='input-group'>
               <label htmlFor={`phase-${index}-flow`} className='input w-full'>
@@ -284,7 +285,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
                   }
                   aria-label='Flow rate in grams per second'
-                  min={mode === 'flow' ? '0.1' : '0'}
+                  min={mode === 'flow' ? '-1' : '0'}
                 />
                 <span aria-label='grams per second'>g/s</span>
               </label>
