@@ -117,6 +117,13 @@ class Settings {
     int getAltRelayFunction() const { return altRelayFunction; }
     bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
+    
+    // Cleaning schedule getters
+    int getBackflushIntervalDays() const { return backflushIntervalDays; }
+    int getDescalingIntervalWeeks() const { return descalingIntervalWeeks; }
+    unsigned long getLastBackflushTime() const { return lastBackflushTime; }
+    unsigned long getLastDescalingTime() const { return lastDescalingTime; }
+    
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -182,6 +189,12 @@ class Settings {
     void setAltRelayFunction(int alt_relay_function);
     void setAutoWakeupEnabled(bool enabled);
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
+    
+    // Cleaning schedule setters
+    void setBackflushIntervalDays(int backflush_interval_days);
+    void setDescalingIntervalWeeks(int descaling_interval_weeks);
+    void setLastBackflushTime(unsigned long last_backflush_time);
+    void setLastDescalingTime(unsigned long last_descaling_time);
 
   private:
     Preferences preferences;
@@ -257,6 +270,12 @@ class Settings {
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
+
+    // Cleaning schedule settings
+    int backflushIntervalDays = 14;        // Default: 14 days
+    int descalingIntervalWeeks = 6;        // Default: 6 weeks
+    unsigned long lastBackflushTime = 0;   // Unix timestamp of last backflush
+    unsigned long lastDescalingTime = 0;   // Unix timestamp of last descaling
 
     void doSave();
     xTaskHandle taskHandle;
