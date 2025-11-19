@@ -30,7 +30,6 @@
           buildInputs = with pkgs; [
             # Node.js environment
             nodejs
-            nodejs.pkgs.npm
 
             # PlatformIO for ESP32 development
             platformio
