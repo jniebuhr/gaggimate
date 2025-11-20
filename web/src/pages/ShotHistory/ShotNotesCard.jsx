@@ -355,7 +355,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
             className='textarea textarea-bordered w-full'
             rows='4'
             value={notes.notes}
-            maxLength={100}
+            maxLength={200}
             onChange={e => handleInputChange('notes', e.target.value)}
             placeholder='Tasting notes, brewing observations, etc...'
           />
