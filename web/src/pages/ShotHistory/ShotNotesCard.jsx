@@ -348,7 +348,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
       <div className='form-control mt-6'>
         <label className='mb-2 block text-sm font-medium'>
           Notes{' '}
-          {isEditing && <span className='text-xs text-gray-500'>({notes.notes.length}/100)</span>}
+          {isEditing && <span className='text-xs text-gray-500'>({notes.notes.length}/200)</span>}
         </label>
         {isEditing ? (
           <textarea
