@@ -125,12 +125,14 @@ export default class ApiService {
       const isConnected = this.socket?.readyState === WebSocket.OPEN;
 
       if (isConnected && timeSinceLastMessage > this.heartbeatTimeout) {
-        console.log(`Connection stale (${timeSinceLastMessage}ms since last message), forcing reconnect`);
+        console.log(
+          `Connection stale (${timeSinceLastMessage}ms since last message), forcing reconnect`,
+        );
         if (this.socket) {
           this.socket.close();
         }
       }
-    }, 1000); 
+    }, 1000);
   }
 
   send(event) {

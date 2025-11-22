@@ -38,10 +38,7 @@ export default function DebugLogs() {
 
       // Format date as YYYY-MM-DD-HH-MM-SS
       const now = new Date();
-      const timestamp = now.toISOString()
-        .replace(/T/, '-')
-        .replace(/:/g, '-')
-        .replace(/\..+/, '');
+      const timestamp = now.toISOString().replace(/T/, '-').replace(/:/g, '-').replace(/\..+/, '');
 
       a.href = url;
       a.download = `gaggimate-logs-${timestamp}.txt`;
@@ -57,9 +54,9 @@ export default function DebugLogs() {
 
   const filteredText = filter
     ? logs.value
-      .split('\n')
-      .filter(line => line.toLowerCase().includes(filter.toLowerCase()))
-      .join('\n')
+        .split('\n')
+        .filter(line => line.toLowerCase().includes(filter.toLowerCase()))
+        .join('\n')
     : logs.value;
 
   const colorizeLogLine = line => {
@@ -93,80 +90,80 @@ export default function DebugLogs() {
       )}
 
       {/* Controls */}
-      <div className='flex flex-wrap gap-2 items-center justify-between'>
-            <div className='flex gap-2 items-center flex-wrap'>
-              <div className='tooltip' data-tip='Clear logs'>
-                <button
-                  className='text-base-content/50 hover:text-error hover:bg-error/10 rounded-md p-2 transition-colors'
-                  onClick={handleClear}
-                  aria-label='Clear logs'
-                >
-                  <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
-                </button>
-              </div>
-              <div className='tooltip' data-tip='Download log file'>
-                <button
-                  className='text-base-content/50 hover:text-info hover:bg-info/10 rounded-md p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-                  onClick={handleExport}
-                  disabled={isExporting}
-                  aria-label='Download log file'
-                >
-                  {isExporting ? (
-                    <span className='loading loading-spinner loading-xs' />
-                  ) : (
-                    <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
-                  )}
-                </button>
-              </div>
-              <label className='label cursor-pointer gap-2'>
-                <span className='label-text'>Auto-scroll</span>
-                <input
-                  type='checkbox'
-                  className='toggle toggle-primary'
-                  checked={autoScroll}
-                  onChange={e => setAutoScroll(e.target.checked)}
-                />
-              </label>
-            </div>
-
-            <div className='flex gap-2 items-center flex-wrap'>
-              <input
-                type='text'
-                placeholder='Filter logs...'
-                className='input input-sm input-bordered w-48'
-                value={filter}
-                onChange={e => setFilter(e.target.value)}
-              />
-
-              <span className='text-sm opacity-70'>
-                {logLines.length} lines
-                {logs.value.length > 0 && ` (~${(logs.value.length / 1024).toFixed(1)}KB)`}
-              </span>
-            </div>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <div className='tooltip' data-tip='Clear logs'>
+            <button
+              className='text-base-content/50 hover:text-error hover:bg-error/10 rounded-md p-2 transition-colors'
+              onClick={handleClear}
+              aria-label='Clear logs'
+            >
+              <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
+            </button>
           </div>
+          <div className='tooltip' data-tip='Download log file'>
+            <button
+              className='text-base-content/50 hover:text-info hover:bg-info/10 rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+              onClick={handleExport}
+              disabled={isExporting}
+              aria-label='Download log file'
+            >
+              {isExporting ? (
+                <span className='loading loading-spinner loading-xs' />
+              ) : (
+                <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
+              )}
+            </button>
+          </div>
+          <label className='label cursor-pointer gap-2'>
+            <span className='label-text'>Auto-scroll</span>
+            <input
+              type='checkbox'
+              className='toggle toggle-primary'
+              checked={autoScroll}
+              onChange={e => setAutoScroll(e.target.checked)}
+            />
+          </label>
+        </div>
+
+        <div className='flex flex-wrap items-center gap-2'>
+          <input
+            type='text'
+            placeholder='Filter logs...'
+            className='input input-sm input-bordered w-48'
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+          />
+
+          <span className='text-sm opacity-70'>
+            {logLines.length} lines
+            {logs.value.length > 0 && ` (~${(logs.value.length / 1024).toFixed(1)}KB)`}
+          </span>
+        </div>
+      </div>
 
       {/* Console Output */}
       <div className='overflow-hidden'>
-          <div
-            ref={consoleRef}
-            className='font-mono text-xs overflow-auto h-full p-4 whitespace-pre'
-            style={{ maxHeight: '65vh' }}
-          >
-            {logLines.length === 0 ? (
-              <div className='text-center text-base-content opacity-50 py-8'>
-                {logs.value.length === 0
-                  ? 'No logs to show yet...'
-                  : 'No logs match the current filter.'}
+        <div
+          ref={consoleRef}
+          className='h-full overflow-auto p-4 font-mono text-xs whitespace-pre'
+          style={{ maxHeight: '65vh' }}
+        >
+          {logLines.length === 0 ? (
+            <div className='text-base-content py-8 text-center opacity-50'>
+              {logs.value.length === 0
+                ? 'No logs to show yet...'
+                : 'No logs match the current filter.'}
+            </div>
+          ) : (
+            logLines.map((line, index) => (
+              <div key={index} className={colorizeLogLine(line)}>
+                {line}
               </div>
-            ) : (
-              logLines.map((line, index) => (
-                <div key={index} className={colorizeLogLine(line)}>
-                  {line}
-                </div>
-              ))
-            )}
-            <div ref={bottomRef} />
-          </div>
+            ))
+          )}
+          <div ref={bottomRef} />
+        </div>
       </div>
     </div>
   );
