@@ -59,7 +59,7 @@ void GaggiMateController::setup() {
         this->ledController->setup();
     }
     if (_config.capabilites.tof) {
-        // this->distanceSensor->setup();
+        this->distanceSensor->setup();
     }
 
     this->thermocouple->setup();
