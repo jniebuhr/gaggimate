@@ -262,7 +262,7 @@ unsigned long ShotHistoryPlugin::getTime() {
 }
 
 void ShotHistoryPlugin::endRecording() {
-    if (controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
+    if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
         extendedRecordingStart = millis();
