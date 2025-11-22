@@ -130,124 +130,126 @@ export function OTA() {
               </div>
             ) : (
               <>
-            <div className='flex flex-col space-y-4'>
-              <label htmlFor='channel' className='text-sm font-medium'>
-                Update Channel
-              </label>
-              <select id='channel' name='channel' className='select select-bordered w-full'>
-                <option value='latest' selected={formData.channel === 'latest'}>
-                  Stable
-                </option>
-                <option value='nightly' selected={formData.channel === 'nightly'}>
-                  Nightly
-                </option>
-              </select>
-            </div>
-
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mt-4'>
-              <div className='flex flex-col space-y-2 min-w-0'>
-                <label className='text-sm font-medium'>Hardware</label>
-                <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal h-auto min-h-12 w-full'>
-                  {formData.hardware}
+                <div className='flex flex-col space-y-4'>
+                  <label htmlFor='channel' className='text-sm font-medium'>
+                    Update Channel
+                  </label>
+                  <select id='channel' name='channel' className='select select-bordered w-full'>
+                    <option value='latest' selected={formData.channel === 'latest'}>
+                      Stable
+                    </option>
+                    <option value='nightly' selected={formData.channel === 'nightly'}>
+                      Nightly
+                    </option>
+                  </select>
                 </div>
-              </div>
 
-              <div className='flex flex-col space-y-2 min-w-0'>
-                <label className='text-sm font-medium'>Controller version</label>
-                <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal h-auto min-h-12 w-full'>
-                  <span className='break-all'>{formData.controllerVersion}</span>
-                  {formData.controllerUpdateAvailable && (
-                    <span className='text-primary font-bold break-all'>
-                      {' '}(Update available: {formData.latestVersion})
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className='flex flex-col space-y-2 min-w-0'>
-                <label className='text-sm font-medium'>Display version</label>
-                <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal h-auto min-h-12 w-full'>
-                  <span className='break-all'>{formData.displayVersion}</span>
-                  {formData.displayUpdateAvailable && (
-                    <span className='text-primary font-bold break-all'>
-                      {' '}(Update available: {formData.latestVersion})
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>
-              {formData.spiffsTotal !== undefined && (
-                <div className='flex flex-col space-y-2 min-w-0'>
-                  <label className='text-sm font-medium'>Storage (SPIFFS)</label>
-                  <div className='flex flex-col gap-1'>
-                    <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
-                      <div
-                        className='bg-primary h-full transition-all'
-                        style={{ width: `${formData.spiffsUsedPct || 0}%` }}
-                      />
+                <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-3'>
+                  <div className='flex min-w-0 flex-col space-y-2'>
+                    <label className='text-sm font-medium'>Hardware</label>
+                    <div className='input input-bordered bg-base-200 h-auto min-h-12 w-full cursor-default break-words whitespace-normal'>
+                      {formData.hardware}
                     </div>
-                    <div className='text-xs opacity-75'>
-                      {((formData.spiffsUsed || 0) / 1024).toFixed(1)} KB /{' '}
-                      {(formData.spiffsTotal / 1024).toFixed(1)} KB ({formData.spiffsUsedPct}%)
+                  </div>
+
+                  <div className='flex min-w-0 flex-col space-y-2'>
+                    <label className='text-sm font-medium'>Controller version</label>
+                    <div className='input input-bordered bg-base-200 h-auto min-h-12 w-full cursor-default break-words whitespace-normal'>
+                      <span className='break-all'>{formData.controllerVersion}</span>
+                      {formData.controllerUpdateAvailable && (
+                        <span className='text-primary font-bold break-all'>
+                          {' '}
+                          (Update available: {formData.latestVersion})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className='flex min-w-0 flex-col space-y-2'>
+                    <label className='text-sm font-medium'>Display version</label>
+                    <div className='input input-bordered bg-base-200 h-auto min-h-12 w-full cursor-default break-words whitespace-normal'>
+                      <span className='break-all'>{formData.displayVersion}</span>
+                      {formData.displayUpdateAvailable && (
+                        <span className='text-primary font-bold break-all'>
+                          {' '}
+                          (Update available: {formData.latestVersion})
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
-              )}
 
-              {formData.sdTotal !== undefined && (
-                <div className='flex flex-col space-y-2 min-w-0'>
-                  <label className='text-sm font-medium'>Storage (SD-Card)</label>
-                  <div className='flex flex-col gap-1'>
-                    <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
-                      <div
-                        className='bg-primary h-full transition-all'
-                        style={{ width: `${formData.sdUsedPct || 0}%` }}
-                      />
+                <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-2'>
+                  {formData.spiffsTotal !== undefined && (
+                    <div className='flex min-w-0 flex-col space-y-2'>
+                      <label className='text-sm font-medium'>Storage (SPIFFS)</label>
+                      <div className='flex flex-col gap-1'>
+                        <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+                          <div
+                            className='bg-primary h-full transition-all'
+                            style={{ width: `${formData.spiffsUsedPct || 0}%` }}
+                          />
+                        </div>
+                        <div className='text-xs opacity-75'>
+                          {((formData.spiffsUsed || 0) / 1024).toFixed(1)} KB /{' '}
+                          {(formData.spiffsTotal / 1024).toFixed(1)} KB ({formData.spiffsUsedPct}%)
+                        </div>
+                      </div>
                     </div>
-                    <div className='text-xs opacity-75'>
-                      {((formData.sdUsed || 0) / 1024 / 1024).toFixed(1)} MB /{' '}
-                      {(formData.sdTotal / 1024 / 1024).toFixed(1)} MB ({formData.sdUsedPct}%)
+                  )}
+
+                  {formData.sdTotal !== undefined && (
+                    <div className='flex min-w-0 flex-col space-y-2'>
+                      <label className='text-sm font-medium'>Storage (SD-Card)</label>
+                      <div className='flex flex-col gap-1'>
+                        <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+                          <div
+                            className='bg-primary h-full transition-all'
+                            style={{ width: `${formData.sdUsedPct || 0}%` }}
+                          />
+                        </div>
+                        <div className='text-xs opacity-75'>
+                          {((formData.sdUsed || 0) / 1024 / 1024).toFixed(1)} MB /{' '}
+                          {(formData.sdTotal / 1024 / 1024).toFixed(1)} MB ({formData.sdUsedPct}%)
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className='alert alert-warning mt-2'>
-              <span>
-                Make sure to backup your profiles from the profile screen before updating the
-                display.
-              </span>
-            </div>
+                <div className='alert alert-warning mt-2'>
+                  <span>
+                    Make sure to backup your profiles from the profile screen before updating the
+                    display.
+                  </span>
+                </div>
 
-            <div className='flex flex-col flex-wrap gap-2 sm:flex-row mt-2'>
-              <button type='submit' className='btn btn-primary' disabled={submitting}>
-                Save & Refresh
-              </button>
-              <button
-                type='submit'
-                name='update'
-                className='btn btn-secondary'
-                disabled={!formData.displayUpdateAvailable || submitting}
-                onClick={() => onUpdate('display')}
-              >
-                Update Display
-              </button>
-              <button
-                type='submit'
-                name='update'
-                className='btn btn-accent'
-                disabled={!formData.controllerUpdateAvailable || submitting}
-                onClick={() => onUpdate('controller')}
-              >
-                Update Controller
-              </button>
-              <button type='button' className='btn btn-outline' onClick={downloadSupportData}>
-                Download Support Data
-              </button>
-            </div>
+                <div className='mt-2 flex flex-col flex-wrap gap-2 sm:flex-row'>
+                  <button type='submit' className='btn btn-primary' disabled={submitting}>
+                    Save & Refresh
+                  </button>
+                  <button
+                    type='submit'
+                    name='update'
+                    className='btn btn-secondary'
+                    disabled={!formData.displayUpdateAvailable || submitting}
+                    onClick={() => onUpdate('display')}
+                  >
+                    Update Display
+                  </button>
+                  <button
+                    type='submit'
+                    name='update'
+                    className='btn btn-accent'
+                    disabled={!formData.controllerUpdateAvailable || submitting}
+                    onClick={() => onUpdate('controller')}
+                  >
+                    Update Controller
+                  </button>
+                  <button type='button' className='btn btn-outline' onClick={downloadSupportData}>
+                    Download Support Data
+                  </button>
+                </div>
               </>
             )}
           </Card>
