@@ -236,9 +236,10 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         float Kp = get_token(pid, 0, ',').toFloat();
         float Ki = get_token(pid, 1, ',').toFloat();
         float Kd = get_token(pid, 2, ',').toFloat();
-        ESP_LOGV(LOG_TAG, "Received PID settings: %.2f, %.2f, %.2f", Kp, Ki, Kd);
+        float FF = get_token(pid, 3, ',', "0").toFloat();
+        ESP_LOGV(LOG_TAG, "Received PID settings: %.2f, %.2f, %.2f, %.2f", Kp, Ki, Kd, FF);
         if (pidControlCallback != nullptr) {
-            pidControlCallback(Kp, Ki, Kd);
+            pidControlCallback(Kp, Ki, Kd, FF);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PUMP_MODEL_COEFFS_CHAR_UUID))) {
         auto pumpModelCoeffs = String(pCharacteristic->getValue().c_str());

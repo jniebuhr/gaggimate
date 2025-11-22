@@ -21,6 +21,7 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#include <display/plugins/PurgeValvePlugin.h>
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
@@ -68,6 +69,7 @@ void Controller::setup() {
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
+    pluginManager->registerPlugin(new PurgeValvePlugin());
     pluginManager->setup(this);
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
@@ -160,10 +162,10 @@ void Controller::setupBluetooth() {
             ESP_LOGE(LOG_TAG, "Received error %d", error);
         }
     });
-    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd) {
-        ESP_LOGI(LOG_TAG, "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
+    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd, const float FF) {
+        ESP_LOGI(LOG_TAG, "Received new autotune values: %.3f, %.3f, %.3f, %.3f", Kp, Ki, Kd, FF);
         char pid[30];
-        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f", Kp, Ki, Kd);
+        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, FF);
         settings.setPid(String(pid));
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
