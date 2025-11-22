@@ -32,7 +32,7 @@ function getChartData(data) {
   const minX = Math.min(...timeValues);
   const maxX = Math.max(...timeValues);
   const padding = maxTemp - minTemp > 10 ? 2 : 5;
-  
+
   // Check if weight data has any non-zero values
   const hasWeight = v.some(point => point.y > 0);
   const hasWeightFlow = vf.some(point => point.y > 0);
@@ -93,20 +93,28 @@ function getChartData(data) {
           data: tf,
         },
         // Only include weight datasets if they have non-zero values
-        ...(hasWeight ? [{
-          label: 'Weight',
-          borderColor: '#8B5CF6',
-          pointStyle: false,
-          yAxisID: 'y2',
-          data: v,
-        }] : []),
-        ...(hasWeightFlow ? [{
-          label: 'Weight Flow',
-          borderColor: '#4b2e8dff',
-          pointStyle: false,
-          yAxisID: 'y1',
-          data: vf,
-        }] : []),
+        ...(hasWeight
+          ? [
+              {
+                label: 'Weight',
+                borderColor: '#8B5CF6',
+                pointStyle: false,
+                yAxisID: 'y2',
+                data: v,
+              },
+            ]
+          : []),
+        ...(hasWeightFlow
+          ? [
+              {
+                label: 'Weight Flow',
+                borderColor: '#4b2e8dff',
+                pointStyle: false,
+                yAxisID: 'y1',
+                data: vf,
+              },
+            ]
+          : []),
       ],
     },
     options: {
@@ -179,21 +187,23 @@ function getChartData(data) {
           },
           grid: { drawOnChartArea: false },
         },
-        ...(hasWeight ? {
-          y2: {
-            type: 'linear',
-            min: 0,
-            position: 'right',
-            offset: true,
-            ticks: {
-              callback: value => `${value.toFixed()} g`,
-              font: {
-                size: window.innerWidth < 640 ? 10 : 12,
+        ...(hasWeight
+          ? {
+              y2: {
+                type: 'linear',
+                min: 0,
+                position: 'right',
+                offset: true,
+                ticks: {
+                  callback: value => `${value.toFixed()} g`,
+                  font: {
+                    size: window.innerWidth < 640 ? 10 : 12,
+                  },
+                },
+                grid: { drawOnChartArea: false },
               },
-            },
-            grid: { drawOnChartArea: false },
-          },
-        } : {}),
+            }
+          : {}),
       },
     },
   };
