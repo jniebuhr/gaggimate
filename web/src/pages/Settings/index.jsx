@@ -46,6 +46,19 @@ export function Settings() {
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
 
+      // Extract Kf from PID string and separate them
+      if (fetchedSettings.pid) {
+        const pidParts = fetchedSettings.pid.split(',');
+        if (pidParts.length >= 4) {
+          // PID string has Kf as 4th parameter
+          settingsWithToggle.pid = pidParts.slice(0, 3).join(','); // First 3 params
+          settingsWithToggle.kf = pidParts[3]; // 4th parameter
+        } else {
+          // No Kf in PID string, use default
+          settingsWithToggle.kf = '0.000';
+        }
+      }
+
       // Initialize auto-wakeup schedules
       if (fetchedSettings.autowakeupSchedules) {
         // Parse new schedule format: "time1|days1;time2|days2"
@@ -178,6 +191,12 @@ export function Settings() {
         'altRelayFunction',
         formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
       );
+
+      // Combine PID and Kf into single PID string
+      if (formData.pid && formData.kf !== undefined) {
+        const combinedPid = `${formData.pid},${formData.kf}`;
+        formDataToSubmit.set('pid', combinedPid);
+      }
 
       // Add auto-wakeup schedules
       const schedulesStr = autowakeupSchedules
@@ -543,6 +562,22 @@ export function Settings() {
                 placeholder='2.0, 0.1, 0.01'
                 value={formData.pid}
                 onChange={onChange('pid')}
+              />
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='kf' className='mb-2 block text-sm font-medium'>
+                Thermal Feedforward Gain (Kff) - 0 to disable
+              </label>
+              <input
+                id='kf'
+                name='kf'
+                type='number'
+                step='0.001'
+                className='input input-bordered w-full'
+                placeholder='0.600'
+                value={formData.kf}
+                onChange={onChange('kf')}
               />
             </div>
 
