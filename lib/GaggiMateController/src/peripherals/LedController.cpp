@@ -11,7 +11,10 @@ bool LedController::isAvailable() { return this->initialize(); }
 
 void LedController::setChannel(uint8_t channel, uint8_t brightness) {
     ESP_LOGI("LedController", "Setting channel %u to %u", channel, brightness);
-    this->pca9634->write1(channel, brightness);
+    uint8_t error = this->pca9634->write1(channel, brightness);
+    if (error > 0) {
+        ESP_LOGE("LedController", "Error setting channel %u to %u: %d", channel, brightness, this->pca9634->lastError());
+    }
 }
 
 void LedController::disable() {

@@ -201,7 +201,9 @@ void Controller::setupInfos() {
 
 void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
+        WiFi.setHostname(settings.getMdnsName().c_str());
         WiFi.mode(WIFI_STA);
+        WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
         WiFi.setAutoReconnect(true);

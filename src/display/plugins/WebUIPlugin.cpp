@@ -717,7 +717,7 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
         const uint64_t used = SD_MMC.usedBytes();
         const uint64_t freeBytes = total > used ? (total - used) : 0;
         doc["sdTotal"] = total;
-        doc["ssdUsed"] = used;
+        doc["sdUsed"] = used;
         doc["sdFree"] = freeBytes;
         if (total > 0) {
             // Provide integer percentage to avoid float JSON
