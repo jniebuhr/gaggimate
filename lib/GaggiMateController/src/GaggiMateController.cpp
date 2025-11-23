@@ -40,11 +40,8 @@ void GaggiMateController::setup() {
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
 
     // 4-Pin peripheral port
-    pinMode(_config.ext1Pin, OUTPUT);
-    digitalWrite(_config.ext1Pin, HIGH);
-    delay(250);
     /*
-    if (!Wire.begin(_config.ext2Pin, _config.ext3Pin, 400000)) {
+    if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
         ESP_LOGE(LOG_TAG, "Failed to initialize I2C bus");
     }
     this->ledController = new LedController(&Wire);
