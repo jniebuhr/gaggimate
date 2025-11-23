@@ -32,7 +32,7 @@ void GaggiMateController::setup() {
         pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { /* noop */ });
     }
     if (_config.capabilites.dimming) {
-        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor, _config.ext3Pin, _config.ext2Pin);
+        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor, _config.ext2Pin, _config.ext3Pin);
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
@@ -40,8 +40,11 @@ void GaggiMateController::setup() {
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
 
     // 4-Pin peripheral port
+    pinMode(_config.ext1Pin, OUTPUT);
+    digitalWrite(_config.ext1Pin, HIGH);
+    delay(250);
     /*
-    if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
+    if (!Wire.begin(_config.ext2Pin, _config.ext3Pin, 400000)) {
         ESP_LOGE(LOG_TAG, "Failed to initialize I2C bus");
     }
     delay(500);

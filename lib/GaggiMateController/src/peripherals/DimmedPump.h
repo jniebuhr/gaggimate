@@ -1,15 +1,15 @@
 #ifndef DIMMEDPUMP_H
 #define DIMMEDPUMP_H
+#include "MCP4725.h"
 #include "PSM.h"
 #include "PressureController/PressureController.h"
 #include "PressureSensor.h"
 #include "Pump.h"
 #include <Arduino.h>
-#include "ESP32_SoftWire.h"
-#include "MCP4725.h"
+#include <SoftWire.h>
 
 class DimmedPump : public Pump {
-public:
+  public:
     enum class ControlMode { POWER, PRESSURE, FLOW };
 
     DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressureSensor, uint8_t sclPin, uint8_t sdaPin);
@@ -33,7 +33,7 @@ public:
     void fullPower();
     void setValveState(bool open);
 
-private:
+  private:
     uint8_t _ssr_pin;
     uint8_t _sense_pin;
     PSM _psm;
