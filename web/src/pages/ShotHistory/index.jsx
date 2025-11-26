@@ -301,12 +301,12 @@ export function ShotHistory() {
       <div className='flex flex-row items-center justify-end gap-2' aria-label='Export history'>
         <button
           onClick={onExport}
-          disabled={history.length === 0 }
+          disabled={history.length === 0 || isExporting }
           className={`btn btn-ghost btn-sm lg:btn-lg`}
           title='Export all profiles'
           aria-label='Export full history'
         > {isExporting ? (
-            <span className="loading loading-dots" />
+            <span className="loading loading-dots text-base-content" />
           ) : (
             <FontAwesomeIcon icon={faFileExport} />
           )}
