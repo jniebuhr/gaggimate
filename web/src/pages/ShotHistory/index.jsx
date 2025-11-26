@@ -326,6 +326,9 @@ export function ShotHistory() {
               if (!target || target.loaded) return;
               try {
                 const parsed = await fetchShotData(id);
+                if (!parsed) {
+                  return;
+                }
                 parsed.incomplete = (target?.incomplete ?? false) || parsed.incomplete;
                 if (target?.notes) parsed.notes = target.notes;
                 setHistory(prev =>
