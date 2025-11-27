@@ -227,8 +227,8 @@ void Controller::setupWifi() {
                     pluginManager->trigger("controller:wifi:disconnect");
                 },
                 WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
-            configTzTime(resolve_timezone(controller->getSettings().getTimezone()), NTP_SERVER);
-            setenv("TZ", resolve_timezone(controller->getSettings().getTimezone()), 1);
+            configTzTime(resolve_timezone(settings.getTimezone()), NTP_SERVER);
+            setenv("TZ", resolve_timezone(settings.getTimezone()), 1);
             tzset();
             sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
             sntp_setservername(0, NTP_SERVER);
