@@ -46,6 +46,7 @@ export function ShotHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [isExporting, setIsExporting] = useState(false);
+  const [exportingHistoryPercentage, setExportingHistoryPercentage] = useState(0);
   const loadHistory = async () => {
     try {
       // Fetch binary index instead of websocket request
@@ -131,21 +132,23 @@ export function ShotHistory() {
   const onExport = useCallback(async () => {
     if(history.length > 0 && !isExporting) {
       setIsExporting(true);
+      setExportingHistoryPercentage(0);
+      const totalShots = history.length;
+      let completed = 0;
       const exportedHistory = await Promise.all(
-        history.map(async p => {
-          let ep = null;
-          let data = null;
-          data = await fetchShotData(p.id);
-          if (data) {
-            ep = data;
-          }
-          return ep;
-        }),
+        history.map(p =>
+          fetchShotData(p.id)
+            .catch(() => null)
+            .finally(() => {
+              completed++;
+              setExportingHistoryPercentage(Math.round((completed / totalShots) * 100));
+            })
+        ),
       );
-      setIsExporting(false);
       if (exportedHistory.length > 0 && exportedHistory[0] !== null) {
         downloadJson(exportedHistory, 'history.json');
       }
+      setIsExporting(false);
     }
     else {
       console.log('Already exporting or No shots to export');
@@ -306,7 +309,10 @@ export function ShotHistory() {
           title='Export all profiles'
           aria-label='Export full history'
         > {isExporting ? (
-            <span className="loading loading-dots text-base-content" />
+          <span className='flex flex-row items-center gap-2 text-base-content'>
+            <span className="loading loading-sm lg:loading-lg loading-dots" />
+            <span aria-live='polite' className="text-xs lg:text-sm">{exportingHistoryPercentage}%</span>
+          </span>
           ) : (
             <FontAwesomeIcon icon={faFileExport} />
           )}
