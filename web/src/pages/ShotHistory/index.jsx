@@ -145,8 +145,12 @@ export function ShotHistory() {
             })
         ),
       );
-      if (exportedHistory.length > 0 && exportedHistory[0] !== null) {
-        downloadJson(exportedHistory, 'history.json');
+      // Remove any falsy entries (failed loads)
+      const cleanedHistory = exportedHistory.filter(Boolean);
+      if (cleanedHistory.length > 0) {
+        downloadJson(cleanedHistory, 'history.json');
+      } else {
+        console.warn('Shots could not be exported');
       }
       setIsExporting(false);
     }
@@ -306,7 +310,7 @@ export function ShotHistory() {
           onClick={onExport}
           disabled={history.length === 0 || isExporting }
           className={`btn btn-ghost btn-sm lg:btn-lg`}
-          title='Export all profiles'
+          title='Export full history'
           aria-label='Export full history'
         > {isExporting ? (
           <span className='flex flex-row items-center gap-2 text-base-content'>
