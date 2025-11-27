@@ -1,13 +1,13 @@
 import {
-  Chart,
-  LineController,
-  TimeScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Legend,
-  Filler,
   CategoryScale,
+  Chart,
+  Filler,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  TimeScale,
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
@@ -46,6 +46,7 @@ export function ShotHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [isExporting, setIsExporting] = useState(false);
+  const [exportingHistoryPercentage, setExportingHistoryPercentage] = useState(0);
   const loadHistoryAbortRef = useRef(null);
   const loadHistory = async () => {
     // Abort any in-flight fetch to prevent request pileup on the ESP32.
@@ -139,21 +140,23 @@ export function ShotHistory() {
   const onExport = useCallback(async () => {
     if(history.length > 0 && !isExporting) {
       setIsExporting(true);
+      setExportingHistoryPercentage(0);
+      const totalShots = history.length;
+      let completed = 0;
       const exportedHistory = await Promise.all(
-        history.map(async p => {
-          let ep = null;
-          let data = null;
-          data = await fetchShotData(p.id);
-          if (data) {
-            ep = data;
-          }
-          return ep;
-        }),
+        history.map(p =>
+          fetchShotData(p.id)
+            .catch(() => null)
+            .finally(() => {
+              completed++;
+              setExportingHistoryPercentage(Math.round((completed / totalShots) * 100));
+            })
+        ),
       );
-      setIsExporting(false);
       if (exportedHistory.length > 0 && exportedHistory[0] !== null) {
         downloadJson(exportedHistory, 'history.json');
       }
+      setIsExporting(false);
     }
     else {
       console.log('Already exporting or No shots to export');
@@ -325,7 +328,10 @@ export function ShotHistory() {
           title='Export all profiles'
           aria-label='Export full history'
         > {isExporting ? (
-            <span className="loading loading-dots text-base-content" />
+          <span className='flex flex-row items-center gap-2 text-base-content'>
+            <span className="loading loading-sm lg:loading-lg loading-dots" />
+            <span aria-live='polite' className="text-xs lg:text-sm">{exportingHistoryPercentage}%</span>
+          </span>
           ) : (
             <FontAwesomeIcon icon={faFileExport} />
           )}
