@@ -21,3 +21,7 @@ void LilyGoDriver::init() {
     beginLvglHelper(panel);
     panel.setBrightness(16);
 }
+
+bool LilyGoDriver::supportsSDCard() { return true; }
+
+bool LilyGoDriver::installSDCard() { return panel.installSD(); }

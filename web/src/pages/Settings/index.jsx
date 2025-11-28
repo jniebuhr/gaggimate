@@ -1,10 +1,10 @@
 import { useQuery } from 'preact-fetching';
 import { Spinner } from '../../components/Spinner.jsx';
-import { useState, useEffect, useCallback, useRef, useContext } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { timezones } from '../../config/zones.js';
 import { computed } from '@preact/signals';
-import { machine, ApiServiceContext } from '../../services/ApiService.js';
+import { machine } from '../../services/ApiService.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { setDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
 import { PluginCard } from './PluginCard.jsx';
@@ -13,21 +13,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
-import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
-const hwScale = computed(() => machine.value.capabilities.hardwareScale);
 
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
-  const [calibrationWeight, setCalibrationWeight] = useState('');
-  const apiService = useContext(ApiServiceContext);
-  const status = computed(() => machine.value.status);
-  
+  const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
+    { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
+  ]);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -48,9 +45,38 @@ export function Settings() {
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
+
+      // Initialize auto-wakeup schedules
+      if (fetchedSettings.autowakeupSchedules) {
+        // Parse new schedule format: "time1|days1;time2|days2"
+        const schedules = [];
+        if (
+          typeof fetchedSettings.autowakeupSchedules === 'string' &&
+          fetchedSettings.autowakeupSchedules.trim()
+        ) {
+          const scheduleStrings = fetchedSettings.autowakeupSchedules.split(';');
+          for (const scheduleStr of scheduleStrings) {
+            const [time, daysStr] = scheduleStr.split('|');
+            if (time && daysStr && daysStr.length === 7) {
+              const days = daysStr.split('').map(d => d === '1');
+              schedules.push({ time, days });
+            }
+          }
+        }
+        if (schedules.length === 0) {
+          schedules.push({ time: '07:00', days: [true, true, true, true, true, true, true] });
+        }
+        setAutoWakeupSchedules(schedules);
+      } else {
+        setAutoWakeupSchedules([
+          { time: '07:00', days: [true, true, true, true, true, true, true] },
+        ]);
+      }
+
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
+      setAutoWakeupSchedules([{ time: '07:00', days: [true, true, true, true, true, true, true] }]);
     }
   }, [fetchedSettings]);
 
@@ -86,6 +112,9 @@ export function Settings() {
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
       }
+      if (key === 'autowakeupEnabled') {
+        value = !formData.autowakeupEnabled;
+      }
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
         // Set standby brightness to 0 when toggle is off
@@ -109,36 +138,34 @@ export function Settings() {
     };
   };
 
-  // Calibration helper functions
-  const tareScale = useCallback(() => {
-    apiService.send({
-      tp: 'req:scale:tare',
-    });
-  }, [apiService]);
+  const addAutoWakeupSchedule = () => {
+    setAutoWakeupSchedules([
+      ...autowakeupSchedules,
+      {
+        time: '07:00',
+        days: [true, true, true, true, true, true, true],
+      },
+    ]);
+  };
 
-  const calibrateLoadCell = useCallback((cellNumber) => {
-    const currentWeight = status.value?.currentWeight;
-    const actualWeight = parseFloat(calibrationWeight);
-    
-    if (!currentWeight || !actualWeight || actualWeight <= 0) {
-      alert('Please ensure the scale is showing a weight and enter a valid calibration weight.');
-      return;
+  const removeAutoWakeupSchedule = index => {
+    if (autowakeupSchedules.length > 1) {
+      const newSchedules = autowakeupSchedules.filter((_, i) => i !== index);
+      setAutoWakeupSchedules(newSchedules);
     }
+  };
 
-    // Calculate new scale factor using the formula: Scale_Factor_New = (Current_Weight * Factor_Old) / Actual_Weight_Of_Calibration_Object
-    const currentFactor = cellNumber === 1 ? parseFloat(formData.scaleFactor1) || 1 : parseFloat(formData.scaleFactor2) || 1;
-    const newFactor = (currentWeight * currentFactor) / actualWeight;
-    
-    // Update the appropriate scale factor in the form
-    if (cellNumber === 1) {
-      setFormData(prev => ({ ...prev, scaleFactor1: newFactor.toFixed(2) }));
-    } else {
-      setFormData(prev => ({ ...prev, scaleFactor2: newFactor.toFixed(2) }));
-    }
-    
-    // Clear the calibration weight input
-    setCalibrationWeight('');
-  }, [status, calibrationWeight, formData.scaleFactor1, formData.scaleFactor2, setFormData]);
+  const updateAutoWakeupTime = (index, value) => {
+    const newSchedules = [...autowakeupSchedules];
+    newSchedules[index].time = value;
+    setAutoWakeupSchedules(newSchedules);
+  };
+
+  const updateAutoWakeupDay = (scheduleIndex, dayIndex, enabled) => {
+    const newSchedules = [...autowakeupSchedules];
+    newSchedules[scheduleIndex].days[dayIndex] = enabled;
+    setAutoWakeupSchedules(newSchedules);
+  };
 
   const onSubmit = useCallback(
     async (e, restart = false) => {
@@ -147,6 +174,16 @@ export function Settings() {
       const form = formRef.current;
       const formDataToSubmit = new FormData(form);
       formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
+      formDataToSubmit.set(
+        'altRelayFunction',
+        formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
+      );
+
+      // Add auto-wakeup schedules
+      const schedulesStr = autowakeupSchedules
+        .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
+        .join(';');
+      formDataToSubmit.set('autowakeupSchedules', schedulesStr);
 
       // Ensure standbyBrightness is included even when the field is disabled
       if (!formData.standbyDisplayEnabled) {
@@ -172,7 +209,7 @@ export function Settings() {
       setFormData(updatedData);
       setSubmitting(false);
     },
-    [setFormData, formRef, formData],
+    [setFormData, formRef, formData, autowakeupSchedules],
   );
 
   const onExport = useCallback(() => {
@@ -618,6 +655,25 @@ export function Settings() {
                 />
               </div>
             )}
+
+            <div className='form-control'>
+              <label htmlFor='altRelayFunction' className='mb-2 block text-sm font-medium'>
+                Alt Relay / SSR2 Function
+              </label>
+              <select
+                id='altRelayFunction'
+                name='altRelayFunction'
+                className='select select-bordered w-full'
+                value={formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1}
+                onChange={onChange('altRelayFunction')}
+              >
+                <option value={0}>None</option>
+                <option value={1}>Grind</option>
+                <option value={2} disabled className='text-gray-400'>
+                  Steam Boiler (Coming Soon)
+                </option>
+              </select>
+            </div>
           </Card>
 
           <Card sm={10} lg={5} title='Display settings'>
@@ -834,149 +890,16 @@ export function Settings() {
             </Card>
           )}
 
-          <Card sm={10} lg={5} title='Scales'>
-            <div className='mb-2 text-sm opacity-70'>
-              Choose which scale to use when both hardware and Bluetooth scales are available
-            </div>
-            
-            <div className='form-control'>
-              <label htmlFor='preferredScaleSource' className='mb-2 block text-sm font-medium'>
-                Preferred Scale Source
-              </label>
-              <select
-                id='preferredScaleSource'
-                name='preferredScaleSource'
-                className='select select-bordered w-full'
-                value={formData.preferredScaleSource || 'hardware'}
-                onChange={onChange('preferredScaleSource')}
-              >
-                <option value='hardware'>Prefer Hardware Scale (Built-in)</option>
-                <option value='bluetooth'>Prefer Bluetooth Scale</option>
-                <option value='flow_estimation'>Prefer Flow Estimation</option>
-              </select>
-            </div>
-            
-            <div className='mt-2 text-xs opacity-60'>
-              Note: Grinding by weight will always use Bluetooth scale regardless of this setting
-            </div>
-
-            {/* Hardware Scale Calibration */}
-            {hwScale.value && (
-              <>
-                <div className='divider'>Hardware Scale Calibration</div>
-                <div className='mb-4 text-sm opacity-70'>
-                  Use this tool to calibrate your load cells with a known weight object.
-                </div>
-                
-                {/* Current Weight Display */}
-                <div className='form-control'>
-                  <label className='mb-2 block text-sm font-medium'>Current Weight</label>
-                  <div className='flex items-center justify-between rounded-lg border border-base-300 bg-base-100 p-3'>
-                    <div className='flex items-center space-x-2'>
-                      <FontAwesomeIcon icon={faWeightScale} className='text-primary' />
-                      <span className='text-2xl font-bold'>
-                        {status.value?.currentWeight?.toFixed(1) || '0.0'}g
-                      </span>
-                    </div>
-                    <button
-                      type='button'
-                      className='btn btn-outline btn-sm'
-                      onClick={tareScale}
-                    >
-                      Tare
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Calibration Weight Input */}
-                <div className='form-control'>
-                  <label className='mb-2 block text-sm font-medium'>
-                    Actual Weight of Calibration Object
-                  </label>
-                  <div className='flex items-center space-x-3'>
-                    <input
-                      type='number'
-                      className='input input-bordered flex-1'
-                      placeholder='100.0'
-                      min='0.1'
-                      step='0.1'
-                      value={calibrationWeight}
-                      onChange={(e) => setCalibrationWeight(e.target.value)}
-                    />
-                    <span className='text-sm opacity-70'>grams</span>
-                  </div>
-                </div>
-                
-                {/* Calibration Buttons */}
-                <div className='grid grid-cols-2 gap-4'>
-                  <button
-                    type='button'
-                    className='btn btn-primary btn-sm'
-                    onClick={() => calibrateLoadCell(1)}
-                    disabled={!status.value?.currentWeight || !calibrationWeight}
-                  >
-                    Calibrate Load Cell 1
-                  </button>
-                  <button
-                    type='button'
-                    className='btn btn-primary btn-sm'
-                    onClick={() => calibrateLoadCell(2)}
-                    disabled={!status.value?.currentWeight || !calibrationWeight}
-                  >
-                    Calibrate Load Cell 2
-                  </button>
-                </div>
-                
-                <div className='text-xs opacity-60'>
-                  Tare the scale.Place a known weight on one load cell, enter its actual weight above, then click the appropriate load cell calibration button. Repeat for the other load cell.
-                </div>
-                
-                <div className='divider'>Manual Scale Factors</div>
-                <div className='mb-2 text-sm opacity-70'>
-                  Or manually set the calibration factors for the hardware scale
-                </div>
-                
-                <div className='form-control mb-3'>
-                  <label htmlFor='scaleFactor1' className='mb-2 block text-sm font-medium'>
-                    Load Cell 1 Scale Factor
-                  </label>
-                  <input
-                    id='scaleFactor1'
-                    name='scaleFactor1'
-                    type='number'
-                    className='input input-bordered w-full'
-                    placeholder='-2500.00'
-                    min='-50000.00'
-                    max='50000.00'
-                    step='0.01'
-                    value={formData.scaleFactor1}
-                    onChange={onChange('scaleFactor1')}
-                  />
-                </div>
-                
-                <div className='form-control'>
-                  <label htmlFor='scaleFactor2' className='mb-2 block text-sm font-medium'>
-                    Load Cell 2 Scale Factor
-                  </label>
-                  <input
-                    id='scaleFactor2'
-                    name='scaleFactor2'
-                    type='number'
-                    className='input input-bordered w-full'
-                    placeholder='2500.00'
-                    min='-50000.00'
-                    max='50000.00'
-                    step='0.01'
-                    value={formData.scaleFactor2}
-                    onChange={onChange('scaleFactor2')}
-                  />
-                </div>
-              </>
-            )}
-          </Card>
-
           <Card sm={10} title='Plugins'>
-            <PluginCard formData={formData} onChange={onChange} />
+            <PluginCard
+              formData={formData}
+              onChange={onChange}
+              autowakeupSchedules={autowakeupSchedules}
+              addAutoWakeupSchedule={addAutoWakeupSchedule}
+              removeAutoWakeupSchedule={removeAutoWakeupSchedule}
+              updateAutoWakeupTime={updateAutoWakeupTime}
+              updateAutoWakeupDay={updateAutoWakeupDay}
+            />
           </Card>
         </div>
 

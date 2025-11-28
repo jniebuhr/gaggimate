@@ -50,14 +50,6 @@ void NimBLEClientController::registerVolumetricMeasurementCallback(const float_c
 
 void NimBLEClientController::registerTofMeasurementCallback(const int_callback_t &callback) { tofMeasurementCallback = callback; }
 
-void NimBLEClientController::registerScaleMeasurementCallback(const float_callback_t &callback) {
-    scaleMeasurementCallback = callback;
-}
-
-void NimBLEClientController::registerScaleCalibrationCallback(const scale_calibration_callback_t &callback) {
-    scaleCalibrationCallback = callback;
-}
-
 std::string NimBLEClientController::readInfo() const {
     if (infoChar != nullptr && infoChar->canRead()) {
         return infoChar->readValue();
@@ -106,8 +98,6 @@ bool NimBLEClientController::connectToServer() {
     pressureScaleChar = pRemoteService->getCharacteristic(NimBLEUUID(PRESSURE_SCALE_UUID));
     volumetricTareChar = pRemoteService->getCharacteristic(NimBLEUUID(VOLUMETRIC_TARE_UUID));
     ledControlChar = pRemoteService->getCharacteristic(NimBLEUUID(LED_CONTROL_UUID));
-    scaleCalibrateChar = pRemoteService->getCharacteristic(NimBLEUUID(SCALE_CALIBRATE_UUID));
-    scaleTareChar = pRemoteService->getCharacteristic(NimBLEUUID(SCALE_TARE_UUID));
 
     // Obtain the remote notify characteristic and subscribe to it
 
@@ -153,19 +143,6 @@ bool NimBLEClientController::connectToServer() {
         tofMeasurementChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                                       std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
-
-    scaleWeightMeasurementChar = pRemoteService->getCharacteristic(NimBLEUUID(SCALE_WEIGHT_MEASUREMENT_UUID));
-    if (scaleWeightMeasurementChar != nullptr && scaleWeightMeasurementChar->canNotify()) {
-        scaleWeightMeasurementChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this,
-                                                      std::placeholders::_1,
-                                                      std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-    }   
-
-    scaleCalibrationChar = pRemoteService->getCharacteristic(NimBLEUUID(SCALE_CALIBRATION_UUID));
-    if (scaleCalibrationChar != nullptr && scaleCalibrationChar->canNotify()) {
-        scaleCalibrationChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
-                                                      std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-    }   
 
     delay(500);
 
@@ -214,28 +191,6 @@ void NimBLEClientController::setPressureScale(float scale) {
 void NimBLEClientController::sendLedControl(uint8_t channel, uint8_t brightness) {
     if (client->isConnected() && ledControlChar != nullptr) {
         ledControlChar->writeValue(String(channel) + "," + String(brightness));
-    }
-}
-
-void NimBLEClientController::sendScaleTare() {
-    if (scaleTareChar != nullptr && client->isConnected()) {
-        scaleTareChar->writeValue("1");
-    }
-}
-
-void NimBLEClientController::sendCalibrateScale(uint8_t cell, float calibrationWeight) {
-    if (scaleCalibrateChar != nullptr && client->isConnected()) {
-        char str[10]; // 1,9999.99 is 9 characters plus a null terminator
-        snprintf(str, sizeof(str), "%d,%.2f", cell, calibrationWeight);
-        scaleCalibrateChar->writeValue(str);
-    }
-}
-
-void NimBLEClientController::sendScaleCalibration(float scaleFactor1, float scaleFactor2) {
-    if (scaleCalibrationChar != nullptr && client->isConnected()) {
-        char str[32]; // -9999.999,-9999.999 is 19 characters plus a null terminator
-        snprintf(str, sizeof(str), "%.3f,%.3f", scaleFactor1, scaleFactor2);
-        scaleCalibrationChar->writeValue(str);
     }
 }
 
@@ -294,21 +249,21 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             remoteErrorCallback(errorCode);
         }
     }
-    else if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
         int brewButtonStatus = atoi((char *)pData);
         ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
         if (brewBtnCallback != nullptr) {
             brewBtnCallback(brewButtonStatus);
         }
     }
-    else if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
         int steamButtonStatus = atoi((char *)pData);
         ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
         if (steamBtnCallback != nullptr) {
             steamBtnCallback(steamButtonStatus);
         }
     }
-    else if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
         String data = String((char *)pData);
         float temperature = get_token(data, 0, ',').toFloat();
         float pressure = get_token(data, 1, ',').toFloat();
@@ -323,7 +278,7 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
         }
     }
-    else if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
         String settings = String((char *)pData);
         ESP_LOGV(LOG_TAG, "autotune result: %s", settings.c_str());
         if (autotuneResultCallback != nullptr) {
@@ -333,39 +288,18 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             autotuneResultCallback(Kp, Ki, Kd);
         }
     }
-    else if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
         float value = atof((char *)pData);
         ESP_LOGV(LOG_TAG, "Volumetric measurement: %.2f", value);
         if (volumetricMeasurementCallback != nullptr) {
             volumetricMeasurementCallback(value);
         }
     }
-    else if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
         int value = atoi((char *)pData);
         ESP_LOGV(LOG_TAG, "ToF measurement: %.2f", value);
         if (tofMeasurementCallback != nullptr) {
             tofMeasurementCallback(value);
         }
     }
-    else if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SCALE_WEIGHT_MEASUREMENT_UUID))) {
-        float value = atof((char *)pData);
-        ESP_LOGV(LOG_TAG, "Scale weight measurement: %.2f", value);
-        if (scaleMeasurementCallback != nullptr) {
-            scaleMeasurementCallback(value);
-        }
-    }
-    else if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SCALE_CALIBRATION_UUID))) {
-        String data = String((char *)pData);
-        float scaleFactor1 = get_token(data, 0, ',').toFloat();
-        float scaleFactor2 = get_token(data, 1, ',').toFloat();
-        ESP_LOGV(LOG_TAG, "Scale calibration: %.3f, %.3f", scaleFactor1, scaleFactor2);
-        if (scaleCalibrationCallback != nullptr) {
-            scaleCalibrationCallback(scaleFactor1, scaleFactor2);
-        }
-    }
-    else {
-        ESP_LOGW(LOG_TAG, "Unknown characteristic notification received: %s", pRemoteCharacteristic->getUUID().toString().c_str());
-    }
-
-
 }

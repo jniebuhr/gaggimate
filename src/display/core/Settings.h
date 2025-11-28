@@ -6,8 +6,42 @@
 #include <Preferences.h>
 #include <display/core/constants.h>
 #include <display/core/utils.h>
+#include <vector>
 
 #define PREFERENCES_KEY "controller"
+
+struct AutoWakeupSchedule {
+    String time;  // HH:MM format
+    bool days[7]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+
+    AutoWakeupSchedule() : time("07:00") {
+        // Default to all days enabled
+        for (int i = 0; i < 7; i++) {
+            days[i] = true;
+        }
+    }
+
+    AutoWakeupSchedule(const String &timeStr) : time(timeStr) {
+        // Default to all days enabled
+        for (int i = 0; i < 7; i++) {
+            days[i] = true;
+        }
+    }
+
+    bool isDayEnabled(int dayOfWeek) const {
+        // dayOfWeek: 1=Monday, 2=Tuesday, ..., 7=Sunday
+        if (dayOfWeek < 1 || dayOfWeek > 7)
+            return false;
+        return days[dayOfWeek - 1];
+    }
+
+    void setDayEnabled(int dayOfWeek, bool enabled) {
+        // dayOfWeek: 1=Monday, 2=Tuesday, ..., 7=Sunday
+        if (dayOfWeek >= 1 && dayOfWeek <= 7) {
+            days[dayOfWeek - 1] = enabled;
+        }
+    }
+};
 
 class Settings;
 using SettingsCallback = std::function<void(Settings *)>;
@@ -80,9 +114,9 @@ class Settings {
     int getSunriseExtBrightness() const { return sunriseExtBrightness; }
     int getEmptyTankDistance() const { return emptyTankDistance; }
     int getFullTankDistance() const { return fullTankDistance; }
-    float getScaleFactor1() const { return scaleFactor1; }
-    float getScaleFactor2() const { return scaleFactor2; }
-    String getPreferredScaleSource() const { return preferredScaleSource; }
+    int getAltRelayFunction() const { return altRelayFunction; }
+    bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
+    std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
     void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -145,8 +179,9 @@ class Settings {
     void setSunriseExtBrightness(int sunrise_ext_brightness);
     void setEmptyTankDistance(int empty_tank_distance);
     void setFullTankDistance(int full_tank_distance);
-    void setScaleFactors(float scale_factor_1, float scale_factor_2);
-    void setPreferredScaleSource(const String &scaleSource);
+    void setAltRelayFunction(int alt_relay_function);
+    void setAutoWakeupEnabled(bool enabled);
+    void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
 
   private:
     Preferences preferences;
@@ -164,6 +199,8 @@ class Settings {
     double grindDelay = 1000.0;
     bool delayAdjust = true;
     int startupMode = MODE_STANDBY;
+    bool autowakeupEnabled = false;
+    std::vector<AutoWakeupSchedule> autowakeupSchedules;
     int standbyTimeout = DEFAULT_STANDBY_TIMEOUT_MS;
     String pid = DEFAULT_PID;
     String pumpModelCoeffs = DEFAULT_PUMP_MODEL_COEFFS;
@@ -219,13 +256,7 @@ class Settings {
     int sunriseExtBrightness = 255;
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
-
-    // Hardware scale settings
-    float scaleFactor1 = 0.0f;
-    float scaleFactor2 = 0.0f;
-    
-    // Scale source preference ("hardware", "bluetooth")
-    String preferredScaleSource = "hardware";
+    int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
 
     void doSave();
     xTaskHandle taskHandle;

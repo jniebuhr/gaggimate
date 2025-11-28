@@ -3,23 +3,23 @@
 
 #include <utility>
 
-ProfileManager::ProfileManager(fs::FS &fs, String dir, Settings &settings, PluginManager *plugin_manager)
+ProfileManager::ProfileManager(fs::FS *fs, String dir, Settings &settings, PluginManager *plugin_manager)
     : _plugin_manager(plugin_manager), _settings(settings), _fs(fs), _dir(std::move(dir)) {}
 
 void ProfileManager::setup() {
     ensureDirectory();
     auto profiles = listProfiles();
-    if (!_settings.isProfilesMigrated() || profiles.empty()) {
+    if (!_settings.isProfilesMigrated() || profiles.empty() || !loadSelectedProfile(selectedProfile)) {
         migrate();
         _settings.setProfilesMigrated(true);
+        loadSelectedProfile(selectedProfile);
     }
-    loadSelectedProfile(selectedProfile);
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));
 }
 
 bool ProfileManager::ensureDirectory() const {
-    if (!_fs.exists(_dir)) {
-        return _fs.mkdir(_dir);
+    if (!_fs->exists(_dir)) {
+        return _fs->mkdir(_dir);
     }
     return true;
 }
@@ -93,7 +93,7 @@ void ProfileManager::migrate() {
 
 std::vector<String> ProfileManager::listProfiles() {
     std::vector<String> uuids;
-    File root = _fs.open(_dir);
+    File root = _fs->open(_dir);
     if (!root || !root.isDirectory())
         return uuids;
 
@@ -125,7 +125,7 @@ std::vector<String> ProfileManager::listProfiles() {
 }
 
 bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
-    File file = _fs.open(profilePath(uuid), "r");
+    File file = _fs->open(profilePath(uuid), "r");
     if (!file)
         return false;
 
@@ -156,7 +156,7 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
     ESP_LOGI("ProfileManager", "Saving profile %s", profile.id.c_str());
 
-    File file = _fs.open(profilePath(profile.id), "w");
+    File file = _fs->open(profilePath(profile.id), "w");
     if (!file)
         return false;
 
@@ -180,10 +180,10 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
 bool ProfileManager::deleteProfile(const String &uuid) {
     _settings.removeFavoritedProfile(uuid);
-    return _fs.remove(profilePath(uuid));
+    return _fs->remove(profilePath(uuid));
 }
 
-bool ProfileManager::profileExists(const String &uuid) { return _fs.exists(profilePath(uuid)); }
+bool ProfileManager::profileExists(const String &uuid) { return _fs->exists(profilePath(uuid)); }
 
 void ProfileManager::selectProfile(const String &uuid) {
     ESP_LOGI("ProfileManager", "Selecting profile %s", uuid.c_str());
@@ -193,9 +193,9 @@ void ProfileManager::selectProfile(const String &uuid) {
     _plugin_manager->trigger("profiles:profile:select", "id", uuid);
 }
 
-Profile ProfileManager::getSelectedProfile() const { return selectedProfile; }
+Profile &ProfileManager::getSelectedProfile() { return selectedProfile; }
 
-void ProfileManager::loadSelectedProfile(Profile &outProfile) { loadProfile(_settings.getSelectedProfile(), outProfile); }
+bool ProfileManager::loadSelectedProfile(Profile &outProfile) { return loadProfile(_settings.getSelectedProfile(), outProfile); }
 
 std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
 

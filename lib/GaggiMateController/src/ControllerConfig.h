@@ -8,7 +8,6 @@ struct Capabilities {
     bool ssrPump;
     bool ledControls;
     bool tof;
-    bool hwScale;
 };
 
 struct ControllerConfig {
@@ -148,7 +147,6 @@ const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.x",
                                             .ssrPump = false,
                                             .ledControls = false,
                                             .tof = false,
-                                            .hwScale =true
                                         }};
 
 const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
@@ -168,23 +166,22 @@ const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
                                       .maxMisoPin = 4,
                                       .brewButtonPin = 38,
                                       .steamButtonPin = 48,
-                                      .scaleSclPin = 11,
-                                      .scaleSdaPin = 12,
-                                      .scaleSda1Pin = 13,
-                                      .sunriseSclPin = 17,
-                                      .sunriseSdaPin = 18,
+                                      .scaleSclPin = 17,
+                                      .scaleSdaPin = 18,
+                                      .scaleSda1Pin = 39,
+                                      .sunriseSclPin = 44,
+                                      .sunriseSdaPin = 43,
                                       .ext1Pin = 1,
                                       .ext2Pin = 2,
                                       .ext3Pin = 8,
-                                      .ext4Pin = 5,
-                                      .ext5Pin = 15,
+                                      .ext4Pin = 12,
+                                      .ext5Pin = 13,
                                       .capabilites = {
                                           .dimming = true,
                                           .pressure = true,
                                           .ssrPump = false,
-                                          .ledControls = true,
-                                          .tof = true,
-                                          .hwScale =true
+                                          .ledControls = false,
+                                          .tof = false,
                                       }};
 
 #endif // CONTROLLERCONFIG_H

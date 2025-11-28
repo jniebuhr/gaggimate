@@ -1,0 +1,3 @@
+Closes #505
+
+# ...paste the whole PR body from above here...

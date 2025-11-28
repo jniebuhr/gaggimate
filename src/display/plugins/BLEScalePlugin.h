@@ -8,7 +8,6 @@ void on_ble_measurement(float value);
 
 constexpr unsigned long UPDATE_INTERVAL_MS = 1000;
 constexpr unsigned int RECONNECTION_TRIES = 15;
-constexpr size_t FLOW_SAMPLE_BUFFER_SIZE = 10; // Number of flow samples for averaging
 
 class BLEScalePlugin : public Plugin {
   public:
@@ -22,7 +21,7 @@ class BLEScalePlugin : public Plugin {
     void connect(const std::string &uuid);
     void scan() const;
     void disconnect();
-    void onMeasurement(float value);
+    void onMeasurement(float value) const;
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
     std::string getName() {
         if (scale != nullptr && scale->isConnected()) {
@@ -42,8 +41,9 @@ class BLEScalePlugin : public Plugin {
   private:
     void update();
     void onProcessStart() const;
+
     void establishConnection();
-    bool shouldEnableScanning() const;
+
     bool active = false;
     bool doConnect = false;
     std::string uuid;
@@ -54,10 +54,8 @@ class BLEScalePlugin : public Plugin {
     // Rate limiting for callbacks
     mutable unsigned long lastMeasurementTime = 0;
     static constexpr unsigned long MIN_MEASUREMENT_INTERVAL_MS = 10; // Max 100 measurements per second
-    float lastWeight = 0.0f;
 
     Controller *controller = nullptr;
-    PluginManager *pluginManager = nullptr;
     RemoteScalesPluginRegistry *pluginRegistry = nullptr;
     RemoteScalesScanner *scanner = nullptr;
     std::unique_ptr<RemoteScales> scale = nullptr;

@@ -41,7 +41,7 @@ export function OTA() {
     };
     const ts = Date.now();
     downloadJson(supportFile, `support-${ts}.dat`);
-  }, []);
+  }, [formData]);
   useEffect(() => {
     const listenerId = apiService.on('res:ota-settings', msg => {
       setFormData(msg);
@@ -186,6 +186,24 @@ export function OTA() {
                   <div className='text-xs opacity-75'>
                     {((formData.spiffsUsed || 0) / 1024).toFixed(1)} KB /{' '}
                     {(formData.spiffsTotal / 1024).toFixed(1)} KB ({formData.spiffsUsedPct}%)
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {formData.sdTotal !== undefined && (
+              <div className='flex flex-col space-y-2'>
+                <label className='text-sm font-medium'>Storage (SD-Card)</label>
+                <div className='flex flex-col gap-1'>
+                  <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+                    <div
+                      className='bg-primary h-full transition-all'
+                      style={{ width: `${formData.sdUsedPct || 0}%` }}
+                    />
+                  </div>
+                  <div className='text-xs opacity-75'>
+                    {((formData.sdUsed || 0) / 1024 / 1024).toFixed(1)} MB /{' '}
+                    {(formData.sdTotal / 1024 / 1024).toFixed(1)} MB ({formData.sdUsedPct}%)
                   </div>
                 </div>
               </div>

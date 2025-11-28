@@ -1,0 +1,27 @@
+From d1e4aa5d233db185547ae707fcb0930995002c99 Mon Sep 17 00:00:00 2001
+From: KT-0001 <applekirk@googlemail.com>
+Date: Fri, 28 Nov 2025 21:26:51 +0000
+Subject: [PATCH] feat(ui): show live shot timer & live Bluetooth scale weight
+ on Brew screen
+
+Closes #505 - adds live shot timer and Bluetooth scale weight on Brew screen
+---
+ platformio.ini | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/platformio.ini b/platformio.ini
+index 1967868a..b1960143 100644
+--- a/platformio.ini
++++ b/platformio.ini
+@@ -25,7 +25,7 @@ monitor_filters =
+ build_flags =
+     -std=c++17
+     -std=gnu++17
+-    -DLV_CONF_INCLUDE_SIMPLE
++    -DLV_CONF_INCLUDE_SIMPLE 
+     -DLV_CONF_PATH="${platformio.src_dir}/display/lv_conf.h"
+     -DDISABLE_ALL_LIBRARY_WARNINGS
+     -DLV_CONF_SUPPRESS_DEFINE_CHECK
+-- 
+2.52.0
+
