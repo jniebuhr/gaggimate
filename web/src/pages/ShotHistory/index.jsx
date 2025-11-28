@@ -23,6 +23,8 @@ import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { downloadJson } from '../../utils/download.js';
+import { loadShotNotes } from './loadShotNotes.js';
+
 
 Chart.register(LineController);
 Chart.register(TimeScale);
@@ -136,14 +138,32 @@ export function ShotHistory() {
       const totalShots = history.length;
       let completed = 0;
       const exportedHistory = await Promise.all(
-        history.map(p =>
-          fetchShotData(p.id)
-            .catch(() => null)
-            .finally(() => {
-              completed++;
-              setExportingHistoryPercentage(Math.round((completed / totalShots) * 100));
-            })
-        ),
+        history.map(async p => {
+          try {
+            const shotData = await fetchShotData(p.id);
+            if (!shotData) return null;
+            // Load notes for this shot
+            const loadedNotes = await loadShotNotes(apiService, {
+              id: p.id,
+              volume: p.volume ?? shotData.volume,
+            });
+
+            return {
+              ...shotData,
+              rating: p.rating,
+              // Use the freshly loaded notes to ensure completeness
+              notes: loadedNotes,
+              // Preserve index metadata over shot file data
+              volume: p.volume ?? shotData.volume,
+              incomplete: p.incomplete ?? shotData.incomplete,
+            };
+          } catch (_e) {
+            return null;
+          } finally {
+            completed++;
+            setExportingHistoryPercentage(Math.round((completed / totalShots) * 100));
+          }
+        }),
       );
       // Remove any falsy entries (failed loads)
       const cleanedHistory = exportedHistory.filter(Boolean);
@@ -157,7 +177,7 @@ export function ShotHistory() {
     else {
       console.log('Already exporting or No shots to export');
     }
-  }, [history, isExporting, fetchShotData]);
+  }, [history, isExporting, fetchShotData, apiService]);
 
   // Filtered and sorted history with pagination
   const { paginatedHistory, totalPages, totalFilteredItems } = useMemo(() => {
