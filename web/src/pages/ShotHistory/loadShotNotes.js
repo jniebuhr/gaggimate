@@ -53,8 +53,8 @@ export async function loadShotNotes(apiService, shotLike) {
     }
 
     // Calculate ratio
-    if (loaded.doseIn && loaded.doseOut && parseFloat(loaded.doseIn) > 0 && parseFloat(loaded.doseOut) > 0) {
-      loaded.ratio = (parseFloat(loaded.doseOut) / parseFloat(loaded.doseIn)).toFixed(2);
+    if (loaded.doseIn && loaded.doseOut && Number.parseFloat(loaded.doseIn) > 0 &&  Number.parseFloat(loaded.doseOut) > 0) {
+      loaded.ratio = ( Number.parseFloat(loaded.doseOut) /  Number.parseFloat(loaded.doseIn)).toFixed(2);
     }
 
     return loaded;
