@@ -10,14 +10,14 @@
     <!-- Title 'Brew' -->
     <text x="0" y="-140" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="22">Brew</text>
 
-    <!-- Timer (left) -->
-    <text id="timer" x="-90" y="20" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">00:15</text>
+    <!-- Timer (center top) -->
+    <text id="timer" x="0" y="10" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">00:15</text>
 
-    <!-- Weight (right) -->
-    <text id="weight" x="90" y="26" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="28">36.0 g</text>
+    <!-- Weight (below timer) -->
+    <text id="weight" x="0" y="48" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="28">36.0 g</text>
 
     <!-- Phase label -->
-    <text x="0" y="-28" text-anchor="middle" fill="#A0A0A0" font-family="Arial, Helvetica, sans-serif" font-size="18">BREW</text>
+    <text x="0" y="-38" text-anchor="middle" fill="#A0A0A0" font-family="Arial, Helvetica, sans-serif" font-size="18">BREW</text>
 
     <!-- Brew progress bar (under timer) -->
     <rect x="-140" y="60" width="280" height="12" fill="#2A2A2A" rx="6" />
@@ -39,5 +39,5 @@
   </g>
 
   <!-- Notes (outside circle) -->
-  <text x="20" y="460" fill="#8F8F8F" font-family="Arial, Helvetica, sans-serif" font-size="12">Mock: Timer on left, weight on right (aligned to the timer) — shows during pre-brew if scales are connected, and during active brew</text>
+  <text x="20" y="460" fill="#8F8F8F" font-family="Arial, Helvetica, sans-serif" font-size="12">Mock: Timer centered, weight below timer — shows during pre-brew if scales are connected, and during active brew</text>
 </svg>
