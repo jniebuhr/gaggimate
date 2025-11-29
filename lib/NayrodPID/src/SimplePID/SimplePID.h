@@ -48,7 +48,6 @@ class SimplePID {
     void setDisturbanceFeedforward(float disturbance, float gainDFF);
     void setDisturbanceGain(float gainDFF) { gainDistFF = gainDFF; };
     float getDisturbanceGain() { return gainDistFF; };
-    void activateDisturbanceFeedForward(bool flag) { isDisturbanceFeedForwardActive = flag; };
 
   private:
     // setpoint filtering
