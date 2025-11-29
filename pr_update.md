@@ -4,6 +4,8 @@ Add a live weight readout to the Brew screen next to the shot timer so users can
 
 This PR also includes a small regression fix for the Build/Display environment: restored missing `uic_BrewScreen_currentDuration` declaration and header extern that can be referenced across the UI codebase.
 
+UI conflict resolution: Moved the weight label below the current timer to avoid layout conflicts on the Brew screen (previously aligned to the right of the timer). Target duration controls are now anchored to the current timer so spacing remains consistent.
+
 ## Commit & author history
 
 - Squashed into a single commit: `feat(ui): Add live weight readout to Brew screen — squash (incl. regression fix)` ([7f949f18])
