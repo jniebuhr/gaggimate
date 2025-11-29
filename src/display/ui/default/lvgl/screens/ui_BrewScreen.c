@@ -303,7 +303,8 @@ void ui_BrewScreen_screen_init(void) {
                                            _ui_theme_alpha_NiceWhite);
     lv_obj_set_style_text_align(ui_BrewScreen_weightLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_BrewScreen_weightLabel, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_align_to(ui_BrewScreen_weightLabel, ui_BrewScreen_currentDuration, LV_ALIGN_OUT_RIGHT_MID, 30, 0);
+    // place weight below the current brew timer to avoid overlap and ensure consistent layout
+    lv_obj_align_to(ui_BrewScreen_weightLabel, ui_BrewScreen_currentDuration, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
     lv_label_set_text(ui_BrewScreen_weightLabel, "-");
     ui_object_set_themeable_style_property(ui_BrewScreen_weightLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_NiceWhite);
@@ -460,7 +461,8 @@ void ui_BrewScreen_screen_init(void) {
     lv_obj_set_height(ui_BrewScreen_targetContainer, 50);
     lv_obj_set_align(ui_BrewScreen_targetContainer, LV_ALIGN_CENTER);
         lv_obj_set_y(ui_BrewScreen_targetContainer, 0);
-        lv_obj_align_to(ui_BrewScreen_targetContainer, ui_BrewScreen_weightLabel, LV_ALIGN_OUT_RIGHT_MID, 30, 0);
+        // align target container to the right of the brew timer (not the weight label) so moving weight label won't affect controls
+        lv_obj_align_to(ui_BrewScreen_targetContainer, ui_BrewScreen_currentDuration, LV_ALIGN_OUT_RIGHT_MID, 30, 0);
 
     ui_BrewScreen_targetDuration = lv_label_create(ui_BrewScreen_targetContainer);
     lv_obj_set_width(ui_BrewScreen_targetDuration, 90);
