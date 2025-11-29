@@ -107,18 +107,6 @@ function getChartData(shot) {
     // Skip the first transition since we handle it with shot_start marker
     if (index === 0) return;
     
-    // Create a label for the phase transition
-    let phaseLabel;
-    if (transition.phaseDisplayNumber !== undefined) {
-      // Use display number (1-based or "End")
-      phaseLabel = `Phase ${transition.phaseDisplayNumber}`;
-    } else if (transition.phaseNumber !== undefined) {
-      // Fallback to phase number + 1 for 1-based display
-      phaseLabel = `Phase ${transition.phaseNumber + 1}`;
-    } else {
-      // Last resort fallback
-      phaseLabel = `Phase ${index + 2}`; // +2 because this is the transition to the next phase
-    }
     
     phaseAnnotations[`phase_line_${index}`] = {
       type: 'line',

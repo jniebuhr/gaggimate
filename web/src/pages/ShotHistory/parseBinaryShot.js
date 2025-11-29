@@ -176,13 +176,6 @@ export function parseBinaryShot(arrayBuffer, id) {
     }
   }
   
-  // Calculate base sample size (all fields are 2 bytes except phase name length which is 1 byte)
-  const baseSampleSize = fieldLayout.reduce((size, field) => {
-    if (field.name === 'phaseNameLength') {
-      return size + 1;
-    }
-    return size + 2;
-  }, 0);
 
   const samples = [];
   const dataBytes = view.byteLength - headerSize;
