@@ -15,25 +15,30 @@ const RESISTANCE_SCALE = 100;
 
 // Field bit positions (must match shot_log_format.h)
 const FIELD_BITS = {
-  T: 0,   // tick
-  TT: 1,  // target temp
-  CT: 2,  // current temp
-  TP: 3,  // target pressure
-  CP: 4,  // current pressure
-  FL: 5,  // pump flow
-  TF: 6,  // target flow
-  PF: 7,  // puck flow
-  VF: 8,  // volumetric flow
-  V: 9,   // volumetric weight
+  T: 0, // tick
+  TT: 1, // target temp
+  CT: 2, // current temp
+  TP: 3, // target pressure
+  CP: 4, // current pressure
+  FL: 5, // pump flow
+  TF: 6, // target flow
+  PF: 7, // puck flow
+  VF: 8, // volumetric flow
+  V: 9, // volumetric weight
   EV: 10, // estimated weight
   PR: 11, // puck resistance
-  SI: 12  // system info (v2+)
+  SI: 12, // system info (v2+)
   // Phase number moved to header transitions in v5+
 };
 
 // Field definitions with parsing info
 const FIELD_DEFS = {
-  [FIELD_BITS.T]: { name: 't', type: 'uint16', scale: null, transform: (val, sampleInterval) => val * sampleInterval },
+  [FIELD_BITS.T]: {
+    name: 't',
+    type: 'uint16',
+    scale: null,
+    transform: (val, sampleInterval) => val * sampleInterval,
+  },
   [FIELD_BITS.TT]: { name: 'tt', type: 'uint16', scale: TEMP_SCALE },
   [FIELD_BITS.CT]: { name: 'ct', type: 'uint16', scale: TEMP_SCALE },
   [FIELD_BITS.TP]: { name: 'tp', type: 'uint16', scale: PRESSURE_SCALE },
@@ -45,19 +50,19 @@ const FIELD_DEFS = {
   [FIELD_BITS.V]: { name: 'v', type: 'uint16', scale: WEIGHT_SCALE },
   [FIELD_BITS.EV]: { name: 'ev', type: 'uint16', scale: WEIGHT_SCALE },
   [FIELD_BITS.PR]: { name: 'pr', type: 'uint16', scale: RESISTANCE_SCALE },
-  [FIELD_BITS.SI]: { 
-    name: 'systemInfo', 
-    type: 'uint16', 
+  [FIELD_BITS.SI]: {
+    name: 'systemInfo',
+    type: 'uint16',
     scale: null,
-    transform: (val) => ({
+    transform: val => ({
       raw: val,
       shotStartedVolumetric: !!(val & 0x0001),
       currentlyVolumetric: !!(val & 0x0002),
       bluetoothScaleConnected: !!(val & 0x0004),
       volumetricAvailable: !!(val & 0x0008),
-      extendedRecording: !!(val & 0x0010)
-    })
-  }
+      extendedRecording: !!(val & 0x0010),
+    }),
+  },
   // Phase number field removed in v5+, moved to header transitions
 };
 
@@ -83,40 +88,40 @@ function countSetBits(n) {
 function parsePhaseTransitions(view, transitionCount) {
   const transitions = [];
   const baseOffset = 110; // Offset after existing header fields
-  
+
   for (let i = 0; i < transitionCount && i < 12; i++) {
     const offset = baseOffset + i * 29; // Each PhaseTransition is 29 bytes
-    
+
     const sampleIndex = view.getUint16(offset, true);
     const phaseNumber = view.getUint8(offset + 2);
     // Skip reserved byte at offset + 3
     const phaseNameBytes = new Uint8Array(view.buffer, view.byteOffset + offset + 4, 25);
     const phaseName = decodeCString(phaseNameBytes);
-    
+
     transitions.push({
       sampleIndex,
       phaseNumber,
-      phaseName
+      phaseName,
     });
   }
-  
+
   return transitions;
 }
 
 export function parseBinaryShot(arrayBuffer, id) {
   const view = new DataView(arrayBuffer);
-  
+
   // Read basic header info first
   if (view.byteLength < 16) throw new Error('File too small for header');
-  
+
   const magic = view.getUint32(0, true);
   if (magic !== MAGIC)
     throw new Error(`Bad magic: expected 0x${MAGIC.toString(16)}, got 0x${magic.toString(16)}`);
-    
+
   const version = view.getUint8(4);
   const deviceSampleSize = view.getUint8(5); // reserved0 holds sample size
   const headerSize = view.getUint16(6, true);
-  
+
   // Determine expected header size based on version
   let expectedHeaderSize;
   if (version <= 4) {
@@ -124,16 +129,20 @@ export function parseBinaryShot(arrayBuffer, id) {
   } else {
     expectedHeaderSize = HEADER_SIZE_V5;
   }
-  
+
   if (view.byteLength < expectedHeaderSize) {
-    throw new Error(`File too small for v${version} header: need ${expectedHeaderSize} bytes, got ${view.byteLength}`);
+    throw new Error(
+      `File too small for v${version} header: need ${expectedHeaderSize} bytes, got ${view.byteLength}`,
+    );
   }
-  
+
   // Validate header size matches version
   if (headerSize !== expectedHeaderSize) {
-    throw new Error(`Header size mismatch for v${version}: expected ${expectedHeaderSize}, got ${headerSize}`);
+    throw new Error(
+      `Header size mismatch for v${version}: expected ${expectedHeaderSize}, got ${headerSize}`,
+    );
   }
-  
+
   // Parse common header fields
   const sampleInterval = view.getUint16(8, true);
   const fieldsMask = view.getUint32(12, true);
@@ -145,20 +154,22 @@ export function parseBinaryShot(arrayBuffer, id) {
   const finalWeightHeader = view.getUint16(108, true);
   const profileId = decodeCString(profileIdBytes);
   const profileName = decodeCString(profileNameBytes);
-  
+
   // Parse phase transitions for v5+
   let phaseTransitions = [];
   if (version >= 5) {
     const transitionCount = view.getUint8(110 + 12 * 29); // After 12 PhaseTransitions
     phaseTransitions = parsePhaseTransitions(view, transitionCount);
   }
-  
+
   // Calculate expected sample size from fieldsMask
   const fieldCount = countSetBits(fieldsMask);
   const expectedSampleSize = fieldCount * 2; // Each field is 16 bits = 2 bytes
-  
+
   if (deviceSampleSize !== expectedSampleSize) {
-    throw new Error(`Field mask indicates ${fieldCount} fields (${expectedSampleSize} bytes), but device reports ${deviceSampleSize} bytes`);
+    throw new Error(
+      `Field mask indicates ${fieldCount} fields (${expectedSampleSize} bytes), but device reports ${deviceSampleSize} bytes`,
+    );
   }
 
   // Build field layout based on mask (preserves field order)
@@ -169,13 +180,18 @@ export function parseBinaryShot(arrayBuffer, id) {
       if (fieldDef) {
         fieldLayout.push({ ...fieldDef, bitPos });
       } else {
-        // Unknown field - skip but track position  
+        // Unknown field - skip but track position
         const fieldSize = 2; // assume uint16 for unknown fields
-        fieldLayout.push({ name: `unknown_${bitPos}`, type: 'uint16', scale: null, bitPos, size: fieldSize });
+        fieldLayout.push({
+          name: `unknown_${bitPos}`,
+          type: 'uint16',
+          scale: null,
+          bitPos,
+          size: fieldSize,
+        });
       }
     }
   }
-  
 
   const samples = [];
   const dataBytes = view.byteLength - headerSize;
@@ -189,23 +205,23 @@ export function parseBinaryShot(arrayBuffer, id) {
   const maxSamples = sampleCountHeader
     ? Math.min(sampleCountHeader, inferredSamples)
     : inferredSamples;
-    
+
   for (let i = 0; i < maxSamples; i++) {
     const base = headerSize + i * sampleSize;
     const sample = {};
-    
+
     // Parse each field dynamically
     for (let fieldIdx = 0; fieldIdx < fieldLayout.length; fieldIdx++) {
       const field = fieldLayout[fieldIdx];
       const offset = base + fieldIdx * 2; // Each field is 2 bytes
-      
+
       let rawValue;
       if (field.type === 'int16') {
         rawValue = view.getInt16(offset, true);
       } else {
         rawValue = view.getUint16(offset, true);
       }
-      
+
       let finalValue;
       if (field.transform) {
         finalValue = field.transform(rawValue, sampleInterval);
@@ -214,16 +230,16 @@ export function parseBinaryShot(arrayBuffer, id) {
       } else {
         finalValue = rawValue;
       }
-      
+
       sample[field.name] = finalValue;
     }
-    
+
     // For v5+ files, reconstruct phase information from transitions
     if (version >= 5) {
       // Find the current phase for this sample
       let currentPhase = 0;
       let phaseName = 'Phase 1';
-      
+
       for (let t = 0; t < phaseTransitions.length; t++) {
         if (i >= phaseTransitions[t].sampleIndex) {
           currentPhase = phaseTransitions[t].phaseNumber;
@@ -232,12 +248,12 @@ export function parseBinaryShot(arrayBuffer, id) {
           break;
         }
       }
-      
+
       sample.phaseNumber = currentPhase;
       sample.phaseDisplayNumber = currentPhase + 1; // 1-based for display
       sample.phaseName = phaseName;
     }
-    
+
     samples.push(sample);
   }
 

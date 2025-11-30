@@ -10,7 +10,7 @@ function getPhaseName(shot, phaseNumber) {
       return transition.phaseName;
     }
   }
-  
+
   // Fallback to no label for v4 shots or missing data
   return '';
 }
@@ -27,12 +27,12 @@ function getChartData(shot) {
   const tf = [];
   const v = [];
   const vf = [];
-  
+
   // Process all samples to build data arrays
   for (let i = 0; i < data.length; i++) {
     const s = data[i];
     const x = s.t / 1000.0; // Convert time to seconds for chart display
-    
+
     ct.push({ x, y: s.ct });
     tt.push({ x, y: s.tt });
     cp.push({ x, y: s.cp });
@@ -46,14 +46,14 @@ function getChartData(shot) {
 
   // For v5+ files, use phase transitions from header
   let phaseTransitions = [];
-  
+
   if (shot.version >= 5 && shot.phaseTransitions) {
     // Use phase transitions directly from header
     phaseTransitions = shot.phaseTransitions.map(t => ({
       time: (t.sampleIndex * (shot.sampleInterval || 250)) / 1000.0,
       phaseNumber: t.phaseNumber,
       phaseDisplayNumber: t.phaseNumber + 1,
-      phaseName: t.phaseName
+      phaseName: t.phaseName,
     }));
   }
   // No phase tracking for versions before v5
@@ -64,15 +64,15 @@ function getChartData(shot) {
   const minX = Math.min(...timeValues);
   const maxX = Math.max(...timeValues);
   const padding = maxTemp - minTemp > 10 ? 2 : 5;
-  
+
   // Check if weight data has any non-zero values
   const hasWeight = v.some(point => point.y > 0);
   const hasWeightFlow = vf.some(point => point.y > 0);
-  
+
   // Create phase annotations
   const phaseAnnotations = {};
   const isSmall = window.innerWidth < 640;
-  
+
   // Add shot start marker
   if (data.length > 0) {
     const shotStartTime = data[0].t / 1000.0; // First sample time in seconds
@@ -102,12 +102,11 @@ function getChartData(shot) {
       },
     };
   }
-  
+
   phaseTransitions.forEach((transition, index) => {
     // Skip the first transition since we handle it with shot_start marker
     if (index === 0) return;
-    
-    
+
     phaseAnnotations[`phase_line_${index}`] = {
       type: 'line',
       xMin: transition.time,
@@ -116,7 +115,9 @@ function getChartData(shot) {
       borderWidth: 1,
       label: {
         display: true,
-        content: transition.phaseName || `Phase ${transition.phaseDisplayNumber || transition.phaseNumber + 1}`,
+        content:
+          transition.phaseName ||
+          `Phase ${transition.phaseDisplayNumber || transition.phaseNumber + 1}`,
         rotation: -90,
         position: 'end',
         xAdjust: -10,
@@ -190,20 +191,28 @@ function getChartData(shot) {
           data: tf,
         },
         // Only include weight datasets if they have non-zero values
-        ...(hasWeight ? [{
-          label: 'Weight',
-          borderColor: '#8B5CF6',
-          pointStyle: false,
-          yAxisID: 'y2',
-          data: v,
-        }] : []),
-        ...(hasWeightFlow ? [{
-          label: 'Weight Flow',
-          borderColor: '#4b2e8dff',
-          pointStyle: false,
-          yAxisID: 'y1',
-          data: vf,
-        }] : []),
+        ...(hasWeight
+          ? [
+              {
+                label: 'Weight',
+                borderColor: '#8B5CF6',
+                pointStyle: false,
+                yAxisID: 'y2',
+                data: v,
+              },
+            ]
+          : []),
+        ...(hasWeightFlow
+          ? [
+              {
+                label: 'Weight Flow',
+                borderColor: '#4b2e8dff',
+                pointStyle: false,
+                yAxisID: 'y1',
+                data: vf,
+              },
+            ]
+          : []),
       ],
     },
     options: {
@@ -279,21 +288,23 @@ function getChartData(shot) {
           },
           grid: { drawOnChartArea: false },
         },
-        ...(hasWeight ? {
-          y2: {
-            type: 'linear',
-            min: 0,
-            position: 'right',
-            offset: true,
-            ticks: {
-              callback: value => `${value.toFixed()} g`,
-              font: {
-                size: window.innerWidth < 640 ? 10 : 12,
+        ...(hasWeight
+          ? {
+              y2: {
+                type: 'linear',
+                min: 0,
+                position: 'right',
+                offset: true,
+                ticks: {
+                  callback: value => `${value.toFixed()} g`,
+                  font: {
+                    size: window.innerWidth < 640 ? 10 : 12,
+                  },
+                },
+                grid: { drawOnChartArea: false },
               },
-            },
-            grid: { drawOnChartArea: false },
-          },
-        } : {}),
+            }
+          : {}),
       },
     },
   };

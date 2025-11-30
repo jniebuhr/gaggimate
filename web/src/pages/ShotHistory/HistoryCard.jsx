@@ -153,11 +153,16 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                 <p className='text-base-content/70 text-sm'>
                   #{shot.id} • {formattedDate}
                 </p>
-                {expanded && shot.loaded && shot.samples && shot.samples.length > 0 && shot.samples[0].systemInfo && (
-                  <p className='text-base-content/60 text-xs italic'>
-                    Brewed by {shot.samples[0].systemInfo.shotStartedVolumetric ? 'Weight' : 'Time'}
-                  </p>
-                )}
+                {expanded &&
+                  shot.loaded &&
+                  shot.samples &&
+                  shot.samples.length > 0 &&
+                  shot.samples[0].systemInfo && (
+                    <p className='text-base-content/60 text-xs italic'>
+                      Brewed by{' '}
+                      {shot.samples[0].systemInfo.shotStartedVolumetric ? 'Weight' : 'Time'}
+                    </p>
+                  )}
               </div>
 
               <div className='flex shrink-0 flex-row items-center gap-2'>

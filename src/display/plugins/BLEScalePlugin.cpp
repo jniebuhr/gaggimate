@@ -125,7 +125,8 @@ void BLEScalePlugin::update() {
         hasConnectedScale = scale->isConnected();
     }
 
-    controller->setVolumetricOverride(hasConnectedScale);
+    if (controller->isVolumetricAvailable())
+        controller->setVolumetricOverride(hasConnectedScale);
 
     if (!active)
         return;
@@ -212,9 +213,7 @@ void BLEScalePlugin::onProcessStart() const {
     }
 }
 
-void BLEScalePlugin::tare() const {
-    onProcessStart(); 
-}
+void BLEScalePlugin::tare() const { onProcessStart(); }
 
 void BLEScalePlugin::establishConnection() {
     if (uuid.empty()) {

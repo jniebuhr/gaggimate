@@ -48,6 +48,7 @@ class ShotHistoryPlugin : public Plugin {
     unsigned long getTime();
 
     void endRecording();
+    void endExtendedRecording();
     void cleanupHistory();
 
     void recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex); // Helper for phase transitions
@@ -65,7 +66,7 @@ class ShotHistoryPlugin : public Plugin {
 
     bool recording = false;
     bool extendedRecording = false;
-    bool indexEntryCreated = false; // Track if early index entry was created
+    bool indexEntryCreated = false;     // Track if early index entry was created
     bool shotStartedVolumetric = false; // Track initial volumetric mode
     unsigned long shotStart = 0;
     unsigned long extendedRecordingStart = 0;

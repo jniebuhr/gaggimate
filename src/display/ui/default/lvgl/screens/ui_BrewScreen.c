@@ -79,9 +79,9 @@ void ui_event_BrewScreen_volumetricButton(lv_event_t *e) {
     if (event_code == LV_EVENT_CLICKED) {
         onVolumetricClick(e);
     }
-    if(event_code == LV_EVENT_LONG_PRESSED) {
+    if (event_code == LV_EVENT_LONG_PRESSED) {
         onVolumetricHold(e);
-    }    
+    }
 }
 
 void ui_event_BrewScreen_settingsButton(lv_event_t *e) {
