@@ -1,8 +1,23 @@
 import { Chart } from 'chart.js';
 import { ChartComponent } from '../../components/Chart.jsx';
 
-function getChartData(data) {
+// Helper function to get phase name from shot data (v5+) or fallback to profile/generic
+function getPhaseName(shot, phaseNumber) {
+  // For v5+ shots, check if we have phase transition data
+  if (shot.phaseTransitions && shot.phaseTransitions.length > 0) {
+    const transition = shot.phaseTransitions.find(t => t.phaseNumber === phaseNumber);
+    if (transition && transition.phaseName) {
+      return transition.phaseName;
+    }
+  }
+  
+  // Fallback to no label for v4 shots or missing data
+  return '';
+}
+
+function getChartData(shot) {
   // Build sample point arrays once (numeric x for linear scale)
+  const data = shot.samples;
   const ct = [];
   const tt = [];
   const cp = [];
@@ -12,9 +27,12 @@ function getChartData(data) {
   const tf = [];
   const v = [];
   const vf = [];
+  
+  // Process all samples to build data arrays
   for (let i = 0; i < data.length; i++) {
     const s = data[i];
-    const x = s.t / 1000.0; // seconds (number)
+    const x = s.t / 1000.0; // Convert time to seconds for chart display
+    
     ct.push({ x, y: s.ct });
     tt.push({ x, y: s.tt });
     cp.push({ x, y: s.cp });
@@ -22,9 +40,23 @@ function getChartData(data) {
     fl.push({ x, y: s.fl });
     pf.push({ x, y: s.pf });
     tf.push({ x, y: s.tf });
-    v.push({ x, y: s.v || 0 });
-    vf.push({ x, y: s.vf || 0 });
+    v.push({ x, y: s.v });
+    vf.push({ x, y: s.vf });
   }
+
+  // For v5+ files, use phase transitions from header
+  let phaseTransitions = [];
+  
+  if (shot.version >= 5 && shot.phaseTransitions) {
+    // Use phase transitions directly from header
+    phaseTransitions = shot.phaseTransitions.map(t => ({
+      time: (t.sampleIndex * (shot.sampleInterval || 250)) / 1000.0,
+      phaseNumber: t.phaseNumber,
+      phaseDisplayNumber: t.phaseNumber + 1,
+      phaseName: t.phaseName
+    }));
+  }
+  // No phase tracking for versions before v5
   const tempValues = ct.map(i => i.y).concat(tt.map(i => i.y));
   const timeValues = ct.map(i => i.x);
   const minTemp = Math.floor(Math.min(...tempValues));
@@ -36,6 +68,71 @@ function getChartData(data) {
   // Check if weight data has any non-zero values
   const hasWeight = v.some(point => point.y > 0);
   const hasWeightFlow = vf.some(point => point.y > 0);
+  
+  // Create phase annotations
+  const phaseAnnotations = {};
+  const isSmall = window.innerWidth < 640;
+  
+  // Add shot start marker
+  if (data.length > 0) {
+    const shotStartTime = data[0].t / 1000.0; // First sample time in seconds
+    const startPhaseName = getPhaseName(shot, 0); // Get first phase name
+    phaseAnnotations['shot_start'] = {
+      type: 'line',
+      xMin: shotStartTime,
+      xMax: shotStartTime,
+      borderColor: '#6B7280', // Gray color to match other phase lines
+      borderWidth: 1,
+      label: {
+        display: true,
+        content: startPhaseName,
+        rotation: -90,
+        position: 'end',
+        xAdjust: -5,
+        yAdjust: 0,
+        padding: { x: 6, y: 0 },
+        color: 'rgb(255,255,255)',
+        backgroundColor: 'rgba(22,33,50,0.75)',
+        textAlign: 'start',
+        font: {
+          size: isSmall ? 9 : 11,
+          weight: 500,
+        },
+        clip: false,
+      },
+    };
+  }
+  
+  phaseTransitions.forEach((transition, index) => {
+    // Skip the first transition since we handle it with shot_start marker
+    if (index === 0) return;
+    
+    
+    phaseAnnotations[`phase_line_${index}`] = {
+      type: 'line',
+      xMin: transition.time,
+      xMax: transition.time,
+      borderColor: '#6B7280', // Gray color to match OverviewChart
+      borderWidth: 1,
+      label: {
+        display: true,
+        content: transition.phaseName || `Phase ${transition.phaseDisplayNumber || transition.phaseNumber + 1}`,
+        rotation: -90,
+        position: 'end',
+        xAdjust: -10,
+        yAdjust: 0,
+        padding: { x: 6, y: 0 },
+        color: 'rgb(255,255,255)',
+        backgroundColor: 'rgba(22,33,50,0.75)',
+        textAlign: 'start',
+        font: {
+          size: isSmall ? 9 : 11,
+          weight: 500,
+        },
+        clip: false,
+      },
+    };
+  });
   return {
     type: 'line',
     data: {
@@ -145,6 +242,9 @@ function getChartData(data) {
         title: {
           display: false,
         },
+        annotation: {
+          annotations: phaseAnnotations,
+        },
       },
       animation: false,
       scales: {
@@ -200,7 +300,7 @@ function getChartData(data) {
 }
 
 export function HistoryChart({ shot }) {
-  const chartData = getChartData(shot.samples);
+  const chartData = getChartData(shot);
 
   return (
     <ChartComponent
