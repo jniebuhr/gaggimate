@@ -58,6 +58,13 @@ int16_t encodeSigned(float value, float scale, int16_t minValue, int16_t maxValu
     }
     return static_cast<int16_t>(fixed);
 }
+
+String padId(String id, int length = 6) {
+    while (id.length() < length) {
+        id = "0" + id;
+    }
+    return id;
+}
 } // namespace
 
 ShotHistoryPlugin ShotHistory;
@@ -69,6 +76,7 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
         fs = &SD_MMC;
         ESP_LOGI("ShotHistoryPlugin", "Logging shot history to SD card");
     }
+    rebuildIndex();
     pm->on("controller:brew:start", [this](Event const &) { startRecording(); });
     pm->on("controller:brew:end", [this](Event const &) { endRecording(); });
     pm->on("controller:brew:clear", [this](Event const &) { endExtendedRecording(); });
@@ -213,7 +221,6 @@ void ShotHistoryPlugin::record() {
         unsigned long duration = header.durationMs;
         if (duration <= 7500) { // Exclude failed shots and flushes
             fs->remove("/h/" + currentId + ".slog");
-            fs->remove("/h/" + currentId + ".json");
 
             // If we created an early index entry, mark it as deleted
             if (indexEntryCreated) {
@@ -254,10 +261,7 @@ void ShotHistoryPlugin::startRecording() {
             return;
         }
     }
-    currentId = controller->getSettings().getHistoryIndex();
-    while (currentId.length() < 6) {
-        currentId = "0" + currentId;
-    }
+    currentId = padId(String(controller->getSettings().getHistoryIndex()));
     shotStart = millis();
     lastWeightChangeTime = 0;
     extendedRecordingStart = 0;

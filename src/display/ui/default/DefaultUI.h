@@ -94,6 +94,9 @@ class DefaultUI {
     int smartGrindActive = false;
     int grindAvailable = false;
 
+    // Seasonal flags
+    int christmasMode = false;
+
     bool rerender = false;
     unsigned long lastRender = 0;
 

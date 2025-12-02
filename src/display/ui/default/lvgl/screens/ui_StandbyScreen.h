@@ -15,7 +15,7 @@ extern void ui_StandbyScreen_screen_init(void);
 extern void ui_StandbyScreen_screen_destroy(void);
 extern void ui_event_StandbyScreen(lv_event_t *e);
 extern lv_obj_t *ui_StandbyScreen;
-extern lv_obj_t *ui_StandbyScreen_Image1;
+extern lv_obj_t *ui_StandbyScreen_logo;
 extern lv_obj_t *ui_StandbyScreen_time;
 extern lv_obj_t *ui_StandbyScreen_Container1;
 extern lv_obj_t *ui_StandbyScreen_wifiIcon;

@@ -77,6 +77,7 @@ LV_IMG_DECLARE(ui_img_1732953241);    // assets/tap-60x60.png
 LV_IMG_DECLARE(ui_img_1456692430);    // assets/pause-40x40.png
 LV_IMG_DECLARE(ui_img_1829139226);    // assets/angle-down-40x40.png
 LV_IMG_DECLARE(ui_img_flowmeter_png); // assets/flowmeter.png
+LV_IMG_DECLARE(ui_img_1510335);       // assets/logo-christmas.png
 LV_IMG_DECLARE(ui_img_691326438);     // assets/wind-40x40.png
 
 // UI INIT
