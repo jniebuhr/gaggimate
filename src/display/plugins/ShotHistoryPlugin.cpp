@@ -698,7 +698,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     ESP_LOGI("ShotHistoryPlugin", "Rebuilding index from %d shot files", slogFiles.size());
 
     for (const String &fileName : slogFiles) {
-        File shotFile = fs->open(fileName, "r");
+        File shotFile = fs->open("/h/" + fileName, "r");
         if (!shotFile) {
             continue;
         }
