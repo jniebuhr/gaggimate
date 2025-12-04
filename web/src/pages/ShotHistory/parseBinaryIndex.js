@@ -127,5 +127,5 @@ export function indexToShotList(indexData) {
       loaded: false,
       data: null,
     }))
-    .sort((a, b) => parseInt(b.id) - parseInt(a.id)); // Most recent first (by ID, not timestamp)
+    .sort((a, b) => Number.parseInt(b.id, 10) - Number.parseInt(a.id, 10)); // Most recent first (by ID, not timestamp)
 }
