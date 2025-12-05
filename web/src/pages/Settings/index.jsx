@@ -1,10 +1,10 @@
 import { useQuery } from 'preact-fetching';
 import { Spinner } from '../../components/Spinner.jsx';
-import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef, useContext } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { timezones } from '../../config/zones.js';
 import { computed } from '@preact/signals';
-import { machine } from '../../services/ApiService.js';
+import { machine, ApiServiceContext } from '../../services/ApiService.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { setDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
 import { PluginCard } from './PluginCard.jsx';
@@ -13,6 +13,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { faSoap } from '@fortawesome/free-solid-svg-icons/faSoap';
+import { faLemon } from '@fortawesome/free-solid-svg-icons/faLemon';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -25,6 +29,7 @@ export function Settings() {
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
+  const apiService = useContext(ApiServiceContext);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -708,6 +713,147 @@ export function Settings() {
                   Steam Boiler (Coming Soon)
                 </option>
               </select>
+            </div>
+          </Card>
+
+          <Card sm={10} lg={5} title='Cleaning Schedule'>
+            <div className='form-control'>
+              <label htmlFor='backflushIntervalDays' className='mb-2 block text-sm font-medium'>
+                Backflush Interval (Days)
+              </label>
+              <input
+                id='backflushIntervalDays'
+                name='backflushIntervalDays'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='14'
+                min='1'
+                max='365'
+                value={formData.backflushIntervalDays}
+                onChange={onChange('backflushIntervalDays')}
+              />
+            </div>
+            <div className='form-control'>
+              <label htmlFor='descalingIntervalWeeks' className='mb-2 block text-sm font-medium'>
+                Descaling Interval (Weeks)
+              </label>
+              <input
+                id='descalingIntervalWeeks'
+                name='descalingIntervalWeeks'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='6'
+                min='1'
+                max='52'
+                value={formData.descalingIntervalWeeks}
+                onChange={onChange('descalingIntervalWeeks')}
+              />
+            </div>
+            <div className='mt-4 space-y-2'>
+              <div className='flex items-center justify-between rounded-lg bg-base-200 p-3'>
+                <div>
+                  <div className='text-sm font-medium'>Last Backflush</div>
+                  <div className={`text-xs ${
+                    formData.lastBackflushTime === 0 || 
+                    Math.floor((Date.now() / 1000 - formData.lastBackflushTime) / (24 * 60 * 60)) > (formData.backflushIntervalDays || 14)
+                      ? 'text-orange-600 font-medium' 
+                      : 'text-base-content/70'
+                  }`}>
+                    {formData.lastBackflushTime > 0 
+                      ? (() => {
+                          const days = Math.floor((Date.now() / 1000 - formData.lastBackflushTime) / (24 * 60 * 60));
+                          return days === 0 ? 'Today' : `${days} days ago`;
+                        })()
+                      : 'Never performed'
+                    }
+                  </div>
+                </div>
+                <div className='flex gap-2'>
+                  <button
+                    type='button'
+                    className='btn btn-primary btn-sm'
+                    onClick={() => {
+                      apiService.send({ tp: 'req:cleaning:backflush:start' });
+                    }}
+                    title='Start Backflush Now'
+                  >
+                    <FontAwesomeIcon icon={faSoap} />
+                  </button>
+                  <button
+                    type='button'
+                    className='btn btn-success btn-sm'
+                    onClick={async () => {
+                      if (confirm('Mark backflush as completed? This will reset the backflush timer.')) {
+                        const newTime = Math.floor(Date.now() / 1000);
+                        const formDataToSubmit = new FormData();
+                        formDataToSubmit.set('lastBackflushTime', newTime.toString());
+                        
+                        const response = await fetch('/api/settings', {
+                          method: 'post',
+                          body: formDataToSubmit,
+                        });
+                        const data = await response.json();
+                        setFormData(prev => ({...prev, lastBackflushTime: data.lastBackflushTime}));
+                      }
+                    }}
+                    title='Mark as Complete'
+                  >
+                    <FontAwesomeIcon icon={faCheck} />
+                  </button>
+                </div>
+              </div>
+              <div className='flex items-center justify-between rounded-lg bg-base-200 p-3'>
+                <div>
+                  <div className='text-sm font-medium'>Last Descaling</div>
+                  <div className={`text-xs ${
+                    formData.lastDescalingTime === 0 || 
+                    Math.floor((Date.now() / 1000 - formData.lastDescalingTime) / (7 * 24 * 60 * 60)) > (formData.descalingIntervalWeeks || 6)
+                      ? 'text-orange-600 font-medium' 
+                      : 'text-base-content/70'
+                  }`}>
+                    {formData.lastDescalingTime > 0 
+                      ? (() => {
+                          const weeks = Math.floor((Date.now() / 1000 - formData.lastDescalingTime) / (7 * 24 * 60 * 60));
+                          return weeks === 0 ? 'Today' : `${weeks} weeks ago`;
+                        })()
+                      : 'Never performed'
+                    }
+                  </div>
+                </div>
+                <div className='flex gap-2'>
+                  <button
+                    type='button'
+                    className='btn btn-warning btn-sm'
+                    onClick={() => {
+                      apiService.send({ tp: 'req:cleaning:descaling:start' });
+                    }}
+                    title='Start Descaling Now'
+                  >
+                    <FontAwesomeIcon icon={faLemon} />
+                  </button>
+                  <button
+                    type='button'
+                    className='btn btn-success btn-sm'
+                    onClick={async () => {
+                      if (confirm('Mark descaling as completed? This will reset the descaling timer.')) {
+                        const newTime = Math.floor(Date.now() / 1000);
+                        const formDataToSubmit = new FormData();
+                        formDataToSubmit.set('lastDescalingTime', newTime.toString());
+                        
+                        const response = await fetch('/api/settings', {
+                          method: 'post',
+                          body: formDataToSubmit,
+                        });
+                        const data = await response.json();
+                        setFormData(prev => ({...prev, lastDescalingTime: data.lastDescalingTime}));
+                      }
+                    }}
+                    title='Mark as Complete'
+                  >
+                    <FontAwesomeIcon icon={faCheck} />
+                  </button>
+                </div>
+              </div>
             </div>
           </Card>
 
