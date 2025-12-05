@@ -58,6 +58,13 @@ int16_t encodeSigned(float value, float scale, int16_t minValue, int16_t maxValu
     }
     return static_cast<int16_t>(fixed);
 }
+
+String padId(String id, int length = 6) {
+    while (id.length() < length) {
+        id = "0" + id;
+    }
+    return id;
+}
 } // namespace
 
 ShotHistoryPlugin ShotHistory;
@@ -69,8 +76,10 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
         fs = &SD_MMC;
         ESP_LOGI("ShotHistoryPlugin", "Logging shot history to SD card");
     }
+    rebuildIndex();
     pm->on("controller:brew:start", [this](Event const &) { startRecording(); });
     pm->on("controller:brew:end", [this](Event const &) { endRecording(); });
+    pm->on("controller:brew:clear", [this](Event const &) { endExtendedRecording(); });
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
     pm->on("controller:volumetric-measurement:bluetooth:change",
@@ -105,6 +114,7 @@ void ShotHistoryPlugin::record() {
                 header.profileId[sizeof(header.profileId) - 1] = '\0';
                 strncpy(header.profileName, profile.label.c_str(), sizeof(header.profileName) - 1);
                 header.profileName[sizeof(header.profileName) - 1] = '\0';
+                header.phaseTransitionCount = 0; // Initialize phase transition count
                 // Write header placeholder
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
@@ -128,6 +138,22 @@ void ShotHistoryPlugin::record() {
         sample.v = encodeUnsigned(currentBluetoothWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
+        sample.si = getSystemInfo(); // Pack system state information
+
+        // Track phase transitions
+        if (controller->getMode() == MODE_BREW) {
+            Process *process = controller->getProcess();
+            if (process != nullptr && process->getType() == MODE_BREW) {
+                auto *brewProcess = static_cast<BrewProcess *>(process);
+                uint8_t currentPhase = static_cast<uint8_t>(brewProcess->phaseIndex);
+
+                // Check for phase transition
+                if (currentPhase != lastRecordedPhase) {
+                    recordPhaseTransition(currentPhase, sampleCount);
+                    lastRecordedPhase = currentPhase;
+                }
+            }
+        }
 
         if (isFileOpen) {
             if (ioBufferPos + sizeof(sample) > sizeof(ioBuffer)) {
@@ -195,7 +221,6 @@ void ShotHistoryPlugin::record() {
         unsigned long duration = header.durationMs;
         if (duration <= 7500) { // Exclude failed shots and flushes
             fs->remove("/h/" + currentId + ".slog");
-            fs->remove("/h/" + currentId + ".json");
 
             // If we created an early index entry, mark it as deleted
             if (indexEntryCreated) {
@@ -236,10 +261,7 @@ void ShotHistoryPlugin::startRecording() {
             return;
         }
     }
-    currentId = controller->getSettings().getHistoryIndex();
-    while (currentId.length() < 6) {
-        currentId = "0" + currentId;
-    }
+    currentId = padId(String(controller->getSettings().getHistoryIndex()));
     shotStart = millis();
     lastWeightChangeTime = 0;
     extendedRecordingStart = 0;
@@ -253,6 +275,12 @@ void ShotHistoryPlugin::startRecording() {
     indexEntryCreated = false; // Reset flag for new shot
     sampleCount = 0;
     ioBufferPos = 0;
+
+    // Reset phase tracking for new shot
+    lastRecordedPhase = 0xFF; // Invalid value to detect first phase
+
+    // Capture initial volumetric mode state (brew by weight vs brew by time)
+    shotStartedVolumetric = controller->getSettings().isVolumetricTarget();
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -262,7 +290,7 @@ unsigned long ShotHistoryPlugin::getTime() {
 }
 
 void ShotHistoryPlugin::endRecording() {
-    if (controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
+    if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
         extendedRecordingStart = millis();
@@ -271,6 +299,80 @@ void ShotHistoryPlugin::endRecording() {
     }
 
     recording = false;
+}
+
+void ShotHistoryPlugin::endExtendedRecording() {
+    if (extendedRecording) {
+        extendedRecording = false;
+    }
+}
+
+void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex) {
+    // Only record if we have space and a valid header
+    if (header.phaseTransitionCount >= 12 || !isFileOpen) {
+        return;
+    }
+
+    // Get current profile to extract phase name
+    Profile profile = controller->getProfileManager()->getSelectedProfile();
+    PhaseTransition &transition = header.phaseTransitions[header.phaseTransitionCount];
+
+    transition.sampleIndex = sampleIndex;
+    transition.phaseNumber = phaseNumber;
+    transition.reserved = 0;
+
+    // Get phase name from profile
+    if (phaseNumber < profile.phases.size()) {
+        strncpy(transition.phaseName, profile.phases[phaseNumber].name.c_str(), sizeof(transition.phaseName) - 1);
+        transition.phaseName[sizeof(transition.phaseName) - 1] = '\0';
+    } else {
+        // Fallback to generic name
+        snprintf(transition.phaseName, sizeof(transition.phaseName), "Phase %d", phaseNumber + 1);
+    }
+
+    header.phaseTransitionCount++;
+
+    ESP_LOGD("ShotHistoryPlugin", "Recorded phase transition to phase %d (%s) at sample %d", phaseNumber, transition.phaseName,
+             sampleIndex);
+}
+
+uint16_t ShotHistoryPlugin::getSystemInfo() {
+    uint16_t systemInfo = 0;
+
+    // Bit 0: Shot started in volumetric mode
+    if (shotStartedVolumetric) {
+        systemInfo |= SYSTEM_INFO_SHOT_STARTED_VOLUMETRIC;
+    }
+
+    // Bit 1: Currently in volumetric mode (check current process if active)
+    if (controller != nullptr) {
+        Process *process = controller->getProcess();
+        if (process != nullptr && process->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(process);
+            bool currentlyVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC &&
+                                       brewProcess->currentPhase.hasVolumetricTarget() && controller->isVolumetricAvailable();
+            if (currentlyVolumetric) {
+                systemInfo |= SYSTEM_INFO_CURRENTLY_VOLUMETRIC;
+            }
+        }
+    }
+
+    // Bit 2: Bluetooth scale connected
+    if (controller != nullptr && controller->isBluetoothScaleHealthy()) {
+        systemInfo |= SYSTEM_INFO_BLUETOOTH_SCALE_CONNECTED;
+    }
+
+    // Bit 3: Volumetric available
+    if (controller != nullptr && controller->isVolumetricAvailable()) {
+        systemInfo |= SYSTEM_INFO_VOLUMETRIC_AVAILABLE;
+    }
+
+    // Bit 4: Extended recording active
+    if (extendedRecording) {
+        systemInfo |= SYSTEM_INFO_EXTENDED_RECORDING;
+    }
+
+    return systemInfo;
 }
 
 void ShotHistoryPlugin::cleanupHistory() {
@@ -596,7 +698,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     ESP_LOGI("ShotHistoryPlugin", "Rebuilding index from %d shot files", slogFiles.size());
 
     for (const String &fileName : slogFiles) {
-        File shotFile = fs->open(fileName, "r");
+        File shotFile = fs->open("/h/" + fileName, "r");
         if (!shotFile) {
             continue;
         }

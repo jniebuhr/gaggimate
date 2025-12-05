@@ -29,8 +29,8 @@ extern lv_obj_t *ui_GrindScreen_upDurationButton;
 extern void ui_event_GrindScreen_downDurationButton(lv_event_t *e);
 extern lv_obj_t *ui_GrindScreen_downDurationButton;
 extern lv_obj_t *ui_GrindScreen_targetSymbol;
+extern void ui_event_GrindScreen_modeSwitch(lv_event_t *e);
 extern lv_obj_t *ui_GrindScreen_modeSwitch;
-extern void ui_event_GrindScreen_volumetricButton(lv_event_t *e);
 extern lv_obj_t *ui_GrindScreen_volumetricButton;
 extern lv_obj_t *ui_GrindScreen_weightLabel;
 // CUSTOM VARIABLES

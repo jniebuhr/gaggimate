@@ -158,12 +158,6 @@ void DefaultUI::init() {
         pressureAvailable = controller->getSystemInfo().capabilities.pressure;
     });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
-        configTzTime(resolve_timezone(controller->getSettings().getTimezone()), NTP_SERVER);
-        setenv("TZ", resolve_timezone(controller->getSettings().getTimezone()), 1);
-        tzset();
-        sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
-        sntp_setservername(0, NTP_SERVER);
-        sntp_init();
         rerender = true;
         apActive = event.getInt("AP");
     });
@@ -514,7 +508,7 @@ void DefaultUI::setupReactive() {
                                                    LV_STYLE_TEXT_COLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_BrewScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_BG_IMG_RECOLOR,
+                                                   LV_STYLE_IMG_RECOLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_BrewScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
                                                    volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
@@ -528,7 +522,7 @@ void DefaultUI::setupReactive() {
                                                    LV_STYLE_TEXT_COLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_GrindScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_BG_IMG_RECOLOR,
+                                                   LV_STYLE_IMG_RECOLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_GrindScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
                                                    volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
@@ -632,12 +626,13 @@ void DefaultUI::setupReactive() {
             _ui_flag_modify(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN,
                             brewScreenState == BrewScreenState::Brew && volumetricAvailable);
             if (volumetricAvailable) {
-                lv_obj_set_style_bg_img_src(ui_BrewScreen_volumetricButton,
-                                            bluetoothScales ? &ui_img_1424216268 : &ui_img_flowmeter_png,
-                                            LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_img_set_src(ui_BrewScreen_volumetricButton, bluetoothScales ? &ui_img_1424216268 : &ui_img_flowmeter_png);
             }
         },
         &brewScreenState, &volumetricAvailable, &bluetoothScales);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
+                          [=]() { lv_img_set_src(ui_StandbyScreen_logo, christmasMode ? &ui_img_1510335 : &ui_img_logo_png); },
+                          &christmasMode);
 }
 
 void DefaultUI::handleScreenChange() {
@@ -679,6 +674,8 @@ void DefaultUI::updateStandbyScreen() {
             strftime(time, sizeof(time), format, &timeinfo);
             lv_label_set_text(ui_StandbyScreen_time, time);
             lv_obj_clear_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
+
+            christmasMode = timeinfo.tm_mon == 11 && timeinfo.tm_mday < 27;
         }
     } else {
         lv_obj_add_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);

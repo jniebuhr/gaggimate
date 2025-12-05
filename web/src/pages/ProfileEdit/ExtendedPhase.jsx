@@ -119,7 +119,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 id={`phase-${index}-target`}
                 className='grow'
                 type='number'
-                value={phase.temperature || 0}
+                value={`${phase.temperature || 0}`}
                 onChange={e => onFieldChange('temperature', parseFloat(e.target.value))}
                 aria-label='Target temperature'
                 min='0'
@@ -233,7 +233,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 step='1'
                 min={0}
                 max={100}
-                value={pumpPower}
+                value={pumpPower.toString()}
                 onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
                 aria-label='Pump power as percentage'
               />
@@ -258,7 +258,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   type='number'
                   step='0.01'
                   min={mode === 'pressure' ? '0.1' : '0'}
-                  value={pressure}
+                  value={pressure.toString()}
                   onChange={e =>
                     onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
                   }
@@ -279,7 +279,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   className='grow'
                   type='number'
                   step='0.01'
-                  value={flow}
+                  value={flow.toString()}
                   onChange={e =>
                     onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
                   }

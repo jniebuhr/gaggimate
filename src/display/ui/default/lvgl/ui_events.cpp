@@ -4,8 +4,12 @@
 // Project name: GaggiMate
 
 #include "../../../main.h"
+#include "../../../plugins/BLEScalePlugin.h"
 #include "ui.h"
 #include <Arduino.h>
+
+// Flag to track if volumetric hold was triggered
+static bool volumetricHoldTriggered = false;
 
 void onBrewCancel(lv_event_t *e) {
     controller.deactivate();
@@ -72,8 +76,13 @@ void onGrindScreen(lv_event_t *e) {
 }
 
 void onVolumetricClick(lv_event_t *e) {
-    controller.onTargetToggle();
-    controller.getUI()->markDirty();
+    // Only execute click if hold wasn't triggered
+    if (!volumetricHoldTriggered) {
+        controller.onTargetToggle();
+        controller.getUI()->markDirty();
+    }
+    // Reset the hold flag for next interaction
+    volumetricHoldTriggered = false;
 }
 
 void onPreviousProfile(lv_event_t *e) { controller.getUI()->onPreviousProfile(); }
@@ -144,4 +153,12 @@ void onProfileAccept(lv_event_t *e) { controller.getUI()->changeBrewScreenMode(B
 void onProfileSaveAsNew(lv_event_t *e) {
     controller.onProfileSaveAsNew();
     controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew);
+}
+
+void onVolumetricHold(lv_event_t *e) {
+    // Set flag to prevent click from firing when button is released
+    volumetricHoldTriggered = true;
+
+    controller.getClientController()->tare();
+    BLEScales.tare();
 }

@@ -259,7 +259,7 @@ function getChartData(data) {
       borderDash: [6, 6],
       pointStyle: false,
       yAxisID: 'y2',
-      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetWeight || 0 })),
+      data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.activeTargetWeight || 0 })),
     });
   }
 

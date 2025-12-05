@@ -11,6 +11,7 @@ void DistanceSensor::setup() {
     if (!this->tof->init()) {
         ESP_LOGE("DistanceSensor", "Failed to initialize VL53L0X");
     } else {
+        ESP_LOGI("DistanceSensor", "Initialized VL53L0X");
         this->tof->startContinuous(250);
         xTaskCreate(loopTask, "DistanceSensor::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
     }
@@ -22,12 +23,12 @@ void DistanceSensor::loop() {
         ESP_LOGE("DistanceSensor", "ToF Timeout");
         return;
     }
-    currentMillis = currentMillis * 0.99 + millis * 0.01;
-    measurements = (measurements + 1) % 25;
+    currentMillis = currentMillis == 0 ? millis : static_cast<int>(currentMillis * 0.9 + static_cast<double>(millis) * 0.1);
+    measurements = (measurements + 1) % 10;
     if (measurements == 0) {
         _callback(currentMillis);
     }
-    ESP_LOGV("DistanceSensor", "Received measurement: %d (%d objects)", currentMillis, objects);
+    ESP_LOGV("DistanceSensor", "Received measurement: %d (%d objects)", currentMillis);
 }
 
 void DistanceSensor::loopTask(void *arg) {
