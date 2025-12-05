@@ -30,9 +30,9 @@ export function App() {
           <div className='flex min-h-screen flex-col'>
             <Header />
 
-            <main className='flex-1'>
-              <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
-                <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
+            <main className='flex flex-1'>
+              <div className='mx-auto flex w-full flex-1 px-4 py-2 lg:p-8 xl:container'>
+                <div className='grid flex-1 grid-cols-1 gap-6 lg:grid-cols-12'>
                   <Navigation />
                   <div className='lg:col-span-10'>
                     <ErrorBoundary>
