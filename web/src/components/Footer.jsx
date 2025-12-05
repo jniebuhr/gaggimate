@@ -3,7 +3,7 @@ export function Footer() {
     <>
       <footer id='page-footer' className='flex grow-0 items-center'>
         <div className='mx-auto w-full px-4 lg:px-8 xl:container'>
-          <div className='border-base-content/10 text-base-content/60 flex flex-col gap-2 border-t-2 py-2 text-center text-sm font-medium md:flex-row md:justify-between md:gap-0 md:text-start xl:py-6'>
+          <div className='border-base-content/10 text-base-content/60 flex flex-col gap-2 border-t-2 py-2 text-center text-sm font-medium md:flex-row md:justify-between md:gap-0 md:text-start xl:py-6 landscape:border-t-0 landscape:lg:border-t-2'>
             <div className='inline-flex items-center justify-center'>
               <span>Crafted with</span>
               <svg
