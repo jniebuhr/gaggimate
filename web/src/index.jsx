@@ -26,15 +26,15 @@ export function App() {
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div className='bg-base-300 h-screen overflow-hidden'>
-          <div className='flex h-full flex-col'>
+        <div className='bg-base-300 min-h-screen'>
+          <div className='flex min-h-screen flex-col'>
             <Header />
 
-            <main className='flex flex-1 min-h-0 overflow-hidden'>
-              <div className='mx-auto flex w-full flex-1 min-h-0 px-4 py-2 lg:p-8 xl:container'>
-                <div className='grid flex-1 grid-cols-1 gap-6 lg:grid-cols-12 min-h-0'>
+            <main className='flex-1'>
+              <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
+                <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
                   <Navigation />
-                  <div className='lg:col-span-10 min-h-0 flex flex-col'>
+                  <div className='lg:col-span-10'>
                     <ErrorBoundary>
                       <Router>
                         <Route path='/' component={Home} />
