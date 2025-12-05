@@ -29,7 +29,7 @@ export default function Card({
 
   return (
     <div
-      className={`card bg-base-100 shadow-xl flex flex-col ${gridClasses} ${fullHeight ? 'h-full' : ''} ${className}`}
+      className={`card bg-base-100 shadow-md flex flex-col ${gridClasses} ${fullHeight ? 'h-full' : ''} ${className}`}
       role={role}
     >
       {title && (
