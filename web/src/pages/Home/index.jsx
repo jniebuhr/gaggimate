@@ -50,7 +50,7 @@ export function Home() {
   const mode = machine.value.status.mode;
 
   return (
-    <div className='flex flex-col landscape:h-[calc(100dvh-5rem)] landscape:lg:h-auto'>
+    <div className='flex h-[calc(100dvh-5rem)] flex-col lg:h-[calc(100dvh-15rem)]'>
       <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
       </div>
