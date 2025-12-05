@@ -37,7 +37,7 @@ export default function Card({
           <h2 className='card-title text-lg sm:text-xl'>{title}</h2>
         </div>
       )}
-      <div className={`card-body flex flex-col gap-2 p-4 min-h-0 overflow-hidden ${fullHeight ? 'flex-1' : ''}`}>
+      <div className={`card-body flex flex-col gap-2 p-4 min-h-0 overflow-auto ${fullHeight ? 'flex-1' : ''}`}>
         {children}
       </div>
     </div>
