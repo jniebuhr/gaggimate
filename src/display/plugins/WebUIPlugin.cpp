@@ -10,10 +10,10 @@
 #include <esp_err.h>
 #include <esp_partition.h>
 #include <esp_system.h>
-
 #include <SD_MMC.h>
 #include <algorithm>
 #include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/DebugLogPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <string>
 #include <unordered_map>
@@ -150,6 +150,17 @@ void WebUIPlugin::loop() {
 
         ws.textAll(doc.as<String>());
     }
+
+    if (ws.count() > 0) {
+        if (now > lastDebugLog + DEBUG_LOG_WS_INTERVAL) {
+            sendDebugLogs();
+            lastDebugLog = now;
+        } else if (lastDebugLogHadBytes && now > lastDebugLog + DEBUG_LOG_WS_FAST_INTERVAL) {
+            sendDebugLogs();
+            lastDebugLog = now;
+        }
+    }
+
     if (now > lastCleanup + CLEANUP_PERIOD) {
         lastCleanup = now;
         ws.cleanupClients();
@@ -204,6 +215,8 @@ void WebUIPlugin::setupServer() {
         }
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
+    server.on("/api/logs", HTTP_GET, [this](AsyncWebServerRequest *request) { handleLogDownload(request); });
+
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
     ws.onEvent(
@@ -465,6 +478,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("smartGrindMode"))
                 settings->setSmartGrindMode(request->arg("smartGrindMode").toInt());
             settings->setHomeAssistant(request->hasArg("homeAssistant"));
+            settings->setDebugLoggingEnabled(request->hasArg("debugLoggingEnabled"));
             if (request->hasArg("haUser"))
                 settings->setHomeAssistantUser(request->arg("haUser"));
             if (request->hasArg("haPassword"))
@@ -577,6 +591,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haIP"] = settings.getHomeAssistantIP();
     doc["haPort"] = settings.getHomeAssistantPort();
     doc["haTopic"] = settings.getHomeAssistantTopic();
+    doc["debugLoggingEnabled"] = settings.isDebugLoggingEnabled();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["wifiSsid"] = settings.getWifiSsid();
@@ -800,5 +815,64 @@ void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {
     response->addHeader("Content-Disposition", "attachment; filename=\"coredump.bin\"");
     response->addHeader("Cache-Control", "no-cache");
 
+    request->send(response);
+}
+
+void WebUIPlugin::sendDebugLogs() {
+    String newLogs = DebugLog.getNewWSLogs();
+
+    if (newLogs.length() > 0) {
+        JsonDocument logDoc;
+        logDoc["tp"] = "evt:logs";
+        logDoc["data"] = newLogs;
+
+        ws.textAll(logDoc.as<String>());
+        lastDebugLogHadBytes = true;
+    } else {
+        lastDebugLogHadBytes = false;
+    }
+}
+
+void WebUIPlugin::handleLogDownload(AsyncWebServerRequest *request) {
+    FS *fs = &SPIFFS;
+    if (controller->isSDCard()) {
+        fs = &SD_MMC;
+    }
+
+    File oldLog = fs->open("/logs.old.txt", "r");
+    File currentLog = fs->open("/logs.txt", "r");
+
+    auto oldLogPtr = std::make_shared<File>(oldLog);
+    auto currentLogPtr = std::make_shared<File>(currentLog);
+
+    size_t oldLogSize = oldLog ? oldLog.size() : 0;
+    size_t currentLogSize = currentLog ? currentLog.size() : 0;
+
+    if (oldLogSize == 0 && currentLogSize == 0) {
+        return request->send(404, "text/plain", "No logs found");
+    }
+
+    size_t totalSize = oldLogSize + currentLogSize;
+
+    // Stream the two files instead of loading them in memory
+    AsyncWebServerResponse *response = request->beginResponse(
+        "text/plain", totalSize,
+        [oldLogPtr, currentLogPtr, oldLogSize, totalSize](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+            if (index >= totalSize) {
+                return 0;
+            }
+
+            size_t bytesToRead = min(maxLen, totalSize - index);
+
+            if (index < oldLogSize) {
+                oldLogPtr->seek(index);
+                return oldLogPtr->read(buffer, min(bytesToRead, oldLogSize - index));
+            } else {
+                currentLogPtr->seek(index - oldLogSize);
+                return currentLogPtr->read(buffer, bytesToRead);
+            }
+        });
+
+    response->addHeader("Cache-Control", "no-cache");
     request->send(response);
 }
