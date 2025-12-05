@@ -50,27 +50,25 @@ export function Home() {
   const mode = machine.value.status.mode;
 
   return (
-    <div className='flex flex-col landscape:fixed landscape:inset-0 landscape:top-[57px] landscape:lg:static landscape:lg:inset-auto'>
+    <div className='flex flex-col landscape:h-[calc(100dvh-57px-40px)] landscape:lg:h-auto'>
       <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
       </div>
 
-      <div className='flex flex-1 flex-col gap-4 landscape:flex-row landscape:overflow-hidden landscape:p-4 landscape:lg:p-0 landscape:lg:overflow-visible'>
+      <div className='flex flex-1 flex-col gap-4 min-h-0 landscape:flex-row'>
         <Card
-          className={`landscape:flex-1 landscape:basis-0 landscape:min-w-0 landscape:min-h-0 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
+          className={`flex-1 basis-0 min-h-0 overflow-hidden ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
           title='Process Controls'
         >
           <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
         </Card>
 
         <Card
-          className={`landscape:flex-1 landscape:basis-0 landscape:min-w-0 landscape:min-h-0 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
+          className={`flex-1 basis-0 min-h-0 overflow-hidden ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
           title='Temperature & Pressure Chart'
           fullHeight={true}
         >
-          <div className='h-full w-full min-h-0 overflow-hidden'>
-            <OverviewChart />
-          </div>
+          <OverviewChart />
         </Card>
       </div>
     </div>
