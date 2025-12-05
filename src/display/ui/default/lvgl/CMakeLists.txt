@@ -46,6 +46,7 @@ SET(SOURCES components/ui_comp_dials.c
     images/ui_img_1456692430.c
     images/ui_img_1829139226.c
     images/ui_img_flowmeter_png.c
+    images/ui_img_1510335.c
     images/ui_img_691326438.c)
 
 add_library(ui ${SOURCES})

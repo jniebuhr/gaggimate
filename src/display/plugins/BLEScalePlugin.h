@@ -37,6 +37,7 @@ class BLEScalePlugin : public Plugin {
     };
 
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
+    void tare() const;
 
   private:
     void update();
