@@ -50,21 +50,21 @@ export function Home() {
   const mode = machine.value.status.mode;
 
   return (
-    <div className='flex flex-col landscape:h-[calc(100dvh-57px-40px)] landscape:lg:h-auto'>
+    <div className='flex flex-col landscape:h-[calc(100dvh-5rem)] landscape:lg:h-auto'>
       <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
       </div>
 
-      <div className='flex flex-1 flex-col gap-4 min-h-0 landscape:flex-row'>
+      <div className='flex min-h-0 flex-1 flex-col gap-4 landscape:flex-row'>
         <Card
-          className={`flex-1 basis-0 min-h-0 overflow-hidden ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
+          className={`min-h-0 flex-1 basis-0 overflow-hidden ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
           title='Process Controls'
         >
           <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
         </Card>
 
         <Card
-          className={`flex-1 basis-0 min-h-0 overflow-hidden ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
+          className={`min-h-0 flex-1 basis-0 overflow-hidden ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
           title='Temperature & Pressure Chart'
           fullHeight={true}
         >
