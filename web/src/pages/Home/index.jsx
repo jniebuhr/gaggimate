@@ -55,20 +55,20 @@ export function Home() {
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
       </div>
 
-      <div className='flex flex-1 flex-col gap-4 landscape:flex-row'>
+      <div className='flex flex-1 flex-col gap-4 landscape:flex-row min-h-0'>
         <Card
-          className={`flex-1 basis-0 min-w-0 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
+          className={`flex-1 basis-0 min-w-0 min-h-0 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
           title='Process Controls'
         >
           <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
         </Card>
 
         <Card
-          className={`flex-1 basis-0 min-w-0 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
+          className={`flex-1 basis-0 min-w-0 min-h-0 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
           title='Temperature & Pressure Chart'
           fullHeight={true}
         >
-          <div className='h-full w-full overflow-hidden'>
+          <div className='h-full w-full min-h-0 overflow-hidden'>
             <OverviewChart />
           </div>
         </Card>
