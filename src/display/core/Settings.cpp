@@ -22,6 +22,11 @@ Settings::Settings() {
     pumpModelCoeffs = preferences.getString("pmc", DEFAULT_PUMP_MODEL_COEFFS);
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
+    staticIpEnabled = preferences.getBool("si_e", false);
+    staticIp = preferences.getString("si_ip", "");
+    staticNetmask = preferences.getString("si_nm", "255.255.255.0");
+    staticGateway = preferences.getString("si_gw", "");
+    staticDns = preferences.getString("si_dns", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
     homekit = preferences.getBool("hk", false);
     volumetricTarget = preferences.getBool("vt", false);
@@ -232,6 +237,31 @@ void Settings::setWifiSsid(const String &wifiSsid) {
 
 void Settings::setWifiPassword(const String &wifiPassword) {
     this->wifiPassword = wifiPassword;
+    save();
+}
+
+void Settings::setStaticIpEnabled(bool staticIpEnabled) {
+    this->staticIpEnabled = staticIpEnabled;
+    save();
+}
+
+void Settings::setStaticIp(const String &staticIp) {
+    this->staticIp = staticIp;
+    save();
+}
+
+void Settings::setStaticNetmask(const String &staticNetmask) {
+    this->staticNetmask = staticNetmask;
+    save();
+}
+
+void Settings::setStaticGateway(const String &staticGateway) {
+    this->staticGateway = staticGateway;
+    save();
+}
+
+void Settings::setStaticDns(const String &staticDns) {
+    this->staticDns = staticDns;
     save();
 }
 
@@ -484,6 +514,11 @@ void Settings::doSave() {
     preferences.putString("pmc", pumpModelCoeffs);
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
+    preferences.putBool("si_e", staticIpEnabled);
+    preferences.putString("si_ip", staticIp);
+    preferences.putString("si_nm", staticNetmask);
+    preferences.putString("si_gw", staticGateway);
+    preferences.putString("si_dns", staticDns);
     preferences.putString("mn", mdnsName);
     preferences.putBool("hk", homekit);
     preferences.putBool("vt", volumetricTarget);

@@ -75,6 +75,11 @@ class Settings {
     String getPumpModelCoeffs() const { return pumpModelCoeffs; }
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
+    bool isStaticIpEnabled() const { return staticIpEnabled; }
+    String getStaticIp() const { return staticIp; }
+    String getStaticNetmask() const { return staticNetmask; }
+    String getStaticGateway() const { return staticGateway; }
+    String getStaticDns() const { return staticDns; }
     String getMdnsName() const { return mdnsName; }
     bool isHomekit() const { return homekit; }
     bool isVolumetricTarget() const { return volumetricTarget; }
@@ -138,6 +143,11 @@ class Settings {
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
+    void setStaticIpEnabled(bool staticIpEnabled);
+    void setStaticIp(const String &staticIp);
+    void setStaticNetmask(const String &staticNetmask);
+    void setStaticGateway(const String &staticGateway);
+    void setStaticDns(const String &staticDns);
     void setMdnsName(const String &mdnsName);
     void setHomekit(bool homekit);
     void setVolumetricTarget(bool volumetric_target);
@@ -206,6 +216,11 @@ class Settings {
     String pumpModelCoeffs = DEFAULT_PUMP_MODEL_COEFFS;
     String wifiSsid = "";
     String wifiPassword = "";
+    bool staticIpEnabled = false;
+    String staticIp = "";
+    String staticNetmask = "255.255.255.0";
+    String staticGateway = "";
+    String staticDns = "";
     String mdnsName = DEFAULT_MDNS_NAME;
     String savedScale = "";
     bool homekit = false;
