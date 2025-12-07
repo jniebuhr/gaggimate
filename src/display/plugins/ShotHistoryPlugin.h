@@ -78,6 +78,7 @@ class ShotHistoryPlugin : public Plugin {
     float currentBluetoothFlow = 0.0f;
     float currentEstimatedWeight = 0.0f;
     float currentPuckResistance = 0.0f;
+    float maxRecordedWeight = 0.0f; // Track maximum observed weight during shot
     String currentProfileName;
 
     // Phase transition tracking (v5+)
