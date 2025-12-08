@@ -30,6 +30,7 @@ bool LedController::initialize() {
     bool retval = this->pca9634->begin();
     if (!retval) {
         ESP_LOGE("LedController", "Failed to initialize PCA9634");
+        return false;
     }
     ESP_LOGI("LedController", "Initialized PCA9634");
     this->initialized = retval;
