@@ -1,7 +1,7 @@
 #ifndef MQTTPLUGIN_H
 #define MQTTPLUGIN_H
 #include "../core/Plugin.h"
-#include <MQTT.h>
+#include <PsychicMqttClient.h>
 #include <WiFi.h>
 
 constexpr int MQTT_CONNECTION_RETRIES = 5;
@@ -11,17 +11,7 @@ class MQTTPlugin : public Plugin {
   public:
     void setup(Controller *controller, PluginManager *pluginManager) override;
     bool connect(Controller *controller);
-    unsigned long lastMQTTLoop = 0;
-    void loop() override {
-        if (!client.connected()) return;
-
-        unsigned long now = millis();
-        if (now - lastMQTTLoop >= 250) {   // every 100ms
-            client.loop();
-            lastMQTTLoop = now;
-        }
-    }
-
+    void loop() override;
 
 
   private:
@@ -29,7 +19,9 @@ class MQTTPlugin : public Plugin {
     void handleCommand(Controller *controller, const String &topic, const String &payload);
     void publishBrewState(Controller *controller, const char *state);
     void publishDiscovery(Controller *controller);
-    MQTTClient client;
+    void ensureConnected(Controller *controller);
+
+    PsychicMqttClient client;
     WiFiClient net;
 
     float lastTemperature = 0;
