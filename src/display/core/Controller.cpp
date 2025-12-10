@@ -1,5 +1,7 @@
 #include "Controller.h"
 #include "ArduinoJson.h"
+#include "esp_sntp.h"
+#include <SD_MMC.h>
 #include <SPIFFS.h>
 #include <ctime>
 #include <display/config.h>
@@ -10,6 +12,7 @@
 #include <display/core/process/SteamProcess.h>
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
+#include <display/plugins/AutoWakeupPlugin.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/HomekitPlugin.h>
@@ -19,6 +22,11 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#ifndef GAGGIMATE_HEADLESS
+#include <display/drivers/AmoledDisplayDriver.h>
+#include <display/drivers/LilyGoDriver.h>
+#include <display/drivers/WaveshareDriver.h>
+#endif
 
 const String LOG_TAG = F("Controller");
 
@@ -29,11 +37,19 @@ void Controller::setup() {
         Serial.println(F("An Error has occurred while mounting SPIFFS"));
     }
 
+#ifndef GAGGIMATE_HEADLESS
+    setupPanel();
+#endif
+
     pluginManager = new PluginManager();
-    profileManager = new ProfileManager(SPIFFS, "/p", settings, pluginManager);
+    FS *fs = &SPIFFS;
+    if (sdcard) {
+        fs = &SD_MMC;
+    }
+    profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
 #ifndef GAGGIMATE_HEADLESS
-    ui = new DefaultUI(this, pluginManager);
+    ui = new DefaultUI(this, driver, pluginManager);
 #endif
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
@@ -52,6 +68,7 @@ void Controller::setup() {
     pluginManager->registerPlugin(&ShotHistory);
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->registerPlugin(new LedControlPlugin());
+    pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->setup(this);
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
@@ -69,10 +86,13 @@ void Controller::setup() {
     this->onScreenReady();
 #endif
 
+    updateLastAction();
     xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
 void Controller::onScreenReady() { screenReady = true; }
+
+void Controller::onTargetToggle() { settings.setVolumetricTarget(!settings.isVolumetricTarget()); }
 
 void Controller::onTargetChange(ProcessTarget target) { settings.setVolumetricTarget(target == ProcessTarget::VOLUMETRIC); }
 
@@ -90,6 +110,32 @@ void Controller::connect() {
     updateLastAction();
     initialized = true;
 }
+
+#ifndef GAGGIMATE_HEADLESS
+void Controller::setupPanel() {
+    if (AmoledDisplayDriver::getInstance()->isCompatible()) {
+        driver = AmoledDisplayDriver::getInstance();
+    } else if (LilyGoDriver::getInstance()->isCompatible()) {
+        driver = LilyGoDriver::getInstance();
+    } else if (WaveshareDriver::getInstance()->isCompatible()) {
+        driver = WaveshareDriver::getInstance();
+    } else {
+        Serial.println("No compatible display driver found");
+        delay(10000);
+        ESP.restart();
+    }
+    driver->init();
+    if (!driver->supportsSDCard()) {
+        ESP_LOGV(LOG_TAG, "Display driver does not support SD card");
+        return;
+    }
+    if (driver->installSDCard()) {
+        sdcard = true;
+        ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
+        ESP_LOGI(LOG_TAG, "Used: %lluMB, Capacity: %lluMB", SD_MMC.usedBytes() / 1024 / 1024, SD_MMC.cardSize() / 1024 / 1024);
+    }
+}
+#endif
 
 void Controller::setupBluetooth() {
     clientController.initClient();
@@ -115,10 +161,11 @@ void Controller::setupBluetooth() {
             ESP_LOGE(LOG_TAG, "Received error %d", error);
         }
     });
-    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd) {
-        ESP_LOGI(LOG_TAG, "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
-        char pid[30];
-        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f", Kp, Ki, Kd);
+    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd, const float Kf) {
+        ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
+        char pid[64];
+        // Store in simplified format with combined Kf
+        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
         settings.setPid(String(pid));
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
@@ -156,7 +203,9 @@ void Controller::setupInfos() {
 
 void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
+        WiFi.setHostname(settings.getMdnsName().c_str());
         WiFi.mode(WIFI_STA);
+        WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
         WiFi.setAutoReconnect(true);
@@ -179,6 +228,12 @@ void Controller::setupWifi() {
                     pluginManager->trigger("controller:wifi:disconnect");
                 },
                 WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+            configTzTime(resolve_timezone(settings.getTimezone()), NTP_SERVER);
+            setenv("TZ", resolve_timezone(settings.getTimezone()), 1);
+            tzset();
+            sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
+            sntp_setservername(0, NTP_SERVER);
+            sntp_init();
         } else {
             WiFi.disconnect(true, true);
             ESP_LOGI(LOG_TAG, "Timed out while connecting to WiFi");
@@ -226,10 +281,12 @@ void Controller::loop() {
     }
 
     unsigned long now = millis();
-    if (now - lastPing > PING_INTERVAL) {
-        lastPing = now;
-        clientController.sendPing();
-    }
+
+    // Disable ping as we send output control frequently
+    // if (now - lastPing > PING_INTERVAL) {
+    //     lastPing = now;
+    //     clientController.sendPing();
+    // }
 
     if (isErrorState()) {
         return;
@@ -244,6 +301,7 @@ void Controller::loop() {
 
         // Handle current process
         if (currentProcess != nullptr) {
+            updateLastAction();
             if (currentProcess->getType() == MODE_BREW) {
                 auto brewProcess = static_cast<BrewProcess *>(currentProcess);
                 brewProcess->updatePressure(pressure);
@@ -296,9 +354,9 @@ bool Controller::isReady() const { return !isUpdating() && !isErrorState() && !i
 
 bool Controller::isVolumetricAvailable() const {
 #ifdef NIGHTLY_BUILD
-    return volumetricOverride || systemInfo.capabilities.dimming;
+    return isBluetoothScaleHealthy() || systemInfo.capabilities.dimming;
 #else
-    return volumetricOverride;
+    return isBluetoothScaleHealthy();
 #endif
 }
 
@@ -346,7 +404,7 @@ void Controller::setTargetTemp(float temperature) {
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
-        // Update current profile
+        profileManager->getSelectedProfile().temperature = temperature;
         break;
     case MODE_STEAM:
         settings.setTargetSteamTemp(static_cast<int>(temperature));
@@ -369,20 +427,6 @@ void Controller::setPumpModelCoeffs(void) {
     if (systemInfo.capabilities.dimming) {
         clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
     }
-}
-
-int Controller::getTargetDuration() const { return settings.getTargetDuration(); }
-
-void Controller::setTargetDuration(int duration) {
-    Event event = pluginManager->trigger("controller:targetDuration:change", "value", duration);
-    settings.setTargetDuration(event.getInt("value"));
-    updateLastAction();
-}
-
-void Controller::setTargetVolume(int volume) {
-    Event event = pluginManager->trigger("controller:targetVolume:change", "value", volume);
-    settings.setTargetVolume(event.getInt("value"));
-    updateLastAction();
 }
 
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }
@@ -413,34 +457,20 @@ void Controller::lowerTemp() {
 
 void Controller::raiseBrewTarget() {
     if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
-        int newTarget = settings.getTargetVolume() + 1;
-        if (newTarget > BREW_MAX_VOLUMETRIC) {
-            newTarget = BREW_MAX_VOLUMETRIC;
-        }
-        setTargetVolume(newTarget);
+        profileManager->getSelectedProfile().adjustVolumetricTarget(1);
     } else {
-        int newDuration = getTargetDuration() + 1000;
-        if (newDuration > BREW_MAX_DURATION_MS) {
-            newDuration = BREW_MIN_DURATION_MS;
-        }
-        setTargetDuration(newDuration);
+        profileManager->getSelectedProfile().adjustDuration(1);
     }
+    handleProfileUpdate();
 }
 
 void Controller::lowerBrewTarget() {
     if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
-        int newTarget = settings.getTargetVolume() - 1;
-        if (newTarget < BREW_MIN_VOLUMETRIC) {
-            newTarget = BREW_MIN_VOLUMETRIC;
-        }
-        setTargetVolume(newTarget);
+        profileManager->getSelectedProfile().adjustVolumetricTarget(-1);
     } else {
-        int newDuration = getTargetDuration() - 1000;
-        if (newDuration < BREW_MIN_DURATION_MS) {
-            newDuration = BREW_MIN_DURATION_MS;
-        }
-        setTargetDuration(newDuration);
+        profileManager->getSelectedProfile().adjustDuration(-1);
     }
+    handleProfileUpdate();
 }
 
 void Controller::raiseGrindTarget() {
@@ -480,7 +510,16 @@ void Controller::updateControl() {
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
-    clientController.sendAltControl(isActive() && currentProcess->isAltRelayActive());
+
+    // Check if alt relay should be active based on process type and alt relay function setting
+    bool altRelayActive = false;
+    if (isActive() && currentProcess->isAltRelayActive()) {
+        if (currentProcess->getType() == MODE_GRIND && settings.getAltRelayFunction() == ALT_RELAY_GRIND) {
+            altRelayActive = true;
+        }
+    }
+
+    clientController.sendAltControl(altRelayActive);
     if (isActive() && systemInfo.capabilities.pressure) {
         if (currentProcess->getType() == MODE_STEAM) {
             targetPressure = settings.getSteamPumpCutoff();
@@ -511,9 +550,18 @@ void Controller::activate() {
         return;
     clear();
     clientController.tare();
-    if (isVolumetricAvailable())
-        pluginManager->trigger("controller:brew:prestart");
-    delay(100);
+    if (isVolumetricAvailable()) {
+#ifdef NIGHTLY_BUILD
+        currentVolumetricSource =
+            isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::FLOW_ESTIMATION;
+#else
+        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
+#endif
+        if (mode == MODE_BREW) {
+            pluginManager->trigger("controller:brew:prestart");
+        }
+    }
+    delay(200);
     switch (mode) {
     case MODE_BREW:
         startProcess(new BrewProcess(profileManager->getSelectedProfile(),
@@ -557,6 +605,7 @@ void Controller::clear() {
     }
     delete lastProcess;
     lastProcess = nullptr;
+    currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
 }
 
 void Controller::activateGrind() {
@@ -565,6 +614,7 @@ void Controller::activateGrind() {
         return;
     clear();
     if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
+        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
         startProcess(new GrindProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetGrindVolume(), settings.getGrindDelay()));
     } else {
         startProcess(
@@ -615,13 +665,28 @@ void Controller::onOTAUpdate() {
     updating = true;
 }
 
+void Controller::onProfileSave() const { profileManager->saveProfile(profileManager->getSelectedProfile()); }
+
+void Controller::onProfileSaveAsNew() {
+    Profile &profile = profileManager->getSelectedProfile();
+    profile.label = "Copy of " + profileManager->getSelectedProfile().label;
+    profile.id = generateShortID();
+    settings.setSelectedProfile(profile.id);
+    settings.addFavoritedProfile(profile.id);
+    profileManager->saveProfile(profileManager->getSelectedProfile());
+}
+
 void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
     pluginManager->trigger(source == VolumetricMeasurementSource::FLOW_ESTIMATION
                                ? F("controller:volumetric-measurement:estimation:change")
                                : F("controller:volumetric-measurement:bluetooth:change"),
                            "value", static_cast<float>(measurement));
-    // Bluetooth volume override is active, ignore volume estimation
-    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION && volumetricOverride) {
+    if (source == VolumetricMeasurementSource::BLUETOOTH) {
+        lastBluetoothMeasurement = millis();
+    }
+
+    if (currentVolumetricSource != source) {
+        ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
         return;
     }
     if (currentProcess != nullptr) {
@@ -630,6 +695,11 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     if (lastProcess != nullptr) {
         lastProcess->updateVolume(measurement);
     }
+}
+
+bool Controller::isBluetoothScaleHealthy() const {
+    unsigned long timeSinceLastBluetooth = millis() - lastBluetoothMeasurement;
+    return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
 }
 
 void Controller::onFlush() {
@@ -702,12 +772,15 @@ void Controller::handleSteamButton(int steamButtonStatus) {
 
 void Controller::handleProfileUpdate() {
     pluginManager->trigger("boiler:targetTemperature:change", "value", profileManager->getSelectedProfile().temperature);
+    pluginManager->trigger("controller:targetDuration:change", "value", profileManager->getSelectedProfile().getTotalDuration());
+    pluginManager->trigger("controller:targetVolume:change", "value", profileManager->getSelectedProfile().getTotalVolume());
 }
 
 void Controller::loopTask(void *arg) {
+    TickType_t lastWake = xTaskGetTickCount();
     auto *controller = static_cast<Controller *>(arg);
     while (true) {
         controller->loopControl();
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : 100));
     }
 }

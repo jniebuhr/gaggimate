@@ -5,13 +5,10 @@
 
 #include <DNSServer.h>
 
-#include "../core/Plugin.h"
 #include "GitHubOTA.h"
-#include "ShotHistoryPlugin.h"
 #include <ArduinoJson.h>
-#include <AsyncJson.h>
 #include <ESPAsyncWebServer.h>
-#include <vector>
+#include <display/core/Plugin.h>
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 5 * 1000;
@@ -53,6 +50,9 @@ class WebUIPlugin : public Plugin {
     void updateOTAProgress(uint8_t phase, int progress);
     void sendAutotuneResult();
 
+    // Core dump download
+    void handleCoreDumpDownload(AsyncWebServerRequest *request);
+
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
     AsyncWebSocket ws;
@@ -69,6 +69,7 @@ class WebUIPlugin : public Plugin {
     bool apMode = false;
     bool serverRunning = false;
     String updateComponent = "";
+    float currentBluetoothWeight = 0.0f;
 };
 
 #endif // WEBUIPLUGIN_H

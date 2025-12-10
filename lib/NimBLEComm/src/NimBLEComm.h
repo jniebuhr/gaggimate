@@ -25,6 +25,7 @@
 #define TOF_MEASUREMENT_UUID "7282c525-21a0-416a-880d-21fe98602533"
 #define LED_CONTROL_UUID "37804a2b-49ab-4500-8582-db4279fc8573"
 
+constexpr size_t ERROR_CODE_NONE = 0;
 constexpr size_t ERROR_CODE_COMM_SEND = 1;
 constexpr size_t ERROR_CODE_COMM_RCV = 2;
 constexpr size_t ERROR_CODE_PROTO_ERR = 3;
@@ -32,7 +33,7 @@ constexpr size_t ERROR_CODE_RUNAWAY = 4;
 constexpr size_t ERROR_CODE_TIMEOUT = 5;
 
 using pin_control_callback_t = std::function<void(bool isActive)>;
-using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd)>;
+using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kf)>;
 using pump_model_coeffs_callback_t = std::function<void(float a, float b, float c, float d)>;
 using ping_callback_t = std::function<void()>;
 using remote_err_callback_t = std::function<void(int errorCode)>;

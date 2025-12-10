@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
 # Clean data
-rm -rf data/*
+rm -rf data/w
 mkdir -p data/w
 mkdir -p data/p
-touch data/p/.keep
 
 # Build web application
 cd web || exit

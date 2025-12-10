@@ -1,0 +1,108 @@
+{
+  "id": "lever",
+  "label": "Cremina lever machine",
+  "type": "pro",
+  "description": "Darker Roasts - Very Fine- 40-60s - 1:1.5-2.2",
+  "temperature": 86.5,
+  "phases": [
+    {
+      "name": "preinfusion start",
+      "phase": "preinfusion",
+      "valve": 1,
+      "duration": 2,
+      "temperature": 86.5,
+      "transition": {
+        "type": "instant",
+        "duration": 0,
+        "adaptive": false
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 1.1,
+        "flow": 0
+      }
+    },
+    {
+      "name": "preinfusion",
+      "phase": "preinfusion",
+      "valve": 1,
+      "duration": 3,
+      "temperature": 86.5,
+      "transition": {
+        "type": "instant",
+        "duration": 0,
+        "adaptive": false
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 1.1,
+        "flow": 0
+      },
+      "targets": [
+        {
+          "type": "pressure",
+          "operator": "gte",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "name": "soak",
+      "phase": "preinfusion",
+      "valve": 1,
+      "duration": 10,
+      "temperature": 86.5,
+      "transition": {
+        "type": "instant",
+        "duration": 0,
+        "adaptive": false
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 1.1,
+        "flow": 0
+      }
+    },
+    {
+      "name": "ramp",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 10,
+      "temperature": 86.5,
+      "transition": {
+        "type": "ease-in-out",
+        "duration": 10,
+        "adaptive": true
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 9,
+        "flow": 0
+      }
+    },
+    {
+      "name": "ramp-down",
+      "phase": "brew",
+      "valve": 1,
+      "duration": 50,
+      "temperature": 87,
+      "transition": {
+        "type": "linear",
+        "duration": 50,
+        "adaptive": true
+      },
+      "pump": {
+        "target": "pressure",
+        "pressure": 3,
+        "flow": 0
+      },
+      "targets": [
+        {
+          "type": "volumetric",
+          "operator": "gte",
+          "value": 36
+        }
+      ]
+    }
+  ]
+}

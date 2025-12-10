@@ -2,7 +2,7 @@
 #include "ControllerConfig.h"
 #include "GaggiMateController.h"
 
-GaggiMateController controller;
+GaggiMateController controller(BUILD_GIT_VERSION);
 
 void setup() {
     Serial.begin(115200);

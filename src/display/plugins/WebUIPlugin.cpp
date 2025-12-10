@@ -4,17 +4,26 @@
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
+#include <display/core/process/GrindProcess.h>
 #include <display/models/profile.h>
+#include <esp_core_dump.h>
+#include <esp_err.h>
+#include <esp_partition.h>
+#include <esp_system.h>
 
-#include "BLEScalePlugin.h"
-#include "ShotHistoryPlugin.h"
+#include <SD_MMC.h>
 #include <algorithm>
+#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/ShotHistoryPlugin.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
-static std::unordered_map<uint32_t, std::string> rxBuffers;
+#include <version.h>
 
-WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") {}
+static std::unordered_map<uint32_t, std::string> rxBuffers;
+static WebUIPlugin *g_webUIPlugin = nullptr;
+
+WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") { g_webUIPlugin = this; }
 
 void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) {
     this->controller = _controller;
@@ -42,6 +51,11 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         ota->init(controller->getClientController()->getClient());
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
+
+    // Subscribe to Bluetooth scale weight updates
+    pluginManager->on("controller:volumetric-measurement:bluetooth:change",
+                      [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
+
     setupServer();
 }
 
@@ -73,11 +87,24 @@ void WebUIPlugin::loop() {
         doc["pt"] = controller->getTargetPressure();
         doc["m"] = controller->getMode();
         doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
+        doc["puid"] = controller->getProfileManager()->getSelectedProfile().id;
         doc["cp"] = controller->getSystemInfo().capabilities.pressure;
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
+        doc["tw"] = profileManager->getSelectedProfile().getTotalVolume(); // total target weight for the process
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+        doc["btd"] = profileManager->getSelectedProfile().getTotalDuration();
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
+        doc["gtd"] = controller->getTargetGrindDuration();
+        doc["gtv"] = controller->getSettings().getTargetGrindVolume();
+        doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+        doc["gact"] = controller->isGrindActive() ? 1 : 0;
+
+        bool bleConnected = BLEScales.isConnected();
+        // Add Bluetooth scale weight information
+        doc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
+        doc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
+        doc["bc"] = bleConnected;                                    // bluetooth scale connected status
 
         Process *process = controller->getProcess();
         if (process == nullptr) {
@@ -102,6 +129,21 @@ void WebUIPlugin::loop() {
                 } else {
                     pObj["pt"] = brew->getPhaseDuration();
                     pObj["pp"] = ts - brew->currentPhaseStarted;
+                }
+            } else if (process->getType() == MODE_GRIND) {
+                auto *grind = static_cast<GrindProcess *>(process);
+                unsigned long ts = grind->isActive() && controller->isActive() ? millis() : grind->finished;
+                pObj["s"] = "grind";
+                pObj["l"] = grind->isActive() ? "Grinding" : "Finished";
+                pObj["e"] = ts - grind->started;
+                const bool isVolumetric = grind->target == ProcessTarget::VOLUMETRIC && controller->isVolumetricAvailable();
+                pObj["tt"] = isVolumetric ? "volumetric" : "time";
+                if (isVolumetric) {
+                    pObj["pt"] = grind->grindVolume;
+                    pObj["pp"] = grind->currentVolume;
+                } else {
+                    pObj["pt"] = grind->time;
+                    pObj["pp"] = ts - grind->started;
                 }
             }
         }
@@ -148,6 +190,20 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
+    FS *fs = &SPIFFS;
+    if (controller->isSDCard()) {
+        fs = &SD_MMC;
+    }
+    server.serveStatic("/api/history/", *fs, "/h/").setCacheControl("no-store");
+    server.on("/api/history/index.bin", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
+        // Serve the binary index file directly
+        if (fs->exists("/h/index.bin")) {
+            request->send(*fs, "/h/index.bin", "application/octet-stream");
+        } else {
+            request->send(404, "text/plain", "Index not found");
+        }
+    });
+    server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
     ws.onEvent(
@@ -233,6 +289,23 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     controller->clear();
                 } else if (msgType == "req:process:clear") {
                     controller->clear();
+                } else if (msgType == "req:grind:activate") {
+                    controller->activateGrind();
+                } else if (msgType == "req:grind:deactivate") {
+                    controller->deactivateGrind();
+                } else if (msgType == "req:change-grind-target") {
+                    if (doc["target"].is<uint8_t>()) {
+                        auto target = doc["target"].as<uint8_t>();
+                        controller->getSettings().setVolumetricTarget(target);
+                    }
+                } else if (msgType == "req:raise-temp") {
+                    controller->raiseTemp();
+                } else if (msgType == "req:lower-temp") {
+                    controller->lowerTemp();
+                } else if (msgType == "req:raise-grind-target") {
+                    controller->raiseGrindTarget();
+                } else if (msgType == "req:lower-grind-target") {
+                    controller->lowerGrindTarget();
                 } else if (msgType == "req:change-mode") {
                     if (doc["mode"].is<uint8_t>()) {
                         auto mode = doc["mode"].as<uint8_t>();
@@ -439,8 +512,54 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
+            if (request->hasArg("altRelayFunction"))
+                settings->setAltRelayFunction(request->arg("altRelayFunction").toInt());
+            settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
+            if (request->hasArg("autowakeupSchedules")) {
+                // Handle schedule format with days
+                String schedulesStr = request->arg("autowakeupSchedules");
+                std::vector<AutoWakeupSchedule> schedules;
+
+                if (schedulesStr.length() > 0) {
+                    // Split semicolon-separated schedules
+                    int start = 0;
+                    int end = schedulesStr.indexOf(';');
+
+                    while (end != -1 || start < schedulesStr.length()) {
+                        String scheduleStr = (end != -1) ? schedulesStr.substring(start, end) : schedulesStr.substring(start);
+
+                        int pipePos = scheduleStr.indexOf('|');
+                        if (pipePos != -1) {
+                            String timeStr = scheduleStr.substring(0, pipePos);
+                            String daysStr = scheduleStr.substring(pipePos + 1);
+
+                            AutoWakeupSchedule schedule;
+                            schedule.time = timeStr;
+
+                            if (daysStr.length() == 7) {
+                                for (int i = 0; i < 7; i++) {
+                                    schedule.days[i] = (daysStr.charAt(i) == '1');
+                                }
+                            }
+
+                            schedules.push_back(schedule);
+                        }
+
+                        if (end == -1)
+                            break;
+                        start = end + 1;
+                        end = schedulesStr.indexOf(';', start);
+                    }
+                }
+
+                if (schedules.empty()) {
+                    schedules.push_back(AutoWakeupSchedule("07:00")); // Default fallback
+                }
+                settings->setAutoWakeupSchedules(schedules);
+            }
             settings->save(true);
         });
+        pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
     }
@@ -491,6 +610,24 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["sunriseExtBrightness"] = settings.getSunriseExtBrightness();
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
+    doc["altRelayFunction"] = settings.getAltRelayFunction();
+    // Add auto-wakeup settings to response
+    doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
+
+    // Add schedule format with days
+    std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();
+    String schedulesStr = "";
+    for (size_t i = 0; i < autowakeupSchedules.size(); i++) {
+        if (i > 0)
+            schedulesStr += ";";
+        schedulesStr += autowakeupSchedules[i].time + "|";
+
+        // Convert days array to 7-bit string
+        for (int j = 0; j < 7; j++) {
+            schedulesStr += autowakeupSchedules[i].days[j] ? "1" : "0";
+        }
+    }
+    doc["autowakeupSchedules"] = schedulesStr;
     serializeJson(doc, *response);
     request->send(response);
 
@@ -562,6 +699,31 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;
+    // SPIFFS usage metrics
+    {
+        size_t total = SPIFFS.totalBytes();
+        size_t used = SPIFFS.usedBytes();
+        size_t freeBytes = total > used ? (total - used) : 0;
+        doc["spiffsTotal"] = static_cast<uint32_t>(total);
+        doc["spiffsUsed"] = static_cast<uint32_t>(used);
+        doc["spiffsFree"] = static_cast<uint32_t>(freeBytes);
+        if (total > 0) {
+            // Provide integer percentage to avoid float JSON
+            doc["spiffsUsedPct"] = static_cast<uint8_t>((used * 100) / total);
+        }
+    }
+    if (controller->isSDCard()) {
+        const uint64_t total = SD_MMC.cardSize();
+        const uint64_t used = SD_MMC.usedBytes();
+        const uint64_t freeBytes = total > used ? (total - used) : 0;
+        doc["sdTotal"] = total;
+        doc["sdUsed"] = used;
+        doc["sdFree"] = freeBytes;
+        if (total > 0) {
+            // Provide integer percentage to avoid float JSON
+            doc["sdUsedPct"] = static_cast<uint8_t>((used * 100) / total);
+        }
+    }
     ws.textAll(doc.as<String>());
 }
 
@@ -593,4 +755,50 @@ void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
     String msg;
     serializeJson(response, msg);
     ws.text(clientId, msg);
+}
+
+void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {
+    // Check if core dump is available
+    size_t coreAddr, coreSize;
+    if (esp_core_dump_image_get(&coreAddr, &coreSize) != ESP_OK || coreSize == 0) {
+        request->send(404, "text/plain", "No core dump available");
+        return;
+    }
+
+    // Find the coredump partition
+    const esp_partition_t *coredump_partition =
+        esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
+    if (coredump_partition == NULL) {
+        request->send(500, "text/plain", "Core dump partition not found");
+        return;
+    }
+
+    ESP_LOGI("WebUIPlugin", "Streaming core dump: %d bytes from 0x%x", coreSize, coreAddr);
+
+    // Create a streaming response
+    AsyncWebServerResponse *response =
+        request->beginResponse("application/octet-stream", coreSize,
+                               [coredump_partition, coreSize](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+                                   // Calculate how much to read
+                                   size_t remaining = coreSize - index;
+                                   size_t toRead = (remaining < maxLen) ? remaining : maxLen;
+
+                                   if (toRead == 0)
+                                       return 0;
+
+                                   // Read from partition
+                                   esp_err_t err = esp_partition_read(coredump_partition, index, buffer, toRead);
+                                   if (err != ESP_OK) {
+                                       ESP_LOGE("WebUIPlugin", "Failed to read core dump: %s", esp_err_to_name(err));
+                                       return 0;
+                                   }
+
+                                   return toRead;
+                               });
+
+    // Set appropriate headers
+    response->addHeader("Content-Disposition", "attachment; filename=\"coredump.bin\"");
+    response->addHeader("Cache-Control", "no-cache");
+
+    request->send(response);
 }

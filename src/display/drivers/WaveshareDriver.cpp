@@ -15,3 +15,7 @@ void WaveshareDriver::init() {
     beginLvglHelper(panel);
     panel.setBrightness(16);
 }
+
+bool WaveshareDriver::supportsSDCard() { return true; }
+
+bool WaveshareDriver::installSDCard() { return panel.installSD(); }
