@@ -56,15 +56,26 @@ class VolumetricRateCalculator {
 
     double getOvershootAdjustMillis(double expectedVolume, double actualVolume) {
         if (measurementTimes.size() < 2)
-            return 0.0;
-        double overshoot = actualVolume - expectedVolume;
-        double rate = getRate(measurementTimes.back());
-        
-        if (rate < 1e-10) {
+        {
             return 0.0;
         }
         
-        return overshoot / rate;
+        const double overshoot = actualVolume - expectedVolume;
+        const double rate = getRate(measurementTimes.back());
+        
+        if (rate < 1e-10) {
+            ESP_LOGW("VolumetricRateCalculator", "Invalid rate: %f", rate);
+            return 0.0;
+        }
+        
+        const double adjust = overshoot / rate;
+
+        if(isnan(adjust) || isinf(adjust) || adjust < 0.0) {
+            ESP_LOGW("VolumetricRateCalculator", "Invalid adjust: %f", adjust);
+            return 0.0;
+        }
+
+        return adjust;
     }
 
   private:
