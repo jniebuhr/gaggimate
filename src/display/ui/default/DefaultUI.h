@@ -93,6 +93,10 @@ class DefaultUI {
     int active = false;
     int smartGrindActive = false;
     int grindAvailable = false;
+    
+    // Cleaning schedule flags
+    bool backflushDue = false;
+    bool descalingDue = false;
 
     // Seasonal flags
     int christmasMode = false;
