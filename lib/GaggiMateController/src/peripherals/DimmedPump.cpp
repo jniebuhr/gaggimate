@@ -21,6 +21,7 @@ void DimmedPump::loop() {
     updatePower();
     // _currentFlow = 0.1f * _pressureController.getPumpFlowRate() + 0.9f * _currentFlow;
     _currentFlow = _pressureController.getPumpFlowRate();
+    plot(150);
 }
 
 void DimmedPump::setPower(float setpoint) {
@@ -87,4 +88,21 @@ void DimmedPump::setPumpFlowCoeff(float oneBarFlow, float nineBarFlow) {
 
 void DimmedPump::setPumpFlowPolyCoeffs(float a, float b, float c, float d) {
     _pressureController.setPumpFlowPolyCoeffs(a, b, c, d);
+}
+
+void DimmedPump::plot(uint8_t everyNth) {
+    if (plotCount >= everyNth) {
+        plotCount = 1;
+        String mode = "POWER";
+        if (_mode == ControlMode::PRESSURE) {
+            mode = "PRESSURE";
+        } else if (_mode == ControlMode::FLOW) {
+            mode = "FLOW";
+        }
+        ESP_LOGI(
+            LOG_TAG,
+            "Dimmed Pump Plot: power=%.2f, mode=%s, ctrl_pressure=%.2f, ctrl_flow=%.2f, pressure=%.2f, flow=%.2f, counter=%ld",
+            _power, mode.c_str(), _ctrlPressure, _ctrlFlow, _currentPressure, _currentFlow, _psm.getCounter());
+    } else
+        plotCount++;
 }
