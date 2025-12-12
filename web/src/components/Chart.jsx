@@ -117,7 +117,7 @@ export function ChartComponent({ data, className, chartClassName }) {
   }, [chart]);
 
   return (
-    <div className={className}>
+    <div className={`${className} min-h-0`}>
       <canvas className={chartClassName} ref={ref} />
     </div>
   );
