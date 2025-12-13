@@ -28,7 +28,7 @@ class Heater {
     
     
     // Thermal feedforward control
-    void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, bool *valveStatusPtr = nullptr);
+    void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
     void setFeedforwardScale(float combinedKff);  // Set combined Kff value (output units per watt)
     
 
@@ -69,7 +69,7 @@ class Heater {
 
     // Thermal feedforward variables
     float *pumpFlowRate = nullptr;
-    bool *valveStatus = nullptr;
+    int *valveStatus = nullptr;
     float lastSafetyFactor = 1.0f;  // For smooth safety scaling transitions
     float incomingWaterTemp = 23.0f;
     float heaterEfficiency = 0.95f;  // 95% efficiency (immersion heater)
