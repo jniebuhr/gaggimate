@@ -49,9 +49,13 @@ class WebUIPlugin : public Plugin {
     void updateOTAStatus(const String &version);
     void updateOTAProgress(uint8_t phase, int progress);
     void sendAutotuneResult();
+    void sendDebugLogs();
 
     // Core dump download
     void handleCoreDumpDownload(AsyncWebServerRequest *request);
+
+    // Download the stored log files
+    void handleLogDownload(AsyncWebServerRequest *request);
 
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
@@ -65,6 +69,8 @@ class WebUIPlugin : public Plugin {
     long lastStatus = 0;
     long lastCleanup = 0;
     long lastDns = 0;
+    long lastDebugLog = 0;
+    bool lastDebugLogHadBytes = true;
     bool updating = false;
     bool apMode = false;
     bool serverRunning = false;
