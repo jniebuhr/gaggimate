@@ -77,7 +77,7 @@ void GaggiMateController::setup() {
     if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         float* pumpFlowPtr = dimmedPump->getPumpFlowPtr();
-        bool* valveStatusPtr = dimmedPump->getValveStatusPtr();
+        int* valveStatusPtr = dimmedPump->getValveStatusPtr();
         
         heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
         heater->setFeedforwardScale(0.0f);
