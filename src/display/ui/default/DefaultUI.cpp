@@ -675,7 +675,7 @@ void DefaultUI::updateStandbyScreen() {
             lv_label_set_text(ui_StandbyScreen_time, time);
             lv_obj_clear_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
 
-            christmasMode = timeinfo.tm_mon == 11 && timeinfo.tm_mday < 27;
+            christmasMode = (timeinfo.tm_mon == 11 && timeinfo.tm_mday < 27) || (timeinfo.tm_mon == 0 && timeinfo.tm_mday < 6);
         }
     } else {
         lv_obj_add_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);

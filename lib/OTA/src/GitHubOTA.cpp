@@ -57,6 +57,12 @@ void GitHubOTA::checkForUpdates() {
         _latest_url = _release_url + "/";
         _latest_url.replace("tag", "download");
         String version = get_updated_version_via_txt_file(_wifi_client, _latest_url);
+
+        if (version.length() == 0) {
+            ESP_LOGW(TAG, "version.txt did not return a valid version string");
+            return;
+        }
+
         version = version.substring(1);
         _latest_version_string = version;
         _latest_version = from_string(version.c_str());

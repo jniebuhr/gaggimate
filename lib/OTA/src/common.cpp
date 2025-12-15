@@ -71,8 +71,11 @@ String get_updated_version_via_txt_file(WiFiClientSecure &wifi_client, String &_
         char errorText[128];
         int errCode = wifi_client.lastError(errorText, sizeof(errorText));
         ESP_LOGV(TAG, "httpCode: %d, errorCode %d: %s\n", httpCode, errCode, errorText);
+        https.end();
+        return "";
     }
     String version = https.getString();
+    version.trim();
     https.end();
     ESP_LOGI(TAG, "returns: %s\n", version.c_str());
     return version;

@@ -67,7 +67,7 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
 }
 
 
-void Heater::setThermalFeedforward(float *pumpFlowPtr, float incomingWaterTemp, bool *valveStatusPtr) {
+void Heater::setThermalFeedforward(float *pumpFlowPtr, float incomingWaterTemp, int *valveStatusPtr) {
     pumpFlowRate = pumpFlowPtr;
     valveStatus = valveStatusPtr;
     this->incomingWaterTemp = incomingWaterTemp;
@@ -94,7 +94,7 @@ void Heater::loopPid() {
     
     // Calculate and set disturbance feedforward BEFORE PID update
     // Only apply thermal feedforward when Kf>0, valve is open, and water is flowing
-    if (combinedKff > 0.0f && pumpFlowRate && *pumpFlowRate > 0.01f && valveStatus && *valveStatus) {
+    if (combinedKff > 0.0f && pumpFlowRate && *pumpFlowRate > 0.01f && valveStatus && *valveStatus != 0) {
         float currentFlowRate = *pumpFlowRate; // Use raw flow rate for fast response
         float disturbanceGain = calculateDisturbanceFeedforwardGain();
         
