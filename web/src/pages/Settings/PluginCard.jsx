@@ -1,16 +1,41 @@
 import homekitImage from '../../assets/homekit.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { useState, useEffect } from 'preact/hooks';
 
 export function PluginCard({
   formData,
   onChange,
+  updateHomekitMode,
   autowakeupSchedules,
   addAutoWakeupSchedule,
   removeAutoWakeupSchedule,
   updateAutoWakeupTime,
   updateAutoWakeupDay,
 }) {
+
+ const homekitMode = parseInt(formData.homekitMode, 10) || 0;
+
+  // state exposing
+  const [isHomekitOpen, setIsHomekitOpen] = useState(homekitMode > 0);
+
+  // sync
+  useEffect(() => {
+    if (homekitMode > 0) {
+      setIsHomekitOpen(true);
+    }
+  }, [homekitMode]);
+
+  const handleHomekitToggle = () => {
+    const nextState = !isHomekitOpen;
+    setIsHomekitOpen(nextState);
+    if (!nextState) {
+      updateHomekitMode(0);
+    } else if (homekitMode === 0) {
+      updateHomekitMode(1);
+    }
+  };
+
   return (
     <div className='space-y-4'>
       <div className='bg-base-200 rounded-lg p-4'>
@@ -121,27 +146,88 @@ export function PluginCard({
         )}
       </div>
 
+      {/*homekit*/}
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>
-          <span className='text-xl font-medium'>Homekit</span>
+          <span className='text-xl font-medium'>HomeKit Integration</span>
           <input
-            id='homekit'
-            name='homekit'
-            value='homekit'
             type='checkbox'
             className='toggle toggle-primary'
-            checked={!!formData.homekit}
-            onChange={onChange('homekit')}
-            aria-label='Enable Homekit'
+            checked={isHomekitOpen}
+            onChange={handleHomekitToggle}
           />
         </div>
-        {formData.homekit && (
-          <div className='border-base-300 mt-4 flex flex-col items-center justify-center gap-4 border-t pt-4'>
-            <img src={homekitImage} alt='Homekit Setup Code' />
-            <p className='text-center'>
-              Open the Homekit App, find your GaggiMate device and scan the setup code above to add
-              it.
-            </p>
+
+        {isHomekitOpen && (
+          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            <div className='form-control'>
+              <label className='mb-2 block text-sm font-medium opacity-70'>Select Integration Mode</label>
+              <div className='grid grid-cols-2 gap-2'>
+                <button
+                  type='button'
+                  className={`btn btn-sm ${homekitMode === 1 ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => updateHomekitMode(1)}
+                >
+                  Thermostat
+                </button>
+                <button
+                  type='button'
+                  className={`btn btn-sm ${homekitMode === 2 ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => updateHomekitMode(2)}
+                >
+                  Bridge
+                </button>
+              </div>
+            </div>
+
+            {/* Descriptions */}
+            <div className='text-sm bg-base-100 p-4 rounded-md shadow-sm border border-base-300'>
+              {homekitMode === 1 && (
+                <p><strong>Thermostat Mode:</strong> Emulates a thermostat for direct temperature control (as before).</p>
+              )}
+              {homekitMode === 2 && (
+                <div>
+                  <strong>Bridge Mode:</strong> Creates multiple devices:
+                  <ul className='list-disc list-inside mt-2 ml-1 space-y-1 text-sm'>
+                    <li>Sensor that reflects the heating status (red / heating = closed, green / ready = open)</li>
+                    <li>Switch for Standby - Brew</li>
+                    <li>Switch for Brew - Steam</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Troubleshooting */}
+            <div className='text-xs opacity-70'>
+              <p>
+                If HomeKit is not responding, try restarting first. If issues persist, cycle the modes: 
+                Switch mode &rarr; Restart &rarr; Wait for Apple Home update &rarr; Switch back &rarr; Restart.
+              </p>
+            </div>
+
+            {/* Pairing Code, Note and Reset Button */}
+            <div className='flex flex-col items-center justify-center gap-4 pt-4 border-t border-base-300'>
+              <img 
+                src={homekitImage} 
+                alt='Homekit Setup Code' 
+                className='h-auto w-auto max-w-full object-contain'
+                style={{ maxHeight: '150px' }} 
+              />
+              
+              <div className='text-center space-y-2 max-w-md'>
+                 <p className='text-sm font-medium'>
+                  Open the Home app, select Add Accessory, and scan the code above.
+                </p>
+
+                {/* Note */}
+                <div className='text-xs bg-base-300 p-3 rounded text-left mt-2 opacity-80'>
+                    Note, that if the GaggiMate does not appear for pairing, reset HomeKit pairings. 
+                    If this does not help, the display may need to be reset. 
+                    To do this, you must reflash the display via USB. (Remember to back up your profiles and settings). 
+                    Also remove the existing bridge or devices from GaggiMate from your Home app.
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

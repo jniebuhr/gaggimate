@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <esp32-hal-log.h>
 
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);
@@ -23,7 +24,26 @@ Settings::Settings() {
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
-    homekit = preferences.getBool("hk", false);
+    homekitMode = preferences.getInt("hkm", HOMEKIT_MODE_DISABLED);
+    /*Homekit migration logic: Migration logic caused problems with saving the new value, as it is read-only mode.
+    For migration logic, change to preferences.begin(PREFERENCES_KEY, false);
+    ...other settings...
+    if (preferences.isKey("hk")) { 
+        ESP_LOGW("Settings", "Migrating old HomeKit bool setting 'hk' to new int setting 'hkm'.");
+        bool old_homekit_bool = preferences.getBool("hk", false);
+        
+        if (old_homekit_bool) {
+            homekitMode = HOMEKIT_MODE_THERMOSTAT;
+        } else {
+            homekitMode = HOMEKIT_MODE_DISABLED;
+        }
+        preferences.remove("hk"); 
+        preferences.putInt("hkm", homekitMode);
+        ESP_LOGI("Settings", "HomeKit migration complete. New mode: %d", homekitMode);
+    } else {
+        homekitMode = preferences.getInt("hkm", HOMEKIT_MODE_DISABLED); 
+    }
+    */
     volumetricTarget = preferences.getBool("vt", false);
     otaChannel = preferences.getString("oc", DEFAULT_OTA_CHANNEL);
     infusePumpTime = preferences.getInt("ipt", 0);
@@ -56,7 +76,7 @@ Settings::Settings() {
     historyIndex = preferences.getInt("hi", 0);
     autowakeupEnabled = preferences.getBool("ab_en", false);
 
-    // Load schedule format: "time1|days1;time2|days2" where days is 7-bit string (e.g., "1111100" for weekdays only)
+    // Load schedule format: "time1|days1;time2|days2"
     String schedulesStr = preferences.getString("ab_schedules", "");
     autowakeupSchedules.clear();
 
@@ -240,9 +260,14 @@ void Settings::setMdnsName(const String &mdnsName) {
     save();
 }
 
-void Settings::setHomekit(const bool homekit) {
-    this->homekit = homekit;
-    save();
+// Homekit mode
+void Settings::setHomekitMode(const int mode) {
+    int clampedMode = std::clamp(mode, (int)HOMEKIT_MODE_DISABLED, (int)HOMEKIT_MODE_BRIDGE);
+    // check save
+    if (this->homekitMode != clampedMode) { 
+        this->homekitMode = clampedMode;
+        save();
+    }
 }
 
 void Settings::setVolumetricTarget(bool volumetric_target) {
@@ -485,7 +510,7 @@ void Settings::doSave() {
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
     preferences.putString("mn", mdnsName);
-    preferences.putBool("hk", homekit);
+    preferences.putInt("hkm", homekitMode); 
     preferences.putBool("vt", volumetricTarget);
     preferences.putString("oc", otaChannel);
     preferences.putInt("ipt", infusePumpTime);
@@ -497,7 +522,7 @@ void Settings::doSave() {
     preferences.putInt("bf_st", steamFillTime);
     preferences.putBool("sg_a", smartGrindActive);
     preferences.putString("sg_i", smartGrindIp);
-    preferences.putBool("sg_t", smartGrindToggle);
+    // preferences.putBool("sg_t", smartGrindToggle);
     preferences.putInt("sg_m", smartGrindMode);
     preferences.putBool("ha_a", homeAssistant);
     preferences.putString("ha_i", homeAssistantIP);

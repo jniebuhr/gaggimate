@@ -101,9 +101,7 @@ export function Settings() {
   const onChange = key => {
     return e => {
       let value = e.currentTarget.value;
-      if (key === 'homekit') {
-        value = !formData.homekit;
-      }
+      
       if (key === 'boilerFillActive') {
         value = !formData.boilerFillActive;
       }
@@ -112,6 +110,9 @@ export function Settings() {
       }
       if (key === 'smartGrindToggle') {
         value = !formData.smartGrindToggle;
+      }
+      if (key === 'homekitMode') {
+        value = parseInt(value, 10);
       }
       if (key === 'homeAssistant') {
         value = !formData.homeAssistant;
@@ -161,6 +162,13 @@ export function Settings() {
     ]);
   };
 
+  const updateHomekitMode = (mode) => {
+  setFormData({
+    ...formData,
+    homekitMode: parseInt(mode, 10),
+  });
+};
+
   const removeAutoWakeupSchedule = index => {
     if (autowakeupSchedules.length > 1) {
       const newSchedules = autowakeupSchedules.filter((_, i) => i !== index);
@@ -208,6 +216,8 @@ export function Settings() {
       if (!formData.standbyDisplayEnabled) {
         formDataToSubmit.set('standbyBrightness', '0');
       }
+
+      formDataToSubmit.set('homekitMode', formData.homekitMode !== undefined ? formData.homekitMode : 0);
 
       if (restart) {
         formDataToSubmit.append('restart', '1');
@@ -929,6 +939,7 @@ export function Settings() {
             <PluginCard
               formData={formData}
               onChange={onChange}
+              updateHomekitMode={updateHomekitMode}
               autowakeupSchedules={autowakeupSchedules}
               addAutoWakeupSchedule={addAutoWakeupSchedule}
               removeAutoWakeupSchedule={removeAutoWakeupSchedule}
