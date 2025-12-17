@@ -76,7 +76,7 @@ Settings::Settings() {
     historyIndex = preferences.getInt("hi", 0);
     autowakeupEnabled = preferences.getBool("ab_en", false);
 
-    // Load schedule format: "time1|days1;time2|days2"
+    // Load schedule format: "time1|days1;time2|days2" where days is 7-bit string (e.g., "1111100" for weekdays only)
     String schedulesStr = preferences.getString("ab_schedules", "");
     autowakeupSchedules.clear();
 
