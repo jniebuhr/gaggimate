@@ -163,11 +163,11 @@ export function Settings() {
   };
 
   const updateHomekitMode = (mode) => {
-  setFormData({
-    ...formData,
-    homekitMode: parseInt(mode, 10),
-  });
-};
+    setFormData({
+      ...formData,
+      homekitMode: parseInt(mode, 10),
+    });
+  };
 
   const removeAutoWakeupSchedule = index => {
     if (autowakeupSchedules.length > 1) {
