@@ -522,7 +522,7 @@ void Settings::doSave() {
     preferences.putInt("bf_st", steamFillTime);
     preferences.putBool("sg_a", smartGrindActive);
     preferences.putString("sg_i", smartGrindIp);
-    // preferences.putBool("sg_t", smartGrindToggle);
+    preferences.putBool("sg_t", smartGrindToggle);
     preferences.putInt("sg_m", smartGrindMode);
     preferences.putBool("ha_a", homeAssistant);
     preferences.putString("ha_i", homeAssistantIP);
