@@ -81,7 +81,7 @@ class HomekitBridgePlugin : public Plugin {
     GaggiMateSteamSwitch *steamSwitch = nullptr;
     GaggiMateHeatingSensor *heatingSensor = nullptr;
 
-    // Thread-Safe varaiables (Atomic), fixing race condition
+    // Thread-Safe variables (Atomic), fixing race condition
     std::atomic<HomekitAction> lastAction{HomekitAction::NONE};
     std::atomic<bool> actionSwitch1State{false};
     std::atomic<bool> actionSwitch2State{false};
