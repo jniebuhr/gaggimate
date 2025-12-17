@@ -6,6 +6,7 @@
 #include "HomeSpan.h"
 #include <functional>
 #include <utility>
+#include <atomic>
 
 #include "../core/Event.h"
 
@@ -21,7 +22,7 @@ enum class HomekitAction {
 // Callback-Type def
 typedef std::function<void(HomekitAction, bool)> bridge_callback_t;
 
-// Accessoires
+// Accessoires:
 
 // Switch 1: Power
 class GaggiMatePowerSwitch : public Service::Switch {
@@ -48,28 +49,27 @@ class GaggiMateSteamSwitch : public Service::Switch {
 };
 
 
-// Contact Sensor
+// Contact Sensor (Heating Status)
 class GaggiMateHeatingSensor : public Service::ContactSensor {
   public:
     GaggiMateHeatingSensor();
-    void setHeatingState(bool isHeating);
+    // true = Ready, false = Heating
+    void setStability(bool isStable);
   private:
     SpanCharacteristic *contactState;
 };
 
-// Plugin Manager
+// Plugin Class
+
 class HomekitBridgePlugin : public Plugin {
   public:
     HomekitBridgePlugin(String wifiSsid, String wifiPassword);
     void setup(Controller *controller, PluginManager *pluginManager) override;
     void loop() override;
 
-    // Methods controlling HomeKit actions
-    HomekitAction getAction() const;
-    bool getSwitch1State() const;
-    bool getSwitch2State() const;
-    bool hasAction() const;
+    // Helper
     void clearAction();
+    
     const char *getName() const { return "HomekitBridgePlugin"; }
 
   private:
@@ -81,11 +81,11 @@ class HomekitBridgePlugin : public Plugin {
     GaggiMateSteamSwitch *steamSwitch = nullptr;
     GaggiMateHeatingSensor *heatingSensor = nullptr;
 
-    HomekitAction lastAction = HomekitAction::NONE;
-    bool actionSwitch1State = false;
-    bool actionSwitch2State = false;
-
-    bool actionRequired = false; 
+    // Thread-Safe varaiables (Atomic), fixing race condition
+    std::atomic<HomekitAction> lastAction{HomekitAction::NONE};
+    std::atomic<bool> actionSwitch1State{false};
+    std::atomic<bool> actionSwitch2State{false};
+    std::atomic<bool> actionRequired{false};
 
     Controller *controller = nullptr;
 
