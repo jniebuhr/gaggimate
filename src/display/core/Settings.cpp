@@ -76,7 +76,7 @@ Settings::Settings() {
     historyIndex = preferences.getInt("hi", 0);
     autowakeupEnabled = preferences.getBool("ab_en", false);
 
-    // Load schedule format: "time1|days1;time2|days2"
+    // Load schedule format: "time1|days1;time2|days2" where days is 7-bit string (e.g., "1111100" for weekdays only)
     String schedulesStr = preferences.getString("ab_schedules", "");
     autowakeupSchedules.clear();
 
@@ -522,7 +522,7 @@ void Settings::doSave() {
     preferences.putInt("bf_st", steamFillTime);
     preferences.putBool("sg_a", smartGrindActive);
     preferences.putString("sg_i", smartGrindIp);
-    // preferences.putBool("sg_t", smartGrindToggle);
+    preferences.putBool("sg_t", smartGrindToggle);
     preferences.putInt("sg_m", smartGrindMode);
     preferences.putBool("ha_a", homeAssistant);
     preferences.putString("ha_i", homeAssistantIP);
