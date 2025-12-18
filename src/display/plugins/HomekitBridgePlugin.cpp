@@ -6,7 +6,8 @@
 #include <Arduino.h>
 
 // GaggiMatePowerSwitch
-GaggiMatePowerSwitch::GaggiMatePowerSwitch(bridge_callback_t callback) : callback(std::move(callback)), power(nullptr) {
+GaggiMatePowerSwitch::GaggiMatePowerSwitch(bridge_callback_t callback) 
+    : callback(std::move(callback)) {
     power = new Characteristic::On();
 }
 
@@ -20,12 +21,12 @@ boolean GaggiMatePowerSwitch::update() {
 }
 
 void GaggiMatePowerSwitch::setState(bool active) {
-    power->setVal(active, true);
+    if (power) power->setVal(active, true);
 }
 
-
 // GaggiMateSteamSwitch
-GaggiMateSteamSwitch::GaggiMateSteamSwitch(bridge_callback_t callback) : callback(std::move(callback)), power(nullptr) {
+GaggiMateSteamSwitch::GaggiMateSteamSwitch(bridge_callback_t callback) 
+    : callback(std::move(callback)) {
     power = new Characteristic::On();
 }
 
@@ -39,120 +40,102 @@ boolean GaggiMateSteamSwitch::update() {
 }
 
 void GaggiMateSteamSwitch::setState(bool active) {
-    power->setVal(active, true);
+    if (power) power->setVal(active, true);
 }
-
 
 // GaggiMateHeatingSensor
 GaggiMateHeatingSensor::GaggiMateHeatingSensor() : Service::ContactSensor() {
-    // Starting value: 0 = Closed
     contactState = new Characteristic::ContactSensorState(0); 
 }
 
 void GaggiMateHeatingSensor::setStability(bool isStable) {
-    // 0 = Closed -> Ready
-    // 1 = Open -> Heating
-    int targetVal = isStable ? 0 : 1;
-    
-    if (contactState->getVal() != targetVal) {
+    int targetVal = isStable ? 1 : 0; // 1 = ready (closed)
+    if (contactState && contactState->getVal() != targetVal) {
         contactState->setVal(targetVal, true);
     }
 }
 
 
-// HomekitBridgePlugin Implementation
+// Main Plugin Implementation
 
 HomekitBridgePlugin::HomekitBridgePlugin(String wifiSsid, String wifiPassword) 
     : wifiSsid(std::move(wifiSsid)), wifiPassword(std::move(wifiPassword)) {
+    actionRequired.store(false);
+    lastAction.store(HomekitAction::NONE);
+    actionSwitch1State.store(false);
+    actionSwitch2State.store(false);
 }
 
 void HomekitBridgePlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
 
-    // Central callback, fix with Atomic .store)
     auto callback = [this](HomekitAction action, bool state) {
-        this->lastAction.store(action); 
-        
         if (action == HomekitAction::SWITCH_1_TOGGLE) {
             this->actionSwitch1State.store(state);
         } else if (action == HomekitAction::SWITCH_2_TOGGLE) {
             this->actionSwitch2State.store(state);
         }
-        
+        this->lastAction.store(action); 
         this->actionRequired.store(true);
     };
 
+    homeSpan.setHostNameSuffix("");
+    homeSpan.setPortNum(HOMESPAN_PORT);
+
+    homeSpan.begin(Category::Bridges, DEVICE_NAME, this->controller->getSettings().getMdnsName().c_str());
     homeSpan.setWifiCredentials(wifiSsid.c_str(), wifiPassword.c_str());
-    homeSpan.setPairingCode("46637726");
-    homeSpan.setQRID("GAGG");
 
-    homeSpan.begin(Category::Bridges, DEVICE_NAME, DEVICE_NAME, DEVICE_NAME);
-
-    // Bridge Device
+    // Bridge Info Accessory
     new SpanAccessory();
-        new Service::AccessoryInformation();
-        new Characteristic::Identify();
-        new Characteristic::Name(DEVICE_NAME " Bridge");
-        new Characteristic::Manufacturer("GaggiMate");
-        new Characteristic::SerialNumber("GM-1000");
-        new Characteristic::Model("Bridge");
-        new Characteristic::FirmwareRevision("1.0.0");
-        
-    // Power Switch
-    new SpanAccessory();
-        new Service::AccessoryInformation();
-        new Characteristic::Identify();
-        new Characteristic::Name("GaggiMate Power");
-        this->powerSwitch = new GaggiMatePowerSwitch(callback);
+    new Service::AccessoryInformation();
+    new Characteristic::Identify();
 
-    // Steam Switch
+    // Power Accessory
     new SpanAccessory();
-        new Service::AccessoryInformation();
-        new Characteristic::Identify();
-        new Characteristic::Name("GaggiMate Steam");
-        this->steamSwitch = new GaggiMateSteamSwitch(callback);
+    new Service::AccessoryInformation();
+    new Characteristic::Identify();
+    new Characteristic::Name("GaggiMate Power");
+    powerSwitch = new GaggiMatePowerSwitch(callback);
 
-    // Status Sensor
+    // Steam Accessory
     new SpanAccessory();
-        new Service::AccessoryInformation();
-        new Characteristic::Identify();
-        new Characteristic::Name("GaggiMate Status");
-        this->heatingSensor = new GaggiMateHeatingSensor();
+    new Service::AccessoryInformation();
+    new Characteristic::Identify();
+    new Characteristic::Name("GaggiMate Steam");
+    steamSwitch = new GaggiMateSteamSwitch(callback);
 
-    // Event Listener
+    // Sensor Accessory
+    new SpanAccessory();
+    new Service::AccessoryInformation();
+    new Characteristic::Identify();
+    new Characteristic::Name("GaggiMate Heating Status");
+    this->heatingSensor = new GaggiMateHeatingSensor();
+
     if (pluginManager != nullptr) {
-        
-        pluginManager->on("BOILER_STATUS", 
-            [this](Event &e) { this->handleBoilerStatus(e); });
-            
-        pluginManager->on("boiler:heating:stable", 
-            [this](Event &e) { this->handleHeatingStatus(e); });
+        pluginManager->on("BOILER_STATUS", [this](Event &e) { this->handleBoilerStatus(e); });
+        pluginManager->on("boiler:heating:stable", [this](Event &e) { this->handleHeatingStatus(e); });
     }
+
+    homeSpan.autoPoll(); 
 }
 
 void HomekitBridgePlugin::loop() {
-    homeSpan.poll(); 
-
-    if (!actionRequired.load() || controller == nullptr)
-        return;
+    if (!actionRequired.load() || controller == nullptr) return;
 
     HomekitAction currentAction = lastAction.load();
+    bool s1 = actionSwitch1State.load();
+    bool s2 = actionSwitch2State.load();
 
     if (currentAction == HomekitAction::SWITCH_1_TOGGLE) {
-        if (actionSwitch1State.load()) {
-            controller->deactivateStandby();
-        } else {
-            controller->activateStandby();
-        }
+        if (s1) controller->deactivateStandby();
+        else controller->activateStandby();
     } else if (currentAction == HomekitAction::SWITCH_2_TOGGLE) {
-        if (actionSwitch2State.load()) {
-             controller->setMode(MODE_STEAM);
-        } else {
-             controller->deactivate(); 
-             controller->setMode(MODE_BREW);
+        if (s2) controller->setMode(MODE_STEAM);
+        else {
+            controller->deactivate(); 
+            controller->setMode(MODE_BREW);
         }
     }
-
     this->clearAction();
 }
 
@@ -161,22 +144,15 @@ void HomekitBridgePlugin::clearAction() {
     lastAction.store(HomekitAction::NONE);
 }
 
-// Event-Handler
-
 void HomekitBridgePlugin::handleBoilerStatus(const Event &event) {
     if (!this->powerSwitch || !this->steamSwitch) return;
-
-    bool isStandby = event.getInt("STANDBY");
-    this->powerSwitch->setState(!isStandby);
-
-    bool isSteamActive = event.getInt("STEAM_MODE");
-    this->steamSwitch->setState(isSteamActive);
+    this->powerSwitch->setState(!event.getInt("STANDBY"));
+    this->steamSwitch->setState(event.getInt("STEAM_MODE"));
 }
 
 void HomekitBridgePlugin::handleHeatingStatus(const Event &event) {
-    if (this->heatingSensor == nullptr) return;
-
-    // isStable from Event: 1 = stable, 0 = heating
-    int isStable = event.getInt("isStable");
-    this->heatingSensor->setStability(isStable == 1);
+    if (this->heatingSensor) {
+        //Safety fix: direct transfer, HomeSpan takes care of thread safety internally
+        this->heatingSensor->setStability(event.getInt("isStable") == 1);
+    }
 }
