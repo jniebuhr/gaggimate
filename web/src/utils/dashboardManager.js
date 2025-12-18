@@ -28,6 +28,34 @@ export const setDashboardLayout = layout => {
   }
 };
 
+export const getDashboardUpDownLayout = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return false;
+  }
+
+  try {
+    return localStorage.getItem('upDownLayout') === 'true';
+  } catch (error) {
+    console.warn('getDashboardUpDownLayout: localStorage access failed:', error);
+    return false;
+  }
+};
+
+export const setDashboardUpDownLayout = layout => {
+  if (layout === null || layout === undefined) {
+    console.error('setDashboardUpDownLayout: Layout cannot be null or undefined');
+    return false;
+  }
+
+  try {
+    localStorage.setItem('upDownLayout', layout);
+    return true;
+  } catch (error) {
+    console.error('setDashboardUpDownLayout: Failed to store layout in localStorage:', error);
+    return false;
+  }
+}
+
 export const DASHBOARD_LAYOUTS = {
   ORDER_FIRST: 'order-first',
   ORDER_LAST: 'order-last',

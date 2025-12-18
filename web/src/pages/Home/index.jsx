@@ -14,7 +14,12 @@ import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import ProcessControls from './ProcessControls.jsx';
-import { getDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
+import {
+  getDashboardLayout,
+  DASHBOARD_LAYOUTS,
+  setDashboardUpDownLayout,
+  getDashboardUpDownLayout,
+} from '../../utils/dashboardManager.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowsLeftRight } from '@fortawesome/free-solid-svg-icons/faArrowsLeftRight';
 import { faArrowsUpDown } from '@fortawesome/free-solid-svg-icons/faArrowsUpDown';
@@ -24,7 +29,7 @@ Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement
 export function Home() {
   const [dashboardLayout, setDashboardLayout] = useState(DASHBOARD_LAYOUTS.ORDER_FIRST);
   const apiService = useContext(ApiServiceContext);
-  const [upDownLayout, setUpDownLayout] = useState(false);
+  const [upDownLayout, setUpDownLayout] = useState(getDashboardUpDownLayout());
   const gridUpDownClass = upDownLayout ? 'grid-cols-1' : 'grid-cols-10';
 
   useEffect(() => {
@@ -63,9 +68,12 @@ export function Home() {
 
         <div className='absolute top-3 right-0 z-50 sm:top-[-1rem] md:top-9'>
           <button
-            className='btn-lg btn-circle bg-base-content/10 text-base-content/60 sm:border-base-content/20 hover:text-base-content sm:hover:bg-base-content/10 hover:border-base-content/40 text-md cursor-pointer transition-all duration-200'
+          aria-label={upDownLayout ? 'Switch to horizontal layout' : 'Switch to vertical layout'}
+          className='btn-lg btn-circle bg-base-content/10 text-base-content/60 sm:border-base-content/20 hover:text-base-content sm:hover:bg-base-content/10 hover:border-base-content/40 text-md cursor-pointer transition-all duration-200'
             onClick={() => {
-              setUpDownLayout(!upDownLayout);
+              const newLayout = !upDownLayout;
+              setUpDownLayout(newLayout);
+              setDashboardUpDownLayout(newLayout);
             }}
           >
             <FontAwesomeIcon
