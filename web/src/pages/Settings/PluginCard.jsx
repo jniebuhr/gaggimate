@@ -160,6 +160,21 @@ export function PluginCard({
 
         {isHomekitOpen && (
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            
+            <p className='text-sm opacity-70'>
+              Control your machine via Apple Home.
+            </p>
+
+            {/* 1. MIGRATION WARNING */}
+            <div className='alert alert-warning shadow-sm text-sm'>
+              <div>
+                <span className="font-bold">Important</span>
+                <span className="block mt-1">
+                  After the update, HomeKit might not establish a connection to the thermostat immediately. <b>Do NOT remove the device from Apple Home.</b> Instead, please refer to the <b>Troubleshooting</b> section below for instructions on how to cycle the integration modes if needed.
+                </span>
+              </div>
+            </div>
+
             <div className='form-control'>
               <label className='mb-2 block text-sm font-medium opacity-70'>Select Integration Mode</label>
               <div className='grid grid-cols-2 gap-2'>
@@ -197,15 +212,7 @@ export function PluginCard({
               )}
             </div>
 
-            {/* Troubleshooting */}
-            <div className='text-xs opacity-70'>
-              <p>
-                If HomeKit is not responding, try restarting first. If issues persist, cycle the modes: 
-                Switch mode &rarr; Restart &rarr; Wait for Apple Home update &rarr; Switch back &rarr; Restart.
-              </p>
-            </div>
-
-            {/* Pairing Code, Note and Reset Button */}
+            {/* Pairing Code */}
             <div className='flex flex-col items-center justify-center gap-4 pt-4 border-t border-base-300'>
               <img 
                 src={homekitImage} 
@@ -218,16 +225,46 @@ export function PluginCard({
                  <p className='text-sm font-medium'>
                   Open the Home app, select Add Accessory, and scan the code above.
                 </p>
-
-                {/* Note */}
-                <div className='text-xs bg-base-300 p-3 rounded text-left mt-2 opacity-80'>
-                    Note, that if the GaggiMate does not appear for pairing, reset HomeKit pairings. 
-                    If this does not help, the display may need to be reset. 
-                    To do this, you must reflash the display via USB. (Remember to back up your profiles and settings). 
-                    Also remove the existing bridge or devices from GaggiMate from your Home app.
-                </div>
               </div>
             </div>
+
+            {/* 3. COLLAPSIBLE TROUBLESHOOTING */}
+            <details className="collapse collapse-arrow bg-base-100 border border-base-300 rounded-box">
+                <summary className="collapse-title text-sm font-medium">
+                    Troubleshooting: Connection Issues
+                </summary>
+                <div className="collapse-content text-xs text-base-content/70 space-y-3 pt-2">
+                    
+                    {/* Scenario 1: No Connection / Update */}
+                    <div>
+                        <p className="font-bold mb-1">Devices not updating or connecting:</p>
+                        <ul className="list-disc list-inside ml-1 space-y-1">
+                            <li>Try <b>Save & Restart</b> first.</li>
+                            <li>
+                                If issues persist, <b>cycle the modes</b>: 
+                                Switch mode &rarr; Save & Restart &rarr; Wait for Apple Home to update GaggiMate devices 
+                                (speed it up by tapping on one of the devices in the Home App and give it some time) 
+                                &rarr; Switch back &rarr; Save & Restart.
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Scenario 2: Pairing Issues */}
+                    <div>
+                        <p className="font-bold mb-1">GaggiMate does not appear for pairing:</p>
+                        <ul className="list-disc list-inside ml-1 space-y-1">
+                            <li>Check if any old GaggiMate devices still exist in your Home App and try the instructions above.</li>
+                            <li>If that doesn't help, remove the device from the Home App and restart GaggiMate.</li>
+                            <li className="text-error font-bold mt-2">
+                                If GaggiMate still does not appear, you must reset the display. 
+                                To do this, re-flash the display via USB (just like the initial installation). 
+                                Don't forget to backup your profiles and settings first!
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </details>
           </div>
         )}
       </div>
