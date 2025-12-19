@@ -5,6 +5,8 @@
 #include <utility>
 #include <Arduino.h>
 
+// Helper Classes Implementation
+
 // GaggiMatePowerSwitch
 GaggiMatePowerSwitch::GaggiMatePowerSwitch(bridge_callback_t callback) 
     : callback(std::move(callback)) {
@@ -49,7 +51,8 @@ GaggiMateHeatingSensor::GaggiMateHeatingSensor() : Service::ContactSensor() {
 }
 
 void GaggiMateHeatingSensor::setStability(bool isStable) {
-    int targetVal = isStable ? 1 : 0; // 1 = ready (closed)
+    int targetVal = isStable ? 1 : 0; // 0 = Contact Detected (Closed/Ready), 1 = Open
+    
     if (contactState && contactState->getVal() != targetVal) {
         contactState->setVal(targetVal, true);
     }
@@ -60,15 +63,23 @@ void GaggiMateHeatingSensor::setStability(bool isStable) {
 
 HomekitBridgePlugin::HomekitBridgePlugin(String wifiSsid, String wifiPassword) 
     : wifiSsid(std::move(wifiSsid)), wifiPassword(std::move(wifiPassword)) {
+    // Init Atomics
     actionRequired.store(false);
     lastAction.store(HomekitAction::NONE);
     actionSwitch1State.store(false);
     actionSwitch2State.store(false);
+    
+    statusUpdateRequired.store(false);
+    currentMachineMode.store(0);
+    
+    heatingUpdateRequired.store(false);
+    isHeatingStable.store(false);
 }
 
 void HomekitBridgePlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
 
+    // Callback HomeKit -> Controller
     auto callback = [this](HomekitAction action, bool state) {
         if (action == HomekitAction::SWITCH_1_TOGGLE) {
             this->actionSwitch1State.store(state);
@@ -112,47 +123,69 @@ void HomekitBridgePlugin::setup(Controller *controller, PluginManager *pluginMan
     this->heatingSensor = new GaggiMateHeatingSensor();
 
     if (pluginManager != nullptr) {
-        pluginManager->on("BOILER_STATUS", [this](Event &e) { this->handleBoilerStatus(e); });
-        pluginManager->on("boiler:heating:stable", [this](Event &e) { this->handleHeatingStatus(e); });
+        // Thread save: Modus
+        pluginManager->on("controller:mode:change", [this](Event const &e) {
+            this->currentMachineMode.store(e.getInt("value"));
+            this->statusUpdateRequired.store(true);
+        });
+
+        // Thread safe: Heating Status
+        // Only store value, no direct call to HomeSpan functions
+        pluginManager->on("boiler:heating:stable", [this](Event &e) { 
+             this->isHeatingStable.store(e.getInt("isStable") == 1);
+             this->heatingUpdateRequired.store(true);
+        });
     }
 
     homeSpan.autoPoll(); 
 }
 
 void HomekitBridgePlugin::loop() {
-    if (!actionRequired.load() || controller == nullptr) return;
+    if (controller == nullptr) return;
 
-    HomekitAction currentAction = lastAction.load();
-    bool s1 = actionSwitch1State.load();
-    bool s2 = actionSwitch2State.load();
-
-    if (currentAction == HomekitAction::SWITCH_1_TOGGLE) {
-        if (s1) controller->deactivateStandby();
-        else controller->activateStandby();
-    } else if (currentAction == HomekitAction::SWITCH_2_TOGGLE) {
-        if (s2) controller->setMode(MODE_STEAM);
-        else {
-            controller->deactivate(); 
-            controller->setMode(MODE_BREW);
+    // Thread-Safe Sync
+    
+    // Power / Steam
+    if (statusUpdateRequired.exchange(false)) {
+        int newMode = currentMachineMode.load();
+        
+        if (this->powerSwitch) {
+            this->powerSwitch->setState(newMode != MODE_STANDBY);
+        }
+        if (this->steamSwitch) {
+            this->steamSwitch->setState(newMode == MODE_STEAM);
         }
     }
-    this->clearAction();
+
+    // Heating Status
+    if (heatingUpdateRequired.exchange(false)) {
+        bool stable = isHeatingStable.load();
+        if (this->heatingSensor) {
+            this->heatingSensor->setStability(stable);
+        }
+    }
+
+    // HomeKit -> Controller
+    if (actionRequired.load()) {
+        HomekitAction currentAction = lastAction.load();
+        bool s1 = actionSwitch1State.load();
+        bool s2 = actionSwitch2State.load();
+
+        if (currentAction == HomekitAction::SWITCH_1_TOGGLE) {
+            if (s1) controller->deactivateStandby();
+            else controller->activateStandby();
+        } else if (currentAction == HomekitAction::SWITCH_2_TOGGLE) {
+            if (s2) controller->setMode(MODE_STEAM);
+            else {
+                controller->deactivate(); 
+                controller->setMode(MODE_BREW);
+            }
+        }
+        this->clearAction();
+    }
 }
 
 void HomekitBridgePlugin::clearAction() {
     actionRequired.store(false);
     lastAction.store(HomekitAction::NONE);
-}
-
-void HomekitBridgePlugin::handleBoilerStatus(const Event &event) {
-    if (!this->powerSwitch || !this->steamSwitch) return;
-    this->powerSwitch->setState(!event.getInt("STANDBY"));
-    this->steamSwitch->setState(event.getInt("STEAM_MODE"));
-}
-
-void HomekitBridgePlugin::handleHeatingStatus(const Event &event) {
-    if (this->heatingSensor) {
-        //Safety fix: direct transfer, HomeSpan takes care of thread safety internally
-        this->heatingSensor->setStability(event.getInt("isStable") == 1);
-    }
 }

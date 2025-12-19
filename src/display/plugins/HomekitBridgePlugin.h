@@ -73,6 +73,7 @@ class HomekitBridgePlugin : public Plugin {
     const char *getName() const { return "HomekitBridgePlugin"; }
 
   private:
+    Controller *controller = nullptr;
     String wifiSsid;
     String wifiPassword;
 
@@ -82,16 +83,20 @@ class HomekitBridgePlugin : public Plugin {
     GaggiMateHeatingSensor *heatingSensor = nullptr;
 
     // Thread-Safe variables (Atomic), fixing race condition
+    
+    // HomeKit -> Maschine
     std::atomic<HomekitAction> lastAction{HomekitAction::NONE};
     std::atomic<bool> actionSwitch1State{false};
     std::atomic<bool> actionSwitch2State{false};
     std::atomic<bool> actionRequired{false};
 
-    Controller *controller = nullptr;
+    // Maschine -> HomeKit (Mode)
+    std::atomic<bool> statusUpdateRequired{false};
+    std::atomic<int> currentMachineMode{0}; // 0 = Standby default
 
-    // Event Handler
-    void handleHeatingStatus(const Event &event);
-    void handleBoilerStatus(const Event &event);
+    // Maschine -> HomeKit (Heating) - DIESE HABEN GEFEHLT
+    std::atomic<bool> heatingUpdateRequired{false};
+    std::atomic<bool> isHeatingStable{false};
 };
 
 #endif // HOMEKITBRIDGEPLUGIN_H
