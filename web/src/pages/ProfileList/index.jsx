@@ -531,13 +531,16 @@ export function ProfileList() {
   const apiService = useContext(ApiServiceContext);
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('extraction');
   const [searchTerm, setSearchTerm] = useState('');
-
+  const [activeTab, setActiveTab] = useState('extraction');
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
   const favoriteDisabled = favoriteCount >= 10;
   const hasUtilityProfiles = useMemo(() => profiles.some(p => p.utility), [profiles]);
+
+  useEffect(() => {
+    if (!hasUtilityProfiles) {setActiveTab('extraction');}
+  }, [hasUtilityProfiles]);
 
   const loadProfiles = async () => {
     const response = await apiService.request({ tp: 'req:profiles:list' });
@@ -854,8 +857,6 @@ export function ProfileList() {
               isLast={idx === filtered.length - 1}
             />
           ))}
-
-        {!hasUtilityProfiles || activeTab === 'extraction'}
       </div>
     </>
   );
