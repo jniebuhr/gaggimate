@@ -185,7 +185,7 @@ const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
                                       }};
 
 const ControllerConfig GM_PRO_REV_11 = {.name = "GaggiMate Pro Rev 1.1",
-                                        .autodetectValue = 2, // Voltage divider was missing in Rev 1.0 so it's 0
+                                        .autodetectValue = 4, // Voltage divider was missing in Rev 1.0 so it's 0
                                         .heaterPin = 14,
                                         .pumpPin = 9,
                                         .pumpSensePin = 21,
