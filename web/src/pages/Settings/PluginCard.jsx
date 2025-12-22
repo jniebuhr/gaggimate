@@ -168,8 +168,8 @@ export function PluginCard({
             {/* 1. MIGRATION WARNING */}
             <div className='alert alert-warning shadow-sm text-sm'>
               <div>
-                <span className="font-bold">Important </span>
-                <span>
+                <span className="font-bold">Important</span>
+                <span className="block mt-1">
                   After the update, HomeKit might not establish a connection to the thermostat immediately. <b>Do NOT remove the device from Apple Home.</b> Instead, please refer to the <b>Troubleshooting</b> section below for instructions on how to cycle the integration modes if needed.
                 </span>
               </div>
