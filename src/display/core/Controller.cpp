@@ -15,7 +15,8 @@
 #include <display/plugins/AutoWakeupPlugin.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
-#include <display/plugins/HomekitPlugin.h>
+#include <display/plugins/HomekitThermostatPlugin.h>
+#include <display/plugins/HomekitBridgePlugin.h>
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
@@ -51,10 +52,17 @@ void Controller::setup() {
 #ifndef GAGGIMATE_HEADLESS
     ui = new DefaultUI(this, driver, pluginManager);
 #endif
-    if (settings.isHomekit())
-        pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
-    else
+
+    // HomeKit Mode Selection
+    if (settings.getHomekitMode() == HOMEKIT_MODE_THERMOSTAT) {
+        pluginManager->registerPlugin(new HomekitThermostatPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
         pluginManager->registerPlugin(new mDNSPlugin());
+    } else if (settings.getHomekitMode() == HOMEKIT_MODE_BRIDGE) {
+        pluginManager->registerPlugin(new HomekitBridgePlugin(settings.getWifiSsid(), settings.getWifiPassword())); 
+        pluginManager->registerPlugin(new mDNSPlugin());
+    } else { 
+        pluginManager->registerPlugin(new mDNSPlugin());
+    }
     if (settings.isBoilerFillActive()) {
         pluginManager->registerPlugin(new BoilerFillPlugin());
     }

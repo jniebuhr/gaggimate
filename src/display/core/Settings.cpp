@@ -2,8 +2,35 @@
 
 #include <algorithm>
 #include <utility>
+#include <esp32-hal-log.h>
 
 Settings::Settings() {
+    // Phase 1: HomeKit Migration (Read-Write Mode)
+    preferences.begin(PREFERENCES_KEY, false);
+
+    // Check if the old boolean key "hk" exists
+    if (preferences.isKey("hk")) { 
+        ESP_LOGW("Settings", "Migrating old HomeKit bool setting 'hk' to new int setting 'hkm'.");
+        bool old_homekit_bool = preferences.getBool("hk", false);
+        
+        // Map old boolean to new integer modes
+        if (old_homekit_bool) {
+            homekitMode = HOMEKIT_MODE_THERMOSTAT;
+        } else {
+            homekitMode = HOMEKIT_MODE_DISABLED;
+        }
+        
+        // Save the new mode and remove the obsolete boolean key
+        preferences.putInt("hkm", homekitMode);
+        preferences.remove("hk"); 
+        ESP_LOGI("Settings", "HomeKit migration complete. New mode: %d", homekitMode);
+    } else {
+        // If no old key exists, just load the current mode or default to disabled
+        homekitMode = preferences.getInt("hkm", HOMEKIT_MODE_DISABLED); 
+    }
+    preferences.end(); // Close write access
+
+    // Phase 2: Standard Initialization (Read-Only Mode)
     preferences.begin(PREFERENCES_KEY, true);
     startupMode = preferences.getInt("sm", MODE_STANDBY);
     targetBrewTemp = preferences.getInt("tb", 90);
@@ -23,7 +50,7 @@ Settings::Settings() {
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
-    homekit = preferences.getBool("hk", false);
+    //homekitMode = preferences.getInt("hkm", HOMEKIT_MODE_DISABLED); // homekitMode handled at start
     volumetricTarget = preferences.getBool("vt", false);
     otaChannel = preferences.getString("oc", DEFAULT_OTA_CHANNEL);
     infusePumpTime = preferences.getInt("ipt", 0);
@@ -240,9 +267,14 @@ void Settings::setMdnsName(const String &mdnsName) {
     save();
 }
 
-void Settings::setHomekit(const bool homekit) {
-    this->homekit = homekit;
-    save();
+// Homekit mode
+void Settings::setHomekitMode(const int mode) {
+    int clampedMode = std::clamp(mode, (int)HOMEKIT_MODE_DISABLED, (int)HOMEKIT_MODE_BRIDGE);
+    // check save
+    if (this->homekitMode != clampedMode) { 
+        this->homekitMode = clampedMode;
+        save();
+    }
 }
 
 void Settings::setVolumetricTarget(bool volumetric_target) {
@@ -485,7 +517,7 @@ void Settings::doSave() {
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
     preferences.putString("mn", mdnsName);
-    preferences.putBool("hk", homekit);
+    preferences.putInt("hkm", homekitMode); 
     preferences.putBool("vt", volumetricTarget);
     preferences.putString("oc", otaChannel);
     preferences.putInt("ipt", infusePumpTime);
