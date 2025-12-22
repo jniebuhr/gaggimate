@@ -168,8 +168,8 @@ export function PluginCard({
             {/* 1. MIGRATION WARNING */}
             <div className='alert alert-warning shadow-sm text-sm'>
               <div>
-                <span className="font-bold">Important</span>
-                <span className="block mt-1">
+                <span className="font-bold">Important </span>
+                <span>
                   After the update, HomeKit might not establish a connection to the thermostat immediately. <b>Do NOT remove the device from Apple Home.</b> Instead, please refer to the <b>Troubleshooting</b> section below for instructions on how to cycle the integration modes if needed.
                 </span>
               </div>
@@ -235,7 +235,7 @@ export function PluginCard({
                 </summary>
                 <div className="collapse-content text-xs text-base-content/70 space-y-3 pt-2">
                     
-                    {/* Scenario 1: No Connection / Update */}
+                    {/* No Connection / Update */}
                     <div>
                         <p className="font-bold mb-1">Devices not updating or connecting:</p>
                         <ul className="list-disc list-inside ml-1 space-y-1">
@@ -249,12 +249,27 @@ export function PluginCard({
                         </ul>
                     </div>
 
-                    {/* Scenario 2: Pairing Issues */}
+                    {/* Pairing Issues */}
                     <div>
                         <p className="font-bold mb-1">GaggiMate does not appear for pairing:</p>
                         <ul className="list-disc list-inside ml-1 space-y-1">
                             <li>Check if any old GaggiMate devices still exist in your Home App and try the instructions above.</li>
                             <li>If that doesn't help, remove the device from the Home App and restart GaggiMate.</li>
+                            
+                            {/* Console Reset Instructions */}
+                            <li className="mt-2 mb-1">
+                                <span className="font-semibold">Reset the HomeKit plugin via the console:</span>
+                                <ol className="list-decimal list-inside ml-2 mt-1 space-y-1">
+                                    <li>Connect your GaggiMate to the flashing web interface and open <b>Logs & Console</b>.</li>
+                                    <li>In the console, send <code>?</code> to list available HomeKit commands.</li>
+                                    <li>Send <code>H</code> to perform a HomeKit reset (this clears pairing info and restarts the accessory).</li>
+                                    <li>Re-add GaggiMate in the Home app using the setup code.</li>
+                                </ol>
+                                <div className="mt-1 ml-2 opacity-90">
+                                    If <code>H</code> is not available, check the console help (<code>?</code>). If this doesn’t resolve your issue, you may need to do a full reset with <code>E</code>.
+                                </div>
+                            </li>
+
                             <li className="text-error font-bold mt-2">
                                 If GaggiMate still does not appear, you must reset the display. 
                                 To do this, re-flash the display via USB (just like the initial installation). 
