@@ -348,6 +348,30 @@ export function PluginCard({
           </div>
         )}
       </div>
+
+      <div className='bg-base-200 rounded-lg p-4'>
+        <div className='flex items-center justify-between'>
+          <span className='text-xl font-medium'>Debug Logging</span>
+          <input
+            id='debugLoggingEnabled'
+            name='debugLoggingEnabled'
+            value='debugLoggingEnabled'
+            type='checkbox'
+            className='toggle toggle-primary'
+            checked={!!formData.debugLoggingEnabled}
+            onChange={onChange('debugLoggingEnabled')}
+            aria-label='Enable Debug Logging'
+          />
+        </div>
+        {formData.debugLoggingEnabled && (
+          <div className='border-base-300 mt-4 border-t pt-4'>
+            <p className='text-sm opacity-70'>
+              Captures all system logs to file and streams them to the System &amp; Updates page.
+              Log files are stored on the SD Card if present and on SPIFFS otherwise.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
