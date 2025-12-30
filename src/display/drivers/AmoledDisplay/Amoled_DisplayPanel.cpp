@@ -2,6 +2,7 @@
 #include "Arduino_GFX_Library.h"
 #include "pin_config.h"
 #include <esp_adc_cal.h>
+#include "touch/TouchClassCST816.h"
 
 Amoled_DisplayPanel::Amoled_DisplayPanel(AmoledHwConfig hw_config)
     : hwConfig(hw_config), displayBus(nullptr), display(nullptr), _touchDrv(nullptr), _wakeupMethod(WAKEUP_FROM_NONE),
@@ -29,6 +30,14 @@ Amoled_DisplayPanel::~Amoled_DisplayPanel() {
 }
 
 bool Amoled_DisplayPanel::begin(Amoled_Display_Panel_Color_Order order) {
+    // Enable power FIRST (critical for Waveshare 1.32")
+    if (hwConfig.lcd_en >= 0) {
+        pinMode(hwConfig.lcd_en, OUTPUT);
+        digitalWrite(hwConfig.lcd_en, HIGH);
+        delay(100);  // Let power stabilize
+        ESP_LOGI("Amoled_DisplayPanel", "Power enabled (GPIO %d)", hwConfig.lcd_en);
+    }
+
     bool success = true;
 
     success &= initTouch();
@@ -97,7 +106,7 @@ void Amoled_DisplayPanel::sleep() {
     if (WAKEUP_FROM_TOUCH != _wakeupMethod) {
         if (_touchDrv) {
             pinMode(hwConfig.tp_int, OUTPUT);
-            digitalWrite(hwConfig.tp_int, LOW); // Before touch to set sleep, it is necessary to set INT to LOW
+            digitalWrite(hwConfig.tp_int, LOW);
 
             _touchDrv->sleep();
         }
@@ -110,14 +119,12 @@ void Amoled_DisplayPanel::sleep() {
         uint8_t get_point = 1;
         pinMode(hwConfig.tp_int, INPUT);
 
-        // Wait for the finger to be lifted from the screen
         while (!digitalRead(hwConfig.tp_int)) {
             delay(100);
-            // Clear touch buffer
             getPoint(x_array, y_array, get_point);
         }
 
-        delay(2000); // Wait for the interrupt level to stabilize
+        delay(2000);
         esp_sleep_enable_ext1_wakeup(_BV(hwConfig.tp_int), ESP_EXT1_WAKEUP_ANY_LOW);
     } break;
     case WAKEUP_FROM_BUTTON:
@@ -127,7 +134,6 @@ void Amoled_DisplayPanel::sleep() {
         esp_sleep_enable_timer_wakeup(_sleepTimeUs);
         break;
     default:
-        // Default GPIO0 Wakeup
         esp_sleep_enable_ext1_wakeup(_BV(0), ESP_EXT1_WAKEUP_ANY_LOW);
         break;
     }
@@ -141,11 +147,13 @@ void Amoled_DisplayPanel::sleep() {
 
     esp_deep_sleep_start();
 }
+
 void Amoled_DisplayPanel::wakeup() {}
 
 uint8_t Amoled_DisplayPanel::getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point) {
-    if (touchType == TOUCH_CST92XX) {
-        return _touchDrv->getPoint(x_array, y_array, _touchDrv->getSupportTouchPoint());
+    if (touchType == TOUCH_CST92XX || touchType == TOUCH_CST816) {
+        uint8_t pts = _touchDrv->getPoint(x_array, y_array, _touchDrv->getSupportTouchPoint());
+        return pts;
     }
 
     if (!_touchDrv || !_touchDrv->isPressed()) {
@@ -159,19 +167,19 @@ uint8_t Amoled_DisplayPanel::getPoint(int16_t *x_array, int16_t *y_array, uint8_
         int16_t rawY = y_array[i] + hwConfig.lcd_gram_offset_y;
 
         switch (_rotation) {
-        case 1: // 90°
+        case 1:
             x_array[i] = rawY;
             y_array[i] = width() - rawX;
             break;
-        case 2: // 180°
+        case 2:
             x_array[i] = width() - rawX;
             y_array[i] = height() - rawY;
             break;
-        case 3: // 270°
+        case 3:
             x_array[i] = height() - rawY;
             y_array[i] = rawX;
             break;
-        default: // 0°
+        default:
             x_array[i] = rawX;
             y_array[i] = rawY;
             break;
@@ -219,34 +227,50 @@ void Amoled_DisplayPanel::setRotation(uint8_t rotation) {
         display->setRotation(rotation);
     }
 }
-
+// FIXED: Try CST820/CST816 address (0x15) first for Waveshare 1.32" using correct driver
 bool Amoled_DisplayPanel::initTouch() {
+    // Try CST816/CST820 driver FIRST for Waveshare 1.32" (address 0x15)
+    TouchClassCST816 *cst816 = new TouchClassCST816();
+    cst816->setPins(hwConfig.tp_rst, hwConfig.tp_int);
+    
+    if (cst816->begin(Wire, CST820_DEVICE_ADDRESS, hwConfig.i2c_sda, hwConfig.i2c_scl)) {
+        _touchDrv = cst816;
+        ESP_LOGI("Amoled_DisplayPanel", "Successfully initialized CST816/CST820 at 0x15!");
+        cst816->setMaxCoordinates(466, 466);
+        if (hwConfig.mirror_touch) {
+            cst816->setMirrorXY(true, true);
+        }
+        touchType = TOUCH_CST816;
+        panelType = DISPLAY_WAVESHARE_132;
+        return true;
+    }
+    delete cst816;
+
+    // Try CST92XX driver for other displays (address 0x5A)
     TouchDrvCST92xx *tmp = new TouchDrvCST92xx();
     tmp->setPins(hwConfig.tp_rst, hwConfig.tp_int);
 
     if (tmp->begin(Wire, CST92XX_DEVICE_ADDRESS, hwConfig.i2c_sda, hwConfig.i2c_scl)) {
         _touchDrv = tmp;
-        ESP_LOGI("Amoled_DisplayPanel", "Successfully initialized %s!\n", _touchDrv->getModelName());
+        ESP_LOGI("Amoled_DisplayPanel", "Successfully initialized %s!", _touchDrv->getModelName());
         tmp->setMaxCoordinates(466, 466);
         if (hwConfig.mirror_touch) {
             tmp->setMirrorXY(true, true);
         }
-
         touchType = TOUCH_CST92XX;
         panelType = DISPLAY_1_75_INCHES;
         return true;
     }
     delete tmp;
 
+    // Try FT3168 touch controller
     TouchDrvFT6X36 *tmp2 = new TouchDrvFT6X36();
     tmp2->setPins(hwConfig.tp_rst, hwConfig.tp_int);
 
     if (tmp2->begin(Wire, FT3168_DEVICE_ADDRESS, hwConfig.i2c_sda, hwConfig.i2c_scl)) {
         tmp2->interruptTrigger();
-
         _touchDrv = tmp2;
-        ESP_LOGI("Amoled_DisplayPanel", "Successfully initialized %s!\n", _touchDrv->getModelName());
-
+        ESP_LOGI("Amoled_DisplayPanel", "Successfully initialized %s!", _touchDrv->getModelName());
         touchType = TOUCH_FT3168;
         panelType = DISPLAY_1_43_INCHES;
         return true;
@@ -257,15 +281,16 @@ bool Amoled_DisplayPanel::initTouch() {
     return false;
 }
 
+
 bool Amoled_DisplayPanel::initDisplay(Amoled_Display_Panel_Color_Order colorOrder) {
     if (displayBus == nullptr) {
         displayBus =
-            new Arduino_ESP32QSPI(hwConfig.lcd_cs /* CS */, hwConfig.lcd_sclk /* SCK */, hwConfig.lcd_sdio0 /* SDIO0 */,
-                                  hwConfig.lcd_sdio1 /* SDIO1 */, hwConfig.lcd_sdio2 /* SDIO2 */, hwConfig.lcd_sdio3 /* SDIO3 */);
+            new Arduino_ESP32QSPI(hwConfig.lcd_cs, hwConfig.lcd_sclk, hwConfig.lcd_sdio0,
+                                  hwConfig.lcd_sdio1, hwConfig.lcd_sdio2, hwConfig.lcd_sdio3);
 
-        display = new CO5300(displayBus, hwConfig.lcd_rst /* RST */, _rotation /* rotation */, false /* IPS */,
-                             hwConfig.lcd_width, hwConfig.lcd_height, hwConfig.lcd_gram_offset_x /* col offset 1 */,
-                             0 /* row offset 1 */, hwConfig.lcd_gram_offset_y /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
+        display = new CO5300(displayBus, hwConfig.lcd_rst, _rotation, false,
+                             hwConfig.lcd_width, hwConfig.lcd_height, hwConfig.lcd_gram_offset_x,
+                             0, hwConfig.lcd_gram_offset_y, 0, colorOrder);
     }
 
     pinMode(hwConfig.lcd_en, OUTPUT);
@@ -277,7 +302,11 @@ bool Amoled_DisplayPanel::initDisplay(Amoled_Display_Panel_Color_Order colorOrde
         return false;
     }
 
+    // FIXED: Added DISPLAY_WAVESHARE_132 case
     switch (panelType) {
+    case DISPLAY_WAVESHARE_132:
+        setRotation(0);
+        break;
     case DISPLAY_1_75_INCHES:
         setRotation(hwConfig.rotation_175);
         break;
@@ -288,7 +317,6 @@ bool Amoled_DisplayPanel::initDisplay(Amoled_Display_Panel_Color_Order colorOrde
         break;
     }
 
-    // required for correct GRAM initialization
     displayBus->writeCommand(CO5300_C_PTLON);
     display->fillScreen(BLACK);
 

@@ -27,9 +27,14 @@ bool AmoledDisplayDriver::isCompatible() {
         hwConfig = LILYGO_T_DISPLAY_S3_DS_HW_CONFIG;
         return true;
     }
-    ESP_LOGI("AmoledDisplayDriver", "Testing Waveshare AMOLED Display...");
+    ESP_LOGI("AmoledDisplayDriver", "Testing Waveshare 1.75\" AMOLED Display...");
     if (testHw(WAVESHARE_S3_AMOLED_HW_CONFIG)) {
         hwConfig = WAVESHARE_S3_AMOLED_HW_CONFIG;
+        return true;
+    }
+    ESP_LOGI("AmoledDisplayDriver", "Testing Waveshare 1.32\" AMOLED Display...");
+    if (testHw_Waveshare132(WAVESHARE_132_HW_CONFIG)) {
+        hwConfig = WAVESHARE_132_HW_CONFIG;
         return true;
     }
     return false;
@@ -37,11 +42,12 @@ bool AmoledDisplayDriver::isCompatible() {
 
 void AmoledDisplayDriver::init() {
     panel = new Amoled_DisplayPanel(hwConfig);
-    ESP_LOGI("AmoledDisplayDriver", "Initializing LilyGo T-Display...");
+    ESP_LOGI("AmoledDisplayDriver", "Initializing AMOLED Display (width=%d, height=%d)...", 
+             hwConfig.lcd_width, hwConfig.lcd_height);
 
     if (!panel->begin()) {
         for (uint8_t i = 0; i < 20; i++) {
-            ESP_LOGE("AmoledDisplayDriver", "Error, failed to initialize T-Display");
+            ESP_LOGE("AmoledDisplayDriver", "Error, failed to initialize display!");
             delay(1000);
         }
         ESP.restart();
@@ -50,11 +56,20 @@ void AmoledDisplayDriver::init() {
     beginLvglHelper(*panel);
 
     panel->setBrightness(16);
+    ESP_LOGI("AmoledDisplayDriver", "Display initialized successfully!");
 }
 
-bool AmoledDisplayDriver::supportsSDCard() { return true; }
+bool AmoledDisplayDriver::supportsSDCard() { 
+    // Waveshare 1.32" has no SD card slot
+    return hwConfig.sd_cs >= 0; 
+}
 
-bool AmoledDisplayDriver::installSDCard() { return panel->installSD(); }
+bool AmoledDisplayDriver::installSDCard() { 
+    if (!supportsSDCard()) {
+        return false;
+    }
+    return panel->installSD(); 
+}
 
 bool AmoledDisplayDriver::testHw(AmoledHwConfig hwConfig) {
     // No Wire on these pins, definitely wrong board
@@ -70,4 +85,40 @@ bool AmoledDisplayDriver::testHw(AmoledHwConfig hwConfig) {
 
     Wire.end();
     return pcf8563Found && touchFound;
+}
+
+bool AmoledDisplayDriver::testHw_Waveshare132(AmoledHwConfig hwConfig) {
+    // Initialize I2C with power enabled
+    pinMode(hwConfig.lcd_en, OUTPUT);
+    digitalWrite(hwConfig.lcd_en, HIGH);  // Enable display power
+    delay(100);
+    
+    // Reset touch controller FIRST (important!)
+    if (hwConfig.tp_rst >= 0) {
+        pinMode(hwConfig.tp_rst, OUTPUT);
+        digitalWrite(hwConfig.tp_rst, LOW);
+        delay(10);
+        digitalWrite(hwConfig.tp_rst, HIGH);
+        delay(50);
+    }
+    
+    if (!Wire.begin(hwConfig.i2c_sda, hwConfig.i2c_scl)) {
+        ESP_LOGE("AmoledDisplayDriver", "Failed to initialize I2C on pins SDA=%d, SCL=%d", 
+                 hwConfig.i2c_sda, hwConfig.i2c_scl);
+        return false;
+    }
+
+    // Waveshare 1.32" has CST820 touch controller at 0x15
+    // No RTC or battery management on this board
+    bool cst820Found = detectI2CDevice(CST820_DEVICE_ADDRESS, "CST820 Touch");
+
+    Wire.end();
+    
+    if (cst820Found) {
+        ESP_LOGI("AmoledDisplayDriver", "Waveshare 1.32\" AMOLED detected!");
+        return true;
+    }
+    
+    ESP_LOGW("AmoledDisplayDriver", "CST820 touch controller not found for Waveshare 1.32\"");
+    return false;
 }

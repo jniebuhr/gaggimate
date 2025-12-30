@@ -20,6 +20,7 @@ class AmoledDisplayDriver : public Driver {
 
   private:
     bool testHw(AmoledHwConfig hwConfig);
+    bool testHw_Waveshare132(AmoledHwConfig hwConfig);
 
     static AmoledDisplayDriver *instance;
     Amoled_DisplayPanel *panel = nullptr;
