@@ -290,7 +290,7 @@ bool Amoled_DisplayPanel::initDisplay(Amoled_Display_Panel_Color_Order colorOrde
 
         display = new CO5300(displayBus, hwConfig.lcd_rst, _rotation, false,
                              hwConfig.lcd_width, hwConfig.lcd_height, hwConfig.lcd_gram_offset_x,
-                             0, hwConfig.lcd_gram_offset_y, 0, colorOrder);
+                             hwConfig.lcd_gram_offset_y, 0, 0, colorOrder);
     }
 
     pinMode(hwConfig.lcd_en, OUTPUT);

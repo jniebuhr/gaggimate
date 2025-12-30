@@ -81,9 +81,7 @@ constexpr AmoledHwConfig WAVESHARE_S3_AMOLED_HW_CONFIG{
     .mirror_touch = true,
 };
 
-// CORRECT pins for Waveshare ESP32-S3-Touch-AMOLED-1.32
-// Replace WAVESHARE_132_HW_CONFIG in your pin_config.h with this:
-
+// Waveshare ESP32-S3-Touch-AMOLED-1.32 configuration
 constexpr AmoledHwConfig WAVESHARE_132_HW_CONFIG{
     // QSPI Display pins - From official Waveshare code
     .lcd_sdio0 = 12,     // LCD_DATA0_PIN
@@ -124,7 +122,7 @@ constexpr AmoledHwConfig WAVESHARE_132_HW_CONFIG{
     .mirror_touch = false
 };
 
-// CST820 I2C address - add this at the bottom of pin_config.h if not already there
+// CST820 touch controller I2C address (Waveshare 1.32")
 #define CST820_DEVICE_ADDRESS 0x15
 
 #define CST92XX_DEVICE_ADDRESS 0x5A
