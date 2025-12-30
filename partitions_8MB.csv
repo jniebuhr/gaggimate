@@ -1,0 +1,5 @@
+# 8MB Flash - Single App (no OTA)
+# Name,   Type, SubType, Offset,   Size,     Flags
+nvs,      data, nvs,     0x9000,   0x5000,
+app0,     app,  factory, 0x10000,  0x700000,
+spiffs,   data, spiffs,  0x710000, 0xF0000,
