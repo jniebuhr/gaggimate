@@ -84,18 +84,20 @@ const BrewProgress = props => {
 
   // Countdown logic
   const isTimeBased = processInfo.tt === 'time';
-  const totalDuration = Math.floor((status.value.btd || 0) / 1000); // btd from WebSocket status
 
   let displayTime = elapsed;
   let isOvertime = false;
 
-  if (isTimeBased && totalDuration > 0) {
-    if (elapsed < totalDuration) {
+  if (isTimeBased && processInfo.rt !== undefined) {
+    // Use accurate remaining time from backend (accounts for early phase completion)
+    const remainingTime = Math.floor(processInfo.rt / 1000);
+
+    if (remainingTime > 0) {
       // Countdown: show remaining time
-      displayTime = totalDuration - elapsed;
+      displayTime = remainingTime;
     } else {
       // Overtime: show time over
-      displayTime = elapsed - totalDuration;
+      displayTime = -remainingTime;
       isOvertime = true;
     }
   }

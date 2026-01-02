@@ -740,34 +740,42 @@ void DefaultUI::updateStatusScreen() const {
 
     // Add bounds check for processStarted timestamp
     if (brewProcess && brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
-        // Calculate elapsed time
-        const unsigned long processDuration = now - brewProcess->processStarted;
-        const double elapsedSeconds = processDuration / 1000.0;
-
         // Determine display mode
         bool isTimeBased = brewProcess->target == ProcessTarget::TIME;
         bool isOvertime = false;
         int displayMinutes, displaySeconds;
 
         if (isTimeBased) {
-            // Get total duration
-            const unsigned long totalDuration = brewProcess->getTotalDuration();
-            const double totalSeconds = totalDuration / 1000.0;
+            // Calculate remaining time based on current phase + future phases
+            // This accounts for phases that finish early due to pressure/flow/volume thresholds
+            double remainingSeconds = 0.0;
 
-            if (elapsedSeconds < totalSeconds) {
+            // Add time remaining in current phase
+            const unsigned long timeInCurrentPhase = now - brewProcess->currentPhaseStarted;
+            const double currentPhaseElapsed = timeInCurrentPhase / 1000.0;
+            const double currentPhaseRemaining = std::max(0.0, brewProcess->currentPhase.duration - currentPhaseElapsed);
+            remainingSeconds += currentPhaseRemaining;
+
+            // Add full duration of all future phases
+            for (size_t i = brewProcess->phaseIndex + 1; i < brewProcess->profile.phases.size(); i++) {
+                remainingSeconds += brewProcess->profile.phases[i].duration;
+            }
+
+            if (remainingSeconds > 0.0) {
                 // Countdown mode: show remaining time
-                const double remainingSeconds = totalSeconds - elapsedSeconds;
                 displayMinutes = static_cast<int>(remainingSeconds / 60.0);
                 displaySeconds = static_cast<int>(remainingSeconds) % 60;
             } else {
                 // Overtime mode: count up from 00:00
-                const double overtimeSeconds = elapsedSeconds - totalSeconds;
+                const double overtimeSeconds = -remainingSeconds;
                 displayMinutes = static_cast<int>(overtimeSeconds / 60.0);
                 displaySeconds = static_cast<int>(overtimeSeconds) % 60;
                 isOvertime = true;
             }
         } else {
             // Volumetric mode: count up (unchanged)
+            const unsigned long processDuration = now - brewProcess->processStarted;
+            const double elapsedSeconds = processDuration / 1000.0;
             displayMinutes = static_cast<int>(elapsedSeconds / 60.0);
             displaySeconds = static_cast<int>(elapsedSeconds) % 60;
         }
