@@ -82,6 +82,24 @@ const BrewProgress = props => {
   const progress = (processInfo.pp / processInfo.pt) * 100.0;
   const elapsed = Math.floor(processInfo.e / 1000);
 
+  // Countdown logic
+  const isTimeBased = processInfo.tt === 'time';
+  const totalDuration = Math.floor((status.value.btd || 0) / 1000); // btd from WebSocket status
+
+  let displayTime = elapsed;
+  let isOvertime = false;
+
+  if (isTimeBased && totalDuration > 0) {
+    if (elapsed < totalDuration) {
+      // Countdown: show remaining time
+      displayTime = totalDuration - elapsed;
+    } else {
+      // Overtime: show time over
+      displayTime = elapsed - totalDuration;
+      isOvertime = true;
+    }
+  }
+
   return (
     <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
       {active && (
@@ -107,8 +125,12 @@ const BrewProgress = props => {
               {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(0)}s`}
               {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(0)}g`}
             </div>
-            <div className='text-base-content text-2xl font-bold sm:text-3xl'>
-              {formatDuration(elapsed)}
+            <div
+              className={`text-2xl font-bold sm:text-3xl ${
+                isOvertime ? 'text-error' : 'text-base-content'
+              }`}
+            >
+              {formatDuration(displayTime)}
             </div>
           </div>
         </>

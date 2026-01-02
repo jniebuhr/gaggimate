@@ -740,11 +740,48 @@ void DefaultUI::updateStatusScreen() const {
 
     // Add bounds check for processStarted timestamp
     if (brewProcess && brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
+        // Calculate elapsed time
         const unsigned long processDuration = now - brewProcess->processStarted;
-        const double processSecondsDouble = processDuration / 1000.0;
-        const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0);
-        const auto processSeconds = static_cast<int>(processSecondsDouble) % 60;
-        lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "%2d:%02d", processMinutes, processSeconds);
+        const double elapsedSeconds = processDuration / 1000.0;
+
+        // Determine display mode
+        bool isTimeBased = brewProcess->target == ProcessTarget::TIME;
+        bool isOvertime = false;
+        int displayMinutes, displaySeconds;
+
+        if (isTimeBased) {
+            // Get total duration
+            const unsigned long totalDuration = brewProcess->getTotalDuration();
+            const double totalSeconds = totalDuration / 1000.0;
+
+            if (elapsedSeconds < totalSeconds) {
+                // Countdown mode: show remaining time
+                const double remainingSeconds = totalSeconds - elapsedSeconds;
+                displayMinutes = static_cast<int>(remainingSeconds / 60.0);
+                displaySeconds = static_cast<int>(remainingSeconds) % 60;
+            } else {
+                // Overtime mode: count up from 00:00
+                const double overtimeSeconds = elapsedSeconds - totalSeconds;
+                displayMinutes = static_cast<int>(overtimeSeconds / 60.0);
+                displaySeconds = static_cast<int>(overtimeSeconds) % 60;
+                isOvertime = true;
+            }
+        } else {
+            // Volumetric mode: count up (unchanged)
+            displayMinutes = static_cast<int>(elapsedSeconds / 60.0);
+            displaySeconds = static_cast<int>(elapsedSeconds) % 60;
+        }
+
+        // Update label
+        lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "%2d:%02d", displayMinutes, displaySeconds);
+
+        // Set color: red for overtime, white for normal
+        if (isOvertime) {
+            lv_obj_set_style_text_color(ui_StatusScreen_currentDuration, lv_color_hex(0xF62C2C), LV_PART_MAIN | LV_STATE_DEFAULT);
+        } else {
+            // Reset to theme color (white)
+            ui_object_set_themeable_style_property(ui_StatusScreen_currentDuration, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR, _ui_theme_color_NiceWhite);
+        }
     } else {
         lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "00:00");
     }
