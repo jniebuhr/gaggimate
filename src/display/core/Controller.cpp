@@ -25,6 +25,7 @@
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
+#include <display/drivers/MaTouch21Driver.h>
 #include <display/drivers/WaveshareDriver.h>
 #endif
 
@@ -117,6 +118,8 @@ void Controller::setupPanel() {
         driver = AmoledDisplayDriver::getInstance();
     } else if (LilyGoDriver::getInstance()->isCompatible()) {
         driver = LilyGoDriver::getInstance();
+    } else if (MaTouch21Driver::getInstance()->isCompatible()) {
+        driver = MaTouch21Driver::getInstance();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
         driver = WaveshareDriver::getInstance();
     } else {
