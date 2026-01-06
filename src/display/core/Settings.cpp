@@ -51,6 +51,10 @@ Settings::Settings() {
     wifiPassword = preferences.getString("wp", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
     //homekitMode = preferences.getInt("hkm", HOMEKIT_MODE_DISABLED); // homekitMode handled at start
+    // Load new HomeKit sub-device toggles (default true)
+    hkPowerEnabled = preferences.getBool("hk_pe", true);
+    hkSteamEnabled = preferences.getBool("hk_se", true);
+    hkSensorEnabled = preferences.getBool("hk_he", true);
     volumetricTarget = preferences.getBool("vt", false);
     otaChannel = preferences.getString("oc", DEFAULT_OTA_CHANNEL);
     infusePumpTime = preferences.getInt("ipt", 0);
@@ -275,6 +279,22 @@ void Settings::setHomekitMode(const int mode) {
         this->homekitMode = clampedMode;
         save();
     }
+}
+
+// HomeKit Device Setters
+void Settings::setHkPowerEnabled(bool enabled) {
+    hkPowerEnabled = enabled;
+    save();
+}
+
+void Settings::setHkSteamEnabled(bool enabled) {
+    hkSteamEnabled = enabled;
+    save();
+}
+
+void Settings::setHkSensorEnabled(bool enabled) {
+    hkSensorEnabled = enabled;
+    save();
 }
 
 void Settings::setVolumetricTarget(bool volumetric_target) {
@@ -518,6 +538,12 @@ void Settings::doSave() {
     preferences.putString("wp", wifiPassword);
     preferences.putString("mn", mdnsName);
     preferences.putInt("hkm", homekitMode); 
+    
+    // Save new HomeKit toggles
+    preferences.putBool("hk_pe", hkPowerEnabled);
+    preferences.putBool("hk_se", hkSteamEnabled);
+    preferences.putBool("hk_he", hkSensorEnabled);
+
     preferences.putBool("vt", volumetricTarget);
     preferences.putString("oc", otaChannel);
     preferences.putInt("ipt", infusePumpTime);

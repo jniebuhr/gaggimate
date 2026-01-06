@@ -165,16 +165,6 @@ export function PluginCard({
               Control your machine via Apple Home.
             </p>
 
-            {/* 1. MIGRATION WARNING */}
-            <div className='alert alert-warning shadow-sm text-sm'>
-              <div>
-                <span className="font-bold">Important</span>
-                <span className="block mt-1">
-                  After the update, HomeKit might not establish a connection to the thermostat immediately. <b>Do NOT remove the device from Apple Home.</b> Instead, please refer to the <b>Troubleshooting</b> section below for instructions on how to cycle the integration modes if needed.
-                </span>
-              </div>
-            </div>
-
             <div className='form-control'>
               <label className='mb-2 block text-sm font-medium opacity-70'>Select Integration Mode</label>
               <div className='grid grid-cols-2 gap-2'>
@@ -195,19 +185,82 @@ export function PluginCard({
               </div>
             </div>
 
-            {/* Descriptions */}
+            {/* Descriptions & Device Selection */}
             <div className='text-sm bg-base-100 p-4 rounded-md shadow-sm border border-base-300'>
               {homekitMode === 1 && (
                 <p><strong>Thermostat Mode:</strong> Emulates a thermostat for direct temperature control (as before).</p>
               )}
               {homekitMode === 2 && (
                 <div>
-                  <strong>Bridge Mode:</strong> Creates multiple devices:
-                  <ul className='list-disc list-inside mt-2 ml-1 space-y-1 text-sm'>
-                    <li>Sensor that reflects the heating status (red / heating = closed, green / ready = open)</li>
-                    <li>Switch for Standby - Brew</li>
-                    <li>Switch for Brew - Steam</li>
-                  </ul>
+                  <strong>Bridge Mode:</strong> Exposes the machine capabilities as separate HomeKit accessories.
+                  
+                  {/* Accessory Toggles */}
+                  <div className="mt-4 pt-4 border-t border-base-300">
+                    <p className="text-sm font-medium opacity-70 mb-3">Enabled Accessories</p>
+                    
+                    <div className="space-y-4">
+                      {/* Power Switch */}
+                      <div className='form-control'>
+                        <label className='label cursor-pointer justify-start gap-4 items-start'>
+                          <input 
+                            id='hkPowerEnabled'
+                            name='hkPowerEnabled'
+                            type="checkbox" 
+                            className="toggle toggle-sm toggle-primary mt-1"
+                            checked={formData.hkPowerEnabled !== false} 
+                            onChange={onChange('hkPowerEnabled')}
+                          />
+                          <div className='flex flex-col'>
+                            <span className='label-text font-medium'>Power Switch</span>
+                            <span className='text-xs opacity-70'>
+                              Controls the main machine state (Standby / Brew).
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Steam Switch */}
+                      <div className='form-control'>
+                        <label className='label cursor-pointer justify-start gap-4 items-start'>
+                          <input 
+                            id='hkSteamEnabled'
+                            name='hkSteamEnabled'
+                            type="checkbox" 
+                            className="toggle toggle-sm toggle-primary mt-1"
+                            checked={formData.hkSteamEnabled !== false}
+                            onChange={onChange('hkSteamEnabled')}
+                          />
+                          <div className='flex flex-col'>
+                             <span className='label-text font-medium'>Steam Switch</span>
+                             <span className='text-xs opacity-70'>
+                               Toggles the Steam Mode.
+                             </span>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Heating Sensor */}
+                      <div className='form-control'>
+                        <label className='label cursor-pointer justify-start gap-4 items-start'>
+                          <input 
+                            id='hkSensorEnabled'
+                            name='hkSensorEnabled'
+                            type="checkbox" 
+                            className="toggle toggle-sm toggle-primary mt-1"
+                            checked={formData.hkSensorEnabled !== false}
+                            onChange={onChange('hkSensorEnabled')}
+                          />
+                           <div className='flex flex-col'>
+                            <span className='label-text font-medium'>Heating Sensor</span>
+                            <span className='text-xs opacity-70'>
+                              A contact sensor indicating boiler stability (Closed = Heating, Open = Ready).
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               )}
             </div>
@@ -231,18 +284,16 @@ export function PluginCard({
             {/* 3. COLLAPSIBLE TROUBLESHOOTING */}
             <details className="collapse collapse-arrow bg-base-100 border border-base-300 rounded-box">
                 <summary className="collapse-title text-sm font-medium">
-                    Troubleshooting: Connection Issues
+                    Troubleshooting
                 </summary>
                 <div className="collapse-content text-xs text-base-content/70 space-y-3 pt-2">
                     
                     {/* No Connection / Update */}
                     <div>
-                        <p className="font-bold mb-1">Devices not updating or connecting:</p>
+                        <p className="font-bold mb-1">Devices not updating, connecting or other problems:</p>
                         <ul className="list-disc list-inside ml-1 space-y-1">
-                            <li>Try <b>Save & Restart</b> first.</li>
                             <li>
-                                If issues persist, <b>cycle the modes</b>: 
-                                Switch mode &rarr; Save & Restart &rarr; Wait for Apple Home to update GaggiMate devices 
+                                <b>Cycle the modes:</b> Switch mode &rarr; Save & Restart &rarr; Wait for Apple Home to update GaggiMate devices 
                                 (speed it up by tapping on one of the devices in the Home App and give it some time) 
                                 &rarr; Switch back &rarr; Save & Restart.
                             </li>
@@ -253,8 +304,10 @@ export function PluginCard({
                     <div>
                         <p className="font-bold mb-1">GaggiMate does not appear for pairing:</p>
                         <ul className="list-disc list-inside ml-1 space-y-1">
-                            <li>Check if any old GaggiMate devices still exist in your Home App and try the instructions above.</li>
-                            <li>If that doesn't help, remove the device from the Home App and restart GaggiMate.</li>
+                            <li>
+                                Ensure no stale GaggiMate accessories remain in the Home App (check <i>Home Settings &rarr; Home Hubs & Bridges</i>). 
+                                If unsure, try cycling the modes as described above.
+                            </li>
                             
                             {/* Console Reset Instructions */}
                             <li className="mt-2 mb-1">

@@ -82,7 +82,11 @@ class Settings {
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
     String getMdnsName() const { return mdnsName; }
+    // HomeKit Settings
     int getHomekitMode() const { return homekitMode; }
+    bool isHkPowerEnabled() const { return hkPowerEnabled; }
+    bool isHkSteamEnabled() const { return hkSteamEnabled; }
+    bool isHkSensorEnabled() const { return hkSensorEnabled; }
     bool isVolumetricTarget() const { return volumetricTarget; }
     String getOTAChannel() const { return otaChannel; }
     String getSavedScale() const { return savedScale; }
@@ -145,7 +149,11 @@ class Settings {
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
     void setMdnsName(const String &mdnsName);
+    // HomeKit Setters
     void setHomekitMode(int homekitMode);
+    void setHkPowerEnabled(bool enabled);
+    void setHkSteamEnabled(bool enabled);
+    void setHkSensorEnabled(bool enabled);
     bool isHomekitEnabled() const { return homekitMode != HOMEKIT_MODE_DISABLED; }
     void setVolumetricTarget(bool volumetric_target);
     void setOTAChannel(const String &otaChannel);
@@ -215,7 +223,11 @@ class Settings {
     String wifiPassword = "";
     String mdnsName = DEFAULT_MDNS_NAME;
     String savedScale = "";
+    // HomeKit Variables
     int homekitMode = HOMEKIT_MODE_DISABLED;
+    bool hkPowerEnabled = true;
+    bool hkSteamEnabled = true;
+    bool hkSensorEnabled = true;
     bool volumetricTarget = false;
     bool boilerFillActive = false;
     int startupFillTime = 0;

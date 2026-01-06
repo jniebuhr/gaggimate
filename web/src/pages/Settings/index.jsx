@@ -44,6 +44,10 @@ export function Settings() {
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
+        // Initialize HomeKit toggles (Default to true if undefined/new)
+        hkPowerEnabled: fetchedSettings.hkPowerEnabled !== undefined ? fetchedSettings.hkPowerEnabled : true,
+        hkSteamEnabled: fetchedSettings.hkSteamEnabled !== undefined ? fetchedSettings.hkSteamEnabled : true,
+        hkSensorEnabled: fetchedSettings.hkSensorEnabled !== undefined ? fetchedSettings.hkSensorEnabled : true,
       };
 
       // Extract Kf from PID string and separate them
@@ -113,6 +117,9 @@ export function Settings() {
       }
       if (key === 'homekitMode') {
         value = parseInt(value, 10);
+      }
+      if (['hkPowerEnabled', 'hkSteamEnabled', 'hkSensorEnabled'].includes(key)) {
+        value = !formData[key];
       }
       if (key === 'homeAssistant') {
         value = !formData.homeAssistant;
