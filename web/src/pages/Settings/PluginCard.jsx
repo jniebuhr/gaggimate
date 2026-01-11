@@ -210,9 +210,9 @@ export function PluginCard({
                             checked={formData.hkPowerEnabled !== false} 
                             onChange={onChange('hkPowerEnabled')}
                           />
-                          <div className='flex flex-col'>
+                          <div className='flex flex-col flex-1 min-w-0'> 
                             <span className='label-text font-medium'>Power Switch</span>
-                            <span className='text-xs opacity-70'>
+                            <span className='text-xs opacity-70 block whitespace-normal'>
                               Controls the main machine state (Standby / Brew).
                             </span>
                           </div>
@@ -230,9 +230,9 @@ export function PluginCard({
                             checked={formData.hkSteamEnabled !== false}
                             onChange={onChange('hkSteamEnabled')}
                           />
-                          <div className='flex flex-col'>
+                          <div className='flex flex-col flex-1 min-w-0'> 
                              <span className='label-text font-medium'>Steam Switch</span>
-                             <span className='text-xs opacity-70'>
+                             <span className='text-xs opacity-70 block whitespace-normal'>
                                Toggles the Steam Mode.
                              </span>
                           </div>
@@ -250,9 +250,9 @@ export function PluginCard({
                             checked={formData.hkSensorEnabled !== false}
                             onChange={onChange('hkSensorEnabled')}
                           />
-                           <div className='flex flex-col'>
+                           <div className='flex flex-col flex-1 min-w-0'> 
                             <span className='label-text font-medium'>Heating Sensor</span>
-                            <span className='text-xs opacity-70'>
+                            <span className='text-xs opacity-70 block whitespace-normal'>
                               A contact sensor indicating boiler stability (Closed = Heating, Open = Ready).
                             </span>
                           </div>
