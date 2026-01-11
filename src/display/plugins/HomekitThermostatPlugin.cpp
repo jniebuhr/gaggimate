@@ -1,4 +1,4 @@
-#include "HomekitPlugin.h"
+#include "HomekitThermostatPlugin.h"
 #include "../core/Controller.h"
 #include "../core/constants.h"
 #include <utility>
@@ -42,17 +42,17 @@ void HomekitAccessory::setTargetTemperature(float temperatureValue) const { targ
 
 float HomekitAccessory::getTargetTemperature() const { return targetTemperature->getVal(); }
 
-HomekitPlugin::HomekitPlugin(String wifiSsid, String wifiPassword)
+HomekitThermostatPlugin::HomekitThermostatPlugin(String wifiSsid, String wifiPassword)
     : spanAccessory(nullptr), accessoryInformation(nullptr), identify(nullptr), accessory(nullptr), controller(nullptr) {
     this->wifiSsid = std::move(wifiSsid);
     this->wifiPassword = std::move(wifiPassword);
 }
 
-bool HomekitPlugin::hasAction() const { return actionRequired; }
+bool HomekitThermostatPlugin::hasAction() const { return actionRequired; }
 
-void HomekitPlugin::clearAction() { actionRequired = false; }
+void HomekitThermostatPlugin::clearAction() { actionRequired = false; }
 
-void HomekitPlugin::setup(Controller *controller, PluginManager *pluginManager) {
+void HomekitThermostatPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
 
     pluginManager->on("controller:wifi:connect", [this](Event &event) {
@@ -89,7 +89,7 @@ void HomekitPlugin::setup(Controller *controller, PluginManager *pluginManager) 
     });
 }
 
-void HomekitPlugin::loop() {
+void HomekitThermostatPlugin::loop() {
     if (!actionRequired || controller == nullptr || accessory == nullptr)
         return;
     if (accessory->getState() && controller->getMode() == MODE_STANDBY) {
