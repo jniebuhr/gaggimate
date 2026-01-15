@@ -29,7 +29,7 @@ void DefaultUI::updateTempHistory() {
         tempHistoryIndex += 1;
     }
 
-    if (tempHistoryIndex > TEMP_HISTORY_LENGTH) {
+    if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
         tempHistoryIndex = 0;
         isTempHistoryInitialized = true;
     }
@@ -201,9 +201,14 @@ void DefaultUI::init() {
     setupPanel();
     setupState();
     setupReactive();
-    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
-    xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
-                            0);
+        BaseType_t result = xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
+    if (result != pdPASS) {
+        ESP_LOGE("DefaultUI", "Failed to create UI loop task");
+    }
+    result = xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle, 0);
+    if (result != pdPASS) {
+        ESP_LOGE("DefaultUI", "Failed to create profile loop task");
+    }
 }
 
 void DefaultUI::loop() {
@@ -280,6 +285,9 @@ void DefaultUI::onProfileSwitch() {
 }
 
 void DefaultUI::onNextProfile() {
+    if (favoritedProfiles.empty()) {
+        return;
+    }
     if (currentProfileIdx < favoritedProfiles.size() - 1) {
         currentProfileIdx++;
         currentProfileId = favoritedProfiles.at(currentProfileIdx);
@@ -289,6 +297,9 @@ void DefaultUI::onNextProfile() {
 }
 
 void DefaultUI::onPreviousProfile() {
+    if (favoritedProfiles.empty()) {
+        return;
+    }
     if (currentProfileIdx > 0) {
         currentProfileIdx--;
         currentProfileId = favoritedProfiles.at(currentProfileIdx);
@@ -582,10 +593,10 @@ void DefaultUI::setupReactive() {
                                                    currentProfileIdx > 0 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
             ui_object_set_themeable_style_property(
                 ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
-                currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
+                !favoritedProfiles.empty() && currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
             ui_object_set_themeable_style_property(
                 ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
-                currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
+                !favoritedProfiles.empty() && currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
         },
         &currentProfileId, &profileLoaded);
 
@@ -665,6 +676,7 @@ void DefaultUI::updateStandbyScreen() {
         time_t now;
         struct tm timeinfo;
 
+        time(&now);
         localtime_r(&now, &timeinfo);
         // allocate enough space for both 12h/24h time formats
         if (getLocalTime(&timeinfo, 500)) {

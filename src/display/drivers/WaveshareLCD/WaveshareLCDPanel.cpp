@@ -16,6 +16,19 @@
 #include <SD.h>
 #include <SPI.h>
 
+// Helper to clean up display allocations on failure
+static void cleanupDisplayPtrs(void*& bus, void*& gfx) {
+    if (gfx) { 
+        delete static_cast<WS_ST77916*>(gfx); 
+        gfx = nullptr; 
+    }
+    if (bus) { 
+        delete static_cast<Arduino_ESP32QSPI*>(bus); 
+        bus = nullptr; 
+    }
+}
+
+
 WaveshareLCDPanel::WaveshareLCDPanel()
     : _brightness(0), _panelType(WS_LCD_UNKNOWN), _touchType(WS_LCD_TOUCH_UNKNOWN),
       _bus(nullptr), _gfx(nullptr), _touchDrv(nullptr), 
@@ -63,6 +76,7 @@ bool WaveshareLCDPanel::begin() {
     // Reset and initialize display
     if (!initDisplay()) {
         Serial.println(F("WaveshareLCDPanel: Display init failed"));
+        cleanupDisplayPtrs(_bus, _gfx);
         return false;
     }
 
@@ -85,8 +99,9 @@ bool WaveshareLCDPanel::begin() {
 }
 
 bool WaveshareLCDPanel::initI2C() {
-    // Initialize I2C Bus 0 (Wire) for TCA9554PWR GPIO Expander
-    Wire.begin(WS_LCD_185_I2C0_SDA, WS_LCD_185_I2C0_SCL);
+    if (!Wire.begin(WS_LCD_185_I2C0_SDA, WS_LCD_185_I2C0_SCL)) {
+        return false;
+    }
     Wire.setClock(400000);
     delay(10);
     return true;
@@ -145,6 +160,10 @@ bool WaveshareLCDPanel::initDisplay() {
     // Initialize display at 80MHz
     if (!gfx->begin(80000000)) {
         Serial.println(F("WaveshareLCDPanel: GFX begin failed"));
+        delete gfx;
+        _gfx = nullptr;
+        delete bus;
+        _bus = nullptr;
         return false;
     }
 

@@ -6,6 +6,8 @@
 #ifndef _GAGGIMATE_UI_COMP_HOOK_H
 #define _GAGGIMATE_UI_COMP_HOOK_H
 
+#include "../ui.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

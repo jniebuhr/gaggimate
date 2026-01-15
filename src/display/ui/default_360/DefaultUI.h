@@ -114,7 +114,7 @@ class DefaultUI {
     double bluetoothWeight = 0.0;
     BrewScreenState brewScreenState = BrewScreenState::Brew;
 
-    int currentProfileIdx;
+    int currentProfileIdx = 0;
     String currentProfileId = "";
     int profileLoaded = 0;
     Profile currentProfileChoice{};

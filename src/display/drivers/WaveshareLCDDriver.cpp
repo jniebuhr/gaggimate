@@ -17,7 +17,6 @@ bool WaveshareLCDDriver::detectHardware() {
     
     if (!tca9554Found) {
         ESP_LOGW("WaveshareLCDDriver", "TCA9554PWR not found at 0x%02X", WS_LCD_185_TCA9554_ADDR);
-        Wire.end();
         return false;
     }
     ESP_LOGI("WaveshareLCDDriver", "TCA9554PWR found at 0x%02X", WS_LCD_185_TCA9554_ADDR);
@@ -25,7 +24,6 @@ bool WaveshareLCDDriver::detectHardware() {
     // Note: CST816 may not respond until after LCD reset via GPIO expander
     // We detect based on TCA9554 presence only, touch init happens in begin()
     
-    Wire.end();
     
     ESP_LOGI("WaveshareLCDDriver", "Waveshare 1.85 inch LCD detected!");
     return true;
@@ -54,7 +52,7 @@ void WaveshareLCDDriver::init() {
 }
 
 bool WaveshareLCDDriver::supportsSDCard() {
-    return true;
+    return false; // until WaveshareLCDPanel::installSD() is implemented
 }
 
 bool WaveshareLCDDriver::installSDCard() {
