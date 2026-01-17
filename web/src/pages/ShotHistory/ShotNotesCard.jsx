@@ -348,14 +348,14 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
       <div className='form-control mt-6'>
         <label className='mb-2 block text-sm font-medium'>
           Notes{' '}
-          {isEditing && <span className='text-xs text-gray-500'>({notes.notes.length}/50000)</span>}
+          {isEditing && <span className='text-xs text-gray-500'>({notes.notes.length}/15000)</span>}
         </label>
         {isEditing ? (
           <textarea
             className='textarea textarea-bordered w-full'
             rows='4'
             value={notes.notes}
-            maxLength={50000}
+            maxLength={15000}
             onChange={e => handleInputChange('notes', e.target.value)}
             placeholder='Tasting notes, brewing observations, etc...'
           />
