@@ -360,7 +360,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
             placeholder='Tasting notes, brewing observations, etc...'
           />
         ) : (
-          <div className='textarea textarea-bordered bg-base-200 min-h-[6rem] w-full cursor-default whitespace-pre-wrap break-normal [overflow-wrap:anywhere]'>
+          <div className='textarea textarea-bordered bg-base-200 min-h-[6rem] w-full cursor-default break-normal [overflow-wrap:anywhere] whitespace-pre-wrap'>
             {notes.notes || 'No notes added'}
           </div>
         )}
