@@ -55,7 +55,7 @@ esp_err_t esp_lcd_new_panel_st7701_rgb(const esp_lcd_panel_io_handle_t io, const
 {
     ESP_RETURN_ON_FALSE(io && panel_dev_config && ret_panel, ESP_ERR_INVALID_ARG, TAG, "invalid arguments");
     st7701_vendor_config_t *vendor_config = (st7701_vendor_config_t *)panel_dev_config->vendor_config;
-    ESP_RETURN_ON_FALSE(vendor_config && vendor_config->rgb_config, ESP_ERR_INVALID_ARG, TAG, "`verndor_config` and `rgb_config` are necessary");
+    ESP_RETURN_ON_FALSE(vendor_config && vendor_config->rgb_config, ESP_ERR_INVALID_ARG, TAG, "`vendor_config` and `rgb_config` are necessary");
     ESP_RETURN_ON_FALSE(!vendor_config->flags.enable_io_multiplex || !vendor_config->flags.mirror_by_cmd,
                         ESP_ERR_INVALID_ARG, TAG, "`mirror_by_cmd` and `enable_io_multiplex` cannot work together");
 
@@ -71,17 +71,17 @@ esp_err_t esp_lcd_new_panel_st7701_rgb(const esp_lcd_panel_io_handle_t io, const
         ESP_GOTO_ON_ERROR(gpio_config(&io_conf), err, TAG, "configure GPIO for RST line failed");
     }
 
-    //switch (panel_dev_config->rgb_ele_order) {
-    //case LCD_RGB_ELEMENT_ORDER_RGB:
-    //    st7701->madctl_val = 0;
-    //    break;
-    //case LCD_RGB_ELEMENT_ORDER_BGR:
+    switch (panel_dev_config->color_space) {
+    case ESP_LCD_COLOR_SPACE_RGB:
+        st7701->madctl_val = 0;
+        break;
+    case ESP_LCD_COLOR_SPACE_BGR:
         st7701->madctl_val |= LCD_CMD_BGR_BIT;
-    //    break;
-    //default:
-    //    ESP_GOTO_ON_FALSE(false, ESP_ERR_NOT_SUPPORTED, err, TAG, "unsupported color element order");
-    //    break;
-    //}
+        break;
+    default:
+        ESP_GOTO_ON_FALSE(false, ESP_ERR_NOT_SUPPORTED, err, TAG, "unsupported color element order");
+        break;
+    }
 
     st7701->colmod_val = 0;
     switch (panel_dev_config->bits_per_pixel) {

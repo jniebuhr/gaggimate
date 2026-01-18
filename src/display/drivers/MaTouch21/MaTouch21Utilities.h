@@ -17,15 +17,16 @@
 // T-RGB physical connection is RGB666, but ESP only supports RGB565
 
 // RGB data signal(
-// DB0:BlUE LSB;DB5:BIUE MSB;
+// DB0:RED LSB;DB5:RED MSB;
 // DB6:GREEN LSB;DB11:GREEN,MSB;
-// DB12:RED LSB;DB17:RED MSB)
-#define BOARD_TFT_DATA0 (GPIO_NUM_NC) // B0
-#define BOARD_TFT_DATA1 (4)           // B1
-#define BOARD_TFT_DATA2 (41)          // B2
-#define BOARD_TFT_DATA3 (5)           // B3
-#define BOARD_TFT_DATA4 (40)          // B4
-#define BOARD_TFT_DATA5 (6)           // B5    MSB
+// DB12:BLUE LSB;DB17:BLUE MSB)
+
+#define BOARD_TFT_DATA0 (GPIO_NUM_NC) // R0
+#define BOARD_TFT_DATA1 (11)          // R1
+#define BOARD_TFT_DATA2 (15)          // R2
+#define BOARD_TFT_DATA3 (12)          // R3
+#define BOARD_TFT_DATA4 (16)          // R4
+#define BOARD_TFT_DATA5 (21)          // R5    MSB
 
 #define BOARD_TFT_DATA6 (39)  // G0
 #define BOARD_TFT_DATA7 (7)   // G1
@@ -34,12 +35,12 @@
 #define BOARD_TFT_DATA10 (48) // G4
 #define BOARD_TFT_DATA11 (9)  // G5    MSB
 
-#define BOARD_TFT_DATA12 (GPIO_NUM_NC) // R0
-#define BOARD_TFT_DATA13 (11)          // R1
-#define BOARD_TFT_DATA14 (15)          // R2
-#define BOARD_TFT_DATA15 (12)          // R3
-#define BOARD_TFT_DATA16 (16)          // R4
-#define BOARD_TFT_DATA17 (21)          // R5    MSB
+#define BOARD_TFT_DATA12 (GPIO_NUM_NC) // B0
+#define BOARD_TFT_DATA13 (4)           // B1
+#define BOARD_TFT_DATA14 (41)          // B2
+#define BOARD_TFT_DATA15 (5)           // B3
+#define BOARD_TFT_DATA16 (40)          // B4
+#define BOARD_TFT_DATA17 (6)           // B5    MSB
 
 #define BOARD_TFT_RST (GPIO_NUM_NC)
 #define BOARD_TFT_CS (1)

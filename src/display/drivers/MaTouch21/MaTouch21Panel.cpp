@@ -55,7 +55,7 @@ bool MaTouch21Panel::begin(void) {
 }
 
 void MaTouch21Panel::setBrightness(uint8_t value) {
-    value = constrain(value, 0, 16);
+    value = constrain(value, 0, 15);
     _brightness = value;
     ledcWrite(0, _brightness);
 }
@@ -160,7 +160,7 @@ void MaTouch21Panel::initBUS() {
 
     const esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = BOARD_TFT_RST,
-        //.rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
+        .color_space = ESP_LCD_COLOR_SPACE_RGB,
         .bits_per_pixel = 16,
         .vendor_config = &vendor_config,
     };
@@ -180,6 +180,10 @@ bool MaTouch21Panel::initTouch() {
 int MaTouch21Panel::readTouch(int *x, int *y) {
     byte data_raw[7];
     int res = MaTouch21Panel::i2c_read(I2C_TOUCH_ADDR, 0x02, data_raw, 7);
+
+    if (res != ESP_OK) {
+        return 0;
+    }
 
     int event = data_raw[1] >> 6;
 
@@ -205,7 +209,7 @@ int MaTouch21Panel::i2c_read(uint16_t addr, uint8_t reg_addr, uint8_t *reg_data,
     return 0;
 }
 
-void MaTouch21Panel::pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data) {
+void MaTouch21Panel::pushColors(uint16_t x_start, uint16_t y_start, uint16_t x_end, uint16_t y_end, uint16_t *data) {
     assert(_panelDrv);
-    esp_lcd_panel_draw_bitmap(_panelDrv, x, y, width, hight, data);
+    esp_lcd_panel_draw_bitmap(_panelDrv, x_start, y_start, x_end, y_end, data);
 }
