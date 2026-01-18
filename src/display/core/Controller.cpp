@@ -644,9 +644,9 @@ bool Controller::isGrindActive() const { return isActive() && currentProcess->ge
 int Controller::getMode() const { return mode; }
 
 void Controller::setMode(int newMode) {
-    steamReady = false;
     Event modeEvent = pluginManager->trigger("controller:mode:change", "value", newMode);
     mode = modeEvent.getInt("value");
+    steamReady = false;
 
     updateLastAction();
     setTargetTemp(getTargetTemp());
