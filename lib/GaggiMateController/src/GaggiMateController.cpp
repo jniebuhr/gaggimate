@@ -217,12 +217,20 @@ void GaggiMateController::thermalRunawayShutdown() {
 }
 
 void GaggiMateController::sendSensorData() {
+    float temp = 0, pressure = 0, puckFlow = 0, pumpFlow = 0, puckResistance = 0;
+
+    temp = this->thermocouple->read();
+
     if (_config.capabilites.pressure) {
-        auto dimmedPump = static_cast<DimmedPump *>(pump);
-        _ble.sendSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getPuckFlow(),
-                            dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
-        _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
-    } else {
-        _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
+        pressure = this->pressureSensor->getPressure();
     }
+    if (_config.capabilites.dimming) {
+        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        float coffeeVolume = dimmedPump->getCoffeeVolume();
+        puckFlow = dimmedPump->getPuckFlow();
+        pumpFlow = dimmedPump->getPumpFlow();
+        puckResistance = dimmedPump->getPuckResistance();
+        _ble.sendVolumetricMeasurement(coffeeVolume);
+    }
+    _ble.sendSensorData(temp, pressure, puckFlow, pumpFlow, puckResistance);
 }
