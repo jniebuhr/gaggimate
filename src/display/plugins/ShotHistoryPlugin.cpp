@@ -140,6 +140,11 @@ void ShotHistoryPlugin::record() {
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
         sample.si = getSystemInfo(); // Pack system state information
 
+        // Track maximum observed Bluetooth weight during this shot
+        if (currentBluetoothWeight > maxRecordedWeight) {
+            maxRecordedWeight = currentBluetoothWeight;
+        }
+
         // Track phase transitions
         if (controller->getMode() == MODE_BREW) {
             Process *process = controller->getProcess();
@@ -212,7 +217,8 @@ void ShotHistoryPlugin::record() {
         // Patch header with sampleCount and duration
         header.sampleCount = sampleCount;
         header.durationMs = millis() - shotStart;
-        float finalWeight = currentBluetoothWeight;
+        // Use the maximum observed weight during the shot as final weight
+        float finalWeight = maxRecordedWeight;
         header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
         currentFile.seek(0, SeekSet);
         currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
@@ -278,6 +284,9 @@ void ShotHistoryPlugin::startRecording() {
 
     // Reset phase tracking for new shot
     lastRecordedPhase = 0xFF; // Invalid value to detect first phase
+
+    // Reset per-shot maximum weight tracking
+    maxRecordedWeight = 0.0f;
 
     // Capture initial volumetric mode state (brew by weight vs brew by time)
     shotStartedVolumetric = controller->getSettings().isVolumetricTarget();
