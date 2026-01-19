@@ -112,6 +112,7 @@ void beginLvglHelper(Display &board, bool debug) {
 
     size_t lv_buffer_size = board.width() * board.height() * sizeof(lv_color_t);
     buf = (lv_color_t *)ps_malloc(lv_buffer_size);
+    if (!buf) { ESP_LOGE("LV_Helper", "Failed to allocate buf!"); }
     assert(buf);
 
     if (!board.supportsDirectMode()) {

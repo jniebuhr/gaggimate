@@ -20,6 +20,7 @@
 #include "pin_config.h"
 #include <SD_MMC.h>
 #include <TouchDrvInterface.hpp>
+#include "touch/TouchClassCST816.h"
 #include <display/drivers/common/Display.h>
 #include <display/drivers/common/ext.h>
 
@@ -27,12 +28,14 @@ enum Amoled_Display_Panel_Type {
     DISPLAY_UNKNOWN,
     DISPLAY_1_43_INCHES,
     DISPLAY_1_75_INCHES,
+    DISPLAY_WAVESHARE_132
 };
 
 enum Amoled_Display_Panel_TouchType {
     TOUCH_UNKNOWN,
     TOUCH_FT3168,
     TOUCH_CST92XX,
+    TOUCH_CST816,
 };
 
 enum Amoled_Display_Panel_Color_Order {
