@@ -1,0 +1,102 @@
+#pragma once
+
+#include "esp_lcd_st7701/esp_lcd_st7701.h"
+
+#define RGB_MAX_PIXEL_CLOCK_HZ (7000000UL)
+
+#define BOARD_TFT_WIDTH (480)
+#define BOARD_TFT_HEIGHT (480)
+
+#define BOARD_TFT_BL (38)
+
+#define BOARD_TFT_HSYNC (3)
+#define BOARD_TFT_VSYNC (42)
+#define BOARD_TFT_DE (2)
+#define BOARD_TFT_PCLK (45)
+
+// T-RGB physical connection is RGB666, but ESP only supports RGB565
+
+// RGB data signal(
+// DB0:RED LSB;DB5:RED MSB;
+// DB6:GREEN LSB;DB11:GREEN,MSB;
+// DB12:BLUE LSB;DB17:BLUE MSB)
+
+#define BOARD_TFT_DATA0 (GPIO_NUM_NC) // R0
+#define BOARD_TFT_DATA1 (11)          // R1
+#define BOARD_TFT_DATA2 (15)          // R2
+#define BOARD_TFT_DATA3 (12)          // R3
+#define BOARD_TFT_DATA4 (16)          // R4
+#define BOARD_TFT_DATA5 (21)          // R5    MSB
+
+#define BOARD_TFT_DATA6 (39)  // G0
+#define BOARD_TFT_DATA7 (7)   // G1
+#define BOARD_TFT_DATA8 (47)  // G2
+#define BOARD_TFT_DATA9 (8)   // G3
+#define BOARD_TFT_DATA10 (48) // G4
+#define BOARD_TFT_DATA11 (9)  // G5    MSB
+
+#define BOARD_TFT_DATA12 (GPIO_NUM_NC) // B0
+#define BOARD_TFT_DATA13 (4)           // B1
+#define BOARD_TFT_DATA14 (41)          // B2
+#define BOARD_TFT_DATA15 (5)           // B3
+#define BOARD_TFT_DATA16 (40)          // B4
+#define BOARD_TFT_DATA17 (6)           // B5    MSB
+
+#define BOARD_TFT_RST (GPIO_NUM_NC)
+#define BOARD_TFT_CS (1)
+#define BOARD_TFT_MOSI (0)
+#define BOARD_TFT_SCLK (46)
+
+#define BOARD_I2C_SDA (17)
+#define BOARD_I2C_SCL (18)
+
+#define I2C_TOUCH_ADDR 0x15
+
+#define BOARD_TOUCH_IRQ (0)
+#define BOARD_TOUCH_RST (GPIO_NUM_NC)
+
+#define BOARD_SDMMC_EN (GPIO_NUM_NC)
+#define BOARD_SDMMC_SCK (GPIO_NUM_NC)
+#define BOARD_SDMMC_CMD (GPIO_NUM_NC)
+#define BOARD_SDMMC_DAT (GPIO_NUM_NC)
+
+static const st7701_lcd_init_cmd_t st7701_type5_init_operations[] = {
+    {0x11, (uint8_t[]){0x00}, 0, 120},
+    {0xFF, (uint8_t[]){0x77, 0x01, 0x00, 0x00, 0x10}, 5, 0},
+    {0xC0, (uint8_t[]){0x3B, 0x00}, 2, 0},
+    {0xC1, (uint8_t[]){0x0B, 0x02}, 2, 0}, // VBP
+    {0xC2, (uint8_t[]){0x00, 0x02}, 2, 0},
+    {0xCC, (uint8_t[]){0x10}, 1, 0},
+    {0xCD, (uint8_t[]){0x08}, 1, 0},
+    {0xB0, (uint8_t[]){0x02, 0x13, 0x1B, 0x0D, 0x10, 0x05, 0x08, 0x07, 0x07, 0x24, 0x04, 0x11, 0x0E, 0x2C, 0x33, 0x1D}, 16, 0}, // Positive Voltage Gamma Control
+    {0xB1, (uint8_t[]){0x05, 0x13, 0x1B, 0x0D, 0x11, 0x05, 0x08, 0x07, 0x07, 0x24, 0x04, 0x11, 0x0E, 0x2C, 0x33, 0x1D}, 16, 0}, // Negative Voltage Gamma Control
+    {0xFF, (uint8_t[]){0x77, 0x01, 0x00, 0x00, 0x11}, 5, 0},
+    {0xB0, (uint8_t[]){0x5d}, 1, 0},
+    {0xB1, (uint8_t[]){0x43}, 1, 0}, // VCOM amplitude setting
+    {0xB2, (uint8_t[]){0x81}, 1, 0}, // VGH Voltage setting, 12V
+    {0xB3, (uint8_t[]){0x80}, 1, 0},
+    {0xB5, (uint8_t[]){0x43}, 1, 0}, // VGL Voltage setting, -8.3V
+    {0xB7, (uint8_t[]){0x85}, 1, 0},
+    {0xB8, (uint8_t[]){0x20}, 1, 0},
+    {0xC1, (uint8_t[]){0x78}, 1, 0},
+    {0xC2, (uint8_t[]){0x78}, 1, 20},
+    {0xD0, (uint8_t[]){0x88}, 1, 0},
+    {0xE0, (uint8_t[]){0x00, 0x00, 0x02}, 3, 0},
+    {0xE1, (uint8_t[]){0x03, 0xA0, 0x00, 0x00, 0x04, 0xA0, 0x00, 0x00, 0x00, 0x20, 0x20}, 11, 0},
+    {0xE2, (uint8_t[]){0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 13, 0},
+    {0xE3, (uint8_t[]){0x00, 0x00, 0x11, 0x00}, 4, 0},
+    {0xE4, (uint8_t[]){0x22, 0x00}, 2, 0},
+    {0xE5, (uint8_t[]){0x05, 0xEC, 0xA0, 0xA0, 0x07, 0xEE, 0xA0, 0xA0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 16, 0},
+    {0xE6, (uint8_t[]){0x00, 0x00, 0x11, 0x00}, 4, 0},
+    {0xE7, (uint8_t[]){0x22, 0x00}, 2, 0},
+    {0xE8, (uint8_t[]){0x06, 0xED, 0xA0, 0xA0, 0x08, 0xEF, 0xA0, 0xA0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 16, 0},
+    {0xEB, (uint8_t[]){0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x00}, 7, 0},
+    //{0xEC, (uint8_t[]){0x3C, 0x00}, 2, 0},
+    {0xED, (uint8_t[]){0xFF, 0xFF, 0xFF, 0xBA, 0x0A, 0xBF, 0x45, 0xFF, 0xFF, 0x54, 0xFB, 0xA0, 0xAB, 0xFF, 0xFF, 0xFF}, 16, 0},
+    {0xEF, (uint8_t[]){0x10, 0x0D, 0x04, 0x08, 0x3F, 0x1F}, 6, 0},
+    {0xFF, (uint8_t[]){0x77, 0x01, 0x00, 0x00, 0x13}, 5, 0},
+    {0x36, (uint8_t[]){0x08}, 1, 0},
+    {0x3A, (uint8_t[]){0x60}, 1, 0}, // 0x70 RGB888, 0x60 RGB666, 0x50 RGB565
+    {0x11, (uint8_t[]){0x00}, 0, 120},
+    {0x29, (uint8_t[]){0x00}, 0, 0},
+};
