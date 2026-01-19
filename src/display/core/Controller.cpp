@@ -26,6 +26,7 @@
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
+#include <display/drivers/WaveshareLCDDriver.h>
 #endif
 
 const String LOG_TAG = F("Controller");
@@ -117,6 +118,8 @@ void Controller::setupPanel() {
         driver = AmoledDisplayDriver::getInstance();
     } else if (LilyGoDriver::getInstance()->isCompatible()) {
         driver = LilyGoDriver::getInstance();
+    } else if (WaveshareLCDDriver::getInstance()->isCompatible()) {
+        driver = WaveshareLCDDriver::getInstance();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
         driver = WaveshareDriver::getInstance();
     } else {
