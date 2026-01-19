@@ -327,6 +327,10 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     client->text(buffer);
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
+                } else if (msgType == "req:cleaning:backflush:start") {
+                    pluginManager->trigger("cleaning:backflush:start");
+                } else if (msgType == "req:cleaning:descaling:start") {
+                    pluginManager->trigger("cleaning:descaling:start");
                 }
             }
         }
@@ -557,6 +561,15 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 }
                 settings->setAutoWakeupSchedules(schedules);
             }
+            // Cleaning schedule settings
+            if (request->hasArg("backflushIntervalDays"))
+                settings->setBackflushIntervalDays(request->arg("backflushIntervalDays").toInt());
+            if (request->hasArg("descalingIntervalWeeks"))
+                settings->setDescalingIntervalWeeks(request->arg("descalingIntervalWeeks").toInt());
+            if (request->hasArg("lastBackflushTime"))
+                settings->setLastBackflushTime(request->arg("lastBackflushTime").toInt());
+            if (request->hasArg("lastDescalingTime"))
+                settings->setLastDescalingTime(request->arg("lastDescalingTime").toInt());
             settings->save(true);
         });
         pluginManager->trigger("settings:changed");
@@ -628,6 +641,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         }
     }
     doc["autowakeupSchedules"] = schedulesStr;
+    // Cleaning schedule settings
+    doc["backflushIntervalDays"] = settings.getBackflushIntervalDays();
+    doc["descalingIntervalWeeks"] = settings.getDescalingIntervalWeeks();
+    doc["lastBackflushTime"] = settings.getLastBackflushTime();
+    doc["lastDescalingTime"] = settings.getLastDescalingTime();
     serializeJson(doc, *response);
     request->send(response);
 
