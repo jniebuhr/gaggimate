@@ -60,12 +60,22 @@ struct Phase {
     }
 
     Target getVolumetricTarget() const {
-        for (const auto &target : targets) {
+        for (auto &target : targets) {
             if (target.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
                 return target;
             }
         }
         return Target{};
+    }
+
+    void adjustDuration(float amount) { duration = std::max(0.5f, duration + amount); }
+
+    void adjustVolumetricTarget(float factor) {
+        for (auto &target : targets) {
+            if (target.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+                target.value *= factor;
+            }
+        }
     }
 
     bool isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow, float current_pressure,
@@ -108,6 +118,7 @@ struct Profile {
     String label;
     String type; // "standard" | "pro"
     String description;
+    bool utility = false;
     float temperature;
     bool favorite = false;
     bool selected = false;
@@ -126,12 +137,49 @@ struct Profile {
         return brew + preinfusion;
     }
 
-    unsigned long getTotalDuration() const {
-        unsigned long duration = 0;
+    float getTotalDuration() const {
+        float duration = 0;
         for (const auto &phase : phases) {
             duration += phase.duration;
         }
         return duration;
+    }
+
+    float getTotalVolume() const {
+        float volume = 0.0;
+        for (const auto &phase : phases) {
+            if (phase.hasVolumetricTarget()) {
+                volume = phase.getVolumetricTarget().value;
+            }
+        }
+        return volume;
+    }
+
+    void adjustDuration(float amount) {
+        float totalDuration = 0.0f;
+        ;
+        for (auto &phase : phases) {
+            if (phase.phase == PhaseType::PHASE_TYPE_BREW) {
+                totalDuration += phase.duration;
+            }
+        }
+        for (auto &phase : phases) {
+            if (phase.phase == PhaseType::PHASE_TYPE_BREW) {
+                float share = phase.duration / totalDuration;
+                phase.adjustDuration(amount * share);
+            }
+        }
+    }
+
+    void adjustVolumetricTarget(float amount) {
+        float max = getTotalVolume();
+        float adjustedMax = max + amount;
+        float adjustment = adjustedMax / max;
+        for (auto &phase : phases) {
+            if (phase.hasVolumetricTarget() && phase.phase == PhaseType::PHASE_TYPE_BREW) {
+                phase.adjustVolumetricTarget(adjustment);
+            }
+        }
     }
 };
 
@@ -144,6 +192,7 @@ inline bool parseProfile(const JsonObject &obj, Profile &profile) {
     profile.temperature = obj["temperature"].as<float>();
     profile.favorite = obj["favorite"] | false;
     profile.selected = obj["selected"] | false;
+    profile.utility = obj["utility"] | false;
 
     auto phasesArray = obj["phases"].as<JsonArray>();
     for (JsonObject p : phasesArray) {
@@ -235,6 +284,7 @@ inline void writeProfile(JsonObject &obj, const Profile &profile) {
     obj["temperature"] = profile.temperature;
     obj["favorite"] = profile.favorite;
     obj["selected"] = profile.selected;
+    obj["utility"] = profile.utility;
 
     auto phasesArray = obj["phases"].to<JsonArray>();
     for (const Phase &phase : profile.phases) {

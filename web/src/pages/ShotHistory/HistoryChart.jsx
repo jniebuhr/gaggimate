@@ -1,8 +1,139 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { Chart } from 'chart.js';
 import { ChartComponent } from '../../components/Chart.jsx';
 
-function getChartData(data) {
-  let start = 0;
+// Helper function to get phase name from shot data (v5+) or fallback to profile/generic
+function getPhaseName(shot, phaseNumber) {
+  // For v5+ shots, check if we have phase transition data
+  if (shot.phaseTransitions && shot.phaseTransitions.length > 0) {
+    const transition = shot.phaseTransitions.find(t => t.phaseNumber === phaseNumber);
+    if (transition && transition.phaseName) {
+      return transition.phaseName;
+    }
+  }
+
+  // Fallback to no label for v4 shots or missing data
+  return '';
+}
+
+function getChartData(shot) {
+  // Build sample point arrays once (numeric x for linear scale)
+  const data = shot.samples;
+  const ct = [];
+  const tt = [];
+  const cp = [];
+  const tp = [];
+  const fl = [];
+  const pf = [];
+  const tf = [];
+  const v = [];
+  const vf = [];
+
+  // Process all samples to build data arrays
+  for (let i = 0; i < data.length; i++) {
+    const s = data[i];
+    const x = s.t / 1000.0; // Convert time to seconds for chart display
+
+    ct.push({ x, y: s.ct });
+    tt.push({ x, y: s.tt });
+    cp.push({ x, y: s.cp });
+    tp.push({ x, y: s.tp });
+    fl.push({ x, y: s.fl });
+    pf.push({ x, y: s.pf });
+    tf.push({ x, y: s.tf });
+    v.push({ x, y: s.v });
+    vf.push({ x, y: s.vf });
+  }
+
+  // For v5+ files, use phase transitions from header
+  let phaseTransitions = [];
+
+  if (shot.version >= 5 && shot.phaseTransitions) {
+    // Use phase transitions directly from header
+    phaseTransitions = shot.phaseTransitions.map(t => ({
+      time: (t.sampleIndex * (shot.sampleInterval || 250)) / 1000.0,
+      phaseNumber: t.phaseNumber,
+      phaseDisplayNumber: t.phaseNumber + 1,
+      phaseName: t.phaseName,
+    }));
+  }
+  // No phase tracking for versions before v5
+  const tempValues = ct.map(i => i.y).concat(tt.map(i => i.y));
+  const timeValues = ct.map(i => i.x);
+  const minTemp = Math.floor(Math.min(...tempValues));
+  const maxTemp = Math.ceil(Math.max(...tempValues));
+  const minX = Math.min(...timeValues);
+  const maxX = Math.max(...timeValues);
+  const padding = maxTemp - minTemp > 10 ? 2 : 5;
+
+  // Check if weight data has any non-zero values
+  const hasWeight = v.some(point => point.y > 0);
+  const hasWeightFlow = vf.some(point => point.y > 0);
+
+  // Create phase annotations
+  const phaseAnnotations = {};
+  const isSmall = window.innerWidth < 640;
+
+  // Add shot start marker
+  if (data.length > 0) {
+    const shotStartTime = data[0].t / 1000.0; // First sample time in seconds
+    const startPhaseName = getPhaseName(shot, 0); // Get first phase name
+    phaseAnnotations['shot_start'] = {
+      type: 'line',
+      xMin: shotStartTime,
+      xMax: shotStartTime,
+      borderColor: '#6B7280', // Gray color to match other phase lines
+      borderWidth: 1,
+      label: {
+        display: true,
+        content: startPhaseName,
+        rotation: -90,
+        position: 'end',
+        xAdjust: -5,
+        yAdjust: 0,
+        padding: { x: 6, y: 0 },
+        color: 'rgb(255,255,255)',
+        backgroundColor: 'rgba(22,33,50,0.75)',
+        textAlign: 'start',
+        font: {
+          size: isSmall ? 9 : 11,
+          weight: 500,
+        },
+        clip: false,
+      },
+    };
+  }
+
+  phaseTransitions.forEach((transition, index) => {
+    // Skip the first transition since we handle it with shot_start marker
+    if (index === 0) return;
+
+    phaseAnnotations[`phase_line_${index}`] = {
+      type: 'line',
+      xMin: transition.time,
+      xMax: transition.time,
+      borderColor: '#6B7280', // Gray color to match OverviewChart
+      borderWidth: 1,
+      label: {
+        display: true,
+        content:
+          transition.phaseName ||
+          `Phase ${transition.phaseDisplayNumber || transition.phaseNumber + 1}`,
+        rotation: -90,
+        position: 'end',
+        xAdjust: -10,
+        yAdjust: 0,
+        padding: { x: 6, y: 0 },
+        color: 'rgb(255,255,255)',
+        backgroundColor: 'rgba(22,33,50,0.75)',
+        textAlign: 'start',
+        font: {
+          size: isSmall ? 9 : 11,
+          weight: 500,
+        },
+        clip: false,
+      },
+    };
+  });
   return {
     type: 'line',
     data: {
@@ -11,7 +142,7 @@ function getChartData(data) {
           label: 'Current Temperature',
           borderColor: '#F0561D',
           pointStyle: false,
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.ct })),
+          data: ct,
         },
         {
           label: 'Target Temperature',
@@ -19,14 +150,14 @@ function getChartData(data) {
           borderColor: '#731F00',
           borderDash: [6, 6],
           pointStyle: false,
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tt })),
+          data: tt,
         },
         {
           label: 'Current Pressure',
           borderColor: '#0066CC',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.cp })),
+          data: cp,
         },
         {
           label: 'Target Pressure',
@@ -35,21 +166,21 @@ function getChartData(data) {
           borderDash: [6, 6],
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tp })),
+          data: tp,
         },
         {
           label: 'Current Pump Flow',
           borderColor: '#63993D',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.fl })),
+          data: fl,
         },
         {
           label: 'Current Puck Flow',
           borderColor: '#204D00',
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.pf })),
+          data: pf,
         },
         {
           label: 'Target Pump Flow',
@@ -57,44 +188,92 @@ function getChartData(data) {
           borderDash: [6, 6],
           pointStyle: false,
           yAxisID: 'y1',
-          data: data.map((i, idx) => ({ x: (i.t / 1000).toFixed(1), y: i.tf })),
+          data: tf,
         },
+        // Only include weight datasets if they have non-zero values
+        ...(hasWeight
+          ? [
+              {
+                label: 'Weight',
+                borderColor: '#8B5CF6',
+                pointStyle: false,
+                yAxisID: 'y2',
+                data: v,
+              },
+            ]
+          : []),
+        ...(hasWeightFlow
+          ? [
+              {
+                label: 'Weight Flow',
+                borderColor: '#4b2e8dff',
+                pointStyle: false,
+                yAxisID: 'y1',
+                data: vf,
+              },
+            ]
+          : []),
       ],
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
+      parsing: false, // We already provide x/y objects
+      spanGaps: true,
       plugins: {
         legend: {
           position: 'top',
           display: true,
           labels: {
-            boxWidth: 12,
+            usePointStyle: true,
+            pointStyle: 'line',
+            pointStyleWidth: 20,
             padding: 8,
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
+            },
+            generateLabels: function (chart) {
+              const original = Chart.defaults.plugins.legend.labels.generateLabels;
+              const labels = original.call(this, chart);
+
+              labels.forEach((label, index) => {
+                const dataset = chart.data.datasets[index];
+                label.lineWidth = 3;
+                if (dataset.borderDash && dataset.borderDash.length > 0) {
+                  label.lineDash = dataset.borderDash;
+                }
+              });
+
+              return labels;
             },
           },
         },
         title: {
           display: false,
-          text: 'Temperature History',
-          font: {
-            size: window.innerWidth < 640 ? 14 : 16,
-          },
+        },
+        annotation: {
+          annotations: phaseAnnotations,
         },
       },
       animation: false,
       scales: {
+        x: {
+          min: minX,
+          max: maxX,
+          type: 'linear',
+          title: { display: true, text: 'Time (s)' },
+          ticks: { font: { size: window.innerWidth < 640 ? 10 : 12 } },
+        },
         y: {
           type: 'linear',
           ticks: {
-            callback: value => {
-              return `${value} °C`;
-            },
+            callback: value => `${value.toFixed()} °C`,
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
           },
+          min: Math.max(minTemp - padding, 0),
+          max: maxTemp + padding,
         },
         y1: {
           type: 'linear',
@@ -102,29 +281,43 @@ function getChartData(data) {
           max: 16,
           position: 'right',
           ticks: {
-            callback: value => {
-              return `${value} bar / g/s`;
-            },
+            callback: value => `${value.toFixed()} bar / g/s`,
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
           },
+          grid: { drawOnChartArea: false },
         },
-        x: {
-          ticks: {
-            source: 'auto',
-            font: {
-              size: window.innerWidth < 640 ? 10 : 12,
-            },
-          },
-        },
+        ...(hasWeight
+          ? {
+              y2: {
+                type: 'linear',
+                min: 0,
+                position: 'right',
+                offset: true,
+                ticks: {
+                  callback: value => `${value.toFixed()} g`,
+                  font: {
+                    size: window.innerWidth < 640 ? 10 : 12,
+                  },
+                },
+                grid: { drawOnChartArea: false },
+              },
+            }
+          : {}),
       },
     },
   };
 }
 
 export function HistoryChart({ shot }) {
-  const chartData = getChartData(shot.samples);
+  const chartData = getChartData(shot);
 
-  return <ChartComponent className='' chartClassName='w-full' data={chartData} />;
+  return (
+    <ChartComponent
+      className='min-h-[350px] flex-1'
+      chartClassName='w-full min-h-[350px]'
+      data={chartData}
+    />
+  );
 }

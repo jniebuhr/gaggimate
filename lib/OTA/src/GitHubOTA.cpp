@@ -57,6 +57,12 @@ void GitHubOTA::checkForUpdates() {
         _latest_url = _release_url + "/";
         _latest_url.replace("tag", "download");
         String version = get_updated_version_via_txt_file(_wifi_client, _latest_url);
+
+        if (version.length() == 0) {
+            ESP_LOGW(TAG, "version.txt did not return a valid version string");
+            return;
+        }
+
         version = version.substring(1);
         _latest_version_string = version;
         _latest_version = from_string(version.c_str());
@@ -75,12 +81,15 @@ bool GitHubOTA::isUpdateAvailable(bool controller) const {
 void GitHubOTA::update(bool controller, bool display) {
     const char *TAG = "update";
 
+    bool updateExecuted = false;
+
     if (controller && update_required(_latest_version, _controller_version)) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
         this->phase = PHASE_CONTROLLER_FW;
         this->_phase_callback(PHASE_CONTROLLER_FW);
         _controller_ota.update(_wifi_client, _latest_url + _controller_firmware_name);
         ESP_LOGI(TAG, "Controller update successful. Restarting...\n");
+        updateExecuted = true;
     }
 
     if (display && update_required(_latest_version, _version)) {
@@ -106,11 +115,15 @@ void GitHubOTA::update(bool controller, bool display) {
         ESP_LOGI(TAG, "Update successful. Restarting...\n");
         this->phase = PHASE_FINISHED;
         this->_phase_callback(PHASE_FINISHED);
-        delay(1000);
-        ESP.restart();
+        updateExecuted = true;
     }
     this->phase = PHASE_FINISHED;
     this->_phase_callback(PHASE_FINISHED);
+
+    if (updateExecuted) {
+        delay(1000);
+        ESP.restart();
+    }
 
     ESP_LOGI(TAG, "No updates found\n");
 }

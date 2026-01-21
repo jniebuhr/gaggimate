@@ -19,7 +19,7 @@ constexpr int DETECT_VALUE_PIN = 11;
 
 class GaggiMateController {
   public:
-    GaggiMateController();
+    GaggiMateController(String version);
     void setup(void);
     void loop(void);
 
@@ -28,6 +28,7 @@ class GaggiMateController {
   private:
     void detectBoard();
     void detectAddon();
+    void handlePing();
     void handlePingTimeout(void);
     void thermalRunawayShutdown(void);
     void startPidAutotune(void);
@@ -50,7 +51,9 @@ class GaggiMateController {
 
     std::vector<ControllerConfig> configs;
 
+    String _version;
     unsigned long lastPingTime = 0;
+    size_t errorState = ERROR_CODE_NONE;
 
     const char *LOG_TAG = "GaggiMateController";
 };

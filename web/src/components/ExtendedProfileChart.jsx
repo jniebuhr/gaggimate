@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart';
 
 const POINT_INTERVAL = 0.1; // s
@@ -140,10 +141,26 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
           position: 'top',
           display: true,
           labels: {
-            boxWidth: 12,
+            usePointStyle: true,
+            pointStyle: 'line',
+            pointStyleWidth: 20,
             padding: 8,
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
+            },
+            generateLabels: function (chart) {
+              const original = Chart.defaults.plugins.legend.labels.generateLabels;
+              const labels = original.call(this, chart);
+
+              labels.forEach((label, index) => {
+                const dataset = chart.data.datasets[index];
+                label.lineWidth = 3;
+                if (dataset.borderDash && dataset.borderDash.length > 0) {
+                  label.lineDash = dataset.borderDash;
+                }
+              });
+
+              return labels;
             },
           },
         },
@@ -211,46 +228,69 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
       },
     },
   };
+
+  // Always show phase dividers and labels
+  chartData.options.plugins.annotation = {
+    drawTime: 'afterDatasetsDraw',
+    clip: false,
+    annotations: [],
+  };
+
+  // Add highlighting box only if a phase is selected
   if (selectedPhase !== null) {
     let start = 0;
     for (let i = 0; i < selectedPhase; i++) {
       start += parseFloat(data.phases[i].duration);
     }
     let end = start + parseFloat(data.phases[selectedPhase].duration);
-    chartData.options.plugins.annotation = {
-      drawTime: 'afterDraw',
-      annotations: [
-        {
-          id: 'box1',
-          type: 'box',
-          xMin: start + 0.1,
-          xMax: end + 0.1,
-          backgroundColor: 'rgba(0,105,255,0.2)',
-          borderColor: 'rgba(100, 100, 100, 0)',
-        },
-      ],
-    };
-    start = 0;
-    for (let i = 0; i < data.phases.length; i++) {
-      chartData.options.plugins.annotation.annotations.push({
-        type: 'label',
-        xValue: start + data.phases[i].duration / 2,
-        yValue: 11,
-        content: [i + 1],
-        color: isDarkMode ? 'rgb(205,208,212)' : 'rgb(57,78,106)',
-        font: {
-          size: 14,
-          weight: 500,
-        },
-      });
-      start += parseFloat(data.phases[i].duration);
-      chartData.options.plugins.annotation.annotations.push({
-        type: 'line',
-        xMin: start + 0.1,
-        xMax: start + 0.1,
-        borderColor: 'rgb(128,128,128)',
-      });
-    }
+    chartData.options.plugins.annotation.annotations.push({
+      id: 'box1',
+      type: 'box',
+      xMin: start + 0.1,
+      xMax: end + 0.1,
+      backgroundColor: 'rgba(0,105,255,0.2)',
+      borderColor: 'rgba(100, 100, 100, 0)',
+    });
+  }
+
+  const chartWidth = window.innerWidth;
+  const showLabels = chartWidth >= 520;
+  const isSmall = window.innerWidth < 640;
+  const yMax = chartData.options.scales.y.max ?? 12;
+
+  let phaseStart = 0;
+  for (let i = 0; i < data.phases.length; i++) {
+    const phase = data.phases[i];
+    const phaseName = phase.name || `Phase ${i + 1}`;
+
+    chartData.options.plugins.annotation.annotations.push({
+      type: 'line',
+      xMin: phaseStart,
+      xMax: phaseStart,
+      borderColor: 'rgb(128,128,128)',
+      borderWidth: 1,
+      label: showLabels
+        ? {
+            display: true,
+            content: phaseName,
+            rotation: -90,
+            position: 'end', // anchor at top of line
+            xAdjust: i === 0 ? -7 : 8, // tweak first label inward to compensate for y-axis padding
+            yAdjust: 0,
+            padding: { x: 4, y: 0 },
+            color: isDarkMode ? 'rgb(255,255,255)' : 'rgb(0,0,0)',
+            backgroundColor: isDarkMode ? 'rgba(22,33,50,0.75)' : 'rgba(255,255,255,0.75)',
+            textAlign: 'start',
+            font: {
+              size: isSmall ? 9 : 11,
+              weight: 500,
+            },
+            clip: false,
+          }
+        : undefined,
+    });
+
+    phaseStart += parseFloat(phase.duration);
   }
   return chartData;
 }
