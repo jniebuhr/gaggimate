@@ -44,7 +44,6 @@ void Controller::setup() {
 
     pluginManager = new PluginManager();
 #ifndef GAGGIMATE_HEADLESS
-    ui = new DefaultUI(this, driver, pluginManager);
     if (driver->supportsSDCard() && driver->installSDCard()) {
         sdcard = true;
         ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
