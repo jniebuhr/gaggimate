@@ -41,21 +41,21 @@ jobs:
         run: ./scripts/build_spiffs.sh
       - name: Build controller
         run: |
-          export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
+          export PLATFORMIO_BUILD_FLAGS="'-DNO_NIGHTLY_BUILD'"
           pio run -e controller
           mv .pio/build/controller/firmware.bin out/board-firmware.bin
           mv .pio/build/controller/partitions.bin out/board-partitions.bin
           mv .pio/build/controller/bootloader.bin out/board-bootloader.bin
       - name: Build display
         run: |
-          export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
+          export PLATFORMIO_BUILD_FLAGS="'-DNO_NIGHTLY_BUILD'"
           pio run -e display
           mv .pio/build/display/firmware.bin out/display-firmware.bin
           mv .pio/build/display/partitions.bin out/display-partitions.bin
           mv .pio/build/display/bootloader.bin out/display-bootloader.bin
       - name: Build headless
         run: |
-          export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
+          export PLATFORMIO_BUILD_FLAGS="'-DNO_NIGHTLY_BUILD'"
           pio run -e display-headless
           mv .pio/build/display-headless/firmware.bin out/display-headless-firmware.bin
           mv .pio/build/display-headless/partitions.bin out/display-headless-partitions.bin
