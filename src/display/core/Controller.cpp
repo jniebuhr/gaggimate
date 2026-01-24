@@ -43,6 +43,14 @@ void Controller::setup() {
 #endif
 
     pluginManager = new PluginManager();
+#ifndef GAGGIMATE_HEADLESS
+    ui = new DefaultUI(this, driver, pluginManager);
+    if (driver->supportsSDCard() && driver->installSDCard()) {
+        sdcard = true;
+        ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
+        ESP_LOGI(LOG_TAG, "Used: %lluMB, Capacity: %lluMB", SD_MMC.usedBytes() / 1024 / 1024, SD_MMC.cardSize() / 1024 / 1024);
+    }
+#endif
     FS *fs = &SPIFFS;
     if (sdcard) {
         fs = &SD_MMC;
@@ -58,11 +66,11 @@ void Controller::setup() {
         pluginManager->registerPlugin(new HomekitThermostatPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
         pluginManager->registerPlugin(new mDNSPlugin());
     } else if (settings.getHomekitMode() == HOMEKIT_MODE_BRIDGE) {
-        pluginManager->registerPlugin(new HomekitBridgePlugin(settings.getWifiSsid(), settings.getWifiPassword())); 
-        pluginManager->registerPlugin(new mDNSPlugin());
-    } else { 
+        pluginManager->registerPlugin(new HomekitBridgePlugin(settings.getWifiSsid(), settings.getWifiPassword()));
+    } else {
         pluginManager->registerPlugin(new mDNSPlugin());
     }
+  
     if (settings.isBoilerFillActive()) {
         pluginManager->registerPlugin(new BoilerFillPlugin());
     }
@@ -90,9 +98,8 @@ void Controller::setup() {
 
 #ifndef GAGGIMATE_HEADLESS
     ui->init();
-#else
-    this->onScreenReady();
 #endif
+    this->onScreenReady();
 
     updateLastAction();
     xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
@@ -121,10 +128,10 @@ void Controller::connect() {
 
 #ifndef GAGGIMATE_HEADLESS
 void Controller::setupPanel() {
-    if (AmoledDisplayDriver::getInstance()->isCompatible()) {
-        driver = AmoledDisplayDriver::getInstance();
-    } else if (LilyGoDriver::getInstance()->isCompatible()) {
+    if (LilyGoDriver::getInstance()->isCompatible()) {
         driver = LilyGoDriver::getInstance();
+    } else if (AmoledDisplayDriver::getInstance()->isCompatible()) {
+        driver = AmoledDisplayDriver::getInstance();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
         driver = WaveshareDriver::getInstance();
     } else {
@@ -133,15 +140,6 @@ void Controller::setupPanel() {
         ESP.restart();
     }
     driver->init();
-    if (!driver->supportsSDCard()) {
-        ESP_LOGV(LOG_TAG, "Display driver does not support SD card");
-        return;
-    }
-    if (driver->installSDCard()) {
-        sdcard = true;
-        ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
-        ESP_LOGI(LOG_TAG, "Used: %lluMB, Capacity: %lluMB", SD_MMC.usedBytes() / 1024 / 1024, SD_MMC.cardSize() / 1024 / 1024);
-    }
 }
 #endif
 
