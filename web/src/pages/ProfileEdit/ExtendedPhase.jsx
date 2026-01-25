@@ -3,6 +3,7 @@ import { isNumber } from 'chart.js/helpers';
 import { useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { Tooltip } from '../../components/Tooltip.jsx';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const onFieldChange = (field, value) => {
@@ -424,14 +425,16 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       <div className='mt-2 flex flex-row gap-4'>
         <h3 className='text-lg font-medium'>Stop when</h3>
         <div className='dropdown'>
-          <div
-            tabIndex='0'
-            role='button'
-            className='join-item btn btn-sm btn-outline'
-            aria-label='Add target'
-          >
-            <FontAwesomeIcon icon={faPlus} />
-          </div>
+          <Tooltip content='Add stop condition'>
+            <div
+              tabIndex='0'
+              role='button'
+              className='join-item btn btn-sm btn-outline'
+              aria-label='Add target'
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </div>
+          </Tooltip>
           <ul
             tabIndex='0'
             className='menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm'

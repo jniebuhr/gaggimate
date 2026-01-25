@@ -32,6 +32,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import { ConfirmButton } from '../../components/ConfirmButton.jsx';
+import { Tooltip } from '../../components/Tooltip.jsx';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
@@ -116,7 +117,7 @@ function ProfileCard({
     if (!pop.matches(':popover-open')) {
       try {
         pop.showPopover();
-      } catch (_) {}
+      } catch (_) { }
     }
     // Measure size
     const w = pop.offsetWidth || 224; // ~w-56
@@ -144,7 +145,7 @@ function ProfileCard({
     if (pop && pop.matches(':popover-open')) {
       try {
         pop.hidePopover();
-      } catch (_) {}
+      } catch (_) { }
     }
     setMenuOpen(false);
   }, []);
@@ -161,7 +162,7 @@ function ProfileCard({
         try {
           pop.showPopover();
           setMenuOpen(true);
-        } catch (_) {}
+        } catch (_) { }
       }
     },
     [closeMenu, positionPopover],
@@ -362,55 +363,64 @@ function ProfileCard({
                   role='group'
                   aria-label={`Actions for ${data.label} profile`}
                 >
-                  <button
-                    onClick={onFavoriteToggle}
-                    disabled={favoriteToggleDisabled}
-                    className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
-                    aria-label={
-                      data.favorite
-                        ? `Remove ${data.label} from favorites`
-                        : `Add ${data.label} to favorites`
-                    }
-                    aria-pressed={data.favorite}
-                  >
-                    <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                  </button>
-                  <a
-                    href={`/profiles/${data.id}`}
-                    className='btn btn-sm btn-ghost'
-                    aria-label={`Edit ${data.label} profile`}
-                  >
-                    <FontAwesomeIcon icon={faPen} />
-                  </a>
-                  <button
-                    onClick={onDownload}
-                    className='btn btn-sm btn-ghost text-primary'
-                    aria-label={`Export ${data.label} profile`}
-                  >
-                    <FontAwesomeIcon icon={faFileExport} />
-                  </button>
-                  <button
-                    onClick={() => onDuplicate(data.id)}
-                    className='btn btn-sm btn-ghost text-success'
-                    aria-label={`Duplicate ${data.label} profile`}
-                  >
-                    <FontAwesomeIcon icon={faCopy} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      confirmOrDelete(() => onDelete(data.id));
-                    }}
-                    className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
-                    aria-label={
-                      confirmDelete
-                        ? `Confirm deletion of ${data.label} profile`
-                        : `Delete ${data.label} profile`
-                    }
-                    title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
-                  >
-                    <FontAwesomeIcon icon={faTrashCan} />
-                    {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
-                  </button>
+                  <Tooltip content={data.favorite ? 'Remove from favorites' : 'Add to favorites'}>
+                    <button
+                      onClick={onFavoriteToggle}
+                      disabled={favoriteToggleDisabled}
+                      className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
+                      aria-label={
+                        data.favorite
+                          ? `Remove ${data.label} from favorites`
+                          : `Add ${data.label} to favorites`
+                      }
+                      aria-pressed={data.favorite}
+                    >
+                      <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content='Edit profile'>
+                    <a
+                      href={`/profiles/${data.id}`}
+                      className='btn btn-sm btn-ghost'
+                      aria-label={`Edit ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faPen} />
+                    </a>
+                  </Tooltip>
+                  <Tooltip content='Export profile'>
+                    <button
+                      onClick={onDownload}
+                      className='btn btn-sm btn-ghost text-primary'
+                      aria-label={`Export ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faFileExport} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content='Duplicate profile'>
+                    <button
+                      onClick={() => onDuplicate(data.id)}
+                      className='btn btn-sm btn-ghost text-success'
+                      aria-label={`Duplicate ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faCopy} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content={confirmDelete ? 'Click to confirm' : 'Delete profile'}>
+                    <button
+                      onClick={() => {
+                        confirmOrDelete(() => onDelete(data.id));
+                      }}
+                      className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
+                      aria-label={
+                        confirmDelete
+                          ? `Confirm deletion of ${data.label} profile`
+                          : `Delete ${data.label} profile`
+                      }
+                    >
+                      <FontAwesomeIcon icon={faTrashCan} />
+                      {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -447,26 +457,28 @@ function ProfileCard({
             aria-label={`Profile details for ${data.label}`}
           >
             <div className='flex flex-col justify-evenly'>
-              <button
-                onClick={() => onMoveUp(data.id)}
-                disabled={isFirst}
-                className='btn btn-xs btn-ghost'
-                aria-label={`Move ${data.label} up`}
-                aria-disabled={isFirst}
-                title='Move up'
-              >
-                <FontAwesomeIcon icon={faArrowUp} />
-              </button>
-              <button
-                onClick={() => onMoveDown(data.id)}
-                disabled={isLast}
-                className='btn btn-xs btn-ghost'
-                aria-label={`Move ${data.label} down`}
-                aria-disabled={isLast}
-                title='Move down'
-              >
-                <FontAwesomeIcon icon={faArrowDown} />
-              </button>
+              <Tooltip content='Move up'>
+                <button
+                  onClick={() => onMoveUp(data.id)}
+                  disabled={isFirst}
+                  className='btn btn-xs btn-ghost'
+                  aria-label={`Move ${data.label} up`}
+                  aria-disabled={isFirst}
+                >
+                  <FontAwesomeIcon icon={faArrowUp} />
+                </button>
+              </Tooltip>
+              <Tooltip content='Move down'>
+                <button
+                  onClick={() => onMoveDown(data.id)}
+                  disabled={isLast}
+                  className='btn btn-xs btn-ghost'
+                  aria-label={`Move ${data.label} down`}
+                  aria-disabled={isLast}
+                >
+                  <FontAwesomeIcon icon={faArrowDown} />
+                </button>
+              </Tooltip>
             </div>
             <div className='flex-grow overflow-x-auto'>
               {data.type === 'pro' ? (
@@ -572,7 +584,7 @@ export function ProfileList() {
           // fire and forget; no await during unmount
           apiService
             .request({ tp: 'req:profiles:reorder', order: pendingOrderRef.current })
-            .catch(() => {});
+            .catch(() => { });
         }
       }
     };
@@ -736,22 +748,24 @@ export function ProfileList() {
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Profiles</h1>
-        <button
-          onClick={onExport}
-          className='btn btn-ghost btn-sm'
-          title='Export all profiles'
-          aria-label='Export all profiles'
-        >
-          <FontAwesomeIcon icon={faFileExport} />
-        </button>
-        <label
-          htmlFor='profileImport'
-          className='btn btn-ghost btn-sm cursor-pointer'
-          title='Import profiles'
-          aria-label='Import profiles'
-        >
-          <FontAwesomeIcon icon={faFileImport} />
-        </label>
+        <Tooltip content='Export all profiles'>
+          <button
+            onClick={onExport}
+            className='btn btn-ghost btn-sm'
+            aria-label='Export all profiles'
+          >
+            <FontAwesomeIcon icon={faFileExport} />
+          </button>
+        </Tooltip>
+        <Tooltip content='Import profiles'>
+          <label
+            htmlFor='profileImport'
+            className='btn btn-ghost btn-sm cursor-pointer'
+            aria-label='Import profiles'
+          >
+            <FontAwesomeIcon icon={faFileImport} />
+          </label>
+        </Tooltip>
         <input
           onChange={onUpload}
           className='hidden'
