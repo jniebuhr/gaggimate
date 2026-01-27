@@ -17,6 +17,14 @@ constexpr int RERENDER_INTERVAL_ACTIVE = 100;
 constexpr int TEMP_HISTORY_INTERVAL = 250;
 constexpr int TEMP_HISTORY_LENGTH = 20 * 1000 / TEMP_HISTORY_INTERVAL;
 
+// Adaptive warmup detection: tracks variance over time to detect thermal equilibrium
+constexpr int VARIANCE_SAMPLE_COUNT = 4;
+constexpr unsigned long VARIANCE_SAMPLE_INTERVAL_MS = 15000;
+constexpr float VARIANCE_PLATEAU_RATIO = 0.85f;
+constexpr float VARIANCE_MAX_THRESHOLD = 1.0f;
+constexpr unsigned long WARMUP_MIN_STABLE_MS = 60000;
+constexpr unsigned long WARMUP_MAX_STABLE_MS = 600000;
+
 int16_t calculate_angle(int set_temp, int range, int offset);
 
 enum class BrewScreenState { Brew, Settings };
@@ -62,15 +70,26 @@ class DefaultUI {
     void adjustTempTarget(lv_obj_t *dials);
     void adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const;
 
-    int tempHistory[TEMP_HISTORY_LENGTH] = {0};
+    float tempHistory[TEMP_HISTORY_LENGTH] = {0};
     int tempHistoryIndex = 0;
-    int prevTargetTemp = 0;
+    float prevTargetTemp = 0;
     bool isTempHistoryInitialized = false;
-    int isTemperatureStable = false;
+    bool isTemperatureStable = false;
+    bool isWarmedUp = false;
+    unsigned long stableStartTime = 0;
     unsigned long lastTempLog = 0;
+    float currentTempFloat = 0.0f;
+    float targetTempFloat = 0.0f;
+    // Adaptive warmup detection state
+    float varianceSamples[VARIANCE_SAMPLE_COUNT] = {0};
+    int varianceSampleIndex = 0;
+    unsigned long lastVarianceSampleTime = 0;
+    bool varianceSamplesReady = false;
+    int stabilityLogCounter = 0;
 
     void updateTempHistory();
     void updateTempStableFlag();
+    void resetWarmupState();
     void adjustHeatingIndicator(lv_obj_t *contentPanel);
 
     Driver *panelDriver = nullptr;
