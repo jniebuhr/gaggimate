@@ -33,7 +33,7 @@ void DefaultUI::updateTempHistory() {
         tempHistoryIndex += 1;
     }
 
-    if (tempHistoryIndex > TEMP_HISTORY_LENGTH) {
+    if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
         tempHistoryIndex = 0;
         isTempHistoryInitialized = true;
     }
@@ -447,8 +447,11 @@ void DefaultUI::setupState() {
     smartGrindActive = settings.isSmartGrindActive();
     grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
     mode = controller->getMode();
-    currentTemp = static_cast<int>(controller->getCurrentTemp());
-    targetTemp = static_cast<int>(controller->getTargetTemp());
+    currentTempFloat = controller->getCurrentTemp();
+    targetTempFloat = controller->getTargetTemp();
+    prevTargetTemp = targetTempFloat;
+    currentTemp = static_cast<int>(currentTempFloat);
+    targetTemp = static_cast<int>(targetTempFloat);
     targetDuration = profileManager->getSelectedProfile().getTotalDuration();
     targetVolume = profileManager->getSelectedProfile().getTotalVolume();
     grindDuration = settings.getTargetGrindDuration();
