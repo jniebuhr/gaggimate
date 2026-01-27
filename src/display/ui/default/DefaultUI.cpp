@@ -88,6 +88,12 @@ void DefaultUI::updateTempStableFlag() {
     currentVariance /= TEMP_HISTORY_LENGTH;
 
     unsigned long now = millis();
+    if (isTemperatureStable && stableStartTime == 0) {
+        stableStartTime = now;
+        lastVarianceSampleTime = now;
+        varianceSamplesReady = false;
+        varianceSampleIndex = 0;
+    }
     unsigned long stableDuration = (isTemperatureStable && stableStartTime > 0) ? (now - stableStartTime) : 0;
 
     // Periodic status log for debugging (every ~10 seconds = 40 * 250ms interval)
