@@ -72,14 +72,12 @@ class DefaultUI {
 
     float tempHistory[TEMP_HISTORY_LENGTH] = {0};
     int tempHistoryIndex = 0;
-    float prevTargetTemp = 0;
+    float prevTargetTemp = 0.0f;
     bool isTempHistoryInitialized = false;
     bool isTemperatureStable = false;
     bool isWarmedUp = false;
     unsigned long stableStartTime = 0;
     unsigned long lastTempLog = 0;
-    float currentTempFloat = 0.0f;
-    float targetTempFloat = 0.0f;
     // Adaptive warmup detection state
     float varianceSamples[VARIANCE_SAMPLE_COUNT] = {0};
     int varianceSampleIndex = 0;
@@ -120,8 +118,8 @@ class DefaultUI {
     unsigned long lastRender = 0;
 
     int mode = MODE_STANDBY;
-    int currentTemp = 0;
-    int targetTemp = 0;
+    float currentTemp = 0.0f;
+    float targetTemp = 0.0f;
     float targetDuration = 0;
     float targetVolume = 0;
     int grindDuration = 0;

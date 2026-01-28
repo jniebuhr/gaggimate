@@ -28,8 +28,8 @@ int16_t calculate_angle(int set_temp, int range, int offset) {
 }
 
 void DefaultUI::updateTempHistory() {
-    if (currentTempFloat > 0) {
-        tempHistory[tempHistoryIndex] = currentTempFloat;
+    if (currentTemp > 0) {
+        tempHistory[tempHistoryIndex] = currentTemp;
         tempHistoryIndex += 1;
     }
 
@@ -64,24 +64,24 @@ void DefaultUI::updateTempStableFlag() {
     float maxError = 0.0f;
     float sumSquaredDiff = 0.0f;
     for (int i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-        float diff = tempHistory[i] - targetTempFloat;
+        float diff = tempHistory[i] - targetTemp;
         float error = fabs(diff);
         totalError += error;
         maxError = max(maxError, error);
         sumSquaredDiff += diff * diff;
     }
     float avgError = totalError / TEMP_HISTORY_LENGTH;
-    float errorMargin = max(2.0f, targetTempFloat * 0.02f);
+    float errorMargin = max(2.0f, targetTemp * 0.02f);
     float currentVariance = sumSquaredDiff / TEMP_HISTORY_LENGTH;
     isTemperatureStable = (avgError < errorMargin) && (maxError <= errorMargin);
 
     // Reset stability if setpoint has changed
-    if (fabs(prevTargetTemp - targetTempFloat) > 0.1f) {
+    if (fabs(prevTargetTemp - targetTemp) > 0.1f) {
         isTemperatureStable = false;
         resetWarmupState();
-        ESP_LOGI(TAG, "Target temp changed: %.1f -> %.1f, resetting stability", prevTargetTemp, targetTempFloat);
+        ESP_LOGI(TAG, "Target temp changed: %.1f -> %.1f, resetting stability", prevTargetTemp, targetTemp);
     }
-    prevTargetTemp = targetTempFloat;
+    prevTargetTemp = targetTemp;
 
     unsigned long now = millis();
     // Initialize stable state tracking when entering or re-entering stable state
@@ -93,7 +93,7 @@ void DefaultUI::updateTempStableFlag() {
         varianceSampleIndex = 0;
         if (!wasStable) {
             ESP_LOGI(TAG, "STABLE: temp=%.2f target=%.2f avgErr=%.2f maxErr=%.2f margin=%.2f var=%.3f",
-                     currentTempFloat, targetTempFloat, avgError, maxError, errorMargin, currentVariance);
+                     currentTemp, targetTemp, avgError, maxError, errorMargin, currentVariance);
         }
     }
     unsigned long stableDuration = (isTemperatureStable && stableStartTime > 0) ? (now - stableStartTime) : 0;
@@ -103,7 +103,7 @@ void DefaultUI::updateTempStableFlag() {
         stabilityLogCounter = 0;
         float oldestVar = varianceSamplesReady ? varianceSamples[varianceSampleIndex] : 0.0f;
         ESP_LOGD(TAG, "Status: temp=%.1f target=%.1f stable=%d warmedUp=%d stableSec=%lu | var=%.3f oldest=%.3f ready=%d",
-                 currentTempFloat, targetTempFloat, isTemperatureStable, isWarmedUp, stableDuration / 1000,
+                 currentTemp, targetTemp, isTemperatureStable, isWarmedUp, stableDuration / 1000,
                  currentVariance, oldestVar, varianceSamplesReady);
     }
 
@@ -111,7 +111,7 @@ void DefaultUI::updateTempStableFlag() {
     if (!isTemperatureStable) {
         if (wasStable) {
             ESP_LOGI(TAG, "UNSTABLE: temp=%.2f target=%.2f avgErr=%.2f maxErr=%.2f margin=%.2f",
-                     currentTempFloat, targetTempFloat, avgError, maxError, errorMargin);
+                     currentTemp, targetTemp, avgError, maxError, errorMargin);
         }
         if (wasWarmedUp) {
             ESP_LOGI(TAG, "Lost warmed up state (lost stability)");
@@ -197,13 +197,11 @@ void DefaultUI::init() {
     profileManager = controller->getProfileManager();
     auto triggerRender = [this](Event const &) { rerender = true; };
     pluginManager->on("boiler:currentTemperature:change", [=](Event const &event) {
-        float newTempFloat = event.getFloat("value");
-        int newTemp = static_cast<int>(newTempFloat);
-        currentTempFloat = newTempFloat;
-        if (newTemp != currentTemp) {
-            currentTemp = newTemp;
+        float newTemp = event.getFloat("value");
+        if (static_cast<int>(newTemp) != static_cast<int>(currentTemp)) {
             rerender = true;
         }
+        currentTemp = newTemp;
     });
     pluginManager->on("boiler:pressure:change", [=](Event const &event) {
         float newPressure = event.getFloat("value");
@@ -213,13 +211,11 @@ void DefaultUI::init() {
         }
     });
     pluginManager->on("boiler:targetTemperature:change", [=](Event const &event) {
-        float newTempFloat = event.getFloat("value");
-        int newTemp = static_cast<int>(newTempFloat);
-        targetTempFloat = newTempFloat;
-        if (newTemp != targetTemp) {
-            targetTemp = newTemp;
+        float newTemp = event.getFloat("value");
+        if (static_cast<int>(newTemp) != static_cast<int>(targetTemp)) {
             rerender = true;
         }
+        targetTemp = newTemp;
     });
     pluginManager->on("controller:targetVolume:change", [=](Event const &event) {
         targetVolume = event.getFloat("value");
@@ -443,11 +439,9 @@ void DefaultUI::setupState() {
     smartGrindActive = settings.isSmartGrindActive();
     grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
     mode = controller->getMode();
-    currentTempFloat = controller->getCurrentTemp();
-    targetTempFloat = controller->getTargetTemp();
-    prevTargetTemp = targetTempFloat;
-    currentTemp = static_cast<int>(currentTempFloat);
-    targetTemp = static_cast<int>(targetTempFloat);
+    currentTemp = controller->getCurrentTemp();
+    targetTemp = controller->getTargetTemp();
+    prevTargetTemp = targetTemp;
     targetDuration = profileManager->getSelectedProfile().getTotalDuration();
     targetVolume = profileManager->getSelectedProfile().getTotalVolume();
     grindDuration = settings.getTargetGrindDuration();
@@ -488,51 +482,51 @@ void DefaultUI::setupReactive() {
                           &mode);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_MenuScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_MenuScreen_dials_tempText, "%d°C", currentTemp);
+                              lv_arc_set_value(uic_MenuScreen_dials_tempGauge, static_cast<int>(currentTemp));
+                              lv_label_set_text_fmt(uic_MenuScreen_dials_tempText, "%d°C", static_cast<int>(currentTemp));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_StatusScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_StatusScreen_dials_tempText, "%d°C", currentTemp);
+                              lv_arc_set_value(uic_StatusScreen_dials_tempGauge, static_cast<int>(currentTemp));
+                              lv_label_set_text_fmt(uic_StatusScreen_dials_tempText, "%d°C", static_cast<int>(currentTemp));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_BrewScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_BrewScreen_dials_tempText, "%d°C", currentTemp);
+                              lv_arc_set_value(uic_BrewScreen_dials_tempGauge, static_cast<int>(currentTemp));
+                              lv_label_set_text_fmt(uic_BrewScreen_dials_tempText, "%d°C", static_cast<int>(currentTemp));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_GrindScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_GrindScreen_dials_tempText, "%d°C", currentTemp);
+                              lv_arc_set_value(uic_GrindScreen_dials_tempGauge, static_cast<int>(currentTemp));
+                              lv_label_set_text_fmt(uic_GrindScreen_dials_tempText, "%d°C", static_cast<int>(currentTemp));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_SimpleProcessScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%d°C", currentTemp);
+                              lv_arc_set_value(uic_SimpleProcessScreen_dials_tempGauge, static_cast<int>(currentTemp));
+                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%d°C", static_cast<int>(currentTemp));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%d°C", currentTemp);
+                              lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, static_cast<int>(currentTemp));
+                              lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%d°C", static_cast<int>(currentTemp));
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; }, [=]() { adjustTempTarget(ui_MenuScreen_dials); },
                           &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() {
-                              lv_label_set_text_fmt(ui_StatusScreen_targetTemp, "%d°C", targetTemp);
+                              lv_label_set_text_fmt(ui_StatusScreen_targetTemp, "%d°C", static_cast<int>(targetTemp));
                               adjustTempTarget(ui_StatusScreen_dials);
                           },
                           &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
-                              lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%d°C", targetTemp);
+                              lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%d°C", static_cast<int>(targetTemp));
                               adjustTempTarget(ui_BrewScreen_dials);
                           },
                           &targetTemp);
@@ -540,7 +534,7 @@ void DefaultUI::setupReactive() {
                           &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() {
-                              lv_label_set_text_fmt(ui_SimpleProcessScreen_targetTemp, "%d°C", targetTemp);
+                              lv_label_set_text_fmt(ui_SimpleProcessScreen_targetTemp, "%d°C", static_cast<int>(targetTemp));
                               adjustTempTarget(ui_SimpleProcessScreen_dials);
                           },
                           &targetTemp);
