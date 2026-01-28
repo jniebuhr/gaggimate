@@ -59,16 +59,20 @@ void DefaultUI::updateTempStableFlag() {
     bool wasStable = isTemperatureStable;
     bool wasWarmedUp = isWarmedUp;
 
-    // Calculate stability metrics from temperature history
+    // Calculate stability metrics and variance from temperature history
     float totalError = 0.0f;
     float maxError = 0.0f;
+    float sumSquaredDiff = 0.0f;
     for (int i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-        float error = fabs(tempHistory[i] - targetTempFloat);
+        float diff = tempHistory[i] - targetTempFloat;
+        float error = fabs(diff);
         totalError += error;
         maxError = max(maxError, error);
+        sumSquaredDiff += diff * diff;
     }
     float avgError = totalError / TEMP_HISTORY_LENGTH;
     float errorMargin = max(2.0f, targetTempFloat * 0.02f);
+    float currentVariance = sumSquaredDiff / TEMP_HISTORY_LENGTH;
     isTemperatureStable = (avgError < errorMargin) && (maxError <= errorMargin);
 
     // Reset stability if setpoint has changed
@@ -78,14 +82,6 @@ void DefaultUI::updateTempStableFlag() {
         ESP_LOGI(TAG, "Target temp changed: %.1f -> %.1f, resetting stability", prevTargetTemp, targetTempFloat);
     }
     prevTargetTemp = targetTempFloat;
-
-    // Calculate current variance for warmup detection
-    float currentVariance = 0.0f;
-    for (int i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-        float diff = tempHistory[i] - targetTempFloat;
-        currentVariance += diff * diff;
-    }
-    currentVariance /= TEMP_HISTORY_LENGTH;
 
     unsigned long now = millis();
     // Initialize stable state tracking when entering or re-entering stable state
@@ -127,13 +123,12 @@ void DefaultUI::updateTempStableFlag() {
     // Sample variance periodically while stable
     if (now - lastVarianceSampleTime >= VARIANCE_SAMPLE_INTERVAL_MS) {
         lastVarianceSampleTime = now;
-        int sampledIdx = varianceSampleIndex;
+        ESP_LOGD(TAG, "Variance sample: idx=%d val=%.3f ready=%d", varianceSampleIndex, currentVariance, varianceSamplesReady);
         varianceSamples[varianceSampleIndex] = currentVariance;
         varianceSampleIndex = (varianceSampleIndex + 1) % VARIANCE_SAMPLE_COUNT;
         if (varianceSampleIndex == 0) {
             varianceSamplesReady = true;
         }
-        ESP_LOGD(TAG, "Variance sample: idx=%d val=%.3f ready=%d", sampledIdx, currentVariance, varianceSamplesReady);
     }
 
     // Check if warmed up state was lost due to variance spike
@@ -188,9 +183,8 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
 
     lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    // Flash only when heating (red state)
-    bool isHeating = !isTemperatureStable && !isWarmedUp;
-    lv_opa_t opacity = (isHeating && heatingFlash) ? LV_OPA_50 : LV_OPA_100;
+    // Flash only when heating (red state, i.e. not stable)
+    lv_opa_t opacity = (!isTemperatureStable && heatingFlash) ? LV_OPA_50 : LV_OPA_100;
     lv_obj_set_style_opa(heatingIcon, opacity, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
