@@ -88,11 +88,17 @@ void DefaultUI::updateTempStableFlag() {
     currentVariance /= TEMP_HISTORY_LENGTH;
 
     unsigned long now = millis();
+    // Initialize stable state tracking when entering or re-entering stable state
+    // Handles both: 1) transition from unstable, and 2) re-init after resetWarmupState()
     if (isTemperatureStable && stableStartTime == 0) {
         stableStartTime = now;
         lastVarianceSampleTime = now;
         varianceSamplesReady = false;
         varianceSampleIndex = 0;
+        if (!wasStable) {
+            ESP_LOGI(TAG, "STABLE: temp=%.2f target=%.2f avgErr=%.2f maxErr=%.2f margin=%.2f var=%.3f",
+                     currentTempFloat, targetTempFloat, avgError, maxError, errorMargin, currentVariance);
+        }
     }
     unsigned long stableDuration = (isTemperatureStable && stableStartTime > 0) ? (now - stableStartTime) : 0;
 
@@ -116,16 +122,6 @@ void DefaultUI::updateTempStableFlag() {
         }
         resetWarmupState();
         return;
-    }
-
-    // Handle transition to stable state
-    if (!wasStable) {
-        stableStartTime = now;
-        lastVarianceSampleTime = now;
-        varianceSamplesReady = false;
-        varianceSampleIndex = 0;
-        ESP_LOGI(TAG, "STABLE: temp=%.2f target=%.2f avgErr=%.2f maxErr=%.2f margin=%.2f var=%.3f",
-                 currentTempFloat, targetTempFloat, avgError, maxError, errorMargin, currentVariance);
     }
 
     // Sample variance periodically while stable
@@ -179,23 +175,23 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     // - Red (flashing): heating, not at target
     // - Yellow (solid): stable at target, but not yet warmed up
     // - Green (solid): warmed up and ready
-    uint32_t color;
+    constexpr uint32_t COLOR_GREEN = 0x00D100;
+    constexpr uint32_t COLOR_YELLOW = 0xFFAA00;
+    constexpr uint32_t COLOR_RED = 0xF62C2C;
+
+    uint32_t color = COLOR_RED;
     if (isWarmedUp) {
-        color = 0x00D100; // Green - warmed up
+        color = COLOR_GREEN;
     } else if (isTemperatureStable) {
-        color = 0xFFAA00; // Yellow/Orange - stable but not warmed up
-    } else {
-        color = 0xF62C2C; // Red - heating
+        color = COLOR_YELLOW;
     }
 
     lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     // Flash only when heating (red state)
-    if (!isTemperatureStable && !isWarmedUp) {
-        lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
-    } else {
-        lv_obj_set_style_opa(heatingIcon, LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
-    }
+    bool isHeating = !isTemperatureStable && !isWarmedUp;
+    lv_opa_t opacity = (isHeating && heatingFlash) ? LV_OPA_50 : LV_OPA_100;
+    lv_obj_set_style_opa(heatingIcon, opacity, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
@@ -854,27 +850,17 @@ void DefaultUI::updateStatusScreen() const {
         return;
     }
 
-    // Final safety check before accessing brewProcess members
-    if (!brewProcess) {
-        ESP_LOGE("DefaultUI", "brewProcess became null after validation");
-        return;
-    }
-
     const auto phase = brewProcess->currentPhase;
 
     unsigned long now = millis();
-    if (!process->isActive()) {
-        // Add bounds check for finished timestamp
-        if (brewProcess && brewProcess->finished > 0) {
-            now = brewProcess->finished;
-        }
+    if (!process->isActive() && brewProcess->finished > 0) {
+        now = brewProcess->finished;
     }
 
     lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
-    lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess && brewProcess->isActive() ? phase.name.c_str() : "Finished");
+    lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess->isActive() ? phase.name.c_str() : "Finished");
 
-    // Add bounds check for processStarted timestamp
-    if (brewProcess && brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
+    if (brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
         const unsigned long processDuration = now - brewProcess->processStarted;
         const double processSecondsDouble = processDuration / 1000.0;
         const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0);
@@ -884,40 +870,36 @@ void DefaultUI::updateStatusScreen() const {
         lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "00:00");
     }
 
-    if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget()) {
+    if (brewProcess->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget()) {
         Target target = phase.getVolumetricTarget();
         lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume * 10.0, LV_ANIM_OFF);
         lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value * 10.0 + 1.0);
         lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1fg", target.value);
-    } else if (brewProcess) {
-        // Add bounds check for currentPhaseStarted timestamp
-        if (brewProcess->currentPhaseStarted > 0 && now >= brewProcess->currentPhaseStarted) {
-            const unsigned long progress = now - brewProcess->currentPhaseStarted;
-            lv_bar_set_value(ui_StatusScreen_brewBar, progress, LV_ANIM_OFF);
-            lv_bar_set_range(ui_StatusScreen_brewBar, 0, std::max(static_cast<int>(brewProcess->getPhaseDuration()), 1));
-            lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%ds", brewProcess->getPhaseDuration() / 1000);
-        } else {
-            lv_bar_set_value(ui_StatusScreen_brewBar, 0, LV_ANIM_OFF);
-            lv_bar_set_range(ui_StatusScreen_brewBar, 0, 1);
-            lv_label_set_text(ui_StatusScreen_brewLabel, "0s");
-        }
+    } else if (brewProcess->currentPhaseStarted > 0 && now >= brewProcess->currentPhaseStarted) {
+        const unsigned long progress = now - brewProcess->currentPhaseStarted;
+        lv_bar_set_value(ui_StatusScreen_brewBar, progress, LV_ANIM_OFF);
+        lv_bar_set_range(ui_StatusScreen_brewBar, 0, std::max(static_cast<int>(brewProcess->getPhaseDuration()), 1));
+        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%ds", brewProcess->getPhaseDuration() / 1000);
+    } else {
+        lv_bar_set_value(ui_StatusScreen_brewBar, 0, LV_ANIM_OFF);
+        lv_bar_set_range(ui_StatusScreen_brewBar, 0, 1);
+        lv_label_set_text(ui_StatusScreen_brewLabel, "0s");
     }
 
-    if (brewProcess && brewProcess->target == ProcessTarget::TIME) {
+    if (brewProcess->target == ProcessTarget::TIME) {
         const unsigned long targetDuration = brewProcess->getTotalDuration();
         const double targetSecondsDouble = targetDuration / 1000.0;
         const auto targetMinutes = static_cast<int>(targetSecondsDouble / 60.0);
         const auto targetSeconds = static_cast<int>(targetSecondsDouble) % 60;
         lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%2d:%02d", targetMinutes, targetSeconds);
-    } else if (brewProcess) {
+    } else {
         lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%.1fg", brewProcess->getBrewVolume());
     }
-    if (brewProcess) {
-        lv_img_set_src(ui_StatusScreen_Image8,
-                       brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
-    }
 
-    if (brewProcess && brewProcess->isAdvancedPump()) {
+    lv_img_set_src(ui_StatusScreen_Image8,
+                   brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
+
+    if (brewProcess->isAdvancedPump()) {
         float pressure = brewProcess->getPumpPressure();
         const double percentage = 1.0 - static_cast<double>(pressure) / static_cast<double>(pressureScaling);
         adjustTarget(uic_StatusScreen_dials_pressureTarget, percentage, -62.0, 124.0);
@@ -930,15 +912,12 @@ void DefaultUI::updateStatusScreen() const {
     if (process->isActive()) {
         lv_obj_add_flag(ui_StatusScreen_brewVolume, LV_OBJ_FLAG_HIDDEN);
     } else {
-        // Re-validate brewProcess pointer before accessing members
-        if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC) {
+        if (brewProcess->target == ProcessTarget::VOLUMETRIC) {
             lv_obj_clear_flag(ui_StatusScreen_brewVolume, LV_OBJ_FLAG_HIDDEN);
         }
         lv_obj_add_flag(ui_StatusScreen_barContainer, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(ui_StatusScreen_labelContainer, LV_OBJ_FLAG_HIDDEN);
-        if (brewProcess) {
-            lv_label_set_text_fmt(ui_StatusScreen_brewVolume, "%.1lfg", brewProcess->currentVolume);
-        }
+        lv_label_set_text_fmt(ui_StatusScreen_brewVolume, "%.1lfg", brewProcess->currentVolume);
         lv_imgbtn_set_src(ui_StatusScreen_pauseButton, LV_IMGBTN_STATE_RELEASED, nullptr, &ui_img_631115820, nullptr);
     }
 }
