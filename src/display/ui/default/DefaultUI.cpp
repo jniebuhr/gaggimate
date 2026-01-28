@@ -29,8 +29,7 @@ int16_t calculate_angle(int set_temp, int range, int offset) {
 
 void DefaultUI::updateTempHistory() {
     if (currentTemp > 0) {
-        tempHistory[tempHistoryIndex] = currentTemp;
-        tempHistoryIndex += 1;
+        tempHistory[tempHistoryIndex++] = currentTemp;
     }
 
     if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
@@ -96,7 +95,7 @@ void DefaultUI::updateTempStableFlag() {
                      currentTemp, targetTemp, avgError, maxError, errorMargin, currentVariance);
         }
     }
-    unsigned long stableDuration = (isTemperatureStable && stableStartTime > 0) ? (now - stableStartTime) : 0;
+    unsigned long stableDuration = isTemperatureStable && stableStartTime > 0 ? now - stableStartTime : 0;
 
     // Periodic status log for debugging (every ~10 seconds = 40 * 250ms interval)
     if (++stabilityLogCounter >= 40) {
@@ -152,7 +151,7 @@ void DefaultUI::updateTempStableFlag() {
     // Plateau detection: check if variance has stopped decreasing significantly
     if (stableDuration >= WARMUP_MIN_STABLE_MS && varianceSamplesReady) {
         float oldestVariance = varianceSamples[varianceSampleIndex];
-        bool hasPlateaued = (oldestVariance > 0.001f) && (currentVariance >= oldestVariance * VARIANCE_PLATEAU_RATIO);
+        bool hasPlateaued = oldestVariance > 0.001f && currentVariance >= oldestVariance * VARIANCE_PLATEAU_RATIO;
         bool isVarianceReasonable = currentVariance < VARIANCE_MAX_THRESHOLD;
 
         if (hasPlateaued && isVarianceReasonable) {
@@ -183,9 +182,9 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
 
     lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    // Flash only when heating (red state, i.e. not stable)
-    lv_opa_t opacity = (!isTemperatureStable && heatingFlash) ? LV_OPA_50 : LV_OPA_100;
-    lv_obj_set_style_opa(heatingIcon, opacity, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // Flash only when heating (red state, not stable)
+    bool shouldFlash = !isTemperatureStable && heatingFlash;
+    lv_obj_set_style_opa(heatingIcon, shouldFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
@@ -799,10 +798,17 @@ void DefaultUI::updateStandbyScreen() {
     } else {
         lv_obj_add_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
     }
-    controller->getClientController()->isConnected() ? lv_obj_clear_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN)
-                                                     : lv_obj_add_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
-    !apActive &&WiFi.status() == WL_CONNECTED ? lv_obj_clear_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN)
-                                              : lv_obj_add_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN);
+    if (controller->getClientController()->isConnected()) {
+        lv_obj_clear_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
+    }
+
+    if (!apActive && WiFi.status() == WL_CONNECTED) {
+        lv_obj_clear_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 void DefaultUI::updateStatusScreen() const {
