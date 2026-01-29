@@ -1,4 +1,5 @@
 #include "NimBLEClientController.h"
+#include <cmath>
 
 constexpr size_t MAX_CONNECT_RETRIES = 3;
 constexpr size_t BLE_SCAN_DURATION_SECONDS = 10;
@@ -270,12 +271,18 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         float puckFlow = get_token(data, 2, ',').toFloat();
         float pumpFlow = get_token(data, 3, ',').toFloat();
         float puckResistance = get_token(data, 4, ',').toFloat();
+        // Heater power (0-100%) - NaN if not provided
+        float heaterPower = NAN;
+        String heaterPowerToken = get_token(data, 5, ',');
+        if (heaterPowerToken.length() > 0) {
+            heaterPower = heaterPowerToken.toFloat();
+        }
 
         ESP_LOGV(LOG_TAG,
-                 "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f",
-                 temperature, pressure, puckFlow, pumpFlow, puckResistance);
+                 "Sensor data: temp=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f, heater_power=%.1f",
+                 temperature, pressure, puckFlow, pumpFlow, puckResistance, heaterPower);
         if (sensorCallback != nullptr) {
-            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
+            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance, heaterPower);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
