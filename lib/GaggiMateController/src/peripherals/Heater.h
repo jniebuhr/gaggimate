@@ -26,6 +26,7 @@ class Heater {
     float getSetpoint() { return setpoint; };
     void setTunings(float Kp, float Ki, float Kd);
     void autotune(int goal, int windowSize);
+    float getOutput() const { return output; }
 
     // Thermal feedforward control
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);

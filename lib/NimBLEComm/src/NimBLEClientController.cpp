@@ -1,4 +1,5 @@
 #include "NimBLEClientController.h"
+#include <cmath>
 #include <cstdio>
 
 constexpr size_t MAX_CONNECT_RETRIES = 3;
@@ -313,18 +314,22 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         float puckFlow = 0.0f;
         float pumpFlow = 0.0f;
         float puckResistance = 0.0f;
+        float heaterPower = NAN;
 
-        int parsed = sscanf(rawData, "%f,%f,%f,%f,%f", &temperature, &pressure, &puckFlow, &pumpFlow, &puckResistance);
+        int parsed = sscanf(rawData, "%f,%f,%f,%f,%f,%f", &temperature, &pressure, &puckFlow, &pumpFlow, &puckResistance, &heaterPower);
         if (parsed < 5) {
             ESP_LOGW(LOG_TAG, "Malformed sensor data payload: %s", rawData);
             return;
         }
+        if (parsed < 6) {
+            heaterPower = NAN;
+        }
 
         ESP_LOGV(LOG_TAG,
-                 "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f",
-                 temperature, pressure, puckFlow, pumpFlow, puckResistance);
+                 "Sensor data: temp=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f, heater_power=%.1f",
+                 temperature, pressure, puckFlow, pumpFlow, puckResistance, heaterPower);
         if (sensorCallback != nullptr) {
-            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
+            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance, heaterPower);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
