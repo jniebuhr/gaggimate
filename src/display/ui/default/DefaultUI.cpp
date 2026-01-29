@@ -1,6 +1,9 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
+#include <cmath>
+#include <esp_log.h>
+
 #include <display/config.h>
 #include <display/core/Controller.h>
 #include <display/core/process/BrewProcess.h>
@@ -16,6 +19,7 @@
 
 #include "esp_sntp.h"
 
+static const char *TAG = "DefaultUI";
 static EffectManager effect_mgr;
 
 int16_t calculate_angle(int set_temp, int range, int offset) {
@@ -29,7 +33,7 @@ void DefaultUI::updateTempHistory() {
         tempHistoryIndex += 1;
     }
 
-    if (tempHistoryIndex > TEMP_HISTORY_LENGTH) {
+    if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
         tempHistoryIndex = 0;
         isTempHistoryInitialized = true;
     }
@@ -40,37 +44,140 @@ void DefaultUI::updateTempHistory() {
     }
 }
 
+void DefaultUI::resetWarmupState() {
+    isWarmedUp = false;
+    stableStartTime = 0;
+    heaterPowerWindowStart = 0;
+    heaterPowerTimeSum = 0.0f;
+    heaterPowerTimeTotal = 0;
+    lastHeaterPowerSampleTime = 0;
+    lastHeaterPowerWindowAvg = NAN;
+}
+
 void DefaultUI::updateTempStableFlag() {
-    if (isTempHistoryInitialized) {
-        float totalError = 0.0f;
-        float maxError = 0.0f;
-        for (uint16_t i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-            float error = abs(tempHistory[i] - targetTemp);
-            totalError += error;
-            maxError = error > maxError ? error : maxError;
-        }
-
-        const float avgError = totalError / TEMP_HISTORY_LENGTH;
-        const float errorMargin = max(2.0f, static_cast<float>(targetTemp) * 0.02f);
-
-        isTemperatureStable = avgError < errorMargin && maxError <= errorMargin;
+    if (!isTempHistoryInitialized) {
+        return;
     }
 
-    // instantly reset stability if setpoint has changed
-    if (prevTargetTemp != targetTemp) {
+    bool wasStable = isTemperatureStable;
+
+    // Calculate temperature stability from history
+    float totalError = 0.0f;
+    float maxError = 0.0f;
+    for (int i = 0; i < TEMP_HISTORY_LENGTH; i++) {
+        float error = fabs(tempHistory[i] - targetTempFloat);
+        totalError += error;
+        maxError = max(maxError, error);
+    }
+    float avgError = totalError / TEMP_HISTORY_LENGTH;
+    float errorMargin = max(2.0f, targetTempFloat * 0.02f);
+    float unstableMargin = errorMargin + TEMP_STABILITY_HYSTERESIS;
+    if (isTemperatureStable) {
+        isTemperatureStable = (avgError < errorMargin) && (maxError <= unstableMargin);
+    } else {
+        isTemperatureStable = (avgError < errorMargin) && (maxError <= errorMargin);
+    }
+
+    // Reset stability if setpoint has changed
+    if (fabs(prevTargetTemp - targetTempFloat) > 0.1f) {
         isTemperatureStable = false;
+        resetWarmupState();
+        ESP_LOGD(TAG, "Target temp changed: %.1f -> %.1f, resetting stability", prevTargetTemp, targetTempFloat);
+    }
+    prevTargetTemp = targetTempFloat;
+
+    unsigned long now = millis();
+
+    // Initialize stable state tracking when entering or re-entering stable state
+    if (isTemperatureStable && stableStartTime == 0) {
+        isWarmedUp = false;
+        stableStartTime = now;
+        heaterPowerWindowStart = now;
+        heaterPowerTimeSum = 0.0f;
+        heaterPowerTimeTotal = 0;
+        lastHeaterPowerSampleTime = 0;
+        lastHeaterPowerWindowAvg = NAN;
+        if (!wasStable) {
+            ESP_LOGI(TAG, "Stable: temp=%.1f target=%.1f", currentTempFloat, targetTempFloat);
+        }
     }
 
-    prevTargetTemp = targetTemp;
+    // Handle loss of stability
+    if (!isTemperatureStable) {
+        if (wasStable) {
+            ESP_LOGD(TAG, "Unstable: temp=%.1f avgErr=%.2f maxErr=%.2f margin=%.2f",
+                     currentTempFloat, avgError, maxError, errorMargin);
+        }
+        resetWarmupState();
+        return;
+    }
+
+    // Check if warmed up state was lost due to heater power spike
+    if (isWarmedUp && currentHeaterPower >= HEATER_POWER_SPIKE_THRESHOLD) {
+        ESP_LOGI(TAG, "Warmup lost: heater power %.1f%% >= %.1f%%", currentHeaterPower, HEATER_POWER_SPIKE_THRESHOLD);
+        resetWarmupState();
+        return;
+    }
+
+    if (isWarmedUp) {
+        return;
+    }
+
+    unsigned long stableDuration = now - stableStartTime;
+    unsigned long windowDuration = heaterPowerWindowStart > 0 ? now - heaterPowerWindowStart : 0;
+
+    // Fallback: maximum stable time reached
+    if (stableDuration >= WARMUP_MAX_STABLE_MS) {
+        isWarmedUp = true;
+        ESP_LOGI(TAG, "Warmed up (fallback): stable for %lu seconds", stableDuration / 1000);
+        return;
+    }
+
+    // Heater power equilibrium detection: check at end of each window
+    if (windowDuration >= HEATER_POWER_WINDOW_MS && heaterPowerTimeTotal > 0) {
+        float avgPower = heaterPowerTimeSum / heaterPowerTimeTotal;
+        bool hasLastAvg = !std::isnan(lastHeaterPowerWindowAvg);
+        bool trendOk = hasLastAvg && fabsf(lastHeaterPowerWindowAvg - avgPower) <= HEATER_POWER_TREND_THRESHOLD;
+
+        if (trendOk) {
+            isWarmedUp = true;
+            ESP_LOGI(TAG, "Warmed up: power trend stable (avg=%.1f%%, prev=%.1f%%)",
+                     avgPower, lastHeaterPowerWindowAvg);
+        } else {
+            ESP_LOGD(TAG, "Warmup window: avg=%.1f%%, prev=%s",
+                     avgPower, hasLastAvg ? String(lastHeaterPowerWindowAvg, 1).c_str() : "n/a");
+            lastHeaterPowerWindowAvg = avgPower;
+            heaterPowerWindowStart = now;
+            heaterPowerTimeSum = 0.0f;
+            heaterPowerTimeTotal = 0;
+            lastHeaterPowerSampleTime = 0;
+        }
+    }
 }
 
 void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     lv_obj_t *heatingIcon = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPICON);
-    lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(isTemperatureStable ? 0x00D100 : 0xF62C2C),
-                                 LV_PART_MAIN | LV_STATE_DEFAULT);
-    if (!isTemperatureStable) {
-        lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Three-color indicator:
+    // - Red (flashing): heating, not at target
+    // - Yellow (solid): stable at target, but not yet warmed up
+    // - Green (solid): warmed up and ready
+    constexpr uint32_t COLOR_GREEN = 0x00D100;
+    constexpr uint32_t COLOR_YELLOW = 0xFFAA00;
+    constexpr uint32_t COLOR_RED = 0xF62C2C;
+
+    uint32_t color = COLOR_RED;
+    if (isWarmedUp) {
+        color = COLOR_GREEN;
+    } else if (isTemperatureStable) {
+        color = COLOR_YELLOW;
     }
+
+    lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Flash only when heating (red state, not stable)
+    bool shouldFlash = !isTemperatureStable && heatingFlash;
+    lv_obj_set_style_opa(heatingIcon, shouldFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
@@ -82,7 +189,8 @@ void DefaultUI::init() {
     profileManager = controller->getProfileManager();
     auto triggerRender = [this](Event const &) { rerender = true; };
     pluginManager->on("boiler:currentTemperature:change", [=](Event const &event) {
-        int newTemp = static_cast<int>(event.getFloat("value"));
+        currentTempFloat = event.getFloat("value");
+        int newTemp = static_cast<int>(currentTempFloat);
         if (newTemp != currentTemp) {
             currentTemp = newTemp;
             rerender = true;
@@ -96,11 +204,26 @@ void DefaultUI::init() {
         }
     });
     pluginManager->on("boiler:targetTemperature:change", [=](Event const &event) {
-        int newTemp = static_cast<int>(event.getFloat("value"));
+        targetTempFloat = event.getFloat("value");
+        int newTemp = static_cast<int>(targetTempFloat);
         if (newTemp != targetTemp) {
             targetTemp = newTemp;
             rerender = true;
         }
+    });
+    pluginManager->on("boiler:heaterPower:change", [=](Event const &event) {
+        currentHeaterPower = event.getFloat("value");
+        if (!std::isfinite(currentHeaterPower) || !isTemperatureStable || isWarmedUp) {
+            lastHeaterPowerSampleTime = 0;
+            return;
+        }
+        unsigned long now = millis();
+        if (lastHeaterPowerSampleTime > 0) {
+            unsigned long dt = now - lastHeaterPowerSampleTime;
+            heaterPowerTimeSum += currentHeaterPower * dt;
+            heaterPowerTimeTotal += dt;
+        }
+        lastHeaterPowerSampleTime = now;
     });
     pluginManager->on("controller:targetVolume:change", [=](Event const &event) {
         targetVolume = event.getFloat("value");
@@ -122,6 +245,7 @@ void DefaultUI::init() {
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
         mode = event.getInt("value");
+        resetWarmupState();
         switch (mode) {
         case MODE_STANDBY:
             changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
@@ -325,6 +449,9 @@ void DefaultUI::setupState() {
     mode = controller->getMode();
     currentTemp = static_cast<int>(controller->getCurrentTemp());
     targetTemp = static_cast<int>(controller->getTargetTemp());
+    currentTempFloat = controller->getCurrentTemp();
+    targetTempFloat = controller->getTargetTemp();
+    prevTargetTemp = targetTempFloat;
     targetDuration = profileManager->getSelectedProfile().getTotalDuration();
     targetVolume = profileManager->getSelectedProfile().getTotalVolume();
     grindDuration = settings.getTargetGrindDuration();
@@ -349,17 +476,17 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustDials(ui_ProfileScreen_dials); },
                           &pressureAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; }, [=]() { adjustHeatingIndicator(ui_BrewScreen_dials); },
-                          &isTemperatureStable, &heatingFlash);
+                          &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { adjustHeatingIndicator(ui_SimpleProcessScreen_dials); }, &isTemperatureStable, &heatingFlash);
+                          [=]() { adjustHeatingIndicator(ui_SimpleProcessScreen_dials); }, &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; }, [=]() { adjustHeatingIndicator(ui_MenuScreen_dials); },
-                          &isTemperatureStable, &heatingFlash);
+                          &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
-                          [=]() { adjustHeatingIndicator(ui_ProfileScreen_dials); }, &isTemperatureStable, &heatingFlash);
+                          [=]() { adjustHeatingIndicator(ui_ProfileScreen_dials); }, &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() { adjustHeatingIndicator(ui_GrindScreen_dials); }, &isTemperatureStable, &heatingFlash);
+                          [=]() { adjustHeatingIndicator(ui_GrindScreen_dials); }, &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
-                          [=]() { adjustHeatingIndicator(ui_StatusScreen_dials); }, &isTemperatureStable, &heatingFlash);
+                          [=]() { adjustHeatingIndicator(ui_StatusScreen_dials); }, &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() { lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, mode == MODE_STEAM ? "Steam" : "Water"); },
                           &mode);
