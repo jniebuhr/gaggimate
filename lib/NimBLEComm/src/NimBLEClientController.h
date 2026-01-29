@@ -28,6 +28,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerBrewBtnCallback(const brew_callback_t &callback);
     void registerSteamBtnCallback(const steam_callback_t &callback);
     void registerSensorCallback(const sensor_read_callback_t &callback);
+    void registerSensorCallback(const legacy_sensor_read_callback_t &callback);
     void registerAutotuneResultCallback(const pid_control_callback_t &callback);
     void registerVolumetricMeasurementCallback(const float_callback_t &callback);
     void registerTofMeasurementCallback(const int_callback_t &callback);
