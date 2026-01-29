@@ -43,6 +43,14 @@ void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &cal
 
 void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t &callback) { sensorCallback = callback; }
 
+void NimBLEClientController::registerSensorCallback(const legacy_sensor_read_callback_t &callback) {
+    sensorCallback = [callback](float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance, float) {
+        if (callback) {
+            callback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
+        }
+    };
+}
+
 void NimBLEClientController::registerAutotuneResultCallback(const pid_control_callback_t &callback) {
     autotuneResultCallback = callback;
 }

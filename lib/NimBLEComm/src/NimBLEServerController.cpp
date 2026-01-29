@@ -83,7 +83,8 @@ void NimBLEServerController::sendSensorData(float temperature, float pressure, f
                                             float puckResistance, float heaterPower) {
     if (deviceConnected && sensorChar != nullptr) {
         char str[64];
-        snprintf(str, sizeof(str), "%.2f,%.2f,%.2f,%.2f,%.2f,%.1f", temperature, pressure, puckFlow, pumpFlow, puckResistance, heaterPower);
+        snprintf(str, sizeof(str), "%.3f,%.3f,%.3f,%.3f,%.3f,%.1f", temperature, pressure, puckFlow, pumpFlow, puckResistance,
+                 heaterPower);
         sensorChar->setValue(str);
         sensorChar->notify();
     }

@@ -28,8 +28,8 @@ int16_t calculate_angle(int set_temp, int range, int offset) {
 }
 
 void DefaultUI::updateTempHistory() {
-    if (currentTemp > 0) {
-        tempHistory[tempHistoryIndex] = currentTemp;
+    if (currentTempSample > 0.0f) {
+        tempHistory[tempHistoryIndex] = currentTempSample;
         tempHistoryIndex += 1;
     }
 
@@ -64,9 +64,9 @@ void DefaultUI::updateTempStableFlag() {
     // Calculate temperature stability from history
     float totalError = 0.0f;
     float maxError = 0.0f;
-    const float targetTempF = static_cast<float>(targetTemp);
+    const float targetTempF = targetTempSample;
     for (int i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-        float error = fabsf(static_cast<float>(tempHistory[i]) - targetTempF);
+        float error = fabsf(tempHistory[i] - targetTempF);
         totalError += error;
         maxError = max(maxError, error);
     }
@@ -80,12 +80,12 @@ void DefaultUI::updateTempStableFlag() {
     }
 
     // Reset stability if setpoint has changed
-    if (prevTargetTemp != targetTemp) {
+    if (prevTargetTemp != targetTempSample) {
         isTemperatureStable = false;
         resetWarmupState();
-        ESP_LOGD(TAG, "Target temp changed: %d -> %d, resetting stability", prevTargetTemp, targetTemp);
+        ESP_LOGD(TAG, "Target temp changed: %.1f -> %.1f, resetting stability", prevTargetTemp, targetTempSample);
     }
-    prevTargetTemp = targetTemp;
+    prevTargetTemp = targetTempSample;
 
     unsigned long now = millis();
 
@@ -99,15 +99,15 @@ void DefaultUI::updateTempStableFlag() {
         lastHeaterPowerSampleTime = 0;
         lastHeaterPowerWindowAvg = NAN;
         if (!wasStable) {
-            ESP_LOGI(TAG, "Stable: temp=%d target=%d", currentTemp, targetTemp);
+            ESP_LOGI(TAG, "Stable: temp=%.1f target=%.1f", currentTempSample, targetTempSample);
         }
     }
 
     // Handle loss of stability
     if (!isTemperatureStable) {
         if (wasStable) {
-            ESP_LOGD(TAG, "Unstable: temp=%d avgErr=%.2f maxErr=%.2f margin=%.2f",
-                     currentTemp, avgError, maxError, errorMargin);
+            ESP_LOGD(TAG, "Unstable: temp=%.1f avgErr=%.2f maxErr=%.2f margin=%.2f",
+                     currentTempSample, avgError, maxError, errorMargin);
         }
         resetWarmupState();
         return;
@@ -190,9 +190,11 @@ void DefaultUI::init() {
     profileManager = controller->getProfileManager();
     auto triggerRender = [this](Event const &) { rerender = true; };
     pluginManager->on("boiler:currentTemperature:change", [=](Event const &event) {
-        int newTemp = static_cast<int>(event.getFloat("value"));
-        if (newTemp != currentTemp) {
-            currentTemp = newTemp;
+        float newTemp = event.getFloat("value");
+        currentTempSample = newTemp;
+        int newTempInt = static_cast<int>(newTemp);
+        if (newTempInt != currentTemp) {
+            currentTemp = newTempInt;
             rerender = true;
         }
     });
@@ -204,9 +206,11 @@ void DefaultUI::init() {
         }
     });
     pluginManager->on("boiler:targetTemperature:change", [=](Event const &event) {
-        int newTemp = static_cast<int>(event.getFloat("value"));
-        if (newTemp != targetTemp) {
-            targetTemp = newTemp;
+        float newTemp = event.getFloat("value");
+        targetTempSample = newTemp;
+        int newTempInt = static_cast<int>(newTemp);
+        if (newTempInt != targetTemp) {
+            targetTemp = newTempInt;
             rerender = true;
         }
     });
@@ -446,9 +450,11 @@ void DefaultUI::setupState() {
     smartGrindActive = settings.isSmartGrindActive();
     grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
     mode = controller->getMode();
-    currentTemp = static_cast<int>(controller->getCurrentTemp());
-    targetTemp = static_cast<int>(controller->getTargetTemp());
-    prevTargetTemp = targetTemp;
+    currentTempSample = controller->getCurrentTemp();
+    currentTemp = static_cast<int>(currentTempSample);
+    targetTempSample = controller->getTargetTemp();
+    targetTemp = static_cast<int>(targetTempSample);
+    prevTargetTemp = targetTempSample;
     targetDuration = profileManager->getSelectedProfile().getTotalDuration();
     targetVolume = profileManager->getSelectedProfile().getTotalVolume();
     grindDuration = settings.getTargetGrindDuration();
