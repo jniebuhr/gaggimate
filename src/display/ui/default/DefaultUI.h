@@ -69,9 +69,9 @@ class DefaultUI {
     void adjustTempTarget(lv_obj_t *dials);
     void adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const;
 
-    float tempHistory[TEMP_HISTORY_LENGTH] = {0};
+    int tempHistory[TEMP_HISTORY_LENGTH] = {0};
     int tempHistoryIndex = 0;
-    float prevTargetTemp = 0.0f;
+    int prevTargetTemp = 0;
     bool isTempHistoryInitialized = false;
     int isTemperatureStable = false;
     bool isWarmedUp = false;
@@ -120,8 +120,6 @@ class DefaultUI {
     int mode = MODE_STANDBY;
     int currentTemp = 0;
     int targetTemp = 0;
-    float currentTempFloat = 0.0f;
-    float targetTempFloat = 0.0f;
     float targetDuration = 0;
     float targetVolume = 0;
     int grindDuration = 0;

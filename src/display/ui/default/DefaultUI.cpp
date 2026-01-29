@@ -64,13 +64,14 @@ void DefaultUI::updateTempStableFlag() {
     // Calculate temperature stability from history
     float totalError = 0.0f;
     float maxError = 0.0f;
+    const float targetTempF = static_cast<float>(targetTemp);
     for (int i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-        float error = fabs(tempHistory[i] - targetTempFloat);
+        float error = fabsf(static_cast<float>(tempHistory[i]) - targetTempF);
         totalError += error;
         maxError = max(maxError, error);
     }
     float avgError = totalError / TEMP_HISTORY_LENGTH;
-    float errorMargin = max(2.0f, targetTempFloat * 0.02f);
+    float errorMargin = max(2.0f, targetTempF * 0.02f);
     float unstableMargin = errorMargin + TEMP_STABILITY_HYSTERESIS;
     if (isTemperatureStable) {
         isTemperatureStable = (avgError < errorMargin) && (maxError <= unstableMargin);
@@ -79,12 +80,12 @@ void DefaultUI::updateTempStableFlag() {
     }
 
     // Reset stability if setpoint has changed
-    if (fabs(prevTargetTemp - targetTempFloat) > 0.1f) {
+    if (prevTargetTemp != targetTemp) {
         isTemperatureStable = false;
         resetWarmupState();
-        ESP_LOGD(TAG, "Target temp changed: %.1f -> %.1f, resetting stability", prevTargetTemp, targetTempFloat);
+        ESP_LOGD(TAG, "Target temp changed: %d -> %d, resetting stability", prevTargetTemp, targetTemp);
     }
-    prevTargetTemp = targetTempFloat;
+    prevTargetTemp = targetTemp;
 
     unsigned long now = millis();
 
@@ -98,15 +99,15 @@ void DefaultUI::updateTempStableFlag() {
         lastHeaterPowerSampleTime = 0;
         lastHeaterPowerWindowAvg = NAN;
         if (!wasStable) {
-            ESP_LOGI(TAG, "Stable: temp=%.1f target=%.1f", currentTempFloat, targetTempFloat);
+            ESP_LOGI(TAG, "Stable: temp=%d target=%d", currentTemp, targetTemp);
         }
     }
 
     // Handle loss of stability
     if (!isTemperatureStable) {
         if (wasStable) {
-            ESP_LOGD(TAG, "Unstable: temp=%.1f avgErr=%.2f maxErr=%.2f margin=%.2f",
-                     currentTempFloat, avgError, maxError, errorMargin);
+            ESP_LOGD(TAG, "Unstable: temp=%d avgErr=%.2f maxErr=%.2f margin=%.2f",
+                     currentTemp, avgError, maxError, errorMargin);
         }
         resetWarmupState();
         return;
@@ -189,8 +190,7 @@ void DefaultUI::init() {
     profileManager = controller->getProfileManager();
     auto triggerRender = [this](Event const &) { rerender = true; };
     pluginManager->on("boiler:currentTemperature:change", [=](Event const &event) {
-        currentTempFloat = event.getFloat("value");
-        int newTemp = static_cast<int>(currentTempFloat);
+        int newTemp = static_cast<int>(event.getFloat("value"));
         if (newTemp != currentTemp) {
             currentTemp = newTemp;
             rerender = true;
@@ -204,8 +204,7 @@ void DefaultUI::init() {
         }
     });
     pluginManager->on("boiler:targetTemperature:change", [=](Event const &event) {
-        targetTempFloat = event.getFloat("value");
-        int newTemp = static_cast<int>(targetTempFloat);
+        int newTemp = static_cast<int>(event.getFloat("value"));
         if (newTemp != targetTemp) {
             targetTemp = newTemp;
             rerender = true;
@@ -449,9 +448,7 @@ void DefaultUI::setupState() {
     mode = controller->getMode();
     currentTemp = static_cast<int>(controller->getCurrentTemp());
     targetTemp = static_cast<int>(controller->getTargetTemp());
-    currentTempFloat = controller->getCurrentTemp();
-    targetTempFloat = controller->getTargetTemp();
-    prevTargetTemp = targetTempFloat;
+    prevTargetTemp = targetTemp;
     targetDuration = profileManager->getSelectedProfile().getTotalDuration();
     targetVolume = profileManager->getSelectedProfile().getTotalVolume();
     grindDuration = settings.getTargetGrindDuration();
