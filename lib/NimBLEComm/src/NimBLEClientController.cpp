@@ -1,5 +1,4 @@
 #include "NimBLEClientController.h"
-#include <cmath>
 
 constexpr size_t MAX_CONNECT_RETRIES = 3;
 constexpr size_t BLE_SCAN_DURATION_SECONDS = 10;
@@ -280,11 +279,7 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         float pumpFlow = get_token(data, 3, ',').toFloat();
         float puckResistance = get_token(data, 4, ',').toFloat();
         // Heater power (0-100%) - NaN if not provided
-        float heaterPower = NAN;
-        String heaterPowerToken = get_token(data, 5, ',');
-        if (heaterPowerToken.length() > 0) {
-            heaterPower = heaterPowerToken.toFloat();
-        }
+        float heaterPower = get_token(data, 5, ',', "nan").toFloat();
 
         ESP_LOGV(LOG_TAG,
                  "Sensor data: temp=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f, heater_power=%.1f",
@@ -304,8 +299,7 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             // Handle optional Kf parameter with default
             float Kf = 0.0f; // Default combined Kff
             String kfToken = get_token(settings, 3, ',');
-            if (kfToken.length() > 0)
-                Kf = kfToken.toFloat();
+            if (kfToken.length() > 0) Kf = kfToken.toFloat();
 
             autotuneResultCallback(Kp, Ki, Kd, Kf);
         }

@@ -1,8 +1,6 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
-#include <cmath>
-#include <esp_log.h>
 
 #include <display/config.h>
 #include <display/core/Controller.h>
@@ -18,8 +16,6 @@
 #include <display/ui/utils/effects.h>
 
 #include "esp_sntp.h"
-
-static const char *TAG = "DefaultUI";
 static EffectManager effect_mgr;
 
 int16_t calculate_angle(int set_temp, int range, int offset) {
@@ -28,12 +24,12 @@ int16_t calculate_angle(int set_temp, int range, int offset) {
 }
 
 void DefaultUI::updateTempHistory() {
-    if (currentTempSample > 0.0f) {
-        tempHistory[tempHistoryIndex] = currentTempSample;
+    if (currentTemp > 0) {
+        tempHistory[tempHistoryIndex] = currentTemp;
         tempHistoryIndex += 1;
     }
 
-    if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
+    if (tempHistoryIndex > TEMP_HISTORY_LENGTH) {
         tempHistoryIndex = 0;
         isTempHistoryInitialized = true;
     }
@@ -46,107 +42,60 @@ void DefaultUI::updateTempHistory() {
 
 void DefaultUI::resetWarmupState() {
     isWarmedUp = false;
-    stableStartTime = 0;
     heaterPowerWindowStart = 0;
     heaterPowerTimeSum = 0.0f;
     heaterPowerTimeTotal = 0;
     lastHeaterPowerSampleTime = 0;
-    lastHeaterPowerWindowAvg = NAN;
+    lastHeaterPowerWindowAvg = -1.0f;
 }
 
 void DefaultUI::updateTempStableFlag() {
-    if (!isTempHistoryInitialized) {
-        return;
+    if (isTempHistoryInitialized) {
+        float totalError = 0.0f;
+        float maxError = 0.0f;
+        for (uint16_t i = 0; i < TEMP_HISTORY_LENGTH; i++) {
+            float error = abs(tempHistory[i] - targetTemp);
+            totalError += error;
+            maxError = error > maxError ? error : maxError;
+        }
+
+        const float avgError = totalError / TEMP_HISTORY_LENGTH;
+        const float errorMargin = max(2.0f, static_cast<float>(targetTemp) * 0.02f);
+
+        isTemperatureStable = avgError < errorMargin && maxError <= errorMargin;
     }
 
-    bool wasStable = isTemperatureStable;
-
-    // Calculate temperature stability from history
-    float totalError = 0.0f;
-    float maxError = 0.0f;
-    const float targetTempF = targetTempSample;
-    for (int i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-        float error = fabsf(tempHistory[i] - targetTempF);
-        totalError += error;
-        maxError = max(maxError, error);
-    }
-    float avgError = totalError / TEMP_HISTORY_LENGTH;
-    float errorMargin = max(2.0f, targetTempF * 0.02f);
-    float unstableMargin = errorMargin + TEMP_STABILITY_HYSTERESIS;
-    if (isTemperatureStable) {
-        isTemperatureStable = (avgError < errorMargin) && (maxError <= unstableMargin);
-    } else {
-        isTemperatureStable = (avgError < errorMargin) && (maxError <= errorMargin);
-    }
-
-    // Reset stability if setpoint has changed
-    if (prevTargetTemp != targetTempSample) {
+    // instantly reset stability if setpoint has changed
+    if (prevTargetTemp != targetTemp) {
         isTemperatureStable = false;
         resetWarmupState();
-        ESP_LOGD(TAG, "Target temp changed: %.1f -> %.1f, resetting stability", prevTargetTemp, targetTempSample);
     }
-    prevTargetTemp = targetTempSample;
+
+    prevTargetTemp = targetTemp;
+
+    if (!isTemperatureStable) {
+        resetWarmupState();
+        return;
+    }
 
     unsigned long now = millis();
-
-    // Initialize stable state tracking when entering or re-entering stable state
-    if (isTemperatureStable && stableStartTime == 0) {
-        isWarmedUp = false;
-        stableStartTime = now;
+    if (heaterPowerWindowStart == 0) {
         heaterPowerWindowStart = now;
-        heaterPowerTimeSum = 0.0f;
-        heaterPowerTimeTotal = 0;
-        lastHeaterPowerSampleTime = 0;
-        lastHeaterPowerWindowAvg = NAN;
-        if (!wasStable) {
-            ESP_LOGI(TAG, "Stable: temp=%.1f target=%.1f", currentTempSample, targetTempSample);
-        }
     }
 
-    // Handle loss of stability
-    if (!isTemperatureStable) {
-        if (wasStable) {
-            ESP_LOGD(TAG, "Unstable: temp=%.1f avgErr=%.2f maxErr=%.2f margin=%.2f",
-                     currentTempSample, avgError, maxError, errorMargin);
-        }
-        resetWarmupState();
-        return;
-    }
-
-    // Check if warmed up state was lost due to heater power spike
-    if (isWarmedUp && currentHeaterPower >= HEATER_POWER_SPIKE_THRESHOLD) {
-        ESP_LOGI(TAG, "Warmup lost: heater power %.1f%% >= %.1f%%", currentHeaterPower, HEATER_POWER_SPIKE_THRESHOLD);
-        resetWarmupState();
-        return;
-    }
-
-    if (isWarmedUp) {
-        return;
-    }
-
-    unsigned long stableDuration = now - stableStartTime;
-    unsigned long windowDuration = heaterPowerWindowStart > 0 ? now - heaterPowerWindowStart : 0;
-
-    // Fallback: maximum stable time reached
-    if (stableDuration >= WARMUP_MAX_STABLE_MS) {
-        isWarmedUp = true;
-        ESP_LOGI(TAG, "Warmed up (fallback): stable for %lu seconds", stableDuration / 1000);
-        return;
-    }
-
-    // Heater power equilibrium detection: check at end of each window
-    if (windowDuration >= HEATER_POWER_WINDOW_MS && heaterPowerTimeTotal > 0) {
+    if (!isWarmedUp && heaterPowerTimeTotal > 0 && (now - heaterPowerWindowStart) >= HEATER_POWER_WINDOW_MS) {
         float avgPower = heaterPowerTimeSum / heaterPowerTimeTotal;
-        bool hasLastAvg = !std::isnan(lastHeaterPowerWindowAvg);
-        bool trendOk = hasLastAvg && fabsf(lastHeaterPowerWindowAvg - avgPower) <= HEATER_POWER_TREND_THRESHOLD;
+        if (lastHeaterPowerWindowAvg >= 0.0f) {
+            float diff = lastHeaterPowerWindowAvg - avgPower;
+            if (diff < 0.0f) {
+                diff = -diff;
+            }
+            if (diff <= HEATER_POWER_TREND_THRESHOLD) {
+                isWarmedUp = true;
+            }
+        }
 
-        if (trendOk) {
-            isWarmedUp = true;
-            ESP_LOGI(TAG, "Warmed up: power trend stable (avg=%.1f%%, prev=%.1f%%)",
-                     avgPower, lastHeaterPowerWindowAvg);
-        } else {
-            ESP_LOGD(TAG, "Warmup window: avg=%.1f%%, prev=%s",
-                     avgPower, hasLastAvg ? String(lastHeaterPowerWindowAvg, 1).c_str() : "n/a");
+        if (!isWarmedUp) {
             lastHeaterPowerWindowAvg = avgPower;
             heaterPowerWindowStart = now;
             heaterPowerTimeSum = 0.0f;
@@ -158,27 +107,16 @@ void DefaultUI::updateTempStableFlag() {
 
 void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     lv_obj_t *heatingIcon = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPICON);
-
-    // Three-color indicator:
-    // - Red (flashing): heating, not at target
-    // - Yellow (solid): stable at target, but not yet warmed up
-    // - Green (solid): warmed up and ready
-    constexpr uint32_t COLOR_GREEN = 0x00D100;
-    constexpr uint32_t COLOR_YELLOW = 0xFFAA00;
-    constexpr uint32_t COLOR_RED = 0xF62C2C;
-
-    uint32_t color = COLOR_RED;
+    uint32_t color = 0xF62C2C; // Red: not stable
     if (isWarmedUp) {
-        color = COLOR_GREEN;
+        color = 0x00D100; // Green: power trend stable (warmed up)
     } else if (isTemperatureStable) {
-        color = COLOR_YELLOW;
+        color = 0xFFAA00; // Yellow: temp stable, waiting on power trend
     }
-
     lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    // Flash only when heating (red state, not stable)
-    bool shouldFlash = !isTemperatureStable && heatingFlash;
-    lv_obj_set_style_opa(heatingIcon, shouldFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
+    if (!isTemperatureStable) {
+        lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
 }
 
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
@@ -190,11 +128,9 @@ void DefaultUI::init() {
     profileManager = controller->getProfileManager();
     auto triggerRender = [this](Event const &) { rerender = true; };
     pluginManager->on("boiler:currentTemperature:change", [=](Event const &event) {
-        float newTemp = event.getFloat("value");
-        currentTempSample = newTemp;
-        int newTempInt = static_cast<int>(newTemp);
-        if (newTempInt != currentTemp) {
-            currentTemp = newTempInt;
+        int newTemp = static_cast<int>(event.getFloat("value"));
+        if (newTemp != currentTemp) {
+            currentTemp = newTemp;
             rerender = true;
         }
     });
@@ -206,17 +142,15 @@ void DefaultUI::init() {
         }
     });
     pluginManager->on("boiler:targetTemperature:change", [=](Event const &event) {
-        float newTemp = event.getFloat("value");
-        targetTempSample = newTemp;
-        int newTempInt = static_cast<int>(newTemp);
-        if (newTempInt != targetTemp) {
-            targetTemp = newTempInt;
+        int newTemp = static_cast<int>(event.getFloat("value"));
+        if (newTemp != targetTemp) {
+            targetTemp = newTemp;
             rerender = true;
         }
     });
     pluginManager->on("boiler:heaterPower:change", [=](Event const &event) {
         currentHeaterPower = event.getFloat("value");
-        if (!std::isfinite(currentHeaterPower) || !isTemperatureStable || isWarmedUp) {
+        if (currentHeaterPower != currentHeaterPower || !isTemperatureStable || isWarmedUp) {
             lastHeaterPowerSampleTime = 0;
             return;
         }
@@ -248,7 +182,6 @@ void DefaultUI::init() {
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
         mode = event.getInt("value");
-        resetWarmupState();
         switch (mode) {
         case MODE_STANDBY:
             changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
@@ -450,11 +383,8 @@ void DefaultUI::setupState() {
     smartGrindActive = settings.isSmartGrindActive();
     grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
     mode = controller->getMode();
-    currentTempSample = controller->getCurrentTemp();
-    currentTemp = static_cast<int>(currentTempSample);
-    targetTempSample = controller->getTargetTemp();
-    targetTemp = static_cast<int>(targetTempSample);
-    prevTargetTemp = targetTempSample;
+    currentTemp = static_cast<int>(controller->getCurrentTemp());
+    targetTemp = static_cast<int>(controller->getTargetTemp());
     targetDuration = profileManager->getSelectedProfile().getTotalDuration();
     targetVolume = profileManager->getSelectedProfile().getTotalVolume();
     grindDuration = settings.getTargetGrindDuration();

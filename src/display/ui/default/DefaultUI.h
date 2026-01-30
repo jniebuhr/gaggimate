@@ -18,11 +18,8 @@ constexpr int TEMP_HISTORY_INTERVAL = 250;
 constexpr int TEMP_HISTORY_LENGTH = 20 * 1000 / TEMP_HISTORY_INTERVAL;
 
 // Heater power equilibrium warmup detection
-constexpr float HEATER_POWER_SPIKE_THRESHOLD = 60.0f;       // Power % above which resets warmup
-constexpr unsigned long HEATER_POWER_WINDOW_MS = 30000;     // Window size for sampling
-constexpr float TEMP_STABILITY_HYSTERESIS = 0.2f;           // Extra margin before declaring unstable
-constexpr float HEATER_POWER_TREND_THRESHOLD = 2.0f;        // Max avg power drop (%) between windows
-constexpr unsigned long WARMUP_MAX_STABLE_MS = 600000;       // Fallback: declare warmed up after 10min stable
+constexpr unsigned long HEATER_POWER_WINDOW_MS = 30000; // Window size for sampling
+constexpr float HEATER_POWER_TREND_THRESHOLD = 2.0f;    // Max avg power drop (%) between windows
 
 int16_t calculate_angle(int set_temp, int range, int offset);
 
@@ -69,13 +66,12 @@ class DefaultUI {
     void adjustTempTarget(lv_obj_t *dials);
     void adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const;
 
-    float tempHistory[TEMP_HISTORY_LENGTH] = {0.0f};
+    int tempHistory[TEMP_HISTORY_LENGTH] = {0};
     int tempHistoryIndex = 0;
-    float prevTargetTemp = 0.0f;
+    int prevTargetTemp = 0;
     bool isTempHistoryInitialized = false;
     int isTemperatureStable = false;
     bool isWarmedUp = false;
-    unsigned long stableStartTime = 0;
     unsigned long lastTempLog = 0;
     // Heater power equilibrium detection state
     float currentHeaterPower = 0.0f;
@@ -83,7 +79,7 @@ class DefaultUI {
     unsigned long heaterPowerTimeTotal = 0;
     unsigned long lastHeaterPowerSampleTime = 0;
     unsigned long heaterPowerWindowStart = 0;
-    float lastHeaterPowerWindowAvg = NAN;
+    float lastHeaterPowerWindowAvg = -1.0f;
 
     void updateTempHistory();
     void updateTempStableFlag();
@@ -118,8 +114,6 @@ class DefaultUI {
     unsigned long lastRender = 0;
 
     int mode = MODE_STANDBY;
-    float currentTempSample = 0.0f;
-    float targetTempSample = 0.0f;
     int currentTemp = 0;
     int targetTemp = 0;
     float targetDuration = 0;
