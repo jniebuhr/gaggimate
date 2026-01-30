@@ -16,6 +16,7 @@ GaggiMateController::GaggiMateController(String version) : _version(std::move(ve
 }
 
 void GaggiMateController::setup() {
+    // Configure hardware peripherals, initialize the pump/valves/heater, and wire BLE callbacks.
     delay(5000);
     detectBoard();
     detectAddon();
@@ -32,7 +33,8 @@ void GaggiMateController::setup() {
         pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { /* noop */ });
     }
     if (_config.capabilites.dimming) {
-        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor, _config.ext2Pin, _config.ext3Pin);
+        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, _config.ext5Pin, pressureSensor, _config.ext2Pin,
+                              _config.ext3Pin);
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
