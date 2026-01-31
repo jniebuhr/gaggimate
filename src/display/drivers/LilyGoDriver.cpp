@@ -19,7 +19,6 @@ void LilyGoDriver::init() {
         ESP.restart();
     }
     beginLvglHelper(panel);
-    panel.setBrightness(16);
 }
 
 bool LilyGoDriver::supportsSDCard() { return true; }

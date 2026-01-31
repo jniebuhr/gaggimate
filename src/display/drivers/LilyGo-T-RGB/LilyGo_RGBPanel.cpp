@@ -43,18 +43,7 @@ bool LilyGo_RGBPanel::begin(LilyGo_RGBPanel_Color_Order order) {
     pinMode(BOARD_TFT_BL, OUTPUT);
     digitalWrite(BOARD_TFT_BL, LOW);
 
-    // Initialize the XL9555 expansion chip
-    if (!extension.init(Wire, BOARD_I2C_SDA, BOARD_I2C_SCL)) {
-        Serial.println(F("External GPIO expansion chip does not exist."));
-        assert(false);
-    }
-
-    /**
-     * * The power enable is connected to the XL9555 expansion chip GPIO.
-     * * It must be turned on and can only be started when using a battery.
-     */
-    extension.pinMode(power_enable, OUTPUT);
-    extension.digitalWrite(power_enable, HIGH);
+    initExtension();
 
     if (!initTouch()) {
         Serial.println(F("Touch chip not found."));
@@ -67,7 +56,27 @@ bool LilyGo_RGBPanel::begin(LilyGo_RGBPanel_Color_Order order) {
     return true;
 }
 
+void LilyGo_RGBPanel::initExtension() {
+    if (_extension_initialized) {
+        return;
+    }
+    // Initialize the XL9555 expansion chip
+    if (!extension.init(Wire, BOARD_I2C_SDA, BOARD_I2C_SCL)) {
+        Serial.println(F("External GPIO expansion chip does not exist."));
+        assert(false);
+    }
+
+    /**
+     * * The power enable is connected to the XL9555 expansion chip GPIO.
+     * * It must be turned on and can only be started when using a battery.
+     */
+    extension.pinMode(power_enable, OUTPUT);
+    extension.digitalWrite(power_enable, HIGH);
+    _extension_initialized = true;
+}
+
 bool LilyGo_RGBPanel::installSD() {
+    initExtension();
     extension.pinMode(sdmmc_cs, OUTPUT);
     extension.digitalWrite(sdmmc_cs, HIGH);
 
