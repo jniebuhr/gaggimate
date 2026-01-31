@@ -18,8 +18,8 @@ constexpr int TEMP_HISTORY_INTERVAL = 250;
 constexpr int TEMP_HISTORY_LENGTH = 20 * 1000 / TEMP_HISTORY_INTERVAL;
 
 // Heater power equilibrium warmup detection
-constexpr unsigned long HEATER_POWER_WINDOW_MS = 30000; // Window size for sampling
-constexpr float HEATER_POWER_TREND_THRESHOLD = 2.0f;    // Max avg power drop (%) between windows
+constexpr unsigned long HEATER_POWER_WINDOW_MS = 60000; // Window size for sampling
+constexpr float HEATER_POWER_TREND_THRESHOLD = 1.0f;    // Max avg power diff (%) between windows
 
 int16_t calculate_angle(int set_temp, int range, int offset);
 
@@ -70,7 +70,7 @@ class DefaultUI {
     int tempHistoryIndex = 0;
     int prevTargetTemp = 0;
     bool isTempHistoryInitialized = false;
-    int isTemperatureStable = false;
+    bool isTemperatureStable = false;
     bool isWarmedUp = false;
     unsigned long lastTempLog = 0;
     // Heater power equilibrium detection state
