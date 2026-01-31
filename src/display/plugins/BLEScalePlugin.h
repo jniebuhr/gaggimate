@@ -16,7 +16,6 @@ class BLEScalePlugin : public Plugin {
 
     void setup(Controller *controller, PluginManager *pluginManager) override;
     void loop() override;
-    ;
 
     void connect(const std::string &uuid);
     void scan() const;
@@ -42,6 +41,11 @@ class BLEScalePlugin : public Plugin {
   private:
     void update();
     void onProcessStart() const;
+    bool tareWithVerification(int maxRetries = 3,
+                              unsigned long settleWindowMs = 100,
+                              float tolerance = 0.1f) const;
+    bool waitForStableZero(unsigned long windowMs,
+                           float tolerance) const;
 
     void establishConnection();
 

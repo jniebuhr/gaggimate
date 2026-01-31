@@ -201,19 +201,44 @@ void BLEScalePlugin::disconnect() {
 }
 
 void BLEScalePlugin::onProcessStart() const {
-    if (scale != nullptr && scale->isConnected()) {
-        // Double tare with validation
-        scale->tare();
-        delay(50);
-
-        // Check if scale is still connected before second tare
-        if (scale != nullptr && scale->isConnected()) {
-            scale->tare();
-        }
+    if (!tareWithVerification()) {
+        ESP_LOGW("BLEScalePlugin", "Tare verification failed; starting process without confirmed zero");
     }
 }
 
 void BLEScalePlugin::tare() const { onProcessStart(); }
+
+bool BLEScalePlugin::tareWithVerification(int maxRetries,
+                                          unsigned long settleWindowMs,
+                                          float tolerance) const {
+    if (scale == nullptr || !scale->isConnected()) {
+        ESP_LOGW("BLEScalePlugin", "Cannot tare: no connected scale");
+        return false;
+    }
+
+    for (int attempt = 0; attempt < maxRetries; ++attempt) {
+        scale->tare();
+        if (waitForStableZero(settleWindowMs, tolerance)) {
+            ESP_LOGI("BLEScalePlugin", "Tare confirmed on attempt %d", attempt + 1);
+            return true;
+        }
+        ESP_LOGW("BLEScalePlugin", "Tare attempt %d did not settle, retrying", attempt + 1);
+    }
+    return false;
+}
+
+bool BLEScalePlugin::waitForStableZero(unsigned long windowMs,
+                                       float tolerance) const {
+    const unsigned long start = millis();
+    while (millis() - start < windowMs) {
+        float w = scale->getWeight();
+        if (fabsf(w) <= tolerance) {
+            return true;
+        }
+        delay(20);
+    }
+    return false;
+}
 
 void BLEScalePlugin::establishConnection() {
     if (uuid.empty()) {
