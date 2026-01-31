@@ -97,13 +97,11 @@ void DefaultUI::updateTempStableFlag() {
             }
         }
 
-        if (!isWarmedUp) {
-            lastHeaterPowerWindowAvg = avgPower;
-            heaterPowerWindowStart = now;
-            heaterPowerTimeSum = 0.0f;
-            heaterPowerTimeTotal = 0;
-            lastHeaterPowerSampleTime = 0;
-        }
+        lastHeaterPowerWindowAvg = avgPower;
+        heaterPowerWindowStart = now;
+        heaterPowerTimeSum = 0.0f;
+        heaterPowerTimeTotal = 0;
+        lastHeaterPowerSampleTime = 0;
     }
 }
 
@@ -118,6 +116,8 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
     if (!isTemperatureStable) {
         lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+        lv_obj_set_style_opa(heatingIcon, LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 }
 
@@ -154,6 +154,9 @@ void DefaultUI::init() {
     });
     pluginManager->on("boiler:heaterPower:change", [=](Event const &event) {
         currentHeaterPower = event.getFloat("value");
+        ESP_LOGI("DefaultUI", "heaterPower=%.1f stable=%d warmedUp=%d windowAvg=%.1f sum=%.0f total=%lu",
+                 currentHeaterPower, isTemperatureStable, isWarmedUp, lastHeaterPowerWindowAvg,
+                 heaterPowerTimeSum, heaterPowerTimeTotal);
         if (currentHeaterPower != currentHeaterPower || !isTemperatureStable || isWarmedUp) {
             lastHeaterPowerSampleTime = 0;
             return;
