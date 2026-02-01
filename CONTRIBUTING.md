@@ -41,7 +41,7 @@ build_src_filter = -<*> +<controller/>
 
 ### Controller Firmware
 
-Located in `lib/GaggiMateControlle` and `src/controller`.
+Located in `lib/GaggiMateController` and `src/controller`.
 Implements hardware control and BLE communication.
 `GaggiMateController.*` sets up peripherals (heater, pump, valve) and handles safety mechanisms such as thermal runaway shutoff.
 Communication with the display uses the NimBLE library.
@@ -57,9 +57,9 @@ Plugins (e.g., BLEScalePlugin, MQTTPlugin, BoilerFillPlugin, HomekitPlugin) exte
 
 The `web/` directory contains a Preact + Vite project. The README inside explains how to run it:
 
-- `npm run dev` - Starts a dev server at http://localhost:5173/
+- `npm run dev` - Starts a dev server at <http://localhost:5173/>
 - `npm run build` - Builds for production, emitting to `dist/`
-- `npm run preview` - Starts a server at http://localhost:4173/ to test production build locally
+- `npm run preview` - Starts a server at <http://localhost:4173/> to test production build locally
 
 When building the firmware, the `scripts/build_spiffs.sh` script installs the web dependencies and copies the compiled files to the data/ directory for inclusion in the device’s SPIFFS image.
 
