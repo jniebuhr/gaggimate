@@ -4,10 +4,10 @@ Thank you for considering a contribution to the project. This document explains 
 
 ## CLA
 
-We require contributors to sign our Contributor License Agreement. In order for
-us to review and merge your code, please contact
-[@jniebuhr](https://github.com/jniebuhr) (mdwasp) on Discord to access the CLA.
-A signed CLA is required for contributing.
+We require contributors to sign our Contributor License Agreement. To review
+and merge your code, please contact [@jniebuhr](https://github.com/jniebuhr)
+(mdwasp) on Discord to access the CLA. A signed CLA is required for
+contributing.
 
 ## Codebase Overview
 
