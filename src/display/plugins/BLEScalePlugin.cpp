@@ -103,6 +103,9 @@ void BLEScalePlugin::loop() {
     if (doConnect && scale == nullptr) {
         establishConnection();
     }
+    if (tareState != TareState::IDLE) {
+        checkTareProgress();
+    }
     const unsigned long now = millis();
     if (now - lastUpdate > UPDATE_INTERVAL_MS) {
         lastUpdate = now;
@@ -200,44 +203,53 @@ void BLEScalePlugin::disconnect() {
     }
 }
 
-void BLEScalePlugin::onProcessStart() const {
-    if (!tareWithVerification()) {
-        ESP_LOGW("BLEScalePlugin", "Tare verification failed; starting process without confirmed zero");
-    }
-}
-
-void BLEScalePlugin::tare() const { onProcessStart(); }
-
-bool BLEScalePlugin::tareWithVerification(int maxRetries,
-                                          unsigned long settleWindowMs,
-                                          float tolerance) const {
+void BLEScalePlugin::onProcessStart() {
     if (scale == nullptr || !scale->isConnected()) {
         ESP_LOGW("BLEScalePlugin", "Cannot tare: no connected scale");
-        return false;
+        return;
+    }
+    if (tareState != TareState::IDLE) {
+        ESP_LOGW("BLEScalePlugin", "Tare already in progress");
+        return;
     }
 
-    for (int attempt = 0; attempt < maxRetries; ++attempt) {
-        scale->tare();
-        if (waitForStableZero(settleWindowMs, tolerance)) {
-            ESP_LOGI("BLEScalePlugin", "Tare confirmed on attempt %d", attempt + 1);
-            return true;
-        }
-        ESP_LOGW("BLEScalePlugin", "Tare attempt %d did not settle, retrying", attempt + 1);
-    }
-    return false;
+    tareAttempt = 0;
+    scale->tare();
+    tareStartTime = millis();
+    tareState = TareState::WAITING_FOR_STABLE;
+    ESP_LOGI("BLEScalePlugin", "Tare initiated, waiting for stable zero (attempt 1)");
 }
 
-bool BLEScalePlugin::waitForStableZero(unsigned long windowMs,
-                                       float tolerance) const {
-    const unsigned long start = millis();
-    while (millis() - start < windowMs) {
-        float w = scale->getWeight();
-        if (fabsf(w) <= tolerance) {
-            return true;
-        }
-        delay(20);
+void BLEScalePlugin::tare() { onProcessStart(); }
+
+void BLEScalePlugin::checkTareProgress() {
+    if (tareState != TareState::WAITING_FOR_STABLE) {
+        return;
     }
-    return false;
+    if (scale == nullptr || !scale->isConnected()) {
+        ESP_LOGW("BLEScalePlugin", "Scale disconnected during tare");
+        tareState = TareState::IDLE;
+        return;
+    }
+
+    float w = scale->getWeight();
+    if (fabsf(w) <= TARE_TOLERANCE) {
+        ESP_LOGI("BLEScalePlugin", "Tare confirmed on attempt %d", tareAttempt + 1);
+        tareState = TareState::IDLE;
+        return;
+    }
+
+    if (millis() - tareStartTime >= TARE_SETTLE_WINDOW_MS) {
+        tareAttempt++;
+        if (tareAttempt >= TARE_MAX_RETRIES) {
+            ESP_LOGW("BLEScalePlugin", "Tare verification failed after %d attempts", TARE_MAX_RETRIES);
+            tareState = TareState::IDLE;
+            return;
+        }
+        ESP_LOGW("BLEScalePlugin", "Tare attempt %d did not settle, retrying", tareAttempt);
+        scale->tare();
+        tareStartTime = millis();
+    }
 }
 
 void BLEScalePlugin::establishConnection() {
@@ -320,6 +332,15 @@ void BLEScalePlugin::onMeasurement(float value) const {
     }
     lastMeasurementTime = now;
 
+    // Validate the measurement value
+    if (!isfinite(value) || value < -1000.0f || value > 10000.0f) {
+        ESP_LOGW("BLEScalePlugin", "Invalid measurement value: %f, ignoring", value);
+        return;
+    }
+
+    // Always track callback weight for tare verification consistency
+    lastCallbackWeight = value;
+
     // Multiple safety checks to prevent crashes
     if (controller == nullptr) {
         return; // Silently ignore if controller is null
@@ -328,12 +349,6 @@ void BLEScalePlugin::onMeasurement(float value) const {
     // Check if we're being destroyed or in an unsafe state
     if (!active) {
         return; // Don't process measurements when not active
-    }
-
-    // Validate the measurement value
-    if (!isfinite(value) || value < -1000.0f || value > 10000.0f) {
-        ESP_LOGW("BLEScalePlugin", "Invalid measurement value: %f, ignoring", value);
-        return;
     }
 
     // Safe to call controller method

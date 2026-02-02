@@ -9,6 +9,9 @@ void on_ble_measurement(float value);
 constexpr unsigned long UPDATE_INTERVAL_MS = 1000;
 constexpr unsigned int RECONNECTION_TRIES = 15;
 
+// Async tare verification state
+enum class TareState { IDLE, WAITING_FOR_STABLE };
+
 class BLEScalePlugin : public Plugin {
   public:
     BLEScalePlugin();
@@ -36,16 +39,12 @@ class BLEScalePlugin : public Plugin {
     };
 
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
-    void tare() const;
+    void tare();
 
   private:
     void update();
-    void onProcessStart() const;
-    bool tareWithVerification(int maxRetries = 3,
-                              unsigned long settleWindowMs = 100,
-                              float tolerance = 0.1f) const;
-    bool waitForStableZero(unsigned long windowMs,
-                           float tolerance) const;
+    void onProcessStart();
+    void checkTareProgress();
 
     void establishConnection();
 
@@ -59,6 +58,17 @@ class BLEScalePlugin : public Plugin {
     // Rate limiting for callbacks
     mutable unsigned long lastMeasurementTime = 0;
     static constexpr unsigned long MIN_MEASUREMENT_INTERVAL_MS = 10; // Max 100 measurements per second
+
+    // Async tare verification state
+    TareState tareState = TareState::IDLE;
+    unsigned long tareStartTime = 0;
+    int tareAttempt = 0;
+    static constexpr int TARE_MAX_RETRIES = 3;
+    static constexpr unsigned long TARE_SETTLE_WINDOW_MS = 500;
+    static constexpr float TARE_TOLERANCE = 0.5f;
+
+    // Track weight from BLE callbacks (same values sent to BrewProcess)
+    mutable float lastCallbackWeight = 0.0f;
 
     Controller *controller = nullptr;
     RemoteScalesPluginRegistry *pluginRegistry = nullptr;
