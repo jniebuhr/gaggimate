@@ -63,7 +63,7 @@ class PressureController {
 
     float _errorIntegral = 0.0f;
     float _pressureIntegralLimit = 1.0f;
-    float _pressureKp = 0.15f;
+    float _pressureKp = 0.075f;
     float _pressureKi = 0.05f;
 
     const float _maxPressure = 15.0f;
@@ -75,3 +75,4 @@ class PressureController {
 };
 
 #endif // PRESSURE_CONTROLLER_H
+
