@@ -150,7 +150,7 @@ void DefaultUI::init() {
     });
     pluginManager->on("boiler:heaterPower:change", [=](Event const &event) {
         currentHeaterPower = event.getFloat("value");
-        ESP_LOGI("DefaultUI", "heaterPower=%.1f stable=%d warmedUp=%d windowAvg=%.1f sum=%.0f total=%lu",
+        ESP_LOGV("DefaultUI", "heaterPower=%.1f stable=%d warmedUp=%d windowAvg=%.1f sum=%.0f total=%lu",
                  currentHeaterPower, isTemperatureStable, isWarmedUp, lastHeaterPowerWindowAvg,
                  heaterPowerTimeSum, heaterPowerTimeTotal);
         if (currentHeaterPower != currentHeaterPower || !isTemperatureStable || isWarmedUp) {
