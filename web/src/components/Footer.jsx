@@ -3,6 +3,7 @@ const RANDOM_ICONS = [
   '🍝',
   '🍕',
   '☕️',
+  '🥐',
   '🤌',
   <svg
     key="heart"
