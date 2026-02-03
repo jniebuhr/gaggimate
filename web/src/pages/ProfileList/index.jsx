@@ -1,20 +1,20 @@
 import {
-  Chart,
-  LineController,
-  TimeScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Legend,
-  Filler,
   CategoryScale,
+  Chart,
+  Filler,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  TimeScale,
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useEffect, useState, useContext, useRef } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
@@ -36,6 +36,7 @@ import { Tooltip } from '../../components/Tooltip.jsx';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 
 Chart.register(
   LineController,
@@ -542,9 +543,16 @@ export function ProfileList() {
   const apiService = useContext(ApiServiceContext);
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('extraction');
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
   const favoriteDisabled = favoriteCount >= 10;
+  const hasUtilityProfiles = useMemo(() => profiles.some(p => p.utility), [profiles]);
+
+  useEffect(() => {
+    if (!hasUtilityProfiles) {setActiveTab('extraction');}
+  }, [hasUtilityProfiles]);
 
   const loadProfiles = async () => {
     const response = await apiService.request({ tp: 'req:profiles:list' });
@@ -731,6 +739,20 @@ export function ProfileList() {
     }
   }, [profiles, apiService]);
 
+  // Filtered profiles
+  const profilesToShow = useMemo(() => {
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim();
+      return profiles.filter(
+        profile =>
+          profile.label?.toLowerCase().includes(search) ||
+          profile.description?.toLowerCase().includes(search),
+      );
+    }
+    return profiles;
+  }, [profiles, searchTerm]);
+
   if (loading) {
     return (
       <div
@@ -748,6 +770,29 @@ export function ProfileList() {
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Profiles</h1>
+      </div>
+
+      <div className='mb-4 flex flex-col items-center gap-2 sm:flex-row'>
+        {/* Controls Row */}
+        <div className='flex flex-col items-start gap-3 sm:flex-row sm:items-center'>
+          {/* Search */}
+          <div className='relative max-w-md flex-grow'>
+            <FontAwesomeIcon
+              icon={faSearch}
+              className='text-base-content/50 absolute top-1/2 left-3 -translate-y-1/2 transform text-sm'
+            />
+            <input
+              type='text'
+              placeholder='Search...'
+              value={searchTerm}
+              onChange={e => {
+                setSearchTerm(e.target.value);
+              }}
+              className='input input-bordered w-full pr-4 pl-10 text-sm'
+            />
+          </div>
+        </div>
+        <div className='flex flex-grow items-center justify-end gap-2'>
         <Tooltip content='Export all profiles'>
           <button
             onClick={onExport}
@@ -780,28 +825,51 @@ export function ProfileList() {
           tooltip='Delete all profiles'
           confirmTooltip='Confirm deletion'
         />
+        </div>
       </div>
-
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label='Profile list'>
-        {profiles.map((data, idx) => (
-          <ProfileCard
-            key={data.id}
-            data={data}
-            onDelete={onDelete}
-            onSelect={onSelect}
-            favoriteDisabled={favoriteDisabled}
-            unfavoriteDisabled={unfavoriteDisabled}
-            onUnfavorite={onUnfavorite}
-            onFavorite={onFavorite}
-            onDuplicate={onDuplicate}
-            onMoveUp={moveProfileUp}
-            onMoveDown={moveProfileDown}
-            isFirst={idx === 0}
-            isLast={idx === profiles.length - 1}
-          />
-        ))}
-
+      <div className='mb-4' aria-label='Add profile'>
         <ProfileAddCard />
+      </div>
+      {hasUtilityProfiles && (
+        <div role='tablist' className='tabs tabs-border mb-4'>
+          <button
+            role='tab'
+            className={`tab ${activeTab === 'extraction' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('extraction')}
+            aria-label='Switch to extraction tab'
+          >
+            Extraction
+          </button>
+          <button
+            role='tab'
+            className={`tab ${activeTab === 'utility' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('utility')}
+            aria-label='Switch to utility tab'
+          >
+            Utility
+          </button>
+        </div>
+      )}
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label='Profile list'>
+        {profilesToShow
+          .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
+          .map((data, idx, filtered) => (
+            <ProfileCard
+              key={data.id}
+              data={data}
+              onDelete={onDelete}
+              onSelect={onSelect}
+              favoriteDisabled={favoriteDisabled}
+              unfavoriteDisabled={unfavoriteDisabled}
+              onUnfavorite={onUnfavorite}
+              onFavorite={onFavorite}
+              onDuplicate={onDuplicate}
+              onMoveUp={moveProfileUp}
+              onMoveDown={moveProfileDown}
+              isFirst={idx === 0}
+              isLast={idx === filtered.length - 1}
+            />
+          ))}
       </div>
     </>
   );

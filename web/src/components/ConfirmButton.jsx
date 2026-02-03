@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCallback, useState } from 'preact/hooks';
 import { Tooltip } from './Tooltip.jsx';
 
-export function ConfirmButton({ onAction, icon, tooltip, confirmTooltip }) {
+export function ConfirmButton({ onAction, icon, tooltip, confirmTooltip, btnSize = 'sm' }) {
   const [confirm, setConfirm] = useState(false);
   const confirmOrAction = useCallback(() => {
     if (confirm) {
@@ -19,7 +19,7 @@ export function ConfirmButton({ onAction, icon, tooltip, confirmTooltip }) {
         onClick={() => {
           confirmOrAction();
         }}
-        className={`btn btn-ghost btn-sm text-error cursor-pointer transition-colors ${confirm ? 'bg-error text-error-content font-semibold' : 'hover:text-error hover:bg-error/10'}`}
+        className={`btn btn-ghost btn-${btnSize} text-error cursor-pointer transition-colors ${confirm ? 'bg-error text-error-content font-semibold' : 'hover:text-error hover:bg-error/10'}`}
         aria-label={confirm ? confirmTooltip : tooltip}
       >
         <FontAwesomeIcon icon={icon} />
