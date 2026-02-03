@@ -156,7 +156,7 @@
 .tooltip-portal {
   @apply bg-neutral text-neutral-content rounded-md px-2 py-1 text-sm;
   @apply pointer-events-none z-[9999];
-  @apply opacity-0 animate-[fadeIn_150ms_ease-out_forwards];
+  @apply animate-[fadeIn_150ms_ease-out_forwards] opacity-0;
 }
 
 @keyframes fadeIn {

@@ -194,10 +194,11 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                     <button
                       onClick={() => setShowUploadModal(true)}
                       disabled={!canUpload}
-                      className={`group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold ${canUpload
+                      className={`group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold ${
+                        canUpload
                           ? 'text-success hover:bg-success/10 active:border-success/20'
                           : 'cursor-not-allowed text-gray-400'
-                        }`}
+                      }`}
                       aria-label='Upload to visualizer.coffee'
                     >
                       <FontAwesomeIcon icon={faUpload} />

@@ -118,7 +118,7 @@ function ProfileCard({
     if (!pop.matches(':popover-open')) {
       try {
         pop.showPopover();
-      } catch (_) { }
+      } catch (_) {}
     }
     // Measure size
     const w = pop.offsetWidth || 224; // ~w-56
@@ -146,7 +146,7 @@ function ProfileCard({
     if (pop && pop.matches(':popover-open')) {
       try {
         pop.hidePopover();
-      } catch (_) { }
+      } catch (_) {}
     }
     setMenuOpen(false);
   }, []);
@@ -163,7 +163,7 @@ function ProfileCard({
         try {
           pop.showPopover();
           setMenuOpen(true);
-        } catch (_) { }
+        } catch (_) {}
       }
     },
     [closeMenu, positionPopover],
@@ -551,7 +551,9 @@ export function ProfileList() {
   const hasUtilityProfiles = useMemo(() => profiles.some(p => p.utility), [profiles]);
 
   useEffect(() => {
-    if (!hasUtilityProfiles) {setActiveTab('extraction');}
+    if (!hasUtilityProfiles) {
+      setActiveTab('extraction');
+    }
   }, [hasUtilityProfiles]);
 
   const loadProfiles = async () => {
@@ -592,7 +594,7 @@ export function ProfileList() {
           // fire and forget; no await during unmount
           apiService
             .request({ tp: 'req:profiles:reorder', order: pendingOrderRef.current })
-            .catch(() => { });
+            .catch(() => {});
         }
       }
     };
@@ -776,11 +778,8 @@ export function ProfileList() {
         {/* Controls Row */}
         <div className='flex flex-col items-start gap-3 sm:flex-row sm:items-center'>
           {/* Search */}
-          <div className='relative max-w-md flex-grow'>
-            <FontAwesomeIcon
-              icon={faSearch}
-              className='text-base-content/50 absolute top-1/2 left-3 -translate-y-1/2 transform text-sm'
-            />
+          <label className='input w-full'>
+            <FontAwesomeIcon icon={faSearch} />
             <input
               type='text'
               placeholder='Search...'
@@ -788,43 +787,43 @@ export function ProfileList() {
               onChange={e => {
                 setSearchTerm(e.target.value);
               }}
-              className='input input-bordered w-full pr-4 pl-10 text-sm'
+              className='grow'
             />
-          </div>
+          </label>
         </div>
         <div className='flex flex-grow items-center justify-end gap-2'>
-        <Tooltip content='Export all profiles'>
-          <button
-            onClick={onExport}
-            className='btn btn-ghost btn-sm'
-            aria-label='Export all profiles'
-          >
-            <FontAwesomeIcon icon={faFileExport} />
-          </button>
-        </Tooltip>
-        <Tooltip content='Import profiles'>
-          <label
-            htmlFor='profileImport'
-            className='btn btn-ghost btn-sm cursor-pointer'
-            aria-label='Import profiles'
-          >
-            <FontAwesomeIcon icon={faFileImport} />
-          </label>
-        </Tooltip>
-        <input
-          onChange={onUpload}
-          className='hidden'
-          id='profileImport'
-          type='file'
-          accept='.json,application/json,.tcl'
-          aria-label='Select a JSON file containing profile data to import'
-        />
-        <ConfirmButton
-          onAction={onClear}
-          icon={faTrashCan}
-          tooltip='Delete all profiles'
-          confirmTooltip='Confirm deletion'
-        />
+          <Tooltip content='Export all profiles'>
+            <button
+              onClick={onExport}
+              className='btn btn-ghost btn-sm'
+              aria-label='Export all profiles'
+            >
+              <FontAwesomeIcon icon={faFileExport} />
+            </button>
+          </Tooltip>
+          <Tooltip content='Import profiles'>
+            <label
+              htmlFor='profileImport'
+              className='btn btn-ghost btn-sm cursor-pointer'
+              aria-label='Import profiles'
+            >
+              <FontAwesomeIcon icon={faFileImport} />
+            </label>
+          </Tooltip>
+          <input
+            onChange={onUpload}
+            className='hidden'
+            id='profileImport'
+            type='file'
+            accept='.json,application/json,.tcl'
+            aria-label='Select a JSON file containing profile data to import'
+          />
+          <ConfirmButton
+            onAction={onClear}
+            icon={faTrashCan}
+            tooltip='Delete all profiles'
+            confirmTooltip='Confirm deletion'
+          />
         </div>
       </div>
       <div className='mb-4' aria-label='Add profile'>

@@ -308,10 +308,11 @@ const ProcessControls = props => {
           ].map(tab => (
             <button
               key={tab.id}
-              className={`flex-1 cursor-pointer rounded-full px-1 py-1 text-sm transition-all duration-200 sm:px-4 lg:px-2 lg:py-2 ${mode === tab.id
-                ? 'bg-primary text-primary-content font-medium'
-                : 'text-base-content/60 hover:text-base-content'
-                }`}
+              className={`flex-1 cursor-pointer rounded-full px-1 py-1 text-sm transition-all duration-200 sm:px-4 lg:px-2 lg:py-2 ${
+                mode === tab.id
+                  ? 'bg-primary text-primary-content font-medium'
+                  : 'text-base-content/60 hover:text-base-content'
+              }`}
               onClick={() => changeMode(tab.id)}
             >
               {tab.label}
@@ -457,29 +458,31 @@ const ProcessControls = props => {
             !finished &&
             isGrindAvailable &&
             status.value.volumetricAvailable)) && (
-            <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
-              <button
-                className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${(brew && !brewTarget) || (grind && status.value.grindTarget === 0)
+          <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
+            <button
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
+                (brew && !brewTarget) || (grind && status.value.grindTarget === 0)
                   ? 'bg-primary text-primary-content font-medium'
                   : 'text-base-content/60 hover:text-base-content'
-                  }`}
-                onClick={() => changeTarget(0)}
-              >
-                <FontAwesomeIcon icon={faClock} />
-                <span className='ml-1'>Time</span>
-              </button>
-              <button
-                className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${(brew && brewTarget) || (grind && status.value.grindTarget === 1)
+              }`}
+              onClick={() => changeTarget(0)}
+            >
+              <FontAwesomeIcon icon={faClock} />
+              <span className='ml-1'>Time</span>
+            </button>
+            <button
+              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
+                (brew && brewTarget) || (grind && status.value.grindTarget === 1)
                   ? 'bg-primary text-primary-content font-medium'
                   : 'text-base-content/60 hover:text-base-content'
-                  }`}
-                onClick={() => changeTarget(1)}
-              >
-                <FontAwesomeIcon icon={faWeightScale} />
-                <span className='ml-1'>Weight</span>
-              </button>
-            </div>
-          )}
+              }`}
+              onClick={() => changeTarget(1)}
+            >
+              <FontAwesomeIcon icon={faWeightScale} />
+              <span className='ml-1'>Weight</span>
+            </button>
+          </div>
+        )}
         {/* Controls for different modes */}
         {mode === 1 && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
