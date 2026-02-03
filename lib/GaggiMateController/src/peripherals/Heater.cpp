@@ -1,6 +1,7 @@
 #include "Heater.h"
 #include <Arduino.h>
 #include <algorithm>
+#include <cmath>
 
 Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
                const pid_result_callback_t &pid_callback)
@@ -65,6 +66,22 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
     }
 }
 
+void Heater::setThermalFeedforward(float *pumpFlowPtr, float incomingWaterTemp, int *valveStatusPtr) {
+    pumpFlowRate = pumpFlowPtr;
+    valveStatus = valveStatusPtr;
+    this->incomingWaterTemp = incomingWaterTemp;
+
+    ESP_LOGI(LOG_TAG, "Thermal feedforward setup - incoming water temp: %.1f°C, valve tracking: %s",
+             incomingWaterTemp, valveStatusPtr ? "enabled" : "disabled");
+    ESP_LOGI(LOG_TAG, "Feedforward will be %s based on Kff value (currently %.3f)",
+             combinedKff > 0.0f ? "ENABLED" : "DISABLED", combinedKff);
+}
+
+void Heater::setFeedforwardScale(float combinedKff) {
+    this->combinedKff = combinedKff;
+    ESP_LOGI(LOG_TAG, "Combined feedforward gain (Kff) set to: %.3f output units per watt", combinedKff);
+}
+
 void Heater::autotune(int goal, int windowSize) {
     setupAutotune(goal, windowSize);
     autotuning = true;
@@ -73,7 +90,35 @@ void Heater::autotune(int goal, int windowSize) {
 void Heater::loopPid() {
     softPwm(TUNER_OUTPUT_SPAN);
     temperature = sensor->read();
-    if (simplePid->update()) {
+
+    // Calculate and set disturbance feedforward BEFORE PID update.
+    // Only apply thermal feedforward when Kf>0, valve is open, and water is flowing
+    if (combinedKff > 0.0f && pumpFlowRate && *pumpFlowRate > 0.01f && valveStatus && *valveStatus != 0) {
+        float currentFlowRate = *pumpFlowRate; // Use raw flow rate for fast response
+        float disturbanceGain = calculateDisturbanceFeedforwardGain();
+
+        // Apply smoothed temperature-based safety scaling
+        float tempError = temperature - setpoint;
+        float rawSafetyFactor = calculateSafetyScaling(tempError);
+
+        // Smooth safety factor transitions to reduce oscillations
+        const float safetyAlpha = 0.85f; // Faster response for quicker feedforward
+        float safetyFactor = safetyAlpha * rawSafetyFactor + (1.0f - safetyAlpha) * lastSafetyFactor;
+        lastSafetyFactor = safetyFactor;
+
+        disturbanceGain *= safetyFactor;
+
+        // Set the disturbance feedforward in SimplePID
+        simplePid->setDisturbanceFeedforward(currentFlowRate, disturbanceGain);
+
+    } else {
+        simplePid->setDisturbanceFeedforward(0.0f, 0.0f);
+    }
+
+    // Now run PID with proper feedforward integrated
+    bool pidUpdated = simplePid->update();
+
+    if (pidUpdated) {
         plot(output, 1.0f, 1);
     }
 }
@@ -149,6 +194,44 @@ void Heater::plot(float optimumOutput, float outputScale, uint8_t everyNth) {
         ESP_LOGV(LOG_TAG, "PID Plot: output=%.2f, input=%.2f, setpoint=%.2f", optimumOutput * outputScale, temperature, setpoint);
     } else
         plotCount++;
+}
+
+float Heater::calculateDisturbanceFeedforwardGain() {
+    if (combinedKff <= 0.0f || !pumpFlowRate || *pumpFlowRate <= 0.01f) {
+        return 0.0f;
+    }
+
+    float currentFlowRate = *pumpFlowRate; // Use raw flow rate for fast response
+
+    // Calculate temperature difference (target - incoming water temperature)
+    float tempDelta = setpoint - incomingWaterTemp;
+    if (tempDelta <= 0.0f)
+        return 0.0f;
+
+    // Calculate thermal power needed per ml/s of flow (Watts per ml/s)
+    float powerPerFlowRate = WATER_DENSITY * WATER_SPECIFIC_HEAT * tempDelta + (heatLossWatts / currentFlowRate);
+    powerPerFlowRate /= heaterEfficiency;
+
+    // Apply combined Kff directly (output units per watt)
+    float gainPerFlowRate = powerPerFlowRate * combinedKff;
+
+    return gainPerFlowRate;
+}
+
+float Heater::calculateSafetyScaling(float tempError) {
+    // tempError = temperature - setpoint
+    // Use smoother, less aggressive safety scaling to reduce oscillations
+    if (tempError > 1.0f) {
+        return 0.0f; // No FF if more than 1.0°C above setpoint
+    } else if (tempError >= 0.0f) {
+        // Gradual reduction: 100% at 0°C error, 70% at +1.0°C error
+        return 0.7f + 0.3f * (1.0f - tempError / 1.0f);
+    } else if (tempError > -1.0f) {
+        // Scale from 70% to 100% as temperature drops below setpoint
+        return 0.7f + 0.3f * std::abs(tempError) / 1.0f;
+    } else {
+        return 1.0f; // Full FF when more than 1.0°C below setpoint
+    }
 }
 
 void Heater::loopTask(void *arg) {

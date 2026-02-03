@@ -121,8 +121,9 @@ void NimBLEServerController::sendSteamBtnState(bool steamButtonStatus) {
 
 void NimBLEServerController::sendAutotuneResult(float Kp, float Ki, float Kd) {
     if (deviceConnected) {
-        char pidStr[30];
-        snprintf(pidStr, sizeof(pidStr), "%.3f,%.3f,%.3f", Kp, Ki, Kd);
+        char pidStr[64];
+        // Send with default Kf=0.0 (disabled)
+        snprintf(pidStr, sizeof(pidStr), "%.3f,%.3f,%.3f,0.0", Kp, Ki, Kd);
         autotuneResultChar->setValue(pidStr);
         autotuneResultChar->notify();
     }
@@ -236,9 +237,21 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         float Kp = get_token(pid, 0, ',').toFloat();
         float Ki = get_token(pid, 1, ',').toFloat();
         float Kd = get_token(pid, 2, ',').toFloat();
-        ESP_LOGV(LOG_TAG, "Received PID settings: %.2f, %.2f, %.2f", Kp, Ki, Kd);
+
+        // Optional thermal feedforward parameter (default value if not provided).
+        float Kf = 0.0f;    // Default combined feedforward gain
+
+        String kfToken = get_token(pid, 3, ',');
+
+        if (kfToken.length() > 0 && kfToken.toFloat() > 0.0f) {
+            Kf = kfToken.toFloat();
+        }
+
+        ESP_LOGI(LOG_TAG, "BLE received PID string: '%s'", pid.c_str());
+        ESP_LOGI(LOG_TAG, "Parsed PID: Kp=%.2f, Ki=%.2f, Kd=%.2f, Kf=%.3f (combined)",
+                 Kp, Ki, Kd, Kf);
         if (pidControlCallback != nullptr) {
-            pidControlCallback(Kp, Ki, Kd);
+            pidControlCallback(Kp, Ki, Kd, Kf);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PUMP_MODEL_COEFFS_CHAR_UUID))) {
         auto pumpModelCoeffs = String(pCharacteristic->getValue().c_str());

@@ -57,7 +57,9 @@ bool SimplePID::update() {
     float Dout = gainKd * derivative;
 
     // Calculate the output before antiwindup clamping
-    float sumPID = Pout + Iout + Dout + FFOut;
+    // Disturbance feedforward term is injected alongside PID terms.
+    float disturbanceOut = disturbanceInput * disturbanceGain;
+    float sumPID = Pout + Iout + Dout + FFOut + disturbanceOut;
     float sumPIDsat = constrain(sumPID, ctrlOutputLimits[0], ctrlOutputLimits[1]);
 
     // Antiwindup clamping
@@ -147,6 +149,11 @@ void SimplePID::setSamplingFrequency(float freq) { ctrl_freq_sampling = freq; }
 void SimplePID::setCtrlOutputLimits(float minOutput, float maxOutput) {
     ctrlOutputLimits[0] = minOutput;
     ctrlOutputLimits[1] = maxOutput;
+}
+
+void SimplePID::setDisturbanceFeedforward(float newDisturbanceInput, float newDisturbanceGain) {
+    disturbanceInput = newDisturbanceInput;
+    disturbanceGain = newDisturbanceGain;
 }
 
 void SimplePID::setMode(Control modeCMD) {

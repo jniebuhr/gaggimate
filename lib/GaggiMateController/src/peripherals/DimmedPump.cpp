@@ -33,12 +33,14 @@ DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, uint8_t rpm_pin, Pres
     // Start with pump output disabled.
     _psm.set(0);
 
+    // Initialize the extension I/O expander used by the DAC interface.
     if (!extension.init(Wire, sda_pin, scl_pin, XL9555_UNKOWN_ADDRESS)) {
         ESP_LOGE(LOG_TAG, "Failed to initialize extension I2C bus");
     } else {
         extension.setClock(1000000L);
     }
 
+    // Use a software I2C bus through the extension IO for the DAC.
     i2c = new SoftWire(0, 0);
     i2c->setTxBuffer(swTxBuffer, sizeof(swTxBuffer));
     i2c->setRxBuffer(swRxBuffer, sizeof(swRxBuffer));
@@ -52,6 +54,7 @@ DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, uint8_t rpm_pin, Pres
 
     delay(200);
 
+    // MCP4725 drives the analog control voltage for the pump.
     mcp = new MCP4725(0x60, i2c);
     mcp->setMaxVoltage(MCP_VOLTAGE);
     mcp->begin();
@@ -67,6 +70,7 @@ void DimmedPump::loop() {
     // Read pressure, map RPM/pressure to flow, and feed the controller.
     _currentPressure = _pressureSensor->getRawPressure();
 
+    // Update RPM sampling and derive flow from the vendor map.
     _rpmSensor.update();
     float rpm = _rpmSensor.getRPM();
 
@@ -141,6 +145,10 @@ float DimmedPump::getPumpFlow() { return _currentFlow; }
 float DimmedPump::getPuckFlow() { return _pressureController.getCoffeeFlowRate(); }
 
 float DimmedPump::getPuckResistance() { return _pressureController.getPuckResistance(); }
+
+float *DimmedPump::getPumpFlowPtr() { return &_currentFlow; }
+
+int *DimmedPump::getValveStatusPtr() { return &_valveStatus; }
 
 void DimmedPump::tare() {
     _pressureController.tare();
