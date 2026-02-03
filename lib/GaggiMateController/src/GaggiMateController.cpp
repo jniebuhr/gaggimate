@@ -13,6 +13,7 @@ GaggiMateController::GaggiMateController(String version) : _version(std::move(ve
     configs.push_back(GM_STANDARD_REV_2X);
     configs.push_back(GM_PRO_REV_1x);
     configs.push_back(GM_PRO_LEGO);
+    configs.push_back(GM_PRO_REV_11);
 }
 
 void GaggiMateController::setup() {
@@ -77,7 +78,7 @@ void GaggiMateController::setup() {
     if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         float* pumpFlowPtr = dimmedPump->getPumpFlowPtr();
-        bool* valveStatusPtr = dimmedPump->getValveStatusPtr();
+        int* valveStatusPtr = dimmedPump->getValveStatusPtr();
         
         heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
         heater->setFeedforwardScale(0.0f);
@@ -220,7 +221,9 @@ void GaggiMateController::sendSensorData() {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         _ble.sendSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getPuckFlow(),
                             dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
-        _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+        if (this->valve->getState()) {
+            _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+        }
     } else {
         _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
     }
