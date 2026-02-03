@@ -43,11 +43,15 @@ class ShotHistoryPlugin : public Plugin {
     void loadNotes(const String &id, JsonDocument &notes);
     void startRecording();
 
+    uint16_t getSystemInfo(); // Helper to pack system state bits
+
     unsigned long getTime();
 
     void endRecording();
-    void finalizeRecording();
+    void endExtendedRecording();
     void cleanupHistory();
+
+    void recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex); // Helper for phase transitions
 
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
@@ -62,7 +66,8 @@ class ShotHistoryPlugin : public Plugin {
 
     bool recording = false;
     bool extendedRecording = false;
-    bool indexEntryCreated = false; // Track if early index entry was created
+    bool indexEntryCreated = false;     // Track if early index entry was created
+    bool shotStartedVolumetric = false; // Track initial volumetric mode
     unsigned long shotStart = 0;
     unsigned long extendedRecordingStart = 0;
     unsigned long lastWeightChangeTime = 0;
@@ -74,6 +79,9 @@ class ShotHistoryPlugin : public Plugin {
     float currentEstimatedWeight = 0.0f;
     float currentPuckResistance = 0.0f;
     String currentProfileName;
+
+    // Phase transition tracking (v5+)
+    uint8_t lastRecordedPhase = 0xFF; // Invalid initial value to detect first phase
 
     xTaskHandle taskHandle;
     void flushBuffer();

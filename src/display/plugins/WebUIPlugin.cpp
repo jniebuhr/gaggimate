@@ -94,17 +94,17 @@ void WebUIPlugin::loop() {
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["btd"] = profileManager->getSelectedProfile().getTotalDuration();
-        doc["btv"] = controller->getSettings().getTargetVolume();
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
         doc["gtd"] = controller->getTargetGrindDuration();
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
         doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["gact"] = controller->isGrindActive() ? 1 : 0;
 
+        bool bleConnected = BLEScales.isConnected();
         // Add Bluetooth scale weight information
-        doc["bw"] = this->currentBluetoothWeight; // current bluetooth weight
-        doc["cw"] = this->currentBluetoothWeight; // Use 'currentWeight' for forward compatbility
-        doc["bc"] = BLEScales.isConnected();      // bluetooth scale connected status
+        doc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
+        doc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
+        doc["bc"] = bleConnected;                                    // bluetooth scale connected status
 
         Process *process = controller->getProcess();
         if (process == nullptr) {
@@ -190,11 +190,15 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
-    server.serveStatic("/api/history/", SPIFFS, "/h/").setCacheControl("no-store");
-    server.on("/api/history/index.bin", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    FS *fs = &SPIFFS;
+    if (controller->isSDCard()) {
+        fs = &SD_MMC;
+    }
+    server.serveStatic("/api/history/", *fs, "/h/").setCacheControl("no-store");
+    server.on("/api/history/index.bin", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
         // Serve the binary index file directly
-        if (SPIFFS.exists("/h/index.bin")) {
-            request->send(SPIFFS, "/h/index.bin", "application/octet-stream");
+        if (fs->exists("/h/index.bin")) {
+            request->send(*fs, "/h/index.bin", "application/octet-stream");
         } else {
             request->send(404, "text/plain", "Index not found");
         }
@@ -713,7 +717,7 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
         const uint64_t used = SD_MMC.usedBytes();
         const uint64_t freeBytes = total > used ? (total - used) : 0;
         doc["sdTotal"] = total;
-        doc["ssdUsed"] = used;
+        doc["sdUsed"] = used;
         doc["sdFree"] = freeBytes;
         if (total > 0) {
             // Provide integer percentage to avoid float JSON

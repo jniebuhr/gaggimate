@@ -33,6 +33,8 @@ bool SimplePID::update() {
 
     // Compute the filtered setpoint values
     float FFOut = 0.0f;
+    float DistFFOut = 0.0f;
+    
     if (isfilterSetpointActive) {
         setpointFiltering(setpointFilterFreq);
     } else {
@@ -41,6 +43,10 @@ bool SimplePID::update() {
 
     if (isFeedForwardActive)
         FFOut = setpointDerivative * gainFF;
+        
+    if (isDisturbanceFeedForwardActive)
+        DistFFOut = currentDisturbance * gainDistFF;
+        
     Serial.printf("%.2f\t %.2f\t %.2f\t %.2f\n", *setpointTarget, setpointFiltered, setpointDerivative, *sensorOutput);
 
     float deltaTime = 1.0f / ctrl_freq_sampling; // Time step in seconds
@@ -57,7 +63,7 @@ bool SimplePID::update() {
     float Dout = gainKd * derivative;
 
     // Calculate the output before antiwindup clamping
-    float sumPID = Pout + Iout + Dout + FFOut;
+    float sumPID = Pout + Iout + Dout + FFOut + DistFFOut;
     float sumPIDsat = constrain(sumPID, ctrlOutputLimits[0], ctrlOutputLimits[1]);
 
     // Antiwindup clamping
@@ -71,7 +77,7 @@ bool SimplePID::update() {
             error * deltaTime; // Forbide the integration to happen when the output is saturated and the error is in the same
                                // direction as the output (i.e. the system is not able to follow the setpoint)
         Iout = gainKi * feedback_integralState; // Recompute the integral term with the new state
-        sumPID = Pout + Iout + Dout + FFOut;    // Recompute the output with the new integral state
+        sumPID = Pout + Iout + Dout + FFOut + DistFFOut;    // Recompute the output with the new integral state
         sumPIDsat = constrain(sumPID, ctrlOutputLimits[0], ctrlOutputLimits[1]);
     }
 
@@ -182,4 +188,10 @@ void SimplePID::activateFeedForward(bool flag) {
     } else {
         isFeedForwardActive = flag;
     }
+}
+
+void SimplePID::setDisturbanceFeedforward(float disturbance, float gainDFF) {
+    currentDisturbance = disturbance;
+    gainDistFF = gainDFF;
+    isDisturbanceFeedForwardActive = (gainDFF != 0.0f);
 }

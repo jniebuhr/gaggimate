@@ -54,3 +54,4 @@ convert "tachometer-fast.svg" 40
 convert "pumpkin-alt-2.svg" 60
 convert "disk.svg" 30
 convert "floppy-disks.svg" 30
+convert "meter-droplet.svg" 40

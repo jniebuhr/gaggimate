@@ -6,8 +6,8 @@
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
 #include <display/core/zones.h>
+#include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
-#include <display/drivers/LilyGoTDisplayDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
 #include <display/ui/default/lvgl/ui_theme_manager.h>
@@ -75,10 +75,11 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
 
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
     : controller(controller), panelDriver(driver), pluginManager(pluginManager) {
-    profileManager = controller->getProfileManager();
+    setupPanel();
 }
 
 void DefaultUI::init() {
+    profileManager = controller->getProfileManager();
     auto triggerRender = [this](Event const &) { rerender = true; };
     pluginManager->on("boiler:currentTemperature:change", [=](Event const &event) {
         int newTemp = static_cast<int>(event.getFloat("value"));
@@ -158,12 +159,6 @@ void DefaultUI::init() {
         pressureAvailable = controller->getSystemInfo().capabilities.pressure;
     });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
-        configTzTime(resolve_timezone(controller->getSettings().getTimezone()), NTP_SERVER);
-        setenv("TZ", resolve_timezone(controller->getSettings().getTimezone()), 1);
-        tzset();
-        sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
-        sntp_setservername(0, NTP_SERVER);
-        sntp_init();
         rerender = true;
         apActive = event.getInt("AP");
     });
@@ -204,7 +199,6 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
-    setupPanel();
     setupState();
     setupReactive();
     xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
@@ -232,6 +226,7 @@ void DefaultUI::loop() {
         autotuning = controller->isAutotuning();
         const Settings &settings = controller->getSettings();
         volumetricAvailable = controller->isVolumetricAvailable();
+        bluetoothScales = controller->isBluetoothScaleHealthy();
         volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
         grindActive = controller->isGrindActive();
         active = controller->isActive();
@@ -309,7 +304,9 @@ void DefaultUI::onProfileSelect() {
 
 void DefaultUI::setupPanel() {
     ui_init();
+    lv_task_handler();
 
+    delay(100);
     // Set initial brightness based on settings
     const Settings &settings = controller->getSettings();
     setBrightness(settings.getMainBrightness());
@@ -513,7 +510,7 @@ void DefaultUI::setupReactive() {
                                                    LV_STYLE_TEXT_COLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_BrewScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_BG_IMG_RECOLOR,
+                                                   LV_STYLE_IMG_RECOLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_BrewScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
                                                    volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
@@ -527,7 +524,7 @@ void DefaultUI::setupReactive() {
                                                    LV_STYLE_TEXT_COLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_GrindScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_BG_IMG_RECOLOR,
+                                                   LV_STYLE_IMG_RECOLOR,
                                                    volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
             ui_object_set_themeable_style_property(ui_GrindScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
                                                    volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
@@ -603,22 +600,22 @@ void DefaultUI::setupReactive() {
                           &grindAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
-                              if (volumetricAvailable) {
+                              if (volumetricAvailable && bluetoothScales) {
                                   lv_label_set_text_fmt(ui_BrewScreen_weightLabel, "%.1fg", bluetoothWeight);
                               } else {
-                                  lv_label_set_text_fmt(ui_BrewScreen_weightLabel, "%.1fg", 0.0f);
+                                  lv_label_set_text(ui_BrewScreen_weightLabel, "-");
                               }
                           },
-                          &bluetoothWeight, &volumetricAvailable);
+                          &bluetoothWeight, &volumetricAvailable, &bluetoothScales);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
                           [=]() {
-                              if (volumetricAvailable) {
+                              if (volumetricAvailable && bluetoothScales) {
                                   lv_label_set_text_fmt(ui_GrindScreen_weightLabel, "%.1fg", bluetoothWeight);
                               } else {
-                                  lv_label_set_text_fmt(ui_GrindScreen_weightLabel, "%.1fg", 0.0f);
+                                  lv_label_set_text(ui_GrindScreen_weightLabel, "-");
                               }
                           },
-                          &bluetoothWeight, &volumetricAvailable);
+                          &bluetoothWeight, &volumetricAvailable, &bluetoothScales);
     effect_mgr.use_effect(
         [=] { return currentScreen == ui_BrewScreen; },
         [=]() {
@@ -630,8 +627,14 @@ void DefaultUI::setupReactive() {
             _ui_flag_modify(ui_BrewScreen_profileInfo, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Brew);
             _ui_flag_modify(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN,
                             brewScreenState == BrewScreenState::Brew && volumetricAvailable);
+            if (volumetricAvailable) {
+                lv_img_set_src(ui_BrewScreen_volumetricButton, bluetoothScales ? &ui_img_1424216268 : &ui_img_flowmeter_png);
+            }
         },
-        &brewScreenState, &volumetricAvailable);
+        &brewScreenState, &volumetricAvailable, &bluetoothScales);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
+                          [=]() { lv_img_set_src(ui_StandbyScreen_logo, christmasMode ? &ui_img_1510335 : &ui_img_logo_png); },
+                          &christmasMode);
 }
 
 void DefaultUI::handleScreenChange() {
@@ -646,7 +649,7 @@ void DefaultUI::handleScreenChange() {
         }
 
         _ui_screen_change(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0, targetScreenInit);
-        _ui_screen_delete(&current);
+        lv_obj_del(current);
         rerender = true;
     }
 }
@@ -673,6 +676,8 @@ void DefaultUI::updateStandbyScreen() {
             strftime(time, sizeof(time), format, &timeinfo);
             lv_label_set_text(ui_StandbyScreen_time, time);
             lv_obj_clear_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
+
+            christmasMode = (timeinfo.tm_mon == 11 && timeinfo.tm_mday < 27) || (timeinfo.tm_mon == 0 && timeinfo.tm_mday < 6);
         }
     } else {
         lv_obj_add_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
@@ -748,8 +753,8 @@ void DefaultUI::updateStatusScreen() const {
 
     if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget()) {
         Target target = phase.getVolumetricTarget();
-        lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume, LV_ANIM_OFF);
-        lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value + 1);
+        lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume * 10.0, LV_ANIM_OFF);
+        lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value * 10.0 + 1.0);
         lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1fg", target.value);
     } else if (brewProcess) {
         // Add bounds check for currentPhaseStarted timestamp
@@ -838,7 +843,7 @@ void DefaultUI::applyTheme() {
         currentThemeMode = newThemeMode;
         ui_theme_set(currentThemeMode);
 
-        if (LilyGoTDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
+        if (AmoledDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
             enable_amoled_black_theme_override(lv_disp_get_default());
         }
     }

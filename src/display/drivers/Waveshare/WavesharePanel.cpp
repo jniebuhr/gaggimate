@@ -53,9 +53,7 @@ bool WavesharePanel::begin(WS_RGBPanel_Color_Order order) {
     ledcSetup(WS_PWM_CHANNEL, WS_PWM_FREQ, WS_PWM_RESOLUTION);
     ledcAttachPin(WS_BOARD_TFT_BL, WS_PWM_CHANNEL);
 
-    I2C_Init();
-    delay(120);
-    TCA9554PWR_Init(0x00);
+    initExtension();
     Set_EXIO(EXIO_PIN8, Low);
 
     if (!initTouch()) {
@@ -68,7 +66,18 @@ bool WavesharePanel::begin(WS_RGBPanel_Color_Order order) {
     return true;
 }
 
+void WavesharePanel::initExtension() {
+    if (_extension_initialized) {
+        return;
+    }
+    I2C_Init();
+    delay(120);
+    TCA9554PWR_Init(0x00);
+    _extension_initialized = true;
+}
+
 bool WavesharePanel::installSD() {
+    initExtension();
     Mode_EXIO(EXIO_PIN4, TCA9554_OUTPUT_REG);
     Set_EXIO(EXIO_PIN4, High);
 

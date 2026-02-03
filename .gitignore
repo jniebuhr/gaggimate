@@ -9,3 +9,4 @@ __pycache__
 data/w
 .codebuddy
 src/version.h
+src/display/ui/default/lvgl/project.info

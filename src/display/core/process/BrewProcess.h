@@ -57,7 +57,8 @@ class BrewProcess : public Process {
         double volume = currentVolume;
         if (volume > 0.0) {
             double currentRate = volumetricRateCalculator.getRate();
-            const double predictedAddedVolume = currentRate * brewDelay;
+            double predictedAddedVolume = currentRate * brewDelay;
+            predictedAddedVolume = std::clamp(predictedAddedVolume, 0.0, 8.0);
             volume = currentVolume + predictedAddedVolume;
         }
         float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;

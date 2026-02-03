@@ -22,7 +22,7 @@ class VolumetricRateCalculator {
 
         size_t i = measurementTimes.size();
         double cutoff = time - windowDuration;
-        while (measurementTimes[i - 1] > cutoff) { // check from the most recent time
+        while (i > 0 && measurementTimes[i - 1] > cutoff) { // check from the most recent time
             i--;
         }
         // i is the index of the first entry after the cutoff
@@ -42,18 +42,40 @@ class VolumetricRateCalculator {
         double tdev2 = 0.0;
         double tdev_vdev = 0.0;
         for (size_t j = i; j < measurements.size(); j++) {
-            tdev_vdev += (measurementTimes[i] - t_mean) * (measurements[i] - v_mean);
-            tdev2 += pow(measurementTimes[i] - t_mean, 2.0);
+            tdev_vdev += (measurementTimes[j] - t_mean) * (measurements[j] - v_mean);
+            tdev2 += pow(measurementTimes[j] - t_mean, 2.0);
         }
+        
+        if (tdev2 < 1e-10) {
+            return 0.0;
+        }
+        
         double volumePerMilliSecond = tdev_vdev / tdev2;              // the slope (volume per millisecond) of the linear best fit
         return volumePerMilliSecond > 0 ? volumePerMilliSecond : 0.0; // return 0 if it is not positive, convert to seconds
     }
 
     double getOvershootAdjustMillis(double expectedVolume, double actualVolume) {
         if (measurementTimes.size() < 2)
+        {
             return 0.0;
-        double overshoot = actualVolume - expectedVolume;
-        return overshoot / getRate(measurementTimes.back());
+        }
+        
+        const double overshoot = actualVolume - expectedVolume;
+        const double rate = getRate(measurementTimes.back());
+        
+        if (rate < 1e-10) {
+            ESP_LOGW("VolumetricRateCalculator", "Invalid rate: %f", rate);
+            return 0.0;
+        }
+        
+        const double adjust = overshoot / rate;
+
+        if(isnan(adjust) || isinf(adjust) || adjust < 0.0) {
+            ESP_LOGW("VolumetricRateCalculator", "Invalid adjust: %f", adjust);
+            return 0.0;
+        }
+
+        return adjust;
     }
 
   private:

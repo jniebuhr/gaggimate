@@ -13,6 +13,7 @@ GaggiMateController::GaggiMateController(String version) : _version(std::move(ve
     configs.push_back(GM_STANDARD_REV_2X);
     configs.push_back(GM_PRO_REV_1x);
     configs.push_back(GM_PRO_LEGO);
+    configs.push_back(GM_PRO_REV_11);
 }
 
 void GaggiMateController::setup() {
@@ -43,27 +44,6 @@ void GaggiMateController::setup() {
     if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
         ESP_LOGE(LOG_TAG, "Failed to initialize I2C bus");
     }
-    delay(500);
-    int nDevices;
-    ESP_LOGI("", "Scanning...");
-    byte error, address;
-    nDevices = 0;
-    for (address = 1; address < 127; address++) {
-        ESP_LOGV(LOG_TAG, "Scanning 0x%02x", address);
-        Wire.beginTransmission(address);
-        error = Wire.endTransmission();
-        if (error == 0) {
-            ESP_LOGI("", "I2C device found at address 0x%02x", address);
-            nDevices++;
-        } else if (error == 4) {
-            ESP_LOGI("", "Unknow error at address 0x%02x", address);
-        }
-    }
-    if (nDevices == 0) {
-        ESP_LOGI("", "No I2C devices found");
-    } else {
-        ESP_LOGI("", "done");
-    }
     this->ledController = new LedController(&Wire);
     this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _ble.sendTofMeasurement(distance); });
     if (this->ledController->isAvailable()) {
@@ -76,6 +56,13 @@ void GaggiMateController::setup() {
     String systemInfo = make_system_info(_config, _version);
     _ble.initServer(systemInfo);
 
+    if (_config.capabilites.ledControls) {
+        this->ledController->setup();
+    }
+    if (_config.capabilites.tof) {
+        this->distanceSensor->setup();
+    }
+
     this->thermocouple->setup();
     this->heater->setup();
     this->valve->setup();
@@ -87,13 +74,17 @@ void GaggiMateController::setup() {
         pressureSensor->setup();
         _ble.registerPressureScaleCallback([this](float scale) { this->pressureSensor->setScale(scale); });
     }
-    if (_config.capabilites.ledControls) {
-        this->ledController->setup();
-    }
-    if (_config.capabilites.tof) {
-        // this->distanceSensor->setup();
-    }
+   // Set up thermal feedforward for main heater if pressure/dimming capability exists
+    if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
+        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        float* pumpFlowPtr = dimmedPump->getPumpFlowPtr();
+        int* valveStatusPtr = dimmedPump->getValveStatusPtr();
+        
+        heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
+        heater->setFeedforwardScale(0.0f);
+        
 
+    } 
     // Initialize last ping time
     lastPingTime = millis();
 
@@ -131,7 +122,13 @@ void GaggiMateController::setup() {
             dimmedPump->setValveState(valve);
         });
     _ble.registerAltControlCallback([this](bool state) { this->alt->set(state); });
-    _ble.registerPidControlCallback([this](float Kp, float Ki, float Kd) { this->heater->setTunings(Kp, Ki, Kd); });
+    _ble.registerPidControlCallback([this](float Kp, float Ki, float Kd, float Kf) { 
+        this->heater->setTunings(Kp, Ki, Kd); 
+        
+        // Apply thermal feedforward parameters if available
+        this->heater->setFeedforwardScale(Kf);
+
+    });
     _ble.registerPumpModelCoeffsCallback([this](float a, float b, float c, float d) {
         if (_config.capabilites.dimming) {
             auto dimmedPump = static_cast<DimmedPump *>(pump);
@@ -224,7 +221,9 @@ void GaggiMateController::sendSensorData() {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         _ble.sendSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getPuckFlow(),
                             dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
-        _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+        if (this->valve->getState()) {
+            _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+        }
     } else {
         _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
     }
