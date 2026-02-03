@@ -33,6 +33,9 @@ class DimmedPump : public Pump {
     float getPumpFlow();
     float getPuckFlow();
     float getPuckResistance();
+    // Accessors for heater feedforward (flow + valve state).
+    float *getPumpFlowPtr();
+    int *getValveStatusPtr();
 
     void tare();
 

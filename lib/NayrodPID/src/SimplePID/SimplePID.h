@@ -13,6 +13,8 @@ class SimplePID {
     void resetFeedbackController();
     void setSamplingFrequency(float freq);
     void setCtrlOutputLimits(float minOutput, float maxOutput);
+    // Adds a disturbance feedforward term (input * gain) to the controller output.
+    void setDisturbanceFeedforward(float disturbanceInput, float disturbanceGain);
 
     void initSetPointFilter(float initialValue);
     void setSetpointRateLimits(float lowerLimit, float upperLimit);
@@ -69,6 +71,8 @@ class SimplePID {
     float feedback_integralState = 0.0f; // Integral state
     float prevError = 0.0f;              // Previous error for derivative calculation
     float prevOutput = 0.0f;             // Previous output for derivative calculation
+    float disturbanceInput = 0.0f;       // Disturbance input for feedforward
+    float disturbanceGain = 0.0f;        // Gain for disturbance feedforward
     Control mode = Control::manual;
     float manualOutput = 0.0f;
     unsigned long lastTime = 0;
