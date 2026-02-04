@@ -1,20 +1,20 @@
 import {
-  Chart,
-  LineController,
-  TimeScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Legend,
-  Filler,
   CategoryScale,
+  Chart,
+  Filler,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  TimeScale,
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useEffect, useState, useContext, useRef } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
@@ -32,9 +32,11 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import { ConfirmButton } from '../../components/ConfirmButton.jsx';
+import { Tooltip } from '../../components/Tooltip.jsx';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 
 Chart.register(
   LineController,
@@ -362,55 +364,64 @@ function ProfileCard({
                   role='group'
                   aria-label={`Actions for ${data.label} profile`}
                 >
-                  <button
-                    onClick={onFavoriteToggle}
-                    disabled={favoriteToggleDisabled}
-                    className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
-                    aria-label={
-                      data.favorite
-                        ? `Remove ${data.label} from favorites`
-                        : `Add ${data.label} to favorites`
-                    }
-                    aria-pressed={data.favorite}
-                  >
-                    <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                  </button>
-                  <a
-                    href={`/profiles/${data.id}`}
-                    className='btn btn-sm btn-ghost'
-                    aria-label={`Edit ${data.label} profile`}
-                  >
-                    <FontAwesomeIcon icon={faPen} />
-                  </a>
-                  <button
-                    onClick={onDownload}
-                    className='btn btn-sm btn-ghost text-primary'
-                    aria-label={`Export ${data.label} profile`}
-                  >
-                    <FontAwesomeIcon icon={faFileExport} />
-                  </button>
-                  <button
-                    onClick={() => onDuplicate(data.id)}
-                    className='btn btn-sm btn-ghost text-success'
-                    aria-label={`Duplicate ${data.label} profile`}
-                  >
-                    <FontAwesomeIcon icon={faCopy} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      confirmOrDelete(() => onDelete(data.id));
-                    }}
-                    className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
-                    aria-label={
-                      confirmDelete
-                        ? `Confirm deletion of ${data.label} profile`
-                        : `Delete ${data.label} profile`
-                    }
-                    title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
-                  >
-                    <FontAwesomeIcon icon={faTrashCan} />
-                    {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
-                  </button>
+                  <Tooltip content={data.favorite ? 'Remove from favorites' : 'Add to favorites'}>
+                    <button
+                      onClick={onFavoriteToggle}
+                      disabled={favoriteToggleDisabled}
+                      className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
+                      aria-label={
+                        data.favorite
+                          ? `Remove ${data.label} from favorites`
+                          : `Add ${data.label} to favorites`
+                      }
+                      aria-pressed={data.favorite}
+                    >
+                      <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content='Edit profile'>
+                    <a
+                      href={`/profiles/${data.id}`}
+                      className='btn btn-sm btn-ghost'
+                      aria-label={`Edit ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faPen} />
+                    </a>
+                  </Tooltip>
+                  <Tooltip content='Export profile'>
+                    <button
+                      onClick={onDownload}
+                      className='btn btn-sm btn-ghost text-primary'
+                      aria-label={`Export ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faFileExport} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content='Duplicate profile'>
+                    <button
+                      onClick={() => onDuplicate(data.id)}
+                      className='btn btn-sm btn-ghost text-success'
+                      aria-label={`Duplicate ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faCopy} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content={confirmDelete ? 'Click to confirm' : 'Delete profile'}>
+                    <button
+                      onClick={() => {
+                        confirmOrDelete(() => onDelete(data.id));
+                      }}
+                      className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
+                      aria-label={
+                        confirmDelete
+                          ? `Confirm deletion of ${data.label} profile`
+                          : `Delete ${data.label} profile`
+                      }
+                    >
+                      <FontAwesomeIcon icon={faTrashCan} />
+                      {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -447,26 +458,28 @@ function ProfileCard({
             aria-label={`Profile details for ${data.label}`}
           >
             <div className='flex flex-col justify-evenly'>
-              <button
-                onClick={() => onMoveUp(data.id)}
-                disabled={isFirst}
-                className='btn btn-xs btn-ghost'
-                aria-label={`Move ${data.label} up`}
-                aria-disabled={isFirst}
-                title='Move up'
-              >
-                <FontAwesomeIcon icon={faArrowUp} />
-              </button>
-              <button
-                onClick={() => onMoveDown(data.id)}
-                disabled={isLast}
-                className='btn btn-xs btn-ghost'
-                aria-label={`Move ${data.label} down`}
-                aria-disabled={isLast}
-                title='Move down'
-              >
-                <FontAwesomeIcon icon={faArrowDown} />
-              </button>
+              <Tooltip content='Move up'>
+                <button
+                  onClick={() => onMoveUp(data.id)}
+                  disabled={isFirst}
+                  className='btn btn-xs btn-ghost'
+                  aria-label={`Move ${data.label} up`}
+                  aria-disabled={isFirst}
+                >
+                  <FontAwesomeIcon icon={faArrowUp} />
+                </button>
+              </Tooltip>
+              <Tooltip content='Move down'>
+                <button
+                  onClick={() => onMoveDown(data.id)}
+                  disabled={isLast}
+                  className='btn btn-xs btn-ghost'
+                  aria-label={`Move ${data.label} down`}
+                  aria-disabled={isLast}
+                >
+                  <FontAwesomeIcon icon={faArrowDown} />
+                </button>
+              </Tooltip>
             </div>
             <div className='flex-grow overflow-x-auto'>
               {data.type === 'pro' ? (
@@ -530,9 +543,18 @@ export function ProfileList() {
   const apiService = useContext(ApiServiceContext);
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('extraction');
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
   const favoriteDisabled = favoriteCount >= 10;
+  const hasUtilityProfiles = useMemo(() => profiles.some(p => p.utility), [profiles]);
+
+  useEffect(() => {
+    if (!hasUtilityProfiles) {
+      setActiveTab('extraction');
+    }
+  }, [hasUtilityProfiles]);
 
   const loadProfiles = async () => {
     const response = await apiService.request({ tp: 'req:profiles:list' });
@@ -719,6 +741,20 @@ export function ProfileList() {
     }
   }, [profiles, apiService]);
 
+  // Filtered profiles
+  const profilesToShow = useMemo(() => {
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim();
+      return profiles.filter(
+        profile =>
+          profile.label?.toLowerCase().includes(search) ||
+          profile.description?.toLowerCase().includes(search),
+      );
+    }
+    return profiles;
+  }, [profiles, searchTerm]);
+
   if (loading) {
     return (
       <div
@@ -736,58 +772,103 @@ export function ProfileList() {
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Profiles</h1>
-        <button
-          onClick={onExport}
-          className='btn btn-ghost btn-sm'
-          title='Export all profiles'
-          aria-label='Export all profiles'
-        >
-          <FontAwesomeIcon icon={faFileExport} />
-        </button>
-        <label
-          htmlFor='profileImport'
-          className='btn btn-ghost btn-sm cursor-pointer'
-          title='Import profiles'
-          aria-label='Import profiles'
-        >
-          <FontAwesomeIcon icon={faFileImport} />
-        </label>
-        <input
-          onChange={onUpload}
-          className='hidden'
-          id='profileImport'
-          type='file'
-          accept='.json,application/json,.tcl'
-          aria-label='Select a JSON file containing profile data to import'
-        />
-        <ConfirmButton
-          onAction={onClear}
-          icon={faTrashCan}
-          tooltip='Delete all profiles'
-          confirmTooltip='Confirm deletion'
-        />
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label='Profile list'>
-        {profiles.map((data, idx) => (
-          <ProfileCard
-            key={data.id}
-            data={data}
-            onDelete={onDelete}
-            onSelect={onSelect}
-            favoriteDisabled={favoriteDisabled}
-            unfavoriteDisabled={unfavoriteDisabled}
-            onUnfavorite={onUnfavorite}
-            onFavorite={onFavorite}
-            onDuplicate={onDuplicate}
-            onMoveUp={moveProfileUp}
-            onMoveDown={moveProfileDown}
-            isFirst={idx === 0}
-            isLast={idx === profiles.length - 1}
+      <div className='mb-4 flex flex-col items-center gap-2 sm:flex-row'>
+        {/* Controls Row */}
+        <div className='flex flex-col items-start gap-3 sm:flex-row sm:items-center'>
+          {/* Search */}
+          <label className='input w-full'>
+            <FontAwesomeIcon icon={faSearch} />
+            <input
+              type='text'
+              placeholder='Search...'
+              value={searchTerm}
+              onChange={e => {
+                setSearchTerm(e.target.value);
+              }}
+              className='grow'
+            />
+          </label>
+        </div>
+        <div className='flex flex-grow items-center justify-end gap-2'>
+          <Tooltip content='Export all profiles'>
+            <button
+              onClick={onExport}
+              className='btn btn-ghost btn-sm'
+              aria-label='Export all profiles'
+            >
+              <FontAwesomeIcon icon={faFileExport} />
+            </button>
+          </Tooltip>
+          <Tooltip content='Import profiles'>
+            <label
+              htmlFor='profileImport'
+              className='btn btn-ghost btn-sm cursor-pointer'
+              aria-label='Import profiles'
+            >
+              <FontAwesomeIcon icon={faFileImport} />
+            </label>
+          </Tooltip>
+          <input
+            onChange={onUpload}
+            className='hidden'
+            id='profileImport'
+            type='file'
+            accept='.json,application/json,.tcl'
+            aria-label='Select a JSON file containing profile data to import'
           />
-        ))}
-
+          <ConfirmButton
+            onAction={onClear}
+            icon={faTrashCan}
+            tooltip='Delete all profiles'
+            confirmTooltip='Confirm deletion'
+          />
+        </div>
+      </div>
+      <div className='mb-4' aria-label='Add profile'>
         <ProfileAddCard />
+      </div>
+      {hasUtilityProfiles && (
+        <div role='tablist' className='tabs tabs-border mb-4'>
+          <button
+            role='tab'
+            className={`tab ${activeTab === 'extraction' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('extraction')}
+            aria-label='Switch to extraction tab'
+          >
+            Extraction
+          </button>
+          <button
+            role='tab'
+            className={`tab ${activeTab === 'utility' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('utility')}
+            aria-label='Switch to utility tab'
+          >
+            Utility
+          </button>
+        </div>
+      )}
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label='Profile list'>
+        {profilesToShow
+          .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
+          .map((data, idx, filtered) => (
+            <ProfileCard
+              key={data.id}
+              data={data}
+              onDelete={onDelete}
+              onSelect={onSelect}
+              favoriteDisabled={favoriteDisabled}
+              unfavoriteDisabled={unfavoriteDisabled}
+              onUnfavorite={onUnfavorite}
+              onFavorite={onFavorite}
+              onDuplicate={onDuplicate}
+              onMoveUp={moveProfileUp}
+              onMoveDown={moveProfileDown}
+              isFirst={idx === 0}
+              isLast={idx === filtered.length - 1}
+            />
+          ))}
       </div>
     </>
   );

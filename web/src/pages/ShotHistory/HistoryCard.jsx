@@ -17,6 +17,7 @@ import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import VisualizerUploadModal from '../../components/VisualizerUploadModal.jsx';
 import { visualizerService } from '../../services/VisualizerService.js';
 import { ApiServiceContext } from '../../services/ApiService.js';
+import { Tooltip } from '../../components/Tooltip.jsx';
 
 function round2(v) {
   if (v == null || Number.isNaN(v)) return v;
@@ -173,22 +174,18 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                 )}
 
                 <div className='flex flex-row gap-1'>
-                  <div
-                    className='tooltip tooltip-left'
-                    data-tip={shot.loaded ? 'Export' : 'Load first'}
-                  >
+                  <Tooltip content={shot.loaded ? 'Export' : 'Load first'}>
                     <button
                       disabled={!shot.loaded}
-                      onClick={onExport} // no wrapper needed
+                      onClick={onExport}
                       className='text-base-content/50 hover:text-info hover:bg-info/10 rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
                       aria-label='Export shot data'
                     >
                       <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
                     </button>
-                  </div>
-                  <div
-                    className='tooltip tooltip-left'
-                    data-tip={
+                  </Tooltip>
+                  <Tooltip
+                    content={
                       canUpload
                         ? 'Upload to Visualizer.coffee'
                         : 'Load shot data first by expanding the shot'
@@ -206,23 +203,19 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                     >
                       <FontAwesomeIcon icon={faUpload} />
                     </button>
-                  </div>
-                  <div
-                    className='tooltip tooltip-left'
-                    data-tip={confirmDelete ? 'Click to confirm delete' : 'Delete'}
-                  >
+                  </Tooltip>
+                  <Tooltip content={confirmDelete ? 'Click to confirm delete' : 'Delete'}>
                     <button
                       onClick={() => {
                         confirmOrDelete(() => onDelete(shot.id));
                       }}
                       className={`rounded-md p-2 transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
                       aria-label={confirmDelete ? 'Confirm deletion of shot' : 'Delete shot'}
-                      title={confirmDelete ? 'Click to confirm delete' : 'Delete shot'}
                     >
                       <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
                       {confirmDelete && <span className='ml-2 hidden sm:inline'>Confirm</span>}
                     </button>
-                  </div>
+                  </Tooltip>
                 </div>
               </div>
             </div>
