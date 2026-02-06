@@ -222,6 +222,49 @@ void BLEScalePlugin::onProcessStart() {
 
 void BLEScalePlugin::tare() { onProcessStart(); }
 
+bool BLEScalePlugin::waitForZero(uint32_t timeoutMs) {
+    if (scale == nullptr || !scale->isConnected()) {
+        ESP_LOGW("BLEScalePlugin", "Cannot wait for zero: no connected scale");
+        return false;
+    }
+
+    // If no tare in progress, start one.
+    if (tareState == TareState::IDLE) {
+        tareAttempt = 0;
+        scale->tare();
+        tareStartTime = millis();
+        tareState = TareState::WAITING_FOR_STABLE;
+        ESP_LOGI("BLEScalePlugin", "Tare initiated (waitForZero), waiting for stable zero");
+    }
+
+    const unsigned long start = millis();
+    unsigned long lastSeenMeasurement = lastMeasurementTime;
+
+    while (millis() - start < timeoutMs) {
+        // Keep scale state fresh.
+        scale->update();
+        checkTareProgress();
+
+        float w = scale->getWeight();
+        bool gotNewWeight = lastMeasurementTime != lastSeenMeasurement;
+
+        // Record that we saw a new measurement so we don’t accept stale readings
+        if (gotNewWeight) {
+            lastSeenMeasurement = lastMeasurementTime;
+        }
+
+        // Success path: tare finished and a fresh measurement is ~0
+        if (tareState == TareState::IDLE && gotNewWeight && fabsf(w) <= TARE_TOLERANCE) {
+            return true;
+        }
+
+        delay(20); // brief yield while waiting
+    }
+
+    ESP_LOGW("BLEScalePlugin", "waitForZero timed out after %ums", timeoutMs);
+    return false;
+}
+
 void BLEScalePlugin::checkTareProgress() {
     if (tareState != TareState::WAITING_FOR_STABLE) {
         return;

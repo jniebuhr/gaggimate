@@ -554,9 +554,13 @@ void Controller::activate() {
 #endif
         if (mode == MODE_BREW) {
             pluginManager->trigger("controller:brew:prestart");
+            // Block until tare has actually zeroed, or timeout
+            bool tareOk = BLEScales.waitForZero(2000);
+            if (!tareOk) {
+                ESP_LOGW(LOG_TAG, "Brew starting without confirmed tare zero (timeout)");
+            }
         }
     }
-    delay(200);
     switch (mode) {
     case MODE_BREW:
         startProcess(new BrewProcess(profileManager->getSelectedProfile(),

@@ -40,6 +40,8 @@ class BLEScalePlugin : public Plugin {
 
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
     void tare();
+    // Wait for tare to reach near-zero; returns true on success, false if timed out or disconnected.
+    bool waitForZero(uint32_t timeoutMs = 2000);
 
   private:
     void update();
