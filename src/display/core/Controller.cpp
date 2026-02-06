@@ -524,7 +524,11 @@ void Controller::updateControl() {
         }
         //shut off pump if pressure if higher than 5 bar in water mode, to avoid high pressure.
         if (currentProcess->getType() == MODE_WATER) {
-            clientController.sendAdvancedOutputControl(false, targetTemp, false, 5.0f, 0.0f);
+            if (brewProcess->getPumpPressure() < 5.0f) {
+                clientController.sendOutputControl(false, currentProcess->getPumpValue(), targetTemp)
+            } else {
+                clientController.sendOutputControl(false, 0, targetTemp)
+            }
             return;
         }
         if (currentProcess->getType() == MODE_BREW) {
