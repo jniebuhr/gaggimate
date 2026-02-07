@@ -6,6 +6,8 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { Tooltip } from '../../components/Tooltip.jsx';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
+  const isNumeric = v => typeof v === 'number';
+
   const onFieldChange = (field, value) => {
     onChange({
       ...phase,
@@ -43,10 +45,11 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
 
   const targets = phase?.targets || [];
 
-  const pumpPower = isNumber(phase.pump) ? phase.pump : 100;
+  const pumpPower = isNumeric(phase.pump) ? phase.pump : 100;
   const pressure = !isNumber(phase.pump) ? phase.pump.pressure : 0;
   const flow = !isNumber(phase.pump) ? phase.pump.flow : 0;
-  const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
+  const mode = isNumeric(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
+
   const availableTargetTypes = TargetTypes.filter(
     t => !targets.find(t2 => t2.type === t.type && t2.operator === t.operator),
   );
