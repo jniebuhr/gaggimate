@@ -80,7 +80,7 @@ void WifiManager::wifiTask(void *parameter) {
 
         // Handle connection state
         if (WiFi.status() == WL_CONNECTED) {
-            if (!xEventGroupGetBits(manager->wifiEventGroup) & WIFI_CONNECTED_BIT) {
+            if (!(xEventGroupGetBits(manager->wifiEventGroup) & WIFI_CONNECTED_BIT)) {
                 // Just connected
                 xEventGroupSetBits(manager->wifiEventGroup, WIFI_CONNECTED_BIT);
                 xEventGroupClearBits(manager->wifiEventGroup, WIFI_FAIL_BIT);
