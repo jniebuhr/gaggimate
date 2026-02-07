@@ -15,6 +15,7 @@
 #include <display/plugins/AutoWakeupPlugin.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
+#include <display/plugins/DebugLogPlugin.h>
 #include <display/plugins/HomekitPlugin.h>
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
@@ -69,6 +70,7 @@ void Controller::setup() {
     if (settings.isHomeAssistant()) {
         pluginManager->registerPlugin(new MQTTPlugin());
     }
+    pluginManager->registerPlugin(&DebugLog);
     pluginManager->registerPlugin(new WebUIPlugin());
     pluginManager->registerPlugin(&ShotHistory);
     pluginManager->registerPlugin(&BLEScales);
@@ -177,11 +179,11 @@ void Controller::setupBluetooth() {
 
 void Controller::setupInfos() {
     const std::string info = clientController.readInfo();
-    printf("System info: %s\n", info.c_str());
+    ESP_LOGI(LOG_TAG, "System info: %s", info.c_str());
     JsonDocument doc;
     DeserializationError err = deserializeJson(doc, info);
     if (err) {
-        printf("Error deserializing JSON: %s\n", err.c_str());
+        ESP_LOGE(LOG_TAG, "Error deserializing JSON: %s", err.c_str());
         systemInfo = SystemInfo{
             .hardware = "GaggiMate Standard 1.x", .version = "v1.0.0", .capabilities = {.dimming = false, .pressure = false}};
     } else {
