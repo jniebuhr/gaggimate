@@ -18,8 +18,9 @@ constexpr int TEMP_HISTORY_INTERVAL = 250;
 constexpr int TEMP_HISTORY_LENGTH = 20 * 1000 / TEMP_HISTORY_INTERVAL;
 
 // Heater power equilibrium warmup detection
-constexpr unsigned long HEATER_POWER_WINDOW_MS = 60000; // Window size for sampling
-constexpr float HEATER_POWER_TREND_THRESHOLD = 1.0f;    // Max avg power diff (%) between windows
+constexpr unsigned long HEATER_POWER_WINDOW_MS = 60000;       // Window size for sampling
+constexpr float HEATER_POWER_TREND_THRESHOLD = 1.0f;          // Max avg power diff (%) between windows
+constexpr unsigned long STABLE_FALLBACK_MS = 10 * 60 * 1000;  // Fallback warmup if no heater power data
 
 int16_t calculate_angle(int set_temp, int range, int offset);
 
