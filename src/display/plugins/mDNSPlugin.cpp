@@ -3,7 +3,10 @@
 #include "../core/Event.h"
 #include <ESPmDNS.h>
 #include <WiFi.h>
+#include <esp_log.h>
 #include <version.h>
+
+static constexpr char LOG_TAG[] = "mDNSPlugin";
 
 void mDNSPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
@@ -14,7 +17,7 @@ void mDNSPlugin::start(Event const &event) const {
     if (apMode)
         return;
     if (!MDNS.begin(controller->getSettings().getMdnsName().c_str())) {
-        Serial.println(F("Error setting up MDNS responder!"));
+        ESP_LOGE(LOG_TAG, "Error setting up mDNS responder");
         return;
     }
 
@@ -28,5 +31,5 @@ void mDNSPlugin::start(Event const &event) const {
     MDNS.addServiceTxt("gaggimate", "tcp", "version", BUILD_GIT_VERSION);
     MDNS.addServiceTxt("gaggimate", "tcp", "type", "espresso_machine");
 
-    Serial.println(F("mDNS responder started with service advertisement"));
+    ESP_LOGI(LOG_TAG, "mDNS responder started with service advertisement");
 }
