@@ -83,6 +83,10 @@ void DefaultUI::updateTempStableFlag() {
         heaterPowerWindowStart = now;
     }
 
+    if (!isWarmedUp && heaterPowerTimeTotal == 0 && (now - heaterPowerWindowStart) >= STABLE_FALLBACK_MS) {
+        isWarmedUp = true;
+    }
+
     if (!isWarmedUp && heaterPowerTimeTotal > 0 && (now - heaterPowerWindowStart) >= HEATER_POWER_WINDOW_MS) {
         float avgPower = heaterPowerTimeSum / heaterPowerTimeTotal;
         if (lastHeaterPowerWindowAvg >= 0.0f) {
