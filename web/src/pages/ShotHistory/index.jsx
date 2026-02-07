@@ -138,7 +138,9 @@ export function ShotHistory() {
 
       switch (sortBy) {
         case 'date':
-          comparison = a.timestamp - b.timestamp;
+          // Use ID for date sorting since it's always sequential,
+          // unlike timestamp which can reset if hardware time is lost
+          comparison = Number.parseInt(a.id, 10) - Number.parseInt(b.id, 10);
           break;
         case 'rating':
           comparison = (a.rating || 0) - (b.rating || 0);
@@ -153,7 +155,7 @@ export function ShotHistory() {
           comparison = (a.volume || 0) - (b.volume || 0);
           break;
         default:
-          comparison = a.timestamp - b.timestamp;
+          comparison = Number.parseInt(a.id, 10) - Number.parseInt(b.id, 10);
       }
 
       return sortOrder === 'desc' ? -comparison : comparison;
