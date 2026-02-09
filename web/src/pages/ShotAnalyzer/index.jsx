@@ -223,7 +223,7 @@ export function ShotAnalyzer() {
                     <div className="mt-16 text-center">
                         <div className="inline-block p-10 bg-base-200/30 border-2 border-dashed border-base-content/10 rounded-2xl max-w-lg w-full">
                             <h3 className="text-xl font-semibold text-base-content mb-2">No Shot Loaded</h3>
-                            <p className="text-base-content/70">Import a shot file to start analyzing</p>
+                            <p className="text-base-content/70">Click on the library or import a shot file to start analyzing</p>
                         </div>
                     </div>
                 )}
