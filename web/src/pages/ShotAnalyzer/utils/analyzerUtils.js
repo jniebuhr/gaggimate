@@ -435,10 +435,20 @@ export const formatDuration = (samples) => {
 export const detectDoseFromProfileName = (profileName) => {
     if (!profileName) return null;
     
-    // Match patterns like "18g", "20.5g" in profile names
-    // Uses split match to avoid ReDoS from nested quantifiers (SonarQube S5852)
-    const match = profileName.match(/(\d+\.?\d*)g\b/i);
-    return match ? parseFloat(match[1]) : null;
+    // Find dose patterns like "18g", "20.5g" without regex (avoids ReDoS, SonarQube S5852)
+    const lower = profileName.toLowerCase();
+    const gIndex = lower.indexOf('g');
+    if (gIndex < 1) return null;
+    
+    // Walk backwards from 'g' to collect the number
+    let start = gIndex - 1;
+    while (start > 0 && (lower[start - 1] >= '0' && lower[start - 1] <= '9' || lower[start - 1] === '.')) {
+        start--;
+    }
+    
+    const candidate = lower.slice(start, gIndex);
+    const value = parseFloat(candidate);
+    return (!isNaN(value) && value > 0) ? value : null;
 };
 
 /**
