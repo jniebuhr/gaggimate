@@ -590,7 +590,7 @@ export const saveToLibrary = (collection, fileName, data) => {
         saveDate: Date.now(),
         shotDate: data.timestamp ? data.timestamp * 1000 : Date.now(),
         profileName: data.profile || "Manual/Unknown",
-        duration: data.samples 
+        duration: data.samples?.length
             ? ((data.samples[data.samples.length - 1].t - data.samples[0].t) / 1000).toFixed(1) 
             : 0,
         data: data
