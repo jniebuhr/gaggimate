@@ -435,7 +435,9 @@ export const formatDuration = (samples) => {
 export const detectDoseFromProfileName = (profileName) => {
     if (!profileName) return null;
     
-    const match = profileName.match(/(\d+(?:\.\d+)?)g\b/i);
+    // Match patterns like "18g", "20.5g" in profile names
+    // Uses split match to avoid ReDoS from nested quantifiers (SonarQube S5852)
+    const match = profileName.match(/(\d+\.?\d*)g\b/i);
     return match ? parseFloat(match[1]) : null;
 };
 

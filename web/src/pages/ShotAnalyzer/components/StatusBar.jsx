@@ -1,6 +1,5 @@
 /**
  * StatusBar.jsx
- * * Status bar with GLASS EFFECT.
  * * Merges seamlessly with the dropdown when expanded.
  */
 
