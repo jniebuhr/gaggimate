@@ -212,7 +212,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                     let predictedW = lastW;
                     if (lastW > 0.1 && !scaleConnectionBrokenPermanently) {
                         let currentRate = (lastVF !== undefined) ? lastVF : lastF;
-                        let predictedAdded = currentRate * (scaleDelayMs / 500.0);
+                        let predictedAdded = currentRate * (scaleDelayMs / 500.0); //Normally 1000, but we are currently using this to obtain more realistic values in the Tool (with 1000, the prediction deviates too much from what the predictive scale delay should actually indicate).
                         
                         // Clamp prediction
                         if (predictedAdded < 0) predictedAdded = 0;
