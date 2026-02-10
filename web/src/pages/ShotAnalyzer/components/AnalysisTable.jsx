@@ -149,7 +149,7 @@ export function AnalysisTable({ results, activeColumns, onColumnsChange, setting
                         <div className="flex items-center gap-1 bg-base-content/5 rounded p-0.5 border border-base-content/5">
                             <ScrollBtn icon={faArrowLeft} onClick={() => scrollToBound('start')} />
                             <ScrollBtn icon={faAngleDoubleLeft} onClick={() => scrollTable(-300)} />
-                            <ScrollBtn icon={faAngleLeft} onClick={() => scrollTable(-100)} className="border-r border-base-content/10 rounded-r-none mr-1" />
+                            <ScrollBtn icon={faAngleLeft} onClick={() => scrollTable(-100)} className="rounded-r-none mr-1" />
                             <ScrollBtn icon={faAngleRight} onClick={() => scrollTable(100)} className="rounded-l-none" />
                             <ScrollBtn icon={faAngleDoubleRight} onClick={() => scrollTable(300)} />
                             <ScrollBtn icon={faArrowRight} onClick={() => scrollToBound('end')} />
