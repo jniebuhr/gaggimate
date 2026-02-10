@@ -69,6 +69,9 @@ class DefaultUI {
     int isTemperatureStable = false;
     unsigned long lastTempLog = 0;
 
+    // recognize status change for plugins
+    int prevIsTemperatureStable = false;
+
     void updateTempHistory();
     void updateTempStableFlag();
     void adjustHeatingIndicator(lv_obj_t *contentPanel);
