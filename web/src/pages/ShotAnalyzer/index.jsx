@@ -204,38 +204,40 @@ export function ShotAnalyzer() {
                                     Supported Sources
                                 </p>
 
-                                {/* GM Section - Cyan */}
+                                {/* GM Section */}
                                 <div className="flex gap-4 items-start group">
-                                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center 
-                                        bg-cyan-500/20 dark:bg-cyan-500/10 border border-cyan-500/20">
-                                        <span className="text-xs font-black text-cyan-800 dark:text-cyan-300">GM</span>
+                                    <div className="flex-shrink-0 w-10 h-8 rounded flex items-center justify-center 
+                                        bg-cyan-500/10 border border-cyan-500/20">
+                                        <span className="text-[10px] font-black text-cyan-500 tracking-tighter">GM</span>
                                     </div>
+                                    
                                     <div className="flex-1">
-                                        <h3 className="font-bold text-base-content text-sm mb-1 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors">
-                                            GaggiMate
+                                        <h3 className="font-bold text-sm mb-1 text-base-content group-hover:text-cyan-500 transition-colors">
+                                            GaggiMate Controller
                                         </h3>
-                                        <p className="text-xs text-base-content opacity-80 leading-relaxed">
-                                            Your saved shots and profiles directly from the controller.
+                                        <p className="text-xs text-base-content leading-relaxed">
+                                            Your saved shots and profiles directly from the controller's internal storage.
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* Divider */}
-                                <div className="w-full h-px bg-base-content/10"></div>
+                                {/* Divider - Subtle */}
+                                <div className="w-full h-px bg-base-content/5"></div>
 
-                                {/* WEB Section - Purple */}
+                                {/* WEB Section */}
                                 <div className="flex gap-4 items-start group">
-                                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center 
-                                        bg-purple-500/20 dark:bg-purple-500/10 border border-purple-500/20">
-                                        <span className="text-xs font-black text-purple-800 dark:text-purple-300">WEB</span>
+                                    <div className="flex-shrink-0 w-10 h-8 rounded flex items-center justify-center 
+                                        bg-purple-500/10 border border-purple-500/20">
+                                        <span className="text-[10px] font-black text-purple-500 tracking-tighter">WEB</span>
                                     </div>
+                                    
                                     <div className="flex-1">
-                                        <h3 className="font-bold text-base-content text-sm mb-1 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
-                                            Local Browser Uploads
+                                        <h3 className="font-bold text-sm mb-1 text-base-content group-hover:text-purple-500 transition-colors">
+                                            Local Browser Storage
                                         </h3>
-                                        <div className="text-xs text-base-content opacity-80 leading-relaxed">
-                                            External <code className="bg-base-100 px-1 py-0.5 rounded border border-base-content/10 text-[10px] font-mono mx-1">.json</code> shot and profile files. 
-                                            <span className="block mt-1">Drag & Drop or Click the Import button. Bulk import possible.</span>
+                                        <div className="text-xs text-base-content leading-relaxed">
+                                            External <code className="bg-base-100 px-1 py-0.5 rounded border border-base-content/10 text-[10px] font-mono mx-0.5 text-purple-500">.json</code> files. 
+                                            <span className="block mt-1">Drag & Drop files or use the Import button. Bulk upload is supported.</span>
                                         </div>
                                     </div>
                                 </div>

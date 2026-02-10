@@ -91,29 +91,29 @@ export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = 
         return col.label + suffix;
     };
 
-    // --- Dynamic Styles based on Integration Mode ---
+    // Container styles using fixed base colors
     const containerClasses = isIntegrated
-        ? "bg-base-200 border-t border-base-content/10 rounded-b-lg" // Footer style
-        : "bg-base-200/50 backdrop-blur-sm rounded-lg shadow-sm border border-base-content/5 mb-5"; // Standalone card style
+        ? "bg-base-200 border-t border-base-content/10 rounded-b-lg" 
+        : "bg-base-200/80 backdrop-blur-md rounded-lg shadow-sm border border-base-content/10 mb-5";
 
     return (
         <div className={`overflow-hidden transition-colors ${containerClasses}`}>
             {/* Header Bar */}
             <div 
-                className="px-4 py-3 flex items-center gap-4 cursor-pointer hover:bg-base-content/5 select-none"
+                className="px-4 py-3 flex items-center gap-4 cursor-pointer hover:bg-base-content/10 select-none"
                 onClick={() => setExpanded(!expanded)}
             >
                 <div className={`text-primary transition-transform duration-300 text-xs ${expanded ? 'rotate-180' : ''}`}>
                     <FontAwesomeIcon icon={faChevronDown} />
                 </div>
                 
-                <div className="flex-1 min-w-0 font-bold text-base-content opacity-80 text-xs uppercase tracking-wider">
+                <div className="flex-1 min-w-0 font-bold text-base-content text-xs uppercase tracking-wider">
                     Column Configuration
                 </div>
                 
                 {/* Quick Controls in Header */}
                 <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                    <button onClick={applyStandard} className="btn btn-ghost btn-xs text-[10px] h-6 min-h-0 font-bold uppercase tracking-wider opacity-50 hover:opacity-100">
+                    <button onClick={applyStandard} className="btn btn-ghost btn-xs text-[10px] h-6 min-h-0 font-bold uppercase tracking-wider">
                         Standard
                     </button>
 
@@ -129,7 +129,7 @@ export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = 
                             }
                         }}
                         onClick={e => e.stopPropagation()}
-                        className="select select-bordered select-xs h-6 min-h-0 text-[10px] font-bold bg-base-100/50"
+                        className="select select-bordered select-xs h-6 min-h-0 text-[10px] font-bold bg-base-100"
                     >
                         <option value="" disabled>Presets...</option>
                         <option value="ALL_METRICS">All Metrics</option>
@@ -138,30 +138,30 @@ export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = 
                     </select>
 
                     {selectedPresetId && selectedPresetId !== 'ALL_METRICS' && (
-                        <button onClick={deletePreset} className="btn btn-ghost btn-xs h-6 min-h-0 text-error/60 hover:text-error">
+                        <button onClick={deletePreset} className="btn btn-ghost btn-xs h-6 min-h-0 text-error">
                             <FontAwesomeIcon icon={faTrash} />
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* Expandable Content */}
+            {/* Expandable Selection Grid */}
             {expanded && (
-                <div className="px-5 py-6 border-t border-base-content/5 animate-fade-in bg-base-100/50">
+                <div className="px-5 py-6 border-t border-base-content/10 animate-fade-in bg-base-100">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {Object.keys(groupedColumns).map(groupKey => {
                             const cols = groupedColumns[groupKey];
                             const colors = groupColors[groupKey] || groupColors.basics;
                             
                             return (
-                                <div key={groupKey} className={`rounded-md p-3 ${colors.bg} border border-base-content/5`}>
-                                    <h4 className={`text-[10px] font-bold uppercase tracking-wider mb-2 border-b border-base-content/10 pb-1 ${colors.text} opacity-80`}>
+                                <div key={groupKey} className={`rounded-md p-3 ${colors.bg} border ${colors.border}`}>
+                                    <h4 className={`text-[10px] font-bold uppercase tracking-wider mb-2 border-b border-current pb-1 ${colors.text}`}>
                                         {groups[groupKey]}
                                     </h4>
                                     
                                     <div className="space-y-1.5">
                                         {cols.map(col => (
-                                            <label key={col.id} className={`flex items-start gap-2 text-xs cursor-pointer hover:opacity-100 transition-opacity group ${colors.text}`}>
+                                            <label key={col.id} className={`flex items-start gap-2 text-xs cursor-pointer group ${colors.text}`}>
                                                 <input
                                                     type="checkbox"
                                                     checked={activeColumns.has(col.id)}
@@ -169,7 +169,7 @@ export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = 
                                                     className={`checkbox checkbox-xs rounded-sm mt-0.5 ${colors.border}`}
                                                     style={{ borderColor: 'currentColor' }}
                                                 />
-                                                <span className="opacity-80 group-hover:opacity-100 leading-tight">
+                                                <span className="font-medium leading-tight">
                                                     {getDetailedLabel(col)}
                                                 </span>
                                             </label>
@@ -180,15 +180,16 @@ export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = 
                         })}
                     </div>
                     
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-base-content/5">
+                    {/* Action Footer */}
+                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-base-content/10">
                         <div className="flex gap-2">
-                            <button onClick={applyFactoryReset} className="btn btn-xs btn-ghost gap-1 text-[10px] font-bold uppercase opacity-40 hover:opacity-100 hover:text-error">
+                            <button onClick={applyFactoryReset} className="btn btn-xs btn-ghost gap-1 text-[10px] font-bold uppercase text-base-content/60 hover:text-error">
                                 <FontAwesomeIcon icon={faUndo} /> Reset Defaults
                             </button>
                         </div>
                         
                         <div className="flex gap-2">
-                            <button onClick={saveAsStandard} className="btn btn-xs btn-ghost text-[10px] font-bold uppercase opacity-40 hover:opacity-100">
+                            <button onClick={saveAsStandard} className="btn btn-xs btn-ghost text-[10px] font-bold uppercase text-base-content/60 hover:text-base-content">
                                 Save as Standard
                             </button>
                             <button onClick={saveAsPreset} className="btn btn-xs btn-outline btn-primary text-[10px]">

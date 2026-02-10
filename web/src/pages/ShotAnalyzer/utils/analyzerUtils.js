@@ -311,59 +311,59 @@ export const groups = {
  */
 export const groupColors = {
     basics: {
-        bg: 'bg-base-content/5',         
-        text: 'text-base-content',       
-        border: 'border-base-content/10'
+        bg: 'bg-slate-500/10',         
+        text: 'text-slate-500',
+        border: 'border-slate-500/20'
     },
     pressure: {
-        bg: 'bg-blue-500/5',             
-        text: 'text-blue-600 dark:text-blue-400', 
-        border: 'border-blue-500/20'
+        bg: 'bg-sky-500/10',             
+        text: 'text-sky-500',
+        border: 'border-sky-500/20'
     },
     target_pressure: {
-        bg: 'bg-blue-500/5',
-        text: 'text-blue-500 dark:text-blue-300',
-        border: 'border-blue-500/10'
+        bg: 'bg-sky-500/5',
+        text: 'text-sky-400', 
+        border: 'border-sky-500/10'
     },
     flow: {
-        bg: 'bg-green-500/5',
-        text: 'text-green-600 dark:text-green-400',
-        border: 'border-green-500/20'
-    },
-    target_flow: {
-        bg: 'bg-green-500/5',
-        text: 'text-green-500 dark:text-green-300',
-        border: 'border-green-500/10'
-    },
-    puckflow: {
-        bg: 'bg-emerald-500/5',
-        text: 'text-emerald-700 dark:text-emerald-400',
+        bg: 'bg-emerald-500/10',
+        text: 'text-emerald-500', 
         border: 'border-emerald-500/20'
     },
+    target_flow: {
+        bg: 'bg-emerald-500/5',
+        text: 'text-emerald-400', 
+        border: 'border-emerald-500/10'
+    },
+    puckflow: {
+        bg: 'bg-cyan-500/10',
+        text: 'text-cyan-500', 
+        border: 'border-cyan-500/20'
+    },
     temp: {
-        bg: 'bg-orange-500/5',
-        text: 'text-orange-600 dark:text-orange-400',
+        bg: 'bg-orange-500/10',
+        text: 'text-orange-500', 
         border: 'border-orange-500/20'
     },
     target_temp: {
         bg: 'bg-orange-500/5',
-        text: 'text-orange-500 dark:text-orange-300',
+        text: 'text-orange-400', 
         border: 'border-orange-500/10'
     },
     weight: {
-        bg: 'bg-purple-500/5',
-        text: 'text-purple-600 dark:text-purple-400',
+        bg: 'bg-purple-500/10',
+        text: 'text-purple-500', 
         border: 'border-purple-500/20'
     },
     weight_det: {
         bg: 'bg-purple-500/5',
-        text: 'text-purple-500 dark:text-purple-300',
+        text: 'text-purple-400', 
         border: 'border-purple-500/10'
     },
     system: {
-        bg: 'bg-base-content/5',
-        text: 'text-base-content/70',
-        border: 'border-base-content/10'
+        bg: 'bg-slate-500/10',
+        text: 'text-slate-500', 
+        border: 'border-slate-500/20'
     }
 };
 
