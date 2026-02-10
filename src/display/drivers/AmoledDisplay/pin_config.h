@@ -91,7 +91,7 @@ constexpr AmoledHwConfig WAVESHARE_S3_AMOLED_143_HW_CONFIG{
     .lcd_rst = 21,
     .lcd_width = 466,
     .lcd_height = 466,
-    .lcd_gram_offset_x = 0,
+    .lcd_gram_offset_x = 6,
     .lcd_gram_offset_y = 0,
     .lcd_en = 42,
     .i2c_sda = 47,
