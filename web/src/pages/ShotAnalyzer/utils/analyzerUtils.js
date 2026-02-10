@@ -1,9 +1,7 @@
 /**
  * analyzerUtils.js
- * 
- * Configuration and utility functions for Shot Analyzer
- * 
- * Contains:
+ * * Configuration and utility functions for Shot Analyzer
+ * * Contains:
  * - Column definitions for analysis table
  * - Group labels for UI organization
  * - Storage keys for localStorage
@@ -23,8 +21,7 @@ export const ANALYZER_DB_KEYS = {
 /**
  * Column Configuration
  * Defines all available metrics that can be displayed in the analysis table
- * 
- * Properties:
+ * * Properties:
  * - id: Unique identifier
  * - label: Display name
  * - type: 'val' (single value) | 'se' (start/end) | 'mm' (min/max) | 'avg' (average) | 'bool' (boolean)
@@ -314,13 +311,13 @@ export const groups = {
  */
 export const groupColors = {
     basics: {
-        bg: 'bg-base-content/5',         // Neutral gray tint adaptive to theme
-        text: 'text-base-content',       // Standard text color
+        bg: 'bg-base-content/5',         
+        text: 'text-base-content',       
         border: 'border-base-content/10'
     },
     pressure: {
-        bg: 'bg-blue-500/5',             // 5% Blue on any background
-        text: 'text-blue-600 dark:text-blue-400', // Adaptive text
+        bg: 'bg-blue-500/5',             
+        text: 'text-blue-600 dark:text-blue-400', 
         border: 'border-blue-500/20'
     },
     target_pressure: {

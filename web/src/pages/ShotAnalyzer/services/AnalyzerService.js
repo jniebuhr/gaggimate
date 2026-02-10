@@ -1,11 +1,7 @@
 /**
  * AnalyzerService.js
- * 
- * Shot Analysis Engine for GaggiMate
+ * * Shot Analysis Engine for GaggiMate
  * Calculates metrics, detects phase transitions, and determines exit reasons
- * 
- * Based on: DeepDiveShotAnalyzer shot-analysis.js
- * Migrated: 2025 for Preact integration
  */
 
 /**
@@ -76,8 +72,7 @@ export function formatStopReason(type) {
 /**
  * Main Analysis Function
  * Calculates all metrics for a shot with optional profile comparison
- * 
- * @param {Object} shotData - Shot data with samples array
+ * * @param {Object} shotData - Shot data with samples array
  * @param {Object|null} profileData - Optional profile for comparison
  * @param {Object} settings - Analysis settings
  * @param {number} settings.scaleDelayMs - Scale latency in ms (default: 800)
@@ -156,6 +151,11 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         const rawName = phaseNameMap[phaseNum];
         const displayName = rawName ? rawName : `Phase ${phaseNum}`;
         
+        // --- System Info Extraction (Direct Access) ---
+        // Grab the last sample of the phase to determine the state
+        const lastSampleInPhase = samples[samples.length - 1];
+        const sysInfo = lastSampleInPhase.systemInfo || {};
+
         // Check scale connection for this phase
         let scaleLostInThisPhase = false;
         if (isBrewByWeight) {
@@ -357,7 +357,15 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                 tf: getMetricStats(samples, 'tf'),  // Target Flow
                 t: getMetricStats(samples, 'ct'),   // Temperature
                 tt: getMetricStats(samples, 'tt'),  // Target Temp
-                w: getMetricStats(samples, 'v')     // Weight
+                w: getMetricStats(samples, 'v'),    // Weight
+                
+                // --- System Info Flags (Direct Access from last sample) ---
+                sys_raw: sysInfo.raw,
+                sys_shot_vol: sysInfo.shotStartedVolumetric,
+                sys_curr_vol: sysInfo.currentlyVolumetric,
+                sys_scale: sysInfo.bluetoothScaleConnected,
+                sys_vol_avail: sysInfo.volumetricAvailable,
+                sys_ext: sysInfo.extendedRecording
             },
             exit: {
                 reason: exitReason,
@@ -373,6 +381,9 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     });
     
     // --- 5. TOTAL STATS ---
+    // Extract system info from the very last sample of the shot
+    const finalSysInfo = gSamples[gSamples.length - 1].systemInfo || {};
+
     const totalStats = {
         duration: gDuration,
         water: gWater,
@@ -384,7 +395,15 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         tf: getMetricStats(gSamples, 'tf'),
         t: getMetricStats(gSamples, 'ct'),
         tt: getMetricStats(gSamples, 'tt'),
-        w: getMetricStats(gSamples, 'v')
+        w: getMetricStats(gSamples, 'v'),
+        
+        // System Info Totals
+        sys_raw: finalSysInfo.raw,
+        sys_shot_vol: finalSysInfo.shotStartedVolumetric,
+        sys_curr_vol: finalSysInfo.currentlyVolumetric,
+        sys_scale: finalSysInfo.bluetoothScaleConnected,
+        sys_vol_avail: finalSysInfo.volumetricAvailable,
+        sys_ext: finalSysInfo.extendedRecording
     };
     
     return {
@@ -401,8 +420,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 /**
  * Auto-Delay Detection
  * Attempts to find optimal sensor delay by testing target hit accuracy
- * 
- * @param {Object} shotData - Shot data
+ * * @param {Object} shotData - Shot data
  * @param {Object|null} profileData - Profile data with targets
  * @param {number} manualDelay - User-configured delay (fallback)
  * @returns {Object} { delay: number, auto: boolean }

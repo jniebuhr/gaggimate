@@ -139,8 +139,8 @@ export function LibraryPanel({
                     switch (cfg.key) {
                         case 'shotDate': valA = a.timestamp || 0; valB = b.timestamp || 0; break;
                         case 'name': 
-                            valA = (a.profile || a.name || a.label || '').toLowerCase(); 
-                            valB = (b.profile || b.name || b.label || '').toLowerCase(); 
+                            valA = (a.name || a.label || a.profile || '').toLowerCase(); 
+                            valB = (b.name || b.label || b.profile || '').toLowerCase(); 
                             break;
                         case 'data.rating': valA = a.rating || 0; valB = b.rating || 0; break;
                         case 'duration': valA = parseFloat(a.duration) || 0; valB = parseFloat(b.duration) || 0; break;
@@ -243,9 +243,9 @@ export function LibraryPanel({
                     if (importMode === 'browser') await indexedDBService.saveProfile(profile);
                     onProfileLoad(data, profileName);
                 }
-                refreshLibraries();
             } catch (e) { console.error('Import error:', e); }
         }
+        refreshLibraries();
     };
 
     const handleLoadShot = async (item) => {
@@ -303,7 +303,7 @@ export function LibraryPanel({
                                     }}
                                     onDeleteAll={async () => { 
                                         if(confirm(`WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`)) { 
-                                            for(const s of shots) await libraryService.deleteShot(s.id, s.source); 
+                                            for(const s of shots) await libraryService.deleteShot(s.id || s.name, s.source); 
                                             refreshLibraries(); 
                                         }
                                     }}

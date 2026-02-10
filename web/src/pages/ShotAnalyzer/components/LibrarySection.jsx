@@ -1,7 +1,5 @@
 /**
  * LibrarySection.jsx
- * * Fixed: Added scrollbar-gutter to prevent scrollbar from overlapping action icons.
- * * Fixed: Adjusted column layout for better symmetry.
  */
 
 import { LibraryRow } from './LibraryRow';

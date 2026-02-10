@@ -15,7 +15,8 @@ import {
     faAngleRight, faAngleDoubleRight, faArrowRight, 
     faAngleLeft, faAngleDoubleLeft, faArrowLeft,
     faExclamationTriangle, faCalculator,
-    faMagnifyingGlassMinus, faMagnifyingGlassPlus
+    faMagnifyingGlassMinus, faMagnifyingGlassPlus,
+    faCheck, faTimes, faMinus
 } from '@fortawesome/free-solid-svg-icons';
 import { columnConfig, groupColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
@@ -256,29 +257,87 @@ function CellContent({ phase, col, results, isTotal = false }) {
     // Safe number formatter — returns "-" for null/undefined/NaN
     const sf = (v, d = 1) => (v != null && isFinite(v)) ? v.toFixed(d) : "-";
 
+    // Helper for Boolean Status rendering
+    const renderBool = (val) => {
+        if (val === true) return <FontAwesomeIcon icon={faCheck} className="text-success opacity-80" />;
+        if (val === false) return <FontAwesomeIcon icon={faTimes} className="text-base-content/20" />; // Or faMinus
+        return <span className="opacity-20">-</span>;
+    };
+
     let mainValue = "-";
     let unit = "";
+    let isBoolean = false; 
+    let booleanContent = null;
     
     switch (col.id) {
         case 'duration': mainValue = sf(data.duration); unit = "s"; break;
         case 'water': mainValue = sf(data.water); unit = "ml"; break;
         case 'weight': mainValue = sf(data.weight); unit = "g"; break;
-        case 'p_avg': mainValue = sf(stats?.p?.avg); unit = "bar"; break;
-        case 'f_avg': mainValue = sf(stats?.f?.avg); unit = "ml/s"; break;
-        case 't_avg': mainValue = sf(stats?.t?.avg); unit = "°"; break;
+        // Pressure
         case 'p_se': mainValue = `${sf(stats?.p?.start)}/${sf(stats?.p?.end)}`; break;
         case 'p_mm': mainValue = `${sf(stats?.p?.min)}/${sf(stats?.p?.max)}`; break;
+        case 'p_avg': mainValue = sf(stats?.p?.avg); unit = "bar"; break;
+        // Target Pressure
+        case 'tp_se': mainValue = `${sf(stats?.tp?.start)}/${sf(stats?.tp?.end)}`; break;
+        case 'tp_mm': mainValue = `${sf(stats?.tp?.min)}/${sf(stats?.tp?.max)}`; break;
+        case 'tp_avg': mainValue = sf(stats?.tp?.avg); unit = "bar"; break;
+        // Flow
         case 'f_se': mainValue = `${sf(stats?.f?.start)}/${sf(stats?.f?.end)}`; break;
         case 'f_mm': mainValue = `${sf(stats?.f?.min)}/${sf(stats?.f?.max)}`; break;
+        case 'f_avg': mainValue = sf(stats?.f?.avg); unit = "ml/s"; break;
+        // Target Flow
+        case 'tf_se': mainValue = `${sf(stats?.tf?.start)}/${sf(stats?.tf?.end)}`; break;
+        case 'tf_mm': mainValue = `${sf(stats?.tf?.min)}/${sf(stats?.tf?.max)}`; break;
+        case 'tf_avg': mainValue = sf(stats?.tf?.avg); unit = "ml/s"; break;
+        // Puck Flow
         case 'pf_se': mainValue = `${sf(stats?.pf?.start)}/${sf(stats?.pf?.end)}`; break;
         case 'pf_mm': mainValue = `${sf(stats?.pf?.min)}/${sf(stats?.pf?.max)}`; break;
         case 'pf_avg': mainValue = sf(stats?.pf?.avg); unit = "ml/s"; break;
+        // Temperature
         case 't_se': mainValue = `${sf(stats?.t?.start)}/${sf(stats?.t?.end)}`; break;
         case 't_mm': mainValue = `${sf(stats?.t?.min)}/${sf(stats?.t?.max)}`; break;
+        case 't_avg': mainValue = sf(stats?.t?.avg); unit = "°"; break;
+        // Target Temperature
+        case 'tt_se': mainValue = `${sf(stats?.tt?.start)}/${sf(stats?.tt?.end)}`; break;
+        case 'tt_mm': mainValue = `${sf(stats?.tt?.min)}/${sf(stats?.tt?.max)}`; break;
+        case 'tt_avg': mainValue = sf(stats?.tt?.avg); unit = "°"; break;
+        // Weight Details
+        case 'w_se': mainValue = `${sf(stats?.w?.start)}/${sf(stats?.w?.end)}`; break;
+        case 'w_mm': mainValue = `${sf(stats?.w?.min)}/${sf(stats?.w?.max)}`; break;
+        case 'w_avg': mainValue = sf(stats?.w?.avg); unit = "g"; break;
+        
+        // --- System Info (Mapped from AnalyzerService stats) ---
+        case 'sys_raw': 
+            mainValue = stats?.sys_raw !== undefined ? stats.sys_raw : "-"; 
+            break;
+        case 'sys_shot_vol': // Start Volumetric
+            isBoolean = true; 
+            booleanContent = renderBool(stats?.sys_shot_vol); 
+            break;
+        case 'sys_curr_vol': // Currently Volumetric
+            isBoolean = true; 
+            booleanContent = renderBool(stats?.sys_curr_vol); 
+            break;
+        case 'sys_scale': // Scale Connected
+            isBoolean = true; 
+            booleanContent = renderBool(stats?.sys_scale); 
+            break;
+        case 'sys_vol_avail': // Volumetric Available
+            isBoolean = true; 
+            booleanContent = renderBool(stats?.sys_vol_avail); 
+            break;
+        case 'sys_ext': // Extended Record
+            isBoolean = true; 
+            booleanContent = renderBool(stats?.sys_ext); 
+            break;
+            
         default: mainValue = "-";
     }
 
-    if (isTotal) return <span>{mainValue}{unit}</span>;
+    if (isTotal) {
+        if (isBoolean) return <div className="flex justify-end">{booleanContent}</div>;
+        return <span>{mainValue}{unit}</span>;
+    }
 
     const isHit = phase.exit?.type === col.targetType;
     const isWeightCol = col.id === 'weight';
@@ -300,7 +359,6 @@ function CellContent({ phase, col, results, isTotal = false }) {
         if (target) {
             const targetVal = target.value;
             // For compound "start/end" values, compare the end (last) value against target
-            // For compound "min/max" values, compare the max (last) value
             const rawForParse = typeof mainValue === 'string' && mainValue.includes('/')
                 ? mainValue.split('/').pop()
                 : mainValue;
@@ -345,9 +403,13 @@ function CellContent({ phase, col, results, isTotal = false }) {
 
     return (
         <div className="flex flex-col items-end justify-center min-h-[2em]">
-            <span className={`${isHit ? 'font-bold text-orange-600 dark:text-orange-400' : ''}`}>
-                {mainValue}{unit}
-            </span>
+            {isBoolean ? (
+                <div className="flex items-center h-full pb-1">{booleanContent}</div>
+            ) : (
+                <span className={`${isHit ? 'font-bold text-orange-600 dark:text-orange-400' : ''}`}>
+                    {mainValue}{unit}
+                </span>
+            )}
             {targetDisplay}
             {predictionDisplay}
             {warningDisplay}
