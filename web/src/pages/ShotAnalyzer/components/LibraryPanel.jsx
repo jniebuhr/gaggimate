@@ -175,13 +175,12 @@ export function LibraryPanel({
             if (debouncedShotsSearch) {
                 const sSearch = debouncedShotsSearch.toLowerCase();
                 fShots = shotsData.filter(s =>
-                    (s.name || s.id || '').toLowerCase().includes(sSearch) ||
+                    (s.name || s.label || s.title || s.id || '').toLowerCase().includes(sSearch) ||
                     (s.profile || s.profileName || '').toLowerCase().includes(sSearch)
                 );
-                // Prioritize name/id matches over profile-only matches
                 fShots.sort((a, b) => {
-                    const aName = (a.name || a.id || '').toLowerCase().includes(sSearch) ? 0 : 1;
-                    const bName = (b.name || b.id || '').toLowerCase().includes(sSearch) ? 0 : 1;
+                    const aName = (a.name || a.label || a.title || a.id || '').toLowerCase().includes(sSearch) ? 0 : 1;
+                    const bName = (b.name || b.label || b.title || b.id || '').toLowerCase().includes(sSearch) ? 0 : 1;
                     return aName - bName;
                 });
             }
