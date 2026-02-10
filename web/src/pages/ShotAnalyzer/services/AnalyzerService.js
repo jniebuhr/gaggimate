@@ -46,7 +46,8 @@ function getMetricStats(samples, key) {
     if (min === Infinity) min = 0;
     if (max === -Infinity) max = 0;
     
-    const avg = totalTime > 0 ? (weightedSum / totalTime) : 0;
+    // For single-sample phases, totalTime is 0 — use the sample value directly
+    const avg = totalTime > 0 ? (weightedSum / totalTime) : start;
     
     return { start, end, min, max, avg };
 }
@@ -408,6 +409,11 @@ export function calculateShotMetrics(shotData, profileData, settings) {
  */
 export function detectAutoDelay(shotData, profileData, manualDelay) {
     if (!profileData || !profileData.phases) {
+        return { delay: manualDelay, auto: false };
+    }
+
+    // Guard against missing or empty samples
+    if (!shotData || !Array.isArray(shotData.samples) || shotData.samples.length === 0) {
         return { delay: manualDelay, auto: false };
     }
     

@@ -79,7 +79,7 @@ export function LibrarySection({
                     </thead>
                     <tbody className="text-sm">
                         {items.map((item) => (
-                            <LibraryRow key={item.id || item.name} item={item} isShot={isShot} isMatch={getMatchStatus(item)} onLoad={onLoad} onExport={onExport} onDelete={onDelete} />
+                            <LibraryRow key={`${item.source || 'unknown'}-${item.id || item.name}`} item={item} isShot={isShot} isMatch={getMatchStatus(item)} onLoad={onLoad} onExport={onExport} onDelete={onDelete} />
                         ))}
                     </tbody>
                 </table>

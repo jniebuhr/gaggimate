@@ -233,13 +233,13 @@ export function LibraryPanel({
                 const text = await file.text();
                 const data = JSON.parse(text);
                 if (data.samples) {
-                    const shot = { name: file.name, id: file.name, data, ...data, source: importMode === 'browser' ? 'browser' : 'temp' };
+                    const shot = { ...data, name: file.name, id: file.name, data, source: importMode === 'browser' ? 'browser' : 'temp' };
                     if (importMode === 'browser') await indexedDBService.saveShot(shot);
                     onShotLoad(data, file.name);
                 } else if (data.phases) {
                     // Use profile label from JSON as canonical name (not the filename)
                     const profileName = data.label || cleanName(file.name);
-                    const profile = { name: profileName, data, ...data, source: importMode === 'browser' ? 'browser' : 'temp' };
+                    const profile = { ...data, name: profileName, data, source: importMode === 'browser' ? 'browser' : 'temp' };
                     if (importMode === 'browser') await indexedDBService.saveProfile(profile);
                     onProfileLoad(data, profileName);
                 }
@@ -249,9 +249,13 @@ export function LibraryPanel({
     };
 
     const handleLoadShot = async (item) => {
-        const full = item.loaded ? item : await libraryService.loadShot(item.id || item.name, item.source);
-        onShotLoad(full, item.name || item.id);
-        setCollapsed(true);
+        try {
+            const full = item.loaded ? item : await libraryService.loadShot(item.id || item.name, item.source);
+            onShotLoad(full, item.name || item.id);
+            setCollapsed(true);
+        } catch (e) {
+            console.error('Failed to load shot:', e);
+        }
     };
 
     // Styling logic for fixed bar
@@ -294,7 +298,7 @@ export function LibraryPanel({
                                     onExportAll={() => {
                                         if (shots.length === 0) return;
                                         if (confirm(`Do you really want to export all ${shots.length} filtered shots?`)) {
-                                            shots.forEach((s, i) => setTimeout(() => handleExport(s), i * 300));
+                                            for (let i = 0; i < shots.length; i++) setTimeout(() => handleExport(shots[i]), i * 300);
                                         }
                                     }}
                                     onDeleteAll={async () => { 
@@ -317,7 +321,7 @@ export function LibraryPanel({
                                     onExportAll={() => {
                                         if (profiles.length === 0) return;
                                         if (confirm(`Do you really want to export all ${profiles.length} filtered profiles?`)) {
-                                            profiles.forEach((p, i) => setTimeout(() => handleExport(p), i * 300));
+                                            for (let i = 0; i < profiles.length; i++) setTimeout(() => handleExport(profiles[i]), i * 300);
                                         }
                                     }}
                                     onDeleteAll={async () => { 

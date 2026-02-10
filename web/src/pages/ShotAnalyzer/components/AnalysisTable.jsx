@@ -253,25 +253,28 @@ function CellContent({ phase, col, results, isTotal = false }) {
     
     if (!data) return <span>-</span>;
 
+    // Safe number formatter — returns "-" for null/undefined/NaN
+    const sf = (v, d = 1) => (v != null && isFinite(v)) ? v.toFixed(d) : "-";
+
     let mainValue = "-";
     let unit = "";
     
     switch (col.id) {
-        case 'duration': mainValue = data.duration.toFixed(1); unit = "s"; break;
-        case 'water': mainValue = data.water.toFixed(1); unit = "ml"; break;
-        case 'weight': mainValue = data.weight.toFixed(1); unit = "g"; break;
-        case 'p_avg': mainValue = stats.p.avg.toFixed(1); unit = "bar"; break;
-        case 'f_avg': mainValue = stats.f.avg.toFixed(1); unit = "ml/s"; break;
-        case 't_avg': mainValue = stats.t.avg.toFixed(1); unit = "°"; break;
-        case 'p_se': mainValue = `${stats.p.start.toFixed(1)}/${stats.p.end.toFixed(1)}`; break;
-        case 'p_mm': mainValue = `${stats.p.min.toFixed(1)}/${stats.p.max.toFixed(1)}`; break;
-        case 'f_se': mainValue = `${stats.f.start.toFixed(1)}/${stats.f.end.toFixed(1)}`; break;
-        case 'f_mm': mainValue = `${stats.f.min.toFixed(1)}/${stats.f.max.toFixed(1)}`; break;
-        case 'pf_se': mainValue = `${stats.pf.start.toFixed(1)}/${stats.pf.end.toFixed(1)}`; break;
-        case 'pf_mm': mainValue = `${stats.pf.min.toFixed(1)}/${stats.pf.max.toFixed(1)}`; break;
-        case 'pf_avg': mainValue = stats.pf.avg.toFixed(1); unit = "ml/s"; break;
-        case 't_se': mainValue = `${stats.t.start.toFixed(1)}/${stats.t.end.toFixed(1)}`; break;
-        case 't_mm': mainValue = `${stats.t.min.toFixed(1)}/${stats.t.max.toFixed(1)}`; break;
+        case 'duration': mainValue = sf(data.duration); unit = "s"; break;
+        case 'water': mainValue = sf(data.water); unit = "ml"; break;
+        case 'weight': mainValue = sf(data.weight); unit = "g"; break;
+        case 'p_avg': mainValue = sf(stats?.p?.avg); unit = "bar"; break;
+        case 'f_avg': mainValue = sf(stats?.f?.avg); unit = "ml/s"; break;
+        case 't_avg': mainValue = sf(stats?.t?.avg); unit = "°"; break;
+        case 'p_se': mainValue = `${sf(stats?.p?.start)}/${sf(stats?.p?.end)}`; break;
+        case 'p_mm': mainValue = `${sf(stats?.p?.min)}/${sf(stats?.p?.max)}`; break;
+        case 'f_se': mainValue = `${sf(stats?.f?.start)}/${sf(stats?.f?.end)}`; break;
+        case 'f_mm': mainValue = `${sf(stats?.f?.min)}/${sf(stats?.f?.max)}`; break;
+        case 'pf_se': mainValue = `${sf(stats?.pf?.start)}/${sf(stats?.pf?.end)}`; break;
+        case 'pf_mm': mainValue = `${sf(stats?.pf?.min)}/${sf(stats?.pf?.max)}`; break;
+        case 'pf_avg': mainValue = sf(stats?.pf?.avg); unit = "ml/s"; break;
+        case 't_se': mainValue = `${sf(stats?.t?.start)}/${sf(stats?.t?.end)}`; break;
+        case 't_mm': mainValue = `${sf(stats?.t?.min)}/${sf(stats?.t?.max)}`; break;
         default: mainValue = "-";
     }
 
@@ -296,12 +299,16 @@ function CellContent({ phase, col, results, isTotal = false }) {
 
         if (target) {
             const targetVal = target.value;
-            const measuredVal = parseFloat(mainValue);
+            // For compound "start/end" values, compare the end (last) value against target
+            // For compound "min/max" values, compare the max (last) value
+            const rawForParse = typeof mainValue === 'string' && mainValue.includes('/')
+                ? mainValue.split('/').pop()
+                : mainValue;
+            const measuredVal = parseFloat(rawForParse);
             
             if (!isNaN(measuredVal)) {
                 const diff = measuredVal - targetVal;
                 const diffSign = diff > 0 ? '+' : '';
-                const diffStr = `${diffSign}${diff.toFixed(1)}`;
                 const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/40';
 
                 targetDisplay = (
@@ -316,8 +323,8 @@ function CellContent({ phase, col, results, isTotal = false }) {
 
     if (isWeightCol && phase.prediction && phase.prediction.finalWeight !== null) {
         const measuredVal = parseFloat(mainValue);
-        if (Math.abs(measuredVal - phase.prediction.finalWeight) >= 0.1) {
-             const predVal = phase.prediction.finalWeight.toFixed(1);
+        if (!isNaN(measuredVal) && Math.abs(measuredVal - phase.prediction.finalWeight) >= 0.1) {
+             const predVal = sf(phase.prediction.finalWeight);
              predictionDisplay = (
                 <div style={subTextSize} className="text-blue-600 dark:text-blue-400 leading-tight mt-0.5 font-bold flex items-center justify-end gap-1">
                     <FontAwesomeIcon icon={faCalculator} style={iconSize} className="opacity-60" />
