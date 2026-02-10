@@ -1,7 +1,7 @@
 /**
  * ShotChart.jsx
  * Chart.js visualization component for shot data.
- * Displays pressure, flow, temperature, and weight over time.
+ * Displays pressure, flow, puck flow, temperature, and weight over time.
  */
 
 import { useEffect, useRef } from 'preact/hooks';
@@ -57,7 +57,8 @@ export function ShotChart({ shotData }) {
             temp: '#F0561D',        
             tempTarget: '#731F00',  
             pressure: '#0066CC',    
-            flow: '#63993D',        
+            flow: '#63993D',
+            puckFlow: '#059669',
             weight: '#8B5CF6'   
         };
         
@@ -73,7 +74,7 @@ export function ShotChart({ shotData }) {
         
         // Initialize data series arrays
         const series = {
-            pressure: [], flow: [], temp: [], weight: [],
+            pressure: [], flow: [], puckFlow: [], temp: [], weight: [],
             targetPressure: [], targetFlow: [], targetTemp: []
         };
         
@@ -84,6 +85,7 @@ export function ShotChart({ shotData }) {
             // Extract raw values
             const press = getVal(d, ['cp', 'p', 'pressure']);
             const flow = getVal(d, ['fl', 'f', 'flow']);
+            const pFlow = getVal(d, ['pf', 'puck_flow']);
             const temp = getVal(d, ['ct', 't', 'temperature']);
             const weight = getVal(d, ['v', 'w', 'weight', 'm']);
             
@@ -95,6 +97,7 @@ export function ShotChart({ shotData }) {
             // Populate series
             if (press !== null) series.pressure.push({ x: t, y: press });
             if (flow !== null) series.flow.push({ x: t, y: flow });
+            if (pFlow !== null) series.puckFlow.push({ x: t, y: pFlow });
             if (temp !== null) series.temp.push({ x: t, y: temp });
             if (weight !== null) series.weight.push({ x: t, y: weight });
             
@@ -196,6 +199,16 @@ export function ShotChart({ shotData }) {
                 tension: 0.2
             },
             {
+                label: 'Puck Flow',
+                data: series.puckFlow,
+                borderColor: COLORS.puckFlow,
+                backgroundColor: COLORS.puckFlow,
+                yAxisID: 'y1',
+                pointRadius: 0,
+                borderWidth: 1.5,
+                tension: 0.2
+            },
+            {
                 label: 'Weight (g)',
                 data: series.weight,
                 borderColor: COLORS.weight,
@@ -257,7 +270,7 @@ export function ShotChart({ shotData }) {
                         labels: {
                             usePointStyle: true,
                             boxWidth: 6,
-                            padding: 20, // Increased padding for better spacing
+                            padding: 20, 
                             font: { size: 10 }
                         }
                     },
@@ -308,7 +321,7 @@ export function ShotChart({ shotData }) {
                             color: 'rgba(200, 200, 200, 0.1)'
                         }
                     },
-                    // Right Axis 1: Pressure & Flow
+                    // Right Axis 1: Pressure & Flow & Puck Flow
                     y1: {
                         type: 'linear',
                         position: 'right',
