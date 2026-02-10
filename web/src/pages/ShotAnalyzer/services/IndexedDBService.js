@@ -13,18 +13,19 @@ const DB_VERSION = 1;
 class IndexedDBService {
     constructor() {
         this.db = null;
+        this._initPromise = null;
     }
 
     /**
-     * Initialize the database
-     * Creates object stores for shots and profiles
+     * Initialize the database.
+     * Caches the init promise to prevent concurrent openDB calls.
      */
     async init() {
         if (this.db) return this.db;
+        if (this._initPromise) return this._initPromise;
 
-        this.db = await openDB(DB_NAME, DB_VERSION, {
-            upgrade(db, oldVersion, newVersion, transaction) {
-                // Create object stores if they don't exist
+        this._initPromise = openDB(DB_NAME, DB_VERSION, {
+            upgrade(db) {
                 if (!db.objectStoreNames.contains('shots')) {
                     db.createObjectStore('shots', { keyPath: 'name' });
                 }
@@ -32,9 +33,15 @@ class IndexedDBService {
                     db.createObjectStore('profiles', { keyPath: 'name' });
                 }
             },
+        }).then(db => {
+            this.db = db;
+            return db;
+        }).catch(err => {
+            this._initPromise = null;
+            throw err;
         });
 
-        return this.db;
+        return this._initPromise;
     }
 
     /**

@@ -1,5 +1,7 @@
 /**
  * LibrarySection.jsx
+ * * Fixed: Added scrollbar-gutter to prevent scrollbar from overlapping action icons.
+ * * Fixed: Adjusted column layout for better symmetry.
  */
 
 import { LibraryRow } from './LibraryRow';
@@ -44,12 +46,14 @@ export function LibrarySection({
                 <div className="flex gap-2">
                     <input type="text" placeholder={`Search ${title.toLowerCase()}...`} value={searchValue} onInput={(e) => onSearchChange(e.target.value)} className="flex-1 h-9 pl-3 text-sm bg-base-100/50 border border-base-content/10 rounded outline-none focus:border-primary" />
                     <select value={`${sortKey}-${sortOrder}`} onChange={(e) => { const [k, o] = e.target.value.split('-'); onSortChange(k, o); }} className="h-9 px-2 text-xs bg-base-100/50 border border-base-content/10 rounded outline-none cursor-pointer">
-                        <option value="shotDate-desc">Date (New)</option>
-                        <option value="shotDate-asc">Date (Old)</option>
+                        {isShot && <option value="shotDate-desc">Date (New)</option>}
+                        {isShot && <option value="shotDate-asc">Date (Old)</option>}
                         <option value="name-asc">Name (A-Z)</option>
                         <option value="name-desc">Name (Z-A)</option>
                         {isShot && <option value="data.rating-desc">Rating (High)</option>}
+                        {isShot && <option value="data.rating-asc">Rating (Low)</option>}
                         {isShot && <option value="duration-desc">Length (Long)</option>}
+                        {isShot && <option value="duration-asc">Length (Short)</option>}
                     </select>
                 </div>
             </div>

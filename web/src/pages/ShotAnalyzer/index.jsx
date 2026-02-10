@@ -1,24 +1,25 @@
 /**
  * ShotAnalyzer.jsx
+ * Main container for the analysis view.
+ * Handles shot loading, chart visualization, and data tables.
  */
 
 import { useState, useEffect, useContext } from 'preact/hooks';
 import { LibraryPanel } from './components/LibraryPanel';
-import { ShotFileInfo } from './components/ShotFileInfo';
 import { AnalysisTable } from './components/AnalysisTable';
 import { ShotChart } from './components/ShotChart';
 import { calculateShotMetrics, detectAutoDelay } from './services/AnalyzerService';
 import { libraryService } from './services/LibraryService';
-import { indexedDBService } from './services/IndexedDBService';
 import { ApiServiceContext } from '../../services/ApiService';
 import { 
     getDefaultColumns, 
     cleanName,
     ANALYZER_DB_KEYS,
     loadFromStorage,
-    saveToStorage
 } from './utils/analyzerUtils';
-import DeepDiveLogo from './assets/deepdive.png'; 
+
+// Asset Imports
+import DeepDiveLogoOutline from './assets/deepdive.svg'; 
 
 export function ShotAnalyzer() {
     const apiService = useContext(ApiServiceContext);
@@ -87,10 +88,9 @@ export function ShotAnalyzer() {
     
     // --- Data Handlers ---
     const handleShotLoad = async (shotData, name) => {
-        const isGM = !name.toLowerCase().endsWith('.json') && !name.toLowerCase().endsWith('.slog');
         const shotWithMetadata = {
             ...shotData,
-            source: isGM ? 'gaggimate' : (shotData.source || importMode)
+            source: shotData.source || importMode
         };
 
         setCurrentShot(shotWithMetadata);
@@ -122,52 +122,27 @@ export function ShotAnalyzer() {
         setCurrentProfileName(name);
     };
     
-    const handleShotUpdate = async (updatedShot) => {
-        setCurrentShot(updatedShot);
-        const source = updatedShot.source || 'browser';
-        
-        try {
-            if (source === 'gaggimate' && apiService?.socket?.readyState === WebSocket.OPEN) {
-                await apiService.request({
-                    tp: 'req:history:notes:save',
-                    id: updatedShot.id,
-                    notes: updatedShot.notes
-                });
-            } else if (source === 'browser') {
-                await indexedDBService.saveShot({
-                    ...updatedShot,
-                    name: updatedShot.name || currentShotName,
-                    id: updatedShot.id || currentShotName,
-                    source: 'browser'
-                });
-            }
-            const lib = loadFromStorage(ANALYZER_DB_KEYS.SHOTS, []);
-            const idx = lib.findIndex(i => i.name === currentShotName);
-            if (idx > -1) {
-                lib[idx].data = updatedShot;
-                saveToStorage(ANALYZER_DB_KEYS.SHOTS, lib);
-            }
-        } catch (e) { console.error("Save failed:", e); }
-    };
-
-    const handleExportShot = () => {
-        if (!currentShot) return;
-        const blob = new Blob([JSON.stringify(currentShot, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = (currentShotName.toLowerCase().endsWith('.json') ? currentShotName : currentShotName + '.json');
-        a.click();
-        URL.revokeObjectURL(url);
+    // Helper style for CSS Masking
+    const maskStyle = {
+        maskImage: `url(${DeepDiveLogoOutline})`,
+        WebkitMaskImage: `url(${DeepDiveLogoOutline})`,
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center'
     };
     
     return (
         <div className="pb-20">
+            {/* Header */}
             <div className='mb-4 flex flex-row items-center gap-2'>
                 <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Deep Dive Shot Analyzer</h2>
             </div>
             
             <div className="container mx-auto max-w-7xl">
+                {/* Library Panel (Always visible) */}
                 <div className="mt-4">
                     <LibraryPanel
                         currentShot={currentShot}
@@ -186,13 +161,8 @@ export function ShotAnalyzer() {
                 </div>
                 
                 {currentShot ? (
+                    // --- Active Analysis View ---
                     <div className="mt-8 space-y-5 animate-fade-in">
-                        <ShotFileInfo
-                            shot={currentShot}
-                            onUpdate={handleShotUpdate}
-                            onExport={handleExportShot}
-                        />
-                        
                         <div className="bg-base-200/50 backdrop-blur-sm rounded-lg p-5 shadow-sm border border-base-content/5">
                             <div className="text-lg font-bold text-base-content mb-4 pb-2.5 border-b-2 border-base-content/10 uppercase tracking-wide">
                                 Shot Analysis
@@ -201,15 +171,13 @@ export function ShotAnalyzer() {
                             <div className="mb-8">
                                 <ShotChart shotData={currentShot} />
                             </div>
-
-                            {/* Column Controls removed here, they are now inside AnalysisTable */}
                             
                             {analysisResults && (
                                 <div className="mt-4 space-y-6">
                                     <AnalysisTable
                                         results={analysisResults}
                                         activeColumns={activeColumns}
-                                        onColumnsChange={setActiveColumns} // Passed down
+                                        onColumnsChange={setActiveColumns}
                                         profileData={currentProfile}
                                         settings={settings}
                                         onSettingsChange={setSettings}
@@ -220,23 +188,85 @@ export function ShotAnalyzer() {
                         </div>
                     </div>
                 ) : (
-                    <div className="mt-16 text-center">
-                        <div className="inline-block p-10 bg-base-200/30 border-2 border-dashed border-base-content/10 rounded-2xl max-w-lg w-full">
-                            <h3 className="text-xl font-semibold text-base-content mb-2">No Shot Loaded</h3>
-                            <p className="text-base-content/70">Click on the library or import a shot file to start analyzing</p>
+                    // --- Empty State / Onboarding ---
+                    <div className="flex items-center justify-center min-h-[60vh] p-8">
+                        <div className="max-w-2xl text-center space-y-8">
+                            
+                            {/* Headline */}
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-bold text-base-content">No Shot Loaded</h2>
+                                <p className="text-base-content opacity-70">Import a shot file or select one from your library to start analyzing.</p>
+                            </div>
+
+                            {/* Info Box */}
+                            <div className="space-y-6 text-left bg-base-200/60 rounded-xl p-8 border border-base-content/5 shadow-sm">
+                                <p className="text-sm font-bold text-base-content uppercase tracking-wide border-b border-base-content/10 pb-2 mb-4">
+                                    Supported Sources
+                                </p>
+
+                                {/* GM Section - Cyan */}
+                                <div className="flex gap-4 items-start group">
+                                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center 
+                                        bg-cyan-500/20 dark:bg-cyan-500/10 border border-cyan-500/20">
+                                        <span className="text-xs font-black text-cyan-800 dark:text-cyan-300">GM</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-base-content text-sm mb-1 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors">
+                                            GaggiMate
+                                        </h3>
+                                        <p className="text-xs text-base-content opacity-80 leading-relaxed">
+                                            Your saved shots and profiles directly from the controller.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Divider */}
+                                <div className="w-full h-px bg-base-content/10"></div>
+
+                                {/* WEB Section - Purple */}
+                                <div className="flex gap-4 items-start group">
+                                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center 
+                                        bg-purple-500/20 dark:bg-purple-500/10 border border-purple-500/20">
+                                        <span className="text-xs font-black text-purple-800 dark:text-purple-300">WEB</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-base-content text-sm mb-1 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                                            Local Browser Uploads
+                                        </h3>
+                                        <div className="text-xs text-base-content opacity-80 leading-relaxed">
+                                            External <code className="bg-base-100 px-1 py-0.5 rounded border border-base-content/10 text-[10px] font-mono mx-1">.json</code> shot and profile files. 
+                                            <span className="block mt-1">Drag & Drop or Click the Import button. Bulk import possible.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Logo: Masked Div for Theme Color Adaptation */}
+                            <div 
+                                className="w-24 h-24 mx-auto bg-base-content opacity-20"
+                                style={maskStyle}
+                            />
+                            
+                            {/* Tip */}
+                            <div className="text-xs text-base-content opacity-50 pt-2">
+                                Tip: You can toggle between <span className="font-bold opacity-100">VIEW Temporarily or SAVE in Browser</span>.
+                            </div>
                         </div>
                     </div>
                 )}
             </div>
 
+            {/* Coming Soon Modal */}
             {showInfoModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowInfoModal(false)}>
                     <div className="bg-base-100 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center border border-base-content/10" onClick={e => e.stopPropagation()}>
-                        <img 
-                            src={DeepDiveLogo} 
-                            alt="Deep Dive" 
-                            className="w-24 h-auto mx-auto mb-6 opacity-90 drop-shadow-sm" 
+                        
+                        {/* Logo: Masked Div for Theme Color Adaptation */}
+                        <div 
+                            className="w-24 h-24 mx-auto mb-6 bg-base-content opacity-90"
+                            style={maskStyle}
                         />
+
                         <h3 className="text-2xl font-bold mb-2">Coming Soon</h3>
                         <p className="opacity-70">Comparison and statistics feature under development.</p>
                         <button onClick={() => setShowInfoModal(false)} className="btn btn-primary mt-6 w-full">Close</button>

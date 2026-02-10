@@ -9,7 +9,7 @@
  * - Pins matching shots/profiles to the top of the list.
  */
 
-import { useState, useEffect, useContext, useRef } from 'preact/hooks';
+import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
 import { StatusBar } from './StatusBar';
 import { LibrarySection } from './LibrarySection';
 import { libraryService } from '../services/LibraryService';
@@ -57,6 +57,20 @@ export function LibraryPanel({
     const [profilesSearch, setProfilesSearch] = useState('');
     const [profilesSort, setProfilesSort] = useState({ key: 'name', order: 'asc' });
 
+    // Debounced search values to avoid re-fetching on every keystroke
+    const [debouncedShotsSearch, setDebouncedShotsSearch] = useState('');
+    const [debouncedProfilesSearch, setDebouncedProfilesSearch] = useState('');
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedShotsSearch(shotsSearch), 250);
+        return () => clearTimeout(timer);
+    }, [shotsSearch]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedProfilesSearch(profilesSearch), 250);
+        return () => clearTimeout(timer);
+    }, [profilesSearch]);
+
     // Initialize API Service for Library
     useEffect(() => {
         if (apiService) libraryService.setApiService(apiService);
@@ -81,7 +95,7 @@ export function LibraryPanel({
             const rect = sentinelRef.current.getBoundingClientRect();
             setBarRect({
                 width: rect.width,
-                left: rect.left + (window.scrollX || document.documentElement.scrollLeft),
+                left: rect.left,
                 height: barRef.current?.offsetHeight || 64
             });
         };
@@ -154,12 +168,12 @@ export function LibraryPanel({
                 });
             };
 
-            // Filter by search string
+            // Filter by search string (using debounced values)
             // Shot search: matches name/id OR profile name (name/id matches prioritized)
             // Profile search: additionally cross-filters shots by their profile name
             let fShots = shotsData;
-            if (shotsSearch) {
-                const sSearch = shotsSearch.toLowerCase();
+            if (debouncedShotsSearch) {
+                const sSearch = debouncedShotsSearch.toLowerCase();
                 fShots = shotsData.filter(s =>
                     (s.name || s.id || '').toLowerCase().includes(sSearch) ||
                     (s.profile || s.profileName || '').toLowerCase().includes(sSearch)
@@ -171,12 +185,12 @@ export function LibraryPanel({
                     return aName - bName;
                 });
             }
-            if (profilesSearch) {
-                const pSearch = profilesSearch.toLowerCase();
+            if (debouncedProfilesSearch) {
+                const pSearch = debouncedProfilesSearch.toLowerCase();
                 fShots = fShots.filter(s => (s.profile || s.profileName || '').toLowerCase().includes(pSearch));
             }
             // Profile search: independent of shot search
-            const fProfiles = profilesData.filter(p => !profilesSearch || (p.name || p.label || '').toLowerCase().includes(profilesSearch.toLowerCase()));
+            const fProfiles = profilesData.filter(p => !debouncedProfilesSearch || (p.name || p.label || '').toLowerCase().includes(debouncedProfilesSearch.toLowerCase()));
 
             setShots(pinMatches(applySort(fShots, shotsSort), true));
             setProfiles(pinMatches(applySort(fProfiles, profilesSort), false));
@@ -188,8 +202,8 @@ export function LibraryPanel({
     };
 
     useEffect(() => { refreshLibraries(); }, [
-        shotsSourceFilter, profilesSourceFilter, shotsSearch, shotsSort, 
-        profilesSearch, profilesSort, currentShot, currentProfile, currentShotName, currentProfileName
+        shotsSourceFilter, profilesSourceFilter, debouncedShotsSearch, shotsSort, 
+        debouncedProfilesSearch, profilesSort, currentShot, currentProfile, currentShotName, currentProfileName
     ]);
 
     // --- Action Handlers ---
@@ -223,9 +237,11 @@ export function LibraryPanel({
                     if (importMode === 'browser') await indexedDBService.saveShot(shot);
                     onShotLoad(data, file.name);
                 } else if (data.phases) {
-                    const profile = { name: file.name, data, ...data, source: importMode === 'browser' ? 'browser' : 'temp' };
+                    // Use profile label from JSON as canonical name (not the filename)
+                    const profileName = data.label || cleanName(file.name);
+                    const profile = { name: profileName, data, ...data, source: importMode === 'browser' ? 'browser' : 'temp' };
                     if (importMode === 'browser') await indexedDBService.saveProfile(profile);
-                    onProfileLoad(data, file.name);
+                    onProfileLoad(data, profileName);
                 }
                 refreshLibraries();
             } catch (e) { console.error('Import error:', e); }

@@ -3,6 +3,9 @@
  * 
  * Shot Analysis Engine for GaggiMate
  * Calculates metrics, detects phase transitions, and determines exit reasons
+ * 
+ * Based on: DeepDiveShotAnalyzer shot-analysis.js
+ * Migrated: 2025 for Preact integration
  */
 
 /**
@@ -82,6 +85,11 @@ export function formatStopReason(type) {
  * @returns {Object} Analysis results with phases and totals
  */
 export function calculateShotMetrics(shotData, profileData, settings) {
+    // Defensive guard: ensure valid shot data with samples
+    if (!shotData || !Array.isArray(shotData.samples) || shotData.samples.length === 0) {
+        return { phases: [], warnings: ['No sample data available for analysis.'] };
+    }
+
     const { scaleDelayMs, sensorDelayMs, isAutoAdjusted } = settings;
     const gSamples = shotData.samples;
     const globalStartTime = gSamples[0].t;

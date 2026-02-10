@@ -171,23 +171,23 @@ class LibraryService {
      * @returns {Object} Full shot data with samples
      */
     async loadShot(id, source) {
+        const idStr = String(id);
+
         if (source === 'gaggimate') {
-            // Load from GaggiMate controller
-            const paddedId = id.padStart(6, '0');
+            const paddedId = idStr.padStart(6, '0');
             const response = await fetch(`/api/history/${paddedId}.slog`);
             
             if (!response.ok) {
-                throw new Error(`Failed to load shot ${id}: HTTP ${response.status}`);
+                throw new Error(`Failed to load shot ${idStr}: HTTP ${response.status}`);
             }
 
             const arrayBuffer = await response.arrayBuffer();
             const { parseBinaryShot } = await import('../../ShotHistory/parseBinaryShot');
-            return parseBinaryShot(arrayBuffer, id);
+            return parseBinaryShot(arrayBuffer, idStr);
         } else {
-            // Load from browser storage
-            const shot = await indexedDBService.getShot(id);
+            const shot = await indexedDBService.getShot(idStr);
             if (!shot) {
-                throw new Error(`Shot ${id} not found in browser storage`);
+                throw new Error(`Shot ${idStr} not found in browser storage`);
             }
             return shot;
         }
@@ -278,38 +278,6 @@ class LibraryService {
         } else {
             // Delete from browser storage
             await indexedDBService.deleteProfile(name);
-        }
-    }
-
-    /**
-     * Save shot notes
-     * Notes are embedded in shot data
-     * @param {string} id - Shot ID
-     * @param {Object} notes - Notes object
-     * @param {string} source - 'gaggimate' or 'browser'
-     */
-    async saveNotes(id, notes, source) {
-        if (source === 'gaggimate') {
-            // Save to GaggiMate controller via WebSocket
-            if (!this.apiService) {
-                throw new Error('ApiService not set');
-            }
-
-            await this.apiService.request({
-                tp: 'req:history:notes:save',
-                id: id,
-                notes: notes
-            });
-        } else {
-            // Update in browser storage
-            const shot = await indexedDBService.getShot(id);
-            if (shot) {
-                await indexedDBService.saveShot({
-                    ...shot,
-                    notes: notes,
-                    rating: notes.rating || 0
-                });
-            }
         }
     }
 

@@ -104,7 +104,10 @@ export function AnalysisTable({ results, activeColumns, onColumnsChange, setting
                             <span className="opacity-60">Scale</span>
                             <input 
                                 type="number" step="50" value={safeSettings.scaleDelay} 
-                                onInput={e => { onSettingsChange({...safeSettings, scaleDelay: parseInt(e.target.value)}); onAnalyze(); }}
+                                onInput={e => { 
+                                    const val = parseInt(e.target.value);
+                                    if (!isNaN(val)) onSettingsChange({...safeSettings, scaleDelay: val}); 
+                                }}
                                 className="bg-base-100 border border-base-content/10 rounded w-12 h-5 text-center font-mono focus:outline-none focus:border-primary text-base-content"
                             />
                             <span className="opacity-40 lowercase font-normal">ms</span>
@@ -114,14 +117,17 @@ export function AnalysisTable({ results, activeColumns, onColumnsChange, setting
                             <span className="opacity-60">System</span>
                             <input 
                                 type="number" step="50" value={safeSettings.sensorDelay} disabled={safeSettings.autoDelay} 
-                                onInput={e => { onSettingsChange({...safeSettings, sensorDelay: parseInt(e.target.value)}); onAnalyze(); }}
+                                onInput={e => { 
+                                    const val = parseInt(e.target.value);
+                                    if (!isNaN(val)) onSettingsChange({...safeSettings, sensorDelay: val}); 
+                                }}
                                 className="bg-base-100 border border-base-content/10 rounded w-12 h-5 text-center font-mono focus:outline-none focus:border-primary disabled:opacity-30 text-base-content"
                             />
                             <span className="opacity-40 lowercase font-normal">ms</span>
                             <label className="flex items-center gap-1.5 ml-2 cursor-pointer hover:text-primary transition-colors">
                                 <input 
                                     type="checkbox" checked={safeSettings.autoDelay} 
-                                    onChange={e => { onSettingsChange({...safeSettings, autoDelay: e.target.checked}); onAnalyze(); }}
+                                    onChange={e => onSettingsChange({...safeSettings, autoDelay: e.target.checked})}
                                     className="checkbox checkbox-xs rounded-sm border-base-content/30" 
                                 />
                                 <span className="opacity-60">Auto</span>
