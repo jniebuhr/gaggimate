@@ -31,7 +31,7 @@ export function AnalysisTable({ results, activeColumns, onColumnsChange, setting
     const [tableFontSize, setTableFontSize] = useState(11);
     
     const tableContainerRef = useRef(null);
-    const safeSettings = settings || { scaleDelay: 800, sensorDelay: 200, autoDelay: true };
+    const safeSettings = settings || { scaleDelay: 1000, sensorDelay: 200, autoDelay: true };
     const visibleColumns = columnConfig.filter(col => activeColumns.has(col.id));
 
     // --- Helper Functions ---
@@ -386,7 +386,7 @@ function CellContent({ phase, col, results, isTotal = false }) {
              predictionDisplay = (
                 <div style={subTextSize} className="text-blue-600 dark:text-blue-400 leading-tight mt-0.5 font-bold flex items-center justify-end gap-1">
                     <FontAwesomeIcon icon={faCalculator} style={iconSize} className="opacity-60" />
-                    <span>Pred: {predVal}{unit}</span>
+                    <span>Calc: {predVal}{unit}</span>
                 </div>
             );
         }

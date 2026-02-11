@@ -75,7 +75,7 @@ export function formatStopReason(type) {
  * * @param {Object} shotData - Shot data with samples array
  * @param {Object|null} profileData - Optional profile for comparison
  * @param {Object} settings - Analysis settings
- * @param {number} settings.scaleDelayMs - Scale latency in ms (default: 800)
+ * @param {number} settings.scaleDelayMs - Scale latency in ms (default: 0)
  * @param {number} settings.sensorDelayMs - System sensor delay in ms (default: 200)
  * @param {boolean} settings.isAutoAdjusted - Whether delay was auto-detected
  * @returns {Object} Analysis results with phases and totals
@@ -221,7 +221,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                     let predictedW = lastW;
                     if (lastW > 0.1 && !scaleConnectionBrokenPermanently) {
                         let currentRate = (lastVF !== undefined) ? lastVF : lastF;
-                        let predictedAdded = currentRate * (scaleDelayMs / 500.0); //Normally 1000, but we are currently using this to obtain more realistic values in the Tool (with 1000, the prediction deviates too much from what the predictive scale delay should actually indicate).
+                        let predictedAdded = currentRate * (scaleDelayMs / 1000.0);
                         
                         // Clamp prediction
                         if (predictedAdded < 0) predictedAdded = 0;
@@ -306,6 +306,11 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                             }
                             if (tgt.type === 'flow' && tgt.operator === 'gte' && 
                                 nextPhaseFirstSample.fl >= tgt.value) {
+                                hit = true;
+                            }
+                            // Look-ahead for Weight/Volumetric
+                            if ((tgt.type === 'weight' || tgt.type === 'volumetric') && tgt.operator === 'gte' && 
+                                nextPhaseFirstSample.v >= tgt.value) {
                                 hit = true;
                             }
                         }

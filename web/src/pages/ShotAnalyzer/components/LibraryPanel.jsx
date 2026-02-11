@@ -169,26 +169,45 @@ export function LibraryPanel({
             };
 
             // Filter by search string (using debounced values)
-            // Shot search: matches name/id OR profile name (name/id matches prioritized)
-            // Profile search: additionally cross-filters shots by their profile name
+            // Shot search: matches name, ID, filename, or profile name
             let fShots = shotsData;
             if (debouncedShotsSearch) {
                 const sSearch = debouncedShotsSearch.toLowerCase();
-                fShots = shotsData.filter(s =>
-                    (s.name || s.label || s.title || s.id || '').toLowerCase().includes(sSearch) ||
-                    (s.profile || s.profileName || '').toLowerCase().includes(sSearch)
-                );
+                
+                // UPDATED: Robust filtering logic
+                fShots = shotsData.filter(s => {
+                    // Check Display Name / Label
+                    const nameMatch = (s.name || s.label || s.title || '').toLowerCase().includes(sSearch);
+                    // Check Profile Name
+                    const profileMatch = (s.profile || s.profileName || '').toLowerCase().includes(sSearch);
+                    // Check ID specifically (convert to string first)
+                    const idMatch = String(s.id || '').toLowerCase().includes(sSearch);
+                    // Check Filename / ExportName (e.g. for "shot-6")
+                    const fileMatch = (s.fileName || s.exportName || '').toLowerCase().includes(sSearch);
+
+                    return nameMatch || profileMatch || idMatch || fileMatch;
+                });
+
+                // Sort: Prioritize direct Name or ID matches over Profile-Name matches
                 fShots.sort((a, b) => {
-                    const aName = (a.name || a.label || a.title || a.id || '').toLowerCase().includes(sSearch) ? 0 : 1;
-                    const bName = (b.name || b.label || b.title || b.id || '').toLowerCase().includes(sSearch) ? 0 : 1;
-                    return aName - bName;
+                    const aId = String(a.id || '').toLowerCase();
+                    const aName = (a.name || a.label || a.title || '').toLowerCase();
+                    const aPrio = (aName.includes(sSearch) || aId.includes(sSearch)) ? 0 : 1;
+
+                    const bId = String(b.id || '').toLowerCase();
+                    const bName = (b.name || b.label || b.title || '').toLowerCase();
+                    const bPrio = (bName.includes(sSearch) || bId.includes(sSearch)) ? 0 : 1;
+
+                    return aPrio - bPrio;
                 });
             }
+
+            // Profile search filter
             if (debouncedProfilesSearch) {
                 const pSearch = debouncedProfilesSearch.toLowerCase();
                 fShots = fShots.filter(s => (s.profile || s.profileName || '').toLowerCase().includes(pSearch));
             }
-            // Profile search: independent of shot search
+            
             const fProfiles = profilesData.filter(p => !debouncedProfilesSearch || (p.name || p.label || '').toLowerCase().includes(debouncedProfilesSearch.toLowerCase()));
 
             setShots(pinMatches(applySort(fShots, shotsSort), true));
@@ -207,14 +226,35 @@ export function LibraryPanel({
 
     // --- Action Handlers ---
 
-    const handleExport = (item) => {
-        const blob = new Blob([JSON.stringify(item.data || item, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = (item.name || 'export') + (item.name?.toLowerCase().endsWith('.json') ? '' : '.json');
-        link.click();
-        URL.revokeObjectURL(url);
+    // Uses libraryService.exportItem to ensure clean/full data with router-safe download
+    const handleExport = async (item, isShot) => {
+        try {
+            // 1. Fetch data via service
+            const { blob, filename } = await libraryService.exportItem(item, isShot);
+            
+            // 2. Create URL
+            const url = URL.createObjectURL(blob);
+            
+            // 3. Create Link
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            
+            // CRITICAL: Prevent router hijacking (SecurityError fix)
+            link.target = "_blank"; 
+            link.rel = "noopener noreferrer";
+
+            document.body.appendChild(link);
+            link.click();
+            
+            // 4. Cleanup
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 100); 
+            
+        } catch (e) {
+            alert(`Export failed: ${e.message}`);
+            console.error(e);
+        }
     };
 
     const handleDelete = async (item) => {
@@ -293,11 +333,12 @@ export function LibraryPanel({
                                     sourceFilter={shotsSourceFilter} onSearchChange={setShotsSearch}
                                     onSortChange={(k, o) => setShotsSort({ key: k, order: o || (shotsSort.key === k && shotsSort.order === 'desc' ? 'asc' : 'desc') })}
                                     onSourceFilterChange={setShotsSourceFilter} onLoad={handleLoadShot}
-                                    onExport={handleExport} onDelete={handleDelete}
+                                    onExport={(item) => handleExport(item, true)} // Pass true for shots
+                                    onDelete={handleDelete}
                                     onExportAll={() => {
                                         if (shots.length === 0) return;
-                                        if (confirm(`Do you really want to export all ${shots.length} filtered shots?`)) {
-                                            for (let i = 0; i < shots.length; i++) setTimeout(() => handleExport(shots[i]), i * 300);
+                                        if (confirm(`Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`)) {
+                                            for (let i = 0; i < shots.length; i++) setTimeout(() => handleExport(shots[i], true), i * 300);
                                         }
                                     }}
                                     onDeleteAll={async () => { 
@@ -316,11 +357,12 @@ export function LibraryPanel({
                                     sourceFilter={profilesSourceFilter} onSearchChange={setProfilesSearch}
                                     onSortChange={(k, o) => setProfilesSort({ key: k, order: o || (profilesSort.key === k && profilesSort.order === 'desc' ? 'asc' : 'desc') })}
                                     onSourceFilterChange={setProfilesSourceFilter} onLoad={(item) => { onProfileLoad(item.data || item, item.name || item.label); setCollapsed(true); }}
-                                    onExport={handleExport} onDelete={handleDelete}
+                                    onExport={(item) => handleExport(item, false)} // Pass false for profiles
+                                    onDelete={handleDelete}
                                     onExportAll={() => {
                                         if (profiles.length === 0) return;
-                                        if (confirm(`Do you really want to export all ${profiles.length} filtered profiles?`)) {
-                                            for (let i = 0; i < profiles.length; i++) setTimeout(() => handleExport(profiles[i]), i * 300);
+                                        if (confirm(`Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`)) {
+                                            for (let i = 0; i < profiles.length; i++) setTimeout(() => handleExport(profiles[i], false), i * 300);
                                         }
                                     }}
                                     onDeleteAll={async () => { 

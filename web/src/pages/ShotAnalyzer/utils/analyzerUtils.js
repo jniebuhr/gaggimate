@@ -426,6 +426,7 @@ export const formatDuration = (samples) => {
 
 /**
  * Auto-detect dose in from profile name (e.g., "18g Turbo")
+ * Scans all 'g' occurrences from right-to-left to handle cases like "My Great 18g Profile"
  * @param {string} profileName - Profile name
  * @returns {number|null} Detected dose or null
  */
@@ -434,18 +435,34 @@ export const detectDoseFromProfileName = (profileName) => {
     
     // Find dose patterns like "18g", "20.5g" without regex (avoids ReDoS, SonarQube S5852)
     const lower = profileName.toLowerCase();
-    const gIndex = lower.indexOf('g');
-    if (gIndex < 1) return null;
-    
-    // Walk backwards from 'g' to collect the number
-    let start = gIndex - 1;
-    while (start > 0 && (lower[start - 1] >= '0' && lower[start - 1] <= '9' || lower[start - 1] === '.')) {
-        start--;
+    let searchPos = lower.length;
+    let gIndex;
+
+    // Scan all 'g' occurrences from right-to-left
+    while ((gIndex = lower.lastIndexOf('g', searchPos - 1)) !== -1) {
+        if (gIndex < 1) {
+            searchPos = gIndex;
+            continue;
+        }
+
+        // Walk backwards from 'g' to collect the number
+        let start = gIndex;
+        while (start > 0 && (lower[start - 1] >= '0' && lower[start - 1] <= '9' || lower[start - 1] === '.')) {
+            start--;
+        }
+
+        if (start < gIndex) {
+            const candidate = lower.slice(start, gIndex);
+            const value = parseFloat(candidate);
+            if (!isNaN(value) && value > 0) {
+                return value;
+            }
+        }
+        
+        searchPos = gIndex;
     }
     
-    const candidate = lower.slice(start, gIndex);
-    const value = parseFloat(candidate);
-    return (!isNaN(value) && value > 0) ? value : null;
+    return null;
 };
 
 /**

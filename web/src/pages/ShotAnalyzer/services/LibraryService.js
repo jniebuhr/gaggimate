@@ -46,7 +46,8 @@ class LibraryService {
             // Add source tag and ensure name property exists
             return shotList.map(shot => ({
                 ...shot,
-                name: shot.profile || shot.id || 'Unknown',
+                name: shot.profile || shot.id || 'Unknown', // Display Name for UI (e.g. "Turbo Bloom")
+                exportName: `shot-${shot.id}.json`,         // Real Filename for Export (e.g. "shot-1701234.json")
                 source: 'gaggimate'
             }));
         } catch (error) {
@@ -96,7 +97,6 @@ class LibraryService {
      * @returns {Array} List of GaggiMate profiles with source tag
      */
     async getGaggiMateProfiles() {
-        // Check if WebSocket is connected
         if (!this.apiService || 
             !this.apiService.socket || 
             this.apiService.socket.readyState !== WebSocket.OPEN) {
@@ -114,10 +114,10 @@ class LibraryService {
             }
 
             // Add source tag and normalize name property
-            // Keep the real API id for loading, use label for display
             return response.profiles.map(profile => ({
                 ...profile,
                 name: profile.label || profile.name || 'Unknown', // Display name
+                exportName: (profile.label || profile.name) + '.json', // Filename
                 profileId: profile.id, // Keep real API id for req:profiles:load
                 label: profile.label,
                 source: 'gaggimate'
@@ -149,7 +149,6 @@ class LibraryService {
     async getAllProfiles(sourceFilter = 'both') {
         const promises = [];
 
-        // Load from selected sources
         if (sourceFilter === 'both' || sourceFilter === 'gaggimate') {
             promises.push(this.getGaggiMateProfiles());
         }
@@ -160,7 +159,6 @@ class LibraryService {
         const results = await Promise.all(promises);
         const merged = results.flat();
 
-        // Sort by name
         return merged.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
 
@@ -201,18 +199,10 @@ class LibraryService {
      */
     async loadProfile(nameOrId, source) {
         if (source === 'gaggimate') {
-            // Load from GaggiMate controller
-            if (!this.apiService) {
-                throw new Error('ApiService not set');
-            }
-
-            // Check WebSocket connection
-            if (!this.apiService.socket || 
-                this.apiService.socket.readyState !== WebSocket.OPEN) {
+            if (!this.apiService || !this.apiService.socket || this.apiService.socket.readyState !== WebSocket.OPEN) {
                 throw new Error('WebSocket not connected');
             }
 
-            // GM uses the numeric/uuid profile id (not the label)
             const response = await this.apiService.request({
                 tp: 'req:profiles:load',
                 id: nameOrId
@@ -228,7 +218,6 @@ class LibraryService {
                 source: 'gaggimate'
             };
         } else {
-            // Load from browser storage
             const profile = await indexedDBService.getProfile(nameOrId);
             if (!profile) {
                 throw new Error(`Profile ${nameOrId} not found in browser storage`);
@@ -238,23 +227,74 @@ class LibraryService {
     }
 
     /**
+     * PREPARE EXPORT DATA
+     * Fetches the original data and cleans it for export.
+     * @param {Object} item - The library item (shot or profile)
+     * @param {boolean} isShot - True if item is a shot
+     * @returns {Object} { blob, filename }
+     */
+    async exportItem(item, isShot) {
+        console.log("Service Exporting:", item); 
+
+        let exportData = null;
+        // 1. Prefer specific exportName (e.g. shot-123.json), else item.name/id
+        let filename = item.exportName || item.name || item.id || 'export.json';
+        
+        // Ensure extension .json (or .slog if preferred)
+        if (!filename.toLowerCase().endsWith('.json') && !filename.toLowerCase().endsWith('.slog')) {
+            filename += '.json';
+        }
+
+        if (item.source === 'gaggimate') {
+            if (isShot) {
+                // SHOT EXPORT (GM): 
+                // We MUST load the full shot because the list item only has summary data.
+                // Use the 'id' (timestamp) to load, ignoring the 'name' (profile name).
+                const loadId = item.id;
+                if (!loadId) throw new Error("Shot ID missing for export");
+
+                const fullShot = await this.loadShot(loadId, 'gaggimate');
+                exportData = fullShot; 
+            } else {
+                // PROFILE EXPORT (GM): 
+                // Load fresh from controller using the hidden profileId
+                const loadId = item.profileId || item.id;
+                if (!loadId) throw new Error("Profile ID missing for export");
+
+                const raw = await this.loadProfile(loadId, 'gaggimate');
+                const clean = { ...raw };
+                
+                // Cleanup internal metadata before export
+                delete clean.source;
+                // delete clean.name; // Use caution removing name, usually needed inside the file
+                delete clean.id;      // Remove internal ID (e.g. "QtQdQjBeav")
+                exportData = clean;
+            }
+        } else {
+            // BROWSER EXPORT:
+            // Just clean up our internal tags
+            exportData = { ... (item.data || item) };
+            delete exportData.source;
+            delete exportData.uploadedAt;
+            // For browser shots, exportData already contains full samples if they were uploaded
+        }
+
+        const jsonStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+
+        return { blob, filename };
+    }
+
+    /**
      * Delete a shot
      * @param {string} id - Shot ID
      * @param {string} source - 'gaggimate' or 'browser'
      */
     async deleteShot(id, source) {
         if (source === 'gaggimate') {
-            // Delete from GaggiMate controller
-            if (!this.apiService) {
-                throw new Error('ApiService not set');
-            }
-
-            await this.apiService.request({
-                tp: 'req:history:delete',
-                id: id
-            });
+            if (!this.apiService) throw new Error('ApiService not set');
+            await this.apiService.request({ tp: 'req:history:delete', id: id });
         } else {
-            // Delete from browser storage
             await indexedDBService.deleteShot(id);
         }
     }
@@ -266,17 +306,9 @@ class LibraryService {
      */
     async deleteProfile(name, source) {
         if (source === 'gaggimate') {
-            // Delete from GaggiMate controller
-            if (!this.apiService) {
-                throw new Error('ApiService not set');
-            }
-
-            await this.apiService.request({
-                tp: 'req:profiles:delete',
-                id: name
-            });
+            if (!this.apiService) throw new Error('ApiService not set');
+            await this.apiService.request({ tp: 'req:profiles:delete', id: name });
         } else {
-            // Delete from browser storage
             await indexedDBService.deleteProfile(name);
         }
     }
@@ -310,5 +342,4 @@ class LibraryService {
     }
 }
 
-// Export singleton instance
 export const libraryService = new LibraryService();

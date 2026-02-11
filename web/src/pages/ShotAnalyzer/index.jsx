@@ -41,7 +41,7 @@ export function ShotAnalyzer() {
     });
     
     const [settings, setSettings] = useState({
-        scaleDelay: 800,
+        scaleDelay: 1000,
         sensorDelay: 200,
         autoDelay: true
     });
