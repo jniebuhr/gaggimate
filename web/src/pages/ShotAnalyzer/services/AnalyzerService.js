@@ -91,7 +91,6 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     const globalStartTime = gSamples[0].t;
     
     // --- 1. PHASE SEPARATION ---
-    // Group samples by phase number
     const phases = {};
     const phaseNameMap = {};
     
@@ -107,12 +106,13 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         phases[pNum].push(sample);
     });
     
+    const sortedPhaseKeys = Object.keys(phases).sort((a, b) => a - b);
+    const lastPhaseKey = sortedPhaseKeys[sortedPhaseKeys.length - 1];
+
     // --- 2. BREW MODE DETECTION ---
-    // Check if shot was started in volumetric (weight-based) mode
     const startSysInfo = gSamples[0].systemInfo || {};
     const isBrewByWeight = startSysInfo.shotStartedVolumetric === true;
     
-    // Track if Bluetooth scale connection was lost
     let globalScaleLost = false;
     if (isBrewByWeight) {
         globalScaleLost = gSamples.some(s => 
@@ -123,40 +123,42 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     // --- 3. GLOBAL TOTALS ---
     let gDuration = (gSamples[gSamples.length - 1].t - gSamples[0].t) / 1000;
     
-    // Total water pumped (integrate flow over time)
     let gWater = 0;
     for (let i = 1; i < gSamples.length; i++) {
         const dt = (gSamples[i].t - gSamples[i - 1].t) / 1000;
         gWater += gSamples[i].fl * dt;
     }
     
-    // Final weight
     let gWeight = gSamples[gSamples.length - 1].v;
     
     // --- 4. PHASE-BY-PHASE ANALYSIS ---
     const analyzedPhases = [];
     
-    // Tolerances for target matching
-    const TOL_PRESSURE = 0.15; // ±0.15 bar
-    const TOL_FLOW = 0.3;      // ±0.3 ml/s
+    // Variables to calculate global average delay for UI
+    let cumulativeDelaySum = 0;
+    let phasesWithHits = 0;
+
+    // Tolerances
+    const TOL_PRESSURE = 0.15;
+    const TOL_FLOW = 0.3;
     
     let scaleConnectionBrokenPermanently = false;
     
-    Object.keys(phases).sort((a, b) => a - b).forEach(phaseNum => {
+    sortedPhaseKeys.forEach(phaseNum => {
         const samples = phases[phaseNum];
         const pStart = (samples[0].t - globalStartTime) / 1000;
         const pEnd = (samples[samples.length - 1].t - globalStartTime) / 1000;
         const duration = pEnd - pStart;
         
+        const isLastPhase = (phaseNum === lastPhaseKey);
+        
         const rawName = phaseNameMap[phaseNum];
         const displayName = rawName ? rawName : `Phase ${phaseNum}`;
         
-        // --- System Info Extraction (Direct Access) ---
-        // Grab the last sample of the phase to determine the state
+        // System Info
         const lastSampleInPhase = samples[samples.length - 1];
         const sysInfo = lastSampleInPhase.systemInfo || {};
 
-        // Check scale connection for this phase
         let scaleLostInThisPhase = false;
         if (isBrewByWeight) {
             scaleLostInThisPhase = samples.some(s => 
@@ -167,13 +169,12 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             scaleConnectionBrokenPermanently = true;
         }
         
-        // --- EXIT REASON DETECTION ---
+        // --- EXIT REASON & AUTO-DELAY LOGIC ---
         let exitReason = null;
         let exitType = null;
         let finalPredictedWeight = null;
         let profilePhase = null;
         
-        // Match with profile phase if available
         if (profileData && profileData.phases) {
             const cleanName = rawName ? rawName.trim().toLowerCase() : "";
             profilePhase = profileData.phases.find(p => 
@@ -183,156 +184,178 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             if (profilePhase) {
                 const profDur = profilePhase.duration;
                 
-                // Check if phase ended due to time limit
+                // Time Limit Check (Always runs first)
                 if (Math.abs(duration - profDur) < 0.5 || duration >= profDur) {
                     exitReason = "Time Limit";
                     exitType = "duration";
                 }
                 
                 // Check target-based exits
+                // If Auto-Adjust is ON: Loop delays from 0 to 3000ms simultaneously
+                // If Auto-Adjust is OFF: Run once with manual settings
                 if (profilePhase.targets && (!exitType || duration < (profDur - 0.5))) {
-                    // Calculate phase water pumped
-                    let wPumped = 0;
-                    for (let i = 1; i < samples.length; i++) {
-                        const dt = (samples[i].t - samples[i - 1].t) / 1000;
-                        wPumped += samples[i].fl * dt;
-                    }
                     
-                    // Last sample values
-                    const lastSample = samples[samples.length - 1];
-                    const prevSample = samples.length > 1 ? samples[samples.length - 2] : lastSample;
-                    const dt = (lastSample.t - prevSample.t) / 1000.0;
-                    
-                    const lastP = lastSample.cp;
-                    const lastF = lastSample.fl;
-                    const lastW = lastSample.v;
-                    const lastVF = lastSample.vf; // Volumetric flow (if available)
-                    
-                    // Look ahead to next phase first sample
-                    let nextPhaseFirstSample = null;
-                    const nextPNum = parseInt(phaseNum) + 1;
-                    if (phases[nextPNum] && phases[nextPNum].length > 0) {
-                        nextPhaseFirstSample = phases[nextPNum][0];
-                    }
-                    
-                    // --- PREDICTIVE CALCULATIONS ---
-                    
-                    // Weight prediction (with scale delay compensation)
-                    let predictedW = lastW;
-                    if (lastW > 0.1 && !scaleConnectionBrokenPermanently) {
+                    const steps = isAutoAdjusted ? 31 : 1; // 0..3000 (31 steps) or 1 step
+                    let foundMatch = false;
+
+                    for (let step = 0; step < steps; step++) {
+                        // In Auto mode: scale & sensor increase together (0, 100, 200...)
+                        // In Manual mode: use specific settings
+                        const currentDelay = isAutoAdjusted ? (step * 100) : null;
+                        const tScaleDelay = isAutoAdjusted ? currentDelay : scaleDelayMs;
+                        const tSensorDelay = isAutoAdjusted ? currentDelay : sensorDelayMs;
+
+                        // --- CALCULATIONS FOR CURRENT DELAY ---
+                        
+                        let wPumped = 0;
+                        for (let i = 1; i < samples.length; i++) {
+                            const dt = (samples[i].t - samples[i - 1].t) / 1000;
+                            wPumped += samples[i].fl * dt;
+                        }
+                        
+                        const lastSample = samples[samples.length - 1];
+                        const prevSample = samples.length > 1 ? samples[samples.length - 2] : lastSample;
+                        const dt = (lastSample.t - prevSample.t) / 1000.0;
+                        
+                        const lastP = lastSample.cp;
+                        const lastF = lastSample.fl;
+                        const lastW = lastSample.v;
+                        const lastVF = lastSample.vf;
+
+                        // Look ahead
+                        let nextPhaseFirstSample = null;
+                        const nextPNum = parseInt(phaseNum) + 1;
+                        if (phases[nextPNum] && phases[nextPNum].length > 0) {
+                            nextPhaseFirstSample = phases[nextPNum][0];
+                        }
+                        
+                        // Prediction Logic
+                        let predictedW = lastW;
                         let currentRate = (lastVF !== undefined) ? lastVF : lastF;
-                        let predictedAdded = currentRate * (scaleDelayMs / 1000.0);
                         
-                        // Clamp prediction
-                        if (predictedAdded < 0) predictedAdded = 0;
-                        if (predictedAdded > 8.0) predictedAdded = 8.0;
-                        
-                        predictedW = lastW + predictedAdded;
-                    }
-                    finalPredictedWeight = predictedW;
-                    
-                    // Water pumped prediction
-                    let predictedPumped = wPumped;
-                    if (lastF > 0) {
-                        predictedPumped += lastF * (sensorDelayMs / 1000.0);
-                    }
-                    
-                    // Pressure and Flow predictions (linear extrapolation)
-                    let predictedP = lastP;
-                    let predictedF = lastF;
-                    if (dt > 0) {
-                        const slopeP = (lastP - prevSample.cp) / dt;
-                        const slopeF = (lastF - prevSample.fl) / dt;
-                        
-                        predictedP = lastP + (slopeP * (sensorDelayMs / 1000.0));
-                        predictedF = lastF + (slopeF * (sensorDelayMs / 1000.0));
-                    }
-                    
-                    // --- TARGET MATCHING LOGIC ---
-                    let hitTargets = [];
-                    
-                    for (let tgt of profilePhase.targets) {
-                        // Skip weight targets if scale lost
-                        if ((tgt.type === 'volumetric' || tgt.type === 'weight') && 
-                            scaleConnectionBrokenPermanently) {
-                            continue;
+                        if (lastW > 0.1 && !scaleConnectionBrokenPermanently) {
+                            let predictedAdded = currentRate * (tScaleDelay / 1000.0);
+                            if (predictedAdded < 0) predictedAdded = 0;
+                            if (predictedAdded > 8.0) predictedAdded = 8.0;
+                            predictedW = lastW + predictedAdded;
                         }
                         
-                        let measured = 0;
-                        let checkValue = 0;
-                        let hit = false;
-                        let tolerance = 0;
-                        
-                        // Select appropriate values based on target type
-                        if (tgt.type === 'pressure') {
-                            measured = lastP;
-                            checkValue = (tgt.operator === 'gte' || tgt.operator === 'lte') 
-                                ? predictedP : lastP;
-                            tolerance = TOL_PRESSURE;
-                        } else if (tgt.type === 'flow') {
-                            measured = lastF;
-                            checkValue = (tgt.operator === 'gte' || tgt.operator === 'lte') 
-                                ? predictedF : lastF;
-                            tolerance = TOL_FLOW;
-                        } else if (tgt.type === 'volumetric' || tgt.type === 'weight') {
-                            measured = lastW;
-                            checkValue = (tgt.operator === 'gte') ? predictedW : lastW;
-                        } else if (tgt.type === 'pumped') {
-                            measured = wPumped;
-                            checkValue = (tgt.operator === 'gte') ? predictedPumped : wPumped;
+                        let predictedPumped = wPumped;
+                        if (lastF > 0) {
+                            predictedPumped += lastF * (tSensorDelay / 1000.0);
                         }
                         
-                        // Check if target was hit (measured value)
-                        if (tgt.operator === 'gte' && measured >= tgt.value) hit = true;
-                        if (tgt.operator === 'lte' && measured <= tgt.value) hit = true;
-                        
-                        // Check predicted value if not hit yet
-                        if (!hit) {
-                            if (tgt.operator === 'gte' && checkValue >= tgt.value) hit = true;
-                            if (tgt.operator === 'lte' && checkValue <= tgt.value) hit = true;
+                        let predictedP = lastP;
+                        let predictedF = lastF;
+                        if (dt > 0) {
+                            const slopeP = (lastP - prevSample.cp) / dt;
+                            const slopeF = (lastF - prevSample.fl) / dt;
+                            predictedP = lastP + (slopeP * (tSensorDelay / 1000.0));
+                            predictedF = lastF + (slopeF * (tSensorDelay / 1000.0));
                         }
-                        
-                        // Apply tolerance for close misses
-                        if (!hit && tolerance > 0) {
-                            if (tgt.operator === 'gte' && measured >= tgt.value - tolerance) hit = true;
-                            if (tgt.operator === 'lte' && measured <= tgt.value + tolerance) hit = true;
-                        }
-                        
-                        // Check next phase's first sample (transition overshoot)
-                        if (!hit && nextPhaseFirstSample) {
-                            if (tgt.type === 'pressure' && tgt.operator === 'gte' && 
-                                nextPhaseFirstSample.cp >= tgt.value) {
-                                hit = true;
+
+                        // Target Logic
+                        let hitTargets = [];
+                        for (let tgt of profilePhase.targets) {
+                            if ((tgt.type === 'volumetric' || tgt.type === 'weight') && 
+                                scaleConnectionBrokenPermanently) continue;
+                            
+                            let measured = 0;
+                            let checkValue = 0;
+                            let hit = false;
+                            let tolerance = 0;
+                            
+                            if (tgt.type === 'pressure') {
+                                measured = lastP;
+                                checkValue = (tgt.operator === 'gte' || tgt.operator === 'lte') ? predictedP : lastP;
+                                tolerance = TOL_PRESSURE;
+                            } else if (tgt.type === 'flow') {
+                                measured = lastF;
+                                checkValue = (tgt.operator === 'gte' || tgt.operator === 'lte') ? predictedF : lastF;
+                                tolerance = TOL_FLOW;
+                            } else if (tgt.type === 'volumetric' || tgt.type === 'weight') {
+                                measured = lastW;
+                                checkValue = (tgt.operator === 'gte') ? predictedW : lastW;
+                            } else if (tgt.type === 'pumped') {
+                                measured = wPumped;
+                                checkValue = (tgt.operator === 'gte') ? predictedPumped : wPumped;
                             }
-                            if (tgt.type === 'flow' && tgt.operator === 'gte' && 
-                                nextPhaseFirstSample.fl >= tgt.value) {
-                                hit = true;
+                            
+                            if (tgt.operator === 'gte' && measured >= tgt.value) hit = true;
+                            if (tgt.operator === 'lte' && measured <= tgt.value) hit = true;
+                            
+                            if (!hit) {
+                                if (tgt.operator === 'gte' && checkValue >= tgt.value) hit = true;
+                                if (tgt.operator === 'lte' && checkValue <= tgt.value) hit = true;
                             }
-                            // Look-ahead for Weight/Volumetric
-                            if ((tgt.type === 'weight' || tgt.type === 'volumetric') && tgt.operator === 'gte' && 
-                                nextPhaseFirstSample.v >= tgt.value) {
-                                hit = true;
+                            
+                            if (!hit && tolerance > 0) {
+                                if (tgt.operator === 'gte' && measured >= tgt.value - tolerance) hit = true;
+                                if (tgt.operator === 'lte' && measured <= tgt.value + tolerance) hit = true;
                             }
+                            
+                            if (!hit && nextPhaseFirstSample) {
+                                if (tgt.type === 'pressure' && tgt.operator === 'gte' && nextPhaseFirstSample.cp >= tgt.value) hit = true;
+                                if (tgt.type === 'flow' && tgt.operator === 'gte' && nextPhaseFirstSample.fl >= tgt.value) hit = true;
+                                if ((tgt.type === 'weight' || tgt.type === 'volumetric') && tgt.operator === 'gte' && nextPhaseFirstSample.v >= tgt.value) hit = true;
+                            }
+                            
+                            if (hit) hitTargets.push(tgt);
                         }
-                        
-                        if (hit) hitTargets.push(tgt);
-                    }
-                    
-                    // Select best matching target (priority: flow > weight > pressure)
-                    if (hitTargets.length > 0) {
-                        hitTargets.sort((a, b) => {
-                            const getScore = (type) => {
-                                if (type === 'flow') return 1;
-                                if (type === 'weight' || type === 'volumetric') return 2;
-                                if (type === 'pressure') return 3;
-                                return 4;
-                            };
-                            return getScore(a.type) - getScore(b.type);
-                        });
-                        
-                        const bestMatch = hitTargets[0];
-                        exitReason = formatStopReason(bestMatch.type);
-                        exitType = bestMatch.type;
+
+                        // Did we find a hit in this step?
+                        if (hitTargets.length > 0) {
+                            hitTargets.sort((a, b) => {
+                                const getScore = (type) => {
+                                    if (type === 'flow') return 1;
+                                    if (type === 'weight' || type === 'volumetric') return 2;
+                                    if (type === 'pressure') return 3;
+                                    return 4;
+                                };
+                                return getScore(a.type) - getScore(b.type);
+                            });
+                            
+                            const bestMatch = hitTargets[0];
+                            exitReason = formatStopReason(bestMatch.type);
+                            exitType = bestMatch.type;
+                            finalPredictedWeight = predictedW; // Store the prediction that worked
+                            
+                            if (isAutoAdjusted) {
+                                cumulativeDelaySum += currentDelay;
+                                phasesWithHits++;
+                            }
+                            foundMatch = true;
+                            break; // Stop loop, we found the lowest delay match
+                        }
+                    } // End delay loop
+
+                    // --- FALLBACK: LAST PHASE SPECIAL LOGIC ---
+                    // If no match found in loop, AND it's last phase, AND auto enabled:
+                    // Try to calculate exactly what weight delay was needed.
+                    if (!foundMatch && isLastPhase && isAutoAdjusted) {
+                        // We iterate targets again to see if a weight target was the goal
+                        const weightTarget = profilePhase.targets.find(t => t.type === 'weight' || t.type === 'volumetric');
+                        if (weightTarget) {
+                             const lastW = samples[samples.length - 1].v;
+                             const currentRate = samples[samples.length - 1].vf || samples[samples.length - 1].fl;
+                             const weightDiff = weightTarget.value - lastW;
+                             
+                             if (currentRate > 0.1) {
+                                 const timeToTarget = weightDiff / currentRate;
+                                 const requiredDelayMs = timeToTarget * 1000;
+                                 
+                                 // Allow plausible delay (0-4000ms)
+                                 if (requiredDelayMs >= 0 && requiredDelayMs <= 4000) {
+                                     exitReason = formatStopReason(weightTarget.type);
+                                     exitType = weightTarget.type;
+                                     finalPredictedWeight = weightTarget.value;
+                                     
+                                     // Add this "found" delay to the average
+                                     cumulativeDelaySum += requiredDelayMs;
+                                     phasesWithHits++;
+                                 }
+                             }
+                        }
                     }
                 }
             }
@@ -355,16 +378,14 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             water: pWaterPumped,
             weight: samples[samples.length - 1].v,
             stats: {
-                p: getMetricStats(samples, 'cp'),   // Pressure
-                tp: getMetricStats(samples, 'tp'),  // Target Pressure
-                f: getMetricStats(samples, 'fl'),   // Flow
-                pf: getMetricStats(samples, 'pf'),  // Puck Flow
-                tf: getMetricStats(samples, 'tf'),  // Target Flow
-                t: getMetricStats(samples, 'ct'),   // Temperature
-                tt: getMetricStats(samples, 'tt'),  // Target Temp
-                w: getMetricStats(samples, 'v'),    // Weight
-                
-                // --- System Info Flags (Direct Access from last sample) ---
+                p: getMetricStats(samples, 'cp'),
+                tp: getMetricStats(samples, 'tp'),
+                f: getMetricStats(samples, 'fl'),
+                pf: getMetricStats(samples, 'pf'),
+                tf: getMetricStats(samples, 'tf'),
+                t: getMetricStats(samples, 'ct'),
+                tt: getMetricStats(samples, 'tt'),
+                w: getMetricStats(samples, 'v'),
                 sys_raw: sysInfo.raw,
                 sys_shot_vol: sysInfo.shotStartedVolumetric,
                 sys_curr_vol: sysInfo.currentlyVolumetric,
@@ -385,8 +406,14 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         });
     });
     
+    // Calculate Average Delay
+    let avgDelay = 0;
+    if (isAutoAdjusted && phasesWithHits > 0) {
+        // Round to nearest 50ms for cleaner UI
+        avgDelay = Math.round((cumulativeDelaySum / phasesWithHits) / 50) * 50;
+    }
+    
     // --- 5. TOTAL STATS ---
-    // Extract system info from the very last sample of the shot
     const finalSysInfo = gSamples[gSamples.length - 1].systemInfo || {};
 
     const totalStats = {
@@ -401,8 +428,6 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         t: getMetricStats(gSamples, 'ct'),
         tt: getMetricStats(gSamples, 'tt'),
         w: getMetricStats(gSamples, 'v'),
-        
-        // System Info Totals
         sys_raw: finalSysInfo.raw,
         sys_shot_vol: finalSysInfo.shotStartedVolumetric,
         sys_curr_vol: finalSysInfo.currentlyVolumetric,
@@ -415,6 +440,11 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         isBrewByWeight,
         globalScaleLost,
         isAutoAdjusted,
+        // RETURN USED SETTINGS FOR UI (Average if auto, otherwise manual)
+        usedSettings: {
+            scaleDelayMs: isAutoAdjusted ? avgDelay : scaleDelayMs,
+            sensorDelayMs: isAutoAdjusted ? avgDelay : sensorDelayMs
+        },
         phases: analyzedPhases,
         total: totalStats,
         rawSamples: gSamples,
@@ -424,121 +454,31 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 
 /**
  * Auto-Delay Detection
- * Attempts to find optimal sensor delay by testing target hit accuracy
+ * Optimization Loop: 0 to 3000ms in 100ms steps.
+ * Special Handling: Last phase weight target is calculated independently.
  * * @param {Object} shotData - Shot data
  * @param {Object|null} profileData - Profile data with targets
  * @param {number} manualDelay - User-configured delay (fallback)
  * @returns {Object} { delay: number, auto: boolean }
  */
 export function detectAutoDelay(shotData, profileData, manualDelay) {
-    if (!profileData || !profileData.phases) {
-        return { delay: manualDelay, auto: false };
-    }
-
-    // Guard against missing or empty samples
-    if (!shotData || !Array.isArray(shotData.samples) || shotData.samples.length === 0) {
-        return { delay: manualDelay, auto: false };
-    }
+    // Legacy support or initial detection
+    // For consistency, we can just run the main calculation and return the average it found
+    // But since this function is usually called separately, we can replicate the logic simplified 
+    // or just return the result of calculateShotMetrics().
     
-    // Group samples by phase
-    const phases = {};
-    const phaseNameMap = {};
+    // To avoid circular dependencies or overhead, we just return the manual delay with auto=true flag
+    // and let the main analysis handle the fine-tuning per phase.
     
-    if (shotData.phaseTransitions) {
-        shotData.phaseTransitions.forEach(pt => {
-            phaseNameMap[pt.phaseNumber] = pt.phaseName;
-        });
-    }
-    
-    shotData.samples.forEach(sample => {
-        if (!phases[sample.phaseNumber]) phases[sample.phaseNumber] = [];
-        phases[sample.phaseNumber].push(sample);
+    // Better yet: Perform a quick check using calculateShotMetrics logic
+    const results = calculateShotMetrics(shotData, profileData, { 
+        scaleDelayMs: manualDelay, 
+        sensorDelayMs: manualDelay, 
+        isAutoAdjusted: true 
     });
     
-    /**
-     * Test a specific delay value and count how many targets it hits
-     */
-    const checkDelay = (delayVal) => {
-        let hitCount = 0;
-        
-        Object.keys(phases).forEach(phaseNum => {
-            const samples = phases[phaseNum];
-            const rawName = phaseNameMap[phaseNum];
-            const cleanName = rawName ? rawName.trim().toLowerCase() : "";
-            
-            const profilePhase = profileData.phases.find(p => 
-                p.name.trim().toLowerCase() === cleanName
-            );
-            
-            if (profilePhase && profilePhase.targets) {
-                // Calculate water pumped
-                let wPumped = 0;
-                for (let i = 1; i < samples.length; i++) {
-                    const dt = (samples[i].t - samples[i - 1].t) / 1000;
-                    wPumped += samples[i].fl * dt;
-                }
-                
-                const lastS = samples[samples.length - 1];
-                const prevS = samples.length > 1 ? samples[samples.length - 2] : lastS;
-                const dt = (lastS.t - prevS.t) / 1000.0;
-                
-                // Predictions with this delay
-                let predPumped = wPumped;
-                if (lastS.fl > 0) {
-                    predPumped += lastS.fl * (delayVal / 1000.0);
-                }
-                
-                let predP = lastS.cp;
-                let predF = lastS.fl;
-                if (dt > 0) {
-                    const slopeP = (lastS.cp - prevS.cp) / dt;
-                    const slopeF = (lastS.fl - prevS.fl) / dt;
-                    predP = lastS.cp + (slopeP * (delayVal / 1000.0));
-                    predF = lastS.fl + (slopeF * (delayVal / 1000.0));
-                }
-                
-                // Check each target
-                for (let tgt of profilePhase.targets) {
-                    // Skip weight-based targets
-                    if (tgt.type === 'volumetric' || tgt.type === 'weight') continue;
-                    
-                    let measured = 0;
-                    let checkValue = 0;
-                    
-                    if (tgt.type === 'pressure') {
-                        measured = lastS.cp;
-                        checkValue = predP;
-                    } else if (tgt.type === 'flow') {
-                        measured = lastS.fl;
-                        checkValue = predF;
-                    } else if (tgt.type === 'pumped') {
-                        measured = wPumped;
-                        checkValue = predPumped;
-                    }
-                    
-                    let hit = false;
-                    if ((tgt.operator === 'gte' && (measured >= tgt.value || checkValue >= tgt.value)) ||
-                        (tgt.operator === 'lte' && (measured <= tgt.value || checkValue <= tgt.value))) {
-                        hit = true;
-                    }
-                    
-                    if (hit) {
-                        hitCount++;
-                        break; // Only count one hit per phase
-                    }
-                }
-            }
-        });
-        
-        return hitCount;
-    };
-    
-    // Test manual delay vs higher delay
-    const hitsNormal = checkDelay(manualDelay);
-    const hitsHigh = checkDelay(800);
-    
-    if (hitsHigh > hitsNormal) {
-        return { delay: 800, auto: true };
+    if (results && results.usedSettings) {
+        return { delay: results.usedSettings.scaleDelayMs, auto: true };
     }
     
     return { delay: manualDelay, auto: false };

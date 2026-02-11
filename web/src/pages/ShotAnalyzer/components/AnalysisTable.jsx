@@ -73,10 +73,6 @@ export function AnalysisTable({ results, activeColumns, onColumnsChange, setting
                     left: 0,
                     behavior: 'auto' // Instant scroll to feel native
                 });
-                
-                // Prevent the table from trying to handle it (if it could)
-                // Note: We don't preventDefault() completely, as that might stop other events,
-                // but usually scrolling the window manually is enough to override the trap.
             }
         };
 
@@ -231,22 +227,30 @@ export function AnalysisTable({ results, activeColumns, onColumnsChange, setting
                     <div className="flex items-center gap-4">
                         <span className="opacity-40 select-none hidden sm:inline">Latency</span>
                         <div className="flex items-center gap-2">
-                            <span className="opacity-60">Scale</span>
+                            {/* Shows Average Symbol ∅ if auto-delay is active */}
+                            <span className="opacity-60">Scale{safeSettings.autoDelay ? ' ∅' : ''}</span>
                             <input 
-                                type="number" step="50" value={safeSettings.scaleDelay} 
+                                type="number" 
+                                step="50" 
+                                value={safeSettings.autoDelay && results?.usedSettings ? results.usedSettings.scaleDelayMs : safeSettings.scaleDelay} 
+                                disabled={safeSettings.autoDelay}
                                 onInput={e => { 
                                     const val = parseInt(e.target.value);
                                     if (!isNaN(val)) onSettingsChange({...safeSettings, scaleDelay: val}); 
                                 }}
-                                className="bg-base-200 border border-base-content/10 rounded w-12 h-5 text-center font-mono focus:outline-none focus:border-primary text-base-content"
+                                className="bg-base-200 border border-base-content/10 rounded w-12 h-5 text-center font-mono focus:outline-none focus:border-primary text-base-content disabled:opacity-30"
                             />
                             <span className="opacity-40 lowercase font-normal">ms</span>
                         </div>
                         <div className="w-px h-3 bg-base-content/10 mx-1"></div>
                         <div className="flex items-center gap-2">
-                            <span className="opacity-60">System</span>
+                            {/* Shows Average Symbol ∅ if auto-delay is active */}
+                            <span className="opacity-60">System{safeSettings.autoDelay ? ' ∅' : ''}</span>
                             <input 
-                                type="number" step="50" value={safeSettings.sensorDelay} disabled={safeSettings.autoDelay} 
+                                type="number" 
+                                step="50" 
+                                value={safeSettings.autoDelay && results?.usedSettings ? results.usedSettings.sensorDelayMs : safeSettings.sensorDelay} 
+                                disabled={safeSettings.autoDelay} 
                                 onInput={e => { 
                                     const val = parseInt(e.target.value);
                                     if (!isNaN(val)) onSettingsChange({...safeSettings, sensorDelay: val}); 
@@ -302,69 +306,144 @@ function CellContent({ phase, col, results, isTotal = false }) {
     let isBoolean = false; 
     let booleanContent = null;
     
+    // FORMATTED: Multi-line switch case as requested
     switch (col.id) {
-        case 'duration': mainValue = sf(data.duration); unit = "s"; break;
-        case 'water': mainValue = sf(data.water); unit = "ml"; break;
-        case 'weight': mainValue = sf(data.weight); unit = "g"; break;
+        case 'duration': 
+            mainValue = sf(data.duration); 
+            unit = "s"; 
+            break;
+        case 'water': 
+            mainValue = sf(data.water); 
+            unit = "ml"; 
+            break;
+        case 'weight': 
+            mainValue = sf(data.weight); 
+            unit = "g"; 
+            break;
+        
         // Pressure
-        case 'p_se': mainValue = `${sf(stats?.p?.start)}/${sf(stats?.p?.end)}`; break;
-        case 'p_mm': mainValue = `${sf(stats?.p?.min)}/${sf(stats?.p?.max)}`; break;
-        case 'p_avg': mainValue = sf(stats?.p?.avg); unit = "bar"; break;
+        case 'p_se': 
+            mainValue = `${sf(stats?.p?.start)}/${sf(stats?.p?.end)}`; 
+            break;
+        case 'p_mm': 
+            mainValue = `${sf(stats?.p?.min)}/${sf(stats?.p?.max)}`; 
+            break;
+        case 'p_avg': 
+            mainValue = sf(stats?.p?.avg); 
+            unit = "bar"; 
+            break;
+        
         // Target Pressure
-        case 'tp_se': mainValue = `${sf(stats?.tp?.start)}/${sf(stats?.tp?.end)}`; break;
-        case 'tp_mm': mainValue = `${sf(stats?.tp?.min)}/${sf(stats?.tp?.max)}`; break;
-        case 'tp_avg': mainValue = sf(stats?.tp?.avg); unit = "bar"; break;
+        case 'tp_se': 
+            mainValue = `${sf(stats?.tp?.start)}/${sf(stats?.tp?.end)}`; 
+            break;
+        case 'tp_mm': 
+            mainValue = `${sf(stats?.tp?.min)}/${sf(stats?.tp?.max)}`; 
+            break;
+        case 'tp_avg': 
+            mainValue = sf(stats?.tp?.avg); 
+            unit = "bar"; 
+            break;
+        
         // Flow
-        case 'f_se': mainValue = `${sf(stats?.f?.start)}/${sf(stats?.f?.end)}`; break;
-        case 'f_mm': mainValue = `${sf(stats?.f?.min)}/${sf(stats?.f?.max)}`; break;
-        case 'f_avg': mainValue = sf(stats?.f?.avg); unit = "ml/s"; break;
+        case 'f_se': 
+            mainValue = `${sf(stats?.f?.start)}/${sf(stats?.f?.end)}`; 
+            break;
+        case 'f_mm': 
+            mainValue = `${sf(stats?.f?.min)}/${sf(stats?.f?.max)}`; 
+            break;
+        case 'f_avg': 
+            mainValue = sf(stats?.f?.avg); 
+            unit = "ml/s"; 
+            break;
+        
         // Target Flow
-        case 'tf_se': mainValue = `${sf(stats?.tf?.start)}/${sf(stats?.tf?.end)}`; break;
-        case 'tf_mm': mainValue = `${sf(stats?.tf?.min)}/${sf(stats?.tf?.max)}`; break;
-        case 'tf_avg': mainValue = sf(stats?.tf?.avg); unit = "ml/s"; break;
+        case 'tf_se': 
+            mainValue = `${sf(stats?.tf?.start)}/${sf(stats?.tf?.end)}`; 
+            break;
+        case 'tf_mm': 
+            mainValue = `${sf(stats?.tf?.min)}/${sf(stats?.tf?.max)}`; 
+            break;
+        case 'tf_avg': 
+            mainValue = sf(stats?.tf?.avg); 
+            unit = "ml/s"; 
+            break;
+        
         // Puck Flow
-        case 'pf_se': mainValue = `${sf(stats?.pf?.start)}/${sf(stats?.pf?.end)}`; break;
-        case 'pf_mm': mainValue = `${sf(stats?.pf?.min)}/${sf(stats?.pf?.max)}`; break;
-        case 'pf_avg': mainValue = sf(stats?.pf?.avg); unit = "ml/s"; break;
+        case 'pf_se': 
+            mainValue = `${sf(stats?.pf?.start)}/${sf(stats?.pf?.end)}`; 
+            break;
+        case 'pf_mm': 
+            mainValue = `${sf(stats?.pf?.min)}/${sf(stats?.pf?.max)}`; 
+            break;
+        case 'pf_avg': 
+            mainValue = sf(stats?.pf?.avg); 
+            unit = "ml/s"; 
+            break;
+        
         // Temperature
-        case 't_se': mainValue = `${sf(stats?.t?.start)}/${sf(stats?.t?.end)}`; break;
-        case 't_mm': mainValue = `${sf(stats?.t?.min)}/${sf(stats?.t?.max)}`; break;
-        case 't_avg': mainValue = sf(stats?.t?.avg); unit = "°"; break;
+        case 't_se': 
+            mainValue = `${sf(stats?.t?.start)}/${sf(stats?.t?.end)}`; 
+            break;
+        case 't_mm': 
+            mainValue = `${sf(stats?.t?.min)}/${sf(stats?.t?.max)}`; 
+            break;
+        case 't_avg': 
+            mainValue = sf(stats?.t?.avg); 
+            unit = "°"; 
+            break;
+        
         // Target Temperature
-        case 'tt_se': mainValue = `${sf(stats?.tt?.start)}/${sf(stats?.tt?.end)}`; break;
-        case 'tt_mm': mainValue = `${sf(stats?.tt?.min)}/${sf(stats?.tt?.max)}`; break;
-        case 'tt_avg': mainValue = sf(stats?.tt?.avg); unit = "°"; break;
+        case 'tt_se': 
+            mainValue = `${sf(stats?.tt?.start)}/${sf(stats?.tt?.end)}`; 
+            break;
+        case 'tt_mm': 
+            mainValue = `${sf(stats?.tt?.min)}/${sf(stats?.tt?.max)}`; 
+            break;
+        case 'tt_avg': 
+            mainValue = sf(stats?.tt?.avg); 
+            unit = "°"; 
+            break;
+        
         // Weight Details
-        case 'w_se': mainValue = `${sf(stats?.w?.start)}/${sf(stats?.w?.end)}`; break;
-        case 'w_mm': mainValue = `${sf(stats?.w?.min)}/${sf(stats?.w?.max)}`; break;
-        case 'w_avg': mainValue = sf(stats?.w?.avg); unit = "g"; break;
+        case 'w_se': 
+            mainValue = `${sf(stats?.w?.start)}/${sf(stats?.w?.end)}`; 
+            break;
+        case 'w_mm': 
+            mainValue = `${sf(stats?.w?.min)}/${sf(stats?.w?.max)}`; 
+            break;
+        case 'w_avg': 
+            mainValue = sf(stats?.w?.avg); 
+            unit = "g"; 
+            break;
         
         // --- System Info (Mapped from AnalyzerService stats) ---
         case 'sys_raw': 
             mainValue = stats?.sys_raw !== undefined ? stats.sys_raw : "-"; 
             break;
-        case 'sys_shot_vol': // Start Volumetric
+        case 'sys_shot_vol': 
             isBoolean = true; 
             booleanContent = renderBool(stats?.sys_shot_vol); 
             break;
-        case 'sys_curr_vol': // Currently Volumetric
+        case 'sys_curr_vol': 
             isBoolean = true; 
             booleanContent = renderBool(stats?.sys_curr_vol); 
             break;
-        case 'sys_scale': // Scale Connected
+        case 'sys_scale': 
             isBoolean = true; 
             booleanContent = renderBool(stats?.sys_scale); 
             break;
-        case 'sys_vol_avail': // Volumetric Available
+        case 'sys_vol_avail': 
             isBoolean = true; 
             booleanContent = renderBool(stats?.sys_vol_avail); 
             break;
-        case 'sys_ext': // Extended Record
+        case 'sys_ext': 
             isBoolean = true; 
             booleanContent = renderBool(stats?.sys_ext); 
             break;
             
-        default: mainValue = "-";
+        default: 
+            mainValue = "-";
     }
 
     if (isTotal) {
@@ -382,6 +461,22 @@ function CellContent({ phase, col, results, isTotal = false }) {
     // Relative font sizing for sub-elements (0.85em) ensures they scale with zoom
     const subTextSize = { fontSize: '0.85em' };
     const iconSize = { fontSize: '0.8em' };
+
+    // Duration Target Display
+    // If the phase has a duration target defined in the profile, show it always.
+    if (col.id === 'duration' && phase.profilePhase && phase.profilePhase.duration > 0) {
+        const targetVal = phase.profilePhase.duration;
+        const diff = data.duration - targetVal;
+        const diffSign = diff > 0 ? '+' : '';
+        const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/40';
+
+        targetDisplay = (
+            <div style={subTextSize} className="leading-tight mt-0.5 whitespace-nowrap opacity-80">
+                <span className="opacity-50">Target:</span> {targetVal}s
+                <span className={`ml-1 font-bold ${diffColor}`}>({diffSign}{diff.toFixed(1)})</span>
+            </div>
+        );
+    }
 
     if (phase.profilePhase && phase.profilePhase.targets && col.targetType) {
         const target = phase.profilePhase.targets.find(t => {
