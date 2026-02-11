@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp'; // Added ChevronUp
 import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
 import {
@@ -19,27 +20,34 @@ import {
     loadFromStorage
 } from '../utils/analyzerUtils';
 
-export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = false }) {
+export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = false, headerChildren = null }) {
     const [expanded, setExpanded] = useState(false);
     const [presets, setPresets] = useState([]);
     const [selectedPresetId, setSelectedPresetId] = useState('');
     
+    // Load custom presets on mount
     useEffect(() => {
         setPresets(loadFromStorage(ANALYZER_DB_KEYS.PRESETS, []));
     }, []);
     
     const groupedColumns = getGroupedColumns();
     
+    /**
+     * Toggle individual column visibility
+     */
     const toggleColumn = (columnId, checked) => {
         const newColumns = new Set(activeColumns);
         checked ? newColumns.add(columnId) : newColumns.delete(columnId);
         onColumnsChange(newColumns);
-        if (selectedPresetId) setSelectedPresetId(''); // Reset selection when manually editing
+        
+        // Reset preset selection if manual changes are made
+        if (selectedPresetId) setSelectedPresetId(''); 
     };
 
-    // --- Actions ---
+    // --- Action Handlers ---
+
     const applyStandard = (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Prevent closing if called from header
         const userStandard = loadFromStorage(ANALYZER_DB_KEYS.USER_STANDARD);
         onColumnsChange(userStandard ? new Set(userStandard) : getDefaultColumns());
         setSelectedPresetId('');
@@ -79,10 +87,12 @@ export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = 
         const updated = presets.filter(p => p.id !== selectedPresetId);
         setPresets(updated);
         saveToStorage(ANALYZER_DB_KEYS.PRESETS, updated);
-        applyStandard(e);
+        applyStandard(e); // Reset to standard after delete
     };
 
-    // Helper for Detailed Labels
+    /**
+     * Helper to format detailed technical labels
+     */
     const getDetailedLabel = (col) => {
         let suffix = "";
         if (col.type === 'se') suffix = " Start/End";
@@ -91,63 +101,79 @@ export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = 
         return col.label + suffix;
     };
 
-    // Container styles using fixed base colors
+    // Dynamic container styles
     const containerClasses = isIntegrated
-        ? "bg-base-200 border-t border-base-content/10 rounded-b-lg" 
+        ? "bg-base-200 rounded-t-lg border-b border-base-content/10" 
         : "bg-base-200/80 backdrop-blur-md rounded-lg shadow-sm border border-base-content/10 mb-5";
 
     return (
         <div className={`overflow-hidden transition-colors ${containerClasses}`}>
-            {/* Header Bar */}
+            {/* Header Bar - Toggle for Expand/Collapse */}
             <div 
-                className="px-4 py-3 flex items-center gap-4 cursor-pointer hover:bg-base-content/10 select-none"
+                className="px-4 py-2 flex items-center justify-between gap-4 cursor-pointer hover:bg-base-content/5 select-none min-h-[42px]"
                 onClick={() => setExpanded(!expanded)}
             >
-                <div className={`text-primary transition-transform duration-300 text-xs ${expanded ? 'rotate-180' : ''}`}>
-                    <FontAwesomeIcon icon={faChevronDown} />
-                </div>
-                
-                <div className="flex-1 min-w-0 font-bold text-base-content text-xs uppercase tracking-wider">
-                    Column Configuration
-                </div>
-                
-                {/* Quick Controls in Header */}
-                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                    <button onClick={applyStandard} className="btn btn-ghost btn-xs text-[10px] h-6 min-h-0 font-bold uppercase tracking-wider">
-                        Standard
-                    </button>
-
-                    <select
-                        value={selectedPresetId}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === 'ALL_METRICS') {
-                                applyAll();
-                            } else {
-                                const p = presets.find(x => x.id === val);
-                                if (p) { onColumnsChange(new Set(p.columns)); setSelectedPresetId(p.id); }
-                            }
-                        }}
-                        onClick={e => e.stopPropagation()}
-                        className="select select-bordered select-xs h-6 min-h-0 text-[10px] font-bold bg-base-100"
-                    >
-                        <option value="" disabled>Presets...</option>
-                        <option value="ALL_METRICS">All Metrics</option>
-                        <option disabled>──────────</option>
-                        {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-
-                    {selectedPresetId && selectedPresetId !== 'ALL_METRICS' && (
-                        <button onClick={deletePreset} className="btn btn-ghost btn-xs h-6 min-h-0 text-error">
-                            <FontAwesomeIcon icon={faTrash} />
+                {/* Left Side: Toggle & Controls */}
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className={`text-primary transition-transform duration-300 text-xs ${expanded ? 'rotate-180' : ''}`}>
+                        <FontAwesomeIcon icon={faChevronDown} />
+                    </div>
+                    
+                    <div className="font-bold text-base-content text-xs uppercase tracking-wider truncate">
+                        Column Configuration
+                    </div>
+                    
+                    {/* Header Actions & Preset Selector */}
+                    <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                        <button 
+                            onClick={applyStandard} 
+                            className="btn btn-ghost btn-xs text-[10px] h-6 min-h-0 font-bold uppercase tracking-wider hidden sm:inline-flex"
+                        >
+                            Standard
                         </button>
-                    )}
+
+                        <select
+                            value={selectedPresetId}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === 'ALL_METRICS') {
+                                    applyAll();
+                                } else {
+                                    const p = presets.find(x => x.id === val);
+                                    if (p) { 
+                                        onColumnsChange(new Set(p.columns)); 
+                                        setSelectedPresetId(p.id); 
+                                    }
+                                }
+                            }}
+                            onClick={e => e.stopPropagation()}
+                            className="select select-bordered select-xs h-6 min-h-0 text-[10px] font-bold bg-base-100/50"
+                        >
+                            <option value="" disabled>Presets...</option>
+                            <option value="ALL_METRICS">All Metrics</option>
+                            <option disabled>──────────</option>
+                            {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+
+                        {selectedPresetId && selectedPresetId !== 'ALL_METRICS' && (
+                            <button onClick={deletePreset} className="btn btn-ghost btn-xs h-6 min-h-0 text-error/60 hover:text-error">
+                                <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                        )}
+                    </div>
                 </div>
+
+                {/* Right Side: Injected Content (Zoom/Scroll) */}
+                {headerChildren && (
+                    <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                        {headerChildren}
+                    </div>
+                )}
             </div>
 
-            {/* Expandable Selection Grid */}
+            {/* Expandable Selection Area */}
             {expanded && (
-                <div className="px-5 py-6 border-t border-base-content/10 animate-fade-in bg-base-100">
+                <div className="px-5 pt-6 border-t border-base-content/10 animate-fade-in bg-base-100/50 border-b">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {Object.keys(groupedColumns).map(groupKey => {
                             const cols = groupedColumns[groupKey];
@@ -161,7 +187,10 @@ export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = 
                                     
                                     <div className="space-y-1.5">
                                         {cols.map(col => (
-                                            <label key={col.id} className={`flex items-start gap-2 text-xs cursor-pointer group ${colors.text}`}>
+                                            <label 
+                                                key={col.id} 
+                                                className={`flex items-start gap-2 text-xs cursor-pointer hover:opacity-100 transition-opacity group ${colors.text}`}
+                                            >
                                                 <input
                                                     type="checkbox"
                                                     checked={activeColumns.has(col.id)}
@@ -180,19 +209,40 @@ export function ColumnControls({ activeColumns, onColumnsChange, isIntegrated = 
                         })}
                     </div>
                     
-                    {/* Action Footer */}
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-base-content/10">
-                        <div className="flex gap-2">
-                            <button onClick={applyFactoryReset} className="btn btn-xs btn-ghost gap-1 text-[10px] font-bold uppercase text-base-content/60 hover:text-error">
+                    {/* Control Footer - Clickable to Close */}
+                    {/* Negative X margins and padding allow the hover effect to span full width */}
+                    <div 
+                        className="flex justify-between items-center mt-6 py-3 -mx-5 px-5 border-t border-base-content/10 cursor-pointer hover:bg-base-content/5 transition-colors group"
+                        onClick={() => setExpanded(false)}
+                        title="Click to collapse"
+                    >
+                        {/* Left Actions: Reset - Wrapped to stop propagation */}
+                        <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                            <button 
+                                onClick={applyFactoryReset} 
+                                className="btn btn-xs btn-ghost gap-1 text-[10px] font-bold uppercase text-base-content/60 hover:text-error"
+                            >
                                 <FontAwesomeIcon icon={faUndo} /> Reset Defaults
                             </button>
                         </div>
+
+                        {/* Center Action: Close Indicator */}
+                        <div className="text-base-content/20 group-hover:text-primary transition-colors text-xs">
+                            <FontAwesomeIcon icon={faChevronUp} />
+                        </div>
                         
-                        <div className="flex gap-2">
-                            <button onClick={saveAsStandard} className="btn btn-xs btn-ghost text-[10px] font-bold uppercase text-base-content/60 hover:text-base-content">
+                        {/* Right Actions: Save - Wrapped to stop propagation */}
+                        <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                            <button 
+                                onClick={saveAsStandard} 
+                                className="btn btn-xs btn-ghost text-[10px] font-bold uppercase text-base-content/60 hover:text-base-content"
+                            >
                                 Save as Standard
                             </button>
-                            <button onClick={saveAsPreset} className="btn btn-xs btn-outline btn-primary text-[10px]">
+                            <button 
+                                onClick={saveAsPreset} 
+                                className="btn btn-xs btn-outline btn-primary text-[10px]"
+                            >
                                 Save as New Preset
                             </button>
                         </div>

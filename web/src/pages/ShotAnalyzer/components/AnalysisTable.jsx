@@ -2,21 +2,21 @@
  * AnalysisTable.jsx
  * * Displays detailed shot analysis broken down by phase.
  * * Features:
- * - Integrated Column Controls (Footer)
+ * - Integrated Column Controls (Top Toolbar)
  * - Horizontal scrolling (hidden scrollbars)
  * - Auto-adaptive theme colors
  * - Predictive scale values and target comparisons
  * - Integrated Zoom Controls (Font Size scaling)
  */
 
-import { useState, useRef } from 'preact/hooks';
+import { useState, useRef, useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faAngleRight, faAngleDoubleRight, faArrowRight, 
     faAngleLeft, faAngleDoubleLeft, faArrowLeft,
     faExclamationTriangle, faCalculator,
     faMagnifyingGlassMinus, faMagnifyingGlassPlus,
-    faCheck, faTimes, faMinus
+    faCheck, faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { columnConfig, groupColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
@@ -57,6 +57,35 @@ export function AnalysisTable({ results, activeColumns, onColumnsChange, setting
         });
     };
 
+    // --- SCROLL TRAP FIX ---
+    // Listen for wheel events. If scrolling strictly vertical, and the table handles X-scroll,
+    // manually scroll the window to prevent "locking".
+    useEffect(() => {
+        const el = tableContainerRef.current;
+        if (!el) return;
+
+        const handleWheel = (e) => {
+            // Check if vertical scrolling dominates
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                // Manually scroll the window
+                window.scrollBy({
+                    top: e.deltaY,
+                    left: 0,
+                    behavior: 'auto' // Instant scroll to feel native
+                });
+                
+                // Prevent the table from trying to handle it (if it could)
+                // Note: We don't preventDefault() completely, as that might stop other events,
+                // but usually scrolling the window manually is enough to override the trap.
+            }
+        };
+
+        // Passive: true allows performance, but we rely on manual window scrolling
+        el.addEventListener('wheel', handleWheel, { passive: true });
+        
+        return () => el.removeEventListener('wheel', handleWheel);
+    }, []);
+
     const getHeaderLabel = (col) => {
         let label = col.label;
         if (col.id === 'duration') label = 'Time';
@@ -93,74 +122,43 @@ export function AnalysisTable({ results, activeColumns, onColumnsChange, setting
                 {results.isAutoAdjusted && <StatusBadge label="AUTO-DELAY" colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" />}
             </div>
 
-            {/* 2. MAIN CARD WRAPPER - Holds Toolbar, Table, Legend, Controls */}
+            {/* 2. MAIN CARD WRAPPER */}
             <div className="bg-base-100 border border-base-content/10 rounded-lg shadow-sm flex flex-col">
 
-                {/* A. Toolbar (Top) */}
-                <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-2 bg-base-200 rounded-t-lg border-b border-base-content/10 text-[10px] font-bold uppercase tracking-wider">
-                    {/* Latency Inputs */}
-                    <div className="flex items-center gap-4">
-                        <span className="opacity-40 select-none hidden sm:inline">Latency</span>
+                {/* A. Top Toolbar: Column Controls + Actions (Zoom/Scroll) */}
+                <ColumnControls 
+                    activeColumns={activeColumns} 
+                    onColumnsChange={onColumnsChange} 
+                    isIntegrated={true}
+                    headerChildren={
+                        // Navigation & Zoom Group Injected into ColumnControls Header
                         <div className="flex items-center gap-2">
-                            <span className="opacity-60">Scale</span>
-                            <input 
-                                type="number" step="50" value={safeSettings.scaleDelay} 
-                                onInput={e => { 
-                                    const val = parseInt(e.target.value);
-                                    if (!isNaN(val)) onSettingsChange({...safeSettings, scaleDelay: val}); 
-                                }}
-                                className="bg-base-100 border border-base-content/10 rounded w-12 h-5 text-center font-mono focus:outline-none focus:border-primary text-base-content"
-                            />
-                            <span className="opacity-40 lowercase font-normal">ms</span>
-                        </div>
-                        <div className="w-px h-3 bg-base-content/10 mx-1"></div>
-                        <div className="flex items-center gap-2">
-                            <span className="opacity-60">System</span>
-                            <input 
-                                type="number" step="50" value={safeSettings.sensorDelay} disabled={safeSettings.autoDelay} 
-                                onInput={e => { 
-                                    const val = parseInt(e.target.value);
-                                    if (!isNaN(val)) onSettingsChange({...safeSettings, sensorDelay: val}); 
-                                }}
-                                className="bg-base-100 border border-base-content/10 rounded w-12 h-5 text-center font-mono focus:outline-none focus:border-primary disabled:opacity-30 text-base-content"
-                            />
-                            <span className="opacity-40 lowercase font-normal">ms</span>
-                            <label className="flex items-center gap-1.5 ml-2 cursor-pointer hover:text-primary transition-colors">
-                                <input 
-                                    type="checkbox" checked={safeSettings.autoDelay} 
-                                    onChange={e => onSettingsChange({...safeSettings, autoDelay: e.target.checked})}
-                                    className="checkbox checkbox-xs rounded-sm border-base-content/30" 
-                                />
-                                <span className="opacity-60">Auto</span>
-                            </label>
-                        </div>
-                    </div>
+                            {/* Zoom Controls */}
+                            <div className="flex items-center gap-1 bg-base-content/5 rounded p-0.5 border border-base-content/5">
+                                <ScrollBtn icon={faMagnifyingGlassMinus} onClick={() => handleZoom('out')} title="Zoom Out" className={tableFontSize <= 8 ? 'opacity-20' : ''} />
+                                <span className="text-[9px] opacity-40 font-mono w-4 text-center select-none">{tableFontSize}</span>
+                                <ScrollBtn icon={faMagnifyingGlassPlus} onClick={() => handleZoom('in')} title="Zoom In" className={tableFontSize >= 16 ? 'opacity-20' : ''} />
+                            </div>
 
-                    {/* Navigation & Zoom Group */}
-                    <div className="flex items-center gap-2">
-                        {/* Zoom Controls */}
-                        <div className="flex items-center gap-1 bg-base-content/5 rounded p-0.5 border border-base-content/5">
-                            <ScrollBtn icon={faMagnifyingGlassMinus} onClick={() => handleZoom('out')} title="Zoom Out" className={tableFontSize <= 8 ? 'opacity-20' : ''} />
-                            <span className="text-[9px] opacity-40 font-mono w-4 text-center select-none">{tableFontSize}</span>
-                            <ScrollBtn icon={faMagnifyingGlassPlus} onClick={() => handleZoom('in')} title="Zoom In" className={tableFontSize >= 16 ? 'opacity-20' : ''} />
+                            {/* Scroll Controls */}
+                            <div className="flex items-center gap-1 bg-base-content/5 rounded p-0.5 border border-base-content/5 hidden sm:flex">
+                                <ScrollBtn icon={faArrowLeft} onClick={() => scrollToBound('start')} />
+                                <ScrollBtn icon={faAngleDoubleLeft} onClick={() => scrollTable(-300)} />
+                                <ScrollBtn icon={faAngleLeft} onClick={() => scrollTable(-100)} className="rounded-r-none mr-1" />
+                                <ScrollBtn icon={faAngleRight} onClick={() => scrollTable(100)} className="rounded-l-none" />
+                                <ScrollBtn icon={faAngleDoubleRight} onClick={() => scrollTable(300)} />
+                                <ScrollBtn icon={faArrowRight} onClick={() => scrollToBound('end')} />
+                            </div>
                         </div>
-
-                        {/* Scroll Controls */}
-                        <div className="flex items-center gap-1 bg-base-content/5 rounded p-0.5 border border-base-content/5">
-                            <ScrollBtn icon={faArrowLeft} onClick={() => scrollToBound('start')} />
-                            <ScrollBtn icon={faAngleDoubleLeft} onClick={() => scrollTable(-300)} />
-                            <ScrollBtn icon={faAngleLeft} onClick={() => scrollTable(-100)} className="rounded-r-none mr-1" />
-                            <ScrollBtn icon={faAngleRight} onClick={() => scrollTable(100)} className="rounded-l-none" />
-                            <ScrollBtn icon={faAngleDoubleRight} onClick={() => scrollTable(300)} />
-                            <ScrollBtn icon={faArrowRight} onClick={() => scrollToBound('end')} />
-                        </div>
-                    </div>
-                </div>
+                    }
+                />
 
                 {/* B. Table Container (Middle) */}
                 <div 
                     ref={tableContainerRef}
-                    className="overflow-x-auto overflow-y-hidden h-auto min-h-0 w-full block no-scrollbar"
+                    // FIX: overflow-y-hidden prevents the browser from thinking "I can scroll Y internally"
+                    // removed 'overscroll-*' classes to prevent latching
+                    className="overflow-x-auto overflow-y-hidden h-auto min-h-0 w-full block no-scrollbar touch-pan-y"
                     style={{ scrollBehavior: 'smooth', ...scrollbarHideStyle }}
                 >
                     {/* Dynamic Font Size applied to Table */}
@@ -226,19 +224,54 @@ export function AnalysisTable({ results, activeColumns, onColumnsChange, setting
                     </table>
                 </div>
                 
-                {/* C. Legend (Gap between Table and Controls) */}
-                <div className="px-4 py-3 bg-base-100 flex gap-4 text-[10px] text-base-content/40 uppercase tracking-wider font-bold select-none border-t border-base-content/5">
-                    <span>∅ Avg (Time Weighted)</span>
-                    <span>S/E Start/End</span>
-                    <span>Range Min/Max</span>
-                </div>
+                {/* C. New Footer: Delay Settings (Left) & Legend (Right) */}
+                <div className="px-4 py-3 bg-base-100 rounded-b-lg border-t border-base-content/10 flex flex-wrap items-center justify-between gap-4 text-[10px] font-bold uppercase tracking-wider">
+                    
+                    {/* Left: Latency Inputs */}
+                    <div className="flex items-center gap-4">
+                        <span className="opacity-40 select-none hidden sm:inline">Latency</span>
+                        <div className="flex items-center gap-2">
+                            <span className="opacity-60">Scale</span>
+                            <input 
+                                type="number" step="50" value={safeSettings.scaleDelay} 
+                                onInput={e => { 
+                                    const val = parseInt(e.target.value);
+                                    if (!isNaN(val)) onSettingsChange({...safeSettings, scaleDelay: val}); 
+                                }}
+                                className="bg-base-200 border border-base-content/10 rounded w-12 h-5 text-center font-mono focus:outline-none focus:border-primary text-base-content"
+                            />
+                            <span className="opacity-40 lowercase font-normal">ms</span>
+                        </div>
+                        <div className="w-px h-3 bg-base-content/10 mx-1"></div>
+                        <div className="flex items-center gap-2">
+                            <span className="opacity-60">System</span>
+                            <input 
+                                type="number" step="50" value={safeSettings.sensorDelay} disabled={safeSettings.autoDelay} 
+                                onInput={e => { 
+                                    const val = parseInt(e.target.value);
+                                    if (!isNaN(val)) onSettingsChange({...safeSettings, sensorDelay: val}); 
+                                }}
+                                className="bg-base-200 border border-base-content/10 rounded w-12 h-5 text-center font-mono focus:outline-none focus:border-primary disabled:opacity-30 text-base-content"
+                            />
+                            <span className="opacity-40 lowercase font-normal">ms</span>
+                            <label className="flex items-center gap-1.5 ml-2 cursor-pointer hover:text-primary transition-colors">
+                                <input 
+                                    type="checkbox" checked={safeSettings.autoDelay} 
+                                    onChange={e => onSettingsChange({...safeSettings, autoDelay: e.target.checked})}
+                                    className="checkbox checkbox-xs rounded-sm border-base-content/30" 
+                                />
+                                <span className="opacity-60">Auto</span>
+                            </label>
+                        </div>
+                    </div>
 
-                {/* D. Integrated Column Controls (Footer) */}
-                <ColumnControls 
-                    activeColumns={activeColumns} 
-                    onColumnsChange={onColumnsChange} 
-                    isIntegrated={true} 
-                />
+                    {/* Right: Legend */}
+                    <div className="flex gap-4 text-base-content/40 select-none">
+                        <span>∅ Avg (Time Weighted)</span>
+                        <span>S/E Start/End</span>
+                        <span>Range Min/Max</span>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -386,7 +419,7 @@ function CellContent({ phase, col, results, isTotal = false }) {
              predictionDisplay = (
                 <div style={subTextSize} className="text-blue-600 dark:text-blue-400 leading-tight mt-0.5 font-bold flex items-center justify-end gap-1">
                     <FontAwesomeIcon icon={faCalculator} style={iconSize} className="opacity-60" />
-                    <span>Calc: {predVal}{unit}</span>
+                    <span>Pred: {predVal}{unit}</span>
                 </div>
             );
         }
