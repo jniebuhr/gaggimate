@@ -19,12 +19,17 @@ function getMetricStats(samples, key) {
     // Start and End values
     let start = samples[0][key];
     let end = samples[samples.length - 1][key];
-    if (start === undefined) start = 0;
-    if (end === undefined) end = 0;
+    
+    // Check for both null and undefined using loose equality or explicit checks
+    if (start == null) start = 0;
+    if (end == null) end = 0;
     
     // Min, Max, and Time-Weighted Average
     for (let i = 0; i < samples.length; i++) {
-        const val = samples[i][key] !== undefined ? samples[i][key] : 0;
+        let val = samples[i][key];
+        
+        // Ensure val is a number (handle null/undefined)
+        if (val == null) val = 0;
         
         if (val < min) min = val;
         if (val > max) max = val;
@@ -39,6 +44,7 @@ function getMetricStats(samples, key) {
         }
     }
     
+    // Safety for Infinity (if no valid samples processed)
     if (min === Infinity) min = 0;
     if (max === -Infinity) max = 0;
     
@@ -134,9 +140,10 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     // --- 4. PHASE-BY-PHASE ANALYSIS ---
     const analyzedPhases = [];
     
-    // Variables to calculate global average delay for UI
-    let cumulativeDelaySum = 0;
-    let phasesWithHits = 0;
+    let sumScaleDelay = 0;
+    let countScaleHits = 0;
+    let sumSensorDelay = 0;
+    let countSensorHits = 0;
 
     // Tolerances
     const TOL_PRESSURE = 0.15;
@@ -191,22 +198,17 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                 }
                 
                 // Check target-based exits
-                // If Auto-Adjust is ON: Loop delays from 0 to 3000ms simultaneously
-                // If Auto-Adjust is OFF: Run once with manual settings
                 if (profilePhase.targets && (!exitType || duration < (profDur - 0.5))) {
                     
                     const steps = isAutoAdjusted ? 31 : 1; // 0..3000 (31 steps) or 1 step
                     let foundMatch = false;
 
                     for (let step = 0; step < steps; step++) {
-                        // In Auto mode: scale & sensor increase together (0, 100, 200...)
-                        // In Manual mode: use specific settings
                         const currentDelay = isAutoAdjusted ? (step * 100) : null;
                         const tScaleDelay = isAutoAdjusted ? currentDelay : scaleDelayMs;
                         const tSensorDelay = isAutoAdjusted ? currentDelay : sensorDelayMs;
 
                         // --- CALCULATIONS FOR CURRENT DELAY ---
-                        
                         let wPumped = 0;
                         for (let i = 1; i < samples.length; i++) {
                             const dt = (samples[i].t - samples[i - 1].t) / 1000;
@@ -303,7 +305,6 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                             if (hit) hitTargets.push(tgt);
                         }
 
-                        // Did we find a hit in this step?
                         if (hitTargets.length > 0) {
                             hitTargets.sort((a, b) => {
                                 const getScore = (type) => {
@@ -318,41 +319,51 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                             const bestMatch = hitTargets[0];
                             exitReason = formatStopReason(bestMatch.type);
                             exitType = bestMatch.type;
-                            finalPredictedWeight = predictedW; // Store the prediction that worked
+                            finalPredictedWeight = predictedW; 
                             
                             if (isAutoAdjusted) {
-                                cumulativeDelaySum += currentDelay;
-                                phasesWithHits++;
+                                if (exitType === 'weight' || exitType === 'volumetric') {
+                                    sumScaleDelay += currentDelay;
+                                    countScaleHits++;
+                                } else {
+                                    sumSensorDelay += currentDelay;
+                                    countSensorHits++;
+                                }
                             }
                             foundMatch = true;
-                            break; // Stop loop, we found the lowest delay match
+                            break; 
                         }
-                    } // End delay loop
+                    } 
 
                     // --- FALLBACK: LAST PHASE SPECIAL LOGIC ---
-                    // If no match found in loop, AND it's last phase, AND auto enabled:
-                    // Try to calculate exactly what weight delay was needed.
-                    if (!foundMatch && isLastPhase && isAutoAdjusted) {
-                        // We iterate targets again to see if a weight target was the goal
+                    // Only run if: No match found yet, Last phase, Auto-adjust ON and shot started in Volumetric/Weight mode
+                    if (!foundMatch && isLastPhase && isAutoAdjusted && isBrewByWeight) {
                         const weightTarget = profilePhase.targets.find(t => t.type === 'weight' || t.type === 'volumetric');
+                        
                         if (weightTarget) {
                              const lastW = samples[samples.length - 1].v;
                              const currentRate = samples[samples.length - 1].vf || samples[samples.length - 1].fl;
-                             const weightDiff = weightTarget.value - lastW;
                              
-                             if (currentRate > 0.1) {
-                                 const timeToTarget = weightDiff / currentRate;
-                                 const requiredDelayMs = timeToTarget * 1000;
+                             // Sanity Check: Only assume it was a Weight Stop if we actually reached the target 
+                             // (or are extremely close, e.g. within 2.5g).
+                             // If we stopped at 30g but target was 40g, it was a manual/time stop -> ignore.
+                             const hitTarget = lastW >= (weightTarget.value - 2.5);
+                             
+                             if (hitTarget && currentRate > 0.1) {
+                                 // Calculate overshoot
+                                 const overshoot = lastW - weightTarget.value;
+                                 // Assume overshoot is due to scale delay: Delay = Overshoot / FlowRate
+                                 // (If overshoot is negative/zero, delay is 0)
+                                 const calculatedDelay = Math.max(0, (overshoot / currentRate) * 1000);
                                  
                                  // Allow plausible delay (0-4000ms)
-                                 if (requiredDelayMs >= 0 && requiredDelayMs <= 4000) {
+                                 if (calculatedDelay <= 4000) {
                                      exitReason = formatStopReason(weightTarget.type);
                                      exitType = weightTarget.type;
                                      finalPredictedWeight = weightTarget.value;
                                      
-                                     // Add this "found" delay to the average
-                                     cumulativeDelaySum += requiredDelayMs;
-                                     phasesWithHits++;
+                                     sumScaleDelay += calculatedDelay;
+                                     countScaleHits++;
                                  }
                              }
                         }
@@ -406,11 +417,17 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         });
     });
     
-    // Calculate Average Delay
-    let avgDelay = 0;
-    if (isAutoAdjusted && phasesWithHits > 0) {
-        // Round to nearest 50ms for cleaner UI
-        avgDelay = Math.round((cumulativeDelaySum / phasesWithHits) / 50) * 50;
+    // Calculate distinct Average Delays
+    let avgScaleDelay = scaleDelayMs;
+    let avgSensorDelay = sensorDelayMs;
+
+    if (isAutoAdjusted) {
+        if (countScaleHits > 0) {
+            avgScaleDelay = Math.round((sumScaleDelay / countScaleHits) / 50) * 50;
+        }
+        if (countSensorHits > 0) {
+            avgSensorDelay = Math.round((sumSensorDelay / countSensorHits) / 50) * 50;
+        }
     }
     
     // --- 5. TOTAL STATS ---
@@ -440,10 +457,9 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         isBrewByWeight,
         globalScaleLost,
         isAutoAdjusted,
-        // RETURN USED SETTINGS FOR UI (Average if auto, otherwise manual)
         usedSettings: {
-            scaleDelayMs: isAutoAdjusted ? avgDelay : scaleDelayMs,
-            sensorDelayMs: isAutoAdjusted ? avgDelay : sensorDelayMs
+            scaleDelayMs: avgScaleDelay,
+            sensorDelayMs: avgSensorDelay
         },
         phases: analyzedPhases,
         total: totalStats,
@@ -462,15 +478,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
  * @returns {Object} { delay: number, auto: boolean }
  */
 export function detectAutoDelay(shotData, profileData, manualDelay) {
-    // Legacy support or initial detection
-    // For consistency, we can just run the main calculation and return the average it found
-    // But since this function is usually called separately, we can replicate the logic simplified 
-    // or just return the result of calculateShotMetrics().
-    
-    // To avoid circular dependencies or overhead, we just return the manual delay with auto=true flag
-    // and let the main analysis handle the fine-tuning per phase.
-    
-    // Better yet: Perform a quick check using calculateShotMetrics logic
+    // Perform a quick check using calculateShotMetrics logic
     const results = calculateShotMetrics(shotData, profileData, { 
         scaleDelayMs: manualDelay, 
         sensorDelayMs: manualDelay, 
@@ -478,6 +486,7 @@ export function detectAutoDelay(shotData, profileData, manualDelay) {
     });
     
     if (results && results.usedSettings) {
+        // Return scale delay as primary "detected" delay for legacy compatibility
         return { delay: results.usedSettings.scaleDelayMs, auto: true };
     }
     

@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useContext } from 'preact/hooks';
+import { useRoute } from 'preact-iso'; 
 import { LibraryPanel } from './components/LibraryPanel';
 import { AnalysisTable } from './components/AnalysisTable';
 import { ShotChart } from './components/ShotChart';
@@ -23,6 +24,7 @@ import DeepDiveLogoOutline from './assets/deepdive.svg';
 
 export function ShotAnalyzer() {
     const apiService = useContext(ApiServiceContext);
+    const { params } = useRoute();
     
     // --- State ---
     const [currentShot, setCurrentShot] = useState(null);
@@ -34,7 +36,8 @@ export function ShotAnalyzer() {
     const [showInfoModal, setShowInfoModal] = useState(false); 
     
     const [isMatchingProfile, setIsMatchingProfile] = useState(false);
-    
+    const [isSearchingProfile, setIsSearchingProfile] = useState(false); // <--- NEW STATE
+
     const [activeColumns, setActiveColumns] = useState(() => {
         const userStandard = loadFromStorage(ANALYZER_DB_KEYS.USER_STANDARD);
         return userStandard ? new Set(userStandard) : getDefaultColumns();
@@ -47,6 +50,47 @@ export function ShotAnalyzer() {
     });
     
     const [analysisResults, setAnalysisResults] = useState(null);
+
+    // --- DEEP LINK HANDLER ---
+    useEffect(() => {
+        const loadDeepLink = async () => {
+            if (params.source && params.id) {
+                
+                // 1. MAP URL PARAMS TO SERVICE PARAMS
+                // internal -> gaggimate
+                // external -> browser
+                let serviceSource = params.source;
+                if (params.source === 'internal') serviceSource = 'gaggimate';
+                if (params.source === 'external') serviceSource = 'browser';
+
+                // Prevent reloading if already loaded
+                if (currentShot && currentShot.id === params.id && currentShot.source === serviceSource) {
+                    return;
+                }
+
+                console.log(`Deep Link detected: Loading ${params.id} from ${serviceSource} (URL: ${params.source})`);
+                
+                try {
+                    // Load using the mapped service source
+                    const shot = await libraryService.loadShot(params.id, serviceSource);
+                    
+                    if (shot) {
+                        // Ensure the shot object has the correct internal source ('gaggimate'/'browser')
+                        // so that badges and logic work correctly, regardless of what the URL says.
+                        shot.source = serviceSource; 
+                        await handleShotLoad(shot, shot.name || params.id);
+                    }
+                } catch (e) {
+                    console.error("Deep Link Load Failed:", e);
+                }
+            }
+        };
+
+        if (apiService) {
+            loadDeepLink();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [params.source, params.id, apiService]); 
     
     // --- Effects ---
     useEffect(() => {
@@ -58,7 +102,8 @@ export function ShotAnalyzer() {
             setAnalysisResults(null);
             return;
         }
-        performAnalysis();
+        // Defer analysis to next tick to allow UI update
+        setTimeout(() => performAnalysis(), 0);
     }, [currentShot, currentProfile, settings]);
     
     // --- Analysis Logic ---
@@ -93,27 +138,37 @@ export function ShotAnalyzer() {
             source: shotData.source || importMode
         };
 
+        // If loading via Deep Link, ensure we use the mapped source (gaggimate/browser) 
+        // derived in the useEffect, OR fallback to the shot's own source. 
+        // (Logic handled implicitly by passing correct object to setCurrentShot)
+
         setCurrentShot(shotWithMetadata);
         setCurrentShotName(name);
         
         if (shotWithMetadata.profile) {
             setIsMatchingProfile(true);
-            try {
-                const target = cleanName(shotWithMetadata.profile).toLowerCase();
-                const allProfiles = await libraryService.getAllProfiles('both');
-                const match = allProfiles.find(p => cleanName(p.name || p.label || '').toLowerCase() === target);
-                
-                if (match) {
-                    const pid = match.source === 'gaggimate' ? (match.profileId || match.id) : match.name;
-                    const fullP = match.data ? match.data : await libraryService.loadProfile(pid, match.source);
-                    setCurrentProfile(fullP);
-                    setCurrentProfileName(match.name || match.label);
+            setIsSearchingProfile(true); // <--- START SPINNER
+
+            // Force a UI render cycle before starting heavy profile search
+            setTimeout(async () => {
+                try {
+                    const target = cleanName(shotWithMetadata.profile).toLowerCase();
+                    const allProfiles = await libraryService.getAllProfiles('both');
+                    const match = allProfiles.find(p => cleanName(p.name || p.label || '').toLowerCase() === target);
+                    
+                    if (match) {
+                        const pid = match.source === 'gaggimate' ? (match.profileId || match.id) : match.name;
+                        const fullP = match.data ? match.data : await libraryService.loadProfile(pid, match.source);
+                        setCurrentProfile(fullP);
+                        setCurrentProfileName(match.name || match.label);
+                    }
+                } catch (e) { 
+                    console.warn("Profile auto-match failed:", e); 
+                } finally {
+                    setIsMatchingProfile(false);
+                    setIsSearchingProfile(false); // <- stop spinner
                 }
-            } catch (e) { 
-                console.warn("Profile auto-match failed:", e); 
-            } finally {
-                setIsMatchingProfile(false);
-            }
+            }, 50);
         }
     };
     
@@ -157,6 +212,7 @@ export function ShotAnalyzer() {
                         importMode={importMode}
                         onImportModeChange={setImportMode}
                         isMatchingProfile={isMatchingProfile}
+                        isSearchingProfile={isSearchingProfile} // <- pass prop
                     />
                 </div>
                 
@@ -178,7 +234,6 @@ export function ShotAnalyzer() {
                                         results={analysisResults}
                                         activeColumns={activeColumns}
                                         onColumnsChange={setActiveColumns}
-                                        profileData={currentProfile}
                                         settings={settings}
                                         onSettingsChange={setSettings}
                                         onAnalyze={performAnalysis}

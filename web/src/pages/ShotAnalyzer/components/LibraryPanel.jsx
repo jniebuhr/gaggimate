@@ -16,6 +16,7 @@ import { libraryService } from '../services/LibraryService';
 import { indexedDBService } from '../services/IndexedDBService';
 import { ApiServiceContext } from '../../../services/ApiService';
 import { cleanName } from '../utils/analyzerUtils';
+import { downloadJson } from '../../../utils/download';
 
 export function LibraryPanel({
     currentShot,
@@ -29,8 +30,9 @@ export function LibraryPanel({
     onShowStats,
     importMode = 'temp',
     onImportModeChange,
-    isMatchingProfile = false,
-    isMatchingShot = false
+    isMatchingProfile = false, // Used for highlighting
+    isMatchingShot = false,     // Used for highlighting
+    isSearchingProfile = false  // Spinner state for profile search
 }) {
     const apiService = useContext(ApiServiceContext);
     const panelRef = useRef(null);
@@ -42,6 +44,7 @@ export function LibraryPanel({
     const [barRect, setBarRect] = useState({ width: 0, left: 0, height: 0 });
     const [collapsed, setCollapsed] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [importing, setImporting] = useState(false); // Specific state for import spinner
     
     // Data State
     const [shots, setShots] = useState([]);
@@ -226,30 +229,14 @@ export function LibraryPanel({
 
     // --- Action Handlers ---
 
-    // Uses libraryService.exportItem to ensure clean/full data with router-safe download
+    // Uses libraryService.exportItem to fetch data, then uses UI helper 'downloadJson'
     const handleExport = async (item, isShot) => {
         try {
-            // 1. Fetch data via service
-            const { blob, filename } = await libraryService.exportItem(item, isShot);
+            // 1. Fetch data via service (now returns { exportData, filename })
+            const { exportData, filename } = await libraryService.exportItem(item, isShot);
             
-            // 2. Create URL
-            const url = URL.createObjectURL(blob);
-            
-            // 3. Create Link
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            
-            // CRITICAL: Prevent router hijacking (SecurityError fix)
-            link.target = "_blank"; 
-            link.rel = "noopener noreferrer";
-
-            document.body.appendChild(link);
-            link.click();
-            
-            // 4. Cleanup
-            document.body.removeChild(link);
-            setTimeout(() => URL.revokeObjectURL(url), 100); 
+            // 2. Use existing UI helper for consistent downloading
+            downloadJson(exportData, filename);
             
         } catch (e) {
             alert(`Export failed: ${e.message}`);
@@ -267,24 +254,34 @@ export function LibraryPanel({
     };
 
     const handleImport = async (files) => {
-        for (const file of Array.from(files)) {
+        setImporting(true); // START IMPORT SPINNER
+        
+        // Defer import logic to allow UI update
+        setTimeout(async () => {
             try {
-                const text = await file.text();
-                const data = JSON.parse(text);
-                if (data.samples) {
-                    const shot = { ...data, name: file.name, id: file.name, data, source: importMode === 'browser' ? 'browser' : 'temp' };
-                    if (importMode === 'browser') await indexedDBService.saveShot(shot);
-                    onShotLoad(data, file.name);
-                } else if (data.phases) {
-                    // Use profile label from JSON as canonical name (not the filename)
-                    const profileName = data.label || cleanName(file.name);
-                    const profile = { ...data, name: profileName, data, source: importMode === 'browser' ? 'browser' : 'temp' };
-                    if (importMode === 'browser') await indexedDBService.saveProfile(profile);
-                    onProfileLoad(data, profileName);
+                for (const file of Array.from(files)) {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    if (data.samples) {
+                        const shot = { ...data, name: file.name, id: file.name, data, source: importMode === 'browser' ? 'browser' : 'temp' };
+                        if (importMode === 'browser') await indexedDBService.saveShot(shot);
+                        onShotLoad(data, file.name);
+                    } else if (data.phases) {
+                        // Use profile label from JSON as canonical name (not the filename)
+                        const profileName = data.label || cleanName(file.name);
+                        const profile = { ...data, name: profileName, data, source: importMode === 'browser' ? 'browser' : 'temp' };
+                        if (importMode === 'browser') await indexedDBService.saveProfile(profile);
+                        onProfileLoad(data, profileName);
+                    }
                 }
-            } catch (e) { console.error('Import error:', e); }
-        }
-        refreshLibraries();
+            } catch (e) { 
+                console.error('Import error:', e); 
+                alert('Import failed. Please check the file format.');
+            } finally {
+                setImporting(false); // STOP IMPORT SPINNER
+                refreshLibraries();
+            }
+        }, 50);
     };
 
     const handleLoadShot = async (item) => {
@@ -316,6 +313,8 @@ export function LibraryPanel({
                     onShowStats={onShowStats} isMismatch={currentShot && currentProfile && cleanName(currentShot.profile || '').toLowerCase() !== cleanName(currentProfileName).toLowerCase()}
                     importMode={importMode} onImportModeChange={onImportModeChange} isExpanded={!collapsed}
                     isMatchingProfile={isMatchingProfile} isMatchingShot={isMatchingShot}
+                    isImporting={importing}                 
+                    isSearchingProfile={isSearchingProfile} // <- pass down
                 />
             </div>
             
@@ -335,6 +334,7 @@ export function LibraryPanel({
                                     onSourceFilterChange={setShotsSourceFilter} onLoad={handleLoadShot}
                                     onExport={(item) => handleExport(item, true)} // Pass true for shots
                                     onDelete={handleDelete}
+                                    isLoading={loading} // Pass loading state to show spinner in list
                                     onExportAll={() => {
                                         if (shots.length === 0) return;
                                         if (confirm(`Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`)) {
@@ -359,6 +359,7 @@ export function LibraryPanel({
                                     onSourceFilterChange={setProfilesSourceFilter} onLoad={(item) => { onProfileLoad(item.data || item, item.name || item.label); setCollapsed(true); }}
                                     onExport={(item) => handleExport(item, false)} // Pass false for profiles
                                     onDelete={handleDelete}
+                                    isLoading={loading} // Pass loading state to show spinner in list
                                     onExportAll={() => {
                                         if (profiles.length === 0) return;
                                         if (confirm(`Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`)) {

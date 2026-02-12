@@ -47,6 +47,7 @@ export function App() {
                         <Route path='/pidtune' component={Autotune} />
                         <Route path='/history' component={ShotHistory} />
                         <Route path='/analyzer' component={ShotAnalyzer} />
+                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} /> {/*deep-link route (sorce & ID)*/}
                         <Route default component={NotFound} />
                       </Router>
                     </ErrorBoundary>

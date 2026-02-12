@@ -6,11 +6,13 @@ import { LibraryRow } from './LibraryRow';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 
 export function LibrarySection({
     title, items, isShot, searchValue, sortKey, sortOrder, sourceFilter,
     onSearchChange, onSortChange, onSourceFilterChange, onLoad, 
-    onExport, onDelete, onExportAll, onDeleteAll, getMatchStatus
+    onExport, onDelete, onExportAll, onDeleteAll, getMatchStatus,
+    isLoading
 }) {
     const getSortIcon = (k) => {
         const isActive = sortKey === k;
@@ -29,7 +31,7 @@ export function LibrarySection({
     const widthAction = "10%";
 
     return (
-        <div className="flex flex-col h-full rounded-lg bg-base-100/30 border border-base-content/5">
+        <div className="flex flex-col h-full rounded-lg bg-base-100/30 border border-base-content/5 relative">
             {/* Toolbar */}
             <div className="p-3 border-b border-base-content/5 space-y-3">
                 <div className="flex justify-between items-center">
@@ -58,9 +60,16 @@ export function LibrarySection({
 
             {/* Scrollable Container with Gutter Stability */}
             <div 
-                className="flex-1 overflow-y-auto h-96 scrollbar-thin" 
+                className="flex-1 overflow-y-auto h-96 scrollbar-thin relative" 
                 style={{ scrollbarGutter: 'stable' }}
             >
+                {/* LOADING OVERLAY for Sort/Search */}
+                {isLoading && (
+                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-base-100/50 backdrop-blur-[1px]">
+                         <FontAwesomeIcon icon={faCircleNotch} spin className="text-3xl text-primary" />
+                    </div>
+                )}
+
                 <table className="w-full border-separate border-spacing-y-1 relative">
                     <thead className="sticky top-0 z-10 bg-base-200/95 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider">
                         <tr>

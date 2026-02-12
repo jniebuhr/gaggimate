@@ -11,6 +11,7 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine'; 
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 
 export function StatusBar({
     currentShot,
@@ -23,9 +24,11 @@ export function StatusBar({
     onImport,
     onShowStats,
     isMismatch,
-    importMode = 'temp', //also change in LibraryPanel.jsx and ShotAnalyzer/index.jsx
+    importMode = 'temp', 
     onImportModeChange,
-    isExpanded = false
+    isExpanded = false,
+    isImporting = false,        // Show spinner on import button
+    isSearchingProfile = false  // Show spinner on profile badge
 }) {
     const handleFileSelect = (e) => {
         const files = e.target.files;
@@ -56,9 +59,10 @@ export function StatusBar({
         ? `${badgeBaseClass} bg-primary border-primary text-primary-content`
         : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
 
+    // Updated Badge Logic: If searching, keep it neutral but show activity
     const profileBadgeClasses = isMismatch
         ? `${badgeBaseClass} bg-orange-500 border-orange-600 text-white shadow-orange-500/30`
-        : currentProfile
+        : (currentProfile && !isSearchingProfile)
         ? `${badgeBaseClass} bg-secondary border-secondary text-secondary-content`
         : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
 
@@ -78,8 +82,13 @@ export function StatusBar({
                         onDrop={handleDrop}
                     >
                         <label className="flex-1 h-full flex items-center justify-center cursor-pointer hover:bg-primary/10 text-primary transition-colors border-r border-base-content/10">
-                            <FontAwesomeIcon icon={faFileImport} className="text-xl" />
-                            <input type="file" multiple accept=".slog,.json" onChange={handleFileSelect} className="hidden" />
+                            {/* Import Spinner */}
+                            {isImporting ? (
+                                <FontAwesomeIcon icon={faCircleNotch} spin className="text-xl opacity-60" />
+                            ) : (
+                                <FontAwesomeIcon icon={faFileImport} className="text-xl" />
+                            )}
+                            <input type="file" multiple accept=".slog,.json" onChange={handleFileSelect} className="hidden" disabled={isImporting} />
                         </label>
 
                         <button
@@ -130,12 +139,26 @@ export function StatusBar({
                         onClick={onTogglePanel}
                         title={isMismatch ? "Profile mismatch detected!" : "Click to toggle library"}
                     >
-                        <FontAwesomeIcon icon={faFolderOpen} className="opacity-70" />
+                        {/* Profile Search Spinner replaces Folder Icon */}
+                        {isSearchingProfile ? (
+                            <FontAwesomeIcon icon={faCircleNotch} spin className="opacity-70 text-primary" />
+                        ) : (
+                            <FontAwesomeIcon icon={faFolderOpen} className="opacity-70" />
+                        )}
+                        
                         <span className="flex-1 text-center font-bold text-sm truncate mx-2">
-                            {isMismatch && <FontAwesomeIcon icon={faTriangleExclamation} className="mr-2" />}
-                            {cleanName(currentProfileName)}
+                            {/* Show "Searching..." text if actively searching, otherwise normal name */}
+                            {isSearchingProfile ? (
+                                <span className="opacity-50 italic">Searching Profile...</span>
+                            ) : (
+                                <>
+                                    {isMismatch && <FontAwesomeIcon icon={faTriangleExclamation} className="mr-2" />}
+                                    {cleanName(currentProfileName)}
+                                </>
+                            )}
                         </span>
-                        {currentProfile ? (
+                        
+                        {currentProfile && !isSearchingProfile ? (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -146,7 +169,7 @@ export function StatusBar({
                                 <FontAwesomeIcon icon={faTimes} />
                             </button>
                         ) : (
-                            <FontAwesomeIcon icon={faChevronDown} className="opacity-40 text-xs" />
+                            !isSearchingProfile && <FontAwesomeIcon icon={faChevronDown} className="opacity-40 text-xs" />
                         )}
                     </div>
 

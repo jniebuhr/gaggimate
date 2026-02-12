@@ -11,6 +11,7 @@ import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine';
 import ShotNotesCard from './ShotNotesCard.jsx';
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 
@@ -184,6 +185,18 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                       <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
                     </button>
                   </Tooltip>
+
+                  {/* Analyzer Button */}
+                  <Tooltip content='Open in Analyzer'>
+                    <a
+                      href={`/analyzer/internal/${shot.id}`}
+                      className='text-base-content/50 hover:text-primary hover:bg-primary/10 flex items-center justify-center rounded-md p-2 transition-colors'
+                      aria-label='Open in Analyzer'
+                    >
+                      <FontAwesomeIcon icon={faChartLine} className='h-4 w-4' />
+                    </a>
+                  </Tooltip>
+
                   <Tooltip
                     content={
                       canUpload

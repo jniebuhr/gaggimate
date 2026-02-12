@@ -7,6 +7,7 @@
  */
 
 import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex';
+import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot';
 import { indexedDBService } from './IndexedDBService';
 
 class LibraryService {
@@ -180,7 +181,6 @@ class LibraryService {
             }
 
             const arrayBuffer = await response.arrayBuffer();
-            const { parseBinaryShot } = await import('../../ShotHistory/parseBinaryShot');
             return parseBinaryShot(arrayBuffer, idStr);
         } else {
             const shot = await indexedDBService.getShot(idStr);
@@ -231,7 +231,7 @@ class LibraryService {
      * Fetches the original data and cleans it for export.
      * @param {Object} item - The library item (shot or profile)
      * @param {boolean} isShot - True if item is a shot
-     * @returns {Object} { blob, filename }
+     * @returns {Object} { exportData, filename }
      */
     async exportItem(item, isShot) {
         console.log("Service Exporting:", item); 
@@ -279,10 +279,9 @@ class LibraryService {
             // For browser shots, exportData already contains full samples if they were uploaded
         }
 
-        const jsonStr = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([jsonStr], { type: "application/json" });
-
-        return { blob, filename };
+        // Return raw object
+        // The UI helper 'downloadJson' will handle stringify and blob creation.
+        return { exportData, filename };
     }
 
     /**
