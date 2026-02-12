@@ -132,12 +132,12 @@ export function PluginCard({
             className='toggle toggle-primary'
             checked={!!formData.homekit}
             onChange={onChange('homekit')}
-            aria-label='Enable Homekit'
+            aria-label='Enable HomeKit'
           />
         </div>
         {formData.homekit && (
           <div className='border-base-300 mt-4 flex flex-col items-center justify-center gap-4 border-t pt-4'>
-            <img src={homekitImage} alt='Homekit Setup Code' />
+            <img src={homekitImage} alt='HomeKit Setup Code' />
             <p className='text-center'>
               Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above.
             </p>

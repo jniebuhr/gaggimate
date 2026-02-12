@@ -548,14 +548,14 @@ export function Settings() {
             </div>
           </Card>
 
-          <Card sm={10} lg={5} title='Machine settings'>
+          <Card sm={10} lg={5} title='Machine Settings'>
             <div className='form-control'>
               <label htmlFor='pid' className='mb-2 block text-sm font-medium'>
                 PID Values
               </label>
               <div className='mb-2 text-xs opacity-70'>
                   Enter 3 values (Kp, Ki, Kd)
-                </div>
+              </div>
               <input
                 id='pid'
                 name='pid'
@@ -587,9 +587,9 @@ export function Settings() {
               <label htmlFor='pumpModelCoeffs' className='mb-2 block text-sm font-medium'>
                 Pump Flow Coefficients
               </label>
-                <div className='mb-2 text-xs opacity-70'>
-                  Enter 2 values (flow at 1 bar, flow at 9 bar)
-                </div>
+              <div className='mb-2 text-xs opacity-70'>
+                Enter 2 values (flow at 1 bar, flow at 9 bar)
+              </div>
               <input
                 id='pumpModelCoeffs'
                 name='pumpModelCoeffs'
