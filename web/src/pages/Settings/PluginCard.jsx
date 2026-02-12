@@ -1,6 +1,6 @@
-import homekitImage from '../../assets/homekit.png';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import homekitImage from '../../assets/homekit.png';
 
 export function PluginCard({
   formData,
@@ -123,7 +123,7 @@ export function PluginCard({
 
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>
-          <span className='text-xl font-medium'>Homekit</span>
+          <span className='text-xl font-medium'>HomeKit</span>
           <input
             id='homekit'
             name='homekit'
@@ -139,8 +139,7 @@ export function PluginCard({
           <div className='border-base-300 mt-4 flex flex-col items-center justify-center gap-4 border-t pt-4'>
             <img src={homekitImage} alt='Homekit Setup Code' />
             <p className='text-center'>
-              Open the Homekit App, find your GaggiMate device and scan the setup code above to add
-              it.
+              Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above.
             </p>
           </div>
         )}
@@ -334,7 +333,7 @@ export function PluginCard({
             </div>
             <div className='form-control'>
               <label htmlFor='haTopic' className='mb-2 block text-sm font-medium'>
-                Home Assistant Autodiscovery Topic
+                Home Assistant Discovery Topic
               </label>
               <input
                 id='haTopic'

@@ -1,18 +1,17 @@
-import { useQuery } from 'preact-fetching';
-import { Spinner } from '../../components/Spinner.jsx';
-import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
-import Card from '../../components/Card.jsx';
-import { timezones } from '../../config/zones.js';
-import { computed } from '@preact/signals';
-import { machine } from '../../services/ApiService.js';
-import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
-import { setDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
-import { PluginCard } from './PluginCard.jsx';
-import { downloadJson } from '../../utils/download.js';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { computed } from '@preact/signals';
+import { useQuery } from 'preact-fetching';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import Card from '../../components/Card.jsx';
+import { Spinner } from '../../components/Spinner.jsx';
+import { timezones } from '../../config/zones.js';
+import { machine } from '../../services/ApiService.js';
+import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
+import { downloadJson } from '../../utils/download.js';
+import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
+import { PluginCard } from './PluginCard.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -284,7 +283,7 @@ export function Settings() {
       </div>
       <form key='settings' ref={formRef} method='post' action='/api/settings' onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
-          <Card sm={10} lg={5} title='Temperature settings'>
+          <Card sm={10} lg={5} title='Temperature Settings'>
             <div className='form-control'>
               <label htmlFor='targetSteamTemp' className='mb-2 block text-sm font-medium'>
                 Default Steam Temperature (°C)
@@ -316,7 +315,7 @@ export function Settings() {
             </div>
           </Card>
 
-          <Card sm={10} lg={5} title='User preferences'>
+          <Card sm={10} lg={5} title='User Preferences'>
             <div className='form-control'>
               <label htmlFor='startup-mode' className='mb-2 block text-sm font-medium'>
                 Startup Mode
@@ -351,7 +350,7 @@ export function Settings() {
               />
             </div>
 
-            <div className='divider'>Predictive scale delay</div>
+            <div className='divider'>Predictive Scale Delay</div>
             <div className='mb-2 text-sm opacity-70'>
               Shuts off the process ahead of time based on the flow rate to account for any dripping
               or delays in the control.
@@ -405,7 +404,7 @@ export function Settings() {
               </div>
             </div>
 
-            <div className='divider'>Switch control</div>
+            <div className='divider'>Switch Control</div>
             <div className='form-control'>
               <label className='label cursor-pointer'>
                 <span className='label-text'>Use momentary switches</span>
@@ -468,17 +467,17 @@ export function Settings() {
             </div>
           </Card>
 
-          <Card sm={10} lg={5} title='System preferences'>
+          <Card sm={10} lg={5} title='System Preferences'>
             <div className='form-control'>
               <label htmlFor='wifiSsid' className='mb-2 block text-sm font-medium'>
-                WiFi SSID
+                Wi-Fi SSID
               </label>
               <input
                 id='wifiSsid'
                 name='wifiSsid'
                 type='text'
                 className='input input-bordered w-full'
-                placeholder='WiFi SSID'
+                placeholder='Wi-Fi SSID'
                 value={formData.wifiSsid}
                 onChange={onChange('wifiSsid')}
               />
@@ -486,14 +485,14 @@ export function Settings() {
 
             <div className='form-control'>
               <label htmlFor='wifiPassword' className='mb-2 block text-sm font-medium'>
-                WiFi Password
+                Wi-Fi Password
               </label>
               <input
                 id='wifiPassword'
                 name='wifiPassword'
                 type='password'
                 className='input input-bordered w-full'
-                placeholder='WiFi Password'
+                placeholder='Wi-Fi Password'
                 value={formData.wifiPassword}
                 onChange={onChange('wifiPassword')}
               />
@@ -516,7 +515,7 @@ export function Settings() {
 
             <div className='form-control'>
               <label htmlFor='timezone' className='mb-2 block text-sm font-medium'>
-                Timezone
+                Time Zone
               </label>
               <select
                 id='timezone'
@@ -552,8 +551,11 @@ export function Settings() {
           <Card sm={10} lg={5} title='Machine settings'>
             <div className='form-control'>
               <label htmlFor='pid' className='mb-2 block text-sm font-medium'>
-                PID Values (Kp, Ki, Kd)
+                PID Values
               </label>
+              <div className='mb-2 text-xs opacity-70'>
+                  Enter 3 values (Kp, Ki, Kd)
+                </div>
               <input
                 id='pid'
                 name='pid'
@@ -583,8 +585,11 @@ export function Settings() {
 
             <div className='form-control'>
               <label htmlFor='pumpModelCoeffs' className='mb-2 block text-sm font-medium'>
-                Pump Flow Coefficients <small>Enter 2 values (flow at 1bar, flow at 9bar)</small>
+                Pump Flow Coefficients
               </label>
+                <div className='mb-2 text-xs opacity-70'>
+                  Enter 2 values (flow at 1 bar, flow at 9 bar)
+                </div>
               <input
                 id='pumpModelCoeffs'
                 name='pumpModelCoeffs'
@@ -598,7 +603,7 @@ export function Settings() {
 
             <div className='form-control'>
               <label htmlFor='temperatureOffset' className='mb-2 block text-sm font-medium'>
-                Temperature Offset
+                Temperature Offset (°C)
               </label>
               <input
                 id='temperatureOffset'
@@ -617,7 +622,7 @@ export function Settings() {
             {pressureAvailable.value && (
               <div className='form-control'>
                 <label htmlFor='pressureScaling' className='mb-2 block text-sm font-medium'>
-                  Pressure sensor rating
+                  Pressure Sensor Rating
                 </label>
                 <div className='mb-2 text-xs opacity-70'>
                   Enter the bar rating of the pressure sensor being used
@@ -711,7 +716,7 @@ export function Settings() {
             </div>
           </Card>
 
-          <Card sm={10} lg={5} title='Display settings'>
+          <Card sm={10} lg={5} title='Display Settings'>
             <div className='form-control'>
               <label htmlFor='mainBrightness' className='mb-2 block text-sm font-medium'>
                 Main Brightness (1-16)
@@ -765,7 +770,7 @@ export function Settings() {
 
             <div className='form-control'>
               <label htmlFor='standbyBrightnessTimeout' className='mb-2 block text-sm font-medium'>
-                Standby Brightness Timeout (seconds)
+                Standby Brightness Timeout (s)
               </label>
               <input
                 id='standbyBrightnessTimeout'
@@ -940,7 +945,7 @@ export function Settings() {
 
         <div className='pt-4 lg:col-span-10'>
           <div className='alert alert-warning'>
-            <span>Some options like WiFi, NTP and managing Plugins require a restart.</span>
+            <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
           </div>
 
           <div className='flex flex-col gap-2 pt-4 sm:flex-row'>
