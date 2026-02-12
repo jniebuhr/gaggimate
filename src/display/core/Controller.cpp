@@ -200,7 +200,30 @@ void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.setHostname(settings.getMdnsName().c_str());
         WiFi.mode(WIFI_STA);
-        WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
+
+        // Configure static IP if enabled
+        if (settings.isStaticIpEnabled()) {
+            IPAddress staticIp, gateway, subnet, dns;
+
+            if (staticIp.fromString(settings.getStaticIp()) &&
+                subnet.fromString(settings.getStaticNetmask()) &&
+                gateway.fromString(settings.getStaticGateway())) {
+
+                // DNS is optional
+                if (settings.getStaticDns().isEmpty() || !dns.fromString(settings.getStaticDns())) {
+                    dns = gateway; // Use gateway as DNS if not specified
+                }
+
+                WiFi.config(staticIp, gateway, subnet, dns);
+                ESP_LOGI(LOG_TAG, "Using static IP: %s", settings.getStaticIp().c_str());
+            } else {
+                ESP_LOGW(LOG_TAG, "Invalid static IP configuration, falling back to DHCP");
+                WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
+            }
+        } else {
+            WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
+        }
+
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
         WiFi.setAutoReconnect(true);

@@ -141,6 +141,9 @@ export function Settings() {
         setFormData(newFormData);
         return;
       }
+      if (key === 'staticIpEnabled') {
+        value = !formData.staticIpEnabled;
+      }
       if (key === 'dashboardLayout') {
         setDashboardLayout(value);
       }
@@ -497,6 +500,88 @@ export function Settings() {
                 value={formData.wifiPassword}
                 onChange={onChange('wifiPassword')}
               />
+            </div>
+
+            <div className='divider'>Network Configuration</div>
+            <div className='form-control'>
+              <label className='label cursor-pointer'>
+                <span className='label-text'>Use Static IP</span>
+                <input
+                  id='staticIpEnabled'
+                  name='staticIpEnabled'
+                  value='staticIpEnabled'
+                  type='checkbox'
+                  className='toggle toggle-primary'
+                  checked={!!formData.staticIpEnabled}
+                  onChange={onChange('staticIpEnabled')}
+                />
+              </label>
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <div className='form-control'>
+                <label htmlFor='staticIp' className='mb-2 block text-sm font-medium'>
+                  Static IP Address
+                </label>
+                <input
+                  id='staticIp'
+                  name='staticIp'
+                  type='text'
+                  className='input input-bordered w-full'
+                  placeholder='192.168.1.100'
+                  value={formData.staticIp}
+                  onChange={onChange('staticIp')}
+                  disabled={!formData.staticIpEnabled}
+                />
+              </div>
+              <div className='form-control'>
+                <label htmlFor='staticNetmask' className='mb-2 block text-sm font-medium'>
+                  Subnet Mask
+                </label>
+                <input
+                  id='staticNetmask'
+                  name='staticNetmask'
+                  type='text'
+                  className='input input-bordered w-full'
+                  placeholder='255.255.255.0'
+                  value={formData.staticNetmask}
+                  onChange={onChange('staticNetmask')}
+                  disabled={!formData.staticIpEnabled}
+                />
+              </div>
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <div className='form-control'>
+                <label htmlFor='staticGateway' className='mb-2 block text-sm font-medium'>
+                  Gateway
+                </label>
+                <input
+                  id='staticGateway'
+                  name='staticGateway'
+                  type='text'
+                  className='input input-bordered w-full'
+                  placeholder='192.168.1.1'
+                  value={formData.staticGateway}
+                  onChange={onChange('staticGateway')}
+                  disabled={!formData.staticIpEnabled}
+                />
+              </div>
+              <div className='form-control'>
+                <label htmlFor='staticDns' className='mb-2 block text-sm font-medium'>
+                  DNS Server
+                </label>
+                <input
+                  id='staticDns'
+                  name='staticDns'
+                  type='text'
+                  className='input input-bordered w-full'
+                  placeholder='8.8.8.8'
+                  value={formData.staticDns}
+                  onChange={onChange('staticDns')}
+                  disabled={!formData.staticIpEnabled}
+                />
+              </div>
             </div>
 
             <div className='form-control'>
