@@ -1,18 +1,17 @@
-import { useQuery } from 'preact-fetching';
-import { Spinner } from '../../components/Spinner.jsx';
-import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
-import Card from '../../components/Card.jsx';
-import { timezones } from '../../config/zones.js';
-import { computed } from '@preact/signals';
-import { machine } from '../../services/ApiService.js';
-import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
-import { setDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
-import { PluginCard } from './PluginCard.jsx';
-import { downloadJson } from '../../utils/download.js';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { computed } from '@preact/signals';
+import { useQuery } from 'preact-fetching';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import Card from '../../components/Card.jsx';
+import { Spinner } from '../../components/Spinner.jsx';
+import { timezones } from '../../config/zones.js';
+import { machine } from '../../services/ApiService.js';
+import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
+import { downloadJson } from '../../utils/download.js';
+import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
+import { PluginCard } from './PluginCard.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -282,42 +281,54 @@ export function Settings() {
           accept='.json,application/json'
         />
       </div>
+
       <form key='settings' ref={formRef} method='post' action='/api/settings' onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
-          <Card sm={10} lg={5} title='Temperature settings'>
-            <div className='form-control'>
+          {/* Temperature Settings */}
+          <Card sm={10} lg={5} title='Temperature Settings'>
+            <div className='form-control mb-4'>
               <label htmlFor='targetSteamTemp' className='mb-2 block text-sm font-medium'>
-                Default Steam Temperature (°C)
+                Default Steam Temperature
               </label>
-              <input
-                id='targetSteamTemp'
-                name='targetSteamTemp'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='135'
-                value={formData.targetSteamTemp}
-                onChange={onChange('targetSteamTemp')}
-              />
+              <div className='flex'>
+                <input
+                  id='targetSteamTemp'
+                  name='targetSteamTemp'
+                  type='number'
+                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                  placeholder='135'
+                  value={formData.targetSteamTemp}
+                  onChange={onChange('targetSteamTemp')}
+                />
+                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
+                  °C
+                </span>
+              </div>
             </div>
-
             <div className='form-control'>
               <label htmlFor='targetWaterTemp' className='mb-2 block text-sm font-medium'>
-                Default Water Temperature (°C)
+                Default Water Temperature
               </label>
-              <input
-                id='targetWaterTemp'
-                name='targetWaterTemp'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='80'
-                value={formData.targetWaterTemp}
-                onChange={onChange('targetWaterTemp')}
-              />
+              <div className='flex'>
+                <input
+                  id='targetWaterTemp'
+                  name='targetWaterTemp'
+                  type='number'
+                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                  placeholder='80'
+                  value={formData.targetWaterTemp}
+                  onChange={onChange('targetWaterTemp')}
+                />
+                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
+                  °C
+                </span>
+              </div>
             </div>
           </Card>
 
-          <Card sm={10} lg={5} title='User preferences'>
-            <div className='form-control'>
+          {/* User Preferences */}
+          <Card sm={10} lg={5} title='User Preferences'>
+            <div className='form-control mb-4'>
               <label htmlFor='startup-mode' className='mb-2 block text-sm font-medium'>
                 Startup Mode
               </label>
@@ -335,35 +346,36 @@ export function Settings() {
                 </option>
               </select>
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='standbyTimeout' className='mb-2 block text-sm font-medium'>
-                Standby Timeout (s)
+                Standby Timeout
               </label>
-              <input
-                id='standbyTimeout'
-                name='standbyTimeout'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='0'
-                value={formData.standbyTimeout}
-                onChange={onChange('standbyTimeout')}
-              />
+              <div className='flex'>
+                <input
+                  id='standbyTimeout'
+                  name='standbyTimeout'
+                  type='number'
+                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                  placeholder='0'
+                  value={formData.standbyTimeout}
+                  onChange={onChange('standbyTimeout')}
+                />
+                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
+                  s
+                </span>
+              </div>
             </div>
-
-            <div className='divider'>Predictive scale delay</div>
+            <div className='divider'>Predictive Scale Delay</div>
             <div className='mb-2 text-sm opacity-70'>
               Shuts off the process ahead of time based on the flow rate to account for any dripping
               or delays in the control.
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label className='label cursor-pointer'>
                 <span className='label-text'>Auto Adjust</span>
                 <input
                   id='delayAdjust'
                   name='delayAdjust'
-                  value='delayAdjust'
                   type='checkbox'
                   className='toggle toggle-primary'
                   checked={!!formData.delayAdjust}
@@ -371,48 +383,55 @@ export function Settings() {
                 />
               </label>
             </div>
-
             <div className='grid grid-cols-2 gap-4'>
               <div className='form-control'>
                 <label htmlFor='brewDelay' className='mb-2 block text-sm font-medium'>
-                  Brew (ms)
+                  Brew
                 </label>
-                <input
-                  id='brewDelay'
-                  name='brewDelay'
-                  type='number'
-                  step='any'
-                  className='input input-bordered w-full'
-                  placeholder='0'
-                  value={formData.brewDelay}
-                  onChange={onChange('brewDelay')}
-                />
+                <div className='flex'>
+                  <input
+                    id='brewDelay'
+                    name='brewDelay'
+                    type='number'
+                    step='any'
+                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                    placeholder='0'
+                    value={formData.brewDelay}
+                    onChange={onChange('brewDelay')}
+                  />
+                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
+                    ms
+                  </span>
+                </div>
               </div>
               <div className='form-control'>
                 <label htmlFor='grindDelay' className='mb-2 block text-sm font-medium'>
-                  Grind (ms)
+                  Grind
                 </label>
-                <input
-                  id='grindDelay'
-                  name='grindDelay'
-                  type='number'
-                  step='any'
-                  className='input input-bordered w-full'
-                  placeholder='0'
-                  value={formData.grindDelay}
-                  onChange={onChange('grindDelay')}
-                />
+                <div className='flex'>
+                  <input
+                    id='grindDelay'
+                    name='grindDelay'
+                    type='number'
+                    step='any'
+                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                    placeholder='0'
+                    value={formData.grindDelay}
+                    onChange={onChange('grindDelay')}
+                  />
+                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
+                    ms
+                  </span>
+                </div>
               </div>
             </div>
-
-            <div className='divider'>Switch control</div>
+            <div className='divider'>Switch Control</div>
             <div className='form-control'>
               <label className='label cursor-pointer'>
                 <span className='label-text'>Use momentary switches</span>
                 <input
                   id='momentaryButtons'
                   name='momentaryButtons'
-                  value='momentaryButtons'
                   type='checkbox'
                   className='toggle toggle-primary'
                   checked={!!formData.momentaryButtons}
@@ -422,8 +441,9 @@ export function Settings() {
             </div>
           </Card>
 
+          {/* Web Settings */}
           <Card sm={10} lg={5} title='Web Settings'>
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='webui-theme' className='label'>
                 <span className='label-text font-medium'>Theme</span>
               </label>
@@ -443,7 +463,6 @@ export function Settings() {
                 <option value='nord'>Nord</option>
               </select>
             </div>
-
             <div className='form-control'>
               <label htmlFor='dashboardLayout' className='label'>
                 <span className='label-text font-medium'>Dashboard Layout</span>
@@ -454,12 +473,8 @@ export function Settings() {
                 className='select select-bordered w-full'
                 value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
                 onChange={e => {
-                  const value = e.target.value;
-                  setFormData({
-                    ...formData,
-                    dashboardLayout: value,
-                  });
-                  setDashboardLayout(value);
+                  setFormData({ ...formData, dashboardLayout: e.target.value });
+                  setDashboardLayout(e.target.value);
                 }}
               >
                 <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
@@ -468,38 +483,37 @@ export function Settings() {
             </div>
           </Card>
 
-          <Card sm={10} lg={5} title='System preferences'>
-            <div className='form-control'>
+          {/* System Preferences */}
+          <Card sm={10} lg={5} title='System Preferences'>
+            <div className='form-control mb-4'>
               <label htmlFor='wifiSsid' className='mb-2 block text-sm font-medium'>
-                WiFi SSID
+                Wi-Fi SSID
               </label>
               <input
                 id='wifiSsid'
                 name='wifiSsid'
                 type='text'
                 className='input input-bordered w-full'
-                placeholder='WiFi SSID'
+                placeholder='Wi-Fi SSID'
                 value={formData.wifiSsid}
                 onChange={onChange('wifiSsid')}
               />
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='wifiPassword' className='mb-2 block text-sm font-medium'>
-                WiFi Password
+                Wi-Fi Password
               </label>
               <input
                 id='wifiPassword'
                 name='wifiPassword'
                 type='password'
                 className='input input-bordered w-full'
-                placeholder='WiFi Password'
+                placeholder='Wi-Fi Password'
                 value={formData.wifiPassword}
                 onChange={onChange('wifiPassword')}
               />
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='mdnsName' className='mb-2 block text-sm font-medium'>
                 Hostname
               </label>
@@ -513,10 +527,9 @@ export function Settings() {
                 onChange={onChange('mdnsName')}
               />
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='timezone' className='mb-2 block text-sm font-medium'>
-                Timezone
+                Time Zone
               </label>
               <select
                 id='timezone'
@@ -524,14 +537,13 @@ export function Settings() {
                 className='select select-bordered w-full'
                 onChange={onChange('timezone')}
               >
-                {timezones.map(timezone => (
-                  <option key={timezone} value={timezone} selected={formData.timezone === timezone}>
-                    {timezone}
+                {timezones.map(tz => (
+                  <option key={tz} value={tz} selected={formData.timezone === tz}>
+                    {tz}
                   </option>
                 ))}
               </select>
             </div>
-
             <div className='divider'>Clock</div>
             <div className='form-control'>
               <label className='label cursor-pointer'>
@@ -539,7 +551,6 @@ export function Settings() {
                 <input
                   id='clock24hFormat'
                   name='clock24hFormat'
-                  value='clock24hFormat'
                   type='checkbox'
                   className='toggle toggle-primary'
                   checked={!!formData.clock24hFormat}
@@ -549,42 +560,57 @@ export function Settings() {
             </div>
           </Card>
 
-          <Card sm={10} lg={5} title='Machine settings'>
-            <div className='form-control'>
+          {/* Machine Settings */}
+          <Card sm={10} lg={5} title='Machine Settings'>
+            <div className='form-control mb-4'>
               <label htmlFor='pid' className='mb-2 block text-sm font-medium'>
-                PID Values (Kp, Ki, Kd)
+                PID Values
               </label>
-              <input
-                id='pid'
-                name='pid'
-                type='text'
-                className='input input-bordered w-full'
-                placeholder='2.0, 0.1, 0.01'
-                value={formData.pid}
-                onChange={onChange('pid')}
-              />
+              <div className='flex'>
+                <input
+                  id='pid'
+                  name='pid'
+                  type='text'
+                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                  placeholder='2.0, 0.1, 0.01'
+                  value={formData.pid}
+                  onChange={onChange('pid')}
+                />
+                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
+                  K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>
+                </span>
+              </div>
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='kf' className='mb-2 block text-sm font-medium'>
-                Thermal Feedforward Gain (Kff) - 0 to disable
+                Thermal Feedforward Gain
               </label>
-              <input
-                id='kf'
-                name='kf'
-                type='number'
-                step='0.001'
-                className='input input-bordered w-full'
-                placeholder='0.600'
-                value={formData.kf}
-                onChange={onChange('kf')}
-              />
+              <div className='flex'>
+                <input
+                  id='kf'
+                  name='kf'
+                  type='number'
+                  step='0.001'
+                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                  placeholder='0.600'
+                  value={formData.kf}
+                  onChange={onChange('kf')}
+                />
+                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
+                  K<sub>ff</sub>
+                </span>
+              </div>
+              <div className='mt-2 text-xs opacity-70'>
+                Set to 0 to disable feedforward control.
+              </div>
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='pumpModelCoeffs' className='mb-2 block text-sm font-medium'>
-                Pump Flow Coefficients <small>Enter 2 values (flow at 1bar, flow at 9bar)</small>
+                Pump Flow Coefficients
               </label>
+              <div className='mb-2 text-xs opacity-70'>
+                Enter 2 values (flow at 1 bar, flow at 9 bar)
+              </div>
               <input
                 id='pumpModelCoeffs'
                 name='pumpModelCoeffs'
@@ -595,49 +621,52 @@ export function Settings() {
                 onChange={onChange('pumpModelCoeffs')}
               />
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='temperatureOffset' className='mb-2 block text-sm font-medium'>
                 Temperature Offset
               </label>
-              <input
-                id='temperatureOffset'
-                name='temperatureOffset'
-                type='number'
-                inputMode='decimal'
-                className='input input-bordered w-full'
-                placeholder='0 °C'
-                min='0'
-                step='any'
-                value={formData.temperatureOffset}
-                onChange={onChange('temperatureOffset')}
-              />
+              <div className='flex'>
+                <input
+                  id='temperatureOffset'
+                  name='temperatureOffset'
+                  type='number'
+                  step='any'
+                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                  placeholder='0'
+                  value={formData.temperatureOffset}
+                  onChange={onChange('temperatureOffset')}
+                />
+                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
+                  °C
+                </span>
+              </div>
             </div>
-
             {pressureAvailable.value && (
-              <div className='form-control'>
+              <div className='form-control mb-4'>
                 <label htmlFor='pressureScaling' className='mb-2 block text-sm font-medium'>
-                  Pressure sensor rating
+                  Pressure Sensor Rating
                 </label>
                 <div className='mb-2 text-xs opacity-70'>
                   Enter the bar rating of the pressure sensor being used
                 </div>
-                <input
-                  id='pressureScaling'
-                  name='pressureScaling'
-                  type='number'
-                  inputMode='decimal'
-                  className='input input-bordered w-full'
-                  placeholder='0.0 bar'
-                  min='0'
-                  step='any'
-                  value={formData.pressureScaling}
-                  onChange={onChange('pressureScaling')}
-                />
+                <div className='flex'>
+                  <input
+                    id='pressureScaling'
+                    name='pressureScaling'
+                    type='number'
+                    step='any'
+                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                    placeholder='0.0'
+                    value={formData.pressureScaling}
+                    onChange={onChange('pressureScaling')}
+                  />
+                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
+                    bar
+                  </span>
+                </div>
               </div>
             )}
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='steamPumpPercentage' className='mb-2 block text-sm font-medium'>
                 Steam Pump Assist
               </label>
@@ -646,29 +675,31 @@ export function Settings() {
                   ? 'How many ml/s to pump into the boiler during steaming'
                   : 'What percentage to run the pump at during steaming'}
               </div>
-              <input
-                id='steamPumpPercentage'
-                name='steamPumpPercentage'
-                type='number'
-                inputmode='decimal'
-                className='input input-bordered w-full'
-                placeholder={pressureAvailable.value ? '0.0 ml/s' : '0.0 %'}
-                min='0'
-                step='0.1'
-                value={String(formData.steamPumpPercentage * (pressureAvailable.value ? 0.1 : 1))}
-                onBlur={e =>
-                  setFormData({
-                    ...formData,
-                    steamPumpPercentage: (
-                      parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)
-                    ).toFixed(0),
-                  })
-                }
-              />
+              <div className='flex'>
+                <input
+                  id='steamPumpPercentage'
+                  name='steamPumpPercentage'
+                  type='number'
+                  step='0.1'
+                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                  placeholder={pressureAvailable.value ? '0.0' : '0.0 %'}
+                  value={String(formData.steamPumpPercentage * (pressureAvailable.value ? 0.1 : 1))}
+                  onBlur={e =>
+                    setFormData({
+                      ...formData,
+                      steamPumpPercentage: (
+                        parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)
+                      ).toFixed(0),
+                    })
+                  }
+                />
+                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
+                  {pressureAvailable.value ? 'ml/s' : '%'}
+                </span>
+              </div>
             </div>
-
             {pressureAvailable.value && (
-              <div className='form-control'>
+              <div className='form-control mb-4'>
                 <label htmlFor='steamPumpCutoff' className='mb-2 block text-sm font-medium'>
                   Pump Assist Cutoff
                 </label>
@@ -676,21 +707,23 @@ export function Settings() {
                   At how many bars should the pump assist stop. This makes it so the pump will only
                   run when steam is flowing.
                 </div>
-                <input
-                  id='steamPumpCutoff'
-                  name='steamPumpCutoff'
-                  type='number'
-                  inputMode='decimal'
-                  className='input input-bordered w-full'
-                  placeholder='0.0 bar'
-                  min='0'
-                  step='any'
-                  value={formData.steamPumpCutoff}
-                  onChange={onChange('steamPumpCutoff')}
-                />
+                <div className='flex'>
+                  <input
+                    id='steamPumpCutoff'
+                    name='steamPumpCutoff'
+                    type='number'
+                    step='any'
+                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                    placeholder='0.0'
+                    value={formData.steamPumpCutoff}
+                    onChange={onChange('steamPumpCutoff')}
+                  />
+                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
+                    bar
+                  </span>
+                </div>
               </div>
             )}
-
             <div className='form-control'>
               <label htmlFor='altRelayFunction' className='mb-2 block text-sm font-medium'>
                 Alt Relay / SSR2 Function
@@ -699,7 +732,7 @@ export function Settings() {
                 id='altRelayFunction'
                 name='altRelayFunction'
                 className='select select-bordered w-full'
-                value={formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1}
+                value={formData.altRelayFunction ?? 1}
                 onChange={onChange('altRelayFunction')}
               >
                 <option value={0}>None</option>
@@ -711,8 +744,9 @@ export function Settings() {
             </div>
           </Card>
 
-          <Card sm={10} lg={5} title='Display settings'>
-            <div className='form-control'>
+          {/* Display Settings */}
+          <Card sm={10} lg={5} title='Display Settings'>
+            <div className='form-control mb-4'>
               <label htmlFor='mainBrightness' className='mb-2 block text-sm font-medium'>
                 Main Brightness (1-16)
               </label>
@@ -728,15 +762,13 @@ export function Settings() {
                 onChange={onChange('mainBrightness')}
               />
             </div>
-
             <div className='divider'>Standby Display</div>
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label className='label cursor-pointer'>
                 <span className='label-text'>Enable standby display</span>
                 <input
                   id='standbyDisplayEnabled'
                   name='standbyDisplayEnabled'
-                  value='standbyDisplayEnabled'
                   type='checkbox'
                   className='toggle toggle-primary'
                   checked={formData.standbyDisplayEnabled}
@@ -744,8 +776,7 @@ export function Settings() {
                 />
               </label>
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='standbyBrightness' className='mb-2 block text-sm font-medium'>
                 Standby Brightness (0-16)
               </label>
@@ -762,23 +793,26 @@ export function Settings() {
                 disabled={!formData.standbyDisplayEnabled}
               />
             </div>
-
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='standbyBrightnessTimeout' className='mb-2 block text-sm font-medium'>
-                Standby Brightness Timeout (seconds)
+                Standby Brightness Timeout (s)
               </label>
-              <input
-                id='standbyBrightnessTimeout'
-                name='standbyBrightnessTimeout'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='60'
-                min='1'
-                value={formData.standbyBrightnessTimeout}
-                onChange={onChange('standbyBrightnessTimeout')}
-              />
+              <div className='flex'>
+                <input
+                  id='standbyBrightnessTimeout'
+                  name='standbyBrightnessTimeout'
+                  type='number'
+                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                  placeholder='60'
+                  min='1'
+                  value={formData.standbyBrightnessTimeout}
+                  onChange={onChange('standbyBrightnessTimeout')}
+                />
+                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
+                  s
+                </span>
+              </div>
             </div>
-
             <div className='form-control'>
               <label htmlFor='themeMode' className='mb-2 block text-sm font-medium'>
                 Theme
@@ -796,13 +830,13 @@ export function Settings() {
             </div>
           </Card>
 
+          {/* Sunrise Settings */}
           {ledControl.value && (
             <Card sm={10} lg={5} title='Sunrise Settings'>
               <div className='mb-2 text-sm opacity-70'>
                 Set the colors for the LEDs when in idle mode with no warnings.
               </div>
-
-              <div className='grid grid-cols-2 gap-4'>
+              <div className='mb-4 grid grid-cols-2 gap-4'>
                 <div className='form-control'>
                   <label htmlFor='sunriseR' className='mb-2 block text-sm font-medium'>
                     Red (0 - 255)
@@ -813,8 +847,6 @@ export function Settings() {
                     type='number'
                     className='input input-bordered w-full'
                     placeholder='16'
-                    min='0'
-                    max='255'
                     value={formData.sunriseR}
                     onChange={onChange('sunriseR')}
                   />
@@ -829,15 +861,10 @@ export function Settings() {
                     type='number'
                     className='input input-bordered w-full'
                     placeholder='16'
-                    min='0'
-                    max='255'
                     value={formData.sunriseG}
                     onChange={onChange('sunriseG')}
                   />
                 </div>
-              </div>
-
-              <div className='grid grid-cols-2 gap-4'>
                 <div className='form-control'>
                   <label htmlFor='sunriseB' className='mb-2 block text-sm font-medium'>
                     Blue (0 - 255)
@@ -848,8 +875,6 @@ export function Settings() {
                     type='number'
                     className='input input-bordered w-full'
                     placeholder='16'
-                    min='0'
-                    max='255'
                     value={formData.sunriseB}
                     onChange={onChange('sunriseB')}
                   />
@@ -864,15 +889,12 @@ export function Settings() {
                     type='number'
                     className='input input-bordered w-full'
                     placeholder='16'
-                    min='0'
-                    max='255'
                     value={formData.sunriseW}
                     onChange={onChange('sunriseW')}
                   />
                 </div>
               </div>
-
-              <div className='form-control'>
+              <div className='form-control mb-4'>
                 <label htmlFor='sunriseExtBrightness' className='mb-2 block text-sm font-medium'>
                   External LED (0 - 255)
                 </label>
@@ -882,45 +904,47 @@ export function Settings() {
                   type='number'
                   className='input input-bordered w-full'
                   placeholder='16'
-                  min='0'
-                  max='255'
                   value={formData.sunriseExtBrightness}
                   onChange={onChange('sunriseExtBrightness')}
                 />
               </div>
-
-              <div className='form-control'>
+              <div className='form-control mb-4'>
                 <label htmlFor='emptyTankDistance' className='mb-2 block text-sm font-medium'>
                   Distance from sensor to bottom of the tank
                 </label>
-                <input
-                  id='emptyTankDistance'
-                  name='emptyTankDistance'
-                  type='number'
-                  className='input input-bordered w-full'
-                  placeholder='16'
-                  min='0'
-                  max='1000'
-                  value={formData.emptyTankDistance}
-                  onChange={onChange('emptyTankDistance')}
-                />
+                <div className='flex'>
+                  <input
+                    id='emptyTankDistance'
+                    name='emptyTankDistance'
+                    type='number'
+                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                    placeholder='16'
+                    value={formData.emptyTankDistance}
+                    onChange={onChange('emptyTankDistance')}
+                  />
+                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
+                    mm
+                  </span>
+                </div>
               </div>
-
               <div className='form-control'>
                 <label htmlFor='fullTankDistance' className='mb-2 block text-sm font-medium'>
                   Distance from sensor to the fill line
                 </label>
-                <input
-                  id='fullTankDistance'
-                  name='fullTankDistance'
-                  type='number'
-                  className='input input-bordered w-full'
-                  placeholder='16'
-                  min='0'
-                  max='1000'
-                  value={formData.fullTankDistance}
-                  onChange={onChange('fullTankDistance')}
-                />
+                <div className='flex'>
+                  <input
+                    id='fullTankDistance'
+                    name='fullTankDistance'
+                    type='number'
+                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
+                    placeholder='16'
+                    value={formData.fullTankDistance}
+                    onChange={onChange('fullTankDistance')}
+                  />
+                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
+                    mm
+                  </span>
+                </div>
               </div>
             </Card>
           )}
@@ -939,22 +963,24 @@ export function Settings() {
         </div>
 
         <div className='pt-4 lg:col-span-10'>
-          <div className='alert alert-warning'>
-            <span>Some options like WiFi, NTP and managing Plugins require a restart.</span>
+          <div className='alert alert-warning shadow-sm'>
+            <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
           </div>
-
           <div className='flex flex-col gap-2 pt-4 sm:flex-row'>
-            <a href='/' className='btn btn-outline'>
+            <a href='/' className='btn btn-outline flex-1 sm:flex-none'>
               Back
             </a>
-            <button type='submit' className='btn btn-primary' disabled={submitting}>
-              {submitting && <Spinner size={4} />}
-              Save
+            <button
+              type='submit'
+              className='btn btn-primary flex-1 sm:flex-none'
+              disabled={submitting}
+            >
+              {submitting && <Spinner size={4} />} Save
             </button>
             <button
               type='submit'
               name='restart'
-              className='btn btn-secondary'
+              className='btn btn-secondary flex-1 sm:flex-none'
               disabled={submitting}
               onClick={e => onSubmit(e, true)}
             >
