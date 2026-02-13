@@ -943,27 +943,35 @@ export function Settings() {
           </div>
         </div>
 
-        <div className='border-base-content/10 bg-base-100/90 sticky bottom-0 z-20 mt-8 border-t py-4 backdrop-blur-md'>
-          <div className='flex flex-col gap-2 sm:flex-row'>
-            <a href='/' className='btn btn-outline flex-1 sm:flex-none'>
+        {/* Buttons */}
+        <div className='border-base-content/10 bg-base-100/95 sticky bottom-0 z-20 mt-8 border-t py-4 backdrop-blur-md'>
+          <div className='flex w-full flex-col gap-4 sm:flex-row sm:justify-between'>
+            {/* Left Side: Navigation */}
+            <a href='/' className='btn btn-outline w-full sm:w-auto'>
               Back
             </a>
-            <button
-              type='submit'
-              className='btn btn-primary flex-1 sm:flex-none'
-              disabled={submitting}
-            >
-              {submitting && <Spinner size={4} />} Save
-            </button>
-            <button
-              type='submit'
-              name='restart'
-              className='btn btn-secondary flex-1 sm:flex-none'
-              disabled={submitting}
-              onClick={e => onSubmit(e, true)}
-            >
-              Save and Restart
-            </button>
+
+            {/* Right Side Group: Actions */}
+            <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row'>
+              <button
+                type='submit'
+                name='restart'
+                className='btn btn-secondary w-full sm:w-auto'
+                disabled={submitting}
+                onClick={e => onSubmit(e, true)}
+              >
+                {/* Moved Saved and Restart before Save, as it's a more disruptive action. */}
+                Save and Restart
+              </button>
+
+              <button
+                type='submit'
+                className='btn btn-primary w-full sm:w-auto'
+                disabled={submitting}
+              >
+                {submitting && <Spinner size={4} />} Save
+              </button>
+            </div>
           </div>
         </div>
       </form>
