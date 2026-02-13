@@ -365,6 +365,7 @@ export function Settings() {
                 </span>
               </div>
             </div>
+
             <div className='divider'>Predictive Scale Delay</div>
             <div className='mb-2 text-sm opacity-70'>
               Shuts off the process ahead of time based on the flow rate to account for any dripping
@@ -425,6 +426,7 @@ export function Settings() {
                 </div>
               </div>
             </div>
+
             <div className='divider'>Switch Control</div>
             <div className='form-control'>
               <label className='label cursor-pointer'>
@@ -623,7 +625,7 @@ export function Settings() {
             </div>
             <div className='form-control mb-4'>
               <label htmlFor='temperatureOffset' className='mb-2 block text-sm font-medium'>
-                Temperature Offset
+                Temperature Offset (°C)
               </label>
               <div className='flex'>
                 <input
