@@ -139,7 +139,8 @@ export function PluginCard({
           <div className='border-base-300 mt-4 flex flex-col items-center justify-center gap-4 border-t pt-4'>
             <img src={homekitImage} alt='HomeKit Setup Code' />
             <p className='text-center'>
-              Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above.
+              Open the Home app on your iOS device, select Add Accessory, and enter the setup code
+              shown above.
             </p>
           </div>
         )}

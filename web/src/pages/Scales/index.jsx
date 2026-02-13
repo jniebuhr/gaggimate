@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import Card from '../../components/Card.jsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 
 export function Scales() {
   const [key, setKey] = useState(0);
@@ -100,7 +102,9 @@ export function Scales() {
           ) : scaleData.length === 0 ? (
             <div className='py-12 text-center'>
               <div className='flex flex-col items-center space-y-4'>
-                <div className='text-base-content/30 text-6xl'>⚖️</div>
+                <div className='text-base-content/30 text-6xl'>
+                  <FontAwesomeIcon icon={faScaleBalanced} />
+                </div>
                 <div>
                   <h3 className='text-base-content text-lg font-medium'>No scales found</h3>
                   <p className='text-base-content/70'>

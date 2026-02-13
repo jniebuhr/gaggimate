@@ -290,38 +290,38 @@ export function Settings() {
               <label htmlFor='targetSteamTemp' className='mb-2 block text-sm font-medium'>
                 Default Steam Temperature
               </label>
-              <div className='flex'>
-                <input
-                  id='targetSteamTemp'
-                  name='targetSteamTemp'
-                  type='number'
-                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                  placeholder='135'
-                  value={formData.targetSteamTemp}
-                  onChange={onChange('targetSteamTemp')}
-                />
-                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
-                  °C
-                </span>
+              <div className='input-group'>
+                <label htmlFor='targetSteamTemp' className='input w-full'>
+                  <input
+                    id='targetSteamTemp'
+                    name='targetSteamTemp'
+                    type='number'
+                    className='grow'
+                    placeholder='135'
+                    value={formData.targetSteamTemp}
+                    onChange={onChange('targetSteamTemp')}
+                  />
+                  <span aria-label='celsius'>°C</span>
+                </label>
               </div>
             </div>
             <div className='form-control'>
               <label htmlFor='targetWaterTemp' className='mb-2 block text-sm font-medium'>
                 Default Water Temperature
               </label>
-              <div className='flex'>
-                <input
-                  id='targetWaterTemp'
-                  name='targetWaterTemp'
-                  type='number'
-                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                  placeholder='80'
-                  value={formData.targetWaterTemp}
-                  onChange={onChange('targetWaterTemp')}
-                />
-                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
-                  °C
-                </span>
+              <div className='input-group'>
+                <label htmlFor='targetWaterTemp' className='input w-full'>
+                  <input
+                    id='targetWaterTemp'
+                    name='targetWaterTemp'
+                    type='number'
+                    className='grow'
+                    placeholder='80'
+                    value={formData.targetWaterTemp}
+                    onChange={onChange('targetWaterTemp')}
+                  />
+                  <span aria-label='celsius'>°C</span>
+                </label>
               </div>
             </div>
           </Card>
@@ -350,19 +350,19 @@ export function Settings() {
               <label htmlFor='standbyTimeout' className='mb-2 block text-sm font-medium'>
                 Standby Timeout
               </label>
-              <div className='flex'>
-                <input
-                  id='standbyTimeout'
-                  name='standbyTimeout'
-                  type='number'
-                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                  placeholder='0'
-                  value={formData.standbyTimeout}
-                  onChange={onChange('standbyTimeout')}
-                />
-                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
-                  s
-                </span>
+              <div className='input-group'>
+                <label htmlFor='standbyTimeout' className='input w-full'>
+                  <input
+                    id='standbyTimeout'
+                    name='standbyTimeout'
+                    type='number'
+                    className='grow'
+                    placeholder='0'
+                    value={formData.standbyTimeout}
+                    onChange={onChange('standbyTimeout')}
+                  />
+                  <span aria-label='seconds'>s</span>
+                </label>
               </div>
             </div>
 
@@ -389,40 +389,40 @@ export function Settings() {
                 <label htmlFor='brewDelay' className='mb-2 block text-sm font-medium'>
                   Brew
                 </label>
-                <div className='flex'>
-                  <input
-                    id='brewDelay'
-                    name='brewDelay'
-                    type='number'
-                    step='any'
-                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                    placeholder='0'
-                    value={formData.brewDelay}
-                    onChange={onChange('brewDelay')}
-                  />
-                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
-                    ms
-                  </span>
+                <div className='input-group'>
+                  <label htmlFor='brewDelay' className='input w-full'>
+                    <input
+                      id='brewDelay'
+                      name='brewDelay'
+                      type='number'
+                      step='any'
+                      className='grow'
+                      placeholder='0'
+                      value={formData.brewDelay}
+                      onChange={onChange('brewDelay')}
+                    />
+                    <span aria-label='milliseconds'>ms</span>
+                  </label>
                 </div>
               </div>
               <div className='form-control'>
                 <label htmlFor='grindDelay' className='mb-2 block text-sm font-medium'>
                   Grind
                 </label>
-                <div className='flex'>
-                  <input
-                    id='grindDelay'
-                    name='grindDelay'
-                    type='number'
-                    step='any'
-                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                    placeholder='0'
-                    value={formData.grindDelay}
-                    onChange={onChange('grindDelay')}
-                  />
-                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
-                    ms
-                  </span>
+                <div className='input-group'>
+                  <label htmlFor='grindDelay' className='input w-full'>
+                    <input
+                      id='grindDelay'
+                      name='grindDelay'
+                      type='number'
+                      step='any'
+                      className='grow'
+                      placeholder='0'
+                      value={formData.grindDelay}
+                      onChange={onChange('grindDelay')}
+                    />
+                    <span aria-label='milliseconds'>ms</span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -568,39 +568,43 @@ export function Settings() {
               <label htmlFor='pid' className='mb-2 block text-sm font-medium'>
                 PID Values
               </label>
-              <div className='flex'>
-                <input
-                  id='pid'
-                  name='pid'
-                  type='text'
-                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                  placeholder='2.0, 0.1, 0.01'
-                  value={formData.pid}
-                  onChange={onChange('pid')}
-                />
-                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
-                  K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>
-                </span>
+              <div className='input-group'>
+                <label htmlFor='pid' className='input w-full'>
+                  <input
+                    id='pid'
+                    name='pid'
+                    type='text'
+                    className='grow'
+                    placeholder='2.0, 0.1, 0.01'
+                    value={formData.pid}
+                    onChange={onChange('pid')}
+                  />
+                  <span>
+                    K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>
+                  </span>
+                </label>
               </div>
             </div>
             <div className='form-control mb-4'>
               <label htmlFor='kf' className='mb-2 block text-sm font-medium'>
                 Thermal Feedforward Gain
               </label>
-              <div className='flex'>
-                <input
-                  id='kf'
-                  name='kf'
-                  type='number'
-                  step='0.001'
-                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                  placeholder='0.600'
-                  value={formData.kf}
-                  onChange={onChange('kf')}
-                />
-                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
-                  K<sub>ff</sub>
-                </span>
+              <div className='input-group'>
+                <label htmlFor={'kf'} className={'input w-full'}>
+                  <input
+                    id='kf'
+                    name='kf'
+                    type='number'
+                    step='0.001'
+                    className='grow'
+                    placeholder='0.600'
+                    value={formData.kf}
+                    onChange={onChange('kf')}
+                  />
+                  <span>
+                    K<sub>ff</sub>
+                  </span>
+                </label>
               </div>
               <div className='mt-2 text-xs opacity-70'>
                 Set to 0 to disable feedforward control.
@@ -627,20 +631,20 @@ export function Settings() {
               <label htmlFor='temperatureOffset' className='mb-2 block text-sm font-medium'>
                 Temperature Offset (°C)
               </label>
-              <div className='flex'>
-                <input
-                  id='temperatureOffset'
-                  name='temperatureOffset'
-                  type='number'
-                  step='any'
-                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                  placeholder='0'
-                  value={formData.temperatureOffset}
-                  onChange={onChange('temperatureOffset')}
-                />
-                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
-                  °C
-                </span>
+              <div className='input-group'>
+                <label htmlFor='temperatureOffset' className='input w-full'>
+                  <input
+                    id='temperatureOffset'
+                    name='temperatureOffset'
+                    type='number'
+                    step='any'
+                    className='grow'
+                    placeholder='0'
+                    value={formData.temperatureOffset}
+                    onChange={onChange('temperatureOffset')}
+                  />
+                  <span aria-label='celsius'>°C</span>
+                </label>
               </div>
             </div>
             {pressureAvailable.value && (
@@ -651,20 +655,20 @@ export function Settings() {
                 <div className='mb-2 text-xs opacity-70'>
                   Enter the bar rating of the pressure sensor being used
                 </div>
-                <div className='flex'>
-                  <input
-                    id='pressureScaling'
-                    name='pressureScaling'
-                    type='number'
-                    step='any'
-                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                    placeholder='0.0'
-                    value={formData.pressureScaling}
-                    onChange={onChange('pressureScaling')}
-                  />
-                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
-                    bar
-                  </span>
+                <div className='input-group'>
+                  <label htmlFor='pressureScaling' className='input w-full'>
+                    <input
+                      id='pressureScaling'
+                      name='pressureScaling'
+                      type='number'
+                      step='any'
+                      className='grow'
+                      placeholder='0.0'
+                      value={formData.pressureScaling}
+                      onChange={onChange('pressureScaling')}
+                    />
+                    <span>bar</span>
+                  </label>
                 </div>
               </div>
             )}
@@ -677,27 +681,31 @@ export function Settings() {
                   ? 'How many ml/s to pump into the boiler during steaming'
                   : 'What percentage to run the pump at during steaming'}
               </div>
-              <div className='flex'>
-                <input
-                  id='steamPumpPercentage'
-                  name='steamPumpPercentage'
-                  type='number'
-                  step='0.1'
-                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                  placeholder={pressureAvailable.value ? '0.0' : '0.0 %'}
-                  value={String(formData.steamPumpPercentage * (pressureAvailable.value ? 0.1 : 1))}
-                  onBlur={e =>
-                    setFormData({
-                      ...formData,
-                      steamPumpPercentage: (
-                        parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)
-                      ).toFixed(0),
-                    })
-                  }
-                />
-                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
-                  {pressureAvailable.value ? 'ml/s' : '%'}
-                </span>
+              <div className='input-group'>
+                <label htmlFor='steamPumpPercentage' className='input w-full'>
+                  <input
+                    id='steamPumpPercentage'
+                    name='steamPumpPercentage'
+                    type='number'
+                    step='0.1'
+                    className='grow'
+                    placeholder={pressureAvailable.value ? '0.0' : '0.0 %'}
+                    value={String(
+                      formData.steamPumpPercentage * (pressureAvailable.value ? 0.1 : 1),
+                    )}
+                    onBlur={e =>
+                      setFormData({
+                        ...formData,
+                        steamPumpPercentage: (
+                          parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)
+                        ).toFixed(0),
+                      })
+                    }
+                  />
+                  <span aria-label={pressureAvailable.value ? 'milliliter per second' : 'percent'}>
+                    {pressureAvailable.value ? 'ml/s' : '%'}
+                  </span>
+                </label>
               </div>
             </div>
             {pressureAvailable.value && (
@@ -709,20 +717,20 @@ export function Settings() {
                   At how many bars should the pump assist stop. This makes it so the pump will only
                   run when steam is flowing.
                 </div>
-                <div className='flex'>
-                  <input
-                    id='steamPumpCutoff'
-                    name='steamPumpCutoff'
-                    type='number'
-                    step='any'
-                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                    placeholder='0.0'
-                    value={formData.steamPumpCutoff}
-                    onChange={onChange('steamPumpCutoff')}
-                  />
-                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
-                    bar
-                  </span>
+                <div className='input-group'>
+                  <label htmlFor='steamPumpCutoff' className='input w-full'>
+                    <input
+                      id='steamPumpCutoff'
+                      name='steamPumpCutoff'
+                      type='number'
+                      step='any'
+                      className='grow'
+                      placeholder='0.0'
+                      value={formData.steamPumpCutoff}
+                      onChange={onChange('steamPumpCutoff')}
+                    />
+                    <span>bar</span>
+                  </label>
                 </div>
               </div>
             )}
@@ -799,20 +807,20 @@ export function Settings() {
               <label htmlFor='standbyBrightnessTimeout' className='mb-2 block text-sm font-medium'>
                 Standby Brightness Timeout (s)
               </label>
-              <div className='flex'>
-                <input
-                  id='standbyBrightnessTimeout'
-                  name='standbyBrightnessTimeout'
-                  type='number'
-                  className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                  placeholder='60'
-                  min='1'
-                  value={formData.standbyBrightnessTimeout}
-                  onChange={onChange('standbyBrightnessTimeout')}
-                />
-                <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-sm font-bold'>
-                  s
-                </span>
+              <div className='input-group'>
+                <label htmlFor='standbyBrightnessTimeout' className='input w-full'>
+                  <input
+                    id='standbyBrightnessTimeout'
+                    name='standbyBrightnessTimeout'
+                    type='number'
+                    className='grow'
+                    placeholder='60'
+                    min='1'
+                    value={formData.standbyBrightnessTimeout}
+                    onChange={onChange('standbyBrightnessTimeout')}
+                  />
+                  <span aria-label='seconds'>s</span>
+                </label>
               </div>
             </div>
             <div className='form-control'>
@@ -914,38 +922,38 @@ export function Settings() {
                 <label htmlFor='emptyTankDistance' className='mb-2 block text-sm font-medium'>
                   Distance from sensor to bottom of the tank
                 </label>
-                <div className='flex'>
-                  <input
-                    id='emptyTankDistance'
-                    name='emptyTankDistance'
-                    type='number'
-                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                    placeholder='16'
-                    value={formData.emptyTankDistance}
-                    onChange={onChange('emptyTankDistance')}
-                  />
-                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
-                    mm
-                  </span>
+                <div className='input-group'>
+                  <label htmlFor='emptyTankDistance' className='input w-full'>
+                    <input
+                      id='emptyTankDistance'
+                      name='emptyTankDistance'
+                      type='number'
+                      className='grow'
+                      placeholder='16'
+                      value={formData.emptyTankDistance}
+                      onChange={onChange('emptyTankDistance')}
+                    />
+                    <span aria-label='millimeter'>mm</span>
+                  </label>
                 </div>
               </div>
               <div className='form-control'>
                 <label htmlFor='fullTankDistance' className='mb-2 block text-sm font-medium'>
                   Distance from sensor to the fill line
                 </label>
-                <div className='flex'>
-                  <input
-                    id='fullTankDistance'
-                    name='fullTankDistance'
-                    type='number'
-                    className='input input-bordered min-w-0 flex-1 rounded-r-none'
-                    placeholder='16'
-                    value={formData.fullTankDistance}
-                    onChange={onChange('fullTankDistance')}
-                  />
-                  <span className='border-base-content/20 bg-base-200 text-base-content flex w-18 items-center justify-center rounded-r-lg border border-l-0 text-xs font-bold'>
-                    mm
-                  </span>
+                <div className='input-group'>
+                  <label htmlFor='fullTankDistance' className='input w-full'>
+                    <input
+                      id='fullTankDistance'
+                      name='fullTankDistance'
+                      type='number'
+                      className='grow'
+                      placeholder='16'
+                      value={formData.fullTankDistance}
+                      onChange={onChange('fullTankDistance')}
+                    />
+                    <span aria-label='millimeter'>mm</span>
+                  </label>
                 </div>
               </div>
             </Card>
