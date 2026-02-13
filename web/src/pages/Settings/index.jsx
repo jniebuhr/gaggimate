@@ -1,18 +1,17 @@
-import { useQuery } from 'preact-fetching';
-import { Spinner } from '../../components/Spinner.jsx';
-import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
-import Card from '../../components/Card.jsx';
-import { timezones } from '../../config/zones.js';
-import { computed } from '@preact/signals';
-import { machine } from '../../services/ApiService.js';
-import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
-import { setDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
-import { PluginCard } from './PluginCard.jsx';
-import { downloadJson } from '../../utils/download.js';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { computed } from '@preact/signals';
+import { useQuery } from 'preact-fetching';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import Card from '../../components/Card.jsx';
+import { Spinner } from '../../components/Spinner.jsx';
+import { timezones } from '../../config/zones.js';
+import { machine } from '../../services/ApiService.js';
+import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
+import { downloadJson } from '../../utils/download.js';
+import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
+import { PluginCard } from './PluginCard.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -942,19 +941,24 @@ export function Settings() {
           <div className='alert alert-warning'>
             <span>Some options like WiFi, NTP and managing Plugins require a restart.</span>
           </div>
+        </div>
 
-          <div className='flex flex-col gap-2 pt-4 sm:flex-row'>
-            <a href='/' className='btn btn-outline'>
+        <div className='border-base-content/10 bg-base-100/90 sticky bottom-0 z-20 mt-8 border-t py-4 backdrop-blur-md'>
+          <div className='flex flex-col gap-2 sm:flex-row'>
+            <a href='/' className='btn btn-outline flex-1 sm:flex-none'>
               Back
             </a>
-            <button type='submit' className='btn btn-primary' disabled={submitting}>
-              {submitting && <Spinner size={4} />}
-              Save
+            <button
+              type='submit'
+              className='btn btn-primary flex-1 sm:flex-none'
+              disabled={submitting}
+            >
+              {submitting && <Spinner size={4} />} Save
             </button>
             <button
               type='submit'
               name='restart'
-              className='btn btn-secondary'
+              className='btn btn-secondary flex-1 sm:flex-none'
               disabled={submitting}
               onClick={e => onSubmit(e, true)}
             >
