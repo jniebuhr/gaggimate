@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback, useContext } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
+import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ApiServiceContext } from '../../services/ApiService.js';
-import Card from '../../components/Card.jsx';
 import { downloadJson } from '../../utils/download.js';
 
 const imageUrlToBase64 = async blob => {
@@ -150,7 +150,7 @@ export function OTA() {
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Controller version</label>
+              <label className='text-sm font-medium'>Controller Version</label>
               <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
                 <span className='break-all'>{formData.controllerVersion}</span>
                 {formData.controllerUpdateAvailable && (
@@ -162,7 +162,7 @@ export function OTA() {
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Display version</label>
+              <label className='text-sm font-medium'>Display Version</label>
               <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
                 <span className='break-all'>{formData.displayVersion}</span>
                 {formData.displayUpdateAvailable && (

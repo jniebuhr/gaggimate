@@ -11,6 +11,7 @@ import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine';
 import ShotNotesCard from './ShotNotesCard.jsx';
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 
@@ -178,12 +179,24 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                     <button
                       disabled={!shot.loaded}
                       onClick={onExport}
-                      className='text-base-content/50 hover:text-info hover:bg-info/10 rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
+                      className='text-base-content/50 hover:text-info hover:bg-info/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
                       aria-label='Export shot data'
                     >
                       <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
                     </button>
                   </Tooltip>
+
+                  {/* Analyzer Button */}
+                  <Tooltip content='Open in Analyzer'>
+                    <a
+                      href={`/analyzer/internal/${shot.id}`}
+                      className='text-base-content/50 hover:text-primary hover:bg-primary/10 flex items-center justify-center rounded-md p-2 transition-colors'
+                      aria-label='Open in Analyzer'
+                    >
+                      <FontAwesomeIcon icon={faChartLine} className='h-4 w-4' />
+                    </a>
+                  </Tooltip>
+
                   <Tooltip
                     content={
                       canUpload
@@ -194,7 +207,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                     <button
                       onClick={() => setShowUploadModal(true)}
                       disabled={!canUpload}
-                      className={`group inline-block items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold ${
+                      className={`group inline-block cursor-pointer items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold ${
                         canUpload
                           ? 'text-success hover:bg-success/10 active:border-success/20'
                           : 'cursor-not-allowed text-gray-400'
@@ -209,7 +222,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                       onClick={() => {
                         confirmOrDelete(() => onDelete(shot.id));
                       }}
-                      className={`rounded-md p-2 transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
+                      className={`cursor-pointer rounded-md p-2 transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
                       aria-label={confirmDelete ? 'Confirm deletion of shot' : 'Delete shot'}
                     >
                       <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
