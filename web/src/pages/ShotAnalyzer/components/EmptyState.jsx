@@ -32,13 +32,15 @@ export function EmptyState({ loading }) {
           </p>
 
           {/* GM Section */}
-          <div className='group flex items-start gap-4'>
-            <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center rounded border border-cyan-500/20 bg-cyan-500/10'>
-              <span className='text-[10px] font-black tracking-tighter text-cyan-500'>GM</span>
+          <div className='flex items-start gap-4'>
+            {/* MATCHED LIBRARY COLOR: Changed from cyan-500 to blue-500 */}
+            <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center rounded border border-blue-500/20 bg-blue-500/10'>
+              <span className='text-[10px] font-black tracking-tighter text-blue-500'>GM</span>
             </div>
 
             <div className='flex-1'>
-              <h3 className='text-base-content mb-1 text-sm font-bold transition-colors group-hover:text-cyan-500'>
+              {/* REMOVED HOVER EFFECT */}
+              <h3 className='text-base-content mb-1 text-sm font-bold'>
                 GaggiMate Controller
               </h3>
               <p className='text-base-content text-xs leading-relaxed'>
@@ -51,13 +53,14 @@ export function EmptyState({ loading }) {
           <div className='bg-base-content/5 h-px w-full'></div>
 
           {/* WEB Section */}
-          <div className='group flex items-start gap-4'>
+          <div className='flex items-start gap-4'>
             <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center rounded border border-purple-500/20 bg-purple-500/10'>
               <span className='text-[10px] font-black tracking-tighter text-purple-500'>WEB</span>
             </div>
 
             <div className='flex-1'>
-              <h3 className='text-base-content mb-1 text-sm font-bold transition-colors group-hover:text-purple-500'>
+              {/* REMOVED HOVER EFFECT */}
+              <h3 className='text-base-content mb-1 text-sm font-bold'>
                 Local Browser Storage
               </h3>
               <div className='text-base-content text-xs leading-relaxed'>

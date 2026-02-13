@@ -599,10 +599,18 @@ function CellContent({ phase, col, results, isTotal = false }) {
     const measuredVal = parseFloat(mainValue);
     if (!isNaN(measuredVal) && Math.abs(measuredVal - phase.prediction.finalWeight) >= 0.1) {
       const predVal = sf(phase.prediction.finalWeight);
+      
+      // Highlight the prediction in orange/red if this phase exited via a weight target
+      // This indicates the prediction (or look-ahead) was the actual trigger for the stop.
+      const isPredHit = phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric';
+      const predColorClass = isPredHit 
+        ? 'text-orange-600 dark:text-orange-400' 
+        : 'text-blue-600 dark:text-blue-400';
+
       predictionDisplay = (
         <div
           style={subTextSize}
-          className='mt-0.5 flex items-center justify-end gap-1 leading-tight font-bold text-blue-600 dark:text-blue-400'
+          className={`mt-0.5 flex items-center justify-end gap-1 leading-tight font-bold ${predColorClass}`}
         >
           <FontAwesomeIcon icon={faCalculator} style={iconSize} className='opacity-60' />
           <span>
