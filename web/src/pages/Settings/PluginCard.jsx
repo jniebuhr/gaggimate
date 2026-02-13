@@ -255,7 +255,7 @@ export function PluginCard({
 
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>
-          <span className='text-xl font-medium'>Home Assistant (MQTT)</span>
+          <span className='text-xl font-medium'>Home Assistant over MQTT (Deprecated)</span>
           <input
             id='homeAssistant'
             name='homeAssistant'
@@ -271,7 +271,16 @@ export function PluginCard({
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
             <p className='text-sm opacity-70'>
               This feature allows connection to a Home Assistant or MQTT installation and push the
-              current state.
+              current state. This feature is deprecated for usage with Home Assistant. Please see
+              the{' '}
+              <a
+                href='https://github.com/gaggimate/ha-integration'
+                target='_blank'
+                rel='noreferrer'
+              >
+                Home Assistant Integration
+              </a>{' '}
+              for a more up-to-date solution.
             </p>
             <div className='form-control'>
               <label htmlFor='haIP' className='mb-2 block text-sm font-medium'>
