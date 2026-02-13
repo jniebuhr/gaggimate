@@ -228,7 +228,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
               nextPhaseFirstSample = phases[nextPNum][0];
             }
 
-            // Prediction Logic
+            // --- 1. PREDICTION LOGIC (Current Sample) ---
             let predictedW = lastW;
             let currentRate = lastVF !== undefined ? lastVF : lastF;
 
@@ -253,7 +253,48 @@ export function calculateShotMetrics(shotData, profileData, settings) {
               predictedF = lastF + slopeF * (tSensorDelay / 1000.0);
             }
 
-            // Target Logic
+            // --- 2. PREDICTION LOGIC (Look-Ahead Sample) ---
+            // Calculates predictions for the exact moment after the phase transition
+            // 'pumped' is intentionally excluded
+            
+            // Only calculate look-ahead if tested delay is >= 200ms
+            const maxTestedDelay = Math.max(tScaleDelay || 0, tSensorDelay || 0);
+            const useLookAhead = nextPhaseFirstSample && maxTestedDelay >= 200;
+
+            let nextP = 0, nextF = 0, nextW = 0;
+            let nextPredictedW = 0, nextPredictedP = 0, nextPredictedF = 0;
+
+            // Only run if we actually need the look-ahead
+            if (useLookAhead) {
+              nextP = nextPhaseFirstSample.cp !== undefined ? nextPhaseFirstSample.cp : 0;
+              nextF = nextPhaseFirstSample.fl !== undefined ? nextPhaseFirstSample.fl : 0;
+              nextW = nextPhaseFirstSample.v !== undefined ? nextPhaseFirstSample.v : 0;
+              
+              const nextDt = (nextPhaseFirstSample.t - lastSample.t) / 1000.0;
+              
+              if (nextDt > 0) {
+                nextPredictedW = nextW;
+                // Use currentRate (from active phase) because nextF might be lower if the pump just stopped
+                if (nextW > 0.1 && !scaleConnectionBrokenPermanently) {
+                  let nextPredictedAdded = currentRate * (tScaleDelay / 1000.0);
+                  if (nextPredictedAdded < 0) nextPredictedAdded = 0;
+                  if (nextPredictedAdded > 8.0) nextPredictedAdded = 8.0;
+                  nextPredictedW = nextW + nextPredictedAdded;
+                }
+                
+                const nextSlopeP = (nextP - lastP) / nextDt;
+                const nextSlopeF = (nextF - lastF) / nextDt;
+                nextPredictedP = nextP + (nextSlopeP * (tSensorDelay / 1000.0));
+                nextPredictedF = nextF + (nextSlopeF * (tSensorDelay / 1000.0));
+              } else {
+                // Fallback if timestamps are identical
+                nextPredictedW = nextW;
+                nextPredictedP = nextP;
+                nextPredictedF = nextF;
+              }
+            }
+
+            // --- 3. TARGET MATCHING LOGIC ---
             let hitTargets = [];
             for (let tgt of profilePhase.targets) {
               if (
@@ -262,62 +303,75 @@ export function calculateShotMetrics(shotData, profileData, settings) {
               )
                 continue;
 
-              let measured = 0;
-              let checkValue = 0;
+              let measured = 0, checkValue = 0, tolerance = 0;
+              let nextMeasured = 0, nextCheckValue = 0;
               let hit = false;
-              let tolerance = 0;
+              let hitByLookAhead = false; // Track if the look-ahead sample triggered the hit
 
+              // Assign values based on target type
               if (tgt.type === 'pressure') {
                 measured = lastP;
                 checkValue = tgt.operator === 'gte' || tgt.operator === 'lte' ? predictedP : lastP;
                 tolerance = TOL_PRESSURE;
+                
+                if (useLookAhead) {
+                  nextMeasured = nextP;
+                  nextCheckValue = tgt.operator === 'gte' || tgt.operator === 'lte' ? nextPredictedP : nextP;
+                }
               } else if (tgt.type === 'flow') {
                 measured = lastF;
                 checkValue = tgt.operator === 'gte' || tgt.operator === 'lte' ? predictedF : lastF;
                 tolerance = TOL_FLOW;
+                
+                if (useLookAhead) {
+                  nextMeasured = nextF;
+                  nextCheckValue = tgt.operator === 'gte' || tgt.operator === 'lte' ? nextPredictedF : nextF;
+                }
               } else if (tgt.type === 'volumetric' || tgt.type === 'weight') {
                 measured = lastW;
                 checkValue = tgt.operator === 'gte' ? predictedW : lastW;
+                
+                if (useLookAhead) {
+                  nextMeasured = nextW;
+                  nextCheckValue = tgt.operator === 'gte' ? nextPredictedW : nextW;
+                }
               } else if (tgt.type === 'pumped') {
                 measured = wPumped;
                 checkValue = tgt.operator === 'gte' ? predictedPumped : wPumped;
+                // NO Look-Ahead assigned for pumped!
               }
 
+              // Check 1: Current sample (Raw)
               if (tgt.operator === 'gte' && measured >= tgt.value) hit = true;
               if (tgt.operator === 'lte' && measured <= tgt.value) hit = true;
 
+              // Check 2: Current sample (Predicted)
               if (!hit) {
                 if (tgt.operator === 'gte' && checkValue >= tgt.value) hit = true;
                 if (tgt.operator === 'lte' && checkValue <= tgt.value) hit = true;
               }
 
+              // Check 3: Current sample (Tolerance)
               if (!hit && tolerance > 0) {
                 if (tgt.operator === 'gte' && measured >= tgt.value - tolerance) hit = true;
                 if (tgt.operator === 'lte' && measured <= tgt.value + tolerance) hit = true;
               }
 
-              if (!hit && nextPhaseFirstSample) {
-                if (
-                  tgt.type === 'pressure' &&
-                  tgt.operator === 'gte' &&
-                  nextPhaseFirstSample.cp >= tgt.value
-                )
+              // Check 4: Look-Ahead Sample (Raw & Predicted)
+              // Only for continuous metrics, avoiding phase-reset metrics like 'pumped'
+              if (!hit && useLookAhead && tgt.type !== 'pumped') {
+                if (tgt.operator === 'gte' && (nextMeasured >= tgt.value || nextCheckValue >= tgt.value)) {
                   hit = true;
-                if (
-                  tgt.type === 'flow' &&
-                  tgt.operator === 'gte' &&
-                  nextPhaseFirstSample.fl >= tgt.value
-                )
+                  hitByLookAhead = true;
+                }
+                if (tgt.operator === 'lte' && (nextMeasured <= tgt.value || nextCheckValue <= tgt.value)) {
                   hit = true;
-                if (
-                  (tgt.type === 'weight' || tgt.type === 'volumetric') &&
-                  tgt.operator === 'gte' &&
-                  nextPhaseFirstSample.v >= tgt.value
-                )
-                  hit = true;
+                  hitByLookAhead = true;
+                }
               }
 
-              if (hit) hitTargets.push(tgt);
+              // Store both the target and whether it was hit via look-ahead
+              if (hit) hitTargets.push({ target: tgt, lookAhead: hitByLookAhead });
             }
 
             if (hitTargets.length > 0) {
@@ -328,13 +382,18 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                   if (type === 'pressure') return 3;
                   return 4;
                 };
-                return getScore(a.type) - getScore(b.type);
+                // Access target object because hitTargets now contains objects
+                return getScore(a.target.type) - getScore(b.target.type);
               });
 
-              const bestMatch = hitTargets[0];
+              const bestMatchObj = hitTargets[0];
+              const bestMatch = bestMatchObj.target;
+              
               exitReason = formatStopReason(bestMatch.type);
               exitType = bestMatch.type;
-              finalPredictedWeight = predictedW;
+              
+              // Use the corresponding predicted weight for UI display based on WHEN it hit
+              finalPredictedWeight = bestMatchObj.lookAhead ? nextPredictedW : predictedW;
 
               if (isAutoAdjusted) {
                 if (exitType === 'weight' || exitType === 'volumetric') {

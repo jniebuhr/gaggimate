@@ -17,16 +17,24 @@ Chart.register(annotationPlugin);
  * Retrieves the phase name for a specific phase number.
  * @param {Object} shot - The shot data object.
  * @param {number} phaseNumber - The index of the phase.
- * @returns {string} The name of the phase or an empty string.
+ * @returns {string} The name of the phase or a fallback name.
  */
 function getPhaseName(shot, phaseNumber) {
+  // 1. Try to find the name in the logged phase transitions
   if (shot.phaseTransitions && shot.phaseTransitions.length > 0) {
     const transition = shot.phaseTransitions.find(t => t.phaseNumber === phaseNumber);
     if (transition && transition.phaseName) {
       return transition.phaseName;
     }
   }
-  return '';
+  
+  // 2. Fallback: Try to get it from the original profile definition if embedded
+  if (shot.profile && shot.profile.phases && shot.profile.phases[phaseNumber]) {
+    return shot.profile.phases[phaseNumber].name;
+  }
+  
+  // 3. Fallback to guarantee a label is rendered
+  return phaseNumber === 0 ? 'Start' : `P${phaseNumber + 1}`;
 }
 
 /**
@@ -63,6 +71,9 @@ export function ShotChart({ shotData }) {
     };
 
     const samples = shotData.samples;
+
+    // Calculate the exact end time of the shot to prevent empty chart space
+    const maxTime = samples.length > 0 ? (samples[samples.length - 1].t || 0) / 1000 : 0;
 
     // Helper to safely extract values from sample objects
     const getVal = (item, keys) => {
@@ -131,10 +142,13 @@ export function ShotChart({ shotData }) {
             display: true,
             content: getPhaseName(shotData, 0),
             rotation: -90,
-            position: 'start',
-            yAdjust: 20,
-            color: 'rgba(255,255,255,0.8)',
-            backgroundColor: 'rgba(0,0,0,0.4)',
+            position: 'start', // Start = Top of the chart
+            yAdjust: 15,       // Stick near the top uniformly
+            xAdjust: 10,       // Shift to the right side of the line
+            color: 'rgba(255, 255, 255, 0.95)',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)', // Theme-agnostic contrast box
+            borderRadius: 3,
+            padding: 4,
             font: { size: 9 },
           },
         };
@@ -161,10 +175,13 @@ export function ShotChart({ shotData }) {
             display: true,
             content: transition.phaseName || `P${transition.phaseNumber + 1}`,
             rotation: -90,
-            position: 'start',
-            yAdjust: 20,
-            color: 'rgba(255,255,255,0.8)',
-            backgroundColor: 'rgba(0,0,0,0.4)',
+            position: 'start', // Start = Top of the chart
+            yAdjust: 15,       // Keep uniformly at the same height
+            xAdjust: 10,       // Shift to the right side of the line
+            color: 'rgba(255, 255, 255, 0.95)',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)', // Theme-agnostic contrast box
+            borderRadius: 3,
+            padding: 4,
             font: { size: 9 },
           },
         };
@@ -180,8 +197,7 @@ export function ShotChart({ shotData }) {
         backgroundColor: COLORS.temp,
         yAxisID: 'y',
         pointRadius: 0,
-        // UPDATE: Thinner line (1.5) compared to others (2)
-        borderWidth: 1.5,
+        borderWidth: 1, // Reduced to 1
         tension: 0.2,
       },
       {
@@ -221,7 +237,7 @@ export function ShotChart({ shotData }) {
         backgroundColor: COLORS.weight,
         yAxisID: 'y2',
         pointRadius: 0,
-        borderWidth: 2,
+        borderWidth: 1, // Reduced to 1
         tension: 0.2,
         hidden: !hasWeight,
       },
@@ -322,6 +338,7 @@ export function ShotChart({ shotData }) {
           x: {
             type: 'linear',
             position: 'bottom',
+            max: maxTime, // Forces the axis to stop exactly at the last sample
             ticks: {
               font: { size: 10 },
               color: '#888',
