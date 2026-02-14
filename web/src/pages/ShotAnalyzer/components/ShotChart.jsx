@@ -27,12 +27,12 @@ function getPhaseName(shot, phaseNumber) {
       return transition.phaseName;
     }
   }
-  
+
   // 2. Fallback: Try to get it from the original profile definition if embedded
   if (shot.profile && shot.profile.phases && shot.profile.phases[phaseNumber]) {
     return shot.profile.phases[phaseNumber].name;
   }
-  
+
   // 3. Fallback to guarantee a label is rendered
   return phaseNumber === 0 ? 'Start' : `P${phaseNumber + 1}`;
 }
@@ -143,8 +143,8 @@ export function ShotChart({ shotData }) {
             content: getPhaseName(shotData, 0),
             rotation: -90,
             position: 'start', // Start = Top of the chart
-            yAdjust: 15,       // Stick near the top uniformly
-            xAdjust: 10,       // Shift to the right side of the line
+            yAdjust: 15, // Stick near the top uniformly
+            xAdjust: 10, // Shift to the right side of the line
             color: 'rgba(255, 255, 255, 0.95)',
             backgroundColor: 'rgba(0, 0, 0, 0.6)', // Theme-agnostic contrast box
             borderRadius: 3,
@@ -176,8 +176,8 @@ export function ShotChart({ shotData }) {
             content: transition.phaseName || `P${transition.phaseNumber + 1}`,
             rotation: -90,
             position: 'start', // Start = Top of the chart
-            yAdjust: 15,       // Keep uniformly at the same height
-            xAdjust: 10,       // Shift to the right side of the line
+            yAdjust: 15, // Keep uniformly at the same height
+            xAdjust: 10, // Shift to the right side of the line
             color: 'rgba(255, 255, 255, 0.95)',
             backgroundColor: 'rgba(0, 0, 0, 0.6)', // Theme-agnostic contrast box
             borderRadius: 3,

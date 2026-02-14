@@ -368,8 +368,10 @@ void Controller::autotune(int testTime, int samples) {
 }
 
 void Controller::startProcess(Process *process) {
-    if (isActive() || !isReady())
+    if (isActive() || !isReady()) {
+        delete process;
         return;
+    }
     processCompleted = false;
     this->currentProcess = process;
     pluginManager->trigger("controller:process:start");

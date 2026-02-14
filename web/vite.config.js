@@ -9,11 +9,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://gemilai.local/',
+        target: 'http://gm-e24.local/',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://gemilai.local',
+        target: 'ws://gm-e24.local',
         ws: true,
       },
     },
