@@ -227,7 +227,7 @@ export function ShotAnalyzer() {
               </div>
 
               <div className='mb-8'>
-                <ShotChart shotData={currentShot} />
+                <ShotChart shotData={currentShot} results={analysisResults} />
               </div>
 
               {analysisResults && (

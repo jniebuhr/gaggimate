@@ -309,64 +309,68 @@ export const groups = {
 
 /**
  * Tailwind Color Classes for Groups
- * Used for color-coding table columns and UI elements
  */
 export const groupColors = {
+  // --- MAIN GROUPS ---
   basics: {
-    bg: 'bg-slate-500/10',
-    text: 'text-slate-500',
-    border: 'border-slate-500/20',
+    bg: 'bg-base-content/5',
+    text: 'text-base-content', 
+    anchor: '#64748b', 
   },
   pressure: {
-    bg: 'bg-sky-500/10',
-    text: 'text-sky-500',
-    border: 'border-sky-500/20',
-  },
-  target_pressure: {
-    bg: 'bg-sky-500/5',
-    text: 'text-sky-400',
-    border: 'border-sky-500/10',
+    bg: 'bg-blue-500/5',
+    text: 'text-[#0066CC] dark:text-[#58A6FF]', 
+    anchor: '#0066CC',
   },
   flow: {
-    bg: 'bg-emerald-500/10',
-    text: 'text-emerald-500',
-    border: 'border-emerald-500/20',
-  },
-  target_flow: {
-    bg: 'bg-emerald-500/5',
-    text: 'text-emerald-400',
-    border: 'border-emerald-500/10',
-  },
-  puckflow: {
-    bg: 'bg-cyan-500/10',
-    text: 'text-cyan-500',
-    border: 'border-cyan-500/20',
+    bg: 'bg-green-500/5',
+    text: 'text-[#63993D] dark:text-[#82C952]', 
+    anchor: '#63993D',
   },
   temp: {
-    bg: 'bg-orange-500/10',
-    text: 'text-orange-500',
-    border: 'border-orange-500/20',
-  },
-  target_temp: {
     bg: 'bg-orange-500/5',
-    text: 'text-orange-400',
-    border: 'border-orange-500/10',
+    text: 'text-[#F0561D] dark:text-[#FF7A45]', 
+    anchor: '#F0561D',
   },
   weight: {
-    bg: 'bg-purple-500/10',
-    text: 'text-purple-500',
-    border: 'border-purple-500/20',
-  },
-  weight_det: {
-    bg: 'bg-purple-500/5',
-    text: 'text-purple-400',
-    border: 'border-purple-500/10',
+    bg: 'bg-violet-500/5',
+    text: 'text-[#8B5CF6] dark:text-[#A78BFA]', 
+    anchor: '#8B5CF6',
   },
   system: {
-    bg: 'bg-slate-500/10',
-    text: 'text-slate-500',
-    border: 'border-slate-500/20',
+    bg: 'bg-base-content/5',
+    text: 'text-base-content',
+    anchor: '#475569',
   },
+
+  // --- SUB GROUPS (Column Mapping) ---
+  target_pressure: { 
+    bg: 'bg-blue-500/5', 
+    text: 'text-[#0066CC] dark:text-[#58A6FF]', 
+    anchor: '#0066CC' 
+  },
+  target_flow: { 
+    bg: 'bg-green-500/5', 
+    text: 'text-[#63993D] dark:text-[#82C952]', 
+    anchor: '#63993D' 
+  },
+  target_temp: { 
+    bg: 'bg-orange-500/5', 
+    text: 'text-[#731F00] dark:text-[#BC2D00]', 
+    anchor: '#731F00' 
+  },
+  puckflow: { 
+    bg: 'bg-emerald-500/5', 
+    text: 'text-[#059669] dark:text-[#10B981]', 
+    anchor: '#059669' 
+  },
+  weight_det: { 
+    bg: 'bg-violet-500/5', 
+    text: 'text-[#8B5CF6] dark:text-[#A78BFA]', 
+    anchor: '#8B5CF6' 
+  },
+  stopRed: '#DC2626',
+  warningOrange: '#F59E0B',
 };
 
 /**

@@ -189,7 +189,7 @@ export function ColumnControls({
 
       {/* Expandable Selection Area */}
       {expanded && (
-        <div className='border-base-content/10 animate-fade-in bg-base-100/50 border-t border-b px-5 pt-6'>
+        <div className='border-base-content/10 animate-fade-in bg-base-100/50 border-t border-b px-5 pt-6 pb-6'>
           <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
             {Object.keys(groupedColumns).map(groupKey => {
               const cols = groupedColumns[groupKey];
@@ -198,28 +198,29 @@ export function ColumnControls({
               return (
                 <div
                   key={groupKey}
-                  className={`rounded-md p-3 ${colors.bg} border ${colors.border}`}
+                  className="rounded-md p-3 bg-base-200 border-t-2"
+                  style={{ borderColor: colors.anchor }}
                 >
-                  <h4
-                    className={`mb-2 border-b border-current pb-1 text-[10px] font-bold tracking-wider uppercase ${colors.text}`}
-                  >
+                  <h4 className={`mb-2 border-b border-base-content/10 pb-1 text-[10px] font-bold tracking-wider uppercase ${colors.text}`}>
                     {groups[groupKey]}
                   </h4>
 
                   <div className='space-y-1.5'>
                     {cols.map(col => (
-                      <label
-                        key={col.id}
-                        className={`group flex cursor-pointer items-start gap-2 text-xs transition-opacity hover:opacity-100 ${colors.text}`}
-                      >
+                      <label key={col.id} className="group flex cursor-pointer items-start gap-2 text-xs">
                         <input
                           type='checkbox'
                           checked={activeColumns.has(col.id)}
                           onChange={e => toggleColumn(col.id, e.target.checked)}
-                          className={`checkbox checkbox-xs mt-0.5 rounded-sm ${colors.border}`}
-                          style={{ borderColor: 'currentColor' }}
+                          className="checkbox checkbox-xs mt-0.5 rounded-sm"
+                          style={{ 
+                            backgroundColor: activeColumns.has(col.id) ? colors.anchor : 'transparent',
+                            borderColor: activeColumns.has(col.id) ? colors.anchor : 'currentColor'
+                          }}
                         />
-                        <span className='leading-tight font-medium'>{getDetailedLabel(col)}</span>
+                        <span className={`leading-tight font-bold ${activeColumns.has(col.id) ? colors.text : 'text-base-content'}`}>
+                          {getDetailedLabel(col)}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -229,7 +230,6 @@ export function ColumnControls({
           </div>
 
           {/* Control Footer - Clickable to Close */}
-          {/* Negative X margins and padding allow the hover effect to span full width */}
           <div
             className='border-base-content/10 hover:bg-base-content/5 group -mx-5 mt-6 flex cursor-pointer items-center justify-between border-t px-5 py-3 transition-colors'
             onClick={() => setExpanded(false)}
