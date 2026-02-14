@@ -25,7 +25,7 @@ import {
   faCheck,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
-import { columnConfig, groupColors } from '../utils/analyzerUtils';
+import { columnConfig, groupColors, utilityColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
 
 /**
@@ -122,29 +122,30 @@ export function AnalysisTable({
                 .no-scrollbar::-webkit-scrollbar { display: none; }
             `}</style>
 
-      {/* 1. Status Badges (Outside the main card) */}
+      {/* 1. Status Badges (Outside the main card) - Updated for Solid Colors */}
       <div className='mb-2 flex flex-wrap gap-2 px-1'>
         {results.isBrewByWeight ? (
           <StatusBadge
             label='BREW BY WEIGHT'
-            colorClass='bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20'
+            colorClass='bg-emerald-600 text-white border-emerald-700'
           />
         ) : (
           <StatusBadge
             label='BREW BY TIME'
-            colorClass='bg-base-content/5 text-base-content/60 border-base-content/10'
+            colorClass='bg-slate-600 text-white border-slate-700'
           />
         )}
         {results.globalScaleLost && (
           <StatusBadge
             label='SCALE LOST'
-            colorClass='bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
+            style={{ backgroundColor: utilityColors.warningOrange, borderColor: utilityColors.warningOrange }}
+            colorClass='text-white shadow-sm'
           />
         )}
         {results.isAutoAdjusted && (
           <StatusBadge
             label='AUTO-DELAY'
-            colorClass='bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+            colorClass='bg-blue-600 text-white border-blue-700'
           />
         )}
       </div>
@@ -202,7 +203,6 @@ export function AnalysisTable({
         {/* B. Table Container (Middle) */}
         <div
           ref={tableContainerRef}
-          // FIX: overflow-y-hidden prevents the browser from thinking "I can scroll Y internally"
           // removed 'overscroll-*' classes to prevent latching
           className='no-scrollbar block h-auto min-h-0 w-full touch-pan-y overflow-x-auto overflow-y-hidden'
           style={{ scrollBehavior: 'smooth', ...scrollbarHideStyle }}
@@ -225,9 +225,13 @@ export function AnalysisTable({
                   return (
                     <th
                       key={col.id}
-                      className={`px-3 py-2 text-right font-bold whitespace-nowrap ${colors.bg} ${colors.text} border-base-content/5 border-l tracking-tighter uppercase`}
+                      className={`px-3 py-2 text-right font-bold whitespace-nowrap border-l border-base-content/10 tracking-tighter uppercase`}
+                      style={{ 
+                        borderTop: `3px solid ${colors.anchor}`,
+                        backgroundColor: 'rgba(128, 128, 128, 0.05)' // Subtle unified tint
+                      }}
                     >
-                      {getHeaderLabel(col)}
+                      <span className={colors.text}>{getHeaderLabel(col)}</span>
                     </th>
                   );
                 })}
@@ -244,13 +248,14 @@ export function AnalysisTable({
                     {idx + 1}
                   </td>
                   <td className='bg-base-content/5 border-base-content/5 border-r px-2 py-2 text-left whitespace-nowrap'>
-                    <div className='mb-0.5 leading-none font-bold text-orange-600/90 dark:text-orange-400'>
+                    {/* Neutral Phase Names */}
+                    <div className='mb-0.5 leading-none font-bold text-base-content'>
                       {phase.displayName}
                     </div>
                     {phase.exit?.reason && (
                       <div
-                        className='font-bold tracking-tight uppercase opacity-30'
-                        style={{ fontSize: '0.85em' }}
+                        className='font-bold tracking-tight uppercase'
+                        style={{ fontSize: '0.8em', color: utilityColors.stopRed }}
                       >
                         via {phase.exit.reason}
                       </div>
@@ -345,7 +350,7 @@ export function AnalysisTable({
           </div>
 
           {/* Right: Legend */}
-          <div className='text-base-content/40 flex gap-4 select-none'>
+          <div className='text-base-content font-bold flex gap-4 select-none'>
             <span>∅ Avg (Time Weighted)</span>
             <span>S/E Start/End</span>
             <span>Range Min/Max</span>
@@ -542,17 +547,16 @@ function CellContent({ phase, col, results, isTotal = false }) {
   const subTextSize = { fontSize: '0.85em' };
   const iconSize = { fontSize: '0.8em' };
 
-  // Duration Target Display
-  // If the phase has a duration target defined in the profile, show it always.
+  // Unified Target Display - Parentheses + Italics, no "Target:" label
   if (col.id === 'duration' && phase.profilePhase && phase.profilePhase.duration > 0) {
     const targetVal = phase.profilePhase.duration;
     const diff = data.duration - targetVal;
     const diffSign = diff > 0 ? '+' : '';
-    const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/40';
+    const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/60';
 
     targetDisplay = (
-      <div style={subTextSize} className='mt-0.5 leading-tight whitespace-nowrap opacity-80'>
-        <span className='opacity-50'>Target:</span> {targetVal}s
+      <div style={subTextSize} className='mt-0.5 leading-tight whitespace-nowrap font-medium italic opacity-100'>
+        ({targetVal}{unit})
         <span className={`ml-1 font-bold ${diffColor}`}>
           ({diffSign}
           {diff.toFixed(1)})
@@ -569,7 +573,6 @@ function CellContent({ phase, col, results, isTotal = false }) {
 
     if (target) {
       const targetVal = target.value;
-      // For compound "start/end" values, compare the end (last) value against target
       const rawForParse =
         typeof mainValue === 'string' && mainValue.includes('/')
           ? mainValue.split('/').pop()
@@ -579,12 +582,11 @@ function CellContent({ phase, col, results, isTotal = false }) {
       if (!isNaN(measuredVal)) {
         const diff = measuredVal - targetVal;
         const diffSign = diff > 0 ? '+' : '';
-        const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/40';
+        const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/60';
 
         targetDisplay = (
-          <div style={subTextSize} className='mt-0.5 leading-tight whitespace-nowrap opacity-80'>
-            <span className='opacity-50'>Target:</span> {targetVal}
-            {unit}
+          <div style={subTextSize} className='mt-0.5 leading-tight whitespace-nowrap font-medium italic opacity-100'>
+            ({targetVal}{unit})
             <span className={`ml-1 font-bold ${diffColor}`}>
               ({diffSign}
               {diff.toFixed(1)})
@@ -599,12 +601,10 @@ function CellContent({ phase, col, results, isTotal = false }) {
     const measuredVal = parseFloat(mainValue);
     if (!isNaN(measuredVal) && Math.abs(measuredVal - phase.prediction.finalWeight) >= 0.1) {
       const predVal = sf(phase.prediction.finalWeight);
-
-      // Highlight the prediction in orange/red if this phase exited via a weight target
-      // This indicates the prediction (or look-ahead) was the actual trigger for the stop.
+      
       const isPredHit = phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric';
-      const predColorClass = isPredHit
-        ? 'text-orange-600 dark:text-orange-400'
+      const predColorClass = isPredHit 
+        ? 'text-[#DC2626] dark:text-red-500' 
         : 'text-blue-600 dark:text-blue-400';
 
       predictionDisplay = (
@@ -623,23 +623,26 @@ function CellContent({ phase, col, results, isTotal = false }) {
   }
 
   if (isWeightCol && phase.scaleLost) {
-    warningDisplay = (
-      <div
-        style={subTextSize}
-        className='text-error mt-0.5 flex items-center justify-end gap-1 font-bold'
-      >
-        <FontAwesomeIcon icon={faExclamationTriangle} />
-        <span>Scale Lost</span>
-      </div>
-    );
-  }
+      warningDisplay = (
+        <div
+          style={{ ...subTextSize, color: utilityColors.warningOrange }}
+          className='mt-0.5 flex items-center justify-end gap-1 font-bold'
+        >
+          <FontAwesomeIcon icon={faExclamationTriangle} />
+          <span>Scale Lost</span>
+        </div>
+      );
+    }
 
   return (
     <div className='flex min-h-[2em] flex-col items-end justify-center'>
       {isBoolean ? (
         <div className='flex h-full items-center pb-1'>{booleanContent}</div>
       ) : (
-        <span className={`${isHit ? 'font-bold text-orange-600 dark:text-orange-400' : ''}`}>
+        <span 
+          className={isHit ? 'font-bold' : ''} 
+          style={isHit ? { color: utilityColors.stopRed } : {}}
+        >
           {mainValue}
           {unit}
         </span>
@@ -652,9 +655,10 @@ function CellContent({ phase, col, results, isTotal = false }) {
 }
 
 // --- Status Badge Helper ---
-const StatusBadge = ({ label, colorClass, title }) => (
+const StatusBadge = ({ label, colorClass = '', style = {}, title }) => (
   <span
-    className={`rounded-[4px] border px-2 py-0.5 text-[10px] font-bold ${colorClass} leading-none tracking-tight select-none`}
+    className={`rounded-[4px] border px-2 py-0.5 text-[10px] font-bold leading-none tracking-tight select-none ${colorClass}`}
+    style={style}
     title={title}
   >
     {label}

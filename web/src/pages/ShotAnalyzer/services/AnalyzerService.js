@@ -251,6 +251,10 @@ export function calculateShotMetrics(shotData, profileData, settings) {
               const slopeF = (lastF - prevSample.fl) / dt;
               predictedP = lastP + slopeP * (tSensorDelay / 1000.0);
               predictedF = lastF + slopeF * (tSensorDelay / 1000.0);
+              
+              // Clamp to physical bounds (prevent impossible negative predictions)
+              if (predictedP < 0) predictedP = 0;
+              if (predictedF < 0) predictedF = 0;
             }
 
             // --- 2. PREDICTION LOGIC (Look-Ahead Sample) ---
@@ -288,8 +292,13 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 
                 const nextSlopeP = (nextP - lastP) / nextDt;
                 const nextSlopeF = (nextF - lastF) / nextDt;
-                nextPredictedP = nextP + nextSlopeP * (tSensorDelay / 1000.0);
-                nextPredictedF = nextF + nextSlopeF * (tSensorDelay / 1000.0);
+                nextPredictedP = nextP + (nextSlopeP * (tSensorDelay / 1000.0));
+                nextPredictedF = nextF + (nextSlopeF * (tSensorDelay / 1000.0));
+                
+                // Clamp to physical bounds (prevent impossible negative predictions)
+                if (nextPredictedP < 0) nextPredictedP = 0;
+                if (nextPredictedF < 0) nextPredictedF = 0;
+
               } else {
                 // Fallback if timestamps are identical
                 nextPredictedW = nextW;
