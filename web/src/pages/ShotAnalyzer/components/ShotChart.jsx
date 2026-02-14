@@ -4,7 +4,7 @@
  * Displays pressure, flow, puck flow, temperature, and weight over time.
  */
 
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
@@ -41,9 +41,13 @@ function getPhaseName(shot, phaseNumber) {
  * ShotChart Component
  * Renders a line chart using Chart.js.
  */
-export function ShotChart({ shotData }) {
+export function ShotChart({ shotData, results }) {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+
+  // --- State for Annotation Visibility ---
+  const [showPhases, setShowPhases] = useState(true);
+  const [showStops, setShowStops] = useState(true);
 
   useEffect(() => {
     // Validation: Ensure data exists before rendering
@@ -61,13 +65,14 @@ export function ShotChart({ shotData }) {
 
     // GaggiMate Color Scheme Definition
     const COLORS = {
-      // Reverted to solid GaggiMate Red
       temp: '#F0561D',
       tempTarget: '#731F00',
       pressure: '#0066CC',
       flow: '#63993D',
       puckFlow: '#059669',
       weight: '#8B5CF6',
+      phaseLine: 'rgba(107, 114, 128, 0.5)',
+      stopLabel: 'rgba(220, 38, 38, 0.85)'
     };
 
     const samples = shotData.samples;
@@ -136,17 +141,17 @@ export function ShotChart({ shotData }) {
           type: 'line',
           scaleID: 'x',
           value: shotStartTime,
-          borderColor: 'rgba(107, 114, 128, 0.5)', // Gray-500 with opacity
+          borderColor: COLORS.phaseLine,
           borderWidth: 1,
           label: {
-            display: true,
+            display: showPhases,
             content: getPhaseName(shotData, 0),
             rotation: -90,
-            position: 'start', // Start = Top of the chart
-            yAdjust: 15,       // Stick near the top uniformly
-            xAdjust: 10,       // Shift to the right side of the line
+            position: 'start',
+            yAdjust: 0,
+            xAdjust: 12, // Shift to the right side of the line
             color: 'rgba(255, 255, 255, 0.95)',
-            backgroundColor: 'rgba(0, 0, 0, 0.6)', // Theme-agnostic contrast box
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
             borderRadius: 3,
             padding: 4,
             font: { size: 9 },
@@ -154,7 +159,7 @@ export function ShotChart({ shotData }) {
         };
       }
 
-      // 2. Mark subsequent phase transitions
+      // 2. Mark subsequent phase transitions & Exit Reasons
       shotData.phaseTransitions.forEach((transition, index) => {
         let timeInSeconds = 0;
         if (transition.sampleIndex !== undefined && samples[transition.sampleIndex]) {
@@ -165,31 +170,106 @@ export function ShotChart({ shotData }) {
 
         if (timeInSeconds <= 0.1 && index === 0) return;
 
+        // A. The standard Phase Name Label (Right side of the line)
         phaseAnnotations[`phase_line_${index}`] = {
           type: 'line',
           scaleID: 'x',
           value: timeInSeconds,
-          borderColor: 'rgba(107, 114, 128, 0.5)',
+          borderColor: COLORS.phaseLine,
           borderWidth: 1,
           label: {
-            display: true,
+            display: showPhases,
             content: transition.phaseName || `P${transition.phaseNumber + 1}`,
             rotation: -90,
-            position: 'start', // Start = Top of the chart
-            yAdjust: 15,       // Keep uniformly at the same height
-            xAdjust: 10,       // Shift to the right side of the line
+            position: 'start',
+            yAdjust: 0,
+            xAdjust: 12, // Shift to the right side of the line
             color: 'rgba(255, 255, 255, 0.95)',
-            backgroundColor: 'rgba(0, 0, 0, 0.6)', // Theme-agnostic contrast box
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
             borderRadius: 3,
             padding: 4,
             font: { size: 9 },
           },
         };
+
+        // B. The Exit Reason Label for the PREVIOUS phase (Left side of the line)
+        if (results && results.phases && index > 0) {
+          const prevPhaseNum = shotData.phaseTransitions[index - 1].phaseNumber;
+          const endedPhase = results.phases.find(p => String(p.number) === String(prevPhaseNum));
+          
+          if (endedPhase && endedPhase.exit && endedPhase.exit.reason) {
+            phaseAnnotations[`phase_exit_${index}`] = {
+              type: 'line',
+              scaleID: 'x',
+              value: timeInSeconds,
+              borderColor: 'transparent',
+              borderWidth: 0,
+              label: {
+                display: showStops,
+                content: endedPhase.exit.reason.toUpperCase(),
+                rotation: -90,
+                position: 'start',
+                yAdjust: 0,
+                xAdjust: -12,
+                color: 'rgba(255, 255, 255, 0.95)',
+                backgroundColor: COLORS.stopLabel,
+                borderRadius: 3,
+                padding: 4,
+                font: { size: 8, weight: 'bold' },
+              },
+            };
+          }
+        }
       });
+      
+      // 3. Mark the final exit reason at the very end of the shot
+      if (results && results.phases && results.phases.length > 0 && maxTime > 0) {
+        const lastPhase = results.phases[results.phases.length - 1];
+        if (lastPhase.exit && lastPhase.exit.reason) {
+          phaseAnnotations['shot_end'] = {
+            type: 'line',
+            scaleID: 'x',
+            value: maxTime,
+            borderColor: COLORS.phaseLine,
+            borderWidth: 1, // End line
+            borderDash: [4, 4],
+            label: {
+              display: showStops,
+              content: lastPhase.exit.reason.toUpperCase(),
+              rotation: -90,
+              position: 'start',
+              yAdjust: 0,
+              xAdjust: -12,
+              color: 'rgba(255, 255, 255, 0.95)',
+              backgroundColor: COLORS.stopLabel,
+              borderRadius: 3,
+              padding: 4,
+              font: { size: 8, weight: 'bold' },
+            },
+          };
+        }
+      }
     }
 
     // --- Dataset Configuration ---
     const datasets = [
+      // Toggle Legend Item: Phases
+      {
+        label: 'Phase Names',
+        data: [],
+        borderColor: COLORS.phaseLine,
+        backgroundColor: COLORS.phaseLine,
+        hidden: !showPhases,
+      },
+      // Toggle Legend Item: Stops
+      {
+        label: 'Stops',
+        data: [],
+        borderColor: COLORS.stopLabel,
+        backgroundColor: COLORS.stopLabel,
+        hidden: !showStops,
+      },
+      // Standard Metrics
       {
         label: 'Temp (°C)',
         data: series.temp,
@@ -197,7 +277,7 @@ export function ShotChart({ shotData }) {
         backgroundColor: COLORS.temp,
         yAxisID: 'y',
         pointRadius: 0,
-        borderWidth: 1, // Reduced to 1
+        borderWidth: 1,
         tension: 0.2,
       },
       {
@@ -237,11 +317,11 @@ export function ShotChart({ shotData }) {
         backgroundColor: COLORS.weight,
         yAxisID: 'y2',
         pointRadius: 0,
-        borderWidth: 1, // Reduced to 1
+        borderWidth: 1,
         tension: 0.2,
         hidden: !hasWeight,
       },
-      // Dashed Target Lines
+      // Target Lines
       {
         label: 'Target P',
         data: series.targetPressure,
@@ -289,6 +369,18 @@ export function ShotChart({ shotData }) {
         plugins: {
           legend: {
             position: 'top',
+            onClick: (e, legendItem, legend) => {
+              const label = legendItem.text;
+              // Intercept click on the toggle-only labels
+              if (label === 'Phase Names') {
+                setShowPhases(!showPhases);
+              } else if (label === 'Stops') {
+                setShowStops(!showStops);
+              } else {
+                // Default behavior for other labels
+                Chart.defaults.plugins.legend.onClick(e, legendItem, legend);
+              }
+            },
             labels: {
               usePointStyle: true,
               pointStyle: 'line',
@@ -301,9 +393,16 @@ export function ShotChart({ shotData }) {
 
                 labels.forEach((label, index) => {
                   const dataset = chart.data.datasets[index];
-                  label.lineWidth = 3;
-                  if (dataset.borderDash && dataset.borderDash.length > 0) {
-                    label.lineDash = dataset.borderDash;
+                  
+                  // Style Toggle Labels differently
+                  if (label.text === 'Phase Names' || label.text === 'Stops') {
+                    label.pointStyle = 'rectRounded';
+                    label.lineWidth = 0;
+                  } else {
+                    label.lineWidth = 3;
+                    if (dataset.borderDash && dataset.borderDash.length > 0) {
+                      label.lineDash = dataset.borderDash;
+                    }
                   }
                 });
 
@@ -320,6 +419,10 @@ export function ShotChart({ shotData }) {
             cornerRadius: 4,
             callbacks: {
               label: function (context) {
+                // Do not show tooltips for dummy datasets
+                if (context.dataset.label === 'Phase Names' || context.dataset.label === 'Stops') {
+                  return null;
+                }
                 let label = context.dataset.label || '';
                 if (label) label += ': ';
                 if (context.parsed.y !== null) {
@@ -393,7 +496,7 @@ export function ShotChart({ shotData }) {
         chartInstance.current.destroy();
       }
     };
-  }, [shotData]);
+  }, [shotData, results, showPhases, showStops]);
 
   // Render nothing if no data
   if (!shotData || !shotData.samples || shotData.samples.length === 0) {
