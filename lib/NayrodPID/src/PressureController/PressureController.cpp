@@ -245,7 +245,7 @@ float PressureController::getPumpDutyCycleForPressure() {
     if (P < _maxPressure) {
         pressureRatio = P / _maxPressure;
     }
-    float denominator = fmaxf(1.0f - pressureRatio, 0.0001f); // Clamp to minimum 0.01
+    float denominator = fmaxf(1.0f - pressureRatio, 0.0001f); // Clamp to minimum 0.0001
     float Ki = _integralGain / denominator;
     _errorIntegral += error * _dt;
     float iterm = Ki * _errorIntegral;
