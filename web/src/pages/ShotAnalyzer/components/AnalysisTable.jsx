@@ -25,7 +25,7 @@ import {
   faCheck,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
-import { columnConfig, groupColors } from '../utils/analyzerUtils';
+import { columnConfig, groupColors, utilityColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
 
 /**
@@ -138,7 +138,8 @@ export function AnalysisTable({
         {results.globalScaleLost && (
           <StatusBadge
             label='SCALE LOST'
-            colorClass='bg-[#F59E0B] text-white border-[#D97706]'
+            style={{ backgroundColor: utilityColors.warningOrange, borderColor: utilityColors.warningOrange }}
+            colorClass='text-white shadow-sm'
           />
         )}
         {results.isAutoAdjusted && (
@@ -253,8 +254,8 @@ export function AnalysisTable({
                     </div>
                     {phase.exit?.reason && (
                       <div
-                        className='text-[#DC2626] dark:text-red-500 font-bold tracking-tight uppercase'
-                        style={{ fontSize: '0.8em' }}
+                        className='font-bold tracking-tight uppercase'
+                        style={{ fontSize: '0.8em', color: utilityColors.stopRed }}
                       >
                         via {phase.exit.reason}
                       </div>
@@ -622,23 +623,26 @@ function CellContent({ phase, col, results, isTotal = false }) {
   }
 
   if (isWeightCol && phase.scaleLost) {
-    warningDisplay = (
-      <div
-        style={{ ...subTextSize, color: '#F59E0B' }}
-        className='mt-0.5 flex items-center justify-end gap-1 font-bold'
-      >
-        <FontAwesomeIcon icon={faExclamationTriangle} />
-        <span>Scale Lost</span>
-      </div>
-    );
-  }
+      warningDisplay = (
+        <div
+          style={{ ...subTextSize, color: utilityColors.warningOrange }}
+          className='mt-0.5 flex items-center justify-end gap-1 font-bold'
+        >
+          <FontAwesomeIcon icon={faExclamationTriangle} />
+          <span>Scale Lost</span>
+        </div>
+      );
+    }
 
   return (
     <div className='flex min-h-[2em] flex-col items-end justify-center'>
       {isBoolean ? (
         <div className='flex h-full items-center pb-1'>{booleanContent}</div>
       ) : (
-        <span className={`${isHit ? 'font-bold text-[#DC2626] dark:text-red-500' : ''}`}>
+        <span 
+          className={isHit ? 'font-bold' : ''} 
+          style={isHit ? { color: utilityColors.stopRed } : {}}
+        >
           {mainValue}
           {unit}
         </span>
@@ -651,9 +655,10 @@ function CellContent({ phase, col, results, isTotal = false }) {
 }
 
 // --- Status Badge Helper ---
-const StatusBadge = ({ label, colorClass, title }) => (
+const StatusBadge = ({ label, colorClass = '', style = {}, title }) => (
   <span
-    className={`rounded-[4px] border px-2 py-0.5 text-[10px] font-bold ${colorClass} leading-none tracking-tight select-none border-black/10 shadow-sm`}
+    className={`rounded-[4px] border px-2 py-0.5 text-[10px] font-bold leading-none tracking-tight select-none ${colorClass}`}
+    style={style}
     title={title}
   >
     {label}

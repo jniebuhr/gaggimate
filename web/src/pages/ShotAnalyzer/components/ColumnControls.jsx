@@ -113,6 +113,13 @@ export function ColumnControls({
 
   return (
     <div className={`overflow-hidden transition-colors ${containerClasses}`}>
+      <style>{`
+        .checkbox-dynamic:checked {
+          background-color: var(--chk-color) !important;
+          border-color: var(--chk-color) !important;
+          --tw-bg-opacity: 1;
+        }
+      `}</style>
       {/* Header Bar - Toggle for Expand/Collapse */}
       <div
         className='hover:bg-base-content/5 flex min-h-[42px] cursor-pointer items-center justify-between gap-4 px-4 py-2 select-none'
@@ -212,10 +219,10 @@ export function ColumnControls({
                           type='checkbox'
                           checked={activeColumns.has(col.id)}
                           onChange={e => toggleColumn(col.id, e.target.checked)}
-                          className="checkbox checkbox-xs mt-0.5 rounded-sm"
+                          className="checkbox checkbox-xs mt-0.5 rounded-sm checkbox-dynamic"
                           style={{ 
-                            backgroundColor: activeColumns.has(col.id) ? colors.anchor : 'transparent',
-                            borderColor: activeColumns.has(col.id) ? colors.anchor : 'currentColor'
+                            '--chk-color': colors.anchor,
+                            borderColor: activeColumns.has(col.id) ? 'transparent' : 'currentColor'
                           }}
                         />
                         <span className={`leading-tight font-bold ${activeColumns.has(col.id) ? colors.text : 'text-base-content'}`}>

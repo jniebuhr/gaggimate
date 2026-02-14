@@ -307,11 +307,15 @@ export const groups = {
   system: 'System Info',
 };
 
+export const utilityColors = {
+  stopRed: '#DC2626',
+  warningOrange: 'var(--color-orange-600)',
+};
+
 /**
  * Tailwind Color Classes for Groups
  */
 export const groupColors = {
-  // --- MAIN GROUPS ---
   basics: {
     bg: 'bg-base-content/5',
     text: 'text-base-content', 
@@ -319,58 +323,54 @@ export const groupColors = {
   },
   pressure: {
     bg: 'bg-blue-500/5',
-    text: 'text-[#0066CC] dark:text-[#58A6FF]', 
+    text: 'text-[#0066CC] dark:text-[#58A6FF]',
     anchor: '#0066CC',
   },
-  flow: {
-    bg: 'bg-green-500/5',
-    text: 'text-[#63993D] dark:text-[#82C952]', 
-    anchor: '#63993D',
-  },
-  temp: {
-    bg: 'bg-orange-500/5',
-    text: 'text-[#F0561D] dark:text-[#FF7A45]', 
-    anchor: '#F0561D',
-  },
-  weight: {
-    bg: 'bg-violet-500/5',
-    text: 'text-[#8B5CF6] dark:text-[#A78BFA]', 
-    anchor: '#8B5CF6',
-  },
-  system: {
-    bg: 'bg-base-content/5',
-    text: 'text-base-content',
-    anchor: '#475569',
-  },
-
-  // --- SUB GROUPS (Column Mapping) ---
   target_pressure: { 
     bg: 'bg-blue-500/5', 
     text: 'text-[#0066CC] dark:text-[#58A6FF]', 
     anchor: '#0066CC' 
+  },
+  flow: {
+    bg: 'bg-green-500/5',
+    text: 'text-[#63993D] dark:text-[#82C952]',
+    anchor: '#63993D',
   },
   target_flow: { 
     bg: 'bg-green-500/5', 
     text: 'text-[#63993D] dark:text-[#82C952]', 
     anchor: '#63993D' 
   },
+  puckflow: { 
+    bg: 'bg-emerald-500/5', 
+    text: 'text-[#059669] dark:text-[#10B981]', 
+    anchor: '#059669' 
+  },
+  temp: {
+    bg: 'bg-orange-500/5',
+    text: 'text-[#F0561D] dark:text-[#FF7A45]',
+    anchor: '#F0561D',
+  },
   target_temp: { 
     bg: 'bg-orange-500/5', 
     text: 'text-[#731F00] dark:text-[#BC2D00]', 
     anchor: '#731F00' 
   },
-  puckflow: { 
-    bg: 'bg-emerald-500/5', 
-    text: 'text-[#059669] dark:text-[#10B981]', 
-    anchor: '#059669' 
+  weight: {
+    bg: 'bg-violet-500/5',
+    text: 'text-[#8B5CF6] dark:text-[#A78BFA]',
+    anchor: '#8B5CF6',
   },
   weight_det: { 
     bg: 'bg-violet-500/5', 
     text: 'text-[#8B5CF6] dark:text-[#A78BFA]', 
     anchor: '#8B5CF6' 
   },
-  stopRed: '#DC2626',
-  warningOrange: '#F59E0B',
+  system: {
+    bg: 'bg-base-content/5',
+    text: 'text-base-content',
+    anchor: '#475569',
+  },
 };
 
 /**
