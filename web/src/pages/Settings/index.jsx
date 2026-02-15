@@ -1,5 +1,4 @@
-import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
-import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faEye, faEyeSlash, faFileExport, faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
@@ -21,6 +20,7 @@ export function Settings() {
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
+  const [showPassword, setShowPassword] = useState(false);
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
@@ -505,15 +505,33 @@ export function Settings() {
               <label htmlFor='wifiPassword' className='mb-2 block text-sm font-medium'>
                 Wi-Fi Password
               </label>
-              <input
-                id='wifiPassword'
-                name='wifiPassword'
-                type='password'
-                className='input input-bordered w-full'
-                placeholder='Wi-Fi Password'
-                value={formData.wifiPassword}
-                onChange={onChange('wifiPassword')}
-              />
+
+              {/* 1. We wrap the input in a relative div so the button can stay inside it */}
+              <div className='relative flex items-center'>
+                <input
+                  id='wifiPassword'
+                  name='wifiPassword'
+                  // 2. Use the 'showPassword' state here to toggle dots vs text
+                  type={showPassword ? 'text' : 'password'}
+                  // 3. Added 'pr-12' to make sure typed text doesn't go under the eye
+                  className='input input-bordered w-full pr-12'
+                  placeholder='Wi-Fi Password'
+                  value={formData.wifiPassword}
+                  onChange={onChange('wifiPassword')}
+                />
+
+                {/* 4. The Eyeball Button */}
+                <button
+                  type='button'
+                  // 'absolute right-0' pins it to the right side of the input box
+                  // 'z-20' keeps it on top even when you click the field
+                  className='text-base-content/50 hover:text-primary absolute right-0 z-20 h-full px-4'
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex='-1'
+                >
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                </button>
+              </div>
             </div>
             <div className='form-control mb-4'>
               <label htmlFor='mdnsName' className='mb-2 block text-sm font-medium'>
