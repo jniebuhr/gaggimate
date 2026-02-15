@@ -1,3 +1,21 @@
+import { faAnglesDown } from '@fortawesome/free-solid-svg-icons/faAnglesDown';
+import { faAnglesUp } from '@fortawesome/free-solid-svg-icons/faAnglesUp';
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy';
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
+import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
+import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { computed } from '@preact/signals';
 import {
   CategoryScale,
   Chart,
@@ -10,33 +28,17 @@ import {
   TimeScale,
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
-import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
-import { useConfirmAction } from '../../hooks/useConfirmAction.js';
-import { ProfileAddCard } from './ProfileAddCard.jsx';
-import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { computed } from '@preact/signals';
-import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
-import { parseProfile } from './utils.js';
-import { downloadJson } from '../../utils/download.js';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
-import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
-import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
-import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
-import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy';
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
-import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
-import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import { ConfirmButton } from '../../components/ConfirmButton.jsx';
+import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
+import { Spinner } from '../../components/Spinner.jsx';
 import { Tooltip } from '../../components/Tooltip.jsx';
-import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
-import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
-import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { useConfirmAction } from '../../hooks/useConfirmAction.js';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { downloadJson } from '../../utils/download.js';
+import { ProfileAddCard } from './ProfileAddCard.jsx';
+import { parseProfile } from './utils.js';
 
 Chart.register(
   LineController,
@@ -66,7 +68,9 @@ function ProfileCard({
   favoriteDisabled,
   unfavoriteDisabled,
   onMoveUp,
+  onMoveToTop,
   onMoveDown,
+  onMoveToBottom,
   isFirst,
   isLast,
 }) {
@@ -458,6 +462,17 @@ function ProfileCard({
             aria-label={`Profile details for ${data.label}`}
           >
             <div className='flex flex-col justify-evenly'>
+              <Tooltip content='Move to top'>
+                <button
+                  onClick={() => onMoveToTop(data.id)}
+                  disabled={isFirst}
+                  className='btn btn-xs btn-ghost'
+                  aria-label={`Move ${data.label} to top`}
+                  aria-disabled={isFirst}
+                >
+                  <FontAwesomeIcon icon={faAnglesUp} />
+                </button>
+              </Tooltip>
               <Tooltip content='Move up'>
                 <button
                   onClick={() => onMoveUp(data.id)}
@@ -478,6 +493,17 @@ function ProfileCard({
                   aria-disabled={isLast}
                 >
                   <FontAwesomeIcon icon={faArrowDown} />
+                </button>
+              </Tooltip>
+              <Tooltip content='Move to bottom'>
+                <button
+                  onClick={() => onMoveToBottom(data.id)}
+                  disabled={isLast}
+                  className='btn btn-xs btn-ghost'
+                  aria-label={`Move ${data.label} to bottom`}
+                  aria-disabled={isLast}
+                >
+                  <FontAwesomeIcon icon={faAnglesDown} />
                 </button>
               </Tooltip>
             </div>
@@ -616,6 +642,23 @@ export function ProfileList() {
     [persistProfileOrder],
   );
 
+  const moveProfileToTop = useCallback(
+    id => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.id === id);
+        if (idx > 0) {
+          const next = [...prev];
+          const [movedItem] = next.splice(idx, 1);
+          next.unshift(movedItem);
+          persistProfileOrder(next);
+          return next;
+        }
+        return prev;
+      });
+    },
+    [persistProfileOrder],
+  );
+
   const moveProfileDown = useCallback(
     id => {
       setProfiles(prev => {
@@ -623,6 +666,23 @@ export function ProfileList() {
         if (idx !== -1 && idx < prev.length - 1) {
           const next = [...prev];
           [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+          persistProfileOrder(next);
+          return next;
+        }
+        return prev;
+      });
+    },
+    [persistProfileOrder],
+  );
+
+  const moveProfileToBottom = useCallback(
+    id => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.id === id);
+        if (idx !== -1 && idx < prev.length - 1) {
+          const next = [...prev];
+          const [movedItem] = next.splice(idx, 1);
+          next.push(movedItem);
           persistProfileOrder(next);
           return next;
         }
@@ -865,6 +925,8 @@ export function ProfileList() {
               onDuplicate={onDuplicate}
               onMoveUp={moveProfileUp}
               onMoveDown={moveProfileDown}
+              onMoveToTop={moveProfileToTop}
+              onMoveToBottom={moveProfileToBottom}
               isFirst={idx === 0}
               isLast={idx === filtered.length - 1}
             />
