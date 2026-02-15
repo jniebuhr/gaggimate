@@ -1,5 +1,6 @@
 #ifndef BLESCALEPLUGIN_H
 #define BLESCALEPLUGIN_H
+#include <cmath>
 #include "../core/Plugin.h"
 #include "remote_scales.h"
 #include "remote_scales_plugin_registry.h"
