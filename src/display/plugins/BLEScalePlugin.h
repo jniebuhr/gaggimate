@@ -23,6 +23,7 @@ class BLEScalePlugin : public Plugin {
     void disconnect();
     void onMeasurement(float value) const;
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
+    bool isTareComplete() const { return scale != nullptr && scale->isConnected() && std::abs(scale->getWeight()) < 0.5f; };
     std::string getName() {
         if (scale != nullptr && scale->isConnected()) {
             return scale->getDeviceName();

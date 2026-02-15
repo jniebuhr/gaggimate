@@ -287,6 +287,15 @@ void Controller::loop() {
         return;
     }
 
+    // Wait for scale tare to complete before creating brew process
+    if (waitingForTare) {
+        if (BLEScales.isTareComplete() || now - tareWaitStart > TARE_WAIT_TIMEOUT_MS) {
+            waitingForTare = false;
+            createAndStartProcess();
+        }
+        return;
+    }
+
     if (now - lastProgress > PROGRESS_INTERVAL) {
         // Check if steam is ready
         if (mode == MODE_STEAM && !steamReady && currentTemp + 5.f > getTargetTemp()) {
@@ -541,7 +550,7 @@ void Controller::updateControl() {
 }
 
 void Controller::activate() {
-    if (isActive())
+    if (isActive() || waitingForTare)
         return;
     clear();
     clientController.tare();
@@ -554,9 +563,16 @@ void Controller::activate() {
 #endif
         if (mode == MODE_BREW) {
             pluginManager->trigger("controller:brew:prestart");
+            // Wait for scale tare to complete before creating the brew process
+            waitingForTare = true;
+            tareWaitStart = millis();
+            return;
         }
     }
-    delay(200);
+    createAndStartProcess();
+}
+
+void Controller::createAndStartProcess() {
     switch (mode) {
     case MODE_BREW:
         startProcess(new BrewProcess(profileManager->getSelectedProfile(),
@@ -594,6 +610,7 @@ void Controller::deactivate() {
 }
 
 void Controller::clear() {
+    waitingForTare = false;
     processCompleted = true;
     if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:clear");
