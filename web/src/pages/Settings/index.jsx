@@ -505,26 +505,18 @@ export function Settings() {
               <label htmlFor='wifiPassword' className='mb-2 block text-sm font-medium'>
                 Wi-Fi Password
               </label>
-
-              {/* 1. We wrap the input in a relative div so the button can stay inside it */}
               <div className='relative flex items-center'>
                 <input
                   id='wifiPassword'
                   name='wifiPassword'
-                  // 2. Use the 'showPassword' state here to toggle dots vs text
                   type={showPassword ? 'text' : 'password'}
-                  // 3. Added 'pr-12' to make sure typed text doesn't go under the eye
                   className='input input-bordered w-full pr-12'
                   placeholder='Wi-Fi Password'
                   value={formData.wifiPassword}
                   onChange={onChange('wifiPassword')}
                 />
-
-                {/* 4. The Eyeball Button */}
-                <button
+                <button // Button to toggle password visibility
                   type='button'
-                  // 'absolute right-0' pins it to the right side of the input box
-                  // 'z-20' keeps it on top even when you click the field
                   className='text-base-content/50 hover:text-primary absolute right-0 z-20 h-full px-4'
                   onClick={() => setShowPassword(!showPassword)}
                   tabIndex='-1'
