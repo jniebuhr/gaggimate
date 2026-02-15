@@ -112,6 +112,7 @@ class Controller {
 
     // Functional methods
     void updateControl();
+    void createAndStartProcess();
 
     // Event handlers
     void onTempRead(float temperature);
@@ -168,6 +169,11 @@ class Controller {
     VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
     unsigned long lastBluetoothMeasurement = 0;
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
+
+    // Tare wait state: delay process creation until scale reads near zero
+    bool waitingForTare = false;
+    unsigned long tareWaitStart = 0;
+    static const unsigned long TARE_WAIT_TIMEOUT_MS = 1000;
 
     xTaskHandle taskHandle;
 
