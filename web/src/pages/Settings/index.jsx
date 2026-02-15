@@ -960,7 +960,6 @@ export function Settings() {
                 disabled={submitting}
                 onClick={e => onSubmit(e, true)}
               >
-                {/* Moved Saved and Restart before Save, as it's a more disruptive action. */}
                 Save and Restart
               </button>
 
