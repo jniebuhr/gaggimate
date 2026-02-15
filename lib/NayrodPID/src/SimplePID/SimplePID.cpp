@@ -47,7 +47,7 @@ bool SimplePID::update() {
     if (isDisturbanceFeedForwardActive)
         DistFFOut = currentDisturbance * gainDistFF;
 
-    Serial.printf("%.2f\t %.2f\t %.2f\t %.2f\n", *setpointTarget, setpointFiltered, setpointDerivative, *sensorOutput);
+    ESP_LOGV("SimplePID", "%.2f\t %.2f\t %.2f\t %.2f\n", *setpointTarget, setpointFiltered, setpointDerivative, *sensorOutput);
 
     float deltaTime = 1.0f / ctrl_freq_sampling; // Time step in seconds
 

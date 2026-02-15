@@ -40,9 +40,7 @@ export function EmptyState({ loading }) {
 
             <div className='flex-1'>
               {/* REMOVED HOVER EFFECT */}
-              <h3 className='text-base-content mb-1 text-sm font-bold'>
-                GaggiMate Controller
-              </h3>
+              <h3 className='text-base-content mb-1 text-sm font-bold'>GaggiMate Controller</h3>
               <p className='text-base-content text-xs leading-relaxed'>
                 Your saved shots and profiles directly from the controller's internal storage.
               </p>
@@ -60,9 +58,7 @@ export function EmptyState({ loading }) {
 
             <div className='flex-1'>
               {/* REMOVED HOVER EFFECT */}
-              <h3 className='text-base-content mb-1 text-sm font-bold'>
-                Local Browser Storage
-              </h3>
+              <h3 className='text-base-content mb-1 text-sm font-bold'>Local Browser Storage</h3>
               <div className='text-base-content text-xs leading-relaxed'>
                 External{' '}
                 <code className='bg-base-100 border-base-content/10 mx-0.5 rounded border px-1 py-0.5 font-mono text-[10px] text-purple-500'>
