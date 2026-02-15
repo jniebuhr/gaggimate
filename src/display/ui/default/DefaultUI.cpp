@@ -517,6 +517,12 @@ void DefaultUI::setupReactive() {
         },
         &volumetricMode);
     effect_mgr.use_effect(
+        [=] { return currentScreen == ui_BrewScreen; },
+        [=]() {
+            lv_label_set_text(ui_BrewScreen_Label1, volumetricMode ? "Brew by Weight" : "Brew by Time");
+        },
+        &volumetricMode);
+    effect_mgr.use_effect(
         [=] { return currentScreen == ui_GrindScreen; },
         [=]() {
             lv_img_set_src(ui_GrindScreen_targetSymbol, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
