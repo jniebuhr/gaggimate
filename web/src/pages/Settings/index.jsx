@@ -565,6 +565,7 @@ export function Settings() {
                     .local
                   </span>
                 </div>
+                {/* Unified Help Text Pattern */}
                 <div className='px-1 pt-2'>
                   <p className='text-xs leading-relaxed opacity-60'>
                     Sets the address used to access this interface on your local network.
