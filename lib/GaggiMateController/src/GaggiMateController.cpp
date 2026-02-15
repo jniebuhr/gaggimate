@@ -30,7 +30,8 @@ void GaggiMateController::setup() {
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
     if (_config.capabilites.pressure) {
-        pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { /* noop */ });
+        this->adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 3);
+        this->pressureSensor = new PressureSensor(this->adc);
     }
     if (_config.capabilites.dimming) {
         pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor);
@@ -71,7 +72,8 @@ void GaggiMateController::setup() {
     this->brewBtn->setup();
     this->steamBtn->setup();
     if (_config.capabilites.pressure) {
-        pressureSensor->setup();
+        this->adc->setup();
+        this->pressureSensor->setup();
         _ble.registerPressureScaleCallback([this](float scale) { this->pressureSensor->setScale(scale); });
     }
     // Set up thermal feedforward for main heater if pressure/dimming capability exists
