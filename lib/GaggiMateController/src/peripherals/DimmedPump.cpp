@@ -1,11 +1,77 @@
 #include "DimmedPump.h"
 
+#include <ExtensionIOXL9555.hpp>
 #include <GaggiMateController.h>
 
-DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor)
+#define MCP_VOLTAGE 5.0f
+
+static ExtensionIOXL9555 extension;
+
+char swTxBuffer[128];
+char swRxBuffer[128];
+
+uint8_t read_scl(const SoftWire *i2c) {
+    uint8_t value = extension.digitalRead(ExtensionIOXL9555::IO0);
+    ESP_LOGV("MCP4725", "Read SCL: %d", value);
+    return value;
+}
+
+uint8_t read_sda(const SoftWire *i2c) {
+    uint8_t value = extension.digitalRead(ExtensionIOXL9555::IO1);
+    ESP_LOGV("MCP4725", "Read SDA: %d", value);
+    return value;
+}
+
+void scl_high(const SoftWire *i2c) {
+    extension.pinMode(ExtensionIOXL9555::IO0, INPUT);
+    ESP_LOGV("MCP4725", "Release SCL");
+}
+
+void sda_high(const SoftWire *i2c) {
+    extension.pinMode(ExtensionIOXL9555::IO1, INPUT);
+    ESP_LOGV("MCP4725", "Release SDA");
+}
+
+void scl_low(const SoftWire *i2c) {
+    extension.pinMode(ExtensionIOXL9555::IO0, OUTPUT);
+    extension.digitalWrite(ExtensionIOXL9555::IO0, LOW);
+    ESP_LOGV("MCP4725", "Write SCL: %d", 0);
+}
+
+void sda_low(const SoftWire *i2c) {
+    extension.pinMode(ExtensionIOXL9555::IO1, OUTPUT);
+    extension.digitalWrite(ExtensionIOXL9555::IO1, LOW);
+    ESP_LOGV("MCP4725", "Write SDA: %d", 0);
+}
+
+DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor, uint8_t scl_pin, uint8_t sda_pin)
     : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 2, 4), _pressureSensor(pressure_sensor),
       _pressureController(0.03f, &_ctrlPressure, &_ctrlFlow, &_currentPressure, &_controllerPower, &_valveStatus) {
     _psm.set(0);
+    if (!extension.init(Wire, sda_pin, scl_pin, XL9555_UNKOWN_ADDRESS)) {
+        ESP_LOGE(LOG_TAG, "Failed to initialize extension I2C bus");
+    } else {
+        ESP_LOGI(LOG_TAG, "Initialized extension");
+        extension.setClock(1000000L);
+    }
+    i2c = new SoftWire(0, 0);
+    i2c->setTxBuffer(swTxBuffer, sizeof(swTxBuffer));
+    i2c->setRxBuffer(swRxBuffer, sizeof(swRxBuffer));
+    i2c->setReadScl(read_scl);
+    i2c->setReadSda(read_sda);
+    i2c->setSetSclHigh(scl_high);
+    i2c->setSetSdaHigh(sda_high);
+    i2c->setSetSclLow(scl_low);
+    i2c->setSetSdaLow(sda_low);
+    i2c->setTimeout_ms(200);
+    i2c->setDelay_us(20);
+    i2c->begin();
+    delay(500);
+    mcp = new MCP4725(0x60, i2c);
+    if (!mcp->begin()) {
+        ESP_LOGE(LOG_TAG, "Failed to initialize MCP4725");
+    }
+    mcp->setMaxVoltage(MCP_VOLTAGE);
 }
 
 void DimmedPump::setup() {
@@ -33,6 +99,7 @@ void DimmedPump::setPower(float setpoint) {
         _currentFlow = 0.0f;
     }
     _psm.set(static_cast<int>(_power));
+    mcp->setVoltage(MCP_VOLTAGE * _power / 100.0f);
 }
 
 float DimmedPump::getCoffeeVolume() { return _pressureController.getCoffeeOutputEstimate(); }
@@ -63,6 +130,7 @@ void DimmedPump::updatePower() {
         _power = _controllerPower;
     }
     _psm.set(static_cast<int>(_power));
+    mcp->setVoltage(MCP_VOLTAGE * _power / 100.0f);
 }
 
 void DimmedPump::setFlowTarget(float targetFlow, float pressureLimit) {
