@@ -237,19 +237,18 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         float Kp = get_token(pid, 0, ',').toFloat();
         float Ki = get_token(pid, 1, ',').toFloat();
         float Kd = get_token(pid, 2, ',').toFloat();
-        
+
         // Optional thermal feedforward parameter (default value if not provided)
-        float Kf = 0.0f;    // Default combined feedforward gain
-        
+        float Kf = 0.0f; // Default combined feedforward gain
+
         String kfToken = get_token(pid, 3, ',');
-        
+
         if (kfToken.length() > 0 && kfToken.toFloat() > 0.0f) {
             Kf = kfToken.toFloat();
         }
-        
+
         ESP_LOGI(LOG_TAG, "BLE received PID string: '%s'", pid.c_str());
-        ESP_LOGI(LOG_TAG, "Parsed PID: Kp=%.2f, Ki=%.2f, Kd=%.2f, Kf=%.3f (combined)", 
-                 Kp, Ki, Kd, Kf);
+        ESP_LOGI(LOG_TAG, "Parsed PID: Kp=%.2f, Ki=%.2f, Kd=%.2f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
         if (pidControlCallback != nullptr) {
             pidControlCallback(Kp, Ki, Kd, Kf);
         }

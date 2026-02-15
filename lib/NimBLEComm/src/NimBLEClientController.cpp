@@ -285,12 +285,13 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             float Kp = get_token(settings, 0, ',').toFloat();
             float Ki = get_token(settings, 1, ',').toFloat();
             float Kd = get_token(settings, 2, ',').toFloat();
-            
+
             // Handle optional Kf parameter with default
-            float Kf = 0.0f;  // Default combined Kff
+            float Kf = 0.0f; // Default combined Kff
             String kfToken = get_token(settings, 3, ',');
-            if (kfToken.length() > 0) Kf = kfToken.toFloat();
-            
+            if (kfToken.length() > 0)
+                Kf = kfToken.toFloat();
+
             autotuneResultCallback(Kp, Ki, Kd, Kf);
         }
     }

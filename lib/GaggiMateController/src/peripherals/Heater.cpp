@@ -6,7 +6,6 @@
 Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
                const pid_result_callback_t &pid_callback)
     : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback) {
-
     simplePid = new SimplePID(&output, &temperature, &setpoint);
     autotuner = new Autotune();
 }
@@ -66,16 +65,15 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
     }
 }
 
-
 void Heater::setThermalFeedforward(float *pumpFlowPtr, float incomingWaterTemp, int *valveStatusPtr) {
     pumpFlowRate = pumpFlowPtr;
     valveStatus = valveStatusPtr;
     this->incomingWaterTemp = incomingWaterTemp;
-      
-    ESP_LOGI(LOG_TAG, "Thermal feedforward setup - incoming water temp: %.1f°C, valve tracking: %s", 
-             incomingWaterTemp, valveStatusPtr ? "enabled" : "disabled");
-    ESP_LOGI(LOG_TAG, "Feedforward will be %s based on Kff value (currently %.3f)", 
-             combinedKff > 0.0f ? "ENABLED" : "DISABLED", combinedKff);
+
+    ESP_LOGI(LOG_TAG, "Thermal feedforward setup - incoming water temp: %.1f°C, valve tracking: %s", incomingWaterTemp,
+             valveStatusPtr ? "enabled" : "disabled");
+    ESP_LOGI(LOG_TAG, "Feedforward will be %s based on Kff value (currently %.3f)", combinedKff > 0.0f ? "ENABLED" : "DISABLED",
+             combinedKff);
 }
 
 void Heater::setFeedforwardScale(float combinedKff) {
@@ -91,34 +89,34 @@ void Heater::autotune(int goal, int windowSize) {
 void Heater::loopPid() {
     softPwm(TUNER_OUTPUT_SPAN);
     temperature = sensor->read();
-    
+
     // Calculate and set disturbance feedforward BEFORE PID update
     // Only apply thermal feedforward when Kf>0, valve is open, and water is flowing
     if (combinedKff > 0.0f && pumpFlowRate && *pumpFlowRate > 0.01f && valveStatus && *valveStatus != 0) {
         float currentFlowRate = *pumpFlowRate; // Use raw flow rate for fast response
         float disturbanceGain = calculateDisturbanceFeedforwardGain();
-        
+
         // Apply smoothed temperature-based safety scaling
         float tempError = temperature - setpoint;
         float rawSafetyFactor = calculateSafetyScaling(tempError);
-        
+
         // Smooth safety factor transitions to reduce oscillations
         const float safetyAlpha = 0.85f; // Faster response for quicker feedforward
         float safetyFactor = safetyAlpha * rawSafetyFactor + (1.0f - safetyAlpha) * lastSafetyFactor;
         lastSafetyFactor = safetyFactor;
-        
+
         disturbanceGain *= safetyFactor;
-        
+
         // Set the disturbance feedforward in SimplePID
         simplePid->setDisturbanceFeedforward(currentFlowRate, disturbanceGain);
-        
+
     } else {
         simplePid->setDisturbanceFeedforward(0.0f, 0.0f);
     }
-    
+
     // Now run PID with proper feedforward integrated
     bool pidUpdated = simplePid->update();
-    
+
     if (pidUpdated) {
         plot(output, 1.0f, 1);
     }
@@ -201,20 +199,21 @@ float Heater::calculateDisturbanceFeedforwardGain() {
     if (combinedKff <= 0.0f || !pumpFlowRate || *pumpFlowRate <= 0.01f) {
         return 0.0f;
     }
-    
+
     float currentFlowRate = *pumpFlowRate; // Use raw flow rate for fast response
-    
+
     // Calculate temperature difference (target - incoming water temperature)
     float tempDelta = setpoint - incomingWaterTemp;
-    if (tempDelta <= 0.0f) return 0.0f;
-    
+    if (tempDelta <= 0.0f)
+        return 0.0f;
+
     // Calculate thermal power needed per ml/s of flow (Watts per ml/s)
     float powerPerFlowRate = WATER_DENSITY * WATER_SPECIFIC_HEAT * tempDelta + (heatLossWatts / currentFlowRate);
     powerPerFlowRate /= heaterEfficiency;
-    
+
     // Apply combined Kff directly (output units per watt)
     float gainPerFlowRate = powerPerFlowRate * combinedKff;
-    
+
     return gainPerFlowRate;
 }
 

@@ -34,7 +34,7 @@ bool SimplePID::update() {
     // Compute the filtered setpoint values
     float FFOut = 0.0f;
     float DistFFOut = 0.0f;
-    
+
     if (isfilterSetpointActive) {
         setpointFiltering(setpointFilterFreq);
     } else {
@@ -43,10 +43,10 @@ bool SimplePID::update() {
 
     if (isFeedForwardActive)
         FFOut = setpointDerivative * gainFF;
-        
+
     if (isDisturbanceFeedForwardActive)
         DistFFOut = currentDisturbance * gainDistFF;
-        
+
     Serial.printf("%.2f\t %.2f\t %.2f\t %.2f\n", *setpointTarget, setpointFiltered, setpointDerivative, *sensorOutput);
 
     float deltaTime = 1.0f / ctrl_freq_sampling; // Time step in seconds
@@ -76,8 +76,8 @@ bool SimplePID::update() {
         feedback_integralState -=
             error * deltaTime; // Forbide the integration to happen when the output is saturated and the error is in the same
                                // direction as the output (i.e. the system is not able to follow the setpoint)
-        Iout = gainKi * feedback_integralState; // Recompute the integral term with the new state
-        sumPID = Pout + Iout + Dout + FFOut + DistFFOut;    // Recompute the output with the new integral state
+        Iout = gainKi * feedback_integralState;          // Recompute the integral term with the new state
+        sumPID = Pout + Iout + Dout + FFOut + DistFFOut; // Recompute the output with the new integral state
         sumPIDsat = constrain(sumPID, ctrlOutputLimits[0], ctrlOutputLimits[1]);
     }
 

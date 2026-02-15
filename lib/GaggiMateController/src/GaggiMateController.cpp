@@ -30,7 +30,8 @@ void GaggiMateController::setup() {
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
     if (_config.capabilites.pressure) {
-        pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { /* noop */ });
+        this->adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 3);
+        this->pressureSensor = new PressureSensor(this->adc);
     }
     if (_config.capabilites.dimming) {
         pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor);
@@ -71,20 +72,19 @@ void GaggiMateController::setup() {
     this->brewBtn->setup();
     this->steamBtn->setup();
     if (_config.capabilites.pressure) {
-        pressureSensor->setup();
+        this->adc->setup();
+        this->pressureSensor->setup();
         _ble.registerPressureScaleCallback([this](float scale) { this->pressureSensor->setScale(scale); });
     }
-   // Set up thermal feedforward for main heater if pressure/dimming capability exists
+    // Set up thermal feedforward for main heater if pressure/dimming capability exists
     if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
-        float* pumpFlowPtr = dimmedPump->getPumpFlowPtr();
-        int* valveStatusPtr = dimmedPump->getValveStatusPtr();
-        
+        float *pumpFlowPtr = dimmedPump->getPumpFlowPtr();
+        int *valveStatusPtr = dimmedPump->getValveStatusPtr();
+
         heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
         heater->setFeedforwardScale(0.0f);
-        
-
-    } 
+    }
     // Initialize last ping time
     lastPingTime = millis();
 
@@ -122,12 +122,11 @@ void GaggiMateController::setup() {
             dimmedPump->setValveState(valve);
         });
     _ble.registerAltControlCallback([this](bool state) { this->alt->set(state); });
-    _ble.registerPidControlCallback([this](float Kp, float Ki, float Kd, float Kf) { 
-        this->heater->setTunings(Kp, Ki, Kd); 
-        
+    _ble.registerPidControlCallback([this](float Kp, float Ki, float Kd, float Kf) {
+        this->heater->setTunings(Kp, Ki, Kd);
+
         // Apply thermal feedforward parameters if available
         this->heater->setFeedforwardScale(Kf);
-
     });
     _ble.registerPumpModelCoeffsCallback([this](float a, float b, float c, float d) {
         if (_config.capabilites.dimming) {
