@@ -241,14 +241,19 @@ float PressureController::getPumpDutyCycleForPressure() {
     }
 
     // Integrator
-    float Ki = _integralGain / (1 - P / _maxPressure);
+    float pressureRatio = 0;
+    if (P < _maxPressure) {
+        pressureRatio = P / _maxPressure;
+    }
+    float denominator = fmaxf(1.0f - pressureRatio, 0.0001f); // Clamp to minimum 0.0001
+    float Ki = _integralGain / denominator;
     _errorIntegral += error * _dt;
     float iterm = Ki * _errorIntegral;
 
     float Qa = getAvailableFlow();
     Qa = fmaxf(Qa, 1e-3f);
     float Ceq = _systemCompliance;
-    float K = _commutationGain / (1 - P / _maxPressure) * Qa / Ceq;
+    float K = _commutationGain / denominator * Qa / Ceq;
     _pumpDutyCycle = Ceq / Qa * (-_convergenceGain * error - K * sat_s) - iterm;
 
     // Anti-windup

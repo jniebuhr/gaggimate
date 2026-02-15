@@ -27,12 +27,12 @@ function getPhaseName(shot, phaseNumber) {
       return transition.phaseName;
     }
   }
-  
+
   // 2. Fallback: Try to get it from the original profile definition if embedded
   if (shot.profile && shot.profile.phases && shot.profile.phases[phaseNumber]) {
     return shot.profile.phases[phaseNumber].name;
   }
-  
+
   // 3. Fallback to guarantee a label is rendered
   return phaseNumber === 0 ? 'Start' : `P${phaseNumber + 1}`;
 }

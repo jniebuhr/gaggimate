@@ -10,9 +10,11 @@ void NimBLEClientController::initClient() {
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
     NimBLEDevice::setMTU(128);
     client = NimBLEDevice::createClient();
-    client->setClientCallbacks(this);
-    if (client == nullptr)
+    if (client == nullptr) {
         ESP_LOGE(LOG_TAG, "Failed to create BLE client");
+        return;
+    }
+    client->setClientCallbacks(this);
 
     // Scan for BLE Server
     scan();
@@ -153,19 +155,19 @@ bool NimBLEClientController::connectToServer() {
 void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure,
                                                        float flow) {
     if (client->isConnected() && outputControlChar != nullptr) {
-        char str[30];
-        snprintf(str, sizeof(str), "%d,%d,%.1f,%.1f,%d,%.2f,%.2f", 1, valve ? 1 : 0, 100.0f, boilerSetpoint,
-                 pressureTarget ? 1 : 0, pressure, flow);
-        _lastOutputControl = String(str);
+        const std::string value = "1," + std::to_string(valve ? 1 : 0) + ",100.0," + std::to_string(boilerSetpoint) + "," +
+                                  std::to_string(pressureTarget ? 1 : 0) + "," + float_to_string(pressure) + "," +
+                                  float_to_string(flow);
+        _lastOutputControl = String(value.c_str());
         outputControlChar->writeValue(_lastOutputControl, false);
     }
 }
 
 void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint) {
     if (client->isConnected() && outputControlChar != nullptr) {
-        char str[30];
-        snprintf(str, sizeof(str), "%d,%d,%.1f,%.1f", 0, valve ? 1 : 0, pumpSetpoint, boilerSetpoint);
-        _lastOutputControl = String(str);
+        const std::string value =
+            "0," + std::to_string(valve ? 1 : 0) + "," + std::to_string(pumpSetpoint) + "," + std::to_string(boilerSetpoint);
+        _lastOutputControl = String(value.c_str());
         outputControlChar->writeValue(_lastOutputControl, false);
     }
 }
@@ -184,7 +186,7 @@ void NimBLEClientController::sendPumpModelCoeffs(const String &pumpModelCoeffs) 
 
 void NimBLEClientController::setPressureScale(float scale) {
     if (client->isConnected() && pressureScaleChar != nullptr) {
-        pressureScaleChar->writeValue(String(scale));
+        pressureScaleChar->writeValue(float_to_string(scale));
     }
 }
 
@@ -208,9 +210,7 @@ void NimBLEClientController::sendPing() {
 
 void NimBLEClientController::sendAutotune(int testTime, int samples) {
     if (autotuneChar != nullptr && client->isConnected()) {
-        char autotuneStr[20];
-        snprintf(autotuneStr, sizeof(autotuneStr), "%d,%d", testTime, samples);
-        autotuneChar->writeValue(autotuneStr);
+        autotuneChar->writeValue(std::to_string(testTime) + "," + std::to_string(samples));
     }
 }
 
@@ -285,12 +285,13 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             float Kp = get_token(settings, 0, ',').toFloat();
             float Ki = get_token(settings, 1, ',').toFloat();
             float Kd = get_token(settings, 2, ',').toFloat();
-            
+
             // Handle optional Kf parameter with default
-            float Kf = 0.0f;  // Default combined Kff
+            float Kf = 0.0f; // Default combined Kff
             String kfToken = get_token(settings, 3, ',');
-            if (kfToken.length() > 0) Kf = kfToken.toFloat();
-            
+            if (kfToken.length() > 0)
+                Kf = kfToken.toFloat();
+
             autotuneResultCallback(Kp, Ki, Kd, Kf);
         }
     }
@@ -303,7 +304,7 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
         int value = atoi((char *)pData);
-        ESP_LOGV(LOG_TAG, "ToF measurement: %.2f", value);
+        ESP_LOGV(LOG_TAG, "ToF measurement: %d", value);
         if (tofMeasurementCallback != nullptr) {
             tofMeasurementCallback(value);
         }
