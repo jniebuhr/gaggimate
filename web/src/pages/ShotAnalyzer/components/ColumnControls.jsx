@@ -205,27 +205,34 @@ export function ColumnControls({
               return (
                 <div
                   key={groupKey}
-                  className="rounded-md p-3 bg-base-200 border-t-2"
+                  className='bg-base-200 rounded-md border-t-2 p-3'
                   style={{ borderColor: colors.anchor }}
                 >
-                  <h4 className={`mb-2 border-b border-base-content/10 pb-1 text-[10px] font-bold tracking-wider uppercase ${colors.text}`}>
+                  <h4
+                    className={`border-base-content/10 mb-2 border-b pb-1 text-[10px] font-bold tracking-wider uppercase ${colors.text}`}
+                  >
                     {groups[groupKey]}
                   </h4>
 
                   <div className='space-y-1.5'>
                     {cols.map(col => (
-                      <label key={col.id} className="group flex cursor-pointer items-start gap-2 text-xs">
+                      <label
+                        key={col.id}
+                        className='group flex cursor-pointer items-start gap-2 text-xs'
+                      >
                         <input
                           type='checkbox'
                           checked={activeColumns.has(col.id)}
                           onChange={e => toggleColumn(col.id, e.target.checked)}
-                          className="checkbox checkbox-xs mt-0.5 rounded-sm checkbox-dynamic"
-                          style={{ 
+                          className='checkbox checkbox-xs checkbox-dynamic mt-0.5 rounded-sm'
+                          style={{
                             '--chk-color': colors.anchor,
-                            borderColor: activeColumns.has(col.id) ? 'transparent' : 'currentColor'
+                            borderColor: activeColumns.has(col.id) ? 'transparent' : 'currentColor',
                           }}
                         />
-                        <span className={`leading-tight font-bold ${activeColumns.has(col.id) ? colors.text : 'text-base-content'}`}>
+                        <span
+                          className={`leading-tight font-bold ${activeColumns.has(col.id) ? colors.text : 'text-base-content'}`}
+                        >
                           {getDetailedLabel(col)}
                         </span>
                       </label>

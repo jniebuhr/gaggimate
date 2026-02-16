@@ -318,53 +318,53 @@ export const utilityColors = {
 export const groupColors = {
   basics: {
     bg: 'bg-base-content/5',
-    text: 'text-base-content', 
-    anchor: '#64748b', 
+    text: 'text-base-content',
+    anchor: '#64748b',
   },
   pressure: {
     bg: 'bg-blue-500/5',
     text: 'text-[#0066CC] dark:text-[#58A6FF]',
     anchor: '#0066CC',
   },
-  target_pressure: { 
-    bg: 'bg-blue-500/5', 
-    text: 'text-[#0066CC] dark:text-[#58A6FF]', 
-    anchor: '#0066CC' 
+  target_pressure: {
+    bg: 'bg-blue-500/5',
+    text: 'text-[#0066CC] dark:text-[#58A6FF]',
+    anchor: '#0066CC',
   },
   flow: {
     bg: 'bg-green-500/5',
     text: 'text-[#63993D] dark:text-[#82C952]',
     anchor: '#63993D',
   },
-  target_flow: { 
-    bg: 'bg-green-500/5', 
-    text: 'text-[#63993D] dark:text-[#82C952]', 
-    anchor: '#63993D' 
+  target_flow: {
+    bg: 'bg-green-500/5',
+    text: 'text-[#63993D] dark:text-[#82C952]',
+    anchor: '#63993D',
   },
-  puckflow: { 
-    bg: 'bg-emerald-500/5', 
-    text: 'text-[#059669] dark:text-[#10B981]', 
-    anchor: '#059669' 
+  puckflow: {
+    bg: 'bg-emerald-500/5',
+    text: 'text-[#059669] dark:text-[#10B981]',
+    anchor: '#059669',
   },
   temp: {
     bg: 'bg-orange-500/5',
     text: 'text-[#F0561D] dark:text-[#FF7A45]',
     anchor: '#F0561D',
   },
-  target_temp: { 
-    bg: 'bg-orange-500/5', 
-    text: 'text-[#731F00] dark:text-[#BC2D00]', 
-    anchor: '#731F00' 
+  target_temp: {
+    bg: 'bg-orange-500/5',
+    text: 'text-[#731F00] dark:text-[#BC2D00]',
+    anchor: '#731F00',
   },
   weight: {
     bg: 'bg-violet-500/5',
     text: 'text-[#8B5CF6] dark:text-[#A78BFA]',
     anchor: '#8B5CF6',
   },
-  weight_det: { 
-    bg: 'bg-violet-500/5', 
-    text: 'text-[#8B5CF6] dark:text-[#A78BFA]', 
-    anchor: '#8B5CF6' 
+  weight_det: {
+    bg: 'bg-violet-500/5',
+    text: 'text-[#8B5CF6] dark:text-[#A78BFA]',
+    anchor: '#8B5CF6',
   },
   system: {
     bg: 'bg-base-content/5',

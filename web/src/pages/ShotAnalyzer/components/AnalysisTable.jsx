@@ -130,23 +130,20 @@ export function AnalysisTable({
             colorClass='bg-emerald-600 text-white border-emerald-700'
           />
         ) : (
-          <StatusBadge
-            label='BREW BY TIME'
-            colorClass='bg-slate-600 text-white border-slate-700'
-          />
+          <StatusBadge label='BREW BY TIME' colorClass='bg-slate-600 text-white border-slate-700' />
         )}
         {results.globalScaleLost && (
           <StatusBadge
             label='SCALE LOST'
-            style={{ backgroundColor: utilityColors.warningOrange, borderColor: utilityColors.warningOrange }}
+            style={{
+              backgroundColor: utilityColors.warningOrange,
+              borderColor: utilityColors.warningOrange,
+            }}
             colorClass='text-white shadow-sm'
           />
         )}
         {results.isAutoAdjusted && (
-          <StatusBadge
-            label='AUTO-DELAY'
-            colorClass='bg-blue-600 text-white border-blue-700'
-          />
+          <StatusBadge label='AUTO-DELAY' colorClass='bg-blue-600 text-white border-blue-700' />
         )}
       </div>
 
@@ -225,10 +222,10 @@ export function AnalysisTable({
                   return (
                     <th
                       key={col.id}
-                      className={`px-3 py-2 text-right font-bold whitespace-nowrap border-l border-base-content/10 tracking-tighter uppercase`}
-                      style={{ 
+                      className={`border-base-content/10 border-l px-3 py-2 text-right font-bold tracking-tighter whitespace-nowrap uppercase`}
+                      style={{
                         borderTop: `3px solid ${colors.anchor}`,
-                        backgroundColor: 'rgba(128, 128, 128, 0.05)' // Subtle unified tint
+                        backgroundColor: 'rgba(128, 128, 128, 0.05)', // Subtle unified tint
                       }}
                     >
                       <span className={colors.text}>{getHeaderLabel(col)}</span>
@@ -249,7 +246,7 @@ export function AnalysisTable({
                   </td>
                   <td className='bg-base-content/5 border-base-content/5 border-r px-2 py-2 text-left whitespace-nowrap'>
                     {/* Neutral Phase Names */}
-                    <div className='mb-0.5 leading-none font-bold text-base-content'>
+                    <div className='text-base-content mb-0.5 leading-none font-bold'>
                       {phase.displayName}
                     </div>
                     {phase.exit?.reason && (
@@ -350,7 +347,7 @@ export function AnalysisTable({
           </div>
 
           {/* Right: Legend */}
-          <div className='text-base-content font-bold flex gap-4 select-none'>
+          <div className='text-base-content flex gap-4 font-bold select-none'>
             <span>∅ Avg (Time Weighted)</span>
             <span>S/E Start/End</span>
             <span>Range Min/Max</span>
@@ -555,8 +552,12 @@ function CellContent({ phase, col, results, isTotal = false }) {
     const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/60';
 
     targetDisplay = (
-      <div style={subTextSize} className='mt-0.5 leading-tight whitespace-nowrap font-medium italic opacity-100'>
-        ({targetVal}{unit})
+      <div
+        style={subTextSize}
+        className='mt-0.5 leading-tight font-medium whitespace-nowrap italic opacity-100'
+      >
+        ({targetVal}
+        {unit})
         <span className={`ml-1 font-bold ${diffColor}`}>
           ({diffSign}
           {diff.toFixed(1)})
@@ -585,8 +586,12 @@ function CellContent({ phase, col, results, isTotal = false }) {
         const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/60';
 
         targetDisplay = (
-          <div style={subTextSize} className='mt-0.5 leading-tight whitespace-nowrap font-medium italic opacity-100'>
-            ({targetVal}{unit})
+          <div
+            style={subTextSize}
+            className='mt-0.5 leading-tight font-medium whitespace-nowrap italic opacity-100'
+          >
+            ({targetVal}
+            {unit})
             <span className={`ml-1 font-bold ${diffColor}`}>
               ({diffSign}
               {diff.toFixed(1)})
@@ -601,10 +606,10 @@ function CellContent({ phase, col, results, isTotal = false }) {
     const measuredVal = parseFloat(mainValue);
     if (!isNaN(measuredVal) && Math.abs(measuredVal - phase.prediction.finalWeight) >= 0.1) {
       const predVal = sf(phase.prediction.finalWeight);
-      
+
       const isPredHit = phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric';
-      const predColorClass = isPredHit 
-        ? 'text-[#DC2626] dark:text-red-500' 
+      const predColorClass = isPredHit
+        ? 'text-[#DC2626] dark:text-red-500'
         : 'text-blue-600 dark:text-blue-400';
 
       predictionDisplay = (
@@ -623,24 +628,24 @@ function CellContent({ phase, col, results, isTotal = false }) {
   }
 
   if (isWeightCol && phase.scaleLost) {
-      warningDisplay = (
-        <div
-          style={{ ...subTextSize, color: utilityColors.warningOrange }}
-          className='mt-0.5 flex items-center justify-end gap-1 font-bold'
-        >
-          <FontAwesomeIcon icon={faExclamationTriangle} />
-          <span>Scale Lost</span>
-        </div>
-      );
-    }
+    warningDisplay = (
+      <div
+        style={{ ...subTextSize, color: utilityColors.warningOrange }}
+        className='mt-0.5 flex items-center justify-end gap-1 font-bold'
+      >
+        <FontAwesomeIcon icon={faExclamationTriangle} />
+        <span>Scale Lost</span>
+      </div>
+    );
+  }
 
   return (
     <div className='flex min-h-[2em] flex-col items-end justify-center'>
       {isBoolean ? (
         <div className='flex h-full items-center pb-1'>{booleanContent}</div>
       ) : (
-        <span 
-          className={isHit ? 'font-bold' : ''} 
+        <span
+          className={isHit ? 'font-bold' : ''}
           style={isHit ? { color: utilityColors.stopRed } : {}}
         >
           {mainValue}
@@ -657,7 +662,7 @@ function CellContent({ phase, col, results, isTotal = false }) {
 // --- Status Badge Helper ---
 const StatusBadge = ({ label, colorClass = '', style = {}, title }) => (
   <span
-    className={`rounded-[4px] border px-2 py-0.5 text-[10px] font-bold leading-none tracking-tight select-none ${colorClass}`}
+    className={`rounded-[4px] border px-2 py-0.5 text-[10px] leading-none font-bold tracking-tight select-none ${colorClass}`}
     style={style}
     title={title}
   >

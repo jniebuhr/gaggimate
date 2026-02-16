@@ -12,6 +12,8 @@ import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardMana
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -21,13 +23,15 @@ export function Settings() {
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
+  const [showWifiPassword, setShowWifiPassword] = useState(false);
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
-    const response = await fetch(`/api/settings`);
-    const data = await response.json();
-    return data;
+    // const response = await fetch(`/api/settings`);
+    // const data = await response.json();
+    // return data;
+    return {};
   });
 
   const formRef = useRef();
@@ -286,7 +290,7 @@ export function Settings() {
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
           {/* Temperature Settings */}
           <Card sm={10} lg={5} title='Temperature Settings'>
-            <div className='form-control mb-4'>
+            <div className='mb-4'>
               <label htmlFor='targetSteamTemp' className='mb-2 block text-sm font-medium'>
                 Default Steam Temperature
               </label>
@@ -296,7 +300,6 @@ export function Settings() {
                     id='targetSteamTemp'
                     name='targetSteamTemp'
                     type='number'
-                    className='grow'
                     placeholder='135'
                     value={formData.targetSteamTemp}
                     onChange={onChange('targetSteamTemp')}
@@ -315,7 +318,6 @@ export function Settings() {
                     id='targetWaterTemp'
                     name='targetWaterTemp'
                     type='number'
-                    className='grow'
                     placeholder='80'
                     value={formData.targetWaterTemp}
                     onChange={onChange('targetWaterTemp')}
@@ -356,7 +358,6 @@ export function Settings() {
                     id='standbyTimeout'
                     name='standbyTimeout'
                     type='number'
-                    className='grow'
                     placeholder='0'
                     value={formData.standbyTimeout}
                     onChange={onChange('standbyTimeout')}
@@ -505,15 +506,23 @@ export function Settings() {
               <label htmlFor='wifiPassword' className='mb-2 block text-sm font-medium'>
                 Wi-Fi Password
               </label>
-              <input
-                id='wifiPassword'
-                name='wifiPassword'
-                type='password'
-                className='input input-bordered w-full'
-                placeholder='Wi-Fi Password'
-                value={formData.wifiPassword}
-                onChange={onChange('wifiPassword')}
-              />
+              <label className='input w-full'>
+                <input
+                  id='wifiPassword'
+                  name='wifiPassword'
+                  type={showWifiPassword ? 'text' : 'password'}
+                  placeholder='Wi-Fi Password'
+                  value={formData.wifiPassword}
+                  onChange={onChange('wifiPassword')}
+                />
+                <span
+                  className={`hover:text-primary cursor-pointer`}
+                  aria-label='Show Password'
+                  onClick={() => setShowWifiPassword(!showWifiPassword)}
+                >
+                  <FontAwesomeIcon icon={showWifiPassword ? faEyeSlash : faEye} />
+                </span>
+              </label>
             </div>
             <div className='form-control mb-4'>
               <label htmlFor='mdnsName' className='mb-2 block text-sm font-medium'>
