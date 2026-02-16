@@ -28,10 +28,9 @@ export function Settings() {
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
-    // const response = await fetch(`/api/settings`);
-    // const data = await response.json();
-    // return data;
-    return {};
+    const response = await fetch(`/api/settings`);
+    const data = await response.json();
+    return data;
   });
 
   const formRef = useRef();
