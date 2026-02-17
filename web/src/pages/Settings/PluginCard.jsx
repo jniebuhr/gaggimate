@@ -12,6 +12,14 @@ const DAYS_OF_WEEK = [
   { short: 'Su', full: 'Sunday' },
 ];
 
+const HA_FIELDS = [
+  { key: 'haIP', label: 'MQTT IP', type: 'text' },
+  { key: 'haPort', label: 'MQTT Port', type: 'number' },
+  { key: 'haUser', label: 'MQTT User', type: 'text' },
+  { key: 'haPassword', label: 'MQTT Password', type: 'password' },
+  { key: 'haTopic', label: 'MQTT Topic', type: 'text' },
+];
+
 /** UI Atoms */
 const CheckboxToggle = ({ checked, onChange, ariaLabel }) => (
   <input
@@ -51,16 +59,21 @@ const PluginWrapper = ({ title, enabled, onToggle, children, actions, descriptio
 
 /** Plugin Content Components */
 function AutoWakeupSchedules({ schedules, updateTime, updateDay, removeSchedule }) {
+  if (!schedules || schedules.length === 0) {
+    return null;
+  }
+
   return (
     <div className='space-y-3'>
-      {schedules?.map((schedule, idx) => (
+      {schedules.map((schedule, idx) => (
         <div key={idx} className='flex items-center gap-2'>
           <div className='join border-base-content/20 hover:border-primary/50 overflow-hidden rounded-lg border shadow-sm transition-colors'>
             <input
               type='time'
               className='input join-item border-base-content/20 bg-base-100 h-8 min-h-0 w-[110px] border-0 border-r px-1 text-center text-sm focus:outline-none'
-              value={schedule.time}
+              value={schedule.time || '07:30'}
               onChange={e => updateTime(idx, e.target.value)}
+              aria-label={`Schedule ${idx + 1} time`}
             />
             <div className='join-item bg-base-100 flex'>
               {DAYS_OF_WEEK.map((day, dIdx) => (
@@ -74,6 +87,7 @@ function AutoWakeupSchedules({ schedules, updateTime, updateDay, removeSchedule 
                   }`}
                   onClick={() => updateDay(idx, dIdx, !schedule.days[dIdx])}
                   title={day.full}
+                  aria-label={`${day.full} for schedule ${idx + 1}`}
                 >
                   {day.short}
                 </button>
@@ -85,6 +99,7 @@ function AutoWakeupSchedules({ schedules, updateTime, updateDay, removeSchedule 
               type='button'
               onClick={() => removeSchedule(idx)}
               className='btn btn-ghost btn-xs text-error hover:bg-error/10'
+              aria-label={`Remove schedule ${idx + 1}`}
             >
               <FontAwesomeIcon icon={faTrashCan} />
             </button>
@@ -149,17 +164,19 @@ export function PluginCard({
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           <InputWrapper id='startupFillTime' label='On startup (seconds)'>
             <input
+              id='startupFillTime'
               type='number'
               className='input input-bordered'
-              value={formData.startupFillTime}
+              value={formData.startupFillTime || ''}
               onChange={onChange('startupFillTime')}
             />
           </InputWrapper>
           <InputWrapper id='steamFillTime' label='On steam deactivate (seconds)'>
             <input
+              id='steamFillTime'
               type='number'
               className='input input-bordered'
-              value={formData.steamFillTime}
+              value={formData.steamFillTime || ''}
               onChange={onChange('steamFillTime')}
             />
           </InputWrapper>
@@ -176,17 +193,19 @@ export function PluginCard({
         <div className='space-y-4'>
           <InputWrapper id='smartGrindIp' label='Tasmota IP'>
             <input
+              id='smartGrindIp'
               type='text'
               className='input input-bordered'
               placeholder='192.168.1.XX'
-              value={formData.smartGrindIp}
+              value={formData.smartGrindIp || ''}
               onChange={onChange('smartGrindIp')}
             />
           </InputWrapper>
           <InputWrapper id='smartGrindMode' label='Mode'>
             <select
+              id='smartGrindMode'
               className='select select-bordered'
-              value={formData.smartGrindMode}
+              value={formData.smartGrindMode || '0'}
               onChange={onChange('smartGrindMode')}
             >
               <option value='0'>Turn off at target</option>
@@ -211,13 +230,14 @@ export function PluginCard({
           .
         </p>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {['haIP', 'haPort', 'haUser', 'haPassword', 'haTopic'].map(key => (
-            <InputWrapper key={key} id={key} label={key.replace('ha', 'MQTT ')}>
+          {HA_FIELDS.map(field => (
+            <InputWrapper key={field.key} id={field.key} label={field.label}>
               <input
-                type={key === 'haPort' ? 'number' : 'text'}
+                id={field.key}
+                type={field.type}
                 className='input input-bordered'
-                value={formData[key]}
-                onChange={onChange(key)}
+                value={formData[field.key] || ''}
+                onChange={onChange(field.key)}
               />
             </InputWrapper>
           ))}
