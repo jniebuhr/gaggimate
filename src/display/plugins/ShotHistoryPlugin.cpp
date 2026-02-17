@@ -85,6 +85,8 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
            [this](Event const &event) { currentBluetoothWeight = event.getFloat("value"); });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
+    // Initialize rebuild state
+    rebuildInProgress = false;
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 0);
 }
 
@@ -476,8 +478,9 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
 
         response["msg"] = "Ok";
     } else if (type == "req:history:rebuild") {
-        rebuildIndex();
-        response["msg"] = "Index rebuilt";
+        // Rebuild is now handled asynchronously by WebUIPlugin
+        // This path shouldn't be reached, but handle it just in case
+        response["msg"] = "Use async rebuild";
     }
 }
 
@@ -661,8 +664,45 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
     indexFile.close();
 }
 
+void ShotHistoryPlugin::startAsyncRebuild() {
+    if (!rebuildInProgress) {
+        rebuildInProgress = true; // Set immediately to prevent multiple rebuilds
+        ESP_LOGI("ShotHistoryPlugin", "Starting immediate async rebuild task");
+        
+        // Create a dedicated task for rebuild instead of using the existing loop
+        xTaskCreatePinnedToCore(
+            [](void* param) {
+                auto* plugin = static_cast<ShotHistoryPlugin*>(param);
+                ESP_LOGI("ShotHistoryPlugin", "Rebuild task started");
+                plugin->rebuildIndex();
+                plugin->rebuildInProgress = false;
+                ESP_LOGI("ShotHistoryPlugin", "Rebuild task completed");
+                vTaskDelete(NULL); // Delete this task when done
+            },
+            "ShotHistoryRebuild",
+            configMINIMAL_STACK_SIZE * 8, // Larger stack for file operations
+            this,
+            2, // Higher priority than normal
+            NULL,
+            0
+        );
+    } else {
+        ESP_LOGW("ShotHistoryPlugin", "Rebuild already in progress, ignoring request");
+    }
+}
+
 void ShotHistoryPlugin::rebuildIndex() {
     ESP_LOGI("ShotHistoryPlugin", "Starting index rebuild...");
+
+    // Send scanning event
+    if (pluginManager) {
+        Event startEvent;
+        startEvent.id = "evt:history-rebuild-progress";
+        startEvent.setInt("total", 0);
+        startEvent.setInt("current", 0);
+        startEvent.setString("status", "scanning");
+        pluginManager->trigger(startEvent);
+    }
 
     // Delete existing index
     fs->remove("/h/index.bin");
@@ -670,12 +710,30 @@ void ShotHistoryPlugin::rebuildIndex() {
     // Create new empty index
     if (!ensureIndexExists()) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to create index during rebuild");
+        // Emit error event
+        if (pluginManager) {
+            Event errorEvent;
+            errorEvent.id = "evt:history-rebuild-progress";
+            errorEvent.setInt("total", 0);
+            errorEvent.setInt("current", 0);
+            errorEvent.setString("status", "error");
+            pluginManager->trigger(errorEvent);
+        }
         return;
     }
 
     File directory = fs->open("/h");
     if (!directory || !directory.isDirectory()) {
         ESP_LOGW("ShotHistoryPlugin", "No history directory found");
+        // Emit completion event even if no directory exists
+        if (pluginManager) {
+            Event completedEvent;
+            completedEvent.id = "evt:history-rebuild-progress";
+            completedEvent.setInt("total", 0);
+            completedEvent.setInt("current", 0);
+            completedEvent.setString("status", "completed");
+            pluginManager->trigger(completedEvent);
+        }
         return;
     }
 
@@ -696,7 +754,19 @@ void ShotHistoryPlugin::rebuildIndex() {
 
     ESP_LOGI("ShotHistoryPlugin", "Rebuilding index from %d shot files", slogFiles.size());
 
+    // Emit start event with total file count
+    if (pluginManager) {
+        Event startEvent;
+        startEvent.id = "evt:history-rebuild-progress";
+        startEvent.setInt("total", (int)slogFiles.size());
+        startEvent.setInt("current", 0);
+        startEvent.setString("status", "started");
+        pluginManager->trigger(startEvent);
+    }
+
+    int currentIndex = 0;
     for (const String &fileName : slogFiles) {
+        currentIndex++;
         File shotFile = fs->open("/h/" + fileName, "r");
         if (!shotFile) {
             continue;
@@ -762,6 +832,32 @@ void ShotHistoryPlugin::rebuildIndex() {
 
         // Append to index
         appendToIndex(entry);
+
+        // Emit progress update with adaptive frequency
+        // Update every file for small rebuilds, every few files for larger ones
+        int updateFrequency = slogFiles.size() <= 20 ? 1 : (slogFiles.size() <= 100 ? 3 : 5);
+        if (pluginManager && (currentIndex % updateFrequency == 0 || currentIndex == slogFiles.size())) {
+            Event progressEvent;
+            progressEvent.id = "evt:history-rebuild-progress";
+            progressEvent.setInt("total", (int)slogFiles.size());
+            progressEvent.setInt("current", currentIndex);
+            progressEvent.setString("status", "processing");
+            pluginManager->trigger(progressEvent);
+            ESP_LOGI("ShotHistoryPlugin", "Rebuild progress: %d/%d", currentIndex, (int)slogFiles.size());
+            
+            // Small delay to allow UI updates and prevent overwhelming the system
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+    }
+
+    // Emit completion event
+    if (pluginManager) {
+        Event completionEvent;
+        completionEvent.id = "evt:history-rebuild-progress";
+        completionEvent.setInt("total", (int)slogFiles.size());
+        completionEvent.setInt("current", (int)slogFiles.size());
+        completionEvent.setString("status", "completed");
+        pluginManager->trigger(completionEvent);
     }
 
     ESP_LOGI("ShotHistoryPlugin", "Index rebuild completed");
