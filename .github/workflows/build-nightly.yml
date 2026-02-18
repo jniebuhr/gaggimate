@@ -52,6 +52,21 @@ jobs:
           cp .pio/build/controller/firmware.bin upload/controller/firmware.bin
           cp .pio/build/controller/partitions.bin upload/controller/partitions.bin
           cp .pio/build/controller/bootloader.bin upload/controller/bootloader.bin
+      - uses: ./.github/actions/upload-firmware
+        env:
+          UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
+          UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
+        with:
+          channel: 'nightly'
+          target: 'controller'
+          firmware_dir: 'upload/controller'
+      - name: Build display FS
+        run: |
+          pio run -t buildfs -e display
+          cp .pio/build/display/spiffs.bin upload/display/filesystem.bin
+          cp .pio/build/display/spiffs.bin upload/headless/filesystem.bin
+          cp .pio/build/display/spiffs.bin out/display-filesystem.bin
+          cp .pio/build/display/spiffs.bin out/display-headless-filesystem.bin
       - name: Build display
         run: |
           export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
@@ -62,6 +77,15 @@ jobs:
           cp .pio/build/display/firmware.bin upload/display/firmware.bin
           cp .pio/build/display/partitions.bin upload/display/partitions.bin
           cp .pio/build/display/bootloader.bin upload/display/bootloader.bin
+      - uses: ./.github/actions/upload-firmware
+        env:
+          UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
+          UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
+        with:
+          channel: 'nightly'
+          target: 'display'
+          firmware_dir: 'upload/display'
+          firmware_files: 'bootloader.bin,partitions.bin,firmware.bin,filesystem.bin'
       - name: Build headless
         run: |
           export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
@@ -72,35 +96,6 @@ jobs:
           cp .pio/build/display-headless/firmware.bin upload/headless/firmware.bin
           cp .pio/build/display-headless/partitions.bin upload/headless/partitions.bin
           cp .pio/build/display-headless/bootloader.bin upload/headless/bootloader.bin
-      - name: Build display FS
-        run: |
-          pio run -t buildfs -e display
-          cp .pio/build/display/spiffs.bin upload/display/filesystem.bin
-          cp .pio/build/display/spiffs.bin upload/headless/filesystem.bin
-          cp .pio/build/display/spiffs.bin out/display-filesystem.bin
-          cp .pio/build/display/spiffs.bin out/display-headless-filesystem.bin
-      - name: Archive Firmware Files
-        uses: actions/upload-artifact@v4
-        with:
-          name: gaggimate-firmware
-          path: "out/*"
-      - uses: ./.github/actions/upload-firmware
-        env:
-          UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
-          UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
-        with:
-          channel: 'nightly'
-          target: 'controller'
-          firmware_dir: 'upload/controller'
-      - uses: ./.github/actions/upload-firmware
-        env:
-          UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
-          UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
-        with:
-          channel: 'nightly'
-          target: 'display'
-          firmware_dir: 'upload/display'
-          firmware_files: 'bootloader.bin,partitions.bin,firmware.bin,filesystem.bin'
       - uses: ./.github/actions/upload-firmware
         env:
           UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
@@ -110,6 +105,11 @@ jobs:
           target: 'headless'
           firmware_dir: 'upload/headless'
           firmware_files: 'bootloader.bin,partitions.bin,firmware.bin,filesystem.bin'
+      - name: Archive Firmware Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaggimate-firmware
+          path: "out/*"
   release-nightly:
     needs: build
     runs-on: ubuntu-latest

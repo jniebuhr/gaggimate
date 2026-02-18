@@ -67,6 +67,6 @@ runs:
         echo "Uploading ${{ inputs.target }} firmware for version ${version} to ${UPLOAD_URL}"
 
         curl --fail-with-body --show-error --silent \
-          -H "x-api-key: ${UPDATE_SERVER_API_KEY}" \
+          -H "X-API-KEY: ${UPDATE_SERVER_API_KEY}" \
           -X POST "${UPLOAD_URL}" \
           "${FORM_ARGS[@]}"
