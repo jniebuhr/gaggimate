@@ -72,7 +72,7 @@ export function ShotChart({ shotData, results }) {
       puckFlow: '#059669',
       weight: '#8B5CF6',
       phaseLine: 'rgba(107, 114, 128, 0.5)',
-      stopLabel: 'rgba(220, 38, 38, 0.85)'
+      stopLabel: 'rgba(220, 38, 38, 0.85)',
     };
 
     const samples = shotData.samples;
@@ -196,7 +196,7 @@ export function ShotChart({ shotData, results }) {
         if (results && results.phases && index > 0) {
           const prevPhaseNum = shotData.phaseTransitions[index - 1].phaseNumber;
           const endedPhase = results.phases.find(p => String(p.number) === String(prevPhaseNum));
-          
+
           if (endedPhase && endedPhase.exit && endedPhase.exit.reason) {
             phaseAnnotations[`phase_exit_${index}`] = {
               type: 'line',
@@ -221,7 +221,7 @@ export function ShotChart({ shotData, results }) {
           }
         }
       });
-      
+
       // 3. Mark the final exit reason at the very end of the shot
       if (results && results.phases && results.phases.length > 0 && maxTime > 0) {
         const lastPhase = results.phases[results.phases.length - 1];
@@ -393,7 +393,7 @@ export function ShotChart({ shotData, results }) {
 
                 labels.forEach((label, index) => {
                   const dataset = chart.data.datasets[index];
-                  
+
                   // Style Toggle Labels differently
                   if (label.text === 'Phase Names' || label.text === 'Stops') {
                     label.pointStyle = 'rectRounded';
