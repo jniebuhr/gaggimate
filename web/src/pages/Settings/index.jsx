@@ -312,7 +312,7 @@ export function Settings() {
         Object.entries(formData).forEach(([key, value]) => {
           if (value === undefined || value === null) return;
 
-          // 1. Handle PID + Kf Merging
+          // Handle PID + Kf Merging
           if (key === 'pid' || key === 'kf') {
             if (pidProcessed) return;
             const p = formData.pid?.split(',').slice(0, 3).join(',') || '0,0,0';
@@ -322,21 +322,21 @@ export function Settings() {
             return;
           }
 
-          // 2. Steam Pump Math (Decimal UI -> Integer API)
+          // Steam Pump Math (Decimal UI -> Integer API)
           if (key === 'steamPumpPercentage' && pressureAvailable.value) {
             const rawNum = parseFloat(value);
             payload.append(key, isNaN(rawNum) ? 0 : Math.round(rawNum * 10));
             return;
           }
 
-          // 3. Numeric Field Casting
+          // Numeric Field Casting
           if (NUMERIC_FIELDS.includes(key)) {
             const numValue = parseFloat(value);
             payload.append(key, isNaN(numValue) ? 0 : numValue);
             return;
           }
 
-          // 4. Boolean to Integer (1/0)
+          // Boolean to Integer
           if (typeof value === 'boolean') {
             payload.append(key, value ? '1' : '0');
             return;
@@ -345,7 +345,7 @@ export function Settings() {
           payload.append(key, value);
         });
 
-        // 5. Build Wakeup Schedule String
+        // Build Wakeup Schedule String
         const scheduleString = autowakeupSchedules
           .map(s => {
             const dayBits = s.days.map(d => (d ? '1' : '0')).join('');

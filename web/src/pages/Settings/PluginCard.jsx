@@ -20,7 +20,7 @@ const HA_FIELDS = [
   { key: 'haTopic', label: 'MQTT Topic', type: 'text' },
 ];
 
-/** UI Atoms */
+/** Reusable Toggle Component */
 const CheckboxToggle = ({ checked, onChange, ariaLabel }) => (
   <input
     type='checkbox'
@@ -31,6 +31,7 @@ const CheckboxToggle = ({ checked, onChange, ariaLabel }) => (
   />
 );
 
+/** Form Field Wrapper */
 const InputWrapper = ({ id, label, children }) => (
   <div className='form-control w-full'>
     <label htmlFor={id} className='mb-2 block text-sm font-medium'>
@@ -110,7 +111,7 @@ function AutoWakeupSchedules({ schedules, updateTime, updateDay, removeSchedule 
   );
 }
 
-/** Main Entry Point */
+/** Main Plugin Card Component */
 export function PluginCard({
   formData,
   onChange,
@@ -122,7 +123,7 @@ export function PluginCard({
 }) {
   return (
     <div className='space-y-4'>
-      {/* Auto Wakeup */}
+      {/* Automatic Wakeup */}
       <PluginWrapper
         title='Automatic Wakeup'
         enabled={formData.autowakeupEnabled}
