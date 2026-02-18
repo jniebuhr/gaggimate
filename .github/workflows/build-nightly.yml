@@ -85,21 +85,30 @@ jobs:
           name: gaggimate-firmware
           path: "out/*"
       - uses: ./.github/actions/upload-firmware
+        env:
+          UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
+          UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
         with:
           channel: 'nightly'
           target: 'controller'
           firmware_dir: 'upload/controller'
       - uses: ./.github/actions/upload-firmware
+        env:
+          UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
+          UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
         with:
           channel: 'nightly'
           target: 'display'
           firmware_dir: 'upload/display'
           firmware_files: 'bootloader.bin,partitions.bin,firmware.bin,filesystem.bin'
       - uses: ./.github/actions/upload-firmware
+        env:
+          UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
+          UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
         with:
           channel: 'nightly'
           target: 'headless'
-          firmware_dir: 'upload/display-headless'
+          firmware_dir: 'upload/headless'
           firmware_files: 'bootloader.bin,partitions.bin,firmware.bin,filesystem.bin'
   release-nightly:
     needs: build

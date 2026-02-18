@@ -63,10 +63,10 @@ runs:
         done
         FORM_ARGS+=( -F "files=@docs/boot_app0.bin" )
 
-        UPLOAD_URL="${{ secrets.UPDATE_SERVER_HOST }}/admin/releases/upload"
+        UPLOAD_URL="${UPDATE_SERVER_HOST}/admin/releases/upload"
         echo "Uploading ${{ inputs.target }} firmware for version ${version} to ${UPLOAD_URL}"
 
         curl --fail-with-body --show-error --silent \
-          -H "x-api-key: ${{ secrets.UPDATE_SERVER_API_KEY }}" \
+          -H "x-api-key: ${UPDATE_SERVER_API_KEY}" \
           -X POST "${UPLOAD_URL}" \
           "${FORM_ARGS[@]}"
