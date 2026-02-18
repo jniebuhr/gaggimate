@@ -45,7 +45,7 @@ const pressureAvailable = computed(() => machine.value?.capabilities?.pressure ?
  * Converts raw API response into UI-friendly state.
  * Ensures all values are strings for controlled inputs.
  */
-const transformAPItoForm = data => {
+const normalizeSettings = data => {
   if (!data) return {};
   const transformed = { ...data };
 
@@ -237,7 +237,7 @@ export function Settings() {
   useEffect(() => {
     if (fetchedSettings) {
       // Set the main form state
-      setFormData(transformAPItoForm(fetchedSettings));
+      setFormData(normalizeSettings(fetchedSettings));
       // Initialize the reducer
       const schedules = parseSchedules(fetchedSettings.autowakeupSchedules);
       dispatchAutoWakeup({ type: 'INIT', payload: schedules });
@@ -403,7 +403,7 @@ export function Settings() {
         try {
           const data = JSON.parse(e.target.result);
           // Update the main form state
-          setFormData(transformAPItoForm(data));
+          setFormData(normalizeSettings(data));
           // Sync the Auto-Wakeup Reducer
           const schedules = parseSchedules(data.autowakeupSchedules);
           dispatchAutoWakeup({ type: 'INIT', payload: schedules });
