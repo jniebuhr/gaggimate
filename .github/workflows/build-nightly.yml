@@ -63,6 +63,8 @@ jobs:
       - name: Build display FS
         run: |
           pio run -t buildfs -e display
+          cp .pio/build/display/spiffs.bin .pio/build/display/filesystem.bin
+          cp .pio/build/display/spiffs.bin .pio/build/display-headless/filesystem.bin
           cp .pio/build/display/spiffs.bin out/display-filesystem.bin
           cp .pio/build/display/spiffs.bin out/display-headless-filesystem.bin
       - name: Archive Firmware Files
@@ -70,6 +72,23 @@ jobs:
         with:
           name: gaggimate-firmware
           path: "out/*"
+      - uses: ./.github/actions/upload-firmware
+        with:
+          channel: 'nightly'
+          target: 'controller'
+          firmware_dir: '.pio/build/controller'
+      - uses: ./.github/actions/upload-firmware
+        with:
+          channel: 'nightly'
+          target: 'display'
+          firmware_dir: '.pio/build/display'
+          firmware_files: 'bootloader.bin,partitions.bin,firmware.bin,filesystem.bin'
+      - uses: ./.github/actions/upload-firmware
+        with:
+          channel: 'nightly'
+          target: 'headless'
+          firmware_dir: '.pio/build/display-headless'
+          firmware_files: 'bootloader.bin,partitions.bin,firmware.bin,filesystem.bin'
   release-nightly:
     needs: build
     runs-on: ubuntu-latest

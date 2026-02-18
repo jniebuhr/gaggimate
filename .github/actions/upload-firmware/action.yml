@@ -1,0 +1,72 @@
+name: 'Upload firmware release'
+inputs:
+  channel:
+    description: Release channel
+    required: true
+    default: stable
+    type: choice
+    options:
+      - stable
+      - nightly
+  version:
+    description: Release version (e.g. 1.2.3)
+    required: false
+    type: string
+    default: ''
+  target:
+    description: Firmware target
+    required: true
+    default: controller
+    type: choice
+    options:
+      - controller
+      - display
+      - headless
+  firmware_dir:
+    description: Directory containing firmware files
+    required: true
+    default: firmware
+    type: string
+  firmware_files:
+    description: Comma-separated filenames relative to firmware_dir
+    required: true
+    default: bootloader.bin,partitions.bin,firmware.bin
+    type: string
+runs:
+  using: 'composite'
+  steps:
+    - name: Upload firmware release
+      shell: bash
+      run: |
+        set -euo pipefail
+        
+        FORM_ARGS=(
+          -F "channel=${{ inputs.channel }}"
+          -F "target=${{ inputs.target }}"
+        )
+        
+        version=${{ inputs.version }}
+        if [[ -z "${{ inputs.version }}" ]]; then
+          version=$(git describe --tags --dirty)
+        fi
+        FORM_ARGS+=( -F "version=${version}" )
+
+        IFS=',' read -r -a FILENAMES <<< "${{ inputs.firmware_files }}"
+        for filename in "${FILENAMES[@]}"; do
+          filename_trimmed="$(echo "$filename" | xargs)"
+          file_path="${{ inputs.firmware_dir }}/${filename_trimmed}"
+          if [[ ! -f "$file_path" ]]; then
+            echo "Missing firmware file: $file_path" >&2
+            exit 1
+          fi
+          FORM_ARGS+=( -F "files=@${file_path}" )
+        done
+        FORM_ARGS+=( -F "files=@docs/boot_app0.bin" )
+
+        UPLOAD_URL="${{ secrets.UPDATE_SERVER_HOST }}/admin/releases/upload"
+        echo "Uploading ${{ inputs.target }} firmware for version ${version} to ${UPLOAD_URL}"
+
+        curl --fail-with-body --show-error --silent \
+          -H "x-api-key: ${{ secrets.UPDATE_SERVER_API_KEY }}" \
+          -X POST "${UPLOAD_URL}" \
+          "${FORM_ARGS[@]}"
