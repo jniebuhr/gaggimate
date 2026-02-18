@@ -63,7 +63,7 @@ runs:
         done
         FORM_ARGS+=( -F "files=@docs/boot_app0.bin" )
 
-        UPLOAD_URL="${UPDATE_SERVER_HOST}/admin/releases/upload"
+        UPLOAD_URL="${UPDATE_SERVER_HOST}/api/admin/releases/upload"
         echo "Uploading ${{ inputs.target }} firmware for version ${version} to ${UPLOAD_URL}"
 
         curl --fail-with-body --show-error --silent \
