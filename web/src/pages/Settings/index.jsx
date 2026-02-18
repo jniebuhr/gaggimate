@@ -12,6 +12,13 @@ import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
 
+// Default schedule used when no valid schedules are found in settings
+const DEFAULT_WAKEUP_SCHEDULE = {
+  time: '07:30',
+  days: Array(7).fill(true),
+};
+
+// List of fields that should be treated as numeric for validation and parsing purposes
 const NUMERIC_FIELDS = [
   'targetSteamTemp',
   'targetWaterTemp',
@@ -36,53 +43,21 @@ const NUMERIC_FIELDS = [
   'startupFillTime',
   'steamFillTime',
   'haPort',
+  'steamPumpPercentage',
 ];
 
+// Fields that require special handling and should be excluded from the generic onChange handler logic
+const EXCLUDED_FIELDS = ['dashboardLayout'];
+
+// Derived capabilities from machine data to conditionally render certain settings sections
 const ledControl = computed(() => machine.value?.capabilities?.ledControl ?? false);
+
+// Pressure sensor availability affects whether we show steam pump assist as a flow rate or percentage
 const pressureAvailable = computed(() => machine.value?.capabilities?.pressure ?? false);
-
-/**
- * Converts raw API response into UI-friendly state.
- * Ensures all values are strings for controlled inputs.
- */
-const normalizeSettings = data => {
-  if (!data) return {};
-  const transformed = { ...data };
-
-  // Handle PID + Kf Merging
-  if (data.pid) {
-    const parts = data.pid.split(',');
-    transformed.pid = parts.slice(0, 3).join(',');
-    transformed.kf = parts[3] || '0.000';
-  }
-
-  // Steam Pump Math (Integer API -> Decimal UI)
-  if (pressureAvailable.value && data.steamPumpPercentage != null) {
-    transformed.steamPumpPercentage = (data.steamPumpPercentage / 10).toString();
-  }
-
-  // Ensure all numeric fields are strings for the input elements
-  NUMERIC_FIELDS.forEach(field => {
-    if (transformed[field] !== undefined && transformed[field] !== null) {
-      transformed[field] = transformed[field].toString();
-    }
-  });
-
-  // Ensure text fields are strings
-  ['wifiSsid', 'wifiPassword', 'mdnsName', 'pumpModelCoeffs', 'startupMode', 'timezone'].forEach(
-    field => {
-      if (transformed[field] === undefined || transformed[field] === null) {
-        transformed[field] = '';
-      }
-    },
-  );
-
-  return transformed;
-};
 
 /** REUSABLE FORM COMPONENTS */
 
-// Base wrapper for every form row
+// Wrapper for form fields to provide consistent spacing, labels, and help text
 const Field = ({ label, id, children, helpText, className = 'mb-4' }) => (
   <div className={`form-control ${className}`}>
     {label && (
@@ -95,7 +70,7 @@ const Field = ({ label, id, children, helpText, className = 'mb-4' }) => (
   </div>
 );
 
-// Standard input with optional unit suffix
+// Input component that can optionally display a unit next to the input field, with proper accessibility attributes for the unit
 const Input = ({ id, unit, unitLabel, className = '', ...props }) => (
   <div className='input-group'>
     <label
@@ -115,7 +90,7 @@ const Input = ({ id, unit, unitLabel, className = '', ...props }) => (
   </div>
 );
 
-// Toggle switch wrapper
+// Toggle component styled as a switch, with proper label association and accessibility attributes
 const Toggle = ({ label, id, checked, onChange }) => (
   <div className='form-control mb-4'>
     <label className='label cursor-pointer p-0'>
@@ -131,7 +106,7 @@ const Toggle = ({ label, id, checked, onChange }) => (
   </div>
 );
 
-// Select dropdown wrapper
+// Select component wrapped in a Field for consistent styling, with proper label association and accessibility attributes
 const Select = ({ label, id, children, ...props }) => (
   <Field label={label} id={id}>
     <select id={id} className='select select-bordered w-full' {...props}>
@@ -140,60 +115,90 @@ const Select = ({ label, id, children, ...props }) => (
   </Field>
 );
 
-/**
- * Converts the custom schedule string into a Reducer-friendly array
- */
+// Function to normalize and transform fetched settings data into the format expected by the form,
+// including handling of combined fields like PID and conversion of numeric values to strings for controlled inputs
+const normalizeSettings = data => {
+  if (!data) return {};
+  const transformed = { ...data };
+
+  if (data.pid) {
+    const parts = data.pid.split(',');
+    transformed.pid = parts.slice(0, 3).join(',');
+    transformed.kf = parts[3] || '0.000';
+  }
+
+  if (pressureAvailable.value && data.steamPumpPercentage != null) {
+    transformed.steamPumpPercentage = (data.steamPumpPercentage / 10).toString();
+  }
+
+  NUMERIC_FIELDS.forEach(field => {
+    if (transformed[field] !== undefined && transformed[field] !== null) {
+      transformed[field] = transformed[field].toString();
+    }
+  });
+
+  ['wifiSsid', 'wifiPassword', 'mdnsName', 'pumpModelCoeffs', 'startupMode', 'timezone'].forEach(
+    field => {
+      if (transformed[field] === undefined || transformed[field] === null) {
+        transformed[field] = '';
+      }
+    },
+  );
+
+  return transformed;
+};
+
+/** REUSABLE FORM COMPONENTS */
+
+// Function to parse the autowakeupSchedules string from the settings into an array of schedule objects with time and days,
+// including validation and fallback to a default schedule if parsing fails
 const parseSchedules = scheduleStr => {
   if (typeof scheduleStr !== 'string' || !scheduleStr.trim()) {
-    return [DEFAULT_WAKEUP_SCHEDULE];
+    return [{ ...DEFAULT_WAKEUP_SCHEDULE, id: crypto.randomUUID() }];
   }
   const parsed = scheduleStr
     .split(';')
     .map(str => {
       const [time, daysStr] = str.split('|');
       if (time && daysStr?.length === 7) {
-        return { time, days: daysStr.split('').map(d => d === '1') };
+        return {
+          id: crypto.randomUUID(), // Generate a unique ID for each schedule for stable React rendering
+          time,
+          days: daysStr.split('').map(d => d === '1'),
+        };
       }
       return null;
     })
     .filter(Boolean);
-  return parsed.length > 0 ? parsed : [DEFAULT_WAKEUP_SCHEDULE];
+  return parsed.length > 0 ? parsed : [{ ...DEFAULT_WAKEUP_SCHEDULE, id: crypto.randomUUID() }];
 };
 
-const DEFAULT_WAKEUP_SCHEDULE = {
-  time: '07:30',
-  days: Array(7).fill(true),
-};
-
-/**
- * @typedef {Object} Action
- * @property {'INIT'|'ADD'|'REMOVE'|'UPDATE_TIME'|'UPDATE_DAY'} type
- * @property {AutoWakeupSchedule[]} [payload] - Only for INIT
- * @property {number} [index] - For REMOVE and UPDATE_TIME
- * @property {string} [time] - For UPDATE_TIME
- * @property {number} [scheduleIndex] - For UPDATE_DAY
- * @property {number} [dayIndex] - For UPDATE_DAY
- * @property {boolean} [enabled] - For UPDATE_DAY
- */
-
-/**
- * Reducer for managing auto-wakeup schedules.
- * @param {AutoWakeupSchedule[]} state
- * @param {Action} action
- */
+// Reducer function to manage the state of automatic wakeup schedules,
+// handling initialization, addition, removal, and updates to time and days based on dispatched actions
 function autoWakeupReducer(state, action) {
   switch (action.type) {
     case 'INIT':
-      return action.payload?.length ? action.payload : [DEFAULT_WAKEUP_SCHEDULE];
+      return action.payload?.length
+        ? action.payload
+        : [{ ...DEFAULT_WAKEUP_SCHEDULE, id: crypto.randomUUID() }];
     case 'ADD':
-      return [...state, { ...DEFAULT_WAKEUP_SCHEDULE }];
+      // Deep copy days array to avoid shared references
+      return [
+        ...state,
+        {
+          ...DEFAULT_WAKEUP_SCHEDULE,
+          days: [...DEFAULT_WAKEUP_SCHEDULE.days],
+          id: crypto.randomUUID(),
+        },
+      ];
     case 'REMOVE':
-      return state.length > 1 ? state.filter((_, i) => i !== action.index) : state;
+      // Filter by ID for stability, but prevent removing the last schedule to ensure there's always at least one
+      return state.length > 1 ? state.filter(s => s.id !== action.id) : state;
     case 'UPDATE_TIME':
-      return state.map((s, i) => (i === action.index ? { ...s, time: action.time } : s));
+      return state.map(s => (s.id === action.id ? { ...s, time: action.time } : s));
     case 'UPDATE_DAY':
-      return state.map((s, i) =>
-        i === action.scheduleIndex
+      return state.map(s =>
+        s.id === action.id
           ? {
               ...s,
               days: s.days.map((d, di) => (di === action.dayIndex ? action.enabled : d)),
@@ -205,56 +210,67 @@ function autoWakeupReducer(state, action) {
   }
 }
 
-/**
- * Handlers for fields that require special state updates.
- */
+// Special handlers for fields that require more complex state updates or side effects when changed,
+// such as updating the dashboard layout immediately upon change
 const SPECIAL_HANDLERS = {
-  dashboardLayout: (setFormData, value) => {
+  dashboardLayout: (setFormData, value, newState) => {
     setDashboardLayout(value);
-    // Use the functional updater to ensure we are merging with the latest state
-    setFormData(prev => ({ ...prev, dashboardLayout: value }));
   },
 };
 
+// Main Settings component that manages the overall state of the settings form, handles fetching and saving settings,
+// and renders the form with all the different sections and fields, including the PluginCard for plugin integrations
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
   const [showPassword, setShowPassword] = useState(false);
-  const [saveMessage, setSaveMessage] = useState(null); // For user feedback
-  const [autowakeupSchedules, dispatchAutoWakeup] = useReducer(autoWakeupReducer, [
-    DEFAULT_WAKEUP_SCHEDULE,
-  ]);
-
-  const { isLoading, data: fetchedSettings } = useQuery('settings', async () => {
-    const response = await fetch('/api/settings');
-    const data = await response.json();
-    return data;
-  });
-
+  const [saveMessage, setSaveMessage] = useState(null);
+  const [autowakeupSchedules, dispatchAutoWakeup] = useReducer(autoWakeupReducer, []);
+  const addAutoWakeupSchedule = () => dispatchAutoWakeup({ type: 'ADD' });
+  const removeAutoWakeupSchedule = id => dispatchAutoWakeup({ type: 'REMOVE', id });
+  const updateAutoWakeupTime = (id, time) => dispatchAutoWakeup({ type: 'UPDATE_TIME', id, time });
+  const updateAutoWakeupDay = (id, dayIndex, enabled) =>
+    dispatchAutoWakeup({
+      type: 'UPDATE_DAY',
+      id,
+      dayIndex,
+      enabled,
+    });
+  const saveMessageTimeoutRef = useRef(null);
   const formRef = useRef();
 
+  // Fetch settings from the API when the component mounts, and handle loading state and errors
+  const { isLoading, data: fetchedSettings } = useQuery('settings', async () => {
+    const response = await fetch('/api/settings');
+    if (!response.ok) throw new Error('Failed to fetch');
+    return await response.json();
+  });
+
+  // When fetched settings change, normalize them and update the form state, and also parse the autowakeup schedules and initialize the reducer state
   useEffect(() => {
     if (fetchedSettings) {
-      // Set the main form state
       setFormData(normalizeSettings(fetchedSettings));
-      // Initialize the reducer
       const schedules = parseSchedules(fetchedSettings.autowakeupSchedules);
       dispatchAutoWakeup({ type: 'INIT', payload: schedules });
     } else {
+      // If no settings are fetched, reset to defaults
       setFormData({});
       dispatchAutoWakeup({ type: 'INIT' });
     }
   }, [fetchedSettings]);
 
-  // Initialize theme
+  // Initialize the current theme from localStorage when the component mounts,
+  // and set up a cleanup function to clear any pending save message timeouts when the component unmounts
   useEffect(() => {
     setCurrentTheme(getStoredTheme());
+    return () => {
+      if (saveMessageTimeoutRef.current) clearTimeout(saveMessageTimeoutRef.current);
+    };
   }, []);
 
-  /**
-   * Returns an onChange handler for a given form field.
-   */
+  // onChange handler for form fields that updates the formData state, with special handling for certain fields like PID and steam pump percentage,
+  // and also invokes any special handlers defined for specific fields to handle side effects or additional state updates
   const onChange = key => e => {
     const target = e.currentTarget;
     const value = target.type === 'checkbox' ? target.checked : target.value;
@@ -262,12 +278,9 @@ export function Settings() {
     setFormData(prev => {
       const newState = { ...prev, [key]: value };
 
-      // Handle PID logic inside the functional update
       if (key === 'pid' && typeof value === 'string') {
-        // Sanitize input by allowing only numbers, commas, and dots
         const sanitized = value.replace(/[^0-9.,-]/g, '');
         newState.pid = sanitized;
-
         if (sanitized.includes(',')) {
           const parts = sanitized.split(',');
           if (parts.length > 3) {
@@ -276,67 +289,57 @@ export function Settings() {
           }
         }
       }
+
+      // Special handling for steamPumpPercentage to convert from percentage to raw value for firmware compatibility when the field changes in the form
+      if (SPECIAL_HANDLERS[key]) {
+        SPECIAL_HANDLERS[key](setFormData, value, newState);
+      }
+
       return newState;
     });
-
-    // Pass setFormData
-    if (SPECIAL_HANDLERS[key]) {
-      SPECIAL_HANDLERS[key](setFormData, value);
-    }
   };
 
-  const addAutoWakeupSchedule = () => dispatchAutoWakeup({ type: 'ADD' });
-  const removeAutoWakeupSchedule = index => dispatchAutoWakeup({ type: 'REMOVE', index });
-  const updateAutoWakeupTime = (index, time) =>
-    dispatchAutoWakeup({ type: 'UPDATE_TIME', index, time });
-  const updateAutoWakeupDay = (scheduleIndex, dayIndex, enabled) =>
-    dispatchAutoWakeup({
-      type: 'UPDATE_DAY',
-      scheduleIndex,
-      dayIndex,
-      enabled,
-    });
-
+  // onSubmit handler for the form that prepares the payload for saving settings,
+  // including handling of special fields and conversion to the format expected by the firmware
   const onSubmit = useCallback(
     async (e, restart = false) => {
       if (e) e.preventDefault();
       if (submitting) return;
 
       setSubmitting(true);
+      if (saveMessageTimeoutRef.current) clearTimeout(saveMessageTimeoutRef.current);
       setSaveMessage(null);
 
       try {
         const payload = new FormData();
-        let pidProcessed = false;
+
+        // Prepare complex fields that require combining multiple form values into the format expected by the firmware
+        const pidString = `${formData.pid || '0,0,0'},${formData.kf || '0.000'}`;
+        const scheduleString = autowakeupSchedules
+          .map(s => `${s.time}|${s.days.map(d => (d ? '1' : '0')).join('')}`)
+          .join(';');
+
+        // Define keys to skip during the generic payload construction, as they are handled separately or require special formatting
+        const SKIPPED_KEYS = [...EXCLUDED_FIELDS, 'pid', 'kf'];
 
         Object.entries(formData).forEach(([key, value]) => {
-          if (value === undefined || value === null) return;
+          if (SKIPPED_KEYS.includes(key) || value === undefined || value === null) return;
 
-          // Handle PID + Kf Merging
-          if (key === 'pid' || key === 'kf') {
-            if (pidProcessed) return;
-            const p = formData.pid?.split(',').slice(0, 3).join(',') || '0,0,0';
-            const k = formData.kf || '0.000';
-            payload.append('pid', `${p},${k}`);
-            pidProcessed = true;
-            return;
-          }
-
-          // Steam Pump Math (Decimal UI -> Integer API)
-          if (key === 'steamPumpPercentage' && pressureAvailable.value) {
+          // Special handling for steamPumpPercentage to convert from percentage to raw value for firmware compatibility when preparing the payload for saving
+          if (key === 'steamPumpPercentage') {
             const rawNum = parseFloat(value);
             payload.append(key, isNaN(rawNum) ? 0 : Math.round(rawNum * 10));
             return;
           }
 
-          // Numeric Field Casting
+          // Convert numeric fields to actual numbers for firmware compatibility when preparing the payload for saving
           if (NUMERIC_FIELDS.includes(key)) {
             const numValue = parseFloat(value);
             payload.append(key, isNaN(numValue) ? 0 : numValue);
             return;
           }
 
-          // Boolean to Integer
+          // Convert boolean values to '1' or '0' strings for firmware compatibility when preparing the payload for saving
           if (typeof value === 'boolean') {
             payload.append(key, value ? '1' : '0');
             return;
@@ -345,13 +348,8 @@ export function Settings() {
           payload.append(key, value);
         });
 
-        // Build Wakeup Schedule String
-        const scheduleString = autowakeupSchedules
-          .map(s => {
-            const dayBits = s.days.map(d => (d ? '1' : '0')).join('');
-            return `${s.time}|${dayBits}`;
-          })
-          .join(';');
+        // Append the combined PID string and the schedule string to the payload, as they require special formatting for the firmware
+        payload.append('pid', pidString);
         payload.append('autowakeupSchedules', scheduleString);
 
         const response = await fetch('/api/settings' + (restart ? '?restart=true' : ''), {
@@ -359,20 +357,16 @@ export function Settings() {
           body: payload,
         });
 
-        if (!response.ok) {
-          throw new Error(`Server responded with status ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Server status ${response.status}`);
 
         setSaveMessage({
           type: 'success',
           text: restart ? 'Saved! Restarting...' : 'Settings saved successfully!',
         });
 
-        // Clear success message after 3 seconds
-        setTimeout(() => setSaveMessage(null), 3000);
+        saveMessageTimeoutRef.current = setTimeout(() => setSaveMessage(null), 3000);
       } catch (err) {
-        console.error('Save failed', err);
-        setSaveMessage({ type: 'error', text: `Failed to save settings: ${err.message}` });
+        setSaveMessage({ type: 'error', text: `Failed to save: ${err.message}` });
       } finally {
         setSubmitting(false);
       }
@@ -380,21 +374,28 @@ export function Settings() {
     [formData, autowakeupSchedules, submitting],
   );
 
+  // Handler for exporting settings to a JSON file, which prepares the data in the correct format expected by the firmware
   const onExport = useCallback(() => {
+    // Prepare the autowakeupSchedules in the format expected by the firmware for export
     const scheduleString = autowakeupSchedules
       .map(s => `${s.time}|${s.days.map(d => (d ? '1' : '0')).join('')}`)
       .join(';');
 
-    // Create a combined object for the export
-    const exportData = {
-      ...formData,
+    // Extract the PID and Kf values from formData to merge them back into the firmware format for export, while keeping the rest of the data intact
+    const { kf, ...baseData } = formData;
+
+    // Merge the PID and Kf values back into the firmware format for export, and include the autowakeupSchedules in the correct format as well
+    const finalExport = {
+      ...baseData,
+      pid: `${formData.pid},${kf || '0.000'}`, // Merge them back into the firmware format
       autowakeupSchedules: scheduleString,
     };
 
-    // Download the merged data
-    downloadJson(exportData, 'settings.json');
+    // Use the utility function to trigger a download of the settings as a JSON file, with the filename 'settings.json'
+    downloadJson(finalExport, 'settings.json');
   }, [formData, autowakeupSchedules]);
 
+  // Handler for importing settings from a JSON file, which reads the file, parses the JSON, normalizes it for the form, and updates the state accordingly
   const onUpload = function (evt) {
     if (evt.target.files.length) {
       const file = evt.target.files[0];
@@ -402,15 +403,14 @@ export function Settings() {
       reader.onload = async e => {
         try {
           const data = JSON.parse(e.target.result);
-          // Update the main form state
           setFormData(normalizeSettings(data));
-          // Sync the Auto-Wakeup Reducer
           const schedules = parseSchedules(data.autowakeupSchedules);
           dispatchAutoWakeup({ type: 'INIT', payload: schedules });
+
+          if (saveMessageTimeoutRef.current) clearTimeout(saveMessageTimeoutRef.current);
           setSaveMessage({ type: 'success', text: 'Settings imported successfully!' });
-          setTimeout(() => setSaveMessage(null), 3000);
+          saveMessageTimeoutRef.current = setTimeout(() => setSaveMessage(null), 3000);
         } catch (err) {
-          console.error('Failed to parse imported settings', err);
           setSaveMessage({
             type: 'error',
             text: 'Failed to import settings. Invalid file format.',
@@ -419,21 +419,12 @@ export function Settings() {
       };
       reader.readAsText(file);
     }
-    // Reset input so same file can be uploaded again
     evt.target.value = '';
   };
 
-  if (isLoading) {
-    return (
-      <div className='flex w-full flex-row items-center justify-center py-16'>
-        <Spinner size={8} />
-      </div>
-    );
-  }
-
   return (
     <>
-      {/* Header with Import and Export buttons */}
+      {/* Header with title and import/export buttons, including proper labels and accessibility */}
       <div className='mb-4 flex flex-row items-center gap-2'>
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Settings</h2>
         <button
@@ -467,7 +458,7 @@ export function Settings() {
         />
       </div>
 
-      {/* Save message feedback */}
+      {/* Display a success or error message after saving settings, with appropriate styling based on the message type */}
       {saveMessage && (
         <div
           className={`alert mb-4 ${saveMessage.type === 'success' ? 'alert-success' : 'alert-error'}`}
@@ -566,7 +557,7 @@ export function Settings() {
             />
           </Card>
 
-          {/* Web Settings */}
+          {/* Web UI Settings */}
           <Card sm={10} lg={5} title='Web Settings'>
             <Select
               label='Theme'
@@ -835,7 +826,7 @@ export function Settings() {
             </Select>
           </Card>
 
-          {/* Sunrise Settings */}
+          {/* Sunrise LED Settings - only show if the machine has LED control capability */}
           {ledControl.value && (
             <Card sm={10} lg={5} title='Sunrise Settings'>
               <p className='mb-4 text-sm opacity-70'>Color settings for idle LEDs.</p>
@@ -922,7 +913,8 @@ export function Settings() {
           </Card>
         </div>
 
-        {/* Form Footer */}
+        {/* Action buttons for saving settings, with options to save normally or save and restart the machine,
+        and a warning about certain settings requiring a restart, all styled appropriately and with proper disabled states during submission */}
         <div className='pt-4 lg:col-span-10'>
           <div className='alert alert-warning mb-4 shadow-sm'>
             <span>Some options like Wi-Fi and NTP require a restart.</span>
