@@ -11,6 +11,7 @@ import { AnalysisTable } from './components/AnalysisTable';
 import { ShotChart } from './components/ShotChart';
 import { calculateShotMetrics, detectAutoDelay } from './services/AnalyzerService';
 import { libraryService } from './services/LibraryService';
+import { notesService } from './services/NotesService';
 import { ApiServiceContext } from '../../services/ApiService';
 import {
   getDefaultColumns,
@@ -99,7 +100,10 @@ export function ShotAnalyzer() {
 
   // --- Effects ---
   useEffect(() => {
-    if (apiService) libraryService.setApiService(apiService);
+    if (apiService) {
+      libraryService.setApiService(apiService);
+      notesService.setApiService(apiService);
+    }
   }, [apiService]);
 
   useEffect(() => {

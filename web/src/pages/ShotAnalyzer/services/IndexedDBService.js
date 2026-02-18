@@ -8,7 +8,7 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'gaggimate-analyzer';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 class IndexedDBService {
   constructor() {
@@ -32,6 +32,10 @@ class IndexedDBService {
         if (!db.objectStoreNames.contains('profiles')) {
           db.createObjectStore('profiles', { keyPath: 'name' });
         }
+        // v2: Dedicated notes store (same JSON format as GaggiMate API)
+        if (!db.objectStoreNames.contains('notes')) {
+          db.createObjectStore('notes', { keyPath: 'id' });
+        }
       },
     })
       .then(db => {
@@ -52,10 +56,13 @@ class IndexedDBService {
    */
   async saveShot(shot) {
     const db = await this.init();
+    const storageKey = String(shot.storageKey || shot.name || shot.id || Date.now());
 
     // Add source tag and storage timestamp
     const shotWithMeta = {
       ...shot,
+      name: storageKey,
+      storageKey,
       source: 'browser',
       uploadedAt: Date.now(),
     };
@@ -75,6 +82,7 @@ class IndexedDBService {
     // Ensure all have source tag
     return shots.map(shot => ({
       ...shot,
+      storageKey: shot.storageKey || shot.name || String(shot.id || ''),
       source: 'browser',
     }));
   }
@@ -149,14 +157,43 @@ class IndexedDBService {
   }
 
   /**
+   * Save notes for a shot
+   * @param {Object} notes - Notes object with id, rating, beanType, etc.
+   */
+  async saveNotes(notes) {
+    const db = await this.init();
+    await db.put('notes', notes);
+  }
+
+  /**
+   * Get notes for a shot by ID
+   * @param {string} id - Shot ID
+   * @returns {Object|undefined} Notes object or undefined
+   */
+  async getNotes(id) {
+    const db = await this.init();
+    return db.get('notes', id);
+  }
+
+  /**
+   * Delete notes for a shot
+   * @param {string} id - Shot ID
+   */
+  async deleteNotes(id) {
+    const db = await this.init();
+    await db.delete('notes', id);
+  }
+
+  /**
    * Clear all browser storage (for reset/cleanup)
    */
   async clearAll() {
     const db = await this.init();
-    const tx = db.transaction(['shots', 'profiles'], 'readwrite');
+    const tx = db.transaction(['shots', 'profiles', 'notes'], 'readwrite');
     await Promise.all([
       tx.objectStore('shots').clear(),
       tx.objectStore('profiles').clear(),
+      tx.objectStore('notes').clear(),
       tx.done,
     ]);
   }

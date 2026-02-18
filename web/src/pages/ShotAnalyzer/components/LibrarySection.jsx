@@ -25,6 +25,7 @@ export function LibrarySection({
   onExportAll,
   onDeleteAll,
   getMatchStatus,
+  getActiveStatus,
   isLoading,
 }) {
   const getSortIcon = k => {
@@ -149,16 +150,17 @@ export function LibrarySection({
                   Profile
                 </th>
               )}
-              <th className='px-2 py-3 text-right' style={{ width: widthAction }}></th>
+              <th className='px-2 py-3 text-right' style={{ width: widthAction }} />
             </tr>
           </thead>
           <tbody className='text-sm'>
             {items.map(item => (
               <LibraryRow
-                key={`${item.source || 'unknown'}-${item.id || item.name}`}
+                key={`${item.source || 'unknown'}-${item.storageKey || item.name || item.id || item.label}`}
                 item={item}
                 isShot={isShot}
                 isMatch={getMatchStatus(item)}
+                isActive={getActiveStatus ? getActiveStatus(item) : false}
                 onLoad={onLoad}
                 onExport={onExport}
                 onDelete={onDelete}

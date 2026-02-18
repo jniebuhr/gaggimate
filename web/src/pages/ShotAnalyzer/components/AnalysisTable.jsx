@@ -142,6 +142,35 @@ export function AnalysisTable({
             colorClass='text-white shadow-sm'
           />
         )}
+        {results.highScaleDelay && (
+          <StatusBadge
+            label='HIGH SCALE DELAY'
+            style={{
+              backgroundColor: utilityColors.warningOrange,
+              borderColor: utilityColors.warningOrange,
+            }}
+            colorClass='text-white shadow-sm'
+            title={
+              results.highScaleDelayMs
+                ? `Estimated scale delay exceeds 2000 ms (${results.highScaleDelayMs} ms), or the shot may have been manually stopped near the target. Please review scale-delay settings.`
+                : 'Estimated scale delay exceeds 2000 ms, or the shot may have been manually stopped near the target. Please review scale-delay settings.'
+            }
+          />
+        )}
+        {results.delayReviewHint && (
+          <StatusBadge
+            label={
+              results.delayReviewPhaseNumber
+                ? `REVIEW PHASE ${results.delayReviewPhaseNumber}`
+                : 'PHASE REVIEW ADVISED'
+            }
+            colorClass='bg-sky-600 text-white border-sky-700'
+            title={
+              results.delayReviewMessage ||
+              'Unusually high inferred delay detected.'
+            }
+          />
+        )}
         {results.isAutoAdjusted && (
           <StatusBadge label='AUTO-DELAY' colorClass='bg-blue-600 text-white border-blue-700' />
         )}
@@ -538,7 +567,7 @@ function CellContent({ phase, col, results, isTotal = false }) {
 
   let targetDisplay = null;
   let predictionDisplay = null;
-  let warningDisplay = null;
+  let warningDisplays = [];
 
   // Relative font sizing for sub-elements (0.85em) ensures they scale with zoom
   const subTextSize = { fontSize: '0.85em' };
@@ -608,14 +637,14 @@ function CellContent({ phase, col, results, isTotal = false }) {
       const predVal = sf(phase.prediction.finalWeight);
 
       const isPredHit = phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric';
-      const predColorClass = isPredHit
-        ? 'text-[#DC2626] dark:text-red-500'
-        : 'text-blue-600 dark:text-blue-400';
+      const predColor = isPredHit
+        ? utilityColors.predictionStopRed
+        : utilityColors.predictionInfoBlue;
 
       predictionDisplay = (
         <div
-          style={subTextSize}
-          className={`mt-0.5 flex items-center justify-end gap-1 leading-tight font-bold ${predColorClass}`}
+          style={{ ...subTextSize, color: predColor }}
+          className='mt-0.5 flex items-center justify-end gap-1 leading-tight font-bold'
         >
           <FontAwesomeIcon icon={faCalculator} style={iconSize} className='opacity-60' />
           <span>
@@ -628,14 +657,31 @@ function CellContent({ phase, col, results, isTotal = false }) {
   }
 
   if (isWeightCol && phase.scaleLost) {
-    warningDisplay = (
+    warningDisplays.push(
       <div
+        key='scale-lost-warning'
         style={{ ...subTextSize, color: utilityColors.warningOrange }}
         className='mt-0.5 flex items-center justify-end gap-1 font-bold'
       >
         <FontAwesomeIcon icon={faExclamationTriangle} />
         <span>Scale Lost</span>
-      </div>
+      </div>,
+    );
+  }
+
+  if (isWeightCol && phase.highScaleDelay) {
+    warningDisplays.push(
+      <div
+        key='high-scale-delay-warning'
+        style={{ ...subTextSize, color: utilityColors.warningOrange }}
+        className='mt-0.5 flex items-center justify-end gap-1 font-bold'
+      >
+        <FontAwesomeIcon icon={faExclamationTriangle} />
+        <span>
+          High Scale Delay
+          {phase.estimatedScaleDelayMs ? ` (${phase.estimatedScaleDelayMs} ms)` : ''}
+        </span>
+      </div>,
     );
   }
 
@@ -654,7 +700,7 @@ function CellContent({ phase, col, results, isTotal = false }) {
       )}
       {targetDisplay}
       {predictionDisplay}
-      {warningDisplay}
+      {warningDisplays}
     </div>
   );
 }

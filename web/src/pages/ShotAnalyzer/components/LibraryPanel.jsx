@@ -9,11 +9,13 @@
  * - Pins matching shots/profiles to the top of the list.
  */
 
-import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
+import { useState, useEffect, useContext, useRef } from 'preact/hooks';
 import { StatusBar } from './StatusBar';
+import { NotesBar } from './NotesBar';
 import { LibrarySection } from './LibrarySection';
 import { libraryService } from '../services/LibraryService';
 import { indexedDBService } from '../services/IndexedDBService';
+import { notesService } from '../services/NotesService';
 import { ApiServiceContext } from '../../../services/ApiService';
 import { cleanName } from '../utils/analyzerUtils';
 import { downloadJson } from '../../../utils/download';
@@ -35,6 +37,12 @@ export function LibraryPanel({
   isMatchingShot = false, // Used for highlighting
   isSearchingProfile = false, // Spinner state for profile search
 }) {
+  const getShotStorageKey = shot => {
+    if (!shot) return '';
+    if (shot.source === 'gaggimate') return String(shot.id || '');
+    return String(shot.storageKey || shot.name || shot.id || '');
+  };
+
   const apiService = useContext(ApiServiceContext);
   const panelRef = useRef(null);
   const sentinelRef = useRef(null);
@@ -46,6 +54,7 @@ export function LibraryPanel({
   const [collapsed, setCollapsed] = useState(true);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false); // Specific state for import spinner
+  const [notesExpanded, setNotesExpanded] = useState(false);
 
   // Data State
   const [shots, setShots] = useState([]);
@@ -260,11 +269,16 @@ export function LibraryPanel({
     shotsSort,
     debouncedProfilesSearch,
     profilesSort,
-    currentShot,
-    currentProfile,
-    currentShotName,
-    currentProfileName,
   ]);
+
+  // Re-sort with updated pins when library panel is opened
+  const prevCollapsed = useRef(collapsed);
+  useEffect(() => {
+    if (prevCollapsed.current && !collapsed) {
+      refreshLibraries();
+    }
+    prevCollapsed.current = collapsed;
+  }, [collapsed]);
 
   // --- Action Handlers ---
 
@@ -285,8 +299,11 @@ export function LibraryPanel({
   const handleDelete = async item => {
     if (!confirm(`Are you sure you want to delete "${item.name || item.id}"?`)) return;
     try {
-      if (item.duration !== undefined || item.samples)
-        await libraryService.deleteShot(item.id || item.name, item.source);
+      if (item.duration !== undefined || item.samples) {
+        const deleteKey =
+          item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
+        await libraryService.deleteShot(deleteKey, item.source);
+      }
       else await libraryService.deleteProfile(item.name || item.label, item.source);
       refreshLibraries();
     } catch (e) {
@@ -304,15 +321,38 @@ export function LibraryPanel({
           const text = await file.text();
           const data = JSON.parse(text);
           if (data.samples) {
+            const source = importMode === 'browser' ? 'browser' : 'temp';
+            const storageKey = file.name;
+            let notesWithId = null;
+
+            // Extract notes from imported JSON (if present)
+            const importedNotes = data.notes;
+            const shotData = { ...data };
+            delete shotData.notes; // Don't store notes inside shot data
+
             const shot = {
-              ...data,
+              ...shotData,
+              id: String(shotData.id ?? storageKey),
               name: file.name,
-              id: file.name,
-              data,
-              source: importMode === 'browser' ? 'browser' : 'temp',
+              storageKey,
+              data: shotData,
+              source,
             };
-            if (importMode === 'browser') await indexedDBService.saveShot(shot);
-            onShotLoad(data, file.name);
+            if (source === 'browser') await indexedDBService.saveShot(shot);
+
+            // Save imported notes via NotesService
+            if (importedNotes && typeof importedNotes === 'object') {
+              notesWithId = {
+                ...notesService.getDefaults(storageKey),
+                ...importedNotes,
+                id: storageKey,
+              };
+              await notesService.saveNotes(storageKey, source, notesWithId);
+            }
+
+            // Keep loaded object aligned with storage metadata (name/storageKey),
+            // so NotesBar can resolve notes immediately after import.
+            onShotLoad(notesWithId ? { ...shot, notes: notesWithId } : shot, file.name);
           } else if (data.phases) {
             // Use profile label from JSON as canonical name (not the filename)
             const profileName = data.label || cleanName(file.name);
@@ -340,10 +380,12 @@ export function LibraryPanel({
     try {
       onShotLoadStart();
       setCollapsed(true);
+      const loadKey =
+        item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
       const full = item.loaded
         ? item
-        : await libraryService.loadShot(item.id || item.name, item.source);
-      onShotLoad(full, item.name || item.id);
+        : await libraryService.loadShot(loadKey, item.source);
+      onShotLoad(full, item.name || item.storageKey || item.id);
     } catch (e) {
       console.error('Failed to load shot:', e);
     }
@@ -374,30 +416,48 @@ export function LibraryPanel({
       {shouldBeFixed && <div style={{ height: `${barRect.height}px` }} />}
 
       <div ref={barRef} style={fixedBarStyle}>
-        <StatusBar
-          currentShot={currentShot}
-          currentProfile={currentProfile}
-          currentShotName={currentShotName}
-          currentProfileName={currentProfileName}
-          onUnloadShot={onShotUnload}
-          onUnloadProfile={onProfileUnload}
-          onTogglePanel={() => setCollapsed(!collapsed)}
-          onImport={handleImport}
-          onShowStats={onShowStats}
-          isMismatch={
-            currentShot &&
-            currentProfile &&
-            cleanName(currentShot.profile || '').toLowerCase() !==
-              cleanName(currentProfileName).toLowerCase()
-          }
-          importMode={importMode}
-          onImportModeChange={onImportModeChange}
-          isExpanded={!collapsed}
-          isMatchingProfile={isMatchingProfile}
-          isMatchingShot={isMatchingShot}
-          isImporting={importing}
-          isSearchingProfile={isSearchingProfile} // <- pass down
-        />
+        <div
+          className={`bg-base-100/80 border-base-content/10 overflow-hidden border backdrop-blur-md transition-all duration-200 ${
+            !collapsed
+              ? 'rounded-t-xl border-b-0 shadow-none'
+              : 'rounded-xl shadow-lg'
+          }`}
+        >
+          <StatusBar
+            currentShot={currentShot}
+            currentProfile={currentProfile}
+            currentShotName={currentShotName}
+            currentProfileName={currentProfileName}
+            onUnloadShot={onShotUnload}
+            onUnloadProfile={onProfileUnload}
+            onTogglePanel={() => setCollapsed(!collapsed)}
+            onImport={handleImport}
+            onShowStats={onShowStats}
+            isMismatch={
+              currentShot &&
+              currentProfile &&
+              cleanName(currentShot.profile || '').toLowerCase() !==
+                cleanName(currentProfileName).toLowerCase()
+            }
+            importMode={importMode}
+            onImportModeChange={onImportModeChange}
+            isExpanded={!collapsed}
+            hasNotesBar={!!currentShot}
+            isImporting={importing}
+            isSearchingProfile={isSearchingProfile}
+          />
+          {currentShot && (
+            <NotesBar
+              currentShot={currentShot}
+              currentShotName={currentShotName}
+              shotList={shots}
+              onNavigate={handleLoadShot}
+              isExpanded={!collapsed}
+              notesExpanded={notesExpanded}
+              onToggleNotesExpanded={() => setNotesExpanded(v => !v)}
+            />
+          )}
+        </div>
       </div>
 
       {!collapsed && (
@@ -450,7 +510,10 @@ export function LibraryPanel({
                       )
                     ) {
                       for (const s of shots)
-                        await libraryService.deleteShot(s.id || s.name, s.source);
+                        await libraryService.deleteShot(
+                          s.source === 'gaggimate' ? s.id : s.storageKey || s.name || s.id,
+                          s.source,
+                        );
                       refreshLibraries();
                     }
                   }}
@@ -458,6 +521,11 @@ export function LibraryPanel({
                     currentProfile &&
                     cleanName(item.profile || '').toLowerCase() ===
                       cleanName(currentProfileName).toLowerCase()
+                  }
+                  getActiveStatus={item =>
+                    currentShot &&
+                    getShotStorageKey(item) === getShotStorageKey(currentShot) &&
+                    item.source === currentShot.source
                   }
                 />
 
@@ -513,6 +581,11 @@ export function LibraryPanel({
                     currentShot &&
                     cleanName(item.name || item.label || '').toLowerCase() ===
                       cleanName(currentShot.profile || '').toLowerCase()
+                  }
+                  getActiveStatus={item =>
+                    currentProfile &&
+                    cleanName(item.name || item.label || '').toLowerCase() ===
+                      cleanName(currentProfileName).toLowerCase()
                   }
                 />
               </div>
