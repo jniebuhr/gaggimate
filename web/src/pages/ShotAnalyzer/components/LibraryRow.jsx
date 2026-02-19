@@ -5,20 +5,26 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
-import { formatTimestamp } from '../utils/analyzerUtils';
+import { cleanName, formatTimestamp } from '../utils/analyzerUtils';
 
-export function LibraryRow({ item, isMatch, isShot, onLoad, onExport, onDelete }) {
+export function LibraryRow({ item, isMatch, isActive, isShot, onLoad, onExport, onDelete }) {
   const itemName = item.name || item.label || 'Unknown';
-  const displayName = isShot ? `#${item.id || itemName}` : itemName.replace(/\.json$/i, '');
+  const displayName = isShot
+    ? item.source === 'gaggimate'
+      ? `#${item.id || itemName}`
+      : cleanName(item.name || item.storageKey || item.id || itemName)
+    : itemName.replace(/\.json$/i, '');
 
   // Format Date & Time
   const dateStr = formatTimestamp(item.timestamp || item.shotDate);
   const [datePart, timePart] = dateStr.includes(',') ? dateStr.split(', ') : [dateStr, ''];
 
   // Consistent full border highlighting
-  const rowClasses = isMatch
-    ? 'bg-primary/10 border border-primary/40 shadow-sm'
-    : 'hover:bg-base-content/5 border border-transparent';
+  const rowClasses = isActive
+    ? 'bg-primary/20 border-2 border-primary/60 shadow-md'
+    : isMatch
+      ? 'bg-primary/10 border border-primary/40 shadow-sm'
+      : 'hover:bg-base-content/5 border border-transparent';
 
   return (
     <tr
@@ -27,7 +33,7 @@ export function LibraryRow({ item, isMatch, isShot, onLoad, onExport, onDelete }
     >
       <td className='px-3 py-2 first:rounded-l-md'>
         <span
-          className={`block truncate text-sm ${isMatch ? 'text-primary font-bold' : 'font-medium'}`}
+          className={`block truncate text-sm ${isActive ? 'text-primary font-bold' : isMatch ? 'text-primary font-bold' : 'font-medium'}`}
         >
           {displayName}
         </span>

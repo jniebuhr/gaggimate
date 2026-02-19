@@ -7,7 +7,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp'; // Added ChevronUp
-import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
 import {
   ANALYZER_DB_KEYS,
@@ -180,7 +180,7 @@ export function ColumnControls({
                 onClick={deletePreset}
                 className='btn btn-ghost btn-xs text-error/60 hover:text-error h-6 min-h-0'
               >
-                <FontAwesomeIcon icon={faTrash} />
+                <FontAwesomeIcon icon={faTrashCan} />
               </button>
             )}
           </div>
