@@ -1,5 +1,9 @@
 #include "GaggiMateServer.h"
 
+namespace std {
+    class any;
+}
+
 GaggiMateServer::GaggiMateServer() {
     // Constructor
 }
@@ -123,7 +127,7 @@ void GaggiMateServer::checkSystemInfoSend() {
 
 void GaggiMateServer::handleBLEData(const uint8_t* data, size_t length) {
     if (message_callback) {
-        GaggiMessage message;
+        ProtocolMessage<std::any> message;
         if (NanopbProtocol::decodeMessage(data, length, &message)) {
             message_callback(message);
         }

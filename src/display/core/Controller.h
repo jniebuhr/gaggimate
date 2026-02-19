@@ -8,6 +8,7 @@
 #include <WiFi.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
+#include "NimBLEClientController.h"
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/Driver.h>
 #include <display/ui/default/DefaultUI.h>
@@ -33,6 +34,7 @@ class Controller {
     void setPumpModelCoeffs();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
+    void setupInfos();
 
     int getMode() const;
 
@@ -99,7 +101,7 @@ class Controller {
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    GaggiMateClient *getClientController() { return &clientController; }
+    NimBLEClientController *getClientController() { return &clientController; }
 
   private:
     // Initialization methods
@@ -128,7 +130,8 @@ class Controller {
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
 #endif
-    GaggiMateClient clientController;
+    NimBLEClientController clientController;
+    GaggiMateClient _client;
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};

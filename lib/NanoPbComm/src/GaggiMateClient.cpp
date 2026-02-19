@@ -96,7 +96,7 @@ void GaggiMateClient::registerMessageCallback(const protocol_message_callback_t&
 
 void GaggiMateClient::handleBLEData(const uint8_t* data, size_t length) {
     if (message_callback) {
-        GaggiMessage message;
+        ProtocolMessage<std::any> message;
         if (NanopbProtocol::decodeMessage(data, length, &message)) {
             message_callback(message);
         }

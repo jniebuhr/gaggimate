@@ -5,8 +5,13 @@
 #include <functional>
 #include <pb_encode.h>
 #include <pb_decode.h>
+
 #include "protocol/gaggimate.pb.h"
 #include "protocol/header.h"
+
+namespace std {
+    class any;
+}
 
 template <typename T> struct ProtocolMessage {
     MessageType type;
@@ -17,7 +22,7 @@ template <typename T> struct ProtocolMessage {
 };
 
 // Transport-agnostic protocol callback type
-template <typename T> typedef std::function<void(const ProtocolMessage<T> &)> protocol_message_callback_t;
+typedef std::function<void(const ProtocolMessage<std::any> &)> protocol_message_callback_t;
 
 /**
  * Pure protocol layer for GaggiMate communication using nanopb.

@@ -83,10 +83,10 @@ void WebUIPlugin::loop() {
     const long now = millis();
     if (otaInitScheduled && now >= otaInitTime) {
         auto clientController = controller->getClientController();
-        if (clientController && clientController->isConnected() && clientController->getNativeClient()) {
+        if (clientController && clientController->isConnected() && clientController->getClient()) {
 
             bool initSuccess = false;
-            auto nativeClient = clientController->getNativeClient();
+            auto nativeClient = clientController->getClient();
             
             if (nativeClient != nullptr && ota != nullptr) {
 
