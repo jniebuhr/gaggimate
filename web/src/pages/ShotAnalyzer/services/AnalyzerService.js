@@ -6,6 +6,11 @@
 
 const PREDICTIVE_WINDOW_MS = 4000;
 const BOUNDARY_MATCH_TOLERANCE_MS = 800;
+// Last-phase fallback thresholds (g)
+const LAST_PHASE_UNDERSHOOT_MIN_G = 2;
+const LAST_PHASE_UNDERSHOOT_MAX_G = 6;
+const LAST_PHASE_OVERSHOOT_MAX_G = 4;
+const LAST_PHASE_ESTIMATED_DELAY_MAX_MS = 4000;
 
 /**
  * Helper: Calculate statistics for a metric across samples
@@ -122,6 +127,13 @@ function getPhaseWeightRate(samples, isLastPhase) {
   const anchorIndex = getPhaseAnchorIndexForWeightRate(samples, isLastPhase);
   if (anchorIndex < 0) return 0;
   return getRegressionWeightRate(samples, anchorIndex, PREDICTIVE_WINDOW_MS);
+}
+
+function getSampleInstantWeightRate(sample) {
+  if (!sample) return 0;
+  if (sample.vf !== undefined && sample.vf > 0.1) return sample.vf;
+  if (sample.fl > 0.1) return sample.fl;
+  return 0;
 }
 
 function isDirectionallyValidLookAhead(operator, currentValue, nextValue) {
@@ -443,11 +455,15 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                 }
 
                 const isWeightTarget = tgt.type === 'volumetric' || tgt.type === 'weight';
-                if (isLastPhase && isWeightTarget && lastNonExtendedSample.v > tgt.value + 4) {
+                if (
+                  isLastPhase &&
+                  isWeightTarget &&
+                  lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G
+                ) {
                   continue;
                 }
                 const enforceLastPhaseWeightCap = isLastPhase && isWeightTarget && tgt.operator === 'gte';
-                const maxAllowedWeightStop = tgt.value + 4;
+                const maxAllowedWeightStop = tgt.value + LAST_PHASE_OVERSHOOT_MAX_G;
                 const isWithinLastPhaseWeightCap = value =>
                   !enforceLastPhaseWeightCap ||
                   (typeof value === 'number' && isFinite(value) && value <= maxAllowedWeightStop);
@@ -620,11 +636,15 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                 }
 
                 const isWeightTarget = tgt.type === 'volumetric' || tgt.type === 'weight';
-                if (isLastPhase && isWeightTarget && lastNonExtendedSample.v > tgt.value + 4) {
+                if (
+                  isLastPhase &&
+                  isWeightTarget &&
+                  lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G
+                ) {
                   continue;
                 }
                 const enforceLastPhaseWeightCap = isLastPhase && isWeightTarget && tgt.operator === 'gte';
-                const maxAllowedWeightStop = tgt.value + 4;
+                const maxAllowedWeightStop = tgt.value + LAST_PHASE_OVERSHOOT_MAX_G;
                 const isWithinLastPhaseWeightCap = value =>
                   !enforceLastPhaseWeightCap ||
                   (typeof value === 'number' && isFinite(value) && value <= maxAllowedWeightStop);
@@ -836,31 +856,31 @@ export function calculateShotMetrics(shotData, profileData, settings) {
               const finalSample = samples[samples.length - 1];
               const finalW = finalSample.v;
               const lastNonExtendedIndex = getLastNonExtendedIndex(samples);
-              const stopW =
-                lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex].v : finalSample.v;
+              const stopSample =
+                lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex] : finalSample;
+              const stopW = stopSample.v;
 
-              // Hard guard: if the shot already exceeded target by >4g at stop moment,
+              // If the shot already exceeded target above configured overshoot cap,
               // treat as manual/other stop (never weight stop).
-              if (stopW > weightTarget.value + 4) {
-                analyzerDebug(debugEnabled, `Last-phase weight stop blocked (>+4g)`, {
-                  shotId: shotData.id,
-                  phaseName: displayName,
-                  stopWeight: stopW,
-                  targetWeight: weightTarget.value,
-                });
+              if (stopW > weightTarget.value + LAST_PHASE_OVERSHOOT_MAX_G) {
+                analyzerDebug(
+                  debugEnabled,
+                  `Last-phase weight stop blocked (>+${LAST_PHASE_OVERSHOOT_MAX_G}g)`,
+                  {
+                    shotId: shotData.id,
+                    phaseName: displayName,
+                    stopWeight: stopW,
+                    targetWeight: weightTarget.value,
+                  },
+                );
                 // Intentionally no weight-stop fallback.
               } else {
                 const currentRate = phaseWeightRate;
                 const overshoot = stopW - weightTarget.value;
                 const undershootAtEnd = weightTarget.value - finalW;
-                const finalInstantRate =
-                  finalSample.vf !== undefined && finalSample.vf > 0.1
-                    ? finalSample.vf
-                    : finalSample.fl > 0.1
-                      ? finalSample.fl
-                      : 0;
+                const stopInstantRate = getSampleInstantWeightRate(stopSample);
 
-                const conservativeRateCandidates = [currentRate, finalInstantRate].filter(
+                const conservativeRateCandidates = [currentRate, stopInstantRate].filter(
                   r => r != null && isFinite(r) && r > 0.1,
                 );
                 const conservativeRate =
@@ -868,16 +888,17 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                     ? Math.min(...conservativeRateCandidates)
                     : 0;
 
-                // Fallback A: stopped above target within +4g
-                const stoppedAboveTargetInRange = overshoot >= 0 && overshoot <= 4;
+                // Fallback A: stopped above target
+                const stoppedAboveTargetInRange =
+                  overshoot >= 0 && overshoot <= LAST_PHASE_OVERSHOOT_MAX_G;
 
                 if (stoppedAboveTargetInRange && currentRate > 0.1) {
                   // Assume overshoot is due to scale delay: Delay = Overshoot / FlowRate
                   // (If overshoot is negative/zero, delay is 0)
                   const calculatedDelay = Math.max(0, (overshoot / currentRate) * 1000);
 
-                  // Allow plausible delay (0-4000ms)
-                  if (calculatedDelay <= 4000) {
+                  // Allow plausible delay (0..configured max)
+                  if (calculatedDelay <= LAST_PHASE_ESTIMATED_DELAY_MAX_MS) {
                     setEstimatedScaleDelay(calculatedDelay);
 
                     exitReason = formatStopReason(weightTarget.type);
@@ -897,17 +918,18 @@ export function calculateShotMetrics(shotData, profileData, settings) {
                   }
                 }
 
-                // Fallback B: finished below target by up to 6g, likely due to too aggressive scale-delay setting.
+                // Fallback B: finished below target
                 // Only classify when estimated delay is clearly high (>2000ms).
                 const stoppedBelowTargetHighDelayCandidate =
-                  undershootAtEnd >= 2 && undershootAtEnd <= 6;
+                  undershootAtEnd >= LAST_PHASE_UNDERSHOOT_MIN_G &&
+                  undershootAtEnd <= LAST_PHASE_UNDERSHOOT_MAX_G;
                 if (
                   !exitType &&
                   stoppedBelowTargetHighDelayCandidate &&
                   conservativeRate > 0.1
                 ) {
                   const estimatedDelay = (undershootAtEnd / conservativeRate) * 1000;
-                  if (estimatedDelay > 2000 && estimatedDelay <= 4000) {
+                  if (estimatedDelay > 2000 && estimatedDelay <= LAST_PHASE_ESTIMATED_DELAY_MAX_MS) {
                     setEstimatedScaleDelay(estimatedDelay);
 
                     exitReason = formatStopReason(weightTarget.type);
@@ -931,8 +953,8 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             }
           }
 
-          // Independent high-delay warning detection for last phase (both undershoot/overshoot),
-          // capped to +/-4g to avoid flagging clear manual stops.
+          // Independent high-delay warning detection for last phase (undershoot up to configured max,
+          // overshoot up to configured max) to avoid flagging clear manual stops.
           if (isLastPhase && isBrewByWeight && !scaleConnectionBrokenPermanently) {
             const weightTarget = profilePhase.targets.find(
               t => t.type === 'weight' || t.type === 'volumetric',
@@ -941,15 +963,11 @@ export function calculateShotMetrics(shotData, profileData, settings) {
               const finalSample = samples[samples.length - 1];
               const finalW = finalSample.v;
               const lastNonExtendedIndex = getLastNonExtendedIndex(samples);
-              const stopW =
-                lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex].v : finalSample.v;
-              const finalInstantRate =
-                finalSample.vf !== undefined && finalSample.vf > 0.1
-                  ? finalSample.vf
-                  : finalSample.fl > 0.1
-                    ? finalSample.fl
-                    : 0;
-              const rateCandidates = [phaseWeightRate, finalInstantRate].filter(
+              const stopSample =
+                lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex] : finalSample;
+              const stopW = stopSample.v;
+              const stopInstantRate = getSampleInstantWeightRate(stopSample);
+              const rateCandidates = [phaseWeightRate, stopInstantRate].filter(
                 r => r != null && isFinite(r) && r > 0.1,
               );
               const conservativeRate = rateCandidates.length > 0 ? Math.min(...rateCandidates) : 0;
@@ -957,13 +975,13 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 
               // Ignore clear manual overshoot and tiny deltas.
               if (
-                stopW <= weightTarget.value + 4 &&
+                stopW <= weightTarget.value + LAST_PHASE_OVERSHOOT_MAX_G &&
                 conservativeRate > 0.1 &&
-                absDelta >= 2 &&
-                absDelta <= 6
+                absDelta >= LAST_PHASE_UNDERSHOOT_MIN_G &&
+                absDelta <= LAST_PHASE_UNDERSHOOT_MAX_G
               ) {
                 const estimatedDelay = (absDelta / conservativeRate) * 1000;
-                if (estimatedDelay <= 4000) {
+                if (estimatedDelay <= LAST_PHASE_ESTIMATED_DELAY_MAX_MS) {
                   setEstimatedScaleDelay(estimatedDelay);
                 }
               }

@@ -140,7 +140,7 @@ export function NotesBarExpanded({
                   className={inputCls}
                   value={notes.grindSetting}
                   onChange={e => onInputChange('grindSetting', e.target.value)}
-                  placeholder='e.g., Eureka Zero 11.1'
+                  placeholder='e.g., 2.5, Medium-Fine'
                 />
               </div>
             </div>
