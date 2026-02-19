@@ -4,6 +4,7 @@
   "type": "standard",
   "description": "",
   "temperature": 93,
+  "utility": true,
   "phases": [
     {
       "name": "Pressurize",

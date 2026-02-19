@@ -154,3 +154,23 @@ def onProfileScreenLoad(event_struct):
 def onGrindScreenLoad(event_struct):
     return
 
+
+def onProfileSettings(event_struct):
+    return
+
+
+def onProfileSave(event_struct):
+    return
+
+
+def onProfileAccept(event_struct):
+    return
+
+
+def onProfileSaveAsNew(event_struct):
+    return
+
+
+def onVolumetricHold(event_struct):
+    return
+

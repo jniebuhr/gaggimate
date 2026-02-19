@@ -8,6 +8,8 @@ class WaveshareDriver : public Driver {
     inline bool isCompatible() override { return true; };
     void init() override;
     void setBrightness(int brightness) override { panel.setBrightness(brightness); };
+    bool supportsSDCard() override;
+    bool installSDCard() override;
 
     static WaveshareDriver *getInstance() {
         if (instance == nullptr) {

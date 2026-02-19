@@ -44,6 +44,11 @@ class SimplePID {
     void setKd(float val) { gainKd = val; };
     void setKFF(float val) { gainFF = val; };
 
+    // Disturbance feedforward methods
+    void setDisturbanceFeedforward(float disturbance, float gainDFF);
+    void setDisturbanceGain(float gainDFF) { gainDistFF = gainDFF; };
+    float getDisturbanceGain() { return gainDistFF; };
+
   private:
     // setpoint filtering
     void setpointFiltering(float freq);
@@ -66,6 +71,12 @@ class SimplePID {
     float gainKi = 0.0f; // Integral gain (multiplies by Kp if Kp,Ki,Kd are strictly parallèle (no factoring by Kp))
     float gainKd = 0.0f; // Derivative gain (by default no derivative term)
     float gainFF = 0.5 * 1000.0f / 2.5f; // Feedforward gain
+
+    // Disturbance feedforward variables
+    float gainDistFF = 0.0f;                     // Disturbance feedforward gain
+    float currentDisturbance = 0.0f;             // Current disturbance value
+    bool isDisturbanceFeedForwardActive = false; // Flag to activate disturbance feedforward
+
     float feedback_integralState = 0.0f; // Integral state
     float prevError = 0.0f;              // Previous error for derivative calculation
     float prevOutput = 0.0f;             // Previous output for derivative calculation

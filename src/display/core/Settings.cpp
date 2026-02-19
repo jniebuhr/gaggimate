@@ -55,43 +55,44 @@ Settings::Settings() {
     steamPumpCutoff = preferences.getFloat("spc", DEFAULT_STEAM_PUMP_CUTOFF);
     historyIndex = preferences.getInt("hi", 0);
     autowakeupEnabled = preferences.getBool("ab_en", false);
-    
+
     // Load schedule format: "time1|days1;time2|days2" where days is 7-bit string (e.g., "1111100" for weekdays only)
     String schedulesStr = preferences.getString("ab_schedules", "");
     autowakeupSchedules.clear();
-    
+
     if (schedulesStr.length() > 0) {
         int start = 0;
         int end = schedulesStr.indexOf(';');
-        
+
         while (end != -1 || start < schedulesStr.length()) {
             String scheduleStr = (end != -1) ? schedulesStr.substring(start, end) : schedulesStr.substring(start);
-            
+
             int pipePos = scheduleStr.indexOf('|');
             if (pipePos != -1) {
                 String timeStr = scheduleStr.substring(0, pipePos);
                 String daysStr = scheduleStr.substring(pipePos + 1);
-                
+
                 AutoWakeupSchedule schedule;
                 schedule.time = timeStr;
-                
+
                 if (daysStr.length() == 7) {
                     for (int i = 0; i < 7; i++) {
                         schedule.days[i] = (daysStr.charAt(i) == '1');
                     }
                 }
-                
+
                 autowakeupSchedules.push_back(schedule);
             }
-            
-            if (end == -1) break;
+
+            if (end == -1)
+                break;
             start = end + 1;
             end = schedulesStr.indexOf(';', start);
         }
     }
-    
+
     if (autowakeupSchedules.empty()) {
-        autowakeupSchedules.push_back(AutoWakeupSchedule("07:00"));
+        autowakeupSchedules.emplace_back(AutoWakeupSchedule("07:00"));
     }
 
     // Display settings
@@ -109,6 +110,7 @@ Settings::Settings() {
     sunriseExtBrightness = preferences.getInt("sr_exb", 255);
     emptyTankDistance = preferences.getInt("sr_ed", 200);
     fullTankDistance = preferences.getInt("sr_fd", 50);
+    altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
 
     preferences.end();
 
@@ -446,6 +448,8 @@ void Settings::setFullTankDistance(int full_tank_distance) {
     save();
 }
 
+void Settings::setAltRelayFunction(int alt_relay_function) { altRelayFunction = alt_relay_function; }
+
 void Settings::setAutoWakeupEnabled(bool enabled) {
     autowakeupEnabled = enabled;
     save();
@@ -513,19 +517,20 @@ void Settings::doSave() {
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
     preferences.putBool("ab_en", autowakeupEnabled);
-    
+
     // Save schedule format
     String schedulesForSave = "";
     for (size_t i = 0; i < autowakeupSchedules.size(); i++) {
-        if (i > 0) schedulesForSave += ";";
+        if (i > 0)
+            schedulesForSave += ";";
         schedulesForSave += autowakeupSchedules[i].time + "|";
-        
+
         // Convert days array to 7-bit string
         for (int j = 0; j < 7; j++) {
             schedulesForSave += autowakeupSchedules[i].days[j] ? "1" : "0";
         }
     }
-    preferences.putString("ab_schedules", schedulesForSave);   
+    preferences.putString("ab_schedules", schedulesForSave);
 
     // Display settings
     preferences.putInt("main_b", mainBrightness);
@@ -542,11 +547,12 @@ void Settings::doSave() {
     preferences.putInt("sr_exb", sunriseExtBrightness);
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);
+    preferences.putInt("alt_relay", altRelayFunction);
 
     preferences.end();
 }
 
-void Settings::loopTask(void *arg) {
+[[noreturn]] void Settings::loopTask(void *arg) {
     auto *settings = static_cast<Settings *>(arg);
     while (true) {
         settings->doSave();

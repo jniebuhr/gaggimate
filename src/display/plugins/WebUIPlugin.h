@@ -71,6 +71,7 @@ class WebUIPlugin : public Plugin {
     bool otaInitScheduled = false;
     unsigned long otaInitTime = 0;
     String updateComponent = "";
+    float currentBluetoothWeight = 0.0f;
 };
 
 #endif // WEBUIPLUGIN_H

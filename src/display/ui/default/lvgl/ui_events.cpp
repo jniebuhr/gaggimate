@@ -4,8 +4,12 @@
 // Project name: GaggiMate
 
 #include "../../../main.h"
+#include "../../../plugins/BLEScalePlugin.h"
 #include "ui.h"
 #include <Arduino.h>
+
+// Flag to track if volumetric hold was triggered
+static bool volumetricHoldTriggered = false;
 
 void onBrewCancel(lv_event_t *e) {
     controller.deactivate();
@@ -50,7 +54,7 @@ void onWakeup(lv_event_t *e) {
     controller.setMode(MODE_BREW);
 }
 
-void onLoadStarted(lv_event_t *e) { controller.onScreenReady(); }
+void onLoadStarted(lv_event_t *e) {}
 
 void onStandby(lv_event_t *e) { controller.activateStandby(); }
 
@@ -71,14 +75,14 @@ void onGrindScreen(lv_event_t *e) {
     controller.setMode(MODE_GRIND);
 }
 
-void onTimedClick(lv_event_t *e) {
-    controller.onTargetChange(ProcessTarget::TIME);
-    controller.getUI()->markDirty();
-}
-
 void onVolumetricClick(lv_event_t *e) {
-    controller.onTargetChange(ProcessTarget::VOLUMETRIC);
-    controller.getUI()->markDirty();
+    // Only execute click if hold wasn't triggered
+    if (!volumetricHoldTriggered) {
+        controller.onTargetToggle();
+        controller.getUI()->markDirty();
+    }
+    // Reset the hold flag for next interaction
+    volumetricHoldTriggered = false;
 }
 
 void onPreviousProfile(lv_event_t *e) { controller.getUI()->onPreviousProfile(); }
@@ -135,4 +139,26 @@ void onGrindScreenLoad(lv_event_t *e) {
     lv_obj_set_ext_click_area(ui_GrindScreen_downDurationButton, 40);
     lv_obj_set_ext_click_area(ui_GrindScreen_startButton, 25);
     lv_obj_set_ext_click_area(ui_GrindScreen_ImgButton2, 20);
+}
+
+void onProfileSettings(lv_event_t *e) { controller.getUI()->changeBrewScreenMode(BrewScreenState::Settings); }
+
+void onProfileSave(lv_event_t *e) {
+    controller.onProfileSave();
+    controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew);
+}
+
+void onProfileAccept(lv_event_t *e) { controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew); }
+
+void onProfileSaveAsNew(lv_event_t *e) {
+    controller.onProfileSaveAsNew();
+    controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew);
+}
+
+void onVolumetricHold(lv_event_t *e) {
+    // Set flag to prevent click from firing when button is released
+    volumetricHoldTriggered = true;
+
+    controller.getClientController()->tare();
+    BLEScales.tare();
 }

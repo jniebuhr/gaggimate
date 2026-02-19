@@ -151,3 +151,21 @@
 }
 
 @source inline("{,sm:,md:,lg:,xl:}col-span-{1..12}");
+
+/* Portal-based tooltip styles (used by Tooltip.jsx) */
+.tooltip-portal {
+  @apply bg-neutral text-neutral-content rounded-md px-2 py-1 text-sm;
+  @apply pointer-events-none z-[9999];
+  @apply animate-[fadeIn_150ms_ease-out_forwards] opacity-0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -4,7 +4,6 @@
 rm -rf data/w
 mkdir -p data/w
 mkdir -p data/p
-touch data/p/.keep
 
 # Build web application
 cd web || exit

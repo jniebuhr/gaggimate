@@ -19,9 +19,11 @@ constexpr int TEMP_HISTORY_LENGTH = 20 * 1000 / TEMP_HISTORY_INTERVAL;
 
 int16_t calculate_angle(int set_temp, int range, int offset);
 
+enum class BrewScreenState { Brew, Settings };
+
 class DefaultUI {
   public:
-    DefaultUI(Controller *controller, PluginManager *pluginManager);
+    DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager);
 
     // Default work methods
     void init();
@@ -31,6 +33,7 @@ class DefaultUI {
     // Interface methods
     void changeScreen(lv_obj_t **screen, void (*target_init)(void));
 
+    void changeBrewScreenMode(BrewScreenState state);
     void onProfileSwitch();
     void onNextProfile();
     void onPreviousProfile();
@@ -84,9 +87,15 @@ class DefaultUI {
     int error = false;
     int autotuning = false;
     int volumetricAvailable = false;
+    int bluetoothScales = false;
     int volumetricMode = false;
     int grindActive = false;
     int active = false;
+    int smartGrindActive = false;
+    int grindAvailable = false;
+
+    // Seasonal flags
+    int christmasMode = false;
 
     bool rerender = false;
     unsigned long lastRender = 0;
@@ -94,14 +103,16 @@ class DefaultUI {
     int mode = MODE_STANDBY;
     int currentTemp = 0;
     int targetTemp = 0;
-    int targetDuration = 0;
-    int targetVolume = 0;
+    float targetDuration = 0;
+    float targetVolume = 0;
     int grindDuration = 0;
     float grindVolume = 0.0f;
     int pressureAvailable = 0;
     float pressure = 0.0f;
     int pressureScaling = DEFAULT_PRESSURE_SCALING;
     int heatingFlash = 0;
+    double bluetoothWeight = 0.0;
+    BrewScreenState brewScreenState = BrewScreenState::Brew;
 
     int currentProfileIdx;
     String currentProfileId = "";

@@ -1,9 +1,11 @@
 #include "ShotHistoryPlugin.h"
 
+#include <SD_MMC.h>
 #include <SPIFFS.h>
 #include <cmath>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
+#include <display/core/process/BrewProcess.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
 
@@ -56,6 +58,13 @@ int16_t encodeSigned(float value, float scale, int16_t minValue, int16_t maxValu
     }
     return static_cast<int16_t>(fixed);
 }
+
+String padId(String id, int length = 6) {
+    while (id.length() < length) {
+        id = "0" + id;
+    }
+    return id;
+}
 } // namespace
 
 ShotHistoryPlugin ShotHistory;
@@ -63,24 +72,31 @@ ShotHistoryPlugin ShotHistory;
 void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     controller = c;
     pluginManager = pm;
+    if (controller->isSDCard()) {
+        fs = &SD_MMC;
+        ESP_LOGI("ShotHistoryPlugin", "Logging shot history to SD card");
+    }
     pm->on("controller:brew:start", [this](Event const &) { startRecording(); });
     pm->on("controller:brew:end", [this](Event const &) { endRecording(); });
+    pm->on("controller:brew:clear", [this](Event const &) { endExtendedRecording(); });
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
     pm->on("controller:volumetric-measurement:bluetooth:change",
            [this](Event const &event) { currentBluetoothWeight = event.getFloat("value"); });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
-    xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle, 0);
+    xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 0);
 }
 
 void ShotHistoryPlugin::record() {
-    if (recording && controller->getMode() == MODE_BREW) {
+    bool shouldRecord = recording || extendedRecording;
+
+    if (shouldRecord && (controller->getMode() == MODE_BREW || extendedRecording)) {
         if (!isFileOpen) {
-            if (!SPIFFS.exists("/h")) {
-                SPIFFS.mkdir("/h");
+            if (!fs->exists("/h")) {
+                fs->mkdir("/h");
             }
-            currentFile = SPIFFS.open("/h/" + currentId + ".slog", FILE_WRITE);
+            currentFile = fs->open("/h/" + currentId + ".slog", FILE_WRITE);
             if (currentFile) {
                 isFileOpen = true;
                 // Prepare header
@@ -97,6 +113,7 @@ void ShotHistoryPlugin::record() {
                 header.profileId[sizeof(header.profileId) - 1] = '\0';
                 strncpy(header.profileName, profile.label.c_str(), sizeof(header.profileName) - 1);
                 header.profileName[sizeof(header.profileName) - 1] = '\0';
+                header.phaseTransitionCount = 0; // Initialize phase transition count
                 // Write header placeholder
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
@@ -120,6 +137,22 @@ void ShotHistoryPlugin::record() {
         sample.v = encodeUnsigned(currentBluetoothWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
+        sample.si = getSystemInfo(); // Pack system state information
+
+        // Track phase transitions
+        if (controller->getMode() == MODE_BREW) {
+            Process *process = controller->getProcess();
+            if (process != nullptr && process->getType() == MODE_BREW) {
+                auto *brewProcess = static_cast<BrewProcess *>(process);
+                uint8_t currentPhase = static_cast<uint8_t>(brewProcess->phaseIndex);
+
+                // Check for phase transition
+                if (currentPhase != lastRecordedPhase) {
+                    recordPhaseTransition(currentPhase, sampleCount);
+                    lastRecordedPhase = currentPhase;
+                }
+            }
+        }
 
         if (isFileOpen) {
             if (ioBufferPos + sizeof(sample) > sizeof(ioBuffer)) {
@@ -135,8 +168,45 @@ void ShotHistoryPlugin::record() {
             createEarlyIndexEntry();
             indexEntryCreated = true;
         }
+
+        // Check for weight stabilization during extended recording
+        if (extendedRecording) {
+            const unsigned long now = millis();
+
+            bool canProcessWeight = (controller != nullptr);
+            if (canProcessWeight) {
+                canProcessWeight = controller->isVolumetricAvailable();
+            }
+
+            if (!canProcessWeight) {
+                // If BLE connection is unstable, end extended recording early
+                extendedRecording = false;
+                return;
+            }
+
+            const float weightDiff = abs(currentBluetoothWeight - lastStableWeight);
+
+            if (weightDiff < WEIGHT_STABILIZATION_THRESHOLD) {
+                if (lastWeightChangeTime == 0) {
+                    lastWeightChangeTime = now;
+                }
+                // Weight has been stable for the threshold time, stop extended recording
+                if (now - lastWeightChangeTime >= WEIGHT_STABILIZATION_TIME) {
+                    extendedRecording = false;
+                }
+            } else {
+                // Weight changed, reset stabilization timer
+                lastWeightChangeTime = 0;
+                lastStableWeight = currentBluetoothWeight;
+            }
+
+            // Also stop extended recording after maximum duration
+            if (now - extendedRecordingStart >= EXTENDED_RECORDING_DURATION) {
+                extendedRecording = false;
+            }
+        }
     }
-    if (!recording && isFileOpen) {
+    if (!recording && !extendedRecording && isFileOpen) {
         flushBuffer();
         // Patch header with sampleCount and duration
         header.sampleCount = sampleCount;
@@ -149,8 +219,7 @@ void ShotHistoryPlugin::record() {
         isFileOpen = false;
         unsigned long duration = header.durationMs;
         if (duration <= 7500) { // Exclude failed shots and flushes
-            SPIFFS.remove("/h/" + currentId + ".slog");
-            SPIFFS.remove("/h/" + currentId + ".json");
+            fs->remove("/h/" + currentId + ".slog");
 
             // If we created an early index entry, mark it as deleted
             if (indexEntryCreated) {
@@ -184,20 +253,33 @@ void ShotHistoryPlugin::record() {
 }
 
 void ShotHistoryPlugin::startRecording() {
-    currentId = controller->getSettings().getHistoryIndex();
-    while (currentId.length() < 6) {
-        currentId = "0" + currentId;
+    Process *process = controller->getProcess();
+    if (process != nullptr && process->getType() == MODE_BREW) {
+        BrewProcess *brewProcess = static_cast<BrewProcess *>(process);
+        if (brewProcess->isUtility()) {
+            return;
+        }
     }
+    currentId = padId(String(controller->getSettings().getHistoryIndex()));
     shotStart = millis();
+    lastWeightChangeTime = 0;
+    extendedRecordingStart = 0;
     currentBluetoothWeight = 0.0f;
-    lastBluetoothWeight = 0.0f;
+    lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
+    extendedRecording = false;
     indexEntryCreated = false; // Reset flag for new shot
     sampleCount = 0;
     ioBufferPos = 0;
+
+    // Reset phase tracking for new shot
+    lastRecordedPhase = 0xFF; // Invalid value to detect first phase
+
+    // Capture initial volumetric mode state (brew by weight vs brew by time)
+    shotStartedVolumetric = controller->getSettings().isVolumetricTarget();
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -206,10 +288,94 @@ unsigned long ShotHistoryPlugin::getTime() {
     return now;
 }
 
-void ShotHistoryPlugin::endRecording() { recording = false; }
+void ShotHistoryPlugin::endRecording() {
+    if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
+        // Start extended recording for any shot with active weight data
+        extendedRecording = true;
+        extendedRecordingStart = millis();
+        lastStableWeight = currentBluetoothWeight;
+        lastWeightChangeTime = 0;
+    }
+
+    recording = false;
+}
+
+void ShotHistoryPlugin::endExtendedRecording() {
+    if (extendedRecording) {
+        extendedRecording = false;
+    }
+}
+
+void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex) {
+    // Only record if we have space and a valid header
+    if (header.phaseTransitionCount >= 12 || !isFileOpen) {
+        return;
+    }
+
+    // Get current profile to extract phase name
+    Profile profile = controller->getProfileManager()->getSelectedProfile();
+    PhaseTransition &transition = header.phaseTransitions[header.phaseTransitionCount];
+
+    transition.sampleIndex = sampleIndex;
+    transition.phaseNumber = phaseNumber;
+    transition.reserved = 0;
+
+    // Get phase name from profile
+    if (phaseNumber < profile.phases.size()) {
+        strncpy(transition.phaseName, profile.phases[phaseNumber].name.c_str(), sizeof(transition.phaseName) - 1);
+        transition.phaseName[sizeof(transition.phaseName) - 1] = '\0';
+    } else {
+        // Fallback to generic name
+        snprintf(transition.phaseName, sizeof(transition.phaseName), "Phase %d", phaseNumber + 1);
+    }
+
+    header.phaseTransitionCount++;
+
+    ESP_LOGD("ShotHistoryPlugin", "Recorded phase transition to phase %d (%s) at sample %d", phaseNumber, transition.phaseName,
+             sampleIndex);
+}
+
+uint16_t ShotHistoryPlugin::getSystemInfo() {
+    uint16_t systemInfo = 0;
+
+    // Bit 0: Shot started in volumetric mode
+    if (shotStartedVolumetric) {
+        systemInfo |= SYSTEM_INFO_SHOT_STARTED_VOLUMETRIC;
+    }
+
+    // Bit 1: Currently in volumetric mode (check current process if active)
+    if (controller != nullptr) {
+        Process *process = controller->getProcess();
+        if (process != nullptr && process->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(process);
+            bool currentlyVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC &&
+                                       brewProcess->currentPhase.hasVolumetricTarget() && controller->isVolumetricAvailable();
+            if (currentlyVolumetric) {
+                systemInfo |= SYSTEM_INFO_CURRENTLY_VOLUMETRIC;
+            }
+        }
+    }
+
+    // Bit 2: Bluetooth scale connected
+    if (controller != nullptr && controller->isBluetoothScaleHealthy()) {
+        systemInfo |= SYSTEM_INFO_BLUETOOTH_SCALE_CONNECTED;
+    }
+
+    // Bit 3: Volumetric available
+    if (controller != nullptr && controller->isVolumetricAvailable()) {
+        systemInfo |= SYSTEM_INFO_VOLUMETRIC_AVAILABLE;
+    }
+
+    // Bit 4: Extended recording active
+    if (extendedRecording) {
+        systemInfo |= SYSTEM_INFO_EXTENDED_RECORDING;
+    }
+
+    return systemInfo;
+}
 
 void ShotHistoryPlugin::cleanupHistory() {
-    File directory = SPIFFS.open("/h");
+    File directory = fs->open("/h");
     std::vector<String> entries;
     String filename = directory.getNextFileName();
     while (filename != "") {
@@ -220,7 +386,7 @@ void ShotHistoryPlugin::cleanupHistory() {
     if (entries.size() > MAX_HISTORY_ENTRIES) {
         for (unsigned int i = 0; i < entries.size() - MAX_HISTORY_ENTRIES; i++) {
             String name = entries[i];
-            SPIFFS.remove(name);
+            fs->remove(name);
         }
     }
 }
@@ -232,7 +398,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
 
     if (type == "req:history:list") {
         JsonArray arr = response["history"].to<JsonArray>();
-        File root = SPIFFS.open("/h");
+        File root = fs->open("/h");
         if (root && root.isDirectory()) {
             File file = root.openNextFile();
             while (file) {
@@ -272,8 +438,12 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         response["error"] = "use HTTP /api/history?id=<id>";
     } else if (type == "req:history:delete") {
         auto id = request["id"].as<String>();
-        SPIFFS.remove("/h/" + id + ".slog");
-        SPIFFS.remove("/h/" + id + ".json");
+        String paddedId = id;
+        while (paddedId.length() < 6) {
+            paddedId = "0" + paddedId;
+        }
+        fs->remove("/h/" + paddedId + ".slog");
+        fs->remove("/h/" + paddedId + ".json");
 
         // Mark as deleted in index
         markIndexDeleted(id.toInt());
@@ -312,7 +482,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
 }
 
 void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
-    File file = SPIFFS.open("/h/" + id + ".json", FILE_WRITE);
+    File file = fs->open("/h/" + id + ".json", FILE_WRITE);
     if (file) {
         String notesStr;
         serializeJson(notes, notesStr);
@@ -322,7 +492,7 @@ void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
 }
 
 void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
-    File file = SPIFFS.open("/h/" + id + ".json", "r");
+    File file = fs->open("/h/" + id + ".json", "r");
     if (file) {
         String notesStr = file.readString();
         file.close();
@@ -348,12 +518,12 @@ void ShotHistoryPlugin::flushBuffer() {
 
 // Index management methods
 bool ShotHistoryPlugin::ensureIndexExists() {
-    if (SPIFFS.exists("/h/index.bin")) {
+    if (fs->exists("/h/index.bin")) {
         return true;
     }
 
     // Create new empty index
-    File indexFile = SPIFFS.open("/h/index.bin", FILE_WRITE);
+    File indexFile = fs->open("/h/index.bin", FILE_WRITE);
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to create index file");
         return false;
@@ -378,7 +548,7 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
         return;
     }
 
-    File indexFile = SPIFFS.open("/h/index.bin", "r+");
+    File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for append");
         return;
@@ -386,6 +556,15 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
 
     ShotIndexHeader header{};
     if (!readIndexHeader(indexFile, header)) {
+        indexFile.close();
+        return;
+    }
+
+    // Check for existing entry with same ID to prevent duplicates
+    int existingPos = findEntryPosition(indexFile, header, entry.id);
+    if (existingPos >= 0) {
+        ESP_LOGW("ShotHistoryPlugin", "Attempt to add duplicate entry for shot %u - entry already exists at position %d",
+                 entry.id, existingPos);
         indexFile.close();
         return;
     }
@@ -405,7 +584,7 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
 }
 
 void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume) {
-    File indexFile = SPIFFS.open("/h/index.bin", "r+");
+    File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for metadata update");
         return;
@@ -441,7 +620,7 @@ void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uin
 }
 
 void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
-    File indexFile = SPIFFS.open("/h/index.bin", "r+");
+    File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for deletion marking");
         return;
@@ -453,18 +632,30 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
         return;
     }
 
-    int entryPos = findEntryPosition(indexFile, header, shotId);
-    if (entryPos >= 0) {
+    // Find ALL entries with this shot ID and mark them as deleted
+    uint32_t duplicatesFound = 0;
+
+    for (uint32_t i = 0; i < header.entryCount; i++) {
+        size_t entryPos = sizeof(ShotIndexHeader) + i * sizeof(ShotIndexEntry);
         ShotIndexEntry entry{};
         if (readEntryAtPosition(indexFile, entryPos, entry)) {
-            entry.flags |= SHOT_FLAG_DELETED;
+            if (entry.id == shotId) {
+                duplicatesFound++;
 
-            if (writeEntryAtPosition(indexFile, entryPos, entry)) {
-                ESP_LOGD("ShotHistoryPlugin", "Marked shot %u as deleted in index", shotId);
+                // Mark this entry as deleted
+                entry.flags |= SHOT_FLAG_DELETED;
+
+                if (writeEntryAtPosition(indexFile, entryPos, entry)) {
+                    ESP_LOGD("ShotHistoryPlugin", "Marked shot %u as deleted in index (duplicate #%u)", shotId, duplicatesFound);
+                }
             }
         }
-    } else {
+    }
+
+    if (duplicatesFound == 0) {
         ESP_LOGW("ShotHistoryPlugin", "Shot %u not found in index for deletion marking", shotId);
+    } else if (duplicatesFound > 1) {
+        ESP_LOGW("ShotHistoryPlugin", "Found and marked %u duplicate entries for shot %u as deleted", duplicatesFound, shotId);
     }
 
     indexFile.close();
@@ -474,7 +665,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     ESP_LOGI("ShotHistoryPlugin", "Starting index rebuild...");
 
     // Delete existing index
-    SPIFFS.remove("/h/index.bin");
+    fs->remove("/h/index.bin");
 
     // Create new empty index
     if (!ensureIndexExists()) {
@@ -482,7 +673,7 @@ void ShotHistoryPlugin::rebuildIndex() {
         return;
     }
 
-    File directory = SPIFFS.open("/h");
+    File directory = fs->open("/h");
     if (!directory || !directory.isDirectory()) {
         ESP_LOGW("ShotHistoryPlugin", "No history directory found");
         return;
@@ -506,7 +697,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     ESP_LOGI("ShotHistoryPlugin", "Rebuilding index from %d shot files", slogFiles.size());
 
     for (const String &fileName : slogFiles) {
-        File shotFile = SPIFFS.open(fileName, "r");
+        File shotFile = fs->open("/h/" + fileName, "r");
         if (!shotFile) {
             continue;
         }
@@ -544,10 +735,10 @@ void ShotHistoryPlugin::rebuildIndex() {
 
         // Check for notes and extract rating and volume override
         String notesPath = "/h/" + String(shotId, 10) + ".json";
-        if (SPIFFS.exists(notesPath)) {
+        if (fs->exists(notesPath)) {
             entry.flags |= SHOT_FLAG_HAS_NOTES;
 
-            File notesFile = SPIFFS.open(notesPath, "r");
+            File notesFile = fs->open(notesPath, "r");
             if (notesFile) {
                 String notesStr = notesFile.readString();
                 notesFile.close();
@@ -645,7 +836,7 @@ void ShotHistoryPlugin::createEarlyIndexEntry() {
 }
 
 void ShotHistoryPlugin::updateIndexCompletion(uint32_t shotId, const ShotLogHeader &finalHeader) {
-    File indexFile = SPIFFS.open("/h/index.bin", "r+");
+    File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for completion update");
         return;
@@ -669,7 +860,13 @@ void ShotHistoryPlugin::updateIndexCompletion(uint32_t shotId, const ShotLogHead
             if (writeEntryAtPosition(indexFile, entryPos, entry)) {
                 ESP_LOGD("ShotHistoryPlugin", "Updated shot %u completion: duration=%u, volume=%u", shotId, entry.duration,
                          entry.volume);
+                indexFile.close();
+                return;
+            } else {
+                ESP_LOGE("ShotHistoryPlugin", "Failed to write completion data for shot %u", shotId);
             }
+        } else {
+            ESP_LOGE("ShotHistoryPlugin", "Failed to read entry for shot %u at position %d", shotId, entryPos);
         }
     } else {
         ESP_LOGW("ShotHistoryPlugin", "Shot %u not found in index for completion update", shotId);

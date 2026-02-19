@@ -9,6 +9,7 @@
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
 #ifndef GAGGIMATE_HEADLESS
+#include <display/drivers/Driver.h>
 #include <display/ui/default/DefaultUI.h>
 #endif
 
@@ -30,15 +31,12 @@ class Controller {
     void setTargetTemp(float temperature);
     void setPressureScale();
     void setPumpModelCoeffs();
-    void setTargetDuration(int duration);
-    void setTargetVolume(int volume);
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
 
     int getMode() const;
 
     float getTargetTemp() const;
-    int getTargetDuration() const;
     int getTargetGrindDuration() const;
     virtual float getCurrentTemp() const { return currentTemp; }
     bool isActive() const;
@@ -47,6 +45,7 @@ class Controller {
     bool isAutotuning() const;
     bool isReady() const;
     bool isVolumetricAvailable() const;
+    bool isSDCard() const { return sdcard; }
     virtual float getTargetPressure() const { return targetPressure; }
     virtual float getTargetFlow() const { return targetFlow; }
     virtual float getCurrentPressure() const { return pressure; }
@@ -82,7 +81,10 @@ class Controller {
     void deactivateStandby();
     void onOTAUpdate();
     void onScreenReady();
+    void onTargetToggle();
     void onTargetChange(ProcessTarget target);
+    void onProfileSave() const;
+    void onProfileSaveAsNew();
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     bool isBluetoothScaleHealthy() const;
@@ -101,7 +103,9 @@ class Controller {
 
   private:
     // Initialization methods
+#ifndef GAGGIMATE_HEADLESS
     void setupPanel();
+#endif
     void setupBluetooth();
     void parseSystemInfo(const String& info);
     void setupWifi();
@@ -122,6 +126,7 @@ class Controller {
     // Private Attributes
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *ui = nullptr;
+    Driver *driver = nullptr;
 #endif
     GaggiMateClient clientController;
     hw_timer_t *timer = nullptr;
@@ -155,6 +160,7 @@ class Controller {
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
+    bool sdcard = false;
     int error = 0;
 
     // Bluetooth scale connection monitoring
