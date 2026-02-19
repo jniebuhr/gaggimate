@@ -1,5 +1,6 @@
 #include <cstdint>
 #include "gaggimate.pb.h"
+#pragma once
 
 #pragma pack(push, 1)
 struct FrameHeader {
