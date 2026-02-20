@@ -38,7 +38,6 @@ class ShotHistoryPlugin : public Plugin {
     bool readEntryAtPosition(File &indexFile, size_t position, ShotIndexEntry &entry);
     bool writeEntryAtPosition(File &indexFile, size_t position, const ShotIndexEntry &entry);
     bool createEarlyIndexEntry();
-    void updateIndexCompletion(uint32_t shotId, const ShotLogHeader &finalHeader);
     void saveNotes(const String &id, const JsonDocument &notes);
     void loadNotes(const String &id, JsonDocument &notes);
     void startRecording();
