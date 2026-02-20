@@ -52,6 +52,17 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
 
+    // Forward shot history rebuild progress events to WebSocket clients
+    pluginManager->on("evt:history-rebuild-progress", [this](Event const &event) {
+        JsonDocument doc;
+        doc["tp"] = "evt:history-rebuild-progress";
+        doc["total"] = event.getInt("total");
+        doc["current"] = event.getInt("current");
+        doc["status"] = event.getString("status");
+        ws.textAll(doc.as<String>());
+    });
+    
+
     // Subscribe to Bluetooth scale weight updates
     pluginManager->on("controller:volumetric-measurement:bluetooth:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
@@ -318,6 +329,19 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                         auto target = doc["target"].as<uint8_t>();
                         controller->getSettings().setVolumetricTarget(target);
                     }
+                } else if (msgType == "req:history:rebuild") {
+                    // Handle rebuild asynchronously - send immediate ack, progress comes via events
+                    JsonDocument resp;
+                    resp["tp"] = "res:history:rebuild";
+                    if (doc["rid"].is<const char*>()) {
+                        resp["rid"] = doc["rid"];
+                    }
+                    resp["msg"] = "Rebuild started";
+                    size_t bufferSize = measureJson(resp);
+                    auto *buffer = ws.makeBuffer(bufferSize);
+                    serializeJson(resp, buffer->get(), bufferSize);
+                    client->text(buffer);
+                    ShotHistory.startAsyncRebuild();
                 } else if (msgType.startsWith("req:history")) {
                     JsonDocument resp;
                     ShotHistory.handleRequest(doc, resp);

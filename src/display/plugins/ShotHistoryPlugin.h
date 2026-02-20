@@ -29,6 +29,7 @@ class ShotHistoryPlugin : public Plugin {
     void updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume);
     void markIndexDeleted(uint32_t shotId);
     void rebuildIndex();
+    void startAsyncRebuild();
     bool ensureIndexExists();
 
   private:
@@ -82,6 +83,9 @@ class ShotHistoryPlugin : public Plugin {
 
     // Phase transition tracking (v5+)
     uint8_t lastRecordedPhase = 0xFF; // Invalid initial value to detect first phase
+
+    // Async rebuild state  
+    bool rebuildInProgress = false;
 
     xTaskHandle taskHandle;
     void flushBuffer();
