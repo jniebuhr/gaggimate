@@ -373,6 +373,12 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
 }
 
 void ShotHistoryPlugin::cleanupHistory() {
+    size_t freeSpace = getFreeSpace();
+    if (freeSpace > MIN_FREE_SPACE_BYTES) {
+        return; // Enough space, nothing to do
+    }
+
+    // Collect and sort .slog files to find the oldest
     File directory = fs->open("/h");
     std::vector<String> slogFiles;
     String filename = directory.getNextFileName();
@@ -384,15 +390,15 @@ void ShotHistoryPlugin::cleanupHistory() {
     }
     directory.close();
 
-    if (slogFiles.size() <= MAX_HISTORY_ENTRIES) {
+    if (slogFiles.empty()) {
         return;
     }
 
     sort(slogFiles.begin(), slogFiles.end(), [](const String &a, const String &b) { return a < b; });
-    size_t toRemove = slogFiles.size() - MAX_HISTORY_ENTRIES;
 
-    for (size_t i = 0; i < toRemove; i++) {
-        // Extract shot ID from filename to sync index
+    // Remove oldest files one at a time until we have enough free space
+    size_t removed = 0;
+    for (size_t i = 0; i < slogFiles.size() && getFreeSpace() <= MIN_FREE_SPACE_BYTES; i++) {
         String fname = slogFiles[i];
         int start = fname.lastIndexOf('/') + 1;
         int end = fname.lastIndexOf('.');
@@ -404,10 +410,26 @@ void ShotHistoryPlugin::cleanupHistory() {
         // Remove .slog and associated .json notes file
         fs->remove(fname);
         String notesPath = fname.substring(0, fname.lastIndexOf('.')) + ".json";
-        fs->remove(notesPath); // OK if it doesn't exist
+        fs->remove(notesPath);
+        removed++;
     }
 
-    ESP_LOGI("ShotHistoryPlugin", "Cleaned up %u old shots", toRemove);
+    if (removed > 0) {
+        ESP_LOGI("ShotHistoryPlugin", "Cleaned up %u old shots (free space: %u bytes)", removed, getFreeSpace());
+    }
+}
+
+size_t ShotHistoryPlugin::getFreeSpace() {
+    if (controller->isSDCard()) {
+        uint64_t total = SD_MMC.totalBytes();
+        uint64_t used = SD_MMC.usedBytes();
+        uint64_t free = total > used ? (total - used) : 0;
+        // Cap to size_t max for consistency
+        return free > SIZE_MAX ? SIZE_MAX : static_cast<size_t>(free);
+    }
+    size_t total = SPIFFS.totalBytes();
+    size_t used = SPIFFS.usedBytes();
+    return total > used ? (total - used) : 0;
 }
 
 void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &response) {
