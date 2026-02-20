@@ -42,6 +42,14 @@ void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &cal
 
 void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t &callback) { sensorCallback = callback; }
 
+void NimBLEClientController::registerSensorCallback(const legacy_sensor_read_callback_t &callback) {
+    sensorCallback = [callback](float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance, float) {
+        if (callback) {
+            callback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
+        }
+    };
+}
+
 void NimBLEClientController::registerAutotuneResultCallback(const pid_control_callback_t &callback) {
     autotuneResultCallback = callback;
 }
@@ -270,12 +278,14 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         float puckFlow = get_token(data, 2, ',').toFloat();
         float pumpFlow = get_token(data, 3, ',').toFloat();
         float puckResistance = get_token(data, 4, ',').toFloat();
+        // Heater power (0-100%) - NaN if not provided
+        float heaterPower = get_token(data, 5, ',', "nan").toFloat();
 
         ESP_LOGV(LOG_TAG,
-                 "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f",
-                 temperature, pressure, puckFlow, pumpFlow, puckResistance);
+                 "Sensor data: temp=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f, heater_power=%.1f",
+                 temperature, pressure, puckFlow, pumpFlow, puckResistance, heaterPower);
         if (sensorCallback != nullptr) {
-            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
+            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance, heaterPower);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
@@ -289,8 +299,7 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             // Handle optional Kf parameter with default
             float Kf = 0.0f; // Default combined Kff
             String kfToken = get_token(settings, 3, ',');
-            if (kfToken.length() > 0)
-                Kf = kfToken.toFloat();
+            if (kfToken.length() > 0) Kf = kfToken.toFloat();
 
             autotuneResultCallback(Kp, Ki, Kd, Kf);
         }

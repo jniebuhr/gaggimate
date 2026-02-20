@@ -17,6 +17,11 @@ constexpr int RERENDER_INTERVAL_ACTIVE = 100;
 constexpr int TEMP_HISTORY_INTERVAL = 250;
 constexpr int TEMP_HISTORY_LENGTH = 20 * 1000 / TEMP_HISTORY_INTERVAL;
 
+// Heater power equilibrium warmup detection
+constexpr unsigned long HEATER_POWER_WINDOW_MS = 60000;       // Window size for sampling
+constexpr float HEATER_POWER_TREND_THRESHOLD = 1.0f;          // Max avg power diff (%) between windows
+constexpr unsigned long STABLE_FALLBACK_MS = 10 * 60 * 1000;  // Fallback warmup if no heater power data
+
 int16_t calculate_angle(int set_temp, int range, int offset);
 
 enum class BrewScreenState { Brew, Settings };
@@ -66,11 +71,20 @@ class DefaultUI {
     int tempHistoryIndex = 0;
     int prevTargetTemp = 0;
     bool isTempHistoryInitialized = false;
-    int isTemperatureStable = false;
+    bool isTemperatureStable = false;
+    bool isWarmedUp = false;
     unsigned long lastTempLog = 0;
+    // Heater power equilibrium detection state
+    float currentHeaterPower = 0.0f;
+    float heaterPowerTimeSum = 0.0f;
+    unsigned long heaterPowerTimeTotal = 0;
+    unsigned long lastHeaterPowerSampleTime = 0;
+    unsigned long heaterPowerWindowStart = 0;
+    float lastHeaterPowerWindowAvg = -1.0f;
 
     void updateTempHistory();
     void updateTempStableFlag();
+    void resetWarmupState();
     void adjustHeatingIndicator(lv_obj_t *contentPanel);
 
     Driver *panelDriver = nullptr;

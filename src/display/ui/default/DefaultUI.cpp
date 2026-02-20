@@ -1,6 +1,7 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
+
 #include <display/config.h>
 #include <display/core/Controller.h>
 #include <display/core/process/BrewProcess.h>
@@ -15,7 +16,6 @@
 #include <display/ui/utils/effects.h>
 
 #include "esp_sntp.h"
-
 static EffectManager effect_mgr;
 
 int16_t calculate_angle(int set_temp, int range, int offset) {
@@ -40,6 +40,15 @@ void DefaultUI::updateTempHistory() {
     }
 }
 
+void DefaultUI::resetWarmupState() {
+    isWarmedUp = false;
+    heaterPowerWindowStart = 0;
+    heaterPowerTimeSum = 0.0f;
+    heaterPowerTimeTotal = 0;
+    lastHeaterPowerSampleTime = 0;
+    lastHeaterPowerWindowAvg = -1.0f;
+}
+
 void DefaultUI::updateTempStableFlag() {
     if (isTempHistoryInitialized) {
         float totalError = 0.0f;
@@ -59,17 +68,58 @@ void DefaultUI::updateTempStableFlag() {
     // instantly reset stability if setpoint has changed
     if (prevTargetTemp != targetTemp) {
         isTemperatureStable = false;
+        resetWarmupState();
     }
 
     prevTargetTemp = targetTemp;
+
+    if (!isTemperatureStable) {
+        resetWarmupState();
+        return;
+    }
+
+    unsigned long now = millis();
+    if (heaterPowerWindowStart == 0) {
+        heaterPowerWindowStart = now;
+    }
+
+    if (!isWarmedUp && heaterPowerTimeTotal == 0 && (now - heaterPowerWindowStart) >= STABLE_FALLBACK_MS) {
+        isWarmedUp = true;
+    }
+
+    if (!isWarmedUp && heaterPowerTimeTotal > 0 && (now - heaterPowerWindowStart) >= HEATER_POWER_WINDOW_MS) {
+        float avgPower = heaterPowerTimeSum / heaterPowerTimeTotal;
+        if (lastHeaterPowerWindowAvg >= 0.0f) {
+            float diff = lastHeaterPowerWindowAvg - avgPower;
+            if (diff < 0.0f) {
+                diff = -diff;
+            }
+            if (diff <= HEATER_POWER_TREND_THRESHOLD) {
+                isWarmedUp = true;
+            }
+        }
+
+        lastHeaterPowerWindowAvg = avgPower;
+        heaterPowerWindowStart = now;
+        heaterPowerTimeSum = 0.0f;
+        heaterPowerTimeTotal = 0;
+        lastHeaterPowerSampleTime = 0;
+    }
 }
 
 void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
     lv_obj_t *heatingIcon = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPICON);
-    lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(isTemperatureStable ? 0x00D100 : 0xF62C2C),
-                                 LV_PART_MAIN | LV_STATE_DEFAULT);
+    uint32_t color = 0xF62C2C; // Red: not stable
+    if (isWarmedUp) {
+        color = 0x00D100; // Green: power trend stable (warmed up)
+    } else if (isTemperatureStable) {
+        color = 0xFFAA00; // Yellow: temp stable, waiting on power trend
+    }
+    lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
     if (!isTemperatureStable) {
         lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+        lv_obj_set_style_opa(heatingIcon, LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 }
 
@@ -101,6 +151,23 @@ void DefaultUI::init() {
             targetTemp = newTemp;
             rerender = true;
         }
+    });
+    pluginManager->on("boiler:heaterPower:change", [=](Event const &event) {
+        currentHeaterPower = event.getFloat("value");
+        ESP_LOGV("DefaultUI", "heaterPower=%.1f stable=%d warmedUp=%d windowAvg=%.1f sum=%.0f total=%lu",
+                 currentHeaterPower, isTemperatureStable, isWarmedUp, lastHeaterPowerWindowAvg,
+                 heaterPowerTimeSum, heaterPowerTimeTotal);
+        if (currentHeaterPower != currentHeaterPower || !isTemperatureStable || isWarmedUp) {
+            lastHeaterPowerSampleTime = 0;
+            return;
+        }
+        unsigned long now = millis();
+        if (lastHeaterPowerSampleTime > 0) {
+            unsigned long dt = now - lastHeaterPowerSampleTime;
+            heaterPowerTimeSum += currentHeaterPower * dt;
+            heaterPowerTimeTotal += dt;
+        }
+        lastHeaterPowerSampleTime = now;
     });
     pluginManager->on("controller:targetVolume:change", [=](Event const &event) {
         targetVolume = event.getFloat("value");
@@ -349,17 +416,17 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustDials(ui_ProfileScreen_dials); },
                           &pressureAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; }, [=]() { adjustHeatingIndicator(ui_BrewScreen_dials); },
-                          &isTemperatureStable, &heatingFlash);
+                          &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { adjustHeatingIndicator(ui_SimpleProcessScreen_dials); }, &isTemperatureStable, &heatingFlash);
+                          [=]() { adjustHeatingIndicator(ui_SimpleProcessScreen_dials); }, &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; }, [=]() { adjustHeatingIndicator(ui_MenuScreen_dials); },
-                          &isTemperatureStable, &heatingFlash);
+                          &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
-                          [=]() { adjustHeatingIndicator(ui_ProfileScreen_dials); }, &isTemperatureStable, &heatingFlash);
+                          [=]() { adjustHeatingIndicator(ui_ProfileScreen_dials); }, &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() { adjustHeatingIndicator(ui_GrindScreen_dials); }, &isTemperatureStable, &heatingFlash);
+                          [=]() { adjustHeatingIndicator(ui_GrindScreen_dials); }, &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
-                          [=]() { adjustHeatingIndicator(ui_StatusScreen_dials); }, &isTemperatureStable, &heatingFlash);
+                          [=]() { adjustHeatingIndicator(ui_StatusScreen_dials); }, &isTemperatureStable, &heatingFlash, &isWarmedUp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() { lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, mode == MODE_STEAM ? "Steam" : "Water"); },
                           &mode);

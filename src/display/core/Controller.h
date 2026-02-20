@@ -51,6 +51,7 @@ class Controller {
     virtual float getCurrentPressure() const { return pressure; }
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
+    virtual float getHeaterPower() const { return heaterPower; }
 
     void autotune(int testTime, int samples);
     void startProcess(Process *process);
@@ -141,6 +142,7 @@ class Controller {
     float currentPuckFlow = 0.0f;
     float currentPumpFlow = 0.0f;
     float targetFlow = 0.0f;
+    float heaterPower = 0.0f;
     int tofDistance = 0;
 
     SystemInfo systemInfo{};
