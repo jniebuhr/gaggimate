@@ -114,7 +114,7 @@ const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x
                                                  .tof = false,
                                              }};
 
-const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.x",
+const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.0",
                                         .autodetectValue = 2, // Voltage divider was missing in Rev 1.0 so it's 0
                                         .heaterPin = 14,
                                         .pumpPin = 9,

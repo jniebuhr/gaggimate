@@ -76,7 +76,6 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
         fs = &SD_MMC;
         ESP_LOGI("ShotHistoryPlugin", "Logging shot history to SD card");
     }
-    rebuildIndex();
     pm->on("controller:brew:start", [this](Event const &) { startRecording(); });
     pm->on("controller:brew:end", [this](Event const &) { endRecording(); });
     pm->on("controller:brew:clear", [this](Event const &) { endExtendedRecording(); });
@@ -255,7 +254,7 @@ void ShotHistoryPlugin::record() {
 
 void ShotHistoryPlugin::startRecording() {
     Process *process = controller->getProcess();
-    if (process->getType() == MODE_BREW) {
+    if (process != nullptr && process->getType() == MODE_BREW) {
         BrewProcess *brewProcess = static_cast<BrewProcess *>(process);
         if (brewProcess->isUtility()) {
             return;

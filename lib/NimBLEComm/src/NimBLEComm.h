@@ -67,4 +67,6 @@ struct SystemInfo {
 
 String get_token(const String &from, uint8_t index, char separator, String default_value = "");
 
+inline std::string float_to_string(float f) { return std::to_string(std::round(f * 1000.0f) / 1000.0f); }
+
 #endif // NIMBLECOMM_H

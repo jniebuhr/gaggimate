@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef, useCallback, useContext } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
+import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ApiServiceContext } from '../../services/ApiService.js';
-import Card from '../../components/Card.jsx';
 import { downloadJson } from '../../utils/download.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -88,6 +90,16 @@ export function OTA() {
     [apiService],
   );
 
+  const [rebuilding, setRebuilding] = useState(false);
+  const [rebuilt, setRebuilt] = useState(false);
+  const onHistoryRebuild = useCallback(async () => {
+    setRebuilt(false);
+    setRebuilding(true);
+    await apiService.request({ tp: 'req:history:rebuild' });
+    setRebuilding(false);
+    setRebuilt(true);
+  }, [apiService, setRebuilding]);
+
   if (isLoading) {
     return (
       <div className='flex w-full flex-row items-center justify-center py-16'>
@@ -150,7 +162,7 @@ export function OTA() {
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Controller version</label>
+              <label className='text-sm font-medium'>Controller Version</label>
               <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
                 <span className='break-all'>{formData.controllerVersion}</span>
                 {formData.controllerUpdateAvailable && (
@@ -162,7 +174,7 @@ export function OTA() {
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Display version</label>
+              <label className='text-sm font-medium'>Display Version</label>
               <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
                 <span className='break-all'>{formData.displayVersion}</span>
                 {formData.displayUpdateAvailable && (
@@ -235,7 +247,7 @@ export function OTA() {
             <button
               type='submit'
               name='update'
-              className='btn btn-accent'
+              className='btn btn-secondary'
               disabled={!formData.controllerUpdateAvailable || submitting}
               onClick={() => onUpdate('controller')}
             >
@@ -243,6 +255,20 @@ export function OTA() {
             </button>
             <button type='button' className='btn btn-outline' onClick={downloadSupportData}>
               Download Support Data
+            </button>
+            <button
+              type='button'
+              className='btn btn-outline'
+              onClick={onHistoryRebuild}
+              disabled={rebuilding}
+            >
+              Rebuild Shot History
+              {rebuilding && <Spinner size={4} className='ml-2' />}
+              {rebuilt && (
+                <span className='text-success'>
+                  <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon>
+                </span>
+              )}
             </button>
           </div>
         </div>
