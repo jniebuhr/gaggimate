@@ -320,9 +320,9 @@ export function AnalysisTable({
 
         {/* C. New Footer: Delay Settings (Left) & Legend (Right) */}
         <div className='bg-base-100 border-base-content/10 flex flex-wrap items-center justify-between gap-4 rounded-b-lg border-t px-4 py-3 text-[10px] font-bold tracking-wider uppercase'>
-          {/* Left: Latency Inputs */}
+          {/* Left: Stop Calculation Inputs */}
           <div className='flex items-center gap-4'>
-            <span className='hidden opacity-40 select-none sm:inline'>Latency</span>
+            <span className='hidden opacity-40 select-none sm:inline'>Stop Calculation</span>
             <div className='flex items-center gap-2'>
               {/* Shows Average Symbol ∅ if auto-delay is active */}
               <span className='opacity-60'>Scale{safeSettings.autoDelay ? ' ∅' : ''}</span>
@@ -562,8 +562,11 @@ function CellContent({ phase, col, results, isTotal = false }) {
     );
   }
 
-  const isHit = phase.exit?.type === col.targetType;
   const isWeightCol = col.id === 'weight';
+  const exitMatchesCol = isWeightCol
+    ? (phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric')
+    : phase.exit?.type === col.targetType;
+  const isHit = exitMatchesCol;
 
   let targetDisplay = null;
   let predictionDisplay = null;
@@ -631,28 +634,43 @@ function CellContent({ phase, col, results, isTotal = false }) {
     }
   }
 
-  if (isWeightCol && phase.prediction && phase.prediction.finalWeight !== null) {
-    const measuredVal = parseFloat(mainValue);
-    if (!isNaN(measuredVal) && Math.abs(measuredVal - phase.prediction.finalWeight) >= 0.1) {
-      const predVal = sf(phase.prediction.finalWeight);
+  if (col.targetType && phase.targetCalcValues) {
+    const calcEntry =
+      col.id === 'weight'
+        ? (phase.targetCalcValues['volumetric'] || phase.targetCalcValues['weight'])
+        : phase.targetCalcValues[col.targetType];
 
-      const isPredHit = phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric';
-      const predColor = isPredHit
-        ? utilityColors.predictionStopRed
-        : utilityColors.predictionInfoBlue;
+    if (calcEntry) {
+      const rawForParse =
+        typeof mainValue === 'string' && mainValue.includes('/')
+          ? mainValue.split('/').pop()
+          : mainValue;
+      const measuredVal = parseFloat(rawForParse);
 
-      predictionDisplay = (
-        <div
-          style={{ ...subTextSize, color: predColor }}
-          className='mt-0.5 flex items-center justify-end gap-1 leading-tight font-bold'
-        >
-          <FontAwesomeIcon icon={faCalculator} style={iconSize} className='opacity-60' />
-          <span>
-            Pred: {predVal}
-            {unit}
-          </span>
-        </div>
-      );
+      if (!isNaN(measuredVal)) {
+        const calcVal = sf(calcEntry.value);
+        const calcColor = calcEntry.isStopReason
+          ? utilityColors.predictionStopRed
+          : utilityColors.predictionInfoBlue;
+
+        let calcUnit = unit;
+        if (!calcUnit && col.targetType === 'pressure') calcUnit = 'bar';
+        if (!calcUnit && col.targetType === 'flow') calcUnit = 'ml/s';
+        if (!calcUnit && col.targetType === 'pumped') calcUnit = 'ml';
+
+        predictionDisplay = (
+          <div
+            style={{ ...subTextSize, color: calcColor }}
+            className='mt-0.5 flex items-center justify-end gap-1 leading-tight font-bold'
+          >
+            <FontAwesomeIcon icon={faCalculator} style={iconSize} className='opacity-60' />
+            <span>
+              Calc: {calcVal}
+              {calcUnit}
+            </span>
+          </div>
+        );
+      }
     }
   }
 
