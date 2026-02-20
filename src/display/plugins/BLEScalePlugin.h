@@ -1,5 +1,6 @@
 #ifndef BLESCALEPLUGIN_H
 #define BLESCALEPLUGIN_H
+#include <cmath>
 #include "../core/Plugin.h"
 #include "remote_scales.h"
 #include "remote_scales_plugin_registry.h"
@@ -23,6 +24,7 @@ class BLEScalePlugin : public Plugin {
     void disconnect();
     void onMeasurement(float value) const;
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
+    bool isTareComplete() const { return scale != nullptr && scale->isConnected() && std::abs(scale->getWeight()) < 0.5f; };
     std::string getName() {
         if (scale != nullptr && scale->isConnected()) {
             return scale->getDeviceName();
