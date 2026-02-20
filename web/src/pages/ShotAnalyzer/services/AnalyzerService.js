@@ -5,7 +5,6 @@
  */
 
 const PREDICTIVE_WINDOW_MS = 4000;
-const BOUNDARY_MATCH_TOLERANCE_MS = 800;
 // Last-phase fallback thresholds (g)
 const LAST_PHASE_UNDERSHOOT_MIN_G = 2;
 const LAST_PHASE_UNDERSHOOT_MAX_G = 6;
@@ -143,21 +142,6 @@ function isDirectionallyValidLookAhead(operator, currentValue, nextValue) {
   return true;
 }
 
-function getHitSourcePriority(source) {
-  if (source === 'raw') return 1;
-  if (source === 'predicted') return 2;
-  if (source === 'tolerance') return 3;
-  if (source === 'lookahead') return 4;
-  if (source === 'lookahead-fallback') return 5;
-  return 6;
-}
-
-function shouldAllowPredictedLteForSensorTarget(targetType, measured, targetValue, tolerance = 0) {
-  if (targetType !== 'flow' && targetType !== 'pressure') return true;
-  if (!isFinite(measured) || !isFinite(targetValue)) return false;
-  return measured <= targetValue + tolerance;
-}
-
 function getLastNonExtendedIndex(samples) {
   if (!Array.isArray(samples) || samples.length === 0) return -1;
   for (let i = samples.length - 1; i >= 0; i--) {
@@ -276,10 +260,6 @@ export function calculateShotMetrics(shotData, profileData, settings) {
   let sumSensorDelay = 0;
   let countSensorHits = 0;
 
-  // Tolerances
-  const TOL_PRESSURE = 0.15;
-  const TOL_FLOW = 0.3;
-
   let scaleConnectionBrokenPermanently = false;
 
   sortedPhaseKeys.forEach(phaseNum => {
@@ -312,6 +292,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     let exitReason = null;
     let exitType = null;
     let finalPredictedWeight = null;
+    let targetCalcValues = null;
     let profilePhase = null;
     let phaseHighScaleDelay = false;
     let phaseEstimatedScaleDelayMs = null;
@@ -355,479 +336,268 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 
         // Check target-based exits
         if (profilePhase.targets && (!exitType || duration < profDur - 0.5)) {
-          const steps = isAutoAdjusted ? 31 : 1; // 0..3000 (31 steps) or 1 step
           let foundMatch = false;
-          let bestStepMatch = null;
 
-          const nextPNum = parseInt(phaseNum, 10) + 1;
-          const nextPhaseFirstSample =
-            phases[nextPNum] && phases[nextPNum].length > 0 ? phases[nextPNum][0] : null;
-          const phaseBoundaryMs = nextPhaseFirstSample
-            ? nextPhaseFirstSample.t
-            : samples[samples.length - 1].t;
+          const sInterval = shotData.sampleInterval || 250;
+          const sIntervalSec = sInterval / 1000;
+          const currentKeyIndex = sortedPhaseKeys.indexOf(phaseNum);
+          const nextPhaseKey = currentKeyIndex >= 0 && currentKeyIndex < sortedPhaseKeys.length - 1
+            ? sortedPhaseKeys[currentKeyIndex + 1]
+            : null;
+          const nextPhaseSamples = nextPhaseKey ? (phases[nextPhaseKey] || []) : [];
           const lastNonExtendedIndex = getLastNonExtendedIndex(samples);
           const lastNonExtendedSample =
             lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex] : samples[samples.length - 1];
 
-          // Ignore post-stop extension tail for replay decisions in the last phase.
-          let replayEndIndex = samples.length - 1;
-          if (isLastPhase) {
-            const firstExtendedIndex = samples.findIndex(s => s.systemInfo?.extendedRecording === true);
-            if (firstExtendedIndex > 0) replayEndIndex = firstExtendedIndex - 1;
-          }
-          if (replayEndIndex < 0) replayEndIndex = samples.length - 1;
+          // Anchor: last non-extended sample for last phase, otherwise last sample
+          const anchorIdx = isLastPhase && lastNonExtendedIndex >= 0
+            ? lastNonExtendedIndex
+            : samples.length - 1;
+          const anchor = samples[anchorIdx];
+          const prevAnchor = anchorIdx > 0 ? samples[anchorIdx - 1] : anchor;
 
-          // Precompute cumulative phase-local pumped volume at each sample.
-          const pumpedAtSample = new Array(samples.length).fill(0);
-          for (let i = 1; i < samples.length; i++) {
+          // Cumulative pumped water up to anchor
+          let anchorPumped = 0;
+          for (let i = 1; i <= anchorIdx; i++) {
             const dt = (samples[i].t - samples[i - 1].t) / 1000;
-            pumpedAtSample[i] = pumpedAtSample[i - 1] + samples[i].fl * dt;
+            anchorPumped += samples[i].fl * dt;
           }
 
-          for (let step = 0; step < steps; step++) {
-            const currentDelay = isAutoAdjusted ? step * 100 : null;
-            const tScaleDelay = isAutoAdjusted ? currentDelay : scaleDelayMs;
-            const tSensorDelay = isAutoAdjusted ? currentDelay : sensorDelayMs;
-            const normalizedScaleDelayMs = Math.max(0, tScaleDelay || 0);
-            const normalizedSensorDelayMs = Math.max(0, tSensorDelay || 0);
-            const scaleDelaySec = normalizedScaleDelayMs / 1000.0;
-            const sensorDelaySec = normalizedSensorDelayMs / 1000.0;
+          // Prediction setup: weight rate and pressure/flow slopes
+          const wRate = getPhaseWeightRate(samples, isLastPhase);
+          const anchorDt = (anchor.t - prevAnchor.t) / 1000;
+          const pSlope = anchorDt > 0 ? (anchor.cp - prevAnchor.cp) / anchorDt : 0;
+          const fSlope = anchorDt > 0 ? (anchor.fl - prevAnchor.fl) / anchorDt : 0;
 
-            let stepMatch = null;
+          // --- Helper: check targets against given values ---
+          const tryTargets = (p, f, w, pumped, delayMs) => {
+            for (let ti = 0; ti < profilePhase.targets.length; ti++) {
+              const tgt = profilePhase.targets[ti];
+              const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+              if (isWt && scaleConnectionBrokenPermanently) continue;
+              if (isLastPhase && isWt && lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G) continue;
 
-            // Replay phase sample-by-sample (GM-like online decision).
-            for (let si = 0; si <= replayEndIndex && !stepMatch; si++) {
-              const sample = samples[si];
-              const prevSample = si > 0 ? samples[si - 1] : sample;
+              let val;
+              if (tgt.type === 'pressure') { val = p; }
+              else if (tgt.type === 'flow') { val = f; }
+              else if (isWt) { val = w; }
+              else if (tgt.type === 'pumped') { val = pumped; }
+              else continue;
 
-              const dt = (sample.t - prevSample.t) / 1000.0;
-              const lastP = sample.cp;
-              const lastF = sample.fl;
-              const lastW = sample.v;
-              const lastVF = sample.vf;
-              const wPumped = pumpedAtSample[si] || 0;
-
-              let weightRateAnchor = si;
-              if (isLastPhase) {
-                while (weightRateAnchor > 0 && samples[weightRateAnchor].systemInfo?.extendedRecording) {
-                  weightRateAnchor--;
-                }
+              let hit = false;
+              if (tgt.operator === 'gte' && val >= tgt.value) {
+                if (!(isLastPhase && isWt && val > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G)) hit = true;
               }
-              const weightRateAtSample = getRegressionWeightRate(
-                samples,
-                weightRateAnchor,
-                PREDICTIVE_WINDOW_MS,
-              );
-              const fallbackInstantRate = lastVF !== undefined ? lastVF : lastF;
-              const currentRate = weightRateAtSample > 0 ? weightRateAtSample : fallbackInstantRate;
+              if (tgt.operator === 'lte' && val <= tgt.value) hit = true;
 
-              let predictedW = lastW;
-              if (lastW > 0.1 && !scaleConnectionBrokenPermanently) {
-                let predictedAdded = currentRate * scaleDelaySec;
-                if (predictedAdded < 0) predictedAdded = 0;
-                if (predictedAdded > 8.0) predictedAdded = 8.0;
-                predictedW = lastW + predictedAdded;
+              if (hit) return { target: tgt, delayMs, predictedWeight: isWt ? val : null };
+            }
+            return null;
+          };
+
+          // --- Helper: check targets with direction validation per target ---
+          const tryTargetsWithDir = (nextSample, nSteps) => {
+            const horizon = nSteps * sIntervalSec;
+            const nextDt = (nextSample.t - anchor.t) / 1000;
+
+            for (let ti = 0; ti < profilePhase.targets.length; ti++) {
+              const tgt = profilePhase.targets[ti];
+              const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+              if (isWt && scaleConnectionBrokenPermanently) continue;
+              if (isLastPhase && isWt && lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G) continue;
+
+              let anchorVal, nextVal, predVal;
+              if (tgt.type === 'pressure') {
+                anchorVal = anchor.cp;
+                nextVal = nextSample.cp;
+                predVal = Math.max(0, anchor.cp + pSlope * horizon);
+              } else if (tgt.type === 'flow') {
+                anchorVal = anchor.fl;
+                nextVal = nextSample.fl;
+                predVal = Math.max(0, anchor.fl + fSlope * horizon);
+              } else if (isWt) {
+                anchorVal = anchor.v;
+                nextVal = nextSample.v;
+                predVal = anchor.v + (wRate > 0 ? wRate * horizon : 0);
+              } else if (tgt.type === 'pumped') {
+                anchorVal = anchorPumped;
+                nextVal = anchorPumped + nextSample.fl * nextDt;
+                predVal = anchorPumped + Math.max(0, anchor.fl) * horizon;
+              } else continue;
+
+              // Use actual value if direction is valid, otherwise fall back to prediction
+              const dirValid = isDirectionallyValidLookAhead(tgt.operator, anchorVal, nextVal);
+              const val = dirValid ? nextVal : predVal;
+
+              // No tolerance at look-ahead steps — these are actual/predicted values, not raw sensor readings
+              let hit = false;
+              if (tgt.operator === 'gte' && val >= tgt.value) {
+                if (!(isLastPhase && isWt && val > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G)) hit = true;
               }
+              if (tgt.operator === 'lte' && val <= tgt.value) hit = true;
 
-              let predictedPumped = wPumped;
-              if (lastF > 0 && sensorDelaySec > 0) {
-                predictedPumped += lastF * sensorDelaySec;
-              }
-
-              let predictedP = lastP;
-              let predictedF = lastF;
-              if (dt > 0 && sensorDelaySec > 0) {
-                const slopeP = (lastP - prevSample.cp) / dt;
-                const slopeF = (lastF - prevSample.fl) / dt;
-                predictedP = lastP + slopeP * sensorDelaySec;
-                predictedF = lastF + slopeF * sensorDelaySec;
-                if (predictedP < 0) predictedP = 0;
-                if (predictedF < 0) predictedF = 0;
-              }
-
-              for (let ti = 0; ti < profilePhase.targets.length; ti++) {
-                const tgt = profilePhase.targets[ti];
-                if (
-                  (tgt.type === 'volumetric' || tgt.type === 'weight') &&
-                  scaleConnectionBrokenPermanently
-                ) {
-                  continue;
-                }
-
-                const isWeightTarget = tgt.type === 'volumetric' || tgt.type === 'weight';
-                if (
-                  isLastPhase &&
-                  isWeightTarget &&
-                  lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G
-                ) {
-                  continue;
-                }
-                const enforceLastPhaseWeightCap = isLastPhase && isWeightTarget && tgt.operator === 'gte';
-                const maxAllowedWeightStop = tgt.value + LAST_PHASE_OVERSHOOT_MAX_G;
-                const isWithinLastPhaseWeightCap = value =>
-                  !enforceLastPhaseWeightCap ||
-                  (typeof value === 'number' && isFinite(value) && value <= maxAllowedWeightStop);
-
-                let measured = 0;
-                let checkValue = 0;
-                let tolerance = 0;
-                let projectedDelayMs = 0;
-                let hitSource = null;
-                let hit = false;
-
-                if (tgt.type === 'pressure') {
-                  measured = lastP;
-                  checkValue = predictedP;
-                  tolerance = TOL_PRESSURE;
-                  projectedDelayMs = normalizedSensorDelayMs;
-                } else if (tgt.type === 'flow') {
-                  measured = lastF;
-                  checkValue = predictedF;
-                  tolerance = TOL_FLOW;
-                  projectedDelayMs = normalizedSensorDelayMs;
-                } else if (isWeightTarget) {
-                  measured = lastW;
-                  checkValue = tgt.operator === 'gte' ? predictedW : lastW;
-                  projectedDelayMs = tgt.operator === 'gte' ? normalizedScaleDelayMs : 0;
-                } else if (tgt.type === 'pumped') {
-                  measured = wPumped;
-                  checkValue = tgt.operator === 'gte' ? predictedPumped : wPumped;
-                  projectedDelayMs = tgt.operator === 'gte' ? normalizedSensorDelayMs : 0;
-                }
-
-                if (
-                  tgt.operator === 'gte' &&
-                  measured >= tgt.value &&
-                  isWithinLastPhaseWeightCap(measured)
-                ) {
-                  hit = true;
-                  hitSource = 'raw';
-                  projectedDelayMs = 0;
-                }
-                if (tgt.operator === 'lte' && measured <= tgt.value) {
-                  hit = true;
-                  hitSource = 'raw';
-                  projectedDelayMs = 0;
-                }
-
-                if (!hit) {
-                  const allowPredictedLte = shouldAllowPredictedLteForSensorTarget(
-                    tgt.type,
-                    measured,
-                    tgt.value,
-                    tolerance,
-                  );
-                  if (
-                    tgt.operator === 'gte' &&
-                    checkValue >= tgt.value &&
-                    isWithinLastPhaseWeightCap(checkValue)
-                  ) {
-                    hit = true;
-                    hitSource = 'predicted';
-                  }
-                  if (tgt.operator === 'lte' && allowPredictedLte && checkValue <= tgt.value) {
-                    hit = true;
-                    hitSource = 'predicted';
-                  }
-                }
-
-                if (!hit && tolerance > 0) {
-                  if (
-                    tgt.operator === 'gte' &&
-                    measured >= tgt.value - tolerance &&
-                    isWithinLastPhaseWeightCap(measured)
-                  ) {
-                    hit = true;
-                    hitSource = 'tolerance';
-                    projectedDelayMs = 0;
-                  }
-                  if (tgt.operator === 'lte' && measured <= tgt.value + tolerance) {
-                    hit = true;
-                    hitSource = 'tolerance';
-                    projectedDelayMs = 0;
-                  }
-                }
-
-                if (hit) {
-                  const triggerTimeMs = sample.t + projectedDelayMs;
-                  stepMatch = {
-                    target: tgt,
-                    lookAhead: false,
-                    source: hitSource,
-                    triggerTimeMs,
-                    boundaryDeltaMs: Math.abs(phaseBoundaryMs - triggerTimeMs),
-                    predictedWeight: isWeightTarget ? predictedW : null,
-                    delayForAverageMs: projectedDelayMs,
-                    testedDelayMs: currentDelay,
-                  };
-                  break;
-                }
+              if (hit) {
+                return {
+                  target: tgt,
+                  delayMs: nSteps * sInterval,
+                  predictedWeight: isWt ? val : null,
+                };
               }
             }
+            return null;
+          };
 
-            // Use next-phase look-ahead only as fallback if replay found no reason.
-            if (!stepMatch && nextPhaseFirstSample && replayEndIndex >= 0) {
-              const anchorSample = samples[replayEndIndex];
-              const prevAnchor = replayEndIndex > 0 ? samples[replayEndIndex - 1] : anchorSample;
-              const nextP = nextPhaseFirstSample.cp ?? 0;
-              const nextF = nextPhaseFirstSample.fl ?? 0;
-              const nextW = nextPhaseFirstSample.v ?? 0;
+          // --- Helper: predict values at N steps ahead (pure extrapolation) ---
+          const predictAt = (nSteps) => {
+            const h = nSteps * sIntervalSec;
+            return {
+              p: Math.max(0, anchor.cp + pSlope * h),
+              f: Math.max(0, anchor.fl + fSlope * h),
+              w: anchor.v + (wRate > 0 ? wRate * h : 0),
+              pumped: anchorPumped + Math.max(0, anchor.fl) * h,
+            };
+          };
 
-              const anchorP = anchorSample.cp ?? 0;
-              const anchorF = anchorSample.fl ?? 0;
-              const anchorW = anchorSample.v ?? 0;
-              const anchorVF = anchorSample.vf;
-              const anchorDt = (anchorSample.t - prevAnchor.t) / 1000.0;
-              const nextDt = (nextPhaseFirstSample.t - anchorSample.t) / 1000.0;
+          let match = null;
 
-              let weightRateAnchor = replayEndIndex;
-              if (isLastPhase) {
-                while (weightRateAnchor > 0 && samples[weightRateAnchor].systemInfo?.extendedRecording) {
-                  weightRateAnchor--;
-                }
-              }
-              const weightRateAtBoundary = getRegressionWeightRate(
-                samples,
-                weightRateAnchor,
-                PREDICTIVE_WINDOW_MS,
-              );
-              const fallbackInstantRate = anchorVF !== undefined ? anchorVF : anchorF;
-              const currentRate = weightRateAtBoundary > 0 ? weightRateAtBoundary : fallbackInstantRate;
+          if (isAutoAdjusted) {
+            // AUTO MODE: 4-step detection using actual recorded data
 
-              let nextPredictedW = nextW;
-              if (nextW > 0.1 && !scaleConnectionBrokenPermanently) {
-                let nextPredictedAdded = currentRate * scaleDelaySec;
-                if (nextPredictedAdded < 0) nextPredictedAdded = 0;
-                if (nextPredictedAdded > 8.0) nextPredictedAdded = 8.0;
-                nextPredictedW = nextW + nextPredictedAdded;
-              }
+            // STEP 1: Check at anchor point (delay = 0) — with sensor tolerance
+            match = tryTargets(anchor.cp, anchor.fl, anchor.v, anchorPumped, 0);
 
-              let nextPredictedP = nextP;
-              let nextPredictedF = nextF;
-              let fallbackLookAheadPredictedP = null;
-              let fallbackLookAheadPredictedF = null;
-
-              if (nextDt > 0 && sensorDelaySec > 0) {
-                const nextSlopeP = (nextP - anchorP) / nextDt;
-                const nextSlopeF = (nextF - anchorF) / nextDt;
-                nextPredictedP = anchorP + nextSlopeP * sensorDelaySec;
-                nextPredictedF = anchorF + nextSlopeF * sensorDelaySec;
-                if (nextPredictedP < 0) nextPredictedP = 0;
-                if (nextPredictedF < 0) nextPredictedF = 0;
-              }
-
-              if (anchorDt > 0 && sensorDelaySec > 0) {
-                const anchorSlopeP = (anchorP - prevAnchor.cp) / anchorDt;
-                const anchorSlopeF = (anchorF - prevAnchor.fl) / anchorDt;
-                fallbackLookAheadPredictedP = anchorP + anchorSlopeP * sensorDelaySec;
-                fallbackLookAheadPredictedF = anchorF + anchorSlopeF * sensorDelaySec;
-                if (fallbackLookAheadPredictedP < 0) fallbackLookAheadPredictedP = 0;
-                if (fallbackLookAheadPredictedF < 0) fallbackLookAheadPredictedF = 0;
-              }
-
-              for (let ti = 0; ti < profilePhase.targets.length && !stepMatch; ti++) {
-                const tgt = profilePhase.targets[ti];
-                if (tgt.type === 'pumped') continue;
-                if (
-                  (tgt.type === 'volumetric' || tgt.type === 'weight') &&
-                  scaleConnectionBrokenPermanently
-                ) {
-                  continue;
-                }
-
-                const isWeightTarget = tgt.type === 'volumetric' || tgt.type === 'weight';
-                if (
-                  isLastPhase &&
-                  isWeightTarget &&
-                  lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G
-                ) {
-                  continue;
-                }
-                const enforceLastPhaseWeightCap = isLastPhase && isWeightTarget && tgt.operator === 'gte';
-                const maxAllowedWeightStop = tgt.value + LAST_PHASE_OVERSHOOT_MAX_G;
-                const isWithinLastPhaseWeightCap = value =>
-                  !enforceLastPhaseWeightCap ||
-                  (typeof value === 'number' && isFinite(value) && value <= maxAllowedWeightStop);
-
-                let measured = 0;
-                let nextMeasured = 0;
-                let nextCheckValue = 0;
-                let projectedDelayMs = 0;
-                let hit = false;
-                let hitSource = null;
-
-                if (tgt.type === 'pressure') {
-                  measured = anchorP;
-                  nextMeasured = nextP;
-                  nextCheckValue = nextPredictedP;
-                  projectedDelayMs = normalizedSensorDelayMs;
-                } else if (tgt.type === 'flow') {
-                  measured = anchorF;
-                  nextMeasured = nextF;
-                  nextCheckValue = nextPredictedF;
-                  projectedDelayMs = normalizedSensorDelayMs;
-                } else if (isWeightTarget) {
-                  measured = anchorW;
-                  nextMeasured = nextW;
-                  nextCheckValue = tgt.operator === 'gte' ? nextPredictedW : nextW;
-                  projectedDelayMs = tgt.operator === 'gte' ? normalizedScaleDelayMs : 0;
-                }
-
-                const directionalLookAheadValid = isDirectionallyValidLookAhead(
-                  tgt.operator,
-                  measured,
-                  nextMeasured,
-                );
-                const lookAheadTolerance =
-                  tgt.type === 'pressure' ? TOL_PRESSURE : tgt.type === 'flow' ? TOL_FLOW : 0;
-
-                if (directionalLookAheadValid) {
-                  let lookAheadRawHit = false;
-                  let lookAheadPredictedHit = false;
-                  if (
-                    tgt.operator === 'gte' &&
-                    nextMeasured >= tgt.value &&
-                    isWithinLastPhaseWeightCap(nextMeasured)
-                  ) {
-                    lookAheadRawHit = true;
-                  }
-                  if (
-                    tgt.operator === 'lte' &&
-                    nextMeasured <= tgt.value
-                  ) {
-                    lookAheadRawHit = true;
-                  }
-
-                  if (
-                    tgt.operator === 'gte' &&
-                    nextCheckValue >= tgt.value &&
-                    isWithinLastPhaseWeightCap(nextCheckValue)
-                  ) {
-                    lookAheadPredictedHit = true;
-                  }
-                  if (
-                    tgt.operator === 'lte' &&
-                    shouldAllowPredictedLteForSensorTarget(
-                      tgt.type,
-                      nextMeasured,
-                      tgt.value,
-                      lookAheadTolerance,
-                    ) &&
-                    nextCheckValue <= tgt.value
-                  ) {
-                    lookAheadPredictedHit = true;
-                  }
-
-                  if (lookAheadRawHit || lookAheadPredictedHit) {
-                    hit = true;
-                    hitSource = 'lookahead';
-                    // Raw look-ahead means no projected delay was needed to trigger the stop.
-                    projectedDelayMs = lookAheadRawHit ? 0 : projectedDelayMs;
-                  }
-                } else if (tgt.type === 'pressure' || tgt.type === 'flow') {
-                  const fallbackValue =
-                    tgt.type === 'pressure'
-                      ? fallbackLookAheadPredictedP
-                      : fallbackLookAheadPredictedF;
-                  if (fallbackValue != null) {
-                    if (
-                      tgt.operator === 'gte' &&
-                      fallbackValue >= tgt.value &&
-                      isWithinLastPhaseWeightCap(fallbackValue)
-                    ) {
-                      hit = true;
-                      hitSource = 'lookahead-fallback';
-                    }
-                    if (
-                      tgt.operator === 'lte' &&
-                      shouldAllowPredictedLteForSensorTarget(
-                        tgt.type,
-                        measured,
-                        tgt.value,
-                        lookAheadTolerance,
-                      ) &&
-                      fallbackValue <= tgt.value
-                    ) {
-                      hit = true;
-                      hitSource = 'lookahead-fallback';
-                    }
-                  }
-                }
-
-                if (hit) {
-                  const triggerTimeMs = anchorSample.t + projectedDelayMs;
-                  stepMatch = {
-                    target: tgt,
-                    lookAhead: true,
-                    source: hitSource,
-                    triggerTimeMs,
-                    boundaryDeltaMs: Math.abs(phaseBoundaryMs - triggerTimeMs),
-                    predictedWeight: isWeightTarget ? nextPredictedW : null,
-                    delayForAverageMs: projectedDelayMs,
-                    testedDelayMs: currentDelay,
-                  };
-                }
-              }
+            // STEP 2: First next-phase sample (delay ≈ 1 × sampleInterval)
+            if (!match && nextPhaseSamples.length > 0) {
+              match = tryTargetsWithDir(nextPhaseSamples[0], 1);
             }
 
-            if (stepMatch) {
-              if (!bestStepMatch) {
-                bestStepMatch = stepMatch;
-              } else {
-                const deltaDiff = stepMatch.boundaryDeltaMs - bestStepMatch.boundaryDeltaMs;
-                const sourceDiff =
-                  getHitSourcePriority(stepMatch.source) - getHitSourcePriority(bestStepMatch.source);
-                const lookAheadDiff = Number(stepMatch.lookAhead) - Number(bestStepMatch.lookAhead);
-                const delayDiff = (stepMatch.testedDelayMs || 0) - (bestStepMatch.testedDelayMs || 0);
+            // STEP 3: Second next-phase sample (delay ≈ 2 × sampleInterval)
+            if (!match && nextPhaseSamples.length > 1) {
+              match = tryTargetsWithDir(nextPhaseSamples[1], 2);
+            }
 
-                const clearlyBetterBoundary = deltaDiff < -BOUNDARY_MATCH_TOLERANCE_MS;
-                const similarBoundary = Math.abs(deltaDiff) <= BOUNDARY_MATCH_TOLERANCE_MS;
-                const betterByTieBreakers =
-                  (lookAheadDiff < 0) ||
-                  (lookAheadDiff === 0 && sourceDiff < 0) ||
-                  (lookAheadDiff === 0 && sourceDiff === 0 && delayDiff < 0);
+            // STEP 4: Predictive extrapolation fallback
+            if (!match) {
+              const maxSteps = Math.ceil(LAST_PHASE_ESTIMATED_DELAY_MAX_MS / sInterval);
+              for (let step = 3; step <= maxSteps && !match; step++) {
+                const pred = predictAt(step);
+                match = tryTargets(pred.p, pred.f, pred.w, pred.pumped, step * sInterval);
+              }
+            }
+          } else {
+            // MANUAL MODE: predict with user-configured delays
+            const normScaleMs = Math.max(0, scaleDelayMs || 0);
+            const normSensorMs = Math.max(0, sensorDelayMs || 0);
+            const scaleDelaySec = normScaleMs / 1000;
+            const sensorDelaySec = normSensorMs / 1000;
 
-                // Within a small boundary window, prefer more conservative (non-lookahead, lower-delay) matches.
-                if (clearlyBetterBoundary || (similarBoundary && betterByTieBreakers)) {
-                  bestStepMatch = stepMatch;
-                }
+            for (let ti = 0; ti < profilePhase.targets.length && !match; ti++) {
+              const tgt = profilePhase.targets[ti];
+              const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+              if (isWt && scaleConnectionBrokenPermanently) continue;
+              if (isLastPhase && isWt && lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G) continue;
+
+              let val, delayMs = 0;
+              if (tgt.type === 'pressure') {
+                val = Math.max(0, anchor.cp + pSlope * sensorDelaySec);
+                delayMs = normSensorMs;
+              } else if (tgt.type === 'flow') {
+                val = Math.max(0, anchor.fl + fSlope * sensorDelaySec);
+                delayMs = normSensorMs;
+              } else if (isWt) {
+                val = anchor.v + (wRate > 0 ? wRate * scaleDelaySec : 0);
+                delayMs = normScaleMs;
+              } else if (tgt.type === 'pumped') {
+                val = anchorPumped + Math.max(0, anchor.fl) * sensorDelaySec;
+                delayMs = normSensorMs;
+              } else continue;
+
+              // No tolerance for predicted values — tolerance only at step 1 (raw sensor readings)
+              let hit = false;
+              if (tgt.operator === 'gte' && val >= tgt.value) {
+                if (!(isLastPhase && isWt && val > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G)) hit = true;
+              }
+              if (tgt.operator === 'lte' && val <= tgt.value) hit = true;
+
+              if (hit) {
+                match = { target: tgt, delayMs, predictedWeight: isWt ? val : null };
               }
             }
           }
 
-          if (bestStepMatch) {
-            exitReason = formatStopReason(bestStepMatch.target.type);
-            exitType = bestStepMatch.target.type;
-            finalPredictedWeight = bestStepMatch.predictedWeight;
-            if (isAutoAdjusted) {
-              setPhaseDelayReviewHint(bestStepMatch.delayForAverageMs || 0, 'auto-delay');
+          // --- Process match result ---
+          if (match) {
+            exitReason = formatStopReason(match.target.type);
+            exitType = match.target.type;
+            finalPredictedWeight = match.predictedWeight;
+
+            setEstimatedScaleDelay(match.delayMs);
+
+            // Review hint when stop was found at step 3 or later (delay >= 2 × sampleInterval)
+            if (isAutoAdjusted && match.delayMs >= sInterval * 2) {
+              setPhaseDelayReviewHint(match.delayMs, 'auto-delay');
             }
 
-            analyzerDebug(debugEnabled, `Auto-delay match phase ${phaseNum}`, {
+            analyzerDebug(debugEnabled, `Stop detected phase ${phaseNum}`, {
               shotId: shotData.id,
               phaseName: displayName,
-              targetType: bestStepMatch.target.type,
-              operator: bestStepMatch.target.operator,
-              targetValue: bestStepMatch.target.value,
-              source: bestStepMatch.source,
-              lookAhead: bestStepMatch.lookAhead,
-              delayMs: bestStepMatch.delayForAverageMs,
-              boundaryDeltaMs: Math.round(bestStepMatch.boundaryDeltaMs),
-              triggerTimeMs: Math.round(bestStepMatch.triggerTimeMs),
+              targetType: match.target.type,
+              operator: match.target.operator,
+              targetValue: match.target.value,
+              delayMs: match.delayMs,
             });
 
             if (isAutoAdjusted) {
               if (exitType === 'weight' || exitType === 'volumetric') {
-                sumScaleDelay += bestStepMatch.delayForAverageMs || 0;
+                sumScaleDelay += match.delayMs;
                 countScaleHits++;
               } else {
-                sumSensorDelay += bestStepMatch.delayForAverageMs || 0;
+                sumSensorDelay += match.delayMs;
                 countSensorHits++;
               }
             }
             foundMatch = true;
+
+            // Compute calculated values for ALL targets at the matched delay
+            if (match.delayMs > 0) {
+              targetCalcValues = {};
+              const matchStep = Math.round(match.delayMs / sInterval);
+
+              for (const tgt of profilePhase.targets) {
+                const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+                if (isWt && scaleConnectionBrokenPermanently) continue;
+
+                let calcVal;
+                const nextSampleIdx = matchStep - 1;
+                if (isAutoAdjusted && nextSampleIdx >= 0 && nextSampleIdx < nextPhaseSamples.length) {
+                  const ns = nextPhaseSamples[nextSampleIdx];
+                  const horizon = matchStep * sIntervalSec;
+                  const nextDt = (ns.t - anchor.t) / 1000;
+                  let anchorVal, nextVal, predVal;
+                  if (tgt.type === 'pressure') { anchorVal = anchor.cp; nextVal = ns.cp; predVal = Math.max(0, anchor.cp + pSlope * horizon); }
+                  else if (tgt.type === 'flow') { anchorVal = anchor.fl; nextVal = ns.fl; predVal = Math.max(0, anchor.fl + fSlope * horizon); }
+                  else if (isWt) { anchorVal = anchor.v; nextVal = ns.v; predVal = anchor.v + (wRate > 0 ? wRate * horizon : 0); }
+                  else if (tgt.type === 'pumped') { anchorVal = anchorPumped; nextVal = anchorPumped + ns.fl * nextDt; predVal = anchorPumped + Math.max(0, anchor.fl) * horizon; }
+                  else continue;
+                  const dirValid = isDirectionallyValidLookAhead(tgt.operator, anchorVal, nextVal);
+                  calcVal = dirValid ? nextVal : predVal;
+                } else {
+                  const h = match.delayMs / 1000;
+                  if (tgt.type === 'pressure') calcVal = Math.max(0, anchor.cp + pSlope * h);
+                  else if (tgt.type === 'flow') calcVal = Math.max(0, anchor.fl + fSlope * h);
+                  else if (isWt) calcVal = anchor.v + (wRate > 0 ? wRate * h : 0);
+                  else if (tgt.type === 'pumped') calcVal = anchorPumped + Math.max(0, anchor.fl) * h;
+                  else continue;
+                }
+
+                targetCalcValues[tgt.type] = {
+                  value: calcVal,
+                  isStopReason: tgt === match.target,
+                };
+              }
+            }
           } else {
-            analyzerDebug(debugEnabled, `Auto-delay no direct match phase ${phaseNum}`, {
+            analyzerDebug(debugEnabled, `No stop match phase ${phaseNum}`, {
               shotId: shotData.id,
               phaseName: displayName,
               targetCount: profilePhase.targets.length,
@@ -1038,6 +808,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
       prediction: {
         finalWeight: finalPredictedWeight,
       },
+      targetCalcValues,
     });
   });
 

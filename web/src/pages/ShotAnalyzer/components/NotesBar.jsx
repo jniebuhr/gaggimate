@@ -41,6 +41,10 @@ export function NotesBar({
   notesExpanded = false,
   onToggleNotesExpanded,
 }) {
+  // Shared responsive spacing for nav arrows and center info chips.
+  // Keeps a visible minimum separation while adapting on wider layouts.
+  const chipGap = 'clamp(0.35rem, 0.9vw, 0.7rem)';
+
   const getShotNotesKey = useCallback(shot => {
     if (!shot) return '';
     if (shot.source === 'gaggimate') return String(shot.id || '');
@@ -177,6 +181,37 @@ export function NotesBar({
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex >= 0 && currentIndex < shotList.length - 1;
 
+  // Keyboard navigation: ArrowLeft / ArrowRight
+  useEffect(() => {
+    if (!currentShot) return;
+
+    const isTypingTarget = target => {
+      const el = target instanceof Element ? target : document.activeElement;
+      if (!el) return false;
+      const tag = el.tagName?.toLowerCase();
+      if (el.isContentEditable) return true;
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+      return !!el.closest('input, textarea, select, [contenteditable=\"true\"], [role=\"textbox\"]');
+    };
+
+    const handleKeyDown = e => {
+      if (e.defaultPrevented) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isTypingTarget(e.target)) return;
+
+      if (e.key === 'ArrowLeft' && canGoPrev) {
+        e.preventDefault();
+        onNavigate(shotList[currentIndex - 1]);
+      } else if (e.key === 'ArrowRight' && canGoNext) {
+        e.preventDefault();
+        onNavigate(shotList[currentIndex + 1]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentShot, canGoPrev, canGoNext, currentIndex, shotList, onNavigate]);
+
   // Source badge (matching LibraryRow styling)
   const sourceLabel = currentShot?.source === 'gaggimate' ? 'GM' : 'WEB';
   const sourceBadgeClass =
@@ -215,14 +250,14 @@ export function NotesBar({
   const borderClasses = 'border-base-content/5 border-t';
 
   const fieldCls =
-    'px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap bg-base-200/60';
+    'shrink-0 rounded-md bg-base-200/60 px-2 py-1 text-xs font-medium whitespace-nowrap';
 
   return (
     <div>
       <div
         className={`transition-all duration-200 ${borderClasses}`}
       >
-        <div className='flex w-full items-center gap-0 px-1 py-0.5'>
+        <div className='flex w-full items-center px-1 py-0.5' style={{ columnGap: chipGap }}>
           {/* Prev Arrow */}
           <button
             className='btn btn-xs btn-ghost flex-shrink-0 rounded-lg px-1.5 py-1.5 disabled:opacity-30'
@@ -236,69 +271,71 @@ export function NotesBar({
           {/* Clickable center area */}
           <button
             type='button'
-            className='flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 overflow-x-auto px-1 py-1.5 scrollbar-none'
+            className='block min-w-0 flex-1 cursor-pointer overflow-x-auto px-1 py-1.5 scrollbar-none'
             onClick={() => !isEditing && onToggleNotesExpanded && onToggleNotesExpanded()}
             title='Click to expand notes'
           >
-            {/* Source Badge */}
-            <span
-              className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${sourceBadgeClass}`}
-            >
-              {sourceLabel}
-            </span>
+            <div className='mx-auto flex w-max items-center' style={{ columnGap: chipGap }}>
+              {/* Source Badge */}
+              <span
+                className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${sourceBadgeClass}`}
+              >
+                {sourceLabel}
+              </span>
 
-            {/* Shot ID/Name */}
-            <span className={fieldCls}>{getShotDisplayName()}</span>
+              {/* Shot ID/Name */}
+              <span className={fieldCls}>{getShotDisplayName()}</span>
 
-            {/* Profile Name (from shot JSON) */}
-            <span className={fieldCls}>{cleanName(currentShot.profile || '—')}</span>
+              {/* Profile Name (from shot JSON) */}
+              <span className={fieldCls}>{cleanName(currentShot.profile || '—')}</span>
 
-            {/* DateTime */}
-            <span className={fieldCls}>{formatDateTime(currentShot.timestamp)}</span>
+              {/* DateTime */}
+              <span className={fieldCls}>{formatDateTime(currentShot.timestamp)}</span>
 
-            {/* Duration (clock icon) */}
-            <span className={`${fieldCls} flex items-center gap-1`}>
-              <FontAwesomeIcon icon={faClock} className='text-[10px] opacity-50' />
-              {getDuration()}
-            </span>
+              {/* Duration (clock icon) */}
+              <span className={`${fieldCls} flex items-center gap-1`}>
+                <FontAwesomeIcon icon={faClock} className='text-[10px] opacity-50' />
+                {getDuration()}
+              </span>
 
-            {/* Ratio (divide icon) */}
-            <span className={`${fieldCls} flex items-center gap-1`}>
-              <FontAwesomeIcon icon={faDivide} className='text-[10px] opacity-50' />
-              {notes.ratio ? `1:${notes.ratio}` : '—'}
-            </span>
+              {/* Ratio (divide icon) */}
+              <span className={`${fieldCls} flex items-center gap-1`}>
+                <FontAwesomeIcon icon={faDivide} className='text-[10px] opacity-50' />
+                {notes.ratio ? `1:${notes.ratio}` : '—'}
+              </span>
 
-            {/* Dose In/Out (scale icon) */}
-            <span className={`${fieldCls} flex items-center gap-1`}>
-              <FontAwesomeIcon icon={faWeightScale} className='text-[10px] opacity-50' />
-              {notes.doseIn || '—'}g ▸ {notes.doseOut || '—'}g
-            </span>
+              {/* Dose In/Out (scale icon) */}
+              <span className={`${fieldCls} flex items-center gap-1`}>
+                <FontAwesomeIcon icon={faWeightScale} className='text-[10px] opacity-50' />
+                {notes.doseIn || '—'}g ▸ {notes.doseOut || '—'}g
+              </span>
 
-            {/* Rating (star icon + x/5) */}
-            <span className={`${fieldCls} flex items-center gap-1`}>
-              <FontAwesomeIcon
-                icon={faStar}
-                className={`text-[10px] ${notes.rating > 0 ? 'text-yellow-400' : 'opacity-30'}`}
-              />
-              {notes.rating > 0 ? `${notes.rating}/5` : '—'}
-            </span>
+              {/* Rating (star icon + x/5) */}
+              <span className={`${fieldCls} flex items-center gap-1`}>
+                <FontAwesomeIcon
+                  icon={faStar}
+                  className={`text-[10px] ${notes.rating > 0 ? 'text-yellow-400' : 'opacity-30'}`}
+                />
+                {notes.rating > 0 ? `${notes.rating}/5` : '—'}
+              </span>
 
-            {/* Balance/Taste (right after rating) */}
-            <span className={`${fieldCls} capitalize ${getTasteColor(notes.balanceTaste)}`}>
-              {notes.balanceTaste}
-            </span>
+              {/* Balance/Taste (right after rating) */}
+              <span className={`${fieldCls} capitalize ${getTasteColor(notes.balanceTaste)}`}>
+                {notes.balanceTaste}
+              </span>
 
-            {/* Bean Type (tag icon) */}
-            <span className={`${fieldCls} flex items-center gap-1`}>
-              <FontAwesomeIcon icon={faTag} className='text-[10px] opacity-50' />
-              {notes.beanType || '—'}
-            </span>
+              {/* Bean Type (tag icon) */}
+              <span className={`${fieldCls} flex items-center gap-1`}>
+                <FontAwesomeIcon icon={faTag} className='text-[10px] opacity-50' />
+                {notes.beanType || '—'}
+              </span>
 
-            {/* Grind Setting (gears icon) */}
-            <span className={`${fieldCls} flex items-center gap-1`}>
-              <FontAwesomeIcon icon={faGears} className='text-[10px] opacity-50' />
-              {notes.grindSetting || '—'}
-            </span>
+              {/* Grind Setting (gears icon) */}
+              <span className={`${fieldCls} flex items-center gap-1`}>
+                <FontAwesomeIcon icon={faGears} className='text-[10px] opacity-50' />
+                {notes.grindSetting || '—'}
+              </span>
+            </div>
           </button>
 
           {/* Next Arrow */}
