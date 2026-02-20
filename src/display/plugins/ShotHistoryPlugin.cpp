@@ -165,8 +165,7 @@ void ShotHistoryPlugin::record() {
 
         // Check for early index insertion (once per shot after 7.5s)
         if (!indexEntryCreated && (millis() - shotStart) > 7500) {
-            createEarlyIndexEntry();
-            indexEntryCreated = true;
+            indexEntryCreated = createEarlyIndexEntry();
         }
 
         // Check for weight stabilization during extended recording
@@ -376,19 +375,40 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
 
 void ShotHistoryPlugin::cleanupHistory() {
     File directory = fs->open("/h");
-    std::vector<String> entries;
+    std::vector<String> slogFiles;
     String filename = directory.getNextFileName();
     while (filename != "") {
-        entries.push_back(filename);
+        if (filename.endsWith(".slog")) {
+            slogFiles.push_back(filename);
+        }
         filename = directory.getNextFileName();
     }
-    sort(entries.begin(), entries.end(), [](String a, String b) { return a < b; });
-    if (entries.size() > MAX_HISTORY_ENTRIES) {
-        for (unsigned int i = 0; i < entries.size() - MAX_HISTORY_ENTRIES; i++) {
-            String name = entries[i];
-            fs->remove(name);
-        }
+    directory.close();
+
+    if (slogFiles.size() <= MAX_HISTORY_ENTRIES) {
+        return;
     }
+
+    sort(slogFiles.begin(), slogFiles.end(), [](const String &a, const String &b) { return a < b; });
+    size_t toRemove = slogFiles.size() - MAX_HISTORY_ENTRIES;
+
+    for (size_t i = 0; i < toRemove; i++) {
+        // Extract shot ID from filename to sync index
+        String fname = slogFiles[i];
+        int start = fname.lastIndexOf('/') + 1;
+        int end = fname.lastIndexOf('.');
+        if (end > start) {
+            uint32_t shotId = fname.substring(start, end).toInt();
+            markIndexDeleted(shotId);
+        }
+
+        // Remove .slog and associated .json notes file
+        fs->remove(fname);
+        String notesPath = fname.substring(0, fname.lastIndexOf('.')) + ".json";
+        fs->remove(notesPath); // OK if it doesn't exist
+    }
+
+    ESP_LOGI("ShotHistoryPlugin", "Cleaned up %u old shots", toRemove);
 }
 
 void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &response) {
@@ -519,7 +539,19 @@ void ShotHistoryPlugin::flushBuffer() {
 // Index management methods
 bool ShotHistoryPlugin::ensureIndexExists() {
     if (fs->exists("/h/index.bin")) {
-        return true;
+        // Validate existing index header
+        File indexFile = fs->open("/h/index.bin", "r");
+        if (indexFile) {
+            ShotIndexHeader hdr{};
+            bool valid = (indexFile.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) &&
+                          hdr.magic == SHOT_INDEX_MAGIC);
+            indexFile.close();
+            if (valid) {
+                return true;
+            }
+            ESP_LOGW("ShotHistoryPlugin", "Corrupt index file detected (bad magic), recreating");
+            fs->remove("/h/index.bin");
+        }
     }
 
     // Create new empty index
@@ -543,21 +575,21 @@ bool ShotHistoryPlugin::ensureIndexExists() {
     return true;
 }
 
-void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
+bool ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
     if (!ensureIndexExists()) {
-        return;
+        return false;
     }
 
     File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for append");
-        return;
+        return false;
     }
 
     ShotIndexHeader header{};
     if (!readIndexHeader(indexFile, header)) {
         indexFile.close();
-        return;
+        return false;
     }
 
     // Check for existing entry with same ID to prevent duplicates
@@ -566,12 +598,17 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
         ESP_LOGW("ShotHistoryPlugin", "Attempt to add duplicate entry for shot %u - entry already exists at position %d",
                  entry.id, existingPos);
         indexFile.close();
-        return;
+        return true; // Entry exists, not a failure
     }
 
     // Append entry
     indexFile.seek(0, SeekEnd);
-    indexFile.write(reinterpret_cast<const uint8_t *>(&entry), sizeof(entry));
+    size_t written = indexFile.write(reinterpret_cast<const uint8_t *>(&entry), sizeof(entry));
+    if (written != sizeof(entry)) {
+        ESP_LOGE("ShotHistoryPlugin", "Failed to write index entry for shot %u", entry.id);
+        indexFile.close();
+        return false;
+    }
 
     // Update header
     header.entryCount++;
@@ -581,6 +618,7 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
 
     indexFile.close();
     ESP_LOGD("ShotHistoryPlugin", "Appended shot %u to index", entry.id);
+    return true;
 }
 
 void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume) {
@@ -816,7 +854,7 @@ bool ShotHistoryPlugin::writeEntryAtPosition(File &indexFile, size_t position, c
     return true;
 }
 
-void ShotHistoryPlugin::createEarlyIndexEntry() {
+bool ShotHistoryPlugin::createEarlyIndexEntry() {
     Profile profile = controller->getProfileManager()->getSelectedProfile();
 
     ShotIndexEntry indexEntry{};
@@ -831,8 +869,13 @@ void ShotHistoryPlugin::createEarlyIndexEntry() {
     strncpy(indexEntry.profileName, profile.label.c_str(), sizeof(indexEntry.profileName) - 1);
     indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
 
-    appendToIndex(indexEntry);
-    ESP_LOGD("ShotHistoryPlugin", "Created early index entry for shot %u", indexEntry.id);
+    bool success = appendToIndex(indexEntry);
+    if (success) {
+        ESP_LOGD("ShotHistoryPlugin", "Created early index entry for shot %u", indexEntry.id);
+    } else {
+        ESP_LOGE("ShotHistoryPlugin", "Failed to create early index entry for shot %u", indexEntry.id);
+    }
+    return success;
 }
 
 void ShotHistoryPlugin::updateIndexCompletion(uint32_t shotId, const ShotLogHeader &finalHeader) {
@@ -869,7 +912,23 @@ void ShotHistoryPlugin::updateIndexCompletion(uint32_t shotId, const ShotLogHead
             ESP_LOGE("ShotHistoryPlugin", "Failed to read entry for shot %u at position %d", shotId, entryPos);
         }
     } else {
-        ESP_LOGW("ShotHistoryPlugin", "Shot %u not found in index for completion update", shotId);
+        // Entry not found - create a new completed entry as fallback
+        ESP_LOGW("ShotHistoryPlugin", "Shot %u not found in index, creating new completed entry", shotId);
+        indexFile.close();
+
+        ShotIndexEntry newEntry{};
+        newEntry.id = shotId;
+        newEntry.timestamp = finalHeader.startEpoch;
+        newEntry.duration = finalHeader.durationMs;
+        newEntry.volume = finalHeader.finalWeight;
+        newEntry.rating = 0;
+        newEntry.flags = SHOT_FLAG_COMPLETED;
+        strncpy(newEntry.profileId, finalHeader.profileId, sizeof(newEntry.profileId) - 1);
+        newEntry.profileId[sizeof(newEntry.profileId) - 1] = '\0';
+        strncpy(newEntry.profileName, finalHeader.profileName, sizeof(newEntry.profileName) - 1);
+        newEntry.profileName[sizeof(newEntry.profileName) - 1] = '\0';
+        appendToIndex(newEntry);
+        return;
     }
 
     indexFile.close();
