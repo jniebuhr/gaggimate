@@ -48,6 +48,7 @@ class GaggiMateController {
     PressureSensor *pressureSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
+    ADSAdc *adc = nullptr;
 
     std::vector<ControllerConfig> configs;
 

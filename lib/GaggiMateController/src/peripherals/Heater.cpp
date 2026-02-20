@@ -6,7 +6,6 @@
 Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
                const pid_result_callback_t &pid_callback)
     : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback) {
-
     simplePid = new SimplePID(&output, &temperature, &setpoint);
     autotuner = new Autotune();
 }
