@@ -130,6 +130,19 @@ void WebUIPlugin::loop() {
                     pObj["pt"] = brew->getPhaseDuration();
                     pObj["pp"] = ts - brew->currentPhaseStarted;
                 }
+                // Calculate accurate remaining time for time-based brews (accounts for early phase completion)
+                if (brew->target == ProcessTarget::TIME) {
+                    double remainingMs = 0.0;
+                    // Add time remaining in current phase
+                    unsigned long timeInCurrentPhase = ts - brew->currentPhaseStarted;
+                    double currentPhaseRemaining = std::max(0.0, brew->currentPhase.duration * 1000.0 - timeInCurrentPhase);
+                    remainingMs += currentPhaseRemaining;
+                    // Add full duration of all future phases
+                    for (size_t i = brew->phaseIndex + 1; i < brew->profile.phases.size(); i++) {
+                        remainingMs += brew->profile.phases[i].duration * 1000.0;
+                    }
+                    pObj["rt"] = static_cast<long>(remainingMs);
+                }
             } else if (process->getType() == MODE_GRIND) {
                 auto *grind = static_cast<GrindProcess *>(process);
                 unsigned long ts = grind->isActive() && controller->isActive() ? millis() : grind->finished;

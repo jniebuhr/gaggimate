@@ -83,6 +83,26 @@ const BrewProgress = props => {
   const progress = (processInfo.pp / processInfo.pt) * 100.0;
   const elapsed = Math.floor(processInfo.e / 1000);
 
+  // Countdown logic
+  const isTimeBased = processInfo.tt === 'time';
+
+  let displayTime = elapsed;
+  let isOvertime = false;
+
+  if (isTimeBased && processInfo.rt !== undefined) {
+    // Use accurate remaining time from backend (accounts for early phase completion)
+    const remainingTime = Math.floor(processInfo.rt / 1000);
+
+    if (remainingTime > 0) {
+      // Countdown: show remaining time
+      displayTime = remainingTime;
+    } else {
+      // Overtime: show time over
+      displayTime = -remainingTime;
+      isOvertime = true;
+    }
+  }
+
   return (
     <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
       {active && (
@@ -108,8 +128,12 @@ const BrewProgress = props => {
               {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(0)}s`}
               {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(0)}g`}
             </div>
-            <div className='text-base-content text-2xl font-bold sm:text-3xl'>
-              {formatDuration(elapsed)}
+            <div
+              className={`text-2xl font-bold sm:text-3xl ${
+                isOvertime ? 'text-error' : 'text-base-content'
+              }`}
+            >
+              {formatDuration(displayTime)}
             </div>
           </div>
         </>
