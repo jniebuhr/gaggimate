@@ -8,7 +8,7 @@
 #include <display/models/shot_log_format.h>
 
 constexpr size_t SHOT_HISTORY_INTERVAL = 100;
-constexpr size_t MAX_HISTORY_ENTRIES = 100;                 // Increased from 10
+constexpr size_t MIN_FREE_SPACE_BYTES = 500 * 1024;        // 500 KB reserved free space
 constexpr unsigned long EXTENDED_RECORDING_DURATION = 3000; // 3 seconds
 constexpr unsigned long WEIGHT_STABILIZATION_TIME = 1000;   // 1 second
 constexpr float WEIGHT_STABILIZATION_THRESHOLD = 0.1f;      // 0.1g threshold
@@ -25,10 +25,11 @@ class ShotHistoryPlugin : public Plugin {
     void handleRequest(JsonDocument &request, JsonDocument &response);
 
     // Index management methods
-    void appendToIndex(const ShotIndexEntry &entry);
+    bool appendToIndex(const ShotIndexEntry &entry);
     void updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume);
     void markIndexDeleted(uint32_t shotId);
     void rebuildIndex();
+    void startAsyncRebuild();
     bool ensureIndexExists();
 
   private:
@@ -37,8 +38,7 @@ class ShotHistoryPlugin : public Plugin {
     int findEntryPosition(File &indexFile, const ShotIndexHeader &header, uint32_t shotId);
     bool readEntryAtPosition(File &indexFile, size_t position, ShotIndexEntry &entry);
     bool writeEntryAtPosition(File &indexFile, size_t position, const ShotIndexEntry &entry);
-    void createEarlyIndexEntry();
-    void updateIndexCompletion(uint32_t shotId, const ShotLogHeader &finalHeader);
+    bool createEarlyIndexEntry();
     void saveNotes(const String &id, const JsonDocument &notes);
     void loadNotes(const String &id, JsonDocument &notes);
     void startRecording();
@@ -50,6 +50,7 @@ class ShotHistoryPlugin : public Plugin {
     void endRecording();
     void endExtendedRecording();
     void cleanupHistory();
+    size_t getFreeSpace();
 
     void recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex); // Helper for phase transitions
 
@@ -82,6 +83,9 @@ class ShotHistoryPlugin : public Plugin {
 
     // Phase transition tracking (v5+)
     uint8_t lastRecordedPhase = 0xFF; // Invalid initial value to detect first phase
+
+    // Async rebuild state  
+    bool rebuildInProgress = false;
 
     xTaskHandle taskHandle;
     void flushBuffer();
