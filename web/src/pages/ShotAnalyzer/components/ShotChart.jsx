@@ -99,6 +99,7 @@ const CHART_COLORS = {
 };
 const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
 const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
+const LEGEND_THIN_LINE_LABELS = new Set(['Target T', 'Target P', 'Target F', 'Puck Flow', 'Weight']);
 const TOOLTIP_BOTTOM_LABELS = new Set(['Temp', 'Target T']);
 const LEGEND_COLOR_BY_LABEL = {
   'Phase Names': CHART_COLORS.phaseLine,
@@ -116,14 +117,14 @@ const LEGEND_COLOR_BY_LABEL = {
 const LEGEND_ORDER = [
   'Phase Names',
   'Stops',
-  'Temp',
-  'Target T',
   'Pressure',
   'Target P',
   'Flow',
   'Target F',
   'Puck Flow',
   'Weight',
+  'Temp',
+  'Target T',
 ];
 
 const LEGEND_INDEX = LEGEND_ORDER.reduce((acc, label, index) => {
@@ -1203,8 +1204,9 @@ export function ShotChart({ shotData, results }) {
             const key = VISIBILITY_KEY_BY_LABEL[label];
             const isVisible = key ? visibility[key] : false;
             const swatchColor = LEGEND_COLOR_BY_LABEL[label] || '#94a3b8';
-            const swatchLineWidth =
-              label === 'Weight' || label === 'Target F' ? THIN_LINE_WIDTH : STANDARD_LINE_WIDTH;
+            const swatchLineWidth = LEGEND_THIN_LINE_LABELS.has(label)
+              ? THIN_LINE_WIDTH
+              : STANDARD_LINE_WIDTH;
 
             return (
               <button
