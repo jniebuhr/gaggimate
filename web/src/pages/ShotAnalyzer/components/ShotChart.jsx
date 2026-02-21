@@ -317,7 +317,7 @@ export function ShotChart({ shotData, results }) {
 
     const COLORS = CHART_COLORS;
 
-    const mainCanvasCtx = mainChartRef.current?.getContext('2d');
+    const mainCanvasCtx = mainChartRef.current.getContext('2d');
     const targetPressureFill = createStripedFillPattern(mainCanvasCtx, COLORS.pressure, {
       baseAlpha: 0.018,
       stripeAlpha: 0.065,
@@ -330,7 +330,7 @@ export function ShotChart({ shotData, results }) {
       size: 18,
       lineWidth: 2,
     });
-    const tempCanvasCtx = tempChartRef.current?.getContext('2d');
+    const tempCanvasCtx = tempChartRef.current.getContext('2d');
     const tempToTargetFill = createStripedFillPattern(tempCanvasCtx, COLORS.temp, {
       baseAlpha: 0.018,
       stripeAlpha: 0.09,
@@ -528,9 +528,9 @@ export function ShotChart({ shotData, results }) {
           const isFinalWeightStop =
             lastPhase.exit.type === 'weight' || lastPhase.exit.type === 'volumetric';
           if (isFinalWeightStop) {
-            const lastNonExtendedSample = [...samples]
-              .reverse()
-              .find(s => !s.systemInfo?.extendedRecording);
+            const lastNonExtendedSample = samples.findLast(
+              s => !s.systemInfo?.extendedRecording,
+            );
             if (lastNonExtendedSample) {
               finalStopTime = (lastNonExtendedSample.t || 0) / 1000;
             }
@@ -733,116 +733,116 @@ export function ShotChart({ shotData, results }) {
     ];
 
     try {
-    mainChartInstance.current = new Chart(mainChartRef.current, {
-      type: 'line',
-      data: { datasets: mainDatasets },
-      plugins: [hoverGuidePlugin, fixedTooltipPlugin],
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        elements: {
-          point: {
-            radius: 0,
-            hoverRadius: 4,
-            hitRadius: 12,
+      mainChartInstance.current = new Chart(mainChartRef.current, {
+        type: 'line',
+        data: { datasets: mainDatasets },
+        plugins: [hoverGuidePlugin, fixedTooltipPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          elements: {
+            point: {
+              radius: 0,
+              hoverRadius: 4,
+              hitRadius: 12,
+            },
+          },
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            fixedTooltip: {
+              offsetX: 12,
+              offsetY: 0,
+              boundsPadding: 4,
+              pointerGap: 10,
+            },
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              enabled: true,
+              caretSize: 0,
+              caretPadding: 0,
+              backgroundColor: 'rgba(20, 20, 20, 0.9)',
+              titleFont: { size: 11 },
+              bodyFont: { size: 10 },
+              padding: 8,
+              cornerRadius: 4,
+              filter: context =>
+                context.dataset.label !== 'Phase Names' &&
+                context.dataset.label !== 'Stops',
+              itemSort: (a, b) => {
+                const aLabel = a.dataset.label;
+                const bLabel = b.dataset.label;
+                const aBottom = TOOLTIP_BOTTOM_LABELS.has(aLabel);
+                const bBottom = TOOLTIP_BOTTOM_LABELS.has(bLabel);
+                if (aBottom !== bBottom) return aBottom ? 1 : -1;
+                return (LEGEND_INDEX[aLabel] ?? 999) - (LEGEND_INDEX[bLabel] ?? 999);
+              },
+              callbacks: {
+                label: makeLegendLabel,
+              },
+            },
+            annotation: {
+              annotations: phaseAnnotations,
+            },
+          },
+          scales: {
+            y: {
+              display: false,
+              grid: { display: false },
+              ticks: { display: false },
+            },
+            x: {
+              type: 'linear',
+              display: false,
+              max: maxTime,
+              ticks: { display: false },
+              grid: { display: false },
+            },
+            yMain: {
+              type: 'linear',
+              position: 'left',
+              min: 0,
+              max: mainAxisMax,
+              ticks: {
+                font: { size: 10 },
+                color: COLORS.pressure,
+                callback: formatAxisTick,
+              },
+              grid: {
+                color: 'rgba(200, 200, 200, 0.1)',
+              },
+            },
+            yTempOverlay: {
+              type: 'linear',
+              display: false,
+              min: tempAxisMin,
+              max: tempAxisMax,
+              grid: { display: false },
+              ticks: { display: false },
+            },
+            yWeight: {
+              type: 'linear',
+              display: hasWeight ? 'auto' : false,
+              position: 'right',
+              offset: false,
+              beginAtZero: true,
+              min: 0,
+              max: weightAxisMax,
+              ticks: {
+                font: { size: 10 },
+                color: COLORS.weight,
+                callback: formatAxisTick,
+              },
+              grid: { display: false },
+            },
           },
         },
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-        plugins: {
-          fixedTooltip: {
-            offsetX: 12,
-            offsetY: 0,
-            boundsPadding: 4,
-            pointerGap: 10,
-          },
-          legend: {
-            display: false,
-          },
-          tooltip: {
-            enabled: true,
-            caretSize: 0,
-            caretPadding: 0,
-            backgroundColor: 'rgba(20, 20, 20, 0.9)',
-            titleFont: { size: 11 },
-            bodyFont: { size: 10 },
-            padding: 8,
-            cornerRadius: 4,
-            filter: context =>
-              context.dataset.label !== 'Phase Names' &&
-              context.dataset.label !== 'Stops',
-            itemSort: (a, b) => {
-              const aLabel = a.dataset.label;
-              const bLabel = b.dataset.label;
-              const aBottom = TOOLTIP_BOTTOM_LABELS.has(aLabel);
-              const bBottom = TOOLTIP_BOTTOM_LABELS.has(bLabel);
-              if (aBottom !== bBottom) return aBottom ? 1 : -1;
-              return (LEGEND_INDEX[aLabel] ?? 999) - (LEGEND_INDEX[bLabel] ?? 999);
-            },
-            callbacks: {
-              label: makeLegendLabel,
-            },
-          },
-          annotation: {
-            annotations: phaseAnnotations,
-          },
-        },
-        scales: {
-          y: {
-            display: false,
-            grid: { display: false },
-            ticks: { display: false },
-          },
-          x: {
-            type: 'linear',
-            display: false,
-            max: maxTime,
-            ticks: { display: false },
-            grid: { display: false },
-          },
-          yMain: {
-            type: 'linear',
-            position: 'left',
-            min: 0,
-            max: mainAxisMax,
-            ticks: {
-              font: { size: 10 },
-              color: COLORS.pressure,
-              callback: formatAxisTick,
-            },
-            grid: {
-              color: 'rgba(200, 200, 200, 0.1)',
-            },
-          },
-          yTempOverlay: {
-            type: 'linear',
-            display: false,
-            min: tempAxisMin,
-            max: tempAxisMax,
-            grid: { display: false },
-            ticks: { display: false },
-          },
-          yWeight: {
-            type: 'linear',
-            display: hasWeight ? 'auto' : false,
-            position: 'right',
-            offset: false,
-            beginAtZero: true,
-            min: 0,
-            max: weightAxisMax,
-            ticks: {
-              font: { size: 10 },
-              color: COLORS.weight,
-              callback: formatAxisTick,
-            },
-            grid: { display: false },
-          },
-        },
-      },
-    });
+      });
     } catch (e) {
       console.error('Main chart creation failed:', e);
     }
@@ -875,105 +875,105 @@ export function ShotChart({ shotData, results }) {
     ];
 
     try {
-    tempChartInstance.current = new Chart(tempChartRef.current, {
-      type: 'line',
-      data: { datasets: tempDatasets },
-      plugins: [hoverGuidePlugin, fixedTooltipPlugin],
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        layout: {
-          padding: { left: 0, right: 0, top: 0, bottom: 0 },
-        },
-        elements: {
-          point: {
-            radius: 0,
-            hoverRadius: 4,
-            hitRadius: 12,
+      tempChartInstance.current = new Chart(tempChartRef.current, {
+        type: 'line',
+        data: { datasets: tempDatasets },
+        plugins: [hoverGuidePlugin, fixedTooltipPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          layout: {
+            padding: { left: 0, right: 0, top: 0, bottom: 0 },
           },
-        },
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-        plugins: {
-          fixedTooltip: {
-            offsetX: 12,
-            offsetY: 2,
-            boundsPadding: 4,
-          },
-          legend: {
-            display: false,
-          },
-          tooltip: {
-            enabled: false,
-            caretSize: 0,
-            caretPadding: 0,
-            backgroundColor: 'rgba(20, 20, 20, 0.9)',
-            titleFont: { size: 11 },
-            bodyFont: { size: 10 },
-            padding: 8,
-            cornerRadius: 4,
-            itemSort: (a, b) =>
-              (LEGEND_INDEX[a.dataset.label] ?? 999) - (LEGEND_INDEX[b.dataset.label] ?? 999),
-            callbacks: {
-              label: makeLegendLabel,
+          elements: {
+            point: {
+              radius: 0,
+              hoverRadius: 4,
+              hitRadius: 12,
             },
           },
-          annotation: {
-            annotations: tempPhaseAnnotations,
+          interaction: {
+            mode: 'index',
+            intersect: false,
           },
-        },
-        scales: {
-          x: {
-            type: 'linear',
-            position: 'top',
-            max: maxTime,
-            ticks: {
-              font: { size: 10 },
-              color: '#888',
-              callback: formatAxisTick,
-              padding: 4,
+          plugins: {
+            fixedTooltip: {
+              offsetX: 12,
+              offsetY: 2,
+              boundsPadding: 4,
             },
-            grid: {
+            legend: {
               display: false,
-              drawOnChartArea: false,
             },
-            border: {
-              display: true,
-              color: 'rgba(200, 200, 200, 0.18)',
+            tooltip: {
+              enabled: false,
+              caretSize: 0,
+              caretPadding: 0,
+              backgroundColor: 'rgba(20, 20, 20, 0.9)',
+              titleFont: { size: 11 },
+              bodyFont: { size: 10 },
+              padding: 8,
+              cornerRadius: 4,
+              itemSort: (a, b) =>
+                (LEGEND_INDEX[a.dataset.label] ?? 999) - (LEGEND_INDEX[b.dataset.label] ?? 999),
+              callbacks: {
+                label: makeLegendLabel,
+              },
+            },
+            annotation: {
+              annotations: tempPhaseAnnotations,
             },
           },
-          yTemp: {
-            type: 'linear',
-            position: 'left',
-            min: tempAxisMin,
-            max: tempAxisMax,
-            ticks: {
-              font: { size: 10 },
-              color: COLORS.temp,
-              callback: formatAxisTick,
+          scales: {
+            x: {
+              type: 'linear',
+              position: 'top',
+              max: maxTime,
+              ticks: {
+                font: { size: 10 },
+                color: '#888',
+                callback: formatAxisTick,
+                padding: 4,
+              },
+              grid: {
+                display: false,
+                drawOnChartArea: false,
+              },
+              border: {
+                display: true,
+                color: 'rgba(200, 200, 200, 0.18)',
+              },
             },
-            grid: {
-              color: 'rgba(200, 200, 200, 0.1)',
+            yTemp: {
+              type: 'linear',
+              position: 'left',
+              min: tempAxisMin,
+              max: tempAxisMax,
+              ticks: {
+                font: { size: 10 },
+                color: COLORS.temp,
+                callback: formatAxisTick,
+              },
+              grid: {
+                color: 'rgba(200, 200, 200, 0.1)',
+              },
             },
-          },
-          yTempRight: {
-            type: 'linear',
-            position: 'right',
-            min: targetTempAxisMin,
-            max: targetTempAxisMax,
-            ticks: {
-              font: { size: 10 },
-              color: COLORS.tempTarget,
-              callback: formatAxisTick,
+            yTempRight: {
+              type: 'linear',
+              position: 'right',
+              min: targetTempAxisMin,
+              max: targetTempAxisMax,
+              ticks: {
+                font: { size: 10 },
+                color: COLORS.tempTarget,
+                callback: formatAxisTick,
+              },
+              grid: { display: false },
             },
-            grid: { display: false },
           },
         },
-      },
-    });
+      });
     } catch (e) {
       console.error('Temp chart creation failed:', e);
     }
