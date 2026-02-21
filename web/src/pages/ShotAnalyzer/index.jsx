@@ -58,6 +58,14 @@ export function ShotAnalyzer() {
   const analysisSectionRef = useRef(null);
   const profileMatchIdRef = useRef(0);
   const analysisIdRef = useRef(0);
+  const profileSearchTimerRef = useRef(null);
+
+  // Cleanup pending profile search on unmount
+  useEffect(() => {
+    return () => {
+      if (profileSearchTimerRef.current) clearTimeout(profileSearchTimerRef.current);
+    };
+  }, []);
 
   // --- DEEP LINK HANDLER ---
   useEffect(() => {
@@ -168,20 +176,29 @@ export function ShotAnalyzer() {
       source: shotData.source || importMode,
     };
 
-    // If loading via Deep Link, ensure we use the mapped source (gaggimate/browser)
-    // derived in the useEffect, OR fallback to the shot's own source.
-    // (Logic handled implicitly by passing correct object to setCurrentShot)
-
     setCurrentShot(shotWithMetadata);
     setCurrentShotName(name);
+
+    // Cancel pending profile search from previous shot
+    if (profileSearchTimerRef.current) {
+      clearTimeout(profileSearchTimerRef.current);
+      profileSearchTimerRef.current = null;
+    }
+
+    // Reset profile for new shot (prevents stale profile from previous shot)
+    setCurrentProfile(null);
+    setCurrentProfileName(
+      shotWithMetadata.profile ? cleanName(shotWithMetadata.profile) : 'No Profile Loaded',
+    );
 
     if (shotWithMetadata.profile) {
       const matchId = ++profileMatchIdRef.current;
       setIsMatchingProfile(true);
       setIsSearchingProfile(true);
 
-      // Force a UI render cycle before starting heavy profile search
-      setTimeout(async () => {
+      // Debounce: wait for rapid navigation to settle before searching
+      profileSearchTimerRef.current = setTimeout(async () => {
+        profileSearchTimerRef.current = null;
         try {
           const target = cleanName(shotWithMetadata.profile).toLowerCase();
           const allProfiles = await libraryService.getAllProfiles('both');
@@ -212,8 +229,14 @@ export function ShotAnalyzer() {
             setIsSearchingProfile(false);
           }
         }
-      }, 50);
+      }, 250);
+    } else {
+      // Shot has no profile field — clear search states immediately
+      profileMatchIdRef.current++;
+      setIsMatchingProfile(false);
+      setIsSearchingProfile(false);
     }
+
     setLoading(false);
   };
 
