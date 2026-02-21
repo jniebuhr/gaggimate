@@ -5,7 +5,7 @@
  * Edit mode lives in the expanded panel with vertical layout.
  */
 
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
@@ -40,6 +40,8 @@ export function NotesBar({
   isExpanded = false,
   notesExpanded = false,
   onToggleNotesExpanded,
+  onEditingChange,
+  onExpandedHeightChange,
 }) {
   // Shared responsive spacing for nav arrows and center info chips.
   // Keeps a visible minimum separation while adapting on wider layouts.
@@ -56,6 +58,7 @@ export function NotesBar({
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const showExpanded = notesExpanded;
+  const expandedPanelRef = useRef(null);
 
   const calculateRatio = useCallback((doseIn, doseOut) => {
     if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
@@ -212,6 +215,31 @@ export function NotesBar({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentShot, canGoPrev, canGoNext, currentIndex, shotList, onNavigate]);
 
+  useEffect(() => {
+    onEditingChange?.(isEditing);
+  }, [isEditing, onEditingChange]);
+
+  useEffect(() => {
+    if (!showExpanded) {
+      onExpandedHeightChange?.(0);
+      return;
+    }
+
+    const panelEl = expandedPanelRef.current;
+    if (!panelEl) {
+      onExpandedHeightChange?.(0);
+      return;
+    }
+
+    const reportHeight = () => onExpandedHeightChange?.(panelEl.offsetHeight || 0);
+    reportHeight();
+
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(reportHeight);
+    resizeObserver.observe(panelEl);
+    return () => resizeObserver.disconnect();
+  }, [showExpanded, onExpandedHeightChange]);
+
   // Source badge (matching LibraryRow styling)
   const sourceLabel = currentShot?.source === 'gaggimate' ? 'GM' : 'WEB';
   const sourceBadgeClass =
@@ -359,18 +387,20 @@ export function NotesBar({
 
       {/* Expanded Notes Panel */}
       {showExpanded && (
-        <NotesBarExpanded
-          currentShot={currentShot}
-          notes={notes}
-          isEditing={isEditing}
-          saving={saving}
-          onInputChange={handleInputChange}
-          onEdit={() => setIsEditing(true)}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          onCollapse={onToggleNotesExpanded}
-          isExpanded={isExpanded}
-        />
+        <div ref={expandedPanelRef}>
+          <NotesBarExpanded
+            currentShot={currentShot}
+            notes={notes}
+            isEditing={isEditing}
+            saving={saving}
+            onInputChange={handleInputChange}
+            onEdit={() => setIsEditing(true)}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            onCollapse={onToggleNotesExpanded}
+            isExpanded={isExpanded}
+          />
+        </div>
       )}
     </div>
   );

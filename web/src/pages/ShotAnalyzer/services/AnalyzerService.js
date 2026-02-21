@@ -374,6 +374,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             for (let ti = 0; ti < profilePhase.targets.length; ti++) {
               const tgt = profilePhase.targets[ti];
               const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+              if (isWt && !isBrewByWeight) continue;
               if (isWt && scaleConnectionBrokenPermanently) continue;
               if (isLastPhase && isWt && lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G) continue;
 
@@ -403,6 +404,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             for (let ti = 0; ti < profilePhase.targets.length; ti++) {
               const tgt = profilePhase.targets[ti];
               const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+              if (isWt && !isBrewByWeight) continue;
               if (isWt && scaleConnectionBrokenPermanently) continue;
               if (isLastPhase && isWt && lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G) continue;
 
@@ -494,6 +496,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             for (let ti = 0; ti < profilePhase.targets.length && !match; ti++) {
               const tgt = profilePhase.targets[ti];
               const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+              if (isWt && !isBrewByWeight) continue;
               if (isWt && scaleConnectionBrokenPermanently) continue;
               if (isLastPhase && isWt && lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G) continue;
 
@@ -565,6 +568,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 
               for (const tgt of profilePhase.targets) {
                 const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+                if (isWt && !isBrewByWeight) continue;
                 if (isWt && scaleConnectionBrokenPermanently) continue;
 
                 let calcVal;

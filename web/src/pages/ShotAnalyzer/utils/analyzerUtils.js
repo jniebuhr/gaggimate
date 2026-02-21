@@ -57,6 +57,27 @@ export const columnConfig = [
     default: true,
     targetType: 'weight',
   },
+  {
+    id: 'w_se',
+    label: 'Weight (g)',
+    type: 'se',
+    group: 'weight',
+    default: false,
+  },
+  {
+    id: 'w_mm',
+    label: 'Weight (g)',
+    type: 'mm',
+    group: 'weight',
+    default: false,
+  },
+  {
+    id: 'w_avg',
+    label: 'Weight (g)',
+    type: 'avg',
+    group: 'weight',
+    default: false,
+  },
 
   // --- PRESSURE ---
   {
@@ -221,29 +242,6 @@ export const columnConfig = [
     default: false,
   },
 
-  // --- WEIGHT DETAILS ---
-  {
-    id: 'w_se',
-    label: 'Weight Details (g)',
-    type: 'se',
-    group: 'weight_det',
-    default: false,
-  },
-  {
-    id: 'w_mm',
-    label: 'Weight Details (g)',
-    type: 'mm',
-    group: 'weight_det',
-    default: false,
-  },
-  {
-    id: 'w_avg',
-    label: 'Weight Details (g)',
-    type: 'avg',
-    group: 'weight_det',
-    default: false,
-  },
-
   // --- SYSTEM INFO ---
   {
     id: 'sys_raw',
@@ -303,7 +301,6 @@ export const groups = {
   temp: 'Temperature (℃)',
   target_temp: 'Target Temp (℃)',
   weight: 'Weight (g)',
-  weight_det: 'Weight Details (g)',
   system: 'System Info',
 };
 
@@ -362,11 +359,6 @@ export const groupColors = {
     bg: 'bg-violet-500/5',
     text: 'text-[var(--analyzer-weight-text)]',
     anchor: 'var(--analyzer-weight-anchor)',
-  },
-  weight_det: {
-    bg: 'bg-violet-500/5',
-    text: 'text-[var(--analyzer-weight-det-text)]',
-    anchor: 'var(--analyzer-weight-det-anchor)',
   },
   system: {
     bg: 'bg-base-content/5',

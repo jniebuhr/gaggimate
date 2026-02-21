@@ -9,7 +9,7 @@
  * - Pins matching shots/profiles to the top of the list.
  */
 
-import { useState, useEffect, useContext, useRef } from 'preact/hooks';
+import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
 import { StatusBar } from './StatusBar';
 import { NotesBar } from './NotesBar';
 import { LibrarySection } from './LibrarySection';
@@ -33,6 +33,7 @@ export function LibraryPanel({
   onShowStats,
   importMode = 'temp',
   onImportModeChange,
+  onShotLoadedFromLibrary,
   isMatchingProfile = false, // Used for highlighting
   isMatchingShot = false, // Used for highlighting
   isSearchingProfile = false, // Spinner state for profile search
@@ -47,6 +48,7 @@ export function LibraryPanel({
   const panelRef = useRef(null);
   const sentinelRef = useRef(null);
   const barRef = useRef(null);
+  const refreshIdRef = useRef(0);
 
   // UI State
   const [isStuck, setIsStuck] = useState(false);
@@ -55,6 +57,8 @@ export function LibraryPanel({
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false); // Specific state for import spinner
   const [notesExpanded, setNotesExpanded] = useState(false);
+  const [notesIsEditing, setNotesIsEditing] = useState(false);
+  const [notesExpandedHeight, setNotesExpandedHeight] = useState(0);
 
   // Data State
   const [shots, setShots] = useState([]);
@@ -69,6 +73,7 @@ export function LibraryPanel({
 
   const [profilesSearch, setProfilesSearch] = useState('');
   const [profilesSort, setProfilesSort] = useState({ key: 'name', order: 'asc' });
+  const [mobileActiveSection, setMobileActiveSection] = useState('shots');
 
   // Debounced search values to avoid re-fetching on every keystroke
   const [debouncedShotsSearch, setDebouncedShotsSearch] = useState('');
@@ -101,16 +106,17 @@ export function LibraryPanel({
   }, []);
 
   // Sync dimensions for fixed positioning
+  const updateRect = useCallback(() => {
+    if (!sentinelRef.current) return;
+    const rect = sentinelRef.current.getBoundingClientRect();
+    setBarRect({
+      width: rect.width,
+      left: rect.left,
+      height: barRef.current?.offsetHeight || 64,
+    });
+  }, []);
+
   useEffect(() => {
-    const updateRect = () => {
-      if (!sentinelRef.current) return;
-      const rect = sentinelRef.current.getBoundingClientRect();
-      setBarRect({
-        width: rect.width,
-        left: rect.left,
-        height: barRef.current?.offsetHeight || 64,
-      });
-    };
     updateRect();
     window.addEventListener('resize', updateRect);
     window.addEventListener('scroll', updateRect, { passive: true });
@@ -118,7 +124,30 @@ export function LibraryPanel({
       window.removeEventListener('resize', updateRect);
       window.removeEventListener('scroll', updateRect);
     };
-  }, []);
+  }, [updateRect]);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(() => updateRect());
+    if (barRef.current) resizeObserver.observe(barRef.current);
+    if (sentinelRef.current) resizeObserver.observe(sentinelRef.current);
+    return () => resizeObserver.disconnect();
+  }, [updateRect]);
+
+  useEffect(() => {
+    if (!notesExpanded) {
+      setNotesIsEditing(false);
+      setNotesExpandedHeight(0);
+    }
+  }, [notesExpanded]);
+
+  useEffect(() => {
+    if (!currentShot) {
+      setNotesExpanded(false);
+      setNotesIsEditing(false);
+      setNotesExpandedHeight(0);
+    }
+  }, [currentShot]);
 
   // Close panel on outside click
   useEffect(() => {
@@ -137,6 +166,7 @@ export function LibraryPanel({
    * Pins matching items (current shot/profile) to the top.
    */
   const refreshLibraries = async () => {
+    const id = ++refreshIdRef.current;
     setLoading(true);
     try {
       const [shotsData, profilesData] = await Promise.all([
@@ -145,6 +175,8 @@ export function LibraryPanel({
           profilesSourceFilter === 'all' ? 'both' : profilesSourceFilter,
         ),
       ]);
+
+      if (id !== refreshIdRef.current) return; // stale request, discard
 
       // Helper: Sort logic based on config keys
       const applySort = (items, cfg) => {
@@ -254,9 +286,12 @@ export function LibraryPanel({
       setShots(pinMatches(applySort(fShots, shotsSort), true));
       setProfiles(pinMatches(applySort(fProfiles, profilesSort), false));
     } catch (error) {
+      if (id !== refreshIdRef.current) return;
       console.error('Library refresh failed:', error);
     } finally {
-      setLoading(false);
+      if (id === refreshIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -378,6 +413,7 @@ export function LibraryPanel({
 
   const handleLoadShot = async item => {
     try {
+      const wasLibraryOpen = !collapsed;
       onShotLoadStart();
       setCollapsed(true);
       const loadKey =
@@ -385,7 +421,10 @@ export function LibraryPanel({
       const full = item.loaded
         ? item
         : await libraryService.loadShot(loadKey, item.source);
-      onShotLoad(full, item.name || item.storageKey || item.id);
+      await onShotLoad(full, item.name || item.storageKey || item.id);
+      if (wasLibraryOpen) {
+        onShotLoadedFromLibrary?.();
+      }
     } catch (e) {
       console.error('Failed to load shot:', e);
     }
@@ -402,9 +441,10 @@ export function LibraryPanel({
         zIndex: 50,
       }
     : {};
+  const dropdownTop = Math.max(0, barRect.height - (notesIsEditing ? notesExpandedHeight : 0));
   const dropdownStyle = {
     position: 'fixed',
-    top: `${barRect.height}px`,
+    top: `${dropdownTop}px`,
     left: `${barRect.left}px`,
     width: `${barRect.width}px`,
     zIndex: 49,
@@ -455,6 +495,8 @@ export function LibraryPanel({
               isExpanded={!collapsed}
               notesExpanded={notesExpanded}
               onToggleNotesExpanded={() => setNotesExpanded(v => !v)}
+              onEditingChange={setNotesIsEditing}
+              onExpandedHeightChange={setNotesExpandedHeight}
             />
           )}
         </div>
@@ -469,125 +511,155 @@ export function LibraryPanel({
           />
           <div style={dropdownStyle}>
             <div className='bg-base-100/80 border-base-content/10 animate-fade-in-down origin-top overflow-hidden rounded-b-xl border border-t-0 shadow-2xl backdrop-blur-md'>
+              <div className='px-4 pt-4 lg:hidden'>
+                <div className='bg-base-200/60 flex items-center gap-1 rounded-lg p-1'>
+                  <button
+                    type='button'
+                    className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                      mobileActiveSection === 'shots'
+                        ? 'bg-base-100 text-base-content shadow-sm'
+                        : 'text-base-content/70 hover:bg-base-100/70'
+                    }`}
+                    onClick={() => setMobileActiveSection('shots')}
+                  >
+                    Shots
+                  </button>
+                  <button
+                    type='button'
+                    className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                      mobileActiveSection === 'profiles'
+                        ? 'bg-base-100 text-base-content shadow-sm'
+                        : 'text-base-content/70 hover:bg-base-100/70'
+                    }`}
+                    onClick={() => setMobileActiveSection('profiles')}
+                  >
+                    Profiles
+                  </button>
+                </div>
+              </div>
               <div className='grid max-h-[75vh] grid-cols-1 gap-4 overflow-y-auto overscroll-contain p-4 lg:grid-cols-2'>
                 {/* SHOTS SECTION */}
-                <LibrarySection
-                  title='Shots'
-                  items={shots}
-                  isShot={true}
-                  searchValue={shotsSearch}
-                  sortKey={shotsSort.key}
-                  sortOrder={shotsSort.order}
-                  sourceFilter={shotsSourceFilter}
-                  onSearchChange={setShotsSearch}
-                  onSortChange={(k, o) =>
-                    setShotsSort({
-                      key: k,
-                      order:
-                        o || (shotsSort.key === k && shotsSort.order === 'desc' ? 'asc' : 'desc'),
-                    })
-                  }
-                  onSourceFilterChange={setShotsSourceFilter}
-                  onLoad={handleLoadShot}
-                  onExport={item => handleExport(item, true)} // Pass true for shots
-                  onDelete={handleDelete}
-                  isLoading={loading} // Pass loading state to show spinner in list
-                  onExportAll={() => {
-                    if (shots.length === 0) return;
-                    if (
-                      confirm(
-                        `Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`,
-                      )
-                    ) {
-                      for (let i = 0; i < shots.length; i++)
-                        setTimeout(() => handleExport(shots[i], true), i * 300);
+                <div className={mobileActiveSection === 'shots' ? 'block lg:block' : 'hidden lg:block'}>
+                  <LibrarySection
+                    title='Shots'
+                    items={shots}
+                    isShot={true}
+                    searchValue={shotsSearch}
+                    sortKey={shotsSort.key}
+                    sortOrder={shotsSort.order}
+                    sourceFilter={shotsSourceFilter}
+                    onSearchChange={setShotsSearch}
+                    onSortChange={(k, o) =>
+                      setShotsSort({
+                        key: k,
+                        order:
+                          o || (shotsSort.key === k && shotsSort.order === 'desc' ? 'asc' : 'desc'),
+                      })
                     }
-                  }}
-                  onDeleteAll={async () => {
-                    if (
-                      confirm(
-                        `WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`,
-                      )
-                    ) {
-                      for (const s of shots)
-                        await libraryService.deleteShot(
-                          s.source === 'gaggimate' ? s.id : s.storageKey || s.name || s.id,
-                          s.source,
-                        );
-                      refreshLibraries();
+                    onSourceFilterChange={setShotsSourceFilter}
+                    onLoad={handleLoadShot}
+                    onExport={item => handleExport(item, true)} // Pass true for shots
+                    onDelete={handleDelete}
+                    isLoading={loading} // Pass loading state to show spinner in list
+                    onExportAll={() => {
+                      if (shots.length === 0) return;
+                      if (
+                        confirm(
+                          `Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`,
+                        )
+                      ) {
+                        for (let i = 0; i < shots.length; i++)
+                          setTimeout(() => handleExport(shots[i], true), i * 300);
+                      }
+                    }}
+                    onDeleteAll={async () => {
+                      if (
+                        confirm(
+                          `WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`,
+                        )
+                      ) {
+                        for (const s of shots)
+                          await libraryService.deleteShot(
+                            s.source === 'gaggimate' ? s.id : s.storageKey || s.name || s.id,
+                            s.source,
+                          );
+                        refreshLibraries();
+                      }
+                    }}
+                    getMatchStatus={item =>
+                      currentProfile &&
+                      cleanName(item.profile || '').toLowerCase() ===
+                        cleanName(currentProfileName).toLowerCase()
                     }
-                  }}
-                  getMatchStatus={item =>
-                    currentProfile &&
-                    cleanName(item.profile || '').toLowerCase() ===
-                      cleanName(currentProfileName).toLowerCase()
-                  }
-                  getActiveStatus={item =>
-                    currentShot &&
-                    getShotStorageKey(item) === getShotStorageKey(currentShot) &&
-                    item.source === currentShot.source
-                  }
-                />
+                    getActiveStatus={item =>
+                      currentShot &&
+                      getShotStorageKey(item) === getShotStorageKey(currentShot) &&
+                      item.source === currentShot.source
+                    }
+                  />
+                </div>
 
                 {/* PROFILES SECTION */}
-                <LibrarySection
-                  title='Profiles'
-                  items={profiles}
-                  isShot={false}
-                  searchValue={profilesSearch}
-                  sortKey={profilesSort.key}
-                  sortOrder={profilesSort.order}
-                  sourceFilter={profilesSourceFilter}
-                  onSearchChange={setProfilesSearch}
-                  onSortChange={(k, o) =>
-                    setProfilesSort({
-                      key: k,
-                      order:
-                        o ||
-                        (profilesSort.key === k && profilesSort.order === 'desc' ? 'asc' : 'desc'),
-                    })
-                  }
-                  onSourceFilterChange={setProfilesSourceFilter}
-                  onLoad={item => {
-                    onProfileLoad(item.data || item, item.name || item.label);
-                    setCollapsed(true);
-                  }}
-                  onExport={item => handleExport(item, false)} // Pass false for profiles
-                  onDelete={handleDelete}
-                  isLoading={loading} // Pass loading state to show spinner in list
-                  onExportAll={() => {
-                    if (profiles.length === 0) return;
-                    if (
-                      confirm(
-                        `Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
-                      )
-                    ) {
-                      for (let i = 0; i < profiles.length; i++)
-                        setTimeout(() => handleExport(profiles[i], false), i * 300);
+                <div className={mobileActiveSection === 'profiles' ? 'block lg:block' : 'hidden lg:block'}>
+                  <LibrarySection
+                    title='Profiles'
+                    items={profiles}
+                    isShot={false}
+                    searchValue={profilesSearch}
+                    sortKey={profilesSort.key}
+                    sortOrder={profilesSort.order}
+                    sourceFilter={profilesSourceFilter}
+                    onSearchChange={setProfilesSearch}
+                    onSortChange={(k, o) =>
+                      setProfilesSort({
+                        key: k,
+                        order:
+                          o ||
+                          (profilesSort.key === k && profilesSort.order === 'desc' ? 'asc' : 'desc'),
+                      })
                     }
-                  }}
-                  onDeleteAll={async () => {
-                    if (
-                      confirm(
-                        `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
-                      )
-                    ) {
-                      for (const p of profiles)
-                        await libraryService.deleteProfile(p.name || p.label, p.source);
-                      refreshLibraries();
+                    onSourceFilterChange={setProfilesSourceFilter}
+                    onLoad={item => {
+                      onProfileLoad(item.data || item, item.name || item.label);
+                      setCollapsed(true);
+                    }}
+                    onExport={item => handleExport(item, false)} // Pass false for profiles
+                    onDelete={handleDelete}
+                    isLoading={loading} // Pass loading state to show spinner in list
+                    onExportAll={() => {
+                      if (profiles.length === 0) return;
+                      if (
+                        confirm(
+                          `Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
+                        )
+                      ) {
+                        for (let i = 0; i < profiles.length; i++)
+                          setTimeout(() => handleExport(profiles[i], false), i * 300);
+                      }
+                    }}
+                    onDeleteAll={async () => {
+                      if (
+                        confirm(
+                          `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
+                        )
+                      ) {
+                        for (const p of profiles)
+                          await libraryService.deleteProfile(p.name || p.label, p.source);
+                        refreshLibraries();
+                      }
+                    }}
+                    getMatchStatus={item =>
+                      currentShot &&
+                      cleanName(item.name || item.label || '').toLowerCase() ===
+                        cleanName(currentShot.profile || '').toLowerCase()
                     }
-                  }}
-                  getMatchStatus={item =>
-                    currentShot &&
-                    cleanName(item.name || item.label || '').toLowerCase() ===
-                      cleanName(currentShot.profile || '').toLowerCase()
-                  }
-                  getActiveStatus={item =>
-                    currentProfile &&
-                    cleanName(item.name || item.label || '').toLowerCase() ===
-                      cleanName(currentProfileName).toLowerCase()
-                  }
-                />
+                    getActiveStatus={item =>
+                      currentProfile &&
+                      cleanName(item.name || item.label || '').toLowerCase() ===
+                        cleanName(currentProfileName).toLowerCase()
+                    }
+                  />
+                </div>
               </div>
             </div>
           </div>
