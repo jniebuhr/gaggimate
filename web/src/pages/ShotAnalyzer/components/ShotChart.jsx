@@ -18,7 +18,7 @@ Chart.register(annotationPlugin);
 const hoverGuidePlugin = {
   id: 'hoverGuide',
   afterDatasetsDraw(chart, _args, pluginOptions) {
-    const active = chart.tooltip?.getActiveElements?.() || [];
+    const active = chart.getActiveElements?.() || chart.tooltip?.getActiveElements?.() || [];
     if (!active.length) return;
 
     const x = active[0]?.element?.x;
@@ -47,11 +47,22 @@ const fixedTooltipPlugin = {
     const offsetX = pluginOptions?.offsetX ?? 12;
     const offsetY = pluginOptions?.offsetY ?? 12;
     const boundsPadding = pluginOptions?.boundsPadding ?? 4;
+    const pointerGap = pluginOptions?.pointerGap ?? 10;
     const tooltipWidth = Number(tooltip.width) || 0;
     const tooltipHeight = Number(tooltip.height) || 0;
 
-    const preferredX = chart.chartArea.left + offsetX;
-    const preferredY = chart.chartArea.top + offsetY;
+    const anchorX = Number.isFinite(tooltip.caretX) ? tooltip.caretX : chart.chartArea.left + offsetX;
+    const chartMidX = (chart.chartArea.left + chart.chartArea.right) / 2;
+    const showRightOfPointer = anchorX <= chartMidX;
+    const preferredX = showRightOfPointer
+      ? anchorX + pointerGap
+      : anchorX - tooltipWidth - pointerGap;
+    const anchorY = Number.isFinite(chart.$fixedTooltipPointerY)
+      ? chart.$fixedTooltipPointerY
+      : Number.isFinite(tooltip.caretY)
+        ? tooltip.caretY
+        : chart.chartArea.top + offsetY;
+    const preferredY = anchorY - tooltipHeight / 2 + offsetY;
     const maxX = Math.max(boundsPadding, chart.width - tooltipWidth - boundsPadding);
     const maxY = Math.max(boundsPadding, chart.height - tooltipHeight - boundsPadding);
     const fixedX = Math.min(maxX, Math.max(boundsPadding, preferredX));
@@ -59,8 +70,8 @@ const fixedTooltipPlugin = {
 
     tooltip.x = fixedX;
     tooltip.y = fixedY;
-    tooltip.caretX = fixedX;
-    tooltip.caretY = fixedY;
+    tooltip.caretX = anchorX;
+    tooltip.caretY = anchorY;
     tooltip.xAlign = 'left';
     tooltip.yAlign = 'top';
   },
@@ -68,8 +79,8 @@ const fixedTooltipPlugin = {
 
 const TARGET_FLOW_MAX = 12;
 const TARGET_PRESSURE_MAX = 16;
-const STANDARD_LINE_WIDTH = 8 / 3; // 2/3 of the current thickest line (4)
-const WEIGHT_LINE_WIDTH = STANDARD_LINE_WIDTH / 2;
+const STANDARD_LINE_WIDTH = 4;
+const THIN_LINE_WIDTH = STANDARD_LINE_WIDTH / 2;
 const BREW_BY_TIME_LABEL = 'BREW BY TIME';
 const BREW_BY_WEIGHT_LABEL = 'BREW BY WEIGHT';
 const MAIN_CHART_HEIGHT_SMALL = 280;
@@ -88,6 +99,7 @@ const CHART_COLORS = {
 };
 const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
 const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
+const TOOLTIP_BOTTOM_LABELS = new Set(['Temp', 'Target T']);
 const LEGEND_COLOR_BY_LABEL = {
   'Phase Names': CHART_COLORS.phaseLine,
   Stops: CHART_COLORS.stopLabel,
@@ -596,7 +608,7 @@ export function ShotChart({ shotData, results }) {
     };
 
     // Main chart datasets:
-    // first 4 are legend toggles (phase/stops/temp/target temp), data intentionally empty.
+    // temp/target-temp datasets are tooltip-only proxies on a hidden axis.
     const mainDatasets = [
       {
         label: 'Phase Names',
@@ -620,23 +632,29 @@ export function ShotChart({ shotData, results }) {
       },
       {
         label: 'Temp',
-        data: [],
+        data: series.temp,
         borderColor: COLORS.temp,
         backgroundColor: COLORS.temp,
-        yAxisID: 'yMain',
+        yAxisID: 'yTempOverlay',
         pointRadius: 0,
-        borderWidth: STANDARD_LINE_WIDTH,
+        pointHoverRadius: 0,
+        pointHitRadius: 12,
+        borderWidth: 0,
+        fill: false,
         hidden: !visibility.temp,
       },
       {
         label: 'Target T',
-        data: [],
+        data: series.targetTemp,
         borderColor: COLORS.tempTarget,
         backgroundColor: COLORS.tempTarget,
         borderDash: [4, 4],
-        yAxisID: 'yMain',
+        yAxisID: 'yTempOverlay',
         pointRadius: 0,
-        borderWidth: STANDARD_LINE_WIDTH,
+        pointHoverRadius: 0,
+        pointHitRadius: 12,
+        borderWidth: 0,
+        fill: false,
         hidden: !visibility.targetTemp,
       },
       {
@@ -659,7 +677,7 @@ export function ShotChart({ shotData, results }) {
         borderDash: [4, 4],
         yAxisID: 'yMain',
         pointRadius: 0,
-        borderWidth: STANDARD_LINE_WIDTH,
+        borderWidth: THIN_LINE_WIDTH,
         tension: 0,
         hidden: !visibility.targetPressure,
       },
@@ -683,7 +701,7 @@ export function ShotChart({ shotData, results }) {
         borderDash: [4, 4],
         yAxisID: 'yMain',
         pointRadius: 0,
-        borderWidth: STANDARD_LINE_WIDTH,
+        borderWidth: THIN_LINE_WIDTH,
         tension: 0,
         hidden: !visibility.targetFlow,
       },
@@ -695,7 +713,7 @@ export function ShotChart({ shotData, results }) {
         fill: false,
         yAxisID: 'yMain',
         pointRadius: 0,
-        borderWidth: STANDARD_LINE_WIDTH,
+        borderWidth: THIN_LINE_WIDTH,
         tension: 0.2,
         hidden: !visibility.puckFlow,
       },
@@ -703,11 +721,11 @@ export function ShotChart({ shotData, results }) {
         label: 'Weight',
         data: series.weight,
         borderColor: COLORS.weight,
-        backgroundColor: 'rgba(139, 92, 246, 0.025)',
+        backgroundColor: 'rgba(139, 92, 246, 0.08)',
         fill: 'origin',
         yAxisID: 'yWeight',
         pointRadius: 0,
-        borderWidth: WEIGHT_LINE_WIDTH,
+        borderWidth: THIN_LINE_WIDTH,
         tension: 0.2,
         hidden: !hasWeight || !visibility.weight,
       },
@@ -734,6 +752,12 @@ export function ShotChart({ shotData, results }) {
           intersect: false,
         },
         plugins: {
+          fixedTooltip: {
+            offsetX: 12,
+            offsetY: 0,
+            boundsPadding: 4,
+            pointerGap: 10,
+          },
           legend: {
             display: false,
           },
@@ -748,11 +772,15 @@ export function ShotChart({ shotData, results }) {
             cornerRadius: 4,
             filter: context =>
               context.dataset.label !== 'Phase Names' &&
-              context.dataset.label !== 'Stops' &&
-              context.dataset.label !== 'Temp' &&
-              context.dataset.label !== 'Target T',
-            itemSort: (a, b) =>
-              (LEGEND_INDEX[a.dataset.label] ?? 999) - (LEGEND_INDEX[b.dataset.label] ?? 999),
+              context.dataset.label !== 'Stops',
+            itemSort: (a, b) => {
+              const aLabel = a.dataset.label;
+              const bLabel = b.dataset.label;
+              const aBottom = TOOLTIP_BOTTOM_LABELS.has(aLabel);
+              const bBottom = TOOLTIP_BOTTOM_LABELS.has(bLabel);
+              if (aBottom !== bBottom) return aBottom ? 1 : -1;
+              return (LEGEND_INDEX[aLabel] ?? 999) - (LEGEND_INDEX[bLabel] ?? 999);
+            },
             callbacks: {
               label: makeLegendLabel,
             },
@@ -787,6 +815,14 @@ export function ShotChart({ shotData, results }) {
             grid: {
               color: 'rgba(200, 200, 200, 0.1)',
             },
+          },
+          yTempOverlay: {
+            type: 'linear',
+            display: false,
+            min: tempAxisMin,
+            max: tempAxisMax,
+            grid: { display: false },
+            ticks: { display: false },
           },
           yWeight: {
             type: 'linear',
@@ -831,7 +867,7 @@ export function ShotChart({ shotData, results }) {
         borderDash: [4, 4],
         yAxisID: 'yTempRight',
         pointRadius: 0,
-        borderWidth: STANDARD_LINE_WIDTH,
+        borderWidth: THIN_LINE_WIDTH,
         tension: 0,
         hidden: !visibility.targetTemp,
       },
@@ -870,7 +906,7 @@ export function ShotChart({ shotData, results }) {
             display: false,
           },
           tooltip: {
-            enabled: true,
+            enabled: false,
             caretSize: 0,
             caretPadding: 0,
             backgroundColor: 'rgba(20, 20, 20, 0.9)',
@@ -996,6 +1032,7 @@ export function ShotChart({ shotData, results }) {
 
     const clearTooltipState = chart => {
       if (!chart) return;
+      chart.$fixedTooltipPointerY = null;
       chart.setActiveElements([]);
       chart.tooltip?.setActiveElements([], { x: 0, y: 0 });
       chart.update('none');
@@ -1028,7 +1065,7 @@ export function ShotChart({ shotData, results }) {
       return active;
     };
 
-    const applyHoverForChart = (chart, xValue) => {
+    const applyHoverForChart = (chart, xValue, pointerClientY, showTooltip = true) => {
       if (!chart || !Number.isFinite(xValue)) return;
       const active = buildActiveElementsForX(chart, xValue);
       if (!active.length) {
@@ -1037,9 +1074,21 @@ export function ShotChart({ shotData, results }) {
       }
       const xPixel = chart.scales?.x?.getPixelForValue(xValue);
       const tooltipX = Number.isFinite(xPixel) ? xPixel : chart.chartArea.left + 8;
-      const tooltipY = chart.chartArea.top + 8;
+      let tooltipY = chart.chartArea.top + 8;
+      if (Number.isFinite(pointerClientY) && chart.canvas) {
+        const chartRect = chart.canvas.getBoundingClientRect();
+        const minClientY = chartRect.top + chart.chartArea.top;
+        const maxClientY = chartRect.top + chart.chartArea.bottom;
+        const clampedClientY = Math.min(maxClientY, Math.max(minClientY, pointerClientY));
+        tooltipY = clampedClientY - chartRect.top;
+      }
+      chart.$fixedTooltipPointerY = tooltipY;
       chart.setActiveElements(active);
-      chart.tooltip?.setActiveElements(active, { x: tooltipX, y: tooltipY });
+      if (showTooltip) {
+        chart.tooltip?.setActiveElements(active, { x: tooltipX, y: tooltipY });
+      } else {
+        chart.tooltip?.setActiveElements([], { x: 0, y: 0 });
+      }
       chart.update('none');
     };
 
@@ -1078,8 +1127,8 @@ export function ShotChart({ shotData, results }) {
         return;
       }
 
-      applyHoverForChart(mainChart, xValue);
-      applyHoverForChart(tempChart, xValue);
+      applyHoverForChart(mainChart, xValue, event.clientY, true);
+      applyHoverForChart(tempChart, xValue, event.clientY, false);
     };
 
     const hoverArea = hoverAreaRef.current;
@@ -1110,7 +1159,8 @@ export function ShotChart({ shotData, results }) {
             const key = VISIBILITY_KEY_BY_LABEL[label];
             const isVisible = key ? visibility[key] : false;
             const swatchColor = LEGEND_COLOR_BY_LABEL[label] || '#94a3b8';
-            const swatchLineWidth = label === 'Weight' ? WEIGHT_LINE_WIDTH : STANDARD_LINE_WIDTH;
+            const swatchLineWidth =
+              label === 'Weight' || label === 'Target F' ? THIN_LINE_WIDTH : STANDARD_LINE_WIDTH;
 
             return (
               <button
