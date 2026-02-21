@@ -8,6 +8,9 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMaximize } from '@fortawesome/free-solid-svg-icons/faMaximize';
+import { faMinimize } from '@fortawesome/free-solid-svg-icons/faMinimize';
 
 // Register the annotation plugin for Phase Lines
 Chart.register(annotationPlugin);
@@ -69,10 +72,34 @@ const STANDARD_LINE_WIDTH = 8 / 3; // 2/3 of the current thickest line (4)
 const WEIGHT_LINE_WIDTH = STANDARD_LINE_WIDTH / 2;
 const BREW_BY_TIME_LABEL = 'BREW BY TIME';
 const BREW_BY_WEIGHT_LABEL = 'BREW BY WEIGHT';
-const MAIN_CHART_HEIGHT_MIN = 280;
-const MAIN_CHART_HEIGHT_MAX = 560;
-const MAIN_CHART_HEIGHT_STEP = 10;
-const MAIN_CHART_HEIGHT_DEFAULT = 280;
+const MAIN_CHART_HEIGHT_SMALL = 280;
+const MAIN_CHART_HEIGHT_BIG = 560;
+const MAIN_CHART_HEIGHT_DEFAULT = MAIN_CHART_HEIGHT_SMALL;
+const TEMP_CHART_HEIGHT_RATIO = 80 / MAIN_CHART_HEIGHT_SMALL;
+const CHART_COLORS = {
+  temp: '#F0561D',
+  tempTarget: '#731F00',
+  pressure: '#0066CC',
+  flow: '#63993D',
+  puckFlow: '#059669',
+  weight: '#8B5CF6',
+  phaseLine: 'rgba(107, 114, 128, 0.5)',
+  stopLabel: 'rgba(220, 38, 38, 0.85)',
+};
+const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
+const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
+const LEGEND_COLOR_BY_LABEL = {
+  'Phase Names': CHART_COLORS.phaseLine,
+  Stops: CHART_COLORS.stopLabel,
+  Temp: CHART_COLORS.temp,
+  'Target T': CHART_COLORS.tempTarget,
+  Pressure: CHART_COLORS.pressure,
+  'Target P': CHART_COLORS.pressure,
+  Flow: CHART_COLORS.flow,
+  'Target F': CHART_COLORS.flow,
+  'Puck Flow': CHART_COLORS.puckFlow,
+  Weight: CHART_COLORS.weight,
+};
 
 const LEGEND_ORDER = [
   'Phase Names',
@@ -236,6 +263,20 @@ export function ShotChart({ shotData, results }) {
   // --- State for Visibility/Toggles ---
   const [visibility, setVisibility] = useState(INITIAL_VISIBILITY);
   const [mainChartHeight, setMainChartHeight] = useState(MAIN_CHART_HEIGHT_DEFAULT);
+  const hasWeightData = Boolean(
+    shotData?.samples?.some(sample => {
+      const rawWeight = sample?.v ?? sample?.w ?? sample?.weight ?? sample?.m;
+      const numericWeight = Number(rawWeight);
+      return Number.isFinite(numericWeight) && numericWeight > 0;
+    }),
+  );
+
+  const handleLegendToggle = label => {
+    const key = VISIBILITY_KEY_BY_LABEL[label];
+    if (!key) return;
+    if (label === 'Weight' && !hasWeightData) return;
+    setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   useEffect(() => {
     const destroyCharts = () => {
@@ -261,19 +302,7 @@ export function ShotChart({ shotData, results }) {
     // Guard: ensure canvas elements are mounted
     if (!mainChartRef.current || !tempChartRef.current) return;
 
-    const isSmall = typeof window !== 'undefined' && window.innerWidth < 640;
-
-    // GaggiMate Color Scheme Definition
-    const COLORS = {
-      temp: '#F0561D',
-      tempTarget: '#731F00',
-      pressure: '#0066CC',
-      flow: '#63993D',
-      puckFlow: '#059669',
-      weight: '#8B5CF6',
-      phaseLine: 'rgba(107, 114, 128, 0.5)',
-      stopLabel: 'rgba(220, 38, 38, 0.85)',
-    };
+    const COLORS = CHART_COLORS;
 
     const mainCanvasCtx = mainChartRef.current?.getContext('2d');
     const targetPressureFill = createStripedFillPattern(mainCanvasCtx, COLORS.pressure, {
@@ -706,43 +735,7 @@ export function ShotChart({ shotData, results }) {
         },
         plugins: {
           legend: {
-            position: 'top',
-            onClick: (_event, legendItem) => {
-              const label = legendItem.text;
-              const key = VISIBILITY_KEY_BY_LABEL[label];
-              if (!key) return;
-              if (label === 'Weight' && !hasWeight) return;
-              setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
-            },
-            labels: {
-              usePointStyle: true,
-              pointStyle: 'line',
-              pointStyleWidth: 20,
-              padding: 8,
-              font: { size: isSmall ? 9 : 10 },
-              generateLabels(chart) {
-                const original = Chart.defaults.plugins.legend.labels.generateLabels;
-                const labels = original.call(this, chart).sort(
-                  (a, b) => (LEGEND_INDEX[a.text] ?? 999) - (LEGEND_INDEX[b.text] ?? 999),
-                );
-
-                labels.forEach(label => {
-                  if (label.text === 'Phase Names' || label.text === 'Stops') {
-                    label.pointStyle = 'rectRounded';
-                    label.lineWidth = 0;
-                    return;
-                  }
-
-                  label.lineWidth =
-                    label.text === 'Weight' ? WEIGHT_LINE_WIDTH : STANDARD_LINE_WIDTH;
-                  if (label.text === 'Target T' || label.text === 'Target P' || label.text === 'Target F') {
-                    label.lineDash = [4, 4];
-                  }
-                });
-
-                return labels;
-              },
-            },
+            display: false,
           },
           tooltip: {
             enabled: true,
@@ -1110,21 +1103,56 @@ export function ShotChart({ shotData, results }) {
 
   return (
     <div className='w-full select-none'>
-      <div className='mb-2 flex items-center gap-2 px-1'>
-        <span className='text-base-content/45 shrink-0 text-[10px] tracking-wide uppercase'>
-          Chart Height
-        </span>
-        <div className='-my-2 w-full py-2'>
-          <input
-            type='range'
-            min={MAIN_CHART_HEIGHT_MIN}
-            max={MAIN_CHART_HEIGHT_MAX}
-            step={MAIN_CHART_HEIGHT_STEP}
-            value={mainChartHeight}
-            onInput={e => setMainChartHeight(Number(e.currentTarget.value))}
-            className='range range-xs h-1 w-full cursor-pointer opacity-35 transition-opacity hover:opacity-55 focus:opacity-60'
-            aria-label='Main chart height'
-          />
+      <div className='mb-2 flex flex-wrap items-center gap-2 px-1'>
+        <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1'>
+          {LEGEND_ORDER.map(label => {
+            if (label === 'Weight' && !hasWeightData) return null;
+            const key = VISIBILITY_KEY_BY_LABEL[label];
+            const isVisible = key ? visibility[key] : false;
+            const swatchColor = LEGEND_COLOR_BY_LABEL[label] || '#94a3b8';
+            const swatchLineWidth = label === 'Weight' ? WEIGHT_LINE_WIDTH : STANDARD_LINE_WIDTH;
+
+            return (
+              <button
+                key={label}
+                type='button'
+                onClick={() => handleLegendToggle(label)}
+                aria-pressed={isVisible}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded px-1.5 py-1 text-[10px] font-semibold transition ${
+                  isVisible ? 'text-base-content opacity-90' : 'text-base-content/60 opacity-45 hover:opacity-70'
+                }`}
+              >
+                {LEGEND_BLOCK_LABELS.has(label) ? (
+                  <span className='h-2.5 w-3 rounded-[2px]' style={{ backgroundColor: swatchColor }} />
+                ) : (
+                  <span
+                    className={`block w-4 border-t ${LEGEND_DASHED_LABELS.has(label) ? 'border-dashed' : 'border-solid'}`}
+                    style={{ borderColor: swatchColor, borderTopWidth: `${swatchLineWidth}px` }}
+                  />
+                )}
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className='flex shrink-0 items-center'>
+          <button
+            type='button'
+            onClick={() =>
+              setMainChartHeight(current =>
+                current === MAIN_CHART_HEIGHT_SMALL ? MAIN_CHART_HEIGHT_BIG : MAIN_CHART_HEIGHT_SMALL,
+              )
+            }
+            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
+            aria-label={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
+            title={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
+          >
+            <FontAwesomeIcon
+              icon={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? faMinimize : faMaximize}
+              className='text-[11px] opacity-80'
+            />
+          </button>
         </div>
       </div>
 
@@ -1132,7 +1160,10 @@ export function ShotChart({ shotData, results }) {
         <div className='relative w-full' style={{ height: `${mainChartHeight}px` }}>
           <canvas ref={mainChartRef} />
         </div>
-        <div className='relative mt-0 h-[80px] w-full'>
+        <div
+          className='relative mt-0 w-full'
+          style={{ height: `${Math.round(mainChartHeight * TEMP_CHART_HEIGHT_RATIO)}px` }}
+        >
           <canvas ref={tempChartRef} />
         </div>
       </div>
