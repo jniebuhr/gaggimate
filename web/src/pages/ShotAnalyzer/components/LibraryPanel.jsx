@@ -339,7 +339,11 @@ export function LibraryPanel({
           item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
         await libraryService.deleteShot(deleteKey, item.source);
       }
-      else await libraryService.deleteProfile(item.name || item.label, item.source);
+      else {
+        const deleteKey =
+          item.source === 'gaggimate' ? item.profileId || item.id : item.name || item.label;
+        await libraryService.deleteProfile(deleteKey, item.source);
+      }
       refreshLibraries();
     } catch (e) {
       alert(`Delete failed: ${e.message}`);
@@ -643,8 +647,11 @@ export function LibraryPanel({
                           `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
                         )
                       ) {
-                        for (const p of profiles)
-                          await libraryService.deleteProfile(p.name || p.label, p.source);
+                        for (const p of profiles) {
+                          const deleteKey =
+                            p.source === 'gaggimate' ? p.profileId || p.id : p.name || p.label;
+                          await libraryService.deleteProfile(deleteKey, p.source);
+                        }
                         refreshLibraries();
                       }
                     }}
