@@ -206,6 +206,22 @@ function createStripedFillPattern(canvasCtx, color, options = {}) {
   return canvasCtx.createPattern(patternCanvas, 'repeat') || color;
 }
 
+function safeMax(arr, fallback = 0) {
+  let max = -Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] > max) max = arr[i];
+  }
+  return max === -Infinity ? fallback : max;
+}
+
+function safeMin(arr, fallback = 0) {
+  let min = Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] < min) min = arr[i];
+  }
+  return min === Infinity ? fallback : min;
+}
+
 /**
  * ShotChart Component
  * Renders main and sub chart using Chart.js.
@@ -241,6 +257,9 @@ export function ShotChart({ shotData, results }) {
 
     // Cleanup before rebuild to avoid memory leaks/visual glitches
     destroyCharts();
+
+    // Guard: ensure canvas elements are mounted
+    if (!mainChartRef.current || !tempChartRef.current) return;
 
     const isSmall = typeof window !== 'undefined' && window.innerWidth < 640;
 
@@ -346,17 +365,16 @@ export function ShotChart({ shotData, results }) {
       ...series.puckFlow,
       ...series.targetFlow,
     ];
-    const mainAxisMaxRaw =
-      mainAxisSamples.length > 0 ? Math.max(...mainAxisSamples.map(p => p.y)) : 1;
+    const mainAxisMaxRaw = safeMax(mainAxisSamples.map(p => p.y), 1);
     const mainAxisMax = Math.max(1, mainAxisMaxRaw * 1.02);
 
-    const weightAxisMaxRaw = series.weight.length > 0 ? Math.max(...series.weight.map(p => p.y)) : 1;
+    const weightAxisMaxRaw = safeMax(series.weight.map(p => p.y), 1);
     // Keep weight always visible while keeping headroom minimal like the main axis.
     const weightAxisMax = Math.max(1, weightAxisMaxRaw * 1.02);
 
     const tempAxisSamples = [...series.temp, ...series.targetTemp];
-    const tempMinRaw = tempAxisSamples.length > 0 ? Math.min(...tempAxisSamples.map(p => p.y)) : 80;
-    const tempMaxRaw = tempAxisSamples.length > 0 ? Math.max(...tempAxisSamples.map(p => p.y)) : 100;
+    const tempMinRaw = safeMin(tempAxisSamples.map(p => p.y), 80);
+    const tempMaxRaw = safeMax(tempAxisSamples.map(p => p.y), 100);
     const tempRange = Math.max(0.5, tempMaxRaw - tempMinRaw);
     const tempTopPadding = Math.max(0.15, tempRange * 0.02);
     const tempBottomPadding = Math.max(0.25, tempRange * 0.07);
@@ -364,10 +382,8 @@ export function ShotChart({ shotData, results }) {
     const tempAxisMax = tempMaxRaw + tempTopPadding;
 
     const targetTempAxisSamples = series.targetTemp.length > 0 ? series.targetTemp : series.temp;
-    const targetTempMinRaw =
-      targetTempAxisSamples.length > 0 ? Math.min(...targetTempAxisSamples.map(p => p.y)) : tempMinRaw;
-    const targetTempMaxRaw =
-      targetTempAxisSamples.length > 0 ? Math.max(...targetTempAxisSamples.map(p => p.y)) : tempMaxRaw;
+    const targetTempMinRaw = safeMin(targetTempAxisSamples.map(p => p.y), tempMinRaw);
+    const targetTempMaxRaw = safeMax(targetTempAxisSamples.map(p => p.y), tempMaxRaw);
     const targetTempRange = Math.max(0.5, targetTempMaxRaw - targetTempMinRaw);
     const targetTempTopPadding = Math.max(0.15, targetTempRange * 0.02);
     const targetTempBottomPadding = Math.max(0.25, targetTempRange * 0.07);
@@ -668,6 +684,7 @@ export function ShotChart({ shotData, results }) {
       },
     ];
 
+    try {
     mainChartInstance.current = new Chart(mainChartRef.current, {
       type: 'line',
       data: { datasets: mainDatasets },
@@ -796,6 +813,9 @@ export function ShotChart({ shotData, results }) {
         },
       },
     });
+    } catch (e) {
+      console.error('Main chart creation failed:', e);
+    }
 
     const tempDatasets = [
       {
@@ -824,6 +844,7 @@ export function ShotChart({ shotData, results }) {
       },
     ];
 
+    try {
     tempChartInstance.current = new Chart(tempChartRef.current, {
       type: 'line',
       data: { datasets: tempDatasets },
@@ -923,6 +944,9 @@ export function ShotChart({ shotData, results }) {
         },
       },
     });
+    } catch (e) {
+      console.error('Temp chart creation failed:', e);
+    }
 
     const syncTempPlotArea = () => {
       const mainChart = mainChartInstance.current;
