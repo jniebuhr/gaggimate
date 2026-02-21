@@ -1097,7 +1097,20 @@ export function ShotChart({ shotData, results }) {
       clearTooltipState(tempChartInstance.current);
     };
 
-    const handleUnifiedMove = event => {
+    const extractClientPoint = event => {
+      if (!event) return null;
+      if (Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+        return { clientX: event.clientX, clientY: event.clientY };
+      }
+      const touch = event.touches?.[0] || event.changedTouches?.[0];
+      if (touch && Number.isFinite(touch.clientX) && Number.isFinite(touch.clientY)) {
+        return { clientX: touch.clientX, clientY: touch.clientY };
+      }
+      return null;
+    };
+
+    const applyUnifiedHoverFromClientPoint = (clientX, clientY) => {
+      if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
       const mainChart = mainChartInstance.current;
       const tempChart = tempChartInstance.current;
       const hoverArea = hoverAreaRef.current;
@@ -1109,8 +1122,8 @@ export function ShotChart({ shotData, results }) {
       const areaRect = hoverArea.getBoundingClientRect();
       const verticalTolerance = 20;
       const withinVerticalTolerance =
-        event.clientY >= areaRect.top - verticalTolerance &&
-        event.clientY <= areaRect.bottom + verticalTolerance;
+        clientY >= areaRect.top - verticalTolerance &&
+        clientY <= areaRect.bottom + verticalTolerance;
       if (!withinVerticalTolerance) {
         clearAllHover();
         return;
@@ -1119,7 +1132,7 @@ export function ShotChart({ shotData, results }) {
       const mainRect = mainChart.canvas.getBoundingClientRect();
       const minClientX = mainRect.left + (mainChart.chartArea?.left || 0);
       const maxClientX = mainRect.left + (mainChart.chartArea?.right || mainChart.width || 0);
-      const clampedClientX = Math.min(maxClientX, Math.max(minClientX, event.clientX));
+      const clampedClientX = Math.min(maxClientX, Math.max(minClientX, clientX));
       const sourceX = clampedClientX - mainRect.left;
       const xValue = mainXScale.getValueForPixel(sourceX);
       if (!Number.isFinite(xValue)) {
@@ -1127,20 +1140,51 @@ export function ShotChart({ shotData, results }) {
         return;
       }
 
-      applyHoverForChart(mainChart, xValue, event.clientY, true);
-      applyHoverForChart(tempChart, xValue, event.clientY, false);
+      applyHoverForChart(mainChart, xValue, clientY, true);
+      applyHoverForChart(tempChart, xValue, clientY, false);
+    };
+
+    const handleUnifiedMove = event => {
+      const point = extractClientPoint(event);
+      if (!point) return;
+      applyUnifiedHoverFromClientPoint(point.clientX, point.clientY);
     };
 
     const hoverArea = hoverAreaRef.current;
-    hoverArea?.addEventListener('mousemove', handleUnifiedMove);
-    hoverArea?.addEventListener('mouseleave', clearAllHover);
+    const supportsPointerEvents = typeof window !== 'undefined' && Boolean(window.PointerEvent);
+    if (supportsPointerEvents) {
+      hoverArea?.addEventListener('pointerdown', handleUnifiedMove, { passive: true });
+      hoverArea?.addEventListener('pointermove', handleUnifiedMove, { passive: true });
+      hoverArea?.addEventListener('pointerup', clearAllHover);
+      hoverArea?.addEventListener('pointerleave', clearAllHover);
+      hoverArea?.addEventListener('pointercancel', clearAllHover);
+    } else {
+      hoverArea?.addEventListener('mousemove', handleUnifiedMove);
+      hoverArea?.addEventListener('mouseleave', clearAllHover);
+      hoverArea?.addEventListener('touchstart', handleUnifiedMove, { passive: true });
+      hoverArea?.addEventListener('touchmove', handleUnifiedMove, { passive: true });
+      hoverArea?.addEventListener('touchend', clearAllHover);
+      hoverArea?.addEventListener('touchcancel', clearAllHover);
+    }
 
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('resize', handleResizeSync);
       }
-      hoverArea?.removeEventListener('mousemove', handleUnifiedMove);
-      hoverArea?.removeEventListener('mouseleave', clearAllHover);
+      if (supportsPointerEvents) {
+        hoverArea?.removeEventListener('pointerdown', handleUnifiedMove);
+        hoverArea?.removeEventListener('pointermove', handleUnifiedMove);
+        hoverArea?.removeEventListener('pointerup', clearAllHover);
+        hoverArea?.removeEventListener('pointerleave', clearAllHover);
+        hoverArea?.removeEventListener('pointercancel', clearAllHover);
+      } else {
+        hoverArea?.removeEventListener('mousemove', handleUnifiedMove);
+        hoverArea?.removeEventListener('mouseleave', clearAllHover);
+        hoverArea?.removeEventListener('touchstart', handleUnifiedMove);
+        hoverArea?.removeEventListener('touchmove', handleUnifiedMove);
+        hoverArea?.removeEventListener('touchend', clearAllHover);
+        hoverArea?.removeEventListener('touchcancel', clearAllHover);
+      }
       destroyCharts();
     };
   }, [shotData, results, visibility]);
