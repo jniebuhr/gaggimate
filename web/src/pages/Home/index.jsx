@@ -50,31 +50,27 @@ export function Home() {
   const mode = machine.value.status.mode;
 
   return (
-    <>
+    <div className='flex h-[calc(100dvh-5rem)] flex-col lg:h-[calc(100dvh-15rem)]'>
       <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
+      <div className='flex min-h-0 flex-1 flex-col gap-4 landscape:flex-row'>
         <Card
-          sm={10}
-          lg={4}
-          className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
+          className={`max-h-[500px] min-h-0 flex-1 basis-0 overflow-hidden ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
           title='Process Controls'
         >
           <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
         </Card>
 
         <Card
-          sm={10}
-          lg={6}
-          className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
+          className={`max-h-[500px] min-h-0 flex-1 basis-0 overflow-hidden ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
           title='Temperature & Pressure Chart'
           fullHeight={true}
         >
           <OverviewChart />
         </Card>
       </div>
-    </>
+    </div>
   );
 }
