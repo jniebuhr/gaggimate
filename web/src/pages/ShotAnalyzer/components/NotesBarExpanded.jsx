@@ -9,11 +9,12 @@ import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit';
 import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { getNotesTasteStyle } from '../utils/analyzerUtils';
 
 const tasteOptions = [
-  { value: 'bitter', label: 'Bitter', color: 'border-orange-500 text-orange-500' },
-  { value: 'balanced', label: 'Balanced', color: 'border-green-500 text-green-500' },
-  { value: 'sour', label: 'Sour', color: 'border-yellow-500 text-yellow-500' },
+  { value: 'bitter', label: 'Bitter' },
+  { value: 'balanced', label: 'Balanced' },
+  { value: 'sour', label: 'Sour' },
 ];
 
 export function NotesBarExpanded({
@@ -32,6 +33,15 @@ export function NotesBarExpanded({
 
   const labelCls = 'text-base-content/50 text-[10px] font-semibold uppercase tracking-wider';
   const inputCls = 'input input-sm border-base-content/20 bg-base-100 w-full text-sm';
+  const getSelectedTasteButtonStyle = taste => {
+    const tasteStyle = getNotesTasteStyle(taste);
+    if (!tasteStyle) return undefined;
+    return {
+      color: tasteStyle.color,
+      borderColor: tasteStyle.borderColor,
+      backgroundColor: tasteStyle.selectedBackground,
+    };
+  };
 
   // Render stars (editable in edit mode)
   const renderStars = () => {
@@ -78,9 +88,14 @@ export function NotesBarExpanded({
                       onClick={() => onInputChange('balanceTaste', opt.value)}
                       className={`flex-1 rounded-md border-2 px-2 py-1.5 text-xs font-medium transition-all ${
                         notes.balanceTaste === opt.value
-                          ? `${opt.color} bg-base-100`
+                          ? ''
                           : 'border-base-content/10 text-base-content/40 hover:border-base-content/30'
                       }`}
+                      style={
+                        notes.balanceTaste === opt.value
+                          ? getSelectedTasteButtonStyle(opt.value)
+                          : undefined
+                      }
                     >
                       {opt.label}
                     </button>

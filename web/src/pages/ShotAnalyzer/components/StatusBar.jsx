@@ -3,7 +3,7 @@
  * * Merges seamlessly with the dropdown when expanded.
  */
 
-import { cleanName } from '../utils/analyzerUtils';
+import { cleanName, analyzerUiColors } from '../utils/analyzerUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
@@ -61,9 +61,17 @@ export function StatusBar({
     ? `${badgeBaseClass} bg-primary border-primary text-primary-content`
     : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
 
+  const mismatchProfileBadgeStyle = isMismatch
+    ? {
+        backgroundColor: analyzerUiColors.warningOrange,
+        borderColor: analyzerUiColors.warningOrangeStrong,
+        boxShadow: `0 1px 2px 0 ${analyzerUiColors.warningOrangeShadow}`,
+      }
+    : undefined;
+
   // Updated Badge Logic: If searching, keep it neutral but show activity
   const profileBadgeClasses = isMismatch
-    ? `${badgeBaseClass} bg-orange-500 border-orange-600 text-white shadow-orange-500/30`
+    ? `${badgeBaseClass} text-white`
     : currentProfile && !isSearchingProfile
       ? `${badgeBaseClass} bg-secondary border-secondary text-secondary-content`
       : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
@@ -142,6 +150,7 @@ export function StatusBar({
           {/* --- CENTER: PROFILE BADGE --- */}
           <div
             className={profileBadgeClasses}
+            style={mismatchProfileBadgeStyle}
             onClick={onTogglePanel}
             title={isMismatch ? 'Profile mismatch detected!' : 'Click to toggle library'}
           >

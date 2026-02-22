@@ -25,7 +25,7 @@ import {
   faCheck,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
-import { columnConfig, groupColors, utilityColors } from '../utils/analyzerUtils';
+import { columnConfig, groupColors, utilityColors, analyzerUiColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
 
 /**
@@ -162,10 +162,23 @@ export function AnalysisTable({
         {results.isBrewByWeight ? (
           <StatusBadge
             label='BREW BY WEIGHT'
-            colorClass='bg-emerald-600 text-white border-emerald-700'
+            colorClass='text-white shadow-sm'
+            style={{
+              backgroundColor: analyzerUiColors.brewByWeightLabelBg,
+              borderColor: analyzerUiColors.brewByWeightLabelBorder,
+              color: analyzerUiColors.brewByWeightLabelText,
+            }}
           />
         ) : (
-          <StatusBadge label='BREW BY TIME' colorClass='bg-slate-600 text-white border-slate-700' />
+          <StatusBadge
+            label='BREW BY TIME'
+            colorClass='text-white shadow-sm'
+            style={{
+              backgroundColor: analyzerUiColors.brewByTimeLabelBg,
+              borderColor: analyzerUiColors.brewByTimeLabelBorder,
+              color: analyzerUiColors.brewByTimeLabelText,
+            }}
+          />
         )}
         {results.globalScaleLost && (
           <StatusBadge

@@ -306,10 +306,49 @@ export const groups = {
 
 export const utilityColors = {
   stopRed: 'var(--analyzer-pred-stop-red)',
-  warningOrange: 'var(--color-orange-600)',
+  warningOrange: 'var(--analyzer-warning-orange)',
   predictionStopRed: 'var(--analyzer-pred-stop-red)',
   predictionInfoBlue: 'var(--analyzer-pred-info-blue)',
 };
+
+export const analyzerUiColors = {
+  warningOrange: 'var(--analyzer-warning-orange)',
+  warningOrangeStrong: 'var(--analyzer-warning-orange-strong)',
+  warningOrangeShadow: 'var(--analyzer-warning-orange-shadow)',
+  brewByTimeLabelBg: 'var(--analyzer-brew-by-time-label-bg)',
+  brewByTimeLabelBorder: 'var(--analyzer-brew-by-time-label-border)',
+  brewByTimeLabelText: 'var(--analyzer-brew-by-time-label-text)',
+  brewByWeightLabelBg: 'var(--analyzer-brew-by-weight-label-bg)',
+  brewByWeightLabelBorder: 'var(--analyzer-brew-by-weight-label-border)',
+  brewByWeightLabelText: 'var(--analyzer-brew-by-weight-label-text)',
+  notesTasteBitter: 'var(--analyzer-notes-taste-bitter)',
+  notesTasteBalanced: 'var(--analyzer-notes-taste-balanced)',
+  notesTasteSour: 'var(--analyzer-notes-taste-sour)',
+  phaseLine: 'var(--analyzer-phase-line)',
+  stopLabel: 'var(--analyzer-stop-label)',
+};
+
+export const notesTasteStyles = {
+  bitter: {
+    color: analyzerUiColors.notesTasteBitter,
+    borderColor: analyzerUiColors.notesTasteBitter,
+    selectedBackground:
+      'color-mix(in srgb, var(--analyzer-notes-taste-bitter) 12%, transparent)',
+  },
+  balanced: {
+    color: analyzerUiColors.notesTasteBalanced,
+    borderColor: analyzerUiColors.notesTasteBalanced,
+    selectedBackground:
+      'color-mix(in srgb, var(--analyzer-notes-taste-balanced) 12%, transparent)',
+  },
+  sour: {
+    color: analyzerUiColors.notesTasteSour,
+    borderColor: analyzerUiColors.notesTasteSour,
+    selectedBackground: 'color-mix(in srgb, var(--analyzer-notes-taste-sour) 12%, transparent)',
+  },
+};
+
+export const getNotesTasteStyle = taste => notesTasteStyles[taste] || null;
 
 /**
  * Tailwind Color Classes for Groups

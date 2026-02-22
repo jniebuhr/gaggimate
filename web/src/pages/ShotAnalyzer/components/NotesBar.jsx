@@ -16,20 +16,12 @@ import { faDivide } from '@fortawesome/free-solid-svg-icons/faDivide';
 import { faTag } from '@fortawesome/free-solid-svg-icons/faTag';
 import { faGears } from '@fortawesome/free-solid-svg-icons/faGears';
 import { notesService } from '../services/NotesService';
-import { cleanName } from '../utils/analyzerUtils';
+import { cleanName, getNotesTasteStyle } from '../utils/analyzerUtils';
 import { NotesBarExpanded } from './NotesBarExpanded';
 
-const getTasteColor = taste => {
-  switch (taste) {
-    case 'bitter':
-      return 'text-orange-500';
-    case 'sour':
-      return 'text-yellow-500';
-    case 'balanced':
-      return 'text-green-500';
-    default:
-      return 'text-base-content/40';
-  }
+const getTasteTextStyle = taste => {
+  const tasteStyle = getNotesTasteStyle(taste);
+  return tasteStyle ? { color: tasteStyle.color } : undefined;
 };
 
 export function NotesBar({
@@ -348,7 +340,7 @@ export function NotesBar({
               </span>
 
               {/* Balance/Taste (right after rating) */}
-              <span className={`${fieldCls} capitalize ${getTasteColor(notes.balanceTaste)}`}>
+              <span className={`${fieldCls} capitalize`} style={getTasteTextStyle(notes.balanceTaste)}>
                 {notes.balanceTaste}
               </span>
 

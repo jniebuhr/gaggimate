@@ -87,7 +87,7 @@ const MAIN_CHART_HEIGHT_SMALL = 280;
 const MAIN_CHART_HEIGHT_BIG = 560;
 const MAIN_CHART_HEIGHT_DEFAULT = MAIN_CHART_HEIGHT_SMALL;
 const TEMP_CHART_HEIGHT_RATIO = 80 / MAIN_CHART_HEIGHT_SMALL;
-const CHART_COLORS = {
+const CHART_COLOR_FALLBACKS = {
   temp: '#F0561D',
   tempTarget: '#731F00',
   pressure: '#0066CC',
@@ -97,22 +97,23 @@ const CHART_COLORS = {
   phaseLine: 'rgba(107, 114, 128, 0.5)',
   stopLabel: 'rgba(220, 38, 38, 0.85)',
 };
+const CHART_COLOR_TOKEN_MAP = {
+  temp: '--analyzer-temp-anchor',
+  tempTarget: '--analyzer-target-temp-anchor',
+  pressure: '--analyzer-pressure-anchor',
+  flow: '--analyzer-flow-anchor',
+  puckFlow: '--analyzer-puckflow-anchor',
+  weight: '--analyzer-weight-anchor',
+  phaseLine: '--analyzer-phase-line',
+  stopLabel: '--analyzer-stop-label',
+};
 const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
 const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
 const LEGEND_THIN_LINE_LABELS = new Set(['Target T', 'Target P', 'Target F', 'Puck Flow', 'Weight']);
+const WATER_DRAWN_PHASE_LABEL = 'Water Drawn (Phase)';
+const WATER_DRAWN_TOTAL_LABEL = 'Water Drawn (Total)';
+const TOOLTIP_WATER_LABELS = new Set([WATER_DRAWN_PHASE_LABEL, WATER_DRAWN_TOTAL_LABEL]);
 const TOOLTIP_BOTTOM_LABELS = new Set(['Temp', 'Target T']);
-const LEGEND_COLOR_BY_LABEL = {
-  'Phase Names': CHART_COLORS.phaseLine,
-  Stops: CHART_COLORS.stopLabel,
-  Temp: CHART_COLORS.temp,
-  'Target T': CHART_COLORS.tempTarget,
-  Pressure: CHART_COLORS.pressure,
-  'Target P': CHART_COLORS.pressure,
-  Flow: CHART_COLORS.flow,
-  'Target F': CHART_COLORS.flow,
-  'Puck Flow': CHART_COLORS.puckFlow,
-  Weight: CHART_COLORS.weight,
-};
 
 const LEGEND_ORDER = [
   'Phase Names',
@@ -128,6 +129,24 @@ const LEGEND_ORDER = [
 ];
 
 const LEGEND_INDEX = LEGEND_ORDER.reduce((acc, label, index) => {
+  acc[label] = index;
+  return acc;
+}, {});
+const TOOLTIP_ORDER = [
+  'Phase Names',
+  'Stops',
+  'Pressure',
+  'Target P',
+  'Flow',
+  'Target F',
+  'Puck Flow',
+  'Weight',
+  WATER_DRAWN_PHASE_LABEL,
+  WATER_DRAWN_TOTAL_LABEL,
+  'Temp',
+  'Target T',
+];
+const TOOLTIP_INDEX = TOOLTIP_ORDER.reduce((acc, label, index) => {
   acc[label] = index;
   return acc;
 }, {});
@@ -158,6 +177,37 @@ const INITIAL_VISIBILITY = {
   weight: true,
 };
 
+function readCssColorVar(variableName, fallback) {
+  if (typeof window === 'undefined' || !window.document?.documentElement) return fallback;
+  const value = window
+    .getComputedStyle(window.document.documentElement)
+    .getPropertyValue(variableName)
+    .trim();
+  return value || fallback;
+}
+
+function getShotChartColors() {
+  return Object.keys(CHART_COLOR_FALLBACKS).reduce((acc, key) => {
+    acc[key] = readCssColorVar(CHART_COLOR_TOKEN_MAP[key], CHART_COLOR_FALLBACKS[key]);
+    return acc;
+  }, {});
+}
+
+function getLegendColorByLabel(colors) {
+  return {
+    'Phase Names': colors.phaseLine,
+    Stops: colors.stopLabel,
+    Temp: colors.temp,
+    'Target T': colors.tempTarget,
+    Pressure: colors.pressure,
+    'Target P': colors.pressure,
+    Flow: colors.flow,
+    'Target F': colors.flow,
+    'Puck Flow': colors.puckFlow,
+    Weight: colors.weight,
+  };
+}
+
 const UNIT_BY_LABEL = {
   Temp: '°C',
   'Target T': '°C',
@@ -167,6 +217,8 @@ const UNIT_BY_LABEL = {
   'Target F': 'ml/s',
   'Puck Flow': 'ml/s',
   Weight: 'g',
+  [WATER_DRAWN_PHASE_LABEL]: 'ml',
+  [WATER_DRAWN_TOTAL_LABEL]: 'ml',
 };
 
 // --- Helper Functions ---
@@ -262,6 +314,34 @@ function safeMin(arr, fallback = 0) {
   return min === Infinity ? fallback : min;
 }
 
+function findLastSampleIndexAtOrBeforeX(sampleTimesSec, xValue) {
+  if (!Array.isArray(sampleTimesSec) || sampleTimesSec.length === 0 || !Number.isFinite(xValue)) {
+    return -1;
+  }
+  if (xValue < sampleTimesSec[0]) return -1;
+
+  let low = 0;
+  let high = sampleTimesSec.length - 1;
+  let best = -1;
+
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    const midValue = sampleTimesSec[mid];
+    if (!Number.isFinite(midValue)) {
+      high = mid - 1;
+      continue;
+    }
+    if (midValue <= xValue) {
+      best = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  return best;
+}
+
 /**
  * ShotChart Component
  * Renders main and sub chart using Chart.js.
@@ -276,6 +356,7 @@ export function ShotChart({ shotData, results }) {
   // --- State for Visibility/Toggles ---
   const [visibility, setVisibility] = useState(INITIAL_VISIBILITY);
   const [mainChartHeight, setMainChartHeight] = useState(MAIN_CHART_HEIGHT_DEFAULT);
+  const legendColorByLabel = getLegendColorByLabel(getShotChartColors());
   const hasWeightData = Boolean(
     shotData?.samples?.some(sample => {
       const rawWeight = sample?.v ?? sample?.w ?? sample?.weight ?? sample?.m;
@@ -315,7 +396,7 @@ export function ShotChart({ shotData, results }) {
     // Guard: ensure canvas elements are mounted
     if (!mainChartRef.current || !tempChartRef.current) return;
 
-    const COLORS = CHART_COLORS;
+    const COLORS = getShotChartColors();
 
     const mainCanvasCtx = mainChartRef.current.getContext('2d');
     const targetPressureFill = createStripedFillPattern(mainCanvasCtx, COLORS.pressure, {
@@ -338,12 +419,62 @@ export function ShotChart({ shotData, results }) {
       lineWidth: 1,
     });
     const brewModeLabel = results?.isBrewByWeight ? BREW_BY_WEIGHT_LABEL : BREW_BY_TIME_LABEL;
-    const brewModeColor = results?.isBrewByWeight ? '#059669' : '#475569';
+    const brewModeColor = results?.isBrewByWeight
+      ? readCssColorVar('--analyzer-brew-by-weight-label-bg', COLORS.weight)
+      : readCssColorVar('--analyzer-brew-by-time-label-bg', '#475569');
+    const brewModeLabelTextColor = results?.isBrewByWeight
+      ? readCssColorVar('--analyzer-brew-by-weight-label-text', '#ffffff')
+      : readCssColorVar('--analyzer-brew-by-time-label-text', '#ffffff');
+    const brewModeBorderColor = results?.isBrewByWeight
+      ? readCssColorVar('--analyzer-brew-by-weight-label-border', COLORS.weight)
+      : readCssColorVar('--analyzer-brew-by-time-label-border', '#334155');
 
     const samples = shotData.samples;
 
     // Calculate the exact end time of the shot to prevent empty chart space
     const maxTime = samples.length > 0 ? (samples[samples.length - 1].t || 0) / 1000 : 0;
+    const sampleTimesSec = new Array(samples.length);
+    const cumulativeWaterTotalBySample = new Array(samples.length);
+    let cumulativeWaterTotal = 0;
+    for (let i = 0; i < samples.length; i++) {
+      const sample = samples[i] || {};
+      const tMs = Number(sample.t) || 0;
+      sampleTimesSec[i] = tMs / 1000;
+      if (i === 0) {
+        cumulativeWaterTotalBySample[i] = 0;
+        continue;
+      }
+
+      const prevTMs = Number(samples[i - 1]?.t) || tMs;
+      const dt = Math.max(0, (tMs - prevTMs) / 1000);
+      const flow = Number(sample.fl);
+      cumulativeWaterTotal += (Number.isFinite(flow) ? flow : 0) * dt;
+      cumulativeWaterTotalBySample[i] = cumulativeWaterTotal;
+    }
+
+    const shotStartSec = sampleTimesSec[0] ?? 0;
+    const phaseHoverRanges = Array.isArray(results?.phases)
+      ? results.phases
+          .map(phase => {
+            const startRel = Number(phase?.start);
+            if (!Number.isFinite(startRel)) return null;
+            const endRelRaw = Number(phase?.end);
+            const endRel = Number.isFinite(endRelRaw) ? endRelRaw : startRel;
+            const startAbs = shotStartSec + startRel;
+            const endAbs = shotStartSec + Math.max(startRel, endRel);
+            const startSampleIndexFloor = findLastSampleIndexAtOrBeforeX(sampleTimesSec, startAbs);
+            const startCumWater =
+              startSampleIndexFloor >= 0 ? cumulativeWaterTotalBySample[startSampleIndexFloor] || 0 : 0;
+            return {
+              label: phase?.displayName || phase?.name || null,
+              startAbs,
+              endAbs,
+              startSampleIndexFloor,
+              startCumWater,
+            };
+          })
+          .filter(Boolean)
+      : [];
 
     // Helper to safely extract values from sample objects
     const getVal = (item, keys) => {
@@ -577,8 +708,10 @@ export function ShotChart({ shotData, results }) {
           position: 'start',
           yAdjust: 0,
           xAdjust: 1,
-          color: 'rgba(255, 255, 255, 0.96)',
+          color: brewModeLabelTextColor,
           backgroundColor: brewModeColor,
+          borderColor: brewModeBorderColor,
+          borderWidth: 1,
           borderRadius: 3,
           padding: 4,
           font: { size: 9, weight: 'bold' },
@@ -599,13 +732,97 @@ export function ShotChart({ shotData, results }) {
       return acc;
     }, {});
 
+    const getHoverWaterValuesAtX = xValue => {
+      if (!Number.isFinite(xValue) || sampleTimesSec.length === 0) {
+        return { totalWaterMl: null, phaseWaterMl: null };
+      }
+
+      const sampleIndex = findLastSampleIndexAtOrBeforeX(sampleTimesSec, xValue);
+      const totalWaterMl = sampleIndex >= 0 ? (cumulativeWaterTotalBySample[sampleIndex] ?? 0) : 0;
+
+      let activePhase = null;
+      for (let i = phaseHoverRanges.length - 1; i >= 0; i--) {
+        const phaseRange = phaseHoverRanges[i];
+        if (xValue >= phaseRange.startAbs && xValue <= phaseRange.endAbs) {
+          activePhase = phaseRange;
+          break;
+        }
+      }
+
+      const phaseWaterMl = activePhase
+        ? Math.max(0, totalWaterMl - (activePhase.startCumWater ?? 0))
+        : null;
+
+      return { totalWaterMl, phaseWaterMl };
+    };
+
     const makeLegendLabel = context => {
       if (context.dataset.label === 'Phase Names' || context.dataset.label === 'Stops') return null;
       const label = context.dataset.label || '';
+
+      if (TOOLTIP_WATER_LABELS.has(label)) {
+        const xValue = context.parsed?.x;
+        const { totalWaterMl, phaseWaterMl } = getHoverWaterValuesAtX(xValue);
+        const waterValue = label === WATER_DRAWN_PHASE_LABEL ? phaseWaterMl : totalWaterMl;
+        return `${label}: ${Number.isFinite(waterValue) ? `${waterValue.toFixed(1)} ml` : '-'}`;
+      }
+
       const value = context.parsed?.y;
       if (value === null || value === undefined) return null;
       const unit = UNIT_BY_LABEL[label];
       return unit ? `${label}: ${value.toFixed(1)} ${unit}` : `${label}: ${value.toFixed(1)}`;
+    };
+
+    const waterTooltipPhaseSeries = sampleTimesSec.map(x => {
+      const { phaseWaterMl } = getHoverWaterValuesAtX(x);
+      return { x, y: Number.isFinite(phaseWaterMl) ? phaseWaterMl : 0 };
+    });
+    const waterTooltipTotalSeries = sampleTimesSec.map((x, index) => ({
+      x,
+      y: Number.isFinite(cumulativeWaterTotalBySample[index]) ? cumulativeWaterTotalBySample[index] : 0,
+    }));
+
+    const tooltipGapBeforeGroup = context => {
+      const label = context?.dataset?.label;
+      if (!label) return null;
+
+      const tooltipItems = context.tooltip?.dataPoints;
+      if (!Array.isArray(tooltipItems) || tooltipItems.length === 0) return null;
+
+      if (TOOLTIP_WATER_LABELS.has(label)) {
+        const firstWaterLabel = tooltipItems.find(item => TOOLTIP_WATER_LABELS.has(item?.dataset?.label))
+          ?.dataset?.label;
+        return firstWaterLabel === label ? [''] : null;
+      }
+
+      if (TOOLTIP_BOTTOM_LABELS.has(label)) {
+        const firstBottomLabel = tooltipItems.find(item => TOOLTIP_BOTTOM_LABELS.has(item?.dataset?.label))
+          ?.dataset?.label;
+        return firstBottomLabel === label ? [''] : null;
+      }
+
+      return null;
+    };
+
+    const tooltipWaterLabelColor = context => {
+      const label = context?.dataset?.label;
+      if (label === WATER_DRAWN_PHASE_LABEL) {
+        return {
+          borderColor: COLORS.puckFlow,
+          backgroundColor: COLORS.puckFlow,
+          borderWidth: 1,
+          borderRadius: 2,
+        };
+      }
+      if (label === WATER_DRAWN_TOTAL_LABEL) {
+        return {
+          borderColor: COLORS.flow,
+          backgroundColor: COLORS.flow,
+          borderWidth: 1,
+          borderRadius: 2,
+        };
+      }
+      return undefined;
     };
 
     // Main chart datasets:
@@ -730,6 +947,32 @@ export function ShotChart({ shotData, results }) {
         tension: 0.2,
         hidden: !hasWeight || !visibility.weight,
       },
+      {
+        label: WATER_DRAWN_PHASE_LABEL,
+        data: waterTooltipPhaseSeries,
+        borderColor: COLORS.puckFlow,
+        backgroundColor: COLORS.puckFlow,
+        yAxisID: 'yWaterOverlay',
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        pointHitRadius: 12,
+        borderWidth: 0,
+        showLine: false,
+        fill: false,
+      },
+      {
+        label: WATER_DRAWN_TOTAL_LABEL,
+        data: waterTooltipTotalSeries,
+        borderColor: COLORS.flow,
+        backgroundColor: COLORS.flow,
+        yAxisID: 'yWaterOverlay',
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        pointHitRadius: 12,
+        borderWidth: 0,
+        showLine: false,
+        fill: false,
+      },
     ];
 
     try {
@@ -767,23 +1010,19 @@ export function ShotChart({ shotData, results }) {
               caretSize: 0,
               caretPadding: 0,
               backgroundColor: 'rgba(20, 20, 20, 0.9)',
-              titleFont: { size: 11 },
-              bodyFont: { size: 10 },
+              titleFont: { size: 12 },
+              bodyFont: { size: 11 },
               padding: 8,
               cornerRadius: 4,
               filter: context =>
                 context.dataset.label !== 'Phase Names' &&
                 context.dataset.label !== 'Stops',
-              itemSort: (a, b) => {
-                const aLabel = a.dataset.label;
-                const bLabel = b.dataset.label;
-                const aBottom = TOOLTIP_BOTTOM_LABELS.has(aLabel);
-                const bBottom = TOOLTIP_BOTTOM_LABELS.has(bLabel);
-                if (aBottom !== bBottom) return aBottom ? 1 : -1;
-                return (LEGEND_INDEX[aLabel] ?? 999) - (LEGEND_INDEX[bLabel] ?? 999);
-              },
+              itemSort: (a, b) =>
+                (TOOLTIP_INDEX[a.dataset.label] ?? 999) - (TOOLTIP_INDEX[b.dataset.label] ?? 999),
               callbacks: {
+                beforeLabel: tooltipGapBeforeGroup,
                 label: makeLegendLabel,
+                labelColor: tooltipWaterLabelColor,
               },
             },
             annotation: {
@@ -822,6 +1061,13 @@ export function ShotChart({ shotData, results }) {
               display: false,
               min: tempAxisMin,
               max: tempAxisMax,
+              grid: { display: false },
+              ticks: { display: false },
+            },
+            yWaterOverlay: {
+              type: 'linear',
+              display: false,
+              beginAtZero: true,
               grid: { display: false },
               ticks: { display: false },
             },
@@ -1203,7 +1449,7 @@ export function ShotChart({ shotData, results }) {
             if (label === 'Weight' && !hasWeightData) return null;
             const key = VISIBILITY_KEY_BY_LABEL[label];
             const isVisible = key ? visibility[key] : false;
-            const swatchColor = LEGEND_COLOR_BY_LABEL[label] || '#94a3b8';
+            const swatchColor = legendColorByLabel[label] || '#94a3b8';
             const swatchLineWidth = LEGEND_THIN_LINE_LABELS.has(label)
               ? THIN_LINE_WIDTH
               : STANDARD_LINE_WIDTH;
