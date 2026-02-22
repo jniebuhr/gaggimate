@@ -3,7 +3,7 @@
  * * Merges seamlessly with the dropdown when expanded.
  */
 
-import { cleanName } from '../utils/analyzerUtils';
+import { cleanName, analyzerUiColors } from '../utils/analyzerUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
@@ -61,9 +61,17 @@ export function StatusBar({
     ? `${badgeBaseClass} bg-primary border-primary text-primary-content`
     : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
 
+  const mismatchProfileBadgeStyle = isMismatch
+    ? {
+        backgroundColor: analyzerUiColors.warningOrange,
+        borderColor: analyzerUiColors.warningOrangeStrong,
+        boxShadow: `0 1px 2px 0 ${analyzerUiColors.warningOrangeShadow}`,
+      }
+    : undefined;
+
   // Updated Badge Logic: If searching, keep it neutral but show activity
   const profileBadgeClasses = isMismatch
-    ? `${badgeBaseClass} bg-orange-500 border-orange-600 text-white shadow-orange-500/30`
+    ? `${badgeBaseClass} text-white`
     : currentProfile && !isSearchingProfile
       ? `${badgeBaseClass} bg-secondary border-secondary text-secondary-content`
       : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
@@ -71,14 +79,20 @@ export function StatusBar({
   return (
     <div className='w-full'>
       <div className='p-2'>
-        <div className='flex h-12 w-full items-center gap-2'>
-          {/* --- LEFT: IMPORT BUTTON (Symmetrical w-40) --- */}
+        <div
+          className='grid h-12 w-full items-center gap-1 sm:gap-2'
+          style={{
+            gridTemplateColumns:
+              'minmax(6.5rem, 1fr) minmax(0, 2.15fr) minmax(0, 2.15fr) minmax(6.5rem, 1fr)',
+          }}
+        >
+          {/* --- LEFT: IMPORT + MODE TOGGLE (outer column, symmetric with stats) --- */}
           <div
-            className='border-primary/50 bg-base-100/50 hover:border-primary group flex h-full w-40 shrink-0 overflow-hidden rounded-lg border-2 border-dashed shadow-sm transition-all'
+            className='border-primary/50 bg-base-100/50 hover:border-primary group flex h-full min-w-0 overflow-hidden rounded-lg border-2 border-dashed shadow-sm transition-all'
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           >
-            <label className='hover:bg-primary/10 text-primary border-base-content/10 flex h-full flex-1 cursor-pointer items-center justify-center border-r transition-colors'>
+            <label className='hover:bg-primary/10 text-primary border-base-content/10 flex h-full min-w-[2.25rem] flex-1 cursor-pointer items-center justify-center border-r transition-colors sm:min-w-[3.25rem]'>
               {/* Import Spinner */}
               {isImporting ? (
                 <FontAwesomeIcon icon={faCircleNotch} spin className='text-xl opacity-60' />
@@ -100,7 +114,7 @@ export function StatusBar({
                 e.preventDefault();
                 onImportModeChange(importMode === 'browser' ? 'temp' : 'browser');
               }}
-              className='bg-base-100/50 text-base-content/70 hover:bg-primary flex h-full w-16 flex-col items-center justify-center transition-colors hover:text-white'
+              className='bg-base-100/50 text-base-content/70 hover:bg-primary flex h-full min-w-[3rem] flex-col items-center justify-center px-0.5 transition-colors hover:text-white sm:min-w-[4.25rem] sm:px-1'
               title='Toggle between Browser and Temporary mode'
             >
               <span className='text-[10px] leading-tight font-bold tracking-wide uppercase'>
@@ -136,6 +150,7 @@ export function StatusBar({
           {/* --- CENTER: PROFILE BADGE --- */}
           <div
             className={profileBadgeClasses}
+            style={mismatchProfileBadgeStyle}
             onClick={onTogglePanel}
             title={isMismatch ? 'Profile mismatch detected!' : 'Click to toggle library'}
           >
@@ -175,9 +190,9 @@ export function StatusBar({
             )}
           </div>
 
-          {/* --- RIGHT: STATS BUTTON (w-40) --- */}
+          {/* --- RIGHT: STATS BUTTON (outer column, symmetric with import block) --- */}
           <button
-            className='border-success/50 text-success hover:bg-success hover:border-success bg-base-100/50 flex h-full w-40 shrink-0 items-center justify-center rounded-lg border-2 shadow-sm transition-all hover:text-white'
+            className='border-success/50 text-success hover:bg-success hover:border-success bg-base-100/50 flex h-full w-full min-w-0 items-center justify-center rounded-lg border-2 shadow-sm transition-all hover:text-white'
             onClick={onShowStats}
             title='Compare & Statistics'
           >

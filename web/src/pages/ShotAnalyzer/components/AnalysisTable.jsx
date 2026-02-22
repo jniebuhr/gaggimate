@@ -25,7 +25,7 @@ import {
   faCheck,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
-import { columnConfig, groupColors, utilityColors } from '../utils/analyzerUtils';
+import { columnConfig, groupColors, utilityColors, analyzerUiColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
 
 /**
@@ -43,6 +43,7 @@ export function AnalysisTable({
 
   // State for Table Zoom (Font Size) - Default 11px
   const [tableFontSize, setTableFontSize] = useState(11);
+  const [isTouchOptimized, setIsTouchOptimized] = useState(false);
 
   const tableContainerRef = useRef(null);
   const safeSettings = settings || { scaleDelay: 1000, sensorDelay: 200, autoDelay: true };
@@ -96,6 +97,31 @@ export function AnalysisTable({
     return () => el.removeEventListener('wheel', handleWheel);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const mediaQuery =
+      typeof window.matchMedia === 'function' ? window.matchMedia('(any-pointer: coarse)') : null;
+
+    const updateTouchOptimization = () => {
+      const hasCoarsePointer = Boolean(mediaQuery?.matches);
+      const hasTouchPoints = Number(window.navigator?.maxTouchPoints || 0) > 0;
+      setIsTouchOptimized(hasCoarsePointer || hasTouchPoints);
+    };
+
+    updateTouchOptimization();
+
+    if (!mediaQuery) return undefined;
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updateTouchOptimization);
+      return () => mediaQuery.removeEventListener('change', updateTouchOptimization);
+    }
+
+    mediaQuery.addListener(updateTouchOptimization);
+    return () => mediaQuery.removeListener(updateTouchOptimization);
+  }, []);
+
   const getHeaderLabel = col => {
     let label = col.label;
     if (col.id === 'duration') label = 'Time';
@@ -114,6 +140,15 @@ export function AnalysisTable({
     scrollbarWidth: 'none' /* Firefox */,
     msOverflowStyle: 'none' /* IE / Edge */,
   };
+  const touchInteractionStyle = isTouchOptimized
+    ? {
+        touchAction: 'pan-x pan-y pinch-zoom',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehaviorX: 'contain',
+      }
+    : {
+        touchAction: 'pan-y',
+      };
 
   return (
     <div className='mt-6 flex w-full flex-col'>
@@ -127,10 +162,23 @@ export function AnalysisTable({
         {results.isBrewByWeight ? (
           <StatusBadge
             label='BREW BY WEIGHT'
-            colorClass='bg-emerald-600 text-white border-emerald-700'
+            colorClass='text-white shadow-sm'
+            style={{
+              backgroundColor: analyzerUiColors.brewByWeightLabelBg,
+              borderColor: analyzerUiColors.brewByWeightLabelBorder,
+              color: analyzerUiColors.brewByWeightLabelText,
+            }}
           />
         ) : (
-          <StatusBadge label='BREW BY TIME' colorClass='bg-slate-600 text-white border-slate-700' />
+          <StatusBadge
+            label='BREW BY TIME'
+            colorClass='text-white shadow-sm'
+            style={{
+              backgroundColor: analyzerUiColors.brewByTimeLabelBg,
+              borderColor: analyzerUiColors.brewByTimeLabelBorder,
+              color: analyzerUiColors.brewByTimeLabelText,
+            }}
+          />
         )}
         {results.globalScaleLost && (
           <StatusBadge
@@ -230,8 +278,8 @@ export function AnalysisTable({
         <div
           ref={tableContainerRef}
           // removed 'overscroll-*' classes to prevent latching
-          className='no-scrollbar block h-auto min-h-0 w-full touch-pan-y overflow-x-auto overflow-y-hidden'
-          style={{ scrollBehavior: 'smooth', ...scrollbarHideStyle }}
+          className='no-scrollbar block h-auto min-h-0 w-full overflow-x-auto overflow-y-hidden'
+          style={{ scrollBehavior: 'smooth', ...scrollbarHideStyle, ...touchInteractionStyle }}
         >
           {/* Dynamic Font Size applied to Table */}
           <table

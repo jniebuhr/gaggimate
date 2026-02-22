@@ -172,6 +172,20 @@
   --analyzer-weight-det-anchor: #8b5cf6;
   --analyzer-pred-stop-red: #dc2626;
   --analyzer-pred-info-blue: #2563eb;
+  --analyzer-warning-orange: #ea7a2f;
+  --analyzer-warning-orange-strong: #c95f1d;
+  --analyzer-warning-orange-shadow: rgba(234, 122, 47, 0.3);
+  --analyzer-brew-by-time-label-bg: #475569;
+  --analyzer-brew-by-time-label-border: #334155;
+  --analyzer-brew-by-time-label-text: #ffffff;
+  --analyzer-brew-by-weight-label-bg: #8b5cf6;
+  --analyzer-brew-by-weight-label-border: #6d3fe0;
+  --analyzer-brew-by-weight-label-text: #ffffff;
+  --analyzer-notes-taste-bitter: #b16a3c;
+  --analyzer-notes-taste-balanced: #5f8a57;
+  --analyzer-notes-taste-sour: #b7963f;
+  --analyzer-phase-line: rgba(107, 114, 128, 0.5);
+  --analyzer-stop-label: rgba(220, 38, 38, 0.85);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -196,6 +210,20 @@
     --analyzer-weight-det-anchor: #a78bfa;
     --analyzer-pred-stop-red: #ef4444;
     --analyzer-pred-info-blue: #60a5fa;
+    --analyzer-warning-orange: #f39a52;
+    --analyzer-warning-orange-strong: #dd7f31;
+    --analyzer-warning-orange-shadow: rgba(243, 154, 82, 0.3);
+    --analyzer-brew-by-time-label-bg: #475569;
+    --analyzer-brew-by-time-label-border: #64748b;
+    --analyzer-brew-by-time-label-text: #ffffff;
+    --analyzer-brew-by-weight-label-bg: #a78bfa;
+    --analyzer-brew-by-weight-label-border: #8f6be8;
+    --analyzer-brew-by-weight-label-text: #ffffff;
+    --analyzer-notes-taste-bitter: #d39a6a;
+    --analyzer-notes-taste-balanced: #8fb58b;
+    --analyzer-notes-taste-sour: #d6b66a;
+    --analyzer-phase-line: rgba(148, 163, 184, 0.45);
+    --analyzer-stop-label: rgba(239, 68, 68, 0.85);
   }
 }
 
@@ -220,6 +248,20 @@ html[data-theme='nord'] {
   --analyzer-weight-det-anchor: #8b5cf6;
   --analyzer-pred-stop-red: #dc2626;
   --analyzer-pred-info-blue: #2563eb;
+  --analyzer-warning-orange: #ea7a2f;
+  --analyzer-warning-orange-strong: #c95f1d;
+  --analyzer-warning-orange-shadow: rgba(234, 122, 47, 0.3);
+  --analyzer-brew-by-time-label-bg: #475569;
+  --analyzer-brew-by-time-label-border: #334155;
+  --analyzer-brew-by-time-label-text: #ffffff;
+  --analyzer-brew-by-weight-label-bg: #8b5cf6;
+  --analyzer-brew-by-weight-label-border: #6d3fe0;
+  --analyzer-brew-by-weight-label-text: #ffffff;
+  --analyzer-notes-taste-bitter: #b16a3c;
+  --analyzer-notes-taste-balanced: #5f8a57;
+  --analyzer-notes-taste-sour: #b7963f;
+  --analyzer-phase-line: rgba(107, 114, 128, 0.5);
+  --analyzer-stop-label: rgba(220, 38, 38, 0.85);
 }
 
 html[data-theme='coffee'] {
@@ -243,6 +285,20 @@ html[data-theme='coffee'] {
   --analyzer-weight-det-anchor: #a78bfa;
   --analyzer-pred-stop-red: #ef4444;
   --analyzer-pred-info-blue: #60a5fa;
+  --analyzer-warning-orange: #f39a52;
+  --analyzer-warning-orange-strong: #dd7f31;
+  --analyzer-warning-orange-shadow: rgba(243, 154, 82, 0.3);
+  --analyzer-brew-by-time-label-bg: #475569;
+  --analyzer-brew-by-time-label-border: #64748b;
+  --analyzer-brew-by-time-label-text: #ffffff;
+  --analyzer-brew-by-weight-label-bg: #a78bfa;
+  --analyzer-brew-by-weight-label-border: #8f6be8;
+  --analyzer-brew-by-weight-label-text: #ffffff;
+  --analyzer-notes-taste-bitter: #d39a6a;
+  --analyzer-notes-taste-balanced: #8fb58b;
+  --analyzer-notes-taste-sour: #d6b66a;
+  --analyzer-phase-line: rgba(148, 163, 184, 0.45);
+  --analyzer-stop-label: rgba(239, 68, 68, 0.85);
 }
 
 @theme {

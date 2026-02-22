@@ -5,7 +5,7 @@
  * Edit mode lives in the expanded panel with vertical layout.
  */
 
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
@@ -16,20 +16,12 @@ import { faDivide } from '@fortawesome/free-solid-svg-icons/faDivide';
 import { faTag } from '@fortawesome/free-solid-svg-icons/faTag';
 import { faGears } from '@fortawesome/free-solid-svg-icons/faGears';
 import { notesService } from '../services/NotesService';
-import { cleanName } from '../utils/analyzerUtils';
+import { cleanName, getNotesTasteStyle } from '../utils/analyzerUtils';
 import { NotesBarExpanded } from './NotesBarExpanded';
 
-const getTasteColor = taste => {
-  switch (taste) {
-    case 'bitter':
-      return 'text-orange-500';
-    case 'sour':
-      return 'text-yellow-500';
-    case 'balanced':
-      return 'text-green-500';
-    default:
-      return 'text-base-content/40';
-  }
+const getTasteTextStyle = taste => {
+  const tasteStyle = getNotesTasteStyle(taste);
+  return tasteStyle ? { color: tasteStyle.color } : undefined;
 };
 
 export function NotesBar({
@@ -40,6 +32,8 @@ export function NotesBar({
   isExpanded = false,
   notesExpanded = false,
   onToggleNotesExpanded,
+  onEditingChange,
+  onExpandedHeightChange,
 }) {
   // Shared responsive spacing for nav arrows and center info chips.
   // Keeps a visible minimum separation while adapting on wider layouts.
@@ -56,6 +50,7 @@ export function NotesBar({
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const showExpanded = notesExpanded;
+  const expandedPanelRef = useRef(null);
 
   const calculateRatio = useCallback((doseIn, doseOut) => {
     if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
@@ -212,6 +207,31 @@ export function NotesBar({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentShot, canGoPrev, canGoNext, currentIndex, shotList, onNavigate]);
 
+  useEffect(() => {
+    onEditingChange?.(isEditing);
+  }, [isEditing, onEditingChange]);
+
+  useEffect(() => {
+    if (!showExpanded) {
+      onExpandedHeightChange?.(0);
+      return;
+    }
+
+    const panelEl = expandedPanelRef.current;
+    if (!panelEl) {
+      onExpandedHeightChange?.(0);
+      return;
+    }
+
+    const reportHeight = () => onExpandedHeightChange?.(panelEl.offsetHeight || 0);
+    reportHeight();
+
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(reportHeight);
+    resizeObserver.observe(panelEl);
+    return () => resizeObserver.disconnect();
+  }, [showExpanded, onExpandedHeightChange]);
+
   // Source badge (matching LibraryRow styling)
   const sourceLabel = currentShot?.source === 'gaggimate' ? 'GM' : 'WEB';
   const sourceBadgeClass =
@@ -320,7 +340,7 @@ export function NotesBar({
               </span>
 
               {/* Balance/Taste (right after rating) */}
-              <span className={`${fieldCls} capitalize ${getTasteColor(notes.balanceTaste)}`}>
+              <span className={`${fieldCls} capitalize`} style={getTasteTextStyle(notes.balanceTaste)}>
                 {notes.balanceTaste}
               </span>
 
@@ -359,18 +379,20 @@ export function NotesBar({
 
       {/* Expanded Notes Panel */}
       {showExpanded && (
-        <NotesBarExpanded
-          currentShot={currentShot}
-          notes={notes}
-          isEditing={isEditing}
-          saving={saving}
-          onInputChange={handleInputChange}
-          onEdit={() => setIsEditing(true)}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          onCollapse={onToggleNotesExpanded}
-          isExpanded={isExpanded}
-        />
+        <div ref={expandedPanelRef}>
+          <NotesBarExpanded
+            currentShot={currentShot}
+            notes={notes}
+            isEditing={isEditing}
+            saving={saving}
+            onInputChange={handleInputChange}
+            onEdit={() => setIsEditing(true)}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            onCollapse={onToggleNotesExpanded}
+            isExpanded={isExpanded}
+          />
+        </div>
       )}
     </div>
   );
