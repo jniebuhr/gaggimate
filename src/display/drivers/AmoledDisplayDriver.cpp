@@ -27,9 +27,14 @@ bool AmoledDisplayDriver::isCompatible() {
         hwConfig = LILYGO_T_DISPLAY_S3_DS_HW_CONFIG;
         return true;
     }
-    ESP_LOGI("AmoledDisplayDriver", "Testing Waveshare AMOLED Display...");
+    ESP_LOGI("AmoledDisplayDriver", "Testing Waveshare AMOLED Display (1.75 inch)...");
     if (testHw(WAVESHARE_S3_AMOLED_HW_CONFIG)) {
         hwConfig = WAVESHARE_S3_AMOLED_HW_CONFIG;
+        return true;
+    }
+    ESP_LOGI("AmoledDisplayDriver", "Testing Waveshare AMOLED Display (1.43 inch)...");
+    if (testHw(WAVESHARE_S3_AMOLED_143_HW_CONFIG)) {
+        hwConfig = WAVESHARE_S3_AMOLED_143_HW_CONFIG;
         return true;
     }
     return false;
