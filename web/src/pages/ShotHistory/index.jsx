@@ -1,15 +1,31 @@
 import {
-  Chart,
-  LineController,
-  TimeScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Legend,
-  Filler,
   CategoryScale,
+  Chart,
+  Filler,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  TimeScale,
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'preact/hooks';
+import { computed } from '@preact/signals';
+import { Spinner } from '../../components/Spinner.jsx';
+import HistoryCard from './HistoryCard.jsx';
+import { parseBinaryShot } from './parseBinaryShot.js';
+import { indexToShotList, parseBinaryIndex } from './parseBinaryIndex.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { downloadJson } from '../../utils/download.js';
+import { loadShotNotes } from './loadShotNotes.js';
+
+
 Chart.register(LineController);
 Chart.register(TimeScale);
 Chart.register(LinearScale);
@@ -18,18 +34,6 @@ Chart.register(PointElement);
 Chart.register(LineElement);
 Chart.register(Filler);
 Chart.register(Legend);
-
-import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useEffect, useState, useContext, useMemo } from 'preact/hooks';
-import { computed } from '@preact/signals';
-import { Spinner } from '../../components/Spinner.jsx';
-import HistoryCard from './HistoryCard.jsx';
-import { parseBinaryShot } from './parseBinaryShot.js';
-import { parseBinaryIndex, indexToShotList } from './parseBinaryIndex.js';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
-import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
-import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 
 const connected = computed(() => machine.value.connected);
 
@@ -43,6 +47,8 @@ export function ShotHistory() {
   const [filterBy, setFilterBy] = useState('all'); // all, rated, unrated
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportingHistoryPercentage, setExportingHistoryPercentage] = useState(0);
   const loadHistory = async () => {
     try {
       // Fetch binary index instead of websocket request
@@ -107,6 +113,71 @@ export function ShotHistory() {
     // Reload the index to get updated ratings
     await loadHistory();
   }, []);
+
+  // Reusable loader for a single shot's detailed data (from .slog file)
+  const fetchShotData = useCallback(async id => {
+    try {
+      const strId = String(id);
+      const paddedId = strId.padStart(6, '0');
+      const resp = await fetch(`/api/history/${paddedId}.slog`);
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const buf = await resp.arrayBuffer();
+
+      return parseBinaryShot(buf, strId);
+    } catch (e) {
+      console.error('Failed loading shot', e);
+      return null;
+    }
+  }, []);
+
+  const onExport = useCallback(async () => {
+    if(history.length > 0 && !isExporting) {
+      setIsExporting(true);
+      setExportingHistoryPercentage(0);
+      const totalShots = history.length;
+      let completed = 0;
+      const exportedHistory = await Promise.all(
+        history.map(async p => {
+          try {
+            const shotData = await fetchShotData(p.id);
+            if (!shotData) return null;
+            // Load notes for this shot
+            const loadedNotes = await loadShotNotes(apiService, {
+              id: p.id,
+              volume: p.volume ?? shotData.volume,
+            });
+
+            return {
+              ...shotData,
+              rating: p.rating,
+              // Use the freshly loaded notes to ensure completeness
+              notes: loadedNotes,
+              // Preserve index metadata over shot file data
+              volume: p.volume ?? shotData.volume,
+              incomplete: p.incomplete ?? shotData.incomplete,
+            };
+          } catch (_e) {
+            return null;
+          } finally {
+            completed++;
+            setExportingHistoryPercentage(Math.round((completed / totalShots) * 100));
+          }
+        }),
+      );
+      // Remove any falsy entries (failed loads)
+      const cleanedHistory = exportedHistory.filter(Boolean);
+      if (cleanedHistory.length > 0) {
+        downloadJson(cleanedHistory, 'history.json');
+      } else {
+        console.warn('Shots could not be exported');
+      }
+      setIsExporting(false);
+    }
+    else {
+      console.log('Already exporting or No shots to export');
+    }
+  }, [history, isExporting, fetchShotData, apiService]);
 
   // Filtered and sorted history with pagination
   const { paginatedHistory, totalPages, totalFilteredItems } = useMemo(() => {
@@ -254,6 +325,24 @@ export function ShotHistory() {
         </div>
       </div>
 
+      <div className='flex flex-row items-center justify-end gap-2' aria-label='Export history'>
+        <button
+          onClick={onExport}
+          disabled={history.length === 0 || isExporting }
+          className={`btn btn-ghost btn-sm lg:btn-lg`}
+          title='Export full history'
+          aria-label='Export full history'
+        > {isExporting ? (
+          <span className='flex flex-row items-center gap-2 text-base-content'>
+            <span className="loading loading-sm lg:loading-lg loading-dots" />
+            <span aria-live='polite' className="text-xs lg:text-sm">{exportingHistoryPercentage}%</span>
+          </span>
+          ) : (
+            <FontAwesomeIcon icon={faFileExport} />
+          )}
+        </button>
+      </div>
+
       <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
         {paginatedHistory.map((item, idx) => (
           <HistoryCard
@@ -266,12 +355,10 @@ export function ShotHistory() {
               const target = history.find(h => h.id === id);
               if (!target || target.loaded) return;
               try {
-                // Pad ID to 6 digits with zeros to match backend filename format
-                const paddedId = id.padStart(6, '0');
-                const resp = await fetch(`/api/history/${paddedId}.slog`);
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const buf = await resp.arrayBuffer();
-                const parsed = parseBinaryShot(buf, id);
+                const parsed = await fetchShotData(id);
+                if (!parsed) {
+                  return;
+                }
                 parsed.incomplete = (target?.incomplete ?? false) || parsed.incomplete;
                 if (target?.notes) parsed.notes = target.notes;
                 setHistory(prev =>
