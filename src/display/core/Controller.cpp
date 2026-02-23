@@ -379,11 +379,12 @@ void Controller::startProcess(Process *process) {
 }
 
 float Controller::getTargetTemp() const {
+    Process *proc = currentProcess;
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
-        if (isActive() && currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
-            auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+        if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
+            auto brewProcess = static_cast<BrewProcess *>(proc);
             return brewProcess->getTemperature();
         }
         return profileManager->getSelectedProfile().temperature;
@@ -503,29 +504,32 @@ void Controller::lowerGrindTarget() {
 }
 
 void Controller::updateControl() {
+    // Captura local para evitar race condition con deactivate() en otro core
+    Process *proc = currentProcess;
+    bool active = proc != nullptr && proc->isActive();
+
     float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
 
-    // Check if alt relay should be active based on process type and alt relay function setting
     bool altRelayActive = false;
-    if (isActive() && currentProcess->isAltRelayActive()) {
-        if (currentProcess->getType() == MODE_GRIND && settings.getAltRelayFunction() == ALT_RELAY_GRIND) {
+    if (active && proc->isAltRelayActive()) {
+        if (proc->getType() == MODE_GRIND && settings.getAltRelayFunction() == ALT_RELAY_GRIND) {
             altRelayActive = true;
         }
     }
 
     clientController.sendAltControl(altRelayActive);
-    if (isActive() && systemInfo.capabilities.pressure) {
-        if (currentProcess->getType() == MODE_STEAM) {
+    if (active && systemInfo.capabilities.pressure) {
+        if (proc->getType() == MODE_STEAM) {
             targetPressure = settings.getSteamPumpCutoff();
-            targetFlow = currentProcess->getPumpValue() * 0.1f;
+            targetFlow = proc->getPumpValue() * 0.1f;
             clientController.sendAdvancedOutputControl(false, targetTemp, false, targetPressure, targetFlow);
             return;
         }
-        if (currentProcess->getType() == MODE_BREW) {
-            auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
+        if (proc->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(proc);
             if (brewProcess->isAdvancedPump()) {
                 clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), targetTemp,
                                                            brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
@@ -538,8 +542,8 @@ void Controller::updateControl() {
     }
     targetPressure = 0.0f;
     targetFlow = 0.0f;
-    clientController.sendOutputControl(isActive() && currentProcess->isRelayActive(),
-                                       isActive() ? currentProcess->getPumpValue() : 0, targetTemp);
+    clientController.sendOutputControl(active && proc->isRelayActive(),
+                                       active ? proc->getPumpValue() : 0, targetTemp);
 }
 
 void Controller::activate() {
@@ -574,7 +578,7 @@ void Controller::activate() {
         break;
     default:;
     }
-    if (currentProcess->getType() == MODE_BREW) {
+    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:start");
     }
 }
@@ -634,9 +638,15 @@ void Controller::deactivateStandby() {
     setMode(MODE_BREW);
 }
 
-bool Controller::isActive() const { return currentProcess != nullptr && currentProcess->isActive(); }
+bool Controller::isActive() const {
+    Process *proc = currentProcess;
+    return proc != nullptr && proc->isActive();
+}
 
-bool Controller::isGrindActive() const { return isActive() && currentProcess->getType() == MODE_GRIND; }
+bool Controller::isGrindActive() const {
+    Process *proc = currentProcess;
+    return proc != nullptr && proc->isActive() && proc->getType() == MODE_GRIND;
+}
 
 int Controller::getMode() const { return mode; }
 
