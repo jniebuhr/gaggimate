@@ -104,6 +104,7 @@ void Controller::connect() {
     if (initialized)
         return;
     lastPing = millis();
+    connectStartTime = millis();
     pluginManager->trigger("controller:startup");
 
     setupWifi();
@@ -257,7 +258,16 @@ void Controller::loop() {
         connect();
     }
 
+    // If BLE scanning has been running for a while without finding the controller,
+    // notify the UI so it can update the startup label accordingly.
+    if (!waitingForController && initialized && !clientController.isConnected() &&
+        (millis() - connectStartTime) > CONTROLLER_WAITING_TIMEOUT_MS) {
+        waitingForController = true;
+        pluginManager->trigger("controller:bluetooth:waiting");
+    }
+
     if (clientController.isReadyForConnection()) {
+        waitingForController = false;
         clientController.connectToServer();
         setupInfos();
         pluginManager->trigger("controller:bluetooth:connect");
@@ -542,8 +552,7 @@ void Controller::updateControl() {
     }
     targetPressure = 0.0f;
     targetFlow = 0.0f;
-    clientController.sendOutputControl(active && proc->isRelayActive(),
-                                       active ? proc->getPumpValue() : 0, targetTemp);
+    clientController.sendOutputControl(active && proc->isRelayActive(), active ? proc->getPumpValue() : 0, targetTemp);
 }
 
 void Controller::activate() {
