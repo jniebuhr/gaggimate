@@ -240,31 +240,33 @@ void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
 }
 
 // Notification callback
-void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t,
+void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length,
                                             bool) const {
+    std::string rawData((char *)pData, length);
+
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(ERROR_CHAR_UUID))) {
-        int errorCode = atoi((char *)pData);
+        int errorCode = atoi(rawData.c_str());
         ESP_LOGV(LOG_TAG, "Error read: %d", errorCode);
         if (remoteErrorCallback != nullptr) {
             remoteErrorCallback(errorCode);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
-        int brewButtonStatus = atoi((char *)pData);
+        int brewButtonStatus = atoi(rawData.c_str());
         ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
         if (brewBtnCallback != nullptr) {
             brewBtnCallback(brewButtonStatus);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
-        int steamButtonStatus = atoi((char *)pData);
+        int steamButtonStatus = atoi(rawData.c_str());
         ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
         if (steamBtnCallback != nullptr) {
             steamBtnCallback(steamButtonStatus);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
-        String data = String((char *)pData);
+        String data = String(rawData.c_str());
         float temperature = get_token(data, 0, ',').toFloat();
         float pressure = get_token(data, 1, ',').toFloat();
         float puckFlow = get_token(data, 2, ',').toFloat();
@@ -279,7 +281,7 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
-        String settings = String((char *)pData);
+        String settings = String(rawData.c_str());
         ESP_LOGV(LOG_TAG, "autotune result: %s", settings.c_str());
         if (autotuneResultCallback != nullptr) {
             float Kp = get_token(settings, 0, ',').toFloat();
@@ -296,14 +298,14 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
-        float value = atof((char *)pData);
+        float value = atof(rawData.c_str());
         ESP_LOGV(LOG_TAG, "Volumetric measurement: %.2f", value);
         if (volumetricMeasurementCallback != nullptr) {
             volumetricMeasurementCallback(value);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
-        int value = atoi((char *)pData);
+        int value = atoi(rawData.c_str());
         ESP_LOGV(LOG_TAG, "ToF measurement: %d", value);
         if (tofMeasurementCallback != nullptr) {
             tofMeasurementCallback(value);
