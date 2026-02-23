@@ -24,9 +24,211 @@ import {
   faMagnifyingGlassPlus,
   faCheck,
   faTimes,
+  faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons';
 import { columnConfig, groupColors, utilityColors, analyzerUiColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
+
+function StopCalculationHelpPopover() {
+  const detailsRef = useRef(null);
+  const [isWideViewport, setIsWideViewport] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const updateViewportMode = () => setIsWideViewport(mediaQuery.matches);
+    updateViewportMode();
+
+    const listener = event => setIsWideViewport(event.matches);
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+
+    mediaQuery.addListener(listener);
+    return () => mediaQuery.removeListener(listener);
+  }, []);
+
+  useEffect(() => {
+    const handlePointerDown = event => {
+      const el = detailsRef.current;
+      if (!el || !el.hasAttribute('open')) return;
+      if (el.contains(event.target)) return;
+      el.removeAttribute('open');
+    };
+
+    const handleKeyDown = event => {
+      if (event.key !== 'Escape') return;
+      const el = detailsRef.current;
+      if (!el || !el.hasAttribute('open')) return;
+      el.removeAttribute('open');
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const mobilePopoverStyle = isWideViewport
+    ? undefined
+    : {
+        position: 'fixed',
+        left: '0.5rem',
+        right: '0.5rem',
+        bottom: '1rem',
+        width: 'auto',
+        maxWidth: 'none',
+      };
+
+  return (
+    <details ref={detailsRef} className='dropdown'>
+      <summary
+        className='flex h-5 w-5 list-none items-center justify-center rounded-full text-base-content/45 transition-colors hover:text-base-content/80 [&::-webkit-details-marker]:hidden'
+        aria-label='Stop Calculation help'
+        title='Stop Calculation help'
+      >
+        <FontAwesomeIcon icon={faCircleInfo} className='text-[13px]' />
+      </summary>
+      <div
+        className={`dropdown-content bg-base-100/95 border-base-content/10 text-base-content normal-case tracking-normal z-[90] max-h-[70vh] overflow-y-auto rounded-xl border p-3 text-[12px] leading-relaxed font-normal shadow-xl backdrop-blur-md ${
+          isWideViewport ? 'absolute right-0 bottom-full mb-2 w-[min(92vw,34rem)]' : ''
+        }`}
+        style={mobilePopoverStyle}
+      >
+        <div className='space-y-2.5'>
+          <p className='text-sm font-semibold leading-tight'>Stop Calculation (Analyzer only)</p>
+          <p className='opacity-85'>
+            The <strong>Stop Calculation</strong> settings and{' '}
+            <strong style={{ color: utilityColors.predictionInfoBlue }}>Calc</strong> values are
+            Analyzer-only tools. Future-value calculations are not performed by GaggiMate itself
+            and shot execution is not changed by these settings.
+          </p>
+
+          <div className='rounded-lg bg-base-200/60 p-2'>
+            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>
+              Status Labels
+            </p>
+            <div className='mt-1 space-y-1.5'>
+              <p>
+                <span className='mr-1.5 inline-flex rounded-[4px] border border-sky-700 bg-sky-600 px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'>
+                  REVIEW PHASE
+                </span>
+                Shown when a stop reason is only detected after a higher calculation step / deeper
+                review. This usually means the stop happened between recorded samples and was not
+                visible in the first pass.
+              </p>
+              <p>
+                <span
+                  className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'
+                  style={{
+                    backgroundColor: utilityColors.warningOrange,
+                    borderColor: utilityColors.warningOrange,
+                  }}
+                >
+                  HIGH SCALE DELAY
+                </span>
+                Shown when a weight-based stop was likely triggered, but the detected timing is
+                significantly too early or too late. This may indicate an incorrectly configured
+                scale delay in the GaggiMate settings (or a shot that was manually stopped near the
+                target).
+              </p>
+              <p>
+                <span
+                  className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'
+                  style={{
+                    backgroundColor: utilityColors.warningOrange,
+                    borderColor: utilityColors.warningOrange,
+                  }}
+                >
+                  SCALE LOST
+                </span>
+                Shown when the scale briefly loses connection during the brew. In this case, weight
+                is ignored for stop detection for that brew, even if the scale reconnects later.
+              </p>
+              <p>
+                <span className='mr-1.5 inline-flex rounded-[4px] border border-blue-700 bg-blue-600 px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'>
+                  AUTO-CALC
+                </span>
+                Shown when Auto mode is active and the displayed stop-calculation delays are
+                analyzer-side averages from the phase-specific calculations.
+              </p>
+            </div>
+          </div>
+
+          <div className='rounded-lg bg-base-200/60 p-2'>
+            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>
+              How stop detection works
+            </p>
+            <p>
+              The Analyzer determines stop reasons from a recorded sample stream. Since samples are
+              recorded at fixed intervals (typically <strong>250 ms</strong>), the exact stop event
+              may happen between recorded points.
+            </p>
+            <p className='mt-1'>
+              To identify the most likely stop reason, the Analyzer first checks up to three nearby
+              timestamps around the phase transition:
+            </p>
+            <ol className='mt-1 ml-4 list-decimal'>
+              <li>the end of the current phase,</li>
+              <li>the next recorded point,</li>
+              <li>the following recorded point.</li>
+            </ol>
+            <p className='mt-1'>
+              If no clear stop reason is found at those three timestamps, the Analyzer performs a
+              limited short-range calculation (extrapolation) based only on that small time window.
+            </p>
+            <p className='mt-1'>
+              The Analyzer intentionally does not use values further into the future, because those
+              may already be influenced by the next phase and could distort stop detection.
+            </p>
+          </div>
+
+          <div className='rounded-lg bg-base-200/60 p-2'>
+            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>Example</p>
+            <p>
+              If a phase has a flow stop at <strong>1 ml/s</strong>, flow may briefly cross that
+              threshold between two samples. A short calculation helps estimate the stop condition
+              more accurately than relying on later values that may already reflect the next phase.
+            </p>
+          </div>
+
+          <div className='rounded-lg bg-base-200/60 p-2'>
+            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>
+              Auto vs Manual
+            </p>
+            <p className='mt-1'>
+              <strong>Auto</strong>: Calculates stop timing per phase, individually. The displayed
+              average values are the averages of those phase-specific calculations. The step size
+              follows the recording sample interval (typically 250 ms), which makes Auto generally
+              more accurate overall.
+            </p>
+            <p className='mt-1'>
+              <strong>Manual</strong>: Applies one stop-calculation offset to all phases at once.
+              This is best for reviewing one specific phase / stop reason in detail. Manual mode can
+              use smaller step intervals than Auto, which may occasionally produce different
+              results.
+            </p>
+          </div>
+
+          <div className='rounded-lg bg-base-200/60 p-2'>
+            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>
+              Scale vs System
+            </p>
+            <p>
+              <strong>Scale</strong> and <strong>System</strong> can be adjusted separately because
+              Bluetooth scales often have their own sampling rates and timing behavior, independent
+              of system sampling / processing timing.
+            </p>
+          </div>
+        </div>
+      </div>
+    </details>
+  );
+}
 
 /**
  * Main Table Component
@@ -220,7 +422,7 @@ export function AnalysisTable({
           />
         )}
         {results.isAutoAdjusted && (
-          <StatusBadge label='AUTO-DELAY' colorClass='bg-blue-600 text-white border-blue-700' />
+          <StatusBadge label='AUTO-CALC' colorClass='bg-blue-600 text-white border-blue-700' />
         )}
       </div>
 
@@ -367,11 +569,11 @@ export function AnalysisTable({
         </div>
 
         {/* C. New Footer: Delay Settings (Left) & Legend (Right) */}
-        <div className='bg-base-100 border-base-content/10 flex flex-wrap items-center justify-between gap-4 rounded-b-lg border-t px-4 py-3 text-[10px] font-bold tracking-wider uppercase'>
+        <div className='bg-base-100 border-base-content/10 flex flex-col items-stretch gap-3 rounded-b-lg border-t px-4 py-3 text-[10px] font-bold tracking-wider uppercase sm:flex-row sm:flex-wrap sm:items-center sm:justify-between'>
           {/* Left: Stop Calculation Inputs */}
-          <div className='flex items-center gap-4'>
+          <div className='flex w-full flex-wrap items-center gap-x-3 gap-y-2 sm:w-auto sm:gap-4'>
             <span className='hidden opacity-40 select-none sm:inline'>Stop Calculation</span>
-            <div className='flex items-center gap-2'>
+            <div className='flex flex-wrap items-center gap-2'>
               {/* Shows Average Symbol ∅ if auto-delay is active */}
               <span className='opacity-60'>Scale{safeSettings.autoDelay ? ' ∅' : ''}</span>
               <input
@@ -391,8 +593,8 @@ export function AnalysisTable({
               />
               <span className='font-normal lowercase opacity-40'>ms</span>
             </div>
-            <div className='bg-base-content/10 mx-1 h-3 w-px'></div>
-            <div className='flex items-center gap-2'>
+            <div className='bg-base-content/10 mx-1 hidden h-3 w-px sm:block'></div>
+            <div className='flex flex-wrap items-center gap-2'>
               {/* Shows Average Symbol ∅ if auto-delay is active */}
               <span className='opacity-60'>System{safeSettings.autoDelay ? ' ∅' : ''}</span>
               <input
@@ -420,14 +622,15 @@ export function AnalysisTable({
                 />
                 <span className='opacity-60'>Auto</span>
               </label>
+              <StopCalculationHelpPopover />
             </div>
           </div>
 
           {/* Right: Legend */}
-          <div className='text-base-content flex gap-4 font-bold select-none'>
-            <span>∅ Avg (Time Weighted)</span>
-            <span>S/E Start/End</span>
-            <span>Range Min/Max</span>
+          <div className='text-base-content grid w-full grid-cols-3 gap-x-3 gap-y-1 font-bold select-none sm:flex sm:w-auto sm:items-center sm:gap-4'>
+            <span className='leading-tight whitespace-normal'>∅ Avg (Time Weighted)</span>
+            <span className='leading-tight whitespace-normal'>S/E Start/End</span>
+            <span className='leading-tight whitespace-normal'>Range Min/Max</span>
           </div>
         </div>
       </div>
