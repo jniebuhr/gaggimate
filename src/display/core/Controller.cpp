@@ -172,6 +172,9 @@ void Controller::setupBluetooth() {
         ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", value);
         pluginManager->trigger("controller:tof:change", "value", value);
     });
+    clientController.registerDisconnectCallback([this]() {
+        pluginManager->trigger("controller:bluetooth:disconnect");
+    });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
@@ -255,6 +258,16 @@ void Controller::loop() {
 
     if (screenReady) {
         connect();
+    }
+
+    // Re-scan for controller board if initial BLE connection was never established
+    if (!loaded && !clientController.isConnected() && !clientController.isReadyForConnection()) {
+        unsigned long now_ble = millis();
+        if (now_ble - lastBleScanRetry > 15000) {
+            lastBleScanRetry = now_ble;
+            ESP_LOGI(LOG_TAG, "BLE controller not found, retrying scan...");
+            clientController.scan();
+        }
     }
 
     if (clientController.isReadyForConnection()) {

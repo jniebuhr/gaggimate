@@ -84,6 +84,7 @@ class DefaultUI {
     int updateAvailable = false;
     int updateActive = false;
     int apActive = false;
+    int bleConnected = false;
     int error = false;
     int autotuning = false;
     int volumetricAvailable = false;

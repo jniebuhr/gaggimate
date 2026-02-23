@@ -152,6 +152,7 @@ class Controller {
     unsigned long lastPing = 0;
     unsigned long lastProgress = 0;
     unsigned long lastAction = 0;
+    unsigned long lastBleScanRetry = 0;
     bool loaded = false;
     bool updating = false;
     bool autotuning = false;
