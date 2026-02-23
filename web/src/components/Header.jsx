@@ -10,6 +10,7 @@ import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine';
 
 function HeaderItem(props) {
   const { path } = useLocation();
@@ -111,6 +112,12 @@ export function Header() {
               label='Shot History'
               link='/history'
               icon={faTimeline}
+              onClick={() => openCb(false)}
+            />
+            <HeaderItem
+              label='Shot Analyzer'
+              link='/analyzer'
+              icon={faChartLine}
               onClick={() => openCb(false)}
             />
           </div>

@@ -48,6 +48,8 @@ class WavesharePanel : public Display {
 
     bool begin(WS_RGBPanel_Color_Order order = WS_T_RGB_ORDER_RGB);
 
+    void initExtension();
+
     bool installSD();
 
     void uninstallSD();
@@ -103,6 +105,7 @@ class WavesharePanel : public Display {
     WS_RGBPanel_Color_Order _order;
 
     bool _has_init;
+    bool _extension_initialized = false;
 
     WS_RGBPanel_Wakeup_Method _wakeupMethod;
 

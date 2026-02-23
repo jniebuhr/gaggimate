@@ -1,5 +1,6 @@
 #include "Controller.h"
 #include "ArduinoJson.h"
+#include "esp_sntp.h"
 #include <SD_MMC.h>
 #include <SPIFFS.h>
 #include <ctime>
@@ -41,15 +42,20 @@ void Controller::setup() {
 #endif
 
     pluginManager = new PluginManager();
+#ifndef GAGGIMATE_HEADLESS
+    ui = new DefaultUI(this, driver, pluginManager);
+    if (driver->supportsSDCard() && driver->installSDCard()) {
+        sdcard = true;
+        ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
+        ESP_LOGI(LOG_TAG, "Used: %lluMB, Capacity: %lluMB", SD_MMC.usedBytes() / 1024 / 1024, SD_MMC.cardSize() / 1024 / 1024);
+    }
+#endif
     FS *fs = &SPIFFS;
     if (sdcard) {
         fs = &SD_MMC;
     }
     profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
-#ifndef GAGGIMATE_HEADLESS
-    ui = new DefaultUI(this, driver, pluginManager);
-#endif
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     else
@@ -81,9 +87,8 @@ void Controller::setup() {
 
 #ifndef GAGGIMATE_HEADLESS
     ui->init();
-#else
-    this->onScreenReady();
 #endif
+    this->onScreenReady();
 
     updateLastAction();
     xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
@@ -112,10 +117,10 @@ void Controller::connect() {
 
 #ifndef GAGGIMATE_HEADLESS
 void Controller::setupPanel() {
-    if (AmoledDisplayDriver::getInstance()->isCompatible()) {
-        driver = AmoledDisplayDriver::getInstance();
-    } else if (LilyGoDriver::getInstance()->isCompatible()) {
+    if (LilyGoDriver::getInstance()->isCompatible()) {
         driver = LilyGoDriver::getInstance();
+    } else if (AmoledDisplayDriver::getInstance()->isCompatible()) {
+        driver = AmoledDisplayDriver::getInstance();
     } else if (WaveshareDriver::getInstance()->isCompatible()) {
         driver = WaveshareDriver::getInstance();
     } else {
@@ -124,15 +129,6 @@ void Controller::setupPanel() {
         ESP.restart();
     }
     driver->init();
-    if (!driver->supportsSDCard()) {
-        ESP_LOGV(LOG_TAG, "Display driver does not support SD card");
-        return;
-    }
-    if (driver->installSDCard()) {
-        sdcard = true;
-        ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
-        ESP_LOGI(LOG_TAG, "Used: %lluMB, Capacity: %lluMB", SD_MMC.usedBytes() / 1024 / 1024, SD_MMC.cardSize() / 1024 / 1024);
-    }
 }
 #endif
 
@@ -160,10 +156,11 @@ void Controller::setupBluetooth() {
             ESP_LOGE(LOG_TAG, "Received error %d", error);
         }
     });
-    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd) {
-        ESP_LOGI(LOG_TAG, "Received new autotune values: %.3f, %.3f, %.3f", Kp, Ki, Kd);
-        char pid[30];
-        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f", Kp, Ki, Kd);
+    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd, const float Kf) {
+        ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
+        char pid[64];
+        // Store in simplified format with combined Kf
+        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
         settings.setPid(String(pid));
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
@@ -226,6 +223,12 @@ void Controller::setupWifi() {
                     pluginManager->trigger("controller:wifi:disconnect");
                 },
                 WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+            configTzTime(resolve_timezone(settings.getTimezone()), NTP_SERVER);
+            setenv("TZ", resolve_timezone(settings.getTimezone()), 1);
+            tzset();
+            sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
+            sntp_setservername(0, NTP_SERVER);
+            sntp_init();
         } else {
             WiFi.disconnect(true, true);
             ESP_LOGI(LOG_TAG, "Timed out while connecting to WiFi");
@@ -328,7 +331,7 @@ void Controller::loop() {
 
     if (grindActiveUntil != 0 && now > grindActiveUntil)
         deactivateGrind();
-    if (mode != MODE_STANDBY && now > lastAction + settings.getStandbyTimeout())
+    if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
 }
 
@@ -365,8 +368,10 @@ void Controller::autotune(int testTime, int samples) {
 }
 
 void Controller::startProcess(Process *process) {
-    if (isActive() || !isReady())
+    if (isActive() || !isReady()) {
+        delete process;
         return;
+    }
     processCompleted = false;
     this->currentProcess = process;
     pluginManager->trigger("controller:process:start");
@@ -636,9 +641,9 @@ bool Controller::isGrindActive() const { return isActive() && currentProcess->ge
 int Controller::getMode() const { return mode; }
 
 void Controller::setMode(int newMode) {
-    steamReady = false;
     Event modeEvent = pluginManager->trigger("controller:mode:change", "value", newMode);
     mode = modeEvent.getInt("value");
+    steamReady = false;
 
     updateLastAction();
     setTargetTemp(getTargetTemp());

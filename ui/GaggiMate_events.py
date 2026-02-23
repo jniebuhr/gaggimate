@@ -170,3 +170,7 @@ def onProfileAccept(event_struct):
 def onProfileSaveAsNew(event_struct):
     return
 
+
+def onVolumetricHold(event_struct):
+    return
+

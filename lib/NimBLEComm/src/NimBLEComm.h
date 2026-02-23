@@ -33,7 +33,7 @@ constexpr size_t ERROR_CODE_RUNAWAY = 4;
 constexpr size_t ERROR_CODE_TIMEOUT = 5;
 
 using pin_control_callback_t = std::function<void(bool isActive)>;
-using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd)>;
+using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kf)>;
 using pump_model_coeffs_callback_t = std::function<void(float a, float b, float c, float d)>;
 using ping_callback_t = std::function<void()>;
 using remote_err_callback_t = std::function<void(int errorCode)>;
@@ -66,5 +66,7 @@ struct SystemInfo {
 };
 
 String get_token(const String &from, uint8_t index, char separator, String default_value = "");
+
+inline std::string float_to_string(float f) { return std::to_string(std::round(f * 1000.0f) / 1000.0f); }
 
 #endif // NIMBLECOMM_H

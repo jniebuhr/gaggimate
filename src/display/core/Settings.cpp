@@ -92,7 +92,7 @@ Settings::Settings() {
     }
 
     if (autowakeupSchedules.empty()) {
-        autowakeupSchedules.push_back(AutoWakeupSchedule("07:00"));
+        autowakeupSchedules.emplace_back(AutoWakeupSchedule("07:00"));
     }
 
     // Display settings
@@ -552,7 +552,7 @@ void Settings::doSave() {
     preferences.end();
 }
 
-void Settings::loopTask(void *arg) {
+[[noreturn]] void Settings::loopTask(void *arg) {
     auto *settings = static_cast<Settings *>(arg);
     while (true) {
         settings->doSave();

@@ -3,6 +3,7 @@ import { isNumber } from 'chart.js/helpers';
 import { useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { Tooltip } from '../../components/Tooltip.jsx';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const onFieldChange = (field, value) => {
@@ -119,7 +120,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 id={`phase-${index}-target`}
                 className='grow'
                 type='number'
-                value={phase.temperature || 0}
+                value={`${phase.temperature || 0}`}
                 onChange={e => onFieldChange('temperature', parseFloat(e.target.value))}
                 aria-label='Target temperature'
                 min='0'
@@ -233,7 +234,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 step='1'
                 min={0}
                 max={100}
-                value={pumpPower}
+                value={pumpPower.toString()}
                 onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
                 aria-label='Pump power as percentage'
               />
@@ -258,7 +259,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   type='number'
                   step='0.01'
                   min={mode === 'pressure' ? '0.1' : '0'}
-                  value={pressure}
+                  value={pressure.toString()}
                   onChange={e =>
                     onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
                   }
@@ -279,7 +280,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   className='grow'
                   type='number'
                   step='0.01'
-                  value={flow}
+                  value={flow.toString()}
                   onChange={e =>
                     onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
                   }
@@ -424,14 +425,16 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       <div className='mt-2 flex flex-row gap-4'>
         <h3 className='text-lg font-medium'>Stop when</h3>
         <div className='dropdown'>
-          <div
-            tabIndex='0'
-            role='button'
-            className='join-item btn btn-sm btn-outline'
-            aria-label='Add target'
-          >
-            <FontAwesomeIcon icon={faPlus} />
-          </div>
+          <Tooltip content='Add stop condition'>
+            <div
+              tabIndex='0'
+              role='button'
+              className='join-item btn btn-sm btn-outline'
+              aria-label='Add target'
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </div>
+          </Tooltip>
           <ul
             tabIndex='0'
             className='menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm'

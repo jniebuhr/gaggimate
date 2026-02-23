@@ -26,6 +26,7 @@ void onBrewScreenLoad(lv_event_t *e);
 void onBrewStart(lv_event_t *e);
 void onFlush(lv_event_t *e);
 void onVolumetricClick(lv_event_t *e);
+void onVolumetricHold(lv_event_t *e);
 void onProfileSettings(lv_event_t *e);
 void onProfileSelect(lv_event_t *e);
 void onBrewTempLower(lv_event_t *e);

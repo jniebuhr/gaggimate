@@ -58,6 +58,13 @@ int16_t encodeSigned(float value, float scale, int16_t minValue, int16_t maxValu
     }
     return static_cast<int16_t>(fixed);
 }
+
+String padId(String id, int length = 6) {
+    while (id.length() < length) {
+        id = "0" + id;
+    }
+    return id;
+}
 } // namespace
 
 ShotHistoryPlugin ShotHistory;
@@ -71,12 +78,15 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     }
     pm->on("controller:brew:start", [this](Event const &) { startRecording(); });
     pm->on("controller:brew:end", [this](Event const &) { endRecording(); });
+    pm->on("controller:brew:clear", [this](Event const &) { endExtendedRecording(); });
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
     pm->on("controller:volumetric-measurement:bluetooth:change",
            [this](Event const &event) { currentBluetoothWeight = event.getFloat("value"); });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
+    // Initialize rebuild state
+    rebuildInProgress = false;
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 0);
 }
 
@@ -105,6 +115,7 @@ void ShotHistoryPlugin::record() {
                 header.profileId[sizeof(header.profileId) - 1] = '\0';
                 strncpy(header.profileName, profile.label.c_str(), sizeof(header.profileName) - 1);
                 header.profileName[sizeof(header.profileName) - 1] = '\0';
+                header.phaseTransitionCount = 0; // Initialize phase transition count
                 // Write header placeholder
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
@@ -128,6 +139,22 @@ void ShotHistoryPlugin::record() {
         sample.v = encodeUnsigned(currentBluetoothWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
+        sample.si = getSystemInfo(); // Pack system state information
+
+        // Track phase transitions
+        if (controller->getMode() == MODE_BREW) {
+            Process *process = controller->getProcess();
+            if (process != nullptr && process->getType() == MODE_BREW) {
+                auto *brewProcess = static_cast<BrewProcess *>(process);
+                uint8_t currentPhase = static_cast<uint8_t>(brewProcess->phaseIndex);
+
+                // Check for phase transition
+                if (currentPhase != lastRecordedPhase) {
+                    recordPhaseTransition(currentPhase, sampleCount);
+                    lastRecordedPhase = currentPhase;
+                }
+            }
+        }
 
         if (isFileOpen) {
             if (ioBufferPos + sizeof(sample) > sizeof(ioBuffer)) {
@@ -140,8 +167,7 @@ void ShotHistoryPlugin::record() {
 
         // Check for early index insertion (once per shot after 7.5s)
         if (!indexEntryCreated && (millis() - shotStart) > 7500) {
-            createEarlyIndexEntry();
-            indexEntryCreated = true;
+            indexEntryCreated = createEarlyIndexEntry();
         }
 
         // Check for weight stabilization during extended recording
@@ -195,7 +221,6 @@ void ShotHistoryPlugin::record() {
         unsigned long duration = header.durationMs;
         if (duration <= 7500) { // Exclude failed shots and flushes
             fs->remove("/h/" + currentId + ".slog");
-            fs->remove("/h/" + currentId + ".json");
 
             // If we created an early index entry, mark it as deleted
             if (indexEntryCreated) {
@@ -205,24 +230,23 @@ void ShotHistoryPlugin::record() {
             controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
             cleanupHistory();
 
-            if (indexEntryCreated) {
-                // Update existing entry with final completion data
-                updateIndexCompletion(currentId.toInt(), header);
-            } else {
-                // Create completed entry directly (edge case: shot ended right after 7.5s)
-                ShotIndexEntry indexEntry{};
-                indexEntry.id = currentId.toInt();
-                indexEntry.timestamp = header.startEpoch;
-                indexEntry.duration = header.durationMs;
-                indexEntry.volume = header.finalWeight;
-                indexEntry.rating = 0; // Will be updated if notes are added
-                indexEntry.flags = SHOT_FLAG_COMPLETED;
-                strncpy(indexEntry.profileId, header.profileId, sizeof(indexEntry.profileId) - 1);
-                indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
-                strncpy(indexEntry.profileName, header.profileName, sizeof(indexEntry.profileName) - 1);
-                indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
+            // Always create a complete index entry via upsert.
+            // If an early entry exists, it gets overwritten with final data.
+            // If no early entry exists, a new one is appended.
+            ShotIndexEntry indexEntry{};
+            indexEntry.id = currentId.toInt();
+            indexEntry.timestamp = header.startEpoch;
+            indexEntry.duration = header.durationMs;
+            indexEntry.volume = header.finalWeight;
+            indexEntry.rating = 0;
+            indexEntry.flags = SHOT_FLAG_COMPLETED;
+            strncpy(indexEntry.profileId, header.profileId, sizeof(indexEntry.profileId) - 1);
+            indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
+            strncpy(indexEntry.profileName, header.profileName, sizeof(indexEntry.profileName) - 1);
+            indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
 
-                appendToIndex(indexEntry);
+            if (!appendToIndex(indexEntry)) {
+                ESP_LOGE("ShotHistoryPlugin", "CRITICAL: Failed to add completed shot %u to index", indexEntry.id);
             }
         }
     }
@@ -230,16 +254,13 @@ void ShotHistoryPlugin::record() {
 
 void ShotHistoryPlugin::startRecording() {
     Process *process = controller->getProcess();
-    if (process->getType() == MODE_BREW) {
+    if (process != nullptr && process->getType() == MODE_BREW) {
         BrewProcess *brewProcess = static_cast<BrewProcess *>(process);
         if (brewProcess->isUtility()) {
             return;
         }
     }
-    currentId = controller->getSettings().getHistoryIndex();
-    while (currentId.length() < 6) {
-        currentId = "0" + currentId;
-    }
+    currentId = padId(String(controller->getSettings().getHistoryIndex()));
     shotStart = millis();
     lastWeightChangeTime = 0;
     extendedRecordingStart = 0;
@@ -253,6 +274,12 @@ void ShotHistoryPlugin::startRecording() {
     indexEntryCreated = false; // Reset flag for new shot
     sampleCount = 0;
     ioBufferPos = 0;
+
+    // Reset phase tracking for new shot
+    lastRecordedPhase = 0xFF; // Invalid value to detect first phase
+
+    // Capture initial volumetric mode state (brew by weight vs brew by time)
+    shotStartedVolumetric = controller->getSettings().isVolumetricTarget();
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -273,21 +300,138 @@ void ShotHistoryPlugin::endRecording() {
     recording = false;
 }
 
-void ShotHistoryPlugin::cleanupHistory() {
-    File directory = fs->open("/h");
-    std::vector<String> entries;
-    String filename = directory.getNextFileName();
-    while (filename != "") {
-        entries.push_back(filename);
-        filename = directory.getNextFileName();
+void ShotHistoryPlugin::endExtendedRecording() {
+    if (extendedRecording) {
+        extendedRecording = false;
     }
-    sort(entries.begin(), entries.end(), [](String a, String b) { return a < b; });
-    if (entries.size() > MAX_HISTORY_ENTRIES) {
-        for (unsigned int i = 0; i < entries.size() - MAX_HISTORY_ENTRIES; i++) {
-            String name = entries[i];
-            fs->remove(name);
+}
+
+void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex) {
+    // Only record if we have space and a valid header
+    if (header.phaseTransitionCount >= 12 || !isFileOpen) {
+        return;
+    }
+
+    // Get current profile to extract phase name
+    Profile profile = controller->getProfileManager()->getSelectedProfile();
+    PhaseTransition &transition = header.phaseTransitions[header.phaseTransitionCount];
+
+    transition.sampleIndex = sampleIndex;
+    transition.phaseNumber = phaseNumber;
+    transition.reserved = 0;
+
+    // Get phase name from profile
+    if (phaseNumber < profile.phases.size()) {
+        strncpy(transition.phaseName, profile.phases[phaseNumber].name.c_str(), sizeof(transition.phaseName) - 1);
+        transition.phaseName[sizeof(transition.phaseName) - 1] = '\0';
+    } else {
+        // Fallback to generic name
+        snprintf(transition.phaseName, sizeof(transition.phaseName), "Phase %d", phaseNumber + 1);
+    }
+
+    header.phaseTransitionCount++;
+
+    ESP_LOGD("ShotHistoryPlugin", "Recorded phase transition to phase %d (%s) at sample %d", phaseNumber, transition.phaseName,
+             sampleIndex);
+}
+
+uint16_t ShotHistoryPlugin::getSystemInfo() {
+    uint16_t systemInfo = 0;
+
+    // Bit 0: Shot started in volumetric mode
+    if (shotStartedVolumetric) {
+        systemInfo |= SYSTEM_INFO_SHOT_STARTED_VOLUMETRIC;
+    }
+
+    // Bit 1: Currently in volumetric mode (check current process if active)
+    if (controller != nullptr) {
+        Process *process = controller->getProcess();
+        if (process != nullptr && process->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(process);
+            bool currentlyVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC &&
+                                       brewProcess->currentPhase.hasVolumetricTarget() && controller->isVolumetricAvailable();
+            if (currentlyVolumetric) {
+                systemInfo |= SYSTEM_INFO_CURRENTLY_VOLUMETRIC;
+            }
         }
     }
+
+    // Bit 2: Bluetooth scale connected
+    if (controller != nullptr && controller->isBluetoothScaleHealthy()) {
+        systemInfo |= SYSTEM_INFO_BLUETOOTH_SCALE_CONNECTED;
+    }
+
+    // Bit 3: Volumetric available
+    if (controller != nullptr && controller->isVolumetricAvailable()) {
+        systemInfo |= SYSTEM_INFO_VOLUMETRIC_AVAILABLE;
+    }
+
+    // Bit 4: Extended recording active
+    if (extendedRecording) {
+        systemInfo |= SYSTEM_INFO_EXTENDED_RECORDING;
+    }
+
+    return systemInfo;
+}
+
+void ShotHistoryPlugin::cleanupHistory() {
+    size_t freeSpace = getFreeSpace();
+    if (freeSpace > MIN_FREE_SPACE_BYTES) {
+        return; // Enough space, nothing to do
+    }
+
+    // Collect and sort .slog files to find the oldest
+    File directory = fs->open("/h");
+    std::vector<String> slogFiles;
+    String filename = directory.getNextFileName();
+    while (filename != "") {
+        if (filename.endsWith(".slog")) {
+            slogFiles.push_back(filename);
+        }
+        filename = directory.getNextFileName();
+    }
+    directory.close();
+
+    if (slogFiles.empty()) {
+        return;
+    }
+
+    sort(slogFiles.begin(), slogFiles.end(), [](const String &a, const String &b) { return a < b; });
+
+    // Remove oldest files one at a time until we have enough free space
+    size_t removed = 0;
+    for (size_t i = 0; i < slogFiles.size() && getFreeSpace() <= MIN_FREE_SPACE_BYTES; i++) {
+        String fname = slogFiles[i];
+        int start = fname.lastIndexOf('/') + 1;
+        int end = fname.lastIndexOf('.');
+        if (end > start) {
+            uint32_t shotId = fname.substring(start, end).toInt();
+            markIndexDeleted(shotId);
+        }
+
+        // Remove .slog and associated .json notes file
+        fs->remove(fname);
+        String notesPath = fname.substring(0, fname.lastIndexOf('.')) + ".json";
+        fs->remove(notesPath);
+        removed++;
+    }
+
+    if (removed > 0) {
+        ESP_LOGI("ShotHistoryPlugin", "Cleaned up %u old shots (free space: %u bytes)", removed, getFreeSpace());
+    }
+}
+
+size_t ShotHistoryPlugin::getFreeSpace() {
+    if (controller->isSDCard()) {
+        uint64_t total = SD_MMC.totalBytes();
+        uint64_t used = SD_MMC.usedBytes();
+        uint64_t free = total > used ? (total - used) : 0;
+        // Cap to size_t max for consistency
+        return free > SIZE_MAX ? SIZE_MAX : static_cast<size_t>(free);
+    }
+    size_t total = SPIFFS.totalBytes();
+    size_t used = SPIFFS.usedBytes();
+    return total > used ? (total - used) : 0;
 }
 
 void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &response) {
@@ -375,8 +519,9 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
 
         response["msg"] = "Ok";
     } else if (type == "req:history:rebuild") {
-        rebuildIndex();
-        response["msg"] = "Index rebuilt";
+        // Rebuild is now handled asynchronously by WebUIPlugin
+        // This path shouldn't be reached, but handle it just in case
+        response["msg"] = "Use async rebuild";
     }
 }
 
@@ -418,7 +563,19 @@ void ShotHistoryPlugin::flushBuffer() {
 // Index management methods
 bool ShotHistoryPlugin::ensureIndexExists() {
     if (fs->exists("/h/index.bin")) {
-        return true;
+        // Validate existing index header
+        File indexFile = fs->open("/h/index.bin", "r");
+        if (indexFile) {
+            ShotIndexHeader hdr{};
+            bool valid = (indexFile.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) &&
+                          hdr.magic == SHOT_INDEX_MAGIC);
+            indexFile.close();
+            if (valid) {
+                return true;
+            }
+            ESP_LOGW("ShotHistoryPlugin", "Corrupt index file detected (bad magic), recreating");
+            fs->remove("/h/index.bin");
+        }
     }
 
     // Create new empty index
@@ -442,35 +599,44 @@ bool ShotHistoryPlugin::ensureIndexExists() {
     return true;
 }
 
-void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
+bool ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
     if (!ensureIndexExists()) {
-        return;
+        return false;
     }
 
     File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for append");
-        return;
+        return false;
     }
 
     ShotIndexHeader header{};
     if (!readIndexHeader(indexFile, header)) {
         indexFile.close();
-        return;
+        return false;
     }
 
-    // Check for existing entry with same ID to prevent duplicates
+    // Check for existing entry with same ID - update in place (upsert)
     int existingPos = findEntryPosition(indexFile, header, entry.id);
     if (existingPos >= 0) {
-        ESP_LOGW("ShotHistoryPlugin", "Attempt to add duplicate entry for shot %u - entry already exists at position %d",
-                 entry.id, existingPos);
+        if (writeEntryAtPosition(indexFile, existingPos, entry)) {
+            ESP_LOGD("ShotHistoryPlugin", "Updated existing index entry for shot %u", entry.id);
+            indexFile.close();
+            return true;
+        }
+        ESP_LOGE("ShotHistoryPlugin", "Failed to update existing index entry for shot %u", entry.id);
         indexFile.close();
-        return;
+        return false;
     }
 
     // Append entry
     indexFile.seek(0, SeekEnd);
-    indexFile.write(reinterpret_cast<const uint8_t *>(&entry), sizeof(entry));
+    size_t written = indexFile.write(reinterpret_cast<const uint8_t *>(&entry), sizeof(entry));
+    if (written != sizeof(entry)) {
+        ESP_LOGE("ShotHistoryPlugin", "Failed to write index entry for shot %u", entry.id);
+        indexFile.close();
+        return false;
+    }
 
     // Update header
     header.entryCount++;
@@ -480,6 +646,7 @@ void ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
 
     indexFile.close();
     ESP_LOGD("ShotHistoryPlugin", "Appended shot %u to index", entry.id);
+    return true;
 }
 
 void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume) {
@@ -560,8 +727,45 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
     indexFile.close();
 }
 
+void ShotHistoryPlugin::startAsyncRebuild() {
+    if (!rebuildInProgress) {
+        rebuildInProgress = true; // Set immediately to prevent multiple rebuilds
+        ESP_LOGI("ShotHistoryPlugin", "Starting immediate async rebuild task");
+        
+        // Create a dedicated task for rebuild instead of using the existing loop
+        xTaskCreatePinnedToCore(
+            [](void* param) {
+                auto* plugin = static_cast<ShotHistoryPlugin*>(param);
+                ESP_LOGI("ShotHistoryPlugin", "Rebuild task started");
+                plugin->rebuildIndex();
+                plugin->rebuildInProgress = false;
+                ESP_LOGI("ShotHistoryPlugin", "Rebuild task completed");
+                vTaskDelete(NULL); // Delete this task when done
+            },
+            "ShotHistoryRebuild",
+            configMINIMAL_STACK_SIZE * 8, // Larger stack for file operations
+            this,
+            2, // Higher priority than normal
+            NULL,
+            0
+        );
+    } else {
+        ESP_LOGW("ShotHistoryPlugin", "Rebuild already in progress, ignoring request");
+    }
+}
+
 void ShotHistoryPlugin::rebuildIndex() {
     ESP_LOGI("ShotHistoryPlugin", "Starting index rebuild...");
+
+    // Send scanning event
+    if (pluginManager) {
+        Event startEvent;
+        startEvent.id = "evt:history-rebuild-progress";
+        startEvent.setInt("total", 0);
+        startEvent.setInt("current", 0);
+        startEvent.setString("status", "scanning");
+        pluginManager->trigger(startEvent);
+    }
 
     // Delete existing index
     fs->remove("/h/index.bin");
@@ -569,12 +773,30 @@ void ShotHistoryPlugin::rebuildIndex() {
     // Create new empty index
     if (!ensureIndexExists()) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to create index during rebuild");
+        // Emit error event
+        if (pluginManager) {
+            Event errorEvent;
+            errorEvent.id = "evt:history-rebuild-progress";
+            errorEvent.setInt("total", 0);
+            errorEvent.setInt("current", 0);
+            errorEvent.setString("status", "error");
+            pluginManager->trigger(errorEvent);
+        }
         return;
     }
 
     File directory = fs->open("/h");
     if (!directory || !directory.isDirectory()) {
         ESP_LOGW("ShotHistoryPlugin", "No history directory found");
+        // Emit completion event even if no directory exists
+        if (pluginManager) {
+            Event completedEvent;
+            completedEvent.id = "evt:history-rebuild-progress";
+            completedEvent.setInt("total", 0);
+            completedEvent.setInt("current", 0);
+            completedEvent.setString("status", "completed");
+            pluginManager->trigger(completedEvent);
+        }
         return;
     }
 
@@ -595,8 +817,20 @@ void ShotHistoryPlugin::rebuildIndex() {
 
     ESP_LOGI("ShotHistoryPlugin", "Rebuilding index from %d shot files", slogFiles.size());
 
+    // Emit start event with total file count
+    if (pluginManager) {
+        Event startEvent;
+        startEvent.id = "evt:history-rebuild-progress";
+        startEvent.setInt("total", (int)slogFiles.size());
+        startEvent.setInt("current", 0);
+        startEvent.setString("status", "started");
+        pluginManager->trigger(startEvent);
+    }
+
+    int currentIndex = 0;
     for (const String &fileName : slogFiles) {
-        File shotFile = fs->open(fileName, "r");
+        currentIndex++;
+        File shotFile = fs->open("/h/" + fileName, "r");
         if (!shotFile) {
             continue;
         }
@@ -661,6 +895,32 @@ void ShotHistoryPlugin::rebuildIndex() {
 
         // Append to index
         appendToIndex(entry);
+
+        // Emit progress update with adaptive frequency
+        // Update every file for small rebuilds, every few files for larger ones
+        int updateFrequency = slogFiles.size() <= 20 ? 1 : (slogFiles.size() <= 100 ? 3 : 5);
+        if (pluginManager && (currentIndex % updateFrequency == 0 || currentIndex == slogFiles.size())) {
+            Event progressEvent;
+            progressEvent.id = "evt:history-rebuild-progress";
+            progressEvent.setInt("total", (int)slogFiles.size());
+            progressEvent.setInt("current", currentIndex);
+            progressEvent.setString("status", "processing");
+            pluginManager->trigger(progressEvent);
+            ESP_LOGI("ShotHistoryPlugin", "Rebuild progress: %d/%d", currentIndex, (int)slogFiles.size());
+            
+            // Small delay to allow UI updates and prevent overwhelming the system
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+    }
+
+    // Emit completion event
+    if (pluginManager) {
+        Event completionEvent;
+        completionEvent.id = "evt:history-rebuild-progress";
+        completionEvent.setInt("total", (int)slogFiles.size());
+        completionEvent.setInt("current", (int)slogFiles.size());
+        completionEvent.setString("status", "completed");
+        pluginManager->trigger(completionEvent);
     }
 
     ESP_LOGI("ShotHistoryPlugin", "Index rebuild completed");
@@ -715,61 +975,26 @@ bool ShotHistoryPlugin::writeEntryAtPosition(File &indexFile, size_t position, c
     return true;
 }
 
-void ShotHistoryPlugin::createEarlyIndexEntry() {
+bool ShotHistoryPlugin::createEarlyIndexEntry() {
     Profile profile = controller->getProfileManager()->getSelectedProfile();
 
     ShotIndexEntry indexEntry{};
     indexEntry.id = currentId.toInt();
     indexEntry.timestamp = header.startEpoch;
-    indexEntry.duration = 0; // Will be updated on completion
-    indexEntry.volume = 0;   // Will be updated on completion
+    indexEntry.duration = 0; // Will be overwritten on completion
+    indexEntry.volume = 0;   // Will be overwritten on completion
     indexEntry.rating = 0;
-    indexEntry.flags = 0; // No SHOT_FLAG_COMPLETED - indicates incomplete shot
+    indexEntry.flags = 0; // No SHOT_FLAG_COMPLETED - indicates in-progress shot
     strncpy(indexEntry.profileId, profile.id.c_str(), sizeof(indexEntry.profileId) - 1);
     indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
     strncpy(indexEntry.profileName, profile.label.c_str(), sizeof(indexEntry.profileName) - 1);
     indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
 
-    appendToIndex(indexEntry);
-    ESP_LOGD("ShotHistoryPlugin", "Created early index entry for shot %u", indexEntry.id);
-}
-
-void ShotHistoryPlugin::updateIndexCompletion(uint32_t shotId, const ShotLogHeader &finalHeader) {
-    File indexFile = fs->open("/h/index.bin", "r+");
-    if (!indexFile) {
-        ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for completion update");
-        return;
-    }
-
-    ShotIndexHeader header{};
-    if (!readIndexHeader(indexFile, header)) {
-        indexFile.close();
-        return;
-    }
-
-    int entryPos = findEntryPosition(indexFile, header, shotId);
-    if (entryPos >= 0) {
-        ShotIndexEntry entry{};
-        if (readEntryAtPosition(indexFile, entryPos, entry)) {
-            // Update with final shot data
-            entry.duration = finalHeader.durationMs;
-            entry.volume = finalHeader.finalWeight;
-            entry.flags |= SHOT_FLAG_COMPLETED; // Mark as completed
-
-            if (writeEntryAtPosition(indexFile, entryPos, entry)) {
-                ESP_LOGD("ShotHistoryPlugin", "Updated shot %u completion: duration=%u, volume=%u", shotId, entry.duration,
-                         entry.volume);
-                indexFile.close();
-                return;
-            } else {
-                ESP_LOGE("ShotHistoryPlugin", "Failed to write completion data for shot %u", shotId);
-            }
-        } else {
-            ESP_LOGE("ShotHistoryPlugin", "Failed to read entry for shot %u at position %d", shotId, entryPos);
-        }
+    bool success = appendToIndex(indexEntry);
+    if (success) {
+        ESP_LOGD("ShotHistoryPlugin", "Created early index entry for shot %u", indexEntry.id);
     } else {
-        ESP_LOGW("ShotHistoryPlugin", "Shot %u not found in index for completion update", shotId);
+        ESP_LOGE("ShotHistoryPlugin", "Failed to create early index entry for shot %u", indexEntry.id);
     }
-
-    indexFile.close();
+    return success;
 }

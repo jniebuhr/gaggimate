@@ -11,8 +11,8 @@
 #define PREFERENCES_KEY "controller"
 
 struct AutoWakeupSchedule {
-    String time;  // HH:MM format
-    bool days[7]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+    String time;    // HH:MM format
+    bool days[7]{}; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
 
     AutoWakeupSchedule() : time("07:00") {
         // Default to all days enabled
@@ -21,21 +21,21 @@ struct AutoWakeupSchedule {
         }
     }
 
-    AutoWakeupSchedule(const String &timeStr) : time(timeStr) {
+    explicit AutoWakeupSchedule(const String &timeStr) : time(timeStr) {
         // Default to all days enabled
         for (int i = 0; i < 7; i++) {
             days[i] = true;
         }
     }
 
-    bool isDayEnabled(int dayOfWeek) const {
+    [[nodiscard]] bool isDayEnabled(const int dayOfWeek) const {
         // dayOfWeek: 1=Monday, 2=Tuesday, ..., 7=Sunday
         if (dayOfWeek < 1 || dayOfWeek > 7)
             return false;
         return days[dayOfWeek - 1];
     }
 
-    void setDayEnabled(int dayOfWeek, bool enabled) {
+    void setDayEnabled(const int dayOfWeek, const bool enabled) {
         // dayOfWeek: 1=Monday, 2=Tuesday, ..., 7=Sunday
         if (dayOfWeek >= 1 && dayOfWeek <= 7) {
             days[dayOfWeek - 1] = enabled;
