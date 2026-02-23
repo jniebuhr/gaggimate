@@ -52,6 +52,8 @@ void NimBLEClientController::registerVolumetricMeasurementCallback(const float_c
 
 void NimBLEClientController::registerTofMeasurementCallback(const int_callback_t &callback) { tofMeasurementCallback = callback; }
 
+void NimBLEClientController::registerDisconnectCallback(const void_callback_t &callback) { disconnectCallback = callback; }
+
 std::string NimBLEClientController::readInfo() const {
     if (infoChar != nullptr && infoChar->canRead()) {
         return infoChar->readValue();
@@ -236,6 +238,9 @@ void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) 
 
 void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
     ESP_LOGI(LOG_TAG, "Disconnected from server, trying to reconnect...");
+    if (disconnectCallback != nullptr) {
+        disconnectCallback();
+    }
     scan();
 }
 

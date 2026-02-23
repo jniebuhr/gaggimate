@@ -150,6 +150,7 @@ void DefaultUI::init() {
         }
     });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
+        bleConnected = true;
         rerender = true;
         if (lv_scr_act() == ui_InitScreen) {
             Settings &settings = controller->getSettings();
@@ -157,6 +158,10 @@ void DefaultUI::init() {
                                                    : changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
         }
         pressureAvailable = controller->getSystemInfo().capabilities.pressure;
+    });
+    pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) {
+        bleConnected = false;
+        rerender = true;
     });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         rerender = true;
@@ -475,9 +480,11 @@ void DefaultUI::setupReactive() {
                                   }
                               } else if (autotuning) {
                                   lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Autotuning...");
+                              } else if (!bleConnected) {
+                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Connecting to controller...");
                               }
                           },
-                          &updateAvailable, &error, &autotuning);
+                          &updateAvailable, &error, &autotuning, &bleConnected);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
                               if (volumetricMode) {
@@ -682,8 +689,15 @@ void DefaultUI::updateStandbyScreen() {
     } else {
         lv_obj_add_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
     }
-    controller->getClientController()->isConnected() ? lv_obj_clear_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN)
-                                                     : lv_obj_add_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
+    if (bleConnected) {
+        lv_obj_clear_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_style_opa(ui_StandbyScreen_bluetoothIcon, LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+        // Show bluetooth icon flashing to indicate scanning/reconnecting
+        lv_obj_clear_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_style_opa(ui_StandbyScreen_bluetoothIcon, heatingFlash ? LV_OPA_30 : LV_OPA_100,
+                             LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
     !apActive &&WiFi.status() == WL_CONNECTED ? lv_obj_clear_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN)
                                               : lv_obj_add_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN);
 }

@@ -31,6 +31,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerAutotuneResultCallback(const pid_control_callback_t &callback);
     void registerVolumetricMeasurementCallback(const float_callback_t &callback);
     void registerTofMeasurementCallback(const int_callback_t &callback);
+    void registerDisconnectCallback(const void_callback_t &callback);
     std::string readInfo() const;
     NimBLEClient *getClient() const { return client; };
 
@@ -68,6 +69,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     sensor_read_callback_t sensorCallback = nullptr;
     float_callback_t volumetricMeasurementCallback = nullptr;
     int_callback_t tofMeasurementCallback = nullptr;
+    void_callback_t disconnectCallback = nullptr;
 
     String _lastOutputControl = "";
 
