@@ -1,7 +1,6 @@
 #include "NimBLEClientController.h"
 
 constexpr size_t MAX_CONNECT_RETRIES = 3;
-constexpr size_t BLE_SCAN_DURATION_SECONDS = 10;
 
 NimBLEClientController::NimBLEClientController() : client(nullptr) {}
 

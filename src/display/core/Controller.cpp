@@ -134,6 +134,7 @@ void Controller::setupPanel() {
 #endif
 
 void Controller::setupBluetooth() {
+    lastScanTime = millis();
     clientController.initClient();
     clientController.registerSensorCallback(
         [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow, const float puckResistance) {
@@ -264,6 +265,13 @@ void Controller::loop() {
         (millis() - connectStartTime) > CONTROLLER_WAITING_TIMEOUT_MS) {
         waitingForController = true;
         pluginManager->trigger("controller:bluetooth:waiting");
+    }
+
+    // Periodically restart BLE scan while waiting for the controller to appear.
+    if (initialized && !clientController.isConnected() &&
+        (millis() - lastScanTime) > (NimBLEClientController::BLE_SCAN_DURATION_SECONDS * 1000UL + 500UL)) {
+        lastScanTime = millis();
+        clientController.scan();
     }
 
     if (clientController.isReadyForConnection()) {
@@ -514,9 +522,9 @@ void Controller::lowerGrindTarget() {
 }
 
 void Controller::updateControl() {
-    // Captura local para evitar race condition con deactivate() en otro core
+    // Local capture to avoid race condition with deactivate() running on another core
     Process *proc = currentProcess;
-    bool active = proc != nullptr && proc->isActive();
+    bool active = isActive();
 
     float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {

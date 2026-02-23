@@ -160,6 +160,7 @@ class Controller {
     bool screenReady = false;
     bool waitingForController = false;
     unsigned long connectStartTime = 0;
+    unsigned long lastScanTime = 0;
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
