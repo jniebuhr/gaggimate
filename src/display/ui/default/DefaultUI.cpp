@@ -149,7 +149,12 @@ void DefaultUI::init() {
             changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
         }
     });
+    pluginManager->on("controller:bluetooth:waiting", [this](Event const &) {
+        waitingForController = true;
+        rerender = true;
+    });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
+        waitingForController = false;
         rerender = true;
         if (lv_scr_act() == ui_InitScreen) {
             Settings &settings = controller->getSettings();
@@ -475,9 +480,11 @@ void DefaultUI::setupReactive() {
                                   }
                               } else if (autotuning) {
                                   lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Autotuning...");
+                              } else if (waitingForController) {
+                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Waiting for controller...");
                               }
                           },
-                          &updateAvailable, &error, &autotuning);
+                          &updateAvailable, &error, &autotuning, &waitingForController);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
                               if (volumetricMode) {
