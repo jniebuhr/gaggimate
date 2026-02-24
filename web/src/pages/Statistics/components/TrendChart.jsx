@@ -185,8 +185,8 @@ export function TrendChart({ trends }) {
           },
         },
       });
-    } catch (e) {
-      console.error('Trend chart creation failed:', e);
+    } catch {
+      // Chart creation can fail transiently during rapid metric/granularity switches.
     }
 
     return () => {

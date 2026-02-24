@@ -173,7 +173,6 @@ export function StatisticsView({ initialContext }) {
         setRawProfiles(Array.isArray(profileList) ? profileList : []);
       } catch (e) {
         if (cancelled || loadId !== metaLoadIdRef.current) return;
-        console.error('Statistics metadata loading failed:', e);
         setRawShotCandidates([]);
         setRawProfiles([]);
         setMetadataError('Failed to load shots/profiles for filtering.');
@@ -840,7 +839,6 @@ export function StatisticsView({ initialContext }) {
         setResult(computeStatistics(entries, { calcMode: !!runRequest.calcMode }));
       } catch (e) {
         if (cancelled || loadId !== analyzeLoadIdRef.current) return;
-        console.error('Statistics loading failed:', e);
         setError('Failed to load statistics. Please try again.');
       } finally {
         if (!cancelled && loadId === analyzeLoadIdRef.current) {

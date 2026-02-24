@@ -1,3 +1,5 @@
+import { fmt } from '../utils/format';
+
 // Global metric averages visualization built from avg/min/max/stdDev (not quartiles/boxplots).
 const METRIC_ROWS = [
   {
@@ -36,10 +38,6 @@ const METRIC_ROWS = [
     accentColor: 'var(--analyzer-weight-text)',
   },
 ];
-
-function fmt(val) {
-  return Number.isFinite(val) ? val.toFixed(1) : '-';
-}
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));

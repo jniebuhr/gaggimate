@@ -1,6 +1,4 @@
-function fmt(val) {
-  return Number.isFinite(val) ? val.toFixed(1) : '-';
-}
+import { fmt } from '../utils/format';
 
 export function ProfileGroupTable({ profileGroups }) {
   if (!profileGroups || profileGroups.length === 0) return null;

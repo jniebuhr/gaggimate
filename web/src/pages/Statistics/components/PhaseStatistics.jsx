@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { fmt } from '../utils/format';
 
 const EXIT_REASON_COLORS = {
   'Time Stop': 'badge-info',
@@ -10,10 +11,6 @@ const EXIT_REASON_COLORS = {
 };
 
 const DELTA_COLOR = 'var(--analyzer-pred-info-blue)';
-
-function fmt(val) {
-  return Number.isFinite(val) ? val.toFixed(1) : '-';
-}
 
 function fmtDelta(val) {
   if (!Number.isFinite(val)) return null;
