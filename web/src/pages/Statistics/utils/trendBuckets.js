@@ -180,9 +180,12 @@ export function formatTrendBucketTickLabel(xMs, granularity, options = {}) {
     case 'day':
       return formatDateLocal(xMs, compact ? { month: 'short', day: 'numeric' } : { day: '2-digit', month: 'short' });
     case 'week':
-      return formatDateLocal(xMs, compact ? { month: 'short', day: 'numeric' } : { day: '2-digit', month: 'short' });
+      return formatDateLocal(
+        xMs,
+        compact ? { month: 'short', day: 'numeric' } : { day: '2-digit', month: 'short', year: '2-digit' },
+      );
     case 'month':
-      return formatDateLocal(xMs, compact ? { month: 'short', year: '2-digit' } : { month: 'short', year: '2-digit' });
+      return formatDateLocal(xMs, compact ? { month: 'short', year: '2-digit' } : { month: 'long', year: 'numeric' });
     case 'year':
       return formatDateLocal(xMs, { year: 'numeric' });
     default:

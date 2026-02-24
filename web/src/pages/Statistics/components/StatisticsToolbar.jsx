@@ -39,6 +39,10 @@ const CALC_ACTIVE_SEGMENT_STYLE = {
   color: 'var(--analyzer-pred-info-blue)',
   backgroundColor: 'color-mix(in srgb, var(--analyzer-pred-info-blue) 12%, transparent)',
 };
+const WARNING_ORANGE_TEXT_STYLE = { color: 'var(--analyzer-warning-orange)' };
+const WARNING_ORANGE_TEXT_MUTED_STYLE = {
+  color: 'color-mix(in srgb, var(--analyzer-warning-orange) 70%, var(--color-base-content) 30%)',
+};
 
 function getSourceButtonClasses(value, isActive, isLast) {
   const base = `${SEGMENT_BUTTON_BASE_CLASS} ${isLast ? 'border-r-0' : ''} font-bold tracking-wide uppercase`;
@@ -454,9 +458,15 @@ export function StatisticsToolbar({
       </div>
 
       {showDateBasisWarning && (
-        <div className='border-warning/20 bg-warning/10 flex w-full min-w-0 flex-wrap items-center gap-2 rounded-lg border px-2 py-2'>
-          <div className='min-w-[14rem] flex-1 text-[11px] leading-relaxed text-warning-content/90'>
-            <span className='text-warning font-semibold'>Date Basis:</span>{' '}
+        <div
+          className='flex w-full min-w-0 flex-wrap items-center gap-2 rounded-lg border px-2 py-2'
+          style={{
+            borderColor: 'color-mix(in srgb, var(--analyzer-warning-orange) 28%, transparent)',
+            background: 'color-mix(in srgb, var(--analyzer-warning-orange) 9%, transparent)',
+          }}
+        >
+          <div className='min-w-[14rem] flex-1 text-[11px] leading-relaxed' style={WARNING_ORANGE_TEXT_MUTED_STYLE}>
+            <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>Date Basis:</span>{' '}
             <span className='text-base-content/80'>
               {dateBasisWarningMessage ||
                 'Some shots have no shot timestamp. Choose how date handling should treat them.'}
@@ -495,15 +505,15 @@ export function StatisticsToolbar({
           {topError ? (
             <span className='text-error font-semibold'>{topError}</span>
           ) : metadataError ? (
-            <span className='text-warning font-semibold'>{metadataError}</span>
+            <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>{metadataError}</span>
           ) : (
-            <span className='text-warning font-semibold'>{topWarning}</span>
+            <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>{topWarning}</span>
           )}
           {parseErrors.length > 1 && (
             <span className='text-error/70'>+{parseErrors.length - 1} more</span>
           )}
           {!topError && parseWarnings.length > 1 && (
-            <span className='text-warning/70'>+{parseWarnings.length - 1} more</span>
+            <span style={WARNING_ORANGE_TEXT_MUTED_STYLE}>+{parseWarnings.length - 1} more</span>
           )}
         </div>
       )}

@@ -65,7 +65,7 @@ function parseQuotedOrPlainValue(rawValue) {
     if (!(startsQuote && endsQuote) || trimmed.length < 2) {
       return { error: 'Unclosed quoted value.' };
     }
-    const inner = trimmed.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+    const inner = trimmed.slice(1, -1).replaceAll('\\"', '"').replaceAll('\\\\', '\\');
     return { value: inner.trim(), exact: true };
   }
 
@@ -233,8 +233,7 @@ function parseAbsoluteLocalDateExpression(expr) {
   return { valueMs: date.getTime(), hasTime };
 }
 
-export function parseDateExpressionToEpochMs(expr, now = new Date(), _localeOptions = {}) {
-  void _localeOptions;
+export function parseDateExpressionToEpochMs(expr, now = new Date()) {
   const trimmed = String(expr ?? '').trim();
   if (!trimmed) {
     return { valueMs: null, hasTime: false, error: 'Empty date expression.' };
@@ -344,7 +343,7 @@ function matchesSourceClause(shotMeta, clause) {
 }
 
 function compileDateClause(clause, options) {
-  const parsed = parseDateExpressionToEpochMs(clause.value, options.now, options.localeOptions);
+  const parsed = parseDateExpressionToEpochMs(clause.value, options.now);
   if (parsed.error || !Number.isFinite(parsed.valueMs)) {
     return {
       error: {
@@ -400,7 +399,6 @@ function matchClauseAgainstShotMeta(shotMeta, clause, ctx) {
 export function buildShotCandidatePredicate(parsedQuery, options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
   const dateBasisMode = options.dateBasisMode || 'auto';
-  const localeOptions = options.localeOptions || {};
   const errors = [...(parsedQuery?.errors || [])];
   const warnings = [...(parsedQuery?.warnings || [])];
   const clauses = Array.isArray(parsedQuery?.clauses) ? parsedQuery.clauses : [];
@@ -418,7 +416,7 @@ export function buildShotCandidatePredicate(parsedQuery, options = {}) {
     }
 
     if (clause.field === 'date') {
-      const compiled = compileDateClause(clause, { now, dateBasisMode, localeOptions });
+      const compiled = compileDateClause(clause, { now, dateBasisMode });
       if (compiled.error) {
         errors.push(compiled.error);
       } else if (compiled.matcher) {

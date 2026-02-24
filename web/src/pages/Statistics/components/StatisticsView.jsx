@@ -171,7 +171,7 @@ export function StatisticsView({ initialContext }) {
 
         setRawShotCandidates(Array.isArray(shotList) ? shotList : []);
         setRawProfiles(Array.isArray(profileList) ? profileList : []);
-      } catch (e) {
+      } catch {
         if (cancelled || loadId !== metaLoadIdRef.current) return;
         setRawShotCandidates([]);
         setRawProfiles([]);
@@ -688,7 +688,7 @@ export function StatisticsView({ initialContext }) {
       mode,
       source,
       metaLoadId: metaLoadIdRef.current,
-      profiles: [...selectedProfileNames].sort(),
+      profiles: [...selectedProfileNames].sort((a, b) => a.localeCompare(b)),
     });
     const shouldSeedAll = profileModeShotSeedSignatureRef.current !== signature;
     profileModeShotSeedSignatureRef.current = signature;
@@ -837,7 +837,7 @@ export function StatisticsView({ initialContext }) {
         if (cancelled || loadId !== analyzeLoadIdRef.current) return;
         entriesRef.current = entries;
         setResult(computeStatistics(entries, { calcMode: !!runRequest.calcMode }));
-      } catch (e) {
+      } catch {
         if (cancelled || loadId !== analyzeLoadIdRef.current) return;
         setError('Failed to load statistics. Please try again.');
       } finally {
