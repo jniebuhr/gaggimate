@@ -72,11 +72,11 @@ class PressureController {
     float _pumpFlowCoefficients[4] = {0.0f, 0.0f, -0.5854f, 10.79f}; // Pump flow polynomial coefficients
 
     // === Controller Gains ===
-    float _commutationGain = 0.7f;     // Commutation gain
+    float _commutationGain = 0.3f;     // Commutation gain
     float _convergenceGain = 1.0f;     // Convergence gain
     float _epsilonCoefficient = 0.3f;  // Limit band coefficient
     float _deadbandCoefficient = 0.1f; // Dead band coefficient
-    float _integralGain = 0.25f;       // Integral gain (dt/tau)
+    float _integralGain = 0.1f;       // Integral gain (dt/tau)
 
     // === Controller states ===
     float _previousPressure = 0.0f; // Previous pressure reading (bar)

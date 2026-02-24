@@ -53,25 +53,28 @@ DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *press
     } else {
         ESP_LOGI(LOG_TAG, "Initialized extension");
         extension.setClock(1000000L);
+        i2c = new SoftWire(0, 0);
+        i2c->setTxBuffer(swTxBuffer, sizeof(swTxBuffer));
+        i2c->setRxBuffer(swRxBuffer, sizeof(swRxBuffer));
+        i2c->setReadScl(read_scl);
+        i2c->setReadSda(read_sda);
+        i2c->setSetSclHigh(scl_high);
+        i2c->setSetSdaHigh(sda_high);
+        i2c->setSetSclLow(scl_low);
+        i2c->setSetSdaLow(sda_low);
+        i2c->setTimeout_ms(200);
+        i2c->setDelay_us(20);
+        i2c->begin();
+        delay(500);
+        mcp = new MCP4725(0x60, i2c);
+        if (!mcp->begin()) {
+            ESP_LOGE(LOG_TAG, "Failed to initialize MCP4725");
+        } else {
+            ESP_LOGI(LOG_TAG, "MCP4725 initialized");
+            mcp->setMaxVoltage(MCP_VOLTAGE);
+            mcp->setPercentage(0);
+        }
     }
-    i2c = new SoftWire(0, 0);
-    i2c->setTxBuffer(swTxBuffer, sizeof(swTxBuffer));
-    i2c->setRxBuffer(swRxBuffer, sizeof(swRxBuffer));
-    i2c->setReadScl(read_scl);
-    i2c->setReadSda(read_sda);
-    i2c->setSetSclHigh(scl_high);
-    i2c->setSetSdaHigh(sda_high);
-    i2c->setSetSclLow(scl_low);
-    i2c->setSetSdaLow(sda_low);
-    i2c->setTimeout_ms(200);
-    i2c->setDelay_us(20);
-    i2c->begin();
-    delay(500);
-    mcp = new MCP4725(0x60, i2c);
-    if (!mcp->begin()) {
-        ESP_LOGE(LOG_TAG, "Failed to initialize MCP4725");
-    }
-    mcp->setMaxVoltage(MCP_VOLTAGE);
 }
 
 void DimmedPump::setup() {
@@ -85,7 +88,6 @@ void DimmedPump::setup() {
 void DimmedPump::loop() {
     _currentPressure = _pressureSensor->getRawPressure();
     updatePower();
-    // _currentFlow = 0.1f * _pressureController.getPumpFlowRate() + 0.9f * _currentFlow;
     _currentFlow = _pressureController.getPumpFlowRate();
 }
 
