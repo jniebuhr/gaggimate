@@ -8,7 +8,6 @@
 #include <WiFi.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
-#include "NimBLEClientController.h"
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/Driver.h>
 #include <display/ui/default/DefaultUI.h>
@@ -101,7 +100,7 @@ class Controller {
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    NimBLEClientController *getClientController() { return &clientController; }
+    GaggiMateClient *getClientController() { return &_client; }
 
   private:
     // Initialization methods
@@ -109,7 +108,6 @@ class Controller {
     void setupPanel();
 #endif
     void setupBluetooth();
-    void parseSystemInfo(const String& info);
     void setupWifi();
 
     // Functional methods
@@ -130,7 +128,6 @@ class Controller {
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
 #endif
-    NimBLEClientController clientController;
     GaggiMateClient _client;
     hw_timer_t *timer = nullptr;
     Settings settings;
@@ -159,6 +156,7 @@ class Controller {
     bool autotuning = false;
     bool isApConnection = false;
     bool initialized = false;
+    bool systemInfoLoaded = false;
     bool screenReady = false;
     bool volumetricOverride = false;
     bool processCompleted = false;

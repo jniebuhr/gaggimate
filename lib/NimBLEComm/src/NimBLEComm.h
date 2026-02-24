@@ -62,6 +62,8 @@ struct SystemCapabilities {
 struct SystemInfo {
     String hardware;
     String version;
+    uint32_t protocolVersion = 1;
+    uint32_t protobufVersion = 0;
     SystemCapabilities capabilities;
 };
 

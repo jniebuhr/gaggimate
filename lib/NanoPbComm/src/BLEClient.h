@@ -31,8 +31,10 @@ public:
     
     // Register callback for received data
     void registerDataCallback(const ble_data_callback_t& callback);
-    
-    // Note: getDeviceInfo() removed - using nanopb messages for system info
+
+    // Read static system info from info characteristic
+    String readDeviceInfo() const;
+
     NimBLEClient* getNativeClient() const { return client; }
 
 private:
@@ -40,7 +42,7 @@ private:
     NimBLEClient* client;
     NimBLERemoteCharacteristic* rx_char = nullptr;  // For receiving data
     NimBLERemoteCharacteristic* tx_char = nullptr;  // For sending data
-    // Note: info_char removed - using nanopb messages for system info
+    NimBLERemoteCharacteristic* info_char = nullptr;  // For reading static system info
     NimBLEAdvertisedDevice* serverDevice = nullptr;
     unsigned long serverDeviceFoundTime = 0;
     
@@ -66,7 +68,7 @@ private:
     static const char* SERVICE_UUID;
     static const char* RX_CHAR_UUID;  // For receiving data from server
     static const char* TX_CHAR_UUID;  // For sending data to server
-    // Note: INFO_CHAR_UUID removed - using nanopb messages for system info
+    static const char* INFO_CHAR_UUID;  // For reading static system info
 };
 
 #endif // BLE_CLIENT_H

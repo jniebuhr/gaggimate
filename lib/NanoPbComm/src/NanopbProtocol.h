@@ -2,16 +2,13 @@
 #define GAGGIMATE_PROTOCOL_H
 
 #include <Arduino.h>
+#include <any>
 #include <functional>
 #include <pb_encode.h>
 #include <pb_decode.h>
 
 #include "protocol/gaggimate.pb.h"
 #include "protocol/header.h"
-
-namespace std {
-    class any;
-}
 
 template <typename T> struct ProtocolMessage {
     MessageType type;
@@ -67,7 +64,7 @@ public:
     static bool encodeSystemInfo(uint8_t* buffer, size_t buffer_size, size_t* message_length, const String& info);
     
     // Message decoding (for receiving)
-    template <typename T> static bool decodeMessage(const uint8_t* buffer, size_t length, ProtocolMessage<T>* message);
+    static bool decodeMessage(const uint8_t* buffer, size_t length, ProtocolMessage<std::any>* message);
     
     // Utility functions
     static MessageType getMessageType(const uint8_t* buffer, size_t length);
@@ -76,6 +73,8 @@ public:
     static String messageTypeToString(MessageType type);
     
     // Constants
+    static constexpr uint32_t PROTOCOL_VERSION = 1;
+    static constexpr uint32_t PROTOBUF_VERSION = PB_PROTO_HEADER_VERSION;
     static constexpr size_t MAX_MESSAGE_SIZE = 128;
     
 private:

@@ -48,7 +48,7 @@ private:
     NimBLEService* service;
     NimBLECharacteristic* rx_char = nullptr;  // For receiving data from client
     NimBLECharacteristic* tx_char = nullptr;  // For sending data to client
-    // Note: info_char removed - using nanopb messages for system info
+    NimBLECharacteristic* info_char = nullptr;  // For static system info retrieval
     
     ble_data_callback_t data_callback = nullptr;
     ble_connection_callback_t connection_callback = nullptr;
@@ -63,7 +63,7 @@ private:
     static const char* SERVICE_UUID;
     static const char* RX_CHAR_UUID;  // For receiving data from client
     static const char* TX_CHAR_UUID;  // For sending data to client
-    // Note: INFO_CHAR_UUID removed - using nanopb messages for system info
+    static const char* INFO_CHAR_UUID;  // For reading static system info
 };
 
 #endif // BLE_SERVER_H
