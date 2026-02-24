@@ -11,6 +11,9 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMaximize } from '@fortawesome/free-solid-svg-icons/faMaximize';
 import { faMinimize } from '@fortawesome/free-solid-svg-icons/faMinimize';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
+import { faStop } from '@fortawesome/free-solid-svg-icons/faStop';
 
 // Register the annotation plugin for Phase Lines
 Chart.register(annotationPlugin);
@@ -77,6 +80,93 @@ const fixedTooltipPlugin = {
   },
 };
 
+const replayRevealPlugin = {
+  id: 'replayReveal',
+  beforeDatasetsDraw(chart) {
+    if (!chart?.$replayRevealEnabled || !chart.chartArea || !chart.scales?.x) return;
+    const cutoffX = Number(chart.$replayRevealX);
+    if (!Number.isFinite(cutoffX)) return;
+
+    const cutoffPixelRaw = chart.scales.x.getPixelForValue(cutoffX);
+    const cutoffPixel = Math.min(
+      chart.chartArea.right,
+      Math.max(chart.chartArea.left, Number.isFinite(cutoffPixelRaw) ? cutoffPixelRaw : chart.chartArea.left),
+    );
+    const clipWidth = Math.max(0, cutoffPixel - chart.chartArea.left);
+
+    chart.ctx.save();
+    chart.ctx.beginPath();
+    chart.ctx.rect(chart.chartArea.left, chart.chartArea.top, clipWidth, chart.chartArea.bottom - chart.chartArea.top);
+    chart.ctx.clip();
+    chart.$replayRevealClipActive = true;
+  },
+  afterDatasetsDraw(chart) {
+    if (!chart?.$replayRevealClipActive) return;
+    chart.ctx.restore();
+    chart.$replayRevealClipActive = false;
+  },
+};
+
+const targetTempAxisLabelsPlugin = {
+  id: 'targetTempAxisLabels',
+  afterDatasetsDraw(chart, _args, pluginOptions) {
+    if (!pluginOptions?.enabled) return;
+    if (!chart.chartArea) return;
+
+    const labels = Array.isArray(pluginOptions.labels) ? pluginOptions.labels : [];
+    if (labels.length === 0) return;
+
+    const yScale = chart.scales?.yTempRight;
+    if (!yScale) return;
+
+    const replayEnabled = Boolean(chart.$replayRevealEnabled);
+    const replayCutoffX = Number(chart.$replayRevealX);
+    const visibleLabels = labels.filter(label => {
+      if (!replayEnabled || !Number.isFinite(replayCutoffX)) return true;
+      return !Number.isFinite(label.firstX) || label.firstX <= replayCutoffX;
+    });
+    if (visibleLabels.length === 0) return;
+
+    const fontSize = pluginOptions.fontSize ?? 10;
+    const fontWeight = pluginOptions.fontWeight ?? 'normal';
+    const color = pluginOptions.color || '#888';
+    const rightInset = pluginOptions.offsetX ?? 6;
+    const minGap = pluginOptions.minGap ?? Math.max(12, fontSize + 2);
+    const x = Math.max(chart.chartArea.right + 2, chart.width - rightInset);
+
+    const positioned = visibleLabels
+      .map(label => ({ ...label, y: yScale.getPixelForValue(label.value) }))
+      .filter(label => Number.isFinite(label.y))
+      .sort((a, b) => a.y - b.y);
+
+    for (let i = 1; i < positioned.length; i++) {
+      if (positioned[i].y - positioned[i - 1].y < minGap) {
+        positioned[i].y = positioned[i - 1].y + minGap;
+      }
+    }
+
+    const topBound = chart.chartArea.top + 2;
+    const bottomBound = chart.chartArea.bottom - 2;
+    for (let i = positioned.length - 1; i >= 0; i--) {
+      positioned[i].y = Math.min(bottomBound, Math.max(topBound, positioned[i].y));
+      if (i > 0 && positioned[i].y - positioned[i - 1].y < minGap) {
+        positioned[i - 1].y = positioned[i].y - minGap;
+      }
+    }
+
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${fontWeight} ${fontSize}px ${Chart.defaults.font.family}`;
+    positioned.forEach(label => {
+      if (label.text) ctx.fillText(label.text, x, label.y);
+    });
+    ctx.restore();
+  },
+};
+
 const TARGET_FLOW_MAX = 12;
 const TARGET_PRESSURE_MAX = 16;
 const STANDARD_LINE_WIDTH = 4;
@@ -87,6 +177,8 @@ const MAIN_CHART_HEIGHT_SMALL = 280;
 const MAIN_CHART_HEIGHT_BIG = 560;
 const MAIN_CHART_HEIGHT_DEFAULT = MAIN_CHART_HEIGHT_SMALL;
 const TEMP_CHART_HEIGHT_RATIO = 80 / MAIN_CHART_HEIGHT_SMALL;
+const REPLAY_TARGET_FPS = 24;
+const REPLAY_FRAME_INTERVAL_MS = 1000 / REPLAY_TARGET_FPS;
 const CHART_COLOR_FALLBACKS = {
   temp: '#F0561D',
   tempTarget: '#731F00',
@@ -266,6 +358,35 @@ function formatAxisTick(value) {
   return rounded < 0 ? `-${absolute}` : absolute;
 }
 
+function buildTargetTempAxisLabels(targetTempSeries) {
+  if (!Array.isArray(targetTempSeries) || targetTempSeries.length === 0) return [];
+
+  const groups = [];
+  const mergeTolerance = 0.05;
+
+  targetTempSeries.forEach(point => {
+    const value = Number(point?.y);
+    const x = Number(point?.x);
+    if (!Number.isFinite(value)) return;
+
+    const existing = groups.find(group => Math.abs(group.value - value) <= mergeTolerance);
+    if (existing) {
+      if (Number.isFinite(x)) {
+        existing.firstX = Number.isFinite(existing.firstX) ? Math.min(existing.firstX, x) : x;
+      }
+      return;
+    }
+
+    groups.push({
+      value,
+      firstX: Number.isFinite(x) ? x : null,
+      text: formatAxisTick(value),
+    });
+  });
+
+  return groups.sort((a, b) => a.value - b.value);
+}
+
 function createStripedFillPattern(canvasCtx, color, options = {}) {
   if (!canvasCtx || typeof window === 'undefined') return color;
 
@@ -352,10 +473,21 @@ export function ShotChart({ shotData, results }) {
   const tempChartRef = useRef(null);
   const mainChartInstance = useRef(null);
   const tempChartInstance = useRef(null);
+  const replayRafRef = useRef(null);
+  const replayStartPerfMsRef = useRef(0);
+  const replayLastRenderPerfMsRef = useRef(0);
+  const replayElapsedOffsetSecRef = useRef(0);
+  const replayBaseShotTimeSecRef = useRef(0);
+  const replayLastAppliedIndexRef = useRef(-1);
+  const replayRuntimeRef = useRef(null);
+  const clearAllHoverRef = useRef(() => {});
+  const isReplayingRef = useRef(false);
 
   // --- State for Visibility/Toggles ---
   const [visibility, setVisibility] = useState(INITIAL_VISIBILITY);
   const [mainChartHeight, setMainChartHeight] = useState(MAIN_CHART_HEIGHT_DEFAULT);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const [isReplayPaused, setIsReplayPaused] = useState(false);
   const legendColorByLabel = getLegendColorByLabel(getShotChartColors());
   const hasWeightData = Boolean(
     shotData?.samples?.some(sample => {
@@ -372,6 +504,239 @@ export function ShotChart({ shotData, results }) {
     setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const stopReplayAnimation = (clearHover = false) => {
+    if (typeof window !== 'undefined' && replayRafRef.current !== null) {
+      window.cancelAnimationFrame(replayRafRef.current);
+    }
+    replayRafRef.current = null;
+    replayStartPerfMsRef.current = 0;
+    replayLastRenderPerfMsRef.current = 0;
+    replayElapsedOffsetSecRef.current = 0;
+    replayLastAppliedIndexRef.current = -1;
+    isReplayingRef.current = false;
+    setIsReplaying(false);
+    setIsReplayPaused(false);
+    if (clearHover) clearAllHoverRef.current?.();
+
+    if (mainChartInstance.current) {
+      mainChartInstance.current.$replayRevealEnabled = false;
+      mainChartInstance.current.$replayRevealX = null;
+      mainChartInstance.current.$replayRevealClipActive = false;
+    }
+    if (tempChartInstance.current) {
+      tempChartInstance.current.$replayRevealEnabled = false;
+      tempChartInstance.current.$replayRevealX = null;
+      tempChartInstance.current.$replayRevealClipActive = false;
+    }
+  };
+
+  const applyReplayCutoff = (cutoffX, options = {}) => {
+    const runtime = replayRuntimeRef.current;
+    if (!runtime) return;
+    const mainChart = mainChartInstance.current;
+    const tempChart = tempChartInstance.current;
+    if (!mainChart || !tempChart) return;
+
+    const { mainAnnotationMeta, tempAnnotationMeta, sampleTimesSec, maxTime } = runtime;
+
+    const revealAll = options.revealAll === true || !Number.isFinite(cutoffX);
+    const effectiveCutoffX = revealAll ? maxTime : cutoffX;
+
+    mainChart.$replayRevealEnabled = !revealAll;
+    mainChart.$replayRevealX = !revealAll ? effectiveCutoffX : null;
+    tempChart.$replayRevealEnabled = !revealAll;
+    tempChart.$replayRevealX = !revealAll ? effectiveCutoffX : null;
+
+    const mainAnnotations = mainChart.options?.plugins?.annotation?.annotations || {};
+    for (const meta of mainAnnotationMeta) {
+      const annotation = mainAnnotations[meta.key];
+      if (!annotation) continue;
+      const shouldShow = revealAll || effectiveCutoffX >= meta.time;
+      annotation.display = meta.baseDisplay && shouldShow;
+    }
+
+    const tempAnnotations = tempChart.options?.plugins?.annotation?.annotations || {};
+    for (const meta of tempAnnotationMeta) {
+      const annotation = tempAnnotations[meta.key];
+      if (!annotation) continue;
+      const shouldShow = revealAll || effectiveCutoffX >= meta.time;
+      annotation.display = meta.baseDisplay && shouldShow;
+    }
+
+    if (revealAll) {
+      replayLastAppliedIndexRef.current = sampleTimesSec.length - 1;
+    } else {
+      replayLastAppliedIndexRef.current = findLastSampleIndexAtOrBeforeX(sampleTimesSec, effectiveCutoffX);
+    }
+
+    mainChart.update('none');
+    tempChart.update('none');
+  };
+
+  const getNowMs = () =>
+    typeof performance !== 'undefined' && typeof performance.now === 'function'
+      ? performance.now()
+      : Date.now();
+
+  const scheduleReplayFrame = frameHandler => {
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return false;
+    replayRafRef.current = window.requestAnimationFrame(frameHandler);
+    return true;
+  };
+
+  const startReplay = () => {
+    const runtime = replayRuntimeRef.current;
+    if (!runtime || !Array.isArray(runtime.sampleTimesSec) || runtime.sampleTimesSec.length === 0) return;
+    const mainChart = mainChartInstance.current;
+    const tempChart = tempChartInstance.current;
+    if (!mainChart || !tempChart) return;
+
+    stopReplayAnimation(true);
+    isReplayingRef.current = true;
+    setIsReplaying(true);
+    setIsReplayPaused(false);
+    replayBaseShotTimeSecRef.current = runtime.shotStartSec;
+    replayElapsedOffsetSecRef.current = 0;
+    replayLastAppliedIndexRef.current = -1;
+    applyReplayCutoff(runtime.shotStartSec - 0.001);
+
+    replayStartPerfMsRef.current = getNowMs();
+    replayLastRenderPerfMsRef.current = 0;
+
+    const frame = nowMs => {
+      if (!isReplayingRef.current) return;
+      const currentRuntime = replayRuntimeRef.current;
+      if (!currentRuntime) {
+        stopReplayAnimation();
+        return;
+      }
+
+      const elapsedSec = Math.max(
+        0,
+        replayElapsedOffsetSecRef.current + (nowMs - replayStartPerfMsRef.current) / 1000,
+      );
+      const cutoffX = replayBaseShotTimeSecRef.current + elapsedSec;
+      const sampleIndex = findLastSampleIndexAtOrBeforeX(currentRuntime.sampleTimesSec, cutoffX);
+      const reachedEnd = cutoffX >= currentRuntime.maxTime;
+      const shouldRenderFrame =
+        reachedEnd ||
+        replayLastRenderPerfMsRef.current === 0 ||
+        nowMs - replayLastRenderPerfMsRef.current >= REPLAY_FRAME_INTERVAL_MS;
+
+      if (shouldRenderFrame) {
+        replayLastRenderPerfMsRef.current = nowMs;
+        applyReplayCutoff(reachedEnd ? currentRuntime.maxTime : cutoffX, { revealAll: reachedEnd });
+      } else if (sampleIndex !== replayLastAppliedIndexRef.current) {
+        replayLastAppliedIndexRef.current = sampleIndex;
+      }
+
+      if (reachedEnd) {
+        stopReplayAnimation();
+        return;
+      }
+
+      replayRafRef.current = window.requestAnimationFrame(frame);
+    };
+
+    if (!scheduleReplayFrame(frame)) {
+      applyReplayCutoff(runtime.maxTime, { revealAll: true });
+      stopReplayAnimation();
+    }
+  };
+
+  const pauseReplay = () => {
+    if (!isReplayingRef.current) return;
+    const nowMs = getNowMs();
+    if (replayStartPerfMsRef.current > 0) {
+      replayElapsedOffsetSecRef.current += Math.max(
+        0,
+        (nowMs - replayStartPerfMsRef.current) / 1000,
+      );
+    }
+    if (typeof window !== 'undefined' && replayRafRef.current !== null) {
+      window.cancelAnimationFrame(replayRafRef.current);
+    }
+    replayRafRef.current = null;
+    replayStartPerfMsRef.current = 0;
+    isReplayingRef.current = false;
+    setIsReplaying(false);
+    setIsReplayPaused(true);
+    clearAllHoverRef.current?.();
+  };
+
+  const resumeReplay = () => {
+    const runtime = replayRuntimeRef.current;
+    if (!runtime || !Array.isArray(runtime.sampleTimesSec) || runtime.sampleTimesSec.length === 0) return;
+    if (isReplayingRef.current) return;
+
+    isReplayingRef.current = true;
+    setIsReplaying(true);
+    setIsReplayPaused(false);
+    replayStartPerfMsRef.current = getNowMs();
+    replayLastRenderPerfMsRef.current = 0;
+    clearAllHoverRef.current?.();
+
+    const frame = nowMs => {
+      if (!isReplayingRef.current) return;
+      const currentRuntime = replayRuntimeRef.current;
+      if (!currentRuntime) {
+        stopReplayAnimation();
+        return;
+      }
+
+      const elapsedSec = Math.max(
+        0,
+        replayElapsedOffsetSecRef.current + (nowMs - replayStartPerfMsRef.current) / 1000,
+      );
+      const cutoffX = replayBaseShotTimeSecRef.current + elapsedSec;
+      const sampleIndex = findLastSampleIndexAtOrBeforeX(currentRuntime.sampleTimesSec, cutoffX);
+      const reachedEnd = cutoffX >= currentRuntime.maxTime;
+      const shouldRenderFrame =
+        reachedEnd ||
+        replayLastRenderPerfMsRef.current === 0 ||
+        nowMs - replayLastRenderPerfMsRef.current >= REPLAY_FRAME_INTERVAL_MS;
+
+      if (shouldRenderFrame) {
+        replayLastRenderPerfMsRef.current = nowMs;
+        applyReplayCutoff(reachedEnd ? currentRuntime.maxTime : cutoffX, { revealAll: reachedEnd });
+      } else if (sampleIndex !== replayLastAppliedIndexRef.current) {
+        replayLastAppliedIndexRef.current = sampleIndex;
+      }
+
+      if (reachedEnd) {
+        stopReplayAnimation();
+        return;
+      }
+
+      replayRafRef.current = window.requestAnimationFrame(frame);
+    };
+
+    if (!scheduleReplayFrame(frame)) {
+      applyReplayCutoff(runtime.maxTime, { revealAll: true });
+      stopReplayAnimation();
+    }
+  };
+
+  const stopReplayAndRestoreChart = () => {
+    const runtime = replayRuntimeRef.current;
+    if (runtime) {
+      applyReplayCutoff(runtime.maxTime, { revealAll: true });
+    }
+    stopReplayAnimation(true);
+  };
+
+  const handleReplayClick = () => {
+    if (isReplayingRef.current) {
+      pauseReplay();
+      return;
+    }
+    if (isReplayPaused) {
+      resumeReplay();
+      return;
+    }
+    startReplay();
+  };
+
   useEffect(() => {
     const destroyCharts = () => {
       if (mainChartInstance.current) {
@@ -383,6 +748,9 @@ export function ShotChart({ shotData, results }) {
         tempChartInstance.current = null;
       }
     };
+
+    stopReplayAnimation(true);
+    replayRuntimeRef.current = null;
 
     // Validation: Ensure data exists before rendering
     if (!shotData || !shotData.samples || shotData.samples.length === 0) {
@@ -974,12 +1342,11 @@ export function ShotChart({ shotData, results }) {
         fill: false,
       },
     ];
-
     try {
       mainChartInstance.current = new Chart(mainChartRef.current, {
         type: 'line',
         data: { datasets: mainDatasets },
-        plugins: [hoverGuidePlugin, fixedTooltipPlugin],
+        plugins: [hoverGuidePlugin, fixedTooltipPlugin, replayRevealPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -1073,7 +1440,7 @@ export function ShotChart({ shotData, results }) {
             },
             yWeight: {
               type: 'linear',
-              display: hasWeight ? 'auto' : false,
+              display: true,
               position: 'right',
               offset: false,
               beginAtZero: true,
@@ -1119,12 +1486,12 @@ export function ShotChart({ shotData, results }) {
         hidden: !visibility.targetTemp,
       },
     ];
-
+    const targetTempAxisLabels = buildTargetTempAxisLabels(series.targetTemp);
     try {
       tempChartInstance.current = new Chart(tempChartRef.current, {
         type: 'line',
         data: { datasets: tempDatasets },
-        plugins: [hoverGuidePlugin, fixedTooltipPlugin],
+        plugins: [hoverGuidePlugin, fixedTooltipPlugin, replayRevealPlugin, targetTempAxisLabelsPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -1170,6 +1537,15 @@ export function ShotChart({ shotData, results }) {
             annotation: {
               annotations: tempPhaseAnnotations,
             },
+            targetTempAxisLabels: {
+              enabled: visibility.targetTemp && targetTempAxisLabels.length > 0,
+              labels: targetTempAxisLabels,
+              color: COLORS.tempTarget,
+              fontSize: 10,
+              fontWeight: 'normal',
+              offsetX: 6,
+              minGap: 12,
+            },
           },
           scales: {
             x: {
@@ -1211,8 +1587,9 @@ export function ShotChart({ shotData, results }) {
               min: targetTempAxisMin,
               max: targetTempAxisMax,
               ticks: {
+                display: true,
                 font: { size: 10 },
-                color: COLORS.tempTarget,
+                color: 'rgba(0, 0, 0, 0)',
                 callback: formatAxisTick,
               },
               grid: { display: false },
@@ -1343,6 +1720,7 @@ export function ShotChart({ shotData, results }) {
       clearTooltipState(mainChartInstance.current);
       clearTooltipState(tempChartInstance.current);
     };
+    clearAllHoverRef.current = clearAllHover;
 
     const extractClientPoint = event => {
       if (!event) return null;
@@ -1357,6 +1735,10 @@ export function ShotChart({ shotData, results }) {
     };
 
     const applyUnifiedHoverFromClientPoint = (clientX, clientY) => {
+      if (isReplayingRef.current) {
+        clearAllHover();
+        return;
+      }
       if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
       const mainChart = mainChartInstance.current;
       const tempChart = tempChartInstance.current;
@@ -1392,9 +1774,34 @@ export function ShotChart({ shotData, results }) {
     };
 
     const handleUnifiedMove = event => {
+      if (isReplayingRef.current) {
+        clearAllHover();
+        return;
+      }
       const point = extractClientPoint(event);
       if (!point) return;
       applyUnifiedHoverFromClientPoint(point.clientX, point.clientY);
+    };
+
+    const buildAnnotationReplayMeta = annotations => {
+      return Object.entries(annotations || {}).reduce((acc, [key, annotation]) => {
+        const time = Number(annotation?.value);
+        if (!Number.isFinite(time)) return acc;
+        acc.push({
+          key,
+          time,
+          baseDisplay: annotation?.display !== false,
+        });
+        return acc;
+      }, []);
+    };
+
+    replayRuntimeRef.current = {
+      sampleTimesSec: [...sampleTimesSec],
+      shotStartSec,
+      maxTime,
+      mainAnnotationMeta: buildAnnotationReplayMeta(phaseAnnotations),
+      tempAnnotationMeta: buildAnnotationReplayMeta(tempPhaseAnnotations),
     };
 
     const hoverArea = hoverAreaRef.current;
@@ -1415,6 +1822,9 @@ export function ShotChart({ shotData, results }) {
     }
 
     return () => {
+      stopReplayAnimation(true);
+      clearAllHoverRef.current = () => {};
+      replayRuntimeRef.current = null;
       if (typeof window !== 'undefined') {
         window.removeEventListener('resize', handleResizeSync);
       }
@@ -1479,6 +1889,29 @@ export function ShotChart({ shotData, results }) {
         </div>
 
         <div className='flex shrink-0 items-center'>
+          <button
+            type='button'
+            onClick={handleReplayClick}
+            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
+            aria-label={
+              isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'
+            }
+            title={isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'}
+          >
+            <FontAwesomeIcon
+              icon={isReplaying ? faPause : faPlay}
+              className='text-[11px] opacity-80'
+            />
+          </button>
+          <button
+            type='button'
+            onClick={stopReplayAndRestoreChart}
+            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
+            aria-label='Stop replay and restore chart'
+            title='Stop replay and restore chart'
+          >
+            <FontAwesomeIcon icon={faStop} className='text-[10px] opacity-80' />
+          </button>
           <button
             type='button'
             onClick={() =>

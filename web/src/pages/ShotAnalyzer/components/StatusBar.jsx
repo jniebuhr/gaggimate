@@ -8,7 +8,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
-import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
@@ -22,14 +21,11 @@ export function StatusBar({
   onUnloadProfile,
   onTogglePanel,
   onImport,
-  onShowStats,
   isMismatch,
   importMode = 'temp',
   onImportModeChange,
-  isExpanded = false,
   isImporting = false, // Show spinner on import button
   isSearchingProfile = false, // Show spinner on profile badge
-  hasNotesBar = false, // Whether NotesBar is rendered below
 }) {
   const handleFileSelect = e => {
     const files = e.target.files;
@@ -83,49 +79,9 @@ export function StatusBar({
           className='grid h-12 w-full items-center gap-1 sm:gap-2'
           style={{
             gridTemplateColumns:
-              'minmax(6.5rem, 1fr) minmax(0, 2.15fr) minmax(0, 2.15fr) minmax(6.5rem, 1fr)',
+              'minmax(0, 2.6fr) minmax(0, 2.6fr) minmax(5.75rem, 0.9fr)',
           }}
         >
-          {/* --- LEFT: IMPORT + MODE TOGGLE (outer column, symmetric with stats) --- */}
-          <div
-            className='border-primary/50 bg-base-100/50 hover:border-primary group flex h-full min-w-0 overflow-hidden rounded-lg border-2 border-dashed shadow-sm transition-all'
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            <label className='hover:bg-primary/10 text-primary border-base-content/10 flex h-full min-w-[2.25rem] flex-1 cursor-pointer items-center justify-center border-r transition-colors sm:min-w-[3.25rem]'>
-              {/* Import Spinner */}
-              {isImporting ? (
-                <FontAwesomeIcon icon={faCircleNotch} spin className='text-xl opacity-60' />
-              ) : (
-                <FontAwesomeIcon icon={faFileImport} className='text-xl' />
-              )}
-              <input
-                type='file'
-                multiple
-                accept='.slog,.json'
-                onChange={handleFileSelect}
-                className='hidden'
-                disabled={isImporting}
-              />
-            </label>
-
-            <button
-              onClick={e => {
-                e.preventDefault();
-                onImportModeChange(importMode === 'browser' ? 'temp' : 'browser');
-              }}
-              className='bg-base-100/50 text-base-content/70 hover:bg-primary flex h-full min-w-[3rem] flex-col items-center justify-center px-0.5 transition-colors hover:text-white sm:min-w-[4.25rem] sm:px-1'
-              title='Toggle between Browser and Temporary mode'
-            >
-              <span className='text-[10px] leading-tight font-bold tracking-wide uppercase'>
-                {importMode === 'browser' ? 'Save' : 'View'}
-              </span>
-              <span className='scale-90 text-[9px] leading-tight whitespace-nowrap opacity-70'>
-                {importMode === 'browser' ? 'in Browser' : 'Temporarily'}
-              </span>
-            </button>
-          </div>
-
           {/* --- CENTER: SHOT BADGE --- */}
           <div className={shotBadgeClasses} onClick={onTogglePanel} title='Click to toggle library'>
             <FontAwesomeIcon icon={faFolderOpen} className='opacity-70' />
@@ -190,14 +146,44 @@ export function StatusBar({
             )}
           </div>
 
-          {/* --- RIGHT: STATS BUTTON (outer column, symmetric with import block) --- */}
-          <button
-            className='border-success/50 text-success hover:bg-success hover:border-success bg-base-100/50 flex h-full w-full min-w-0 items-center justify-center rounded-lg border-2 shadow-sm transition-all hover:text-white'
-            onClick={onShowStats}
-            title='Compare & Statistics'
+          {/* --- RIGHT: IMPORT + MODE TOGGLE --- */}
+          <div
+            className='border-primary/50 bg-base-100/50 hover:border-primary group grid h-full min-w-0 grid-cols-2 overflow-hidden rounded-lg border-2 border-dashed shadow-sm transition-all'
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
           >
-            <FontAwesomeIcon icon={faChartLine} className='text-xl' />
-          </button>
+            <label className='hover:bg-primary/10 text-primary border-base-content/10 flex h-full w-full cursor-pointer items-center justify-center border-r transition-colors'>
+              {isImporting ? (
+                <FontAwesomeIcon icon={faCircleNotch} spin className='text-2xl opacity-60' />
+              ) : (
+                <FontAwesomeIcon icon={faFileImport} className='text-2xl' />
+              )}
+              <input
+                type='file'
+                multiple
+                accept='.slog,.json'
+                onChange={handleFileSelect}
+                className='hidden'
+                disabled={isImporting}
+              />
+            </label>
+
+            <button
+              onClick={e => {
+                e.preventDefault();
+                onImportModeChange(importMode === 'browser' ? 'temp' : 'browser');
+              }}
+              className='bg-base-100/50 text-base-content/70 hover:bg-primary flex h-full w-full min-w-0 flex-col items-center justify-center px-0.5 transition-colors hover:text-white sm:px-1'
+              title='Toggle between Browser and Temporary mode'
+            >
+              <span className='text-[10px] leading-tight font-bold tracking-wide uppercase'>
+                {importMode === 'browser' ? 'Save' : 'View'}
+              </span>
+              <span className='scale-90 text-[9px] leading-tight whitespace-nowrap opacity-70'>
+                {importMode === 'browser' ? 'in Browser' : 'Temporarily'}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

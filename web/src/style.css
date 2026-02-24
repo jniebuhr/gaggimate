@@ -146,7 +146,7 @@
   --noise: 0;
 }
 
-/* Analyzer color mapping (columns + analysis table):
+/* Analyzer color mapping (columns + analysis table + shared statistics visuals incl. trends/summary cards):
    - default follows OS light/dark
    - nord is forced to light mapping
    - coffee is forced to dark mapping
@@ -186,6 +186,19 @@
   --analyzer-notes-taste-sour: #b7963f;
   --analyzer-phase-line: rgba(107, 114, 128, 0.5);
   --analyzer-stop-label: rgba(220, 38, 38, 0.85);
+  --statistics-trend-duration: #64748b;
+  --statistics-trend-water: #0ea5e9;
+  --statistics-trend-shots-brown: #8b5e3c;
+  --statistics-trend-axis-tick: #888888;
+  --statistics-trend-grid: rgba(200, 200, 200, 0.1);
+  --statistics-trend-tooltip-bg: rgba(20, 20, 20, 0.9);
+  --statistics-summary-shots-brown: #8b5e3c;
+  --statistics-summary-water: #0ea5e9;
+  --statistics-summary-duration: #64748b;
+  --statistics-summary-surface-strong: color-mix(in srgb, var(--color-base-100) 92%, var(--color-base-content) 2%);
+  --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 97%, var(--color-base-content) 1%);
+  --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  --statistics-summary-shadow: rgba(15, 23, 42, 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -224,6 +237,19 @@
     --analyzer-notes-taste-sour: #d6b66a;
     --analyzer-phase-line: rgba(148, 163, 184, 0.45);
     --analyzer-stop-label: rgba(239, 68, 68, 0.85);
+    --statistics-trend-duration: #94a3b8;
+    --statistics-trend-water: #38bdf8;
+    --statistics-trend-shots-brown: #b4835f;
+    --statistics-trend-axis-tick: #9ca3af;
+    --statistics-trend-grid: rgba(200, 200, 200, 0.12);
+    --statistics-trend-tooltip-bg: rgba(12, 12, 12, 0.92);
+    --statistics-summary-shots-brown: #b4835f;
+    --statistics-summary-water: #38bdf8;
+    --statistics-summary-duration: #94a3b8;
+    --statistics-summary-surface-strong: color-mix(in srgb, var(--color-base-100) 86%, var(--color-base-content) 4%);
+    --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 92%, var(--color-base-content) 2%);
+    --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 14%, transparent);
+    --statistics-summary-shadow: rgba(0, 0, 0, 0.22);
   }
 }
 
@@ -262,6 +288,19 @@ html[data-theme='nord'] {
   --analyzer-notes-taste-sour: #b7963f;
   --analyzer-phase-line: rgba(107, 114, 128, 0.5);
   --analyzer-stop-label: rgba(220, 38, 38, 0.85);
+  --statistics-trend-duration: #64748b;
+  --statistics-trend-water: #0ea5e9;
+  --statistics-trend-shots-brown: #8b5e3c;
+  --statistics-trend-axis-tick: #888888;
+  --statistics-trend-grid: rgba(200, 200, 200, 0.1);
+  --statistics-trend-tooltip-bg: rgba(20, 20, 20, 0.9);
+  --statistics-summary-shots-brown: #8b5e3c;
+  --statistics-summary-water: #0ea5e9;
+  --statistics-summary-duration: #64748b;
+  --statistics-summary-surface-strong: color-mix(in srgb, var(--color-base-100) 92%, var(--color-base-content) 2%);
+  --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 97%, var(--color-base-content) 1%);
+  --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  --statistics-summary-shadow: rgba(15, 23, 42, 0.08);
 }
 
 html[data-theme='coffee'] {
@@ -299,6 +338,19 @@ html[data-theme='coffee'] {
   --analyzer-notes-taste-sour: #d6b66a;
   --analyzer-phase-line: rgba(148, 163, 184, 0.45);
   --analyzer-stop-label: rgba(239, 68, 68, 0.85);
+  --statistics-trend-duration: #a8a29e;
+  --statistics-trend-water: #67e8f9;
+  --statistics-trend-shots-brown: #b4835f;
+  --statistics-trend-axis-tick: #a8a29e;
+  --statistics-trend-grid: rgba(200, 200, 200, 0.12);
+  --statistics-trend-tooltip-bg: rgba(18, 14, 12, 0.94);
+  --statistics-summary-shots-brown: #b4835f;
+  --statistics-summary-water: #67e8f9;
+  --statistics-summary-duration: #a8a29e;
+  --statistics-summary-surface-strong: color-mix(in srgb, var(--color-base-100) 86%, var(--color-base-content) 4%);
+  --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 92%, var(--color-base-content) 2%);
+  --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 14%, transparent);
+  --statistics-summary-shadow: rgba(0, 0, 0, 0.24);
 }
 
 @theme {

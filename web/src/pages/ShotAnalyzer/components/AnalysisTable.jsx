@@ -653,9 +653,13 @@ function CellContent({ phase, col, results, isTotal = false }) {
 
   // Helper for Boolean Status rendering
   const renderBool = val => {
-    if (val === true) return <FontAwesomeIcon icon={faCheck} className='text-success opacity-80' />;
-    if (val === false) return <FontAwesomeIcon icon={faTimes} className='text-base-content/20' />; // Or faMinus
-    return <span className='opacity-20'>-</span>;
+    if (val === true) {
+      return <FontAwesomeIcon icon={faCheck} className='text-[1em] text-success' />;
+    }
+    if (val === false) {
+      return <FontAwesomeIcon icon={faTimes} className='text-[1em] text-error' />;
+    }
+    return <span className='text-base-content/60'>-</span>;
   };
 
   let mainValue = '-';
@@ -826,6 +830,7 @@ function CellContent({ phase, col, results, isTotal = false }) {
   // Relative font sizing for sub-elements (0.85em) ensures they scale with zoom
   const subTextSize = { fontSize: '0.85em' };
   const iconSize = { fontSize: '0.8em' };
+  const booleanAnomaly = !isTotal && isBoolean ? stats?.sys_anomalies?.[col.id] : null;
 
   // Unified Target Display - Parentheses + Italics, no "Target:" label
   if (col.id === 'duration' && phase.profilePhase && phase.profilePhase.duration > 0) {
@@ -957,7 +962,24 @@ function CellContent({ phase, col, results, isTotal = false }) {
   return (
     <div className='flex min-h-[2em] flex-col items-end justify-center'>
       {isBoolean ? (
-        <div className='flex h-full items-center pb-1'>{booleanContent}</div>
+        <div className='flex h-full flex-col items-end justify-center pb-1'>
+          <div className='flex items-center'>{booleanContent}</div>
+          {booleanAnomaly && (
+            <div
+              style={subTextSize}
+              className='text-base-content/75 mt-0.5 flex flex-col items-end leading-tight font-bold'
+              title={`Sample ${booleanAnomaly.sampleInPhase}: ${String(booleanAnomaly.value)}`}
+            >
+              <span>
+                Sample {booleanAnomaly.sampleInPhase}
+                {Number.isFinite(booleanAnomaly.sampleCountInPhase)
+                  ? ` (${booleanAnomaly.sampleCountInPhase})`
+                  : ''}
+              </span>
+              <span className='text-base-content/60'>{String(booleanAnomaly.value)}</span>
+            </div>
+          )}
+        </div>
       ) : (
         <span
           className={isHit ? 'font-bold' : ''}

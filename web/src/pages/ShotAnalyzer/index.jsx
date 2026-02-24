@@ -18,17 +18,14 @@ import {
   cleanName,
   ANALYZER_DB_KEYS,
   loadFromStorage,
-  maskStyle,
 } from './utils/analyzerUtils';
+import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute';
 
-// Asset Imports
-import DeepDiveLogoOutline from './assets/deepdive.svg';
 import { EmptyState } from './components/EmptyState.jsx';
 
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
-
   // --- State ---
   const [currentShot, setCurrentShot] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +34,6 @@ export function ShotAnalyzer() {
   const [currentProfileName, setCurrentProfileName] = useState('No Profile Loaded');
 
   const [importMode, setImportMode] = useState('temp');
-  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const [isMatchingProfile, setIsMatchingProfile] = useState(false);
   const [isSearchingProfile, setIsSearchingProfile] = useState(false); // <--- NEW STATE
@@ -217,8 +213,12 @@ export function ShotAnalyzer() {
 
             if (matchId !== profileMatchIdRef.current) return; // stale
 
-            setCurrentProfile(fullP);
-            setCurrentProfileName(match.name || match.label);
+            setCurrentProfile(
+              match.source && (match.source === 'gaggimate' || match.source === 'browser') && !fullP?.source
+                ? { ...fullP, source: match.source }
+                : fullP,
+            );
+            setCurrentProfileName(match.label || match.name);
           }
         } catch (e) {
           if (matchId !== profileMatchIdRef.current) return;
@@ -240,10 +240,19 @@ export function ShotAnalyzer() {
     setLoading(false);
   };
 
-  const handleProfileLoad = (data, name) => {
-    setCurrentProfile(data);
-    setCurrentProfileName(name);
+  const handleProfileLoad = (data, name, source) => {
+    const nextProfile =
+      source && (source === 'gaggimate' || source === 'browser') && !data?.source
+        ? { ...data, source }
+        : data;
+    setCurrentProfile(nextProfile);
+    setCurrentProfileName(data?.label || data?.name || name);
   };
+
+  const statsHref = buildStatisticsProfileHref({
+    source: currentProfile?.source,
+    profileName: currentProfileName,
+  });
 
   return (
     <div className='pb-20'>
@@ -272,7 +281,13 @@ export function ShotAnalyzer() {
               setCurrentProfile(null);
               setCurrentProfileName('No Profile Loaded');
             }}
-            onShowStats={() => setShowInfoModal(true)}
+            onShowStats={() => {
+              sessionStorage.setItem('statsInitialContext', JSON.stringify({
+                profileName: currentProfileName,
+                source: 'both',
+              }));
+            }}
+            statsHref={statsHref}
             importMode={importMode}
             onImportModeChange={setImportMode}
             onShotLoadedFromLibrary={() => {
@@ -313,28 +328,6 @@ export function ShotAnalyzer() {
           <EmptyState loading={loading} />
         )}
       </div>
-
-      {/* Coming Soon Modal */}
-      {showInfoModal && (
-        <div
-          className='fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm'
-          onClick={() => setShowInfoModal(false)}
-        >
-          <div
-            className='bg-base-100 border-base-content/10 w-full max-w-md rounded-2xl border p-8 text-center shadow-2xl'
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Logo: Masked Div for Theme Color Adaptation */}
-            <div className='bg-base-content mx-auto mb-6 h-24 w-24 opacity-90' style={maskStyle} />
-
-            <h3 className='mb-2 text-2xl font-bold'>Coming Soon</h3>
-            <p className='opacity-70'>Comparison and statistics feature under development.</p>
-            <button onClick={() => setShowInfoModal(false)} className='btn btn-primary mt-6 w-full'>
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -31,6 +31,7 @@ export function LibraryPanel({
   onShotUnload,
   onProfileUnload,
   onShowStats,
+  statsHref = '/statistics',
   importMode = 'temp',
   onImportModeChange,
   onShotLoadedFromLibrary,
@@ -402,7 +403,7 @@ export function LibraryPanel({
               source: importMode === 'browser' ? 'browser' : 'temp',
             };
             if (importMode === 'browser') await indexedDBService.saveProfile(profile);
-            onProfileLoad(data, profileName);
+            onProfileLoad(data, profileName, profile.source);
           }
         }
       } catch (e) {
@@ -477,6 +478,7 @@ export function LibraryPanel({
             onTogglePanel={() => setCollapsed(!collapsed)}
             onImport={handleImport}
             onShowStats={onShowStats}
+            statsHref={statsHref}
             isMismatch={
               currentShot &&
               currentProfile &&
@@ -624,7 +626,7 @@ export function LibraryPanel({
                     }
                     onSourceFilterChange={setProfilesSourceFilter}
                     onLoad={item => {
-                      onProfileLoad(item.data || item, item.name || item.label);
+                      onProfileLoad(item.data || item, item.label || item.name, item.source);
                       setCollapsed(true);
                     }}
                     onExport={item => handleExport(item, false)} // Pass false for profiles

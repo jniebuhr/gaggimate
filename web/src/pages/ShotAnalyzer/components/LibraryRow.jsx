@@ -3,9 +3,11 @@
  */
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { cleanName, formatTimestamp } from '../utils/analyzerUtils';
+import { buildStatisticsProfileHref } from '../../Statistics/utils/statisticsRoute';
 
 export function LibraryRow({ item, isMatch, isActive, isShot, onLoad, onExport, onDelete }) {
   const itemName = item.name || item.label || 'Unknown';
@@ -18,6 +20,12 @@ export function LibraryRow({ item, isMatch, isActive, isShot, onLoad, onExport, 
   // Format Date & Time
   const dateStr = formatTimestamp(item.timestamp || item.shotDate);
   const [datePart, timePart] = dateStr.includes(',') ? dateStr.split(', ') : [dateStr, ''];
+  const profileStatsHref = !isShot
+    ? buildStatisticsProfileHref({
+        source: item.source,
+        profileName: item.label || item.name || '',
+      })
+    : null;
 
   // Consistent full border highlighting
   const rowClasses = isActive
@@ -63,6 +71,15 @@ export function LibraryRow({ item, isMatch, isActive, isShot, onLoad, onExport, 
       {/* Action cell with extra right padding for scrollbar clearance */}
       <td className='px-4 py-2 text-right last:rounded-r-md'>
         <div className='flex justify-end gap-2' onClick={e => e.stopPropagation()}>
+          {!isShot && (
+            <a
+              href={profileStatsHref || '/statistics'}
+              className='text-base-content/30 hover:text-success transition-colors'
+              title='Profile statistics'
+            >
+              <FontAwesomeIcon icon={faChartSimple} size='xs' />
+            </a>
+          )}
           <button
             onClick={() => onExport(item)}
             className='text-base-content/30 hover:text-primary transition-colors'

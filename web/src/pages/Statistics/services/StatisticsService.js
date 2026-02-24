@@ -14,6 +14,8 @@ function averageOf(values) {
   return sum / values.length;
 }
 
+// Population standard deviation (not sample): we treat the loaded shots as the full
+// dataset, not a sample drawn from a larger population.
 function stdDevOf(values, mean) {
   if (values.length < 2) return 0;
   let sumSq = 0;
@@ -276,6 +278,7 @@ function computePhaseStats(entries, calcMode) {
 
     const avgDur = averageOf(durations);
     const avgWat = averageOf(waters);
+    // Accumulate weighted sums so the total row reflects a proper weighted average.
     totalDuration += avgDur * phases.length;
     totalWater += avgWat * phases.length;
     totalShotCount += phases.length;
