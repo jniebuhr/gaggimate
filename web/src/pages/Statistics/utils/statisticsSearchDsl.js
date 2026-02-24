@@ -83,7 +83,7 @@ export function parseStatisticsQuery(queryString) {
     const trimmed = raw.trim();
     if (!trimmed) return;
 
-    const fieldMatch = trimmed.match(/^([a-zA-Z]+)\s*:\s*(.+)$/);
+    const fieldMatch = trimmed.match(/^([a-zA-Z]+)\s*:\s*(\S.*)$/);
     if (!fieldMatch) {
       const freeValue = parseQuotedOrPlainValue(trimmed);
       if (freeValue.error) {
@@ -117,7 +117,7 @@ export function parseStatisticsQuery(queryString) {
     }
 
     if (field === 'date') {
-      const dateMatch = String(valueRaw ?? '').trim().match(/^(>=|<=|>|<|=)\s*(.+)$/);
+      const dateMatch = String(valueRaw ?? '').trim().match(/^(>=|<=|>|<|=)\s*(\S.*)$/);
       if (!dateMatch) {
         errors.push({
           code: 'date_operator_required',
