@@ -115,52 +115,47 @@ function MetricRangeViz({ row, metric }) {
         </div>
       </div>
 
-      <div className='mt-2 flex flex-col items-center gap-1'>
-        <div className='text-[11px] opacity-65'>
-          Min <span className='font-mono'>{fmt(metric.min)}</span>
-        </div>
-        <div
-          className='w-full rounded-lg border px-2 py-1 text-center shadow-sm'
-          style={{
-            borderColor: `color-mix(in srgb, ${row.accentColor} ${avgBorderPct}%, var(--color-base-content) 12%)`,
-            background: `color-mix(in srgb, ${row.accentColor} ${avgBgPct}%, transparent)`,
-          }}
-        >
-          <span className='font-mono text-base font-semibold'>{fmt(metric.avg)}</span>
-          <span className='ml-1 text-xs opacity-70'>{row.unit}</span>
-        </div>
-        <div className='w-full px-1 pt-1'>
-          <div className='relative h-5'>
-            <div className='absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-base-content/20' />
-            <div className='absolute left-0 top-1/2 h-2 w-px -translate-y-1/2 bg-base-content/30' />
-            <div className='absolute right-0 top-1/2 h-2 w-px -translate-y-1/2 bg-base-content/30' />
-            {positions.hasRange && positions.stdWidth > 0 && (
-              <div
-                className='absolute top-1/2 h-2 -translate-y-1/2 rounded-full'
-                style={{
-                  left: `${positions.stdStart}%`,
-                  width: `${positions.stdWidth}%`,
-                  background: `color-mix(in srgb, ${row.accentColor} ${stdBandPct}%, transparent)`,
-                  border: `1px solid color-mix(in srgb, ${row.accentColor} ${Math.min(
-                    42,
-                    stdBandPct + 10
-                  )}%, transparent)`,
-                }}
-              />
-            )}
+      <div
+        className='mt-2 w-full rounded-lg border px-2 py-1 text-center shadow-sm'
+        style={{
+          borderColor: `color-mix(in srgb, ${row.accentColor} ${avgBorderPct}%, var(--color-base-content) 12%)`,
+          background: `color-mix(in srgb, ${row.accentColor} ${avgBgPct}%, transparent)`,
+        }}
+      >
+        <span className='font-mono text-base font-semibold'>{fmt(metric.avg)}</span>
+        <span className='ml-1 text-xs opacity-70'>{row.unit}</span>
+      </div>
+
+      <div className='mt-2 flex items-center gap-2'>
+        <div className='shrink-0 text-[11px] font-mono opacity-65'>{fmt(metric.min)}</div>
+        <div className='relative h-5 min-w-0 flex-1'>
+          <div className='absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-base-content/20' />
+          <div className='absolute left-0 top-1/2 h-2 w-px -translate-y-1/2 bg-base-content/30' />
+          <div className='absolute right-0 top-1/2 h-2 w-px -translate-y-1/2 bg-base-content/30' />
+          {positions.hasRange && positions.stdWidth > 0 && (
             <div
-              className='absolute top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full'
+              className='absolute top-1/2 h-2 -translate-y-1/2 rounded-full'
               style={{
-                left: `calc(${positions.avgPos}% - 1px)`,
-                backgroundColor: row.accentColor,
-                boxShadow: `0 0 0 2px color-mix(in srgb, ${row.accentColor} 18%, transparent)`,
+                left: `${positions.stdStart}%`,
+                width: `${positions.stdWidth}%`,
+                background: `color-mix(in srgb, ${row.accentColor} ${stdBandPct}%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${row.accentColor} ${Math.min(
+                  42,
+                  stdBandPct + 10
+                )}%, transparent)`,
               }}
             />
-          </div>
+          )}
+          <div
+            className='absolute top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full'
+            style={{
+              left: `calc(${positions.avgPos}% - 1px)`,
+              backgroundColor: row.accentColor,
+              boxShadow: `0 0 0 2px color-mix(in srgb, ${row.accentColor} 18%, transparent)`,
+            }}
+          />
         </div>
-        <div className='text-[11px] opacity-65'>
-          Max <span className='font-mono'>{fmt(metric.max)}</span>
-        </div>
+        <div className='shrink-0 text-[11px] font-mono opacity-65'>{fmt(metric.max)}</div>
       </div>
     </div>
   );
