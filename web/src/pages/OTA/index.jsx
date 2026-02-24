@@ -63,6 +63,24 @@ export function OTA() {
       apiService.off('evt:ota-progress', listenerId);
     };
   }, [apiService]);
+  
+  useEffect(() => {
+    const listenerId = apiService.on('evt:history-rebuild-progress', msg => {
+      setRebuildProgress({
+        total: msg.total || 0,
+        current: msg.current || 0,
+        status: msg.status || ''
+      });
+      
+      if (msg.status === 'completed' || msg.status === 'error') {
+        setRebuilding(false);
+        setRebuilt(msg.status === 'completed');
+      }
+    });
+    return () => {
+      apiService.off('evt:history-rebuild-progress', listenerId);
+    };
+  }, [apiService]);
   useEffect(() => {
     setTimeout(() => {
       apiService.send({ tp: 'req:ota-settings' });
@@ -92,13 +110,13 @@ export function OTA() {
 
   const [rebuilding, setRebuilding] = useState(false);
   const [rebuilt, setRebuilt] = useState(false);
+  const [rebuildProgress, setRebuildProgress] = useState({ total: 0, current: 0, status: '' });
   const onHistoryRebuild = useCallback(async () => {
     setRebuilt(false);
     setRebuilding(true);
-    await apiService.request({ tp: 'req:history:rebuild' });
-    setRebuilding(false);
-    setRebuilt(true);
-  }, [apiService, setRebuilding]);
+    setRebuildProgress({ total: 0, current: 0, status: 'starting' });
+    apiService.send({ tp: 'req:history:rebuild' });
+  }, [apiService]);
 
   if (isLoading) {
     return (
@@ -263,14 +281,47 @@ export function OTA() {
               disabled={rebuilding}
             >
               Rebuild Shot History
-              {rebuilding && <Spinner size={4} className='ml-2' />}
+              {rebuilding && (
+                <>
+                  <Spinner size={4} className='ml-2' />
+                  {rebuildProgress.total > 0 && (
+                    <span className='ml-2 text-xs'>
+                      {rebuildProgress.current}/{rebuildProgress.total}
+                    </span>
+                  )}
+                </>
+              )}
               {rebuilt && (
-                <span className='text-success'>
+                <span className='text-success ml-2'>
                   <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon>
                 </span>
               )}
             </button>
           </div>
+          
+          {rebuilding && (
+            <div className='mt-3'>
+              <div className='text-sm text-base-content/70 mb-1'>
+                {rebuildProgress.status === 'starting' || rebuildProgress.status === 'scanning' || rebuildProgress.total === 0 ? (
+                  'Scanning shot history files...'
+                ) : (
+                  `Processing shot history files (${rebuildProgress.current}/${rebuildProgress.total})`
+                )}
+              </div>
+              <div className='bg-base-300 h-2 w-full overflow-hidden rounded'>
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    rebuildProgress.total === 0 ? 'bg-primary animate-pulse' : 'bg-primary'
+                  }`}
+                  style={{ 
+                    width: rebuildProgress.total > 0 
+                      ? `${(rebuildProgress.current / rebuildProgress.total) * 100}%`
+                      : '30%'
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </form>
     </>

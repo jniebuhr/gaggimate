@@ -439,10 +439,10 @@ function ProfileCard({
                   {totalDurationSeconds}s
                 </span>
                 {data.phases.length > 0 &&
-                  data.phases.at(-1)?.targets?.at(0)?.type === 'volumetric' && (
+                  data.phases.at(-1)?.targets?.some(target => target.type === 'volumetric') && (
                     <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
                       <FontAwesomeIcon icon={faScaleBalanced} />
-                      {`${data.phases.at(-1).targets.at(0).value}g`}
+                      {`${data.phases.at(-1).targets.find(target => target.type === 'volumetric').value}g`}
                     </span>
                   )}
                 {data.phases.length > 0 && (

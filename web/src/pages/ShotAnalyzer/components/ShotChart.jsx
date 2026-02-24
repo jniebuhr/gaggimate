@@ -226,16 +226,32 @@ export function ShotChart({ shotData, results }) {
       if (results && results.phases && results.phases.length > 0 && maxTime > 0) {
         const lastPhase = results.phases[results.phases.length - 1];
         if (lastPhase.exit && lastPhase.exit.reason) {
+          // For final Weight Stops, place the stop marker at the actual stop moment
+          // (last non-extended sample) instead of the extended recording tail end.
+          let finalStopTime = maxTime;
+          const isFinalWeightStop =
+            lastPhase.exit.type === 'weight' || lastPhase.exit.type === 'volumetric';
+          if (isFinalWeightStop) {
+            const lastNonExtendedSample = [...samples]
+              .reverse()
+              .find(s => !s.systemInfo?.extendedRecording);
+            if (lastNonExtendedSample) {
+              finalStopTime = (lastNonExtendedSample.t || 0) / 1000;
+            }
+          }
+
           phaseAnnotations['shot_end'] = {
             type: 'line',
             scaleID: 'x',
-            value: maxTime,
+            value: finalStopTime,
             borderColor: COLORS.phaseLine,
-            borderWidth: 1, // End line
-            borderDash: [4, 4],
+            borderWidth: 1,
             label: {
               display: showStops,
-              content: lastPhase.exit.reason.toUpperCase(),
+              content:
+                lastPhase.exit.type === 'weight' || lastPhase.exit.type === 'volumetric'
+                  ? 'WEIGHT STOP TRIGGERED'
+                  : lastPhase.exit.reason.toUpperCase(),
               rotation: -90,
               position: 'start',
               yAdjust: 0,

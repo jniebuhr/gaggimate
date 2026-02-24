@@ -29,6 +29,7 @@ export function StatusBar({
   isExpanded = false,
   isImporting = false, // Show spinner on import button
   isSearchingProfile = false, // Show spinner on profile badge
+  hasNotesBar = false, // Whether NotesBar is rendered below
 }) {
   const handleFileSelect = e => {
     const files = e.target.files;
@@ -68,13 +69,7 @@ export function StatusBar({
       : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
 
   return (
-    <div
-      className={`w-full backdrop-blur-md transition-all duration-200 ${
-        isExpanded
-          ? 'bg-base-100/80 border-base-content/10 rounded-t-xl border border-b-0 shadow-none'
-          : 'bg-base-100/80 border-base-content/10 rounded-xl border shadow-lg'
-      }`}
-    >
+    <div className='w-full'>
       <div className='p-2'>
         <div className='flex h-12 w-full items-center gap-2'>
           {/* --- LEFT: IMPORT BUTTON (Symmetrical w-40) --- */}
@@ -121,7 +116,7 @@ export function StatusBar({
           <div className={shotBadgeClasses} onClick={onTogglePanel} title='Click to toggle library'>
             <FontAwesomeIcon icon={faFolderOpen} className='opacity-70' />
             <span className='mx-2 flex-1 truncate text-center text-sm font-bold'>
-              {cleanName(currentShotName)}
+              {currentShot?.source === 'gaggimate' ? `#${currentShot.id}` : cleanName(currentShotName)}
             </span>
             {currentShot ? (
               <button

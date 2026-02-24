@@ -142,6 +142,35 @@ export function AnalysisTable({
             colorClass='text-white shadow-sm'
           />
         )}
+        {results.highScaleDelay && (
+          <StatusBadge
+            label='HIGH SCALE DELAY'
+            style={{
+              backgroundColor: utilityColors.warningOrange,
+              borderColor: utilityColors.warningOrange,
+            }}
+            colorClass='text-white shadow-sm'
+            title={
+              results.highScaleDelayMs
+                ? `Estimated scale delay exceeds 2000 ms (${results.highScaleDelayMs} ms), or the shot may have been manually stopped near the target. Please review scale-delay settings.`
+                : 'Estimated scale delay exceeds 2000 ms, or the shot may have been manually stopped near the target. Please review scale-delay settings.'
+            }
+          />
+        )}
+        {results.delayReviewHint && (
+          <StatusBadge
+            label={
+              results.delayReviewPhaseNumber
+                ? `REVIEW PHASE ${results.delayReviewPhaseNumber}`
+                : 'PHASE REVIEW ADVISED'
+            }
+            colorClass='bg-sky-600 text-white border-sky-700'
+            title={
+              results.delayReviewMessage ||
+              'Unusually high inferred delay detected.'
+            }
+          />
+        )}
         {results.isAutoAdjusted && (
           <StatusBadge label='AUTO-DELAY' colorClass='bg-blue-600 text-white border-blue-700' />
         )}
@@ -291,9 +320,9 @@ export function AnalysisTable({
 
         {/* C. New Footer: Delay Settings (Left) & Legend (Right) */}
         <div className='bg-base-100 border-base-content/10 flex flex-wrap items-center justify-between gap-4 rounded-b-lg border-t px-4 py-3 text-[10px] font-bold tracking-wider uppercase'>
-          {/* Left: Latency Inputs */}
+          {/* Left: Stop Calculation Inputs */}
           <div className='flex items-center gap-4'>
-            <span className='hidden opacity-40 select-none sm:inline'>Latency</span>
+            <span className='hidden opacity-40 select-none sm:inline'>Stop Calculation</span>
             <div className='flex items-center gap-2'>
               {/* Shows Average Symbol ∅ if auto-delay is active */}
               <span className='opacity-60'>Scale{safeSettings.autoDelay ? ' ∅' : ''}</span>
@@ -533,12 +562,15 @@ function CellContent({ phase, col, results, isTotal = false }) {
     );
   }
 
-  const isHit = phase.exit?.type === col.targetType;
   const isWeightCol = col.id === 'weight';
+  const exitMatchesCol = isWeightCol
+    ? (phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric')
+    : phase.exit?.type === col.targetType;
+  const isHit = exitMatchesCol;
 
   let targetDisplay = null;
   let predictionDisplay = null;
-  let warningDisplay = null;
+  let warningDisplays = [];
 
   // Relative font sizing for sub-elements (0.85em) ensures they scale with zoom
   const subTextSize = { fontSize: '0.85em' };
@@ -602,40 +634,72 @@ function CellContent({ phase, col, results, isTotal = false }) {
     }
   }
 
-  if (isWeightCol && phase.prediction && phase.prediction.finalWeight !== null) {
-    const measuredVal = parseFloat(mainValue);
-    if (!isNaN(measuredVal) && Math.abs(measuredVal - phase.prediction.finalWeight) >= 0.1) {
-      const predVal = sf(phase.prediction.finalWeight);
+  if (col.targetType && phase.targetCalcValues) {
+    const calcEntry =
+      col.id === 'weight'
+        ? (phase.targetCalcValues['volumetric'] || phase.targetCalcValues['weight'])
+        : phase.targetCalcValues[col.targetType];
 
-      const isPredHit = phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric';
-      const predColorClass = isPredHit
-        ? 'text-[#DC2626] dark:text-red-500'
-        : 'text-blue-600 dark:text-blue-400';
+    if (calcEntry) {
+      const rawForParse =
+        typeof mainValue === 'string' && mainValue.includes('/')
+          ? mainValue.split('/').pop()
+          : mainValue;
+      const measuredVal = parseFloat(rawForParse);
 
-      predictionDisplay = (
-        <div
-          style={subTextSize}
-          className={`mt-0.5 flex items-center justify-end gap-1 leading-tight font-bold ${predColorClass}`}
-        >
-          <FontAwesomeIcon icon={faCalculator} style={iconSize} className='opacity-60' />
-          <span>
-            Pred: {predVal}
-            {unit}
-          </span>
-        </div>
-      );
+      if (!isNaN(measuredVal)) {
+        const calcVal = sf(calcEntry.value);
+        const calcColor = calcEntry.isStopReason
+          ? utilityColors.predictionStopRed
+          : utilityColors.predictionInfoBlue;
+
+        let calcUnit = unit;
+        if (!calcUnit && col.targetType === 'pressure') calcUnit = 'bar';
+        if (!calcUnit && col.targetType === 'flow') calcUnit = 'ml/s';
+        if (!calcUnit && col.targetType === 'pumped') calcUnit = 'ml';
+
+        predictionDisplay = (
+          <div
+            style={{ ...subTextSize, color: calcColor }}
+            className='mt-0.5 flex items-center justify-end gap-1 leading-tight font-bold'
+          >
+            <FontAwesomeIcon icon={faCalculator} style={iconSize} className='opacity-60' />
+            <span>
+              Calc: {calcVal}
+              {calcUnit}
+            </span>
+          </div>
+        );
+      }
     }
   }
 
   if (isWeightCol && phase.scaleLost) {
-    warningDisplay = (
+    warningDisplays.push(
       <div
+        key='scale-lost-warning'
         style={{ ...subTextSize, color: utilityColors.warningOrange }}
         className='mt-0.5 flex items-center justify-end gap-1 font-bold'
       >
         <FontAwesomeIcon icon={faExclamationTriangle} />
         <span>Scale Lost</span>
-      </div>
+      </div>,
+    );
+  }
+
+  if (isWeightCol && phase.highScaleDelay) {
+    warningDisplays.push(
+      <div
+        key='high-scale-delay-warning'
+        style={{ ...subTextSize, color: utilityColors.warningOrange }}
+        className='mt-0.5 flex items-center justify-end gap-1 font-bold'
+      >
+        <FontAwesomeIcon icon={faExclamationTriangle} />
+        <span>
+          High Scale Delay
+          {phase.estimatedScaleDelayMs ? ` (${phase.estimatedScaleDelayMs} ms)` : ''}
+        </span>
+      </div>,
     );
   }
 
@@ -654,7 +718,7 @@ function CellContent({ phase, col, results, isTotal = false }) {
       )}
       {targetDisplay}
       {predictionDisplay}
-      {warningDisplay}
+      {warningDisplays}
     </div>
   );
 }

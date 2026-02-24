@@ -308,8 +308,10 @@ export const groups = {
 };
 
 export const utilityColors = {
-  stopRed: '#DC2626',
+  stopRed: 'var(--analyzer-pred-stop-red)',
   warningOrange: 'var(--color-orange-600)',
+  predictionStopRed: 'var(--analyzer-pred-stop-red)',
+  predictionInfoBlue: 'var(--analyzer-pred-info-blue)',
 };
 
 /**
@@ -323,48 +325,48 @@ export const groupColors = {
   },
   pressure: {
     bg: 'bg-blue-500/5',
-    text: 'text-[#0066CC] dark:text-[#58A6FF]',
-    anchor: '#0066CC',
+    text: 'text-[var(--analyzer-pressure-text)]',
+    anchor: 'var(--analyzer-pressure-anchor)',
   },
   target_pressure: {
     bg: 'bg-blue-500/5',
-    text: 'text-[#0066CC] dark:text-[#58A6FF]',
-    anchor: '#0066CC',
+    text: 'text-[var(--analyzer-target-pressure-text)]',
+    anchor: 'var(--analyzer-target-pressure-anchor)',
   },
   flow: {
     bg: 'bg-green-500/5',
-    text: 'text-[#63993D] dark:text-[#82C952]',
-    anchor: '#63993D',
+    text: 'text-[var(--analyzer-flow-text)]',
+    anchor: 'var(--analyzer-flow-anchor)',
   },
   target_flow: {
     bg: 'bg-green-500/5',
-    text: 'text-[#63993D] dark:text-[#82C952]',
-    anchor: '#63993D',
+    text: 'text-[var(--analyzer-target-flow-text)]',
+    anchor: 'var(--analyzer-target-flow-anchor)',
   },
   puckflow: {
     bg: 'bg-emerald-500/5',
-    text: 'text-[#059669] dark:text-[#10B981]',
-    anchor: '#059669',
+    text: 'text-[var(--analyzer-puckflow-text)]',
+    anchor: 'var(--analyzer-puckflow-anchor)',
   },
   temp: {
     bg: 'bg-orange-500/5',
-    text: 'text-[#F0561D] dark:text-[#FF7A45]',
-    anchor: '#F0561D',
+    text: 'text-[var(--analyzer-temp-text)]',
+    anchor: 'var(--analyzer-temp-anchor)',
   },
   target_temp: {
     bg: 'bg-orange-500/5',
-    text: 'text-[#731F00] dark:text-[#BC2D00]',
-    anchor: '#731F00',
+    text: 'text-[var(--analyzer-target-temp-text)]',
+    anchor: 'var(--analyzer-target-temp-anchor)',
   },
   weight: {
     bg: 'bg-violet-500/5',
-    text: 'text-[#8B5CF6] dark:text-[#A78BFA]',
-    anchor: '#8B5CF6',
+    text: 'text-[var(--analyzer-weight-text)]',
+    anchor: 'var(--analyzer-weight-anchor)',
   },
   weight_det: {
     bg: 'bg-violet-500/5',
-    text: 'text-[#8B5CF6] dark:text-[#A78BFA]',
-    anchor: '#8B5CF6',
+    text: 'text-[var(--analyzer-weight-det-text)]',
+    anchor: 'var(--analyzer-weight-det-anchor)',
   },
   system: {
     bg: 'bg-base-content/5',

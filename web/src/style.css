@@ -146,6 +146,105 @@
   --noise: 0;
 }
 
+/* Analyzer color mapping (columns + analysis table):
+   - default follows OS light/dark
+   - nord is forced to light mapping
+   - coffee is forced to dark mapping
+*/
+:root {
+  --analyzer-pressure-text: #0066cc;
+  --analyzer-pressure-anchor: #0066cc;
+  --analyzer-target-pressure-text: #0066cc;
+  --analyzer-target-pressure-anchor: #0066cc;
+  --analyzer-flow-text: #63993d;
+  --analyzer-flow-anchor: #63993d;
+  --analyzer-target-flow-text: #63993d;
+  --analyzer-target-flow-anchor: #63993d;
+  --analyzer-puckflow-text: #059669;
+  --analyzer-puckflow-anchor: #059669;
+  --analyzer-temp-text: #f0561d;
+  --analyzer-temp-anchor: #f0561d;
+  --analyzer-target-temp-text: #731f00;
+  --analyzer-target-temp-anchor: #731f00;
+  --analyzer-weight-text: #8b5cf6;
+  --analyzer-weight-anchor: #8b5cf6;
+  --analyzer-weight-det-text: #8b5cf6;
+  --analyzer-weight-det-anchor: #8b5cf6;
+  --analyzer-pred-stop-red: #dc2626;
+  --analyzer-pred-info-blue: #2563eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --analyzer-pressure-text: #58a6ff;
+    --analyzer-pressure-anchor: #58a6ff;
+    --analyzer-target-pressure-text: #58a6ff;
+    --analyzer-target-pressure-anchor: #58a6ff;
+    --analyzer-flow-text: #82c952;
+    --analyzer-flow-anchor: #82c952;
+    --analyzer-target-flow-text: #82c952;
+    --analyzer-target-flow-anchor: #82c952;
+    --analyzer-puckflow-text: #10b981;
+    --analyzer-puckflow-anchor: #10b981;
+    --analyzer-temp-text: #ff7a45;
+    --analyzer-temp-anchor: #ff7a45;
+    --analyzer-target-temp-text: #bc2d00;
+    --analyzer-target-temp-anchor: #bc2d00;
+    --analyzer-weight-text: #a78bfa;
+    --analyzer-weight-anchor: #a78bfa;
+    --analyzer-weight-det-text: #a78bfa;
+    --analyzer-weight-det-anchor: #a78bfa;
+    --analyzer-pred-stop-red: #ef4444;
+    --analyzer-pred-info-blue: #60a5fa;
+  }
+}
+
+html[data-theme='nord'] {
+  --analyzer-pressure-text: #0066cc;
+  --analyzer-pressure-anchor: #0066cc;
+  --analyzer-target-pressure-text: #0066cc;
+  --analyzer-target-pressure-anchor: #0066cc;
+  --analyzer-flow-text: #63993d;
+  --analyzer-flow-anchor: #63993d;
+  --analyzer-target-flow-text: #63993d;
+  --analyzer-target-flow-anchor: #63993d;
+  --analyzer-puckflow-text: #059669;
+  --analyzer-puckflow-anchor: #059669;
+  --analyzer-temp-text: #f0561d;
+  --analyzer-temp-anchor: #f0561d;
+  --analyzer-target-temp-text: #731f00;
+  --analyzer-target-temp-anchor: #731f00;
+  --analyzer-weight-text: #8b5cf6;
+  --analyzer-weight-anchor: #8b5cf6;
+  --analyzer-weight-det-text: #8b5cf6;
+  --analyzer-weight-det-anchor: #8b5cf6;
+  --analyzer-pred-stop-red: #dc2626;
+  --analyzer-pred-info-blue: #2563eb;
+}
+
+html[data-theme='coffee'] {
+  --analyzer-pressure-text: #58a6ff;
+  --analyzer-pressure-anchor: #58a6ff;
+  --analyzer-target-pressure-text: #58a6ff;
+  --analyzer-target-pressure-anchor: #58a6ff;
+  --analyzer-flow-text: #82c952;
+  --analyzer-flow-anchor: #82c952;
+  --analyzer-target-flow-text: #82c952;
+  --analyzer-target-flow-anchor: #82c952;
+  --analyzer-puckflow-text: #10b981;
+  --analyzer-puckflow-anchor: #10b981;
+  --analyzer-temp-text: #ff7a45;
+  --analyzer-temp-anchor: #ff7a45;
+  --analyzer-target-temp-text: #bc2d00;
+  --analyzer-target-temp-anchor: #bc2d00;
+  --analyzer-weight-text: #a78bfa;
+  --analyzer-weight-anchor: #a78bfa;
+  --analyzer-weight-det-text: #a78bfa;
+  --analyzer-weight-det-anchor: #a78bfa;
+  --analyzer-pred-stop-red: #ef4444;
+  --analyzer-pred-info-blue: #60a5fa;
+}
+
 @theme {
   --font-logo: 'Montserrat', sans-serif;
 }

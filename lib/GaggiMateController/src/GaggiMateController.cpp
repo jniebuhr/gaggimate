@@ -178,21 +178,28 @@ void GaggiMateController::loop() {
 void GaggiMateController::registerBoardConfig(ControllerConfig config) { configs.push_back(config); }
 
 void GaggiMateController::detectBoard() {
+    constexpr int MAX_DETECT_RETRIES = 3;
     pinMode(DETECT_EN_PIN, OUTPUT);
     pinMode(DETECT_VALUE_PIN, INPUT_PULLDOWN);
-    digitalWrite(DETECT_EN_PIN, HIGH);
-    uint16_t millivolts = analogReadMilliVolts(DETECT_VALUE_PIN);
-    digitalWrite(DETECT_EN_PIN, LOW);
-    int boardId = round(((float)millivolts) / 100.0f - 0.5f);
-    ESP_LOGI(LOG_TAG, "Detected Board ID: %d", boardId);
-    for (ControllerConfig config : configs) {
-        if (config.autodetectValue == boardId) {
-            _config = config;
-            ESP_LOGI(LOG_TAG, "Using Board: %s", _config.name.c_str());
-            return;
+
+    for (int attempt = 0; attempt < MAX_DETECT_RETRIES; attempt++) {
+        digitalWrite(DETECT_EN_PIN, HIGH);
+        delay(10); // Allow voltage to stabilize before ADC read
+        uint16_t millivolts = analogReadMilliVolts(DETECT_VALUE_PIN);
+        digitalWrite(DETECT_EN_PIN, LOW);
+        int boardId = round(((float)millivolts) / 100.0f - 0.5f);
+        ESP_LOGI(LOG_TAG, "Board detect attempt %d/%d: ID=%d (raw: %d mV)", attempt + 1, MAX_DETECT_RETRIES, boardId, millivolts);
+        for (ControllerConfig config : configs) {
+            if (config.autodetectValue == boardId) {
+                _config = config;
+                ESP_LOGI(LOG_TAG, "Using Board: %s", _config.name.c_str());
+                return;
+            }
         }
+        ESP_LOGW(LOG_TAG, "No match on attempt %d, retrying...", attempt + 1);
+        delay(500);
     }
-    ESP_LOGW(LOG_TAG, "No compatible board detected.");
+    ESP_LOGE(LOG_TAG, "No compatible board detected after %d attempts. Restarting...", MAX_DETECT_RETRIES);
     delay(5000);
     ESP.restart();
 }

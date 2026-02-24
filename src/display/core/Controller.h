@@ -158,6 +158,9 @@ class Controller {
     bool initialized = false;
     bool systemInfoLoaded = false;
     bool screenReady = false;
+    bool waitingForController = false;
+    unsigned long connectStartTime = 0;
+    unsigned long lastScanTime = 0;
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
@@ -168,6 +171,7 @@ class Controller {
     VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
     unsigned long lastBluetoothMeasurement = 0;
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
+    static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
     // Ping handling
     unsigned long lastPing = 0;
