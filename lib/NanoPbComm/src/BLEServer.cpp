@@ -4,7 +4,7 @@
 const char* BLETransportServer::SERVICE_UUID = "e75bc5b6-ff6e-4337-9d31-0c128f2e6e68";
 const char* BLETransportServer::RX_CHAR_UUID = "12345678-1234-5678-1234-123456789abc";  // For receiving from client
 const char* BLETransportServer::TX_CHAR_UUID = "87654321-4321-8765-4321-cba987654321";  // For sending to client
-// Note: INFO_CHAR_UUID removed - using nanopb messages for system info
+const char* BLETransportServer::INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdba74";
 
 BLETransportServer::BLETransportServer() : deviceConnected(false), server(nullptr), service(nullptr), tx_char(nullptr), rx_char(nullptr) {
     // Constructor
@@ -57,7 +57,15 @@ void BLETransportServer::initServer(const String &deviceName) {
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
     );
 
-    // Note: Removed info_char - using nanopb messages for system info instead
+    // Create a BLE Characteristic for static system info retrieval
+    info_char = service->createCharacteristic(
+        INFO_CHAR_UUID,
+        NIMBLE_PROPERTY::READ
+    );
+
+    if (info_char) {
+        info_char->setValue(deviceInfo.c_str());
+    }
 
     // Start the service
     service->start();
@@ -120,7 +128,9 @@ void BLETransportServer::registerConnectionCallback(const ble_connection_callbac
 void BLETransportServer::setDeviceInfo(const String& info) {
     deviceInfo = info;
     ESP_LOGI("BLEServer", "Setting device info: '%s' (length: %d)", info.c_str(), info.length());
-    // Note: BLE characteristic approach disabled - using nanopb messages instead
+    if (info_char) {
+        info_char->setValue(deviceInfo.c_str());
+    }
 }
 
 String BLETransportServer::getDeviceInfo() const {

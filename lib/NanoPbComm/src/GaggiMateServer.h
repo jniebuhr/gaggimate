@@ -54,10 +54,17 @@ private:
     
     // Handle raw data received from BLE transport
     void handleBLEData(const uint8_t* data, size_t length);
-    
-    // Helper to send protocol messages
-    template<typename... Args>
-    bool sendProtocolMessage(bool (*encoder)(uint8_t*, size_t, size_t*, Args...), Args... args);
+
+    template <typename Encoder>
+    bool sendEncoded(Encoder&& encoder) {
+        uint8_t buffer[NanopbProtocol::MAX_MESSAGE_SIZE];
+        size_t message_length = 0;
+        if (!encoder(buffer, sizeof(buffer), &message_length)) {
+            return false;
+        }
+        return bleServer.sendData(buffer, message_length);
+    }
+
 };
 
 #endif // GAGGIMATE_SERVER_H

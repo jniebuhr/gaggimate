@@ -1,8 +1,5 @@
 #include "GaggiMateServer.h"
 
-namespace std {
-    class any;
-}
 
 GaggiMateServer::GaggiMateServer() {
     // Constructor
@@ -51,52 +48,56 @@ bool GaggiMateServer::sendRawMessage(const uint8_t* data, size_t length) {
 }
 
 bool GaggiMateServer::sendError(uint32_t error_code) {
-    return sendProtocolMessage(NanopbProtocol::encodeError, error_code);
+    return sendEncoded([error_code](uint8_t* buffer, size_t buffer_size, size_t* message_length) {
+        return NanopbProtocol::encodeError(buffer, buffer_size, message_length, error_code);
+    });
 }
 
 bool GaggiMateServer::sendSensorData(float temp, float pressure, float puck_flow, float pump_flow, float resistance) {
-    return sendProtocolMessage(NanopbProtocol::encodeSensorData, temp, pressure, puck_flow, pump_flow, resistance);
+    return sendEncoded([temp, pressure, puck_flow, pump_flow, resistance](uint8_t* buffer, size_t buffer_size,
+                                                                           size_t* message_length) {
+        return NanopbProtocol::encodeSensorData(buffer, buffer_size, message_length, temp, pressure, puck_flow, pump_flow,
+                                                resistance);
+    });
 }
 
 bool GaggiMateServer::sendBrewButton(bool state) {
-    return sendProtocolMessage(NanopbProtocol::encodeBrewButton, state);
+    return sendEncoded([state](uint8_t* buffer, size_t buffer_size, size_t* message_length) {
+        return NanopbProtocol::encodeBrewButton(buffer, buffer_size, message_length, state);
+    });
 }
 
 bool GaggiMateServer::sendSteamButton(bool state) {
-    return sendProtocolMessage(NanopbProtocol::encodeSteamButton, state);
+    return sendEncoded([state](uint8_t* buffer, size_t buffer_size, size_t* message_length) {
+        return NanopbProtocol::encodeSteamButton(buffer, buffer_size, message_length, state);
+    });
 }
 
 bool GaggiMateServer::sendAutotuneResult(float kp, float ki, float kd) {
-    return sendProtocolMessage(NanopbProtocol::encodeAutotuneResult, kp, ki, kd);
+    return sendEncoded([kp, ki, kd](uint8_t* buffer, size_t buffer_size, size_t* message_length) {
+        return NanopbProtocol::encodeAutotuneResult(buffer, buffer_size, message_length, kp, ki, kd);
+    });
 }
 
 bool GaggiMateServer::sendVolumetricMeasurement(float volume) {
-    return sendProtocolMessage(NanopbProtocol::encodeVolumetricMeasurement, volume);
+    return sendEncoded([volume](uint8_t* buffer, size_t buffer_size, size_t* message_length) {
+        return NanopbProtocol::encodeVolumetricMeasurement(buffer, buffer_size, message_length, volume);
+    });
 }
 
 bool GaggiMateServer::sendTofMeasurement(uint32_t distance) {
-    return sendProtocolMessage(NanopbProtocol::encodeTofMeasurement, distance);
+    return sendEncoded([distance](uint8_t* buffer, size_t buffer_size, size_t* message_length) {
+        return NanopbProtocol::encodeTofMeasurement(buffer, buffer_size, message_length, distance);
+    });
 }
 
 bool GaggiMateServer::sendSystemInfo(const String& info) {
-    // Explicitly avoid template deduction issue with const String&
-    uint8_t buffer[NanopbProtocol::MAX_MESSAGE_SIZE];
-    size_t message_length;
-    
     ESP_LOGI("GaggiMateServer", "About to encode system info message, input length: %d", info.length());
     ESP_LOGI("GaggiMateServer", "Input string: %s", info.c_str());
-    
-    if (NanopbProtocol::encodeSystemInfo(buffer, sizeof(buffer), &message_length, info)) {
-        ESP_LOGI("GaggiMateServer", "Successfully encoded system info, message length: %d bytes", message_length);
-        ESP_LOGI("GaggiMateServer", "Max BLE message size: %d bytes", NanopbProtocol::MAX_MESSAGE_SIZE);
-        
-        bool result = bleServer.sendData(buffer, message_length);
-        ESP_LOGI("GaggiMateServer", "BLE sendData result: %s", result ? "SUCCESS" : "FAILED");
-        return result;
-    } else {
-        ESP_LOGE("GaggiMateServer", "Failed to encode system info message!");
-        return false;
-    }
+
+    return sendEncoded([&info](uint8_t* buffer, size_t buffer_size, size_t* message_length) {
+        return NanopbProtocol::encodeSystemInfo(buffer, buffer_size, message_length, info);
+    });
 }
 
 void GaggiMateServer::registerMessageCallback(const protocol_message_callback_t& callback) {
@@ -132,16 +133,4 @@ void GaggiMateServer::handleBLEData(const uint8_t* data, size_t length) {
             message_callback(message);
         }
     }
-}
-
-template<typename... Args>
-bool GaggiMateServer::sendProtocolMessage(bool (*encoder)(uint8_t*, size_t, size_t*, Args...), Args... args) {
-    uint8_t buffer[NanopbProtocol::MAX_MESSAGE_SIZE];
-    size_t message_length;
-    
-    if (encoder(buffer, sizeof(buffer), &message_length, args...)) {
-        return bleServer.sendData(buffer, message_length);
-    }
-    
-    return false;
 }

@@ -19,18 +19,33 @@ ProtocolMessage<T> NanopbProtocol::wrap(MessageType type, T message, const pb_ms
 
 template<typename T>
 bool NanopbProtocol::encodeMessage(uint8_t *buffer, size_t buffer_size, size_t *message_length, const ProtocolMessage<T> *message) {
+    if (buffer == nullptr || message_length == nullptr || message == nullptr) {
+        return false;
+    }
+
+    constexpr size_t footer_size = 2;
+    if (buffer_size <= sizeof(FrameHeader) + footer_size) {
+        return false;
+    }
+
     uint8_t* p = buffer;
-    // Encode into a scratch buffer after header
     FrameHeader hdr {
         .seq = message->seq,
         .mt = message->type,
     };
-    pb_ostream_t os = pb_ostream_from_buffer(buffer + sizeof(FrameHeader), buffer_size - sizeof(FrameHeader) - 2);
+    pb_ostream_t os = pb_ostream_from_buffer(buffer + sizeof(FrameHeader), buffer_size - sizeof(FrameHeader) - footer_size);
     if (!pb_encode(&os, message->descriptor, &message->content)) return false;
     size_t pb_len = os.bytes_written;
+
+    if (pb_len > UINT16_MAX) {
+        return false;
+    }
+
     hdr.len = static_cast<uint16_t>(pb_len);
     memcpy(p, &hdr, sizeof(hdr));
-    *message_length = sizeof(FrameHeader) + pb_len + 2;
+    buffer[sizeof(FrameHeader) + pb_len] = 0;
+    buffer[sizeof(FrameHeader) + pb_len + 1] = 0;
+    *message_length = sizeof(FrameHeader) + pb_len + footer_size;
     return true;
 }
 
@@ -148,6 +163,14 @@ bool NanopbProtocol::encodeLedControl(uint8_t* buffer, size_t buffer_size, size_
     return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
+bool NanopbProtocol::encodeAltControl(uint8_t* buffer, size_t buffer_size, size_t* message_length, bool pin_state) {
+    AltControlRequest message = AltControlRequest_init_default;
+    message.pin_state = pin_state;
+    ProtocolMessage<AltControlRequest> wrapper = wrap(MessageType_MSG_ALT_CONTROL, message, &AltControlRequest_msg);
+
+    return encodeMessage(buffer, buffer_size, message_length, &wrapper);
+}
+
 bool NanopbProtocol::encodeError(uint8_t* buffer, size_t buffer_size, size_t* message_length, uint32_t error_code) {
     ErrorResponse message = ErrorResponse_init_default;
     message.error_code = error_code;
@@ -191,7 +214,7 @@ bool NanopbProtocol::encodeAutotuneResult(uint8_t* buffer, size_t buffer_size, s
     message.kp = kp;
     message.ki = ki;
     message.kd = kd;
-    ProtocolMessage<AutotuneResultResponse> wrapper = wrap(MessageType_MSG_AUTOTUNE_RESULT, message, &AutotuneRequest_msg);
+    ProtocolMessage<AutotuneResultResponse> wrapper = wrap(MessageType_MSG_AUTOTUNE_RESULT, message, &AutotuneResultResponse_msg);
     
     return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
@@ -221,9 +244,164 @@ bool NanopbProtocol::encodeSystemInfo(uint8_t* buffer, size_t buffer_size, size_
     return encodeMessage(buffer, buffer_size, message_length, &wrapper);
 }
 
-template <typename T> bool NanopbProtocol::decodeMessage(const uint8_t* data, size_t length, ProtocolMessage<T>* message) {
-    // TODO: Implement
-    // pb_istream_t stream = pb_istream_from_buffer(data, length);
-    // return pb_decode(&stream, &GaggiMessage_msg, message);
-    return true;
+MessageType NanopbProtocol::getMessageType(const uint8_t* buffer, size_t length) {
+    if (buffer == nullptr || length < sizeof(FrameHeader)) {
+        return MessageType_MSG_UNKNOWN;
+    }
+
+    const FrameHeader* header = reinterpret_cast<const FrameHeader*>(buffer);
+    return static_cast<MessageType>(header->mt);
+}
+
+uint32_t NanopbProtocol::getMessageId(const uint8_t* buffer, size_t length) {
+    if (buffer == nullptr || length < sizeof(FrameHeader)) {
+        return 0;
+    }
+
+    const FrameHeader* header = reinterpret_cast<const FrameHeader*>(buffer);
+    return header->seq;
+}
+
+bool NanopbProtocol::decodeMessage(const uint8_t* data, size_t length, ProtocolMessage<std::any>* message) {
+    if (data == nullptr || message == nullptr || length < sizeof(FrameHeader)) {
+        return false;
+    }
+
+    const FrameHeader* header = reinterpret_cast<const FrameHeader*>(data);
+    const size_t payload_len = header->len;
+    if (length < sizeof(FrameHeader) + payload_len) {
+        return false;
+    }
+
+    const uint8_t* payload = data + sizeof(FrameHeader);
+    pb_istream_t stream = pb_istream_from_buffer(payload, payload_len);
+
+    message->type = static_cast<MessageType>(header->mt);
+    message->seq = header->seq;
+    message->priority = 0;
+
+    switch (message->type) {
+        case MessageType_MSG_PING: {
+            PingRequest decoded = PingRequest_init_default;
+            if (!pb_decode(&stream, &PingRequest_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&PingRequest_msg);
+            return true;
+        }
+        case MessageType_MSG_OUTPUT_CONTROL: {
+            OutputControlRequest decoded = OutputControlRequest_init_default;
+            if (!pb_decode(&stream, &OutputControlRequest_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&OutputControlRequest_msg);
+            return true;
+        }
+        case MessageType_MSG_PID_SETTINGS: {
+            PidSettingsRequest decoded = PidSettingsRequest_init_default;
+            if (!pb_decode(&stream, &PidSettingsRequest_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&PidSettingsRequest_msg);
+            return true;
+        }
+        case MessageType_MSG_PUMP_MODEL: {
+            PumpModelCoeffsRequest decoded = PumpModelCoeffsRequest_init_default;
+            if (!pb_decode(&stream, &PumpModelCoeffsRequest_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&PumpModelCoeffsRequest_msg);
+            return true;
+        }
+        case MessageType_MSG_AUTOTUNE: {
+            AutotuneRequest decoded = AutotuneRequest_init_default;
+            if (!pb_decode(&stream, &AutotuneRequest_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&AutotuneRequest_msg);
+            return true;
+        }
+        case MessageType_MSG_PRESSURE_SCALE: {
+            PressureScaleRequest decoded = PressureScaleRequest_init_default;
+            if (!pb_decode(&stream, &PressureScaleRequest_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&PressureScaleRequest_msg);
+            return true;
+        }
+        case MessageType_MSG_TARE: {
+            TareRequest decoded = TareRequest_init_default;
+            if (!pb_decode(&stream, &TareRequest_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&TareRequest_msg);
+            return true;
+        }
+        case MessageType_MSG_LED_CONTROL: {
+            LedControlRequest decoded = LedControlRequest_init_default;
+            if (!pb_decode(&stream, &LedControlRequest_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&LedControlRequest_msg);
+            return true;
+        }
+        case MessageType_MSG_ALT_CONTROL: {
+            AltControlRequest decoded = AltControlRequest_init_default;
+            if (!pb_decode(&stream, &AltControlRequest_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&AltControlRequest_msg);
+            return true;
+        }
+        case MessageType_MSG_ERROR: {
+            ErrorResponse decoded = ErrorResponse_init_default;
+            if (!pb_decode(&stream, &ErrorResponse_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&ErrorResponse_msg);
+            return true;
+        }
+        case MessageType_MSG_SENSOR_DATA: {
+            SensorDataResponse decoded = SensorDataResponse_init_default;
+            if (!pb_decode(&stream, &SensorDataResponse_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&SensorDataResponse_msg);
+            return true;
+        }
+        case MessageType_MSG_BREW_BUTTON: {
+            BrewButtonResponse decoded = BrewButtonResponse_init_default;
+            if (!pb_decode(&stream, &BrewButtonResponse_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&BrewButtonResponse_msg);
+            return true;
+        }
+        case MessageType_MSG_STEAM_BUTTON: {
+            SteamButtonResponse decoded = SteamButtonResponse_init_default;
+            if (!pb_decode(&stream, &SteamButtonResponse_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&SteamButtonResponse_msg);
+            return true;
+        }
+        case MessageType_MSG_AUTOTUNE_RESULT: {
+            AutotuneResultResponse decoded = AutotuneResultResponse_init_default;
+            if (!pb_decode(&stream, &AutotuneResultResponse_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&AutotuneResultResponse_msg);
+            return true;
+        }
+        case MessageType_MSG_VOLUMETRIC: {
+            VolumetricMeasurementResponse decoded = VolumetricMeasurementResponse_init_default;
+            if (!pb_decode(&stream, &VolumetricMeasurementResponse_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&VolumetricMeasurementResponse_msg);
+            return true;
+        }
+        case MessageType_MSG_TOF: {
+            TofMeasurementResponse decoded = TofMeasurementResponse_init_default;
+            if (!pb_decode(&stream, &TofMeasurementResponse_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&TofMeasurementResponse_msg);
+            return true;
+        }
+        case MessageType_MSG_SYSTEM_INFO: {
+            SystemInfoResponse decoded = SystemInfoResponse_init_default;
+            if (!pb_decode(&stream, &SystemInfoResponse_msg, &decoded)) return false;
+            message->content = decoded;
+            message->descriptor = const_cast<pb_msgdesc_t*>(&SystemInfoResponse_msg);
+            return true;
+        }
+        case MessageType_MSG_UNKNOWN:
+        default:
+            return false;
+    }
 }

@@ -4,12 +4,11 @@
 const char* BLETransportClient::SERVICE_UUID = "e75bc5b6-ff6e-4337-9d31-0c128f2e6e68";
 const char* BLETransportClient::RX_CHAR_UUID = "87654321-4321-8765-4321-cba987654321";  // For receiving from server
 const char* BLETransportClient::TX_CHAR_UUID = "12345678-1234-5678-1234-123456789abc";  // For sending to server
-// Note: INFO_CHAR_UUID removed - using nanopb messages for system info
+const char* BLETransportClient::INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdba74";
 
 // Static instance for callback handling
 BLETransportClient* BLETransportClient::instance = nullptr;
 
-#include "BLEClient.h"
 
 BLETransportClient::BLETransportClient() : deviceConnected(false), client(nullptr) {
     Serial.println("[BLEClient] BLETransportClient constructor called");
@@ -94,7 +93,7 @@ bool BLETransportClient::connectToServer() {
     // Get characteristics
     rx_char = pRemoteService->getCharacteristic(RX_CHAR_UUID);
     tx_char = pRemoteService->getCharacteristic(TX_CHAR_UUID);
-    // Note: info_char removed - using nanopb messages for system info
+    info_char = pRemoteService->getCharacteristic(INFO_CHAR_UUID);
     
     if (!rx_char || !tx_char) {
         deviceConnected = false;
@@ -138,6 +137,9 @@ void BLETransportClient::disconnect() {
     readyForConnection = false;
     serverDevice = nullptr;
     serverDeviceFoundTime = 0;
+    rx_char = nullptr;
+    tx_char = nullptr;
+    info_char = nullptr;
     if (client && client->isConnected()) {
         client->disconnect();
     }
@@ -187,6 +189,16 @@ void BLETransportClient::registerDataCallback(const ble_data_callback_t& callbac
     data_callback = callback;
 }
 
+
+String BLETransportClient::readDeviceInfo() const {
+    if (!isConnected() || !info_char || !info_char->canRead()) {
+        return "";
+    }
+
+    const std::string value = info_char->readValue();
+    return String(value.c_str());
+}
+
 void BLETransportClient::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     if (advertisedDevice->haveServiceUUID() && 
         advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))) {
@@ -209,6 +221,9 @@ void BLETransportClient::onDisconnect(NimBLEClient* pClient) {
     readyForConnection = false;
     serverDevice = nullptr;
     serverDeviceFoundTime = 0;
+    rx_char = nullptr;
+    tx_char = nullptr;
+    info_char = nullptr;
     ESP_LOGI("BLEClient", "Connection lost, resetting state");
 }
 
