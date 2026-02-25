@@ -6,11 +6,8 @@
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);
     startupMode = preferences.getInt("sm", MODE_STANDBY);
-    targetBrewTemp = preferences.getInt("tb", 90);
     targetSteamTemp = preferences.getInt("ts", 145);
     targetWaterTemp = preferences.getInt("tw", 80);
-    targetDuration = preferences.getInt("td", 25000);
-    targetVolume = preferences.getInt("tv", 36);
     targetGrindVolume = preferences.getDouble("tgv", 18.0);
     targetGrindDuration = preferences.getInt("tgd", 25000);
     brewDelay = preferences.getDouble("del_br", 1000.0);
@@ -26,9 +23,6 @@ Settings::Settings() {
     homekit = preferences.getBool("hk", false);
     volumetricTarget = preferences.getBool("vt", false);
     otaChannel = preferences.getString("oc", DEFAULT_OTA_CHANNEL);
-    infusePumpTime = preferences.getInt("ipt", 0);
-    infuseBloomTime = preferences.getInt("ibt", 0);
-    pressurizeTime = preferences.getInt("pt", 0);
     savedScale = preferences.getString("ssc", "");
     momentaryButtons = preferences.getBool("mb", false);
     boilerFillActive = preferences.getBool("bf_a", false);
@@ -48,7 +42,6 @@ Settings::Settings() {
     timezone = preferences.getString("tz", DEFAULT_TIMEZONE);
     clock24hFormat = preferences.getBool("clk_24h", true);
     selectedProfile = preferences.getString("sp", "");
-    profilesMigrated = preferences.getBool("pm", false);
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
     profileOrder = explode(preferences.getString("po", ""), ',');
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
@@ -130,11 +123,6 @@ void Settings::save(bool noDelay) {
     dirty = true;
 }
 
-void Settings::setTargetBrewTemp(const int target_brew_temp) {
-    targetBrewTemp = target_brew_temp;
-    save();
-}
-
 void Settings::setTargetSteamTemp(const int target_steam_temp) {
     targetSteamTemp = target_steam_temp;
     save();
@@ -152,16 +140,6 @@ void Settings::setTemperatureOffset(const int temperature_offset) {
 
 void Settings::setPressureScaling(const float pressure_scaling) {
     pressureScaling = pressure_scaling;
-    save();
-}
-
-void Settings::setTargetDuration(const int target_duration) {
-    targetDuration = target_duration;
-    save();
-}
-
-void Settings::setTargetVolume(int target_volume) {
-    targetVolume = target_volume;
     save();
 }
 
@@ -197,21 +175,6 @@ void Settings::setStartupMode(const int startup_mode) {
 
 void Settings::setStandbyTimeout(int standby_timeout) {
     standbyTimeout = standby_timeout;
-    save();
-}
-
-void Settings::setInfuseBloomTime(int infuse_bloom_time) {
-    infuseBloomTime = infuse_bloom_time;
-    save();
-}
-
-void Settings::setInfusePumpTime(int infuse_pump_time) {
-    infusePumpTime = infuse_pump_time;
-    save();
-}
-
-void Settings::setPressurizeTime(int pressurize_time) {
-    pressurizeTime = pressurize_time;
     save();
 }
 
@@ -337,17 +300,15 @@ void Settings::setSelectedProfile(String selected_profile) {
     save();
 }
 
-void Settings::setProfilesMigrated(bool profiles_migrated) {
-    profilesMigrated = profiles_migrated;
-    save();
-}
-
 void Settings::setFavoritedProfiles(std::vector<String> favorited_profiles) {
     favoritedProfiles = std::move(favorited_profiles);
     save();
 }
 
 void Settings::addFavoritedProfile(String profile) {
+    if (std::find(favoritedProfiles.begin(), favoritedProfiles.end(), profile) != favoritedProfiles.end()) {
+        return;
+    }
     favoritedProfiles.emplace_back(profile);
     save();
 }
@@ -468,11 +429,8 @@ void Settings::doSave() {
     ESP_LOGI("Settings", "Saving settings");
     preferences.begin(PREFERENCES_KEY, false);
     preferences.putInt("sm", startupMode);
-    preferences.putInt("tb", targetBrewTemp);
     preferences.putInt("ts", targetSteamTemp);
     preferences.putInt("tw", targetWaterTemp);
-    preferences.putInt("td", targetDuration);
-    preferences.putInt("tv", targetVolume);
     preferences.putDouble("tgv", targetGrindVolume);
     preferences.putInt("tgd", targetGrindDuration);
     preferences.putDouble("del_br", brewDelay);
@@ -488,9 +446,6 @@ void Settings::doSave() {
     preferences.putBool("hk", homekit);
     preferences.putBool("vt", volumetricTarget);
     preferences.putString("oc", otaChannel);
-    preferences.putInt("ipt", infusePumpTime);
-    preferences.putInt("ibt", infuseBloomTime);
-    preferences.putInt("pt", pressurizeTime);
     preferences.putString("ssc", savedScale);
     preferences.putBool("bf_a", boilerFillActive);
     preferences.putInt("bf_su", startupFillTime);
@@ -509,7 +464,6 @@ void Settings::doSave() {
     preferences.putBool("clk_24h", clock24hFormat);
     preferences.putString("sp", selectedProfile);
     preferences.putInt("sbt", standbyTimeout);
-    preferences.putBool("pm", profilesMigrated);
     preferences.putBool("mb", momentaryButtons);
     preferences.putString("fp", implode(favoritedProfiles, ","));
     preferences.putString("po", implode(profileOrder, ","));

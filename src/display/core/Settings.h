@@ -54,20 +54,14 @@ class Settings {
     void save(bool noDelay = false);
 
     // Getters and setters
-    int getTargetBrewTemp() const { return targetBrewTemp; }
     int getTargetSteamTemp() const { return targetSteamTemp; }
     int getTargetWaterTemp() const { return targetWaterTemp; }
     int getTemperatureOffset() const { return temperatureOffset; }
     float getPressureScaling() const { return pressureScaling; }
-    int getTargetDuration() const { return targetDuration; }
-    int getTargetVolume() const { return targetVolume; }
     double getTargetGrindVolume() const { return targetGrindVolume; }
     int getTargetGrindDuration() const { return targetGrindDuration; }
     int getStartupMode() const { return startupMode; }
     int getStandbyTimeout() const { return standbyTimeout; }
-    int getInfuseBloomTime() const { return infuseBloomTime; }
-    int getInfusePumpTime() const { return infusePumpTime; }
-    int getPressurizeTime() const { return pressurizeTime; }
     double getBrewDelay() const { return brewDelay; }
     double getGrindDelay() const { return grindDelay; }
     bool isDelayAdjust() const { return delayAdjust; }
@@ -96,7 +90,6 @@ class Settings {
     String getTimezone() const { return timezone; }
     bool isClock24hFormat() const { return clock24hFormat; }
     String getSelectedProfile() const { return selectedProfile; }
-    bool isProfilesMigrated() const { return profilesMigrated; }
     std::vector<String> getFavoritedProfiles() const { return favoritedProfiles; }
     std::vector<String> getProfileOrder() const { return profileOrder; }
     int getMainBrightness() const { return mainBrightness; }
@@ -117,20 +110,14 @@ class Settings {
     int getAltRelayFunction() const { return altRelayFunction; }
     bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
-    void setTargetBrewTemp(int target_brew_temp);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
     void setPressureScaling(float pressure_scaling);
-    void setTargetDuration(int target_duration);
-    void setTargetVolume(int target_volume);
     void setTargetGrindVolume(double target_grind_volume);
     void setTargetGrindDuration(int target_duration);
     void setStartupMode(int startup_mode);
     void setStandbyTimeout(int standby_timeout);
-    void setInfuseBloomTime(int infuse_bloom_time);
-    void setInfusePumpTime(int infuse_pump_time);
-    void setPressurizeTime(int pressurize_time);
     void setBrewDelay(double brewDelay);
     void setGrindDelay(double grindDelay);
     void setDelayAdjust(bool delay_adjust);
@@ -159,7 +146,6 @@ class Settings {
     void setTimezone(String timezone);
     void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
-    void setProfilesMigrated(bool profiles_migrated);
     void setFavoritedProfiles(std::vector<String> favorited_profiles);
     void addFavoritedProfile(String profile);
     void removeFavoritedProfile(String profile);
@@ -188,7 +174,6 @@ class Settings {
     bool dirty = false;
 
     String selectedProfile;
-    bool profilesMigrated = false;
     int targetSteamTemp = 155;
     int targetWaterTemp = 80;
     int temperatureOffset = DEFAULT_TEMPERATURE_OFFSET;
@@ -232,14 +217,6 @@ class Settings {
     float steamPumpPercentage = DEFAULT_STEAM_PUMP_PERCENTAGE;
     float steamPumpCutoff = DEFAULT_STEAM_PUMP_CUTOFF;
     int historyIndex = 0;
-
-    // Deprecated, use profiles
-    int targetBrewTemp = 93;
-    int targetDuration = 25000;
-    int targetVolume = 36;
-    int infuseBloomTime = 0;
-    int infusePumpTime = 0;
-    int pressurizeTime = 0;
 
     // Display settings
     int mainBrightness = 16;
