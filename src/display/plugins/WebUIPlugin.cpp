@@ -612,6 +612,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setTargetSteamTemp(request->arg("targetSteamTemp").toInt());
             if (request->hasArg("targetWaterTemp"))
                 settings->setTargetWaterTemp(request->arg("targetWaterTemp").toInt());
+            if (request->hasArg("standbyTemperature"))
+                settings->setStandbyTemperature(request->arg("standbyTemperature").toInt());
             if (request->hasArg("temperatureOffset"))
                 settings->setTemperatureOffset(request->arg("temperatureOffset").toInt());
             if (request->hasArg("pressureScaling"))
@@ -754,6 +756,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["startupProfile"] = settings.getStartupProfile();
     doc["targetSteamTemp"] = settings.getTargetSteamTemp();
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
+    doc["standbyTemperature"] = settings.getStandbyTemperature();
     doc["homekit"] = settings.isHomekit();
     doc["homeAssistant"] = settings.isHomeAssistant();
     doc["haUser"] = settings.getHomeAssistantUser();

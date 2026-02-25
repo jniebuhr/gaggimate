@@ -55,9 +55,9 @@
         "strtype": "THEME_COLOR",
         "strval": "Heating",
         "intarray": [
-          0,
-          105,
-          173,
+          246,
+          44,
+          44,
           255
         ],
         "InheritedType": 0
@@ -121,9 +121,9 @@
           "strtype": "THEME_COLOR",
           "strval": "Heating",
           "intarray": [
-            0,
-            105,
-            173,
+            246,
+            44,
+            44,
             255
           ],
           "InheritedType": 0

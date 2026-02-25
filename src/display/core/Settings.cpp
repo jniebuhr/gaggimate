@@ -112,6 +112,9 @@ Settings::Settings() {
     fullTankDistance = preferences.getInt("sr_fd", 30);
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
 
+    // Standby heating
+    standbyTemperature = preferences.getInt("sbtmp", 0);
+
     commutationGain = preferences.getFloat("p_cm", DEFAULT_COMMUTATION_GAIN);
     convergenceGain = preferences.getFloat("p_cv", DEFAULT_CONVERGENCE_GAIN);
     integralGain = preferences.getFloat("p_ig", DEFAULT_INTEGRAL_GAIN);
@@ -461,6 +464,11 @@ void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &sch
     save();
 }
 
+void Settings::setStandbyTemperature(int standby_temperature) {
+    standbyTemperature = standby_temperature;
+    save();
+}
+
 void Settings::setButtonBehavior(int index, String behavior) {
     if (index < 0 || index >= buttonBehavior.size()) {
         return;
@@ -545,6 +553,7 @@ void Settings::doSave() {
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
     preferences.putBool("ab_en", autowakeupEnabled);
+    preferences.putInt("sbtmp", standbyTemperature);
 
     // Save schedule format
     String schedulesForSave = "";

@@ -128,6 +128,7 @@ class Settings {
     int getAltRelayFunction() const { return altRelayFunction; }
     bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
+    int getStandbyTemperature() const { return standbyTemperature; }
     String getButtonBehavior(int index) const {
         if (index >= 0 && index < buttonBehavior.size())
             return buttonBehavior[index];
@@ -206,6 +207,7 @@ class Settings {
     void setAltRelayFunction(int alt_relay_function);
     void setAutoWakeupEnabled(bool enabled);
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
+    void setStandbyTemperature(int standby_temperature);
     void setButtonBehavior(int index, String behavior);
     void setButtonBehaviorList(const std::vector<String> &behavior_list);
 
@@ -292,6 +294,9 @@ class Settings {
     float convergenceGain = DEFAULT_CONVERGENCE_GAIN;
     float integralGain = DEFAULT_INTEGRAL_GAIN;
     float maxPumpPower = 1.0f;
+
+    // Standby heating
+    int standbyTemperature = 0;
 
     void doSave();
     xTaskHandle taskHandle;
