@@ -109,7 +109,10 @@ export function StatisticsMultiSelectDropdown({
 
     const start = Math.min(anchorIndex, index);
     const end = Math.max(anchorIndex, index);
-    const rangeIds = filteredItems.slice(start, end + 1).map(item => item.id).filter(Boolean);
+    const rangeIds = filteredItems
+      .slice(start, end + 1)
+      .map(item => item.id)
+      .filter(Boolean);
 
     const nextSet = additive ? new Set(selectedSet) : new Set();
     rangeIds.forEach(id => nextSet.add(id));
@@ -300,7 +303,7 @@ export function StatisticsMultiSelectDropdown({
         aria-expanded={open}
         aria-haspopup='listbox'
         onClick={() => setOpen(v => !v)}
-        className={`inline-flex h-12 min-h-0 min-w-[12rem] max-w-[22rem] items-center justify-between gap-2 rounded-lg border px-3 text-xs font-semibold shadow-sm transition-colors ${getAccentTriggerClasses(accentTone, selectedCount > 0)} disabled:cursor-not-allowed disabled:opacity-40`}
+        className={`inline-flex h-12 min-h-0 max-w-[22rem] min-w-[12rem] items-center justify-between gap-2 rounded-lg border px-3 text-xs font-semibold shadow-sm transition-colors ${getAccentTriggerClasses(accentTone, selectedCount > 0)} disabled:cursor-not-allowed disabled:opacity-40`}
       >
         <span className='truncate text-left'>{triggerText}</span>
         <span className='text-[10px] opacity-65'>{open ? '▲' : '▼'}</span>
@@ -309,7 +312,7 @@ export function StatisticsMultiSelectDropdown({
       {open && (
         <div
           ref={listRef}
-          className='bg-base-100/95 border-base-content/10 absolute left-0 top-full z-[60] mt-2 w-[min(92vw,28rem)] rounded-xl border shadow-xl backdrop-blur-md'
+          className='bg-base-100/95 border-base-content/10 absolute top-full left-0 z-[60] mt-2 w-[min(92vw,28rem)] rounded-xl border shadow-xl backdrop-blur-md'
         >
           <div className='border-base-content/8 border-b p-2'>
             <input
@@ -317,7 +320,7 @@ export function StatisticsMultiSelectDropdown({
               value={searchTerm}
               onInput={e => setSearchTerm(e.target.value)}
               placeholder={`Search ${label.toLowerCase()}...`}
-              className='input input-sm input-bordered h-8 min-h-0 w-full border-base-content/10 bg-base-100/70 text-xs'
+              className='input input-sm input-bordered border-base-content/10 bg-base-100/70 h-8 min-h-0 w-full text-xs'
             />
           </div>
 
@@ -370,7 +373,9 @@ export function StatisticsMultiSelectDropdown({
                     </button>
 
                     <div className='min-w-0 flex-1'>
-                      <div className='truncate text-xs font-semibold'>{item.primary || item.id}</div>
+                      <div className='truncate text-xs font-semibold'>
+                        {item.primary || item.id}
+                      </div>
                       {item.secondary && (
                         <div className='truncate text-[10px] opacity-65'>{item.secondary}</div>
                       )}

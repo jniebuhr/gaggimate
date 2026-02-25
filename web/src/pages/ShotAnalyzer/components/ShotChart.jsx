@@ -54,7 +54,9 @@ const fixedTooltipPlugin = {
     const tooltipWidth = Number(tooltip.width) || 0;
     const tooltipHeight = Number(tooltip.height) || 0;
 
-    const anchorX = Number.isFinite(tooltip.caretX) ? tooltip.caretX : chart.chartArea.left + offsetX;
+    const anchorX = Number.isFinite(tooltip.caretX)
+      ? tooltip.caretX
+      : chart.chartArea.left + offsetX;
     const chartMidX = (chart.chartArea.left + chart.chartArea.right) / 2;
     const showRightOfPointer = anchorX <= chartMidX;
     const preferredX = showRightOfPointer
@@ -90,13 +92,21 @@ const replayRevealPlugin = {
     const cutoffPixelRaw = chart.scales.x.getPixelForValue(cutoffX);
     const cutoffPixel = Math.min(
       chart.chartArea.right,
-      Math.max(chart.chartArea.left, Number.isFinite(cutoffPixelRaw) ? cutoffPixelRaw : chart.chartArea.left),
+      Math.max(
+        chart.chartArea.left,
+        Number.isFinite(cutoffPixelRaw) ? cutoffPixelRaw : chart.chartArea.left,
+      ),
     );
     const clipWidth = Math.max(0, cutoffPixel - chart.chartArea.left);
 
     chart.ctx.save();
     chart.ctx.beginPath();
-    chart.ctx.rect(chart.chartArea.left, chart.chartArea.top, clipWidth, chart.chartArea.bottom - chart.chartArea.top);
+    chart.ctx.rect(
+      chart.chartArea.left,
+      chart.chartArea.top,
+      clipWidth,
+      chart.chartArea.bottom - chart.chartArea.top,
+    );
     chart.ctx.clip();
     chart.$replayRevealClipActive = true;
   },
@@ -201,7 +211,13 @@ const CHART_COLOR_TOKEN_MAP = {
 };
 const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
 const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
-const LEGEND_THIN_LINE_LABELS = new Set(['Target T', 'Target P', 'Target F', 'Puck Flow', 'Weight']);
+const LEGEND_THIN_LINE_LABELS = new Set([
+  'Target T',
+  'Target P',
+  'Target F',
+  'Puck Flow',
+  'Weight',
+]);
 const WATER_DRAWN_PHASE_LABEL = 'Water Drawn (Phase)';
 const WATER_DRAWN_TOTAL_LABEL = 'Water Drawn (Total)';
 const TOOLTIP_WATER_LABELS = new Set([WATER_DRAWN_PHASE_LABEL, WATER_DRAWN_TOTAL_LABEL]);
@@ -566,7 +582,10 @@ export function ShotChart({ shotData, results }) {
     if (revealAll) {
       replayLastAppliedIndexRef.current = sampleTimesSec.length - 1;
     } else {
-      replayLastAppliedIndexRef.current = findLastSampleIndexAtOrBeforeX(sampleTimesSec, effectiveCutoffX);
+      replayLastAppliedIndexRef.current = findLastSampleIndexAtOrBeforeX(
+        sampleTimesSec,
+        effectiveCutoffX,
+      );
     }
 
     mainChart.update('none');
@@ -579,14 +598,16 @@ export function ShotChart({ shotData, results }) {
       : Date.now();
 
   const scheduleReplayFrame = frameHandler => {
-    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return false;
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function')
+      return false;
     replayRafRef.current = window.requestAnimationFrame(frameHandler);
     return true;
   };
 
   const startReplay = () => {
     const runtime = replayRuntimeRef.current;
-    if (!runtime || !Array.isArray(runtime.sampleTimesSec) || runtime.sampleTimesSec.length === 0) return;
+    if (!runtime || !Array.isArray(runtime.sampleTimesSec) || runtime.sampleTimesSec.length === 0)
+      return;
     const mainChart = mainChartInstance.current;
     const tempChart = tempChartInstance.current;
     if (!mainChart || !tempChart) return;
@@ -666,7 +687,8 @@ export function ShotChart({ shotData, results }) {
 
   const resumeReplay = () => {
     const runtime = replayRuntimeRef.current;
-    if (!runtime || !Array.isArray(runtime.sampleTimesSec) || runtime.sampleTimesSec.length === 0) return;
+    if (!runtime || !Array.isArray(runtime.sampleTimesSec) || runtime.sampleTimesSec.length === 0)
+      return;
     if (isReplayingRef.current) return;
 
     isReplayingRef.current = true;
@@ -832,7 +854,9 @@ export function ShotChart({ shotData, results }) {
             const endAbs = shotStartSec + Math.max(startRel, endRel);
             const startSampleIndexFloor = findLastSampleIndexAtOrBeforeX(sampleTimesSec, startAbs);
             const startCumWater =
-              startSampleIndexFloor >= 0 ? cumulativeWaterTotalBySample[startSampleIndexFloor] || 0 : 0;
+              startSampleIndexFloor >= 0
+                ? cumulativeWaterTotalBySample[startSampleIndexFloor] || 0
+                : 0;
             return {
               label: phase?.displayName || phase?.name || null,
               startAbs,
@@ -906,16 +930,28 @@ export function ShotChart({ shotData, results }) {
       ...series.puckFlow,
       ...series.targetFlow,
     ];
-    const mainAxisMaxRaw = safeMax(mainAxisSamples.map(p => p.y), 1);
+    const mainAxisMaxRaw = safeMax(
+      mainAxisSamples.map(p => p.y),
+      1,
+    );
     const mainAxisMax = Math.max(1, mainAxisMaxRaw * 1.02);
 
-    const weightAxisMaxRaw = safeMax(series.weight.map(p => p.y), 1);
+    const weightAxisMaxRaw = safeMax(
+      series.weight.map(p => p.y),
+      1,
+    );
     // Keep weight always visible while keeping headroom minimal like the main axis.
     const weightAxisMax = Math.max(1, weightAxisMaxRaw * 1.02);
 
     const tempAxisSamples = [...series.temp, ...series.targetTemp];
-    const tempMinRaw = safeMin(tempAxisSamples.map(p => p.y), 80);
-    const tempMaxRaw = safeMax(tempAxisSamples.map(p => p.y), 100);
+    const tempMinRaw = safeMin(
+      tempAxisSamples.map(p => p.y),
+      80,
+    );
+    const tempMaxRaw = safeMax(
+      tempAxisSamples.map(p => p.y),
+      100,
+    );
     const tempRange = Math.max(0.5, tempMaxRaw - tempMinRaw);
     const tempTopPadding = Math.max(0.15, tempRange * 0.02);
     const tempBottomPadding = Math.max(0.25, tempRange * 0.07);
@@ -923,8 +959,14 @@ export function ShotChart({ shotData, results }) {
     const tempAxisMax = tempMaxRaw + tempTopPadding;
 
     const targetTempAxisSamples = series.targetTemp.length > 0 ? series.targetTemp : series.temp;
-    const targetTempMinRaw = safeMin(targetTempAxisSamples.map(p => p.y), tempMinRaw);
-    const targetTempMaxRaw = safeMax(targetTempAxisSamples.map(p => p.y), tempMaxRaw);
+    const targetTempMinRaw = safeMin(
+      targetTempAxisSamples.map(p => p.y),
+      tempMinRaw,
+    );
+    const targetTempMaxRaw = safeMax(
+      targetTempAxisSamples.map(p => p.y),
+      tempMaxRaw,
+    );
     const targetTempRange = Math.max(0.5, targetTempMaxRaw - targetTempMinRaw);
     const targetTempTopPadding = Math.max(0.15, targetTempRange * 0.02);
     const targetTempBottomPadding = Math.max(0.25, targetTempRange * 0.07);
@@ -1027,9 +1069,7 @@ export function ShotChart({ shotData, results }) {
           const isFinalWeightStop =
             lastPhase.exit.type === 'weight' || lastPhase.exit.type === 'volumetric';
           if (isFinalWeightStop) {
-            const lastNonExtendedSample = samples.findLast(
-              s => !s.systemInfo?.extendedRecording,
-            );
+            const lastNonExtendedSample = samples.findLast(s => !s.systemInfo?.extendedRecording);
             if (lastNonExtendedSample) {
               finalStopTime = (lastNonExtendedSample.t || 0) / 1000;
             }
@@ -1088,17 +1128,20 @@ export function ShotChart({ shotData, results }) {
     }
 
     // Temp chart should only mirror the phase separator lines, without any labels.
-    const tempPhaseAnnotations = Object.entries(phaseAnnotations).reduce((acc, [key, annotation]) => {
-      const isPhaseSeparator =
-        key === 'shot_start' || key === 'shot_end' || key.startsWith('phase_line_');
-      if (!isPhaseSeparator) return acc;
+    const tempPhaseAnnotations = Object.entries(phaseAnnotations).reduce(
+      (acc, [key, annotation]) => {
+        const isPhaseSeparator =
+          key === 'shot_start' || key === 'shot_end' || key.startsWith('phase_line_');
+        if (!isPhaseSeparator) return acc;
 
-      acc[key] = {
-        ...annotation,
-        label: { display: false },
-      };
-      return acc;
-    }, {});
+        acc[key] = {
+          ...annotation,
+          label: { display: false },
+        };
+        return acc;
+      },
+      {},
+    );
 
     const getHoverWaterValuesAtX = xValue => {
       if (!Number.isFinite(xValue) || sampleTimesSec.length === 0) {
@@ -1147,7 +1190,9 @@ export function ShotChart({ shotData, results }) {
     });
     const waterTooltipTotalSeries = sampleTimesSec.map((x, index) => ({
       x,
-      y: Number.isFinite(cumulativeWaterTotalBySample[index]) ? cumulativeWaterTotalBySample[index] : 0,
+      y: Number.isFinite(cumulativeWaterTotalBySample[index])
+        ? cumulativeWaterTotalBySample[index]
+        : 0,
     }));
 
     const tooltipGapBeforeGroup = context => {
@@ -1158,14 +1203,16 @@ export function ShotChart({ shotData, results }) {
       if (!Array.isArray(tooltipItems) || tooltipItems.length === 0) return null;
 
       if (TOOLTIP_WATER_LABELS.has(label)) {
-        const firstWaterLabel = tooltipItems.find(item => TOOLTIP_WATER_LABELS.has(item?.dataset?.label))
-          ?.dataset?.label;
+        const firstWaterLabel = tooltipItems.find(item =>
+          TOOLTIP_WATER_LABELS.has(item?.dataset?.label),
+        )?.dataset?.label;
         return firstWaterLabel === label ? [''] : null;
       }
 
       if (TOOLTIP_BOTTOM_LABELS.has(label)) {
-        const firstBottomLabel = tooltipItems.find(item => TOOLTIP_BOTTOM_LABELS.has(item?.dataset?.label))
-          ?.dataset?.label;
+        const firstBottomLabel = tooltipItems.find(item =>
+          TOOLTIP_BOTTOM_LABELS.has(item?.dataset?.label),
+        )?.dataset?.label;
         return firstBottomLabel === label ? [''] : null;
       }
 
@@ -1382,8 +1429,7 @@ export function ShotChart({ shotData, results }) {
               padding: 8,
               cornerRadius: 4,
               filter: context =>
-                context.dataset.label !== 'Phase Names' &&
-                context.dataset.label !== 'Stops',
+                context.dataset.label !== 'Phase Names' && context.dataset.label !== 'Stops',
               itemSort: (a, b) =>
                 (TOOLTIP_INDEX[a.dataset.label] ?? 999) - (TOOLTIP_INDEX[b.dataset.label] ?? 999),
               callbacks: {
@@ -1491,7 +1537,12 @@ export function ShotChart({ shotData, results }) {
       tempChartInstance.current = new Chart(tempChartRef.current, {
         type: 'line',
         data: { datasets: tempDatasets },
-        plugins: [hoverGuidePlugin, fixedTooltipPlugin, replayRevealPlugin, targetTempAxisLabelsPlugin],
+        plugins: [
+          hoverGuidePlugin,
+          fixedTooltipPlugin,
+          replayRevealPlugin,
+          targetTempAxisLabelsPlugin,
+        ],
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -1618,7 +1669,10 @@ export function ShotChart({ shotData, results }) {
       const currentLeft = Number(currentPadding.left) || 0;
       const currentRight = Number(currentPadding.right) || 0;
 
-      if (Math.abs(currentLeft - leftPadding) < 0.5 && Math.abs(currentRight - rightPadding) < 0.5) {
+      if (
+        Math.abs(currentLeft - leftPadding) < 0.5 &&
+        Math.abs(currentRight - rightPadding) < 0.5
+      ) {
         return;
       }
 
@@ -1871,11 +1925,16 @@ export function ShotChart({ shotData, results }) {
                 onClick={() => handleLegendToggle(label)}
                 aria-pressed={isVisible}
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded px-1.5 py-1 text-[10px] font-semibold transition ${
-                  isVisible ? 'text-base-content opacity-90' : 'text-base-content/60 opacity-45 hover:opacity-70'
+                  isVisible
+                    ? 'text-base-content opacity-90'
+                    : 'text-base-content/60 opacity-45 hover:opacity-70'
                 }`}
               >
                 {LEGEND_BLOCK_LABELS.has(label) ? (
-                  <span className='h-2.5 w-3 rounded-[2px]' style={{ backgroundColor: swatchColor }} />
+                  <span
+                    className='h-2.5 w-3 rounded-[2px]'
+                    style={{ backgroundColor: swatchColor }}
+                  />
                 ) : (
                   <span
                     className={`block w-4 border-t ${LEGEND_DASHED_LABELS.has(label) ? 'border-dashed' : 'border-solid'}`}
@@ -1916,11 +1975,15 @@ export function ShotChart({ shotData, results }) {
             type='button'
             onClick={() =>
               setMainChartHeight(current =>
-                current === MAIN_CHART_HEIGHT_SMALL ? MAIN_CHART_HEIGHT_BIG : MAIN_CHART_HEIGHT_SMALL,
+                current === MAIN_CHART_HEIGHT_SMALL
+                  ? MAIN_CHART_HEIGHT_BIG
+                  : MAIN_CHART_HEIGHT_SMALL,
               )
             }
             className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
-            aria-label={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
+            aria-label={
+              mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'
+            }
             title={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
           >
             <FontAwesomeIcon

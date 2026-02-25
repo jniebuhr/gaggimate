@@ -78,15 +78,16 @@ export function StatusBar({
         <div
           className='grid h-12 w-full items-center gap-1 sm:gap-2'
           style={{
-            gridTemplateColumns:
-              'minmax(0, 2.6fr) minmax(0, 2.6fr) minmax(5.75rem, 0.9fr)',
+            gridTemplateColumns: 'minmax(0, 2.6fr) minmax(0, 2.6fr) minmax(5.75rem, 0.9fr)',
           }}
         >
           {/* --- CENTER: SHOT BADGE --- */}
           <div className={shotBadgeClasses} onClick={onTogglePanel} title='Click to toggle library'>
             <FontAwesomeIcon icon={faFolderOpen} className='opacity-70' />
             <span className='mx-2 flex-1 truncate text-center text-sm font-bold'>
-              {currentShot?.source === 'gaggimate' ? `#${currentShot.id}` : cleanName(currentShotName)}
+              {currentShot?.source === 'gaggimate'
+                ? `#${currentShot.id}`
+                : cleanName(currentShotName)}
             </span>
             {currentShot ? (
               <button

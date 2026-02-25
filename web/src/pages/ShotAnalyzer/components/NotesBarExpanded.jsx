@@ -65,9 +65,7 @@ export function NotesBarExpanded({
   };
 
   return (
-    <div
-      className={`transition-all duration-200 ${borderClasses}`}
-    >
+    <div className={`transition-all duration-200 ${borderClasses}`}>
       <div className='px-4 py-3'>
         {isEditing ? (
           /* ── EDIT MODE: Vertical layout ── */
@@ -207,7 +205,7 @@ export function NotesBarExpanded({
           /* ── VIEW MODE: Notes text + edit button ── */
           <div className='flex items-start gap-3'>
             <div
-              className='bg-base-200/50 min-h-[2rem] min-w-0 flex-1 cursor-pointer rounded-md px-3 py-2 text-xs hover:bg-base-200/80'
+              className='bg-base-200/50 hover:bg-base-200/80 min-h-[2rem] min-w-0 flex-1 cursor-pointer rounded-md px-3 py-2 text-xs'
               onClick={onCollapse}
               title='Click to collapse'
             >

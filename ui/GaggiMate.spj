@@ -28744,7 +28744,7 @@
               {
                 "nid": -1854919881,
                 "strtype": "OBJECT/Name",
-                "strval": "Image3",
+                "strval": "wakeupButton",
                 "InheritedType": 10
               },
               {
@@ -52422,7 +52422,7 @@
     "theme_color1": 5,
     "theme_color2": 0,
     "custom_variable_prefix": "uic",
-    "backup_cnt": 532,
+    "backup_cnt": 534,
     "autosave_cnt": 0,
     "group_color_cnt": 0,
     "lvgl_version": "8.3.11",

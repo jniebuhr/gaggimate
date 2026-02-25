@@ -191,7 +191,11 @@ export function StatisticsToolbar({
     dateToPreviewLocal,
   });
   const showDateRangeLabelInTrigger = !dateRangeDisplay.isAuto;
-  const candidateLabel = metadataLoading ? '...' : Number.isFinite(candidateCount) ? String(candidateCount) : '-';
+  const candidateLabel = metadataLoading
+    ? '...'
+    : Number.isFinite(candidateCount)
+      ? String(candidateCount)
+      : '-';
   const resetAriaCount = metadataLoading
     ? 'loading candidates'
     : Number.isFinite(candidateCount)
@@ -295,20 +299,22 @@ export function StatisticsToolbar({
           <button
             type='button'
             onClick={onClearFilters}
-            className='inline-flex h-12 min-h-0 w-12 flex-col items-center justify-center gap-0.5 rounded-lg border border-base-content/10 bg-base-100/45 px-0 text-base-content/70 shadow-sm transition-colors hover:bg-base-200/70 hover:text-base-content disabled:cursor-not-allowed disabled:opacity-40'
+            className='border-base-content/10 bg-base-100/45 text-base-content/70 hover:bg-base-200/70 hover:text-base-content inline-flex h-12 min-h-0 w-12 flex-col items-center justify-center gap-0.5 rounded-lg border px-0 shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40'
             disabled={isBusy}
             aria-label={`Clear filters and selections (${resetAriaCount})`}
             title={`Clear filters and selections (${resetAriaCount})`}
           >
             <FontAwesomeIcon icon={faUndo} className='text-lg leading-none' />
-            <span className='text-[10px] leading-none font-semibold tabular-nums'>{candidateLabel}</span>
+            <span className='text-[10px] leading-none font-semibold tabular-nums'>
+              {candidateLabel}
+            </span>
           </button>
 
           <button
             type='button'
             onClick={onGo}
             disabled={!canExecute}
-            className='border-success/50 text-success hover:bg-success hover:border-success inline-flex h-12 min-h-0 w-24 items-center justify-center rounded-lg border-2 bg-base-100/50 shadow-sm transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-40'
+            className='border-success/50 text-success hover:bg-success hover:border-success bg-base-100/50 inline-flex h-12 min-h-0 w-24 items-center justify-center rounded-lg border-2 shadow-sm transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-40'
             aria-label='Run statistics'
             title='Run statistics'
           >
@@ -334,7 +340,9 @@ export function StatisticsToolbar({
             />
             {showDateRangeLabelInTrigger && (
               <>
-                <span className='shrink-0 font-semibold tracking-wide'>{dateRangeDisplay.label}</span>
+                <span className='shrink-0 font-semibold tracking-wide'>
+                  {dateRangeDisplay.label}
+                </span>
                 <span className='text-base-content/35 shrink-0'>·</span>
               </>
             )}
@@ -342,7 +350,7 @@ export function StatisticsToolbar({
               {dateRangeDisplay.fromText || 'No dates'}
               {dateRangeDisplay.toText && (
                 <>
-                  <span className='mx-1.5 inline-block align-middle text-base-content/35'>
+                  <span className='text-base-content/35 mx-1.5 inline-block align-middle'>
                     <FontAwesomeIcon icon={faArrowRightLong} className='text-[9px]' />
                   </span>
                   {dateRangeDisplay.toText}
@@ -354,28 +362,28 @@ export function StatisticsToolbar({
 
           <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-[min(92vw,26rem)] rounded-xl border p-3 shadow-xl backdrop-blur-md'>
             <div className='grid gap-2'>
-              <label className='flex items-center gap-2 text-[11px] font-semibold text-base-content/75'>
+              <label className='text-base-content/75 flex items-center gap-2 text-[11px] font-semibold'>
                 <span className='w-10 shrink-0'>From</span>
                 <input
                   type='datetime-local'
                   value={dateFromLocal}
                   onInput={e => onDateFromChange(e.target.value)}
                   step='60'
-                  className='analyzer-statistics-datetime input input-bordered h-9 min-h-0 w-full border-base-content/10 bg-base-100/50 text-xs'
+                  className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
                   disabled={isBusy}
                   aria-label='Start date/time'
                   title='Start date/time'
                 />
               </label>
 
-              <label className='flex items-center gap-2 text-[11px] font-semibold text-base-content/75'>
+              <label className='text-base-content/75 flex items-center gap-2 text-[11px] font-semibold'>
                 <span className='w-10 shrink-0'>To</span>
                 <input
                   type='datetime-local'
                   value={dateToLocal}
                   onInput={e => onDateToChange(e.target.value)}
                   step='60'
-                  className='analyzer-statistics-datetime input input-bordered h-9 min-h-0 w-full border-base-content/10 bg-base-100/50 text-xs'
+                  className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
                   disabled={isBusy}
                   aria-label='End date/time'
                   title='End date/time'
@@ -384,7 +392,7 @@ export function StatisticsToolbar({
             </div>
 
             <div className='mt-3 flex items-center justify-between gap-2'>
-              <div className='text-[10px] text-base-content/55'>
+              <div className='text-base-content/55 text-[10px]'>
                 {dateRangeDisplay.isAuto
                   ? 'Using auto range from current shot selection.'
                   : 'Manual date filter is active.'}
@@ -396,7 +404,7 @@ export function StatisticsToolbar({
                   onDateToChange('');
                 }}
                 disabled={isBusy || (!dateFromLocal && !dateToLocal)}
-                className='btn btn-ghost btn-xs h-7 min-h-0 rounded-md border border-base-content/10 px-2 text-[10px] font-semibold'
+                className='btn btn-ghost btn-xs border-base-content/10 h-7 min-h-0 rounded-md border px-2 text-[10px] font-semibold'
                 title='Clear date filter'
               >
                 Clear Date Filter
@@ -407,13 +415,13 @@ export function StatisticsToolbar({
 
         <div className='ml-auto flex min-w-0 flex-1 items-center justify-end gap-2'>
           {showAdvancedSearch && (
-            <div className='min-w-[16rem] max-w-[38rem] flex-1'>
+            <div className='max-w-[38rem] min-w-[16rem] flex-1'>
               <input
                 type='text'
                 value={query}
                 onInput={e => onQueryChange(e.target.value)}
                 placeholder='name:"325"; profile:3_0_25; date:>h-7d;'
-                className='input input-bordered h-9 min-h-0 w-full border-base-content/10 bg-base-100/50 text-xs shadow-sm'
+                className='input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs shadow-sm'
                 disabled={isBusy}
               />
             </div>
@@ -422,7 +430,7 @@ export function StatisticsToolbar({
           {showAdvancedSearch && (
             <button
               type='button'
-              className={`inline-flex h-9 min-h-0 w-12 items-center justify-center rounded-lg border border-base-content/10 px-2 text-[10px] font-medium tracking-wide shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+              className={`border-base-content/10 inline-flex h-9 min-h-0 w-12 items-center justify-center rounded-lg border px-2 text-[10px] font-medium tracking-wide shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                 calcMode
                   ? 'text-base-content/80 hover:bg-base-200/50 hover:text-base-content'
                   : 'bg-base-content/6 text-base-content/90 hover:bg-base-content/8'
@@ -465,8 +473,13 @@ export function StatisticsToolbar({
             background: 'color-mix(in srgb, var(--analyzer-warning-orange) 9%, transparent)',
           }}
         >
-          <div className='min-w-[14rem] flex-1 text-[11px] leading-relaxed' style={WARNING_ORANGE_TEXT_MUTED_STYLE}>
-            <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>Date Basis:</span>{' '}
+          <div
+            className='min-w-[14rem] flex-1 text-[11px] leading-relaxed'
+            style={WARNING_ORANGE_TEXT_MUTED_STYLE}
+          >
+            <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>
+              Date Basis:
+            </span>{' '}
             <span className='text-base-content/80'>
               {dateBasisWarningMessage ||
                 'Some shots have no shot timestamp. Choose how date handling should treat them.'}
@@ -505,9 +518,13 @@ export function StatisticsToolbar({
           {topError ? (
             <span className='text-error font-semibold'>{topError}</span>
           ) : metadataError ? (
-            <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>{metadataError}</span>
+            <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>
+              {metadataError}
+            </span>
           ) : (
-            <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>{topWarning}</span>
+            <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>
+              {topWarning}
+            </span>
           )}
           {parseErrors.length > 1 && (
             <span className='text-error/70'>+{parseErrors.length - 1} more</span>

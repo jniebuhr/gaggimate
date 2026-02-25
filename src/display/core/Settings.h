@@ -110,6 +110,7 @@ class Settings {
     int getAltRelayFunction() const { return altRelayFunction; }
     bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
+    int getStandbyTemperature() const { return standbyTemperature; }
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
@@ -168,6 +169,7 @@ class Settings {
     void setAltRelayFunction(int alt_relay_function);
     void setAutoWakeupEnabled(bool enabled);
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
+    void setStandbyTemperature(int standby_temperature);
 
   private:
     Preferences preferences;
@@ -233,7 +235,11 @@ class Settings {
     int sunriseExtBrightness = 255;
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
+
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
+
+    // Standby heating
+    int standbyTemperature = 0;
 
     void doSave();
     xTaskHandle taskHandle;

@@ -470,6 +470,14 @@ void DefaultUI::setupReactive() {
                                               : lv_obj_add_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN);
                           },
                           &updateAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
+                          [=]() {
+                              bool heating = targetTemp > 0;
+                              ui_object_set_themeable_style_property(
+                                  ui_StandbyScreen_wakeupButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+                                  heating && heatingFlash ? _ui_theme_color_Heating : _ui_theme_color_NiceWhite);
+                          },
+                          &targetTemp, &heatingFlash);
     effect_mgr.use_effect([=] { return currentScreen == ui_InitScreen; },
                           [=]() {
                               if (updateActive) {

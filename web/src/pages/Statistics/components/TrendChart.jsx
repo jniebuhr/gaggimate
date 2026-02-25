@@ -9,14 +9,39 @@ import {
 // Chart-level trend aggregation stays local to this component so users can switch
 // metric and bucket size without rerunning StatisticsService.
 const TREND_METRICS = [
-  { key: 'duration', label: 'Duration (s)', colorVar: '--statistics-trend-duration', color: '#64748b' },
+  {
+    key: 'duration',
+    label: 'Duration (s)',
+    colorVar: '--statistics-trend-duration',
+    color: '#64748b',
+  },
   { key: 'weight', label: 'Weight (g)', colorVar: '--analyzer-weight-text', color: '#8B5CF6' },
   { key: 'water', label: 'Water (ml)', colorVar: '--statistics-trend-water', color: '#0EA5E9' },
-  { key: 'shotCount', label: 'Shots', colorVar: '--statistics-trend-shots-brown', color: '#8B5E3C' },
-  { key: 'avgPressure', label: 'Avg Pressure (bar)', colorVar: '--analyzer-pressure-text', color: '#0066CC' },
+  {
+    key: 'shotCount',
+    label: 'Shots',
+    colorVar: '--statistics-trend-shots-brown',
+    color: '#8B5E3C',
+  },
+  {
+    key: 'avgPressure',
+    label: 'Avg Pressure (bar)',
+    colorVar: '--analyzer-pressure-text',
+    color: '#0066CC',
+  },
   { key: 'avgFlow', label: 'Avg Flow (ml/s)', colorVar: '--analyzer-flow-text', color: '#63993D' },
-  { key: 'avgTemp', label: 'Avg Temp (\u2103)', colorVar: '--analyzer-temp-text', color: '#F0561D' },
-  { key: 'avgPuckFlow', label: 'Avg Puck Flow (ml/s)', colorVar: '--analyzer-puckflow-text', color: '#059669' },
+  {
+    key: 'avgTemp',
+    label: 'Avg Temp (\u2103)',
+    colorVar: '--analyzer-temp-text',
+    color: '#F0561D',
+  },
+  {
+    key: 'avgPuckFlow',
+    label: 'Avg Puck Flow (ml/s)',
+    colorVar: '--analyzer-puckflow-text',
+    color: '#059669',
+  },
 ];
 
 const GRANULARITY_OPTIONS = [
@@ -168,7 +193,9 @@ export function TrendChart({ trends }) {
                 font: { size: 10 },
                 color: tickColor,
                 callback: value =>
-                  formatTrendBucketTickLabel(Number(value), selectedGranularity, { containerWidth }),
+                  formatTrendBucketTickLabel(Number(value), selectedGranularity, {
+                    containerWidth,
+                  }),
                 maxTicksLimit,
               },
               grid: { color: gridColor },
@@ -211,7 +238,9 @@ export function TrendChart({ trends }) {
           >
             {TREND_METRICS.map(m => (
               <option key={m.key} value={m.key}>
-                {m.key === 'shotCount' ? `Shots / ${getGranularityLabel(selectedGranularity)}` : m.label}
+                {m.key === 'shotCount'
+                  ? `Shots / ${getGranularityLabel(selectedGranularity)}`
+                  : m.label}
               </option>
             ))}
           </select>

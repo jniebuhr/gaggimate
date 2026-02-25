@@ -105,6 +105,9 @@ Settings::Settings() {
     fullTankDistance = preferences.getInt("sr_fd", 50);
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
 
+    // Standby heating
+    standbyTemperature = preferences.getInt("sbtmp", 0);
+
     preferences.end();
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
@@ -421,6 +424,11 @@ void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &sch
     save();
 }
 
+void Settings::setStandbyTemperature(int standby_temperature) {
+    standbyTemperature = standby_temperature;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -471,6 +479,7 @@ void Settings::doSave() {
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
     preferences.putBool("ab_en", autowakeupEnabled);
+    preferences.putInt("sbtmp", standbyTemperature);
 
     // Save schedule format
     String schedulesForSave = "";
