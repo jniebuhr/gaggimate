@@ -53,12 +53,12 @@ function SummaryStatCard({ icon, label, value, accentColorVar, tone = 'muted' })
 
         <div className='min-w-0 flex-1 text-center'>
           <div
-            className='truncate text-xl font-bold leading-tight sm:text-2xl'
+            className='truncate text-xl leading-tight font-bold sm:text-2xl'
             style={{ color: isStrong ? accent : 'inherit' }}
           >
             {value}
           </div>
-          <div className='mt-1 text-[10px] font-semibold uppercase tracking-wide opacity-60 sm:text-[11px]'>
+          <div className='mt-1 text-[10px] font-semibold tracking-wide uppercase opacity-60 sm:text-[11px]'>
             {label}
           </div>
         </div>
@@ -153,7 +153,9 @@ export function SummaryCards({ summary }) {
   return (
     <div className='space-y-3'>
       <div className='space-y-2'>
-        <div className='px-1 text-[10px] font-semibold uppercase tracking-wide opacity-50'>Totals</div>
+        <div className='px-1 text-[10px] font-semibold tracking-wide uppercase opacity-50'>
+          Totals
+        </div>
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'>
           {totalCards.map(card => (
             <SummaryStatCard key={card.key} {...card} />
@@ -162,7 +164,9 @@ export function SummaryCards({ summary }) {
       </div>
 
       <div className='space-y-2'>
-        <div className='px-1 text-[10px] font-semibold uppercase tracking-wide opacity-50'>Averages</div>
+        <div className='px-1 text-[10px] font-semibold tracking-wide uppercase opacity-50'>
+          Averages
+        </div>
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5'>
           {averageCards.map(card => (
             <SummaryStatCard key={card.key} {...card} />

@@ -12,7 +12,7 @@ lv_obj_t *ui_StandbyScreen_Container1 = NULL;
 lv_obj_t *ui_StandbyScreen_wifiIcon = NULL;
 lv_obj_t *ui_StandbyScreen_bluetoothIcon = NULL;
 lv_obj_t *ui_StandbyScreen_updateIcon = NULL;
-lv_obj_t *ui_StandbyScreen_Image3 = NULL;
+lv_obj_t *ui_StandbyScreen_wakeupButton = NULL;
 // event funtions
 void ui_event_StandbyScreen(lv_event_t *e) {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -128,20 +128,20 @@ void ui_StandbyScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_StandbyScreen_updateIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
                                            _ui_theme_alpha_NiceWhite);
 
-    ui_StandbyScreen_Image3 = lv_img_create(ui_StandbyScreen);
-    lv_img_set_src(ui_StandbyScreen_Image3, &ui_img_1732953241);
-    lv_obj_set_width(ui_StandbyScreen_Image3, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(ui_StandbyScreen_Image3, LV_SIZE_CONTENT); /// 1
-    lv_obj_set_x(ui_StandbyScreen_Image3, 0);
-    lv_obj_set_y(ui_StandbyScreen_Image3, 150);
-    lv_obj_set_align(ui_StandbyScreen_Image3, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_StandbyScreen_Image3, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_StandbyScreen_Image3, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-    lv_img_set_zoom(ui_StandbyScreen_Image3, 210);
-    ui_object_set_themeable_style_property(ui_StandbyScreen_Image3, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+    ui_StandbyScreen_wakeupButton = lv_img_create(ui_StandbyScreen);
+    lv_img_set_src(ui_StandbyScreen_wakeupButton, &ui_img_1732953241);
+    lv_obj_set_width(ui_StandbyScreen_wakeupButton, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(ui_StandbyScreen_wakeupButton, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_x(ui_StandbyScreen_wakeupButton, 0);
+    lv_obj_set_y(ui_StandbyScreen_wakeupButton, 150);
+    lv_obj_set_align(ui_StandbyScreen_wakeupButton, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_StandbyScreen_wakeupButton, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+    lv_obj_clear_flag(ui_StandbyScreen_wakeupButton, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_img_set_zoom(ui_StandbyScreen_wakeupButton, 210);
+    ui_object_set_themeable_style_property(ui_StandbyScreen_wakeupButton, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
                                            _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_StandbyScreen_Image3, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
-                                           _ui_theme_alpha_NiceWhite);
+    ui_object_set_themeable_style_property(ui_StandbyScreen_wakeupButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                           LV_STYLE_IMG_RECOLOR_OPA, _ui_theme_alpha_NiceWhite);
 
     lv_obj_add_event_cb(ui_StandbyScreen, ui_event_StandbyScreen, LV_EVENT_ALL, NULL);
 }
@@ -158,5 +158,5 @@ void ui_StandbyScreen_screen_destroy(void) {
     ui_StandbyScreen_wifiIcon = NULL;
     ui_StandbyScreen_bluetoothIcon = NULL;
     ui_StandbyScreen_updateIcon = NULL;
-    ui_StandbyScreen_Image3 = NULL;
+    ui_StandbyScreen_wakeupButton = NULL;
 }

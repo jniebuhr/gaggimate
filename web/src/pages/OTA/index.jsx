@@ -63,15 +63,15 @@ export function OTA() {
       apiService.off('evt:ota-progress', listenerId);
     };
   }, [apiService]);
-  
+
   useEffect(() => {
     const listenerId = apiService.on('evt:history-rebuild-progress', msg => {
       setRebuildProgress({
         total: msg.total || 0,
         current: msg.current || 0,
-        status: msg.status || ''
+        status: msg.status || '',
       });
-      
+
       if (msg.status === 'completed' || msg.status === 'error') {
         setRebuilding(false);
         setRebuilt(msg.status === 'completed');
@@ -298,25 +298,26 @@ export function OTA() {
               )}
             </button>
           </div>
-          
+
           {rebuilding && (
             <div className='mt-3'>
-              <div className='text-sm text-base-content/70 mb-1'>
-                {rebuildProgress.status === 'starting' || rebuildProgress.status === 'scanning' || rebuildProgress.total === 0 ? (
-                  'Scanning shot history files...'
-                ) : (
-                  `Processing shot history files (${rebuildProgress.current}/${rebuildProgress.total})`
-                )}
+              <div className='text-base-content/70 mb-1 text-sm'>
+                {rebuildProgress.status === 'starting' ||
+                rebuildProgress.status === 'scanning' ||
+                rebuildProgress.total === 0
+                  ? 'Scanning shot history files...'
+                  : `Processing shot history files (${rebuildProgress.current}/${rebuildProgress.total})`}
               </div>
               <div className='bg-base-300 h-2 w-full overflow-hidden rounded'>
                 <div
                   className={`h-full transition-all duration-300 ${
                     rebuildProgress.total === 0 ? 'bg-primary animate-pulse' : 'bg-primary'
                   }`}
-                  style={{ 
-                    width: rebuildProgress.total > 0 
-                      ? `${(rebuildProgress.current / rebuildProgress.total) * 100}%`
-                      : '30%'
+                  style={{
+                    width:
+                      rebuildProgress.total > 0
+                        ? `${(rebuildProgress.current / rebuildProgress.total) * 100}%`
+                        : '30%',
                   }}
                 />
               </div>

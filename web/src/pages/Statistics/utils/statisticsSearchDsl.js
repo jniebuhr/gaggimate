@@ -117,7 +117,9 @@ export function parseStatisticsQuery(queryString) {
     }
 
     if (field === 'date') {
-      const dateMatch = String(valueRaw ?? '').trim().match(/^(>=|<=|>|<|=)\s*(\S.*)$/);
+      const dateMatch = String(valueRaw ?? '')
+        .trim()
+        .match(/^(>=|<=|>|<|=)\s*(\S.*)$/);
       if (!dateMatch) {
         errors.push({
           code: 'date_operator_required',
@@ -274,15 +276,7 @@ export function parseDateExpressionToEpochMs(expr, now = new Date()) {
 
 function getDayBounds(ms) {
   const date = new Date(ms);
-  const start = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    0,
-    0,
-    0,
-    0,
-  ).getTime();
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0).getTime();
   const end = new Date(
     date.getFullYear(),
     date.getMonth(),
@@ -323,7 +317,14 @@ function getTextValuesForField(shotMeta, field) {
     case 'source':
       return [shotMeta?.source];
     case '__free':
-      return [shotMeta?.name, shotMeta?.label, shotMeta?.title, shotMeta?.profile, shotMeta?.id, shotMeta?.source];
+      return [
+        shotMeta?.name,
+        shotMeta?.label,
+        shotMeta?.title,
+        shotMeta?.profile,
+        shotMeta?.id,
+        shotMeta?.source,
+      ];
     default:
       return [];
   }

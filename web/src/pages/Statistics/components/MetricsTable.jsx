@@ -101,10 +101,12 @@ function MetricRangeViz({ row, metric }) {
 
   // Std-dev intensity is normalized per metric so colors stay meaningful across units.
   return (
-    <div className='rounded-xl border border-base-content/10 bg-base-100/40 p-3 shadow-sm'>
+    <div className='border-base-content/10 bg-base-100/40 rounded-xl border p-3 shadow-sm'>
       <div className='flex items-start justify-between gap-2'>
         <div className='min-w-0'>
-          <div className={`truncate text-xs font-semibold uppercase tracking-wide ${row.colorClass}`}>
+          <div
+            className={`truncate text-xs font-semibold tracking-wide uppercase ${row.colorClass}`}
+          >
             {row.label}
           </div>
           <div className='text-[10px] opacity-60'>{row.unit}</div>
@@ -127,11 +129,11 @@ function MetricRangeViz({ row, metric }) {
       </div>
 
       <div className='mt-2 flex items-center gap-2'>
-        <div className='shrink-0 text-[11px] font-mono opacity-65'>{fmt(metric.min)}</div>
+        <div className='shrink-0 font-mono text-[11px] opacity-65'>{fmt(metric.min)}</div>
         <div className='relative h-5 min-w-0 flex-1'>
-          <div className='absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-base-content/20' />
-          <div className='absolute left-0 top-1/2 h-2 w-px -translate-y-1/2 bg-base-content/30' />
-          <div className='absolute right-0 top-1/2 h-2 w-px -translate-y-1/2 bg-base-content/30' />
+          <div className='bg-base-content/20 absolute top-1/2 right-0 left-0 h-px -translate-y-1/2' />
+          <div className='bg-base-content/30 absolute top-1/2 left-0 h-2 w-px -translate-y-1/2' />
+          <div className='bg-base-content/30 absolute top-1/2 right-0 h-2 w-px -translate-y-1/2' />
           {positions.hasRange && positions.stdWidth > 0 && (
             <div
               className='absolute top-1/2 h-2 -translate-y-1/2 rounded-full'
@@ -141,7 +143,7 @@ function MetricRangeViz({ row, metric }) {
                 background: `color-mix(in srgb, ${row.accentColor} ${stdBandPct}%, transparent)`,
                 border: `1px solid color-mix(in srgb, ${row.accentColor} ${Math.min(
                   42,
-                  stdBandPct + 10
+                  stdBandPct + 10,
                 )}%, transparent)`,
               }}
             />
@@ -155,7 +157,7 @@ function MetricRangeViz({ row, metric }) {
             }}
           />
         </div>
-        <div className='shrink-0 text-[11px] font-mono opacity-65'>{fmt(metric.max)}</div>
+        <div className='shrink-0 font-mono text-[11px] opacity-65'>{fmt(metric.max)}</div>
       </div>
     </div>
   );
@@ -176,17 +178,19 @@ export function MetricsTable({ metrics }) {
       </div>
 
       {/* Keep the numeric table available for precision checks without dominating the page. */}
-      <details className='mt-3 rounded-xl border border-base-content/10 bg-base-100/30'>
-        <summary className='cursor-pointer list-none px-3 py-2 text-xs font-semibold uppercase tracking-wide opacity-70'>
+      <details className='border-base-content/10 bg-base-100/30 mt-3 rounded-xl border'>
+        <summary className='cursor-pointer list-none px-3 py-2 text-xs font-semibold tracking-wide uppercase opacity-70'>
           Detailed Table
         </summary>
-        <div className='border-t border-base-content/10 px-2 py-2'>
+        <div className='border-base-content/10 border-t px-2 py-2'>
           <div className='overflow-x-auto'>
             <table className='table-xs table w-full'>
               <thead>
                 <tr className='text-xs opacity-60'>
                   <th>Metric</th>
-                  <th className='text-right' title='Time-Weighted Average'>Avg (TW)</th>
+                  <th className='text-right' title='Time-Weighted Average'>
+                    Avg (TW)
+                  </th>
                   <th className='text-right'>Min</th>
                   <th className='text-right'>Max</th>
                   <th className='text-right'>Std Dev</th>

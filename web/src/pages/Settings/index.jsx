@@ -289,7 +289,7 @@ export function Settings() {
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
           {/* Temperature Settings */}
           <Card sm={10} lg={5} title='Temperature Settings'>
-            <div className='mb-4'>
+            <div className='form-control mb-4'>
               <label htmlFor='targetSteamTemp' className='mb-2 block text-sm font-medium'>
                 Default Steam Temperature
               </label>
@@ -307,7 +307,7 @@ export function Settings() {
                 </label>
               </div>
             </div>
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label htmlFor='targetWaterTemp' className='mb-2 block text-sm font-medium'>
                 Default Water Temperature
               </label>
@@ -324,6 +324,28 @@ export function Settings() {
                   <span aria-label='celsius'>°C</span>
                 </label>
               </div>
+            </div>
+            <div className='form-control'>
+              <label htmlFor='standbyTemperature' className='mb-2 block text-sm font-medium'>
+                Standby Temperature
+              </label>
+              <div className='input-group'>
+                <label htmlFor='standbyTemperature' className='input w-full'>
+                  <input
+                    id='standbyTemperature'
+                    name='standbyTemperature'
+                    type='number'
+                    placeholder='0'
+                    value={formData.standbyTemperature}
+                    onChange={onChange('standbyTemperature')}
+                  />
+                  <span aria-label='celsius'>°C</span>
+                </label>
+              </div>
+            </div>
+            <div className='text-error mb-2 text-sm'>
+              Warning: Activating this means the coffee machine will be heating to this temperature
+              even when in Standby. It should be set to at least 60°C to prevent bacteria growth.
             </div>
           </Card>
 

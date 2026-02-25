@@ -186,7 +186,9 @@ export function NotesBar({
       const tag = el.tagName?.toLowerCase();
       if (el.isContentEditable) return true;
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
-      return !!el.closest('input, textarea, select, [contenteditable=\"true\"], [role=\"textbox\"]');
+      return !!el.closest(
+        'input, textarea, select, [contenteditable=\"true\"], [role=\"textbox\"]',
+      );
     };
 
     const handleKeyDown = e => {
@@ -274,9 +276,7 @@ export function NotesBar({
 
   return (
     <div>
-      <div
-        className={`transition-all duration-200 ${borderClasses}`}
-      >
+      <div className={`transition-all duration-200 ${borderClasses}`}>
         <div className='flex w-full items-center px-1 py-0.5' style={{ columnGap: chipGap }}>
           {/* Prev Arrow */}
           <button
@@ -291,7 +291,7 @@ export function NotesBar({
           {/* Clickable center area */}
           <button
             type='button'
-            className='block min-w-0 flex-1 cursor-pointer overflow-x-auto px-1 py-1.5 scrollbar-none'
+            className='scrollbar-none block min-w-0 flex-1 cursor-pointer overflow-x-auto px-1 py-1.5'
             onClick={() => !isEditing && onToggleNotesExpanded && onToggleNotesExpanded()}
             title='Click to expand notes'
           >
@@ -340,7 +340,10 @@ export function NotesBar({
               </span>
 
               {/* Balance/Taste (right after rating) */}
-              <span className={`${fieldCls} capitalize`} style={getTasteTextStyle(notes.balanceTaste)}>
+              <span
+                className={`${fieldCls} capitalize`}
+                style={getTasteTextStyle(notes.balanceTaste)}
+              >
                 {notes.balanceTaste}
               </span>
 

@@ -332,14 +332,12 @@ export const notesTasteStyles = {
   bitter: {
     color: analyzerUiColors.notesTasteBitter,
     borderColor: analyzerUiColors.notesTasteBitter,
-    selectedBackground:
-      'color-mix(in srgb, var(--analyzer-notes-taste-bitter) 12%, transparent)',
+    selectedBackground: 'color-mix(in srgb, var(--analyzer-notes-taste-bitter) 12%, transparent)',
   },
   balanced: {
     color: analyzerUiColors.notesTasteBalanced,
     borderColor: analyzerUiColors.notesTasteBalanced,
-    selectedBackground:
-      'color-mix(in srgb, var(--analyzer-notes-taste-balanced) 12%, transparent)',
+    selectedBackground: 'color-mix(in srgb, var(--analyzer-notes-taste-balanced) 12%, transparent)',
   },
   sour: {
     color: analyzerUiColors.notesTasteSour,

@@ -214,7 +214,9 @@ export function ShotAnalyzer() {
             if (matchId !== profileMatchIdRef.current) return; // stale
 
             setCurrentProfile(
-              match.source && (match.source === 'gaggimate' || match.source === 'browser') && !fullP?.source
+              match.source &&
+                (match.source === 'gaggimate' || match.source === 'browser') &&
+                !fullP?.source
                 ? { ...fullP, source: match.source }
                 : fullP,
             );
@@ -282,10 +284,13 @@ export function ShotAnalyzer() {
               setCurrentProfileName('No Profile Loaded');
             }}
             onShowStats={() => {
-              sessionStorage.setItem('statsInitialContext', JSON.stringify({
-                profileName: currentProfileName,
-                source: 'both',
-              }));
+              sessionStorage.setItem(
+                'statsInitialContext',
+                JSON.stringify({
+                  profileName: currentProfileName,
+                  source: 'both',
+                }),
+              );
             }}
             statsHref={statsHref}
             importMode={importMode}

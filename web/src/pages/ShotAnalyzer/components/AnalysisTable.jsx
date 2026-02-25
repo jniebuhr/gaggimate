@@ -87,34 +87,34 @@ function StopCalculationHelpPopover() {
   return (
     <details ref={detailsRef} className='dropdown'>
       <summary
-        className='flex h-5 w-5 list-none items-center justify-center rounded-full text-base-content/45 transition-colors hover:text-base-content/80 [&::-webkit-details-marker]:hidden'
+        className='text-base-content/45 hover:text-base-content/80 flex h-5 w-5 list-none items-center justify-center rounded-full transition-colors [&::-webkit-details-marker]:hidden'
         aria-label='Stop Calculation help'
         title='Stop Calculation help'
       >
         <FontAwesomeIcon icon={faCircleInfo} className='text-[13px]' />
       </summary>
       <div
-        className={`dropdown-content bg-base-100/95 border-base-content/10 text-base-content normal-case tracking-normal z-[90] max-h-[70vh] overflow-y-auto rounded-xl border p-3 text-[12px] leading-relaxed font-normal shadow-xl backdrop-blur-md ${
+        className={`dropdown-content bg-base-100/95 border-base-content/10 text-base-content z-[90] max-h-[70vh] overflow-y-auto rounded-xl border p-3 text-[12px] leading-relaxed font-normal tracking-normal normal-case shadow-xl backdrop-blur-md ${
           isWideViewport ? 'absolute right-0 bottom-full mb-2 w-[min(92vw,34rem)]' : ''
         }`}
         style={mobilePopoverStyle}
       >
         <div className='space-y-2.5'>
-          <p className='text-sm font-semibold leading-tight'>Stop Calculation (Analyzer only)</p>
+          <p className='text-sm leading-tight font-semibold'>Stop Calculation (Analyzer only)</p>
           <p className='opacity-85'>
             The <strong>Stop Calculation</strong> settings and{' '}
             <strong style={{ color: utilityColors.predictionInfoBlue }}>Calc</strong> values are
-            Analyzer-only tools. Future-value calculations are not performed by GaggiMate itself
-            and shot execution is not changed by these settings.
+            Analyzer-only tools. Future-value calculations are not performed by GaggiMate itself and
+            shot execution is not changed by these settings.
           </p>
 
-          <div className='rounded-lg bg-base-200/60 p-2'>
-            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>
+          <div className='bg-base-200/60 rounded-lg p-2'>
+            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>
               Status Labels
             </p>
             <div className='mt-1 space-y-1.5'>
               <p>
-                <span className='mr-1.5 inline-flex rounded-[4px] border border-sky-700 bg-sky-600 px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'>
+                <span className='mr-1.5 inline-flex rounded-[4px] border border-sky-700 bg-sky-600 px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'>
                   REVIEW PHASE
                 </span>
                 Shown when a stop reason is only detected after a higher calculation step / deeper
@@ -123,7 +123,7 @@ function StopCalculationHelpPopover() {
               </p>
               <p>
                 <span
-                  className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'
+                  className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'
                   style={{
                     backgroundColor: utilityColors.warningOrange,
                     borderColor: utilityColors.warningOrange,
@@ -138,7 +138,7 @@ function StopCalculationHelpPopover() {
               </p>
               <p>
                 <span
-                  className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'
+                  className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'
                   style={{
                     backgroundColor: utilityColors.warningOrange,
                     borderColor: utilityColors.warningOrange,
@@ -150,7 +150,7 @@ function StopCalculationHelpPopover() {
                 is ignored for stop detection for that brew, even if the scale reconnects later.
               </p>
               <p>
-                <span className='mr-1.5 inline-flex rounded-[4px] border border-blue-700 bg-blue-600 px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'>
+                <span className='mr-1.5 inline-flex rounded-[4px] border border-blue-700 bg-blue-600 px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'>
                   AUTO-CALC
                 </span>
                 Shown when Auto mode is active and the displayed stop-calculation delays are
@@ -159,8 +159,8 @@ function StopCalculationHelpPopover() {
             </div>
           </div>
 
-          <div className='rounded-lg bg-base-200/60 p-2'>
-            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>
+          <div className='bg-base-200/60 rounded-lg p-2'>
+            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>
               How stop detection works
             </p>
             <p>
@@ -187,8 +187,8 @@ function StopCalculationHelpPopover() {
             </p>
           </div>
 
-          <div className='rounded-lg bg-base-200/60 p-2'>
-            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>Example</p>
+          <div className='bg-base-200/60 rounded-lg p-2'>
+            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>Example</p>
             <p>
               If a phase has a flow stop at <strong>1 ml/s</strong>, flow may briefly cross that
               threshold between two samples. A short calculation helps estimate the stop condition
@@ -196,8 +196,8 @@ function StopCalculationHelpPopover() {
             </p>
           </div>
 
-          <div className='rounded-lg bg-base-200/60 p-2'>
-            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>
+          <div className='bg-base-200/60 rounded-lg p-2'>
+            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>
               Auto vs Manual
             </p>
             <p className='mt-1'>
@@ -214,8 +214,8 @@ function StopCalculationHelpPopover() {
             </p>
           </div>
 
-          <div className='rounded-lg bg-base-200/60 p-2'>
-            <p className='text-[12px] leading-tight font-semibold text-base-content/90'>
+          <div className='bg-base-200/60 rounded-lg p-2'>
+            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>
               Scale vs System
             </p>
             <p>
@@ -415,10 +415,7 @@ export function AnalysisTable({
                 : 'PHASE REVIEW ADVISED'
             }
             colorClass='bg-sky-600 text-white border-sky-700'
-            title={
-              results.delayReviewMessage ||
-              'Unusually high inferred delay detected.'
-            }
+            title={results.delayReviewMessage || 'Unusually high inferred delay detected.'}
           />
         )}
         {results.isAutoAdjusted && (
@@ -654,10 +651,10 @@ function CellContent({ phase, col, results, isTotal = false }) {
   // Helper for Boolean Status rendering
   const renderBool = val => {
     if (val === true) {
-      return <FontAwesomeIcon icon={faCheck} className='text-[1em] text-success' />;
+      return <FontAwesomeIcon icon={faCheck} className='text-success text-[1em]' />;
     }
     if (val === false) {
-      return <FontAwesomeIcon icon={faTimes} className='text-[1em] text-error' />;
+      return <FontAwesomeIcon icon={faTimes} className='text-error text-[1em]' />;
     }
     return <span className='text-base-content/60'>-</span>;
   };
@@ -819,7 +816,7 @@ function CellContent({ phase, col, results, isTotal = false }) {
 
   const isWeightCol = col.id === 'weight';
   const exitMatchesCol = isWeightCol
-    ? (phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric')
+    ? phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric'
     : phase.exit?.type === col.targetType;
   const isHit = exitMatchesCol;
 
@@ -893,7 +890,7 @@ function CellContent({ phase, col, results, isTotal = false }) {
   if (col.targetType && phase.targetCalcValues) {
     const calcEntry =
       col.id === 'weight'
-        ? (phase.targetCalcValues['volumetric'] || phase.targetCalcValues['weight'])
+        ? phase.targetCalcValues['volumetric'] || phase.targetCalcValues['weight']
         : phase.targetCalcValues[col.targetType];
 
     if (calcEntry) {
