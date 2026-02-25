@@ -7,7 +7,8 @@ import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
-import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine';
+import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
+import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 
 function MenuItem(props) {
   let className =
@@ -33,7 +34,8 @@ export function Navigation(props) {
       <div className='space-y-1.5'>
         <MenuItem label='Profiles' link='/profiles' icon={faList} />
         <MenuItem label='Shot History' link='/history' icon={faTimeline} />
-        <MenuItem label='Shot Analyzer' link='/analyzer' icon={faChartLine} />
+        <MenuItem label='Shot Analyzer' link='/analyzer' icon={faMagnifyingGlassChart} />
+        <MenuItem label='Statistics' link='/statistics' icon={faChartSimple} />
       </div>
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>

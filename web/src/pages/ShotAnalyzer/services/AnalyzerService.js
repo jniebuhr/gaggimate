@@ -277,6 +277,30 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     // System Info
     const lastSampleInPhase = samples[samples.length - 1];
     const sysInfo = lastSampleInPhase.systemInfo || {};
+    const sysFieldMap = [
+      ['sys_shot_vol', 'shotStartedVolumetric'],
+      ['sys_curr_vol', 'currentlyVolumetric'],
+      ['sys_scale', 'bluetoothScaleConnected'],
+      ['sys_vol_avail', 'volumetricAvailable'],
+      ['sys_ext', 'extendedRecording'],
+    ];
+    const sysAnomalies = {};
+    sysFieldMap.forEach(([statsKey, sampleKey]) => {
+      const finalValue = sysInfo[sampleKey];
+      if (typeof finalValue !== 'boolean') return;
+      const mismatchIndex = samples.findIndex(sample => {
+        const sampleValue = sample?.systemInfo?.[sampleKey];
+        return typeof sampleValue === 'boolean' && sampleValue !== finalValue;
+      });
+      if (mismatchIndex < 0) return;
+      const mismatchSampleValue = samples[mismatchIndex]?.systemInfo?.[sampleKey];
+      if (typeof mismatchSampleValue !== 'boolean') return;
+      sysAnomalies[statsKey] = {
+        sampleInPhase: mismatchIndex + 1,
+        sampleCountInPhase: samples.length,
+        value: mismatchSampleValue,
+      };
+    });
 
     let scaleLostInThisPhase = false;
     if (isBrewByWeight) {
@@ -374,6 +398,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             for (let ti = 0; ti < profilePhase.targets.length; ti++) {
               const tgt = profilePhase.targets[ti];
               const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+              if (isWt && !isBrewByWeight) continue;
               if (isWt && scaleConnectionBrokenPermanently) continue;
               if (isLastPhase && isWt && lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G) continue;
 
@@ -403,6 +428,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             for (let ti = 0; ti < profilePhase.targets.length; ti++) {
               const tgt = profilePhase.targets[ti];
               const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+              if (isWt && !isBrewByWeight) continue;
               if (isWt && scaleConnectionBrokenPermanently) continue;
               if (isLastPhase && isWt && lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G) continue;
 
@@ -494,6 +520,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
             for (let ti = 0; ti < profilePhase.targets.length && !match; ti++) {
               const tgt = profilePhase.targets[ti];
               const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+              if (isWt && !isBrewByWeight) continue;
               if (isWt && scaleConnectionBrokenPermanently) continue;
               if (isLastPhase && isWt && lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G) continue;
 
@@ -565,6 +592,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 
               for (const tgt of profilePhase.targets) {
                 const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
+                if (isWt && !isBrewByWeight) continue;
                 if (isWt && scaleConnectionBrokenPermanently) continue;
 
                 let calcVal;
@@ -792,6 +820,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         sys_scale: sysInfo.bluetoothScaleConnected,
         sys_vol_avail: sysInfo.volumetricAvailable,
         sys_ext: sysInfo.extendedRecording,
+        sys_anomalies: Object.keys(sysAnomalies).length > 0 ? sysAnomalies : undefined,
       },
       exit: {
         reason: exitReason,

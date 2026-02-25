@@ -31,12 +31,14 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
+import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { ConfirmButton } from '../../components/ConfirmButton.jsx';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 
 Chart.register(
   LineController,
@@ -92,6 +94,7 @@ function ProfileCard({
 
     downloadJson(download, `profile-${data.id}.json`);
   }, [data]);
+  const statsHref = buildStatisticsProfileHref({ source: 'gaggimate', profileName: data.label });
 
   // Toggle profile details
   const [detailsCollapsed, setDetailsCollapsed] = useState(true);
@@ -306,6 +309,18 @@ function ProfileCard({
                         </a>
                       </li>
                       <li role='none'>
+                        <a
+                          role='menuitem'
+                          href={statsHref}
+                          onClick={closeMenu}
+                          className='text-success justify-start'
+                          aria-label={`View statistics for ${data.label} profile`}
+                        >
+                          <FontAwesomeIcon icon={faChartSimple} />
+                          <span>Statistics</span>
+                        </a>
+                      </li>
+                      <li role='none'>
                         <button
                           role='menuitem'
                           onClick={() => {
@@ -386,6 +401,15 @@ function ProfileCard({
                       aria-label={`Edit ${data.label} profile`}
                     >
                       <FontAwesomeIcon icon={faPen} />
+                    </a>
+                  </Tooltip>
+                  <Tooltip content='View statistics for this profile'>
+                    <a
+                      href={statsHref}
+                      className='btn btn-sm btn-ghost text-success'
+                      aria-label={`View statistics for ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faChartSimple} />
                     </a>
                   </Tooltip>
                   <Tooltip content='Export profile'>

@@ -414,15 +414,15 @@ class LibraryService {
 
   /**
    * Delete a profile
-   * @param {string} name - Profile name/ID
+   * @param {string} id - Profile ID (gaggimate: internal API id, browser: name)
    * @param {string} source - 'gaggimate' or 'browser'
    */
-  async deleteProfile(name, source) {
+  async deleteProfile(id, source) {
     if (source === 'gaggimate') {
       if (!this.apiService) throw new Error('ApiService not set');
-      await this.apiService.request({ tp: 'req:profiles:delete', id: name });
+      await this.apiService.request({ tp: 'req:profiles:delete', id });
     } else {
-      await indexedDBService.deleteProfile(name);
+      await indexedDBService.deleteProfile(id);
     }
   }
 

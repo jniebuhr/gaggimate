@@ -4,7 +4,7 @@
  * Handles shot loading, chart visualization, and data tables.
  */
 
-import { useState, useEffect, useContext } from 'preact/hooks';
+import { useState, useEffect, useContext, useRef } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
 import { LibraryPanel } from './components/LibraryPanel';
 import { AnalysisTable } from './components/AnalysisTable';
@@ -18,17 +18,14 @@ import {
   cleanName,
   ANALYZER_DB_KEYS,
   loadFromStorage,
-  maskStyle,
 } from './utils/analyzerUtils';
+import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute';
 
-// Asset Imports
-import DeepDiveLogoOutline from './assets/deepdive.svg';
 import { EmptyState } from './components/EmptyState.jsx';
 
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
-
   // --- State ---
   const [currentShot, setCurrentShot] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +34,6 @@ export function ShotAnalyzer() {
   const [currentProfileName, setCurrentProfileName] = useState('No Profile Loaded');
 
   const [importMode, setImportMode] = useState('temp');
-  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const [isMatchingProfile, setIsMatchingProfile] = useState(false);
   const [isSearchingProfile, setIsSearchingProfile] = useState(false); // <--- NEW STATE
@@ -54,6 +50,18 @@ export function ShotAnalyzer() {
   });
 
   const [analysisResults, setAnalysisResults] = useState(null);
+  const [pendingMobileAnalysisScroll, setPendingMobileAnalysisScroll] = useState(false);
+  const analysisSectionRef = useRef(null);
+  const profileMatchIdRef = useRef(0);
+  const analysisIdRef = useRef(0);
+  const profileSearchTimerRef = useRef(null);
+
+  // Cleanup pending profile search on unmount
+  useEffect(() => {
+    return () => {
+      if (profileSearchTimerRef.current) clearTimeout(profileSearchTimerRef.current);
+    };
+  }, []);
 
   // --- DEEP LINK HANDLER ---
   useEffect(() => {
@@ -111,29 +119,50 @@ export function ShotAnalyzer() {
       setAnalysisResults(null);
       return;
     }
+    const id = ++analysisIdRef.current;
     // Defer analysis to next tick to allow UI update
-    setTimeout(() => performAnalysis(), 0);
+    setTimeout(() => {
+      if (id !== analysisIdRef.current) return; // stale
+      performAnalysis();
+    }, 0);
   }, [currentShot, currentProfile, settings]);
+
+  useEffect(() => {
+    if (!pendingMobileAnalysisScroll || !currentShot) return;
+    if (typeof window === 'undefined') return;
+
+    const timer = window.setTimeout(() => {
+      analysisSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setPendingMobileAnalysisScroll(false);
+    }, 90);
+
+    return () => window.clearTimeout(timer);
+  }, [pendingMobileAnalysisScroll, currentShot]);
 
   // --- Analysis Logic ---
   const performAnalysis = () => {
     if (!currentShot) return;
 
-    let usedSensorDelay = settings.sensorDelay;
-    let isAutoAdjusted = false;
+    try {
+      let usedSensorDelay = settings.sensorDelay;
+      let isAutoAdjusted = false;
 
-    if (settings.autoDelay && currentProfile) {
-      const detection = detectAutoDelay(currentShot, currentProfile, settings.sensorDelay);
-      usedSensorDelay = detection.delay;
-      isAutoAdjusted = detection.auto;
+      if (settings.autoDelay && currentProfile) {
+        const detection = detectAutoDelay(currentShot, currentProfile, settings.sensorDelay);
+        usedSensorDelay = detection.delay;
+        isAutoAdjusted = detection.auto;
+      }
+
+      const results = calculateShotMetrics(currentShot, currentProfile, {
+        scaleDelayMs: settings.scaleDelay,
+        sensorDelayMs: usedSensorDelay,
+        isAutoAdjusted: isAutoAdjusted,
+      });
+      setAnalysisResults(results);
+    } catch (e) {
+      console.error('Analysis failed:', e);
+      setAnalysisResults(null);
     }
-
-    const results = calculateShotMetrics(currentShot, currentProfile, {
-      scaleDelayMs: settings.scaleDelay,
-      sensorDelayMs: usedSensorDelay,
-      isAutoAdjusted: isAutoAdjusted,
-    });
-    setAnalysisResults(results);
   };
 
   // --- Data Handlers ---
@@ -143,22 +172,35 @@ export function ShotAnalyzer() {
       source: shotData.source || importMode,
     };
 
-    // If loading via Deep Link, ensure we use the mapped source (gaggimate/browser)
-    // derived in the useEffect, OR fallback to the shot's own source.
-    // (Logic handled implicitly by passing correct object to setCurrentShot)
-
     setCurrentShot(shotWithMetadata);
     setCurrentShotName(name);
 
-    if (shotWithMetadata.profile) {
-      setIsMatchingProfile(true);
-      setIsSearchingProfile(true); // <--- START SPINNER
+    // Cancel pending profile search from previous shot
+    if (profileSearchTimerRef.current) {
+      clearTimeout(profileSearchTimerRef.current);
+      profileSearchTimerRef.current = null;
+    }
 
-      // Force a UI render cycle before starting heavy profile search
-      setTimeout(async () => {
+    // Reset profile for new shot (prevents stale profile from previous shot)
+    setCurrentProfile(null);
+    setCurrentProfileName(
+      shotWithMetadata.profile ? cleanName(shotWithMetadata.profile) : 'No Profile Loaded',
+    );
+
+    if (shotWithMetadata.profile) {
+      const matchId = ++profileMatchIdRef.current;
+      setIsMatchingProfile(true);
+      setIsSearchingProfile(true);
+
+      // Debounce: wait for rapid navigation to settle before searching
+      profileSearchTimerRef.current = setTimeout(async () => {
+        profileSearchTimerRef.current = null;
         try {
           const target = cleanName(shotWithMetadata.profile).toLowerCase();
           const allProfiles = await libraryService.getAllProfiles('both');
+
+          if (matchId !== profileMatchIdRef.current) return; // stale
+
           const match = allProfiles.find(
             p => cleanName(p.name || p.label || '').toLowerCase() === target,
           );
@@ -168,24 +210,49 @@ export function ShotAnalyzer() {
             const fullP = match.data
               ? match.data
               : await libraryService.loadProfile(pid, match.source);
-            setCurrentProfile(fullP);
-            setCurrentProfileName(match.name || match.label);
+
+            if (matchId !== profileMatchIdRef.current) return; // stale
+
+            setCurrentProfile(
+              match.source && (match.source === 'gaggimate' || match.source === 'browser') && !fullP?.source
+                ? { ...fullP, source: match.source }
+                : fullP,
+            );
+            setCurrentProfileName(match.label || match.name);
           }
         } catch (e) {
+          if (matchId !== profileMatchIdRef.current) return;
           console.warn('Profile auto-match failed:', e);
         } finally {
-          setIsMatchingProfile(false);
-          setIsSearchingProfile(false); // <- stop spinner
+          if (matchId === profileMatchIdRef.current) {
+            setIsMatchingProfile(false);
+            setIsSearchingProfile(false);
+          }
         }
-      }, 50);
+      }, 250);
+    } else {
+      // Shot has no profile field — clear search states immediately
+      profileMatchIdRef.current++;
+      setIsMatchingProfile(false);
+      setIsSearchingProfile(false);
     }
+
     setLoading(false);
   };
 
-  const handleProfileLoad = (data, name) => {
-    setCurrentProfile(data);
-    setCurrentProfileName(name);
+  const handleProfileLoad = (data, name, source) => {
+    const nextProfile =
+      source && (source === 'gaggimate' || source === 'browser') && !data?.source
+        ? { ...data, source }
+        : data;
+    setCurrentProfile(nextProfile);
+    setCurrentProfileName(data?.label || data?.name || name);
   };
+
+  const statsHref = buildStatisticsProfileHref({
+    source: currentProfile?.source,
+    profileName: currentProfileName,
+  });
 
   return (
     <div className='pb-20'>
@@ -214,9 +281,18 @@ export function ShotAnalyzer() {
               setCurrentProfile(null);
               setCurrentProfileName('No Profile Loaded');
             }}
-            onShowStats={() => setShowInfoModal(true)}
+            onShowStats={() => {
+              sessionStorage.setItem('statsInitialContext', JSON.stringify({
+                profileName: currentProfileName,
+                source: 'both',
+              }));
+            }}
+            statsHref={statsHref}
             importMode={importMode}
             onImportModeChange={setImportMode}
+            onShotLoadedFromLibrary={() => {
+              setPendingMobileAnalysisScroll(true);
+            }}
             isMatchingProfile={isMatchingProfile}
             isSearchingProfile={isSearchingProfile} // <- pass prop
           />
@@ -224,7 +300,7 @@ export function ShotAnalyzer() {
 
         {currentShot ? (
           // --- Active Analysis View ---
-          <div className='animate-fade-in mt-8 space-y-5'>
+          <div ref={analysisSectionRef} className='animate-fade-in mt-8 space-y-5'>
             <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-5 shadow-sm backdrop-blur-sm'>
               <div className='text-base-content border-base-content/10 mb-4 border-b-2 pb-2.5 text-lg font-bold tracking-wide uppercase'>
                 Shot Analysis
@@ -252,28 +328,6 @@ export function ShotAnalyzer() {
           <EmptyState loading={loading} />
         )}
       </div>
-
-      {/* Coming Soon Modal */}
-      {showInfoModal && (
-        <div
-          className='fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm'
-          onClick={() => setShowInfoModal(false)}
-        >
-          <div
-            className='bg-base-100 border-base-content/10 w-full max-w-md rounded-2xl border p-8 text-center shadow-2xl'
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Logo: Masked Div for Theme Color Adaptation */}
-            <div className='bg-base-content mx-auto mb-6 h-24 w-24 opacity-90' style={maskStyle} />
-
-            <h3 className='mb-2 text-2xl font-bold'>Coming Soon</h3>
-            <p className='opacity-70'>Comparison and statistics feature under development.</p>
-            <button onClick={() => setShowInfoModal(false)} className='btn btn-primary mt-6 w-full'>
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

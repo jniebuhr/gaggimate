@@ -146,7 +146,7 @@
   --noise: 0;
 }
 
-/* Analyzer color mapping (columns + analysis table):
+/* Analyzer color mapping (columns + analysis table + shared statistics visuals incl. trends/summary cards):
    - default follows OS light/dark
    - nord is forced to light mapping
    - coffee is forced to dark mapping
@@ -172,6 +172,33 @@
   --analyzer-weight-det-anchor: #8b5cf6;
   --analyzer-pred-stop-red: #dc2626;
   --analyzer-pred-info-blue: #2563eb;
+  --analyzer-warning-orange: #ea7a2f;
+  --analyzer-warning-orange-strong: #c95f1d;
+  --analyzer-warning-orange-shadow: rgba(234, 122, 47, 0.3);
+  --analyzer-brew-by-time-label-bg: #475569;
+  --analyzer-brew-by-time-label-border: #334155;
+  --analyzer-brew-by-time-label-text: #ffffff;
+  --analyzer-brew-by-weight-label-bg: #8b5cf6;
+  --analyzer-brew-by-weight-label-border: #6d3fe0;
+  --analyzer-brew-by-weight-label-text: #ffffff;
+  --analyzer-notes-taste-bitter: #b16a3c;
+  --analyzer-notes-taste-balanced: #5f8a57;
+  --analyzer-notes-taste-sour: #b7963f;
+  --analyzer-phase-line: rgba(107, 114, 128, 0.5);
+  --analyzer-stop-label: rgba(220, 38, 38, 0.85);
+  --statistics-trend-duration: #64748b;
+  --statistics-trend-water: #0ea5e9;
+  --statistics-trend-shots-brown: #8b5e3c;
+  --statistics-trend-axis-tick: #888888;
+  --statistics-trend-grid: rgba(200, 200, 200, 0.1);
+  --statistics-trend-tooltip-bg: rgba(20, 20, 20, 0.9);
+  --statistics-summary-shots-brown: #8b5e3c;
+  --statistics-summary-water: #0ea5e9;
+  --statistics-summary-duration: #64748b;
+  --statistics-summary-surface-strong: color-mix(in srgb, var(--color-base-100) 92%, var(--color-base-content) 2%);
+  --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 97%, var(--color-base-content) 1%);
+  --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  --statistics-summary-shadow: rgba(15, 23, 42, 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -196,6 +223,33 @@
     --analyzer-weight-det-anchor: #a78bfa;
     --analyzer-pred-stop-red: #ef4444;
     --analyzer-pred-info-blue: #60a5fa;
+    --analyzer-warning-orange: #f39a52;
+    --analyzer-warning-orange-strong: #dd7f31;
+    --analyzer-warning-orange-shadow: rgba(243, 154, 82, 0.3);
+    --analyzer-brew-by-time-label-bg: #475569;
+    --analyzer-brew-by-time-label-border: #64748b;
+    --analyzer-brew-by-time-label-text: #ffffff;
+    --analyzer-brew-by-weight-label-bg: #a78bfa;
+    --analyzer-brew-by-weight-label-border: #8f6be8;
+    --analyzer-brew-by-weight-label-text: #ffffff;
+    --analyzer-notes-taste-bitter: #d39a6a;
+    --analyzer-notes-taste-balanced: #8fb58b;
+    --analyzer-notes-taste-sour: #d6b66a;
+    --analyzer-phase-line: rgba(148, 163, 184, 0.45);
+    --analyzer-stop-label: rgba(239, 68, 68, 0.85);
+    --statistics-trend-duration: #94a3b8;
+    --statistics-trend-water: #38bdf8;
+    --statistics-trend-shots-brown: #b4835f;
+    --statistics-trend-axis-tick: #9ca3af;
+    --statistics-trend-grid: rgba(200, 200, 200, 0.12);
+    --statistics-trend-tooltip-bg: rgba(12, 12, 12, 0.92);
+    --statistics-summary-shots-brown: #b4835f;
+    --statistics-summary-water: #38bdf8;
+    --statistics-summary-duration: #94a3b8;
+    --statistics-summary-surface-strong: color-mix(in srgb, var(--color-base-100) 86%, var(--color-base-content) 4%);
+    --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 92%, var(--color-base-content) 2%);
+    --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 14%, transparent);
+    --statistics-summary-shadow: rgba(0, 0, 0, 0.22);
   }
 }
 
@@ -220,6 +274,33 @@ html[data-theme='nord'] {
   --analyzer-weight-det-anchor: #8b5cf6;
   --analyzer-pred-stop-red: #dc2626;
   --analyzer-pred-info-blue: #2563eb;
+  --analyzer-warning-orange: #ea7a2f;
+  --analyzer-warning-orange-strong: #c95f1d;
+  --analyzer-warning-orange-shadow: rgba(234, 122, 47, 0.3);
+  --analyzer-brew-by-time-label-bg: #475569;
+  --analyzer-brew-by-time-label-border: #334155;
+  --analyzer-brew-by-time-label-text: #ffffff;
+  --analyzer-brew-by-weight-label-bg: #8b5cf6;
+  --analyzer-brew-by-weight-label-border: #6d3fe0;
+  --analyzer-brew-by-weight-label-text: #ffffff;
+  --analyzer-notes-taste-bitter: #b16a3c;
+  --analyzer-notes-taste-balanced: #5f8a57;
+  --analyzer-notes-taste-sour: #b7963f;
+  --analyzer-phase-line: rgba(107, 114, 128, 0.5);
+  --analyzer-stop-label: rgba(220, 38, 38, 0.85);
+  --statistics-trend-duration: #64748b;
+  --statistics-trend-water: #0ea5e9;
+  --statistics-trend-shots-brown: #8b5e3c;
+  --statistics-trend-axis-tick: #888888;
+  --statistics-trend-grid: rgba(200, 200, 200, 0.1);
+  --statistics-trend-tooltip-bg: rgba(20, 20, 20, 0.9);
+  --statistics-summary-shots-brown: #8b5e3c;
+  --statistics-summary-water: #0ea5e9;
+  --statistics-summary-duration: #64748b;
+  --statistics-summary-surface-strong: color-mix(in srgb, var(--color-base-100) 92%, var(--color-base-content) 2%);
+  --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 97%, var(--color-base-content) 1%);
+  --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  --statistics-summary-shadow: rgba(15, 23, 42, 0.08);
 }
 
 html[data-theme='coffee'] {
@@ -243,6 +324,33 @@ html[data-theme='coffee'] {
   --analyzer-weight-det-anchor: #a78bfa;
   --analyzer-pred-stop-red: #ef4444;
   --analyzer-pred-info-blue: #60a5fa;
+  --analyzer-warning-orange: #f39a52;
+  --analyzer-warning-orange-strong: #dd7f31;
+  --analyzer-warning-orange-shadow: rgba(243, 154, 82, 0.3);
+  --analyzer-brew-by-time-label-bg: #475569;
+  --analyzer-brew-by-time-label-border: #64748b;
+  --analyzer-brew-by-time-label-text: #ffffff;
+  --analyzer-brew-by-weight-label-bg: #a78bfa;
+  --analyzer-brew-by-weight-label-border: #8f6be8;
+  --analyzer-brew-by-weight-label-text: #ffffff;
+  --analyzer-notes-taste-bitter: #d39a6a;
+  --analyzer-notes-taste-balanced: #8fb58b;
+  --analyzer-notes-taste-sour: #d6b66a;
+  --analyzer-phase-line: rgba(148, 163, 184, 0.45);
+  --analyzer-stop-label: rgba(239, 68, 68, 0.85);
+  --statistics-trend-duration: #a8a29e;
+  --statistics-trend-water: #67e8f9;
+  --statistics-trend-shots-brown: #b4835f;
+  --statistics-trend-axis-tick: #a8a29e;
+  --statistics-trend-grid: rgba(200, 200, 200, 0.12);
+  --statistics-trend-tooltip-bg: rgba(18, 14, 12, 0.94);
+  --statistics-summary-shots-brown: #b4835f;
+  --statistics-summary-water: #67e8f9;
+  --statistics-summary-duration: #a8a29e;
+  --statistics-summary-surface-strong: color-mix(in srgb, var(--color-base-100) 86%, var(--color-base-content) 4%);
+  --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 92%, var(--color-base-content) 2%);
+  --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 14%, transparent);
+  --statistics-summary-shadow: rgba(0, 0, 0, 0.24);
 }
 
 @theme {
