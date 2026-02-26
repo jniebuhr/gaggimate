@@ -1,6 +1,7 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 #include "ControllerConfig.h"
+#include "NanopbProtocol.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
@@ -8,6 +9,8 @@ inline String make_system_info(ControllerConfig config, String version) {
     JsonDocument doc;
     doc["hw"] = config.name;
     doc["v"] = version;
+    doc["pv"] = NanopbProtocol::PROTOCOL_VERSION;
+    doc["pbv"] = NanopbProtocol::PROTOBUF_VERSION;
     JsonDocument capabilities;
     capabilities["ps"] = config.capabilites.pressure;
     capabilities["dm"] = config.capabilites.dimming;

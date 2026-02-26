@@ -134,67 +134,105 @@ void Controller::setupPanel() {
 #endif
 
 void Controller::setupBluetooth() {
-    lastScanTime = millis();
-    clientController.initClient();
-    clientController.registerSensorCallback(
-        [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow, const float puckResistance) {
-            onTempRead(temp);
-            this->pressure = pressure;
-            this->currentPuckFlow = puckFlow;
-            this->currentPumpFlow = pumpFlow;
-            pluginManager->trigger("boiler:pressure:change", "value", pressure);
-            pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
-            pluginManager->trigger("pump:flow:change", "value", pumpFlow);
-            pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
-        });
-    clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
-    clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
-    clientController.registerRemoteErrorCallback([this](const int error) {
-        if (error != ERROR_CODE_TIMEOUT && error != this->error) {
-            this->error = error;
-            deactivate();
-            setMode(MODE_STANDBY);
-            pluginManager->trigger(F("controller:error"));
-            ESP_LOGE(LOG_TAG, "Received error %d", error);
+    _client.init();
+    _client.scan();
+    _client.registerMessageCallback([this](const ProtocolMessage<std::any> &message) {
+        switch (message.type) {
+            case MessageType_MSG_SENSOR_DATA: {
+                const auto payload = std::any_cast<SensorDataResponse>(message.content);
+                onTempRead(payload.temperature);
+                this->pressure = payload.pressure;
+                this->currentPuckFlow = payload.puck_flow;
+                this->currentPumpFlow = payload.pump_flow;
+                pluginManager->trigger("boiler:pressure:change", "value", payload.pressure);
+                pluginManager->trigger("pump:puck-flow:change", "value", payload.puck_flow);
+                pluginManager->trigger("pump:flow:change", "value", payload.pump_flow);
+                pluginManager->trigger("pump:puck-resistance:change", "value", payload.puck_resistance);
+                break;
+            }
+            case MessageType_MSG_BREW_BUTTON:
+                handleBrewButton(std::any_cast<BrewButtonResponse>(message.content).button_state ? 1 : 0);
+                break;
+            case MessageType_MSG_STEAM_BUTTON:
+                handleSteamButton(std::any_cast<SteamButtonResponse>(message.content).button_state ? 1 : 0);
+                break;
+            case MessageType_MSG_ERROR: {
+                const int remoteError = static_cast<int>(std::any_cast<ErrorResponse>(message.content).error_code);
+                if (remoteError != ERROR_CODE_TIMEOUT && remoteError != this->error) {
+                    this->error = remoteError;
+                    deactivate();
+                    setMode(MODE_STANDBY);
+                    pluginManager->trigger(F("controller:error"));
+                    ESP_LOGE(LOG_TAG, "Received error %d", remoteError);
+                }
+                break;
+            }
+            case MessageType_MSG_AUTOTUNE_RESULT: {
+                const auto payload = std::any_cast<AutotuneResultResponse>(message.content);
+                char pid[64];
+                snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", payload.kp, payload.ki, payload.kd, 0.0f);
+                settings.setPid(String(pid));
+                pluginManager->trigger("controller:autotune:result");
+                autotuning = false;
+                break;
+            }
+            case MessageType_MSG_VOLUMETRIC:
+                onVolumetricMeasurement(std::any_cast<VolumetricMeasurementResponse>(message.content).volume,
+                                        VolumetricMeasurementSource::FLOW_ESTIMATION);
+                break;
+            case MessageType_MSG_TOF: {
+                const int value = static_cast<int>(std::any_cast<TofMeasurementResponse>(message.content).distance);
+                tofDistance = value;
+                pluginManager->trigger("controller:tof:change", "value", value);
+                break;
+            }
+            case MessageType_MSG_SYSTEM_INFO: {
+                const auto payload = std::any_cast<SystemInfoResponse>(message.content);
+                JsonDocument doc;
+                if (deserializeJson(doc, payload.info) == DeserializationError::Ok) {
+                    systemInfo = SystemInfo{.hardware = doc["hw"].as<String>(),
+                                            .version = doc["v"].as<String>(),
+                                            .protocolVersion = doc["pv"] | 1UL,
+                                            .protobufVersion = doc["pbv"] | 0UL,
+                                            .capabilities = SystemCapabilities{.dimming = doc["cp"]["dm"].as<bool>(),
+                                                                               .pressure = doc["cp"]["ps"].as<bool>(),
+                                                                               .ledControl = doc["cp"]["led"].as<bool>(),
+                                                                               .tof = doc["cp"]["tof"].as<bool>()}};
+                    systemInfoLoaded = true;
+                }
+                break;
+            }
+            default:
+                break;
         }
-    });
-    clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd, const float Kf) {
-        ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
-        char pid[64];
-        // Store in simplified format with combined Kf
-        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
-        settings.setPid(String(pid));
-        pluginManager->trigger("controller:autotune:result");
-        autotuning = false;
-    });
-    clientController.registerVolumetricMeasurementCallback(
-        [this](const float value) { onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION); });
-    clientController.registerTofMeasurementCallback([this](const int value) {
-        tofDistance = value;
-        ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", value);
-        pluginManager->trigger("controller:tof:change", "value", value);
     });
     pluginManager->trigger("controller:bluetooth:init");
 }
 
 void Controller::setupInfos() {
-    const std::string info = clientController.readInfo();
-    printf("System info: %s\n", info.c_str());
-    JsonDocument doc;
-    DeserializationError err = deserializeJson(doc, info);
-    if (err) {
-        printf("Error deserializing JSON: %s\n", err.c_str());
-        systemInfo = SystemInfo{
-            .hardware = "GaggiMate Standard 1.x", .version = "v1.0.0", .capabilities = {.dimming = false, .pressure = false}};
-    } else {
-        systemInfo = SystemInfo{.hardware = doc["hw"].as<String>(),
-                                .version = doc["v"].as<String>(),
-                                .capabilities = SystemCapabilities{
-                                    .dimming = doc["cp"]["dm"].as<bool>(),
-                                    .pressure = doc["cp"]["ps"].as<bool>(),
-                                    .ledControl = doc["cp"]["led"].as<bool>(),
-                                    .tof = doc["cp"]["tof"].as<bool>(),
-                                }};
+    const String info = _client.readSystemInfo();
+    if (!info.isEmpty()) {
+        JsonDocument doc;
+        if (deserializeJson(doc, info) == DeserializationError::Ok) {
+            systemInfo = SystemInfo{.hardware = doc["hw"].as<String>(),
+                                    .version = doc["v"].as<String>(),
+                                    .protocolVersion = doc["pv"] | 1UL,
+                                    .protobufVersion = doc["pbv"] | 0UL,
+                                    .capabilities = SystemCapabilities{.dimming = doc["cp"]["dm"].as<bool>(),
+                                                                       .pressure = doc["cp"]["ps"].as<bool>(),
+                                                                       .ledControl = doc["cp"]["led"].as<bool>(),
+                                                                       .tof = doc["cp"]["tof"].as<bool>()}};
+            systemInfoLoaded = true;
+            return;
+        }
+    }
+
+    if (!systemInfoLoaded) {
+        systemInfo = SystemInfo{.hardware = "GaggiMate Standard 1.x",
+                                .version = "v1.0.0",
+                                .protocolVersion = 1,
+                                .protobufVersion = 0,
+                                .capabilities = {.dimming = false, .pressure = false, .ledControl = false, .tof = false}};
     }
 }
 
@@ -259,24 +297,10 @@ void Controller::loop() {
         connect();
     }
 
-    // If BLE scanning has been running for a while without finding the controller,
-    // notify the UI so it can update the startup label accordingly.
-    if (!waitingForController && initialized && !clientController.isConnected() &&
-        (millis() - connectStartTime) > CONTROLLER_WAITING_TIMEOUT_MS) {
-        waitingForController = true;
-        pluginManager->trigger("controller:bluetooth:waiting");
-    }
-
-    // Periodically restart BLE scan while waiting for the controller to appear.
-    if (initialized && !clientController.isConnected() &&
-        (millis() - lastScanTime) > (NimBLEClientController::BLE_SCAN_DURATION_SECONDS * 1000UL + 500UL)) {
-        lastScanTime = millis();
-        clientController.scan();
-    }
-
-    if (clientController.isReadyForConnection()) {
-        waitingForController = false;
-        clientController.connectToServer();
+    if (_client.isReadyForConnection() && !_client.isConnected()) {
+        if (!_client.connect()) {
+            return;
+        }
         setupInfos();
         pluginManager->trigger("controller:bluetooth:connect");
         if (!loaded) {
@@ -286,8 +310,8 @@ void Controller::loop() {
 
             ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
             setPressureScale();
-            clientController.sendPidSettings(settings.getPid());
-            clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
+            _client.sendPidSettings(settings.getPid());
+            _client.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
 
             pluginManager->trigger("controller:ready");
         }
@@ -298,7 +322,7 @@ void Controller::loop() {
     // Disable ping as we send output control frequently
     // if (now - lastPing > PING_INTERVAL) {
     //     lastPing = now;
-    //     clientController.sendPing();
+    //     _client.sendPing();
     // }
 
     if (isErrorState()) {
@@ -381,7 +405,7 @@ void Controller::autotune(int testTime, int samples) {
         activateStandby();
     }
     autotuning = true;
-    clientController.sendAutotune(testTime, samples);
+    _client.sendAutotune(testTime, samples);
     pluginManager->trigger("controller:autotune:start");
 }
 
@@ -435,13 +459,13 @@ void Controller::setTargetTemp(float temperature) {
 
 void Controller::setPressureScale(void) {
     if (systemInfo.capabilities.pressure) {
-        clientController.setPressureScale(settings.getPressureScaling());
+        _client.setPressureScale(settings.getPressureScaling());
     }
 }
 
 void Controller::setPumpModelCoeffs(void) {
     if (systemInfo.capabilities.dimming) {
-        clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
+        _client.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
     }
 }
 
@@ -538,18 +562,18 @@ void Controller::updateControl() {
         }
     }
 
-    clientController.sendAltControl(altRelayActive);
+    _client.sendAltControl(altRelayActive);
     if (active && systemInfo.capabilities.pressure) {
-        if (proc->getType() == MODE_STEAM) {
+        if (currentProcess->getType() == MODE_STEAM) {
             targetPressure = settings.getSteamPumpCutoff();
-            targetFlow = proc->getPumpValue() * 0.1f;
-            clientController.sendAdvancedOutputControl(false, targetTemp, false, targetPressure, targetFlow);
+            targetFlow = currentProcess->getPumpValue() * 0.1f;
+            _client.sendAdvancedOutputControl(false, targetTemp, false, targetPressure, targetFlow);
             return;
         }
         if (proc->getType() == MODE_BREW) {
             auto *brewProcess = static_cast<BrewProcess *>(proc);
             if (brewProcess->isAdvancedPump()) {
-                clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), targetTemp,
+                _client.sendAdvancedOutputControl(brewProcess->isRelayActive(), targetTemp,
                                                            brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
                                                            brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
                 targetPressure = brewProcess->getPumpPressure();
@@ -560,14 +584,15 @@ void Controller::updateControl() {
     }
     targetPressure = 0.0f;
     targetFlow = 0.0f;
-    clientController.sendOutputControl(active && proc->isRelayActive(), active ? proc->getPumpValue() : 0, targetTemp);
+    _client.sendOutputControl(active && currentProcess->isRelayActive(),
+                                       active ? currentProcess->getPumpValue() : 0, targetTemp);
 }
 
 void Controller::activate() {
     if (isActive())
         return;
     clear();
-    clientController.tare();
+    _client.tare();
     if (isVolumetricAvailable()) {
 #ifdef NIGHTLY_BUILD
         currentVolumetricSource =
