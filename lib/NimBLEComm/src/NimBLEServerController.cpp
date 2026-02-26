@@ -80,11 +80,12 @@ void NimBLEServerController::initServer(const String infoString) {
 }
 
 void NimBLEServerController::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow,
-                                            float puckResistance) {
+                                            float puckResistance, float heaterPower) {
     if (deviceConnected && sensorChar != nullptr) {
-        std::string value = float_to_string(temperature) + "," + float_to_string(pressure) + "," + float_to_string(puckFlow) +
-                            "," + float_to_string(pumpFlow) + "," + float_to_string(puckResistance);
-        sensorChar->setValue(value);
+        char str[64];
+        snprintf(str, sizeof(str), "%.3f,%.3f,%.3f,%.3f,%.3f,%.1f", temperature, pressure, puckFlow, pumpFlow, puckResistance,
+                 heaterPower);
+        sensorChar->setValue(str);
         sensorChar->notify();
     }
 }
