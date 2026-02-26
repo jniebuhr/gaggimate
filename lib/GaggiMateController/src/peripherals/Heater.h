@@ -7,8 +7,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-enum class PIDLibrary { Legacy, Nimrod };
-
 constexpr float MAX_AUTOTUNE_TEMP = 125.0f;
 constexpr float TUNER_OUTPUT_SPAN = 1000.0f;
 
