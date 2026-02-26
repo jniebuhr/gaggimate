@@ -418,7 +418,7 @@ export function ShotChart({ shotData, results }) {
   );
   const hasWeightFlowData = Boolean(
     shotData?.samples?.some(sample => {
-      const val = Number(sample?.vf);
+      const val = Number(sample?.vf ?? sample?.weight_flow);
       return Number.isFinite(val) && val > 0;
     }),
   );
