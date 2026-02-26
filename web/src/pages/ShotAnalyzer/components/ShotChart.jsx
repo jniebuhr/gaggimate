@@ -835,14 +835,12 @@ export function ShotChart({ shotData, results }) {
       ...series.flow,
       ...series.puckFlow,
       ...series.targetFlow,
+      ...series.weightFlow,
     ];
     const mainAxisMaxRaw = safeMax(mainAxisSamples.map(p => p.y), 1);
     const mainAxisMax = Math.max(1, mainAxisMaxRaw * 1.02);
 
-    const weightAxisMaxRaw = safeMax(
-      [...series.weight.map(p => p.y), ...series.weightFlow.map(p => p.y)],
-      1,
-    );
+    const weightAxisMaxRaw = safeMax(series.weight.map(p => p.y), 1);
     // Keep weight always visible while keeping headroom minimal like the main axis.
     const weightAxisMax = Math.max(1, weightAxisMaxRaw * 1.02);
 
@@ -1246,7 +1244,7 @@ export function ShotChart({ shotData, results }) {
         borderColor: COLORS.weightFlow,
         backgroundColor: COLORS.weightFlow,
         fill: false,
-        yAxisID: 'yWeight',
+        yAxisID: 'yMain',
         pointRadius: 0,
         borderWidth: THIN_LINE_WIDTH,
         tension: 0.2,
