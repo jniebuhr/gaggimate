@@ -127,6 +127,7 @@ const CHART_COLOR_FALLBACKS = {
   flow: '#63993D',
   puckFlow: '#059669',
   weight: '#8B5CF6',
+  weightFlow: '#6d28d9',
   phaseLine: 'rgba(107, 114, 128, 0.5)',
   stopLabel: 'rgba(220, 38, 38, 0.85)',
 };
@@ -137,12 +138,13 @@ const CHART_COLOR_TOKEN_MAP = {
   flow: '--analyzer-flow-anchor',
   puckFlow: '--analyzer-puckflow-anchor',
   weight: '--analyzer-weight-anchor',
+  weightFlow: '--analyzer-weightflow-anchor',
   phaseLine: '--analyzer-phase-line',
   stopLabel: '--analyzer-stop-label',
 };
 const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
 const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
-const LEGEND_THIN_LINE_LABELS = new Set(['Target T', 'Target P', 'Target F', 'Puck Flow', 'Weight']);
+const LEGEND_THIN_LINE_LABELS = new Set(['Target T', 'Target P', 'Target F', 'Puck Flow', 'Weight', 'Weight Flow']);
 const WATER_DRAWN_PHASE_LABEL = 'Water Drawn (Phase)';
 const WATER_DRAWN_TOTAL_LABEL = 'Water Drawn (Total)';
 const TOOLTIP_WATER_LABELS = new Set([WATER_DRAWN_PHASE_LABEL, WATER_DRAWN_TOTAL_LABEL]);
@@ -157,6 +159,7 @@ const LEGEND_ORDER = [
   'Target F',
   'Puck Flow',
   'Weight',
+  'Weight Flow',
   'Temp',
   'Target T',
 ];
@@ -173,6 +176,7 @@ const TOOLTIP_ORDER = [
   'Flow',
   'Target F',
   'Puck Flow',
+  'Weight Flow',
   'Weight',
   WATER_DRAWN_PHASE_LABEL,
   WATER_DRAWN_TOTAL_LABEL,
@@ -195,6 +199,7 @@ const VISIBILITY_KEY_BY_LABEL = {
   'Target F': 'targetFlow',
   'Puck Flow': 'puckFlow',
   Weight: 'weight',
+  'Weight Flow': 'weightFlow',
 };
 
 const INITIAL_VISIBILITY = {
@@ -208,6 +213,7 @@ const INITIAL_VISIBILITY = {
   targetFlow: true,
   puckFlow: true,
   weight: true,
+  weightFlow: true,
 };
 
 function readCssColorVar(variableName, fallback) {
@@ -238,6 +244,7 @@ function getLegendColorByLabel(colors) {
     'Target F': colors.flow,
     'Puck Flow': colors.puckFlow,
     Weight: colors.weight,
+    'Weight Flow': colors.weightFlow,
   };
 }
 
@@ -250,6 +257,7 @@ const UNIT_BY_LABEL = {
   'Target F': 'ml/s',
   'Puck Flow': 'ml/s',
   Weight: 'g',
+  'Weight Flow': 'g/s',
   [WATER_DRAWN_PHASE_LABEL]: 'ml',
   [WATER_DRAWN_TOTAL_LABEL]: 'ml',
 };
@@ -408,11 +416,18 @@ export function ShotChart({ shotData, results }) {
       return Number.isFinite(numericWeight) && numericWeight > 0;
     }),
   );
+  const hasWeightFlowData = Boolean(
+    shotData?.samples?.some(sample => {
+      const val = Number(sample?.vf);
+      return Number.isFinite(val) && val > 0;
+    }),
+  );
 
   const handleLegendToggle = label => {
     const key = VISIBILITY_KEY_BY_LABEL[label];
     if (!key) return;
     if (label === 'Weight' && !hasWeightData) return;
+    if (label === 'Weight Flow' && !hasWeightFlowData) return;
     setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -771,6 +786,7 @@ export function ShotChart({ shotData, results }) {
       puckFlow: [],
       temp: [],
       weight: [],
+      weightFlow: [],
       targetPressure: [],
       targetFlow: [],
       targetTemp: [],
@@ -786,6 +802,7 @@ export function ShotChart({ shotData, results }) {
       const puckFlow = toNumberOrNull(getVal(sample, ['pf', 'puck_flow']));
       const temp = toNumberOrNull(getVal(sample, ['ct', 't', 'temperature']));
       const weight = toNumberOrNull(getVal(sample, ['v', 'w', 'weight', 'm']));
+      const weightFlow = toNumberOrNull(getVal(sample, ['vf', 'weight_flow']));
 
       // Extract target values
       const targetPressure = toNumberOrNull(getVal(sample, ['tp', 'target_pressure']));
@@ -798,6 +815,7 @@ export function ShotChart({ shotData, results }) {
       if (puckFlow !== null) series.puckFlow.push({ x: t, y: puckFlow });
       if (temp !== null) series.temp.push({ x: t, y: temp });
       if (weight !== null && weight >= 0) series.weight.push({ x: t, y: weight });
+      if (weightFlow !== null) series.weightFlow.push({ x: t, y: Math.max(0, weightFlow) });
 
       if (targetPressure !== null) {
         series.targetPressure.push({ x: t, y: Math.min(targetPressure, TARGET_PRESSURE_MAX) });
@@ -821,7 +839,10 @@ export function ShotChart({ shotData, results }) {
     const mainAxisMaxRaw = safeMax(mainAxisSamples.map(p => p.y), 1);
     const mainAxisMax = Math.max(1, mainAxisMaxRaw * 1.02);
 
-    const weightAxisMaxRaw = safeMax(series.weight.map(p => p.y), 1);
+    const weightAxisMaxRaw = safeMax(
+      [...series.weight.map(p => p.y), ...series.weightFlow.map(p => p.y)],
+      1,
+    );
     // Keep weight always visible while keeping headroom minimal like the main axis.
     const weightAxisMax = Math.max(1, weightAxisMaxRaw * 1.02);
 
@@ -1218,6 +1239,18 @@ export function ShotChart({ shotData, results }) {
         borderWidth: THIN_LINE_WIDTH,
         tension: 0.2,
         hidden: !hasWeight || !visibility.weight,
+      },
+      {
+        label: 'Weight Flow',
+        data: series.weightFlow,
+        borderColor: COLORS.weightFlow,
+        backgroundColor: COLORS.weightFlow,
+        fill: false,
+        yAxisID: 'yWeight',
+        pointRadius: 0,
+        borderWidth: THIN_LINE_WIDTH,
+        tension: 0.2,
+        hidden: !hasWeightFlowData || !visibility.weightFlow,
       },
       {
         label: WATER_DRAWN_PHASE_LABEL,
@@ -1751,6 +1784,7 @@ export function ShotChart({ shotData, results }) {
         <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1'>
           {LEGEND_ORDER.map(label => {
             if (label === 'Weight' && !hasWeightData) return null;
+            if (label === 'Weight Flow' && !hasWeightFlowData) return null;
             const key = VISIBILITY_KEY_BY_LABEL[label];
             const isVisible = key ? visibility[key] : false;
             const swatchColor = legendColorByLabel[label] || '#94a3b8';
