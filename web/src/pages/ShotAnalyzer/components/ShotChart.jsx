@@ -107,65 +107,6 @@ const replayRevealPlugin = {
   },
 };
 
-const targetTempAxisLabelsPlugin = {
-  id: 'targetTempAxisLabels',
-  afterDatasetsDraw(chart, _args, pluginOptions) {
-    if (!pluginOptions?.enabled) return;
-    if (!chart.chartArea) return;
-
-    const labels = Array.isArray(pluginOptions.labels) ? pluginOptions.labels : [];
-    if (labels.length === 0) return;
-
-    const yScale = chart.scales?.yTempRight;
-    if (!yScale) return;
-
-    const replayEnabled = Boolean(chart.$replayRevealEnabled);
-    const replayCutoffX = Number(chart.$replayRevealX);
-    const visibleLabels = labels.filter(label => {
-      if (!replayEnabled || !Number.isFinite(replayCutoffX)) return true;
-      return !Number.isFinite(label.firstX) || label.firstX <= replayCutoffX;
-    });
-    if (visibleLabels.length === 0) return;
-
-    const fontSize = pluginOptions.fontSize ?? 10;
-    const fontWeight = pluginOptions.fontWeight ?? 'normal';
-    const color = pluginOptions.color || '#888';
-    const rightInset = pluginOptions.offsetX ?? 6;
-    const minGap = pluginOptions.minGap ?? Math.max(12, fontSize + 2);
-    const x = Math.max(chart.chartArea.right + 2, chart.width - rightInset);
-
-    const positioned = visibleLabels
-      .map(label => ({ ...label, y: yScale.getPixelForValue(label.value) }))
-      .filter(label => Number.isFinite(label.y))
-      .sort((a, b) => a.y - b.y);
-
-    for (let i = 1; i < positioned.length; i++) {
-      if (positioned[i].y - positioned[i - 1].y < minGap) {
-        positioned[i].y = positioned[i - 1].y + minGap;
-      }
-    }
-
-    const topBound = chart.chartArea.top + 2;
-    const bottomBound = chart.chartArea.bottom - 2;
-    for (let i = positioned.length - 1; i >= 0; i--) {
-      positioned[i].y = Math.min(bottomBound, Math.max(topBound, positioned[i].y));
-      if (i > 0 && positioned[i].y - positioned[i - 1].y < minGap) {
-        positioned[i - 1].y = positioned[i].y - minGap;
-      }
-    }
-
-    const ctx = chart.ctx;
-    ctx.save();
-    ctx.fillStyle = color;
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.font = `${fontWeight} ${fontSize}px ${Chart.defaults.font.family}`;
-    positioned.forEach(label => {
-      if (label.text) ctx.fillText(label.text, x, label.y);
-    });
-    ctx.restore();
-  },
-};
 
 const TARGET_FLOW_MAX = 12;
 const TARGET_PRESSURE_MAX = 16;
@@ -356,35 +297,6 @@ function formatAxisTick(value) {
   const rounded = Math.round(numeric);
   const absolute = Math.abs(rounded).toString().padStart(2, '0');
   return rounded < 0 ? `-${absolute}` : absolute;
-}
-
-function buildTargetTempAxisLabels(targetTempSeries) {
-  if (!Array.isArray(targetTempSeries) || targetTempSeries.length === 0) return [];
-
-  const groups = [];
-  const mergeTolerance = 0.05;
-
-  targetTempSeries.forEach(point => {
-    const value = Number(point?.y);
-    const x = Number(point?.x);
-    if (!Number.isFinite(value)) return;
-
-    const existing = groups.find(group => Math.abs(group.value - value) <= mergeTolerance);
-    if (existing) {
-      if (Number.isFinite(x)) {
-        existing.firstX = Number.isFinite(existing.firstX) ? Math.min(existing.firstX, x) : x;
-      }
-      return;
-    }
-
-    groups.push({
-      value,
-      firstX: Number.isFinite(x) ? x : null,
-      text: formatAxisTick(value),
-    });
-  });
-
-  return groups.sort((a, b) => a.value - b.value);
 }
 
 function createStripedFillPattern(canvasCtx, color, options = {}) {
@@ -922,14 +834,6 @@ export function ShotChart({ shotData, results }) {
     const tempAxisMin = tempMinRaw - tempBottomPadding;
     const tempAxisMax = tempMaxRaw + tempTopPadding;
 
-    const targetTempAxisSamples = series.targetTemp.length > 0 ? series.targetTemp : series.temp;
-    const targetTempMinRaw = safeMin(targetTempAxisSamples.map(p => p.y), tempMinRaw);
-    const targetTempMaxRaw = safeMax(targetTempAxisSamples.map(p => p.y), tempMaxRaw);
-    const targetTempRange = Math.max(0.5, targetTempMaxRaw - targetTempMinRaw);
-    const targetTempTopPadding = Math.max(0.15, targetTempRange * 0.02);
-    const targetTempBottomPadding = Math.max(0.25, targetTempRange * 0.07);
-    const targetTempAxisMin = targetTempMinRaw - targetTempBottomPadding;
-    const targetTempAxisMax = targetTempMaxRaw + targetTempTopPadding;
 
     // --- Phase Annotation Logic ---
     const phaseAnnotations = {};
@@ -1486,12 +1390,11 @@ export function ShotChart({ shotData, results }) {
         hidden: !visibility.targetTemp,
       },
     ];
-    const targetTempAxisLabels = buildTargetTempAxisLabels(series.targetTemp);
     try {
       tempChartInstance.current = new Chart(tempChartRef.current, {
         type: 'line',
         data: { datasets: tempDatasets },
-        plugins: [hoverGuidePlugin, fixedTooltipPlugin, replayRevealPlugin, targetTempAxisLabelsPlugin],
+        plugins: [hoverGuidePlugin, fixedTooltipPlugin, replayRevealPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -1537,15 +1440,6 @@ export function ShotChart({ shotData, results }) {
             annotation: {
               annotations: tempPhaseAnnotations,
             },
-            targetTempAxisLabels: {
-              enabled: visibility.targetTemp && targetTempAxisLabels.length > 0,
-              labels: targetTempAxisLabels,
-              color: COLORS.tempTarget,
-              fontSize: 10,
-              fontWeight: 'normal',
-              offsetX: 6,
-              minGap: 12,
-            },
           },
           scales: {
             x: {
@@ -1584,12 +1478,12 @@ export function ShotChart({ shotData, results }) {
             yTempRight: {
               type: 'linear',
               position: 'right',
-              min: targetTempAxisMin,
-              max: targetTempAxisMax,
+              min: tempAxisMin,
+              max: tempAxisMax,
               ticks: {
                 display: true,
                 font: { size: 10 },
-                color: 'rgba(0, 0, 0, 0)',
+                color: COLORS.tempTarget,
                 callback: formatAxisTick,
               },
               grid: { display: false },
