@@ -27,6 +27,11 @@ bool AmoledDisplayDriver::isCompatible() {
         hwConfig = LILYGO_T_DISPLAY_S3_DS_HW_CONFIG;
         return true;
     }
+    ESP_LOGI("AmoledDisplayDriver", "Testing Waveshare 1.43\" AMOLED Display...");
+    if (testHw(WAVESHARE_S3_TOUCH_AMOLED_1_43_HW_CONFIG)) {
+        hwConfig = WAVESHARE_S3_TOUCH_AMOLED_1_43_HW_CONFIG;
+        return true;
+    }
     ESP_LOGI("AmoledDisplayDriver", "Testing Waveshare AMOLED Display...");
     if (testHw(WAVESHARE_S3_AMOLED_HW_CONFIG)) {
         hwConfig = WAVESHARE_S3_AMOLED_HW_CONFIG;
@@ -59,9 +64,10 @@ bool AmoledDisplayDriver::testHw(AmoledHwConfig hwConfig) {
     if (!Wire.begin(hwConfig.i2c_sda, hwConfig.i2c_scl))
         return false;
 
-    // Required: PCF8563 (RTC) and SY6970 (Battery management)
+    // Required: PCF8563 (RTC) when present, and a touch sensor
     // Touch sensor: Either CST92XX (1.75 inch) or FT3168 (1.43 inch)
-    bool pcf8563Found = detectI2CDevice(PCF8563_DEVICE_ADDRESS, "PCF8563 RTC");
+    // Some boards (e.g. Waveshare 1.43") have no PCF8563 RTC; skip that check for them
+    bool pcf8563Found = (hwConfig.pcf8563_int == -1) || detectI2CDevice(PCF8563_DEVICE_ADDRESS, "PCF8563 RTC");
 
     bool touchFound = detectI2CDevice(CST92XX_DEVICE_ADDRESS, "CST92XX Touch Sensor") ||
                       detectI2CDevice(FT3168_DEVICE_ADDRESS, "FT3168 Touch Sensor");

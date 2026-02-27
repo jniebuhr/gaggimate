@@ -268,8 +268,10 @@ bool Amoled_DisplayPanel::initDisplay(Amoled_Display_Panel_Color_Order colorOrde
                              0 /* row offset 1 */, hwConfig.lcd_gram_offset_y /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
     }
 
-    pinMode(hwConfig.lcd_en, OUTPUT);
-    digitalWrite(hwConfig.lcd_en, HIGH);
+    if (hwConfig.lcd_en != -1) {
+        pinMode(hwConfig.lcd_en, OUTPUT);
+        digitalWrite(hwConfig.lcd_en, HIGH);
+    }
 
     bool success = display->begin(80000000);
     if (!success) {
