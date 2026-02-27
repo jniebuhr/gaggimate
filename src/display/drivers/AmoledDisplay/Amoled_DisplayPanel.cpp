@@ -18,7 +18,9 @@ Amoled_DisplayPanel::~Amoled_DisplayPanel() {
     }
     if (display) {
         display->setBrightness(0);
-        digitalWrite(hwConfig.lcd_en, LOW);
+        if (hwConfig.lcd_en != -1) {
+            digitalWrite(hwConfig.lcd_en, LOW);
+        }
         delete display;
         display = nullptr;
     }
@@ -78,7 +80,13 @@ Amoled_Display_Panel_Type Amoled_DisplayPanel::getModel() { return panelType; }
 
 const char *Amoled_DisplayPanel::getTouchModelName() { return _touchDrv->getModelName(); }
 
-void Amoled_DisplayPanel::enableTouchWakeup() { _wakeupMethod = WAKEUP_FROM_TOUCH; }
+void Amoled_DisplayPanel::enableTouchWakeup() {
+    if (hwConfig.tp_int == -1) {
+        ESP_LOGW("Amoled_DisplayPanel", "Touch wakeup is not supported: tp_int is not wired");
+        return;
+    }
+    _wakeupMethod = WAKEUP_FROM_TOUCH;
+}
 
 void Amoled_DisplayPanel::enableButtonWakeup() { _wakeupMethod = WAKEUP_FROM_BUTTON; }
 
