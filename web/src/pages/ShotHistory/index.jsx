@@ -20,7 +20,7 @@ Chart.register(Filler);
 Chart.register(Legend);
 
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useEffect, useState, useContext, useMemo } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState, useContext, useMemo } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import HistoryCard from './HistoryCard.jsx';
@@ -43,10 +43,16 @@ export function ShotHistory() {
   const [filterBy, setFilterBy] = useState('all'); // all, rated, unrated
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const loadHistoryAbortRef = useRef(null);
   const loadHistory = async () => {
+    // Abort any in-flight fetch to prevent request pileup on the ESP32.
+    loadHistoryAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadHistoryAbortRef.current = controller;
+
     try {
       // Fetch binary index instead of websocket request
-      const response = await fetch('/api/history/index.bin');
+      const response = await fetch('/api/history/index.bin', { signal: controller.signal });
       if (!response.ok) {
         if (response.status === 404) {
           // Index doesn't exist, show empty list with option to rebuild
@@ -82,6 +88,7 @@ export function ShotHistory() {
       });
       setLoading(false);
     } catch (error) {
+      if (error.name === 'AbortError') return; // Intentional abort, not an error.
       console.error('Failed to load shot history:', error);
       setHistory([]);
       setLoading(false);
@@ -91,6 +98,7 @@ export function ShotHistory() {
     if (connected.value) {
       loadHistory();
     }
+    return () => loadHistoryAbortRef.current?.abort();
   }, [connected.value]);
 
   const onDelete = useCallback(

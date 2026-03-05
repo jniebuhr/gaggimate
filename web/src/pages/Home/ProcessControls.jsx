@@ -140,10 +140,11 @@ const ProcessControls = props => {
   const [profileData, setProfileData] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Fetch profile data when selectedProfileId or selectedProfile changes
+  // Fetch profile data when the selected profileID changes
+  // selectedProfile (name string) is intentionally excluded — the ID is the
+  // unique identifier and the name can change reference on every status update.
   useEffect(() => {
     const selectedProfileId = status.value.selectedProfileId;
-    const selectedProfileName = status.value.selectedProfile;
 
     if (!selectedProfileId || !apiService) {
       setProfileData(null);
@@ -172,7 +173,7 @@ const ProcessControls = props => {
     };
 
     fetchProfile();
-  }, [status.value.selectedProfileId, status.value.selectedProfile, apiService]);
+  }, [status.value.selectedProfileId, apiService]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Get settings to check if SmartGrind is enabled
   const { data: settings } = useQuery(
