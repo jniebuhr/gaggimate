@@ -22,6 +22,12 @@ const BATCH_SIZE = 5;
 const DEFAULT_SETTINGS = { scaleDelayMs: 200, sensorDelayMs: 200, isAutoAdjusted: true };
 const NO_PROFILE_LOADED = 'No Profile Loaded';
 
+function getStatisticsFallbackSource(source) {
+  if (source === 'gaggimate') return 'browser';
+  if (source === 'browser') return 'gaggimate';
+  return null;
+}
+
 function getInitialProfileName(initialContext) {
   const profileName = initialContext?.profileName;
   if (profileName && profileName !== NO_PROFILE_LOADED) return profileName;
@@ -38,9 +44,30 @@ function getAvailableProfileNames(profileList) {
   return [...new Set(profileNames)];
 }
 
-function parseDateTimeLocalInputMs(value) {
+function parseDateInputMs(value, boundary = 'start') {
   if (!value) return { valueMs: null, error: null };
-  const date = new Date(value);
+
+  const normalizedValue = String(value).trim();
+  const dateOnlyMatch = normalizedValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    const date = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      boundary === 'end' ? 23 : 0,
+      boundary === 'end' ? 59 : 0,
+      boundary === 'end' ? 59 : 0,
+      boundary === 'end' ? 999 : 0,
+    );
+    const valueMs = date.getTime();
+    if (!Number.isFinite(valueMs)) {
+      return { valueMs: null, error: `Invalid date: ${value}` };
+    }
+    return { valueMs, error: null };
+  }
+
+  const date = new Date(normalizedValue);
   const valueMs = date.getTime();
   if (!Number.isFinite(valueMs)) {
     return { valueMs: null, error: `Invalid date/time: ${value}` };
@@ -90,6 +117,25 @@ function getShotDisplayPrimary(shotMeta) {
   return String(shotMeta?.name || shotMeta?.label || shotMeta?.title || shotMeta?.id || 'Unknown Shot');
 }
 
+function stripFileExtension(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  return text.replace(/\.[^./\\]{1,8}$/, '');
+}
+
+function getShotFileStem(shotMeta) {
+  return String(
+    stripFileExtension(
+      shotMeta?.name ||
+        shotMeta?.storageKey ||
+        shotMeta?.label ||
+        shotMeta?.title ||
+        shotMeta?.id ||
+        'Unknown Shot',
+    ),
+  );
+}
+
 function getShotDisplaySecondary(shotMeta, dateBasisMode) {
   const ts = resolveShotEffectiveTimestampMs(shotMeta, dateBasisMode || 'auto');
   return `${formatShotDateTime(ts)} • ${getSourceShortLabel(shotMeta?.source)}`;
@@ -99,6 +145,8 @@ function buildShotSelectionItem(shot, dateBasisMode) {
   return {
     id: getShotSelectionKey(shot),
     primary: getShotDisplayPrimary(shot),
+    fileStem: getShotFileStem(shot),
+    shotId: String(shot?.id || shot?.storageKey || shot?.name || ''),
     secondary: getShotDisplaySecondary(shot, dateBasisMode),
     searchText: `${shot?.id || ''} ${shot?.profile || ''} ${shot?.name || ''} ${shot?.source || ''}`,
   };
@@ -345,8 +393,8 @@ export function StatisticsView({ initialContext }) {
     [parsedDslQuery, dateBasisMode],
   );
 
-  const visualDateFrom = useMemo(() => parseDateTimeLocalInputMs(dateFromLocal), [dateFromLocal]);
-  const visualDateTo = useMemo(() => parseDateTimeLocalInputMs(dateToLocal), [dateToLocal]);
+  const visualDateFrom = useMemo(() => parseDateInputMs(dateFromLocal, 'start'), [dateFromLocal]);
+  const visualDateTo = useMemo(() => parseDateInputMs(dateToLocal, 'end'), [dateToLocal]);
 
   // Stage 1 filtering: date + DSL only. This drives visible selection scopes and parse feedback.
   const baseFilterState = useMemo(() => {
@@ -737,12 +785,21 @@ export function StatisticsView({ initialContext }) {
       try {
         const shotList = Array.isArray(runRequest.shots) ? runRequest.shots : [];
         const profileList = Array.isArray(runRequest.profiles) ? runRequest.profiles : [];
+        const fallbackProfileList = Array.isArray(runRequest.fallbackProfiles)
+          ? runRequest.fallbackProfiles
+          : [];
 
         const profileMap = new Map();
         for (const p of profileList) {
           const displayName = cleanName(p.name || p.label || '');
           const key = displayName.toLowerCase();
           if (key) profileMap.set(key, p);
+        }
+        const fallbackProfileMap = new Map();
+        for (const p of fallbackProfileList) {
+          const displayName = cleanName(p.name || p.label || '');
+          const key = displayName.toLowerCase();
+          if (key && !profileMap.has(key)) fallbackProfileMap.set(key, p);
         }
         // Deduplicate repeated profile loads within the same run (especially useful for GM profiles).
         const loadedProfileCache = new Map();
@@ -772,7 +829,9 @@ export function StatisticsView({ initialContext }) {
 
                 const profileField = fullShot.profile || '';
                 const profileKey = cleanName(profileField).toLowerCase();
-                const matchedProfileEntry = profileKey ? profileMap.get(profileKey) : null;
+                const matchedProfileEntry = profileKey
+                  ? profileMap.get(profileKey) || fallbackProfileMap.get(profileKey) || null
+                  : null;
 
                 let matchedProfile = null;
                 if (matchedProfileEntry) {
@@ -883,13 +942,33 @@ export function StatisticsView({ initialContext }) {
       return;
     }
 
-    // Persist a run snapshot so UI changes after clicking "Go" do not mutate the active run.
-    setRunRequest({
-      id: Date.now(),
-      shots: [...candidateFilterState.filteredShots],
-      profiles: [...rawProfiles],
-      calcMode,
-    });
+    const nextRunId = Date.now();
+    const fallbackSource = getStatisticsFallbackSource(source);
+    const shotSnapshot = [...candidateFilterState.filteredShots];
+    const profileSnapshot = [...rawProfiles];
+    const nextCalcMode = calcMode;
+
+    async function prepareRunRequest() {
+      let fallbackProfiles = [];
+      if (fallbackSource) {
+        try {
+          fallbackProfiles = await libraryService.getAllProfiles(fallbackSource);
+        } catch {
+          fallbackProfiles = [];
+        }
+      }
+
+      // Persist a run snapshot so UI changes after clicking "Go" do not mutate the active run.
+      setRunRequest({
+        id: nextRunId,
+        shots: shotSnapshot,
+        profiles: profileSnapshot,
+        fallbackProfiles: Array.isArray(fallbackProfiles) ? fallbackProfiles : [],
+        calcMode: nextCalcMode,
+      });
+    }
+
+    prepareRunRequest();
   };
 
   const handleClearFilters = () => {
