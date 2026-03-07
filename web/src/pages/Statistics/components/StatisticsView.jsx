@@ -903,7 +903,7 @@ export function StatisticsView({ initialContext }) {
 
   return (
     <div className='space-y-5'>
-      <div className='bg-base-100/80 border-base-content/10 sticky top-0 z-50 rounded-xl border shadow-lg backdrop-blur-md'>
+      <div className='bg-base-100/80 border-base-content/10 z-50 rounded-xl border shadow-lg backdrop-blur-md lg:sticky lg:top-0'>
         <div className='p-2'>
           <StatisticsToolbar
             source={source}
