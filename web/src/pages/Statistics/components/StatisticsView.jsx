@@ -51,15 +51,25 @@ function parseDateInputMs(value, boundary = 'start') {
   const dateOnlyMatch = normalizedValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (dateOnlyMatch) {
     const [, year, month, day] = dateOnlyMatch;
+    const yearNum = Number(year);
+    const monthNum = Number(month);
+    const dayNum = Number(day);
     const date = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
+      yearNum,
+      monthNum - 1,
+      dayNum,
       boundary === 'end' ? 23 : 0,
       boundary === 'end' ? 59 : 0,
       boundary === 'end' ? 59 : 0,
       boundary === 'end' ? 999 : 0,
     );
+    if (
+      date.getFullYear() !== yearNum ||
+      date.getMonth() + 1 !== monthNum ||
+      date.getDate() !== dayNum
+    ) {
+      return { valueMs: null, error: `Invalid date: ${value}` };
+    }
     const valueMs = date.getTime();
     if (!Number.isFinite(valueMs)) {
       return { valueMs: null, error: `Invalid date: ${value}` };
