@@ -188,6 +188,10 @@
   --analyzer-notes-taste-sour: #b7963f;
   --analyzer-phase-line: rgba(107, 114, 128, 0.5);
   --analyzer-stop-label: rgba(220, 38, 38, 0.85);
+  --analyzer-hover-tooltip-bg: rgba(20, 20, 20, 0.92);
+  --analyzer-hover-tooltip-border: rgba(255, 255, 255, 0.08);
+  --analyzer-hover-tooltip-text: #ffffff;
+  --analyzer-hover-tooltip-shadow: rgba(15, 23, 42, 0.26);
   --statistics-trend-duration: #64748b;
   --statistics-trend-water: #0ea5e9;
   --statistics-trend-shots-brown: #8b5e3c;
@@ -241,6 +245,10 @@
     --analyzer-notes-taste-sour: #d6b66a;
     --analyzer-phase-line: rgba(148, 163, 184, 0.45);
     --analyzer-stop-label: rgba(239, 68, 68, 0.85);
+    --analyzer-hover-tooltip-bg: rgba(12, 12, 12, 0.94);
+    --analyzer-hover-tooltip-border: rgba(255, 255, 255, 0.1);
+    --analyzer-hover-tooltip-text: #ffffff;
+    --analyzer-hover-tooltip-shadow: rgba(0, 0, 0, 0.34);
     --statistics-trend-duration: #94a3b8;
     --statistics-trend-water: #38bdf8;
     --statistics-trend-shots-brown: #b4835f;
@@ -294,6 +302,10 @@ html[data-theme='nord'] {
   --analyzer-notes-taste-sour: #b7963f;
   --analyzer-phase-line: rgba(107, 114, 128, 0.5);
   --analyzer-stop-label: rgba(220, 38, 38, 0.85);
+  --analyzer-hover-tooltip-bg: rgba(20, 20, 20, 0.92);
+  --analyzer-hover-tooltip-border: rgba(255, 255, 255, 0.08);
+  --analyzer-hover-tooltip-text: #ffffff;
+  --analyzer-hover-tooltip-shadow: rgba(15, 23, 42, 0.26);
   --statistics-trend-duration: #64748b;
   --statistics-trend-water: #0ea5e9;
   --statistics-trend-shots-brown: #8b5e3c;
@@ -346,6 +358,10 @@ html[data-theme='coffee'] {
   --analyzer-notes-taste-sour: #d6b66a;
   --analyzer-phase-line: rgba(148, 163, 184, 0.45);
   --analyzer-stop-label: rgba(239, 68, 68, 0.85);
+  --analyzer-hover-tooltip-bg: rgba(18, 14, 12, 0.94);
+  --analyzer-hover-tooltip-border: rgba(255, 255, 255, 0.08);
+  --analyzer-hover-tooltip-text: #ffffff;
+  --analyzer-hover-tooltip-shadow: rgba(0, 0, 0, 0.34);
   --statistics-trend-duration: #a8a29e;
   --statistics-trend-water: #67e8f9;
   --statistics-trend-shots-brown: #b4835f;

@@ -1092,7 +1092,10 @@ export function StatisticsView({ initialContext }) {
 
           {result.phaseStats.length > 0 && (
             <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-4 shadow-sm'>
-              <PhaseStatistics phaseStats={result.phaseStats} />
+              <PhaseStatistics
+                phaseStats={result.phaseStats}
+                defaultExpanded={mode === 'profile'}
+              />
             </div>
           )}
 
