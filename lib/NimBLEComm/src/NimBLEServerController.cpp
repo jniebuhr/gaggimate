@@ -82,19 +82,16 @@ void NimBLEServerController::initServer(const String infoString) {
 void NimBLEServerController::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow,
                                             float puckResistance) {
     if (deviceConnected && sensorChar != nullptr) {
-        char str[30];
-        snprintf(str, sizeof(str), "%.3f,%.3f,%.3f,%.3f,%.3f", temperature, pressure, puckFlow, pumpFlow, puckResistance);
-        sensorChar->setValue(str);
+        std::string value = float_to_string(temperature) + "," + float_to_string(pressure) + "," + float_to_string(puckFlow) +
+                            "," + float_to_string(pumpFlow) + "," + float_to_string(puckResistance);
+        sensorChar->setValue(value);
         sensorChar->notify();
     }
 }
 
 void NimBLEServerController::sendError(int errorCode) {
     if (deviceConnected) {
-        // Send temperature notification to the client
-        char errorStr[8];
-        snprintf(errorStr, sizeof(errorStr), "%d", errorCode);
-        errorChar->setValue(errorStr);
+        errorChar->setValue(std::to_string(errorCode));
         errorChar->notify();
     }
 }
@@ -102,9 +99,7 @@ void NimBLEServerController::sendError(int errorCode) {
 void NimBLEServerController::sendBrewBtnState(bool brewButtonStatus) {
     if (deviceConnected) {
         // Send brew notification to the client
-        char brewStr[8];
-        snprintf(brewStr, sizeof(brewStr), "%d", brewButtonStatus);
-        brewBtnChar->setValue(brewStr);
+        brewBtnChar->setValue(std::to_string(static_cast<int>(brewButtonStatus)));
         brewBtnChar->notify();
     }
 }
@@ -112,37 +107,30 @@ void NimBLEServerController::sendBrewBtnState(bool brewButtonStatus) {
 void NimBLEServerController::sendSteamBtnState(bool steamButtonStatus) {
     if (deviceConnected) {
         // Send steam notification to the client
-        char steamStr[8];
-        snprintf(steamStr, sizeof(steamStr), "%d", steamButtonStatus);
-        steamBtnChar->setValue(steamStr);
+        steamBtnChar->setValue(std::to_string(static_cast<int>(steamButtonStatus)));
         steamBtnChar->notify();
     }
 }
 
 void NimBLEServerController::sendAutotuneResult(float Kp, float Ki, float Kd) {
     if (deviceConnected) {
-        char pidStr[64];
         // Send with default Kf=0.0 (disabled)
-        snprintf(pidStr, sizeof(pidStr), "%.3f,%.3f,%.3f,0.0", Kp, Ki, Kd);
-        autotuneResultChar->setValue(pidStr);
+        std::string value = float_to_string(Kp) + "," + float_to_string(Ki) + "," + float_to_string(Kd) + ",0.0";
+        autotuneResultChar->setValue(value);
         autotuneResultChar->notify();
     }
 }
 
 void NimBLEServerController::sendVolumetricMeasurement(float value) {
     if (deviceConnected) {
-        char data[8];
-        snprintf(data, sizeof(data), "%.2f", value);
-        volumetricMeasurementChar->setValue(data);
+        volumetricMeasurementChar->setValue(float_to_string(value));
         volumetricMeasurementChar->notify();
     }
 }
 
 void NimBLEServerController::sendTofMeasurement(int value) {
     if (deviceConnected) {
-        char data[8];
-        snprintf(data, sizeof(data), "%d", value);
-        tofMeasurementChar->setValue(data);
+        tofMeasurementChar->setValue(std::to_string(value));
         tofMeasurementChar->notify();
     }
 }
@@ -237,19 +225,18 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
         float Kp = get_token(pid, 0, ',').toFloat();
         float Ki = get_token(pid, 1, ',').toFloat();
         float Kd = get_token(pid, 2, ',').toFloat();
-        
+
         // Optional thermal feedforward parameter (default value if not provided)
-        float Kf = 0.0f;    // Default combined feedforward gain
-        
+        float Kf = 0.0f; // Default combined feedforward gain
+
         String kfToken = get_token(pid, 3, ',');
-        
+
         if (kfToken.length() > 0 && kfToken.toFloat() > 0.0f) {
             Kf = kfToken.toFloat();
         }
-        
+
         ESP_LOGI(LOG_TAG, "BLE received PID string: '%s'", pid.c_str());
-        ESP_LOGI(LOG_TAG, "Parsed PID: Kp=%.2f, Ki=%.2f, Kd=%.2f, Kf=%.3f (combined)", 
-                 Kp, Ki, Kd, Kf);
+        ESP_LOGI(LOG_TAG, "Parsed PID: Kp=%.2f, Ki=%.2f, Kd=%.2f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
         if (pidControlCallback != nullptr) {
             pidControlCallback(Kp, Ki, Kd, Kf);
         }

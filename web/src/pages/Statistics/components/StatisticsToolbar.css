@@ -1,0 +1,44 @@
+.analyzer-statistics-datetime {
+  text-align: left;
+  padding-inline: 0.2rem !important;
+}
+
+.analyzer-statistics-datetime::-webkit-datetime-edit {
+  padding: 0;
+}
+
+.analyzer-statistics-datetime::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+.analyzer-statistics-datetime::-webkit-datetime-edit-text {
+  padding: 0 0.05rem;
+}
+
+.analyzer-statistics-datetime::-webkit-datetime-edit-year-field,
+.analyzer-statistics-datetime::-webkit-datetime-edit-month-field,
+.analyzer-statistics-datetime::-webkit-datetime-edit-day-field,
+.analyzer-statistics-datetime::-webkit-datetime-edit-hour-field,
+.analyzer-statistics-datetime::-webkit-datetime-edit-minute-field {
+  padding: 0;
+}
+
+.analyzer-statistics-datetime::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 0;
+}
+
+.analyzer-statistics-datetime::-webkit-calendar-picker-indicator {
+  margin: 0 0 0 0.2rem;
+  padding: 0;
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+  opacity: 0.45;
+}
+
+.analyzer-statistics-datetime::-webkit-inner-spin-button,
+.analyzer-statistics-datetime::-webkit-clear-button {
+  display: none;
+  -webkit-appearance: none;
+  margin: 0;
+}

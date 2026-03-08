@@ -86,6 +86,7 @@ class DefaultUI {
     int apActive = false;
     int error = false;
     int autotuning = false;
+    int waitingForController = false;
     int volumetricAvailable = false;
     int bluetoothScales = false;
     int volumetricMode = false;

@@ -10,6 +10,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void initClient();
     bool connectToServer();
 
+    static constexpr size_t BLE_SCAN_DURATION_SECONDS = 10;
+
     void sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure, float flow);
 
     void sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint);

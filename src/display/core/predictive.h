@@ -45,32 +45,31 @@ class VolumetricRateCalculator {
             tdev_vdev += (measurementTimes[j] - t_mean) * (measurements[j] - v_mean);
             tdev2 += pow(measurementTimes[j] - t_mean, 2.0);
         }
-        
+
         if (tdev2 < 1e-10) {
             return 0.0;
         }
-        
+
         double volumePerMilliSecond = tdev_vdev / tdev2;              // the slope (volume per millisecond) of the linear best fit
         return volumePerMilliSecond > 0 ? volumePerMilliSecond : 0.0; // return 0 if it is not positive, convert to seconds
     }
 
     double getOvershootAdjustMillis(double expectedVolume, double actualVolume) {
-        if (measurementTimes.size() < 2)
-        {
+        if (measurementTimes.size() < 2) {
             return 0.0;
         }
-        
+
         const double overshoot = actualVolume - expectedVolume;
         const double rate = getRate(measurementTimes.back());
-        
+
         if (rate < 1e-10) {
             ESP_LOGW("VolumetricRateCalculator", "Invalid rate: %f", rate);
             return 0.0;
         }
-        
+
         const double adjust = overshoot / rate;
 
-        if(isnan(adjust) || isinf(adjust) || adjust < 0.0) {
+        if (isnan(adjust) || isinf(adjust) || adjust < 0.0) {
             ESP_LOGW("VolumetricRateCalculator", "Invalid adjust: %f", adjust);
             return 0.0;
         }

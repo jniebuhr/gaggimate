@@ -54,7 +54,7 @@ void onWakeup(lv_event_t *e) {
     controller.setMode(MODE_BREW);
 }
 
-void onLoadStarted(lv_event_t *e) { }
+void onLoadStarted(lv_event_t *e) {}
 
 void onStandby(lv_event_t *e) { controller.activateStandby(); }
 

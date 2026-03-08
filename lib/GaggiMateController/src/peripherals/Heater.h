@@ -25,12 +25,10 @@ class Heater {
     void setSetpoint(float setpoint);
     void setTunings(float Kp, float Ki, float Kd);
     void autotune(int goal, int windowSize);
-    
-    
+
     // Thermal feedforward control
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
-    void setFeedforwardScale(float combinedKff);  // Set combined Kff value (output units per watt)
-    
+    void setFeedforwardScale(float combinedKff); // Set combined Kff value (output units per watt)
 
   private:
     void setupPid();
@@ -70,12 +68,12 @@ class Heater {
     // Thermal feedforward variables
     float *pumpFlowRate = nullptr;
     int *valveStatus = nullptr;
-    float lastSafetyFactor = 1.0f;  // For smooth safety scaling transitions
+    float lastSafetyFactor = 1.0f; // For smooth safety scaling transitions
     float incomingWaterTemp = 23.0f;
-    float heaterEfficiency = 0.95f;  // 95% efficiency (immersion heater)
-    float heatLossWatts = 5.0f;      // 5W heat loss (well-insulated boiler)
-    float combinedKff = 0.0f;        // Combined feedforward gain (output units per watt) - disabled by default
-    
+    float heaterEfficiency = 0.95f; // 95% efficiency (immersion heater)
+    float heatLossWatts = 5.0f;     // 5W heat loss (well-insulated boiler)
+    float combinedKff = 0.0f;       // Combined feedforward gain (output units per watt) - disabled by default
+
     // Thermal model constants
     static constexpr float WATER_DENSITY = 1.0f;        // g/ml
     static constexpr float WATER_SPECIFIC_HEAT = 4.18f; // J/(g·°C)

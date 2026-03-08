@@ -16,6 +16,7 @@ import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { ProcessProfileChart } from '../../components/ProcessProfileChart.jsx';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
+import { Tooltip } from '../../components/Tooltip.jsx';
 
 const status = computed(() => machine.value.status);
 
@@ -496,21 +497,25 @@ const ProcessControls = props => {
                 TEMPERATURE
               </div>
               <div className='flex items-center space-x-2'>
-                <button
-                  onClick={lowerTemp}
-                  className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                >
-                  <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
-                </button>
+                <Tooltip content='Lower temperature'>
+                  <button
+                    onClick={lowerTemp}
+                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                  >
+                    <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
+                  </button>
+                </Tooltip>
                 <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
                   {status.value.targetTemperature}°C
                 </div>
-                <button
-                  onClick={raiseTemp}
-                  className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                >
-                  <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
-                </button>
+                <Tooltip content='Raise temperature'>
+                  <button
+                    onClick={raiseTemp}
+                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                  >
+                    <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
+                  </button>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -523,21 +528,25 @@ const ProcessControls = props => {
                 TEMPERATURE
               </div>
               <div className='flex items-center space-x-2'>
-                <button
-                  onClick={lowerTemp}
-                  className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                >
-                  <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
-                </button>
+                <Tooltip content='Lower temperature'>
+                  <button
+                    onClick={lowerTemp}
+                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                  >
+                    <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
+                  </button>
+                </Tooltip>
                 <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
                   {status.value.targetTemperature}°C
                 </div>
-                <button
-                  onClick={raiseTemp}
-                  className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                >
-                  <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
-                </button>
+                <Tooltip content='Raise temperature'>
+                  <button
+                    onClick={raiseTemp}
+                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                  >
+                    <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
+                  </button>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -551,23 +560,27 @@ const ProcessControls = props => {
                   GRIND TARGET
                 </div>
                 <div className='flex items-center space-x-2'>
-                  <button
-                    onClick={lowerTarget}
-                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                  >
-                    <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
-                  </button>
+                  <Tooltip content='Decrease target'>
+                    <button
+                      onClick={lowerTarget}
+                      className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                    >
+                      <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
+                    </button>
+                  </Tooltip>
                   <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
                     {status.value.grindTarget === 1 && status.value.volumetricAvailable
                       ? `${status.value.grindTargetVolume}g`
                       : `${Math.round(status.value.grindTargetDuration / 1000)}s`}
                   </div>
-                  <button
-                    onClick={raiseTarget}
-                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                  >
-                    <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
-                  </button>
+                  <Tooltip content='Increase target'>
+                    <button
+                      onClick={raiseTarget}
+                      className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                    >
+                      <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             )}
@@ -577,15 +590,17 @@ const ProcessControls = props => {
         {/* Common controls for all modes that need them */}
         {(mode === 1 || mode === 3 || (mode === 4 && showGrindTab && isGrindAvailable)) && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
-            <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
-              <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
-            </button>
+            <Tooltip content={active ? 'Pause' : finished ? 'Finish' : 'Start'}>
+              <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
+                <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
+              </button>
+            </Tooltip>
 
             {brew && !active && !finished && (
               <button
                 className='btn text-base-content/60 hover:text-base-content rounded-full text-sm transition-colors duration-200'
                 onClick={startFlush}
-                title='Click to flush water'
+                aria-label='Flush water'
               >
                 <FontAwesomeIcon icon={faTint} />
                 Flush

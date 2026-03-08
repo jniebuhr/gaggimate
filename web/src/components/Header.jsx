@@ -10,6 +10,8 @@ import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
+import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
+import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 
 function HeaderItem(props) {
   const { path } = useLocation();
@@ -111,6 +113,18 @@ export function Header() {
               label='Shot History'
               link='/history'
               icon={faTimeline}
+              onClick={() => openCb(false)}
+            />
+            <HeaderItem
+              label='Shot Analyzer'
+              link='/analyzer'
+              icon={faMagnifyingGlassChart}
+              onClick={() => openCb(false)}
+            />
+            <HeaderItem
+              label='Statistics'
+              link='/statistics'
+              icon={faChartSimple}
               onClick={() => openCb(false)}
             />
           </div>
