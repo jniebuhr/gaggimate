@@ -300,10 +300,10 @@ export function StatisticsMultiSelectDropdown({
         aria-expanded={open}
         aria-haspopup='listbox'
         onClick={() => setOpen(v => !v)}
-        className={`inline-flex h-12 min-h-0 min-w-[12rem] max-w-[22rem] items-center justify-between gap-2 rounded-lg border px-3 text-xs font-semibold shadow-sm transition-colors ${getAccentTriggerClasses(accentTone, selectedCount > 0)} disabled:cursor-not-allowed disabled:opacity-40`}
+        className={`inline-flex h-12 min-h-0 min-w-[8.75rem] max-w-[15rem] items-center justify-between gap-1 rounded-lg border px-2.25 text-xs font-semibold shadow-sm transition-colors ${getAccentTriggerClasses(accentTone, selectedCount > 0)} disabled:cursor-not-allowed disabled:opacity-40`}
       >
         <span className='truncate text-left'>{triggerText}</span>
-        <span className='text-[10px] opacity-65'>{open ? '▲' : '▼'}</span>
+        <span className='-ml-0.5 text-[10px] opacity-65'>{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (

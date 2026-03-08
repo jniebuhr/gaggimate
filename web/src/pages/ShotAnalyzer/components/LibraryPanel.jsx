@@ -53,6 +53,9 @@ export function LibraryPanel({
 
   // UI State
   const [isStuck, setIsStuck] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false,
+  );
   const [barRect, setBarRect] = useState({ width: 0, left: 0, height: 0 });
   const [collapsed, setCollapsed] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -104,6 +107,23 @@ export function LibraryPanel({
     });
     observer.observe(sentinel);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    const handleChange = event => setIsMobileViewport(event.matches);
+
+    setIsMobileViewport(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
   }, []);
 
   // Sync dimensions for fixed positioning
@@ -436,7 +456,8 @@ export function LibraryPanel({
   };
 
   // Styling logic for fixed bar
-  const shouldBeFixed = isStuck || !collapsed;
+  // Keep the panel anchored while it is open, but let the collapsed bar scroll normally on mobile.
+  const shouldBeFixed = !collapsed || (!isMobileViewport && isStuck);
   const fixedBarStyle = shouldBeFixed
     ? {
         position: 'fixed',

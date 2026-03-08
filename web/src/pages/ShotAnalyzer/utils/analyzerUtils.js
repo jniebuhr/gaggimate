@@ -79,6 +79,29 @@ export const columnConfig = [
     default: false,
   },
 
+  // --- WEIGHT FLOW ---
+  {
+    id: 'wf_se',
+    label: 'Weight Flow (g/s)',
+    type: 'se',
+    group: 'weightflow',
+    default: false,
+  },
+  {
+    id: 'wf_mm',
+    label: 'Weight Flow (g/s)',
+    type: 'mm',
+    group: 'weightflow',
+    default: false,
+  },
+  {
+    id: 'wf_avg',
+    label: 'Weight Flow (g/s)',
+    type: 'avg',
+    group: 'weightflow',
+    default: false,
+  },
+
   // --- PRESSURE ---
   {
     id: 'p_se',
@@ -301,6 +324,7 @@ export const groups = {
   temp: 'Temperature (℃)',
   target_temp: 'Target Temp (℃)',
   weight: 'Weight (g)',
+  weightflow: 'Weight Flow (g/s)',
   system: 'System Info',
 };
 
@@ -398,6 +422,11 @@ export const groupColors = {
     bg: 'bg-violet-500/5',
     text: 'text-[var(--analyzer-weight-text)]',
     anchor: 'var(--analyzer-weight-anchor)',
+  },
+  weightflow: {
+    bg: 'bg-violet-500/5',
+    text: 'text-[var(--analyzer-weightflow-text)]',
+    anchor: 'var(--analyzer-weightflow-anchor)',
   },
   system: {
     bg: 'bg-base-content/5',
