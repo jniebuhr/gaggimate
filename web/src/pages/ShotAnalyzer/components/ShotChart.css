@@ -46,6 +46,7 @@
 .shot-chart-tooltip__text {
   display: inline-flex;
   flex-wrap: wrap;
+  gap: 0.15rem;
 }
 
 .shot-chart-tooltip__value {

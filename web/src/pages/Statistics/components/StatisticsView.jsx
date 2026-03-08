@@ -15,6 +15,7 @@ import {
   parseStatisticsQuery,
   resolveShotEffectiveTimestampMs,
 } from '../utils/statisticsSearchDsl';
+import { STATISTICS_SOURCE_FALLBACK } from '../utils/statisticsRoute';
 
 // StatisticsView orchestrates metadata loading, filter state, and batch analysis runs.
 // StatisticsService remains pure; this component handles UI-specific selection semantics.
@@ -23,9 +24,7 @@ const DEFAULT_SETTINGS = { scaleDelayMs: 200, sensorDelayMs: 200, isAutoAdjusted
 const NO_PROFILE_LOADED = 'No Profile Loaded';
 
 function getStatisticsFallbackSource(source) {
-  if (source === 'gaggimate') return 'browser';
-  if (source === 'browser') return 'gaggimate';
-  return null;
+  return STATISTICS_SOURCE_FALLBACK[source] || null;
 }
 
 function getInitialProfileName(initialContext) {
@@ -134,16 +133,9 @@ function stripFileExtension(value) {
 }
 
 function getShotFileStem(shotMeta) {
-  return String(
-    stripFileExtension(
-      shotMeta?.name ||
-        shotMeta?.storageKey ||
-        shotMeta?.label ||
-        shotMeta?.title ||
-        shotMeta?.id ||
-        'Unknown Shot',
-    ),
-  );
+  const fileName = shotMeta?.name || shotMeta?.storageKey;
+  if (fileName) return String(stripFileExtension(fileName));
+  return String(shotMeta?.label || shotMeta?.title || shotMeta?.id || 'Unknown Shot');
 }
 
 function getShotDisplaySecondary(shotMeta, dateBasisMode) {
@@ -197,9 +189,11 @@ export function StatisticsView({ initialContext }) {
   const [error, setError] = useState(null);
   const [runRequest, setRunRequest] = useState(null);
   const [calcMode, setCalcMode] = useState(false);
+  const [preparingRun, setPreparingRun] = useState(false);
 
   const metaLoadIdRef = useRef(0);
   const analyzeLoadIdRef = useRef(0);
+  const prepareRunIdRef = useRef(0);
   const entriesRef = useRef(null);
   const initialProfilePresetAppliedRef = useRef(false);
   const profileModeShotSeedSignatureRef = useRef('');
@@ -944,6 +938,7 @@ export function StatisticsView({ initialContext }) {
   const handleGo = () => {
     if (
       loading ||
+      preparingRun ||
       metadataLoading ||
       metadataError ||
       candidateFilterState.parseErrors.length > 0 ||
@@ -952,30 +947,40 @@ export function StatisticsView({ initialContext }) {
       return;
     }
 
-    const nextRunId = Date.now();
+    const prepareRunId = ++prepareRunIdRef.current;
+    const nextRunId = `${Date.now()}-${prepareRunId}`;
     const fallbackSource = getStatisticsFallbackSource(source);
     const shotSnapshot = [...candidateFilterState.filteredShots];
     const profileSnapshot = [...rawProfiles];
     const nextCalcMode = calcMode;
+    setPreparingRun(true);
 
     async function prepareRunRequest() {
-      let fallbackProfiles = [];
-      if (fallbackSource) {
-        try {
-          fallbackProfiles = await libraryService.getAllProfiles(fallbackSource);
-        } catch {
-          fallbackProfiles = [];
+      try {
+        let fallbackProfiles = [];
+        if (fallbackSource) {
+          try {
+            fallbackProfiles = await libraryService.getAllProfiles(fallbackSource);
+          } catch {
+            fallbackProfiles = [];
+          }
+        }
+
+        if (prepareRunIdRef.current !== prepareRunId) return;
+
+        // Persist a run snapshot so UI changes after clicking "Go" do not mutate the active run.
+        setRunRequest({
+          id: nextRunId,
+          shots: shotSnapshot,
+          profiles: profileSnapshot,
+          fallbackProfiles: Array.isArray(fallbackProfiles) ? fallbackProfiles : [],
+          calcMode: nextCalcMode,
+        });
+      } finally {
+        if (prepareRunIdRef.current === prepareRunId) {
+          setPreparingRun(false);
         }
       }
-
-      // Persist a run snapshot so UI changes after clicking "Go" do not mutate the active run.
-      setRunRequest({
-        id: nextRunId,
-        shots: shotSnapshot,
-        profiles: profileSnapshot,
-        fallbackProfiles: Array.isArray(fallbackProfiles) ? fallbackProfiles : [],
-        calcMode: nextCalcMode,
-      });
     }
 
     prepareRunRequest();
@@ -1008,6 +1013,7 @@ export function StatisticsView({ initialContext }) {
             metadataLoading={metadataLoading}
             canGo={
               !loading &&
+              !preparingRun &&
               !metadataLoading &&
               !metadataError &&
               candidateFilterState.parseErrors.length === 0 &&

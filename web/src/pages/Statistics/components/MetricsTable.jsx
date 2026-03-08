@@ -9,6 +9,10 @@ import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { fmt } from '../utils/format';
 
+const DETAILED_TABLE_AVERAGE_HELPER_ID = 'statistics-metrics-average-helper';
+const DETAILED_TABLE_AVERAGE_HELPER_TEXT =
+  'Avg semantics: Pressure, Flow, Puck Flow and Temperature are time-weighted; Weight, Water, Duration and Target Temp Δ are shot-level averages.';
+
 const METRIC_ROWS = [
   {
     key: 'w',
@@ -54,7 +58,6 @@ const METRIC_ROWS = [
     accentColor: 'var(--analyzer-target-temp-text)',
     icon: faBullseye,
     digits: 2,
-    avgPrefix: '\u00B1',
     averageDescription: 'Per-shot absolute delta between measured and target average temperature',
   },
   {
@@ -255,15 +258,15 @@ export function MetricsTable({ metrics }) {
           Detailed Table
         </summary>
         <div className='border-t border-base-content/10 px-2 py-2'>
+          <p id={DETAILED_TABLE_AVERAGE_HELPER_ID} className='px-1 pb-2 text-[11px] opacity-65'>
+            {DETAILED_TABLE_AVERAGE_HELPER_TEXT}
+          </p>
           <div className='overflow-x-auto'>
             <table className='table-xs table w-full'>
               <thead>
                 <tr className='text-xs opacity-60'>
                   <th>Metric</th>
-                  <th
-                    className='text-right'
-                    title='Pressure, Flow, Puck Flow and Temperature use time-weighted averages; Weight, Water, Duration and Target Temp Δ use shot-level aggregate averages.'
-                  >
+                  <th className='text-right' aria-describedby={DETAILED_TABLE_AVERAGE_HELPER_ID}>
                     Avg
                   </th>
                   <th className='text-right'>Min</th>
@@ -280,7 +283,10 @@ export function MetricsTable({ metrics }) {
                       <td className={`font-semibold ${row.colorClass}`}>
                         {row.label} <span className='opacity-50'>({row.unit})</span>
                       </td>
-                      <td className='text-right font-mono' title={row.averageDescription}>
+                      <td
+                        className='text-right font-mono'
+                        aria-label={`${row.label} average. ${row.averageDescription}`}
+                      >
                         {formatMetricValue(metric.avg, row)}
                       </td>
                       <td className='text-right font-mono'>{fmt(metric.min, row.digits)}</td>

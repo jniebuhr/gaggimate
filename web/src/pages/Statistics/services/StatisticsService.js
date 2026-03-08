@@ -155,7 +155,10 @@ function computeProfileGroups(entries) {
     const keys = ['p', 'f', 'pf', 't', 'w'];
     const metrics = {};
     for (const key of keys) {
-      metrics[key] = aggregateMetricStats(totals, key);
+      metrics[key] =
+        key === 'w'
+          ? aggregateValueStats(totals.map(total => total.weight))
+          : aggregateMetricStats(totals, key);
     }
 
     result.push({
