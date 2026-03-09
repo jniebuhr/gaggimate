@@ -8,515 +8,61 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
 import annotationPlugin from 'chartjs-plugin-annotation';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMaximize } from '@fortawesome/free-solid-svg-icons/faMaximize';
-import { faMinimize } from '@fortawesome/free-solid-svg-icons/faMinimize';
-import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
-import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
-import { faStop } from '@fortawesome/free-solid-svg-icons/faStop';
+import { downloadBlob, downloadJson } from '../../../utils/download';
+import { exportReplayImage, exportReplayVideo } from '../services/ReplayVideoExportService';
+import { libraryService } from '../services/LibraryService';
+import { ShotChartControls, getNextChartHeight } from './shotChart/ShotChartControls';
+import {
+  areTooltipLayoutsEqual,
+  areTooltipStatesEqual,
+  buildExternalTooltipState,
+  createHiddenExternalTooltipLayout,
+  createHiddenExternalTooltipState,
+  getExternalTooltipLayout,
+  ShotChartExternalTooltip,
+  shouldRenderTooltipLabel,
+  sortTooltipItems,
+} from './shotChart/ShotChartExternalTooltip';
+import {
+  BREW_BY_TIME_LABEL,
+  BREW_BY_WEIGHT_LABEL,
+  DEFAULT_REPLAY_EXPORT_CONFIG,
+  INITIAL_VISIBILITY,
+  MAIN_CHART_HEIGHT_DEFAULT,
+  REPLAY_EXPORT_STATUS_LABELS,
+  REPLAY_FRAME_INTERVAL_MS,
+  STANDARD_LINE_WIDTH,
+  TARGET_FLOW_MAX,
+  TARGET_PRESSURE_MAX,
+  TEMP_CHART_HEIGHT_RATIO,
+  THIN_LINE_WIDTH,
+  VISIBILITY_KEY_BY_LABEL,
+  WATER_DRAWN_PHASE_LABEL,
+  WATER_DRAWN_TOTAL_LABEL,
+} from './shotChart/constants';
+import {
+  buildReplayExportFilename,
+  buildReplayImageFilename,
+  createStripedFillPattern,
+  findLastSampleIndexAtOrBeforeX,
+  formatAxisTick,
+  getLegendColorByLabel,
+  getPhaseName,
+  getShotChartColors,
+  getTooltipColorByLabel,
+  getVisibleLegendItemsForExport,
+  hoverGuidePlugin,
+  readCssColorVar,
+  replayRevealPlugin,
+  resolveHoverPointColor,
+  safeMax,
+  safeMin,
+  toNumberOrNull,
+} from './shotChart/helpers';
 import './ShotChart.css';
 
 // Register the annotation plugin for Phase Lines
 Chart.register(annotationPlugin);
-
-const hoverGuidePlugin = {
-  id: 'hoverGuide',
-  afterDatasetsDraw(chart, _args, pluginOptions) {
-    const active = chart.getActiveElements?.() || chart.tooltip?.getActiveElements?.() || [];
-    if (!active.length) return;
-
-    const x = active[0]?.element?.x;
-    if (!Number.isFinite(x)) return;
-
-    const { top, bottom } = chart.chartArea;
-    const ctx = chart.ctx;
-    ctx.save();
-    ctx.beginPath();
-    ctx.strokeStyle = pluginOptions?.color || 'rgba(148, 163, 184, 0.72)';
-    ctx.lineWidth = pluginOptions?.lineWidth || 1.25;
-    ctx.setLineDash(pluginOptions?.dash || []);
-    ctx.moveTo(x, top);
-    ctx.lineTo(x, bottom);
-    ctx.stroke();
-    ctx.restore();
-  },
-};
-
-const replayRevealPlugin = {
-  id: 'replayReveal',
-  beforeDatasetsDraw(chart) {
-    if (!chart?.$replayRevealEnabled || !chart.chartArea || !chart.scales?.x) return;
-    const cutoffX = Number(chart.$replayRevealX);
-    if (!Number.isFinite(cutoffX)) return;
-
-    const cutoffPixelRaw = chart.scales.x.getPixelForValue(cutoffX);
-    const cutoffPixel = Math.min(
-      chart.chartArea.right,
-      Math.max(chart.chartArea.left, Number.isFinite(cutoffPixelRaw) ? cutoffPixelRaw : chart.chartArea.left),
-    );
-    const clipWidth = Math.max(0, cutoffPixel - chart.chartArea.left);
-
-    chart.ctx.save();
-    chart.ctx.beginPath();
-    chart.ctx.rect(chart.chartArea.left, chart.chartArea.top, clipWidth, chart.chartArea.bottom - chart.chartArea.top);
-    chart.ctx.clip();
-    chart.$replayRevealClipActive = true;
-  },
-  afterDatasetsDraw(chart) {
-    if (!chart?.$replayRevealClipActive) return;
-    chart.ctx.restore();
-    chart.$replayRevealClipActive = false;
-  },
-};
-
-
-const TARGET_FLOW_MAX = 12;
-const TARGET_PRESSURE_MAX = 16;
-const STANDARD_LINE_WIDTH = 4;
-const THIN_LINE_WIDTH = STANDARD_LINE_WIDTH / 2;
-const BREW_BY_TIME_LABEL = 'BREW BY TIME';
-const BREW_BY_WEIGHT_LABEL = 'BREW BY WEIGHT';
-const MAIN_CHART_HEIGHT_SMALL = 280;
-const MAIN_CHART_HEIGHT_BIG = 560;
-const MAIN_CHART_HEIGHT_DEFAULT = MAIN_CHART_HEIGHT_SMALL;
-const TEMP_CHART_HEIGHT_RATIO = 80 / MAIN_CHART_HEIGHT_SMALL;
-const REPLAY_TARGET_FPS = 24;
-const REPLAY_FRAME_INTERVAL_MS = 1000 / REPLAY_TARGET_FPS;
-const EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X = 12;
-const EXTERNAL_TOOLTIP_POINTER_GAP = 10;
-const EXTERNAL_TOOLTIP_BOUNDS_PADDING = 4;
-const EXTERNAL_TOOLTIP_VERTICAL_OFFSET = 0;
-const CHART_COLOR_FALLBACKS = {
-  temp: '#F0561D',
-  tempTarget: '#731F00',
-  pressure: '#0066CC',
-  flow: '#63993D',
-  puckFlow: '#059669',
-  weight: '#8B5CF6',
-  weightFlow: '#6d28d9',
-  phaseLine: 'rgba(107, 114, 128, 0.5)',
-  stopLabel: 'rgba(220, 38, 38, 0.85)',
-};
-const CHART_COLOR_TOKEN_MAP = {
-  temp: '--analyzer-temp-anchor',
-  tempTarget: '--analyzer-target-temp-anchor',
-  pressure: '--analyzer-pressure-anchor',
-  flow: '--analyzer-flow-anchor',
-  puckFlow: '--analyzer-puckflow-anchor',
-  weight: '--analyzer-weight-anchor',
-  weightFlow: '--analyzer-weightflow-anchor',
-  phaseLine: '--analyzer-phase-line',
-  stopLabel: '--analyzer-stop-label',
-};
-const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
-const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
-const LEGEND_THIN_LINE_LABELS = new Set(['Target T', 'Target P', 'Target F', 'Puck Flow', 'Weight', 'Weight Flow']);
-const WATER_DRAWN_PHASE_LABEL = 'Water Drawn (Phase)';
-const WATER_DRAWN_TOTAL_LABEL = 'Water Drawn (Total)';
-const TOOLTIP_WATER_LABELS = new Set([WATER_DRAWN_PHASE_LABEL, WATER_DRAWN_TOTAL_LABEL]);
-const TOOLTIP_BOTTOM_LABELS = new Set(['Temp', 'Target T']);
-
-const LEGEND_ORDER = [
-  'Phase Names',
-  'Stops',
-  'Pressure',
-  'Target P',
-  'Flow',
-  'Target F',
-  'Puck Flow',
-  'Weight',
-  'Weight Flow',
-  'Temp',
-  'Target T',
-];
-
-const TOOLTIP_ORDER = [
-  'Phase Names',
-  'Stops',
-  'Pressure',
-  'Target P',
-  'Flow',
-  'Target F',
-  'Puck Flow',
-  'Weight Flow',
-  'Weight',
-  WATER_DRAWN_PHASE_LABEL,
-  WATER_DRAWN_TOTAL_LABEL,
-  'Temp',
-  'Target T',
-];
-const TOOLTIP_INDEX = TOOLTIP_ORDER.reduce((acc, label, index) => {
-  acc[label] = index;
-  return acc;
-}, {});
-const TOOLTIP_GROUP_BY_LABEL = {
-  Pressure: 'pressure',
-  'Target P': 'pressure',
-  Flow: 'flow',
-  'Target F': 'flow',
-  'Puck Flow': 'flow',
-  Weight: 'weight',
-  'Weight Flow': 'weight',
-  [WATER_DRAWN_PHASE_LABEL]: 'water',
-  [WATER_DRAWN_TOTAL_LABEL]: 'water',
-  Temp: 'temp',
-  'Target T': 'temp',
-};
-
-const VISIBILITY_KEY_BY_LABEL = {
-  'Phase Names': 'phaseNames',
-  Stops: 'stops',
-  Temp: 'temp',
-  'Target T': 'targetTemp',
-  Pressure: 'pressure',
-  'Target P': 'targetPressure',
-  Flow: 'flow',
-  'Target F': 'targetFlow',
-  'Puck Flow': 'puckFlow',
-  Weight: 'weight',
-  'Weight Flow': 'weightFlow',
-};
-
-const INITIAL_VISIBILITY = {
-  phaseNames: true,
-  stops: true,
-  temp: true,
-  targetTemp: true,
-  pressure: true,
-  targetPressure: true,
-  flow: true,
-  targetFlow: true,
-  puckFlow: true,
-  weight: true,
-  weightFlow: true,
-};
-
-function readCssColorVar(variableName, fallback) {
-  if (typeof window === 'undefined' || !window.document?.documentElement) return fallback;
-  const value = window
-    .getComputedStyle(window.document.documentElement)
-    .getPropertyValue(variableName)
-    .trim();
-  return value || fallback;
-}
-
-function getShotChartColors() {
-  return Object.keys(CHART_COLOR_FALLBACKS).reduce((acc, key) => {
-    acc[key] = readCssColorVar(CHART_COLOR_TOKEN_MAP[key], CHART_COLOR_FALLBACKS[key]);
-    return acc;
-  }, {});
-}
-
-function getLegendColorByLabel(colors) {
-  return {
-    'Phase Names': colors.phaseLine,
-    Stops: colors.stopLabel,
-    Temp: colors.temp,
-    'Target T': colors.tempTarget,
-    Pressure: colors.pressure,
-    'Target P': colors.pressure,
-    Flow: colors.flow,
-    'Target F': colors.flow,
-    'Puck Flow': colors.puckFlow,
-    Weight: colors.weight,
-    'Weight Flow': colors.weightFlow,
-  };
-}
-
-function getTooltipColorByLabel(colors) {
-  return {
-    ...getLegendColorByLabel(colors),
-    [WATER_DRAWN_PHASE_LABEL]: colors.puckFlow,
-    [WATER_DRAWN_TOTAL_LABEL]: colors.flow,
-  };
-}
-
-const UNIT_BY_LABEL = {
-  Temp: '°C',
-  'Target T': '°C',
-  Pressure: 'bar',
-  'Target P': 'bar',
-  Flow: 'ml/s',
-  'Target F': 'ml/s',
-  'Puck Flow': 'ml/s',
-  Weight: 'g',
-  'Weight Flow': 'g/s',
-  [WATER_DRAWN_PHASE_LABEL]: 'ml',
-  [WATER_DRAWN_TOTAL_LABEL]: 'ml',
-};
-
-function createHiddenExternalTooltipState() {
-  return {
-    visible: false,
-    titleLines: [],
-    rows: [],
-    anchorX: 0,
-    anchorY: 0,
-    chartWidth: 0,
-    chartHeight: 0,
-  };
-}
-
-function createHiddenExternalTooltipLayout() {
-  return {
-    visible: false,
-    x: 0,
-    y: 0,
-  };
-}
-
-function areStringArraysEqual(a = [], b = []) {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
-function areTooltipRowsEqual(a = [], b = []) {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (
-      a[i]?.label !== b[i]?.label ||
-      a[i]?.valueText !== b[i]?.valueText ||
-      a[i]?.color !== b[i]?.color ||
-      a[i]?.spacerBefore !== b[i]?.spacerBefore
-    ) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function areTooltipStatesEqual(a, b) {
-  if (!a || !b) return false;
-  return (
-    a.visible === b.visible &&
-    a.anchorX === b.anchorX &&
-    a.anchorY === b.anchorY &&
-    a.chartWidth === b.chartWidth &&
-    a.chartHeight === b.chartHeight &&
-    areStringArraysEqual(a.titleLines, b.titleLines) &&
-    areTooltipRowsEqual(a.rows, b.rows)
-  );
-}
-
-function areTooltipLayoutsEqual(a, b) {
-  if (!a || !b) return false;
-  return a.visible === b.visible && a.x === b.x && a.y === b.y;
-}
-
-function shouldRenderTooltipLabel(label) {
-  return Boolean(label) && label !== 'Phase Names' && label !== 'Stops';
-}
-
-function sortTooltipItems(a, b) {
-  return (TOOLTIP_INDEX[a?.dataset?.label] ?? 999) - (TOOLTIP_INDEX[b?.dataset?.label] ?? 999);
-}
-
-function getTooltipGroupKey(label) {
-  return TOOLTIP_GROUP_BY_LABEL[label] || null;
-}
-
-function resolveHoverPointColor(context) {
-  const datasetColor = context?.dataset?.borderColor;
-  return typeof datasetColor === 'string' && datasetColor.length > 0 ? datasetColor : '#94a3b8';
-}
-
-function computeExternalTooltipPosition({
-  anchorX,
-  anchorY,
-  chartWidth,
-  chartHeight,
-  tooltipWidth,
-  tooltipHeight,
-  boundsPadding = EXTERNAL_TOOLTIP_BOUNDS_PADDING,
-  pointerGap = EXTERNAL_TOOLTIP_POINTER_GAP,
-  verticalOffset = EXTERNAL_TOOLTIP_VERTICAL_OFFSET,
-}) {
-  const chartMidX = chartWidth / 2;
-  const showRightOfPointer = anchorX <= chartMidX;
-  const preferredX = showRightOfPointer
-    ? anchorX + pointerGap
-    : anchorX - tooltipWidth - pointerGap;
-  const preferredY = anchorY - tooltipHeight / 2 + verticalOffset;
-  const maxX = Math.max(boundsPadding, chartWidth - tooltipWidth - boundsPadding);
-  const maxY = Math.max(boundsPadding, chartHeight - tooltipHeight - boundsPadding);
-
-  return {
-    visible: true,
-    x: Math.min(maxX, Math.max(boundsPadding, preferredX)),
-    y: Math.min(maxY, Math.max(boundsPadding, preferredY)),
-  };
-}
-
-function buildTooltipRowModel(tooltipItem, getHoverWaterValuesAtX, tooltipColorByLabel) {
-  const label = tooltipItem?.dataset?.label;
-  if (!label || !shouldRenderTooltipLabel(label)) return null;
-
-  let valueText = null;
-  if (TOOLTIP_WATER_LABELS.has(label)) {
-    const xValue = tooltipItem.parsed?.x;
-    const { totalWaterMl, phaseWaterMl } = getHoverWaterValuesAtX(xValue);
-    const waterValue = label === WATER_DRAWN_PHASE_LABEL ? phaseWaterMl : totalWaterMl;
-    valueText = Number.isFinite(waterValue) ? `${waterValue.toFixed(1)} ml` : '-';
-  } else {
-    const value = tooltipItem.parsed?.y;
-    if (value === null || value === undefined) return null;
-    const unit = UNIT_BY_LABEL[label];
-    valueText = unit ? `${value.toFixed(1)} ${unit}` : `${value.toFixed(1)}`;
-  }
-
-  return {
-    label,
-    valueText,
-    color: tooltipColorByLabel[label] || '#94a3b8',
-    spacerBefore: false,
-  };
-}
-
-function buildExternalTooltipRows(tooltipItems, getHoverWaterValuesAtX, tooltipColorByLabel) {
-  const sortedItems = [...(tooltipItems || [])]
-    .filter(item => shouldRenderTooltipLabel(item?.dataset?.label))
-    .sort(sortTooltipItems);
-
-  let previousGroupKey = null;
-
-  return sortedItems.reduce((rows, item) => {
-    const row = buildTooltipRowModel(item, getHoverWaterValuesAtX, tooltipColorByLabel);
-    if (!row) return rows;
-
-    const groupKey = getTooltipGroupKey(row.label);
-    if (previousGroupKey !== null && groupKey !== null && groupKey !== previousGroupKey) {
-      row.spacerBefore = true;
-    }
-
-    if (groupKey !== null) previousGroupKey = groupKey;
-    rows.push(row);
-    return rows;
-  }, []);
-}
-
-// --- Helper Functions ---
-
-/**
- * Retrieves the phase name for a specific phase number.
- * @param {Object} shot - The shot data object.
- * @param {number} phaseNumber - The index of the phase.
- * @returns {string} The name of the phase or a fallback name.
- */
-function getPhaseName(shot, phaseNumber) {
-  // 1. Try to find the name in the logged phase transitions
-  if (shot.phaseTransitions && shot.phaseTransitions.length > 0) {
-    const transition = shot.phaseTransitions.find(t => t.phaseNumber === phaseNumber);
-    if (transition && transition.phaseName) {
-      return transition.phaseName;
-    }
-  }
-
-  // 2. Fallback: Try to get it from the original profile definition if embedded
-  if (shot.profile && shot.profile.phases && shot.profile.phases[phaseNumber]) {
-    return shot.profile.phases[phaseNumber].name;
-  }
-
-  // 3. Fallback to guarantee a label is rendered
-  return phaseNumber === 0 ? 'Start' : `P${phaseNumber + 1}`;
-}
-
-/**
- * Converts a candidate value to a finite number or null.
- * @param {any} value - Candidate input value.
- * @returns {number|null}
- */
-function toNumberOrNull(value) {
-  if (value === null || value === undefined) return null;
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
-}
-
-function formatAxisTick(value) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return value;
-  const rounded = Math.round(numeric);
-  const absolute = Math.abs(rounded).toString().padStart(2, '0');
-  return rounded < 0 ? `-${absolute}` : absolute;
-}
-
-function createStripedFillPattern(canvasCtx, color, options = {}) {
-  if (!canvasCtx || typeof window === 'undefined') return color;
-
-  const size = options.size ?? 8;
-  const lineWidth = options.lineWidth ?? 1;
-  const baseAlpha = options.baseAlpha ?? 0.02;
-  const stripeAlpha = options.stripeAlpha ?? 0.1;
-
-  const patternCanvas = window.document.createElement('canvas');
-  patternCanvas.width = size;
-  patternCanvas.height = size;
-
-  const patternCtx = patternCanvas.getContext('2d');
-  if (!patternCtx) return color;
-
-  patternCtx.clearRect(0, 0, size, size);
-  patternCtx.fillStyle = color;
-  patternCtx.globalAlpha = baseAlpha;
-  patternCtx.fillRect(0, 0, size, size);
-
-  patternCtx.strokeStyle = color;
-  patternCtx.globalAlpha = stripeAlpha;
-  patternCtx.lineWidth = lineWidth;
-  patternCtx.lineCap = 'butt';
-  patternCtx.beginPath();
-  patternCtx.moveTo(0, size);
-  patternCtx.lineTo(size, 0);
-  patternCtx.stroke();
-
-  return canvasCtx.createPattern(patternCanvas, 'repeat') || color;
-}
-
-function safeMax(arr, fallback = 0) {
-  let max = -Infinity;
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i] > max) max = arr[i];
-  }
-  return max === -Infinity ? fallback : max;
-}
-
-function safeMin(arr, fallback = 0) {
-  let min = Infinity;
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i] < min) min = arr[i];
-  }
-  return min === Infinity ? fallback : min;
-}
-
-function findLastSampleIndexAtOrBeforeX(sampleTimesSec, xValue) {
-  if (!Array.isArray(sampleTimesSec) || sampleTimesSec.length === 0 || !Number.isFinite(xValue)) {
-    return -1;
-  }
-  if (xValue < sampleTimesSec[0]) return -1;
-
-  let low = 0;
-  let high = sampleTimesSec.length - 1;
-  let best = -1;
-
-  while (low <= high) {
-    const mid = (low + high) >> 1;
-    const midValue = sampleTimesSec[mid];
-    if (!Number.isFinite(midValue)) {
-      high = mid - 1;
-      continue;
-    }
-    if (midValue <= xValue) {
-      best = mid;
-      low = mid + 1;
-    } else {
-      high = mid - 1;
-    }
-  }
-
-  return best;
-}
 
 /**
  * ShotChart Component
@@ -527,6 +73,7 @@ export function ShotChart({ shotData, results }) {
   const mainChartContainerRef = useRef(null);
   const mainChartRef = useRef(null);
   const tempChartRef = useRef(null);
+  const exportMenuRef = useRef(null);
   const externalTooltipRef = useRef(null);
   const mainChartInstance = useRef(null);
   const tempChartInstance = useRef(null);
@@ -540,12 +87,24 @@ export function ShotChart({ shotData, results }) {
   const replayRuntimeRef = useRef(null);
   const clearAllHoverRef = useRef(() => {});
   const isReplayingRef = useRef(false);
+  const isExportingRef = useRef(false);
+  const activeExportTypeRef = useRef(null);
+  const exportAbortControllerRef = useRef(null);
+  const isMountedRef = useRef(true);
 
-  // --- State for Visibility/Toggles ---
+  // Keep frame-by-frame replay state in refs so the animation loop does not trigger React renders.
+  // Only user-facing state stays in React state.
   const [visibility, setVisibility] = useState(INITIAL_VISIBILITY);
   const [mainChartHeight, setMainChartHeight] = useState(MAIN_CHART_HEIGHT_DEFAULT);
   const [isReplaying, setIsReplaying] = useState(false);
   const [isReplayPaused, setIsReplayPaused] = useState(false);
+  const [exportMenuState, setExportMenuState] = useState({
+    open: false,
+    exportType: DEFAULT_REPLAY_EXPORT_CONFIG.exportType,
+    includeLegend: DEFAULT_REPLAY_EXPORT_CONFIG.includeLegend,
+  });
+  const [isReplayExporting, setIsReplayExporting] = useState(false);
+  const [replayExportStatus, setReplayExportStatus] = useState({ status: 'idle', error: null });
   const [externalTooltipState, setExternalTooltipState] = useState(createHiddenExternalTooltipState);
   const [externalTooltipLayout, setExternalTooltipLayout] = useState(createHiddenExternalTooltipLayout);
   if (!chartColorsRef.current) {
@@ -565,8 +124,30 @@ export function ShotChart({ shotData, results }) {
       return Number.isFinite(val) && val > 0;
     }),
   );
+  const activeExportType = activeExportTypeRef.current;
+  const isVideoExportActive = isReplayExporting && activeExportType === 'video';
+  const isControlsLocked = isReplayExporting;
+  const shouldShowReplayFocusHint =
+    isVideoExportActive &&
+    (replayExportStatus.status === 'preparing' || replayExportStatus.status === 'recording');
+  const replayExportStatusLabel = replayExportStatus.error
+    ? replayExportStatus.error
+    : REPLAY_EXPORT_STATUS_LABELS[replayExportStatus.status] || '';
+
+  const setReplayExportStatusSafely = nextStatus => {
+    if (isMountedRef.current) {
+      setReplayExportStatus(nextStatus);
+    }
+  };
+
+  const updateReplayExportStatusSafely = updater => {
+    if (isMountedRef.current) {
+      setReplayExportStatus(updater);
+    }
+  };
 
   useLayoutEffect(() => {
+    // The tooltip width depends on rendered content, so measure after paint and then clamp it into the chart box.
     if (!externalTooltipState.visible) {
       setExternalTooltipLayout(prev => {
         const hiddenLayout = createHiddenExternalTooltipLayout();
@@ -584,19 +165,72 @@ export function ShotChart({ shotData, results }) {
     const tooltipWidth = tooltipElement.offsetWidth || 0;
     const tooltipHeight = tooltipElement.offsetHeight || 0;
 
-    const nextLayout = computeExternalTooltipPosition({
-      anchorX: externalTooltipState.anchorX,
-      anchorY: externalTooltipState.anchorY,
-      chartWidth,
-      chartHeight,
+    const nextLayout = getExternalTooltipLayout({
+      tooltipState: externalTooltipState,
       tooltipWidth,
       tooltipHeight,
+      fallbackWidth: chartWidth,
+      fallbackHeight: chartHeight,
     });
 
     setExternalTooltipLayout(prev => (areTooltipLayoutsEqual(prev, nextLayout) ? prev : nextLayout));
   }, [externalTooltipState]);
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      exportAbortControllerRef.current?.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Delay the global listener to the next tick so the cancel click itself does not immediately dismiss the message.
+    if (replayExportStatus.error !== 'Replay export was cancelled.') return undefined;
+
+    let isDisposed = false;
+    const handlePointerDown = () => {
+      if (isDisposed) return;
+      setReplayExportStatus({ status: 'idle', error: null });
+    };
+
+    const timerId = window.setTimeout(() => {
+      if (isDisposed) return;
+      document.addEventListener('pointerdown', handlePointerDown, { once: true });
+    }, 0);
+
+    return () => {
+      isDisposed = true;
+      window.clearTimeout(timerId);
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [replayExportStatus.error]);
+
+  useEffect(() => {
+    if (!exportMenuState.open) return undefined;
+
+    // Treat the export menu like a lightweight popover: close on outside click or Escape.
+    const handlePointerDown = event => {
+      const menuNode = exportMenuRef.current;
+      if (!menuNode || menuNode.contains(event.target)) return;
+      setExportMenuState(prev => ({ ...prev, open: false }));
+    };
+
+    const handleKeyDown = event => {
+      if (event.key !== 'Escape') return;
+      setExportMenuState(prev => ({ ...prev, open: false }));
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [exportMenuState.open]);
+
   const handleLegendToggle = label => {
+    if (isExportingRef.current) return;
     const key = VISIBILITY_KEY_BY_LABEL[label];
     if (!key) return;
     if (label === 'Weight' && !hasWeightData) return;
@@ -604,7 +238,38 @@ export function ShotChart({ shotData, results }) {
     setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const closeExportMenu = () => {
+    setExportMenuState(prev => ({ ...prev, open: false }));
+  };
+
+  const openExportMenu = () => {
+    if (isControlsLocked) return;
+    setReplayExportStatus({ status: 'idle', error: null });
+    setExportMenuState({
+      open: true,
+      exportType: DEFAULT_REPLAY_EXPORT_CONFIG.exportType,
+      includeLegend: DEFAULT_REPLAY_EXPORT_CONFIG.includeLegend,
+    });
+  };
+
+  const toggleExportMenu = () => {
+    if (exportMenuState.open) {
+      closeExportMenu();
+      return;
+    }
+    openExportMenu();
+  };
+
+  const handleExportTypeChange = exportType => {
+    setExportMenuState(prev => ({ ...prev, exportType }));
+  };
+
+  const handleIncludeLegendChange = includeLegend => {
+    setExportMenuState(prev => ({ ...prev, includeLegend }));
+  };
+
   const stopReplayAnimation = (clearHover = false) => {
+    // Reset both charts back to their fully revealed state and clear any replay-only plugin state.
     if (typeof window !== 'undefined' && replayRafRef.current !== null) {
       window.cancelAnimationFrame(replayRafRef.current);
     }
@@ -642,6 +307,7 @@ export function ShotChart({ shotData, results }) {
     const revealAll = options.revealAll === true || !Number.isFinite(cutoffX);
     const effectiveCutoffX = revealAll ? maxTime : cutoffX;
 
+    // The live replay and the export pipeline both go through this function so annotations and clipping stay identical.
     mainChart.$replayRevealEnabled = !revealAll;
     mainChart.$replayRevealX = !revealAll ? effectiveCutoffX : null;
     tempChart.$replayRevealEnabled = !revealAll;
@@ -684,25 +350,7 @@ export function ShotChart({ shotData, results }) {
     return true;
   };
 
-  const startReplay = () => {
-    const runtime = replayRuntimeRef.current;
-    if (!runtime || !Array.isArray(runtime.sampleTimesSec) || runtime.sampleTimesSec.length === 0) return;
-    const mainChart = mainChartInstance.current;
-    const tempChart = tempChartInstance.current;
-    if (!mainChart || !tempChart) return;
-
-    stopReplayAnimation(true);
-    isReplayingRef.current = true;
-    setIsReplaying(true);
-    setIsReplayPaused(false);
-    replayBaseShotTimeSecRef.current = runtime.shotStartSec;
-    replayElapsedOffsetSecRef.current = 0;
-    replayLastAppliedIndexRef.current = -1;
-    applyReplayCutoff(runtime.shotStartSec - 0.001);
-
-    replayStartPerfMsRef.current = getNowMs();
-    replayLastRenderPerfMsRef.current = 0;
-
+  const startReplayLoop = () => {
     const frame = nowMs => {
       if (!isReplayingRef.current) return;
       const currentRuntime = replayRuntimeRef.current;
@@ -739,9 +387,34 @@ export function ShotChart({ shotData, results }) {
     };
 
     if (!scheduleReplayFrame(frame)) {
-      applyReplayCutoff(runtime.maxTime, { revealAll: true });
+      const runtime = replayRuntimeRef.current;
+      if (runtime) {
+        applyReplayCutoff(runtime.maxTime, { revealAll: true });
+      }
       stopReplayAnimation();
     }
+  };
+
+  const startReplay = () => {
+    // Always start from a clean visual state so replayed annotations and hover state do not leak between runs.
+    const runtime = replayRuntimeRef.current;
+    if (!runtime || !Array.isArray(runtime.sampleTimesSec) || runtime.sampleTimesSec.length === 0) return;
+    const mainChart = mainChartInstance.current;
+    const tempChart = tempChartInstance.current;
+    if (!mainChart || !tempChart) return;
+
+    stopReplayAnimation(true);
+    isReplayingRef.current = true;
+    setIsReplaying(true);
+    setIsReplayPaused(false);
+    replayBaseShotTimeSecRef.current = runtime.shotStartSec;
+    replayElapsedOffsetSecRef.current = 0;
+    replayLastAppliedIndexRef.current = -1;
+    applyReplayCutoff(runtime.shotStartSec - 0.001);
+
+    replayStartPerfMsRef.current = getNowMs();
+    replayLastRenderPerfMsRef.current = 0;
+    startReplayLoop();
   };
 
   const pauseReplay = () => {
@@ -775,49 +448,15 @@ export function ShotChart({ shotData, results }) {
     replayStartPerfMsRef.current = getNowMs();
     replayLastRenderPerfMsRef.current = 0;
     clearAllHoverRef.current?.();
-
-    const frame = nowMs => {
-      if (!isReplayingRef.current) return;
-      const currentRuntime = replayRuntimeRef.current;
-      if (!currentRuntime) {
-        stopReplayAnimation();
-        return;
-      }
-
-      const elapsedSec = Math.max(
-        0,
-        replayElapsedOffsetSecRef.current + (nowMs - replayStartPerfMsRef.current) / 1000,
-      );
-      const cutoffX = replayBaseShotTimeSecRef.current + elapsedSec;
-      const sampleIndex = findLastSampleIndexAtOrBeforeX(currentRuntime.sampleTimesSec, cutoffX);
-      const reachedEnd = cutoffX >= currentRuntime.maxTime;
-      const shouldRenderFrame =
-        reachedEnd ||
-        replayLastRenderPerfMsRef.current === 0 ||
-        nowMs - replayLastRenderPerfMsRef.current >= REPLAY_FRAME_INTERVAL_MS;
-
-      if (shouldRenderFrame) {
-        replayLastRenderPerfMsRef.current = nowMs;
-        applyReplayCutoff(reachedEnd ? currentRuntime.maxTime : cutoffX, { revealAll: reachedEnd });
-      } else if (sampleIndex !== replayLastAppliedIndexRef.current) {
-        replayLastAppliedIndexRef.current = sampleIndex;
-      }
-
-      if (reachedEnd) {
-        stopReplayAnimation();
-        return;
-      }
-
-      replayRafRef.current = window.requestAnimationFrame(frame);
-    };
-
-    if (!scheduleReplayFrame(frame)) {
-      applyReplayCutoff(runtime.maxTime, { revealAll: true });
-      stopReplayAnimation();
-    }
+    startReplayLoop();
   };
 
   const stopReplayAndRestoreChart = () => {
+    if (activeExportTypeRef.current === 'video') {
+      cancelActiveExport();
+      return;
+    }
+    if (isExportingRef.current) return;
     const runtime = replayRuntimeRef.current;
     if (runtime) {
       applyReplayCutoff(runtime.maxTime, { revealAll: true });
@@ -826,6 +465,7 @@ export function ShotChart({ shotData, results }) {
   };
 
   const handleReplayClick = () => {
+    if (isExportingRef.current) return;
     if (isReplayingRef.current) {
       pauseReplay();
       return;
@@ -835,6 +475,233 @@ export function ShotChart({ shotData, results }) {
       return;
     }
     startReplay();
+  };
+
+  const captureReplayVisualSnapshot = () => {
+    const runtime = replayRuntimeRef.current;
+    if (!runtime) return { mode: 'revealed' };
+
+    // Export temporarily takes ownership of the replay visuals, so capture enough state to restore the user's view afterwards.
+    if (!isReplayingRef.current && !isReplayPaused) {
+      return { mode: 'revealed' };
+    }
+
+    const elapsedSec =
+      replayElapsedOffsetSecRef.current +
+      (isReplayingRef.current && replayStartPerfMsRef.current > 0
+        ? Math.max(0, (getNowMs() - replayStartPerfMsRef.current) / 1000)
+        : 0);
+    const cutoffX = Math.min(runtime.maxTime, replayBaseShotTimeSecRef.current + elapsedSec);
+
+    if (!Number.isFinite(cutoffX) || cutoffX >= runtime.maxTime) {
+      return { mode: 'revealed' };
+    }
+
+    return {
+      mode: 'cutoff',
+      cutoffX,
+      elapsedSec: Math.max(0, cutoffX - runtime.shotStartSec),
+    };
+  };
+
+  const restoreReplayVisualSnapshot = snapshot => {
+    const runtime = replayRuntimeRef.current;
+    stopReplayAnimation(true);
+    if (!runtime) return;
+
+    if (snapshot?.mode === 'cutoff' && Number.isFinite(snapshot.cutoffX)) {
+      replayBaseShotTimeSecRef.current = runtime.shotStartSec;
+      replayElapsedOffsetSecRef.current = Math.max(
+        0,
+        snapshot.elapsedSec ?? snapshot.cutoffX - runtime.shotStartSec,
+      );
+      applyReplayCutoff(snapshot.cutoffX, { revealAll: false });
+      setIsReplayPaused(true);
+      return;
+    }
+
+    applyReplayCutoff(runtime.maxTime, { revealAll: true });
+  };
+
+  const beginExportSession = (exportType, abortController = null) => {
+    // Separate export lifecycle state from menu state so control locking stays explicit.
+    exportAbortControllerRef.current = abortController;
+    isExportingRef.current = true;
+    activeExportTypeRef.current = exportType;
+    if (isMountedRef.current) {
+      setIsReplayExporting(true);
+    }
+  };
+
+  const finishExportSession = () => {
+    exportAbortControllerRef.current = null;
+    isExportingRef.current = false;
+    activeExportTypeRef.current = null;
+    if (isMountedRef.current) {
+      setIsReplayExporting(false);
+    }
+  };
+
+  const getResolvedExportConfig = () => ({
+    ...DEFAULT_REPLAY_EXPORT_CONFIG,
+    exportType: exportMenuState.exportType,
+    includeLegend: exportMenuState.includeLegend,
+  });
+
+  const getResolvedLegendItems = includeLegend => {
+    if (!includeLegend) return [];
+    return getVisibleLegendItemsForExport({
+      legendColorByLabel,
+      visibility,
+      hasWeightData,
+      hasWeightFlowData,
+    });
+  };
+
+  const cancelActiveExport = () => {
+    if (activeExportTypeRef.current !== 'video') return;
+    exportAbortControllerRef.current?.abort();
+  };
+
+  const handleVideoExport = async () => {
+    const runtime = replayRuntimeRef.current;
+    const mainChart = mainChartInstance.current;
+    const tempChart = tempChartInstance.current;
+    if (!runtime || !mainChart?.canvas || !tempChart?.canvas) {
+      setReplayExportStatusSafely({
+        status: 'error',
+        error: 'Replay export is not ready yet.',
+      });
+      return;
+    }
+
+    const visualSnapshot = captureReplayVisualSnapshot();
+    exportAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    beginExportSession('video', abortController);
+    setReplayExportStatusSafely({ status: 'preparing', error: null });
+
+    clearAllHoverRef.current?.();
+    stopReplayAnimation(true);
+
+    try {
+      // Video export replays the chart from the beginning on a separate composition canvas.
+      const exportConfig = getResolvedExportConfig();
+      const legendItems = getResolvedLegendItems(exportConfig.includeLegend);
+      const { blob } = await exportReplayVideo({
+        mainCanvas: mainChart.canvas,
+        tempCanvas: tempChart.canvas,
+        runtime,
+        applyReplayCutoff,
+        legendItems,
+        config: exportConfig,
+        signal: abortController.signal,
+        onStatusChange: status => {
+          updateReplayExportStatusSafely(current => ({ ...current, status, error: null }));
+        },
+      });
+
+      setReplayExportStatusSafely({ status: 'downloading', error: null });
+      downloadBlob(blob, buildReplayExportFilename(shotData, exportConfig.includeLegend));
+      restoreReplayVisualSnapshot(visualSnapshot);
+      setReplayExportStatusSafely({ status: 'idle', error: null });
+    } catch (error) {
+      restoreReplayVisualSnapshot(visualSnapshot);
+      setReplayExportStatusSafely({
+        status: 'error',
+        error:
+          error?.name === 'AbortError'
+            ? 'Replay export was cancelled.'
+            : error?.message || 'Replay export failed.',
+      });
+    } finally {
+      finishExportSession();
+    }
+  };
+
+  const handleImageExport = async () => {
+    const runtime = replayRuntimeRef.current;
+    const mainChart = mainChartInstance.current;
+    const tempChart = tempChartInstance.current;
+    if (!runtime || !mainChart?.canvas || !tempChart?.canvas) {
+      setReplayExportStatusSafely({
+        status: 'error',
+        error: 'Replay image export is not ready yet.',
+      });
+      return;
+    }
+
+    const visualSnapshot = captureReplayVisualSnapshot();
+    const abortController = new AbortController();
+    beginExportSession('image', abortController);
+    setReplayExportStatusSafely({ status: 'renderingImage', error: null });
+
+    clearAllHoverRef.current?.();
+    stopReplayAnimation(true);
+
+    try {
+      // Image export renders the fully revealed end state through the same composition pipeline as video export.
+      const exportConfig = getResolvedExportConfig();
+      const legendItems = getResolvedLegendItems(exportConfig.includeLegend);
+      applyReplayCutoff(runtime.maxTime, { revealAll: true });
+      const { blob } = await exportReplayImage({
+        mainCanvas: mainChart.canvas,
+        tempCanvas: tempChart.canvas,
+        legendItems,
+        config: exportConfig,
+        signal: abortController.signal,
+      });
+      setReplayExportStatusSafely({ status: 'downloading', error: null });
+      downloadBlob(blob, buildReplayImageFilename(shotData, exportConfig.includeLegend));
+      restoreReplayVisualSnapshot(visualSnapshot);
+      setReplayExportStatusSafely({ status: 'idle', error: null });
+    } catch (error) {
+      restoreReplayVisualSnapshot(visualSnapshot);
+      setReplayExportStatusSafely({
+        status: 'error',
+        error:
+          error?.name === 'AbortError'
+            ? 'Replay image export was cancelled.'
+            : error?.message || 'Replay image export failed.',
+      });
+    } finally {
+      finishExportSession();
+    }
+  };
+
+  const handleShotJsonExport = async () => {
+    beginExportSession('json');
+    setReplayExportStatusSafely({ status: 'preparingJson', error: null });
+
+    try {
+      const { exportData, filename } = await libraryService.exportItem(shotData, true);
+      setReplayExportStatusSafely({ status: 'downloading', error: null });
+      downloadJson(exportData, filename);
+      setReplayExportStatusSafely({ status: 'idle', error: null });
+    } catch (error) {
+      setReplayExportStatusSafely({
+        status: 'error',
+        error: error?.message || 'Shot JSON export failed.',
+      });
+    } finally {
+      finishExportSession();
+    }
+  };
+
+  const handleExportAction = async () => {
+    if (isExportingRef.current) return;
+
+    closeExportMenu();
+    // Dispatch exports here so the menu stays dumb and the export lifecycle remains centralized.
+    if (exportMenuState.exportType === 'json') {
+      await handleShotJsonExport();
+      return;
+    }
+    if (exportMenuState.exportType === 'image') {
+      await handleImageExport();
+      return;
+    }
+    await handleVideoExport();
   };
 
   useEffect(() => {
@@ -849,6 +716,8 @@ export function ShotChart({ shotData, results }) {
       }
     };
 
+    // Rebuild charts only when the underlying data or visibility changes.
+    // Hover and replay updates stay imperative and do not rerun this effect.
     stopReplayAnimation(true);
     replayRuntimeRef.current = null;
     setExternalTooltipState(prev => {
@@ -904,7 +773,7 @@ export function ShotChart({ shotData, results }) {
 
     const samples = shotData.samples;
 
-    // Calculate the exact end time of the shot to prevent empty chart space
+    // Use the real last sample time as the x-axis ceiling so replay/export do not end with trailing empty space.
     const maxTime = samples.length > 0 ? (samples[samples.length - 1].t || 0) / 1000 : 0;
     const sampleTimesSec = new Array(samples.length);
     const cumulativeWaterTotalBySample = new Array(samples.length);
@@ -926,6 +795,7 @@ export function ShotChart({ shotData, results }) {
     }
 
     const shotStartSec = sampleTimesSec[0] ?? 0;
+    // Precompute phase-relative water offsets once so tooltip water values stay cheap during pointer movement.
     const phaseHoverRanges = Array.isArray(results?.phases)
       ? results.phases
           .map(phase => {
@@ -1225,6 +1095,7 @@ export function ShotChart({ shotData, results }) {
       return { totalWaterMl, phaseWaterMl };
     };
 
+    // Hidden overlay series let the shared main tooltip expose water values without drawing extra visible lines.
     const waterTooltipPhaseSeries = sampleTimesSec.map(x => {
       const { phaseWaterMl } = getHoverWaterValuesAtX(x);
       return { x, y: Number.isFinite(phaseWaterMl) ? phaseWaterMl : 0 };
@@ -1241,41 +1112,17 @@ export function ShotChart({ shotData, results }) {
       });
     };
     const updateExternalTooltip = ({ chart, tooltip }) => {
-      if (!tooltip || tooltip.opacity === 0 || !chart.chartArea) {
-        hideExternalTooltip();
-        return;
-      }
-
-      const tooltipItems = Array.isArray(tooltip.dataPoints) ? tooltip.dataPoints : [];
-      const rows = buildExternalTooltipRows(
-        tooltipItems,
+      const nextState = buildExternalTooltipState({
+        chart,
+        tooltip,
         getHoverWaterValuesAtX,
-        chartTooltipColorByLabel,
-      );
-      const titleLines = Array.isArray(tooltip.title)
-        ? tooltip.title.filter(title => typeof title === 'string' && title.trim().length > 0)
-        : [];
+        tooltipColorByLabel: chartTooltipColorByLabel,
+      });
 
-      if (rows.length === 0 && titleLines.length === 0) {
+      if (!nextState.visible) {
         hideExternalTooltip();
         return;
       }
-
-      const nextState = {
-        visible: true,
-        titleLines,
-        rows,
-        anchorX: Number.isFinite(tooltip.caretX)
-          ? tooltip.caretX
-          : chart.chartArea.left + EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X,
-        anchorY: Number.isFinite(chart.$fixedTooltipPointerY)
-          ? chart.$fixedTooltipPointerY
-          : Number.isFinite(tooltip.caretY)
-            ? tooltip.caretY
-            : chart.chartArea.top,
-        chartWidth: chart.width,
-        chartHeight: chart.height,
-      };
 
       setExternalTooltipState(prev => (areTooltipStatesEqual(prev, nextState) ? prev : nextState));
     };
@@ -1668,6 +1515,7 @@ export function ShotChart({ shotData, results }) {
     }
 
     const syncTempPlotArea = () => {
+      // The temperature chart must mirror the main chart's inner plot width so the shared x-position lines up exactly.
       const mainChart = mainChartInstance.current;
       const tempChart = tempChartInstance.current;
       if (!mainChart || !tempChart || !mainChart.chartArea || !tempChart.chartArea) return;
@@ -1802,6 +1650,7 @@ export function ShotChart({ shotData, results }) {
     };
 
     const applyUnifiedHoverFromClientPoint = (clientX, clientY) => {
+      // One hover surface spans both canvases so the guide line and tooltip stay synchronized across charts.
       if (isReplayingRef.current) {
         clearAllHover();
         return;
@@ -1841,7 +1690,7 @@ export function ShotChart({ shotData, results }) {
     };
 
     const handleUnifiedMove = event => {
-      if (isReplayingRef.current) {
+      if (isReplayingRef.current || isExportingRef.current) {
         clearAllHover();
         return;
       }
@@ -1863,6 +1712,7 @@ export function ShotChart({ shotData, results }) {
       }, []);
     };
 
+    // Cache replay timing metadata once per chart build so the animation loop can stay lightweight.
     replayRuntimeRef.current = {
       sampleTimesSec: [...sampleTimesSec],
       shotStartSec,
@@ -1889,6 +1739,7 @@ export function ShotChart({ shotData, results }) {
     }
 
     return () => {
+      exportAbortControllerRef.current?.abort();
       stopReplayAnimation(true);
       clearAllHoverRef.current = () => {};
       replayRuntimeRef.current = null;
@@ -1920,123 +1771,41 @@ export function ShotChart({ shotData, results }) {
 
   return (
     <div className='w-full select-none'>
-      <div className='mb-2 flex flex-wrap items-center gap-2 px-1'>
-        <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1'>
-          {LEGEND_ORDER.map(label => {
-            if (label === 'Weight' && !hasWeightData) return null;
-            if (label === 'Weight Flow' && !hasWeightFlowData) return null;
-            const key = VISIBILITY_KEY_BY_LABEL[label];
-            const isVisible = key ? visibility[key] : false;
-            const swatchColor = legendColorByLabel[label] || '#94a3b8';
-            const swatchLineWidth = LEGEND_THIN_LINE_LABELS.has(label)
-              ? THIN_LINE_WIDTH
-              : STANDARD_LINE_WIDTH;
-
-            return (
-              <button
-                key={label}
-                type='button'
-                onClick={() => handleLegendToggle(label)}
-                aria-pressed={isVisible}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded px-1.5 py-1 text-[10px] font-semibold transition ${
-                  isVisible ? 'text-base-content opacity-90' : 'text-base-content/60 opacity-45 hover:opacity-70'
-                }`}
-              >
-                {LEGEND_BLOCK_LABELS.has(label) ? (
-                  <span className='h-2.5 w-3 rounded-[2px]' style={{ backgroundColor: swatchColor }} />
-                ) : (
-                  <span
-                    className={`block w-4 border-t ${LEGEND_DASHED_LABELS.has(label) ? 'border-dashed' : 'border-solid'}`}
-                    style={{ borderColor: swatchColor, borderTopWidth: `${swatchLineWidth}px` }}
-                  />
-                )}
-                <span>{label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className='flex shrink-0 items-center'>
-          <button
-            type='button'
-            onClick={handleReplayClick}
-            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
-            aria-label={
-              isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'
-            }
-            title={isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'}
-          >
-            <FontAwesomeIcon
-              icon={isReplaying ? faPause : faPlay}
-              className='text-[11px] opacity-80'
-            />
-          </button>
-          <button
-            type='button'
-            onClick={stopReplayAndRestoreChart}
-            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
-            aria-label='Stop replay and restore chart'
-            title='Stop replay and restore chart'
-          >
-            <FontAwesomeIcon icon={faStop} className='text-[10px] opacity-80' />
-          </button>
-          <button
-            type='button'
-            onClick={() =>
-              setMainChartHeight(current =>
-                current === MAIN_CHART_HEIGHT_SMALL ? MAIN_CHART_HEIGHT_BIG : MAIN_CHART_HEIGHT_SMALL,
-              )
-            }
-            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
-            aria-label={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
-            title={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
-          >
-            <FontAwesomeIcon
-              icon={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? faMinimize : faMaximize}
-              className='text-[11px] opacity-80'
-            />
-          </button>
-        </div>
-      </div>
+      <ShotChartControls
+        exportMenuRef={exportMenuRef}
+        exportMenuState={exportMenuState}
+        hasWeightData={hasWeightData}
+        hasWeightFlowData={hasWeightFlowData}
+        isControlsLocked={isControlsLocked}
+        isReplayPaused={isReplayPaused}
+        isReplaying={isReplaying}
+        isReplayExporting={isReplayExporting}
+        isVideoExportActive={isVideoExportActive}
+        legendColorByLabel={legendColorByLabel}
+        mainChartHeight={mainChartHeight}
+        onChartHeightToggle={() => setMainChartHeight(current => getNextChartHeight(current))}
+        onCloseExportMenu={closeExportMenu}
+        onExportAction={handleExportAction}
+        onExportMenuToggle={toggleExportMenu}
+        onExportTypeChange={handleExportTypeChange}
+        onIncludeLegendChange={handleIncludeLegendChange}
+        onLegendToggle={handleLegendToggle}
+        onReplayToggle={handleReplayClick}
+        onStop={stopReplayAndRestoreChart}
+        replayExportStatus={replayExportStatus}
+        replayExportStatusLabel={replayExportStatusLabel}
+        shouldShowReplayFocusHint={shouldShowReplayFocusHint}
+        visibility={visibility}
+      />
 
       <div ref={hoverAreaRef} className='w-full'>
         <div ref={mainChartContainerRef} className='relative w-full' style={{ height: `${mainChartHeight}px` }}>
           <canvas ref={mainChartRef} />
-          {externalTooltipState.visible ? (
-            <div
-              ref={externalTooltipRef}
-              className='shot-chart-tooltip'
-              style={{
-                left: `${externalTooltipLayout.x}px`,
-                top: `${externalTooltipLayout.y}px`,
-                visibility: externalTooltipLayout.visible ? 'visible' : 'hidden',
-              }}
-            >
-              {externalTooltipState.titleLines.length > 0 ? (
-                <div className='shot-chart-tooltip__title'>
-                  {externalTooltipState.titleLines.map((titleLine, index) => (
-                    <div key={`${titleLine}-${index}`}>{titleLine}</div>
-                  ))}
-                </div>
-              ) : null}
-              {externalTooltipState.rows.map((row, index) => (
-                <div
-                  key={`${row.label}-${row.valueText}-${index}`}
-                  className={`shot-chart-tooltip__row${row.spacerBefore ? ' shot-chart-tooltip__row--spacer' : ''}`}
-                >
-                  <span
-                    className='shot-chart-tooltip__dot'
-                    style={{ backgroundColor: row.color }}
-                    aria-hidden='true'
-                  />
-                  <span className='shot-chart-tooltip__text'>
-                    <span>{row.label}: </span>
-                    <span className='shot-chart-tooltip__value'>{row.valueText}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <ShotChartExternalTooltip
+            tooltipRef={externalTooltipRef}
+            state={externalTooltipState}
+            layout={externalTooltipLayout}
+          />
         </div>
         <div
           className='relative mt-0 w-full'

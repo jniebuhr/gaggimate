@@ -1,0 +1,220 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faMaximize } from '@fortawesome/free-solid-svg-icons/faMaximize';
+import { faMinimize } from '@fortawesome/free-solid-svg-icons/faMinimize';
+import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { faStop } from '@fortawesome/free-solid-svg-icons/faStop';
+import {
+  LEGEND_BLOCK_LABELS,
+  LEGEND_DASHED_LABELS,
+  LEGEND_ORDER,
+  LEGEND_THIN_LINE_LABELS,
+  MAIN_CHART_HEIGHT_BIG,
+  MAIN_CHART_HEIGHT_SMALL,
+  STANDARD_LINE_WIDTH,
+  THIN_LINE_WIDTH,
+  VISIBILITY_KEY_BY_LABEL,
+} from './constants';
+
+export function ShotChartControls({
+  exportMenuRef,
+  exportMenuState,
+  hasWeightData,
+  hasWeightFlowData,
+  isControlsLocked,
+  isReplayPaused,
+  isReplaying,
+  isReplayExporting,
+  isVideoExportActive,
+  legendColorByLabel,
+  mainChartHeight,
+  onChartHeightToggle,
+  onCloseExportMenu,
+  onExportAction,
+  onExportMenuToggle,
+  onExportTypeChange,
+  onIncludeLegendChange,
+  onLegendToggle,
+  onReplayToggle,
+  onStop,
+  replayExportStatus,
+  replayExportStatusLabel,
+  shouldShowReplayFocusHint,
+  visibility,
+}) {
+  return (
+    <>
+      {/* Keep the control bar extracted so ShotChart.jsx can focus on chart lifecycle and replay logic. */}
+      <div className='mb-2 flex flex-wrap items-center gap-2 px-1'>
+        <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1'>
+          {LEGEND_ORDER.map(label => {
+            if (label === 'Weight' && !hasWeightData) return null;
+            if (label === 'Weight Flow' && !hasWeightFlowData) return null;
+            const key = VISIBILITY_KEY_BY_LABEL[label];
+            const isVisible = key ? visibility[key] : false;
+            const swatchColor = legendColorByLabel[label] || '#94a3b8';
+            const swatchLineWidth = LEGEND_THIN_LINE_LABELS.has(label)
+              ? THIN_LINE_WIDTH
+              : STANDARD_LINE_WIDTH;
+
+            return (
+              <button
+                key={label}
+                type='button'
+                onClick={() => onLegendToggle(label)}
+                aria-pressed={isVisible}
+                disabled={isControlsLocked}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded px-1.5 py-1 text-[10px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-35 ${
+                  isVisible
+                    ? 'text-base-content opacity-90'
+                    : 'text-base-content/60 opacity-45 hover:opacity-70'
+                }`}
+              >
+                {LEGEND_BLOCK_LABELS.has(label) ? (
+                  <span className='h-2.5 w-3 rounded-[2px]' style={{ backgroundColor: swatchColor }} />
+                ) : (
+                  <span
+                    className={`block w-4 border-t ${LEGEND_DASHED_LABELS.has(label) ? 'border-dashed' : 'border-solid'}`}
+                    style={{ borderColor: swatchColor, borderTopWidth: `${swatchLineWidth}px` }}
+                  />
+                )}
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className='flex shrink-0 flex-wrap items-center justify-end gap-2'>
+          <button
+            type='button'
+            onClick={onReplayToggle}
+            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
+            disabled={isControlsLocked}
+            aria-label={
+              isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'
+            }
+            title={isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'}
+          >
+            <FontAwesomeIcon
+              icon={isReplaying ? faPause : faPlay}
+              className='text-[11px] opacity-80'
+            />
+          </button>
+          <button
+            type='button'
+            onClick={onStop}
+            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
+            disabled={isReplayExporting && !isVideoExportActive}
+            aria-label={isVideoExportActive ? 'Cancel replay export' : 'Stop replay and restore chart'}
+            title={isVideoExportActive ? 'Cancel replay export' : 'Stop replay and restore chart'}
+          >
+            <FontAwesomeIcon icon={faStop} className='text-[10px] opacity-80' />
+          </button>
+          <div ref={exportMenuRef} className='relative'>
+            <button
+              type='button'
+              onClick={onExportMenuToggle}
+              className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
+              disabled={isControlsLocked}
+              aria-label='Open export menu'
+              aria-expanded={exportMenuState.open}
+              title='Open export menu'
+            >
+              <FontAwesomeIcon icon={faFileExport} className='text-[11px] opacity-80' />
+            </button>
+            {exportMenuState.open ? (
+              <div className='bg-base-100/95 border-base-content/10 absolute right-0 top-full z-[70] mt-2 w-[min(92vw,15rem)] rounded-xl border p-3 text-[12px] shadow-xl backdrop-blur-md'>
+                <div className='mb-2 text-[11px] font-semibold uppercase tracking-wide opacity-60'>
+                  Export Shot
+                </div>
+                <div className='space-y-1'>
+                  {[
+                    { value: 'video', label: 'Video (.mp4)' },
+                    { value: 'image', label: 'Image (.png)' },
+                    { value: 'json', label: 'Shot JSON (.json)' },
+                  ].map(option => (
+                    <label
+                      key={option.value}
+                      className='flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-base-content/5'
+                    >
+                      <input
+                        type='radio'
+                        name='shot-chart-export-type'
+                        className='radio radio-xs'
+                        checked={exportMenuState.exportType === option.value}
+                        onChange={() => onExportTypeChange(option.value)}
+                      />
+                      <span className='text-sm'>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+                {exportMenuState.exportType !== 'json' ? (
+                  <label className='mt-2 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-base-content/5'>
+                    <input
+                      type='checkbox'
+                      className='checkbox checkbox-xs'
+                      checked={exportMenuState.includeLegend}
+                      onChange={event => onIncludeLegendChange(event.currentTarget.checked)}
+                    />
+                    <span className='text-sm'>Include legend</span>
+                  </label>
+                ) : null}
+                <div className='mt-3 flex items-center justify-end gap-2'>
+                  <button
+                    type='button'
+                    onClick={onCloseExportMenu}
+                    className='btn btn-ghost btn-xs h-7 min-h-0 px-2.5'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type='button'
+                    onClick={onExportAction}
+                    className='btn btn-primary btn-xs h-7 min-h-0 px-2.5'
+                  >
+                    Export
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <button
+            type='button'
+            onClick={onChartHeightToggle}
+            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
+            disabled={isControlsLocked}
+            aria-label={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
+            title={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
+          >
+            <FontAwesomeIcon
+              icon={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? faMinimize : faMaximize}
+              className='text-[11px] opacity-80'
+            />
+          </button>
+          {replayExportStatusLabel ? (
+            <span
+              className={`min-w-[10rem] text-right text-[10px] font-semibold ${
+                replayExportStatus.error ? 'text-error' : 'text-base-content/65'
+              }`}
+            >
+              {replayExportStatusLabel}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      {shouldShowReplayFocusHint ? (
+        <div className='mb-2 px-1'>
+          <div className='inline-flex items-center rounded-md border border-base-content/10 bg-base-100/70 px-2.5 py-1 text-[10px] font-semibold text-[var(--analyzer-warning-orange)] shadow-sm'>
+            Keep this window focused while the replay is being recorded.
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+export function getNextChartHeight(currentHeight) {
+  return currentHeight === MAIN_CHART_HEIGHT_SMALL ? MAIN_CHART_HEIGHT_BIG : MAIN_CHART_HEIGHT_SMALL;
+}
