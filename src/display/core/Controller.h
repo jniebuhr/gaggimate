@@ -120,6 +120,7 @@ class Controller {
 
     // Event handlers
     void onTempRead(float temperature);
+    void onPressureRead(float pressure);
 
     // brew button
     void handleBrewButton(int brewButtonStatus);
