@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faMaximize } from '@fortawesome/free-solid-svg-icons/faMaximize';
 import { faMinimize } from '@fortawesome/free-solid-svg-icons/faMinimize';
@@ -34,13 +35,17 @@ export function ShotChartControls({
   onExportAction,
   onExportMenuToggle,
   onExportTypeChange,
+  onExportFormatChange,
+  onExportFormatInfoToggle,
   onIncludeLegendChange,
   onLegendToggle,
   onReplayToggle,
   onStop,
   replayExportStatus,
+  replayExportStatusHint,
   replayExportStatusLabel,
   shouldShowReplayFocusHint,
+  shouldShowWebmToggle,
   visibility,
 }) {
   return (
@@ -130,7 +135,7 @@ export function ShotChartControls({
                 </div>
                 <div className='space-y-1'>
                   {[
-                    { value: 'video', label: 'Video (.mp4)' },
+                    { value: 'video', label: 'Video' },
                     { value: 'image', label: 'Image (.png)' },
                     { value: 'json', label: 'Shot JSON (.json)' },
                   ].map(option => (
@@ -159,6 +164,39 @@ export function ShotChartControls({
                     />
                     <span className='text-sm'>Include legend</span>
                   </label>
+                ) : null}
+                {exportMenuState.exportType === 'video' && shouldShowWebmToggle ? (
+                  <div className='mt-1 rounded-md px-2 py-1.5 hover:bg-base-content/5'>
+                    <div className='flex items-center gap-2'>
+                      <label className='flex min-w-0 flex-1 cursor-pointer items-center gap-2'>
+                        <input
+                          type='checkbox'
+                          className='checkbox checkbox-xs'
+                          checked={exportMenuState.exportFormat === 'webm'}
+                          onChange={event =>
+                            onExportFormatChange(event.currentTarget.checked ? 'webm' : 'mp4')
+                          }
+                        />
+                        <span className='text-sm'>Export as WebM</span>
+                      </label>
+                      <button
+                        type='button'
+                        onClick={onExportFormatInfoToggle}
+                        className='btn btn-ghost btn-xs h-6 min-h-0 w-6 p-0'
+                        aria-label='Explain WebM export'
+                        aria-expanded={exportMenuState.showFormatInfo}
+                        title='Explain WebM export'
+                      >
+                        <FontAwesomeIcon icon={faCircleInfo} className='text-[11px] opacity-70' />
+                      </button>
+                    </div>
+                    {exportMenuState.showFormatInfo ? (
+                      <p className='text-base-content/70 mt-2 pr-1 text-[11px] leading-relaxed'>
+                        WebM can export faster in some browsers because it avoids additional MP4
+                        conversion.
+                      </p>
+                    ) : null}
+                  </div>
                 ) : null}
                 <div className='mt-3 flex items-center justify-end gap-2'>
                   <button
@@ -193,13 +231,20 @@ export function ShotChartControls({
             />
           </button>
           {replayExportStatusLabel ? (
-            <span
-              className={`min-w-[10rem] text-right text-[10px] font-semibold ${
-                replayExportStatus.error ? 'text-error' : 'text-base-content/65'
-              }`}
-            >
-              {replayExportStatusLabel}
-            </span>
+            <div className='min-w-[10rem] text-right'>
+              <div
+                className={`text-[10px] font-semibold ${
+                  replayExportStatus.error ? 'text-error' : 'text-base-content/65'
+                }`}
+              >
+                {replayExportStatusLabel}
+              </div>
+              {replayExportStatusHint ? (
+                <div className='text-base-content/45 mt-0.5 text-[9px] leading-relaxed'>
+                  {replayExportStatusHint}
+                </div>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </div>

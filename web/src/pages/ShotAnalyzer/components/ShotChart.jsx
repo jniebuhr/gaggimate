@@ -9,7 +9,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { downloadBlob, downloadJson } from '../../../utils/download';
-import { exportReplayImage, exportReplayVideo } from '../services/ReplayVideoExportService';
+import {
+  exportReplayImage,
+  exportReplayVideo,
+  getVideoExportCapabilities,
+} from '../services/ReplayVideoExportService';
 import { libraryService } from '../services/LibraryService';
 import { ShotChartControls, getNextChartHeight } from './shotChart/ShotChartControls';
 import {
@@ -27,9 +31,10 @@ import {
   BREW_BY_TIME_LABEL,
   BREW_BY_WEIGHT_LABEL,
   DEFAULT_REPLAY_EXPORT_CONFIG,
+  getReplayExportStatusHint,
+  getReplayExportStatusLabel,
   INITIAL_VISIBILITY,
   MAIN_CHART_HEIGHT_DEFAULT,
-  REPLAY_EXPORT_STATUS_LABELS,
   REPLAY_FRAME_INTERVAL_MS,
   STANDARD_LINE_WIDTH,
   TARGET_FLOW_MAX,
@@ -101,7 +106,9 @@ export function ShotChart({ shotData, results }) {
   const [exportMenuState, setExportMenuState] = useState({
     open: false,
     exportType: DEFAULT_REPLAY_EXPORT_CONFIG.exportType,
+    exportFormat: DEFAULT_REPLAY_EXPORT_CONFIG.exportFormat,
     includeLegend: DEFAULT_REPLAY_EXPORT_CONFIG.includeLegend,
+    showFormatInfo: false,
   });
   const [isReplayExporting, setIsReplayExporting] = useState(false);
   const [replayExportStatus, setReplayExportStatus] = useState({ status: 'idle', error: null });
@@ -124,15 +131,21 @@ export function ShotChart({ shotData, results }) {
       return Number.isFinite(val) && val > 0;
     }),
   );
+  const videoExportCapabilities = getVideoExportCapabilities();
   const activeExportType = activeExportTypeRef.current;
   const isVideoExportActive = isReplayExporting && activeExportType === 'video';
   const isControlsLocked = isReplayExporting;
   const shouldShowReplayFocusHint =
     isVideoExportActive &&
     (replayExportStatus.status === 'preparing' || replayExportStatus.status === 'recording');
+  const effectiveVideoExportFormat =
+    exportMenuState.exportFormat === 'webm' && !videoExportCapabilities.shouldHideWebmOption
+      ? 'webm'
+      : 'mp4';
   const replayExportStatusLabel = replayExportStatus.error
     ? replayExportStatus.error
-    : REPLAY_EXPORT_STATUS_LABELS[replayExportStatus.status] || '';
+    : getReplayExportStatusLabel(replayExportStatus.status, effectiveVideoExportFormat);
+  const replayExportStatusHint = getReplayExportStatusHint(replayExportStatus.status);
 
   const setReplayExportStatusSafely = nextStatus => {
     if (isMountedRef.current) {
@@ -248,7 +261,9 @@ export function ShotChart({ shotData, results }) {
     setExportMenuState({
       open: true,
       exportType: DEFAULT_REPLAY_EXPORT_CONFIG.exportType,
+      exportFormat: videoExportCapabilities.defaultExportFormat,
       includeLegend: DEFAULT_REPLAY_EXPORT_CONFIG.includeLegend,
+      showFormatInfo: false,
     });
   };
 
@@ -264,8 +279,16 @@ export function ShotChart({ shotData, results }) {
     setExportMenuState(prev => ({ ...prev, exportType }));
   };
 
+  const handleExportFormatChange = exportFormat => {
+    setExportMenuState(prev => ({ ...prev, exportFormat }));
+  };
+
   const handleIncludeLegendChange = includeLegend => {
     setExportMenuState(prev => ({ ...prev, includeLegend }));
+  };
+
+  const handleExportFormatInfoToggle = () => {
+    setExportMenuState(prev => ({ ...prev, showFormatInfo: !prev.showFormatInfo }));
   };
 
   const stopReplayAnimation = (clearHover = false) => {
@@ -545,6 +568,7 @@ export function ShotChart({ shotData, results }) {
   const getResolvedExportConfig = () => ({
     ...DEFAULT_REPLAY_EXPORT_CONFIG,
     exportType: exportMenuState.exportType,
+    exportFormat: effectiveVideoExportFormat,
     includeLegend: exportMenuState.includeLegend,
   });
 
@@ -602,7 +626,14 @@ export function ShotChart({ shotData, results }) {
       });
 
       setReplayExportStatusSafely({ status: 'downloading', error: null });
-      downloadBlob(blob, buildReplayExportFilename(shotData, exportConfig.includeLegend));
+      downloadBlob(
+        blob,
+        buildReplayExportFilename(
+          shotData,
+          exportConfig.includeLegend,
+          exportConfig.exportFormat,
+        ),
+      );
       restoreReplayVisualSnapshot(visualSnapshot);
       setReplayExportStatusSafely({ status: 'idle', error: null });
     } catch (error) {
@@ -1788,13 +1819,17 @@ export function ShotChart({ shotData, results }) {
         onExportAction={handleExportAction}
         onExportMenuToggle={toggleExportMenu}
         onExportTypeChange={handleExportTypeChange}
+        onExportFormatChange={handleExportFormatChange}
+        onExportFormatInfoToggle={handleExportFormatInfoToggle}
         onIncludeLegendChange={handleIncludeLegendChange}
         onLegendToggle={handleLegendToggle}
         onReplayToggle={handleReplayClick}
         onStop={stopReplayAndRestoreChart}
         replayExportStatus={replayExportStatus}
         replayExportStatusLabel={replayExportStatusLabel}
+        replayExportStatusHint={replayExportStatusHint}
         shouldShowReplayFocusHint={shouldShowReplayFocusHint}
+        shouldShowWebmToggle={!videoExportCapabilities.shouldHideWebmOption}
         visibility={visibility}
       />
 

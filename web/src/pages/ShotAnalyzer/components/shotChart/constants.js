@@ -24,16 +24,36 @@ export const DEFAULT_REPLAY_EXPORT_CONFIG = {
   chartPlacement: null,
 };
 
-export const REPLAY_EXPORT_STATUS_LABELS = {
-  idle: '',
-  preparing: 'Preparing MP4 export...',
-  renderingImage: 'Rendering PNG export...',
-  preparingJson: 'Preparing shot JSON...',
-  recording: 'Recording replay...',
-  transcoding: 'Converting to MP4...',
-  downloading: 'Downloading export...',
-  error: 'Replay export failed.',
-};
+export function getReplayExportStatusLabel(status, exportFormat = 'mp4') {
+  switch (status) {
+    case 'idle':
+      return '';
+    case 'preparing':
+      return exportFormat === 'webm' ? 'Preparing WebM export...' : 'Preparing MP4 export...';
+    case 'renderingImage':
+      return 'Rendering PNG export...';
+    case 'preparingJson':
+      return 'Preparing shot JSON...';
+    case 'recording':
+      return 'Recording replay...';
+    case 'transcoding':
+      return 'Converting to MP4...';
+    case 'downloading':
+      return 'Downloading export...';
+    case 'error':
+      return 'Replay export failed.';
+    default:
+      return '';
+  }
+}
+
+export function getReplayExportStatusHint(status) {
+  if (status === 'transcoding') {
+    return 'Depending on your browser and device, this conversion can take a few minutes.';
+  }
+
+  return '';
+}
 
 export const EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X = 12;
 export const EXTERNAL_TOOLTIP_POINTER_GAP = 10;

@@ -165,9 +165,10 @@ function resolveShotExportStem(shotData, fallbackStem) {
   );
 }
 
-export function buildReplayExportFilename(shotData, includeLegend) {
+export function buildReplayExportFilename(shotData, includeLegend, exportFormat = 'mp4') {
   const stem = resolveShotExportStem(shotData, 'shot-analyzer-replay');
-  return `${stem}${includeLegend ? '-with-legend' : ''}-replay.mp4`;
+  const extension = exportFormat === 'webm' ? 'webm' : 'mp4';
+  return `${stem}${includeLegend ? '-with-legend' : ''}-replay.${extension}`;
 }
 
 export function buildReplayImageFilename(shotData, includeLegend) {

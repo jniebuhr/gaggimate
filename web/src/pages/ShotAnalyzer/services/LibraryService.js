@@ -116,7 +116,7 @@ class LibraryService {
 
   /**
    * Get shots from GaggiMate controller
-   * @returns {Array} List of GaggiMate shots with source tag
+   * @returns {Promise<Object[]>} List of GaggiMate shots with source tag
    */
   async getGaggiMateShots() {
     try {
@@ -150,7 +150,7 @@ class LibraryService {
 
   /**
    * Get shots from browser uploads
-   * @returns {Array} List of browser shots with source tag
+   * @returns {Promise<Object[]>} List of browser shots with source tag
    */
   async getBrowserShots() {
     try {
@@ -168,7 +168,7 @@ class LibraryService {
   /**
    * Get merged shot list from all sources
    * @param {string} sourceFilter - 'both', 'gaggimate', or 'browser'
-   * @returns {Array} Filtered and merged shot list
+   * @returns {Promise<Object[]>} Filtered and merged shot list
    */
   async getAllShots(sourceFilter = 'both') {
     const promises = [];
@@ -190,7 +190,7 @@ class LibraryService {
 
   /**
    * Get profiles from GaggiMate controller
-   * @returns {Array} List of GaggiMate profiles with source tag
+   * @returns {Promise<Object[]>} List of GaggiMate profiles with source tag
    */
   async getGaggiMateProfiles() {
     if (
@@ -228,7 +228,7 @@ class LibraryService {
 
   /**
    * Get profiles from browser uploads
-   * @returns {Array} List of browser profiles with source tag
+   * @returns {Promise<Object[]>} List of browser profiles with source tag
    */
   async getBrowserProfiles() {
     try {
@@ -242,7 +242,7 @@ class LibraryService {
   /**
    * Get merged profile list from all sources
    * @param {string} sourceFilter - 'both', 'gaggimate', or 'browser'
-   * @returns {Array} Filtered and merged profile list
+   * @returns {Promise<Object[]>} Filtered and merged profile list
    */
   async getAllProfiles(sourceFilter = 'both') {
     const promises = [];
@@ -264,7 +264,7 @@ class LibraryService {
    * Load full shot data
    * @param {string} id - Shot ID
    * @param {string} source - 'gaggimate' or 'browser'
-   * @returns {Object} Full shot data with samples
+   * @returns {Promise<Object>} Full shot data with samples
    */
   async loadShot(id, source) {
     const idStr = String(id);
@@ -295,7 +295,7 @@ class LibraryService {
    * Load full profile data
    * @param {string} nameOrId - Profile name/ID (for GM: use label)
    * @param {string} source - 'gaggimate' or 'browser'
-   * @returns {Object} Full profile data
+   * @returns {Promise<Object>} Full profile data
    */
   async loadProfile(nameOrId, source) {
     if (source === 'gaggimate') {
@@ -334,7 +334,7 @@ class LibraryService {
    * Fetches the original data and cleans it for export.
    * @param {Object} item - The library item (shot or profile)
    * @param {boolean} isShot - True if item is a shot
-   * @returns {Object} { exportData, filename }
+   * @returns {Promise<{ exportData: Object, filename: string }>} Export payload and filename
    */
   async exportItem(item, isShot) {
     console.log('Service Exporting:', item);
@@ -428,7 +428,7 @@ class LibraryService {
 
   /**
    * Get storage statistics
-   * @returns {Object} Stats from all sources
+   * @returns {Promise<Object>} Stats from all sources
    */
   async getStats() {
     const [gmShots, browserShots, gmProfiles, browserProfiles] = await Promise.all([

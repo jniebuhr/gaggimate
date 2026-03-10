@@ -1,5 +1,5 @@
-import ffmpegCoreUrl from '@ffmpeg/core?url';
-import ffmpegWasmUrl from '@ffmpeg/core/wasm?url';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 const EXPORT_FPS = 24;
 const EXPORT_PADDING = 24;
@@ -12,8 +12,24 @@ const EXPORT_LEGEND_ROW_GAP = 12;
 const EXPORT_CARD_SHADOW_BLUR = 28;
 const EXPORT_OVERLAY_LANDSCAPE = { width: 1920, height: 1080 };
 const EXPORT_OVERLAY_PORTRAIT = { width: 1080, height: 1920 };
+const FFMPEG_CORE_VERSION = '0.12.10';
+const FFMPEG_REMOTE_BASE_URLS = [
+  `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/esm`,
+  `https://unpkg.com/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/esm`,
+];
 
 let ffmpegRuntimePromise = null;
+
+function isLikelySafariBrowser() {
+  if (typeof window === 'undefined' || typeof window.navigator === 'undefined') return false;
+  const userAgent = window.navigator.userAgent || '';
+  const vendor = window.navigator.vendor || '';
+  return (
+    /Safari/i.test(userAgent) &&
+    /Apple/i.test(vendor) &&
+    !/Chrome|Chromium|CriOS|Firefox|FxiOS|Edg|EdgiOS|Android/i.test(userAgent)
+  );
+}
 
 function throwIfAborted(signal) {
   if (signal?.aborted) {
@@ -436,26 +452,56 @@ function resolveRecorderMimeType(targetFormat) {
   }) || null;
 }
 
+export function getVideoExportCapabilities() {
+  const preferredMp4MimeType = resolveRecorderMimeType('mp4');
+  const preferredWebmMimeType = resolveRecorderMimeType('webm');
+  const canRecordMp4 = Boolean(preferredMp4MimeType && preferredMp4MimeType.includes('mp4'));
+  const canRecordWebm = Boolean(preferredWebmMimeType && preferredWebmMimeType.includes('webm'));
+  const requiresMp4Transcode = Boolean(preferredMp4MimeType && !preferredMp4MimeType.includes('mp4'));
+  const shouldHideWebmOption = isLikelySafariBrowser() || !canRecordWebm;
+
+  return {
+    canRecordMp4,
+    canRecordWebm,
+    requiresMp4Transcode,
+    shouldHideWebmOption,
+    defaultExportFormat:
+      !shouldHideWebmOption && (requiresMp4Transcode || !canRecordMp4) ? 'webm' : 'mp4',
+  };
+}
+
 function getRecordedExtension(mimeType) {
   if (mimeType?.includes('mp4')) return 'mp4';
   if (mimeType?.includes('webm')) return 'webm';
   return 'dat';
 }
 
+async function loadFfmpegCore() {
+  let lastError = null;
+
+  for (const baseUrl of FFMPEG_REMOTE_BASE_URLS) {
+    try {
+      // Keep the heavy ffmpeg core outside the shipped display filesystem image.
+      const [coreURL, wasmURL] = await Promise.all([
+        toBlobURL(`${baseUrl}/ffmpeg-core.js`, 'text/javascript'),
+        toBlobURL(`${baseUrl}/ffmpeg-core.wasm`, 'application/wasm'),
+      ]);
+      const ffmpeg = new FFmpeg();
+      await ffmpeg.load({ coreURL, wasmURL });
+      return ffmpeg;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw new Error(lastError?.message || 'The ffmpeg runtime could not be loaded for MP4 export.');
+}
+
 async function getFfmpegRuntime() {
   if (!ffmpegRuntimePromise) {
     ffmpegRuntimePromise = (async () => {
       try {
-        const [{ FFmpeg }, { fetchFile }] = await Promise.all([
-          import('@ffmpeg/ffmpeg'),
-          import('@ffmpeg/util'),
-        ]);
-        const ffmpeg = new FFmpeg();
-        // Bundle ffmpeg-core locally so browser-specific exports do not depend on a CDN fetch.
-        await ffmpeg.load({
-          coreURL: ffmpegCoreUrl,
-          wasmURL: ffmpegWasmUrl,
-        });
+        const ffmpeg = await loadFfmpegCore();
         return { ffmpeg, fetchFile };
       } catch (error) {
         ffmpegRuntimePromise = null;
