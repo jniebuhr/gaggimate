@@ -132,22 +132,27 @@ export function ShotChart({ shotData, results }) {
     }),
   );
   const videoExportCapabilities = getVideoExportCapabilities();
+  const hasVideoExportSupport =
+    videoExportCapabilities.canRecordMp4 || videoExportCapabilities.canRecordWebm;
   const activeExportType = activeExportTypeRef.current;
-  const isVideoExportActive = isReplayExporting && activeExportType === 'video';
+  const isVideoExportActive =
+    hasVideoExportSupport && isReplayExporting && activeExportType === 'video';
   const isControlsLocked = isReplayExporting;
   const shouldShowReplayFocusHint =
     isVideoExportActive &&
     (replayExportStatus.status === 'preparing' || replayExportStatus.status === 'recording');
   const shouldForceWebmExport =
     !videoExportCapabilities.canRecordMp4 && !videoExportCapabilities.shouldHideWebmOption;
-  const effectiveVideoExportFormat = shouldForceWebmExport
-    ? 'webm'
-    : exportMenuState.exportFormat === 'webm' && !videoExportCapabilities.shouldHideWebmOption
+  const effectiveVideoExportFormat = !hasVideoExportSupport
+    ? null
+    : shouldForceWebmExport
       ? 'webm'
-      : 'mp4';
+      : exportMenuState.exportFormat === 'webm' && !videoExportCapabilities.shouldHideWebmOption
+        ? 'webm'
+        : 'mp4';
   const replayExportStatusLabel = replayExportStatus.error
     ? replayExportStatus.error
-    : getReplayExportStatusLabel(replayExportStatus.status, effectiveVideoExportFormat);
+    : getReplayExportStatusLabel(replayExportStatus.status, effectiveVideoExportFormat || 'mp4');
   const replayExportStatusHint = getReplayExportStatusHint(replayExportStatus.status);
 
   const setReplayExportStatusSafely = nextStatus => {
@@ -263,8 +268,8 @@ export function ShotChart({ shotData, results }) {
     setReplayExportStatus({ status: 'idle', error: null });
     setExportMenuState({
       open: true,
-      exportType: DEFAULT_REPLAY_EXPORT_CONFIG.exportType,
-      exportFormat: videoExportCapabilities.defaultExportFormat,
+      exportType: hasVideoExportSupport ? DEFAULT_REPLAY_EXPORT_CONFIG.exportType : 'image',
+      exportFormat: hasVideoExportSupport ? videoExportCapabilities.defaultExportFormat : 'mp4',
       includeLegend: DEFAULT_REPLAY_EXPORT_CONFIG.includeLegend,
       showFormatInfo: false,
     });
@@ -279,6 +284,7 @@ export function ShotChart({ shotData, results }) {
   };
 
   const handleExportTypeChange = exportType => {
+    if (exportType === 'video' && !hasVideoExportSupport) return;
     setExportMenuState(prev => ({ ...prev, exportType }));
   };
 
@@ -591,6 +597,14 @@ export function ShotChart({ shotData, results }) {
   };
 
   const handleVideoExport = async () => {
+    if (!hasVideoExportSupport || !effectiveVideoExportFormat) {
+      setReplayExportStatusSafely({
+        status: 'error',
+        error: 'Video export is not supported in this browser.',
+      });
+      return;
+    }
+
     const runtime = replayRuntimeRef.current;
     const mainChart = mainChartInstance.current;
     const tempChart = tempChartInstance.current;
@@ -1832,6 +1846,7 @@ export function ShotChart({ shotData, results }) {
         replayExportStatusLabel={replayExportStatusLabel}
         replayExportStatusHint={replayExportStatusHint}
         shouldShowReplayFocusHint={shouldShowReplayFocusHint}
+        hasVideoExportSupport={hasVideoExportSupport}
         shouldShowWebmToggle={!videoExportCapabilities.shouldHideWebmOption}
         shouldLockWebmToggle={shouldForceWebmExport}
         visibility={visibility}

@@ -23,6 +23,7 @@ export function ShotChartControls({
   exportMenuState,
   hasWeightData,
   hasWeightFlowData,
+  hasVideoExportSupport,
   isControlsLocked,
   isReplayPaused,
   isReplaying,
@@ -136,19 +137,28 @@ export function ShotChartControls({
                 </div>
                 <div className='space-y-1'>
                   {[
-                    { value: 'video', label: 'Video' },
+                    {
+                      value: 'video',
+                      label: hasVideoExportSupport ? 'Video' : 'Video (unsupported)',
+                      disabled: !hasVideoExportSupport,
+                    },
                     { value: 'image', label: 'Image (.png)' },
                     { value: 'json', label: 'Shot JSON (.json)' },
                   ].map(option => (
                     <label
                       key={option.value}
-                      className='flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-base-content/5'
+                      className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${
+                        option.disabled
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-base-content/5'
+                      }`}
                     >
                       <input
                         type='radio'
                         name='shot-chart-export-type'
                         className='radio radio-xs'
                         checked={exportMenuState.exportType === option.value}
+                        disabled={option.disabled}
                         onChange={() => onExportTypeChange(option.value)}
                       />
                       <span className='text-sm'>{option.label}</span>
@@ -196,7 +206,7 @@ export function ShotChartControls({
                       <p className='text-base-content/70 mt-2 pr-1 text-[11px] leading-relaxed'>
                         {shouldLockWebmToggle
                           ? 'This browser records replay video as WebM natively.'
-                          : 'WebM can export faster in some browsers because it avoids additional MP4 conversion.'}
+                          : 'WebM is the recommended replay video format in browsers with native WebM recording support.'}
                       </p>
                     ) : null}
                   </div>
