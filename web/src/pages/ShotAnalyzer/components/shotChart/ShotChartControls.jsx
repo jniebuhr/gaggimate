@@ -45,6 +45,7 @@ export function ShotChartControls({
   replayExportStatusHint,
   replayExportStatusLabel,
   shouldShowReplayFocusHint,
+  shouldLockWebmToggle,
   shouldShowWebmToggle,
   visibility,
 }) {
@@ -173,6 +174,7 @@ export function ShotChartControls({
                           type='checkbox'
                           className='checkbox checkbox-xs'
                           checked={exportMenuState.exportFormat === 'webm'}
+                          disabled={shouldLockWebmToggle}
                           onChange={event =>
                             onExportFormatChange(event.currentTarget.checked ? 'webm' : 'mp4')
                           }
@@ -192,8 +194,9 @@ export function ShotChartControls({
                     </div>
                     {exportMenuState.showFormatInfo ? (
                       <p className='text-base-content/70 mt-2 pr-1 text-[11px] leading-relaxed'>
-                        WebM can export faster in some browsers because it avoids additional MP4
-                        conversion.
+                        {shouldLockWebmToggle
+                          ? 'This browser records replay video as WebM natively.'
+                          : 'WebM can export faster in some browsers because it avoids additional MP4 conversion.'}
                       </p>
                     ) : null}
                   </div>

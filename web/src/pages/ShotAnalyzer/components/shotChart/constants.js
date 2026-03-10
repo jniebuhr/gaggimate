@@ -36,8 +36,6 @@ export function getReplayExportStatusLabel(status, exportFormat = 'mp4') {
       return 'Preparing shot JSON...';
     case 'recording':
       return 'Recording replay...';
-    case 'transcoding':
-      return 'Converting to MP4...';
     case 'downloading':
       return 'Downloading export...';
     case 'error':
@@ -47,11 +45,7 @@ export function getReplayExportStatusLabel(status, exportFormat = 'mp4') {
   }
 }
 
-export function getReplayExportStatusHint(status) {
-  if (status === 'transcoding') {
-    return 'Depending on your browser and device, this conversion can take a few minutes.';
-  }
-
+export function getReplayExportStatusHint() {
   return '';
 }
 

@@ -138,8 +138,11 @@ export function ShotChart({ shotData, results }) {
   const shouldShowReplayFocusHint =
     isVideoExportActive &&
     (replayExportStatus.status === 'preparing' || replayExportStatus.status === 'recording');
-  const effectiveVideoExportFormat =
-    exportMenuState.exportFormat === 'webm' && !videoExportCapabilities.shouldHideWebmOption
+  const shouldForceWebmExport =
+    !videoExportCapabilities.canRecordMp4 && !videoExportCapabilities.shouldHideWebmOption;
+  const effectiveVideoExportFormat = shouldForceWebmExport
+    ? 'webm'
+    : exportMenuState.exportFormat === 'webm' && !videoExportCapabilities.shouldHideWebmOption
       ? 'webm'
       : 'mp4';
   const replayExportStatusLabel = replayExportStatus.error
@@ -1830,6 +1833,7 @@ export function ShotChart({ shotData, results }) {
         replayExportStatusHint={replayExportStatusHint}
         shouldShowReplayFocusHint={shouldShowReplayFocusHint}
         shouldShowWebmToggle={!videoExportCapabilities.shouldHideWebmOption}
+        shouldLockWebmToggle={shouldForceWebmExport}
         visibility={visibility}
       />
 

@@ -1,6 +1,3 @@
-import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
-
 const EXPORT_FPS = 24;
 const EXPORT_PADDING = 24;
 const EXPORT_SECTION_GAP = 18;
@@ -12,14 +9,6 @@ const EXPORT_LEGEND_ROW_GAP = 12;
 const EXPORT_CARD_SHADOW_BLUR = 28;
 const EXPORT_OVERLAY_LANDSCAPE = { width: 1920, height: 1080 };
 const EXPORT_OVERLAY_PORTRAIT = { width: 1080, height: 1920 };
-const FFMPEG_CORE_VERSION = '0.12.10';
-const FFMPEG_REMOTE_BASE_URLS = [
-  `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/esm`,
-  `https://unpkg.com/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/esm`,
-];
-
-let ffmpegRuntimePromise = null;
-
 function isLikelySafariBrowser() {
   if (typeof window === 'undefined' || typeof window.navigator === 'undefined') return false;
   const userAgent = window.navigator.userAgent || '';
@@ -436,15 +425,8 @@ function resolveRecorderMimeType(targetFormat) {
   if (typeof window === 'undefined' || typeof window.MediaRecorder === 'undefined') return null;
   const candidates =
     targetFormat === 'mp4'
-      ? [
-          'video/mp4;codecs=avc1.42E01E',
-          'video/mp4;codecs=h264',
-          'video/mp4',
-          'video/webm;codecs=vp9',
-          'video/webm;codecs=vp8',
-          'video/webm',
-        ]
-      : ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
+      ? ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=h264', 'video/mp4']
+      : ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
 
   return candidates.find(mimeType => {
     if (typeof window.MediaRecorder.isTypeSupported !== 'function') return true;
@@ -457,91 +439,14 @@ export function getVideoExportCapabilities() {
   const preferredWebmMimeType = resolveRecorderMimeType('webm');
   const canRecordMp4 = Boolean(preferredMp4MimeType && preferredMp4MimeType.includes('mp4'));
   const canRecordWebm = Boolean(preferredWebmMimeType && preferredWebmMimeType.includes('webm'));
-  const requiresMp4Transcode = Boolean(preferredMp4MimeType && !preferredMp4MimeType.includes('mp4'));
   const shouldHideWebmOption = isLikelySafariBrowser() || !canRecordWebm;
 
   return {
     canRecordMp4,
     canRecordWebm,
-    requiresMp4Transcode,
     shouldHideWebmOption,
-    defaultExportFormat:
-      !shouldHideWebmOption && (requiresMp4Transcode || !canRecordMp4) ? 'webm' : 'mp4',
+    defaultExportFormat: !shouldHideWebmOption && !canRecordMp4 ? 'webm' : 'mp4',
   };
-}
-
-function getRecordedExtension(mimeType) {
-  if (mimeType?.includes('mp4')) return 'mp4';
-  if (mimeType?.includes('webm')) return 'webm';
-  return 'dat';
-}
-
-async function loadFfmpegCore() {
-  let lastError = null;
-
-  for (const baseUrl of FFMPEG_REMOTE_BASE_URLS) {
-    try {
-      // Keep the heavy ffmpeg core outside the shipped display filesystem image.
-      const [coreURL, wasmURL] = await Promise.all([
-        toBlobURL(`${baseUrl}/ffmpeg-core.js`, 'text/javascript'),
-        toBlobURL(`${baseUrl}/ffmpeg-core.wasm`, 'application/wasm'),
-      ]);
-      const ffmpeg = new FFmpeg();
-      await ffmpeg.load({ coreURL, wasmURL });
-      return ffmpeg;
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw new Error(lastError?.message || 'The ffmpeg runtime could not be loaded for MP4 export.');
-}
-
-async function getFfmpegRuntime() {
-  if (!ffmpegRuntimePromise) {
-    ffmpegRuntimePromise = (async () => {
-      try {
-        const ffmpeg = await loadFfmpegCore();
-        return { ffmpeg, fetchFile };
-      } catch (error) {
-        ffmpegRuntimePromise = null;
-        throw error;
-      }
-    })();
-  }
-
-  return ffmpegRuntimePromise;
-}
-
-async function transcodeToMp4(recordedBlob, mimeType, signal) {
-  throwIfAborted(signal);
-  const { ffmpeg, fetchFile } = await getFfmpegRuntime();
-  const inputExtension = getRecordedExtension(mimeType);
-  const inputFile = `input.${inputExtension}`;
-  const outputFile = 'output.mp4';
-
-  await ffmpeg.writeFile(inputFile, await fetchFile(recordedBlob), { signal });
-  const exitCode = await ffmpeg.exec([
-    '-i',
-    inputFile,
-    '-vf',
-    'scale=trunc(iw/2)*2:trunc(ih/2)*2',
-    '-c:v',
-    'libx264',
-    '-pix_fmt',
-    'yuv420p',
-    '-movflags',
-    '+faststart',
-    outputFile,
-  ], -1, { signal });
-
-  if (exitCode !== 0) {
-    throw new Error('ffmpeg could not convert the replay export to MP4.');
-  }
-
-  const outputData = await ffmpeg.readFile(outputFile, 'binary', { signal });
-  await Promise.allSettled([ffmpeg.deleteFile(inputFile), ffmpeg.deleteFile(outputFile)]);
-  return new Blob([outputData], { type: 'video/mp4' });
 }
 
 async function recordCanvas(canvas, fps, renderFrames, signal, recorderMimeType) {
@@ -647,7 +552,11 @@ export async function exportReplayVideo({
 
   const recorderMimeType = resolveRecorderMimeType(config.exportFormat);
   if (!recorderMimeType) {
-    throw new Error('No supported video recorder was found for replay export.');
+    throw new Error(
+      config.exportFormat === 'mp4'
+        ? 'This browser cannot record MP4 video. Please use WebM export instead.'
+        : 'No supported video recorder was found for replay export.',
+    );
   }
 
   const totalDurationSec = Math.max(0, runtime.maxTime - runtime.shotStartSec);
@@ -704,25 +613,9 @@ export async function exportReplayVideo({
     recorderMimeType,
   );
 
-  if (config.exportFormat === 'mp4' && !recordedBlob.type.includes('mp4')) {
-    // Browsers that only record WebM fall back to a local ffmpeg transcode step.
-    onStatusChange?.('transcoding');
-    const transcodedBlob = await transcodeToMp4(recordedBlob, recordedBlob.type, signal);
-    return {
-      blob: transcodedBlob,
-      mimeType: 'video/mp4',
-      width: layout.outputWidth,
-      height: layout.outputHeight,
-      fps: EXPORT_FPS,
-    };
-  }
-
   return {
-    // Normalize the returned blob type so the download path can treat every successful export as MP4.
-    blob: recordedBlob.type.includes('mp4')
-      ? recordedBlob
-      : new Blob([await recordedBlob.arrayBuffer()], { type: 'video/mp4' }),
-    mimeType: recordedBlob.type || 'video/mp4',
+    blob: recordedBlob,
+    mimeType: recordedBlob.type || recorderMimeType,
     width: layout.outputWidth,
     height: layout.outputHeight,
     fps: EXPORT_FPS,
