@@ -26,6 +26,13 @@ function throwIfAborted(signal) {
   }
 }
 
+function getNowMs() {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now();
+  }
+  return Date.now();
+}
+
 function wait(ms, signal) {
   return new Promise((resolve, reject) => {
     throwIfAborted(signal);
@@ -564,44 +571,28 @@ export async function exportReplayVideo({
   const frameDurationMs = 1000 / EXPORT_FPS;
 
   const renderFrames = async () => {
-    // Drive export frames through the same cutoff logic as the live replay so both views stay aligned.
-    applyReplayCutoff(runtime.shotStartSec - 0.001);
-    await waitForAnimationFrame(signal);
-    renderCompositionFrame(ctx, layout, {
-      config,
-      mainCanvas,
-      tempCanvas,
-      legendItems,
-    });
-    await wait(frameDurationMs, signal);
+    // Use an absolute schedule instead of chaining rAF + timeout delays.
+    // That keeps the recorded replay duration aligned with the live replay timing.
+    const recordingStartMs = getNowMs();
 
     for (let frameIndex = 0; frameIndex <= totalFrames; frameIndex++) {
       throwIfAborted(signal);
-      const cutoffX = Math.min(
-        runtime.maxTime,
-        runtime.shotStartSec + frameIndex / EXPORT_FPS,
-      );
+      const elapsedSec = Math.min(totalDurationSec, frameIndex / EXPORT_FPS);
+      const cutoffX = runtime.shotStartSec + elapsedSec;
       const revealAll = cutoffX >= runtime.maxTime;
       applyReplayCutoff(cutoffX, { revealAll });
-      await waitForAnimationFrame(signal);
       renderCompositionFrame(ctx, layout, {
         config,
         mainCanvas,
         tempCanvas,
         legendItems,
       });
-      await wait(frameDurationMs, signal);
-    }
 
-    applyReplayCutoff(runtime.maxTime, { revealAll: true });
-    await waitForAnimationFrame(signal);
-    renderCompositionFrame(ctx, layout, {
-      config,
-      mainCanvas,
-      tempCanvas,
-      legendItems,
-    });
-    await wait(Math.max(frameDurationMs * 1.5, 120), signal);
+      if (frameIndex === totalFrames) continue;
+
+      const nextFrameDueMs = recordingStartMs + (frameIndex + 1) * frameDurationMs;
+      await wait(Math.max(0, nextFrameDueMs - getNowMs()), signal);
+    }
   };
 
   onStatusChange?.('recording');
