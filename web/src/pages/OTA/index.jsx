@@ -88,6 +88,9 @@ export function OTA() {
   }, [apiService]);
 
   const formRef = useRef();
+  const displayFwRef = useRef();
+  const displayFsRef = useRef();
+  const controllerFwRef = useRef();
 
   const onSubmit = useCallback(
     async e => {
@@ -104,6 +107,43 @@ export function OTA() {
   const onUpdate = useCallback(
     component => {
       apiService.send({ tp: 'req:ota-start', cp: component });
+    },
+    [apiService],
+  );
+
+  const onLocalUpload = useCallback(
+    async (component, file) => {
+      if (!file) return;
+      setSubmitting(true);
+      setPhase(1); // Set to a non-zero phase to show the progress screen
+      setProgress(0);
+
+      const formData = new FormData();
+      // Ensure the filename matches what the backend expects
+      const filename =
+        component === 'display'
+          ? 'display-firmware.bin'
+          : component === 'filesystem'
+            ? 'display-filesystem.bin'
+            : 'board-firmware.bin';
+
+      formData.append('file', file, filename);
+
+      try {
+        const response = await fetch('/api/ota/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+      } catch (error) {
+        console.error('Local upload error:', error);
+        setPhase(0);
+        setSubmitting(false);
+        alert('Upload failed: ' + error.message);
+      }
     },
     [apiService],
   );
@@ -157,6 +197,76 @@ export function OTA() {
 
       <form key='ota' method='post' action='/api/ota' ref={formRef} onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
+          <Card sm={12} title='Manual Update (Developer)'>
+            <div className='flex flex-col space-y-4'>
+              <div className='flex flex-col space-y-2'>
+                <label className='text-sm font-medium'>Display Firmware (.bin)</label>
+                <div className='flex items-center gap-2'>
+                  <input
+                    type='file'
+                    ref={displayFwRef}
+                    className='file-input file-input-bordered w-full'
+                    accept='.bin'
+                  />
+                  <button
+                    type='button'
+                    className='btn btn-secondary'
+                    onClick={() => onLocalUpload('display', displayFwRef.current.files[0])}
+                    disabled={submitting}
+                  >
+                    Upload & Flash
+                  </button>
+                </div>
+              </div>
+
+              <div className='flex flex-col space-y-2'>
+                <label className='text-sm font-medium'>Display Filesystem (.bin)</label>
+                <div className='flex items-center gap-2'>
+                  <input
+                    type='file'
+                    ref={displayFsRef}
+                    className='file-input file-input-bordered w-full'
+                    accept='.bin'
+                  />
+                  <button
+                    type='button'
+                    className='btn btn-secondary'
+                    onClick={() => onLocalUpload('filesystem', displayFsRef.current.files[0])}
+                    disabled={submitting}
+                  >
+                    Upload & Flash
+                  </button>
+                </div>
+              </div>
+
+              <div className='flex flex-col space-y-2'>
+                <label className='text-sm font-medium'>Controller Firmware (.bin)</label>
+                <div className='flex items-center gap-2'>
+                  <input
+                    type='file'
+                    ref={controllerFwRef}
+                    className='file-input file-input-bordered w-full'
+                    accept='.bin'
+                  />
+                  <button
+                    type='button'
+                    className='btn btn-secondary'
+                    onClick={() => onLocalUpload('controller', controllerFwRef.current.files[0])}
+                    disabled={submitting}
+                  >
+                    Upload & Flash
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className='alert alert-warning mt-4'>
+              <span>
+                <strong>Warning:</strong> Manual uploading is for developers. Ensure you are
+                flashing compatible firmware to avoid bricking your device.
+              </span>
+            </div>
+          </Card>
+
           <Card sm={12} title='System Information'>
             <div className='flex flex-col space-y-4'>
               <label htmlFor='channel' className='text-sm font-medium'>

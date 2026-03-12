@@ -33,6 +33,18 @@ class GitHubOTA {
     void setReleaseUrl(const String &release_url);
     void setControllerVersion(const String &controller_version);
 
+    ControllerOTA &getControllerOTA() { return _controller_ota; }
+    uint8_t getPhase() const { return phase; }
+    void setPhase(uint8_t phase) {
+        this->phase = phase;
+        if (_phase_callback)
+            _phase_callback(phase);
+    }
+    void updateProgress(uint8_t phase, int progress) {
+        if (_progress_callback)
+            _progress_callback(phase, progress);
+    }
+
   private:
     HTTPUpdate Updater;
 
