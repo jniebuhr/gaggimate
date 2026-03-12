@@ -71,6 +71,8 @@ class WebUIPlugin : public Plugin {
     bool serverRunning = false;
     String updateComponent = "";
     float currentBluetoothWeight = 0.0f;
+    int lastOtaProgress = -1;
+    uint8_t lastOtaPhase = 0;
 };
 
 #endif // WEBUIPLUGIN_H

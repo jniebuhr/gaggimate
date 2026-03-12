@@ -734,6 +734,8 @@ void WebUIPlugin::handleOTAUpload(AsyncWebServerRequest *request, String filenam
                                  bool final) {
     if (index == 0) {
         // Start of upload
+        lastOtaProgress = -1;
+        lastOtaPhase = 0;
         request->_tempFile = File(); // Reset any previous file
         if (filename == "display-firmware.bin" || filename == "firmware.bin") {
             ota->setPhase(PHASE_DISPLAY_FW);
@@ -767,11 +769,18 @@ void WebUIPlugin::handleOTAUpload(AsyncWebServerRequest *request, String filenam
     size_t totalProgress = request->contentLength();
     if (totalProgress > 0) {
         int percentage = (currentProgress * 100) / totalProgress;
+        uint8_t currentPhase = ota->getPhase();
+        int reportedPercentage = percentage;
+
         // For controller upload, we only use first 50% for upload, next 50% for BLE transfer
         if (filename == "board-firmware.bin" || filename == "controller.bin") {
-            ota->updateProgress(PHASE_CONTROLLER_FW, percentage / 2);
-        } else {
-            ota->updateProgress(ota->getPhase(), percentage);
+            reportedPercentage = percentage / 2;
+        }
+
+        if (reportedPercentage != lastOtaProgress || currentPhase != lastOtaPhase) {
+            ota->updateProgress(currentPhase, reportedPercentage);
+            lastOtaProgress = reportedPercentage;
+            lastOtaPhase = currentPhase;
         }
     }
 
