@@ -197,75 +197,77 @@ export function OTA() {
 
       <form key='ota' method='post' action='/api/ota' ref={formRef} onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
-          <Card sm={12} title='Manual Update (Developer)'>
-            <div className='flex flex-col space-y-4'>
-              <div className='flex flex-col space-y-2'>
-                <label className='text-sm font-medium'>Display Firmware (.bin)</label>
-                <div className='flex items-center gap-2'>
-                  <input
-                    type='file'
-                    ref={displayFwRef}
-                    className='file-input file-input-bordered w-full'
-                    accept='.bin'
-                  />
-                  <button
-                    type='button'
-                    className='btn btn-secondary'
-                    onClick={() => onLocalUpload('display', displayFwRef.current.files[0])}
-                    disabled={submitting}
-                  >
-                    Upload & Flash
-                  </button>
+          {formData.developerMode && (
+            <Card sm={12} title='Manual Update (Developer)'>
+              <div className='flex flex-col space-y-4'>
+                <div className='flex flex-col space-y-2'>
+                  <label className='text-sm font-medium'>Display Firmware (.bin)</label>
+                  <div className='flex items-center gap-2'>
+                    <input
+                      type='file'
+                      ref={displayFwRef}
+                      className='file-input file-input-bordered w-full'
+                      accept='.bin'
+                    />
+                    <button
+                      type='button'
+                      className='btn btn-secondary'
+                      onClick={() => onLocalUpload('display', displayFwRef.current.files[0])}
+                      disabled={submitting}
+                    >
+                      Upload & Flash
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className='flex flex-col space-y-2'>
-                <label className='text-sm font-medium'>Display Filesystem (.bin)</label>
-                <div className='flex items-center gap-2'>
-                  <input
-                    type='file'
-                    ref={displayFsRef}
-                    className='file-input file-input-bordered w-full'
-                    accept='.bin'
-                  />
-                  <button
-                    type='button'
-                    className='btn btn-secondary'
-                    onClick={() => onLocalUpload('filesystem', displayFsRef.current.files[0])}
-                    disabled={submitting}
-                  >
-                    Upload & Flash
-                  </button>
+                <div className='flex flex-col space-y-2'>
+                  <label className='text-sm font-medium'>Display Filesystem (.bin)</label>
+                  <div className='flex items-center gap-2'>
+                    <input
+                      type='file'
+                      ref={displayFsRef}
+                      className='file-input file-input-bordered w-full'
+                      accept='.bin'
+                    />
+                    <button
+                      type='button'
+                      className='btn btn-secondary'
+                      onClick={() => onLocalUpload('filesystem', displayFsRef.current.files[0])}
+                      disabled={submitting}
+                    >
+                      Upload & Flash
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className='flex flex-col space-y-2'>
-                <label className='text-sm font-medium'>Controller Firmware (.bin)</label>
-                <div className='flex items-center gap-2'>
-                  <input
-                    type='file'
-                    ref={controllerFwRef}
-                    className='file-input file-input-bordered w-full'
-                    accept='.bin'
-                  />
-                  <button
-                    type='button'
-                    className='btn btn-secondary'
-                    onClick={() => onLocalUpload('controller', controllerFwRef.current.files[0])}
-                    disabled={submitting}
-                  >
-                    Upload & Flash
-                  </button>
+                <div className='flex flex-col space-y-2'>
+                  <label className='text-sm font-medium'>Controller Firmware (.bin)</label>
+                  <div className='flex items-center gap-2'>
+                    <input
+                      type='file'
+                      ref={controllerFwRef}
+                      className='file-input file-input-bordered w-full'
+                      accept='.bin'
+                    />
+                    <button
+                      type='button'
+                      className='btn btn-secondary'
+                      onClick={() => onLocalUpload('controller', controllerFwRef.current.files[0])}
+                      disabled={submitting}
+                    >
+                      Upload & Flash
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className='alert alert-warning mt-4'>
-              <span>
-                <strong>Warning:</strong> Manual uploading is for developers. Ensure you are
-                flashing compatible firmware to avoid bricking your device.
-              </span>
-            </div>
-          </Card>
+              <div className='alert alert-warning mt-4'>
+                <span>
+                  <strong>Warning:</strong> Manual uploading is for developers. Ensure you are
+                  flashing compatible firmware to avoid bricking your device.
+                </span>
+              </div>
+            </Card>
+          )}
 
           <Card sm={12} title='System Information'>
             <div className='flex flex-col space-y-4'>

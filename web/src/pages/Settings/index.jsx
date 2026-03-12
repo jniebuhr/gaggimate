@@ -130,6 +130,9 @@ export function Settings() {
       if (key === 'autowakeupEnabled') {
         value = !formData.autowakeupEnabled;
       }
+      if (key === 'developerMode') {
+        value = !formData.developerMode;
+      }
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
         // Set standby brightness to 0 when toggle is off
@@ -555,7 +558,7 @@ export function Settings() {
               </select>
             </div>
             <div className='divider'>Clock</div>
-            <div className='form-control'>
+            <div className='form-control mb-4'>
               <label className='label cursor-pointer'>
                 <span className='label-text'>Use 24h Format</span>
                 <input
@@ -567,6 +570,27 @@ export function Settings() {
                   onChange={onChange('clock24hFormat')}
                 />
               </label>
+            </div>
+            <div className='divider'>Developer</div>
+            <div className='form-control'>
+              <label className='label cursor-pointer'>
+                <span className='label-text'>Developer Mode</span>
+                <input
+                  id='developerMode'
+                  name='developerMode'
+                  type='checkbox'
+                  className='toggle toggle-primary'
+                  checked={!!formData.developerMode}
+                  onChange={onChange('developerMode')}
+                />
+              </label>
+              {formData.developerMode && (
+                <div className='alert alert-warning mt-2 py-2 text-xs'>
+                  <span>
+                    Enables manual firmware uploads. Use with caution to avoid bricking.
+                  </span>
+                </div>
+              )}
             </div>
           </Card>
 
