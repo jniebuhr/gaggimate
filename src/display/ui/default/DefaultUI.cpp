@@ -681,6 +681,7 @@ void DefaultUI::updateStandbyScreen() {
             Settings &settings = controller->getSettings();
             const char *format = settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p";
             strftime(time, sizeof(time), format, &timeinfo);
+            if (!settings.isClock24hFormat() && time[0] == '0') time[0] = ' ';
             lv_label_set_text(ui_StandbyScreen_time, time);
             lv_obj_clear_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
 
