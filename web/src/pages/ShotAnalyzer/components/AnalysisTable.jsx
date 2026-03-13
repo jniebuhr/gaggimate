@@ -778,6 +778,18 @@ function CellContent({ phase, col, results, isTotal = false }) {
       unit = 'g';
       break;
 
+    // Weight Flow Details (clamp to 0)
+    case 'wf_se':
+      mainValue = `${sf(Math.max(0, stats?.wf?.start ?? 0))}/${sf(Math.max(0, stats?.wf?.end ?? 0))}`;
+      break;
+    case 'wf_mm':
+      mainValue = `${sf(Math.max(0, stats?.wf?.min ?? 0))}/${sf(Math.max(0, stats?.wf?.max ?? 0))}`;
+      break;
+    case 'wf_avg':
+      mainValue = sf(Math.max(0, stats?.wf?.avg ?? 0));
+      unit = 'g/s';
+      break;
+
     // --- System Info (Mapped from AnalyzerService stats) ---
     case 'sys_raw':
       mainValue = stats?.sys_raw !== undefined ? stats.sys_raw : '-';

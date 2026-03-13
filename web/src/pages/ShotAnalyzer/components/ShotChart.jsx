@@ -5,7 +5,7 @@
  * Sub chart: temperature (Temp + Target T).
  */
 
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,6 +14,7 @@ import { faMinimize } from '@fortawesome/free-solid-svg-icons/faMinimize';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
 import { faStop } from '@fortawesome/free-solid-svg-icons/faStop';
+import './ShotChart.css';
 
 // Register the annotation plugin for Phase Lines
 Chart.register(annotationPlugin);
@@ -31,52 +32,13 @@ const hoverGuidePlugin = {
     const ctx = chart.ctx;
     ctx.save();
     ctx.beginPath();
-    ctx.strokeStyle = pluginOptions?.color || 'rgba(148, 163, 184, 0.55)';
-    ctx.lineWidth = pluginOptions?.lineWidth || 1;
-    ctx.setLineDash(pluginOptions?.dash || [3, 3]);
+    ctx.strokeStyle = pluginOptions?.color || 'rgba(148, 163, 184, 0.72)';
+    ctx.lineWidth = pluginOptions?.lineWidth || 1.25;
+    ctx.setLineDash(pluginOptions?.dash || []);
     ctx.moveTo(x, top);
     ctx.lineTo(x, bottom);
     ctx.stroke();
     ctx.restore();
-  },
-};
-
-const fixedTooltipPlugin = {
-  id: 'fixedTooltip',
-  beforeTooltipDraw(chart, args, pluginOptions) {
-    const tooltip = args.tooltip;
-    if (!tooltip || tooltip.opacity === 0 || !chart.chartArea) return;
-
-    const offsetX = pluginOptions?.offsetX ?? 12;
-    const offsetY = pluginOptions?.offsetY ?? 12;
-    const boundsPadding = pluginOptions?.boundsPadding ?? 4;
-    const pointerGap = pluginOptions?.pointerGap ?? 10;
-    const tooltipWidth = Number(tooltip.width) || 0;
-    const tooltipHeight = Number(tooltip.height) || 0;
-
-    const anchorX = Number.isFinite(tooltip.caretX) ? tooltip.caretX : chart.chartArea.left + offsetX;
-    const chartMidX = (chart.chartArea.left + chart.chartArea.right) / 2;
-    const showRightOfPointer = anchorX <= chartMidX;
-    const preferredX = showRightOfPointer
-      ? anchorX + pointerGap
-      : anchorX - tooltipWidth - pointerGap;
-    const anchorY = Number.isFinite(chart.$fixedTooltipPointerY)
-      ? chart.$fixedTooltipPointerY
-      : Number.isFinite(tooltip.caretY)
-        ? tooltip.caretY
-        : chart.chartArea.top + offsetY;
-    const preferredY = anchorY - tooltipHeight / 2 + offsetY;
-    const maxX = Math.max(boundsPadding, chart.width - tooltipWidth - boundsPadding);
-    const maxY = Math.max(boundsPadding, chart.height - tooltipHeight - boundsPadding);
-    const fixedX = Math.min(maxX, Math.max(boundsPadding, preferredX));
-    const fixedY = Math.min(maxY, Math.max(boundsPadding, preferredY));
-
-    tooltip.x = fixedX;
-    tooltip.y = fixedY;
-    tooltip.caretX = anchorX;
-    tooltip.caretY = anchorY;
-    tooltip.xAlign = 'left';
-    tooltip.yAlign = 'top';
   },
 };
 
@@ -107,65 +69,6 @@ const replayRevealPlugin = {
   },
 };
 
-const targetTempAxisLabelsPlugin = {
-  id: 'targetTempAxisLabels',
-  afterDatasetsDraw(chart, _args, pluginOptions) {
-    if (!pluginOptions?.enabled) return;
-    if (!chart.chartArea) return;
-
-    const labels = Array.isArray(pluginOptions.labels) ? pluginOptions.labels : [];
-    if (labels.length === 0) return;
-
-    const yScale = chart.scales?.yTempRight;
-    if (!yScale) return;
-
-    const replayEnabled = Boolean(chart.$replayRevealEnabled);
-    const replayCutoffX = Number(chart.$replayRevealX);
-    const visibleLabels = labels.filter(label => {
-      if (!replayEnabled || !Number.isFinite(replayCutoffX)) return true;
-      return !Number.isFinite(label.firstX) || label.firstX <= replayCutoffX;
-    });
-    if (visibleLabels.length === 0) return;
-
-    const fontSize = pluginOptions.fontSize ?? 10;
-    const fontWeight = pluginOptions.fontWeight ?? 'normal';
-    const color = pluginOptions.color || '#888';
-    const rightInset = pluginOptions.offsetX ?? 6;
-    const minGap = pluginOptions.minGap ?? Math.max(12, fontSize + 2);
-    const x = Math.max(chart.chartArea.right + 2, chart.width - rightInset);
-
-    const positioned = visibleLabels
-      .map(label => ({ ...label, y: yScale.getPixelForValue(label.value) }))
-      .filter(label => Number.isFinite(label.y))
-      .sort((a, b) => a.y - b.y);
-
-    for (let i = 1; i < positioned.length; i++) {
-      if (positioned[i].y - positioned[i - 1].y < minGap) {
-        positioned[i].y = positioned[i - 1].y + minGap;
-      }
-    }
-
-    const topBound = chart.chartArea.top + 2;
-    const bottomBound = chart.chartArea.bottom - 2;
-    for (let i = positioned.length - 1; i >= 0; i--) {
-      positioned[i].y = Math.min(bottomBound, Math.max(topBound, positioned[i].y));
-      if (i > 0 && positioned[i].y - positioned[i - 1].y < minGap) {
-        positioned[i - 1].y = positioned[i].y - minGap;
-      }
-    }
-
-    const ctx = chart.ctx;
-    ctx.save();
-    ctx.fillStyle = color;
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.font = `${fontWeight} ${fontSize}px ${Chart.defaults.font.family}`;
-    positioned.forEach(label => {
-      if (label.text) ctx.fillText(label.text, x, label.y);
-    });
-    ctx.restore();
-  },
-};
 
 const TARGET_FLOW_MAX = 12;
 const TARGET_PRESSURE_MAX = 16;
@@ -179,6 +82,10 @@ const MAIN_CHART_HEIGHT_DEFAULT = MAIN_CHART_HEIGHT_SMALL;
 const TEMP_CHART_HEIGHT_RATIO = 80 / MAIN_CHART_HEIGHT_SMALL;
 const REPLAY_TARGET_FPS = 24;
 const REPLAY_FRAME_INTERVAL_MS = 1000 / REPLAY_TARGET_FPS;
+const EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X = 12;
+const EXTERNAL_TOOLTIP_POINTER_GAP = 10;
+const EXTERNAL_TOOLTIP_BOUNDS_PADDING = 4;
+const EXTERNAL_TOOLTIP_VERTICAL_OFFSET = 0;
 const CHART_COLOR_FALLBACKS = {
   temp: '#F0561D',
   tempTarget: '#731F00',
@@ -186,6 +93,7 @@ const CHART_COLOR_FALLBACKS = {
   flow: '#63993D',
   puckFlow: '#059669',
   weight: '#8B5CF6',
+  weightFlow: '#6d28d9',
   phaseLine: 'rgba(107, 114, 128, 0.5)',
   stopLabel: 'rgba(220, 38, 38, 0.85)',
 };
@@ -196,12 +104,13 @@ const CHART_COLOR_TOKEN_MAP = {
   flow: '--analyzer-flow-anchor',
   puckFlow: '--analyzer-puckflow-anchor',
   weight: '--analyzer-weight-anchor',
+  weightFlow: '--analyzer-weightflow-anchor',
   phaseLine: '--analyzer-phase-line',
   stopLabel: '--analyzer-stop-label',
 };
 const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
 const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
-const LEGEND_THIN_LINE_LABELS = new Set(['Target T', 'Target P', 'Target F', 'Puck Flow', 'Weight']);
+const LEGEND_THIN_LINE_LABELS = new Set(['Target T', 'Target P', 'Target F', 'Puck Flow', 'Weight', 'Weight Flow']);
 const WATER_DRAWN_PHASE_LABEL = 'Water Drawn (Phase)';
 const WATER_DRAWN_TOTAL_LABEL = 'Water Drawn (Total)';
 const TOOLTIP_WATER_LABELS = new Set([WATER_DRAWN_PHASE_LABEL, WATER_DRAWN_TOTAL_LABEL]);
@@ -216,14 +125,11 @@ const LEGEND_ORDER = [
   'Target F',
   'Puck Flow',
   'Weight',
+  'Weight Flow',
   'Temp',
   'Target T',
 ];
 
-const LEGEND_INDEX = LEGEND_ORDER.reduce((acc, label, index) => {
-  acc[label] = index;
-  return acc;
-}, {});
 const TOOLTIP_ORDER = [
   'Phase Names',
   'Stops',
@@ -232,6 +138,7 @@ const TOOLTIP_ORDER = [
   'Flow',
   'Target F',
   'Puck Flow',
+  'Weight Flow',
   'Weight',
   WATER_DRAWN_PHASE_LABEL,
   WATER_DRAWN_TOTAL_LABEL,
@@ -242,6 +149,19 @@ const TOOLTIP_INDEX = TOOLTIP_ORDER.reduce((acc, label, index) => {
   acc[label] = index;
   return acc;
 }, {});
+const TOOLTIP_GROUP_BY_LABEL = {
+  Pressure: 'pressure',
+  'Target P': 'pressure',
+  Flow: 'flow',
+  'Target F': 'flow',
+  'Puck Flow': 'flow',
+  Weight: 'weight',
+  'Weight Flow': 'weight',
+  [WATER_DRAWN_PHASE_LABEL]: 'water',
+  [WATER_DRAWN_TOTAL_LABEL]: 'water',
+  Temp: 'temp',
+  'Target T': 'temp',
+};
 
 const VISIBILITY_KEY_BY_LABEL = {
   'Phase Names': 'phaseNames',
@@ -254,6 +174,7 @@ const VISIBILITY_KEY_BY_LABEL = {
   'Target F': 'targetFlow',
   'Puck Flow': 'puckFlow',
   Weight: 'weight',
+  'Weight Flow': 'weightFlow',
 };
 
 const INITIAL_VISIBILITY = {
@@ -267,6 +188,7 @@ const INITIAL_VISIBILITY = {
   targetFlow: true,
   puckFlow: true,
   weight: true,
+  weightFlow: true,
 };
 
 function readCssColorVar(variableName, fallback) {
@@ -297,6 +219,15 @@ function getLegendColorByLabel(colors) {
     'Target F': colors.flow,
     'Puck Flow': colors.puckFlow,
     Weight: colors.weight,
+    'Weight Flow': colors.weightFlow,
+  };
+}
+
+function getTooltipColorByLabel(colors) {
+  return {
+    ...getLegendColorByLabel(colors),
+    [WATER_DRAWN_PHASE_LABEL]: colors.puckFlow,
+    [WATER_DRAWN_TOTAL_LABEL]: colors.flow,
   };
 }
 
@@ -309,9 +240,162 @@ const UNIT_BY_LABEL = {
   'Target F': 'ml/s',
   'Puck Flow': 'ml/s',
   Weight: 'g',
+  'Weight Flow': 'g/s',
   [WATER_DRAWN_PHASE_LABEL]: 'ml',
   [WATER_DRAWN_TOTAL_LABEL]: 'ml',
 };
+
+function createHiddenExternalTooltipState() {
+  return {
+    visible: false,
+    titleLines: [],
+    rows: [],
+    anchorX: 0,
+    anchorY: 0,
+    chartWidth: 0,
+    chartHeight: 0,
+  };
+}
+
+function createHiddenExternalTooltipLayout() {
+  return {
+    visible: false,
+    x: 0,
+    y: 0,
+  };
+}
+
+function areStringArraysEqual(a = [], b = []) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function areTooltipRowsEqual(a = [], b = []) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (
+      a[i]?.label !== b[i]?.label ||
+      a[i]?.valueText !== b[i]?.valueText ||
+      a[i]?.color !== b[i]?.color ||
+      a[i]?.spacerBefore !== b[i]?.spacerBefore
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function areTooltipStatesEqual(a, b) {
+  if (!a || !b) return false;
+  return (
+    a.visible === b.visible &&
+    a.anchorX === b.anchorX &&
+    a.anchorY === b.anchorY &&
+    a.chartWidth === b.chartWidth &&
+    a.chartHeight === b.chartHeight &&
+    areStringArraysEqual(a.titleLines, b.titleLines) &&
+    areTooltipRowsEqual(a.rows, b.rows)
+  );
+}
+
+function areTooltipLayoutsEqual(a, b) {
+  if (!a || !b) return false;
+  return a.visible === b.visible && a.x === b.x && a.y === b.y;
+}
+
+function shouldRenderTooltipLabel(label) {
+  return Boolean(label) && label !== 'Phase Names' && label !== 'Stops';
+}
+
+function sortTooltipItems(a, b) {
+  return (TOOLTIP_INDEX[a?.dataset?.label] ?? 999) - (TOOLTIP_INDEX[b?.dataset?.label] ?? 999);
+}
+
+function getTooltipGroupKey(label) {
+  return TOOLTIP_GROUP_BY_LABEL[label] || null;
+}
+
+function resolveHoverPointColor(context) {
+  const datasetColor = context?.dataset?.borderColor;
+  return typeof datasetColor === 'string' && datasetColor.length > 0 ? datasetColor : '#94a3b8';
+}
+
+function computeExternalTooltipPosition({
+  anchorX,
+  anchorY,
+  chartWidth,
+  chartHeight,
+  tooltipWidth,
+  tooltipHeight,
+  boundsPadding = EXTERNAL_TOOLTIP_BOUNDS_PADDING,
+  pointerGap = EXTERNAL_TOOLTIP_POINTER_GAP,
+  verticalOffset = EXTERNAL_TOOLTIP_VERTICAL_OFFSET,
+}) {
+  const chartMidX = chartWidth / 2;
+  const showRightOfPointer = anchorX <= chartMidX;
+  const preferredX = showRightOfPointer
+    ? anchorX + pointerGap
+    : anchorX - tooltipWidth - pointerGap;
+  const preferredY = anchorY - tooltipHeight / 2 + verticalOffset;
+  const maxX = Math.max(boundsPadding, chartWidth - tooltipWidth - boundsPadding);
+  const maxY = Math.max(boundsPadding, chartHeight - tooltipHeight - boundsPadding);
+
+  return {
+    visible: true,
+    x: Math.min(maxX, Math.max(boundsPadding, preferredX)),
+    y: Math.min(maxY, Math.max(boundsPadding, preferredY)),
+  };
+}
+
+function buildTooltipRowModel(tooltipItem, getHoverWaterValuesAtX, tooltipColorByLabel) {
+  const label = tooltipItem?.dataset?.label;
+  if (!label || !shouldRenderTooltipLabel(label)) return null;
+
+  let valueText = null;
+  if (TOOLTIP_WATER_LABELS.has(label)) {
+    const xValue = tooltipItem.parsed?.x;
+    const { totalWaterMl, phaseWaterMl } = getHoverWaterValuesAtX(xValue);
+    const waterValue = label === WATER_DRAWN_PHASE_LABEL ? phaseWaterMl : totalWaterMl;
+    valueText = Number.isFinite(waterValue) ? `${waterValue.toFixed(1)} ml` : '-';
+  } else {
+    const value = tooltipItem.parsed?.y;
+    if (value === null || value === undefined) return null;
+    const unit = UNIT_BY_LABEL[label];
+    valueText = unit ? `${value.toFixed(1)} ${unit}` : `${value.toFixed(1)}`;
+  }
+
+  return {
+    label,
+    valueText,
+    color: tooltipColorByLabel[label] || '#94a3b8',
+    spacerBefore: false,
+  };
+}
+
+function buildExternalTooltipRows(tooltipItems, getHoverWaterValuesAtX, tooltipColorByLabel) {
+  const sortedItems = [...(tooltipItems || [])]
+    .filter(item => shouldRenderTooltipLabel(item?.dataset?.label))
+    .sort(sortTooltipItems);
+
+  let previousGroupKey = null;
+
+  return sortedItems.reduce((rows, item) => {
+    const row = buildTooltipRowModel(item, getHoverWaterValuesAtX, tooltipColorByLabel);
+    if (!row) return rows;
+
+    const groupKey = getTooltipGroupKey(row.label);
+    if (previousGroupKey !== null && groupKey !== null && groupKey !== previousGroupKey) {
+      row.spacerBefore = true;
+    }
+
+    if (groupKey !== null) previousGroupKey = groupKey;
+    rows.push(row);
+    return rows;
+  }, []);
+}
 
 // --- Helper Functions ---
 
@@ -356,35 +440,6 @@ function formatAxisTick(value) {
   const rounded = Math.round(numeric);
   const absolute = Math.abs(rounded).toString().padStart(2, '0');
   return rounded < 0 ? `-${absolute}` : absolute;
-}
-
-function buildTargetTempAxisLabels(targetTempSeries) {
-  if (!Array.isArray(targetTempSeries) || targetTempSeries.length === 0) return [];
-
-  const groups = [];
-  const mergeTolerance = 0.05;
-
-  targetTempSeries.forEach(point => {
-    const value = Number(point?.y);
-    const x = Number(point?.x);
-    if (!Number.isFinite(value)) return;
-
-    const existing = groups.find(group => Math.abs(group.value - value) <= mergeTolerance);
-    if (existing) {
-      if (Number.isFinite(x)) {
-        existing.firstX = Number.isFinite(existing.firstX) ? Math.min(existing.firstX, x) : x;
-      }
-      return;
-    }
-
-    groups.push({
-      value,
-      firstX: Number.isFinite(x) ? x : null,
-      text: formatAxisTick(value),
-    });
-  });
-
-  return groups.sort((a, b) => a.value - b.value);
 }
 
 function createStripedFillPattern(canvasCtx, color, options = {}) {
@@ -469,10 +524,13 @@ function findLastSampleIndexAtOrBeforeX(sampleTimesSec, xValue) {
  */
 export function ShotChart({ shotData, results }) {
   const hoverAreaRef = useRef(null);
+  const mainChartContainerRef = useRef(null);
   const mainChartRef = useRef(null);
   const tempChartRef = useRef(null);
+  const externalTooltipRef = useRef(null);
   const mainChartInstance = useRef(null);
   const tempChartInstance = useRef(null);
+  const chartColorsRef = useRef(null);
   const replayRafRef = useRef(null);
   const replayStartPerfMsRef = useRef(0);
   const replayLastRenderPerfMsRef = useRef(0);
@@ -488,7 +546,12 @@ export function ShotChart({ shotData, results }) {
   const [mainChartHeight, setMainChartHeight] = useState(MAIN_CHART_HEIGHT_DEFAULT);
   const [isReplaying, setIsReplaying] = useState(false);
   const [isReplayPaused, setIsReplayPaused] = useState(false);
-  const legendColorByLabel = getLegendColorByLabel(getShotChartColors());
+  const [externalTooltipState, setExternalTooltipState] = useState(createHiddenExternalTooltipState);
+  const [externalTooltipLayout, setExternalTooltipLayout] = useState(createHiddenExternalTooltipLayout);
+  if (!chartColorsRef.current) {
+    chartColorsRef.current = getShotChartColors();
+  }
+  const legendColorByLabel = getLegendColorByLabel(chartColorsRef.current);
   const hasWeightData = Boolean(
     shotData?.samples?.some(sample => {
       const rawWeight = sample?.v ?? sample?.w ?? sample?.weight ?? sample?.m;
@@ -496,11 +559,48 @@ export function ShotChart({ shotData, results }) {
       return Number.isFinite(numericWeight) && numericWeight > 0;
     }),
   );
+  const hasWeightFlowData = Boolean(
+    shotData?.samples?.some(sample => {
+      const val = Number(sample?.vf ?? sample?.weight_flow);
+      return Number.isFinite(val) && val > 0;
+    }),
+  );
+
+  useLayoutEffect(() => {
+    if (!externalTooltipState.visible) {
+      setExternalTooltipLayout(prev => {
+        const hiddenLayout = createHiddenExternalTooltipLayout();
+        return areTooltipLayoutsEqual(prev, hiddenLayout) ? prev : hiddenLayout;
+      });
+      return;
+    }
+
+    const tooltipElement = externalTooltipRef.current;
+    const containerElement = mainChartContainerRef.current;
+    if (!tooltipElement || !containerElement) return;
+
+    const chartWidth = externalTooltipState.chartWidth || containerElement.clientWidth || 0;
+    const chartHeight = externalTooltipState.chartHeight || containerElement.clientHeight || 0;
+    const tooltipWidth = tooltipElement.offsetWidth || 0;
+    const tooltipHeight = tooltipElement.offsetHeight || 0;
+
+    const nextLayout = computeExternalTooltipPosition({
+      anchorX: externalTooltipState.anchorX,
+      anchorY: externalTooltipState.anchorY,
+      chartWidth,
+      chartHeight,
+      tooltipWidth,
+      tooltipHeight,
+    });
+
+    setExternalTooltipLayout(prev => (areTooltipLayoutsEqual(prev, nextLayout) ? prev : nextLayout));
+  }, [externalTooltipState]);
 
   const handleLegendToggle = label => {
     const key = VISIBILITY_KEY_BY_LABEL[label];
     if (!key) return;
     if (label === 'Weight' && !hasWeightData) return;
+    if (label === 'Weight Flow' && !hasWeightFlowData) return;
     setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -751,6 +851,10 @@ export function ShotChart({ shotData, results }) {
 
     stopReplayAnimation(true);
     replayRuntimeRef.current = null;
+    setExternalTooltipState(prev => {
+      const hiddenState = createHiddenExternalTooltipState();
+      return areTooltipStatesEqual(prev, hiddenState) ? prev : hiddenState;
+    });
 
     // Validation: Ensure data exists before rendering
     if (!shotData || !shotData.samples || shotData.samples.length === 0) {
@@ -765,6 +869,7 @@ export function ShotChart({ shotData, results }) {
     if (!mainChartRef.current || !tempChartRef.current) return;
 
     const COLORS = getShotChartColors();
+    chartColorsRef.current = COLORS;
 
     const mainCanvasCtx = mainChartRef.current.getContext('2d');
     const targetPressureFill = createStripedFillPattern(mainCanvasCtx, COLORS.pressure, {
@@ -859,6 +964,7 @@ export function ShotChart({ shotData, results }) {
       puckFlow: [],
       temp: [],
       weight: [],
+      weightFlow: [],
       targetPressure: [],
       targetFlow: [],
       targetTemp: [],
@@ -874,6 +980,7 @@ export function ShotChart({ shotData, results }) {
       const puckFlow = toNumberOrNull(getVal(sample, ['pf', 'puck_flow']));
       const temp = toNumberOrNull(getVal(sample, ['ct', 't', 'temperature']));
       const weight = toNumberOrNull(getVal(sample, ['v', 'w', 'weight', 'm']));
+      const weightFlow = toNumberOrNull(getVal(sample, ['vf', 'weight_flow']));
 
       // Extract target values
       const targetPressure = toNumberOrNull(getVal(sample, ['tp', 'target_pressure']));
@@ -886,6 +993,7 @@ export function ShotChart({ shotData, results }) {
       if (puckFlow !== null) series.puckFlow.push({ x: t, y: puckFlow });
       if (temp !== null) series.temp.push({ x: t, y: temp });
       if (weight !== null && weight >= 0) series.weight.push({ x: t, y: weight });
+      if (weightFlow !== null) series.weightFlow.push({ x: t, y: Math.max(0, weightFlow) });
 
       if (targetPressure !== null) {
         series.targetPressure.push({ x: t, y: Math.min(targetPressure, TARGET_PRESSURE_MAX) });
@@ -905,6 +1013,7 @@ export function ShotChart({ shotData, results }) {
       ...series.flow,
       ...series.puckFlow,
       ...series.targetFlow,
+      ...series.weightFlow,
     ];
     const mainAxisMaxRaw = safeMax(mainAxisSamples.map(p => p.y), 1);
     const mainAxisMax = Math.max(1, mainAxisMaxRaw * 1.02);
@@ -922,14 +1031,6 @@ export function ShotChart({ shotData, results }) {
     const tempAxisMin = tempMinRaw - tempBottomPadding;
     const tempAxisMax = tempMaxRaw + tempTopPadding;
 
-    const targetTempAxisSamples = series.targetTemp.length > 0 ? series.targetTemp : series.temp;
-    const targetTempMinRaw = safeMin(targetTempAxisSamples.map(p => p.y), tempMinRaw);
-    const targetTempMaxRaw = safeMax(targetTempAxisSamples.map(p => p.y), tempMaxRaw);
-    const targetTempRange = Math.max(0.5, targetTempMaxRaw - targetTempMinRaw);
-    const targetTempTopPadding = Math.max(0.15, targetTempRange * 0.02);
-    const targetTempBottomPadding = Math.max(0.25, targetTempRange * 0.07);
-    const targetTempAxisMin = targetTempMinRaw - targetTempBottomPadding;
-    const targetTempAxisMax = targetTempMaxRaw + targetTempTopPadding;
 
     // --- Phase Annotation Logic ---
     const phaseAnnotations = {};
@@ -1124,23 +1225,6 @@ export function ShotChart({ shotData, results }) {
       return { totalWaterMl, phaseWaterMl };
     };
 
-    const makeLegendLabel = context => {
-      if (context.dataset.label === 'Phase Names' || context.dataset.label === 'Stops') return null;
-      const label = context.dataset.label || '';
-
-      if (TOOLTIP_WATER_LABELS.has(label)) {
-        const xValue = context.parsed?.x;
-        const { totalWaterMl, phaseWaterMl } = getHoverWaterValuesAtX(xValue);
-        const waterValue = label === WATER_DRAWN_PHASE_LABEL ? phaseWaterMl : totalWaterMl;
-        return `${label}: ${Number.isFinite(waterValue) ? `${waterValue.toFixed(1)} ml` : '-'}`;
-      }
-
-      const value = context.parsed?.y;
-      if (value === null || value === undefined) return null;
-      const unit = UNIT_BY_LABEL[label];
-      return unit ? `${label}: ${value.toFixed(1)} ${unit}` : `${label}: ${value.toFixed(1)}`;
-    };
-
     const waterTooltipPhaseSeries = sampleTimesSec.map(x => {
       const { phaseWaterMl } = getHoverWaterValuesAtX(x);
       return { x, y: Number.isFinite(phaseWaterMl) ? phaseWaterMl : 0 };
@@ -1149,48 +1233,51 @@ export function ShotChart({ shotData, results }) {
       x,
       y: Number.isFinite(cumulativeWaterTotalBySample[index]) ? cumulativeWaterTotalBySample[index] : 0,
     }));
-
-    const tooltipGapBeforeGroup = context => {
-      const label = context?.dataset?.label;
-      if (!label) return null;
-
-      const tooltipItems = context.tooltip?.dataPoints;
-      if (!Array.isArray(tooltipItems) || tooltipItems.length === 0) return null;
-
-      if (TOOLTIP_WATER_LABELS.has(label)) {
-        const firstWaterLabel = tooltipItems.find(item => TOOLTIP_WATER_LABELS.has(item?.dataset?.label))
-          ?.dataset?.label;
-        return firstWaterLabel === label ? [''] : null;
-      }
-
-      if (TOOLTIP_BOTTOM_LABELS.has(label)) {
-        const firstBottomLabel = tooltipItems.find(item => TOOLTIP_BOTTOM_LABELS.has(item?.dataset?.label))
-          ?.dataset?.label;
-        return firstBottomLabel === label ? [''] : null;
-      }
-
-      return null;
+    const chartTooltipColorByLabel = getTooltipColorByLabel(COLORS);
+    const hideExternalTooltip = () => {
+      setExternalTooltipState(prev => {
+        const hiddenState = createHiddenExternalTooltipState();
+        return areTooltipStatesEqual(prev, hiddenState) ? prev : hiddenState;
+      });
     };
+    const updateExternalTooltip = ({ chart, tooltip }) => {
+      if (!tooltip || tooltip.opacity === 0 || !chart.chartArea) {
+        hideExternalTooltip();
+        return;
+      }
 
-    const tooltipWaterLabelColor = context => {
-      const label = context?.dataset?.label;
-      if (label === WATER_DRAWN_PHASE_LABEL) {
-        return {
-          borderColor: COLORS.puckFlow,
-          backgroundColor: COLORS.puckFlow,
-          borderWidth: 1,
-          borderRadius: 2,
-        };
+      const tooltipItems = Array.isArray(tooltip.dataPoints) ? tooltip.dataPoints : [];
+      const rows = buildExternalTooltipRows(
+        tooltipItems,
+        getHoverWaterValuesAtX,
+        chartTooltipColorByLabel,
+      );
+      const titleLines = Array.isArray(tooltip.title)
+        ? tooltip.title.filter(title => typeof title === 'string' && title.trim().length > 0)
+        : [];
+
+      if (rows.length === 0 && titleLines.length === 0) {
+        hideExternalTooltip();
+        return;
       }
-      if (label === WATER_DRAWN_TOTAL_LABEL) {
-        return {
-          borderColor: COLORS.flow,
-          backgroundColor: COLORS.flow,
-          borderWidth: 1,
-          borderRadius: 2,
-        };
-      }
-      return undefined;
+
+      const nextState = {
+        visible: true,
+        titleLines,
+        rows,
+        anchorX: Number.isFinite(tooltip.caretX)
+          ? tooltip.caretX
+          : chart.chartArea.left + EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X,
+        anchorY: Number.isFinite(chart.$fixedTooltipPointerY)
+          ? chart.$fixedTooltipPointerY
+          : Number.isFinite(tooltip.caretY)
+            ? tooltip.caretY
+            : chart.chartArea.top,
+        chartWidth: chart.width,
+        chartHeight: chart.height,
+      };
+
+      setExternalTooltipState(prev => (areTooltipStatesEqual(prev, nextState) ? prev : nextState));
     };
 
     // Main chart datasets:
@@ -1316,6 +1403,18 @@ export function ShotChart({ shotData, results }) {
         hidden: !hasWeight || !visibility.weight,
       },
       {
+        label: 'Weight Flow',
+        data: series.weightFlow,
+        borderColor: COLORS.weightFlow,
+        backgroundColor: COLORS.weightFlow,
+        fill: false,
+        yAxisID: 'yMain',
+        pointRadius: 0,
+        borderWidth: THIN_LINE_WIDTH,
+        tension: 0.2,
+        hidden: !hasWeightFlowData || !visibility.weightFlow,
+      },
+      {
         label: WATER_DRAWN_PHASE_LABEL,
         data: waterTooltipPhaseSeries,
         borderColor: COLORS.puckFlow,
@@ -1346,7 +1445,7 @@ export function ShotChart({ shotData, results }) {
       mainChartInstance.current = new Chart(mainChartRef.current, {
         type: 'line',
         data: { datasets: mainDatasets },
-        plugins: [hoverGuidePlugin, fixedTooltipPlugin, replayRevealPlugin],
+        plugins: [hoverGuidePlugin, replayRevealPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -1356,6 +1455,12 @@ export function ShotChart({ shotData, results }) {
               radius: 0,
               hoverRadius: 4,
               hitRadius: 12,
+              borderWidth: 0,
+              hoverBorderWidth: 0,
+              backgroundColor: resolveHoverPointColor,
+              hoverBackgroundColor: resolveHoverPointColor,
+              borderColor: resolveHoverPointColor,
+              hoverBorderColor: resolveHoverPointColor,
             },
           },
           interaction: {
@@ -1363,34 +1468,16 @@ export function ShotChart({ shotData, results }) {
             intersect: false,
           },
           plugins: {
-            fixedTooltip: {
-              offsetX: 12,
-              offsetY: 0,
-              boundsPadding: 4,
-              pointerGap: 10,
-            },
             legend: {
               display: false,
             },
             tooltip: {
-              enabled: true,
+              enabled: false,
               caretSize: 0,
               caretPadding: 0,
-              backgroundColor: 'rgba(20, 20, 20, 0.9)',
-              titleFont: { size: 12 },
-              bodyFont: { size: 11 },
-              padding: 8,
-              cornerRadius: 4,
-              filter: context =>
-                context.dataset.label !== 'Phase Names' &&
-                context.dataset.label !== 'Stops',
-              itemSort: (a, b) =>
-                (TOOLTIP_INDEX[a.dataset.label] ?? 999) - (TOOLTIP_INDEX[b.dataset.label] ?? 999),
-              callbacks: {
-                beforeLabel: tooltipGapBeforeGroup,
-                label: makeLegendLabel,
-                labelColor: tooltipWaterLabelColor,
-              },
+              filter: context => shouldRenderTooltipLabel(context.dataset.label),
+              itemSort: sortTooltipItems,
+              external: updateExternalTooltip,
             },
             annotation: {
               annotations: phaseAnnotations,
@@ -1486,12 +1573,11 @@ export function ShotChart({ shotData, results }) {
         hidden: !visibility.targetTemp,
       },
     ];
-    const targetTempAxisLabels = buildTargetTempAxisLabels(series.targetTemp);
     try {
       tempChartInstance.current = new Chart(tempChartRef.current, {
         type: 'line',
         data: { datasets: tempDatasets },
-        plugins: [hoverGuidePlugin, fixedTooltipPlugin, replayRevealPlugin, targetTempAxisLabelsPlugin],
+        plugins: [hoverGuidePlugin, replayRevealPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -1504,6 +1590,12 @@ export function ShotChart({ shotData, results }) {
               radius: 0,
               hoverRadius: 4,
               hitRadius: 12,
+              borderWidth: 0,
+              hoverBorderWidth: 0,
+              backgroundColor: resolveHoverPointColor,
+              hoverBackgroundColor: resolveHoverPointColor,
+              borderColor: resolveHoverPointColor,
+              hoverBorderColor: resolveHoverPointColor,
             },
           },
           interaction: {
@@ -1511,40 +1603,14 @@ export function ShotChart({ shotData, results }) {
             intersect: false,
           },
           plugins: {
-            fixedTooltip: {
-              offsetX: 12,
-              offsetY: 2,
-              boundsPadding: 4,
-            },
             legend: {
               display: false,
             },
             tooltip: {
               enabled: false,
-              caretSize: 0,
-              caretPadding: 0,
-              backgroundColor: 'rgba(20, 20, 20, 0.9)',
-              titleFont: { size: 11 },
-              bodyFont: { size: 10 },
-              padding: 8,
-              cornerRadius: 4,
-              itemSort: (a, b) =>
-                (LEGEND_INDEX[a.dataset.label] ?? 999) - (LEGEND_INDEX[b.dataset.label] ?? 999),
-              callbacks: {
-                label: makeLegendLabel,
-              },
             },
             annotation: {
               annotations: tempPhaseAnnotations,
-            },
-            targetTempAxisLabels: {
-              enabled: visibility.targetTemp && targetTempAxisLabels.length > 0,
-              labels: targetTempAxisLabels,
-              color: COLORS.tempTarget,
-              fontSize: 10,
-              fontWeight: 'normal',
-              offsetX: 6,
-              minGap: 12,
             },
           },
           scales: {
@@ -1584,12 +1650,12 @@ export function ShotChart({ shotData, results }) {
             yTempRight: {
               type: 'linear',
               position: 'right',
-              min: targetTempAxisMin,
-              max: targetTempAxisMax,
+              min: tempAxisMin,
+              max: tempAxisMax,
               ticks: {
                 display: true,
                 font: { size: 10 },
-                color: 'rgba(0, 0, 0, 0)',
+                color: COLORS.tempTarget,
                 callback: formatAxisTick,
               },
               grid: { display: false },
@@ -1719,6 +1785,7 @@ export function ShotChart({ shotData, results }) {
     const clearAllHover = () => {
       clearTooltipState(mainChartInstance.current);
       clearTooltipState(tempChartInstance.current);
+      hideExternalTooltip();
     };
     clearAllHoverRef.current = clearAllHover;
 
@@ -1857,6 +1924,7 @@ export function ShotChart({ shotData, results }) {
         <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1'>
           {LEGEND_ORDER.map(label => {
             if (label === 'Weight' && !hasWeightData) return null;
+            if (label === 'Weight Flow' && !hasWeightFlowData) return null;
             const key = VISIBILITY_KEY_BY_LABEL[label];
             const isVisible = key ? visibility[key] : false;
             const swatchColor = legendColorByLabel[label] || '#94a3b8';
@@ -1932,8 +2000,43 @@ export function ShotChart({ shotData, results }) {
       </div>
 
       <div ref={hoverAreaRef} className='w-full'>
-        <div className='relative w-full' style={{ height: `${mainChartHeight}px` }}>
+        <div ref={mainChartContainerRef} className='relative w-full' style={{ height: `${mainChartHeight}px` }}>
           <canvas ref={mainChartRef} />
+          {externalTooltipState.visible ? (
+            <div
+              ref={externalTooltipRef}
+              className='shot-chart-tooltip'
+              style={{
+                left: `${externalTooltipLayout.x}px`,
+                top: `${externalTooltipLayout.y}px`,
+                visibility: externalTooltipLayout.visible ? 'visible' : 'hidden',
+              }}
+            >
+              {externalTooltipState.titleLines.length > 0 ? (
+                <div className='shot-chart-tooltip__title'>
+                  {externalTooltipState.titleLines.map((titleLine, index) => (
+                    <div key={`${titleLine}-${index}`}>{titleLine}</div>
+                  ))}
+                </div>
+              ) : null}
+              {externalTooltipState.rows.map((row, index) => (
+                <div
+                  key={`${row.label}-${row.valueText}-${index}`}
+                  className={`shot-chart-tooltip__row${row.spacerBefore ? ' shot-chart-tooltip__row--spacer' : ''}`}
+                >
+                  <span
+                    className='shot-chart-tooltip__dot'
+                    style={{ backgroundColor: row.color }}
+                    aria-hidden='true'
+                  />
+                  <span className='shot-chart-tooltip__text'>
+                    <span>{row.label}: </span>
+                    <span className='shot-chart-tooltip__value'>{row.valueText}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
         <div
           className='relative mt-0 w-full'
