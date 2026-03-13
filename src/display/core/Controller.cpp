@@ -139,10 +139,9 @@ void Controller::setupBluetooth() {
     clientController.registerSensorCallback(
         [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow, const float puckResistance) {
             onTempRead(temp);
-            this->pressure = pressure;
+            onPressureRead(pressure);
             this->currentPuckFlow = puckFlow;
             this->currentPumpFlow = pumpFlow;
-            pluginManager->trigger("boiler:pressure:change", "value", pressure);
             pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
             pluginManager->trigger("pump:flow:change", "value", pumpFlow);
             pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
@@ -551,7 +550,8 @@ void Controller::updateControl() {
             if (brewProcess->isAdvancedPump()) {
                 clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), targetTemp,
                                                            brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
-                                                           brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
+                                                           brewProcess->getPumpPressure() + settings.getPressureOffset(),
+                                                           brewProcess->getPumpFlow());
                 targetPressure = brewProcess->getPumpPressure();
                 targetFlow = brewProcess->getPumpFlow();
                 return;
@@ -680,6 +680,20 @@ void Controller::onTempRead(float temperature) {
     float temp = temperature - static_cast<float>(settings.getTemperatureOffset());
     Event event = pluginManager->trigger("boiler:currentTemperature:change", "value", temp);
     currentTemp = event.getFloat("value");
+}
+
+void Controller::onPressureRead(float pressure) {
+    float p = pressure;
+    if (mode == MODE_BREW) {
+        // Offset for machines with grouphead mushroom valves
+        // Clamped to 0.0 to prevent negative values in the UI
+        p -= settings.getPressureOffset();
+        if (p < 0.0f) {
+            p = 0.0f;
+        }
+    }
+    Event event = pluginManager->trigger("boiler:pressure:change", "value", p);
+    this->pressure = event.getFloat("value");
 }
 
 void Controller::updateLastAction() { lastAction = millis(); }

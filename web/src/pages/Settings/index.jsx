@@ -657,6 +657,33 @@ export function Settings() {
             </div>
             {pressureAvailable.value && (
               <div className='form-control mb-4'>
+                <label htmlFor='pressureOffset' className='mb-2 block text-sm font-medium'>
+                  Pressure Offset (bar)
+                </label>
+                <div className='mb-2 text-xs opacity-70'>
+                  If your machine has a grouphead mushroom valve enter its cracking pressure here.
+                  Delonghi machines are often 4.0. If you have a 3-way solenoid valve this should be 
+                  left at 0.0
+                </div>
+                <div className='input-group'>
+                  <label htmlFor='pressureOffset' className='input w-full'>
+                    <input
+                      id='pressureOffset'
+                      name='pressureOffset'
+                      type='number'
+                      step='any'
+                      className='grow'
+                      placeholder='0.0'
+                      value={formData.pressureOffset}
+                      onChange={onChange('pressureOffset')}
+                    />
+                    <span aria-label='bar'>bar</span>
+                  </label>
+                </div>
+              </div>
+            )}
+            {pressureAvailable.value && (
+              <div className='form-control mb-4'>
                 <label htmlFor='pressureScaling' className='mb-2 block text-sm font-medium'>
                   Pressure Sensor Rating
                 </label>
