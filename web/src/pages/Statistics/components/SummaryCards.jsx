@@ -1,8 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faMugHot } from '@fortawesome/free-solid-svg-icons/faMugHot';
+import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch';
-import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 
 // Presentational only: renders a high-signal summary layer from StatisticsService.summary.
 function formatDuration(seconds) {
@@ -81,7 +81,7 @@ export function SummaryCards({ summary }) {
       key: 'totalWeight',
       label: 'Total Weight',
       value: `${fmtNumber(summary.totalWeight)}g`,
-      icon: faWeightScale,
+      icon: faScaleBalanced,
       accentColorVar: '--analyzer-weight-text',
       tone: 'strong',
     },

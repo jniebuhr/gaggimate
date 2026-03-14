@@ -5,8 +5,8 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faFaucet } from '@fortawesome/free-solid-svg-icons/faFaucet';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
+import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
-import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { fmt } from '../utils/format';
 
 const DETAILED_TABLE_AVERAGE_HELPER_ID = 'statistics-metrics-average-helper';
@@ -20,7 +20,7 @@ const METRIC_ROWS = [
     unit: 'g',
     colorClass: 'text-[var(--analyzer-weight-text)]',
     accentColor: 'var(--analyzer-weight-text)',
-    icon: faWeightScale,
+    icon: faScaleBalanced,
     averageDescription: 'Final shot weight average',
   },
   {

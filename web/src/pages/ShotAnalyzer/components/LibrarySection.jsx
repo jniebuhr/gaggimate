@@ -8,6 +8,21 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 
+function getLibraryItemKey(item, isShot) {
+  if (!item) return 'unknown-item';
+
+  if (isShot) {
+    if (item.source === 'gaggimate') return `gaggimate-shot:${String(item.id || '')}`;
+    return `browser-shot:${String(item.storageKey || item.name || item.id || '')}`;
+  }
+
+  if (item.source === 'gaggimate') {
+    return `gaggimate-profile:${String(item.profileId || item.id || item.name || item.label || '')}`;
+  }
+
+  return `browser-profile:${String(item.name || item.label || item.id || '')}`;
+}
+
 export function LibrarySection({
   title,
   items,
@@ -156,7 +171,7 @@ export function LibrarySection({
           <tbody className='text-sm'>
             {items.map(item => (
               <LibraryRow
-                key={`${item.source || 'unknown'}-${item.storageKey || item.name || item.id || item.label}`}
+                key={getLibraryItemKey(item, isShot)}
                 item={item}
                 isShot={isShot}
                 isMatch={getMatchStatus(item)}
