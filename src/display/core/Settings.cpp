@@ -42,6 +42,7 @@ Settings::Settings() {
     timezone = preferences.getString("tz", DEFAULT_TIMEZONE);
     clock24hFormat = preferences.getBool("clk_24h", true);
     selectedProfile = preferences.getString("sp", "");
+    startupProfile = preferences.getString("sup", ""); // Empty = last used profile
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
     profileOrder = explode(preferences.getString("po", ""), ',');
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
@@ -300,6 +301,11 @@ void Settings::setSelectedProfile(String selected_profile) {
     save();
 }
 
+void Settings::setStartupProfile(String startup_profile) {
+    this->startupProfile = std::move(startup_profile);
+    save();
+}
+
 void Settings::setFavoritedProfiles(std::vector<String> favorited_profiles) {
     favoritedProfiles = std::move(favorited_profiles);
     save();
@@ -463,6 +469,7 @@ void Settings::doSave() {
     preferences.putString("tz", timezone);
     preferences.putBool("clk_24h", clock24hFormat);
     preferences.putString("sp", selectedProfile);
+    preferences.putString("sup", startupProfile);
     preferences.putInt("sbt", standbyTimeout);
     preferences.putBool("mb", momentaryButtons);
     preferences.putString("fp", implode(favoritedProfiles, ","));

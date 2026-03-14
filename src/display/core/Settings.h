@@ -90,6 +90,7 @@ class Settings {
     String getTimezone() const { return timezone; }
     bool isClock24hFormat() const { return clock24hFormat; }
     String getSelectedProfile() const { return selectedProfile; }
+    String getStartupProfile() const { return startupProfile; }
     std::vector<String> getFavoritedProfiles() const { return favoritedProfiles; }
     std::vector<String> getProfileOrder() const { return profileOrder; }
     int getMainBrightness() const { return mainBrightness; }
@@ -146,6 +147,7 @@ class Settings {
     void setTimezone(String timezone);
     void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
+    void setStartupProfile(String startup_profile);
     void setFavoritedProfiles(std::vector<String> favorited_profiles);
     void addFavoritedProfile(String profile);
     void removeFavoritedProfile(String profile);
@@ -174,6 +176,7 @@ class Settings {
     bool dirty = false;
 
     String selectedProfile;
+    String startupProfile; // Empty = last used profile, otherwise profile ID
     int targetSteamTemp = 155;
     int targetWaterTemp = 80;
     int temperatureOffset = DEFAULT_TEMPERATURE_OFFSET;

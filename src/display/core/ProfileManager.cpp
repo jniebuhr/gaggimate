@@ -15,6 +15,18 @@ void ProfileManager::setup() {
         loadSelectedProfile(selectedProfile);
     }
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));
+
+    // Apply startup profile if configured
+    String startupProfile = _settings.getStartupProfile();
+    if (!startupProfile.isEmpty()) {
+        // Check if the configured startup profile exists
+        if (profileExists(startupProfile)) {
+            selectProfile(startupProfile);
+        } else {
+            // Startup profile was deleted, reset to "last used" behavior
+            _settings.setStartupProfile("");
+        }
+    }
 }
 
 bool ProfileManager::ensureDirectory() const {
@@ -142,6 +154,10 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
 bool ProfileManager::deleteProfile(const String &uuid) {
     _settings.removeFavoritedProfile(uuid);
+    // If the deleted profile was the configured startup profile, reset to "last used"
+    if (_settings.getStartupProfile() == uuid) {
+        _settings.setStartupProfile("");
+    }
     return _fs->remove(profilePath(uuid));
 }
 

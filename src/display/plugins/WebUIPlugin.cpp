@@ -397,7 +397,12 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
             Profile profile{};
             profileManager->loadProfile(id, profile);
             auto p = arr.add<JsonObject>();
-            writeProfile(p, profile);
+            if (request["minimal"].as<bool>()) {
+                p["id"] = profile.id;
+                p["label"] = profile.label;
+            } else {
+                writeProfile(p, profile);
+            }
         }
     } else if (type == "req:profiles:load") {
         auto id = request["id"].as<String>();
@@ -458,6 +463,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         controller->getSettings().batchUpdate([request](Settings *settings) {
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
+            if (request->hasArg("startupProfile"))
+                settings->setStartupProfile(request->arg("startupProfile"));
             if (request->hasArg("targetSteamTemp"))
                 settings->setTargetSteamTemp(request->arg("targetSteamTemp").toInt());
             if (request->hasArg("targetWaterTemp"))
@@ -591,6 +598,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     JsonDocument doc;
     Settings const &settings = controller->getSettings();
     doc["startupMode"] = settings.getStartupMode() == MODE_BREW ? "brew" : "standby";
+    doc["startupProfile"] = settings.getStartupProfile();
     doc["targetSteamTemp"] = settings.getTargetSteamTemp();
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
     doc["homekit"] = settings.isHomekit();
