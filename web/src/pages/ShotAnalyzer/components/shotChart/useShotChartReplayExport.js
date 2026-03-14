@@ -23,7 +23,6 @@ import {
 import {
   buildReplayExportFilename,
   buildReplayImageFilename,
-  findLastSampleIndexAtOrBeforeX,
   getVisibleLegendItemsForExport,
 } from './helpers';
 
@@ -276,10 +275,6 @@ export function useShotChartReplayExport({
       const annotation = tempAnnotations[meta.key];
       if (!annotation) continue;
       annotation.display = meta.baseDisplay && (revealAll || effectiveCutoffX >= meta.time);
-    }
-
-    if (!revealAll) {
-      findLastSampleIndexAtOrBeforeX(runtime.sampleTimesSec, effectiveCutoffX);
     }
 
     mainChart.update('none');

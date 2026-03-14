@@ -21,6 +21,10 @@ function getSampleValue(sample, keys) {
   return null;
 }
 
+function getFlowFromSample(sample) {
+  return getSampleValue(sample, ['fl', 'f', 'flow']);
+}
+
 function buildSampleTimeline(samples) {
   const sampleTimesSec = new Array(samples.length);
   const cumulativeWaterTotalBySample = new Array(samples.length);
@@ -40,7 +44,7 @@ function buildSampleTimeline(samples) {
     // consistent cumulative values even when the original shot payload does not store them.
     const prevTMs = Number(samples[i - 1]?.t) || tMs;
     const dt = Math.max(0, (tMs - prevTMs) / 1000);
-    const flow = Number(sample.fl);
+    const flow = Number(getFlowFromSample(sample));
     cumulativeWaterTotal += (Number.isFinite(flow) ? flow : 0) * dt;
     cumulativeWaterTotalBySample[i] = cumulativeWaterTotal;
   }
@@ -99,9 +103,9 @@ function buildSeries(samples) {
     // Samples may come from different sources/versions, so each series resolves a
     // small key fallback chain instead of assuming one canonical payload shape.
     const pressure = toNumberOrNull(getSampleValue(sample, ['cp', 'p', 'pressure']));
-    const flow = toNumberOrNull(getSampleValue(sample, ['fl', 'f', 'flow']));
+    const flow = toNumberOrNull(getFlowFromSample(sample));
     const puckFlow = toNumberOrNull(getSampleValue(sample, ['pf', 'puck_flow']));
-    const temp = toNumberOrNull(getSampleValue(sample, ['ct', 't', 'temperature']));
+    const temp = toNumberOrNull(getSampleValue(sample, ['ct', 'temperature']));
     const weight = toNumberOrNull(getSampleValue(sample, ['v', 'w', 'weight', 'm']));
     const weightFlow = toNumberOrNull(getSampleValue(sample, ['vf', 'weight_flow']));
     const targetPressure = toNumberOrNull(getSampleValue(sample, ['tp', 'target_pressure']));

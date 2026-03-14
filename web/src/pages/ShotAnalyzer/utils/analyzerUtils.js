@@ -18,6 +18,8 @@ export const ANALYZER_DB_KEYS = {
   PROFILES: 'gaggimate_profiles',
   PRESETS: 'gaggimate_column_presets',
   USER_STANDARD: 'gaggimate_user_standard_cols',
+  LIBRARY_SHOTS_SOURCE_FILTER: 'gaggimate_library_shots_source_filter',
+  LIBRARY_PROFILES_SOURCE_FILTER: 'gaggimate_library_profiles_source_filter',
 };
 
 /**

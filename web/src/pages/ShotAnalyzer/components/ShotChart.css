@@ -26,7 +26,7 @@
   height: 100%;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border: 1px solid color-mix(in srgb, currentcolor 12%, transparent);
   border-radius: 0.85rem;
   background: var(--fallback-b1, #ffffff);
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
