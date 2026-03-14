@@ -154,7 +154,6 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
 bool ProfileManager::deleteProfile(const String &uuid) {
     _settings.removeFavoritedProfile(uuid);
-    // If the deleted profile was the configured startup profile, reset to "last used"
     if (_settings.getStartupProfile() == uuid) {
         _settings.setStartupProfile("");
     }
