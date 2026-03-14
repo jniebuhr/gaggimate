@@ -15,6 +15,18 @@ void ProfileManager::setup() {
         loadSelectedProfile(selectedProfile);
     }
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));
+
+    String startupProfile = _settings.getStartupProfile();
+    if (!startupProfile.isEmpty()) {
+        // Validate profile integrity by loading it
+        Profile testProfile{};
+        if (loadProfile(startupProfile, testProfile)) {
+            selectProfile(startupProfile);
+        } else {
+            ESP_LOGW("ProfileManager", "Startup profile %s not found or invalid, resetting", startupProfile.c_str());
+            _settings.setStartupProfile("");
+        }
+    }
 }
 
 bool ProfileManager::ensureDirectory() const {
@@ -142,6 +154,9 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
 bool ProfileManager::deleteProfile(const String &uuid) {
     _settings.removeFavoritedProfile(uuid);
+    if (_settings.getStartupProfile() == uuid) {
+        _settings.setStartupProfile("");
+    }
     return _fs->remove(profilePath(uuid));
 }
 
