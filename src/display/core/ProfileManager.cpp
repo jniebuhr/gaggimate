@@ -16,14 +16,14 @@ void ProfileManager::setup() {
     }
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));
 
-    // Apply startup profile if configured
     String startupProfile = _settings.getStartupProfile();
     if (!startupProfile.isEmpty()) {
-        // Check if the configured startup profile exists
-        if (profileExists(startupProfile)) {
+        // Validate profile integrity by loading it
+        Profile testProfile{};
+        if (loadProfile(startupProfile, testProfile)) {
             selectProfile(startupProfile);
         } else {
-            // Startup profile was deleted, reset to "last used" behavior
+            ESP_LOGW("ProfileManager", "Startup profile %s not found or invalid, resetting", startupProfile.c_str());
             _settings.setStartupProfile("");
         }
     }
