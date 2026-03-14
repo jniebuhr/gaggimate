@@ -1,4 +1,6 @@
-const EXPORT_FPS = 24;
+import { REPLAY_TARGET_FPS } from '../components/shotChart/constants';
+
+const EXPORT_FPS = REPLAY_TARGET_FPS;
 const EXPORT_PADDING = 24;
 const EXPORT_SECTION_GAP = 18;
 const EXPORT_CARD_PADDING = 12;
@@ -285,6 +287,9 @@ function resolveCompositionLayout({ config, mainCanvas, tempCanvas, legendItems 
       ? baseCanvasSize.height + legendSectionHeight
       : baseCanvasSize.height,
   );
+
+  // Compute a single normalized layout up front so video and image export share the exact same
+  // card/frame geometry regardless of which export path invoked the compositor.
   const chartFrame = resolveChartFrame({
     layoutPreset: config.layoutPreset,
     chartPlacement: config.chartPlacement,
@@ -448,6 +453,8 @@ export function getVideoExportCapabilities() {
   const canRecordWebm = Boolean(preferredWebmMimeType && preferredWebmMimeType.includes('webm'));
   const shouldHideWebmOption = isLikelySafariBrowser() || !canRecordWebm;
 
+  // Keep capability detection centralized so the UI and the recorder agree on which formats are
+  // actually viable before an export session starts.
   return {
     canRecordMp4,
     canRecordWebm,
@@ -514,6 +521,8 @@ async function recordCanvas(canvas, fps, renderFrames, signal, recorderMimeType)
     stream.getTracks().forEach(track => track.stop());
   };
 
+  // The recorder lifecycle is intentionally wrapped here so exportReplayVideo can focus on replay
+  // timing and composition, while this helper owns MediaRecorder event handling and cleanup.
   const abortHandler = () => {
     try {
       if (recorder.state !== 'inactive') recorder.stop();
@@ -539,7 +548,7 @@ export async function exportReplayVideo({
   mainCanvas,
   tempCanvas,
   runtime,
-  applyReplayCutoff,
+  applyReplayFrame,
   legendItems = [],
   config,
   onStatusChange,
@@ -566,21 +575,37 @@ export async function exportReplayVideo({
     );
   }
 
-  const totalDurationSec = Math.max(0, runtime.maxTime - runtime.shotStartSec);
-  const totalFrames = Math.max(1, Math.ceil(totalDurationSec * EXPORT_FPS));
-  const frameDurationMs = 1000 / EXPORT_FPS;
+  const totalDurationSec = Math.max(
+    0,
+    Number.isFinite(runtime.totalDurationSec)
+      ? runtime.totalDurationSec
+      : runtime.maxTime - runtime.shotStartSec,
+  );
+  const totalFrames = Math.max(
+    1,
+    Number.isFinite(runtime.frameCount) ? runtime.frameCount : Math.ceil(totalDurationSec * EXPORT_FPS),
+  );
+  const frameDurationMs = totalDurationSec > 0 ? (totalDurationSec * 1000) / totalFrames : 1000 / EXPORT_FPS;
 
   const renderFrames = async () => {
     // Use an absolute schedule instead of chaining rAF + timeout delays.
     // That keeps the recorded replay duration aligned with the live replay timing.
     const recordingStartMs = getNowMs();
 
+    applyReplayFrame(-1, { forceReset: true });
+    renderCompositionFrame(ctx, layout, {
+      config,
+      mainCanvas,
+      tempCanvas,
+      legendItems,
+    });
+
     for (let frameIndex = 0; frameIndex <= totalFrames; frameIndex++) {
       throwIfAborted(signal);
-      const elapsedSec = Math.min(totalDurationSec, frameIndex / EXPORT_FPS);
-      const cutoffX = runtime.shotStartSec + elapsedSec;
-      const revealAll = cutoffX >= runtime.maxTime;
-      applyReplayCutoff(cutoffX, { revealAll });
+
+      // Drive the export from the same replay frame function as the live chart so recorded timing
+      // follows the transformed replay model instead of falling back to simple visual clipping.
+      applyReplayFrame(frameIndex);
       renderCompositionFrame(ctx, layout, {
         config,
         mainCanvas,
@@ -632,6 +657,8 @@ export async function exportReplayImage({
     config,
   });
 
+  // Wait one animation frame so any final Chart.js draw triggered just before export has landed
+  // on the source canvases before the static PNG composition is captured.
   await waitForAnimationFrame(signal);
   renderCompositionFrame(ctx, layout, {
     config,

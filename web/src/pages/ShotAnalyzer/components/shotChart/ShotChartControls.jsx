@@ -1,11 +1,13 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
+import { faDownLeftAndUpRightToCenter } from '@fortawesome/free-solid-svg-icons/faDownLeftAndUpRightToCenter';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faMaximize } from '@fortawesome/free-solid-svg-icons/faMaximize';
 import { faMinimize } from '@fortawesome/free-solid-svg-icons/faMinimize';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { faStop } from '@fortawesome/free-solid-svg-icons/faStop';
+import { faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons/faUpRightAndDownLeftFromCenter';
 import {
   LEGEND_BLOCK_LABELS,
   LEGEND_DASHED_LABELS,
@@ -25,6 +27,7 @@ export function ShotChartControls({
   hasWeightFlowData,
   hasVideoExportSupport,
   isControlsLocked,
+  isFullDisplay,
   isReplayPaused,
   isReplaying,
   isReplayExporting,
@@ -38,6 +41,7 @@ export function ShotChartControls({
   onExportTypeChange,
   onExportFormatChange,
   onExportFormatInfoToggle,
+  onFullDisplayToggle,
   onIncludeLegendChange,
   onLegendToggle,
   onReplayToggle,
@@ -234,12 +238,29 @@ export function ShotChartControls({
             type='button'
             onClick={onChartHeightToggle}
             className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
-            disabled={isControlsLocked}
+            disabled={isControlsLocked || isFullDisplay}
             aria-label={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
             title={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
           >
             <FontAwesomeIcon
               icon={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? faMinimize : faMaximize}
+              className='text-[11px] opacity-80'
+            />
+          </button>
+          <button
+            type='button'
+            onClick={onFullDisplayToggle}
+            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
+            disabled={isControlsLocked}
+            aria-label={isFullDisplay ? 'Close full display' : 'Open full display'}
+            title={isFullDisplay ? 'Close full display' : 'Open full display'}
+          >
+            <FontAwesomeIcon
+              icon={
+                isFullDisplay
+                  ? faDownLeftAndUpRightToCenter
+                  : faUpRightAndDownLeftFromCenter
+              }
               className='text-[11px] opacity-80'
             />
           </button>

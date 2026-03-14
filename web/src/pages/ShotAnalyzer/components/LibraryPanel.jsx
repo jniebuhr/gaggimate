@@ -17,8 +17,20 @@ import { libraryService } from '../services/LibraryService';
 import { indexedDBService } from '../services/IndexedDBService';
 import { notesService } from '../services/NotesService';
 import { ApiServiceContext } from '../../../services/ApiService';
-import { cleanName } from '../utils/analyzerUtils';
+import {
+  ANALYZER_DB_KEYS,
+  cleanName,
+  loadFromStorage,
+  saveToStorage,
+} from '../utils/analyzerUtils';
 import { downloadJson } from '../../../utils/download';
+
+function getStoredLibrarySourceFilter(storageKey) {
+  const storedValue = loadFromStorage(storageKey, 'all');
+  return storedValue === 'gaggimate' || storedValue === 'browser' || storedValue === 'all'
+    ? storedValue
+    : 'all';
+}
 
 export function LibraryPanel({
   currentShot,
@@ -69,8 +81,12 @@ export function LibraryPanel({
   const [profiles, setProfiles] = useState([]);
 
   // Filter & Sort State
-  const [shotsSourceFilter, setShotsSourceFilter] = useState('all');
-  const [profilesSourceFilter, setProfilesSourceFilter] = useState('all');
+  const [shotsSourceFilter, setShotsSourceFilter] = useState(() =>
+    getStoredLibrarySourceFilter(ANALYZER_DB_KEYS.LIBRARY_SHOTS_SOURCE_FILTER),
+  );
+  const [profilesSourceFilter, setProfilesSourceFilter] = useState(() =>
+    getStoredLibrarySourceFilter(ANALYZER_DB_KEYS.LIBRARY_PROFILES_SOURCE_FILTER),
+  );
 
   const [shotsSearch, setShotsSearch] = useState('');
   const [shotsSort, setShotsSort] = useState({ key: 'shotDate', order: 'desc' });
@@ -92,6 +108,14 @@ export function LibraryPanel({
     const timer = setTimeout(() => setDebouncedProfilesSearch(profilesSearch), 250);
     return () => clearTimeout(timer);
   }, [profilesSearch]);
+
+  useEffect(() => {
+    saveToStorage(ANALYZER_DB_KEYS.LIBRARY_SHOTS_SOURCE_FILTER, shotsSourceFilter);
+  }, [shotsSourceFilter]);
+
+  useEffect(() => {
+    saveToStorage(ANALYZER_DB_KEYS.LIBRARY_PROFILES_SOURCE_FILTER, profilesSourceFilter);
+  }, [profilesSourceFilter]);
 
   // Initialize API Service for Library
   useEffect(() => {
