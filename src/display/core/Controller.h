@@ -1,8 +1,8 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include "NimBLEClientController.h"
-#include "NimBLEComm.h"
+#include "GaggiMateClient.h"
+#include "ProtocolTypes.h"
 #include "PluginManager.h"
 #include "Settings.h"
 #include <WiFi.h>
@@ -33,6 +33,7 @@ class Controller {
     void setPumpModelCoeffs();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
+    void setupInfos();
 
     int getMode() const;
 
@@ -99,7 +100,7 @@ class Controller {
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    NimBLEClientController *getClientController() { return &clientController; }
+    GaggiMateClient *getClientController() { return &_client; }
 
   private:
     // Initialization methods
@@ -107,7 +108,6 @@ class Controller {
     void setupPanel();
 #endif
     void setupBluetooth();
-    void setupInfos();
     void setupWifi();
 
     // Functional methods
@@ -128,7 +128,7 @@ class Controller {
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
 #endif
-    NimBLEClientController clientController;
+    GaggiMateClient _client;
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};
@@ -149,7 +149,6 @@ class Controller {
     Process *lastProcess = nullptr;
 
     unsigned long grindActiveUntil = 0;
-    unsigned long lastPing = 0;
     unsigned long lastProgress = 0;
     unsigned long lastAction = 0;
     bool loaded = false;
@@ -157,6 +156,7 @@ class Controller {
     bool autotuning = false;
     bool isApConnection = false;
     bool initialized = false;
+    bool systemInfoLoaded = false;
     bool screenReady = false;
     bool waitingForController = false;
     unsigned long connectStartTime = 0;
@@ -172,6 +172,9 @@ class Controller {
     unsigned long lastBluetoothMeasurement = 0;
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
+
+    // Ping handling
+    unsigned long lastPing = 0;
 
     xTaskHandle taskHandle;
 
