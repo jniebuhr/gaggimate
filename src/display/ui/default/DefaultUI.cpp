@@ -10,6 +10,7 @@
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
+#include <display/plugins/BLEScalePlugin.h>
 #include <display/ui/default/lvgl/ui_theme_manager.h>
 #include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
@@ -144,6 +145,11 @@ void DefaultUI::init() {
     });
     pluginManager->on("controller:brew:start",
                       [this](Event const &event) { changeScreen(&ui_StatusScreen, &ui_StatusScreen_screen_init); });
+    pluginManager->on("controller:brew:scale-missing", [this](Event const &) {
+        if (scaleWaitModal == nullptr) {
+            showScaleWaitModal();
+        }
+    });
     pluginManager->on("controller:brew:clear", [this](Event const &event) {
         if (lv_scr_act() == ui_StatusScreen) {
             changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
@@ -211,9 +217,75 @@ void DefaultUI::init() {
                             0);
 }
 
+void DefaultUI::showScaleWaitModal() {
+    static const char *btns[] = {"Ignore", "Cancel", ""};
+    scaleWaitModal = lv_msgbox_create(NULL, "Weighing Scale", "Waiting for Scale to connect...", btns, false);
+
+    // Apply main styles
+    ui_object_set_themeable_style_property(scaleWaitModal, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
+                                           _ui_theme_color_Dark);
+    ui_object_set_themeable_style_property(scaleWaitModal, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA,
+                                           _ui_theme_alpha_Dark);
+    lv_obj_set_style_border_width(scaleWaitModal, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_object_set_themeable_style_property(scaleWaitModal, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BORDER_COLOR,
+                                           _ui_theme_color_NiceWhite);
+    lv_obj_set_style_radius(scaleWaitModal, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_width(scaleWaitModal, 280);
+
+    // Style the title
+    lv_obj_t *title = lv_msgbox_get_title(scaleWaitModal);
+    if (title) {
+        ui_object_set_themeable_style_property(title, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+                                               _ui_theme_color_NiceWhite);
+        lv_obj_set_style_text_font(title, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+
+    // Style the text
+    lv_obj_t *text = lv_msgbox_get_text(scaleWaitModal);
+    if (text) {
+        ui_object_set_themeable_style_property(text, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+                                               _ui_theme_color_NiceWhite);
+        lv_obj_set_style_text_font(text, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+
+    // Style the buttons
+    lv_obj_t *btnm = lv_msgbox_get_btns(scaleWaitModal);
+    if (btnm) {
+        lv_obj_set_width(btnm, lv_pct(100));
+        ui_object_set_themeable_style_property(btnm, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA, 0);
+        ui_object_set_themeable_style_property(btnm, LV_PART_ITEMS | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+                                               _ui_theme_color_Dark);
+        ui_object_set_themeable_style_property(btnm, LV_PART_ITEMS | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
+                                               _ui_theme_color_NiceWhite);
+        lv_obj_set_style_text_font(btnm, &lv_font_montserrat_20, LV_PART_ITEMS | LV_STATE_DEFAULT);
+        lv_obj_set_style_radius(btnm, 10, LV_PART_ITEMS | LV_STATE_DEFAULT);
+    }
+
+    lv_obj_add_event_cb(
+        scaleWaitModal,
+        [](lv_event_t *e) {
+            lv_obj_t *obj = lv_event_get_current_target(e);
+            auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+            const char *txt = lv_msgbox_get_active_btn_text(obj);
+            if (txt != nullptr && strcmp(txt, "Ignore") == 0) {
+                ui->controller->activate(true);
+            }
+            lv_msgbox_close(obj);
+            ui->scaleWaitModal = nullptr;
+        },
+        LV_EVENT_VALUE_CHANGED, this);
+    lv_obj_center(scaleWaitModal);
+}
+
 void DefaultUI::loop() {
     const unsigned long now = millis();
     const unsigned long diff = now - lastRender;
+
+    if (scaleWaitModal != nullptr && BLEScales.isConnected()) {
+        lv_msgbox_close(scaleWaitModal);
+        scaleWaitModal = nullptr;
+        controller->activate(true);
+    }
 
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
         updateTempHistory();

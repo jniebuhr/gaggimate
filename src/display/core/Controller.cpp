@@ -563,9 +563,15 @@ void Controller::updateControl() {
     clientController.sendOutputControl(active && proc->isRelayActive(), active ? proc->getPumpValue() : 0, targetTemp);
 }
 
-void Controller::activate() {
+void Controller::activate(bool ignoreScale) {
     if (isActive())
         return;
+
+    if (!ignoreScale && settings.getSavedScale() != "" && !BLEScales.isConnected() && mode == MODE_BREW) {
+        pluginManager->trigger("controller:brew:scale-missing");
+        return;
+    }
+
     clear();
     clientController.tare();
     if (isVolumetricAvailable()) {

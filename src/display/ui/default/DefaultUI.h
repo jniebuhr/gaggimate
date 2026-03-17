@@ -72,6 +72,9 @@ class DefaultUI {
     void updateTempHistory();
     void updateTempStableFlag();
     void adjustHeatingIndicator(lv_obj_t *contentPanel);
+    void showScaleWaitModal();
+
+    lv_obj_t *scaleWaitModal = nullptr;
 
     Driver *panelDriver = nullptr;
     Controller *controller;
