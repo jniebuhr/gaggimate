@@ -7,9 +7,6 @@
  * - Storage keys for localStorage
  * - Helper functions for data formatting
  */
-
-import DeepDiveLogoOutline from '../assets/deepdive.svg';
-
 /**
  * LocalStorage Keys for Analyzer Data
  */
@@ -341,6 +338,12 @@ export const analyzerUiColors = {
   warningOrange: 'var(--analyzer-warning-orange)',
   warningOrangeStrong: 'var(--analyzer-warning-orange-strong)',
   warningOrangeShadow: 'var(--analyzer-warning-orange-shadow)',
+  sourceBadgeGmBg: 'var(--analyzer-source-gm-badge-bg)',
+  sourceBadgeGmBorder: 'var(--analyzer-source-gm-badge-border)',
+  sourceBadgeGmText: 'var(--analyzer-source-gm-badge-text)',
+  sourceBadgeWebBg: 'var(--analyzer-source-web-badge-bg)',
+  sourceBadgeWebBorder: 'var(--analyzer-source-web-badge-border)',
+  sourceBadgeWebText: 'var(--analyzer-source-web-badge-text)',
   brewByTimeLabelBg: 'var(--analyzer-brew-by-time-label-bg)',
   brewByTimeLabelBorder: 'var(--analyzer-brew-by-time-label-border)',
   brewByTimeLabelText: 'var(--analyzer-brew-by-time-label-text)',
@@ -450,6 +453,20 @@ export const getAllColumns = () => {
   const all = new Set();
   columnConfig.forEach(col => all.add(col.id));
   return all;
+};
+
+/**
+ * Get all column IDs for one logical group.
+ * Used by built-in presets such as "System Info".
+ * @param {string} groupKey - Column group ID
+ * @returns {Set<string>}
+ */
+export const getColumnsByGroup = groupKey => {
+  const columns = new Set();
+  columnConfig.forEach(col => {
+    if (col.group === groupKey) columns.add(col.id);
+  });
+  return columns;
 };
 
 /**
@@ -711,13 +728,3 @@ export const clearLibrary = collection => {
 };
 
 // Helper style for CSS Masking
-export const maskStyle = {
-  maskImage: `url(${DeepDiveLogoOutline})`,
-  WebkitMaskImage: `url(${DeepDiveLogoOutline})`,
-  maskSize: 'contain',
-  WebkitMaskSize: 'contain',
-  maskRepeat: 'no-repeat',
-  WebkitMaskRepeat: 'no-repeat',
-  maskPosition: 'center',
-  WebkitMaskPosition: 'center',
-};

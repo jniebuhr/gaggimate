@@ -32,9 +32,9 @@ const DATE_BASIS_OPTIONS = [
 const SEGMENT_GROUP_CLASS =
   'inline-flex overflow-hidden rounded-lg border border-base-content/10 bg-base-100/50 shadow-sm';
 const SEGMENT_BUTTON_BASE_CLASS =
-  'flex h-12 min-h-0 items-center justify-center border-0 border-r border-base-content/10 px-2.5 text-xs font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-3';
+  'flex h-11 min-h-0 items-center justify-center border-0 border-r border-base-content/10 px-2 text-xs font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5';
 const COMPACT_SEGMENT_BUTTON_BASE_CLASS =
-  'flex h-10 min-h-0 items-center justify-center border-0 border-r border-base-content/10 px-2 text-[11px] font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40';
+  'flex h-9 min-h-0 items-center justify-center border-0 border-r border-base-content/10 px-1.5 text-[11px] font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40';
 const CALC_ACTIVE_SEGMENT_STYLE = {
   color: 'var(--analyzer-pred-info-blue)',
   backgroundColor: 'color-mix(in srgb, var(--analyzer-pred-info-blue) 12%, transparent)',
@@ -44,20 +44,7 @@ const WARNING_ORANGE_TEXT_MUTED_STYLE = {
   color: 'color-mix(in srgb, var(--analyzer-warning-orange) 70%, var(--color-base-content) 30%)',
 };
 
-function getSourceToneClasses(value) {
-  if (value === 'gaggimate') {
-    return 'border-blue-500/20 bg-blue-500/10 text-blue-500 hover:bg-blue-500/15';
-  }
-  if (value === 'browser') {
-    return 'border-purple-500/20 bg-purple-500/10 text-purple-500 hover:bg-purple-500/15';
-  }
-  return 'border-base-content/12 bg-base-content/8 text-base-content/85 hover:bg-base-content/12';
-}
-
-function getModeToneClasses(value) {
-  if (value === 'profile') {
-    return 'border-secondary/25 bg-secondary/12 text-secondary hover:bg-secondary/18';
-  }
+function getPrimaryDropdownToneClasses() {
   return 'border-primary/22 bg-primary/10 text-primary hover:bg-primary/15';
 }
 
@@ -268,11 +255,11 @@ export function StatisticsToolbar({
   }, [shouldShowDslSelectionPreview]);
 
   return (
-    <div className='flex w-full min-w-0 flex-col gap-3'>
-      <div className='flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5'>
+    <div className='flex w-full min-w-0 flex-col gap-2.5'>
+      <div className='flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1'>
         <details className='dropdown max-w-full'>
           <summary
-            className={`flex h-12 min-h-0 w-[4.15rem] list-none items-center justify-between rounded-lg border px-2 text-xs font-bold uppercase tracking-wide shadow-sm transition-colors [&::-webkit-details-marker]:hidden ${getSourceToneClasses(currentSourceOption.value)} ${isBusy ? 'pointer-events-none opacity-40' : ''}`}
+            className={`flex h-11 min-h-0 w-[4rem] list-none items-center justify-between rounded-lg border px-1.75 text-xs font-bold uppercase tracking-wide shadow-sm transition-colors [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`}
             aria-label='Select source'
             title='Select source'
           >
@@ -286,7 +273,7 @@ export function StatisticsToolbar({
                 <button
                   key={opt.value}
                   type='button'
-                  className={`flex h-9 min-h-0 items-center justify-between rounded-lg border px-3 text-xs font-bold uppercase tracking-wide transition-colors ${getSourceToneClasses(opt.value)} ${source === opt.value ? 'ring-1 ring-current/15' : ''}`}
+                  className={`flex h-9 min-h-0 items-center justify-between rounded-lg border px-3 text-xs font-bold uppercase tracking-wide transition-colors ${getPrimaryDropdownToneClasses()} ${source === opt.value ? 'ring-1 ring-current/15' : ''}`}
                   onClick={e => {
                     onSourceChange(opt.value);
                     closeParentDetails(e.currentTarget);
@@ -303,7 +290,7 @@ export function StatisticsToolbar({
 
         <details className='dropdown max-w-full'>
           <summary
-            className={`flex h-12 min-h-0 w-[7rem] list-none items-center justify-between rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition-colors [&::-webkit-details-marker]:hidden ${getModeToneClasses(currentModeOption.value)} ${isBusy ? 'pointer-events-none opacity-40' : ''}`}
+            className={`flex h-11 min-h-0 w-[6.75rem] list-none items-center justify-between rounded-lg border px-2 text-xs font-semibold shadow-sm transition-colors [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`}
             aria-label='Select statistics mode'
             title='Select statistics mode'
           >
@@ -317,7 +304,7 @@ export function StatisticsToolbar({
                 <button
                   key={opt.value}
                   type='button'
-                  className={`flex h-9 min-h-0 items-center justify-between rounded-lg border px-3 text-xs font-semibold transition-colors ${getModeToneClasses(opt.value)} ${mode === opt.value ? 'ring-1 ring-current/15' : ''}`}
+                  className={`flex h-9 min-h-0 items-center justify-between rounded-lg border px-3 text-xs font-semibold transition-colors ${getPrimaryDropdownToneClasses()} ${mode === opt.value ? 'ring-1 ring-current/15' : ''}`}
                   onClick={e => {
                     onModeChange(opt.value);
                     closeParentDetails(e.currentTarget);
@@ -340,7 +327,7 @@ export function StatisticsToolbar({
               selectedIds={selectedProfileNames}
               onChange={onSelectedProfileNamesChange}
               disabled={isBusy}
-              accentTone='secondary'
+              accentTone='primary'
               emptyText='Select Profiles...'
             />
             <StatisticsMultiSelectDropdown
@@ -372,7 +359,7 @@ export function StatisticsToolbar({
               selectedIds={selectedProfileNames}
               onChange={onSelectedProfileNamesChange}
               disabled={isBusy}
-              accentTone='secondary'
+              accentTone='primary'
               emptyText='Select Profiles...'
             />
           </>
@@ -382,7 +369,7 @@ export function StatisticsToolbar({
           <button
             type='button'
             onClick={onClearFilters}
-            className='inline-flex h-12 min-h-0 w-12 flex-col items-center justify-center gap-0.5 rounded-lg border border-base-content/10 bg-base-100/45 px-0 text-base-content/70 shadow-sm transition-colors hover:bg-base-200/70 hover:text-base-content disabled:cursor-not-allowed disabled:opacity-40'
+            className='inline-flex h-11 min-h-0 w-11 flex-col items-center justify-center gap-0.5 rounded-lg border border-base-content/10 bg-base-100/45 px-0 text-base-content/70 shadow-sm transition-colors hover:bg-base-200/70 hover:text-base-content disabled:cursor-not-allowed disabled:opacity-40'
             disabled={isBusy}
             aria-label={`Clear filters and selections (${resetAriaCount})`}
             title={`Clear filters and selections (${resetAriaCount})`}
@@ -398,16 +385,16 @@ export function StatisticsToolbar({
               onGo();
             }}
             disabled={!canExecute}
-            className='border-success/50 text-success hover:bg-success hover:border-success inline-flex h-12 min-h-0 w-24 items-center justify-center rounded-lg border-2 bg-base-100/50 shadow-sm transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-40'
+            className='border-success/50 text-success hover:bg-success hover:border-success inline-flex h-11 min-h-0 w-[5.5rem] items-center justify-center rounded-lg border-2 bg-base-100/50 shadow-sm transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-40'
             aria-label='Run statistics'
             title='Run statistics'
           >
-            <FontAwesomeIcon icon={faPlay} className='text-xl' />
+            <FontAwesomeIcon icon={faPlay} className='text-lg' />
           </button>
         </div>
       </div>
 
-      <div className='flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5'>
+      <div className='flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1'>
         <details className='dropdown'>
           <summary
             className={`flex h-9 min-h-0 w-[11.25rem] list-none items-center gap-1.5 rounded-lg border px-2 text-left text-[10px] shadow-sm transition-colors sm:w-[12.5rem] md:w-[15rem] [&::-webkit-details-marker]:hidden ${

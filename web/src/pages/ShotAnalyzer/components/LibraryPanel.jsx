@@ -13,6 +13,7 @@ import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hoo
 import { StatusBar } from './StatusBar';
 import { NotesBar } from './NotesBar';
 import { LibrarySection } from './LibrarySection';
+import { getAnalyzerTextButtonClasses } from './analyzerControlStyles';
 import { libraryService } from '../services/LibraryService';
 import { indexedDBService } from '../services/IndexedDBService';
 import { notesService } from '../services/NotesService';
@@ -499,6 +500,9 @@ export function LibraryPanel({
     width: `${barRect.width}px`,
     zIndex: 49,
   };
+  const desktopSectionHeight = !isMobileViewport
+    ? `max(18rem, calc(100dvh - ${dropdownTop}px - 2rem))`
+    : undefined;
 
   return (
     <div ref={panelRef} className='relative'>
@@ -530,26 +534,24 @@ export function LibraryPanel({
               cleanName(currentShot.profile || '').toLowerCase() !==
                 cleanName(currentProfileName).toLowerCase()
             }
-            importMode={importMode}
-            onImportModeChange={onImportModeChange}
             isExpanded={!collapsed}
             hasNotesBar={!!currentShot}
             isImporting={importing}
             isSearchingProfile={isSearchingProfile}
           />
-          {currentShot && (
-            <NotesBar
-              currentShot={currentShot}
-              currentShotName={currentShotName}
-              shotList={shots}
-              onNavigate={handleLoadShot}
-              isExpanded={!collapsed}
-              notesExpanded={notesExpanded}
-              onToggleNotesExpanded={() => setNotesExpanded(v => !v)}
-              onEditingChange={setNotesIsEditing}
-              onExpandedHeightChange={setNotesExpandedHeight}
-            />
-          )}
+          <NotesBar
+            currentShot={currentShot}
+            currentShotName={currentShotName}
+            shotList={shots}
+            onNavigate={handleLoadShot}
+            importMode={importMode}
+            onImportModeChange={onImportModeChange}
+            isExpanded={!collapsed}
+            notesExpanded={notesExpanded}
+            onToggleNotesExpanded={() => setNotesExpanded(v => !v)}
+            onEditingChange={setNotesIsEditing}
+            onExpandedHeightChange={setNotesExpandedHeight}
+          />
         </div>
       </div>
 
@@ -569,7 +571,9 @@ export function LibraryPanel({
                     className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                       mobileActiveSection === 'shots'
                         ? 'bg-base-100 text-base-content shadow-sm'
-                        : 'text-base-content/70 hover:bg-base-100/70'
+                        : getAnalyzerTextButtonClasses({
+                            className: 'justify-center',
+                          })
                     }`}
                     onClick={() => setMobileActiveSection('shots')}
                   >
@@ -580,7 +584,9 @@ export function LibraryPanel({
                     className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                       mobileActiveSection === 'profiles'
                         ? 'bg-base-100 text-base-content shadow-sm'
-                        : 'text-base-content/70 hover:bg-base-100/70'
+                        : getAnalyzerTextButtonClasses({
+                            className: 'justify-center',
+                          })
                     }`}
                     onClick={() => setMobileActiveSection('profiles')}
                   >
@@ -588,131 +594,135 @@ export function LibraryPanel({
                   </button>
                 </div>
               </div>
-              <div className='grid max-h-[75vh] grid-cols-1 gap-4 overflow-y-auto overscroll-contain p-4 lg:grid-cols-2'>
-                {/* SHOTS SECTION */}
-                <div className={mobileActiveSection === 'shots' ? 'block lg:block' : 'hidden lg:block'}>
-                  <LibrarySection
-                    title='Shots'
-                    items={shots}
-                    isShot={true}
-                    searchValue={shotsSearch}
-                    sortKey={shotsSort.key}
-                    sortOrder={shotsSort.order}
-                    sourceFilter={shotsSourceFilter}
-                    onSearchChange={setShotsSearch}
-                    onSortChange={(k, o) =>
-                      setShotsSort({
-                        key: k,
-                        order:
-                          o || (shotsSort.key === k && shotsSort.order === 'desc' ? 'asc' : 'desc'),
-                      })
-                    }
-                    onSourceFilterChange={setShotsSourceFilter}
-                    onLoad={handleLoadShot}
-                    onExport={item => handleExport(item, true)} // Pass true for shots
-                    onDelete={handleDelete}
-                    isLoading={loading} // Pass loading state to show spinner in list
-                    onExportAll={() => {
-                      if (shots.length === 0) return;
-                      if (
-                        confirm(
-                          `Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`,
-                        )
-                      ) {
-                        for (let i = 0; i < shots.length; i++)
-                          setTimeout(() => handleExport(shots[i], true), i * 300);
+              <div className='max-h-[75vh] overflow-y-auto overscroll-contain lg:max-h-none lg:overflow-hidden'>
+                <div className='grid grid-cols-1 gap-x-4 gap-y-4 p-4 lg:grid-cols-2 lg:gap-x-1.5'>
+                  {/* SHOTS SECTION */}
+                  <div className={mobileActiveSection === 'shots' ? 'block lg:block' : 'hidden lg:block'}>
+                    <LibrarySection
+                      title='Shots'
+                      items={shots}
+                      isShot={true}
+                      sectionHeight={desktopSectionHeight}
+                      searchValue={shotsSearch}
+                      sortKey={shotsSort.key}
+                      sortOrder={shotsSort.order}
+                      sourceFilter={shotsSourceFilter}
+                      onSearchChange={setShotsSearch}
+                      onSortChange={(k, o) =>
+                        setShotsSort({
+                          key: k,
+                          order:
+                            o || (shotsSort.key === k && shotsSort.order === 'desc' ? 'asc' : 'desc'),
+                        })
                       }
-                    }}
-                    onDeleteAll={async () => {
-                      if (
-                        confirm(
-                          `WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`,
-                        )
-                      ) {
-                        for (const s of shots)
-                          await libraryService.deleteShot(
-                            s.source === 'gaggimate' ? s.id : s.storageKey || s.name || s.id,
-                            s.source,
-                          );
-                        refreshLibraries();
-                      }
-                    }}
-                    getMatchStatus={item =>
-                      currentProfile &&
-                      cleanName(item.profile || '').toLowerCase() ===
-                        cleanName(currentProfileName).toLowerCase()
-                    }
-                    getActiveStatus={item =>
-                      currentShot &&
-                      getShotStorageKey(item) === getShotStorageKey(currentShot) &&
-                      item.source === currentShot.source
-                    }
-                  />
-                </div>
-
-                {/* PROFILES SECTION */}
-                <div className={mobileActiveSection === 'profiles' ? 'block lg:block' : 'hidden lg:block'}>
-                  <LibrarySection
-                    title='Profiles'
-                    items={profiles}
-                    isShot={false}
-                    searchValue={profilesSearch}
-                    sortKey={profilesSort.key}
-                    sortOrder={profilesSort.order}
-                    sourceFilter={profilesSourceFilter}
-                    onSearchChange={setProfilesSearch}
-                    onSortChange={(k, o) =>
-                      setProfilesSort({
-                        key: k,
-                        order:
-                          o ||
-                          (profilesSort.key === k && profilesSort.order === 'desc' ? 'asc' : 'desc'),
-                      })
-                    }
-                    onSourceFilterChange={setProfilesSourceFilter}
-                    onLoad={item => {
-                      onProfileLoad(item.data || item, item.label || item.name, item.source);
-                      setCollapsed(true);
-                    }}
-                    onExport={item => handleExport(item, false)} // Pass false for profiles
-                    onDelete={handleDelete}
-                    isLoading={loading} // Pass loading state to show spinner in list
-                    onExportAll={() => {
-                      if (profiles.length === 0) return;
-                      if (
-                        confirm(
-                          `Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
-                        )
-                      ) {
-                        for (let i = 0; i < profiles.length; i++)
-                          setTimeout(() => handleExport(profiles[i], false), i * 300);
-                      }
-                    }}
-                    onDeleteAll={async () => {
-                      if (
-                        confirm(
-                          `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
-                        )
-                      ) {
-                        for (const p of profiles) {
-                          const deleteKey =
-                            p.source === 'gaggimate' ? p.profileId || p.id : p.name || p.label;
-                          await libraryService.deleteProfile(deleteKey, p.source);
+                      onSourceFilterChange={setShotsSourceFilter}
+                      onLoad={handleLoadShot}
+                      onExport={item => handleExport(item, true)} // Pass true for shots
+                      onDelete={handleDelete}
+                      isLoading={loading} // Pass loading state to show spinner in list
+                      onExportAll={() => {
+                        if (shots.length === 0) return;
+                        if (
+                          confirm(
+                            `Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`,
+                          )
+                        ) {
+                          for (let i = 0; i < shots.length; i++)
+                            setTimeout(() => handleExport(shots[i], true), i * 300);
                         }
-                        refreshLibraries();
+                      }}
+                      onDeleteAll={async () => {
+                        if (
+                          confirm(
+                            `WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`,
+                          )
+                        ) {
+                          for (const s of shots)
+                            await libraryService.deleteShot(
+                              s.source === 'gaggimate' ? s.id : s.storageKey || s.name || s.id,
+                              s.source,
+                            );
+                          refreshLibraries();
+                        }
+                      }}
+                      getMatchStatus={item =>
+                        currentProfile &&
+                        cleanName(item.profile || '').toLowerCase() ===
+                          cleanName(currentProfileName).toLowerCase()
                       }
-                    }}
-                    getMatchStatus={item =>
-                      currentShot &&
-                      cleanName(item.name || item.label || '').toLowerCase() ===
-                        cleanName(currentShot.profile || '').toLowerCase()
-                    }
-                    getActiveStatus={item =>
-                      currentProfile &&
-                      cleanName(item.name || item.label || '').toLowerCase() ===
-                        cleanName(currentProfileName).toLowerCase()
-                    }
-                  />
+                      getActiveStatus={item =>
+                        currentShot &&
+                        getShotStorageKey(item) === getShotStorageKey(currentShot) &&
+                        item.source === currentShot.source
+                      }
+                    />
+                  </div>
+
+                  {/* PROFILES SECTION */}
+                  <div className={mobileActiveSection === 'profiles' ? 'block lg:block' : 'hidden lg:block'}>
+                    <LibrarySection
+                      title='Profiles'
+                      items={profiles}
+                      isShot={false}
+                      sectionHeight={desktopSectionHeight}
+                      searchValue={profilesSearch}
+                      sortKey={profilesSort.key}
+                      sortOrder={profilesSort.order}
+                      sourceFilter={profilesSourceFilter}
+                      onSearchChange={setProfilesSearch}
+                      onSortChange={(k, o) =>
+                        setProfilesSort({
+                          key: k,
+                          order:
+                            o ||
+                            (profilesSort.key === k && profilesSort.order === 'desc' ? 'asc' : 'desc'),
+                        })
+                      }
+                      onSourceFilterChange={setProfilesSourceFilter}
+                      onLoad={item => {
+                        onProfileLoad(item.data || item, item.label || item.name, item.source);
+                        setCollapsed(true);
+                      }}
+                      onExport={item => handleExport(item, false)} // Pass false for profiles
+                      onDelete={handleDelete}
+                      isLoading={loading} // Pass loading state to show spinner in list
+                      onExportAll={() => {
+                        if (profiles.length === 0) return;
+                        if (
+                          confirm(
+                            `Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
+                          )
+                        ) {
+                          for (let i = 0; i < profiles.length; i++)
+                            setTimeout(() => handleExport(profiles[i], false), i * 300);
+                        }
+                      }}
+                      onDeleteAll={async () => {
+                        if (
+                          confirm(
+                            `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
+                          )
+                        ) {
+                          for (const p of profiles) {
+                            const deleteKey =
+                              p.source === 'gaggimate' ? p.profileId || p.id : p.name || p.label;
+                            await libraryService.deleteProfile(deleteKey, p.source);
+                          }
+                          refreshLibraries();
+                        }
+                      }}
+                      getMatchStatus={item =>
+                        currentShot &&
+                        cleanName(item.name || item.label || '').toLowerCase() ===
+                          cleanName(currentShot.profile || '').toLowerCase()
+                      }
+                      getActiveStatus={item =>
+                        currentProfile &&
+                        cleanName(item.name || item.label || '').toLowerCase() ===
+                          cleanName(currentProfileName).toLowerCase()
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             </div>

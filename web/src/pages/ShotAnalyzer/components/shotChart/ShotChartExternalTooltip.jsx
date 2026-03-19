@@ -1,3 +1,4 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X,
   TOOLTIP_GROUP_BY_LABEL,
@@ -7,6 +8,7 @@ import {
   WATER_DRAWN_PHASE_LABEL,
 } from './constants';
 import { computeExternalTooltipPosition } from './helpers';
+import { getShotChartDisplayLabel, getShotChartLabelIcon } from './labelVisuals';
 
 export function createHiddenExternalTooltipState() {
   return {
@@ -196,13 +198,13 @@ export function getExternalTooltipLayout({
   });
 }
 
-export function ShotChartExternalTooltip({ tooltipRef, state, layout }) {
+export function ShotChartExternalTooltip({ tooltipRef, state, layout, isFullDisplay = false }) {
   if (!state.visible) return null;
 
   return (
     <div
       ref={tooltipRef}
-      className='shot-chart-tooltip'
+      className={`shot-chart-tooltip${isFullDisplay ? ' shot-chart-tooltip--fullscreen' : ''}`}
       style={{
         left: `${layout.x}px`,
         top: `${layout.y}px`,
@@ -216,22 +218,30 @@ export function ShotChartExternalTooltip({ tooltipRef, state, layout }) {
           ))}
         </div>
       ) : null}
-      {state.rows.map((row, index) => (
-        <div
-          key={`${row.label}-${row.valueText}-${index}`}
-          className={`shot-chart-tooltip__row${row.spacerBefore ? ' shot-chart-tooltip__row--spacer' : ''}`}
-        >
-          <span
-            className='shot-chart-tooltip__dot'
-            style={{ backgroundColor: row.color }}
-            aria-hidden='true'
-          />
-          <span className='shot-chart-tooltip__text'>
-            <span>{row.label}: </span>
-            <span className='shot-chart-tooltip__value'>{row.valueText}</span>
-          </span>
-        </div>
-      ))}
+      {state.rows.map((row, index) => {
+        const rowIcon = getShotChartLabelIcon(row.label);
+        const displayLabel = getShotChartDisplayLabel(row.label);
+
+        return (
+          <div
+            key={`${row.label}-${row.valueText}-${index}`}
+            className={`shot-chart-tooltip__row${row.spacerBefore ? ' shot-chart-tooltip__row--spacer' : ''}`}
+          >
+            {rowIcon ? (
+              <FontAwesomeIcon
+                icon={rowIcon}
+                className='shot-chart-tooltip__icon'
+                style={{ color: row.color }}
+                aria-hidden='true'
+              />
+            ) : null}
+            <span className='shot-chart-tooltip__text'>
+              <span>{displayLabel}: </span>
+              <span className='shot-chart-tooltip__value'>{row.valueText}</span>
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

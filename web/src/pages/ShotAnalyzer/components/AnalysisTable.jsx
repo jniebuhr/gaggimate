@@ -26,8 +26,22 @@ import {
   faTimes,
   faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons';
-import { columnConfig, groupColors, utilityColors, analyzerUiColors } from '../utils/analyzerUtils';
+import { columnConfig, utilityColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
+import { getAnalyzerColumnVisual } from './analyzerGroupVisuals';
+import {
+  ANALYZER_COMPACT_GROUP_CLASSES,
+  ANALYZER_COMPACT_ICON_BUTTON_CLASS,
+  getAnalyzerIconButtonClasses,
+  getAnalyzerTextButtonClasses,
+  joinAnalyzerClasses,
+} from './analyzerControlStyles';
+
+const NEUTRAL_STATUS_BADGE_CLASS = 'bg-base-content/10 text-base-content/80 border-base-content/15';
+
+function getBrewModeLabel(isBrewByWeight) {
+  return isBrewByWeight ? 'Brew by Weight' : 'Brew by Time';
+}
 
 function StopCalculationHelpPopover() {
   const detailsRef = useRef(null);
@@ -87,7 +101,12 @@ function StopCalculationHelpPopover() {
   return (
     <details ref={detailsRef} className='dropdown'>
       <summary
-        className='flex h-5 w-5 list-none items-center justify-center rounded-full text-base-content/45 transition-colors hover:text-base-content/80 [&::-webkit-details-marker]:hidden'
+        className={joinAnalyzerClasses(
+          getAnalyzerIconButtonClasses({
+            className: 'h-5 w-5 rounded-full [&::-webkit-details-marker]:hidden',
+          }),
+          'list-none',
+        )}
         aria-label='Stop Calculation help'
         title='Stop Calculation help'
       >
@@ -114,7 +133,9 @@ function StopCalculationHelpPopover() {
             </p>
             <div className='mt-1 space-y-1.5'>
               <p>
-                <span className='mr-1.5 inline-flex rounded-[4px] border border-sky-700 bg-sky-600 px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'>
+                <span
+                  className={`mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight align-middle ${NEUTRAL_STATUS_BADGE_CLASS}`}
+                >
                   REVIEW PHASE
                 </span>
                 Shown when a stop reason is only detected after a higher calculation step / deeper
@@ -148,13 +169,6 @@ function StopCalculationHelpPopover() {
                 </span>
                 Shown when the scale briefly loses connection during the brew. In this case, weight
                 is ignored for stop detection for that brew, even if the scale reconnects later.
-              </p>
-              <p>
-                <span className='mr-1.5 inline-flex rounded-[4px] border border-blue-700 bg-blue-600 px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-tight text-white align-middle'>
-                  AUTO-CALC
-                </span>
-                Shown when Auto mode is active and the displayed stop-calculation delays are
-                analyzer-side averages from the phase-specific calculations.
               </p>
             </div>
           </div>
@@ -252,6 +266,11 @@ export function AnalysisTable({
   const visibleColumns = columnConfig.filter(col => activeColumns.has(col.id));
 
   // --- Helper Functions ---
+  const handleNonNegativeDelayInput = (key, rawValue) => {
+    const parsedValue = parseInt(rawValue, 10);
+    if (Number.isNaN(parsedValue)) return;
+    onSettingsChange({ ...safeSettings, [key]: Math.max(0, parsedValue) });
+  };
 
   const scrollTable = amount => {
     if (tableContainerRef.current) {
@@ -359,29 +378,8 @@ export function AnalysisTable({
                 .no-scrollbar::-webkit-scrollbar { display: none; }
             `}</style>
 
-      {/* 1. Status Badges (Outside the main card) - Updated for Solid Colors */}
+      {/* Keep the top strip focused on global warnings and phase-review hints only. */}
       <div className='mb-2 flex flex-wrap gap-2 px-1'>
-        {results.isBrewByWeight ? (
-          <StatusBadge
-            label='BREW BY WEIGHT'
-            colorClass='text-white shadow-sm'
-            style={{
-              backgroundColor: analyzerUiColors.brewByWeightLabelBg,
-              borderColor: analyzerUiColors.brewByWeightLabelBorder,
-              color: analyzerUiColors.brewByWeightLabelText,
-            }}
-          />
-        ) : (
-          <StatusBadge
-            label='BREW BY TIME'
-            colorClass='text-white shadow-sm'
-            style={{
-              backgroundColor: analyzerUiColors.brewByTimeLabelBg,
-              borderColor: analyzerUiColors.brewByTimeLabelBorder,
-              color: analyzerUiColors.brewByTimeLabelText,
-            }}
-          />
-        )}
         {results.globalScaleLost && (
           <StatusBadge
             label='SCALE LOST'
@@ -414,15 +412,12 @@ export function AnalysisTable({
                 ? `REVIEW PHASE ${results.delayReviewPhaseNumber}`
                 : 'PHASE REVIEW ADVISED'
             }
-            colorClass='bg-sky-600 text-white border-sky-700'
+            colorClass={NEUTRAL_STATUS_BADGE_CLASS}
             title={
               results.delayReviewMessage ||
               'Unusually high inferred delay detected.'
             }
           />
-        )}
-        {results.isAutoAdjusted && (
-          <StatusBadge label='AUTO-CALC' colorClass='bg-blue-600 text-white border-blue-700' />
         )}
       </div>
 
@@ -437,7 +432,7 @@ export function AnalysisTable({
             // Navigation & Zoom Group Injected into ColumnControls Header
             <div className='flex items-center gap-2'>
               {/* Zoom Controls */}
-              <div className='bg-base-content/5 border-base-content/5 flex items-center gap-1 rounded border p-0.5'>
+              <div className={ANALYZER_COMPACT_GROUP_CLASSES}>
                 <ScrollBtn
                   icon={faMagnifyingGlassMinus}
                   onClick={() => handleZoom('out')}
@@ -455,8 +450,10 @@ export function AnalysisTable({
                 />
               </div>
 
+              <div className='bg-base-content/10 hidden h-3 w-px shrink-0 sm:block' aria-hidden='true' />
+
               {/* Scroll Controls */}
-              <div className='bg-base-content/5 border-base-content/5 flex hidden items-center gap-1 rounded border p-0.5 sm:flex'>
+              <div className={`${ANALYZER_COMPACT_GROUP_CLASSES} hidden sm:flex`}>
                 <ScrollBtn icon={faArrowLeft} onClick={() => scrollToBound('start')} />
                 <ScrollBtn icon={faAngleDoubleLeft} onClick={() => scrollTable(-300)} />
                 <ScrollBtn
@@ -490,24 +487,30 @@ export function AnalysisTable({
           >
             <thead>
               <tr className='bg-base-200 border-base-content/10 border-b-2'>
-                <th className='bg-base-content/5 border-base-content/5 w-8 border-r py-2 text-center opacity-40'>
+                <th className='bg-base-content/5 border-base-content/5 text-base-content/60 w-8 border-r py-2 text-center font-bold'>
                   #
                 </th>
                 <th className='bg-base-content/5 border-base-content/5 min-w-[120px] border-r px-2 py-2 text-left font-bold tracking-tighter whitespace-nowrap uppercase opacity-60'>
                   Phase
                 </th>
                 {visibleColumns.map(col => {
-                  const colors = groupColors[col.group] || groupColors.basics;
+                  const columnVisual = getAnalyzerColumnVisual(col);
                   return (
                     <th
                       key={col.id}
-                      className={`border-base-content/10 border-l px-3 py-2 text-right font-bold tracking-tighter whitespace-nowrap uppercase`}
+                      className='border-base-content/10 border-l px-3 py-2 text-right align-middle font-bold tracking-tighter uppercase'
                       style={{
-                        borderTop: `3px solid ${colors.anchor}`,
                         backgroundColor: 'rgba(128, 128, 128, 0.05)', // Subtle unified tint
                       }}
                     >
-                      <span className={colors.text}>{getHeaderLabel(col)}</span>
+                      <span className='text-base-content/70 ml-auto flex max-w-[6.25rem] items-center justify-end gap-1.5 text-right leading-tight'>
+                        <FontAwesomeIcon
+                          icon={columnVisual.icon}
+                          className='shrink-0 text-[11px]'
+                          style={{ color: columnVisual.color }}
+                        />
+                        <span className='min-w-0 whitespace-normal break-words'>{getHeaderLabel(col)}</span>
+                      </span>
                     </th>
                   );
                 })}
@@ -520,11 +523,11 @@ export function AnalysisTable({
                   key={idx}
                   className='border-base-content/5 hover:bg-base-content/5 group border-b align-top transition-colors'
                 >
-                  <td className='bg-base-content/5 border-base-content/5 border-r pt-2.5 text-center font-bold opacity-20 select-none'>
+                  <td className='bg-base-content/5 border-base-content/5 text-base-content/80 border-r pt-2.5 text-center font-extrabold select-none'>
                     {idx + 1}
                   </td>
                   <td className='bg-base-content/5 border-base-content/5 border-r px-2 py-2 text-left whitespace-nowrap'>
-                    {/* Neutral Phase Names */}
+                    {/* Keep phase naming prominent and attach brew mode only to the last row. */}
                     <div className='text-base-content mb-0.5 leading-none font-bold'>
                       {phase.displayName}
                     </div>
@@ -534,6 +537,11 @@ export function AnalysisTable({
                         style={{ fontSize: '0.8em', color: utilityColors.stopRed }}
                       >
                         via {phase.exit.reason}
+                      </div>
+                    )}
+                    {idx === results.phases.length - 1 && (
+                      <div className='font-medium text-base-content/55 leading-tight' style={{ fontSize: '0.8em' }}>
+                        {getBrewModeLabel(results.isBrewByWeight)}
                       </div>
                     )}
                   </td>
@@ -578,6 +586,7 @@ export function AnalysisTable({
               <span className='opacity-60'>Scale{safeSettings.autoDelay ? ' ∅' : ''}</span>
               <input
                 type='number'
+                min='0'
                 step='50'
                 value={
                   safeSettings.autoDelay && results?.usedSettings
@@ -585,10 +594,7 @@ export function AnalysisTable({
                     : safeSettings.scaleDelay
                 }
                 disabled={safeSettings.autoDelay}
-                onInput={e => {
-                  const val = parseInt(e.target.value);
-                  if (!isNaN(val)) onSettingsChange({ ...safeSettings, scaleDelay: val });
-                }}
+                onInput={e => handleNonNegativeDelayInput('scaleDelay', e.target.value)}
                 className='bg-base-200 border-base-content/10 focus:border-primary text-base-content h-5 w-12 rounded border text-center font-mono focus:outline-none disabled:opacity-30'
               />
               <span className='font-normal lowercase opacity-40'>ms</span>
@@ -599,6 +605,7 @@ export function AnalysisTable({
               <span className='opacity-60'>System{safeSettings.autoDelay ? ' ∅' : ''}</span>
               <input
                 type='number'
+                min='0'
                 step='50'
                 value={
                   safeSettings.autoDelay && results?.usedSettings
@@ -606,14 +613,15 @@ export function AnalysisTable({
                     : safeSettings.sensorDelay
                 }
                 disabled={safeSettings.autoDelay}
-                onInput={e => {
-                  const val = parseInt(e.target.value);
-                  if (!isNaN(val)) onSettingsChange({ ...safeSettings, sensorDelay: val });
-                }}
+                onInput={e => handleNonNegativeDelayInput('sensorDelay', e.target.value)}
                 className='bg-base-200 border-base-content/10 focus:border-primary text-base-content h-5 w-12 rounded border text-center font-mono focus:outline-none disabled:opacity-30'
               />
               <span className='font-normal lowercase opacity-40'>ms</span>
-              <label className='hover:text-primary ml-2 flex cursor-pointer items-center gap-1.5 transition-colors'>
+              <label
+                className={getAnalyzerTextButtonClasses({
+                  className: 'ml-2 flex cursor-pointer items-center gap-1.5 px-1.5 py-0.5',
+                })}
+              >
                 <input
                   type='checkbox'
                   checked={safeSettings.autoDelay}
@@ -1024,7 +1032,9 @@ const ScrollBtn = ({ icon, onClick, className = '', title }) => (
   <button
     onClick={onClick}
     title={title}
-    className={`btn btn-ghost btn-xs text-base-content/40 hover:text-primary h-5 min-h-0 px-1.5 ${className}`}
+    className={getAnalyzerIconButtonClasses({
+      className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_ICON_BUTTON_CLASS} px-0 ${className}`,
+    })}
   >
     <FontAwesomeIcon icon={icon} className='text-[10px]' />
   </button>

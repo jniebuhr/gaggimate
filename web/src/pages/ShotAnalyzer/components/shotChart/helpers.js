@@ -121,8 +121,9 @@ export function getLegendColorByLabel(colors) {
 export function getTooltipColorByLabel(colors) {
   return {
     ...getLegendColorByLabel(colors),
-    [WATER_DRAWN_PHASE_LABEL]: colors.puckFlow,
-    [WATER_DRAWN_TOTAL_LABEL]: colors.flow,
+    [WATER_DRAWN_PHASE_LABEL]:
+      'color-mix(in srgb, var(--statistics-summary-water) 84%, black)',
+    [WATER_DRAWN_TOTAL_LABEL]: 'var(--statistics-summary-water)',
   };
 }
 

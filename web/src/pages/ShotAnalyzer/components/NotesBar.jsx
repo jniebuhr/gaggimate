@@ -6,29 +6,32 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faArrowTurnUp } from '@fortawesome/free-solid-svg-icons/faArrowTurnUp';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faDivide } from '@fortawesome/free-solid-svg-icons/faDivide';
 import { faTag } from '@fortawesome/free-solid-svg-icons/faTag';
 import { faGears } from '@fortawesome/free-solid-svg-icons/faGears';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faLaptopFile } from '@fortawesome/free-solid-svg-icons/faLaptopFile';
 import { notesService } from '../services/NotesService';
-import { cleanName, getNotesTasteStyle } from '../utils/analyzerUtils';
+import { cleanName, analyzerUiColors } from '../utils/analyzerUtils';
 import { NotesBarExpanded } from './NotesBarExpanded';
-
-const getTasteTextStyle = taste => {
-  const tasteStyle = getNotesTasteStyle(taste);
-  return tasteStyle ? { color: tasteStyle.color } : undefined;
-};
+import { SourceMarker } from './SourceMarker';
+import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
 
 export function NotesBar({
   currentShot,
   currentShotName,
   shotList = [],
   onNavigate,
+  importMode = 'temp',
+  onImportModeChange,
   isExpanded = false,
   notesExpanded = false,
   onToggleNotesExpanded,
@@ -49,8 +52,16 @@ export function NotesBar({
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  const showExpanded = notesExpanded;
+  const hasShot = !!currentShot;
+  const showExpanded = hasShot && notesExpanded;
   const expandedPanelRef = useRef(null);
+  const modeButtonRef = useRef(null);
+  const modeHintTimerRef = useRef(null);
+  const modeHintDismissArmTimerRef = useRef(null);
+  const modeHintDismissReadyRef = useRef(false);
+  const [modeHint, setModeHint] = useState('');
+  const [modeHintVariant, setModeHintVariant] = useState('temp');
+  const [modeHintPosition, setModeHintPosition] = useState({ top: 0, left: 12 });
 
   const calculateRatio = useCallback((doseIn, doseOut) => {
     if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
@@ -170,11 +181,13 @@ export function NotesBar({
   };
 
   // Navigation
-  const currentIndex = shotList.findIndex(
-    s => getShotNotesKey(s) === getShotNotesKey(currentShot) && s.source === currentShot?.source,
-  );
-  const canGoPrev = currentIndex > 0;
-  const canGoNext = currentIndex >= 0 && currentIndex < shotList.length - 1;
+  const currentIndex = hasShot
+    ? shotList.findIndex(
+        s => getShotNotesKey(s) === getShotNotesKey(currentShot) && s.source === currentShot?.source,
+      )
+    : -1;
+  const canGoPrev = hasShot && currentIndex > 0;
+  const canGoNext = hasShot && currentIndex >= 0 && currentIndex < shotList.length - 1;
 
   // Keyboard navigation: ArrowLeft / ArrowRight
   useEffect(() => {
@@ -232,13 +245,6 @@ export function NotesBar({
     return () => resizeObserver.disconnect();
   }, [showExpanded, onExpandedHeightChange]);
 
-  // Source badge (matching LibraryRow styling)
-  const sourceLabel = currentShot?.source === 'gaggimate' ? 'GM' : 'WEB';
-  const sourceBadgeClass =
-    currentShot?.source === 'gaggimate'
-      ? 'bg-blue-500/10 text-blue-500'
-      : 'bg-purple-500/10 text-purple-500';
-
   const formatDateTime = ts => {
     if (!ts) return '—';
     const d = new Date(ts * 1000);
@@ -265,107 +271,238 @@ export function NotesBar({
     return cleanName(currentShotName);
   };
 
-  if (!currentShot) return null;
+  const clearModeHintTimers = useCallback(() => {
+    if (modeHintTimerRef.current) {
+      window.clearTimeout(modeHintTimerRef.current);
+      modeHintTimerRef.current = null;
+    }
+    if (modeHintDismissArmTimerRef.current) {
+      window.clearTimeout(modeHintDismissArmTimerRef.current);
+      modeHintDismissArmTimerRef.current = null;
+    }
+  }, []);
+
+  const updateModeHintPosition = useCallback(() => {
+    const rect = modeButtonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const hintWidth = Math.min(352, Math.max(0, window.innerWidth - 32));
+    const maxLeft = Math.max(12, window.innerWidth - hintWidth - 12);
+    setModeHintPosition({
+      top: rect.bottom + 10,
+      left: Math.min(Math.max(12, rect.left), maxLeft),
+    });
+  }, []);
+
+  const showModeHint = useCallback(
+    nextMode => {
+      const browserMode = nextMode === 'browser';
+      setModeHintVariant(browserMode ? 'browser' : 'temp');
+      setModeHint(
+        browserMode
+          ? 'Save to Browser. Imported shots and profiles will now be saved to the browser library.'
+          : 'View temporarily. Imported shots and profiles will now open temporarily in the analyzer.',
+      );
+      updateModeHintPosition();
+      clearModeHintTimers();
+      modeHintDismissReadyRef.current = false;
+      modeHintDismissArmTimerRef.current = window.setTimeout(() => {
+        modeHintDismissReadyRef.current = true;
+      }, 180);
+      modeHintTimerRef.current = window.setTimeout(() => {
+        setModeHint('');
+      }, 4200);
+    },
+    [clearModeHintTimers, updateModeHintPosition],
+  );
+
+  const handleModeToggle = useCallback(
+    event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!onImportModeChange) return;
+      const nextMode = importMode === 'browser' ? 'temp' : 'browser';
+      onImportModeChange(nextMode);
+      showModeHint(nextMode);
+    },
+    [importMode, onImportModeChange, showModeHint],
+  );
+
+  useEffect(() => {
+    return () => {
+      clearModeHintTimers();
+    };
+  }, [clearModeHintTimers]);
+
+  useEffect(() => {
+    if (!modeHint) return;
+    updateModeHintPosition();
+    const handleViewportChange = () => updateModeHintPosition();
+    window.addEventListener('resize', handleViewportChange);
+    window.addEventListener('scroll', handleViewportChange, true);
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('scroll', handleViewportChange, true);
+    };
+  }, [modeHint, updateModeHintPosition]);
+
+  useEffect(() => {
+    if (!modeHint) return;
+    const dismissHint = () => {
+      if (!modeHintDismissReadyRef.current) return;
+      setModeHint('');
+    };
+    document.addEventListener('pointerdown', dismissHint, true);
+    return () => {
+      document.removeEventListener('pointerdown', dismissHint, true);
+    };
+  }, [modeHint]);
 
   const borderClasses = 'border-base-content/5 border-t';
 
   const fieldCls =
     'shrink-0 rounded-md bg-base-200/60 px-2 py-1 text-xs font-medium whitespace-nowrap';
+  const navButtonClasses = getAnalyzerIconButtonClasses({
+    className: 'btn btn-xs btn-ghost h-6 w-6 flex-shrink-0 rounded-lg p-0',
+  });
+  const modeButtonClasses = getAnalyzerIconButtonClasses({
+    tone: 'subtle',
+    className:
+      'btn btn-xs btn-ghost h-6 w-6 flex-shrink-0 rounded-lg p-0 hover:opacity-100',
+  });
+  const modeHintBadgeStyle =
+    modeHintVariant === 'browser'
+      ? {
+          backgroundColor: analyzerUiColors.sourceBadgeWebBg,
+          borderColor: analyzerUiColors.sourceBadgeWebBorder,
+          color: analyzerUiColors.sourceBadgeWebText,
+        }
+      : undefined;
 
   return (
     <div>
-      <div
-        className={`transition-all duration-200 ${borderClasses}`}
-      >
-        <div className='flex w-full items-center px-1 py-0.5' style={{ columnGap: chipGap }}>
-          {/* Prev Arrow */}
-          <button
-            className='btn btn-xs btn-ghost flex-shrink-0 rounded-lg px-1.5 py-1.5 disabled:opacity-30'
-            disabled={!canGoPrev}
-            onClick={() => canGoPrev && onNavigate(shotList[currentIndex - 1])}
-            title='Previous shot'
-          >
-            <FontAwesomeIcon icon={faChevronLeft} />
-          </button>
+      <div className={`transition-all duration-200 ${borderClasses}`}>
+        <div
+          className='grid w-full items-center px-1.5 py-0.5 sm:px-2'
+          style={{
+            columnGap: chipGap,
+            gridTemplateColumns: hasShot
+              ? 'auto minmax(0, 1fr) auto auto'
+              : 'auto minmax(0, 1fr) auto',
+          }}
+        >
+          {hasShot ? (
+            <button
+              className={navButtonClasses}
+              disabled={!canGoPrev}
+              onClick={() => canGoPrev && onNavigate(shotList[currentIndex - 1])}
+              title='Previous shot'
+            >
+              <FontAwesomeIcon icon={faChevronLeft} />
+            </button>
+          ) : (
+            <span aria-hidden='true' className='h-6 w-6 flex-shrink-0' />
+          )}
 
-          {/* Clickable center area */}
-          <button
-            type='button'
-            className='block min-w-0 flex-1 cursor-pointer overflow-x-auto px-1 py-1.5 scrollbar-none'
-            onClick={() => !isEditing && onToggleNotesExpanded && onToggleNotesExpanded()}
-            title='Click to expand notes'
-          >
-            <div className='mx-auto flex w-max items-center' style={{ columnGap: chipGap }}>
-              {/* Source Badge */}
-              <span
-                className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${sourceBadgeClass}`}
-              >
-                {sourceLabel}
-              </span>
-
-              {/* Shot ID/Name */}
-              <span className={fieldCls}>{getShotDisplayName()}</span>
-
-              {/* Profile Name (from shot JSON) */}
-              <span className={fieldCls}>{cleanName(currentShot.profile || '—')}</span>
-
-              {/* DateTime */}
-              <span className={fieldCls}>{formatDateTime(currentShot.timestamp)}</span>
-
-              {/* Duration (clock icon) */}
-              <span className={`${fieldCls} flex items-center gap-1`}>
-                <FontAwesomeIcon icon={faClock} className='text-[10px] opacity-50' />
-                {getDuration()}
-              </span>
-
-              {/* Ratio (divide icon) */}
-              <span className={`${fieldCls} flex items-center gap-1`}>
-                <FontAwesomeIcon icon={faDivide} className='text-[10px] opacity-50' />
-                {notes.ratio ? `1:${notes.ratio}` : '—'}
-              </span>
-
-              {/* Dose In/Out (scale icon) */}
-              <span className={`${fieldCls} flex items-center gap-1`}>
-                <FontAwesomeIcon icon={faWeightScale} className='text-[10px] opacity-50' />
-                {notes.doseIn || '—'}g ▸ {notes.doseOut || '—'}g
-              </span>
-
-              {/* Rating (star icon + x/5) */}
-              <span className={`${fieldCls} flex items-center gap-1`}>
+          {hasShot ? (
+            <button
+              type='button'
+              className='block min-w-0 w-full cursor-pointer overflow-x-auto px-1 py-1.5 text-center scrollbar-none'
+              onClick={() => !isEditing && onToggleNotesExpanded && onToggleNotesExpanded()}
+              title='Click to expand notes'
+            >
+              <div className='mx-auto inline-flex min-w-max items-center justify-center' style={{ columnGap: chipGap }}>
+                {currentShot?.source === 'temp' ? (
+                  <span
+                    className='inline-flex items-center justify-center text-base-content/45'
+                    style={{ lineHeight: 0 }}
+                    aria-label='VIEW'
+                    title='Temporary Analyzer View'
+                  >
+                    <FontAwesomeIcon icon={faEye} className='text-[0.72rem]' />
+                  </span>
+                ) : (
+                  <SourceMarker source={currentShot?.source} variant='library' />
+                )}
+                <span className={fieldCls}>{getShotDisplayName()}</span>
+                <span className={fieldCls}>{cleanName(currentShot.profile || '—')}</span>
+                <span className={fieldCls}>{formatDateTime(currentShot.timestamp)}</span>
+                <span className={`${fieldCls} flex items-center gap-1`}>
+                  <FontAwesomeIcon icon={faClock} className='text-[10px] opacity-50' />
+                  {getDuration()}
+                </span>
+                <span className={`${fieldCls} flex items-center gap-1`}>
+                  <FontAwesomeIcon icon={faDivide} className='text-[10px] opacity-50' />
+                  {notes.ratio ? `1:${notes.ratio}` : '—'}
+                </span>
+                <span className={`${fieldCls} flex items-center gap-1`}>
+                  <FontAwesomeIcon icon={faWeightScale} className='text-[10px] opacity-50' />
+                  {notes.doseIn || '—'}g ▸ {notes.doseOut || '—'}g
+                </span>
+                <span className={`${fieldCls} flex items-center gap-1`}>
+                  <FontAwesomeIcon icon={faTag} className='text-[10px] opacity-50' />
+                  {notes.beanType || '—'}
+                </span>
+                <span className={`${fieldCls} flex items-center gap-1`}>
+                  <FontAwesomeIcon icon={faGears} className='text-[10px] opacity-50' />
+                  {notes.grindSetting || '—'}
+                </span>
+                <span className={`${fieldCls} capitalize`}>{notes.balanceTaste}</span>
+                <span className={`${fieldCls} flex items-center gap-1`}>
+                  <FontAwesomeIcon
+                    icon={faStar}
+                    className={`text-[10px] ${notes.rating > 0 ? 'opacity-60' : 'opacity-30'}`}
+                  />
+                  {notes.rating > 0 ? `${notes.rating}/5` : '—'}
+                </span>
+              </div>
+            </button>
+          ) : (
+            <div className='flex min-w-0 items-center justify-center px-2 py-1.5 text-center text-sm font-medium italic opacity-70'>
+              <span className='inline-flex flex-wrap items-center justify-center gap-1.5'>
                 <FontAwesomeIcon
-                  icon={faStar}
-                  className={`text-[10px] ${notes.rating > 0 ? 'text-yellow-400' : 'opacity-30'}`}
+                  icon={faArrowTurnUp}
+                  className='text-[0.72rem] opacity-80'
+                  style={{ transform: 'scaleX(-1)' }}
                 />
-                {notes.rating > 0 ? `${notes.rating}/5` : '—'}
-              </span>
-
-              {/* Balance/Taste (right after rating) */}
-              <span className={`${fieldCls} capitalize`} style={getTasteTextStyle(notes.balanceTaste)}>
-                {notes.balanceTaste}
-              </span>
-
-              {/* Bean Type (tag icon) */}
-              <span className={`${fieldCls} flex items-center gap-1`}>
-                <FontAwesomeIcon icon={faTag} className='text-[10px] opacity-50' />
-                {notes.beanType || '—'}
-              </span>
-
-              {/* Grind Setting (gears icon) */}
-              <span className={`${fieldCls} flex items-center gap-1`}>
-                <FontAwesomeIcon icon={faGears} className='text-[10px] opacity-50' />
-                {notes.grindSetting || '—'}
+                <span>Drag &amp; Drop</span>
+                <FontAwesomeIcon icon={faArrowTurnUp} className='text-[0.72rem] opacity-80' />
               </span>
             </div>
-          </button>
+          )}
 
-          {/* Next Arrow */}
+          {hasShot && (
+            <button
+              className={navButtonClasses}
+              disabled={!canGoNext}
+              onClick={() => canGoNext && onNavigate(shotList[currentIndex + 1])}
+              title='Next shot'
+            >
+              <FontAwesomeIcon icon={faChevronRight} />
+            </button>
+          )}
+
           <button
-            className='btn btn-xs btn-ghost flex-shrink-0 rounded-lg px-1.5 py-1.5 disabled:opacity-30'
-            disabled={!canGoNext}
-            onClick={() => canGoNext && onNavigate(shotList[currentIndex + 1])}
-            title='Next shot'
+            ref={modeButtonRef}
+            type='button'
+            className={`${modeButtonClasses} ${importMode === 'browser' ? 'opacity-75' : 'opacity-60'}`}
+            style={
+              importMode === 'browser'
+                ? { color: analyzerUiColors.sourceBadgeWebText }
+                : undefined
+            }
+            onClick={handleModeToggle}
+            title={
+              importMode === 'browser'
+                ? 'Save to Browser. Click to switch imports to View temporarily.'
+                : 'View temporarily. Click to switch imports to Save to Browser.'
+            }
+            aria-label={
+              importMode === 'browser'
+                ? 'Switch import mode to View temporarily'
+                : 'Switch import mode to Save to Browser'
+            }
           >
-            <FontAwesomeIcon icon={faChevronRight} />
+            <FontAwesomeIcon icon={importMode === 'browser' ? faLaptopFile : faEye} className='text-xs' />
           </button>
         </div>
 
@@ -394,6 +531,29 @@ export function NotesBar({
           />
         </div>
       )}
+
+      {modeHint &&
+        createPortal(
+          <div
+            className='pointer-events-none fixed z-[85] rounded-xl border border-base-content/10 bg-base-100/95 px-3 py-2 shadow-xl backdrop-blur-sm'
+            style={{
+              top: `${modeHintPosition.top}px`,
+              left: `${modeHintPosition.left}px`,
+              width: 'min(22rem, calc(100vw - 2rem))',
+            }}
+          >
+            <div className='flex items-center gap-2 text-xs leading-5 text-base-content/80'>
+              <span
+                className='inline-flex h-5 shrink-0 items-center rounded-full border px-2 text-[10px] font-bold uppercase tracking-[0.14em]'
+                style={modeHintBadgeStyle}
+              >
+                {modeHintVariant === 'browser' ? 'SAVE' : 'VIEW'}
+              </span>
+              <span className='min-w-0'>{modeHint}</span>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

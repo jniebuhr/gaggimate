@@ -444,6 +444,7 @@ export function ShotChart({ shotData, results }) {
           tooltipRef={externalTooltipRef}
           state={externalTooltipState}
           layout={externalTooltipLayout}
+          isFullDisplay={isFullDisplay}
         />
       </div>
       <div className='relative mt-0 w-full' style={{ height: `${effectiveTempChartHeight}px` }}>

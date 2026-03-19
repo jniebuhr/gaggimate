@@ -23,6 +23,12 @@ import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute'
 
 import { EmptyState } from './components/EmptyState.jsx';
 
+const clampNonNegativeDelay = value => {
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue)) return 0;
+  return Math.max(0, Math.round(parsedValue));
+};
+
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
@@ -55,6 +61,16 @@ export function ShotAnalyzer() {
   const profileMatchIdRef = useRef(0);
   const analysisIdRef = useRef(0);
   const profileSearchTimerRef = useRef(null);
+
+  const handleSettingsChange = nextSettings => {
+    setSettings(prevSettings => ({
+      ...prevSettings,
+      ...nextSettings,
+      scaleDelay: clampNonNegativeDelay(nextSettings?.scaleDelay ?? prevSettings.scaleDelay),
+      sensorDelay: clampNonNegativeDelay(nextSettings?.sensorDelay ?? prevSettings.sensorDelay),
+      autoDelay: Boolean(nextSettings?.autoDelay ?? prevSettings.autoDelay),
+    }));
+  };
 
   // Cleanup pending profile search on unmount
   useEffect(() => {
@@ -301,11 +317,7 @@ export function ShotAnalyzer() {
         {currentShot ? (
           // --- Active Analysis View ---
           <div ref={analysisSectionRef} className='animate-fade-in mt-8 space-y-5'>
-            <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-5 shadow-sm backdrop-blur-sm'>
-              <div className='text-base-content border-base-content/10 mb-4 border-b-2 pb-2.5 text-lg font-bold tracking-wide uppercase'>
-                Shot Analysis
-              </div>
-
+            <div className='bg-base-100 border-base-content/10 rounded-lg border p-5 shadow-sm'>
               <div className='mb-8'>
                 <ShotChart shotData={currentShot} results={analysisResults} />
               </div>
@@ -317,7 +329,7 @@ export function ShotAnalyzer() {
                     activeColumns={activeColumns}
                     onColumnsChange={setActiveColumns}
                     settings={settings}
-                    onSettingsChange={setSettings}
+                    onSettingsChange={handleSettingsChange}
                     onAnalyze={performAnalysis}
                   />
                 </div>
@@ -325,7 +337,9 @@ export function ShotAnalyzer() {
             </div>
           </div>
         ) : (
-          <EmptyState loading={loading} />
+          <div className='mt-8'>
+            <EmptyState loading={loading} />
+          </div>
         )}
       </div>
     </div>

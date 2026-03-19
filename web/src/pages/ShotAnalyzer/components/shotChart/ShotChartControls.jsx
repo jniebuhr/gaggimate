@@ -19,6 +19,14 @@ import {
   THIN_LINE_WIDTH,
   VISIBILITY_KEY_BY_LABEL,
 } from './constants';
+import {
+  ANALYZER_COMPACT_ICON_BUTTON_CLASS,
+  ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES,
+  getAnalyzerIconButtonClasses,
+  getAnalyzerSurfaceTriggerClasses,
+  getAnalyzerTextButtonClasses,
+} from '../analyzerControlStyles';
+import { getShotChartDisplayLabel, getShotChartLabelIcon } from './labelVisuals';
 
 export function ShotChartControls({
   exportMenuRef,
@@ -54,6 +62,11 @@ export function ShotChartControls({
   shouldShowWebmToggle,
   visibility,
 }) {
+  const chartActionButtonClasses = getAnalyzerIconButtonClasses({
+    className:
+      `btn btn-ghost btn-xs ${ANALYZER_COMPACT_ICON_BUTTON_CLASS} rounded-none border-0 bg-transparent p-0 shadow-none`,
+  });
+
   return (
     <>
       {/* Keep the control bar extracted so ShotChart.jsx can focus on chart lifecycle and replay logic. */}
@@ -68,6 +81,8 @@ export function ShotChartControls({
             const swatchLineWidth = LEGEND_THIN_LINE_LABELS.has(label)
               ? THIN_LINE_WIDTH
               : STANDARD_LINE_WIDTH;
+            const labelIcon = getShotChartLabelIcon(label);
+            const displayLabel = getShotChartDisplayLabel(label);
 
             return (
               <button
@@ -78,62 +93,70 @@ export function ShotChartControls({
                 disabled={isControlsLocked}
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded px-1.5 py-1 text-[10px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-35 ${
                   isVisible
-                    ? 'text-base-content opacity-90'
-                    : 'text-base-content/60 opacity-45 hover:opacity-70'
+                    ? 'text-base-content opacity-90 hover:bg-base-content/5'
+                    : 'text-base-content/60 opacity-45 hover:bg-base-content/5 hover:text-primary hover:opacity-75'
                 }`}
               >
                 {LEGEND_BLOCK_LABELS.has(label) ? (
                   <span className='h-2.5 w-3 rounded-[2px]' style={{ backgroundColor: swatchColor }} />
+                ) : labelIcon ? (
+                  <FontAwesomeIcon
+                    icon={labelIcon}
+                    className='text-[10px]'
+                    style={{ color: swatchColor }}
+                    aria-hidden='true'
+                  />
                 ) : (
                   <span
                     className={`block w-4 border-t ${LEGEND_DASHED_LABELS.has(label) ? 'border-dashed' : 'border-solid'}`}
                     style={{ borderColor: swatchColor, borderTopWidth: `${swatchLineWidth}px` }}
                   />
                 )}
-                <span>{label}</span>
+                <span>{displayLabel}</span>
               </button>
             );
           })}
         </div>
 
         <div className='flex shrink-0 flex-wrap items-center justify-end gap-2'>
-          <button
-            type='button'
-            onClick={onReplayToggle}
-            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
-            disabled={isControlsLocked}
-            aria-label={
-              isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'
-            }
-            title={isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'}
-          >
-            <FontAwesomeIcon
-              icon={isReplaying ? faPause : faPlay}
-              className='text-[11px] opacity-80'
-            />
-          </button>
-          <button
-            type='button'
-            onClick={onStop}
-            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
-            disabled={isReplayExporting && !isVideoExportActive}
-            aria-label={isVideoExportActive ? 'Cancel replay export' : 'Stop replay and restore chart'}
-            title={isVideoExportActive ? 'Cancel replay export' : 'Stop replay and restore chart'}
-          >
-            <FontAwesomeIcon icon={faStop} className='text-[10px] opacity-80' />
-          </button>
-          <div ref={exportMenuRef} className='relative'>
+          <div className={ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES}>
             <button
               type='button'
-              onClick={onExportMenuToggle}
-              className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
+              onClick={onReplayToggle}
+              className={chartActionButtonClasses}
               disabled={isControlsLocked}
-              aria-label='Open export menu'
-              aria-expanded={exportMenuState.open}
-              title='Open export menu'
+              aria-label={
+                isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'
+              }
+              title={isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'}
             >
-              <FontAwesomeIcon icon={faFileExport} className='text-[11px] opacity-80' />
+              <FontAwesomeIcon
+                icon={isReplaying ? faPause : faPlay}
+                className='text-[10px]'
+              />
             </button>
+            <button
+              type='button'
+              onClick={onStop}
+              className={chartActionButtonClasses}
+              disabled={isReplayExporting && !isVideoExportActive}
+              aria-label={isVideoExportActive ? 'Cancel replay export' : 'Stop replay and restore chart'}
+              title={isVideoExportActive ? 'Cancel replay export' : 'Stop replay and restore chart'}
+            >
+              <FontAwesomeIcon icon={faStop} className='text-[10px]' />
+            </button>
+            <div ref={exportMenuRef} className='relative flex'>
+              <button
+                type='button'
+                onClick={onExportMenuToggle}
+                className={`${chartActionButtonClasses} ${exportMenuState.open ? 'text-base-content/90' : ''}`}
+                disabled={isControlsLocked}
+                aria-label='Open export menu'
+                aria-expanded={exportMenuState.open}
+                title='Open export menu'
+              >
+                <FontAwesomeIcon icon={faFileExport} className='text-[10px]' />
+              </button>
             {exportMenuState.open ? (
               <div className='bg-base-100/95 border-base-content/10 absolute right-0 top-full z-[70] mt-2 w-[min(92vw,15rem)] rounded-xl border p-3 text-[12px] shadow-xl backdrop-blur-md'>
                 <div className='mb-2 text-[11px] font-semibold uppercase tracking-wide opacity-60'>
@@ -151,10 +174,12 @@ export function ShotChartControls({
                   ].map(option => (
                     <label
                       key={option.value}
-                      className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${
+                      className={`${
                         option.disabled
                           ? 'cursor-not-allowed opacity-50'
-                          : 'cursor-pointer hover:bg-base-content/5'
+                          : getAnalyzerSurfaceTriggerClasses({
+                              className: 'flex cursor-pointer items-center gap-2 px-2 py-1.5',
+                            })
                       }`}
                     >
                       <input
@@ -170,7 +195,11 @@ export function ShotChartControls({
                   ))}
                 </div>
                 {exportMenuState.exportType !== 'json' ? (
-                  <label className='mt-2 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-base-content/5'>
+                  <label
+                    className={getAnalyzerSurfaceTriggerClasses({
+                      className: 'mt-2 flex cursor-pointer items-center gap-2 px-2 py-1.5',
+                    })}
+                  >
                     <input
                       type='checkbox'
                       className='checkbox checkbox-xs'
@@ -181,7 +210,11 @@ export function ShotChartControls({
                   </label>
                 ) : null}
                 {exportMenuState.exportType === 'video' && shouldShowWebmToggle ? (
-                  <div className='mt-1 rounded-md px-2 py-1.5 hover:bg-base-content/5'>
+                  <div
+                    className={getAnalyzerSurfaceTriggerClasses({
+                      className: 'mt-1 px-2 py-1.5',
+                    })}
+                  >
                     <div className='flex items-center gap-2'>
                       <label className='flex min-w-0 flex-1 cursor-pointer items-center gap-2'>
                         <input
@@ -198,7 +231,9 @@ export function ShotChartControls({
                       <button
                         type='button'
                         onClick={onExportFormatInfoToggle}
-                        className='btn btn-ghost btn-xs h-6 min-h-0 w-6 p-0'
+                        className={getAnalyzerIconButtonClasses({
+                          className: 'btn btn-ghost btn-xs h-6 min-h-0 w-6 p-0',
+                        })}
                         aria-label='Explain WebM export'
                         aria-expanded={exportMenuState.showFormatInfo}
                         title='Explain WebM export'
@@ -219,7 +254,9 @@ export function ShotChartControls({
                   <button
                     type='button'
                     onClick={onCloseExportMenu}
-                    className='btn btn-ghost btn-xs h-7 min-h-0 px-2.5'
+                    className={getAnalyzerTextButtonClasses({
+                      className: 'btn btn-ghost btn-xs h-7 min-h-0 px-2.5',
+                    })}
                   >
                     Cancel
                   </button>
@@ -233,37 +270,38 @@ export function ShotChartControls({
                 </div>
               </div>
             ) : null}
+            </div>
+            <button
+              type='button'
+              onClick={onChartHeightToggle}
+              className={chartActionButtonClasses}
+              disabled={isControlsLocked || isFullDisplay}
+              aria-label={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
+              title={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
+            >
+              <FontAwesomeIcon
+                icon={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? faMinimize : faMaximize}
+                className='text-[10px]'
+              />
+            </button>
+            <button
+              type='button'
+              onClick={onFullDisplayToggle}
+              className={chartActionButtonClasses}
+              disabled={isControlsLocked}
+              aria-label={isFullDisplay ? 'Close full display' : 'Open full display'}
+              title={isFullDisplay ? 'Close full display' : 'Open full display'}
+            >
+              <FontAwesomeIcon
+                icon={
+                  isFullDisplay
+                    ? faDownLeftAndUpRightToCenter
+                    : faUpRightAndDownLeftFromCenter
+                }
+                className='text-[10px]'
+              />
+            </button>
           </div>
-          <button
-            type='button'
-            onClick={onChartHeightToggle}
-            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
-            disabled={isControlsLocked || isFullDisplay}
-            aria-label={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
-            title={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? 'Minimize chart' : 'Maximize chart'}
-          >
-            <FontAwesomeIcon
-              icon={mainChartHeight === MAIN_CHART_HEIGHT_BIG ? faMinimize : faMaximize}
-              className='text-[11px] opacity-80'
-            />
-          </button>
-          <button
-            type='button'
-            onClick={onFullDisplayToggle}
-            className='btn btn-ghost btn-xs h-7 min-h-0 w-7 p-0'
-            disabled={isControlsLocked}
-            aria-label={isFullDisplay ? 'Close full display' : 'Open full display'}
-            title={isFullDisplay ? 'Close full display' : 'Open full display'}
-          >
-            <FontAwesomeIcon
-              icon={
-                isFullDisplay
-                  ? faDownLeftAndUpRightToCenter
-                  : faUpRightAndDownLeftFromCenter
-              }
-              className='text-[11px] opacity-80'
-            />
-          </button>
           {replayExportStatusLabel ? (
             <div className='min-w-[10rem] text-right'>
               <div

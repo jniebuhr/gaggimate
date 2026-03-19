@@ -998,7 +998,7 @@ export function StatisticsView({ initialContext }) {
   return (
     <div className='space-y-5'>
       <div className='bg-base-100/80 border-base-content/10 z-50 rounded-xl border shadow-lg backdrop-blur-md lg:sticky lg:top-0'>
-        <div className='p-2'>
+        <div className='px-1.5 py-1.5 sm:px-2 sm:py-2'>
           <StatisticsToolbar
             source={source}
             onSourceChange={value => {

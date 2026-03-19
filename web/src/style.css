@@ -205,6 +205,12 @@
   --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 97%, var(--color-base-content) 1%);
   --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 10%, transparent);
   --statistics-summary-shadow: rgba(15, 23, 42, 0.08);
+  --analyzer-source-gm-badge-bg: color-mix(in srgb, var(--color-base-content) 8%, transparent);
+  --analyzer-source-gm-badge-border: color-mix(in srgb, var(--color-base-content) 15%, transparent);
+  --analyzer-source-gm-badge-text: var(--color-base-content);
+  --analyzer-source-web-badge-bg: color-mix(in srgb, var(--color-base-content) 8%, transparent);
+  --analyzer-source-web-badge-border: color-mix(in srgb, var(--color-base-content) 15%, transparent);
+  --analyzer-source-web-badge-text: #5b7aa7;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -262,6 +268,7 @@
     --statistics-summary-surface-muted: color-mix(in srgb, var(--color-base-100) 92%, var(--color-base-content) 2%);
     --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 14%, transparent);
     --statistics-summary-shadow: rgba(0, 0, 0, 0.22);
+    --analyzer-source-web-badge-text: #94a3b8;
   }
 }
 

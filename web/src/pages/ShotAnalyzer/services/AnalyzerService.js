@@ -902,8 +902,13 @@ export function calculateShotMetrics(shotData, profileData, settings) {
         (a, b) => (b.delayReviewMs || 0) - (a.delayReviewMs || 0),
       )[0]
     : null;
-  const delayReviewPhaseNumber = primaryDelayReview ? primaryDelayReview.tablePhaseNumber : null;
-  const delayReviewMs = primaryDelayReview ? primaryDelayReview.delayReviewMs : null;
+  const hideLastPhaseDelayReview =
+    primaryDelayReview?.tablePhaseNumber === analyzedPhases.length;
+  const shouldExposeDelayReview = Boolean(primaryDelayReview) && !hideLastPhaseDelayReview;
+  const delayReviewPhaseNumber = shouldExposeDelayReview
+    ? primaryDelayReview.tablePhaseNumber
+    : null;
+  const delayReviewMs = shouldExposeDelayReview ? primaryDelayReview.delayReviewMs : null;
   const delayReviewMessage = delayReviewPhaseNumber
     ? delayReviewMs != null
       ? `Unusually high inferred delay in Phase ${delayReviewPhaseNumber} (${delayReviewMs} ms).`
@@ -915,7 +920,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     globalScaleLost,
     highScaleDelay: hasHighScaleDelay,
     highScaleDelayMs,
-    delayReviewHint: hasDelayReviewHint,
+    delayReviewHint: shouldExposeDelayReview,
     delayReviewPhaseNumber,
     delayReviewMs,
     delayReviewMessage,
