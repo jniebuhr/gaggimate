@@ -49,7 +49,10 @@ export function App() {
                         <Route path='/history' component={ShotHistory} />
                         <Route path='/analyzer' component={ShotAnalyzer} />
                         <Route path='/statistics' component={StatisticsPage} />
-                        <Route path='/statistics/:sourceAlias/:profileName' component={StatisticsPage} />
+                        <Route
+                          path='/statistics/:sourceAlias/:profileName'
+                          component={StatisticsPage}
+                        />
                         <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
                         {/*deep-link route (sorce & ID)*/}
                         <Route default component={NotFound} />

@@ -5,6 +5,7 @@ import { ApiServiceContext } from '../../services/ApiService.js';
 import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { machine } from '../../services/ApiService.js';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -27,6 +28,7 @@ export function OTA() {
   const [formData, setFormData] = useState({});
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
+  const rssi = machine.value.status.rssi;
 
   const downloadSupportData = useCallback(async () => {
     const settingsResponse = await fetch(`/api/settings`);
@@ -63,15 +65,15 @@ export function OTA() {
       apiService.off('evt:ota-progress', listenerId);
     };
   }, [apiService]);
-  
+
   useEffect(() => {
     const listenerId = apiService.on('evt:history-rebuild-progress', msg => {
       setRebuildProgress({
         total: msg.total || 0,
         current: msg.current || 0,
-        status: msg.status || ''
+        status: msg.status || '',
       });
-      
+
       if (msg.status === 'completed' || msg.status === 'error') {
         setRebuilding(false);
         setRebuilt(msg.status === 'completed');
@@ -159,7 +161,7 @@ export function OTA() {
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
           <Card sm={12} title='System Information'>
             <div className='flex flex-col space-y-4'>
-              <label htmlFor='channel' className='text-sm font-medium'>
+              <label htmlFor='channel' className='mb-2 block text-sm font-medium'>
                 Update Channel
               </label>
               <select id='channel' name='channel' className='select select-bordered w-full'>
@@ -173,15 +175,13 @@ export function OTA() {
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Hardware</label>
-              <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
-                {formData.hardware}
-              </div>
+              <label className='mb-2 block text-sm font-medium'>Hardware</label>
+              <span className='font-light'>{formData.hardware}</span>
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Controller Version</label>
-              <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
+              <label className='mb-2 block text-sm font-medium'>Controller Version</label>
+              <div className='flex flex-row gap-2 font-light'>
                 <span className='break-all'>{formData.controllerVersion}</span>
                 {formData.controllerUpdateAvailable && (
                   <span className='text-primary font-bold break-all'>
@@ -192,8 +192,8 @@ export function OTA() {
             </div>
 
             <div className='flex flex-col space-y-4'>
-              <label className='text-sm font-medium'>Display Version</label>
-              <div className='input input-bordered bg-base-200 cursor-default break-words whitespace-normal'>
+              <label className='mb-2 block text-sm font-medium'>Display Version</label>
+              <div className='flex flex-row gap-2 font-light'>
                 <span className='break-all'>{formData.displayVersion}</span>
                 {formData.displayUpdateAvailable && (
                   <span className='text-primary font-bold break-all'>
@@ -203,9 +203,19 @@ export function OTA() {
               </div>
             </div>
 
+            <div className='flex flex-col space-y-4'>
+              <label className='mb-2 block text-sm font-medium'>Controller Signal Strength</label>
+              <span className='font-light'>
+                {rssi}dB{' '}
+                <span
+                  className={`indicator-item status ml-2 ${rssi < -90 ? 'status-error' : rssi < -80 ? 'status-warning' : 'status-success'}`}
+                ></span>
+              </span>
+            </div>
+
             {formData.spiffsTotal !== undefined && (
               <div className='flex flex-col space-y-2'>
-                <label className='text-sm font-medium'>Storage (SPIFFS)</label>
+                <label className='mb-2 block text-sm font-medium'>Storage (SPIFFS)</label>
                 <div className='flex flex-col gap-1'>
                   <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
                     <div
@@ -298,25 +308,26 @@ export function OTA() {
               )}
             </button>
           </div>
-          
+
           {rebuilding && (
             <div className='mt-3'>
-              <div className='text-sm text-base-content/70 mb-1'>
-                {rebuildProgress.status === 'starting' || rebuildProgress.status === 'scanning' || rebuildProgress.total === 0 ? (
-                  'Scanning shot history files...'
-                ) : (
-                  `Processing shot history files (${rebuildProgress.current}/${rebuildProgress.total})`
-                )}
+              <div className='text-base-content/70 mb-1 text-sm'>
+                {rebuildProgress.status === 'starting' ||
+                rebuildProgress.status === 'scanning' ||
+                rebuildProgress.total === 0
+                  ? 'Scanning shot history files...'
+                  : `Processing shot history files (${rebuildProgress.current}/${rebuildProgress.total})`}
               </div>
               <div className='bg-base-300 h-2 w-full overflow-hidden rounded'>
                 <div
                   className={`h-full transition-all duration-300 ${
                     rebuildProgress.total === 0 ? 'bg-primary animate-pulse' : 'bg-primary'
                   }`}
-                  style={{ 
-                    width: rebuildProgress.total > 0 
-                      ? `${(rebuildProgress.current / rebuildProgress.total) * 100}%`
-                      : '30%'
+                  style={{
+                    width:
+                      rebuildProgress.total > 0
+                        ? `${(rebuildProgress.current / rebuildProgress.total) * 100}%`
+                        : '30%',
                   }}
                 />
               </div>

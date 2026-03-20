@@ -40,7 +40,7 @@ export function Navigation(props) {
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
         <MenuItem label='PID Autotune' link='/pidtune' icon={faTemperatureHalf} />
-        <MenuItem label='Bluetooth Scales' link='/scales' icon={faBluetoothB} />
+        <MenuItem label='Bluetooth Devices' link='/scales' icon={faBluetoothB} />
         <MenuItem label='Settings' link='/settings' icon={faCog} />
       </div>
       <hr className='h-5 border-0' />

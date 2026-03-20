@@ -64,8 +64,8 @@ LV_IMG_DECLARE(ui_img_545340440);     // assets/raindrops-80x80.png
 LV_IMG_DECLARE(ui_img_363557387);     // assets/coffee-bean-80x80.png
 LV_IMG_DECLARE(ui_img_445946954);     // assets/play-40x40.png
 LV_IMG_DECLARE(ui_img_1424216268);    // assets/equality-40x40.png
-LV_IMG_DECLARE(ui_img_340148213);     // assets/settings-40x40.png
 LV_IMG_DECLARE(ui_img_332059803);     // assets/dropdown-bar-40x40.png
+LV_IMG_DECLARE(ui_img_340148213);     // assets/settings-40x40.png
 LV_IMG_DECLARE(ui_img_834125362);     // assets/minus-small-40x40.png
 LV_IMG_DECLARE(ui_img_390988422);     // assets/plus-small-40x40.png
 LV_IMG_DECLARE(ui_img_1594943393);    // assets/disk-30x30.png

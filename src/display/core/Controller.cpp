@@ -335,12 +335,18 @@ void Controller::loop() {
             if (lastProcess->getType() == MODE_BREW) {
                 if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
                     brewProcess->target == ProcessTarget::VOLUMETRIC) {
-                    settings.setBrewDelay(brewProcess->getNewDelayTime());
+                    double newDelay = brewProcess->getNewDelayTime();
+                    if (newDelay >= 0) {
+                        settings.setBrewDelay(newDelay);
+                    }
                 }
             } else if (lastProcess->getType() == MODE_GRIND) {
                 if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
                     grindProcess->target == ProcessTarget::VOLUMETRIC) {
-                    settings.setGrindDelay(grindProcess->getNewDelayTime());
+                    double newDelay = grindProcess->getNewDelayTime();
+                    if (newDelay >= 0) {
+                        settings.setGrindDelay(newDelay);
+                    }
                 }
             }
         }
@@ -716,7 +722,7 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     if (currentProcess != nullptr) {
         currentProcess->updateVolume(measurement);
     }
-    if (lastProcess != nullptr) {
+    if (lastProcess != nullptr && !lastProcess->isComplete()) {
         lastProcess->updateVolume(measurement);
     }
 }

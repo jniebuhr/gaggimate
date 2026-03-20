@@ -109,6 +109,7 @@ void WebUIPlugin::loop() {
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
         doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["gact"] = controller->isGrindActive() ? 1 : 0;
+        doc["rssi"] = controller->getClientController()->getClient()->getRssi();
 
         bool bleConnected = BLEScales.isConnected();
         // Add Bluetooth scale weight information
@@ -666,6 +667,7 @@ void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
         JsonDocument scale;
         scale["uuid"] = device.getAddress().toString();
         scale["name"] = device.getName();
+        scale["rssi"] = device.getRSSI();
         scalesArray.add(scale);
     }
     AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -704,6 +706,7 @@ void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
     doc["connected"] = BLEScales.isConnected();
     doc["name"] = BLEScales.getName();
     doc["uuid"] = BLEScales.getUUID();
+    doc["rssi"] = BLEScales.getRSSI();
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
     request->send(response);

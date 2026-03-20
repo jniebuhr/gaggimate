@@ -184,6 +184,7 @@ export default class ApiService {
       bluetoothConnected: message.bc || false,
       process: message.process || null,
       timestamp: new Date(),
+      rssi: message.rssi || 0,
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;
