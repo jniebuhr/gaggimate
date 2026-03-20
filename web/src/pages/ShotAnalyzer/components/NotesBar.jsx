@@ -5,6 +5,8 @@
  * Edit mode lives in the expanded panel with vertical layout.
  */
 
+/* global globalThis */
+
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -24,6 +26,155 @@ import { cleanName, analyzerUiColors } from '../utils/analyzerUtils';
 import { NotesBarExpanded } from './NotesBarExpanded';
 import { SourceMarker } from './SourceMarker';
 import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
+
+function isTypingTarget(target) {
+  const activeElement =
+    typeof Element !== 'undefined' && target instanceof Element ? target : document.activeElement;
+  if (!activeElement) return false;
+  const tag = activeElement.tagName?.toLowerCase();
+  if (activeElement.isContentEditable) return true;
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+  return !!activeElement.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]');
+}
+
+function formatNotesBarDateTime(timestamp) {
+  if (!timestamp) return '—';
+  const date = new Date(timestamp * 1000);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
+}
+
+function getShotDuration(currentShot) {
+  if (!currentShot?.samples?.length) return '—';
+  const first = currentShot.samples[0].t;
+  const last = currentShot.samples[currentShot.samples.length - 1].t;
+  return `${Math.round((last - first) / 1000)}s`;
+}
+
+function getShotDisplayName(currentShot, currentShotName) {
+  if (currentShot?.source === 'gaggimate') {
+    return `#${currentShot.id}`;
+  }
+  return cleanName(currentShotName);
+}
+
+function getModeHintCopy(nextMode) {
+  return nextMode === 'browser'
+    ? 'Save to Browser. Imported shots and profiles will now be saved to the browser library.'
+    : 'View temporarily. Imported shots and profiles will now open temporarily in the analyzer.';
+}
+
+function LoadedShotSummary({
+  chipGap,
+  currentShot,
+  currentShotName,
+  fieldCls,
+  getDurationLabel,
+  notes,
+  isEditing,
+  onToggleNotesExpanded,
+}) {
+  return (
+    <button
+      type='button'
+      className='block min-w-0 w-full cursor-pointer overflow-x-auto px-1 py-1.5 text-center scrollbar-none'
+      onClick={() => !isEditing && onToggleNotesExpanded && onToggleNotesExpanded()}
+      title='Click to expand notes'
+    >
+      <div className='mx-auto inline-flex min-w-max items-center justify-center' style={{ columnGap: chipGap }}>
+        {currentShot?.source === 'temp' ? (
+          <span
+            className='inline-flex items-center justify-center text-base-content/45'
+            style={{ lineHeight: 0 }}
+            aria-label='VIEW'
+            title='Temporary Analyzer View'
+          >
+            <FontAwesomeIcon icon={faEye} className='text-[0.72rem]' />
+          </span>
+        ) : (
+          <SourceMarker source={currentShot?.source} variant='library' />
+        )}
+        <span className={fieldCls}>{getShotDisplayName(currentShot, currentShotName)}</span>
+        <span className={fieldCls}>{cleanName(currentShot.profile || '—')}</span>
+        <span className={fieldCls}>{formatNotesBarDateTime(currentShot.timestamp)}</span>
+        <span className={`${fieldCls} flex items-center gap-1`}>
+          <FontAwesomeIcon icon={faClock} className='text-[10px] opacity-50' />
+          {getDurationLabel}
+        </span>
+        <span className={`${fieldCls} flex items-center gap-1`}>
+          <FontAwesomeIcon icon={faDivide} className='text-[10px] opacity-50' />
+          {notes.ratio ? `1:${notes.ratio}` : '—'}
+        </span>
+        <span className={`${fieldCls} flex items-center gap-1`}>
+          <FontAwesomeIcon icon={faWeightScale} className='text-[10px] opacity-50' />
+          {notes.doseIn || '—'}g ▸ {notes.doseOut || '—'}g
+        </span>
+        <span className={`${fieldCls} flex items-center gap-1`}>
+          <FontAwesomeIcon icon={faTag} className='text-[10px] opacity-50' />
+          {notes.beanType || '—'}
+        </span>
+        <span className={`${fieldCls} flex items-center gap-1`}>
+          <FontAwesomeIcon icon={faGears} className='text-[10px] opacity-50' />
+          {notes.grindSetting || '—'}
+        </span>
+        <span className={`${fieldCls} capitalize`}>{notes.balanceTaste}</span>
+        <span className={`${fieldCls} flex items-center gap-1`}>
+          <FontAwesomeIcon
+            icon={faStar}
+            className={`text-[10px] ${notes.rating > 0 ? 'opacity-60' : 'opacity-30'}`}
+          />
+          {notes.rating > 0 ? `${notes.rating}/5` : '—'}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+function PlaceholderShotSummary() {
+  return (
+    <div className='flex min-w-0 items-center justify-center px-2 py-1.5 text-center text-sm font-medium italic opacity-70'>
+      <span className='inline-flex flex-wrap items-center justify-center gap-1.5'>
+        <FontAwesomeIcon
+          icon={faArrowTurnUp}
+          className='text-[0.72rem] opacity-80'
+          style={{ transform: 'scaleX(-1)' }}
+        />
+        <span>Drag &amp; Drop</span>
+        <FontAwesomeIcon icon={faArrowTurnUp} className='text-[0.72rem] opacity-80' />
+      </span>
+    </div>
+  );
+}
+
+function ModeHintPortal({ modeHint, modeHintBadgeStyle, modeHintPosition, modeHintVariant }) {
+  if (!modeHint) return null;
+
+  return createPortal(
+    <div
+      className='pointer-events-none fixed z-[85] rounded-xl border border-base-content/10 bg-base-100/95 px-3 py-2 shadow-xl backdrop-blur-sm'
+      style={{
+        top: `${modeHintPosition.top}px`,
+        left: `${modeHintPosition.left}px`,
+        width: 'min(22rem, calc(100vw - 2rem))',
+      }}
+    >
+      <div className='flex items-center gap-2 text-xs leading-5 text-base-content/80'>
+        <span
+          className='inline-flex h-5 shrink-0 items-center rounded-full border px-2 text-[10px] font-bold uppercase tracking-[0.14em]'
+          style={modeHintBadgeStyle}
+        >
+          {modeHintVariant === 'browser' ? 'SAVE' : 'VIEW'}
+        </span>
+        <span className='min-w-0'>{modeHint}</span>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 export function NotesBar({
   currentShot,
@@ -193,15 +344,6 @@ export function NotesBar({
   useEffect(() => {
     if (!currentShot) return;
 
-    const isTypingTarget = target => {
-      const el = target instanceof Element ? target : document.activeElement;
-      if (!el) return false;
-      const tag = el.tagName?.toLowerCase();
-      if (el.isContentEditable) return true;
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
-      return !!el.closest('input, textarea, select, [contenteditable=\"true\"], [role=\"textbox\"]');
-    };
-
     const handleKeyDown = e => {
       if (e.defaultPrevented) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -216,8 +358,8 @@ export function NotesBar({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, [currentShot, canGoPrev, canGoNext, currentIndex, shotList, onNavigate]);
 
   useEffect(() => {
@@ -245,39 +387,13 @@ export function NotesBar({
     return () => resizeObserver.disconnect();
   }, [showExpanded, onExpandedHeightChange]);
 
-  const formatDateTime = ts => {
-    if (!ts) return '—';
-    const d = new Date(ts * 1000);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const mins = String(d.getMinutes()).padStart(2, '0');
-    return `${day}.${month}.${year} ${hours}:${mins}`;
-  };
-
-  const getDuration = () => {
-    if (!currentShot?.samples?.length) return '—';
-    const first = currentShot.samples[0].t;
-    const last = currentShot.samples[currentShot.samples.length - 1].t;
-    return `${Math.round((last - first) / 1000)}s`;
-  };
-
-  // Shot display name: use ID for GaggiMate shots, filename for browser shots
-  const getShotDisplayName = () => {
-    if (currentShot?.source === 'gaggimate') {
-      return `#${currentShot.id}`;
-    }
-    return cleanName(currentShotName);
-  };
-
   const clearModeHintTimers = useCallback(() => {
     if (modeHintTimerRef.current) {
-      window.clearTimeout(modeHintTimerRef.current);
+      globalThis.clearTimeout(modeHintTimerRef.current);
       modeHintTimerRef.current = null;
     }
     if (modeHintDismissArmTimerRef.current) {
-      window.clearTimeout(modeHintDismissArmTimerRef.current);
+      globalThis.clearTimeout(modeHintDismissArmTimerRef.current);
       modeHintDismissArmTimerRef.current = null;
     }
   }, []);
@@ -285,8 +401,9 @@ export function NotesBar({
   const updateModeHintPosition = useCallback(() => {
     const rect = modeButtonRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const hintWidth = Math.min(352, Math.max(0, window.innerWidth - 32));
-    const maxLeft = Math.max(12, window.innerWidth - hintWidth - 12);
+    const viewportWidth = globalThis.innerWidth || 0;
+    const hintWidth = Math.min(352, Math.max(0, viewportWidth - 32));
+    const maxLeft = Math.max(12, viewportWidth - hintWidth - 12);
     setModeHintPosition({
       top: rect.bottom + 10,
       left: Math.min(Math.max(12, rect.left), maxLeft),
@@ -297,18 +414,14 @@ export function NotesBar({
     nextMode => {
       const browserMode = nextMode === 'browser';
       setModeHintVariant(browserMode ? 'browser' : 'temp');
-      setModeHint(
-        browserMode
-          ? 'Save to Browser. Imported shots and profiles will now be saved to the browser library.'
-          : 'View temporarily. Imported shots and profiles will now open temporarily in the analyzer.',
-      );
+      setModeHint(getModeHintCopy(nextMode));
       updateModeHintPosition();
       clearModeHintTimers();
       modeHintDismissReadyRef.current = false;
-      modeHintDismissArmTimerRef.current = window.setTimeout(() => {
+      modeHintDismissArmTimerRef.current = globalThis.setTimeout(() => {
         modeHintDismissReadyRef.current = true;
       }, 180);
-      modeHintTimerRef.current = window.setTimeout(() => {
+      modeHintTimerRef.current = globalThis.setTimeout(() => {
         setModeHint('');
       }, 4200);
     },
@@ -337,11 +450,11 @@ export function NotesBar({
     if (!modeHint) return;
     updateModeHintPosition();
     const handleViewportChange = () => updateModeHintPosition();
-    window.addEventListener('resize', handleViewportChange);
-    window.addEventListener('scroll', handleViewportChange, true);
+    globalThis.addEventListener('resize', handleViewportChange);
+    globalThis.addEventListener('scroll', handleViewportChange, true);
     return () => {
-      window.removeEventListener('resize', handleViewportChange);
-      window.removeEventListener('scroll', handleViewportChange, true);
+      globalThis.removeEventListener('resize', handleViewportChange);
+      globalThis.removeEventListener('scroll', handleViewportChange, true);
     };
   }, [modeHint, updateModeHintPosition]);
 
@@ -404,70 +517,18 @@ export function NotesBar({
           )}
 
           {hasShot ? (
-            <button
-              type='button'
-              className='block min-w-0 w-full cursor-pointer overflow-x-auto px-1 py-1.5 text-center scrollbar-none'
-              onClick={() => !isEditing && onToggleNotesExpanded && onToggleNotesExpanded()}
-              title='Click to expand notes'
-            >
-              <div className='mx-auto inline-flex min-w-max items-center justify-center' style={{ columnGap: chipGap }}>
-                {currentShot?.source === 'temp' ? (
-                  <span
-                    className='inline-flex items-center justify-center text-base-content/45'
-                    style={{ lineHeight: 0 }}
-                    aria-label='VIEW'
-                    title='Temporary Analyzer View'
-                  >
-                    <FontAwesomeIcon icon={faEye} className='text-[0.72rem]' />
-                  </span>
-                ) : (
-                  <SourceMarker source={currentShot?.source} variant='library' />
-                )}
-                <span className={fieldCls}>{getShotDisplayName()}</span>
-                <span className={fieldCls}>{cleanName(currentShot.profile || '—')}</span>
-                <span className={fieldCls}>{formatDateTime(currentShot.timestamp)}</span>
-                <span className={`${fieldCls} flex items-center gap-1`}>
-                  <FontAwesomeIcon icon={faClock} className='text-[10px] opacity-50' />
-                  {getDuration()}
-                </span>
-                <span className={`${fieldCls} flex items-center gap-1`}>
-                  <FontAwesomeIcon icon={faDivide} className='text-[10px] opacity-50' />
-                  {notes.ratio ? `1:${notes.ratio}` : '—'}
-                </span>
-                <span className={`${fieldCls} flex items-center gap-1`}>
-                  <FontAwesomeIcon icon={faWeightScale} className='text-[10px] opacity-50' />
-                  {notes.doseIn || '—'}g ▸ {notes.doseOut || '—'}g
-                </span>
-                <span className={`${fieldCls} flex items-center gap-1`}>
-                  <FontAwesomeIcon icon={faTag} className='text-[10px] opacity-50' />
-                  {notes.beanType || '—'}
-                </span>
-                <span className={`${fieldCls} flex items-center gap-1`}>
-                  <FontAwesomeIcon icon={faGears} className='text-[10px] opacity-50' />
-                  {notes.grindSetting || '—'}
-                </span>
-                <span className={`${fieldCls} capitalize`}>{notes.balanceTaste}</span>
-                <span className={`${fieldCls} flex items-center gap-1`}>
-                  <FontAwesomeIcon
-                    icon={faStar}
-                    className={`text-[10px] ${notes.rating > 0 ? 'opacity-60' : 'opacity-30'}`}
-                  />
-                  {notes.rating > 0 ? `${notes.rating}/5` : '—'}
-                </span>
-              </div>
-            </button>
+            <LoadedShotSummary
+              chipGap={chipGap}
+              currentShot={currentShot}
+              currentShotName={currentShotName}
+              fieldCls={fieldCls}
+              getDurationLabel={getShotDuration(currentShot)}
+              notes={notes}
+              isEditing={isEditing}
+              onToggleNotesExpanded={onToggleNotesExpanded}
+            />
           ) : (
-            <div className='flex min-w-0 items-center justify-center px-2 py-1.5 text-center text-sm font-medium italic opacity-70'>
-              <span className='inline-flex flex-wrap items-center justify-center gap-1.5'>
-                <FontAwesomeIcon
-                  icon={faArrowTurnUp}
-                  className='text-[0.72rem] opacity-80'
-                  style={{ transform: 'scaleX(-1)' }}
-                />
-                <span>Drag &amp; Drop</span>
-                <FontAwesomeIcon icon={faArrowTurnUp} className='text-[0.72rem] opacity-80' />
-              </span>
-            </div>
+            <PlaceholderShotSummary />
           )}
 
           {hasShot && (
@@ -532,28 +593,12 @@ export function NotesBar({
         </div>
       )}
 
-      {modeHint &&
-        createPortal(
-          <div
-            className='pointer-events-none fixed z-[85] rounded-xl border border-base-content/10 bg-base-100/95 px-3 py-2 shadow-xl backdrop-blur-sm'
-            style={{
-              top: `${modeHintPosition.top}px`,
-              left: `${modeHintPosition.left}px`,
-              width: 'min(22rem, calc(100vw - 2rem))',
-            }}
-          >
-            <div className='flex items-center gap-2 text-xs leading-5 text-base-content/80'>
-              <span
-                className='inline-flex h-5 shrink-0 items-center rounded-full border px-2 text-[10px] font-bold uppercase tracking-[0.14em]'
-                style={modeHintBadgeStyle}
-              >
-                {modeHintVariant === 'browser' ? 'SAVE' : 'VIEW'}
-              </span>
-              <span className='min-w-0'>{modeHint}</span>
-            </div>
-          </div>,
-          document.body,
-        )}
+      <ModeHintPortal
+        modeHint={modeHint}
+        modeHintBadgeStyle={modeHintBadgeStyle}
+        modeHintPosition={modeHintPosition}
+        modeHintVariant={modeHintVariant}
+      />
     </div>
   );
 }

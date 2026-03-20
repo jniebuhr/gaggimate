@@ -13,7 +13,7 @@ import DeepDiveLogoRaw from '../assets/deepdive.svg?raw';
 const deepDiveLogoMarkup = DeepDiveLogoRaw.replace(
   '<svg width="2048" height="2048" viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">',
   '<svg width="100%" height="100%" viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" style="display:block;">',
-).replace(/fill="#ffffff"/g, 'fill="currentColor"');
+).replaceAll('fill="#ffffff"', 'fill="currentColor"');
 
 function DeepDiveLogoMark() {
   // Inline the original SVG markup from the asset file so the logo renders on

@@ -21,6 +21,19 @@ function hasFileDrag(event) {
   return false;
 }
 
+function getProfileBadgeClasses({ isMismatch, currentProfile, badgeBaseClass }) {
+  if (isMismatch) return `${badgeBaseClass} text-white`;
+  if (currentProfile) return `${badgeBaseClass} bg-primary border-primary text-primary-content`;
+  return `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
+}
+
+function getProfileBadgeTitle(isMismatch) {
+  if (isMismatch) {
+    return 'Profile mismatch detected. Use the import icon or drop files here to import.';
+  }
+  return 'Click to open the library. Use the import icon or drop files here to import.';
+}
+
 export function StatusBar({
   currentShot,
   currentProfile,
@@ -113,12 +126,11 @@ export function StatusBar({
       }
     : undefined;
 
-  // Updated Badge Logic: If searching, keep it neutral but show activity
-  const profileBadgeClasses = isMismatch
-    ? `${badgeBaseClass} text-white`
-    : currentProfile
-      ? `${badgeBaseClass} bg-primary border-primary text-primary-content`
-      : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
+  const profileBadgeClasses = getProfileBadgeClasses({
+    isMismatch,
+    currentProfile,
+    badgeBaseClass,
+  });
 
   const neutralImportButtonClasses = getAnalyzerIconButtonClasses({
     className: 'h-6 w-6 flex-shrink-0 rounded-full opacity-75 hover:opacity-100',
@@ -146,6 +158,39 @@ export function StatusBar({
     </button>
   );
 
+  const handleBadgeKeyDown = (event, action) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    action();
+  };
+
+  const renderProfileTrailingControl = () => {
+    if (currentProfile) {
+      if (isSearchingProfile) {
+        return <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />;
+      }
+
+      return (
+        <button
+          type='button'
+          onClick={e => {
+            e.stopPropagation();
+            onUnloadProfile();
+          }}
+          className={activeBadgeIconButtonClasses}
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
+      );
+    }
+
+    if (isSearchingProfile) {
+      return <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />;
+    }
+
+    return <FontAwesomeIcon icon={faChevronDown} className='text-xs opacity-40' />;
+  };
+
   return (
     <div
       className='w-full'
@@ -167,7 +212,10 @@ export function StatusBar({
           <div
             className={shotBadgeClasses}
             onClick={onTogglePanel}
+            onKeyDown={event => handleBadgeKeyDown(event, onTogglePanel)}
             title='Click to open the library. Use the import icon or drop files here to import.'
+            role='button'
+            tabIndex={0}
           >
             <div className='flex flex-shrink-0 items-center gap-2'>
               {renderImportButton('files into the Shot Analyzer', Boolean(currentShot))}
@@ -177,6 +225,7 @@ export function StatusBar({
             </span>
             {currentShot ? (
               <button
+                type='button'
                 onClick={e => {
                   e.stopPropagation();
                   onUnloadShot();
@@ -195,11 +244,10 @@ export function StatusBar({
             className={profileBadgeClasses}
             style={mismatchProfileBadgeStyle}
             onClick={onTogglePanel}
-            title={
-              isMismatch
-                ? 'Profile mismatch detected. Use the import icon or drop files here to import.'
-                : 'Click to open the library. Use the import icon or drop files here to import.'
-            }
+            onKeyDown={event => handleBadgeKeyDown(event, onTogglePanel)}
+            title={getProfileBadgeTitle(isMismatch)}
+            role='button'
+            tabIndex={0}
           >
             <div className='flex flex-shrink-0 items-center gap-2'>
               {renderImportButton(
@@ -219,27 +267,7 @@ export function StatusBar({
               )}
             </span>
 
-            {currentProfile ? (
-              isSearchingProfile ? (
-                <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
-              ) : (
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onUnloadProfile();
-                  }}
-                  className={activeBadgeIconButtonClasses}
-                >
-                  <FontAwesomeIcon icon={faTimes} />
-                </button>
-              )
-            ) : isSearchingProfile ? (
-              <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
-            ) : (
-              !isSearchingProfile && (
-                <FontAwesomeIcon icon={faChevronDown} className='text-xs opacity-40' />
-              )
-            )}
+            {renderProfileTrailingControl()}
           </div>
 
         </div>

@@ -4,6 +4,8 @@
  * Calculates metrics, detects phase transitions, and determines exit reasons
  */
 
+/* global globalThis */
+
 const PREDICTIVE_WINDOW_MS = 4000;
 // Last-phase fallback thresholds (g)
 const LAST_PHASE_UNDERSHOOT_MIN_G = 2;
@@ -151,11 +153,14 @@ function getLastNonExtendedIndex(samples) {
 }
 
 function isAnalyzerDebugEnabled() {
-  if (typeof window === 'undefined') return false;
+  if (typeof globalThis === 'undefined') return false;
   try {
-    return window.__SHOT_ANALYZER_DEBUG__ === true || window.localStorage?.getItem('shotAnalyzerDebug') === '1';
+    return (
+      globalThis.__SHOT_ANALYZER_DEBUG__ === true ||
+      globalThis.localStorage?.getItem('shotAnalyzerDebug') === '1'
+    );
   } catch {
-    return window.__SHOT_ANALYZER_DEBUG__ === true;
+    return globalThis.__SHOT_ANALYZER_DEBUG__ === true;
   }
 }
 

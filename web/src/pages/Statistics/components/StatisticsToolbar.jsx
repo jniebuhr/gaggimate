@@ -189,12 +189,15 @@ export function StatisticsToolbar({
     dateToPreviewLocal,
   });
   const showDateRangeLabelInTrigger = !dateRangeDisplay.isAuto;
-  const candidateLabel = metadataLoading ? '...' : Number.isFinite(candidateCount) ? String(candidateCount) : '-';
-  const resetAriaCount = metadataLoading
-    ? 'loading candidates'
-    : Number.isFinite(candidateCount)
-      ? `${candidateCount} candidates`
-      : 'unknown candidates';
+  let candidateLabel = '-';
+  let resetAriaCount = 'unknown candidates';
+  if (metadataLoading) {
+    candidateLabel = '...';
+    resetAriaCount = 'loading candidates';
+  } else if (Number.isFinite(candidateCount)) {
+    candidateLabel = String(candidateCount);
+    resetAriaCount = `${candidateCount} candidates`;
+  }
   const currentSourceOption = SOURCE_OPTIONS.find(opt => opt.value === source) || SOURCE_OPTIONS[0];
   const currentModeOption = MODE_OPTIONS.find(opt => opt.value === mode) || MODE_OPTIONS[0];
   const hasDslQuery = !!String(query || '').trim();

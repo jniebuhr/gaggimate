@@ -144,7 +144,7 @@ export function ColumnControls({
         {/* Left Side: Toggle & Controls */}
         <div className='flex min-w-0 flex-1 items-center gap-2 sm:gap-4'>
           {/* Header Actions & Preset Selector */}
-          <div className='flex items-center gap-2' onClick={e => e.stopPropagation()}>
+          <div className='flex items-center gap-2'>
             <div className={ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES}>
               <button
                 type='button'
@@ -314,9 +314,11 @@ export function ColumnControls({
             title='Click to collapse'
           >
             {/* Left Actions: Reset - Wrapped to stop propagation */}
-            <div className='flex items-center gap-2' onClick={e => e.stopPropagation()}>
+            <div className='flex items-center gap-2'>
               <button
+                type='button'
                 onClick={applyFactoryReset}
+                onClickCapture={e => e.stopPropagation()}
                 className={getAnalyzerTextButtonClasses({
                   tone: 'error',
                   className:
@@ -333,9 +335,11 @@ export function ColumnControls({
             </div>
 
             {/* Right Actions: Save - Wrapped to stop propagation */}
-            <div className='flex items-center gap-2' onClick={e => e.stopPropagation()}>
+            <div className='flex items-center gap-2'>
               <button
+                type='button'
                 onClick={saveAsStandard}
+                onClickCapture={e => e.stopPropagation()}
                 className={getAnalyzerTextButtonClasses({
                   className:
                     `btn btn-ghost btn-xs ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} px-3 text-[10px] font-bold tracking-normal normal-case`,
@@ -344,7 +348,9 @@ export function ColumnControls({
                 Save as Standard
               </button>
               <button
+                type='button'
                 onClick={saveAsPreset}
+                onClickCapture={e => e.stopPropagation()}
                 className={getAnalyzerTextButtonClasses({
                   className:
                     `btn btn-ghost btn-xs ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} border-base-content/10 bg-transparent px-3 text-[10px] font-bold tracking-normal normal-case shadow-none`,

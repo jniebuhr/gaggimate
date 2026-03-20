@@ -500,9 +500,9 @@ export function LibraryPanel({
     width: `${barRect.width}px`,
     zIndex: 49,
   };
-  const desktopSectionHeight = !isMobileViewport
-    ? `max(18rem, calc(100dvh - ${dropdownTop}px - 2rem))`
-    : undefined;
+  const desktopSectionHeight = isMobileViewport
+    ? undefined
+    : `max(18rem, calc(100dvh - ${dropdownTop}px - 2rem))`;
 
   return (
     <div ref={panelRef} className='relative'>
@@ -512,9 +512,9 @@ export function LibraryPanel({
       <div ref={barRef} style={fixedBarStyle}>
         <div
           className={`bg-base-100/80 border-base-content/10 overflow-hidden border backdrop-blur-md transition-all duration-200 ${
-            !collapsed
-              ? 'rounded-t-xl border-b-0 shadow-none'
-              : 'rounded-xl shadow-lg'
+            collapsed
+              ? 'rounded-xl shadow-lg'
+              : 'rounded-t-xl border-b-0 shadow-none'
           }`}
         >
           <StatusBar

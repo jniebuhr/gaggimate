@@ -267,7 +267,7 @@ export function AnalysisTable({
 
   // --- Helper Functions ---
   const handleNonNegativeDelayInput = (key, rawValue) => {
-    const parsedValue = parseInt(rawValue, 10);
+    const parsedValue = Number.parseInt(rawValue, 10);
     if (Number.isNaN(parsedValue)) return;
     onSettingsChange({ ...safeSettings, [key]: Math.max(0, parsedValue) });
   };

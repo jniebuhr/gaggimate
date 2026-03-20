@@ -33,6 +33,36 @@ const PROFILE_AUTO_MATCH_INITIAL_DELAY_MS = 250;
 const PROFILE_AUTO_MATCH_RETRY_DELAY_MS = 450;
 const PROFILE_AUTO_MATCH_MAX_ATTEMPTS = 4;
 
+function findPreferredProfileMatch(allProfiles, shotProfileName, shotSource) {
+  const target = cleanName(shotProfileName).toLowerCase();
+  const matches = allProfiles.filter(
+    profile => cleanName(profile.name || profile.label || '').toLowerCase() === target,
+  );
+  return matches.find(profile => profile.source === shotSource) || matches[0] || null;
+}
+
+function getProfileLookupId(profileMatch) {
+  return profileMatch.source === 'gaggimate'
+    ? profileMatch.profileId || profileMatch.id
+    : profileMatch.name;
+}
+
+function normalizeMatchedProfileSource(profileData, profileSource) {
+  if (
+    profileSource &&
+    (profileSource === 'gaggimate' || profileSource === 'browser') &&
+    !profileData?.source
+  ) {
+    return { ...profileData, source: profileSource };
+  }
+  return profileData;
+}
+
+function shouldAutoScrollAnalyzerOnSelection() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(max-width: 1023px)').matches;
+}
+
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
@@ -74,6 +104,14 @@ export function ShotAnalyzer() {
       sensorDelay: clampNonNegativeDelay(nextSettings?.sensorDelay ?? prevSettings.sensorDelay),
       autoDelay: Boolean(nextSettings?.autoDelay ?? prevSettings.autoDelay),
     }));
+  };
+
+  const scheduleProfileAutoMatchRetry = (attempt, callback) => {
+    if (attempt + 1 >= PROFILE_AUTO_MATCH_MAX_ATTEMPTS) return false;
+    profileSearchTimerRef.current = setTimeout(() => {
+      void callback(attempt + 1);
+    }, PROFILE_AUTO_MATCH_RETRY_DELAY_MS);
+    return true;
   };
 
   // Cleanup pending profile search on unmount
@@ -215,17 +253,15 @@ export function ShotAnalyzer() {
       const attemptProfileAutoMatch = async (attempt = 0) => {
         profileSearchTimerRef.current = null;
         try {
-          const target = cleanName(shotWithMetadata.profile).toLowerCase();
           const allProfiles = await libraryService.getAllProfiles('both');
 
           if (matchId !== profileMatchIdRef.current) return; // stale
 
-          const matches = allProfiles.filter(
-            p => cleanName(p.name || p.label || '').toLowerCase() === target,
+          const preferredMatch = findPreferredProfileMatch(
+            allProfiles,
+            shotWithMetadata.profile,
+            shotWithMetadata.source,
           );
-
-          const preferredMatch =
-            matches.find(p => p.source === shotWithMetadata.source) || matches[0] || null;
 
           if (preferredMatch) {
             // Keep the matched name visible while searching, but only promote the
@@ -234,10 +270,7 @@ export function ShotAnalyzer() {
             // that may not contain the phase data required for profile comparison.
             setCurrentProfileName(preferredMatch.label || preferredMatch.name);
 
-            const pid =
-              preferredMatch.source === 'gaggimate'
-                ? preferredMatch.profileId || preferredMatch.id
-                : preferredMatch.name;
+            const pid = getProfileLookupId(preferredMatch);
             const fullProfile = preferredMatch.data
               ? preferredMatch.data
               : await libraryService.loadProfile(pid, preferredMatch.source);
@@ -245,30 +278,18 @@ export function ShotAnalyzer() {
             if (matchId !== profileMatchIdRef.current) return; // stale
 
             if (fullProfile) {
-              setCurrentProfile(
-                preferredMatch.source &&
-                  (preferredMatch.source === 'gaggimate' || preferredMatch.source === 'browser') &&
-                  !fullProfile?.source
-                  ? { ...fullProfile, source: preferredMatch.source }
-                  : fullProfile,
-              );
+              setCurrentProfile(normalizeMatchedProfileSource(fullProfile, preferredMatch.source));
               setCurrentProfileName(preferredMatch.label || preferredMatch.name);
               return;
             }
           }
 
-          if (attempt + 1 < PROFILE_AUTO_MATCH_MAX_ATTEMPTS) {
-            profileSearchTimerRef.current = setTimeout(() => {
-              void attemptProfileAutoMatch(attempt + 1);
-            }, PROFILE_AUTO_MATCH_RETRY_DELAY_MS);
+          if (scheduleProfileAutoMatchRetry(attempt, attemptProfileAutoMatch)) {
             return;
           }
         } catch (e) {
           if (matchId !== profileMatchIdRef.current) return;
-          if (attempt + 1 < PROFILE_AUTO_MATCH_MAX_ATTEMPTS) {
-            profileSearchTimerRef.current = setTimeout(() => {
-              void attemptProfileAutoMatch(attempt + 1);
-            }, PROFILE_AUTO_MATCH_RETRY_DELAY_MS);
+          if (scheduleProfileAutoMatchRetry(attempt, attemptProfileAutoMatch)) {
             return;
           }
           console.warn('Profile auto-match failed:', e);
@@ -295,10 +316,7 @@ export function ShotAnalyzer() {
   };
 
   const handleProfileLoad = (data, name, source) => {
-    const nextProfile =
-      source && (source === 'gaggimate' || source === 'browser') && !data?.source
-        ? { ...data, source }
-        : data;
+    const nextProfile = normalizeMatchedProfileSource(data, source);
     setCurrentProfile(nextProfile);
     setCurrentProfileName(data?.label || data?.name || name);
   };
@@ -345,7 +363,9 @@ export function ShotAnalyzer() {
             importMode={importMode}
             onImportModeChange={setImportMode}
             onShotLoadedFromLibrary={() => {
-              setPendingMobileAnalysisScroll(true);
+              if (shouldAutoScrollAnalyzerOnSelection()) {
+                setPendingMobileAnalysisScroll(true);
+              }
             }}
             isMatchingProfile={isMatchingProfile}
             isSearchingProfile={isSearchingProfile} // <- pass prop

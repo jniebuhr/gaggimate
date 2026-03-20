@@ -156,6 +156,88 @@ function buildShotSelectionItem(shot, dateBasisMode) {
   };
 }
 
+function getPreferredStatisticsDetailSection(runMode) {
+  return runMode === 'profile' ? 'phase' : 'profile';
+}
+
+function resolveStatisticsDetailSectionChoice({
+  candidate,
+  hasProfileGroupStatistics,
+  hasPhaseStatistics,
+}) {
+  if (candidate === 'phase' && !hasPhaseStatistics && hasProfileGroupStatistics) return 'profile';
+  if (candidate === 'profile' && !hasProfileGroupStatistics && hasPhaseStatistics) return 'phase';
+  return candidate;
+}
+
+function StatisticsDetailHeader({
+  hasPhaseStatistics,
+  hasProfileGroupStatistics,
+  resolvedStatisticsDetailSection,
+  setStatisticsDetailSection,
+}) {
+  if (hasProfileGroupStatistics && hasPhaseStatistics) {
+    return (
+      <div role='tablist' className='tabs tabs-border'>
+        <button
+          type='button'
+          role='tab'
+          className={`tab ${resolvedStatisticsDetailSection === 'profile' ? 'tab-active' : ''}`}
+          aria-selected={resolvedStatisticsDetailSection === 'profile'}
+          onClick={() => setStatisticsDetailSection('profile')}
+        >
+          Per-profile statistics
+        </button>
+        <button
+          type='button'
+          role='tab'
+          className={`tab ${resolvedStatisticsDetailSection === 'phase' ? 'tab-active' : ''}`}
+          aria-selected={resolvedStatisticsDetailSection === 'phase'}
+          onClick={() => setStatisticsDetailSection('phase')}
+        >
+          Per-phase statistics
+        </button>
+      </div>
+    );
+  }
+
+  const title = hasProfileGroupStatistics ? 'Per-profile statistics' : 'Per-phase statistics';
+  return <h3 className={STATISTICS_SECTION_TITLE_CLASS}>{title}</h3>;
+}
+
+function StatisticsDetailSectionPanel({
+  hasPhaseStatistics,
+  hasProfileGroupStatistics,
+  resolvedStatisticsDetailSection,
+  result,
+  setStatisticsDetailSection,
+}) {
+  if (!hasProfileGroupStatistics && !hasPhaseStatistics) return null;
+
+  return (
+    <div className='space-y-2'>
+      <StatisticsDetailHeader
+        hasPhaseStatistics={hasPhaseStatistics}
+        hasProfileGroupStatistics={hasProfileGroupStatistics}
+        resolvedStatisticsDetailSection={resolvedStatisticsDetailSection}
+        setStatisticsDetailSection={setStatisticsDetailSection}
+      />
+
+      <div className={`${STATISTICS_PANEL_CLASS} p-4`}>
+        {hasProfileGroupStatistics &&
+          (!hasPhaseStatistics || resolvedStatisticsDetailSection === 'profile') && (
+            <ProfileGroupTable profileGroups={result.profileGroups} showTitle={false} />
+          )}
+
+        {hasPhaseStatistics &&
+          (!hasProfileGroupStatistics || resolvedStatisticsDetailSection === 'phase') && (
+            <PhaseStatistics phaseStats={result.phaseStats} showTitle={false} />
+          )}
+      </div>
+    </div>
+  );
+}
+
 export function StatisticsView({ initialContext }) {
   const apiService = useContext(ApiServiceContext);
   const initialProfileName = getInitialProfileName(initialContext);
@@ -1006,11 +1088,12 @@ export function StatisticsView({ initialContext }) {
 
     const hasProfileGroups = Array.isArray(result.profileGroups) && result.profileGroups.length > 0;
     const hasPhaseStats = Array.isArray(result.phaseStats) && result.phaseStats.length > 0;
-    const preferredSection = runRequest.mode === 'profile' ? 'phase' : 'profile';
-
-    let nextSection = preferredSection;
-    if (preferredSection === 'phase' && !hasPhaseStats && hasProfileGroups) nextSection = 'profile';
-    if (preferredSection === 'profile' && !hasProfileGroups && hasPhaseStats) nextSection = 'phase';
+    const preferredSection = getPreferredStatisticsDetailSection(runRequest.mode);
+    const nextSection = resolveStatisticsDetailSectionChoice({
+      candidate: preferredSection,
+      hasProfileGroupStatistics: hasProfileGroups,
+      hasPhaseStatistics: hasPhaseStats,
+    });
 
     setStatisticsDetailSection(nextSection);
     initializedDetailSectionRunIdRef.current = runRequest.id;
@@ -1018,17 +1101,16 @@ export function StatisticsView({ initialContext }) {
 
   const hasProfileGroupStatistics = result?.profileGroups?.length > 0;
   const hasPhaseStatistics = result?.phaseStats?.length > 0;
-  const preferredStatisticsDetailSection = runRequest?.mode === 'profile' ? 'phase' : 'profile';
-  const resolvedStatisticsDetailSection = (() => {
-    const candidate =
-      initializedDetailSectionRunIdRef.current === runRequest?.id
-        ? statisticsDetailSection
-        : preferredStatisticsDetailSection;
-
-    if (candidate === 'phase' && !hasPhaseStatistics && hasProfileGroupStatistics) return 'profile';
-    if (candidate === 'profile' && !hasProfileGroupStatistics && hasPhaseStatistics) return 'phase';
-    return candidate;
-  })();
+  const preferredStatisticsDetailSection = getPreferredStatisticsDetailSection(runRequest?.mode);
+  const detailSectionCandidate =
+    initializedDetailSectionRunIdRef.current === runRequest?.id
+      ? statisticsDetailSection
+      : preferredStatisticsDetailSection;
+  const resolvedStatisticsDetailSection = resolveStatisticsDetailSectionChoice({
+    candidate: detailSectionCandidate,
+    hasProfileGroupStatistics,
+    hasPhaseStatistics,
+  });
 
   return (
     <div className='space-y-5'>
@@ -1129,48 +1211,13 @@ export function StatisticsView({ initialContext }) {
             </div>
           )}
 
-          {(hasProfileGroupStatistics || hasPhaseStatistics) && (
-            <div className='space-y-2'>
-              {hasProfileGroupStatistics && hasPhaseStatistics ? (
-                <div role='tablist' className='tabs tabs-border'>
-                  <button
-                    type='button'
-                    role='tab'
-                    className={`tab ${resolvedStatisticsDetailSection === 'profile' ? 'tab-active' : ''}`}
-                    aria-selected={resolvedStatisticsDetailSection === 'profile'}
-                    onClick={() => setStatisticsDetailSection('profile')}
-                  >
-                    Per-profile statistics
-                  </button>
-                  <button
-                    type='button'
-                    role='tab'
-                    className={`tab ${resolvedStatisticsDetailSection === 'phase' ? 'tab-active' : ''}`}
-                    aria-selected={resolvedStatisticsDetailSection === 'phase'}
-                    onClick={() => setStatisticsDetailSection('phase')}
-                  >
-                    Per-phase statistics
-                  </button>
-                </div>
-              ) : hasProfileGroupStatistics ? (
-                <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Per-profile statistics</h3>
-              ) : (
-                <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Per-phase statistics</h3>
-              )}
-
-              <div className={`${STATISTICS_PANEL_CLASS} p-4`}>
-                {hasProfileGroupStatistics &&
-                  (!hasPhaseStatistics || resolvedStatisticsDetailSection === 'profile') && (
-                    <ProfileGroupTable profileGroups={result.profileGroups} showTitle={false} />
-                  )}
-
-                {hasPhaseStatistics &&
-                  (!hasProfileGroupStatistics || resolvedStatisticsDetailSection === 'phase') && (
-                    <PhaseStatistics phaseStats={result.phaseStats} showTitle={false} />
-                  )}
-              </div>
-            </div>
-          )}
+          <StatisticsDetailSectionPanel
+            hasPhaseStatistics={hasPhaseStatistics}
+            hasProfileGroupStatistics={hasProfileGroupStatistics}
+            resolvedStatisticsDetailSection={resolvedStatisticsDetailSection}
+            result={result}
+            setStatisticsDetailSection={setStatisticsDetailSection}
+          />
 
           {result.summary.totalShots === 0 && (
             <div className={`${STATISTICS_PANEL_CLASS} p-8 text-center`}>

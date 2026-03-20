@@ -28,6 +28,30 @@ import {
 } from '../analyzerControlStyles';
 import { getShotChartDisplayLabel, getShotChartLabelIcon } from './labelVisuals';
 
+function renderLegendMarker({ label, labelIcon, swatchColor, swatchLineWidth }) {
+  if (LEGEND_BLOCK_LABELS.has(label)) {
+    return <span className='h-2.5 w-3 rounded-[2px]' style={{ backgroundColor: swatchColor }} />;
+  }
+
+  if (labelIcon) {
+    return (
+      <FontAwesomeIcon
+        icon={labelIcon}
+        className='text-[10px]'
+        style={{ color: swatchColor }}
+        aria-hidden='true'
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`block w-4 border-t ${LEGEND_DASHED_LABELS.has(label) ? 'border-dashed' : 'border-solid'}`}
+      style={{ borderColor: swatchColor, borderTopWidth: `${swatchLineWidth}px` }}
+    />
+  );
+}
+
 export function ShotChartControls({
   exportMenuRef,
   exportMenuState,
@@ -66,6 +90,11 @@ export function ShotChartControls({
     className:
       `btn btn-ghost btn-xs ${ANALYZER_COMPACT_ICON_BUTTON_CLASS} rounded-none border-0 bg-transparent p-0 shadow-none`,
   });
+  const replayActionLabel = isReplaying
+    ? 'Pause replay'
+    : isReplayPaused
+      ? 'Resume replay'
+      : 'Replay chart';
 
   return (
     <>
@@ -97,21 +126,7 @@ export function ShotChartControls({
                     : 'text-base-content/60 opacity-45 hover:bg-base-content/5 hover:text-primary hover:opacity-75'
                 }`}
               >
-                {LEGEND_BLOCK_LABELS.has(label) ? (
-                  <span className='h-2.5 w-3 rounded-[2px]' style={{ backgroundColor: swatchColor }} />
-                ) : labelIcon ? (
-                  <FontAwesomeIcon
-                    icon={labelIcon}
-                    className='text-[10px]'
-                    style={{ color: swatchColor }}
-                    aria-hidden='true'
-                  />
-                ) : (
-                  <span
-                    className={`block w-4 border-t ${LEGEND_DASHED_LABELS.has(label) ? 'border-dashed' : 'border-solid'}`}
-                    style={{ borderColor: swatchColor, borderTopWidth: `${swatchLineWidth}px` }}
-                  />
-                )}
+                {renderLegendMarker({ label, labelIcon, swatchColor, swatchLineWidth })}
                 <span>{displayLabel}</span>
               </button>
             );
@@ -125,10 +140,8 @@ export function ShotChartControls({
               onClick={onReplayToggle}
               className={chartActionButtonClasses}
               disabled={isControlsLocked}
-              aria-label={
-                isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'
-              }
-              title={isReplaying ? 'Pause replay' : isReplayPaused ? 'Resume replay' : 'Replay chart'}
+              aria-label={replayActionLabel}
+              title={replayActionLabel}
             >
               <FontAwesomeIcon
                 icon={isReplaying ? faPause : faPlay}
