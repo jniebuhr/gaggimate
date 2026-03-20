@@ -263,6 +263,12 @@ export function createShotChartConfigs({
             // provides item ordering/filtering so both paths share one data model.
             filter: context => shouldRenderTooltipLabel(context.dataset.label),
             itemSort: sortTooltipItems,
+            callbacks: {
+              title: tooltipItems => {
+                const xValue = tooltipItems?.[0]?.parsed?.x;
+                return Number.isFinite(xValue) ? `${xValue.toFixed(2)} s` : '';
+              },
+            },
             external: updateExternalTooltip,
           },
           annotation: {
