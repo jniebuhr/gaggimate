@@ -128,7 +128,7 @@ export function ColumnControls({
 
   // Dynamic container styles
   const containerClasses = isIntegrated
-    ? 'bg-base-200 rounded-t-lg border-b border-base-content/10'
+    ? 'bg-base-100 rounded-t-lg border-b border-base-content/10'
     : 'bg-base-200/80 backdrop-blur-md rounded-lg shadow-sm border border-base-content/10 mb-5';
 
   return (
@@ -238,8 +238,8 @@ export function ColumnControls({
 
       {/* Expandable Selection Area */}
       {expanded && (
-        <div className='border-base-content/10 animate-fade-in bg-base-100/50 border-t border-b px-5 pt-6 pb-6'>
-          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
+        <div className='border-base-content/10 animate-fade-in bg-base-100/50 border-t border-b px-4 pt-5 pb-5'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
             {Object.keys(groupedColumns).map(groupKey => {
               const cols = groupedColumns[groupKey];
               const groupVisuals = getAnalyzerGroupCardVisuals(groupKey);
@@ -247,30 +247,31 @@ export function ColumnControls({
               return (
                 <div
                   key={groupKey}
-                  className='bg-base-200 border-base-content/10 rounded-md border p-3'
+                  className='bg-base-200 border-base-content/10 rounded-md border p-2.5'
                 >
-                  <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-x-4'>
-                    <h4 className='border-base-content/10 text-base-content/70 col-span-2 mb-2 border-b pb-1 text-[10px] font-bold tracking-wider uppercase'>
+                  <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-x-3'>
+                    <h4 className='border-base-content/10 text-base-content/85 col-span-2 mb-1.5 border-b pb-1 text-[9px] leading-tight font-bold tracking-normal normal-case'>
                       {groups[groupKey]}
                     </h4>
 
                     <div className='min-w-0'>
-                      <div className='space-y-1.5'>
+                      <div className='space-y-1'>
                         {cols.map(col => (
                           <label
                             key={col.id}
                             className={getAnalyzerSurfaceTriggerClasses({
-                              className: 'group flex cursor-pointer items-start gap-2 px-1.5 py-1 text-xs',
+                              className:
+                                'group flex cursor-pointer items-center gap-1.5 px-1 py-0.5 text-[10px]',
                             })}
                           >
                             <input
                               type='checkbox'
                               checked={activeColumns.has(col.id)}
                               onChange={e => toggleColumn(col.id, e.target.checked)}
-                              className='checkbox checkbox-xs border-base-content/20 text-base-content/55 mt-0.5 rounded-sm'
+                              className='checkbox checkbox-xs border-base-content/20 text-base-content/55 rounded-sm'
                             />
                             <span
-                              className={`leading-tight font-bold ${activeColumns.has(col.id) ? 'text-base-content' : 'text-base-content/75'}`}
+                              className={`leading-tight font-semibold ${activeColumns.has(col.id) ? 'text-base-content' : 'text-base-content/75'}`}
                             >
                               {getDetailedLabel(col)}
                             </span>
@@ -280,7 +281,7 @@ export function ColumnControls({
                     </div>
 
                     <div
-                      className={`flex shrink-0 items-center justify-center self-center ${groupVisuals.length > 1 ? 'flex-col gap-2' : ''}`}
+                      className={`flex shrink-0 items-center justify-center self-center ${groupVisuals.length > 1 ? 'flex-col gap-1.5' : ''}`}
                     >
                       {groupVisuals.map((groupVisual, index) => (
                         <span
@@ -291,7 +292,7 @@ export function ColumnControls({
                           <FontAwesomeIcon
                             icon={groupVisual.icon}
                             className={
-                              groupVisuals.length > 1 ? 'text-[1.05rem]' : 'text-2xl sm:text-[1.65rem]'
+                              groupVisuals.length > 1 ? 'text-[0.95rem]' : 'text-[1.25rem] sm:text-[1.45rem]'
                             }
                           />
                         </span>
@@ -307,7 +308,7 @@ export function ColumnControls({
           <div
             className={getAnalyzerSurfaceTriggerClasses({
               className:
-                'border-base-content/10 group -mx-5 mt-6 flex cursor-pointer items-center justify-between border-t px-5 py-3',
+                'border-base-content/10 group -mx-4 mt-5 flex cursor-pointer items-center justify-between border-t px-4 py-2.5',
             })}
             onClick={() => setExpanded(false)}
             title='Click to collapse'

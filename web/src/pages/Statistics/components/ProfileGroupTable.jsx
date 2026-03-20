@@ -1,11 +1,14 @@
 import { fmt } from '../utils/format';
+import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
-export function ProfileGroupTable({ profileGroups }) {
+export function ProfileGroupTable({ profileGroups, showTitle = true }) {
   if (!profileGroups || profileGroups.length === 0) return null;
 
   return (
     <div>
-      <h3 className='mb-2 text-sm font-bold uppercase opacity-70'>Per-Profile Statistics</h3>
+      {showTitle && (
+        <h3 className={`mb-2 ${STATISTICS_SECTION_TITLE_CLASS}`}>Per-profile statistics</h3>
+      )}
       <div className='overflow-x-auto'>
         <table className='table-xs table w-full'>
           <thead>

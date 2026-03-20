@@ -128,21 +128,21 @@ export const columnConfig = [
   // --- TARGET PRESSURE ---
   {
     id: 'tp_se',
-    label: 'Target Pressure',
+    label: 'Target Pressure (bar)',
     type: 'se',
     group: 'target_pressure',
     default: false,
   },
   {
     id: 'tp_mm',
-    label: 'Target Pressure',
+    label: 'Target Pressure (bar)',
     type: 'mm',
     group: 'target_pressure',
     default: false,
   },
   {
     id: 'tp_avg',
-    label: 'Target Pressure',
+    label: 'Target Pressure (bar)',
     type: 'avg',
     group: 'target_pressure',
     default: false,
@@ -175,21 +175,21 @@ export const columnConfig = [
   // --- TARGET FLOW ---
   {
     id: 'tf_se',
-    label: 'Target Flow',
+    label: 'Target Flow (ml/s)',
     type: 'se',
     group: 'target_flow',
     default: false,
   },
   {
     id: 'tf_mm',
-    label: 'Target Flow',
+    label: 'Target Flow (ml/s)',
     type: 'mm',
     group: 'target_flow',
     default: false,
   },
   {
     id: 'tf_avg',
-    label: 'Target Flow',
+    label: 'Target Flow (ml/s)',
     type: 'avg',
     group: 'target_flow',
     default: false,
@@ -244,21 +244,21 @@ export const columnConfig = [
   // --- TARGET TEMPERATURE ---
   {
     id: 'tt_se',
-    label: 'Target Temp',
+    label: 'Target Temp (℃)',
     type: 'se',
     group: 'target_temp',
     default: false,
   },
   {
     id: 'tt_mm',
-    label: 'Target Temp',
+    label: 'Target Temp (℃)',
     type: 'mm',
     group: 'target_temp',
     default: false,
   },
   {
     id: 'tt_avg',
-    label: 'Target Temp',
+    label: 'Target Temp (℃)',
     type: 'avg',
     group: 'target_temp',
     default: false,

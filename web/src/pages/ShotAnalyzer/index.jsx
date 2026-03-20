@@ -29,6 +29,10 @@ const clampNonNegativeDelay = value => {
   return Math.max(0, Math.round(parsedValue));
 };
 
+const PROFILE_AUTO_MATCH_INITIAL_DELAY_MS = 250;
+const PROFILE_AUTO_MATCH_RETRY_DELAY_MS = 450;
+const PROFILE_AUTO_MATCH_MAX_ATTEMPTS = 4;
+
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
@@ -208,8 +212,7 @@ export function ShotAnalyzer() {
       setIsMatchingProfile(true);
       setIsSearchingProfile(true);
 
-      // Debounce: wait for rapid navigation to settle before searching
-      profileSearchTimerRef.current = setTimeout(async () => {
+      const attemptProfileAutoMatch = async (attempt = 0) => {
         profileSearchTimerRef.current = null;
         try {
           const target = cleanName(shotWithMetadata.profile).toLowerCase();
@@ -217,35 +220,70 @@ export function ShotAnalyzer() {
 
           if (matchId !== profileMatchIdRef.current) return; // stale
 
-          const match = allProfiles.find(
+          const matches = allProfiles.filter(
             p => cleanName(p.name || p.label || '').toLowerCase() === target,
           );
 
-          if (match) {
-            const pid = match.source === 'gaggimate' ? match.profileId || match.id : match.name;
-            const fullP = match.data
-              ? match.data
-              : await libraryService.loadProfile(pid, match.source);
+          const preferredMatch =
+            matches.find(p => p.source === shotWithMetadata.source) || matches[0] || null;
+
+          if (preferredMatch) {
+            // Keep the matched name visible while searching, but only promote the
+            // profile to currentProfile after the full payload has been loaded.
+            // This prevents the analyzer from re-running against a partial list item
+            // that may not contain the phase data required for profile comparison.
+            setCurrentProfileName(preferredMatch.label || preferredMatch.name);
+
+            const pid =
+              preferredMatch.source === 'gaggimate'
+                ? preferredMatch.profileId || preferredMatch.id
+                : preferredMatch.name;
+            const fullProfile = preferredMatch.data
+              ? preferredMatch.data
+              : await libraryService.loadProfile(pid, preferredMatch.source);
 
             if (matchId !== profileMatchIdRef.current) return; // stale
 
-            setCurrentProfile(
-              match.source && (match.source === 'gaggimate' || match.source === 'browser') && !fullP?.source
-                ? { ...fullP, source: match.source }
-                : fullP,
-            );
-            setCurrentProfileName(match.label || match.name);
+            if (fullProfile) {
+              setCurrentProfile(
+                preferredMatch.source &&
+                  (preferredMatch.source === 'gaggimate' || preferredMatch.source === 'browser') &&
+                  !fullProfile?.source
+                  ? { ...fullProfile, source: preferredMatch.source }
+                  : fullProfile,
+              );
+              setCurrentProfileName(preferredMatch.label || preferredMatch.name);
+              return;
+            }
+          }
+
+          if (attempt + 1 < PROFILE_AUTO_MATCH_MAX_ATTEMPTS) {
+            profileSearchTimerRef.current = setTimeout(() => {
+              void attemptProfileAutoMatch(attempt + 1);
+            }, PROFILE_AUTO_MATCH_RETRY_DELAY_MS);
+            return;
           }
         } catch (e) {
           if (matchId !== profileMatchIdRef.current) return;
+          if (attempt + 1 < PROFILE_AUTO_MATCH_MAX_ATTEMPTS) {
+            profileSearchTimerRef.current = setTimeout(() => {
+              void attemptProfileAutoMatch(attempt + 1);
+            }, PROFILE_AUTO_MATCH_RETRY_DELAY_MS);
+            return;
+          }
           console.warn('Profile auto-match failed:', e);
         } finally {
-          if (matchId === profileMatchIdRef.current) {
+          if (matchId === profileMatchIdRef.current && !profileSearchTimerRef.current) {
             setIsMatchingProfile(false);
             setIsSearchingProfile(false);
           }
         }
-      }, 250);
+      };
+
+      // Debounce: wait for rapid navigation to settle before searching
+      profileSearchTimerRef.current = setTimeout(() => {
+        void attemptProfileAutoMatch(0);
+      }, PROFILE_AUTO_MATCH_INITIAL_DELAY_MS);
     } else {
       // Shot has no profile field — clear search states immediately
       profileMatchIdRef.current++;
@@ -316,28 +354,28 @@ export function ShotAnalyzer() {
 
         {currentShot ? (
           // --- Active Analysis View ---
-          <div ref={analysisSectionRef} className='animate-fade-in mt-8 space-y-5'>
+          <div ref={analysisSectionRef} className='animate-fade-in mt-8'>
             <div className='bg-base-100 border-base-content/10 rounded-lg border p-5 shadow-sm'>
-              <div className='mb-8'>
+              <div>
                 <ShotChart shotData={currentShot} results={analysisResults} />
               </div>
-
-              {analysisResults && (
-                <div className='mt-4 space-y-6'>
-                  <AnalysisTable
-                    results={analysisResults}
-                    activeColumns={activeColumns}
-                    onColumnsChange={setActiveColumns}
-                    settings={settings}
-                    onSettingsChange={handleSettingsChange}
-                    onAnalyze={performAnalysis}
-                  />
-                </div>
-              )}
             </div>
+
+            {analysisResults && (
+              <div className='mt-2'>
+                <AnalysisTable
+                  results={analysisResults}
+                  activeColumns={activeColumns}
+                  onColumnsChange={setActiveColumns}
+                  settings={settings}
+                  onSettingsChange={handleSettingsChange}
+                  onAnalyze={performAnalysis}
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <div className='mt-8'>
+          <div className='mt-6'>
             <EmptyState loading={loading} />
           </div>
         )}

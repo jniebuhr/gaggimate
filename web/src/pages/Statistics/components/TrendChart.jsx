@@ -203,8 +203,7 @@ export function TrendChart({ trends }) {
 
   return (
     <div>
-      <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
-        <h3 className='text-sm font-bold uppercase opacity-70'>Trends</h3>
+      <div className='mb-2 flex flex-wrap items-center justify-end gap-2'>
         <div className='ml-auto flex flex-wrap items-center gap-2'>
           <select
             className='select select-xs select-bordered'

@@ -10,6 +10,7 @@ import { MetricsTable } from './MetricsTable';
 import { ProfileGroupTable } from './ProfileGroupTable';
 import { PhaseStatistics } from './PhaseStatistics';
 import { TrendChart } from './TrendChart';
+import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 import {
   buildShotCandidatePredicate,
   parseStatisticsQuery,
@@ -22,6 +23,7 @@ import { STATISTICS_SOURCE_FALLBACK } from '../utils/statisticsRoute';
 const BATCH_SIZE = 5;
 const DEFAULT_SETTINGS = { scaleDelayMs: 200, sensorDelayMs: 200, isAutoAdjusted: true };
 const NO_PROFILE_LOADED = 'No Profile Loaded';
+const STATISTICS_PANEL_CLASS = 'bg-base-100 border-base-content/10 rounded-xl border shadow-sm';
 
 function getStatisticsFallbackSource(source) {
   return STATISTICS_SOURCE_FALLBACK[source] || null;
@@ -190,6 +192,7 @@ export function StatisticsView({ initialContext }) {
   const [runRequest, setRunRequest] = useState(null);
   const [calcMode, setCalcMode] = useState(false);
   const [preparingRun, setPreparingRun] = useState(false);
+  const [statisticsDetailSection, setStatisticsDetailSection] = useState('profile');
 
   const metaLoadIdRef = useRef(0);
   const analyzeLoadIdRef = useRef(0);
@@ -198,6 +201,7 @@ export function StatisticsView({ initialContext }) {
   const initialProfilePresetAppliedRef = useRef(false);
   const profileModeShotSeedSignatureRef = useRef('');
   const gmPrefillRetryCountRef = useRef(0);
+  const initializedDetailSectionRunIdRef = useRef(null);
 
   useEffect(() => {
     libraryService.setApiService(apiService);
@@ -975,6 +979,7 @@ export function StatisticsView({ initialContext }) {
           profiles: profileSnapshot,
           fallbackProfiles: Array.isArray(fallbackProfiles) ? fallbackProfiles : [],
           calcMode: nextCalcMode,
+          mode,
         });
       } finally {
         if (prepareRunIdRef.current === prepareRunId) {
@@ -994,6 +999,36 @@ export function StatisticsView({ initialContext }) {
     setQuery('');
     setDateBasisMode('auto');
   };
+
+  useEffect(() => {
+    if (!result || !runRequest?.id) return;
+    if (initializedDetailSectionRunIdRef.current === runRequest.id) return;
+
+    const hasProfileGroups = Array.isArray(result.profileGroups) && result.profileGroups.length > 0;
+    const hasPhaseStats = Array.isArray(result.phaseStats) && result.phaseStats.length > 0;
+    const preferredSection = runRequest.mode === 'profile' ? 'phase' : 'profile';
+
+    let nextSection = preferredSection;
+    if (preferredSection === 'phase' && !hasPhaseStats && hasProfileGroups) nextSection = 'profile';
+    if (preferredSection === 'profile' && !hasProfileGroups && hasPhaseStats) nextSection = 'phase';
+
+    setStatisticsDetailSection(nextSection);
+    initializedDetailSectionRunIdRef.current = runRequest.id;
+  }, [result, runRequest]);
+
+  const hasProfileGroupStatistics = result?.profileGroups?.length > 0;
+  const hasPhaseStatistics = result?.phaseStats?.length > 0;
+  const preferredStatisticsDetailSection = runRequest?.mode === 'profile' ? 'phase' : 'profile';
+  const resolvedStatisticsDetailSection = (() => {
+    const candidate =
+      initializedDetailSectionRunIdRef.current === runRequest?.id
+        ? statisticsDetailSection
+        : preferredStatisticsDetailSection;
+
+    if (candidate === 'phase' && !hasPhaseStatistics && hasProfileGroupStatistics) return 'profile';
+    if (candidate === 'profile' && !hasProfileGroupStatistics && hasPhaseStatistics) return 'phase';
+    return candidate;
+  })();
 
   return (
     <div className='space-y-5'>
@@ -1052,7 +1087,7 @@ export function StatisticsView({ initialContext }) {
       </div>
 
       {loading && (
-        <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-6 text-center'>
+        <div className={`${STATISTICS_PANEL_CLASS} p-6 text-center`}>
           <div className='mb-2 text-sm font-semibold opacity-70'>
             Analyzing shot {progress.current} of {progress.total}...
           </div>
@@ -1080,33 +1115,65 @@ export function StatisticsView({ initialContext }) {
         <div className='space-y-5'>
           <SummaryCards summary={result.summary} />
 
-          <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-4 shadow-sm'>
+          <div className='space-y-2'>
+            <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Global metric averages</h3>
             <MetricsTable metrics={result.metrics} />
           </div>
 
           {result.trends.length > 1 && (
-            <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-4 shadow-sm'>
-              <TrendChart trends={result.trends} />
+            <div className='space-y-2'>
+              <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Trends</h3>
+              <div className={`${STATISTICS_PANEL_CLASS} p-4`}>
+                <TrendChart trends={result.trends} />
+              </div>
             </div>
           )}
 
-          {result.profileGroups.length > 0 && (
-            <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-4 shadow-sm'>
-              <ProfileGroupTable profileGroups={result.profileGroups} />
-            </div>
-          )}
+          {(hasProfileGroupStatistics || hasPhaseStatistics) && (
+            <div className='space-y-2'>
+              {hasProfileGroupStatistics && hasPhaseStatistics ? (
+                <div role='tablist' className='tabs tabs-border'>
+                  <button
+                    type='button'
+                    role='tab'
+                    className={`tab ${resolvedStatisticsDetailSection === 'profile' ? 'tab-active' : ''}`}
+                    aria-selected={resolvedStatisticsDetailSection === 'profile'}
+                    onClick={() => setStatisticsDetailSection('profile')}
+                  >
+                    Per-profile statistics
+                  </button>
+                  <button
+                    type='button'
+                    role='tab'
+                    className={`tab ${resolvedStatisticsDetailSection === 'phase' ? 'tab-active' : ''}`}
+                    aria-selected={resolvedStatisticsDetailSection === 'phase'}
+                    onClick={() => setStatisticsDetailSection('phase')}
+                  >
+                    Per-phase statistics
+                  </button>
+                </div>
+              ) : hasProfileGroupStatistics ? (
+                <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Per-profile statistics</h3>
+              ) : (
+                <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Per-phase statistics</h3>
+              )}
 
-          {result.phaseStats.length > 0 && (
-            <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-4 shadow-sm'>
-              <PhaseStatistics
-                phaseStats={result.phaseStats}
-                defaultExpanded={mode === 'profile'}
-              />
+              <div className={`${STATISTICS_PANEL_CLASS} p-4`}>
+                {hasProfileGroupStatistics &&
+                  (!hasPhaseStatistics || resolvedStatisticsDetailSection === 'profile') && (
+                    <ProfileGroupTable profileGroups={result.profileGroups} showTitle={false} />
+                  )}
+
+                {hasPhaseStatistics &&
+                  (!hasProfileGroupStatistics || resolvedStatisticsDetailSection === 'phase') && (
+                    <PhaseStatistics phaseStats={result.phaseStats} showTitle={false} />
+                  )}
+              </div>
             </div>
           )}
 
           {result.summary.totalShots === 0 && (
-            <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-8 text-center'>
+            <div className={`${STATISTICS_PANEL_CLASS} p-8 text-center`}>
               <p className='text-sm opacity-50'>No shots found for the selected filters.</p>
             </div>
           )}
@@ -1114,14 +1181,14 @@ export function StatisticsView({ initialContext }) {
       )}
 
       {!loading && !result && !error && !metadataError && metadataLoading && (
-        <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-12 text-center'>
+        <div className={`${STATISTICS_PANEL_CLASS} p-12 text-center`}>
           <span className='loading loading-spinner loading-lg text-base-content/30' />
           <p className='mt-3 text-sm opacity-50'>Loading shots and profiles...</p>
         </div>
       )}
 
       {!loading && !result && !error && !metadataError && !metadataLoading && (
-        <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-8 text-center'>
+        <div className={`${STATISTICS_PANEL_CLASS} p-8 text-center`}>
           <p className='text-sm opacity-50'>Configure your filters and press Go to generate statistics.</p>
         </div>
       )}

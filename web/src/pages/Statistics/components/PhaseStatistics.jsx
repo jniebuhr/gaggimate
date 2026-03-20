@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { fmt } from '../utils/format';
+import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
 const DELTA_COLOR = 'var(--analyzer-pred-info-blue)';
 const EXIT_REASON_UNKNOWN_STYLE = {
@@ -151,14 +152,8 @@ function PhaseSection({ phase }) {
   );
 }
 
-export function PhaseStatistics({ phaseStats, defaultExpanded = false }) {
+export function PhaseStatistics({ phaseStats, showTitle = true }) {
   if (!phaseStats || phaseStats.length === 0) return null;
-
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
-  useEffect(() => {
-    setIsExpanded(defaultExpanded);
-  }, [defaultExpanded]);
 
   // Separate regular phases from total row
   const phases = phaseStats.filter(p => !p.isTotal);
@@ -166,24 +161,13 @@ export function PhaseStatistics({ phaseStats, defaultExpanded = false }) {
 
   return (
     <div>
-      <button
-        type='button'
-        className='mb-2 flex w-full items-center justify-between text-left'
-        onClick={() => setIsExpanded(open => !open)}
-        aria-expanded={isExpanded}
-      >
-        <h3 className='text-sm font-bold uppercase opacity-70'>Per-Phase Statistics</h3>
-        <span className='text-xs opacity-40'>{isExpanded ? '\u25B2' : '\u25BC'}</span>
-      </button>
-
-      {isExpanded && (
-        <div className='space-y-2'>
-          {phases.map(phase => (
-            <PhaseSection key={phase.phaseName} phase={phase} />
-          ))}
-          {totalRow && <PhaseSection key='total' phase={totalRow} />}
-        </div>
-      )}
+      {showTitle && <h3 className={`mb-2 ${STATISTICS_SECTION_TITLE_CLASS}`}>Per-phase statistics</h3>}
+      <div className='space-y-2'>
+        {phases.map(phase => (
+          <PhaseSection key={phase.phaseName} phase={phase} />
+        ))}
+        {totalRow && <PhaseSection key='total' phase={totalRow} />}
+      </div>
     </div>
   );
 }

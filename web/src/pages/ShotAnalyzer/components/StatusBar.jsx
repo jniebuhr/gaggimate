@@ -116,7 +116,7 @@ export function StatusBar({
   // Updated Badge Logic: If searching, keep it neutral but show activity
   const profileBadgeClasses = isMismatch
     ? `${badgeBaseClass} text-white`
-    : currentProfile && !isSearchingProfile
+    : currentProfile
       ? `${badgeBaseClass} bg-primary border-primary text-primary-content`
       : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
 
@@ -209,8 +209,7 @@ export function StatusBar({
             </div>
 
             <span className='mx-1.5 flex-1 truncate text-center text-sm font-bold'>
-              {/* Show "Searching..." text if actively searching, otherwise normal name */}
-              {isSearchingProfile ? (
+              {isSearchingProfile && !currentProfile ? (
                 <span className='italic opacity-50'>Searching Profile...</span>
               ) : (
                 <>
@@ -220,16 +219,20 @@ export function StatusBar({
               )}
             </span>
 
-            {currentProfile && !isSearchingProfile ? (
-              <button
-                onClick={e => {
-                  e.stopPropagation();
-                  onUnloadProfile();
-                }}
-                className={activeBadgeIconButtonClasses}
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
+            {currentProfile ? (
+              isSearchingProfile ? (
+                <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
+              ) : (
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onUnloadProfile();
+                  }}
+                  className={activeBadgeIconButtonClasses}
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              )
             ) : isSearchingProfile ? (
               <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
             ) : (

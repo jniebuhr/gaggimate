@@ -37,10 +37,10 @@ export function EmptyState({ loading }) {
     );
   }
   return (
-    <div className='flex min-h-[60vh] items-center justify-center p-8'>
-      <div className='max-w-2xl space-y-8 text-center'>
+    <div className='flex min-h-[60vh] items-start justify-center pb-8'>
+      <div className='w-full space-y-6 text-center'>
         {/* Info Box */}
-        <div className='bg-base-200/60 border-base-content/5 space-y-6 rounded-xl border p-8 text-left shadow-sm'>
+        <div className='bg-base-200/60 border-base-content/5 w-full space-y-6 rounded-xl border p-8 text-left shadow-sm'>
           <div className='border-base-content/10 space-y-2 border-b pb-4 text-center'>
             <h2 className='text-base-content text-2xl font-bold'>No Shot Loaded</h2>
             <p className='text-base-content text-sm opacity-70'>
@@ -131,8 +131,9 @@ export function EmptyState({ loading }) {
             <span className='mt-1 block'>Bulk upload and download are supported.</span>
           </div>
         </div>
-
-        <DeepDiveLogoMark />
+        <div className='mx-auto max-w-2xl'>
+          <DeepDiveLogoMark />
+        </div>
       </div>
     </div>
   );

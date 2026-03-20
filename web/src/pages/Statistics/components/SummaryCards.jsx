@@ -3,6 +3,7 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faMugHot } from '@fortawesome/free-solid-svg-icons/faMugHot';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch';
+import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
 // Presentational only: renders a high-signal summary layer from StatisticsService.summary.
 function formatDuration(seconds) {
@@ -36,13 +37,9 @@ function SummaryStatCard({ icon, label, value, accentColorVar, tone = 'muted' })
     >
       <div className='flex items-center gap-3'>
         <div
-          className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border sm:h-14 sm:w-14'
+          className='flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14'
           style={{
             color: accent,
-            borderColor: `color-mix(in srgb, ${accent} 32%, var(--statistics-summary-border))`,
-            background: isStrong
-              ? `color-mix(in srgb, ${accent} 14%, transparent)`
-              : `color-mix(in srgb, ${accent} 10%, transparent)`,
           }}
         >
           <FontAwesomeIcon icon={icon} className='text-2xl sm:text-[1.65rem]' />
@@ -105,7 +102,7 @@ export function SummaryCards({ summary }) {
 
   return (
     <div className='space-y-2'>
-      <div className='px-1 text-[10px] font-semibold uppercase tracking-wide opacity-50'>Totals</div>
+      <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Totals</h3>
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'>
         {totalCards.map(card => (
           <SummaryStatCard key={card.key} {...card} />
