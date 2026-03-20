@@ -262,7 +262,7 @@ export function StatisticsToolbar({
       <div className='flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1'>
         <details className='dropdown max-w-full'>
           <summary
-            className={`flex h-11 min-h-0 w-[4rem] list-none items-center justify-between rounded-lg border px-1.75 text-xs font-bold uppercase tracking-wide shadow-sm transition-colors [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`}
+            className={`flex h-11 min-h-0 w-[4rem] list-none items-center justify-between rounded-lg border px-1.5 text-xs font-bold uppercase tracking-wide shadow-sm transition-colors [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`}
             aria-label='Select source'
             title='Select source'
           >

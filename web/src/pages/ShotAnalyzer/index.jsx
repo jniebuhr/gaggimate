@@ -59,8 +59,32 @@ function normalizeMatchedProfileSource(profileData, profileSource) {
 }
 
 function shouldAutoScrollAnalyzerOnSelection() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-  return window.matchMedia('(max-width: 1023px)').matches;
+  const viewportWindow = globalThis.window;
+  if (!viewportWindow || typeof viewportWindow.matchMedia !== 'function') return false;
+  return viewportWindow.matchMedia('(max-width: 1023px)').matches;
+}
+
+async function loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles) {
+  const preferredMatch = findPreferredProfileMatch(
+    allProfiles,
+    shotWithMetadata.profile,
+    shotWithMetadata.source,
+  );
+
+  if (!preferredMatch) return null;
+
+  const profileName = preferredMatch.label || preferredMatch.name;
+  const profileId = getProfileLookupId(preferredMatch);
+  const fullProfile = preferredMatch.data
+    ? preferredMatch.data
+    : await libraryService.loadProfile(profileId, preferredMatch.source);
+
+  if (!fullProfile) return null;
+
+  return {
+    profile: normalizeMatchedProfileSource(fullProfile, preferredMatch.source),
+    profileName,
+  };
 }
 
 export function ShotAnalyzer() {
@@ -109,7 +133,7 @@ export function ShotAnalyzer() {
   const scheduleProfileAutoMatchRetry = (attempt, callback) => {
     if (attempt + 1 >= PROFILE_AUTO_MATCH_MAX_ATTEMPTS) return false;
     profileSearchTimerRef.current = setTimeout(() => {
-      void callback(attempt + 1);
+      callback(attempt + 1);
     }, PROFILE_AUTO_MATCH_RETRY_DELAY_MS);
     return true;
   };
@@ -257,31 +281,18 @@ export function ShotAnalyzer() {
 
           if (matchId !== profileMatchIdRef.current) return; // stale
 
-          const preferredMatch = findPreferredProfileMatch(
-            allProfiles,
-            shotWithMetadata.profile,
-            shotWithMetadata.source,
-          );
+          const matchedProfile = await loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles);
 
-          if (preferredMatch) {
+          if (matchId !== profileMatchIdRef.current) return; // stale
+
+          if (matchedProfile) {
             // Keep the matched name visible while searching, but only promote the
             // profile to currentProfile after the full payload has been loaded.
             // This prevents the analyzer from re-running against a partial list item
             // that may not contain the phase data required for profile comparison.
-            setCurrentProfileName(preferredMatch.label || preferredMatch.name);
-
-            const pid = getProfileLookupId(preferredMatch);
-            const fullProfile = preferredMatch.data
-              ? preferredMatch.data
-              : await libraryService.loadProfile(pid, preferredMatch.source);
-
-            if (matchId !== profileMatchIdRef.current) return; // stale
-
-            if (fullProfile) {
-              setCurrentProfile(normalizeMatchedProfileSource(fullProfile, preferredMatch.source));
-              setCurrentProfileName(preferredMatch.label || preferredMatch.name);
-              return;
-            }
+            setCurrentProfile(matchedProfile.profile);
+            setCurrentProfileName(matchedProfile.profileName);
+            return;
           }
 
           if (scheduleProfileAutoMatchRetry(attempt, attemptProfileAutoMatch)) {
@@ -303,7 +314,7 @@ export function ShotAnalyzer() {
 
       // Debounce: wait for rapid navigation to settle before searching
       profileSearchTimerRef.current = setTimeout(() => {
-        void attemptProfileAutoMatch(0);
+        attemptProfileAutoMatch(0);
       }, PROFILE_AUTO_MATCH_INITIAL_DELAY_MS);
     } else {
       // Shot has no profile field — clear search states immediately

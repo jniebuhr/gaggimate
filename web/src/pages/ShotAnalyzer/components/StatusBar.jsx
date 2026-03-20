@@ -158,12 +158,6 @@ export function StatusBar({
     </button>
   );
 
-  const handleBadgeKeyDown = (event, action) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    action();
-  };
-
   const renderProfileTrailingControl = () => {
     if (currentProfile) {
       if (isSearchingProfile) {
@@ -211,18 +205,19 @@ export function StatusBar({
           {/* --- CENTER: SHOT BADGE --- */}
           <div
             className={shotBadgeClasses}
-            onClick={onTogglePanel}
-            onKeyDown={event => handleBadgeKeyDown(event, onTogglePanel)}
             title='Click to open the library. Use the import icon or drop files here to import.'
-            role='button'
-            tabIndex={0}
           >
             <div className='flex flex-shrink-0 items-center gap-2'>
               {renderImportButton('files into the Shot Analyzer', Boolean(currentShot))}
             </div>
-            <span className='mx-1.5 flex-1 truncate text-center text-sm font-bold'>
+            <button
+              type='button'
+              onClick={onTogglePanel}
+              className='mx-1.5 flex-1 truncate text-center text-sm font-bold'
+              title='Open library'
+            >
               {currentShot?.source === 'gaggimate' ? `#${currentShot.id}` : cleanName(currentShotName)}
-            </span>
+            </button>
             {currentShot ? (
               <button
                 type='button'
@@ -243,11 +238,7 @@ export function StatusBar({
           <div
             className={profileBadgeClasses}
             style={mismatchProfileBadgeStyle}
-            onClick={onTogglePanel}
-            onKeyDown={event => handleBadgeKeyDown(event, onTogglePanel)}
             title={getProfileBadgeTitle(isMismatch)}
-            role='button'
-            tabIndex={0}
           >
             <div className='flex flex-shrink-0 items-center gap-2'>
               {renderImportButton(
@@ -256,7 +247,12 @@ export function StatusBar({
               )}
             </div>
 
-            <span className='mx-1.5 flex-1 truncate text-center text-sm font-bold'>
+            <button
+              type='button'
+              onClick={onTogglePanel}
+              className='mx-1.5 flex-1 truncate text-center text-sm font-bold'
+              title={getProfileBadgeTitle(isMismatch)}
+            >
               {isSearchingProfile && !currentProfile ? (
                 <span className='italic opacity-50'>Searching Profile...</span>
               ) : (
@@ -265,7 +261,7 @@ export function StatusBar({
                   {cleanName(currentProfileName)}
                 </>
               )}
-            </span>
+            </button>
 
             {renderProfileTrailingControl()}
           </div>

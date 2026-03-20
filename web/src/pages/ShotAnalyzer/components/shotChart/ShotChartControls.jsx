@@ -52,6 +52,12 @@ function renderLegendMarker({ label, labelIcon, swatchColor, swatchLineWidth }) 
   );
 }
 
+function getReplayActionLabel({ isReplaying, isReplayPaused }) {
+  if (isReplaying) return 'Pause replay';
+  if (isReplayPaused) return 'Resume replay';
+  return 'Replay chart';
+}
+
 export function ShotChartControls({
   exportMenuRef,
   exportMenuState,
@@ -90,11 +96,7 @@ export function ShotChartControls({
     className:
       `btn btn-ghost btn-xs ${ANALYZER_COMPACT_ICON_BUTTON_CLASS} rounded-none border-0 bg-transparent p-0 shadow-none`,
   });
-  const replayActionLabel = isReplaying
-    ? 'Pause replay'
-    : isReplayPaused
-      ? 'Resume replay'
-      : 'Replay chart';
+  const replayActionLabel = getReplayActionLabel({ isReplaying, isReplayPaused });
 
   return (
     <>
