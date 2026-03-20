@@ -65,13 +65,28 @@ export function ExtendedProfileForm(props) {
     setCurrentPhaseIndex(0);
   };
 
+  const handleSave = () => {
+    const normalized = {
+      ...data,
+      phases: data.phases.map(p => {
+        let pump = p.pump;
+        if (typeof pump === 'number' && Number.isNaN(pump)) {
+          pump = 0;
+        }
+        return { ...p, pump };
+      }),
+    };
+    onSave(normalized);
+  };
+
+
   const currentPhase = data.phases[currentPhaseIndex];
 
   return (
     <form
       onSubmit={e => {
         e.preventDefault();
-        onSave(data);
+        handleSave();
       }}
     >
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
