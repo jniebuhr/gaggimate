@@ -11,16 +11,16 @@ class MQTTPlugin : public Plugin {
   public:
     void setup(Controller *controller, PluginManager *pluginManager) override;
     bool connect(Controller *controller);
-    void loop() override {
-        // Event based plugin, no loop needed
-    };
+    void loop() override { client.loop(); };
 
   private:
     void publish(const std::string &topic, const std::string &message);
     void publishBrewState(const char *state);
     void publishDiscovery(Controller *controller);
+    void subscribeToTopics();
     MQTTClient client;
     WiFiClient net;
+    PluginManager *pluginManager = nullptr;
 
     float lastTemperature = 0;
 };

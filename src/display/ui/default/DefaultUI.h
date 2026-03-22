@@ -14,6 +14,8 @@ class Controller;
 constexpr int RERENDER_INTERVAL_IDLE = 2500;
 constexpr int RERENDER_INTERVAL_ACTIVE = 100;
 
+constexpr int QUOTE_ROTATION_INTERVAL = 10000; // 10 seconds
+
 constexpr int TEMP_HISTORY_INTERVAL = 250;
 constexpr int TEMP_HISTORY_LENGTH = 20 * 1000 / TEMP_HISTORY_INTERVAL;
 
@@ -129,6 +131,11 @@ class DefaultUI {
 
     // Standby brightness control
     unsigned long standbyEnterTime = 0;
+
+    // Standby quote rotation
+    int currentQuoteIndex = 0;
+    unsigned long lastQuoteChange = 0;
+    String customStandbyQuote = "";
 
     xTaskHandle taskHandle;
     static void loopTask(void *arg);

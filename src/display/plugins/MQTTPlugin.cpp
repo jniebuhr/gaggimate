@@ -117,11 +117,28 @@ void MQTTPlugin::publishBrewState(const char *state) {
     publish("controller/brew/state", json);
 }
 
+void MQTTPlugin::subscribeToTopics() {
+    String mac = WiFi.macAddress();
+    mac.replace(":", "_");
+    char topic[80];
+    snprintf(topic, sizeof(topic), "gaggimate/%s/standby/quote", mac.c_str());
+    client.subscribe(topic);
+}
+
 void MQTTPlugin::setup(Controller *controller, PluginManager *pluginManager) {
+    this->pluginManager = pluginManager;
+
+    client.onMessage([this](String &topic, String &payload) {
+        if (topic.endsWith("/standby/quote")) {
+            this->pluginManager->trigger("ui:standby:quote", "text", payload);
+        }
+    });
+
     pluginManager->on("controller:wifi:connect", [this, controller](const Event &) {
         if (!connect(controller))
             return;
         publishDiscovery(controller);
+        subscribeToTopics();
     });
 
     pluginManager->on("boiler:currentTemperature:change", [this](Event const &event) {

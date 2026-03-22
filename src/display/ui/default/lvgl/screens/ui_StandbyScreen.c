@@ -13,6 +13,7 @@ lv_obj_t *ui_StandbyScreen_wifiIcon = NULL;
 lv_obj_t *ui_StandbyScreen_bluetoothIcon = NULL;
 lv_obj_t *ui_StandbyScreen_updateIcon = NULL;
 lv_obj_t *ui_StandbyScreen_Image3 = NULL;
+lv_obj_t *ui_StandbyScreen_quote = NULL;
 // event funtions
 void ui_event_StandbyScreen(lv_event_t *e) {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -143,6 +144,20 @@ void ui_StandbyScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_StandbyScreen_Image3, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
                                            _ui_theme_alpha_NiceWhite);
 
+    ui_StandbyScreen_quote = lv_label_create(ui_StandbyScreen);
+    lv_obj_set_width(ui_StandbyScreen_quote, 460);
+    lv_obj_set_height(ui_StandbyScreen_quote, LV_SIZE_CONTENT);
+    lv_obj_set_align(ui_StandbyScreen_quote, LV_ALIGN_BOTTOM_MID);
+    lv_obj_set_y(ui_StandbyScreen_quote, -20);
+    lv_label_set_text(ui_StandbyScreen_quote, "");
+    lv_label_set_long_mode(ui_StandbyScreen_quote, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(ui_StandbyScreen_quote, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_StandbyScreen_quote, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_object_set_themeable_style_property(ui_StandbyScreen_quote, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
+                                           _ui_theme_color_NiceWhite);
+    ui_object_set_themeable_style_property(ui_StandbyScreen_quote, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,
+                                           _ui_theme_alpha_NiceWhite);
+
     lv_obj_add_event_cb(ui_StandbyScreen, ui_event_StandbyScreen, LV_EVENT_ALL, NULL);
 }
 
@@ -159,4 +174,5 @@ void ui_StandbyScreen_screen_destroy(void) {
     ui_StandbyScreen_bluetoothIcon = NULL;
     ui_StandbyScreen_updateIcon = NULL;
     ui_StandbyScreen_Image3 = NULL;
+    ui_StandbyScreen_quote = NULL;
 }

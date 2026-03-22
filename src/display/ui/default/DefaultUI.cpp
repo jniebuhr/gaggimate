@@ -18,6 +18,31 @@
 
 static EffectManager effect_mgr;
 
+static const char *STANDBY_QUOTES[] = {
+    "\"Grind size: the thing you'll blame before admitting it was you.\" - Socrates",
+    "\"Today's forecast: 100% chance of espresso.\" - Nostradamus",
+    "\"Pre-infusion: a fancy word for patience.\" - Aristotle",
+    "\"You don't need an alarm clock. You need a grinder.\" - Nikola Tesla",
+    "\"The puck looked perfect. The shot did not. Such is life.\" - Marcus Aurelius",
+    "\"Dose, tamp, extract, repeat. This is the way.\" - Genghis Khan",
+    "\"The espresso machine doesn't judge you. That's its best feature.\" - Frankenstein's Monster",
+    "\"The ratio is 1:2. The ratio of espresso to problems solved is infinite.\" - Isaac Newton",
+    "\"Another morning. Another chance to nail the dial-in.\" - Theodore Roosevelt",
+    "\"Coffee is ready. Everything else can wait.\" - Julius Caesar",
+    "\"Some people wake up. You wake up with purpose.\" - Nietzsche",
+    "\"Channeling: nature's way of keeping baristas humble.\" - Galileo Galilei",
+    "\"The scale said 18g. The scale lied. Again.\" - Albert Einstein",
+    "\"Sour? Bitter? Somewhere in between? Welcome to Monday.\" - Sherlock Holmes",
+    "\"The crema looks incredible. It tastes like regret.\" - Shakespeare",
+    "\"Your kitchen smells better than any cafe. Own it.\" - Cleopatra",
+    "\"One more shot. For science.\" - Marie Curie",
+    "\"Third wave coffee: where a $4 bean becomes a $7 existential crisis.\" - Karl Marx",
+    "\"It's 6am. You've already read extraction theory. Seek help.\" - Sigmund Freud",
+    "\"You've watched more extraction videos than your own family photos.\" - Charles Darwin",
+    "\"Barista at home. Disaster in the cup. Still better than the office.\" - Napoleon Bonaparte",
+};
+static const int STANDBY_QUOTES_COUNT = sizeof(STANDBY_QUOTES) / sizeof(STANDBY_QUOTES[0]);
+
 int16_t calculate_angle(int set_temp, int range, int offset) {
     const double percentage = static_cast<double>(set_temp) / static_cast<double>(MAX_TEMP);
     return (percentage * ((double)range)) - range / 2 - offset;
@@ -203,6 +228,10 @@ void DefaultUI::init() {
             bluetoothWeight = newWeight;
             rerender = true;
         }
+    });
+    pluginManager->on("ui:standby:quote", [this](Event const &event) {
+        customStandbyQuote = event.getString("text");
+        rerender = true;
     });
     setupState();
     setupReactive();
@@ -693,6 +722,17 @@ void DefaultUI::updateStandbyScreen() {
                                                      : lv_obj_add_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
     !apActive &&WiFi.status() == WL_CONNECTED ? lv_obj_clear_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN)
                                               : lv_obj_add_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN);
+
+    if (ui_StandbyScreen_quote != nullptr) {
+        const unsigned long now = millis();
+        if (!customStandbyQuote.isEmpty()) {
+            lv_label_set_text(ui_StandbyScreen_quote, customStandbyQuote.c_str());
+        } else if (now - lastQuoteChange >= QUOTE_ROTATION_INTERVAL) {
+            lv_label_set_text(ui_StandbyScreen_quote, STANDBY_QUOTES[currentQuoteIndex]);
+            currentQuoteIndex = (currentQuoteIndex + 1) % STANDBY_QUOTES_COUNT;
+            lastQuoteChange = now;
+        }
+    }
 }
 
 void DefaultUI::updateStatusScreen() const {
