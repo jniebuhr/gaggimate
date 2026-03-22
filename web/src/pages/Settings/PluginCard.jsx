@@ -41,7 +41,7 @@ export function PluginCard({
                     className='flex flex-wrap items-center gap-1 md:flex-nowrap'
                   >
                     {/* Time input */}
-                    <div className='flex-grow-1 text-center sm:text-start'>
+                    <div className='grow-1 text-center sm:text-start'>
                       <input
                         type='time'
                         className='w-auto text-center input input-bordered input-sm md:input-md min-w-0 pr-6'
@@ -53,7 +53,7 @@ export function PluginCard({
 
                     {/* Days toggle buttons */}
                     <div
-                      className='join flex flex-grow-8'
+                      className='join flex grow-8'
                       role='group'
                       aria-label='Days of week selection'
                     >
@@ -99,18 +99,18 @@ export function PluginCard({
                       <button
                         type='button'
                         onClick={() => removeAutoWakeupSchedule(scheduleIndex)}
-                        className='btn btn-ghost btn-sm md:btn-md flex-grow-1'
+                        className='btn btn-ghost btn-sm md:btn-md grow-1'
                         disabled={!formData.autowakeupEnabled}
                         title='Delete this schedule'
                       >
-                        <FontAwesomeIcon icon={faTrashCan} className='text-md' />
+                        <FontAwesomeIcon icon={faTrashCan} className='text-base' />
                       </button>
                     ) : (
                       <div
-                        className='btn btn-ghost btn-sm md:btn-md flex-grow-1 cursor-not-allowed opacity-30'
+                        className='btn btn-ghost btn-sm md:btn-md grow-1 cursor-not-allowed opacity-30'
                         title='Cannot delete the last schedule'
                       >
-                        <FontAwesomeIcon icon={faTrashCan} className='text-md' />
+                        <FontAwesomeIcon icon={faTrashCan} className='text-base' />
                       </div>
                     )}
                   </div>
