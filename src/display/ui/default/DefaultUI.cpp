@@ -679,6 +679,11 @@ void DefaultUI::handleScreenChange() {
     if (current != *targetScreen) {
         if (*targetScreen == ui_StandbyScreen) {
             standbyEnterTime = millis();
+            if (ui_StandbyScreen_quote != nullptr) {
+                lv_label_set_text(ui_StandbyScreen_quote, STANDBY_QUOTES[currentQuoteIndex]);
+                currentQuoteIndex = (currentQuoteIndex + 1) % STANDBY_QUOTES_COUNT;
+                lastQuoteChange = standbyEnterTime;
+            }
         } else if (current == ui_StandbyScreen) {
             const Settings &settings = controller->getSettings();
             setBrightness(settings.getMainBrightness());
