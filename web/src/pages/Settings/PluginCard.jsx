@@ -1,6 +1,7 @@
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import homekitImage from '../../assets/homekit.png';
+import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
 
 export function PluginCard({
   formData,
@@ -44,7 +45,7 @@ export function PluginCard({
                     <div className='grow-1 text-center sm:text-start'>
                       <input
                         type='time'
-                        className='w-auto text-center input input-bordered input-sm md:input-md min-w-0 pr-6'
+                        className='input input-bordered input-sm md:input-md w-auto min-w-0 pr-6 text-center'
                         value={schedule.time}
                         onChange={e => updateAutoWakeupTime(scheduleIndex, e.target.value)}
                         disabled={!formData.autowakeupEnabled}
@@ -120,8 +121,10 @@ export function PluginCard({
                   onClick={addAutoWakeupSchedule}
                   className='btn btn-primary btn-sm md:btn-md mt-2'
                   disabled={!formData.autowakeupEnabled}
+                  aria-label='Add schedule'
+                  title='Add schedule'
                 >
-                  +
+                  <FontAwesomeIcon icon={faCalendarDays} />
                 </button>
               </div>
             </div>
