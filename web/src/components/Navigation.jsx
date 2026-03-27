@@ -1,4 +1,4 @@
-import { useLocation, useRoute } from 'preact-iso';
+import { useLocation } from 'preact-iso';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
@@ -9,48 +9,81 @@ import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 
-function MenuItem(props) {
-  let className =
-    'btn btn-md justify-start gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
+const NAVIGATION_SECTIONS = [
+  [{ label: 'Dashboard', link: '/', icon: faHome }],
+  [
+    { label: 'Profiles', link: '/profiles', icon: faList },
+    { label: 'Shot History', link: '/history', icon: faTimeline },
+    { label: 'Shot Analyzer', link: '/analyzer', icon: faMagnifyingGlassChart, isNew: true },
+    { label: 'Statistics', link: '/statistics', icon: faChartSimple, isNew: true },
+  ],
+  [
+    { label: 'PID Autotune', link: '/pidtune', icon: faTemperatureHalf },
+    { label: 'Bluetooth Devices', link: '/scales', icon: faBluetoothB },
+    { label: 'Settings', link: '/settings', icon: faCog },
+  ],
+  [{ label: 'System & Updates', link: '/ota', icon: faRotate }],
+];
+
+function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
   const { path } = useLocation();
-  if (props.active || path === props.link) {
-    className =
-      'btn btn-md justify-start gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
-  }
+  const isActive = path === link;
+  const baseClassName = collapsed
+    ? 'btn btn-square btn-md w-full justify-center text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-0'
+    : 'btn btn-md justify-start gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
+  const activeClassName = collapsed
+    ? 'btn btn-square btn-md w-full justify-center bg-primary text-primary-content hover:bg-primary hover:text-primary-content border-none px-0'
+    : 'btn btn-md justify-start gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
+  const className = isActive ? activeClassName : baseClassName;
+
   return (
-    <a href={props.link} className={className}>
-      <FontAwesomeIcon icon={props.icon} />
-      <div className='indicator'>
-        {props.isNew && (
-          <span className='indicator-item text-success pl-8 text-xs font-bold'>NEW</span>
-        )}
-        <span>{props.label}</span>
-      </div>
+    <a
+      href={link}
+      className={className}
+      aria-label={collapsed ? label : undefined}
+      aria-current={isActive ? 'page' : undefined}
+      title={collapsed ? label : undefined}
+    >
+      <FontAwesomeIcon icon={icon} />
+      {!collapsed ? (
+        <div className='indicator'>
+          {isNew ? <span className='indicator-item text-success pl-8 text-xs font-bold'>NEW</span> : null}
+          <span>{label}</span>
+        </div>
+      ) : null}
     </a>
   );
 }
 
-export function Navigation(props) {
+export function Navigation({ collapsed = false, onToggleCollapsed }) {
   return (
-    <nav className='hidden lg:col-span-2 lg:block'>
-      <MenuItem label='Dashboard' link='/' icon={faHome} />
-      <hr className='h-5 border-0' />
-      <div className='space-y-1.5'>
-        <MenuItem label='Profiles' link='/profiles' icon={faList} />
-        <MenuItem label='Shot History' link='/history' icon={faTimeline} />
-        <MenuItem label='Shot Analyzer' link='/analyzer' icon={faMagnifyingGlassChart} isNew />
-        <MenuItem label='Statistics' link='/statistics' icon={faChartSimple} isNew />
-      </div>
-      <hr className='h-5 border-0' />
-      <div className='space-y-1.5'>
-        <MenuItem label='PID Autotune' link='/pidtune' icon={faTemperatureHalf} />
-        <MenuItem label='Bluetooth Devices' link='/scales' icon={faBluetoothB} />
-        <MenuItem label='Settings' link='/settings' icon={faCog} />
-      </div>
-      <hr className='h-5 border-0' />
-      <div className='space-y-1.5'>
-        <MenuItem label='System & Updates' link='/ota' icon={faRotate} />
+    <nav className={`hidden lg:block ${collapsed ? 'lg:col-span-1' : 'lg:col-span-2'}`}>
+      <div className={collapsed ? 'mx-auto w-full max-w-[3.5rem]' : 'w-full'}>
+        {NAVIGATION_SECTIONS.map((section, sectionIndex) => (
+          <div key={`nav-section-${sectionIndex}`}>
+            {sectionIndex > 0 ? <hr className='h-5 border-0' /> : null}
+            <div className='space-y-1.5'>
+              {section.map(item => (
+                <MenuItem key={item.link} collapsed={collapsed} {...item} />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <div className={`mt-4 flex ${collapsed ? 'justify-center' : 'justify-end'}`}>
+          <button
+            type='button'
+            onClick={onToggleCollapsed}
+            className='btn btn-square btn-sm text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
+            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+            title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+          >
+            <FontAwesomeIcon icon={collapsed ? faChevronRight : faChevronLeft} />
+          </button>
+        </div>
       </div>
     </nav>
   );
