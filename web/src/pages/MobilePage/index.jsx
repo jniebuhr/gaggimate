@@ -326,7 +326,7 @@ export function MobilePage() {
           </div>
 
           {/* Profile switcher — brew mode, not active */}
-          {mode === 1 && !active && !finished && profiles.length > 0 && (
+          {mode === 1 && !active && !finished && (s.selectedProfile || profiles.length > 0) && (
             <div
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
@@ -344,7 +344,8 @@ export function MobilePage() {
             >
               <button
                 onClick={prevProfile}
-                style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: 22, padding: '4px 10px', cursor: 'pointer', lineHeight: 1 }}
+                disabled={profiles.length < 2}
+                style={{ background: 'none', border: 'none', color: profiles.length < 2 ? '#2d2d2d' : '#9ca3af', fontSize: 22, padding: '4px 10px', cursor: profiles.length < 2 ? 'default' : 'pointer', lineHeight: 1 }}
               >
                 ‹
               </button>
@@ -361,7 +362,8 @@ export function MobilePage() {
               </div>
               <button
                 onClick={nextProfile}
-                style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: 22, padding: '4px 10px', cursor: 'pointer', lineHeight: 1 }}
+                disabled={profiles.length < 2}
+                style={{ background: 'none', border: 'none', color: profiles.length < 2 ? '#2d2d2d' : '#9ca3af', fontSize: 22, padding: '4px 10px', cursor: profiles.length < 2 ? 'default' : 'pointer', lineHeight: 1 }}
               >
                 ›
               </button>
