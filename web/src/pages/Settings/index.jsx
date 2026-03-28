@@ -994,50 +994,75 @@ export function Settings() {
         <div className='mx-auto w-full px-4 py-2 lg:px-8 xl:container'>
           <div className='grid grid-cols-1 lg:grid-cols-12'>
             <div className='hidden lg:col-span-2 lg:block' />
-            <div className='flex flex-col items-end lg:col-span-10'>
-              {/* Slim Right-Aligned Warning - No Background */}
-              <div className='text-base-content/70 mb-2 flex items-center gap-2 px-2 py-1'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  viewBox='0 0 16 16'
-                  fill='currentColor'
-                  className='text-warning size-3.5 shrink-0'
-                >
-                  <path
-                    fillRule='evenodd'
-                    d='M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5A.75.75 0 0 1 8 5Zm0 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z'
-                    clipRule='evenodd'
-                  />
-                </svg>
-                <span className='text-[11px] leading-none font-medium'>
-                  Wi-Fi, NTP, and plugin changes will take effect after a restart.
-                </span>
-              </div>
+            <div className='lg:col-span-10'>
+              <div className='flex w-full flex-col gap-2 lg:flex-row lg:items-center'>
+                <div className='flex w-full items-center justify-between lg:order-2 lg:flex-1'>
+                  {/* Left-side Group: Navigation */}
+                  <a href='/' className='btn btn-outline btn-sm flex h-8 min-h-8 items-center px-3'>
+                    Back
+                  </a>
 
-              {/* Action Bar - Centered Buttons */}
-              <div className='flex w-full items-center justify-between gap-2'>
-                <a href='/' className='btn btn-outline btn-sm flex h-8 min-h-8 items-center px-3'>
-                  Back
-                </a>
-                <div className='flex items-center gap-2'>
-                  <button
-                    type='submit'
-                    form='settings-form'
-                    className='btn btn-primary btn-sm h-8 min-h-8'
-                    disabled={submitting}
+                  {/* Right-side Group: Warning + Save Buttons */}
+                  <div className='flex items-center gap-2 lg:gap-4'>
+                    {/* Warning Message - Inline to the left of Save buttons */}
+                    <div className='text-base-content/70 hidden items-center gap-2 lg:flex'>
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        viewBox='0 0 16 16'
+                        fill='currentColor'
+                        className='text-warning size-3.5 shrink-0'
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5A.75.75 0 0 1 8 5Zm0 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z'
+                          clipRule='evenodd'
+                        />
+                      </svg>
+                      <span className='text-[11px] leading-none font-medium'>
+                        Wi-Fi, NTP, and plugin changes will take effect after a restart.
+                      </span>
+                    </div>
+
+                    <div className='flex items-center gap-2'>
+                      <button
+                        type='submit'
+                        form='settings-form'
+                        className='btn btn-primary btn-sm h-8 min-h-8'
+                        disabled={submitting}
+                      >
+                        {submitting && <Spinner size={3} />} Save
+                      </button>
+                      <button
+                        type='submit'
+                        form='settings-form'
+                        name='restart'
+                        className='btn btn-secondary btn-sm h-8 min-h-8'
+                        disabled={submitting}
+                        onClick={e => onSubmit(e, true)}
+                      >
+                        Save & Restart
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Warning Message - Appears at the bottom on small screens */}
+                <div className='text-base-content/70 flex items-center justify-end gap-2 px-2 py-1 lg:hidden'>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    viewBox='0 0 16 16'
+                    fill='currentColor'
+                    className='text-warning size-3.5 shrink-0'
                   >
-                    {submitting && <Spinner size={3} />} Save
-                  </button>
-                  <button
-                    type='submit'
-                    form='settings-form'
-                    name='restart'
-                    className='btn btn-secondary btn-sm h-8 min-h-8'
-                    disabled={submitting}
-                    onClick={e => onSubmit(e, true)}
-                  >
-                    Save & Restart
-                  </button>
+                    <path
+                      fillRule='evenodd'
+                      d='M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5A.75.75 0 0 1 8 5Zm0 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z'
+                      clipRule='evenodd'
+                    />
+                  </svg>
+                  <span className='text-right text-[11px] leading-none font-medium'>
+                    Wi-Fi, NTP, and plugin changes will take effect after a restart.
+                  </span>
                 </div>
               </div>
             </div>
