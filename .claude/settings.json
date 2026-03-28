@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npx vite:*)",
+      "Bash(npm install:*)",
+      "Bash(rm -rf data/w)",
+      "Bash(mkdir -p data/w)",
+      "Bash(cp -R web/dist/* data/w/)"
+    ]
+  }
+}

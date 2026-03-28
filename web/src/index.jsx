@@ -4,7 +4,7 @@ import './style.css';
 import { initializeTheme } from './utils/themeManager.js';
 
 import { render } from 'preact';
-import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
+import { LocationProvider, Router, Route, ErrorBoundary, useLocation } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
 import { Footer } from './components/Footer.jsx';
@@ -21,50 +21,63 @@ import { Autotune } from './pages/Autotune/index.jsx';
 import { ShotHistory } from './pages/ShotHistory/index.jsx';
 import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
 import { StatisticsPage } from './pages/Statistics/index.jsx';
+import { MobilePage } from './pages/MobilePage/index.jsx';
 
 const apiService = new ApiService();
+
+function AppContent() {
+  const { url } = useLocation();
+
+  if (url === '/mobilepage') {
+    return <MobilePage />;
+  }
+
+  return (
+    <div className='bg-base-300 min-h-screen'>
+      <div className='flex min-h-screen flex-col'>
+        <Header />
+
+        <main className='flex-1'>
+          <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
+            <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
+              <Navigation />
+              <div className='lg:col-span-10'>
+                <ErrorBoundary>
+                  <Router>
+                    <Route path='/' component={Home} />
+                    <Route path='/profiles' component={ProfileList} />
+                    <Route path='/profiles/:id' component={ProfileEdit} />
+                    <Route path='/settings' component={Settings} />
+                    <Route path='/ota' component={OTA} />
+                    <Route path='/scales' component={Scales} />
+                    <Route path='/pidtune' component={Autotune} />
+                    <Route path='/history' component={ShotHistory} />
+                    <Route path='/analyzer' component={ShotAnalyzer} />
+                    <Route path='/statistics' component={StatisticsPage} />
+                    <Route
+                      path='/statistics/:sourceAlias/:profileName'
+                      component={StatisticsPage}
+                    />
+                    <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
+                    {/*deep-link route (sorce & ID)*/}
+                    <Route default component={NotFound} />
+                  </Router>
+                </ErrorBoundary>
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    </div>
+  );
+}
 
 export function App() {
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div className='bg-base-300 min-h-screen'>
-          <div className='flex min-h-screen flex-col'>
-            <Header />
-
-            <main className='flex-1'>
-              <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
-                <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
-                  <Navigation />
-                  <div className='lg:col-span-10'>
-                    <ErrorBoundary>
-                      <Router>
-                        <Route path='/' component={Home} />
-                        <Route path='/profiles' component={ProfileList} />
-                        <Route path='/profiles/:id' component={ProfileEdit} />
-                        <Route path='/settings' component={Settings} />
-                        <Route path='/ota' component={OTA} />
-                        <Route path='/scales' component={Scales} />
-                        <Route path='/pidtune' component={Autotune} />
-                        <Route path='/history' component={ShotHistory} />
-                        <Route path='/analyzer' component={ShotAnalyzer} />
-                        <Route path='/statistics' component={StatisticsPage} />
-                        <Route
-                          path='/statistics/:sourceAlias/:profileName'
-                          component={StatisticsPage}
-                        />
-                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
-                        {/*deep-link route (sorce & ID)*/}
-                        <Route default component={NotFound} />
-                      </Router>
-                    </ErrorBoundary>
-                  </div>
-                </div>
-              </div>
-            </main>
-            <Footer />
-          </div>
-        </div>
+        <AppContent />
       </ApiServiceContext.Provider>
     </LocationProvider>
   );
