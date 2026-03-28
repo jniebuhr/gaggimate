@@ -87,6 +87,12 @@ export function ShotChart({ shotData, results }) {
       return Number.isFinite(value) && value > 0;
     }),
   );
+  const hasTargetFlowData = Boolean(
+    shotData?.samples?.some(sample => {
+      const value = Number(sample?.tf ?? sample?.target_flow);
+      return Number.isFinite(value) && value > 0;
+    }),
+  );
 
   const legendColorByLabel = getLegendColorByLabel(chartColorsRef.current);
   const hideExternalTooltip = useCallback(() => {
@@ -237,14 +243,14 @@ export function ShotChart({ shotData, results }) {
     if (!mainCanvasCtx || !tempCanvasCtx) return undefined;
 
     const targetPressureFill = createStripedFillPattern(mainCanvasCtx, colors.pressure, {
-      baseAlpha: 0.018,
-      stripeAlpha: 0.065,
+      baseAlpha: 0.06,
+      stripeAlpha: 0.16,
       size: 18,
       lineWidth: 2,
     });
     const targetFlowFill = createStripedFillPattern(mainCanvasCtx, colors.flow, {
-      baseAlpha: 0.018,
-      stripeAlpha: 0.065,
+      baseAlpha: 0.06,
+      stripeAlpha: 0.16,
       size: 18,
       lineWidth: 2,
     });
@@ -303,6 +309,7 @@ export function ShotChart({ shotData, results }) {
       hasWeightFlowData,
       targetPressureFill,
       targetFlowFill,
+      hasTargetFlowData,
       tempToTargetFill,
       updateExternalTooltip,
     });

@@ -6,7 +6,8 @@
       "Bash(npm install:*)",
       "Bash(rm -rf data/w)",
       "Bash(mkdir -p data/w)",
-      "Bash(cp -R web/dist/* data/w/)"
+      "Bash(cp -R web/dist/* data/w/)",
+      "Read(//c/Users/svenf/Downloads/**)"
     ]
   }
 }

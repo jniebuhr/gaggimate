@@ -85,8 +85,6 @@ export const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
 export const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
 export const LEGEND_THIN_LINE_LABELS = new Set([
   'Target T',
-  'Target P',
-  'Target F',
   'Puck Flow',
   'Weight',
   'Weight Flow',
