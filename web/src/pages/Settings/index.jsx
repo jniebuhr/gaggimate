@@ -285,7 +285,14 @@ export function Settings() {
         />
       </div>
 
-      <form key='settings' ref={formRef} method='post' action='/api/settings' onSubmit={onSubmit}>
+      <form
+        id='settings-form'
+        key='settings'
+        ref={formRef}
+        method='post'
+        action='/api/settings'
+        onSubmit={onSubmit}
+      >
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
           {/* Temperature Settings */}
           <Card sm={10} lg={5} title='Temperature Settings'>
@@ -980,33 +987,49 @@ export function Settings() {
           </Card>
         </div>
 
-        <div className='pt-4 lg:col-span-10'>
-          <div className='alert alert-warning shadow-sm'>
-            <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
-          </div>
-          <div className='flex flex-col gap-2 pt-4 sm:flex-row'>
-            <a href='/' className='btn btn-outline flex-1 sm:flex-none'>
-              Back
-            </a>
-            <button
-              type='submit'
-              className='btn btn-primary flex-1 sm:flex-none'
-              disabled={submitting}
-            >
-              {submitting && <Spinner size={4} />} Save
-            </button>
-            <button
-              type='submit'
-              name='restart'
-              className='btn btn-secondary flex-1 sm:flex-none'
-              disabled={submitting}
-              onClick={e => onSubmit(e, true)}
-            >
-              Save and Restart
-            </button>
+        {/* Spacer so content doesn't hide behind the fixed bar */}
+        <div className='h-28' />
+      </form>
+
+      {/* Fixed save bar — mirrors App.jsx layout: xl:container > lg:grid-cols-12 > col-span-10 */}
+      <div className='border-base-200 bg-base-100/90 fixed right-0 bottom-0 left-0 z-50 border-t shadow-[0_-2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md'>
+        <div className='mx-auto w-full px-4 py-3 lg:px-8 xl:container'>
+          <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
+            {/* Spacer matching Navigation's 2-col width on large screens */}
+            <div className='hidden lg:col-span-2 lg:block' />
+            <div className='lg:col-span-10'>
+              <div className='alert alert-warning mb-3 shadow-sm'>
+                <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <a href='/' className='btn btn-outline'>
+                  Back
+                </a>
+                <div className='ml-auto flex gap-2'>
+                  <button
+                    type='submit'
+                    form='settings-form'
+                    className='btn btn-primary'
+                    disabled={submitting}
+                  >
+                    {submitting && <Spinner size={4} />} Save
+                  </button>
+                  <button
+                    type='submit'
+                    form='settings-form'
+                    name='restart'
+                    className='btn btn-secondary'
+                    disabled={submitting}
+                    onClick={e => onSubmit(e, true)}
+                  >
+                    Save & Restart
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </form>
+      </div>
     </>
   );
 }
