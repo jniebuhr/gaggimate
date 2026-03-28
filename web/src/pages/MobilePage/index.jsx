@@ -1,6 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
@@ -86,6 +86,22 @@ export function MobilePage() {
   const apiService = useContext(ApiServiceContext);
   const s = status.value;
   const mode = s.mode ?? 0;
+
+  const [profiles, setProfiles] = useState([]);
+  const [profileIdx, setProfileIdx] = useState(0);
+  const touchStartX = useRef(null);
+
+  useEffect(() => {
+    apiService.request({ tp: 'req:profiles:list' }).then(res => {
+      if (Array.isArray(res.profiles)) setProfiles(res.profiles);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!profiles.length || !s.selectedProfileId) return;
+    const idx = profiles.findIndex(p => p.id === s.selectedProfileId);
+    if (idx >= 0) setProfileIdx(idx);
+  }, [s.selectedProfileId, profiles]);
   const processInfo = s.process;
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
@@ -97,9 +113,38 @@ export function MobilePage() {
   const currentPressure = s.currentPressure ?? 0;
   const targetPressure = s.targetPressure ?? 0;
 
-  // Gauge fill percentages
-  const tempPct = Math.min(100, Math.max(0, (currentTemp / 140) * 100));
+  // Gauge fill percentages — temp bar fills toward targetTemp (100% = ready)
+  const tempMax = targetTemp > 0 ? targetTemp : 140;
+  const tempPct = Math.min(100, Math.max(0, (currentTemp / tempMax) * 100));
   const pressPct = Math.min(100, Math.max(0, (currentPressure / 12) * 100));
+
+  const prevProfile = useCallback(() => {
+    if (!profiles.length) return;
+    const idx = (profileIdx - 1 + profiles.length) % profiles.length;
+    setProfileIdx(idx);
+    apiService.request({ tp: 'req:profiles:select', id: profiles[idx].id }).catch(() => {});
+  }, [profiles, profileIdx, apiService]);
+
+  const nextProfile = useCallback(() => {
+    if (!profiles.length) return;
+    const idx = (profileIdx + 1) % profiles.length;
+    setProfileIdx(idx);
+    apiService.request({ tp: 'req:profiles:select', id: profiles[idx].id }).catch(() => {});
+  }, [profiles, profileIdx, apiService]);
+
+  const handleTouchStart = useCallback(e => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(e => {
+    if (touchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(deltaX) > 40) {
+      if (deltaX < 0) nextProfile();
+      else prevProfile();
+    }
+  }, [nextProfile, prevProfile]);
 
   const changeMode = useCallback(
     newMode => apiService.send({ tp: 'req:change-mode', mode: newMode }),
@@ -205,7 +250,7 @@ export function MobilePage() {
           }}
         >
           <span style={{ fontSize: 9, color: '#f87171', letterSpacing: '0.1em', writingMode: 'vertical-rl', transform: 'rotate(180deg)', marginBottom: 6 }}>
-            {Math.round(currentTemp)}°C
+            {Math.round(tempMax)}°C
           </span>
           <div
             style={{
@@ -279,6 +324,49 @@ export function MobilePage() {
               );
             })}
           </div>
+
+          {/* Profile switcher — brew mode, not active */}
+          {mode === 1 && !active && !finished && profiles.length > 0 && (
+            <div
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#111',
+                borderRadius: 12,
+                padding: '6px 4px',
+                marginTop: 10,
+                flexShrink: 0,
+                gap: 4,
+                userSelect: 'none',
+              }}
+            >
+              <button
+                onClick={prevProfile}
+                style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: 22, padding: '4px 10px', cursor: 'pointer', lineHeight: 1 }}
+              >
+                ‹
+              </button>
+              <div style={{ flex: 1, textAlign: 'center', overflow: 'hidden' }}>
+                <div style={{ fontSize: 9, color: '#6b7280', letterSpacing: '0.12em', marginBottom: 2 }}>PROFILE</div>
+                <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {profiles[profileIdx]?.name || s.selectedProfile || '—'}
+                </div>
+                {profiles.length > 1 && (
+                  <div style={{ fontSize: 9, color: '#4b5563', marginTop: 2 }}>
+                    {profileIdx + 1} / {profiles.length}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={nextProfile}
+                style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: 22, padding: '4px 10px', cursor: 'pointer', lineHeight: 1 }}
+              >
+                ›
+              </button>
+            </div>
+          )}
 
           {/* Process info (when brewing/active) */}
           {(active || finished) && brew && processInfo && (
