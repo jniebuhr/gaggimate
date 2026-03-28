@@ -13,6 +13,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import ShotNotesCard from './ShotNotesCard.jsx';
+import ShotFeedbackCard from './ShotFeedbackCard.jsx';
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 
 import VisualizerUploadModal from '../../components/VisualizerUploadModal.jsx';
@@ -25,7 +26,7 @@ function round2(v) {
   return Math.round((v + Number.EPSILON) * 100) / 100;
 }
 
-export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) {
+export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged, showFeedback, showRoastTips }) {
   const apiService = useContext(ApiServiceContext);
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
   const [expanded, setExpanded] = useState(false);
@@ -273,6 +274,13 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                     shot={shot}
                     onNotesLoaded={handleNotesLoaded}
                     onNotesUpdate={handleNotesUpdate}
+                  />
+                )}
+                {shot.loaded && showFeedback && shotNotes && (
+                  <ShotFeedbackCard
+                    shot={shot}
+                    notes={shotNotes}
+                    showRoastTips={showRoastTips}
                   />
                 )}
               </div>

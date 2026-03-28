@@ -17,6 +17,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
     ratio: '',
     grindSetting: '',
     balanceTaste: 'balanced',
+    roastType: '',
     notes: '',
   });
 
@@ -52,6 +53,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
           ratio: '',
           grindSetting: '',
           balanceTaste: 'balanced',
+          roastType: '',
           notes: '',
         };
 
@@ -100,6 +102,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
           ratio: '',
           grindSetting: '',
           balanceTaste: 'balanced',
+          roastType: '',
           notes: '',
         };
 
@@ -339,6 +342,27 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
               className={`input input-bordered bg-base-200 w-full cursor-default capitalize ${getTasteColor(notes.balanceTaste)}`}
             >
               {notes.balanceTaste}
+            </div>
+          )}
+        </div>
+
+        {/* Roast Type */}
+        <div className='form-control'>
+          <label className='mb-2 block text-sm font-medium'>Roast Type</label>
+          {isEditing ? (
+            <select
+              className='select select-bordered w-full'
+              value={notes.roastType}
+              onChange={e => handleInputChange('roastType', e.target.value)}
+            >
+              <option value=''>Not set</option>
+              <option value='light'>Light</option>
+              <option value='medium'>Medium</option>
+              <option value='dark'>Dark</option>
+            </select>
+          ) : (
+            <div className='input input-bordered bg-base-200 w-full cursor-default capitalize'>
+              {notes.roastType || '—'}
             </div>
           )}
         </div>

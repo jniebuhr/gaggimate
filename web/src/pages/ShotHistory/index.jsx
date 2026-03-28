@@ -42,6 +42,12 @@ export function ShotHistory() {
   const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
   const [filterBy, setFilterBy] = useState('all'); // all, rated, unrated
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFeedback, setShowFeedback] = useState(() => {
+    try { return localStorage.getItem('gaggimate_shot_feedback') !== 'false'; } catch { return true; }
+  });
+  const [showRoastTips, setShowRoastTips] = useState(() => {
+    try { return localStorage.getItem('gaggimate_shot_feedback_roast_tips') !== 'false'; } catch { return true; }
+  });
   const itemsPerPage = 10;
   const loadHistoryAbortRef = useRef(null);
   const loadHistory = async () => {
@@ -259,6 +265,36 @@ export function ShotHistory() {
               <option value='unrated'>Unrated Only</option>
             </select>
           </div>
+
+          {/* Feedback toggles */}
+          <div className='flex items-center gap-4'>
+            <label className='flex cursor-pointer items-center gap-2 text-sm'>
+              <input
+                type='checkbox'
+                className='toggle toggle-primary toggle-sm'
+                checked={showFeedback}
+                onChange={e => {
+                  setShowFeedback(e.target.checked);
+                  try { localStorage.setItem('gaggimate_shot_feedback', String(e.target.checked)); } catch {}
+                }}
+              />
+              <span>Shot Feedback</span>
+            </label>
+            {showFeedback && (
+              <label className='flex cursor-pointer items-center gap-2 text-sm'>
+                <input
+                  type='checkbox'
+                  className='toggle toggle-primary toggle-sm'
+                  checked={showRoastTips}
+                  onChange={e => {
+                    setShowRoastTips(e.target.checked);
+                    try { localStorage.setItem('gaggimate_shot_feedback_roast_tips', String(e.target.checked)); } catch {}
+                  }}
+                />
+                <span className='text-base-content/70'>Roast Tips</span>
+              </label>
+            )}
+          </div>
         </div>
       </div>
 
@@ -269,6 +305,8 @@ export function ShotHistory() {
             shot={item}
             onDelete={id => onDelete(id)}
             onNotesChanged={onNotesChanged}
+            showFeedback={showFeedback}
+            showRoastTips={showRoastTips}
             onLoad={async id => {
               // Fetch binary only if not loaded
               const target = history.find(h => h.id === id);
