@@ -1,3 +1,12 @@
+import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
+import Sortable, {MultiDrag} from 'sortablejs';
+try {
+Sortable?.mount(new MultiDrag())
+} catch (error) {
+  //
+}
+
+Sortable.pl
 import {
   CategoryScale,
   Chart,
@@ -21,8 +30,6 @@ import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
 import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
@@ -38,6 +45,7 @@ import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faAnglesDown, faAnglesUp, faGrip } from '@fortawesome/free-solid-svg-icons';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 
 Chart.register(
@@ -67,12 +75,27 @@ function ProfileCard({
   onDuplicate,
   favoriteDisabled,
   unfavoriteDisabled,
-  onMoveUp,
-  onMoveDown,
+  disabledDrag,
+  onMoveTop,
+  onMoveBottom,
   isFirst,
   isLast,
 }) {
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
+  const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
+
+  const handleMoveTop = useCallback(() => {
+    setTooltipsDisabled(true);
+    onMoveTop(data.id);
+    setTimeout(() => setTooltipsDisabled(false), 500);
+  }, [onMoveTop, data.id]);
+
+  const handleMoveBottom = useCallback(() => {
+    setTooltipsDisabled(true);
+    onMoveBottom(data.id);
+    setTimeout(() => setTooltipsDisabled(false), 500);
+  }, [onMoveBottom, data.id]);
+
   const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
@@ -198,7 +221,7 @@ function ProfileCard({
   }, [positionPopover]);
 
   return (
-    <Card sm={12} role='listitem'>
+    <Card sm={12} role='listitem' className='profile-card-container'>
       <div
         className='flex flex-row items-center'
         role='group'
@@ -481,27 +504,38 @@ function ProfileCard({
             className='flex flex-row gap-2 py-2'
             aria-label={`Profile details for ${data.label}`}
           >
-            <div className='flex flex-col justify-evenly'>
-              <Tooltip content='Move up'>
+            <div className='flex flex-col justify-evenly pr-1'>
+              <Tooltip content='Move to top' disabled={tooltipsDisabled}>
                 <button
-                  onClick={() => onMoveUp(data.id)}
+                  onClick={handleMoveTop}
                   disabled={isFirst}
-                  className='btn btn-xs btn-ghost'
-                  aria-label={`Move ${data.label} up`}
+                  className='drag-to-top btn btn-sm btn-ghost'
+                  aria-label={`Move ${data.label} to top`}
                   aria-disabled={isFirst}
                 >
-                  <FontAwesomeIcon icon={faArrowUp} />
+                  <FontAwesomeIcon icon={faAnglesUp} />
                 </button>
               </Tooltip>
-              <Tooltip content='Move down'>
+              {/*<Tooltip*/}
+              {/*  content={`${!disabledDrag ? 'Drag to reorder' : 'Drag disabled on search result'} `}*/}
+              {/*  disabled={tooltipsDisabled}*/}
+              {/*>*/}
+              <div
+                className={`drag-handle btn btn-sm btn-ghost ${disabledDrag ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
+                title={`${!disabledDrag ? 'Drag to reorder' : 'Drag disabled on search result'} `}
+              >
+                <FontAwesomeIcon icon={faGrip} />
+              </div>
+              {/*</Tooltip>*/}
+              <Tooltip content='Move to bottom' disabled={tooltipsDisabled}>
                 <button
-                  onClick={() => onMoveDown(data.id)}
+                  onClick={handleMoveBottom}
                   disabled={isLast}
-                  className='btn btn-xs btn-ghost'
-                  aria-label={`Move ${data.label} down`}
+                  className='drag-to-bottom btn btn-sm btn-ghost'
+                  aria-label={`Move ${data.label} to bottom`}
                   aria-disabled={isLast}
                 >
-                  <FontAwesomeIcon icon={faArrowDown} />
+                  <FontAwesomeIcon icon={faAnglesDown} />
                 </button>
               </Tooltip>
             </div>
@@ -569,6 +603,7 @@ export function ProfileList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('extraction');
+  const containerRef = useRef(null);
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
   const favoriteDisabled = favoriteCount >= 10;
@@ -624,37 +659,124 @@ export function ProfileList() {
     };
   }, [apiService]);
 
-  const moveProfileUp = useCallback(
+
+  // Filtered profiles
+  const profilesToShow = useMemo(() => {
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim();
+      return profiles.filter(
+        profile =>
+          profile.label?.toLowerCase().includes(search) ||
+          profile.description?.toLowerCase().includes(search),
+      );
+    }
+    return profiles;
+  }, [profiles, searchTerm]);
+
+  const moveProfileTop = useCallback(
     id => {
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.id === id);
-        if (idx > 0) {
-          const next = [...prev];
-          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-          persistProfileOrder(next);
-          return next;
+        if (idx <= 0 || idx >= prev.length) {
+          return prev;
         }
-        return prev;
+
+        const item = prev[idx];
+        const next = [item, ...prev.slice(0, idx), ...prev.slice(idx + 1)];
+        persistProfileOrder(next);
+        return next;
+
       });
     },
     [persistProfileOrder],
   );
 
-  const moveProfileDown = useCallback(
+
+  const moveProfileBottom = useCallback(
     id => {
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.id === id);
-        if (idx !== -1 && idx < prev.length - 1) {
-          const next = [...prev];
-          [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-          persistProfileOrder(next);
-          return next;
+        if (idx === -1 || idx >= prev.length) {
+          return prev;
         }
-        return prev;
+
+        const item = prev[idx];
+        const next = [...prev.slice(0, idx), ...prev.slice(idx + 1), item];
+        persistProfileOrder(next);
+        return next;
       });
     },
     [persistProfileOrder],
   );
+
+  // Reorder handling via SortableJS
+  useEffect(() => {
+    if (loading || !containerRef.current) return;
+
+    // const currentTab = activeTab;
+    const isFiltered = !!searchTerm.trim();
+
+    const sortable = Sortable.create(containerRef.current, {
+      multiDrag: true,
+      selectedClass: 'profile-list-drag-selected-item',
+      animation: 150,
+      handle: '.drag-handle',
+      disabled: isFiltered,
+      onStart: () => {
+        // Find all Tooltips in the container and disable them
+        const profileCards = containerRef.current.querySelectorAll('.profile-card-container');
+        profileCards.forEach(card => {
+        // Trigger a mouseleave on all handles
+          const handles =
+            card
+              .querySelectorAll('.drag-handle, button')
+              .querySelectorAll('.drag-to-top button')
+              .querySelectorAll('.drag-to-bottom button') || []; ;
+          handles.forEach(h => h.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true })));
+        });
+      },
+      onEnd: evt => {
+        const { oldIndex, newIndex, oldIndicies } = evt;
+        if (oldIndex === newIndex) return;
+
+        setProfiles(prev => {
+          const displayedProfiles = profilesToShow.filter(p =>
+            activeTab === 'utility' ? p.utility : !p.utility,
+          );
+
+          // Get the moved items
+          // SortableJS provides oldIndicies when multiDrag is used. If empty (e.g. single item drag) fallback to oldIndex.
+          const movedItems = (
+            oldIndicies && oldIndicies.length > 0 ? oldIndicies : [{ index: oldIndex }]
+          )
+            .map(oi => displayedProfiles[oi.index])
+            .filter(p => !!p);
+          const movedIds = new Set(movedItems.map(p => p.id));
+
+          // Remove moved items from profile list
+          const remainingProfiles = prev.filter(p => !movedIds.has(p.id));
+
+          // Find the insertion target in the full profiles list, targetItem is the item that WAS at newIndex in the displayed list
+          const targetItem = displayedProfiles[newIndex];
+          if (!targetItem) return prev;
+          const insertIdx = remainingProfiles.findIndex(p => p.id === targetItem.id);
+          if (insertIdx === -1) return prev;
+
+          // Splice the moved profiles in at the correct position
+          const newProfiles = [...remainingProfiles];
+          newProfiles.splice(insertIdx + (newIndex > oldIndex ? 1 : 0), 0, ...movedItems);
+
+          persistProfileOrder(newProfiles);
+          return newProfiles;
+        });
+      },
+    });
+
+    return () => {
+      sortable.destroy();
+    };
+  }, [loading, searchTerm, activeTab, persistProfileOrder, profilesToShow]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -771,20 +893,6 @@ export function ProfileList() {
     await loadProfiles();
   }, [profiles, apiService]);
 
-  // Filtered profiles
-  const profilesToShow = useMemo(() => {
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase().trim();
-      return profiles.filter(
-        profile =>
-          profile.label?.toLowerCase().includes(search) ||
-          profile.description?.toLowerCase().includes(search),
-      );
-    }
-    return profiles;
-  }, [profiles, searchTerm]);
-
   if (loading) {
     return (
       <div
@@ -824,6 +932,7 @@ export function ProfileList() {
         <div className='flex flex-grow items-center justify-end gap-2'>
           <Tooltip content='Export all profiles'>
             <button
+              id='export-profiles'
               onClick={onExport}
               className='btn btn-ghost btn-sm'
               aria-label='Export all profiles'
@@ -879,7 +988,12 @@ export function ProfileList() {
           </button>
         </div>
       )}
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label='Profile list'>
+      <div
+        className='grid grid-cols-1 gap-4 lg:grid-cols-12'
+        role='list'
+        aria-label='Profile list'
+        ref={containerRef}
+      >
         {profilesToShow
           .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
           .map((data, idx, filtered) => (
@@ -893,8 +1007,9 @@ export function ProfileList() {
               onUnfavorite={onUnfavorite}
               onFavorite={onFavorite}
               onDuplicate={onDuplicate}
-              onMoveUp={moveProfileUp}
-              onMoveDown={moveProfileDown}
+              disabledDrag={!!searchTerm.trim()}
+              onMoveTop={moveProfileTop}
+              onMoveBottom={moveProfileBottom}
               isFirst={idx === 0}
               isLast={idx === filtered.length - 1}
             />
