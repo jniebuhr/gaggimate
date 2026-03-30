@@ -16,6 +16,7 @@
     "SPIFFS": "*",
     "ble_ota_dfu": "file://lib/ble_ota_dfu",
     "NimBLEComm": "file://lib/NimBLEComm",
+    "NanoPbComm": "file://lib/NanoPbComm",
     "h2zero/NimBLE-Arduino": "^1.4.0",
     "robtillaart/MAX31855": "^0.6.1",
     "bblanchon/ArduinoJson": "^7.2.1",

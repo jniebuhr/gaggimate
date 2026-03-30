@@ -11,6 +11,10 @@ void ControllerOTA::init(NimBLEClient *client, const ctr_progress_callback_t &pr
         return;
     }
     rxChar = pRemoteService->getCharacteristic(NimBLEUUID(CHARACTERISTIC_OTA_BL_UUID_RX));
+    if (rxChar == nullptr) {
+        ESP_LOGE("ControllerOTA", "OTA RX characteristic not found");
+        return;
+    }
     txChar = pRemoteService->getCharacteristic(NimBLEUUID(CHARACTERISTIC_OTA_BL_UUID_TX));
     if (txChar != nullptr && txChar->canNotify()) {
         txChar->subscribe(true, std::bind(&ControllerOTA::onReceive, this, std::placeholders::_1, std::placeholders::_2,
