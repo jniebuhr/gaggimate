@@ -43,7 +43,12 @@ import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
-import { faAnglesDown, faAnglesUp, faGrip } from '@fortawesome/free-solid-svg-icons';
+import {
+  faAnglesDown,
+  faAnglesUp,
+  faGrip,
+  faGripVertical,
+} from '@fortawesome/free-solid-svg-icons';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 
 Chart.register(
@@ -63,6 +68,16 @@ const PhaseLabels = {
 };
 
 const connected = computed(() => machine.value.connected);
+
+function disableProfileCardTooltips(container) {
+  const profileCards = container?.querySelectorAll('.profile-card-container') || [];
+  profileCards.forEach(card => {
+    const handles = card.querySelectorAll('.drag-handle, button') || [];
+    handles.forEach(handle =>
+      handle.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true })),
+    );
+  });
+}
 
 function ProfileCard({
   data,
@@ -472,77 +487,79 @@ function ProfileCard({
               </div>
             </div>
           </div>
-          {!detailsCollapsed && (
-            <div id={detailsSectionId} className='mx-2 mt-2 flex flex-col items-start gap-2'>
-              <span className='text-base-content/60 text-xs md:text-sm'>{data.description}</span>
-              <div className='flex flex-row gap-2'>
-                <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                  <FontAwesomeIcon icon={faTemperatureFull} />
-                  {data.temperature}°C
-                </span>
-                <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                  <FontAwesomeIcon icon={faClock} />
-                  {totalDurationSeconds}s
-                </span>
-                {data.phases.length > 0 &&
-                  data.phases.at(-1)?.targets?.some(target => target.type === 'volumetric') && (
+          <div className={`${isDragging ? 'hidden' : ''}`}>
+            {!detailsCollapsed && (
+              <div id={detailsSectionId} className='mx-2 mt-2 flex flex-col items-start gap-2'>
+                <span className='text-base-content/60 text-xs md:text-sm'>{data.description}</span>
+                <div className='flex flex-row gap-2'>
+                  <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
+                    <FontAwesomeIcon icon={faTemperatureFull} />
+                    {data.temperature}°C
+                  </span>
+                  <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
+                    <FontAwesomeIcon icon={faClock} />
+                    {totalDurationSeconds}s
+                  </span>
+                  {data.phases.length > 0 &&
+                    data.phases.at(-1)?.targets?.some(target => target.type === 'volumetric') && (
+                      <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
+                        <FontAwesomeIcon icon={faScaleBalanced} />
+                        {`${data.phases.at(-1).targets.find(target => target.type === 'volumetric').value}g`}
+                      </span>
+                    )}
+                  {data.phases.length > 0 && (
                     <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                      <FontAwesomeIcon icon={faScaleBalanced} />
-                      {`${data.phases.at(-1).targets.find(target => target.type === 'volumetric').value}g`}
+                      {data.phases.length} phase{data.phases.length === 1 ? '' : 's'}
                     </span>
                   )}
-                {data.phases.length > 0 && (
-                  <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                    {data.phases.length} phase{data.phases.length === 1 ? '' : 's'}
-                  </span>
+                </div>
+              </div>
+            )}
+            <div
+              className='flex flex-row gap-2 py-2'
+              aria-label={`Profile details for ${data.label}`}
+            >
+              <div className='flex flex-col justify-evenly pr-1'>
+                <Tooltip content='Move to top' disabled={isDragging || tooltipsDisabled}>
+                  <button
+                    onClick={handleMoveTop}
+                    disabled={isFirst}
+                    className='drag-to-top btn btn-sm btn-ghost'
+                    aria-label={`Move ${data.label} to top`}
+                    aria-disabled={isFirst}
+                  >
+                    <FontAwesomeIcon icon={faAnglesUp} />
+                  </button>
+                </Tooltip>
+                <Tooltip
+                  content={`${disabledDrag ? 'Drag disabled on search result' : 'Drag to reorder'} `}
+                  disabled={isDragging}
+                >
+                  <div
+                    className={`drag-handle btn btn-sm btn-ghost ${disabledDrag ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
+                  >
+                    <FontAwesomeIcon icon={faGripVertical} />
+                  </div>
+                </Tooltip>
+                <Tooltip content='Move to bottom' disabled={isDragging || tooltipsDisabled}>
+                  <button
+                    onClick={handleMoveBottom}
+                    disabled={isLast}
+                    className='drag-to-bottom btn btn-sm btn-ghost'
+                    aria-label={`Move ${data.label} to bottom`}
+                    aria-disabled={isLast}
+                  >
+                    <FontAwesomeIcon icon={faAnglesDown} />
+                  </button>
+                </Tooltip>
+              </div>
+              <div className='flex-grow overflow-x-auto'>
+                {data.type === 'pro' ? (
+                  <ExtendedProfileChart data={data} className='max-h-36' />
+                ) : (
+                  <SimpleContent data={data} />
                 )}
               </div>
-            </div>
-          )}
-          <div
-            className='flex flex-row gap-2 py-2'
-            aria-label={`Profile details for ${data.label}`}
-          >
-            <div className='flex flex-col justify-evenly pr-1'>
-              <Tooltip content='Move to top' disabled={isDragging || tooltipsDisabled}>
-                <button
-                  onClick={handleMoveTop}
-                  disabled={isFirst}
-                  className='drag-to-top btn btn-sm btn-ghost'
-                  aria-label={`Move ${data.label} to top`}
-                  aria-disabled={isFirst}
-                >
-                  <FontAwesomeIcon icon={faAnglesUp} />
-                </button>
-              </Tooltip>
-              <Tooltip
-                content={`${!disabledDrag ? 'Drag to reorder' : 'Drag disabled on search result'} `}
-                disabled={isDragging}
-              >
-                <div
-                  className={`drag-handle btn btn-sm btn-ghost ${disabledDrag ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
-                >
-                  <FontAwesomeIcon icon={faGrip} />
-                </div>
-              </Tooltip>
-              <Tooltip content='Move to bottom' disabled={isDragging || tooltipsDisabled}>
-                <button
-                  onClick={handleMoveBottom}
-                  disabled={isLast}
-                  className='drag-to-bottom btn btn-sm btn-ghost'
-                  aria-label={`Move ${data.label} to bottom`}
-                  aria-disabled={isLast}
-                >
-                  <FontAwesomeIcon icon={faAnglesDown} />
-                </button>
-              </Tooltip>
-            </div>
-            <div className='flex-grow overflow-x-auto'>
-              {data.type === 'pro' ? (
-                <ExtendedProfileChart data={data} className='max-h-36' />
-              ) : (
-                <SimpleContent data={data} />
-              )}
             </div>
           </div>
         </div>
@@ -713,8 +730,14 @@ export function ProfileList() {
   useEffect(() => {
     if (loading || !containerRef.current) return;
 
-    // const currentTab = activeTab;
     const isFiltered = !!searchTerm.trim();
+    const clearDropHighlights = () => {
+      if (!containerRef.current) return;
+      const highlighted = containerRef.current.querySelectorAll('.drop-highlight');
+      highlighted.forEach(el => {
+        el.classList.remove('drop-highlight');
+      });
+    };
 
     const sortable = Sortable.create(containerRef.current, {
       multiDrag: true,
@@ -727,14 +750,36 @@ export function ProfileList() {
         // Find all Tooltips in the container and disable them
         const profileCards = containerRef.current.querySelectorAll('.profile-card-container');
         profileCards.forEach(card => {
-        // Trigger a mouseleave on all handles to hide any shown tooltip
-          const handles =
-            card.querySelectorAll('.drag-handle, button') || [];
+          // Trigger a mouseleave on all handles to hide any shown tooltip
+          const handles = card.querySelectorAll('.drag-handle, button') || [];
           handles.forEach(h => h.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true })));
         });
+        // Clear any previous drop highlights
+        clearDropHighlights();
+      },
+      onChange: evt => {
+        const { newIndex, oldIndex } = evt;
+        if (newIndex == null || oldIndex == null) return;
+        const container = containerRef.current;
+        if (!container) return;
+
+        // Clear previous highlights
+        clearDropHighlights();
+
+        // Resolve the card element at newIndex among visible items
+        const cards = container.querySelectorAll('.profile-card-container');
+        const targetElement = cards && cards[newIndex];
+        if (!targetElement) return;
+        // highlight the element's new position in the list
+        targetElement.classList.add('drop-highlight');
+
       },
       onEnd: evt => {
         setIsDragging(false);
+
+        // Clear any drop highlights
+        clearDropHighlights();
+
         const { oldIndex, newIndex, oldIndicies } = evt;
         if (oldIndex === newIndex) return;
 
