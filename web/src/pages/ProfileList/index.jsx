@@ -46,7 +46,6 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import {
   faAnglesDown,
   faAnglesUp,
-  faGrip,
   faGripVertical,
 } from '@fortawesome/free-solid-svg-icons';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
