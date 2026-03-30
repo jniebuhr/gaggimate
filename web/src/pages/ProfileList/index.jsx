@@ -1,12 +1,10 @@
-import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
 import Sortable, {MultiDrag} from 'sortablejs';
 try {
 Sortable?.mount(new MultiDrag())
 } catch (error) {
-  //
+  // to avoid error when vite is reloading the page in dev mode
 }
 
-Sortable.pl
 import {
   CategoryScale,
   Chart,
@@ -76,6 +74,7 @@ function ProfileCard({
   favoriteDisabled,
   unfavoriteDisabled,
   disabledDrag,
+  isDragging,
   onMoveTop,
   onMoveBottom,
   isFirst,
@@ -505,7 +504,7 @@ function ProfileCard({
             aria-label={`Profile details for ${data.label}`}
           >
             <div className='flex flex-col justify-evenly pr-1'>
-              <Tooltip content='Move to top' disabled={tooltipsDisabled}>
+              <Tooltip content='Move to top' disabled={isDragging || tooltipsDisabled}>
                 <button
                   onClick={handleMoveTop}
                   disabled={isFirst}
@@ -516,18 +515,17 @@ function ProfileCard({
                   <FontAwesomeIcon icon={faAnglesUp} />
                 </button>
               </Tooltip>
-              {/*<Tooltip*/}
-              {/*  content={`${!disabledDrag ? 'Drag to reorder' : 'Drag disabled on search result'} `}*/}
-              {/*  disabled={tooltipsDisabled}*/}
-              {/*>*/}
-              <div
-                className={`drag-handle btn btn-sm btn-ghost ${disabledDrag ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
-                title={`${!disabledDrag ? 'Drag to reorder' : 'Drag disabled on search result'} `}
+              <Tooltip
+                content={`${!disabledDrag ? 'Drag to reorder' : 'Drag disabled on search result'} `}
+                disabled={isDragging}
               >
-                <FontAwesomeIcon icon={faGrip} />
-              </div>
-              {/*</Tooltip>*/}
-              <Tooltip content='Move to bottom' disabled={tooltipsDisabled}>
+                <div
+                  className={`drag-handle btn btn-sm btn-ghost ${disabledDrag ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
+                >
+                  <FontAwesomeIcon icon={faGrip} />
+                </div>
+              </Tooltip>
+              <Tooltip content='Move to bottom' disabled={isDragging || tooltipsDisabled}>
                 <button
                   onClick={handleMoveBottom}
                   disabled={isLast}
@@ -603,6 +601,7 @@ export function ProfileList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('extraction');
+  const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
@@ -710,7 +709,7 @@ export function ProfileList() {
     [persistProfileOrder],
   );
 
-  // Reorder handling via SortableJS
+  // Sorting via SortableJS
   useEffect(() => {
     if (loading || !containerRef.current) return;
 
@@ -724,19 +723,18 @@ export function ProfileList() {
       handle: '.drag-handle',
       disabled: isFiltered,
       onStart: () => {
+        setIsDragging(true);
         // Find all Tooltips in the container and disable them
         const profileCards = containerRef.current.querySelectorAll('.profile-card-container');
         profileCards.forEach(card => {
-        // Trigger a mouseleave on all handles
+        // Trigger a mouseleave on all handles to hide any shown tooltip
           const handles =
-            card
-              .querySelectorAll('.drag-handle, button')
-              .querySelectorAll('.drag-to-top button')
-              .querySelectorAll('.drag-to-bottom button') || []; ;
+            card.querySelectorAll('.drag-handle, button') || [];
           handles.forEach(h => h.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true })));
         });
       },
       onEnd: evt => {
+        setIsDragging(false);
         const { oldIndex, newIndex, oldIndicies } = evt;
         if (oldIndex === newIndex) return;
 
@@ -1008,6 +1006,7 @@ export function ProfileList() {
               onFavorite={onFavorite}
               onDuplicate={onDuplicate}
               disabledDrag={!!searchTerm.trim()}
+              isDragging={isDragging}
               onMoveTop={moveProfileTop}
               onMoveBottom={moveProfileBottom}
               isFirst={idx === 0}
