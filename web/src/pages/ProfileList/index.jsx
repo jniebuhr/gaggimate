@@ -690,6 +690,14 @@ export function ProfileList() {
     return profiles;
   }, [profiles, searchTerm]);
 
+  const clearDropHighlights = useCallback(() => {
+    if (!containerRef.current) return;
+    const highlighted = containerRef.current.querySelectorAll('.drop-highlight');
+    highlighted.forEach(el => {
+      el.classList.remove('drop-highlight');
+    });
+  }, []);
+
   const moveProfileTop = useCallback(
     id => {
       setProfiles(prev => {
@@ -726,18 +734,89 @@ export function ProfileList() {
     [persistProfileOrder],
   );
 
+  const onDragStart = useCallback(() => {
+    setIsDragging(true);
+    if (!containerRef.current) return;
+    // Find all Tooltips in the container and disable them
+    const profileCards = containerRef.current.querySelectorAll('.profile-card-container');
+    profileCards.forEach(card => {
+      // Trigger a mouseleave on all handles to hide any shown tooltip
+      const handles = card.querySelectorAll('.drag-handle, button') || [];
+      handles.forEach(h => h.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true })));
+    });
+    // Clear any previous drop highlights
+    clearDropHighlights();
+  }, [clearDropHighlights]);
+
+  const onDragChange = useCallback(
+    evt => {
+      const { newIndex, oldIndex } = evt;
+      if (newIndex == null || oldIndex == null) return;
+      const container = containerRef.current;
+      if (!container) return;
+
+      // Clear previous highlights
+      clearDropHighlights();
+
+      // Resolve the card element at newIndex among visible items
+      const cards = container.querySelectorAll('.profile-card-container');
+      const targetElement = cards && cards[newIndex];
+      if (!targetElement) return;
+      // highlight the element's new position in the list
+      targetElement.classList.add('drop-highlight');
+    },
+    [clearDropHighlights],
+  );
+
+  const onDragEnd = useCallback(
+    evt => {
+      setIsDragging(false);
+
+      // Clear any drop highlights
+      clearDropHighlights();
+
+      const { oldIndex, newIndex, oldIndicies } = evt;
+      if (oldIndex === newIndex) return;
+
+      setProfiles(prev => {
+        const displayedProfiles = profilesToShow.filter(p =>
+          activeTab === 'utility' ? p.utility : !p.utility,
+        );
+
+        // Get the moved items
+        // SortableJS provides oldIndicies when multiDrag is used. If empty (e.g. single item drag) fallback to oldIndex.
+        const movedItems = (
+          oldIndicies && oldIndicies.length > 0 ? oldIndicies : [{ index: oldIndex }]
+        )
+          .map(oi => displayedProfiles[oi.index])
+          .filter(p => !!p);
+        const movedIds = new Set(movedItems.map(p => p.id));
+
+        // Remove moved items from profile list
+        const remainingProfiles = prev.filter(p => !movedIds.has(p.id));
+
+        // Find the insertion target in the full profiles list, targetItem is the item that WAS at newIndex in the displayed list
+        const targetItem = displayedProfiles[newIndex];
+        if (!targetItem) return prev;
+        const insertIdx = remainingProfiles.findIndex(p => p.id === targetItem.id);
+        if (insertIdx === -1) return prev;
+
+        // Splice the moved profiles in at the correct position
+        const newProfiles = [...remainingProfiles];
+        newProfiles.splice(insertIdx + (newIndex > oldIndex ? 1 : 0), 0, ...movedItems);
+
+        persistProfileOrder(newProfiles);
+        return newProfiles;
+      });
+    },
+    [activeTab, clearDropHighlights, persistProfileOrder, profilesToShow],
+  );
+
   // Sorting via SortableJS
   useEffect(() => {
     if (loading || !containerRef.current) return;
 
     const isFiltered = !!searchTerm.trim();
-    const clearDropHighlights = () => {
-      if (!containerRef.current) return;
-      const highlighted = containerRef.current.querySelectorAll('.drop-highlight');
-      highlighted.forEach(el => {
-        el.classList.remove('drop-highlight');
-      });
-    };
 
     const sortable = Sortable.create(containerRef.current, {
       multiDrag: true,
@@ -745,81 +824,15 @@ export function ProfileList() {
       animation: 150,
       handle: '.drag-handle',
       disabled: isFiltered,
-      onStart: () => {
-        setIsDragging(true);
-        // Find all Tooltips in the container and disable them
-        const profileCards = containerRef.current.querySelectorAll('.profile-card-container');
-        profileCards.forEach(card => {
-          // Trigger a mouseleave on all handles to hide any shown tooltip
-          const handles = card.querySelectorAll('.drag-handle, button') || [];
-          handles.forEach(h => h.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true })));
-        });
-        // Clear any previous drop highlights
-        clearDropHighlights();
-      },
-      onChange: evt => {
-        const { newIndex, oldIndex } = evt;
-        if (newIndex == null || oldIndex == null) return;
-        const container = containerRef.current;
-        if (!container) return;
-
-        // Clear previous highlights
-        clearDropHighlights();
-
-        // Resolve the card element at newIndex among visible items
-        const cards = container.querySelectorAll('.profile-card-container');
-        const targetElement = cards && cards[newIndex];
-        if (!targetElement) return;
-        // highlight the element's new position in the list
-        targetElement.classList.add('drop-highlight');
-
-      },
-      onEnd: evt => {
-        setIsDragging(false);
-
-        // Clear any drop highlights
-        clearDropHighlights();
-
-        const { oldIndex, newIndex, oldIndicies } = evt;
-        if (oldIndex === newIndex) return;
-
-        setProfiles(prev => {
-          const displayedProfiles = profilesToShow.filter(p =>
-            activeTab === 'utility' ? p.utility : !p.utility,
-          );
-
-          // Get the moved items
-          // SortableJS provides oldIndicies when multiDrag is used. If empty (e.g. single item drag) fallback to oldIndex.
-          const movedItems = (
-            oldIndicies && oldIndicies.length > 0 ? oldIndicies : [{ index: oldIndex }]
-          )
-            .map(oi => displayedProfiles[oi.index])
-            .filter(p => !!p);
-          const movedIds = new Set(movedItems.map(p => p.id));
-
-          // Remove moved items from profile list
-          const remainingProfiles = prev.filter(p => !movedIds.has(p.id));
-
-          // Find the insertion target in the full profiles list, targetItem is the item that WAS at newIndex in the displayed list
-          const targetItem = displayedProfiles[newIndex];
-          if (!targetItem) return prev;
-          const insertIdx = remainingProfiles.findIndex(p => p.id === targetItem.id);
-          if (insertIdx === -1) return prev;
-
-          // Splice the moved profiles in at the correct position
-          const newProfiles = [...remainingProfiles];
-          newProfiles.splice(insertIdx + (newIndex > oldIndex ? 1 : 0), 0, ...movedItems);
-
-          persistProfileOrder(newProfiles);
-          return newProfiles;
-        });
-      },
+      onStart: onDragStart,
+      onChange: onDragChange,
+      onEnd: onDragEnd,
     });
 
     return () => {
       sortable.destroy();
     };
-  }, [loading, searchTerm, activeTab, persistProfileOrder, profilesToShow]);
+  }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
