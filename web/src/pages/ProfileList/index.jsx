@@ -69,16 +69,6 @@ const PhaseLabels = {
 
 const connected = computed(() => machine.value.connected);
 
-function disableProfileCardTooltips(container) {
-  const profileCards = container?.querySelectorAll('.profile-card-container') || [];
-  profileCards.forEach(card => {
-    const handles = card.querySelectorAll('.drag-handle, button') || [];
-    handles.forEach(handle =>
-      handle.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true })),
-    );
-  });
-}
-
 function ProfileCard({
   data,
   onDelete,
@@ -737,13 +727,7 @@ export function ProfileList() {
   const onDragStart = useCallback(() => {
     setIsDragging(true);
     if (!containerRef.current) return;
-    // Find all Tooltips in the container and disable them
-    const profileCards = containerRef.current.querySelectorAll('.profile-card-container');
-    profileCards.forEach(card => {
-      // Trigger a mouseleave on all handles to hide any shown tooltip
-      const handles = card.querySelectorAll('.drag-handle, button') || [];
-      handles.forEach(h => h.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true })));
-    });
+
     // Clear any previous drop highlights
     clearDropHighlights();
   }, [clearDropHighlights]);
