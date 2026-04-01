@@ -102,7 +102,8 @@ void WebUIPlugin::loop() {
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
         doc["tw"] = profileManager->getSelectedProfile().getTotalVolume(); // total target weight for the process
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
-        doc["bt"] = controller->isVolumetricAvailable() && controller->getProfileManager()->getSelectedProfile().isVolumetric() ? 1 : 0;
+        doc["bt"] =
+            controller->isVolumetricAvailable() && controller->getProfileManager()->getSelectedProfile().isVolumetric() ? 1 : 0;
         doc["btd"] = profileManager->getSelectedProfile().getTotalDuration();
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
         doc["gtd"] = controller->getTargetGrindDuration();

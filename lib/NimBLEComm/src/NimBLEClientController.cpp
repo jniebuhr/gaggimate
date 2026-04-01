@@ -51,6 +51,8 @@ void NimBLEClientController::registerVolumetricMeasurementCallback(const float_c
 
 void NimBLEClientController::registerTofMeasurementCallback(const int_callback_t &callback) { tofMeasurementCallback = callback; }
 
+void NimBLEClientController::registerDisconnectCallback(const void_callback_t &callback) { disconnectCallback = callback; }
+
 std::string NimBLEClientController::readInfo() const {
     if (infoChar != nullptr && infoChar->canRead()) {
         return infoChar->readValue();
@@ -235,6 +237,30 @@ void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) 
 
 void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
     ESP_LOGI(LOG_TAG, "Disconnected from server, trying to reconnect...");
+    tempControlChar = nullptr;
+    pumpControlChar = nullptr;
+    valveControlChar = nullptr;
+    altControlChar = nullptr;
+    tempReadChar = nullptr;
+    pingChar = nullptr;
+    pidControlChar = nullptr;
+    pumpModelCoeffsChar = nullptr;
+    errorChar = nullptr;
+    autotuneChar = nullptr;
+    autotuneResultChar = nullptr;
+    brewBtnChar = nullptr;
+    steamBtnChar = nullptr;
+    infoChar = nullptr;
+    sensorChar = nullptr;
+    outputControlChar = nullptr;
+    pressureScaleChar = nullptr;
+    volumetricMeasurementChar = nullptr;
+    volumetricTareChar = nullptr;
+    ledControlChar = nullptr;
+    tofMeasurementChar = nullptr;
+    if (disconnectCallback != nullptr) {
+        disconnectCallback();
+    }
     scan();
 }
 

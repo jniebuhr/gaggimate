@@ -136,6 +136,12 @@ void Controller::setupPanel() {
 void Controller::setupBluetooth() {
     lastScanTime = millis();
     clientController.initClient();
+    clientController.registerDisconnectCallback([this]() {
+        if (initialized) {
+            pluginManager->trigger("controller:bluetooth:disconnect");
+            waitingForController = true;
+        }
+    });
     clientController.registerSensorCallback(
         [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow, const float puckResistance) {
             onTempRead(temp);
@@ -221,7 +227,8 @@ void Controller::setupWifi() {
                          WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
             WiFi.onEvent(
                 [this](WiFiEvent_t, WiFiEventInfo_t info) {
-                    ESP_LOGI(LOG_TAG, "Lost WiFi connection. Reason: %s", WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(info.wifi_sta_disconnected.reason)));
+                    ESP_LOGI(LOG_TAG, "Lost WiFi connection. Reason: %s",
+                             WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(info.wifi_sta_disconnected.reason)));
                     pluginManager->trigger("controller:wifi:disconnect");
                 },
                 WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
@@ -280,7 +287,6 @@ void Controller::loop() {
         waitingForController = false;
         clientController.connectToServer();
         setupInfos();
-        pluginManager->trigger("controller:bluetooth:connect");
         if (!loaded) {
             loaded = true;
             if (settings.getStartupMode() == MODE_STANDBY)
@@ -293,6 +299,7 @@ void Controller::loop() {
 
             pluginManager->trigger("controller:ready");
         }
+        pluginManager->trigger("controller:bluetooth:connect");
     }
 
     if (isErrorState()) {
