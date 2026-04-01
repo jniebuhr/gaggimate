@@ -134,7 +134,6 @@ void Controller::setupPanel() {
 #endif
 
 void Controller::setupBluetooth() {
-    lastScanTime = millis();
     clientController.initClient();
     clientController.registerDisconnectCallback([this]() {
         if (initialized) {
@@ -275,13 +274,6 @@ void Controller::loop() {
         (now - connectStartTime) > CONTROLLER_WAITING_TIMEOUT_MS) {
         waitingForController = true;
         pluginManager->trigger("controller:bluetooth:waiting");
-    }
-
-    // Periodically restart BLE scan while waiting for the controller to appear.
-    if (initialized && !clientController.isConnected() &&
-        (now - lastScanTime) > (NimBLEClientController::BLE_SCAN_DURATION_SECONDS * 1000UL + 500UL)) {
-        lastScanTime = now;
-        clientController.scan();
     }
 
     if (clientController.isReadyForConnection()) {

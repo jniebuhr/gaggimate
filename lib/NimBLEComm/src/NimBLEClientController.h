@@ -9,8 +9,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLEClientController();
     void initClient();
     bool connectToServer();
-
-    static constexpr size_t BLE_SCAN_DURATION_SECONDS = 10;
+    void loop();
 
     void sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure, float flow);
 
@@ -39,6 +38,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
 
   private:
     NimBLEClient *client;
+    NimBLEScan *scanner;
 
     NimBLERemoteCharacteristic *tempControlChar = nullptr;
     NimBLERemoteCharacteristic *pumpControlChar = nullptr;
@@ -63,6 +63,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *tofMeasurementChar = nullptr;
     NimBLEAdvertisedDevice *serverDevice = nullptr;
     bool readyForConnection = false;
+    xTaskHandle taskHandle;
 
     remote_err_callback_t remoteErrorCallback = nullptr;
     brew_callback_t brewBtnCallback = nullptr;
@@ -85,6 +86,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) const;
 
     const char *LOG_TAG = "NimBLEClientController";
+    static void loopTask(void *arg);
 };
 
 #endif // NIMBLECLIENTCONTROLLER_H

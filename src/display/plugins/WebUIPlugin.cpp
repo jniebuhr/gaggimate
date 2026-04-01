@@ -86,7 +86,7 @@ void WebUIPlugin::loop() {
         lastUpdateCheck = now;
         updateOTAStatus(ota->getCurrentVersion());
     }
-    if (now > lastStatus + STATUS_PERIOD) {
+    if (now > lastStatus + STATUS_PERIOD && !ws.getClients().empty()) {
         lastStatus = now;
         JsonDocument doc;
         doc["tp"] = "evt:status";
@@ -110,7 +110,10 @@ void WebUIPlugin::loop() {
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
         doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["gact"] = controller->isGrindActive() ? 1 : 0;
-        doc["rssi"] = controller->getClientController()->getClient()->getRssi();
+        doc["rssi"] = 0;
+        if (controller->getClientController()->getClient()->isConnected()) {
+            doc["rssi"] = controller->getClientController()->getClient()->getRssi();
+        }
 
         bool bleConnected = BLEScales.isConnected();
         // Add Bluetooth scale weight information
