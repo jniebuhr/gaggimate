@@ -169,6 +169,10 @@ void DefaultUI::init() {
         }
         pressureAvailable = controller->getSystemInfo().capabilities.pressure;
     });
+    pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) {
+        waitingForController = true;
+        rerender = true;
+    });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         rerender = true;
         apActive = event.getInt("AP");

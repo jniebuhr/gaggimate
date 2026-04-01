@@ -140,6 +140,7 @@ void Controller::setupBluetooth() {
         if (initialized) {
             pluginManager->trigger("controller:bluetooth:disconnect");
             waitingForController = true;
+            setMode(MODE_STANDBY);
         }
     });
     clientController.registerSensorCallback(
@@ -287,15 +288,14 @@ void Controller::loop() {
         waitingForController = false;
         clientController.connectToServer();
         setupInfos();
+        ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
+        setPressureScale();
+        clientController.sendPidSettings(settings.getPid());
+        clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
         if (!loaded) {
             loaded = true;
             if (settings.getStartupMode() == MODE_STANDBY)
                 activateStandby();
-
-            ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
-            setPressureScale();
-            clientController.sendPidSettings(settings.getPid());
-            clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
 
             pluginManager->trigger("controller:ready");
         }
