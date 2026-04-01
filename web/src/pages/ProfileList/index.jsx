@@ -691,15 +691,18 @@ export function ProfileList() {
     id => {
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.id === id);
-        if (idx <= 0 || idx >= prev.length) {
-          return prev;
-        }
+        if (idx <= 0) return prev;
 
         const item = prev[idx];
-        const next = [item, ...prev.slice(0, idx), ...prev.slice(idx + 1)];
-        persistProfileOrder(next);
-        return next;
+        const reordered = [item, ...prev.slice(0, idx), ...prev.slice(idx + 1)];
 
+        const normalized = [
+          ...reordered.filter(p => !p.utility),
+          ...reordered.filter(p => p.utility),
+        ];
+
+        persistProfileOrder(normalized);
+        return normalized;
       });
     },
     [persistProfileOrder],
@@ -710,14 +713,21 @@ export function ProfileList() {
     id => {
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.id === id);
-        if (idx === -1 || idx >= prev.length) {
+        if (idx === -1 || idx === prev.length - 1 ) {
           return prev;
         }
 
         const item = prev[idx];
-        const next = [...prev.slice(0, idx), ...prev.slice(idx + 1), item];
-        persistProfileOrder(next);
-        return next;
+        const reordered = [...prev.slice(0, idx), ...prev.slice(idx + 1), item];
+
+        const normalized = [
+          ...reordered.filter(p => !p.utility),
+          ...reordered.filter(p => p.utility),
+        ];
+
+        persistProfileOrder(normalized);
+        return normalized;
+
       });
     },
     [persistProfileOrder],
@@ -762,37 +772,38 @@ export function ProfileList() {
       if (oldIndex === newIndex) return;
 
       setProfiles(prev => {
-        const displayedProfiles = profilesToShow.filter(p =>
+        const displayedProfiles = prev.filter(p =>
           activeTab === 'utility' ? p.utility : !p.utility,
         );
 
-        // Get the moved items
-        // SortableJS provides oldIndicies when multiDrag is used. If empty (e.g. single item drag) fallback to oldIndex.
         const movedItems = (
           oldIndicies && oldIndicies.length > 0 ? oldIndicies : [{ index: oldIndex }]
         )
-          .map(oi => displayedProfiles[oi.index])
-          .filter(p => !!p);
+          .map(({ index }) => displayedProfiles[index])
+          .filter(Boolean); // filter all falsey
+
+        if (movedItems.length === 0) return prev;
+
         const movedIds = new Set(movedItems.map(p => p.id));
+        const remainingVisible = displayedProfiles.filter(p => !movedIds.has(p.id));
 
-        // Remove moved items from profile list
-        const remainingProfiles = prev.filter(p => !movedIds.has(p.id));
+        const insertAt = Math.min(newIndex, remainingVisible.length);
+        const reorderedVisible = [
+          ...remainingVisible.slice(0, insertAt),
+          ...movedItems,
+          ...remainingVisible.slice(insertAt),
+        ];
 
-        // Find the insertion target in the full profiles list, targetItem is the item that WAS at newIndex in the displayed list
-        const targetItem = displayedProfiles[newIndex];
-        if (!targetItem) return prev;
-        const insertIdx = remainingProfiles.findIndex(p => p.id === targetItem.id);
-        if (insertIdx === -1) return prev;
+        const next =
+          activeTab === 'utility'
+            ? [...prev.filter(p => !p.utility), ...reorderedVisible]
+            : [...reorderedVisible, ...prev.filter(p => p.utility)];
 
-        // Splice the moved profiles in at the correct position
-        const newProfiles = [...remainingProfiles];
-        newProfiles.splice(insertIdx + (newIndex > oldIndex ? 1 : 0), 0, ...movedItems);
-
-        persistProfileOrder(newProfiles);
-        return newProfiles;
+        persistProfileOrder(next);
+        return next;
       });
     },
-    [activeTab, clearDropHighlights, persistProfileOrder, profilesToShow],
+    [activeTab, clearDropHighlights, persistProfileOrder],
   );
 
   // Sorting via SortableJS
