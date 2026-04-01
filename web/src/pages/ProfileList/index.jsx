@@ -521,7 +521,7 @@ function ProfileCard({
                   </button>
                 </Tooltip>
                 <Tooltip
-                  content={`${disabledDrag ? 'Drag disabled on search result' : 'Drag to reorder'} `}
+                  content={`${disabledDrag ? 'Drag disabled on search result' : 'Drag to reorder'}`}
                   disabled={isDragging}
                 >
                   <div
