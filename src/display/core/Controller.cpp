@@ -276,9 +276,8 @@ void Controller::loop() {
         pluginManager->trigger("controller:bluetooth:waiting");
     }
 
-    if (clientController.isReadyForConnection()) {
+    if (clientController.isReadyForConnection() && clientController.connectToServer()) {
         waitingForController = false;
-        clientController.connectToServer();
         setupInfos();
         ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
         setPressureScale();
