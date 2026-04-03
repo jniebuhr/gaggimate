@@ -856,8 +856,9 @@ export function ProfileList() {
           />
         </div>
       </div>
+
       <div className='mb-4' aria-label='Add profile'>
-        <ProfileAddCard />
+        <ProfileAddCard onUpload={onUpload} />
       </div>
       {hasUtilityProfiles && (
         <div role='tablist' className='tabs tabs-border mb-4'>

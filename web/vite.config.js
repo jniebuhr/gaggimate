@@ -9,11 +9,14 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://gaggimate.local/',
+        // target: 'http://gaggimate.local/',
+        // changeOrigin: true,
+        target: 'http://192.168.0.110',
         changeOrigin: true,
+        rewrite: path => path.replace(/^\/api/, ''),
       },
       '/ws': {
-        target: 'ws://gaggimate.local',
+        target: 'ws://192.168.0.110',
         ws: true,
       },
     },
