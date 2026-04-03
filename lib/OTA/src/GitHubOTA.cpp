@@ -87,9 +87,13 @@ void GitHubOTA::update(bool controller, bool display) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
         this->phase = PHASE_CONTROLLER_FW;
         this->_phase_callback(PHASE_CONTROLLER_FW);
-        _controller_ota.update(_wifi_client, _latest_url + _controller_firmware_name);
-        ESP_LOGI(TAG, "Controller update successful. Restarting...\n");
-        updateExecuted = true;
+        bool controllerSuccess = _controller_ota.update(_wifi_client, _latest_url + _controller_firmware_name);
+        if (controllerSuccess) {
+            ESP_LOGI(TAG, "Controller update successful. Restarting...\n");
+            updateExecuted = true;
+        } else {
+            ESP_LOGE(TAG, "Controller update failed.\n");
+        }
     }
 
     if (display && update_required(_latest_version, _version)) {

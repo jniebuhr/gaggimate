@@ -18,17 +18,25 @@ void ControllerOTA::init(NimBLEClient *client, const ctr_progress_callback_t &pr
     }
 }
 
-void ControllerOTA::update(WiFiClientSecure &wifi_client, const String &release_url) {
+bool ControllerOTA::update(WiFiClientSecure &wifi_client, const String &release_url) {
     if (SPIFFS.exists("/board-firmware.bin")) {
         ESP_LOGI("ControllerOTA", "Removing previous update file");
         SPIFFS.remove("/board-firmware.bin");
     }
     if (!downloadFile(wifi_client, release_url)) {
         ESP_LOGE("ControllerOTA", "Download of firmware file failed");
+        return false;
     }
     File file = SPIFFS.open("/board-firmware.bin", FILE_READ);
-    runUpdate(file, file.size());
+    if (!file || file.size() == 0) {
+        ESP_LOGE("ControllerOTA", "Firmware file is invalid or empty");
+        if (file)
+            file.close();
+        return false;
+    }
+    bool success = runUpdate(file, file.size());
     file.close();
+    return success;
 }
 
 bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &release_url) {
@@ -39,7 +47,7 @@ bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &re
     }
 
     http.useHTTP10(true);
-    http.setTimeout(1800);
+    http.setTimeout(15000);
     http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     http.setUserAgent("ESP32-http-Update");
     http.addHeader("Cache-Control", "no-cache");
@@ -59,10 +67,16 @@ bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &re
     }
 
     WiFiClient *tcp = http.getStreamPtr();
-    delay(100);
 
-    if (tcp->peek() != 0xE9) {
-        ESP_LOGE("ControllerOTA", "Magic header does not start with 0xE9");
+    // Wait for first byte with timeout (data may not arrive immediately after headers)
+    int waitAttempts = 0;
+    while (tcp->available() == 0 && tcp->connected() && waitAttempts < 50) { // 5 seconds max
+        delay(100);
+        waitAttempts++;
+    }
+
+    if (tcp->available() == 0 || tcp->peek() != 0xE9) {
+        ESP_LOGE("ControllerOTA", "Magic header check failed (available=%d, waited=%dms)", tcp->available(), waitAttempts * 100);
         http.end();
         return false;
     }
@@ -85,8 +99,12 @@ bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &re
     return true;
 }
 
-void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
+bool ControllerOTA::runUpdate(Stream &in, uint32_t size) {
     ESP_LOGI("ControllerOTA", "Sending update instructions over BLE. File Size: %d", size);
+    if (size == 0) {
+        ESP_LOGE("ControllerOTA", "Firmware file is empty, aborting update");
+        return false;
+    }
     fileParts = (size + PART_SIZE - 1) / PART_SIZE;
     currentPart = 0;
 
@@ -110,6 +128,7 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
     sendData(updateStart, 1);
     ESP_LOGI("ControllerOTA", "Waiting for signal from controller");
 
+    bool success = false;
     while (client->isConnected()) {
         uint8_t signal = lastSignal;
         lastSignal = 0x00;
@@ -120,11 +139,16 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
             currentPart++;
             notifyUpdate();
         } else if (signal == 0xF2 || signal == 0xFF) {
+            success = true;
             break;
         }
         delay(50);
     }
-    ESP_LOGI("ControllerOTA", "Controller update finished");
+    if (!success) {
+        ESP_LOGE("ControllerOTA", "BLE connection lost during transfer");
+    }
+    ESP_LOGI("ControllerOTA", "Controller update finished (success=%d)", success);
+    return success;
 }
 
 void ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
@@ -162,6 +186,8 @@ void ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const 
 }
 
 void ControllerOTA::notifyUpdate() const {
+    if (fileParts == 0)
+        return;
     double progress = (static_cast<double>(currentPart) / static_cast<double>(fileParts)) * 50.0 + 50.0;
     progressCallback(static_cast<int>(progress));
 }
