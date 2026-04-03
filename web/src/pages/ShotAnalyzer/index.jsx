@@ -33,12 +33,25 @@ const PROFILE_AUTO_MATCH_INITIAL_DELAY_MS = 250;
 const PROFILE_AUTO_MATCH_RETRY_DELAY_MS = 450;
 const PROFILE_AUTO_MATCH_MAX_ATTEMPTS = 4;
 
-function findPreferredProfileMatch(allProfiles, shotProfileName, shotSource) {
-  const target = cleanName(shotProfileName).toLowerCase();
-  const matches = allProfiles.filter(
-    profile => cleanName(profile.name || profile.label || '').toLowerCase() === target,
+function findPreferredProfileMatch(allProfiles, shotProfileName, shotProfileId, shotSource) {
+  const targetId = String(shotProfileId || '').trim();
+  if (targetId) {
+    const idMatches = allProfiles.filter(profile => {
+      const profileId = String(profile.profileId || profile.id || '').trim();
+      return profileId && profileId === targetId;
+    });
+    const preferredIdMatch =
+      idMatches.find(profile => profile.source === shotSource) || idMatches[0] || null;
+    if (preferredIdMatch) return preferredIdMatch;
+  }
+
+  const targetName = cleanName(shotProfileName).trim().toLowerCase();
+  if (!targetName) return null;
+
+  const nameMatches = allProfiles.filter(
+    profile => cleanName(profile.name || profile.label || '').trim().toLowerCase() === targetName,
   );
-  return matches.find(profile => profile.source === shotSource) || matches[0] || null;
+  return nameMatches.find(profile => profile.source === shotSource) || nameMatches[0] || null;
 }
 
 function getProfileLookupId(profileMatch) {
@@ -68,6 +81,7 @@ async function loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles) {
   const preferredMatch = findPreferredProfileMatch(
     allProfiles,
     shotWithMetadata.profile,
+    shotWithMetadata.profileId,
     shotWithMetadata.source,
   );
 

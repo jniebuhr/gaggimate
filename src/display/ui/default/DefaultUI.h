@@ -53,6 +53,7 @@ class DefaultUI {
     void applyTheme();
 
   private:
+    bool isRoundDisplay() const;
     void setupPanel();
     void setupState();
     void setupReactive();
@@ -67,6 +68,8 @@ class DefaultUI {
     void ensureStatusBeanLabel();
     void ensureProfileBeanLabel();
     void ensureGrindBeanLabel();
+    void ensureMenuActionLabels();
+    void ensureBrewContextLabel();
 
     void adjustDials(lv_obj_t *dials);
     void adjustTempTarget(lv_obj_t *dials);
@@ -145,6 +148,11 @@ class DefaultUI {
     lv_obj_t *standbyContextLabel = nullptr;
     lv_obj_t *profileBeanLabel = nullptr;
     lv_obj_t *grindBeanLabel = nullptr;
+    lv_obj_t *menuBrewLabel = nullptr;
+    lv_obj_t *menuSteamLabel = nullptr;
+    lv_obj_t *menuWaterLabel = nullptr;
+    lv_obj_t *menuGrindLabel = nullptr;
+    lv_obj_t *brewContextLabel = nullptr;
 
     // Standby brightness control
     unsigned long standbyEnterTime = 0;

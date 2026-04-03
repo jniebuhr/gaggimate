@@ -58,6 +58,39 @@ export function LibraryPanel({
     return String(shot.storageKey || shot.name || shot.id || '');
   };
 
+  const getProfileLookupKey = profile => {
+    if (!profile) return '';
+    if (profile.source === 'gaggimate') return String(profile.profileId || profile.id || '').trim();
+    return String(profile.name || profile.label || profile.id || '').trim();
+  };
+
+  const getNormalizedProfileName = profile =>
+    cleanName(profile?.name || profile?.label || '').trim().toLowerCase();
+
+  const shotMatchesProfile = (shot, profile) => {
+    if (!shot || !profile) return false;
+
+    const shotProfileId = String(shot.profileId || '').trim();
+    const profileLookupKey = getProfileLookupKey(profile);
+    if (shotProfileId && profileLookupKey && shotProfileId === profileLookupKey) return true;
+
+    const shotProfileName = cleanName(shot.profile || '').trim().toLowerCase();
+    const profileName = getNormalizedProfileName(profile);
+    return !!shotProfileName && !!profileName && shotProfileName === profileName;
+  };
+
+  const profilesMatch = (leftProfile, rightProfile) => {
+    if (!leftProfile || !rightProfile) return false;
+
+    const leftKey = getProfileLookupKey(leftProfile);
+    const rightKey = getProfileLookupKey(rightProfile);
+    if (leftKey && rightKey && leftKey === rightKey) return true;
+
+    const leftName = getNormalizedProfileName(leftProfile);
+    const rightName = getNormalizedProfileName(rightProfile);
+    return !!leftName && !!rightName && leftName === rightName;
+  };
+
   const apiService = useContext(ApiServiceContext);
   const panelRef = useRef(null);
   const sentinelRef = useRef(null);
@@ -259,19 +292,11 @@ export function LibraryPanel({
       const pinMatches = (items, isShotTable) => {
         return items.sort((a, b) => {
           const matchA = isShotTable
-            ? currentProfile &&
-              cleanName(a.profile || '').toLowerCase() ===
-                cleanName(currentProfileName).toLowerCase()
-            : currentShot &&
-              cleanName(a.name || a.label || '').toLowerCase() ===
-                cleanName(currentShot.profile || '').toLowerCase();
+            ? shotMatchesProfile(a, currentProfile)
+            : shotMatchesProfile(currentShot, a);
           const matchB = isShotTable
-            ? currentProfile &&
-              cleanName(b.profile || '').toLowerCase() ===
-                cleanName(currentProfileName).toLowerCase()
-            : currentShot &&
-              cleanName(b.name || b.label || '').toLowerCase() ===
-                cleanName(currentShot.profile || '').toLowerCase();
+            ? shotMatchesProfile(b, currentProfile)
+            : shotMatchesProfile(currentShot, b);
 
           if (matchA && !matchB) return -1;
           if (!matchA && matchB) return 1;
@@ -523,12 +548,7 @@ export function LibraryPanel({
             onImport={handleImport}
             onShowStats={onShowStats}
             statsHref={statsHref}
-            isMismatch={
-              currentShot &&
-              currentProfile &&
-              cleanName(currentShot.profile || '').toLowerCase() !==
-                cleanName(currentProfileName).toLowerCase()
-            }
+            isMismatch={currentShot && currentProfile && !shotMatchesProfile(currentShot, currentProfile)}
             isExpanded={!collapsed}
             hasNotesBar={!!currentShot}
             isImporting={importing}
@@ -646,9 +666,7 @@ export function LibraryPanel({
                         }
                       }}
                       getMatchStatus={item =>
-                        currentProfile &&
-                        cleanName(item.profile || '').toLowerCase() ===
-                          cleanName(currentProfileName).toLowerCase()
+                        shotMatchesProfile(item, currentProfile)
                       }
                       getActiveStatus={item =>
                         currentShot &&
@@ -718,14 +736,10 @@ export function LibraryPanel({
                         }
                       }}
                       getMatchStatus={item =>
-                        currentShot &&
-                        cleanName(item.name || item.label || '').toLowerCase() ===
-                          cleanName(currentShot.profile || '').toLowerCase()
+                        shotMatchesProfile(currentShot, item)
                       }
                       getActiveStatus={item =>
-                        currentProfile &&
-                        cleanName(item.name || item.label || '').toLowerCase() ===
-                          cleanName(currentProfileName).toLowerCase()
+                        profilesMatch(item, currentProfile)
                       }
                     />
                   </div>
