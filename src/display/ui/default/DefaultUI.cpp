@@ -105,8 +105,18 @@ struct DisplayPalette {
     lv_color_t textMuted;
 };
 
+int resolveDisplayThemeMode(const int requestedThemeMode, const bool amoledPanel) {
+    if (amoledPanel) {
+        return UI_THEME_DEFAULT;
+    }
+
+    return requestedThemeMode == UI_THEME_LIGHT ? UI_THEME_LIGHT : UI_THEME_DEFAULT;
+}
+
 DisplayPalette makeDisplayPalette(const int themeMode, const bool amoledPanel) {
-    if (amoledPanel || themeMode != 0) {
+    const int resolvedThemeMode = resolveDisplayThemeMode(themeMode, amoledPanel);
+
+    if (resolvedThemeMode == UI_THEME_DEFAULT) {
         return {
             lv_color_hex(0x050505),
             lv_color_hex(0x161211),
@@ -1046,7 +1056,9 @@ void DefaultUI::ensureBrewContextLabel() {
 }
 
 void DefaultUI::applyScreenVisualLanguage() {
-    const DisplayPalette palette = makeDisplayPalette(controller->getSettings().getThemeMode(), AmoledDisplayDriver::getInstance() == panelDriver);
+    const bool amoledPanel = AmoledDisplayDriver::getInstance() == panelDriver;
+    const int resolvedThemeMode = resolveDisplayThemeMode(controller->getSettings().getThemeMode(), amoledPanel);
+    const DisplayPalette palette = makeDisplayPalette(resolvedThemeMode, amoledPanel);
     lv_obj_t *activeScreen = lv_scr_act();
     const bool roundDisplay = isRoundDisplay();
 
@@ -1574,13 +1586,14 @@ inline void DefaultUI::adjustTempTarget(lv_obj_t *dials) {
 
 void DefaultUI::applyTheme() {
     const Settings &settings = controller->getSettings();
-    int newThemeMode = settings.getThemeMode();
+    const bool amoledPanel = AmoledDisplayDriver::getInstance() == panelDriver;
+    int newThemeMode = resolveDisplayThemeMode(settings.getThemeMode(), amoledPanel);
 
     if (newThemeMode != currentThemeMode) {
         currentThemeMode = newThemeMode;
         ui_theme_set(currentThemeMode);
 
-        if (AmoledDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
+        if (amoledPanel && currentThemeMode == UI_THEME_DEFAULT) {
             enable_amoled_black_theme_override(lv_disp_get_default());
         }
     }
