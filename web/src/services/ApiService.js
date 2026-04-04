@@ -19,6 +19,12 @@ export default class ApiService {
   isConnecting = false;
 
   constructor() {
+    // Bind methods once to avoid creating new function references on each reconnect
+    this._boundOnMessage = this._onMessage.bind(this);
+    this._boundOnClose = this._onClose.bind(this);
+    this._boundOnError = this._onError.bind(this);
+    this._boundOnOpen = this._onOpen.bind(this);
+
     console.log('Established websocket connection');
     this.connect();
   }
@@ -29,6 +35,11 @@ export default class ApiService {
 
     try {
       if (this.socket) {
+        // Remove old listeners before closing to prevent memory leaks
+        this.socket.removeEventListener('message', this._boundOnMessage);
+        this.socket.removeEventListener('close', this._boundOnClose);
+        this.socket.removeEventListener('error', this._boundOnError);
+        this.socket.removeEventListener('open', this._boundOnOpen);
         this.socket.close();
       }
 
@@ -36,10 +47,11 @@ export default class ApiService {
       const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
       this.socket = new WebSocket(`${wsProtocol}${apiHost}/ws`);
 
-      this.socket.addEventListener('message', this._onMessage.bind(this));
-      this.socket.addEventListener('close', this._onClose.bind(this));
-      this.socket.addEventListener('error', this._onError.bind(this));
-      this.socket.addEventListener('open', this._onOpen.bind(this));
+      // Use bound references to enable proper cleanup
+      this.socket.addEventListener('message', this._boundOnMessage);
+      this.socket.addEventListener('close', this._boundOnClose);
+      this.socket.addEventListener('error', this._boundOnError);
+      this.socket.addEventListener('open', this._boundOnOpen);
     } catch (error) {
       console.error('WebSocket connection error:', error);
       this._scheduleReconnect();
@@ -124,25 +136,42 @@ export default class ApiService {
     const returnType = `res:${data.tp.substring(4)}`;
     const rid = uuidv4();
     const message = { ...data, rid };
+    
     return new Promise((resolve, reject) => {
       let timeoutId;
+      let listenerId;
+      let cleaned = false;
+
+      // Centralized cleanup to prevent memory leaks
+      const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
+        clearTimeout(timeoutId);
+        if (listenerId) {
+          this.off(returnType, listenerId);
+        }
+      };
 
       // Create a listener for the response with matching rid
-      const listenerId = this.on(returnType, response => {
+      listenerId = this.on(returnType, response => {
         if (response.rid === rid) {
-          // Clean up the listener and cancel the timeout to free the closure.
-          clearTimeout(timeoutId);
-          this.off(returnType, listenerId);
+          cleanup();
           resolve(response);
         }
       });
 
       // Send the request
-      this.send(message);
+      try {
+        this.send(message);
+      } catch (error) {
+        cleanup();
+        reject(error);
+        return;
+      }
 
       // Timeout: reject if no matching response arrives within 30 seconds
       timeoutId = setTimeout(() => {
-        this.off(returnType, listenerId);
+        cleanup();
         reject(new Error(`Request ${data.tp} timed out`));
       }, 30000); // 30 second timeout
     });
@@ -189,7 +218,14 @@ export default class ApiService {
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;
-    const newValue = {
+    
+    // More efficient history management - avoid creating oversized arrays
+    const currentHistory = machine.value.history;
+    const newHistory = currentHistory.length >= 600
+      ? [...currentHistory.slice(-599), historyEntry]
+      : [...currentHistory, historyEntry];
+    
+    machine.value = {
       ...machine.value,
       connected: true,
       status: {
@@ -202,10 +238,8 @@ export default class ApiService {
         pressure: message.cp,
         ledControl: message.led,
       },
-      history: [...machine.value.history, historyEntry],
+      history: newHistory,
     };
-    newValue.history = newValue.history.slice(-600);
-    machine.value = newValue;
   }
 }
 
