@@ -117,6 +117,7 @@ class IndexedDBService {
       tx.objectStore('shots').clear(),
       tx.objectStore('profiles').clear(),
       tx.objectStore('notes').clear(),
+      tx.done,
     ]);
     await this.close();
   }
@@ -207,20 +208,6 @@ class IndexedDBService {
   async deleteNotes(id) {
     const db = await this.init();
     await db.delete('notes', id);
-  }
-
-  /**
-   * Clear all browser storage (for reset/cleanup)
-   */
-  async clearAll() {
-    const db = await this.init();
-    const tx = db.transaction(['shots', 'profiles', 'notes'], 'readwrite');
-    await Promise.all([
-      tx.objectStore('shots').clear(),
-      tx.objectStore('profiles').clear(),
-      tx.objectStore('notes').clear(),
-      tx.done,
-    ]);
   }
 
   /**

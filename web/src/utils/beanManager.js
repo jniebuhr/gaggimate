@@ -128,9 +128,12 @@ export async function migrateLegacyBeansToDevice(apiService) {
   }
 
   const migrationComplete = readJson(LEGACY_BEAN_MIGRATION_KEY, false);
-  const shouldHydrateDevice = legacyBeans.length > 0 && (!migrationComplete || deviceBeans.length === 0);
+  const shouldHydrateDevice = legacyBeans.length > 0 && !migrationComplete && deviceBeans.length === 0;
 
   if (!shouldHydrateDevice) {
+    if (!migrationComplete) {
+      writeJson(LEGACY_BEAN_MIGRATION_KEY, true);
+    }
     return deviceBeans;
   }
 
@@ -155,11 +158,7 @@ export async function listBeans(apiService) {
   }
 
   try {
-    const deviceBeans = await listDeviceBeans(apiService);
-    if (deviceBeans.length === 0 && legacyBeans.length > 0) {
-      return legacyBeans;
-    }
-    return deviceBeans;
+    return await listDeviceBeans(apiService);
   } catch {
     return legacyBeans;
   }
