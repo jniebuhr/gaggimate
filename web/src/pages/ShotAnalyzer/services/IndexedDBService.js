@@ -97,6 +97,32 @@ class IndexedDBService {
   }
 
   /**
+   * Close the database connection
+   */
+  async close() {
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+      this._initPromise = null;
+    }
+  }
+
+  /**
+   * Clear all data and close connection
+   */
+  async clearAll() {
+    const db = await this.init();
+    const tx = db.transaction(['shots', 'profiles', 'notes'], 'readwrite');
+    await Promise.all([
+      tx.objectStore('shots').clear(),
+      tx.objectStore('profiles').clear(),
+      tx.objectStore('notes').clear(),
+      tx.done,
+    ]);
+    await this.close();
+  }
+
+  /**
    * Delete a shot from browser storage
    * @param {string} name - Shot filename/ID
    */
@@ -182,20 +208,6 @@ class IndexedDBService {
   async deleteNotes(id) {
     const db = await this.init();
     await db.delete('notes', id);
-  }
-
-  /**
-   * Clear all browser storage (for reset/cleanup)
-   */
-  async clearAll() {
-    const db = await this.init();
-    const tx = db.transaction(['shots', 'profiles', 'notes'], 'readwrite');
-    await Promise.all([
-      tx.objectStore('shots').clear(),
-      tx.objectStore('profiles').clear(),
-      tx.objectStore('notes').clear(),
-      tx.done,
-    ]);
   }
 
   /**

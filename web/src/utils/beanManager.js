@@ -79,6 +79,26 @@ function saveLegacyBeans(beans) {
   dispatchBeansChanged(listLegacyBeans());
 }
 
+function upsertLegacyBean(bean) {
+  const normalizedBean = normalizeBeanPayload(bean);
+  const beans = listLegacyBeans();
+  const nextBeans = beans.some(existing => existing.id === normalizedBean.id)
+    ? beans.map(existing => (existing.id === normalizedBean.id ? { ...existing, ...normalizedBean } : existing))
+    : [normalizedBean, ...beans];
+  saveLegacyBeans(nextBeans);
+  return normalizedBean;
+}
+
+function removeLegacyBean(beanId) {
+  const nextBeans = listLegacyBeans().filter(bean => bean.id !== beanId);
+  saveLegacyBeans(nextBeans);
+  return nextBeans;
+}
+
+function hasConnectedApi(apiService) {
+  return !!(apiService?.socket && apiService.socket.readyState === WebSocket.OPEN);
+}
+
 async function requestBeans(apiService, payload) {
   if (!apiService) return null;
   const response = await apiService.request(payload);
@@ -88,36 +108,60 @@ async function requestBeans(apiService, payload) {
   return response;
 }
 
-export async function migrateLegacyBeansToDevice(apiService) {
-  if (!apiService) return [];
-  if (readJson(LEGACY_BEAN_MIGRATION_KEY, false)) {
-    return listBeans(apiService);
-  }
-
-  const legacyBeans = listLegacyBeans();
-  if (legacyBeans.length === 0) {
-    writeJson(LEGACY_BEAN_MIGRATION_KEY, true);
-    return listBeans(apiService);
-  }
-
-  for (const bean of legacyBeans) {
-    await saveBean(apiService, bean, { suppressEvent: true });
-  }
-
-  writeJson(BEANS_STORAGE_KEY, []);
-  writeJson(LEGACY_BEAN_MIGRATION_KEY, true);
-  dispatchBeansChanged();
-  return listBeans(apiService);
-}
-
-export async function listBeans(apiService) {
-  if (!apiService) {
-    return listLegacyBeans();
-  }
-
+async function listDeviceBeans(apiService) {
   const response = await requestBeans(apiService, { tp: 'req:beans:list' });
   const beans = Array.isArray(response?.beans) ? response.beans.map(normalizeBeanPayload) : [];
   return sortBeans(beans);
+}
+
+export async function migrateLegacyBeansToDevice(apiService) {
+  const legacyBeans = listLegacyBeans();
+  if (!hasConnectedApi(apiService)) {
+    return legacyBeans;
+  }
+
+  let deviceBeans;
+  try {
+    deviceBeans = await listDeviceBeans(apiService);
+  } catch {
+    return legacyBeans;
+  }
+
+  const migrationComplete = readJson(LEGACY_BEAN_MIGRATION_KEY, false);
+  const shouldHydrateDevice = legacyBeans.length > 0 && !migrationComplete && deviceBeans.length === 0;
+
+  if (!shouldHydrateDevice) {
+    if (!migrationComplete) {
+      writeJson(LEGACY_BEAN_MIGRATION_KEY, true);
+    }
+    return deviceBeans;
+  }
+
+  for (const bean of legacyBeans) {
+    await saveBean(apiService, bean, { suppressEvent: true, deviceOnly: true });
+  }
+
+  writeJson(LEGACY_BEAN_MIGRATION_KEY, true);
+  dispatchBeansChanged();
+
+  try {
+    return await listDeviceBeans(apiService);
+  } catch {
+    return legacyBeans;
+  }
+}
+
+export async function listBeans(apiService) {
+  const legacyBeans = listLegacyBeans();
+  if (!hasConnectedApi(apiService)) {
+    return legacyBeans;
+  }
+
+  try {
+    return await listDeviceBeans(apiService);
+  } catch {
+    return legacyBeans;
+  }
 }
 
 export async function exportBeanData(apiService) {
@@ -162,27 +206,31 @@ export async function saveBean(apiService, beanInput, options = {}) {
 
   if (!bean.name) return null;
 
-  if (!apiService) {
-    const beans = listLegacyBeans();
-    const nextBeans = beans.some(existing => existing.id === bean.id)
-      ? beans.map(existing => (existing.id === bean.id ? { ...existing, ...bean } : existing))
-      : [bean, ...beans];
-    saveLegacyBeans(nextBeans);
-    return bean;
+  if (!hasConnectedApi(apiService)) {
+    return upsertLegacyBean(bean);
   }
 
-  const response = await requestBeans(apiService, { tp: 'req:beans:save', bean });
-  const savedBean = normalizeBeanPayload(response?.bean || bean);
-  if (!options.suppressEvent) {
-    dispatchBeansChanged(savedBean);
+  try {
+    const response = await requestBeans(apiService, { tp: 'req:beans:save', bean });
+    const savedBean = normalizeBeanPayload(response?.bean || bean);
+    if (!options.deviceOnly) {
+      upsertLegacyBean(savedBean);
+    }
+    if (!options.suppressEvent) {
+      dispatchBeansChanged(savedBean);
+    }
+    return savedBean;
+  } catch (error) {
+    if (options.deviceOnly) {
+      throw error;
+    }
+    return upsertLegacyBean(bean);
   }
-  return savedBean;
 }
 
 export async function removeBean(apiService, beanId, options = {}) {
-  if (!apiService) {
-    const nextBeans = listLegacyBeans().filter(bean => bean.id !== beanId);
-    saveLegacyBeans(nextBeans);
+  if (!hasConnectedApi(apiService)) {
+    const nextBeans = removeLegacyBean(beanId);
     const activeBean = getCurrentBeanSelection();
     if (activeBean?.beanId === beanId) {
       clearCurrentBeanSelection();
@@ -190,7 +238,21 @@ export async function removeBean(apiService, beanId, options = {}) {
     return nextBeans;
   }
 
-  await requestBeans(apiService, { tp: 'req:beans:delete', id: beanId });
+  try {
+    await requestBeans(apiService, { tp: 'req:beans:delete', id: beanId });
+    removeLegacyBean(beanId);
+  } catch (error) {
+    if (options.deviceOnly) {
+      throw error;
+    }
+    const nextBeans = removeLegacyBean(beanId);
+    const activeBean = getCurrentBeanSelection();
+    if (activeBean?.beanId === beanId) {
+      clearCurrentBeanSelection();
+    }
+    return nextBeans;
+  }
+
   const activeBean = getCurrentBeanSelection();
   if (activeBean?.beanId === beanId) {
     clearCurrentBeanSelection();

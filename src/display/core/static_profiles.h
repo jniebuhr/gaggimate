@@ -10,7 +10,7 @@ Profile FLUSH_PROFILE{.label = "Flush",
                       .phases = {Phase{.name = "Flush",
                                        .phase = PhaseType::PHASE_TYPE_BREW,
                                        .valve = 1,
-                                       .duration = 5,
+                                       .duration = 2,
                                        .pumpIsSimple = true,
                                        .pumpSimple = 100}}};
 

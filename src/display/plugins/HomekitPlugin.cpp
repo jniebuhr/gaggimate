@@ -1,6 +1,8 @@
 #include "HomekitPlugin.h"
 #include "../core/Controller.h"
 #include "../core/constants.h"
+#include "../../version.h"
+#include <cmath>
 #include <utility>
 
 HomekitAccessory::HomekitAccessory(change_callback_t callback)
@@ -19,13 +21,19 @@ HomekitAccessory::HomekitAccessory(change_callback_t callback)
 }
 
 boolean HomekitAccessory::update() {
-    if (targetState->getVal() != targetState->getNewVal()) {
-        state->setVal(targetState->getNewVal());
-        this->callback();
+    const bool stateChanged = targetState->updated() && targetState->getVal() != targetState->getNewVal();
+    const bool temperatureChanged =
+        targetTemperature->updated() &&
+        std::fabs(targetTemperature->getVal<float>() - targetTemperature->getNewVal<float>()) > 0.01f;
+
+    if (stateChanged) {
+        state->setVal(targetState->getNewVal(), true);
     }
-    if (targetTemperature->getVal() != targetTemperature->getNewVal()) {
-        this->callback();
+
+    if (stateChanged || temperatureChanged) {
+        this->callback(stateChanged, temperatureChanged);
     }
+
     return true;
 }
 
@@ -38,9 +46,13 @@ void HomekitAccessory::setState(bool active) const {
 
 void HomekitAccessory::setCurrentTemperature(float temperatureValue) const { currentTemperature->setVal(temperatureValue, true); }
 
-void HomekitAccessory::setTargetTemperature(float temperatureValue) const { targetTemperature->setVal(temperatureValue, true); }
+void HomekitAccessory::setTargetTemperature(float temperatureValue) const {
+    targetTemperature->setVal(constrain(temperatureValue, static_cast<float>(MIN_TEMP), static_cast<float>(MAX_TEMP)), true);
+}
 
-float HomekitAccessory::getTargetTemperature() const { return targetTemperature->getVal(); }
+float HomekitAccessory::getTargetTemperature() const {
+    return constrain(targetTemperature->getVal<float>(), static_cast<float>(MIN_TEMP), static_cast<float>(MAX_TEMP));
+}
 
 HomekitPlugin::HomekitPlugin(String wifiSsid, String wifiPassword)
     : spanAccessory(nullptr), accessoryInformation(nullptr), identify(nullptr), accessory(nullptr), controller(nullptr) {
@@ -48,26 +60,71 @@ HomekitPlugin::HomekitPlugin(String wifiSsid, String wifiPassword)
     this->wifiPassword = std::move(wifiPassword);
 }
 
-bool HomekitPlugin::hasAction() const { return actionRequired; }
+bool HomekitPlugin::hasStateAction() const { return stateActionRequired; }
 
-void HomekitPlugin::clearAction() { actionRequired = false; }
+bool HomekitPlugin::hasTemperatureAction() const { return temperatureActionRequired; }
+
+void HomekitPlugin::clearStateAction() { stateActionRequired = false; }
+
+void HomekitPlugin::clearTemperatureAction() { temperatureActionRequired = false; }
+
+String HomekitPlugin::getSerialNumber() const {
+    const uint64_t chipId = ESP.getEfuseMac();
+    char serial[17];
+    snprintf(serial, sizeof(serial), "%04X%08X", static_cast<uint16_t>(chipId >> 32), static_cast<uint32_t>(chipId));
+    return String(serial);
+}
+
+void HomekitPlugin::syncAccessoryState() const {
+    if (accessory == nullptr || controller == nullptr) {
+        return;
+    }
+
+    accessory->setState(controller->getMode() != MODE_STANDBY);
+    accessory->setCurrentTemperature(controller->getCurrentTemp());
+    accessory->setTargetTemperature(controller->getTargetTemp());
+}
+
+void HomekitPlugin::initializeHomekit() {
+    if (homekitInitialized || controller == nullptr) {
+        return;
+    }
+
+    homeSpan.setHostNameSuffix("");
+    homeSpan.setPortNum(HOMESPAN_PORT);
+    homeSpan.setWifiCredentials(wifiSsid.c_str(), wifiPassword.c_str());
+    homeSpan.begin(Category::Thermostats, DEVICE_NAME, this->controller->getSettings().getMdnsName().c_str());
+
+    spanAccessory = new SpanAccessory();
+    accessoryInformation = new Service::AccessoryInformation();
+    new Characteristic::Manufacturer(HOMEKIT_MANUFACTURER);
+    new Characteristic::Model(HOMEKIT_MODEL);
+    new Characteristic::SerialNumber(getSerialNumber().c_str());
+    new Characteristic::FirmwareRevision(BUILD_GIT_VERSION);
+    identify = new Characteristic::Identify();
+    accessory = new HomekitAccessory([this](const bool stateChanged, const bool temperatureChanged) {
+        this->stateActionRequired = this->stateActionRequired || stateChanged;
+        this->temperatureActionRequired = this->temperatureActionRequired || temperatureChanged;
+    });
+
+    syncAccessoryState();
+    homeSpan.autoPoll();
+    homekitInitialized = true;
+}
 
 void HomekitPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
 
     pluginManager->on("controller:wifi:connect", [this](Event &event) {
-        int apMode = event.getInt("AP");
-        if (apMode)
+        if (event.getInt("AP"))
             return;
-        homeSpan.setHostNameSuffix("");
-        homeSpan.setPortNum(HOMESPAN_PORT);
-        homeSpan.begin(Category::Thermostats, DEVICE_NAME, this->controller->getSettings().getMdnsName().c_str());
-        homeSpan.setWifiCredentials(wifiSsid.c_str(), wifiPassword.c_str());
-        spanAccessory = new SpanAccessory();
-        accessoryInformation = new Service::AccessoryInformation();
-        identify = new Characteristic::Identify();
-        accessory = new HomekitAccessory([this]() { this->actionRequired = true; });
-        homeSpan.autoPoll();
+
+        if (!homekitInitialized) {
+            initializeHomekit();
+            return;
+        }
+
+        syncAccessoryState();
     });
 
     pluginManager->on("boiler:targetTemperature:change", [this](Event const &event) {
@@ -90,13 +147,21 @@ void HomekitPlugin::setup(Controller *controller, PluginManager *pluginManager) 
 }
 
 void HomekitPlugin::loop() {
-    if (!actionRequired || controller == nullptr || accessory == nullptr)
+    if (controller == nullptr || accessory == nullptr)
         return;
-    if (accessory->getState() && controller->getMode() == MODE_STANDBY) {
+
+    if (stateActionRequired && accessory->getState() && controller->getMode() == MODE_STANDBY) {
         controller->deactivateStandby();
-    } else if (!accessory->getState() && controller->getMode() != MODE_STANDBY) {
+    } else if (stateActionRequired && !accessory->getState() && controller->getMode() != MODE_STANDBY) {
         controller->activateStandby();
     }
-    controller->setTargetTemp(accessory->getTargetTemperature());
-    actionRequired = false;
+    clearStateAction();
+
+    if (temperatureActionRequired) {
+        const float requestedTemperature = accessory->getTargetTemperature();
+        if (std::fabs(controller->getTargetTemp() - requestedTemperature) > 0.05f) {
+            controller->setTargetTemp(requestedTemperature);
+        }
+        clearTemperatureAction();
+    }
 }

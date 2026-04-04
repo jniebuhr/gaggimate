@@ -5,8 +5,10 @@
 
 #define HOMESPAN_PORT 8080
 #define DEVICE_NAME "GaggiMate"
+#define HOMEKIT_MANUFACTURER "GaggiMate"
+#define HOMEKIT_MODEL "Classic Pro"
 
-typedef std::function<void()> change_callback_t;
+typedef std::function<void(bool stateChanged, bool temperatureChanged)> change_callback_t;
 class HomekitAccessory : public Service::Thermostat {
   public:
     HomekitAccessory(change_callback_t callback);
@@ -32,17 +34,25 @@ class HomekitPlugin : public Plugin {
     void setup(Controller *controller, PluginManager *pluginManager) override;
     void loop() override;
 
-    boolean hasAction() const;
-    void clearAction();
+    bool hasStateAction() const;
+    bool hasTemperatureAction() const;
+    void clearStateAction();
+    void clearTemperatureAction();
 
   private:
+    void initializeHomekit();
+    void syncAccessoryState() const;
+    String getSerialNumber() const;
+
     String wifiSsid;
     String wifiPassword;
     SpanAccessory *spanAccessory;
     Service::AccessoryInformation *accessoryInformation;
     Characteristic::Identify *identify;
     HomekitAccessory *accessory;
-    bool actionRequired = false;
+    bool homekitInitialized = false;
+    bool stateActionRequired = false;
+    bool temperatureActionRequired = false;
     Controller *controller;
 };
 

@@ -1,4 +1,7 @@
-import 'preact/debug';
+// Only load debug mode in development
+if (import.meta.env.DEV) {
+  await import('preact/debug');
+}
 
 import './style.css';
 import { initializeTheme } from './utils/themeManager.js';

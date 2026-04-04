@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState, useMemo } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart';
 
@@ -302,7 +302,11 @@ export function ExtendedProfileChart({
 }) {
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const config = makeChartData(data, selectedPhase, isDarkMode());
+  
+  // Memoize chart config to prevent unnecessary recalculations
+  const config = useMemo(() => {
+    return makeChartData(data, selectedPhase, isDarkMode());
+  }, [data, selectedPhase]);
 
   return (
     <ChartComponent

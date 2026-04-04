@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState, useMemo } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
@@ -7,6 +7,11 @@ Chart.register(annotationPlugin);
 export function ChartComponent({ data, className, chartClassName }) {
   const [chart, setChart] = useState(null);
   const ref = useRef();
+
+  // Memoize data hash to prevent unnecessary updates
+  const dataHash = useMemo(() => {
+    return JSON.stringify(data);
+  }, [data]);
 
   // Create chart on mount
   useEffect(() => {
@@ -42,8 +47,9 @@ export function ChartComponent({ data, className, chartClassName }) {
       }
     });
 
-    chart.update();
-  }, [data, chart]);
+    // Use 'none' mode for better performance (no animations)
+    chart.update('none');
+  }, [dataHash, chart]);
 
   // Add resize event listener to update chart options dynamically
   useEffect(() => {

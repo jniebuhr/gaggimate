@@ -9,7 +9,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { timezones } from '../../config/zones.js';
 import { machine } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
-import { downloadJson } from '../../utils/download.js';
+import { downloadJson, prepareDownload } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
@@ -238,7 +238,14 @@ export function Settings() {
   );
 
   const onExport = useCallback(() => {
-    downloadJson(formData, 'settings.json');
+    const download = prepareDownload('settings.json');
+    try {
+      downloadJson(formData, 'settings.json', download);
+    } catch (error) {
+      download.fail(error);
+      console.error('Failed to export settings:', error);
+      alert(`Settings export failed: ${error.message}`);
+    }
   }, [formData]);
 
   const onUpload = function (evt) {
