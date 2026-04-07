@@ -49,6 +49,7 @@ class GaggiMateController {
     PressureSensor *pressureSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
+    ADSAdc *adc = nullptr;
 
     GearpumpAddon *gearpumpAddon = nullptr;
 
