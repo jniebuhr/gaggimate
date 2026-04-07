@@ -1,8 +1,7 @@
 #include "GaggiMateController.h"
 #include "utilities.h"
 #include <Arduino.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
+#include <ExtensionIOXL9555.hpp>
 #include <peripherals/DimmedPump.h>
 #include <peripherals/SimplePump.h>
 
@@ -33,7 +32,7 @@ void GaggiMateController::setup() {
         pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { /* noop */ });
     }
     if (_config.capabilites.dimming) {
-        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor, _config.ext2Pin, _config.ext3Pin);
+        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor);
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
@@ -70,6 +69,9 @@ void GaggiMateController::setup() {
     this->valve->setup();
     this->alt->setup();
     this->pump->setup();
+    if (this->gearpumpAddon != nullptr) {
+        this->gearpumpAddon->setup(this->pump->getPumpPowerPtr());
+    }
     this->brewBtn->setup();
     this->steamBtn->setup();
     if (_config.capabilites.pressure) {
@@ -183,7 +185,17 @@ void GaggiMateController::detectBoard() {
 }
 
 void GaggiMateController::detectAddon() {
-    // TODO: Add I2C scanning for extensions
+    Wire.begin(_config.ext3Pin, _config.ext2Pin, 400000);
+    for (uint8_t addr = XL9555_SLAVE_ADDRESS0; addr <= XL9555_SLAVE_ADDRESS7; ++addr) {
+        Wire.beginTransmission(addr);
+        if (Wire.endTransmission(addr) == 0) {
+            ESP_LOGI(LOG_TAG, "Found an extension at address 0x%X", addr);
+            if (addr == 0x26) {
+                ESP_LOGI(LOG_TAG, "Identified addon as Gearpump Addon");
+                gearpumpAddon = new GearpumpAddon(addr, _config.ext3Pin, _config.ext2Pin, _config.ext1Pin);
+            }
+        }
+    }
 }
 
 void GaggiMateController::handlePing() {

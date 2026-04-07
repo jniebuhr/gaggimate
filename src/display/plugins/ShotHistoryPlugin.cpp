@@ -567,8 +567,8 @@ bool ShotHistoryPlugin::ensureIndexExists() {
         File indexFile = fs->open("/h/index.bin", "r");
         if (indexFile) {
             ShotIndexHeader hdr{};
-            bool valid = (indexFile.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) &&
-                          hdr.magic == SHOT_INDEX_MAGIC);
+            bool valid =
+                (indexFile.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) && hdr.magic == SHOT_INDEX_MAGIC);
             indexFile.close();
             if (valid) {
                 return true;
@@ -731,11 +731,11 @@ void ShotHistoryPlugin::startAsyncRebuild() {
     if (!rebuildInProgress) {
         rebuildInProgress = true; // Set immediately to prevent multiple rebuilds
         ESP_LOGI("ShotHistoryPlugin", "Starting immediate async rebuild task");
-        
+
         // Create a dedicated task for rebuild instead of using the existing loop
         xTaskCreatePinnedToCore(
-            [](void* param) {
-                auto* plugin = static_cast<ShotHistoryPlugin*>(param);
+            [](void *param) {
+                auto *plugin = static_cast<ShotHistoryPlugin *>(param);
                 ESP_LOGI("ShotHistoryPlugin", "Rebuild task started");
                 plugin->rebuildIndex();
                 plugin->rebuildInProgress = false;
@@ -746,9 +746,7 @@ void ShotHistoryPlugin::startAsyncRebuild() {
             configMINIMAL_STACK_SIZE * 8, // Larger stack for file operations
             this,
             2, // Higher priority than normal
-            NULL,
-            0
-        );
+            NULL, 0);
     } else {
         ESP_LOGW("ShotHistoryPlugin", "Rebuild already in progress, ignoring request");
     }
@@ -907,7 +905,7 @@ void ShotHistoryPlugin::rebuildIndex() {
             progressEvent.setString("status", "processing");
             pluginManager->trigger(progressEvent);
             ESP_LOGI("ShotHistoryPlugin", "Rebuild progress: %d/%d", currentIndex, (int)slogFiles.size());
-            
+
             // Small delay to allow UI updates and prevent overwhelming the system
             vTaskDelay(pdMS_TO_TICKS(10));
         }

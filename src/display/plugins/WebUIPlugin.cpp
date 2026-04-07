@@ -61,7 +61,6 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         doc["status"] = event.getString("status");
         ws.textAll(doc.as<String>());
     });
-    
 
     // Subscribe to Bluetooth scale weight updates
     pluginManager->on("controller:volumetric-measurement:bluetooth:change",
@@ -333,7 +332,7 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     // Handle rebuild asynchronously - send immediate ack, progress comes via events
                     JsonDocument resp;
                     resp["tp"] = "res:history:rebuild";
-                    if (doc["rid"].is<const char*>()) {
+                    if (doc["rid"].is<const char *>()) {
                         resp["rid"] = doc["rid"];
                     }
                     resp["msg"] = "Rebuild started";

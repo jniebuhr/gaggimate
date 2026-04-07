@@ -10,6 +10,7 @@
 #include <peripherals/PressureSensor.h>
 #include <peripherals/Pump.h>
 #include <peripherals/SimpleRelay.h>
+#include <peripherals/addons/GearpumpAddon.h>
 #include <vector>
 
 constexpr double PING_TIMEOUT_SECONDS = 20.0;
@@ -48,6 +49,8 @@ class GaggiMateController {
     PressureSensor *pressureSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
+
+    GearpumpAddon *gearpumpAddon = nullptr;
 
     std::vector<ControllerConfig> configs;
 
