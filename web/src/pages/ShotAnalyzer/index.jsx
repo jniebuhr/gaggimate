@@ -4,7 +4,7 @@
  * Handles shot loading, chart visualization, and data tables.
  */
 
-import { useState, useEffect, useContext } from 'preact/hooks';
+import { useState, useEffect, useContext, useRef } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
 import { LibraryPanel } from './components/LibraryPanel';
 import { AnalysisTable } from './components/AnalysisTable';
@@ -18,17 +18,78 @@ import {
   cleanName,
   ANALYZER_DB_KEYS,
   loadFromStorage,
-  maskStyle,
 } from './utils/analyzerUtils';
+import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute';
 
-// Asset Imports
-import DeepDiveLogoOutline from './assets/deepdive.svg';
 import { EmptyState } from './components/EmptyState.jsx';
+
+const clampNonNegativeDelay = value => {
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue)) return 0;
+  return Math.max(0, Math.round(parsedValue));
+};
+
+const PROFILE_AUTO_MATCH_INITIAL_DELAY_MS = 250;
+const PROFILE_AUTO_MATCH_RETRY_DELAY_MS = 450;
+const PROFILE_AUTO_MATCH_MAX_ATTEMPTS = 4;
+
+function findPreferredProfileMatch(allProfiles, shotProfileName, shotSource) {
+  const target = cleanName(shotProfileName).toLowerCase();
+  const matches = allProfiles.filter(
+    profile => cleanName(profile.name || profile.label || '').toLowerCase() === target,
+  );
+  return matches.find(profile => profile.source === shotSource) || matches[0] || null;
+}
+
+function getProfileLookupId(profileMatch) {
+  return profileMatch.source === 'gaggimate'
+    ? profileMatch.profileId || profileMatch.id
+    : profileMatch.name;
+}
+
+function normalizeMatchedProfileSource(profileData, profileSource) {
+  if (
+    profileSource &&
+    (profileSource === 'gaggimate' || profileSource === 'browser') &&
+    !profileData?.source
+  ) {
+    return { ...profileData, source: profileSource };
+  }
+  return profileData;
+}
+
+function shouldAutoScrollAnalyzerOnSelection() {
+  const viewportWindow = globalThis.window;
+  if (!viewportWindow || typeof viewportWindow.matchMedia !== 'function') return false;
+  return viewportWindow.matchMedia('(max-width: 1023px)').matches;
+}
+
+async function loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles) {
+  const preferredMatch = findPreferredProfileMatch(
+    allProfiles,
+    shotWithMetadata.profile,
+    shotWithMetadata.source,
+  );
+
+  if (!preferredMatch) return null;
+
+  const profileName = preferredMatch.label || preferredMatch.name;
+  const profileId = getProfileLookupId(preferredMatch);
+  const fullProfile = preferredMatch.data
+    ? preferredMatch.data
+    : await libraryService.loadProfile(profileId, preferredMatch.source);
+
+  if (!fullProfile) return null;
+
+  return {
+    profile: normalizeMatchedProfileSource(fullProfile, preferredMatch.source),
+    profileName,
+  };
+}
 
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
-
   // --- State ---
   const [currentShot, setCurrentShot] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +98,6 @@ export function ShotAnalyzer() {
   const [currentProfileName, setCurrentProfileName] = useState('No Profile Loaded');
 
   const [importMode, setImportMode] = useState('temp');
-  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const [isMatchingProfile, setIsMatchingProfile] = useState(false);
   const [isSearchingProfile, setIsSearchingProfile] = useState(false); // <--- NEW STATE
@@ -54,6 +114,36 @@ export function ShotAnalyzer() {
   });
 
   const [analysisResults, setAnalysisResults] = useState(null);
+  const [pendingMobileAnalysisScroll, setPendingMobileAnalysisScroll] = useState(false);
+  const analysisSectionRef = useRef(null);
+  const profileMatchIdRef = useRef(0);
+  const analysisIdRef = useRef(0);
+  const profileSearchTimerRef = useRef(null);
+
+  const handleSettingsChange = nextSettings => {
+    setSettings(prevSettings => ({
+      ...prevSettings,
+      ...nextSettings,
+      scaleDelay: clampNonNegativeDelay(nextSettings?.scaleDelay ?? prevSettings.scaleDelay),
+      sensorDelay: clampNonNegativeDelay(nextSettings?.sensorDelay ?? prevSettings.sensorDelay),
+      autoDelay: Boolean(nextSettings?.autoDelay ?? prevSettings.autoDelay),
+    }));
+  };
+
+  const scheduleProfileAutoMatchRetry = (attempt, callback) => {
+    if (attempt + 1 >= PROFILE_AUTO_MATCH_MAX_ATTEMPTS) return false;
+    profileSearchTimerRef.current = setTimeout(() => {
+      callback(attempt + 1);
+    }, PROFILE_AUTO_MATCH_RETRY_DELAY_MS);
+    return true;
+  };
+
+  // Cleanup pending profile search on unmount
+  useEffect(() => {
+    return () => {
+      if (profileSearchTimerRef.current) clearTimeout(profileSearchTimerRef.current);
+    };
+  }, []);
 
   // --- DEEP LINK HANDLER ---
   useEffect(() => {
@@ -111,29 +201,50 @@ export function ShotAnalyzer() {
       setAnalysisResults(null);
       return;
     }
+    const id = ++analysisIdRef.current;
     // Defer analysis to next tick to allow UI update
-    setTimeout(() => performAnalysis(), 0);
+    setTimeout(() => {
+      if (id !== analysisIdRef.current) return; // stale
+      performAnalysis();
+    }, 0);
   }, [currentShot, currentProfile, settings]);
+
+  useEffect(() => {
+    if (!pendingMobileAnalysisScroll || !currentShot) return;
+    if (typeof window === 'undefined') return;
+
+    const timer = window.setTimeout(() => {
+      analysisSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setPendingMobileAnalysisScroll(false);
+    }, 90);
+
+    return () => window.clearTimeout(timer);
+  }, [pendingMobileAnalysisScroll, currentShot]);
 
   // --- Analysis Logic ---
   const performAnalysis = () => {
     if (!currentShot) return;
 
-    let usedSensorDelay = settings.sensorDelay;
-    let isAutoAdjusted = false;
+    try {
+      let usedSensorDelay = settings.sensorDelay;
+      let isAutoAdjusted = false;
 
-    if (settings.autoDelay && currentProfile) {
-      const detection = detectAutoDelay(currentShot, currentProfile, settings.sensorDelay);
-      usedSensorDelay = detection.delay;
-      isAutoAdjusted = detection.auto;
+      if (settings.autoDelay && currentProfile) {
+        const detection = detectAutoDelay(currentShot, currentProfile, settings.sensorDelay);
+        usedSensorDelay = detection.delay;
+        isAutoAdjusted = detection.auto;
+      }
+
+      const results = calculateShotMetrics(currentShot, currentProfile, {
+        scaleDelayMs: settings.scaleDelay,
+        sensorDelayMs: usedSensorDelay,
+        isAutoAdjusted: isAutoAdjusted,
+      });
+      setAnalysisResults(results);
+    } catch (e) {
+      console.error('Analysis failed:', e);
+      setAnalysisResults(null);
     }
-
-    const results = calculateShotMetrics(currentShot, currentProfile, {
-      scaleDelayMs: settings.scaleDelay,
-      sensorDelayMs: usedSensorDelay,
-      isAutoAdjusted: isAutoAdjusted,
-    });
-    setAnalysisResults(results);
   };
 
   // --- Data Handlers ---
@@ -143,49 +254,91 @@ export function ShotAnalyzer() {
       source: shotData.source || importMode,
     };
 
-    // If loading via Deep Link, ensure we use the mapped source (gaggimate/browser)
-    // derived in the useEffect, OR fallback to the shot's own source.
-    // (Logic handled implicitly by passing correct object to setCurrentShot)
-
     setCurrentShot(shotWithMetadata);
     setCurrentShotName(name);
 
-    if (shotWithMetadata.profile) {
-      setIsMatchingProfile(true);
-      setIsSearchingProfile(true); // <--- START SPINNER
+    // Cancel pending profile search from previous shot
+    if (profileSearchTimerRef.current) {
+      clearTimeout(profileSearchTimerRef.current);
+      profileSearchTimerRef.current = null;
+    }
 
-      // Force a UI render cycle before starting heavy profile search
-      setTimeout(async () => {
+    // Reset profile for new shot (prevents stale profile from previous shot)
+    setCurrentProfile(null);
+    setCurrentProfileName(
+      shotWithMetadata.profile ? cleanName(shotWithMetadata.profile) : 'No Profile Loaded',
+    );
+
+    if (shotWithMetadata.profile) {
+      const matchId = ++profileMatchIdRef.current;
+      setIsMatchingProfile(true);
+      setIsSearchingProfile(true);
+
+      const attemptProfileAutoMatch = async (attempt = 0) => {
+        profileSearchTimerRef.current = null;
         try {
-          const target = cleanName(shotWithMetadata.profile).toLowerCase();
           const allProfiles = await libraryService.getAllProfiles('both');
-          const match = allProfiles.find(
-            p => cleanName(p.name || p.label || '').toLowerCase() === target,
+
+          if (matchId !== profileMatchIdRef.current) return; // stale
+
+          const matchedProfile = await loadPreferredAutoMatchedProfile(
+            shotWithMetadata,
+            allProfiles,
           );
 
-          if (match) {
-            const pid = match.source === 'gaggimate' ? match.profileId || match.id : match.name;
-            const fullP = match.data
-              ? match.data
-              : await libraryService.loadProfile(pid, match.source);
-            setCurrentProfile(fullP);
-            setCurrentProfileName(match.name || match.label);
+          if (matchId !== profileMatchIdRef.current) return; // stale
+
+          if (matchedProfile) {
+            // Keep the matched name visible while searching, but only promote the
+            // profile to currentProfile after the full payload has been loaded.
+            // This prevents the analyzer from re-running against a partial list item
+            // that may not contain the phase data required for profile comparison.
+            setCurrentProfile(matchedProfile.profile);
+            setCurrentProfileName(matchedProfile.profileName);
+            return;
+          }
+
+          if (scheduleProfileAutoMatchRetry(attempt, attemptProfileAutoMatch)) {
+            return;
           }
         } catch (e) {
+          if (matchId !== profileMatchIdRef.current) return;
+          if (scheduleProfileAutoMatchRetry(attempt, attemptProfileAutoMatch)) {
+            return;
+          }
           console.warn('Profile auto-match failed:', e);
         } finally {
-          setIsMatchingProfile(false);
-          setIsSearchingProfile(false); // <- stop spinner
+          if (matchId === profileMatchIdRef.current && !profileSearchTimerRef.current) {
+            setIsMatchingProfile(false);
+            setIsSearchingProfile(false);
+          }
         }
-      }, 50);
+      };
+
+      // Debounce: wait for rapid navigation to settle before searching
+      profileSearchTimerRef.current = setTimeout(() => {
+        attemptProfileAutoMatch(0);
+      }, PROFILE_AUTO_MATCH_INITIAL_DELAY_MS);
+    } else {
+      // Shot has no profile field — clear search states immediately
+      profileMatchIdRef.current++;
+      setIsMatchingProfile(false);
+      setIsSearchingProfile(false);
     }
+
     setLoading(false);
   };
 
-  const handleProfileLoad = (data, name) => {
-    setCurrentProfile(data);
-    setCurrentProfileName(name);
+  const handleProfileLoad = (data, name, source) => {
+    const nextProfile = normalizeMatchedProfileSource(data, source);
+    setCurrentProfile(nextProfile);
+    setCurrentProfileName(data?.label || data?.name || name);
   };
+
+  const statsHref = buildStatisticsProfileHref({
+    source: currentProfile?.source,
+    profileName: currentProfileName,
+  });
 
   return (
     <div className='pb-20'>
@@ -214,9 +367,23 @@ export function ShotAnalyzer() {
               setCurrentProfile(null);
               setCurrentProfileName('No Profile Loaded');
             }}
-            onShowStats={() => setShowInfoModal(true)}
+            onShowStats={() => {
+              sessionStorage.setItem(
+                'statsInitialContext',
+                JSON.stringify({
+                  profileName: currentProfileName,
+                  source: 'both',
+                }),
+              );
+            }}
+            statsHref={statsHref}
             importMode={importMode}
             onImportModeChange={setImportMode}
+            onShotLoadedFromLibrary={() => {
+              if (shouldAutoScrollAnalyzerOnSelection()) {
+                setPendingMobileAnalysisScroll(true);
+              }
+            }}
             isMatchingProfile={isMatchingProfile}
             isSearchingProfile={isSearchingProfile} // <- pass prop
           />
@@ -224,56 +391,32 @@ export function ShotAnalyzer() {
 
         {currentShot ? (
           // --- Active Analysis View ---
-          <div className='animate-fade-in mt-8 space-y-5'>
-            <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-5 shadow-sm backdrop-blur-sm'>
-              <div className='text-base-content border-base-content/10 mb-4 border-b-2 pb-2.5 text-lg font-bold tracking-wide uppercase'>
-                Shot Analysis
-              </div>
-
-              <div className='mb-8'>
+          <div ref={analysisSectionRef} className='animate-fade-in mt-8'>
+            <div className='bg-base-100 border-base-content/10 rounded-lg border p-5 shadow-sm'>
+              <div>
                 <ShotChart shotData={currentShot} results={analysisResults} />
               </div>
-
-              {analysisResults && (
-                <div className='mt-4 space-y-6'>
-                  <AnalysisTable
-                    results={analysisResults}
-                    activeColumns={activeColumns}
-                    onColumnsChange={setActiveColumns}
-                    settings={settings}
-                    onSettingsChange={setSettings}
-                    onAnalyze={performAnalysis}
-                  />
-                </div>
-              )}
             </div>
+
+            {analysisResults && (
+              <div className='mt-2'>
+                <AnalysisTable
+                  results={analysisResults}
+                  activeColumns={activeColumns}
+                  onColumnsChange={setActiveColumns}
+                  settings={settings}
+                  onSettingsChange={handleSettingsChange}
+                  onAnalyze={performAnalysis}
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <EmptyState loading={loading} />
+          <div className='mt-6'>
+            <EmptyState loading={loading} />
+          </div>
         )}
       </div>
-
-      {/* Coming Soon Modal */}
-      {showInfoModal && (
-        <div
-          className='fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm'
-          onClick={() => setShowInfoModal(false)}
-        >
-          <div
-            className='bg-base-100 border-base-content/10 w-full max-w-md rounded-2xl border p-8 text-center shadow-2xl'
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Logo: Masked Div for Theme Color Adaptation */}
-            <div className='bg-base-content mx-auto mb-6 h-24 w-24 opacity-90' style={maskStyle} />
-
-            <h3 className='mb-2 text-2xl font-bold'>Coming Soon</h3>
-            <p className='opacity-70'>Comparison and statistics feature under development.</p>
-            <button onClick={() => setShowInfoModal(false)} className='btn btn-primary mt-6 w-full'>
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -32,7 +32,6 @@ extern "C" {
 ///////////////////// SCREENS ////////////////////
 #include "screens/ui_BrewScreen.h"
 #include "screens/ui_GrindScreen.h"
-#include "screens/ui_InitScreen.h"
 #include "screens/ui_MenuScreen.h"
 #include "screens/ui_ProfileScreen.h"
 #include "screens/ui_SimpleProcessScreen.h"
@@ -46,6 +45,10 @@ extern lv_obj_t *ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE(ui_img_logo_png);      // assets/logo.png
+LV_IMG_DECLARE(ui_img_364513079);     // assets/wifi-20x20.png
+LV_IMG_DECLARE(ui_img_1091371356);    // assets/bluetooth-alt-20x20.png
+LV_IMG_DECLARE(ui_img_1765671371);    // assets/refresh-20x20.png
+LV_IMG_DECLARE(ui_img_1732953241);    // assets/tap-60x60.png
 LV_IMG_DECLARE(ui_img_untitled_png);  // assets/Untitled.png
 LV_IMG_DECLARE(ui_img_489054950);     // assets/gauge-fill.png
 LV_IMG_DECLARE(ui_img_340686386);     // assets/indicator-small.png
@@ -64,16 +67,13 @@ LV_IMG_DECLARE(ui_img_545340440);     // assets/raindrops-80x80.png
 LV_IMG_DECLARE(ui_img_363557387);     // assets/coffee-bean-80x80.png
 LV_IMG_DECLARE(ui_img_445946954);     // assets/play-40x40.png
 LV_IMG_DECLARE(ui_img_1424216268);    // assets/equality-40x40.png
-LV_IMG_DECLARE(ui_img_340148213);     // assets/settings-40x40.png
 LV_IMG_DECLARE(ui_img_332059803);     // assets/dropdown-bar-40x40.png
+LV_IMG_DECLARE(ui_img_340148213);     // assets/settings-40x40.png
 LV_IMG_DECLARE(ui_img_834125362);     // assets/minus-small-40x40.png
 LV_IMG_DECLARE(ui_img_390988422);     // assets/plus-small-40x40.png
+LV_IMG_DECLARE(ui_img_2074354459);    // assets/clock-future-past-40x40.png
 LV_IMG_DECLARE(ui_img_1594943393);    // assets/disk-30x30.png
 LV_IMG_DECLARE(ui_img_1464184441);    // assets/floppy-disks-30x30.png
-LV_IMG_DECLARE(ui_img_364513079);     // assets/wifi-20x20.png
-LV_IMG_DECLARE(ui_img_1091371356);    // assets/bluetooth-alt-20x20.png
-LV_IMG_DECLARE(ui_img_1765671371);    // assets/refresh-20x20.png
-LV_IMG_DECLARE(ui_img_1732953241);    // assets/tap-60x60.png
 LV_IMG_DECLARE(ui_img_1456692430);    // assets/pause-40x40.png
 LV_IMG_DECLARE(ui_img_1829139226);    // assets/angle-down-40x40.png
 LV_IMG_DECLARE(ui_img_flowmeter_png); // assets/flowmeter.png

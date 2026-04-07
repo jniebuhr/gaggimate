@@ -7,11 +7,31 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import {
+  getAnalyzerIconButtonClasses,
+  getAnalyzerSurfaceTriggerClasses,
+} from './analyzerControlStyles';
+
+function getLibraryItemKey(item, isShot) {
+  if (!item) return 'unknown-item';
+
+  if (isShot) {
+    if (item.source === 'gaggimate') return `gaggimate-shot:${String(item.id || '')}`;
+    return `browser-shot:${String(item.storageKey || item.name || item.id || '')}`;
+  }
+
+  if (item.source === 'gaggimate') {
+    return `gaggimate-profile:${String(item.profileId || item.id || item.name || item.label || '')}`;
+  }
+
+  return `browser-profile:${String(item.name || item.label || item.id || '')}`;
+}
 
 export function LibrarySection({
   title,
   items,
   isShot,
+  sectionHeight,
   searchValue,
   sortKey,
   sortOrder,
@@ -48,7 +68,10 @@ export function LibrarySection({
   const widthAction = '10%';
 
   return (
-    <div className='bg-base-100/30 border-base-content/5 relative flex h-full flex-col rounded-lg border'>
+    <div
+      className='bg-base-100/30 border-base-content/5 relative flex h-full flex-col rounded-lg border'
+      style={sectionHeight ? { height: sectionHeight } : undefined}
+    >
       {/* Toolbar */}
       <div className='border-base-content/5 space-y-3 border-b p-3'>
         <div className='flex items-center justify-between'>
@@ -61,14 +84,20 @@ export function LibrarySection({
           <div className='flex gap-2'>
             <button
               onClick={onExportAll}
-              className='text-base-content/50 hover:text-primary p-1.5 transition-colors'
+              className={getAnalyzerIconButtonClasses({
+                tone: 'subtle',
+                className: 'h-7 w-7 p-1.5',
+              })}
               title='Export All'
             >
               <FontAwesomeIcon icon={faFileExport} size='sm' />
             </button>
             <button
               onClick={onDeleteAll}
-              className='text-base-content/50 hover:text-error p-1.5 transition-colors'
+              className={getAnalyzerIconButtonClasses({
+                tone: 'error',
+                className: 'h-7 w-7 p-1.5',
+              })}
               title='Delete All'
             >
               <FontAwesomeIcon icon={faTrashCan} size='sm' />
@@ -89,7 +118,7 @@ export function LibrarySection({
               const [k, o] = e.target.value.split('-');
               onSortChange(k, o);
             }}
-            className='bg-base-100/50 border-base-content/10 h-9 cursor-pointer rounded border px-2 text-xs outline-none'
+            className='bg-base-100/50 border-base-content/10 hover:bg-base-content/5 hover:border-base-content/20 h-9 cursor-pointer rounded border px-2 text-xs transition-colors outline-none'
           >
             {isShot && <option value='shotDate-desc'>Date (New)</option>}
             {isShot && <option value='shotDate-asc'>Date (Old)</option>}
@@ -105,7 +134,7 @@ export function LibrarySection({
 
       {/* Scrollable Container with Gutter Stability */}
       <div
-        className='scrollbar-thin relative h-96 flex-1 overflow-y-auto'
+        className='scrollbar-thin relative h-96 overflow-y-auto lg:h-auto lg:min-h-0 lg:flex-1'
         style={{ scrollbarGutter: 'stable' }}
       >
         {/* LOADING OVERLAY for Sort/Search */}
@@ -115,11 +144,13 @@ export function LibrarySection({
           </div>
         )}
 
-        <table className='relative w-full border-separate border-spacing-y-1'>
-          <thead className='bg-base-200/95 sticky top-0 z-10 text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm'>
+        <table className='relative w-full border-separate border-spacing-0'>
+          <thead className='bg-base-200 sticky top-0 z-10 text-[10px] font-bold tracking-wider uppercase'>
             <tr>
               <th
-                className='hover:text-primary cursor-pointer px-3 py-3 text-left'
+                className={getAnalyzerSurfaceTriggerClasses({
+                  className: 'cursor-pointer px-3 py-3 text-left',
+                })}
                 style={{ width: widthName }}
                 onClick={() => onSortChange('name')}
               >
@@ -129,7 +160,10 @@ export function LibrarySection({
                 <select
                   value={sourceFilter}
                   onChange={e => onSourceFilterChange(e.target.value)}
-                  className='cursor-pointer border-none bg-transparent p-0 text-[10px] font-bold outline-none'
+                  className={getAnalyzerSurfaceTriggerClasses({
+                    className:
+                      'cursor-pointer border-none bg-transparent px-1.5 py-1 text-[10px] font-bold outline-none',
+                  })}
                 >
                   <option value='all'>SRC</option>
                   <option value='gaggimate'>GM</option>
@@ -138,7 +172,9 @@ export function LibrarySection({
               </th>
               {isShot && (
                 <th
-                  className='hover:text-primary cursor-pointer px-3 py-3 text-left'
+                  className={getAnalyzerSurfaceTriggerClasses({
+                    className: 'cursor-pointer px-3 py-3 text-left',
+                  })}
                   style={{ width: widthDate }}
                   onClick={() => onSortChange('shotDate')}
                 >
@@ -156,7 +192,7 @@ export function LibrarySection({
           <tbody className='text-sm'>
             {items.map(item => (
               <LibraryRow
-                key={`${item.source || 'unknown'}-${item.storageKey || item.name || item.id || item.label}`}
+                key={getLibraryItemKey(item, isShot)}
                 item={item}
                 isShot={isShot}
                 isMatch={getMatchStatus(item)}

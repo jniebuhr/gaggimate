@@ -5,20 +5,35 @@
 
 import { useState, useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
-import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp'; // Added ChevronUp
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
 import {
   ANALYZER_DB_KEYS,
   groups,
-  groupColors,
   getGroupedColumns,
   getDefaultColumns,
   getAllColumns,
+  getColumnsByGroup,
   saveToStorage,
   loadFromStorage,
 } from '../utils/analyzerUtils';
+import { getAnalyzerGroupCardVisuals } from './analyzerGroupVisuals';
+import {
+  ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS,
+  ANALYZER_COMPACT_ICON_BUTTON_CLASS,
+  ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES,
+  getAnalyzerIconButtonClasses,
+  getAnalyzerSurfaceTriggerClasses,
+  getAnalyzerTextButtonClasses,
+} from './analyzerControlStyles';
+
+const BUILT_IN_PRESET_IDS = {
+  ALL_METRICS: 'ALL_METRICS',
+  SYSTEM_INFO: 'SYSTEM_INFO',
+};
 
 export function ColumnControls({
   activeColumns,
@@ -60,7 +75,12 @@ export function ColumnControls({
 
   const applyAll = () => {
     onColumnsChange(getAllColumns());
-    setSelectedPresetId('ALL_METRICS');
+    setSelectedPresetId(BUILT_IN_PRESET_IDS.ALL_METRICS);
+  };
+
+  const applySystemInfo = () => {
+    onColumnsChange(getColumnsByGroup('system'));
+    setSelectedPresetId(BUILT_IN_PRESET_IDS.SYSTEM_INFO);
   };
 
   const applyFactoryReset = () => {
@@ -87,7 +107,7 @@ export function ColumnControls({
 
   const deletePreset = e => {
     e.stopPropagation();
-    if (!selectedPresetId || selectedPresetId === 'ALL_METRICS') return;
+    if (!selectedPresetId || Object.values(BUILT_IN_PRESET_IDS).includes(selectedPresetId)) return;
     if (!confirm('Delete this preset?')) return;
     const updated = presets.filter(p => p.id !== selectedPresetId);
     setPresets(updated);
@@ -108,81 +128,104 @@ export function ColumnControls({
 
   // Dynamic container styles
   const containerClasses = isIntegrated
-    ? 'bg-base-200 rounded-t-lg border-b border-base-content/10'
+    ? 'bg-base-100 rounded-t-lg border-b border-base-content/10'
     : 'bg-base-200/80 backdrop-blur-md rounded-lg shadow-sm border border-base-content/10 mb-5';
 
   return (
     <div className={`overflow-hidden transition-colors ${containerClasses}`}>
-      <style>{`
-        .checkbox-dynamic:checked {
-          background-color: var(--chk-color) !important;
-          border-color: var(--chk-color) !important;
-          --tw-bg-opacity: 1;
-        }
-      `}</style>
       {/* Header Bar - Toggle for Expand/Collapse */}
       <div
-        className='hover:bg-base-content/5 flex min-h-[42px] cursor-pointer items-center justify-between gap-4 px-4 py-2 select-none'
+        className={getAnalyzerSurfaceTriggerClasses({
+          className:
+            'flex min-h-[42px] cursor-pointer items-center justify-between gap-4 px-4 py-2 select-none',
+        })}
         onClick={() => setExpanded(!expanded)}
       >
         {/* Left Side: Toggle & Controls */}
-        <div className='flex min-w-0 flex-1 items-center gap-4'>
-          <div
-            className={`text-primary text-xs transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
-          >
-            <FontAwesomeIcon icon={faChevronDown} />
-          </div>
-
-          <div className='text-base-content truncate text-xs font-bold tracking-wider uppercase'>
-            Column Configuration
-          </div>
-
+        <div className='flex min-w-0 flex-1 items-center gap-2 sm:gap-4'>
           {/* Header Actions & Preset Selector */}
-          <div className='flex items-center gap-2' onClick={e => e.stopPropagation()}>
-            <button
-              onClick={applyStandard}
-              className='btn btn-ghost btn-xs hidden h-6 min-h-0 text-[10px] font-bold tracking-wider uppercase sm:inline-flex'
-            >
-              Standard
-            </button>
-
-            <select
-              value={selectedPresetId}
-              onChange={e => {
-                const val = e.target.value;
-                if (val === 'ALL_METRICS') {
-                  applyAll();
-                } else {
-                  const p = presets.find(x => x.id === val);
-                  if (p) {
-                    onColumnsChange(new Set(p.columns));
-                    setSelectedPresetId(p.id);
-                  }
-                }
-              }}
-              onClick={e => e.stopPropagation()}
-              className='select select-bordered select-xs bg-base-100/50 h-6 min-h-0 text-[10px] font-bold'
-            >
-              <option value='' disabled>
-                Presets...
-              </option>
-              <option value='ALL_METRICS'>All Metrics</option>
-              <option disabled>──────────</option>
-              {presets.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-
-            {selectedPresetId && selectedPresetId !== 'ALL_METRICS' && (
+          <div className='flex items-center gap-2'>
+            <div className={ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES}>
               <button
-                onClick={deletePreset}
-                className='btn btn-ghost btn-xs text-error/60 hover:text-error h-6 min-h-0'
+                type='button'
+                onClick={e => {
+                  e.stopPropagation();
+                  setExpanded(prev => !prev);
+                }}
+                className={getAnalyzerIconButtonClasses({
+                  className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_ICON_BUTTON_CLASS} px-0 text-xs`,
+                })}
+                title={expanded ? 'Collapse column settings' : 'Expand column settings'}
+                aria-label={expanded ? 'Collapse column settings' : 'Expand column settings'}
               >
-                <FontAwesomeIcon icon={faTrashCan} />
+                <FontAwesomeIcon icon={expanded ? faMinus : faPlus} />
               </button>
-            )}
+
+              <button
+                onClick={applyStandard}
+                className={getAnalyzerTextButtonClasses({
+                  className: `btn btn-ghost btn-xs hidden ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} rounded-none px-3 text-[10px] font-bold tracking-normal normal-case sm:inline-flex`,
+                })}
+              >
+                Standard
+              </button>
+
+              <div
+                className={`relative flex ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} items-center`}
+              >
+                <select
+                  value={selectedPresetId}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === BUILT_IN_PRESET_IDS.ALL_METRICS) {
+                      applyAll();
+                    } else if (val === BUILT_IN_PRESET_IDS.SYSTEM_INFO) {
+                      applySystemInfo();
+                    } else {
+                      const p = presets.find(x => x.id === val);
+                      if (p) {
+                        onColumnsChange(new Set(p.columns));
+                        setSelectedPresetId(p.id);
+                      }
+                    }
+                  }}
+                  onClick={e => e.stopPropagation()}
+                  className={getAnalyzerSurfaceTriggerClasses({
+                    className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} w-[6rem] max-w-[6rem] appearance-none rounded-none border-0 bg-transparent px-3 pr-6 text-[10px] font-bold tracking-normal normal-case shadow-none outline-none`,
+                  })}
+                >
+                  <option value='' disabled>
+                    Presets...
+                  </option>
+                  <option value={BUILT_IN_PRESET_IDS.ALL_METRICS}>All Metrics</option>
+                  <option value={BUILT_IN_PRESET_IDS.SYSTEM_INFO}>System Info</option>
+                  <option disabled>──────────</option>
+                  {presets.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                <span className='text-base-content/60 pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-[10px]'>
+                  <FontAwesomeIcon icon={faChevronDown} />
+                </span>
+              </div>
+
+              {selectedPresetId &&
+                !Object.values(BUILT_IN_PRESET_IDS).includes(selectedPresetId) && (
+                  <button
+                    onClick={deletePreset}
+                    className={getAnalyzerIconButtonClasses({
+                      tone: 'error',
+                      className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_ICON_BUTTON_CLASS} px-0`,
+                    })}
+                    title='Delete preset'
+                    aria-label='Delete preset'
+                  >
+                    <FontAwesomeIcon icon={faTrashCan} />
+                  </button>
+                )}
+            </div>
           </div>
         </div>
 
@@ -196,47 +239,68 @@ export function ColumnControls({
 
       {/* Expandable Selection Area */}
       {expanded && (
-        <div className='border-base-content/10 animate-fade-in bg-base-100/50 border-t border-b px-5 pt-6 pb-6'>
-          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
+        <div className='border-base-content/10 animate-fade-in bg-base-100/50 border-t border-b px-4 pt-5 pb-5'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
             {Object.keys(groupedColumns).map(groupKey => {
               const cols = groupedColumns[groupKey];
-              const colors = groupColors[groupKey] || groupColors.basics;
+              const groupVisuals = getAnalyzerGroupCardVisuals(groupKey);
 
               return (
                 <div
                   key={groupKey}
-                  className='bg-base-200 rounded-md border-t-2 p-3'
-                  style={{ borderColor: colors.anchor }}
+                  className='bg-base-200 border-base-content/10 rounded-md border p-2.5'
                 >
-                  <h4
-                    className={`border-base-content/10 mb-2 border-b pb-1 text-[10px] font-bold tracking-wider uppercase ${colors.text}`}
-                  >
-                    {groups[groupKey]}
-                  </h4>
+                  <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-x-3'>
+                    <h4 className='border-base-content/10 text-base-content/85 col-span-2 mb-1.5 border-b pb-1 text-[9px] leading-tight font-bold tracking-normal normal-case'>
+                      {groups[groupKey]}
+                    </h4>
 
-                  <div className='space-y-1.5'>
-                    {cols.map(col => (
-                      <label
-                        key={col.id}
-                        className='group flex cursor-pointer items-start gap-2 text-xs'
-                      >
-                        <input
-                          type='checkbox'
-                          checked={activeColumns.has(col.id)}
-                          onChange={e => toggleColumn(col.id, e.target.checked)}
-                          className='checkbox checkbox-xs checkbox-dynamic mt-0.5 rounded-sm'
-                          style={{
-                            '--chk-color': colors.anchor,
-                            borderColor: activeColumns.has(col.id) ? 'transparent' : 'currentColor',
-                          }}
-                        />
+                    <div className='min-w-0'>
+                      <div className='space-y-1'>
+                        {cols.map(col => (
+                          <label
+                            key={col.id}
+                            className={getAnalyzerSurfaceTriggerClasses({
+                              className:
+                                'group flex cursor-pointer items-center gap-1.5 px-1 py-0.5 text-[10px]',
+                            })}
+                          >
+                            <input
+                              type='checkbox'
+                              checked={activeColumns.has(col.id)}
+                              onChange={e => toggleColumn(col.id, e.target.checked)}
+                              className='checkbox checkbox-xs border-base-content/20 text-base-content/55 rounded-sm'
+                            />
+                            <span
+                              className={`leading-tight font-semibold ${activeColumns.has(col.id) ? 'text-base-content' : 'text-base-content/75'}`}
+                            >
+                              {getDetailedLabel(col)}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex shrink-0 items-center justify-center self-center ${groupVisuals.length > 1 ? 'flex-col gap-1.5' : ''}`}
+                    >
+                      {groupVisuals.map((groupVisual, index) => (
                         <span
-                          className={`leading-tight font-bold ${activeColumns.has(col.id) ? colors.text : 'text-base-content'}`}
+                          key={`${groupKey}-${index}`}
+                          className='inline-flex items-center justify-center leading-none'
+                          style={{ color: groupVisual.color, lineHeight: 0 }}
                         >
-                          {getDetailedLabel(col)}
+                          <FontAwesomeIcon
+                            icon={groupVisual.icon}
+                            className={
+                              groupVisuals.length > 1
+                                ? 'text-[0.95rem]'
+                                : 'text-[1.25rem] sm:text-[1.45rem]'
+                            }
+                          />
                         </span>
-                      </label>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               );
@@ -245,36 +309,52 @@ export function ColumnControls({
 
           {/* Control Footer - Clickable to Close */}
           <div
-            className='border-base-content/10 hover:bg-base-content/5 group -mx-5 mt-6 flex cursor-pointer items-center justify-between border-t px-5 py-3 transition-colors'
+            className={getAnalyzerSurfaceTriggerClasses({
+              className:
+                'border-base-content/10 group -mx-4 mt-5 flex cursor-pointer items-center justify-between border-t px-4 py-2.5',
+            })}
             onClick={() => setExpanded(false)}
             title='Click to collapse'
           >
             {/* Left Actions: Reset - Wrapped to stop propagation */}
-            <div className='flex gap-2' onClick={e => e.stopPropagation()}>
+            <div className='flex items-center gap-2'>
               <button
+                type='button'
                 onClick={applyFactoryReset}
-                className='btn btn-xs btn-ghost text-base-content/60 hover:text-error gap-1 text-[10px] font-bold uppercase'
+                onClickCapture={e => e.stopPropagation()}
+                className={getAnalyzerTextButtonClasses({
+                  tone: 'error',
+                  className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} gap-1 px-3 text-[10px] font-bold tracking-normal normal-case`,
+                })}
               >
                 <FontAwesomeIcon icon={faUndo} /> Reset Defaults
               </button>
             </div>
 
             {/* Center Action: Close Indicator */}
-            <div className='text-base-content/20 group-hover:text-primary text-xs transition-colors'>
-              <FontAwesomeIcon icon={faChevronUp} />
+            <div className='text-base-content/30 group-hover:text-primary text-xs transition-colors'>
+              <FontAwesomeIcon icon={faMinus} />
             </div>
 
             {/* Right Actions: Save - Wrapped to stop propagation */}
-            <div className='flex gap-2' onClick={e => e.stopPropagation()}>
+            <div className='flex items-center gap-2'>
               <button
+                type='button'
                 onClick={saveAsStandard}
-                className='btn btn-xs btn-ghost text-base-content/60 hover:text-base-content text-[10px] font-bold uppercase'
+                onClickCapture={e => e.stopPropagation()}
+                className={getAnalyzerTextButtonClasses({
+                  className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} px-3 text-[10px] font-bold tracking-normal normal-case`,
+                })}
               >
                 Save as Standard
               </button>
               <button
+                type='button'
                 onClick={saveAsPreset}
-                className='btn btn-xs btn-outline btn-primary text-[10px]'
+                onClickCapture={e => e.stopPropagation()}
+                className={getAnalyzerTextButtonClasses({
+                  className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} border-base-content/10 bg-transparent px-3 text-[10px] font-bold tracking-normal normal-case shadow-none`,
+                })}
               >
                 Save as New Preset
               </button>

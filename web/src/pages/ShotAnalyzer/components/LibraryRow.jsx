@@ -3,9 +3,13 @@
  */
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { cleanName, formatTimestamp } from '../utils/analyzerUtils';
+import { buildStatisticsProfileHref } from '../../Statistics/utils/statisticsRoute';
+import { SourceMarker } from './SourceMarker';
+import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
 
 export function LibraryRow({ item, isMatch, isActive, isShot, onLoad, onExport, onDelete }) {
   const itemName = item.name || item.label || 'Unknown';
@@ -18,6 +22,12 @@ export function LibraryRow({ item, isMatch, isActive, isShot, onLoad, onExport, 
   // Format Date & Time
   const dateStr = formatTimestamp(item.timestamp || item.shotDate);
   const [datePart, timePart] = dateStr.includes(',') ? dateStr.split(', ') : [dateStr, ''];
+  const profileStatsHref = !isShot
+    ? buildStatisticsProfileHref({
+        source: item.source,
+        profileName: item.label || item.name || '',
+      })
+    : null;
 
   // Consistent full border highlighting
   const rowClasses = isActive
@@ -39,11 +49,7 @@ export function LibraryRow({ item, isMatch, isActive, isShot, onLoad, onExport, 
         </span>
       </td>
       <td className='px-2 py-2 text-center'>
-        <span
-          className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${item.source === 'gaggimate' ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}`}
-        >
-          {item.source === 'gaggimate' ? 'GM' : 'WEB'}
-        </span>
+        <SourceMarker source={item.source} variant='library' />
       </td>
       {isShot && (
         <td className='px-3 py-2 whitespace-nowrap'>
@@ -63,15 +69,33 @@ export function LibraryRow({ item, isMatch, isActive, isShot, onLoad, onExport, 
       {/* Action cell with extra right padding for scrollbar clearance */}
       <td className='px-4 py-2 text-right last:rounded-r-md'>
         <div className='flex justify-end gap-2' onClick={e => e.stopPropagation()}>
+          {!isShot && (
+            <a
+              href={profileStatsHref || '/statistics'}
+              className={getAnalyzerIconButtonClasses({
+                tone: 'success',
+                className: 'h-6 w-6',
+              })}
+              title='Profile statistics'
+            >
+              <FontAwesomeIcon icon={faChartSimple} size='xs' />
+            </a>
+          )}
           <button
             onClick={() => onExport(item)}
-            className='text-base-content/30 hover:text-primary transition-colors'
+            className={getAnalyzerIconButtonClasses({
+              tone: 'subtle',
+              className: 'h-6 w-6',
+            })}
           >
             <FontAwesomeIcon icon={faFileExport} size='xs' />
           </button>
           <button
             onClick={() => onDelete(item)}
-            className='text-base-content/30 hover:text-error transition-colors'
+            className={getAnalyzerIconButtonClasses({
+              tone: 'error',
+              className: 'h-6 w-6',
+            })}
           >
             <FontAwesomeIcon icon={faTrashCan} size='xs' />
           </button>

@@ -7,9 +7,6 @@
  * - Storage keys for localStorage
  * - Helper functions for data formatting
  */
-
-import DeepDiveLogoOutline from '../assets/deepdive.svg';
-
 /**
  * LocalStorage Keys for Analyzer Data
  */
@@ -18,6 +15,8 @@ export const ANALYZER_DB_KEYS = {
   PROFILES: 'gaggimate_profiles',
   PRESETS: 'gaggimate_column_presets',
   USER_STANDARD: 'gaggimate_user_standard_cols',
+  LIBRARY_SHOTS_SOURCE_FILTER: 'gaggimate_library_shots_source_filter',
+  LIBRARY_PROFILES_SOURCE_FILTER: 'gaggimate_library_profiles_source_filter',
 };
 
 /**
@@ -57,6 +56,50 @@ export const columnConfig = [
     default: true,
     targetType: 'weight',
   },
+  {
+    id: 'w_se',
+    label: 'Weight (g)',
+    type: 'se',
+    group: 'weight',
+    default: false,
+  },
+  {
+    id: 'w_mm',
+    label: 'Weight (g)',
+    type: 'mm',
+    group: 'weight',
+    default: false,
+  },
+  {
+    id: 'w_avg',
+    label: 'Weight (g)',
+    type: 'avg',
+    group: 'weight',
+    default: false,
+  },
+
+  // --- WEIGHT FLOW ---
+  {
+    id: 'wf_se',
+    label: 'Weight Flow (g/s)',
+    type: 'se',
+    group: 'weightflow',
+    default: false,
+  },
+  {
+    id: 'wf_mm',
+    label: 'Weight Flow (g/s)',
+    type: 'mm',
+    group: 'weightflow',
+    default: false,
+  },
+  {
+    id: 'wf_avg',
+    label: 'Weight Flow (g/s)',
+    type: 'avg',
+    group: 'weightflow',
+    default: false,
+  },
 
   // --- PRESSURE ---
   {
@@ -85,21 +128,21 @@ export const columnConfig = [
   // --- TARGET PRESSURE ---
   {
     id: 'tp_se',
-    label: 'Target Pressure',
+    label: 'Target Pressure (bar)',
     type: 'se',
     group: 'target_pressure',
     default: false,
   },
   {
     id: 'tp_mm',
-    label: 'Target Pressure',
+    label: 'Target Pressure (bar)',
     type: 'mm',
     group: 'target_pressure',
     default: false,
   },
   {
     id: 'tp_avg',
-    label: 'Target Pressure',
+    label: 'Target Pressure (bar)',
     type: 'avg',
     group: 'target_pressure',
     default: false,
@@ -132,21 +175,21 @@ export const columnConfig = [
   // --- TARGET FLOW ---
   {
     id: 'tf_se',
-    label: 'Target Flow',
+    label: 'Target Flow (ml/s)',
     type: 'se',
     group: 'target_flow',
     default: false,
   },
   {
     id: 'tf_mm',
-    label: 'Target Flow',
+    label: 'Target Flow (ml/s)',
     type: 'mm',
     group: 'target_flow',
     default: false,
   },
   {
     id: 'tf_avg',
-    label: 'Target Flow',
+    label: 'Target Flow (ml/s)',
     type: 'avg',
     group: 'target_flow',
     default: false,
@@ -201,46 +244,23 @@ export const columnConfig = [
   // --- TARGET TEMPERATURE ---
   {
     id: 'tt_se',
-    label: 'Target Temp',
+    label: 'Target Temp (℃)',
     type: 'se',
     group: 'target_temp',
     default: false,
   },
   {
     id: 'tt_mm',
-    label: 'Target Temp',
+    label: 'Target Temp (℃)',
     type: 'mm',
     group: 'target_temp',
     default: false,
   },
   {
     id: 'tt_avg',
-    label: 'Target Temp',
+    label: 'Target Temp (℃)',
     type: 'avg',
     group: 'target_temp',
-    default: false,
-  },
-
-  // --- WEIGHT DETAILS ---
-  {
-    id: 'w_se',
-    label: 'Weight Details (g)',
-    type: 'se',
-    group: 'weight_det',
-    default: false,
-  },
-  {
-    id: 'w_mm',
-    label: 'Weight Details (g)',
-    type: 'mm',
-    group: 'weight_det',
-    default: false,
-  },
-  {
-    id: 'w_avg',
-    label: 'Weight Details (g)',
-    type: 'avg',
-    group: 'weight_det',
     default: false,
   },
 
@@ -303,16 +323,59 @@ export const groups = {
   temp: 'Temperature (℃)',
   target_temp: 'Target Temp (℃)',
   weight: 'Weight (g)',
-  weight_det: 'Weight Details (g)',
+  weightflow: 'Weight Flow (g/s)',
   system: 'System Info',
 };
 
 export const utilityColors = {
   stopRed: 'var(--analyzer-pred-stop-red)',
-  warningOrange: 'var(--color-orange-600)',
+  warningOrange: 'var(--analyzer-warning-orange)',
   predictionStopRed: 'var(--analyzer-pred-stop-red)',
   predictionInfoBlue: 'var(--analyzer-pred-info-blue)',
 };
+
+export const analyzerUiColors = {
+  warningOrange: 'var(--analyzer-warning-orange)',
+  warningOrangeStrong: 'var(--analyzer-warning-orange-strong)',
+  warningOrangeShadow: 'var(--analyzer-warning-orange-shadow)',
+  sourceBadgeGmBg: 'var(--analyzer-source-gm-badge-bg)',
+  sourceBadgeGmBorder: 'var(--analyzer-source-gm-badge-border)',
+  sourceBadgeGmText: 'var(--analyzer-source-gm-badge-text)',
+  sourceBadgeWebBg: 'var(--analyzer-source-web-badge-bg)',
+  sourceBadgeWebBorder: 'var(--analyzer-source-web-badge-border)',
+  sourceBadgeWebText: 'var(--analyzer-source-web-badge-text)',
+  brewByTimeLabelBg: 'var(--analyzer-brew-by-time-label-bg)',
+  brewByTimeLabelBorder: 'var(--analyzer-brew-by-time-label-border)',
+  brewByTimeLabelText: 'var(--analyzer-brew-by-time-label-text)',
+  brewByWeightLabelBg: 'var(--analyzer-brew-by-weight-label-bg)',
+  brewByWeightLabelBorder: 'var(--analyzer-brew-by-weight-label-border)',
+  brewByWeightLabelText: 'var(--analyzer-brew-by-weight-label-text)',
+  notesTasteBitter: 'var(--analyzer-notes-taste-bitter)',
+  notesTasteBalanced: 'var(--analyzer-notes-taste-balanced)',
+  notesTasteSour: 'var(--analyzer-notes-taste-sour)',
+  phaseLine: 'var(--analyzer-phase-line)',
+  stopLabel: 'var(--analyzer-stop-label)',
+};
+
+export const notesTasteStyles = {
+  bitter: {
+    color: analyzerUiColors.notesTasteBitter,
+    borderColor: analyzerUiColors.notesTasteBitter,
+    selectedBackground: 'color-mix(in srgb, var(--analyzer-notes-taste-bitter) 12%, transparent)',
+  },
+  balanced: {
+    color: analyzerUiColors.notesTasteBalanced,
+    borderColor: analyzerUiColors.notesTasteBalanced,
+    selectedBackground: 'color-mix(in srgb, var(--analyzer-notes-taste-balanced) 12%, transparent)',
+  },
+  sour: {
+    color: analyzerUiColors.notesTasteSour,
+    borderColor: analyzerUiColors.notesTasteSour,
+    selectedBackground: 'color-mix(in srgb, var(--analyzer-notes-taste-sour) 12%, transparent)',
+  },
+};
+
+export const getNotesTasteStyle = taste => notesTasteStyles[taste] || null;
 
 /**
  * Tailwind Color Classes for Groups
@@ -363,10 +426,10 @@ export const groupColors = {
     text: 'text-[var(--analyzer-weight-text)]',
     anchor: 'var(--analyzer-weight-anchor)',
   },
-  weight_det: {
+  weightflow: {
     bg: 'bg-violet-500/5',
-    text: 'text-[var(--analyzer-weight-det-text)]',
-    anchor: 'var(--analyzer-weight-det-anchor)',
+    text: 'text-[var(--analyzer-weightflow-text)]',
+    anchor: 'var(--analyzer-weightflow-anchor)',
   },
   system: {
     bg: 'bg-base-content/5',
@@ -388,6 +451,20 @@ export const getAllColumns = () => {
   const all = new Set();
   columnConfig.forEach(col => all.add(col.id));
   return all;
+};
+
+/**
+ * Get all column IDs for one logical group.
+ * Used by built-in presets such as "System Info".
+ * @param {string} groupKey - Column group ID
+ * @returns {Set<string>}
+ */
+export const getColumnsByGroup = groupKey => {
+  const columns = new Set();
+  columnConfig.forEach(col => {
+    if (col.group === groupKey) columns.add(col.id);
+  });
+  return columns;
 };
 
 /**
@@ -649,13 +726,3 @@ export const clearLibrary = collection => {
 };
 
 // Helper style for CSS Masking
-export const maskStyle = {
-  maskImage: `url(${DeepDiveLogoOutline})`,
-  WebkitMaskImage: `url(${DeepDiveLogoOutline})`,
-  maskSize: 'contain',
-  WebkitMaskSize: 'contain',
-  maskRepeat: 'no-repeat',
-  WebkitMaskRepeat: 'no-repeat',
-  maskPosition: 'center',
-  WebkitMaskPosition: 'center',
-};

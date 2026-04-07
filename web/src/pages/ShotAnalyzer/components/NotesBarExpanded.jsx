@@ -9,11 +9,16 @@ import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit';
 import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { getNotesTasteStyle } from '../utils/analyzerUtils';
+import {
+  getAnalyzerSurfaceTriggerClasses,
+  getAnalyzerTextButtonClasses,
+} from './analyzerControlStyles';
 
 const tasteOptions = [
-  { value: 'bitter', label: 'Bitter', color: 'border-orange-500 text-orange-500' },
-  { value: 'balanced', label: 'Balanced', color: 'border-green-500 text-green-500' },
-  { value: 'sour', label: 'Sour', color: 'border-yellow-500 text-yellow-500' },
+  { value: 'bitter', label: 'Bitter' },
+  { value: 'balanced', label: 'Balanced' },
+  { value: 'sour', label: 'Sour' },
 ];
 
 export function NotesBarExpanded({
@@ -32,6 +37,15 @@ export function NotesBarExpanded({
 
   const labelCls = 'text-base-content/50 text-[10px] font-semibold uppercase tracking-wider';
   const inputCls = 'input input-sm border-base-content/20 bg-base-100 w-full text-sm';
+  const getSelectedTasteButtonStyle = taste => {
+    const tasteStyle = getNotesTasteStyle(taste);
+    if (!tasteStyle) return undefined;
+    return {
+      color: tasteStyle.color,
+      borderColor: tasteStyle.borderColor,
+      backgroundColor: tasteStyle.selectedBackground,
+    };
+  };
 
   // Render stars (editable in edit mode)
   const renderStars = () => {
@@ -55,9 +69,7 @@ export function NotesBarExpanded({
   };
 
   return (
-    <div
-      className={`transition-all duration-200 ${borderClasses}`}
-    >
+    <div className={`transition-all duration-200 ${borderClasses}`}>
       <div className='px-4 py-3'>
         {isEditing ? (
           /* ── EDIT MODE: Vertical layout ── */
@@ -76,11 +88,18 @@ export function NotesBarExpanded({
                       key={opt.value}
                       type='button'
                       onClick={() => onInputChange('balanceTaste', opt.value)}
-                      className={`flex-1 rounded-md border-2 px-2 py-1.5 text-xs font-medium transition-all ${
+                      className={`${getAnalyzerSurfaceTriggerClasses({
+                        className: 'flex-1 border-2 px-2 py-1.5 text-xs font-medium',
+                      })} ${
                         notes.balanceTaste === opt.value
-                          ? `${opt.color} bg-base-100`
+                          ? ''
                           : 'border-base-content/10 text-base-content/40 hover:border-base-content/30'
                       }`}
+                      style={
+                        notes.balanceTaste === opt.value
+                          ? getSelectedTasteButtonStyle(opt.value)
+                          : undefined
+                      }
                     >
                       {opt.label}
                     </button>
@@ -165,7 +184,13 @@ export function NotesBarExpanded({
 
             {/* Action Buttons */}
             <div className='flex justify-end gap-2 pt-1'>
-              <button className='btn btn-sm btn-ghost' onClick={onCancel} disabled={saving}>
+              <button
+                className={getAnalyzerTextButtonClasses({
+                  className: 'btn btn-sm btn-ghost',
+                })}
+                onClick={onCancel}
+                disabled={saving}
+              >
                 <FontAwesomeIcon icon={faTimes} className='mr-1' />
                 Cancel
               </button>
@@ -192,14 +217,21 @@ export function NotesBarExpanded({
           /* ── VIEW MODE: Notes text + edit button ── */
           <div className='flex items-start gap-3'>
             <div
-              className='bg-base-200/50 min-h-[2rem] min-w-0 flex-1 cursor-pointer rounded-md px-3 py-2 text-xs hover:bg-base-200/80'
+              className={getAnalyzerSurfaceTriggerClasses({
+                className:
+                  'bg-base-200/50 hover:text-base-content/80 min-h-[2rem] min-w-0 flex-1 cursor-pointer px-3 py-2 text-xs',
+              })}
               onClick={onCollapse}
               title='Click to collapse'
             >
               {notes.notes || 'No notes added'}
             </div>
             <button
-              className='btn btn-sm btn-outline flex-shrink-0'
+              className={getAnalyzerTextButtonClasses({
+                className:
+                  'btn btn-sm border-base-content/10 text-base-content/70 flex-shrink-0 bg-transparent shadow-none',
+                tone: 'neutral',
+              })}
               onClick={onEdit}
               title='Edit notes'
             >

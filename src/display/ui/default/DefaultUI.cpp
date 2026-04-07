@@ -1,7 +1,6 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
-#include <display/config.h>
 #include <display/core/Controller.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
@@ -10,6 +9,7 @@
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
+#include <display/main.h>
 #include <display/ui/default/lvgl/ui_theme_manager.h>
 #include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
@@ -72,6 +72,8 @@ void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
         lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 }
+
+void DefaultUI::reloadProfiles() { profileLoaded = 0; }
 
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
     : controller(controller), panelDriver(driver), pluginManager(pluginManager) {
@@ -149,14 +151,27 @@ void DefaultUI::init() {
             changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
         }
     });
-    pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
+    pluginManager->on("controller:bluetooth:waiting", [this](Event const &) {
+        waitingForController = true;
         rerender = true;
-        if (lv_scr_act() == ui_InitScreen) {
+    });
+    pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
+        waitingForController = false;
+        rerender = true;
+        initialized = true;
+        if (lv_scr_act() == ui_StandbyScreen) {
             Settings &settings = controller->getSettings();
-            settings.getStartupMode() == MODE_BREW ? changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init)
-                                                   : changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
+            if (settings.getStartupMode() == MODE_BREW) {
+                changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
+            } else {
+                standbyEnterTime = millis();
+            }
         }
         pressureAvailable = controller->getSystemInfo().capabilities.pressure;
+    });
+    pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) {
+        waitingForController = true;
+        rerender = true;
     });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         rerender = true;
@@ -165,12 +180,12 @@ void DefaultUI::init() {
     pluginManager->on("ota:update:start", [this](Event const &) {
         updateActive = true;
         rerender = true;
-        changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+        changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
     });
     pluginManager->on("ota:update:end", [this](Event const &) {
         updateActive = false;
         rerender = true;
-        changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+        changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
     });
     pluginManager->on("ota:update:status", [this](Event const &event) {
         rerender = true;
@@ -178,10 +193,10 @@ void DefaultUI::init() {
     });
     pluginManager->on("controller:error", [this](Event const &) {
         rerender = true;
-        changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+        changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
     });
     pluginManager->on("controller:autotune:start",
-                      [this](Event const &) { changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init); });
+                      [this](Event const &) { changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
     pluginManager->on("controller:autotune:result",
                       [this](Event const &) { changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
 
@@ -190,8 +205,13 @@ void DefaultUI::init() {
         selectedProfileId = event.getString("id");
         targetDuration = profileManager->getSelectedProfile().getTotalDuration();
         targetVolume = profileManager->getSelectedProfile().getTotalVolume();
+        profileVolumetric = profileManager->getSelectedProfile().isVolumetric();
+        reloadProfiles();
         rerender = true;
     });
+    pluginManager->on("profiles:profile:favorite", [this](Event const &event) { reloadProfiles(); });
+    pluginManager->on("profiles:profile:unfavorite", [this](Event const &event) { reloadProfiles(); });
+    pluginManager->on("profiles:profile:save", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("controller:volumetric-measurement:bluetooth:change", [=](Event const &event) {
         double newWeight = event.getFloat("value");
         if (round(newWeight * 10.0) != round(bluetoothWeight * 10.0)) {
@@ -228,13 +248,14 @@ void DefaultUI::loop() {
         volumetricAvailable = controller->isVolumetricAvailable();
         bluetoothScales = controller->isBluetoothScaleHealthy();
         volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
+        brewVolumetric = volumetricAvailable && profileVolumetric;
         grindActive = controller->isGrindActive();
         active = controller->isActive();
         smartGrindActive = settings.isSmartGrindActive();
         grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
         applyTheme();
         if (controller->isErrorState()) {
-            changeScreen(&ui_InitScreen, &ui_InitScreen_screen_init);
+            changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
         }
         updateTempStableFlag();
         handleScreenChange();
@@ -250,8 +271,19 @@ void DefaultUI::loop() {
 }
 
 void DefaultUI::loopProfiles() {
-    if (!profileLoaded && currentProfileId != "") {
-        profileManager->loadProfile(currentProfileId, currentProfileChoice);
+    if (!profileLoaded) {
+        favoritedProfileIds.clear();
+        favoritedProfiles.clear();
+        favoritedProfileIds.emplace_back(controller->getSettings().getSelectedProfile());
+        for (auto &id : profileManager->getFavoritedProfiles()) {
+            if (std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id) == favoritedProfileIds.end())
+                favoritedProfileIds.emplace_back(id);
+        }
+        for (const auto &profileId : favoritedProfileIds) {
+            Profile profile{};
+            profileManager->loadProfile(profileId, profile);
+            favoritedProfiles.emplace_back(profile);
+        }
         profileLoaded = 1;
     }
 }
@@ -271,35 +303,34 @@ void DefaultUI::changeBrewScreenMode(BrewScreenState state) {
 }
 
 void DefaultUI::onProfileSwitch() {
-    favoritedProfiles = profileManager->getFavoritedProfiles();
     currentProfileIdx = 0;
-    currentProfileId = favoritedProfiles[currentProfileIdx];
-    profileLoaded = 0;
-    currentProfileChoice = Profile{};
     changeScreen(&ui_ProfileScreen, ui_ProfileScreen_screen_init);
 }
 
 void DefaultUI::onNextProfile() {
-    if (currentProfileIdx < favoritedProfiles.size() - 1) {
+    if (currentProfileIdx < favoritedProfileIds.size() - 1) {
         currentProfileIdx++;
-        currentProfileId = favoritedProfiles.at(currentProfileIdx);
-        profileLoaded = 0;
-        currentProfileChoice = Profile{};
     }
+    rerender = true;
 }
 
 void DefaultUI::onPreviousProfile() {
     if (currentProfileIdx > 0) {
         currentProfileIdx--;
-        currentProfileId = favoritedProfiles.at(currentProfileIdx);
-        profileLoaded = 0;
-        currentProfileChoice = Profile{};
     }
+    rerender = true;
 }
 
 void DefaultUI::onProfileSelect() {
-    profileManager->selectProfile(currentProfileId);
+    profileManager->selectProfile(favoritedProfileIds[currentProfileIdx]);
+    profileDirty = false;
     changeScreen(&ui_BrewScreen, ui_BrewScreen_screen_init);
+}
+
+void DefaultUI::onVolumetricDelete() {
+    controller->onVolumetricDelete();
+    profileVolumetric = profileManager->getSelectedProfile().isVolumetric();
+    profileDirty = true;
 }
 
 void DefaultUI::setupPanel() {
@@ -333,6 +364,7 @@ void DefaultUI::setupState() {
     pressureScaling = std::ceil(settings.getPressureScaling());
     selectedProfileId = settings.getSelectedProfile();
     profileManager->loadSelectedProfile(selectedProfile);
+    profileVolumetric = selectedProfile.isVolumetric();
 }
 
 void DefaultUI::setupReactive() {
@@ -465,22 +497,30 @@ void DefaultUI::setupReactive() {
                                               : lv_obj_add_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN);
                           },
                           &updateAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_InitScreen; },
+    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
                           [=]() {
+                              bool deactivated = true;
                               if (updateActive) {
-                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Updating...");
+                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Updating...");
                               } else if (error) {
                                   if (controller->getError() == ERROR_CODE_RUNAWAY) {
-                                      lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Temperature error, please restart");
+                                      lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Temperature error, please restart");
                                   }
                               } else if (autotuning) {
-                                  lv_label_set_text_fmt(ui_InitScreen_mainLabel, "Autotuning...");
+                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Autotuning...");
+                              } else if (waitingForController) {
+                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Waiting for controller...");
+                              } else {
+                                  deactivated = !initialized;
                               }
+                              _ui_flag_modify(ui_StandbyScreen_mainLabel, LV_OBJ_FLAG_HIDDEN, deactivated);
+                              _ui_flag_modify(ui_StandbyScreen_touchIcon, LV_OBJ_FLAG_HIDDEN, !deactivated);
+                              _ui_flag_modify(ui_StandbyScreen_statusContainer, LV_OBJ_FLAG_HIDDEN, !deactivated);
                           },
-                          &updateAvailable, &error, &autotuning);
+                          &updateAvailable, &error, &autotuning, &waitingForController, &initialized);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
-                              if (volumetricMode) {
+                              if (brewVolumetric) {
                                   lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%.1fg", targetVolume);
                               } else {
                                   const double secondsDouble = targetDuration;
@@ -489,7 +529,7 @@ void DefaultUI::setupReactive() {
                                   lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%2d:%02d", minutes, seconds);
                               }
                           },
-                          &targetDuration, &targetVolume, &volumetricMode);
+                          &targetDuration, &targetVolume, &brewVolumetric);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
                           [=]() {
                               if (volumetricMode) {
@@ -502,20 +542,12 @@ void DefaultUI::setupReactive() {
                               }
                           },
                           &grindDuration, &grindVolume, &volumetricMode);
-    effect_mgr.use_effect(
-        [=] { return currentScreen == ui_BrewScreen; },
-        [=]() {
-            lv_img_set_src(ui_BrewScreen_Image4, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
-            ui_object_set_themeable_style_property(ui_BrewScreen_weightLabel, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_TEXT_COLOR,
-                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-            ui_object_set_themeable_style_property(ui_BrewScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR,
-                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-            ui_object_set_themeable_style_property(ui_BrewScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
-                                                   volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
-        },
-        &volumetricMode);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
+                          [=]() {
+                              lv_img_set_src(ui_BrewScreen_Image4, brewVolumetric ? &ui_img_1424216268 : &ui_img_360122106);
+                              _ui_flag_modify(ui_BrewScreen_byTimeButton, LV_OBJ_FLAG_HIDDEN, brewVolumetric);
+                          },
+                          &brewVolumetric);
     effect_mgr.use_effect(
         [=] { return currentScreen == ui_GrindScreen; },
         [=]() {
@@ -561,14 +593,16 @@ void DefaultUI::setupReactive() {
             if (profileLoaded) {
                 _ui_flag_modify(ui_ProfileScreen_profileDetails, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
                 _ui_flag_modify(ui_ProfileScreen_loadingSpinner, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
-                lv_label_set_text(ui_ProfileScreen_profileName, currentProfileChoice.label.c_str());
+                lv_label_set_text(ui_ProfileScreen_profileName, favoritedProfiles[currentProfileIdx].label.c_str());
+                lv_label_set_text(ui_ProfileScreen_mainLabel, currentProfileIdx == 0 ? "Current profile" : "Select profile");
 
-                const auto minutes = static_cast<int>(currentProfileChoice.getTotalDuration() / 60.0 - 0.5);
-                const auto seconds = static_cast<int>(currentProfileChoice.getTotalDuration()) % 60;
+                const auto minutes = static_cast<int>(favoritedProfiles[currentProfileIdx].getTotalDuration() / 60.0 - 0.5);
+                const auto seconds = static_cast<int>(favoritedProfiles[currentProfileIdx].getTotalDuration()) % 60;
                 lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
-                lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C", static_cast<int>(currentProfileChoice.temperature));
-                unsigned int phaseCount = currentProfileChoice.getPhaseCount();
-                unsigned int stepCount = currentProfileChoice.phases.size();
+                lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C",
+                                      static_cast<int>(favoritedProfiles[currentProfileIdx].temperature));
+                unsigned int phaseCount = favoritedProfiles[currentProfileIdx].getPhaseCount();
+                unsigned int stepCount = favoritedProfiles[currentProfileIdx].phases.size();
                 lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d step%s", stepCount, stepCount > 1 ? "s" : "");
                 lv_label_set_text_fmt(ui_ProfileScreen_phasesLabel, "%d phase%s", phaseCount, phaseCount > 1 ? "s" : "");
             } else {
@@ -589,7 +623,7 @@ void DefaultUI::setupReactive() {
                 ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
                 currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
         },
-        &currentProfileId, &profileLoaded);
+        &currentProfileIdx, &profileLoaded);
 
     // Show/hide grind button based on SmartGrind setting or Alt Relay function
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
@@ -632,6 +666,23 @@ void DefaultUI::setupReactive() {
             }
         },
         &brewScreenState, &volumetricAvailable, &bluetoothScales);
+    effect_mgr.use_effect(
+        [=] { return currentScreen == ui_BrewScreen; },
+        [=]() {
+            ui_object_set_themeable_style_property(ui_BrewScreen_saveButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_IMG_RECOLOR,
+                                                   profileDirty ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
+            ui_object_set_themeable_style_property(ui_BrewScreen_saveButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_IMG_RECOLOR_OPA,
+                                                   profileDirty ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
+            ui_object_set_themeable_style_property(ui_BrewScreen_saveAsNewButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_IMG_RECOLOR,
+                                                   profileDirty ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
+            ui_object_set_themeable_style_property(ui_BrewScreen_saveAsNewButton, LV_PART_MAIN | LV_STATE_DEFAULT,
+                                                   LV_STYLE_IMG_RECOLOR_OPA,
+                                                   profileDirty ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
+        },
+        &brewScreenState, &profileDirty);
     effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
                           [=]() { lv_img_set_src(ui_StandbyScreen_logo, christmasMode ? &ui_img_1510335 : &ui_img_logo_png); },
                           &christmasMode);
@@ -663,7 +714,8 @@ void DefaultUI::updateStandbyScreen() {
         }
     }
 
-    if (!apActive && WiFi.status() == WL_CONNECTED) {
+    if (!apActive && WiFi.status() == WL_CONNECTED && !updateActive && !error && !autotuning && !waitingForController &&
+        initialized) {
         time_t now;
         struct tm timeinfo;
 
@@ -738,7 +790,13 @@ void DefaultUI::updateStatusScreen() const {
     }
 
     lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
-    lv_label_set_text(ui_StatusScreen_phaseLabel, brewProcess && brewProcess->isActive() ? phase.name.c_str() : "Finished");
+    String phaseText = "Finished";
+    if (process->isActive()) {
+        phaseText = phase.name;
+    } else if (controller->getSettings().isDelayAdjust() && !process->isComplete()) {
+        phaseText = "Calibrating...";
+    }
+    lv_label_set_text(ui_StatusScreen_phaseLabel, phaseText.c_str());
 
     // Add bounds check for processStarted timestamp
     if (brewProcess && brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
@@ -755,14 +813,14 @@ void DefaultUI::updateStatusScreen() const {
         Target target = phase.getVolumetricTarget();
         lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume * 10.0, LV_ANIM_OFF);
         lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value * 10.0 + 1.0);
-        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1fg", target.value);
+        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1f / %.1fg", brewProcess->currentVolume, target.value);
     } else if (brewProcess) {
         // Add bounds check for currentPhaseStarted timestamp
         if (brewProcess->currentPhaseStarted > 0 && now >= brewProcess->currentPhaseStarted) {
             const unsigned long progress = now - brewProcess->currentPhaseStarted;
             lv_bar_set_value(ui_StatusScreen_brewBar, progress, LV_ANIM_OFF);
             lv_bar_set_range(ui_StatusScreen_brewBar, 0, std::max(static_cast<int>(brewProcess->getPhaseDuration()), 1));
-            lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%ds", brewProcess->getPhaseDuration() / 1000);
+            lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%d / %ds", progress / 1000, brewProcess->getPhaseDuration() / 1000);
         } else {
             lv_bar_set_value(ui_StatusScreen_brewBar, 0, LV_ANIM_OFF);
             lv_bar_set_range(ui_StatusScreen_brewBar, 0, 1);

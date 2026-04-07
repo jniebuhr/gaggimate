@@ -9,16 +9,29 @@
  * - Pins matching shots/profiles to the top of the list.
  */
 
-import { useState, useEffect, useContext, useRef } from 'preact/hooks';
+import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
 import { StatusBar } from './StatusBar';
 import { NotesBar } from './NotesBar';
 import { LibrarySection } from './LibrarySection';
+import { getAnalyzerTextButtonClasses } from './analyzerControlStyles';
 import { libraryService } from '../services/LibraryService';
 import { indexedDBService } from '../services/IndexedDBService';
 import { notesService } from '../services/NotesService';
 import { ApiServiceContext } from '../../../services/ApiService';
-import { cleanName } from '../utils/analyzerUtils';
+import {
+  ANALYZER_DB_KEYS,
+  cleanName,
+  loadFromStorage,
+  saveToStorage,
+} from '../utils/analyzerUtils';
 import { downloadJson } from '../../../utils/download';
+
+function getStoredLibrarySourceFilter(storageKey) {
+  const storedValue = loadFromStorage(storageKey, 'all');
+  return storedValue === 'gaggimate' || storedValue === 'browser' || storedValue === 'all'
+    ? storedValue
+    : 'all';
+}
 
 export function LibraryPanel({
   currentShot,
@@ -31,8 +44,10 @@ export function LibraryPanel({
   onShotUnload,
   onProfileUnload,
   onShowStats,
+  statsHref = '/statistics',
   importMode = 'temp',
   onImportModeChange,
+  onShotLoadedFromLibrary,
   isMatchingProfile = false, // Used for highlighting
   isMatchingShot = false, // Used for highlighting
   isSearchingProfile = false, // Spinner state for profile search
@@ -47,28 +62,39 @@ export function LibraryPanel({
   const panelRef = useRef(null);
   const sentinelRef = useRef(null);
   const barRef = useRef(null);
+  const refreshIdRef = useRef(0);
 
   // UI State
   const [isStuck, setIsStuck] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false,
+  );
   const [barRect, setBarRect] = useState({ width: 0, left: 0, height: 0 });
   const [collapsed, setCollapsed] = useState(true);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false); // Specific state for import spinner
   const [notesExpanded, setNotesExpanded] = useState(false);
+  const [notesIsEditing, setNotesIsEditing] = useState(false);
+  const [notesExpandedHeight, setNotesExpandedHeight] = useState(0);
 
   // Data State
   const [shots, setShots] = useState([]);
   const [profiles, setProfiles] = useState([]);
 
   // Filter & Sort State
-  const [shotsSourceFilter, setShotsSourceFilter] = useState('all');
-  const [profilesSourceFilter, setProfilesSourceFilter] = useState('all');
+  const [shotsSourceFilter, setShotsSourceFilter] = useState(() =>
+    getStoredLibrarySourceFilter(ANALYZER_DB_KEYS.LIBRARY_SHOTS_SOURCE_FILTER),
+  );
+  const [profilesSourceFilter, setProfilesSourceFilter] = useState(() =>
+    getStoredLibrarySourceFilter(ANALYZER_DB_KEYS.LIBRARY_PROFILES_SOURCE_FILTER),
+  );
 
   const [shotsSearch, setShotsSearch] = useState('');
   const [shotsSort, setShotsSort] = useState({ key: 'shotDate', order: 'desc' });
 
   const [profilesSearch, setProfilesSearch] = useState('');
   const [profilesSort, setProfilesSort] = useState({ key: 'name', order: 'asc' });
+  const [mobileActiveSection, setMobileActiveSection] = useState('shots');
 
   // Debounced search values to avoid re-fetching on every keystroke
   const [debouncedShotsSearch, setDebouncedShotsSearch] = useState('');
@@ -83,6 +109,14 @@ export function LibraryPanel({
     const timer = setTimeout(() => setDebouncedProfilesSearch(profilesSearch), 250);
     return () => clearTimeout(timer);
   }, [profilesSearch]);
+
+  useEffect(() => {
+    saveToStorage(ANALYZER_DB_KEYS.LIBRARY_SHOTS_SOURCE_FILTER, shotsSourceFilter);
+  }, [shotsSourceFilter]);
+
+  useEffect(() => {
+    saveToStorage(ANALYZER_DB_KEYS.LIBRARY_PROFILES_SOURCE_FILTER, profilesSourceFilter);
+  }, [profilesSourceFilter]);
 
   // Initialize API Service for Library
   useEffect(() => {
@@ -100,17 +134,35 @@ export function LibraryPanel({
     return () => observer.disconnect();
   }, []);
 
-  // Sync dimensions for fixed positioning
   useEffect(() => {
-    const updateRect = () => {
-      if (!sentinelRef.current) return;
-      const rect = sentinelRef.current.getBoundingClientRect();
-      setBarRect({
-        width: rect.width,
-        left: rect.left,
-        height: barRef.current?.offsetHeight || 64,
-      });
-    };
+    if (typeof window === 'undefined') return undefined;
+
+    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    const handleChange = event => setIsMobileViewport(event.matches);
+
+    setIsMobileViewport(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
+
+  // Sync dimensions for fixed positioning
+  const updateRect = useCallback(() => {
+    if (!sentinelRef.current) return;
+    const rect = sentinelRef.current.getBoundingClientRect();
+    setBarRect({
+      width: rect.width,
+      left: rect.left,
+      height: barRef.current?.offsetHeight || 64,
+    });
+  }, []);
+
+  useEffect(() => {
     updateRect();
     window.addEventListener('resize', updateRect);
     window.addEventListener('scroll', updateRect, { passive: true });
@@ -118,7 +170,30 @@ export function LibraryPanel({
       window.removeEventListener('resize', updateRect);
       window.removeEventListener('scroll', updateRect);
     };
-  }, []);
+  }, [updateRect]);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(() => updateRect());
+    if (barRef.current) resizeObserver.observe(barRef.current);
+    if (sentinelRef.current) resizeObserver.observe(sentinelRef.current);
+    return () => resizeObserver.disconnect();
+  }, [updateRect]);
+
+  useEffect(() => {
+    if (!notesExpanded) {
+      setNotesIsEditing(false);
+      setNotesExpandedHeight(0);
+    }
+  }, [notesExpanded]);
+
+  useEffect(() => {
+    if (!currentShot) {
+      setNotesExpanded(false);
+      setNotesIsEditing(false);
+      setNotesExpandedHeight(0);
+    }
+  }, [currentShot]);
 
   // Close panel on outside click
   useEffect(() => {
@@ -137,6 +212,7 @@ export function LibraryPanel({
    * Pins matching items (current shot/profile) to the top.
    */
   const refreshLibraries = async () => {
+    const id = ++refreshIdRef.current;
     setLoading(true);
     try {
       const [shotsData, profilesData] = await Promise.all([
@@ -145,6 +221,8 @@ export function LibraryPanel({
           profilesSourceFilter === 'all' ? 'both' : profilesSourceFilter,
         ),
       ]);
+
+      if (id !== refreshIdRef.current) return; // stale request, discard
 
       // Helper: Sort logic based on config keys
       const applySort = (items, cfg) => {
@@ -254,9 +332,12 @@ export function LibraryPanel({
       setShots(pinMatches(applySort(fShots, shotsSort), true));
       setProfiles(pinMatches(applySort(fProfiles, profilesSort), false));
     } catch (error) {
+      if (id !== refreshIdRef.current) return;
       console.error('Library refresh failed:', error);
     } finally {
-      setLoading(false);
+      if (id === refreshIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -303,8 +384,11 @@ export function LibraryPanel({
         const deleteKey =
           item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
         await libraryService.deleteShot(deleteKey, item.source);
+      } else {
+        const deleteKey =
+          item.source === 'gaggimate' ? item.profileId || item.id : item.name || item.label;
+        await libraryService.deleteProfile(deleteKey, item.source);
       }
-      else await libraryService.deleteProfile(item.name || item.label, item.source);
       refreshLibraries();
     } catch (e) {
       alert(`Delete failed: ${e.message}`);
@@ -363,7 +447,7 @@ export function LibraryPanel({
               source: importMode === 'browser' ? 'browser' : 'temp',
             };
             if (importMode === 'browser') await indexedDBService.saveProfile(profile);
-            onProfileLoad(data, profileName);
+            onProfileLoad(data, profileName, profile.source);
           }
         }
       } catch (e) {
@@ -378,21 +462,24 @@ export function LibraryPanel({
 
   const handleLoadShot = async item => {
     try {
+      const wasLibraryOpen = !collapsed;
       onShotLoadStart();
       setCollapsed(true);
       const loadKey =
         item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
-      const full = item.loaded
-        ? item
-        : await libraryService.loadShot(loadKey, item.source);
-      onShotLoad(full, item.name || item.storageKey || item.id);
+      const full = item.loaded ? item : await libraryService.loadShot(loadKey, item.source);
+      await onShotLoad(full, item.name || item.storageKey || item.id);
+      if (wasLibraryOpen) {
+        onShotLoadedFromLibrary?.();
+      }
     } catch (e) {
       console.error('Failed to load shot:', e);
     }
   };
 
   // Styling logic for fixed bar
-  const shouldBeFixed = isStuck || !collapsed;
+  // Keep the panel anchored while it is open, but let the collapsed bar scroll normally on mobile.
+  const shouldBeFixed = !collapsed || (!isMobileViewport && isStuck);
   const fixedBarStyle = shouldBeFixed
     ? {
         position: 'fixed',
@@ -402,13 +489,17 @@ export function LibraryPanel({
         zIndex: 50,
       }
     : {};
+  const dropdownTop = Math.max(0, barRect.height - (notesIsEditing ? notesExpandedHeight : 0));
   const dropdownStyle = {
     position: 'fixed',
-    top: `${barRect.height}px`,
+    top: `${dropdownTop}px`,
     left: `${barRect.left}px`,
     width: `${barRect.width}px`,
     zIndex: 49,
   };
+  const desktopSectionHeight = isMobileViewport
+    ? undefined
+    : `max(18rem, calc(100dvh - ${dropdownTop}px - 2rem))`;
 
   return (
     <div ref={panelRef} className='relative'>
@@ -418,9 +509,7 @@ export function LibraryPanel({
       <div ref={barRef} style={fixedBarStyle}>
         <div
           className={`bg-base-100/80 border-base-content/10 overflow-hidden border backdrop-blur-md transition-all duration-200 ${
-            !collapsed
-              ? 'rounded-t-xl border-b-0 shadow-none'
-              : 'rounded-xl shadow-lg'
+            collapsed ? 'rounded-xl shadow-lg' : 'rounded-t-xl border-b-0 shadow-none'
           }`}
         >
           <StatusBar
@@ -433,30 +522,31 @@ export function LibraryPanel({
             onTogglePanel={() => setCollapsed(!collapsed)}
             onImport={handleImport}
             onShowStats={onShowStats}
+            statsHref={statsHref}
             isMismatch={
               currentShot &&
               currentProfile &&
               cleanName(currentShot.profile || '').toLowerCase() !==
                 cleanName(currentProfileName).toLowerCase()
             }
-            importMode={importMode}
-            onImportModeChange={onImportModeChange}
             isExpanded={!collapsed}
             hasNotesBar={!!currentShot}
             isImporting={importing}
             isSearchingProfile={isSearchingProfile}
           />
-          {currentShot && (
-            <NotesBar
-              currentShot={currentShot}
-              currentShotName={currentShotName}
-              shotList={shots}
-              onNavigate={handleLoadShot}
-              isExpanded={!collapsed}
-              notesExpanded={notesExpanded}
-              onToggleNotesExpanded={() => setNotesExpanded(v => !v)}
-            />
-          )}
+          <NotesBar
+            currentShot={currentShot}
+            currentShotName={currentShotName}
+            shotList={shots}
+            onNavigate={handleLoadShot}
+            importMode={importMode}
+            onImportModeChange={onImportModeChange}
+            isExpanded={!collapsed}
+            notesExpanded={notesExpanded}
+            onToggleNotesExpanded={() => setNotesExpanded(v => !v)}
+            onEditingChange={setNotesIsEditing}
+            onExpandedHeightChange={setNotesExpandedHeight}
+          />
         </div>
       </div>
 
@@ -469,125 +559,177 @@ export function LibraryPanel({
           />
           <div style={dropdownStyle}>
             <div className='bg-base-100/80 border-base-content/10 animate-fade-in-down origin-top overflow-hidden rounded-b-xl border border-t-0 shadow-2xl backdrop-blur-md'>
-              <div className='grid max-h-[75vh] grid-cols-1 gap-4 overflow-y-auto overscroll-contain p-4 lg:grid-cols-2'>
-                {/* SHOTS SECTION */}
-                <LibrarySection
-                  title='Shots'
-                  items={shots}
-                  isShot={true}
-                  searchValue={shotsSearch}
-                  sortKey={shotsSort.key}
-                  sortOrder={shotsSort.order}
-                  sourceFilter={shotsSourceFilter}
-                  onSearchChange={setShotsSearch}
-                  onSortChange={(k, o) =>
-                    setShotsSort({
-                      key: k,
-                      order:
-                        o || (shotsSort.key === k && shotsSort.order === 'desc' ? 'asc' : 'desc'),
-                    })
-                  }
-                  onSourceFilterChange={setShotsSourceFilter}
-                  onLoad={handleLoadShot}
-                  onExport={item => handleExport(item, true)} // Pass true for shots
-                  onDelete={handleDelete}
-                  isLoading={loading} // Pass loading state to show spinner in list
-                  onExportAll={() => {
-                    if (shots.length === 0) return;
-                    if (
-                      confirm(
-                        `Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`,
-                      )
-                    ) {
-                      for (let i = 0; i < shots.length; i++)
-                        setTimeout(() => handleExport(shots[i], true), i * 300);
+              <div className='px-4 pt-4 lg:hidden'>
+                <div className='bg-base-200/60 flex items-center gap-1 rounded-lg p-1'>
+                  <button
+                    type='button'
+                    className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                      mobileActiveSection === 'shots'
+                        ? 'bg-base-100 text-base-content shadow-sm'
+                        : getAnalyzerTextButtonClasses({
+                            className: 'justify-center',
+                          })
+                    }`}
+                    onClick={() => setMobileActiveSection('shots')}
+                  >
+                    Shots
+                  </button>
+                  <button
+                    type='button'
+                    className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                      mobileActiveSection === 'profiles'
+                        ? 'bg-base-100 text-base-content shadow-sm'
+                        : getAnalyzerTextButtonClasses({
+                            className: 'justify-center',
+                          })
+                    }`}
+                    onClick={() => setMobileActiveSection('profiles')}
+                  >
+                    Profiles
+                  </button>
+                </div>
+              </div>
+              <div className='max-h-[75vh] overflow-y-auto overscroll-contain lg:max-h-none lg:overflow-hidden'>
+                <div className='grid grid-cols-1 gap-x-4 gap-y-4 p-4 lg:grid-cols-2 lg:gap-x-1.5'>
+                  {/* SHOTS SECTION */}
+                  <div
+                    className={
+                      mobileActiveSection === 'shots' ? 'block lg:block' : 'hidden lg:block'
                     }
-                  }}
-                  onDeleteAll={async () => {
-                    if (
-                      confirm(
-                        `WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`,
-                      )
-                    ) {
-                      for (const s of shots)
-                        await libraryService.deleteShot(
-                          s.source === 'gaggimate' ? s.id : s.storageKey || s.name || s.id,
-                          s.source,
-                        );
-                      refreshLibraries();
-                    }
-                  }}
-                  getMatchStatus={item =>
-                    currentProfile &&
-                    cleanName(item.profile || '').toLowerCase() ===
-                      cleanName(currentProfileName).toLowerCase()
-                  }
-                  getActiveStatus={item =>
-                    currentShot &&
-                    getShotStorageKey(item) === getShotStorageKey(currentShot) &&
-                    item.source === currentShot.source
-                  }
-                />
+                  >
+                    <LibrarySection
+                      title='Shots'
+                      items={shots}
+                      isShot={true}
+                      sectionHeight={desktopSectionHeight}
+                      searchValue={shotsSearch}
+                      sortKey={shotsSort.key}
+                      sortOrder={shotsSort.order}
+                      sourceFilter={shotsSourceFilter}
+                      onSearchChange={setShotsSearch}
+                      onSortChange={(k, o) =>
+                        setShotsSort({
+                          key: k,
+                          order:
+                            o ||
+                            (shotsSort.key === k && shotsSort.order === 'desc' ? 'asc' : 'desc'),
+                        })
+                      }
+                      onSourceFilterChange={setShotsSourceFilter}
+                      onLoad={handleLoadShot}
+                      onExport={item => handleExport(item, true)} // Pass true for shots
+                      onDelete={handleDelete}
+                      isLoading={loading} // Pass loading state to show spinner in list
+                      onExportAll={() => {
+                        if (shots.length === 0) return;
+                        if (
+                          confirm(
+                            `Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`,
+                          )
+                        ) {
+                          for (let i = 0; i < shots.length; i++)
+                            setTimeout(() => handleExport(shots[i], true), i * 300);
+                        }
+                      }}
+                      onDeleteAll={async () => {
+                        if (
+                          confirm(
+                            `WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`,
+                          )
+                        ) {
+                          for (const s of shots)
+                            await libraryService.deleteShot(
+                              s.source === 'gaggimate' ? s.id : s.storageKey || s.name || s.id,
+                              s.source,
+                            );
+                          refreshLibraries();
+                        }
+                      }}
+                      getMatchStatus={item =>
+                        currentProfile &&
+                        cleanName(item.profile || '').toLowerCase() ===
+                          cleanName(currentProfileName).toLowerCase()
+                      }
+                      getActiveStatus={item =>
+                        currentShot &&
+                        getShotStorageKey(item) === getShotStorageKey(currentShot) &&
+                        item.source === currentShot.source
+                      }
+                    />
+                  </div>
 
-                {/* PROFILES SECTION */}
-                <LibrarySection
-                  title='Profiles'
-                  items={profiles}
-                  isShot={false}
-                  searchValue={profilesSearch}
-                  sortKey={profilesSort.key}
-                  sortOrder={profilesSort.order}
-                  sourceFilter={profilesSourceFilter}
-                  onSearchChange={setProfilesSearch}
-                  onSortChange={(k, o) =>
-                    setProfilesSort({
-                      key: k,
-                      order:
-                        o ||
-                        (profilesSort.key === k && profilesSort.order === 'desc' ? 'asc' : 'desc'),
-                    })
-                  }
-                  onSourceFilterChange={setProfilesSourceFilter}
-                  onLoad={item => {
-                    onProfileLoad(item.data || item, item.name || item.label);
-                    setCollapsed(true);
-                  }}
-                  onExport={item => handleExport(item, false)} // Pass false for profiles
-                  onDelete={handleDelete}
-                  isLoading={loading} // Pass loading state to show spinner in list
-                  onExportAll={() => {
-                    if (profiles.length === 0) return;
-                    if (
-                      confirm(
-                        `Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
-                      )
-                    ) {
-                      for (let i = 0; i < profiles.length; i++)
-                        setTimeout(() => handleExport(profiles[i], false), i * 300);
+                  {/* PROFILES SECTION */}
+                  <div
+                    className={
+                      mobileActiveSection === 'profiles' ? 'block lg:block' : 'hidden lg:block'
                     }
-                  }}
-                  onDeleteAll={async () => {
-                    if (
-                      confirm(
-                        `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
-                      )
-                    ) {
-                      for (const p of profiles)
-                        await libraryService.deleteProfile(p.name || p.label, p.source);
-                      refreshLibraries();
-                    }
-                  }}
-                  getMatchStatus={item =>
-                    currentShot &&
-                    cleanName(item.name || item.label || '').toLowerCase() ===
-                      cleanName(currentShot.profile || '').toLowerCase()
-                  }
-                  getActiveStatus={item =>
-                    currentProfile &&
-                    cleanName(item.name || item.label || '').toLowerCase() ===
-                      cleanName(currentProfileName).toLowerCase()
-                  }
-                />
+                  >
+                    <LibrarySection
+                      title='Profiles'
+                      items={profiles}
+                      isShot={false}
+                      sectionHeight={desktopSectionHeight}
+                      searchValue={profilesSearch}
+                      sortKey={profilesSort.key}
+                      sortOrder={profilesSort.order}
+                      sourceFilter={profilesSourceFilter}
+                      onSearchChange={setProfilesSearch}
+                      onSortChange={(k, o) =>
+                        setProfilesSort({
+                          key: k,
+                          order:
+                            o ||
+                            (profilesSort.key === k && profilesSort.order === 'desc'
+                              ? 'asc'
+                              : 'desc'),
+                        })
+                      }
+                      onSourceFilterChange={setProfilesSourceFilter}
+                      onLoad={item => {
+                        onProfileLoad(item.data || item, item.label || item.name, item.source);
+                        setCollapsed(true);
+                      }}
+                      onExport={item => handleExport(item, false)} // Pass false for profiles
+                      onDelete={handleDelete}
+                      isLoading={loading} // Pass loading state to show spinner in list
+                      onExportAll={() => {
+                        if (profiles.length === 0) return;
+                        if (
+                          confirm(
+                            `Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
+                          )
+                        ) {
+                          for (let i = 0; i < profiles.length; i++)
+                            setTimeout(() => handleExport(profiles[i], false), i * 300);
+                        }
+                      }}
+                      onDeleteAll={async () => {
+                        if (
+                          confirm(
+                            `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
+                          )
+                        ) {
+                          for (const p of profiles) {
+                            const deleteKey =
+                              p.source === 'gaggimate' ? p.profileId || p.id : p.name || p.label;
+                            await libraryService.deleteProfile(deleteKey, p.source);
+                          }
+                          refreshLibraries();
+                        }
+                      }}
+                      getMatchStatus={item =>
+                        currentShot &&
+                        cleanName(item.name || item.label || '').toLowerCase() ===
+                          cleanName(currentShot.profile || '').toLowerCase()
+                      }
+                      getActiveStatus={item =>
+                        currentProfile &&
+                        cleanName(item.name || item.label || '').toLowerCase() ===
+                          cleanName(currentProfileName).toLowerCase()
+                      }
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

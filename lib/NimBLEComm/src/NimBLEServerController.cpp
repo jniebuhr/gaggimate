@@ -9,11 +9,11 @@ void NimBLEServerController::initServer(const String infoString) {
     NimBLEDevice::setMTU(128);
 
     // Create BLE Server
-    NimBLEServer *pServer = NimBLEDevice::createServer();
-    pServer->setCallbacks(this); // Use this class as the callback handler
+    server = NimBLEDevice::createServer();
+    server->setCallbacks(this); // Use this class as the callback handler
 
     // Create BLE Service
-    NimBLEService *pService = pServer->createService(SERVICE_UUID);
+    NimBLEService *pService = server->createService(SERVICE_UUID);
 
     // Output Control Characteristic (Client writes setpoints)
     outputControlChar = pService->createCharacteristic(OUTPUT_CONTROL_UUID, NIMBLE_PROPERTY::WRITE);
@@ -69,14 +69,22 @@ void NimBLEServerController::initServer(const String infoString) {
 
     pService->start();
 
-    ota_dfu_ble.configure_OTA(pServer);
+    ota_dfu_ble.configure_OTA(server);
     ota_dfu_ble.start_OTA();
 
-    NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(SERVICE_UUID);
-    pAdvertising->setScanResponse(true);
-    NimBLEDevice::startAdvertising();
+    advertising = NimBLEDevice::getAdvertising();
+    advertising->addServiceUUID(SERVICE_UUID);
+    advertising->setScanResponse(true);
+    advertising->start();
     ESP_LOGI(LOG_TAG, "BLE Server started, advertising...\n");
+    xTaskCreate(loopTask, "NimBLEServerController::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
+}
+
+void NimBLEServerController::loop() {
+    if (server->getConnectedCount() == 0 && !advertising->isAdvertising()) {
+        advertising->stop();
+        advertising->start();
+    }
 }
 
 void NimBLEServerController::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow,
@@ -271,5 +279,14 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
             ledControlCallback(channel, brightness);
             ESP_LOGV(LOG_TAG, "Received led control, %d: %d", channel, brightness);
         }
+    }
+}
+
+void NimBLEServerController::loopTask(void *arg) {
+    TickType_t lastWake = xTaskGetTickCount();
+    auto *controller = static_cast<NimBLEServerController *>(arg);
+    while (true) {
+        controller->loop();
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(5000));
     }
 }
