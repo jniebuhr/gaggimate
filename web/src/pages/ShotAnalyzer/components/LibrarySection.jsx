@@ -4,13 +4,17 @@
 
 import { LibraryRow } from './LibraryRow';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { getShotIdentityKey } from '../utils/analyzerUtils';
 import {
   getAnalyzerIconButtonClasses,
   getAnalyzerSurfaceTriggerClasses,
 } from './analyzerControlStyles';
+import { SourceMarker } from './SourceMarker';
 
 function getLibraryItemKey(item, isShot) {
   if (!item) return 'unknown-item';
@@ -25,6 +29,39 @@ function getLibraryItemKey(item, isShot) {
   }
 
   return `browser-profile:${String(item.name || item.label || item.id || '')}`;
+}
+
+const SOURCE_FILTER_OPTIONS = [
+  { value: 'all', label: 'ALL' },
+  { value: 'gaggimate', label: 'GM' },
+  { value: 'browser', label: 'WEB' },
+];
+
+function closeParentDetails(target) {
+  const details = target.closest('details');
+  if (details) details.open = false;
+}
+
+function renderLibrarySourceOptionContent(value) {
+  if (value === 'gaggimate') {
+    return (
+      <span className='inline-flex items-center gap-1.5'>
+        <SourceMarker source='gaggimate' variant='compact' />
+        <span>GM</span>
+      </span>
+    );
+  }
+
+  if (value === 'browser') {
+    return (
+      <span className='inline-flex items-center gap-1.5'>
+        <SourceMarker source='browser' variant='compact' />
+        <span>WEB</span>
+      </span>
+    );
+  }
+
+  return <span>ALL</span>;
 }
 
 export function LibrarySection({
@@ -44,8 +81,21 @@ export function LibrarySection({
   onDelete,
   onExportAll,
   onDeleteAll,
+  compareSelectionKeys = new Set(),
+  comparePendingKeys = [],
+  compareReferenceKey = '',
+  compareMode = false,
+  onCompareToggle,
+  onShowStats,
   getMatchStatus,
+  getCompareStatus,
+  getCompareBadgeNumber,
   getActiveStatus,
+  getPinStatus,
+  getPinDisabledReason,
+  onPinToggle,
+  pinnedFirstEnabled = false,
+  onPinnedFirstToggle,
   isLoading,
 }) {
   const getSortIcon = k => {
@@ -60,12 +110,18 @@ export function LibrarySection({
     );
   };
 
-  // Widths adjusted for better naming room and alignment
-  const widthName = isShot ? '30%' : '55%';
+  // Keep the name column flexible because pinning and compare badges both live
+  // inside that cell instead of adding separate narrow columns.
+  const showCompareSelection = false;
+  const widthCompare = showCompareSelection ? '6%' : '0%';
+  const widthName = isShot ? (showCompareSelection ? '24%' : '30%') : '55%';
   const widthSource = '10%';
   const widthDate = isShot ? '25%' : '0%';
   const widthProfile = isShot ? '25%' : '0%';
   const widthAction = '10%';
+  const columnCount = (showCompareSelection ? 1 : 0) + 1 + 1 + (isShot ? 2 : 0) + 1;
+  const hasCompareBadges = items.some(item => Boolean(getCompareBadgeNumber?.(item)));
+  const stickyHeaderCellClass = 'relative z-20 bg-base-200';
 
   return (
     <div
@@ -132,12 +188,10 @@ export function LibrarySection({
         </div>
       </div>
 
-      {/* Scrollable Container with Gutter Stability */}
       <div
-        className='scrollbar-thin relative h-96 overflow-y-auto lg:h-auto lg:min-h-0 lg:flex-1'
+        className='scrollbar-thin relative h-96 overflow-y-auto px-2 lg:h-auto lg:min-h-0 lg:flex-1'
         style={{ scrollbarGutter: 'stable' }}
       >
-        {/* LOADING OVERLAY for Sort/Search */}
         {isLoading && (
           <div className='bg-base-100/50 absolute inset-0 z-20 flex items-center justify-center backdrop-blur-[1px]'>
             <FontAwesomeIcon icon={faCircleNotch} spin className='text-primary text-3xl' />
@@ -145,35 +199,95 @@ export function LibrarySection({
         )}
 
         <table className='relative w-full border-separate border-spacing-0'>
-          <thead className='bg-base-200 sticky top-0 z-10 text-[10px] font-bold tracking-wider uppercase'>
+          <thead className='sticky top-0 z-20 text-[10px] font-bold tracking-wider uppercase'>
             <tr>
+              {showCompareSelection && (
+                <th className={`${stickyHeaderCellClass} px-2 py-3 text-center`} style={{ width: widthCompare }}>
+                  Cmp
+                </th>
+              )}
               <th
-                className={getAnalyzerSurfaceTriggerClasses({
-                  className: 'cursor-pointer px-3 py-3 text-left',
-                })}
+                className={`${stickyHeaderCellClass} px-3 py-3 text-left`}
                 style={{ width: widthName }}
-                onClick={() => onSortChange('name')}
               >
-                Name {getSortIcon('name')}
+                <div className='flex items-center justify-between gap-2'>
+                  <button
+                    type='button'
+                    className={getAnalyzerSurfaceTriggerClasses({
+                      className:
+                        'flex min-w-0 flex-1 cursor-pointer items-center gap-1 text-left text-[10px] font-bold tracking-wider uppercase',
+                    })}
+                    onClick={() => onSortChange('name')}
+                  >
+                    <span className='truncate'>Name</span>
+                    {getSortIcon('name')}
+                  </button>
+                  {onPinnedFirstToggle ? (
+                    <button
+                      type='button'
+                      className={getAnalyzerIconButtonClasses({
+                        tone: pinnedFirstEnabled ? 'primary' : 'subtle',
+                        className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
+                          pinnedFirstEnabled ? 'text-primary hover:text-primary' : ''
+                        }`,
+                      })}
+                      onClick={event => {
+                        event.stopPropagation();
+                        // Header pinning is a view-level promotion toggle; it
+                        // does not mutate the pinned items themselves.
+                        onPinnedFirstToggle();
+                      }}
+                      aria-label={`Toggle pinned ${isShot ? 'shots' : 'profiles'} first`}
+                      title={`Toggle pinned ${isShot ? 'shots' : 'profiles'} first`}
+                    >
+                      <FontAwesomeIcon icon={faThumbtack} />
+                    </button>
+                  ) : null}
+                </div>
               </th>
-              <th className='px-1 py-3 text-center' style={{ width: widthSource }}>
-                <select
-                  value={sourceFilter}
-                  onChange={e => onSourceFilterChange(e.target.value)}
-                  className={getAnalyzerSurfaceTriggerClasses({
-                    className:
-                      'cursor-pointer border-none bg-transparent px-1.5 py-1 text-[10px] font-bold outline-none',
-                  })}
-                >
-                  <option value='all'>SRC</option>
-                  <option value='gaggimate'>GM</option>
-                  <option value='browser'>WEB</option>
-                </select>
+              <th className={`${stickyHeaderCellClass} px-1 py-3 text-center`} style={{ width: widthSource }}>
+                <details className='dropdown'>
+                  <summary
+                    className={getAnalyzerSurfaceTriggerClasses({
+                      className:
+                        'inline-flex list-none cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-bold outline-none [&::-webkit-details-marker]:hidden',
+                    })}
+                    aria-label='Filter library source'
+                    title='Filter library source'
+                  >
+                    {renderLibrarySourceOptionContent(sourceFilter)}
+                    <FontAwesomeIcon icon={faChevronDown} className='text-[9px] opacity-60' />
+                  </summary>
+
+                  <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-28 rounded-xl border p-1.5 shadow-xl backdrop-blur-md'>
+                    <div className='grid gap-1'>
+                      {SOURCE_FILTER_OPTIONS.map(option => (
+                        <button
+                          key={option.value}
+                          type='button'
+                          className={getAnalyzerSurfaceTriggerClasses({
+                            className: `flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-bold ${
+                              sourceFilter === option.value
+                                ? 'bg-base-content/6 text-base-content'
+                                : 'text-base-content/70'
+                            }`,
+                          })}
+                          onClick={event => {
+                            onSourceFilterChange(option.value);
+                            closeParentDetails(event.currentTarget);
+                          }}
+                        >
+                          {renderLibrarySourceOptionContent(option.value)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </details>
               </th>
               {isShot && (
                 <th
                   className={getAnalyzerSurfaceTriggerClasses({
-                    className: 'cursor-pointer px-3 py-3 text-left',
+                    className: `${stickyHeaderCellClass} cursor-pointer px-3 py-3 text-left`,
                   })}
                   style={{ width: widthDate }}
                   onClick={() => onSortChange('shotDate')}
@@ -182,26 +296,54 @@ export function LibrarySection({
                 </th>
               )}
               {isShot && (
-                <th className='px-3 py-3 text-left' style={{ width: widthProfile }}>
+                <th className={`${stickyHeaderCellClass} px-3 py-3 text-left`} style={{ width: widthProfile }}>
                   Profile
                 </th>
               )}
-              <th className='px-2 py-3 text-right' style={{ width: widthAction }} />
+              <th className={`${stickyHeaderCellClass} px-2 py-3 text-right`} style={{ width: widthAction }} />
             </tr>
           </thead>
           <tbody className='text-sm'>
-            {items.map(item => (
-              <LibraryRow
-                key={getLibraryItemKey(item, isShot)}
-                item={item}
-                isShot={isShot}
-                isMatch={getMatchStatus(item)}
-                isActive={getActiveStatus ? getActiveStatus(item) : false}
-                onLoad={onLoad}
-                onExport={onExport}
-                onDelete={onDelete}
-              />
-            ))}
+            {hasCompareBadges ? (
+              <tr aria-hidden='true'>
+                <td colSpan={columnCount} className='h-1.5 p-0' />
+              </tr>
+            ) : null}
+            {items.map(item => {
+              const compareKey = isShot ? getShotIdentityKey(item) : '';
+              const isCompareSelected = isShot && compareSelectionKeys.has(compareKey);
+              const isComparePending = isShot && comparePendingKeys.includes(compareKey);
+              const isCompareReference = isShot && compareKey === compareReferenceKey;
+              const isCompareSelectionDisabled = isComparePending || isCompareReference;
+              const isCompareRelated = Boolean(getCompareStatus?.(item));
+              const compareBadgeNumber = getCompareBadgeNumber?.(item) || null;
+
+              return (
+                <LibraryRow
+                  key={getLibraryItemKey(item, isShot)}
+                  item={item}
+                  isShot={isShot}
+                  compareBadgeNumber={compareBadgeNumber}
+                  isMatch={getMatchStatus(item)}
+                  isCompareRelated={isCompareRelated}
+                  isActive={getActiveStatus ? getActiveStatus(item) : false}
+                  showCompareSelection={showCompareSelection}
+                  isCompareSelected={isCompareSelected}
+                  isComparePending={isComparePending}
+                  isCompareReference={isCompareReference}
+                  isCompareSelectionDisabled={isCompareSelectionDisabled}
+                  compareMode={compareMode}
+                  onCompareToggle={checked => onCompareToggle?.(item, checked)}
+                  onShowStats={onShowStats}
+                  onLoad={() => onLoad(item)}
+                  onExport={onExport}
+                  onDelete={onDelete}
+                  isPinned={Boolean(getPinStatus?.(item))}
+                  pinDisabledReason={getPinDisabledReason?.(item) || ''}
+                  onPinToggle={onPinToggle}
+                />
+              );
+            })}
           </tbody>
         </table>
       </div>

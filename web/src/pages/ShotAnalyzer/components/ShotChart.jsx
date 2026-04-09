@@ -42,11 +42,12 @@ import { useShotChartReplayExport } from './shotChart/useShotChartReplayExport';
 import { buildShotChartModel } from './shotChart/buildShotChartModel';
 import { createShotChartConfigs } from './shotChart/createShotChartConfigs';
 import { attachShotChartHoverSync, attachTempChartLayoutSync } from './shotChart/hoverSync';
+import { CompareShotCharts } from './shotChart/CompareShotCharts';
 import './ShotChart.css';
 
 Chart.register(annotationPlugin);
 
-export function ShotChart({ shotData, results }) {
+function SingleShotChart({ shotData, results }) {
   // These refs point to the mounted DOM and Chart.js instances. They stay local
   // to the component because only the top-level orchestrator owns mounting and teardown.
   const hoverAreaRef = useRef(null);
@@ -472,4 +473,27 @@ export function ShotChart({ shotData, results }) {
       {charts}
     </div>
   );
+}
+
+export function ShotChart({
+  shotData,
+  results,
+  compareEntries = [],
+  isCompareActive = false,
+  compareTargetDisplayMode,
+  onCompareTargetDisplayModeChange,
+}) {
+  if (isCompareActive && Array.isArray(compareEntries) && compareEntries.length > 1) {
+    return (
+      <CompareShotCharts
+        compareEntries={compareEntries}
+        compareTargetDisplayMode={compareTargetDisplayMode}
+        onCompareTargetDisplayModeChange={onCompareTargetDisplayModeChange}
+        showMainChartTitle={false}
+        detailChartTitleVariant='legend'
+      />
+    );
+  }
+
+  return <SingleShotChart shotData={shotData} results={results} />;
 }

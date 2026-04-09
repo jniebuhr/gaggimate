@@ -8,6 +8,7 @@
 import { TARGET_FLOW_MAX, TARGET_PRESSURE_MAX } from './constants';
 import {
   findLastSampleIndexAtOrBeforeX,
+  getSpikeResistantSeriesMax,
   getPhaseName,
   safeMax,
   safeMin,
@@ -141,24 +142,26 @@ function buildAxisRanges(series) {
 
   // The left axis should represent pressure/flow-family values only. Weight has its
   // own axis and should not inflate the shared scale used by the other series.
-  const mainAxisSamples = [
-    ...series.pressure,
-    ...series.targetPressure,
-    ...series.flow,
-    ...series.puckFlow,
-    ...series.targetFlow,
-    ...series.weightFlow,
-  ];
   const mainAxisMaxRaw = safeMax(
-    mainAxisSamples.map(point => point.y),
+    [
+      ...series.pressure.map(point => point.y),
+      ...series.targetPressure.map(point => point.y),
+      ...series.flow.map(point => point.y),
+      ...series.puckFlow.map(point => point.y),
+      ...series.targetFlow.map(point => point.y),
+      getSpikeResistantSeriesMax(series.weightFlow, {
+        fallback: 0,
+        seriesKind: 'weightFlow',
+      }),
+    ],
     1,
   );
   const mainAxisMax = Math.max(1, mainAxisMaxRaw * 1.02);
 
-  const weightAxisMaxRaw = safeMax(
-    series.weight.map(point => point.y),
-    1,
-  );
+  const weightAxisMaxRaw = getSpikeResistantSeriesMax(series.weight, {
+    fallback: 1,
+    seriesKind: 'weight',
+  });
   const weightAxisMax = Math.max(1, weightAxisMaxRaw * 1.02);
 
   const tempAxisSamples = [...series.temp, ...series.targetTemp];
@@ -333,7 +336,7 @@ function buildPhaseAnnotations({
       borderColor: 'transparent',
       borderWidth: 0,
       label: {
-        display: true,
+        display: visibility.brewModeLabel !== false,
         content: brewModeMeta.label,
         rotation: -90,
         position: 'start',

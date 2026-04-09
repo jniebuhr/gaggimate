@@ -3,8 +3,9 @@ import { useRoute } from 'preact-iso';
 import { StatisticsView } from './components/StatisticsView';
 import { parseStatisticsProfileRouteParams } from './utils/statisticsRoute';
 
-// Statistics entry page: resolves prefill context from route deep links first,
-// then falls back to sessionStorage compatibility, then a plain GM default.
+// Statistics entry page: merges deep-link context with transient session hints.
+// Route params stay canonical for source/profile selection, while session state
+// can still contribute one-off UI preferences like the initial detail tab.
 export function StatisticsPage() {
   const { params } = useRoute();
   const [sessionInitialContext] = useState(() => {
@@ -20,8 +21,14 @@ export function StatisticsPage() {
     return null;
   });
   const routeInitialContext = useMemo(() => parseStatisticsProfileRouteParams(params), [params]);
-  // Route-based deep links are canonical and should win over transient session state.
-  const initialContext = routeInitialContext || sessionInitialContext || { source: 'gaggimate' };
+  const initialContext = useMemo(
+    () => ({
+      source: 'gaggimate',
+      ...(sessionInitialContext || {}),
+      ...(routeInitialContext || {}),
+    }),
+    [routeInitialContext, sessionInitialContext],
+  );
 
   return (
     <div className='pb-20'>

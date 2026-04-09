@@ -6,12 +6,16 @@
 import { useRef, useState } from 'preact/hooks';
 import { cleanName, analyzerUiColors } from '../utils/analyzerUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChartArea } from '@fortawesome/free-solid-svg-icons/faChartArea';
+import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faRotateRight } from '@fortawesome/free-solid-svg-icons/faRotateRight';
 import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
+import compareIconUrl from '../assets/compare.svg';
 
 function hasFileDrag(event) {
   const types = event?.dataTransfer?.types;
@@ -21,10 +25,21 @@ function hasFileDrag(event) {
   return false;
 }
 
-function getProfileBadgeClasses({ isMismatch, currentProfile, badgeBaseClass }) {
-  if (isMismatch) return `${badgeBaseClass} text-white`;
-  if (currentProfile) return `${badgeBaseClass} bg-primary border-primary text-primary-content`;
+function getProfileBadgeClasses({ isMismatch, currentProfile, badgeBaseClass, loadedShadowClass }) {
+  if (isMismatch) return `${badgeBaseClass} ${loadedShadowClass} text-white`;
+  if (currentProfile) {
+    return `${badgeBaseClass} ${loadedShadowClass} bg-primary border-primary text-primary-content`;
+  }
   return `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
+}
+
+function getGhostedBadgeClasses(baseClasses, isActive) {
+  if (isActive) {
+    // Secondary compare slots stay visually tied to the active theme while
+    // remaining lighter than the primary bar.
+    return `${baseClasses} bg-primary/24 border-transparent text-primary hover:bg-primary/30 shadow-none`;
+  }
+  return `${baseClasses} bg-base-200/60 border-transparent text-base-content/90 hover:bg-base-200/72 shadow-none`;
 }
 
 function getProfileBadgeTitle(isMismatch) {
@@ -34,6 +49,26 @@ function getProfileBadgeTitle(isMismatch) {
   return 'Click to open the library. Use the import icon or drop files here to import.';
 }
 
+function CompareIcon({ className = 'inline-block h-4.5 w-4.5' }) {
+  return (
+    <span
+      aria-hidden='true'
+      className={className}
+      style={{
+        backgroundColor: 'currentColor',
+        maskImage: `url(${compareIconUrl})`,
+        WebkitMaskImage: `url(${compareIconUrl})`,
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center',
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+      }}
+    />
+  );
+}
+
 export function StatusBar({
   currentShot,
   currentProfile,
@@ -41,14 +76,29 @@ export function StatusBar({
   currentProfileName,
   onUnloadShot,
   onUnloadProfile,
+  onShowStats,
+  onCompareModeToggle,
+  onRetryProfileSearch,
   onTogglePanel,
+  onShotPanelToggle,
+  onProfilePanelToggle,
+  onImportShot,
+  onImportProfile,
   onImport,
   isMismatch,
+  statsHref = '/statistics',
+  compareAvailable = false,
+  compareMode = false,
   isImporting = false, // Show spinner on import button
   isSearchingProfile = false, // Show spinner on profile badge
+  compact = false,
+  showCompareButton = true,
+  compareBadgeNumber = null,
+  ghosted = false,
 }) {
   const fileInputRef = useRef(null);
   const dragDepthRef = useRef(0);
+  const importTargetRef = useRef('shot');
   const [isDragActive, setIsDragActive] = useState(false);
 
   const clearDragState = () => {
@@ -56,10 +106,22 @@ export function StatusBar({
     setIsDragActive(false);
   };
 
-  const openFilePicker = event => {
+  const resolveImportHandler = target =>
+    (target === 'profile' ? onImportProfile : onImportShot) || onImport;
+
+  const getImportTargetFromEvent = event => {
+    const targetElement = event?.target;
+    if (!targetElement || typeof targetElement.closest !== 'function') return 'shot';
+    // Compare mode reuses the same drop zone for shots and profiles, so the
+    // nearest target marker decides which import handler receives the files.
+    return targetElement.closest('[data-import-target="profile"]') ? 'profile' : 'shot';
+  };
+
+  const openFilePicker = (event, target = 'shot') => {
     event?.preventDefault?.();
     event?.stopPropagation?.();
     if (isImporting) return;
+    importTargetRef.current = target;
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
       fileInputRef.current.click();
@@ -68,9 +130,10 @@ export function StatusBar({
 
   const handleFileSelect = e => {
     const files = e.target.files;
-    if (files && files.length > 0) {
+    const importHandler = resolveImportHandler(importTargetRef.current);
+    if (files && files.length > 0 && importHandler) {
       clearDragState();
-      onImport(files);
+      importHandler(files);
       e.target.value = '';
     }
   };
@@ -105,46 +168,81 @@ export function StatusBar({
     e.stopPropagation();
     clearDragState();
     const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      onImport(files);
+    const importTarget = getImportTargetFromEvent(e);
+    const importHandler = resolveImportHandler(importTarget);
+    if (files && files.length > 0 && importHandler) {
+      importHandler(files);
     }
   };
 
-  // Shared styling for badges
-  const badgeBaseClass =
-    'flex items-center justify-between flex-1 px-2 sm:px-3 h-full rounded-lg border-2 cursor-pointer transition-all min-w-0 shadow-sm';
+  const handleShotPanelToggle = onShotPanelToggle || onTogglePanel;
+  const handleProfilePanelToggle = onProfilePanelToggle || onTogglePanel;
 
-  const shotBadgeClasses = currentShot
-    ? `${badgeBaseClass} bg-primary border-primary text-primary-content`
-    : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
+  const badgeBaseClass = compact
+    ? 'flex items-center justify-between flex-1 px-2 h-full rounded-md border cursor-pointer transition-all min-w-0'
+    : 'flex items-center justify-between flex-1 px-2 sm:px-3 h-full rounded-lg border-2 cursor-pointer transition-all min-w-0';
+  const shotBadgeClasses = ghosted
+    ? getGhostedBadgeClasses(badgeBaseClass, Boolean(currentShot))
+    : currentShot
+      ? `${badgeBaseClass} bg-primary border-primary text-primary-content`
+      : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
 
   const mismatchProfileBadgeStyle = isMismatch
     ? {
-        backgroundColor: analyzerUiColors.warningOrange,
-        borderColor: analyzerUiColors.warningOrangeStrong,
+        backgroundColor: ghosted
+          ? `color-mix(in srgb, ${analyzerUiColors.warningOrange} 34%, transparent)`
+          : analyzerUiColors.warningOrange,
+        borderColor: ghosted
+          ? `color-mix(in srgb, ${analyzerUiColors.warningOrangeStrong} 46%, transparent)`
+          : analyzerUiColors.warningOrangeStrong,
         boxShadow: `0 1px 2px 0 ${analyzerUiColors.warningOrangeShadow}`,
       }
     : undefined;
 
-  const profileBadgeClasses = getProfileBadgeClasses({
-    isMismatch,
-    currentProfile,
-    badgeBaseClass,
-  });
+  const profileBadgeClasses =
+    ghosted && !isMismatch
+      ? getGhostedBadgeClasses(badgeBaseClass, Boolean(currentProfile))
+      : getProfileBadgeClasses({
+          isMismatch,
+          currentProfile,
+          badgeBaseClass,
+          loadedShadowClass: '',
+        });
 
   const neutralImportButtonClasses = getAnalyzerIconButtonClasses({
-    className: 'h-6 w-6 flex-shrink-0 rounded-full opacity-75 hover:opacity-100',
+    className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full ${
+      ghosted ? 'opacity-85 hover:opacity-100' : 'opacity-75 hover:opacity-100'
+    }`,
   });
 
   const activeBadgeIconButtonClasses = getAnalyzerIconButtonClasses({
     className:
-      'h-6 w-6 flex-shrink-0 rounded-full text-current opacity-75 hover:bg-black/10 hover:text-current hover:opacity-100',
+      `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full text-current ${
+        ghosted
+          ? 'opacity-90 hover:bg-primary/12 hover:text-current hover:opacity-100'
+          : 'opacity-75 hover:bg-black/10 hover:text-current hover:opacity-100'
+      }`,
   });
+  const compareBadgeIconButtonClasses = compareMode
+    ? `${activeBadgeIconButtonClasses} bg-black/10 opacity-100 ring-1 ring-current/15`
+    : currentShot
+      ? activeBadgeIconButtonClasses
+      : neutralImportButtonClasses;
+  const profileStatsButtonClasses =
+    currentProfile || isMismatch ? activeBadgeIconButtonClasses : neutralImportButtonClasses;
+  const statisticsIcon = compareMode ? faChartArea : faChartSimple;
+  // Empty compare slots keep a neutral badge so slot numbers communicate state
+  // without suggesting that a shot is already loaded.
+  const compareBadgeClasses = currentShot
+    ? ghosted
+      ? 'bg-primary/70 text-primary-content ring-base-100'
+      : 'bg-primary text-primary-content ring-base-100'
+    : 'bg-base-100 text-base-content/55 ring-base-200';
 
-  const renderImportButton = (label, useCurrentTone = false) => (
+  const renderImportButton = (label, useCurrentTone = false, target = 'shot') => (
     <button
       type='button'
-      onClick={openFilePicker}
+      onClick={event => openFilePicker(event, target)}
       className={useCurrentTone ? activeBadgeIconButtonClasses : neutralImportButtonClasses}
       title={`Import ${label}`}
       aria-label={`Import ${label}`}
@@ -153,49 +251,145 @@ export function StatusBar({
       <FontAwesomeIcon
         icon={isImporting ? faCircleNotch : faFileImport}
         spin={isImporting}
-        className='text-sm'
+        className={compact ? 'text-xs' : 'text-sm'}
       />
     </button>
   );
 
   const renderProfileTrailingControl = () => {
-    if (currentProfile) {
-      if (isSearchingProfile) {
-        return <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />;
-      }
+    const statsTitle = currentProfile
+      ? 'Open profile statistics'
+      : 'Load a profile to open statistics';
+    const retryTitle = 'Retry automatic profile search';
 
+    if (currentProfile) {
       return (
-        <button
-          type='button'
-          onClick={e => {
-            e.stopPropagation();
-            onUnloadProfile();
-          }}
-          className={activeBadgeIconButtonClasses}
-        >
-          <FontAwesomeIcon icon={faTimes} />
-        </button>
+        <div className='flex items-center gap-1'>
+          <a
+            href={statsHref || '/statistics'}
+            onClick={event => {
+              event.stopPropagation();
+              onShowStats?.();
+            }}
+            className={profileStatsButtonClasses}
+            title={statsTitle}
+            aria-label={statsTitle}
+          >
+            <FontAwesomeIcon icon={statisticsIcon} className='text-xs' />
+          </a>
+
+          {isMismatch && onRetryProfileSearch ? (
+            <button
+              type='button'
+              onClick={event => {
+                event.stopPropagation();
+                onRetryProfileSearch();
+              }}
+              className={activeBadgeIconButtonClasses}
+              title={retryTitle}
+              aria-label={retryTitle}
+              disabled={isSearchingProfile}
+            >
+              <FontAwesomeIcon
+                icon={isSearchingProfile ? faCircleNotch : faRotateRight}
+                spin={isSearchingProfile}
+                className='text-xs'
+              />
+            </button>
+          ) : null}
+
+          {isSearchingProfile && !isMismatch ? (
+            <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
+          ) : (
+            <button
+              type='button'
+              onClick={e => {
+                e.stopPropagation();
+                onUnloadProfile();
+              }}
+              className={activeBadgeIconButtonClasses}
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          )}
+        </div>
       );
     }
 
-    if (isSearchingProfile) {
-      return <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />;
-    }
+    return (
+      <div className='flex items-center gap-1'>
+        <button
+          type='button'
+          disabled={true}
+          className={profileStatsButtonClasses}
+          title={statsTitle}
+          aria-label={statsTitle}
+        >
+          <FontAwesomeIcon icon={statisticsIcon} className='text-xs' />
+        </button>
 
-    return <FontAwesomeIcon icon={faChevronDown} className='text-xs opacity-40' />;
+        {isSearchingProfile ? (
+          <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
+        ) : null}
+      </div>
+    );
+  };
+
+  const renderShotTrailingControl = () => {
+    const compareTitle = compareMode ? 'Disable compare mode' : 'Enable compare mode';
+
+    return (
+      <div className='flex items-center gap-1'>
+        {showCompareButton ? (
+          <button
+            type='button'
+            onClick={event => {
+              event.stopPropagation();
+              onCompareModeToggle?.();
+            }}
+            disabled={!compareAvailable}
+            className={compareBadgeIconButtonClasses}
+            title={compareAvailable ? compareTitle : 'No shots available to compare'}
+            aria-label={compareAvailable ? compareTitle : 'No shots available to compare'}
+          >
+            <CompareIcon className={compact ? 'inline-block h-4 w-4' : 'inline-block h-4.5 w-4.5'} />
+          </button>
+        ) : null}
+
+        {currentShot ? (
+          <button
+            type='button'
+            onClick={e => {
+              e.stopPropagation();
+              onUnloadShot();
+            }}
+            className={activeBadgeIconButtonClasses}
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        ) : null}
+      </div>
+    );
   };
 
   return (
     <div
-      className='w-full'
+      className='relative w-full overflow-visible'
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className='relative px-1.5 py-1.5 sm:px-2'>
+      {compareBadgeNumber ? (
+        <span
+          className={`pointer-events-none absolute top-0 left-1 z-10 inline-flex h-4 min-w-4 -translate-x-1/3 -translate-y-1/4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold shadow-md ring-2 ${compareBadgeClasses}`}
+        >
+          {compareBadgeNumber}
+        </span>
+      ) : null}
+      <div className={`relative ${compact ? 'px-1.5 py-0.5 sm:px-2' : 'px-1.5 py-1.5 sm:px-2'}`}>
         <div
-          className={`grid h-11 w-full items-center gap-1 rounded-xl transition-all sm:gap-1.5 ${
+          className={`grid ${compact ? 'h-8 rounded-lg' : 'h-10 min-h-10 rounded-xl'} w-full items-center gap-1 transition-all sm:gap-1.5 ${
             isDragActive ? 'bg-primary/8 ring-primary/30 shadow-lg ring-2' : ''
           }`}
           style={{
@@ -204,40 +398,36 @@ export function StatusBar({
         >
           {/* --- CENTER: SHOT BADGE --- */}
           <div
+            data-import-target='shot'
             className={shotBadgeClasses}
             title='Click to open the library. Use the import icon or drop files here to import.'
           >
             <div className='flex flex-shrink-0 items-center gap-2'>
-              {renderImportButton('files into the Shot Analyzer', Boolean(currentShot))}
+              {renderImportButton('files into the Shot Analyzer', Boolean(currentShot), 'shot')}
             </div>
             <button
               type='button'
-              onClick={onTogglePanel}
-              className='mx-1.5 flex-1 truncate text-center text-sm font-bold'
+              onClick={handleShotPanelToggle}
+              className={`mx-1.5 flex min-w-0 flex-1 self-stretch items-center justify-center overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
               title='Open library'
             >
-              {currentShot?.source === 'gaggimate'
-                ? `#${currentShot.id}`
-                : cleanName(currentShotName)}
+              <span className='inline-flex max-w-full items-center justify-center gap-1'>
+                <span className='truncate'>
+                  {currentShot?.source === 'gaggimate'
+                    ? `#${currentShot.id}`
+                    : cleanName(currentShotName)}
+                </span>
+                {!currentShot ? (
+                  <FontAwesomeIcon icon={faChevronDown} className='shrink-0 text-[11px] opacity-40' />
+                ) : null}
+              </span>
             </button>
-            {currentShot ? (
-              <button
-                type='button'
-                onClick={e => {
-                  e.stopPropagation();
-                  onUnloadShot();
-                }}
-                className={activeBadgeIconButtonClasses}
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            ) : (
-              <FontAwesomeIcon icon={faChevronDown} className='text-xs opacity-40' />
-            )}
+            {renderShotTrailingControl()}
           </div>
 
           {/* --- CENTER: PROFILE BADGE --- */}
           <div
+            data-import-target='profile'
             className={profileBadgeClasses}
             style={mismatchProfileBadgeStyle}
             title={getProfileBadgeTitle(isMismatch)}
@@ -246,23 +436,31 @@ export function StatusBar({
               {renderImportButton(
                 'files into the Shot Analyzer',
                 Boolean(currentProfile) || isMismatch,
+                'profile',
               )}
             </div>
 
             <button
               type='button'
-              onClick={onTogglePanel}
-              className='mx-1.5 flex-1 truncate text-center text-sm font-bold'
+              onClick={handleProfilePanelToggle}
+              className={`mx-1.5 flex min-w-0 flex-1 self-stretch items-center justify-center overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
               title={getProfileBadgeTitle(isMismatch)}
             >
-              {isSearchingProfile && !currentProfile ? (
-                <span className='italic opacity-50'>Searching Profile...</span>
-              ) : (
-                <>
-                  {isMismatch && <FontAwesomeIcon icon={faTriangleExclamation} className='mr-2' />}
-                  {cleanName(currentProfileName)}
-                </>
-              )}
+              <span className='inline-flex max-w-full items-center justify-center gap-1'>
+                {isSearchingProfile && !currentProfile ? (
+                  <span className='truncate italic opacity-50'>Searching Profile...</span>
+                ) : (
+                  <>
+                    {isMismatch ? (
+                      <FontAwesomeIcon icon={faTriangleExclamation} className='mr-1 shrink-0' />
+                    ) : null}
+                    <span className='truncate'>{cleanName(currentProfileName)}</span>
+                  </>
+                )}
+                {!currentProfile && !isSearchingProfile ? (
+                  <FontAwesomeIcon icon={faChevronDown} className='shrink-0 text-[11px] opacity-40' />
+                ) : null}
+              </span>
             </button>
 
             {renderProfileTrailingControl()}

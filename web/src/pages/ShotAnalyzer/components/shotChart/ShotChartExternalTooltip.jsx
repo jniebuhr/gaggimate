@@ -6,9 +6,16 @@ import {
   TOOLTIP_WATER_LABELS,
   UNIT_BY_LABEL,
   WATER_DRAWN_PHASE_LABEL,
+  WATER_DRAWN_TOTAL_LABEL,
 } from './constants';
 import { computeExternalTooltipPosition } from './helpers';
 import { getShotChartDisplayLabel, getShotChartLabelIcon } from './labelVisuals';
+
+function getTooltipRowTextKey(row) {
+  return `${row?.shotLabel || ''}|${row?.label || ''}|${row?.displayLabel || ''}|${row?.valueText || ''}|${
+    row?.color || ''
+  }|${row?.spacerBefore ? '1' : '0'}`;
+}
 
 export function createHiddenExternalTooltipState() {
   return {
@@ -19,6 +26,10 @@ export function createHiddenExternalTooltipState() {
     anchorY: 0,
     chartWidth: 0,
     chartHeight: 0,
+    chartAreaLeft: 0,
+    chartAreaRight: 0,
+    chartAreaTop: 0,
+    chartAreaBottom: 0,
   };
 }
 
@@ -41,14 +52,7 @@ function areStringArraysEqual(a = [], b = []) {
 function areTooltipRowsEqual(a = [], b = []) {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
-    if (
-      a[i]?.label !== b[i]?.label ||
-      a[i]?.valueText !== b[i]?.valueText ||
-      a[i]?.color !== b[i]?.color ||
-      a[i]?.spacerBefore !== b[i]?.spacerBefore
-    ) {
-      return false;
-    }
+    if (getTooltipRowTextKey(a[i]) !== getTooltipRowTextKey(b[i])) return false;
   }
   return true;
 }
@@ -61,6 +65,10 @@ export function areTooltipStatesEqual(a, b) {
     a.anchorY === b.anchorY &&
     a.chartWidth === b.chartWidth &&
     a.chartHeight === b.chartHeight &&
+    a.chartAreaLeft === b.chartAreaLeft &&
+    a.chartAreaRight === b.chartAreaRight &&
+    a.chartAreaTop === b.chartAreaTop &&
+    a.chartAreaBottom === b.chartAreaBottom &&
     areStringArraysEqual(a.titleLines, b.titleLines) &&
     areTooltipRowsEqual(a.rows, b.rows)
   );
@@ -79,8 +87,70 @@ export function sortTooltipItems(a, b) {
   return (TOOLTIP_INDEX[a?.dataset?.label] ?? 999) - (TOOLTIP_INDEX[b?.dataset?.label] ?? 999);
 }
 
+function findClosestPointAtX(dataPoints, xValue) {
+  if (!Array.isArray(dataPoints) || dataPoints.length === 0 || !Number.isFinite(xValue)) {
+    return null;
+  }
+
+  let low = 0;
+  let high = dataPoints.length - 1;
+
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    const midX = Number(dataPoints[mid]?.x);
+
+    if (!Number.isFinite(midX) || midX < xValue) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+
+  const candidateIndexes = [low - 1, low, low + 1];
+  let bestPoint = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  candidateIndexes.forEach(index => {
+    if (index < 0 || index >= dataPoints.length) return;
+    const point = dataPoints[index];
+    const pointX = Number(point?.x);
+    const pointY = Number(point?.y);
+
+    if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) return;
+
+    const distance = Math.abs(pointX - xValue);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestPoint = point;
+    }
+  });
+
+  return bestPoint;
+}
+
 function getTooltipGroupKey(label) {
   return TOOLTIP_GROUP_BY_LABEL[label] || null;
+}
+
+function buildCompareDifferenceRow(rows) {
+  if (!Array.isArray(rows) || rows.length !== 2) return null;
+
+  const [firstRow, secondRow] = [...rows].sort((a, b) => a.shotOrder - b.shotOrder);
+  if (!Number.isFinite(firstRow?.numericValue) || !Number.isFinite(secondRow?.numericValue)) {
+    return null;
+  }
+
+  const delta = secondRow.numericValue - firstRow.numericValue;
+  const unit = UNIT_BY_LABEL[firstRow.label];
+  const formattedValue = `${delta > 0 ? '+' : ''}${delta.toFixed(1)}${unit ? ` ${unit}` : ''}`;
+
+  return {
+    label: firstRow.label,
+    displayLabel: 'Difference',
+    valueText: formattedValue,
+    color: firstRow.color,
+    spacerBefore: true,
+  };
 }
 
 function buildTooltipRowModel(tooltipItem, getHoverWaterValuesAtX, tooltipColorByLabel) {
@@ -134,11 +204,112 @@ export function buildExternalTooltipRows(
   }, []);
 }
 
+export function buildCompareExternalTooltipRows({ chart, xValue }) {
+  if (!chart || !Number.isFinite(xValue)) return [];
+
+  const datasets = Array.isArray(chart.data?.datasets) ? chart.data.datasets : [];
+  const waterByShotOrder = new Map();
+
+  // Compare tooltips are grouped by metric first so Shot 1 / Shot 2 values sit
+  // directly next to each other before the optional difference row.
+  const compareRows = datasets
+    .map((dataset, datasetIndex) => {
+      if (!dataset?.compareTooltipBaseLabel || !chart.isDatasetVisible(datasetIndex)) {
+        return null;
+      }
+
+      const point = findClosestPointAtX(dataset.data, xValue);
+      if (!point) return null;
+
+      const baseLabel = dataset.compareTooltipBaseLabel;
+      const value = Number(point.y);
+      if (!Number.isFinite(value)) return null;
+
+      const shotOrder = Number.isFinite(dataset.compareTooltipShotOrder)
+        ? dataset.compareTooltipShotOrder
+        : 999;
+      const shotLabel = `Shot ${shotOrder + 1}`;
+      const waterGetter = dataset.compareTooltipGetHoverWaterValuesAtX;
+      if (typeof waterGetter === 'function' && !waterByShotOrder.has(shotOrder)) {
+        const { totalWaterMl, phaseWaterMl } = waterGetter(xValue);
+        waterByShotOrder.set(shotOrder, {
+          shotLabel,
+          shotOrder,
+          phaseWaterMl,
+          totalWaterMl,
+          color: dataset.borderColor || '#94a3b8',
+        });
+      }
+
+      const unit = UNIT_BY_LABEL[baseLabel];
+      return {
+        shotLabel,
+        shotOrder,
+        label: baseLabel,
+        numericValue: value,
+        displayLabel: getShotChartDisplayLabel(baseLabel),
+        valueText: unit ? `${value.toFixed(1)} ${unit}` : `${value.toFixed(1)}`,
+        color: dataset.borderColor || '#94a3b8',
+      };
+    })
+    .filter(Boolean);
+
+  waterByShotOrder.forEach(({ shotLabel, shotOrder, phaseWaterMl, totalWaterMl, color }) => {
+    compareRows.push({
+      shotLabel,
+      shotOrder,
+      label: WATER_DRAWN_PHASE_LABEL,
+      displayLabel: getShotChartDisplayLabel(WATER_DRAWN_PHASE_LABEL),
+      valueText: Number.isFinite(phaseWaterMl) ? `${phaseWaterMl.toFixed(1)} ml` : '-',
+      color,
+    });
+    compareRows.push({
+      shotLabel,
+      shotOrder,
+      label: WATER_DRAWN_TOTAL_LABEL,
+      displayLabel: getShotChartDisplayLabel(WATER_DRAWN_TOTAL_LABEL),
+      valueText: Number.isFinite(totalWaterMl) ? `${totalWaterMl.toFixed(1)} ml` : '-',
+      color,
+    });
+  });
+
+  compareRows.sort((a, b) => {
+    const labelOrder = (TOOLTIP_INDEX[a.label] ?? 999) - (TOOLTIP_INDEX[b.label] ?? 999);
+    if (labelOrder !== 0) return labelOrder;
+    return a.shotOrder - b.shotOrder;
+  });
+
+  const groupedRows = compareRows.reduce((groups, row) => {
+    const lastGroup = groups[groups.length - 1];
+    if (!lastGroup || lastGroup[0]?.label !== row.label) {
+      groups.push([row]);
+      return groups;
+    }
+    lastGroup.push(row);
+    return groups;
+  }, []);
+
+  return groupedRows.flatMap((rows, groupIndex) => {
+    const normalizedRows = rows.map((row, rowIndex) => ({
+      ...row,
+      spacerBefore: groupIndex > 0 && rowIndex === 0,
+    }));
+
+    if (!chart.$compareTooltipShowDifference) {
+      return normalizedRows;
+    }
+
+    const differenceRow = buildCompareDifferenceRow(rows);
+    return differenceRow ? [...normalizedRows, differenceRow] : normalizedRows;
+  });
+}
+
 export function buildExternalTooltipState({
   chart,
   tooltip,
   getHoverWaterValuesAtX,
   tooltipColorByLabel,
+  tooltipMode = 'single',
 }) {
   // Chart.js still drives hit-testing, but the visible tooltip is rendered as HTML for richer layout control.
   if (!tooltip || tooltip.opacity === 0 || !chart.chartArea) {
@@ -146,10 +317,29 @@ export function buildExternalTooltipState({
   }
 
   const tooltipItems = Array.isArray(tooltip.dataPoints) ? tooltip.dataPoints : [];
-  const rows = buildExternalTooltipRows(tooltipItems, getHoverWaterValuesAtX, tooltipColorByLabel);
-  const titleLines = Array.isArray(tooltip.title)
-    ? tooltip.title.filter(title => typeof title === 'string' && title.trim().length > 0)
-    : [];
+  const isCompareTooltipMode = tooltipMode === 'compare' || tooltipMode === 'compareTitleOnly';
+  const compareXValue =
+    Number.isFinite(chart?.$fixedTooltipXValue) && isCompareTooltipMode
+      ? chart.$fixedTooltipXValue
+      : Number.isFinite(tooltipItems[0]?.parsed?.x) && isCompareTooltipMode
+        ? tooltipItems[0].parsed.x
+      : Number.isFinite(chart.scales?.x?.getValueForPixel?.(tooltip.caretX))
+        ? chart.scales.x.getValueForPixel(tooltip.caretX)
+        : null;
+  const rows =
+    tooltipMode === 'compare'
+      ? buildCompareExternalTooltipRows({ chart, xValue: compareXValue })
+      : tooltipMode === 'compareTitleOnly'
+        ? []
+      : buildExternalTooltipRows(tooltipItems, getHoverWaterValuesAtX, tooltipColorByLabel);
+  const titleLines =
+    isCompareTooltipMode
+      ? Number.isFinite(compareXValue)
+        ? [`${compareXValue.toFixed(2)} s`]
+        : []
+      : Array.isArray(tooltip.title)
+        ? tooltip.title.filter(title => typeof title === 'string' && title.trim().length > 0)
+        : [];
 
   if (rows.length === 0 && titleLines.length === 0) {
     return createHiddenExternalTooltipState();
@@ -159,9 +349,11 @@ export function buildExternalTooltipState({
     visible: true,
     titleLines,
     rows,
-    anchorX: Number.isFinite(tooltip.caretX)
-      ? tooltip.caretX
-      : chart.chartArea.left + EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X,
+    anchorX: Number.isFinite(chart.$fixedTooltipPointerX)
+      ? chart.$fixedTooltipPointerX
+      : Number.isFinite(tooltip.caretX)
+        ? tooltip.caretX
+        : chart.chartArea.left + EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X,
     anchorY: Number.isFinite(chart.$fixedTooltipPointerY)
       ? chart.$fixedTooltipPointerY
       : Number.isFinite(tooltip.caretY)
@@ -169,6 +361,10 @@ export function buildExternalTooltipState({
         : chart.chartArea.top,
     chartWidth: chart.width,
     chartHeight: chart.height,
+    chartAreaLeft: chart.chartArea.left,
+    chartAreaRight: chart.chartArea.right,
+    chartAreaTop: chart.chartArea.top,
+    chartAreaBottom: chart.chartArea.bottom,
   };
 }
 
@@ -191,16 +387,25 @@ export function getExternalTooltipLayout({
     chartHeight: tooltipState.chartHeight || fallbackHeight || 0,
     tooltipWidth,
     tooltipHeight,
+    boundsLeft: Number.isFinite(tooltipState.chartAreaLeft) ? tooltipState.chartAreaLeft : undefined,
+    boundsRight: Number.isFinite(tooltipState.chartAreaRight)
+      ? tooltipState.chartAreaRight
+      : undefined,
+    boundsTop: Number.isFinite(tooltipState.chartAreaTop) ? tooltipState.chartAreaTop : undefined,
+    boundsBottom: Number.isFinite(tooltipState.chartAreaBottom)
+      ? tooltipState.chartAreaBottom
+      : undefined,
   });
 }
 
 export function ShotChartExternalTooltip({ tooltipRef, state, layout, isFullDisplay = false }) {
   if (!state.visible) return null;
+  const isTitleOnly = state.titleLines.length > 0 && state.rows.length === 0;
 
   return (
     <div
       ref={tooltipRef}
-      className={`shot-chart-tooltip${isFullDisplay ? ' shot-chart-tooltip--fullscreen' : ''}`}
+      className={`shot-chart-tooltip${isFullDisplay ? ' shot-chart-tooltip--fullscreen' : ''}${isTitleOnly ? ' shot-chart-tooltip--title-only' : ''}`}
       style={{
         left: `${layout.x}px`,
         top: `${layout.y}px`,
@@ -216,11 +421,11 @@ export function ShotChartExternalTooltip({ tooltipRef, state, layout, isFullDisp
       ) : null}
       {state.rows.map((row, index) => {
         const rowIcon = getShotChartLabelIcon(row.label);
-        const displayLabel = getShotChartDisplayLabel(row.label);
+        const displayLabel = row.displayLabel || getShotChartDisplayLabel(row.label);
 
         return (
           <div
-            key={`${row.label}-${row.valueText}-${index}`}
+            key={`${row.shotLabel || ''}-${row.label}-${row.valueText}-${index}`}
             className={`shot-chart-tooltip__row${row.spacerBefore ? ' shot-chart-tooltip__row--spacer' : ''}`}
           >
             {rowIcon ? (
@@ -232,6 +437,9 @@ export function ShotChartExternalTooltip({ tooltipRef, state, layout, isFullDisp
               />
             ) : null}
             <span className='shot-chart-tooltip__text'>
+              {row.shotLabel ? (
+                <span className='shot-chart-tooltip__shot'>{row.shotLabel}</span>
+              ) : null}
               <span>{displayLabel}: </span>
               <span className='shot-chart-tooltip__value'>{row.valueText}</span>
             </span>

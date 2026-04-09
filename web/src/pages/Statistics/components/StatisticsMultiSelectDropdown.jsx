@@ -1,4 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
+import {
+  getAnalyzerIconButtonClasses,
+  getAnalyzerSurfaceTriggerClasses,
+} from '../../ShotAnalyzer/components/analyzerControlStyles';
 
 const LONG_PRESS_MS = 220;
 const MOVE_CANCEL_PX = 10;
@@ -21,18 +28,23 @@ function buildOrderedSelection(items, nextSet) {
   return ordered;
 }
 
+function getSingularLabel(label) {
+  const normalized = String(label ?? '').trim().toLowerCase();
+  if (normalized.endsWith('ies')) return `${normalized.slice(0, -3)}y`;
+  if (normalized.endsWith('s')) return normalized.slice(0, -1);
+  return normalized || 'item';
+}
+
 function getAccentTriggerClasses(accentTone, hasSelection = false) {
   if (accentTone === 'secondary') {
-    return hasSelection
-      ? 'border-secondary bg-secondary text-secondary-content hover:border-secondary hover:bg-secondary'
-      : 'border-secondary/30 bg-secondary/10 text-secondary hover:border-secondary/45 hover:bg-secondary/15';
+    return 'bg-secondary text-secondary-content hover:bg-secondary/92';
   }
   if (accentTone === 'primary') {
-    return hasSelection
-      ? 'border-primary bg-primary text-primary-content hover:border-primary hover:bg-primary'
-      : 'border-primary/25 bg-primary/10 text-primary hover:border-primary/40 hover:bg-primary/15';
+    return 'bg-primary text-primary-content hover:bg-primary/92';
   }
-  return 'border-base-content/10 bg-base-100/50 text-base-content hover:bg-base-200/70';
+  return hasSelection
+    ? 'bg-base-content/10 text-base-content hover:bg-base-content/14'
+    : 'bg-base-content/4 text-base-content/70 hover:bg-base-content/7 hover:text-base-content';
 }
 
 function getAccentCircleClasses(accentTone, selected) {
@@ -47,10 +59,12 @@ export function StatisticsMultiSelectDropdown({
   items,
   selectedIds,
   onChange,
+  onTogglePin,
   disabled = false,
   accentTone = 'neutral',
   emptyText = 'Select...',
   maxVisibleItems = 12,
+  triggerClassName = 'h-11 min-h-0',
 }) {
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
@@ -62,20 +76,27 @@ export function StatisticsMultiSelectDropdown({
 
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showPinnedOnly, setShowPinnedOnly] = useState(false);
 
   const selectedSet = useMemo(() => new Set(selectedIds || []), [selectedIds]);
   latestSelectedSetRef.current = selectedSet;
   const normalizedSearchTerm = normalizeSearchText(searchTerm);
 
   const filteredItems = useMemo(() => {
-    if (!normalizedSearchTerm) return items || [];
-    return (items || []).filter(item => {
+    let nextItems = items || [];
+
+    if (showPinnedOnly) {
+      nextItems = nextItems.filter(item => item?.isPinned);
+    }
+
+    if (!normalizedSearchTerm) return nextItems;
+    return nextItems.filter(item => {
       const haystack = normalizeSearchText(
         `${item?.primary || ''} ${item?.secondary || ''} ${item?.searchText || ''}`,
       );
       return haystack.includes(normalizedSearchTerm);
     });
-  }, [items, normalizedSearchTerm]);
+  }, [items, normalizedSearchTerm, showPinnedOnly]);
 
   const commitSelection = nextSet => {
     latestSelectedSetRef.current = new Set(nextSet);
@@ -233,6 +254,8 @@ export function StatisticsMultiSelectDropdown({
     state.onMove = onMove;
     state.onUp = endGesture;
     state.onCancel = endGesture;
+    // Long-press turns the selection circle into a touch-friendly "paint"
+    // gesture so users can sweep across many rows without modifier keys.
     state.timer = window.setTimeout(() => beginPaintMode(state), LONG_PRESS_MS);
 
     touchStateRef.current = state;
@@ -272,6 +295,13 @@ export function StatisticsMultiSelectDropdown({
   }, [open]);
 
   useEffect(() => {
+    if (open) return;
+    // Pinned-only is a transient drill-down inside the open menu, not a
+    // persistent filter preference for later openings.
+    setShowPinnedOnly(false);
+  }, [open]);
+
+  useEffect(() => {
     if (!open) return;
     const timer = window.setTimeout(() => {
       listRef.current?.querySelector?.('input')?.focus?.();
@@ -293,6 +323,7 @@ export function StatisticsMultiSelectDropdown({
   const selectedCount = selectedSet.size;
   const triggerText = selectedCount > 0 ? `${label} (${selectedCount})` : emptyText;
   const panelMaxHeight = Math.max(8, Number(maxVisibleItems) || 12) * 36;
+  const singularLabel = getSingularLabel(label);
 
   return (
     <div ref={rootRef} className='relative'>
@@ -303,10 +334,14 @@ export function StatisticsMultiSelectDropdown({
         aria-expanded={open}
         aria-haspopup='listbox'
         onClick={() => setOpen(v => !v)}
-        className={`inline-flex h-11 min-h-0 max-w-[15rem] min-w-[8.5rem] items-center justify-between gap-1 rounded-lg border px-2 text-xs font-semibold shadow-sm transition-colors ${getAccentTriggerClasses(accentTone, selectedCount > 0)} disabled:cursor-not-allowed disabled:opacity-40`}
+        className={getAnalyzerSurfaceTriggerClasses({
+          className: `inline-flex ${triggerClassName} max-w-[15rem] min-w-[8.5rem] items-center justify-between gap-1 rounded-lg px-2 text-xs font-semibold ${getAccentTriggerClasses(accentTone, selectedCount > 0)} disabled:cursor-not-allowed disabled:opacity-40`,
+        })}
       >
         <span className='truncate text-left'>{triggerText}</span>
-        <span className='-ml-0.5 text-[10px] opacity-65'>{open ? '▲' : '▼'}</span>
+        <span className='text-[10px] opacity-65'>
+          <FontAwesomeIcon icon={faChevronDown} className={open ? 'rotate-180 transition-transform' : 'transition-transform'} />
+        </span>
       </button>
 
       {open && (
@@ -315,13 +350,31 @@ export function StatisticsMultiSelectDropdown({
           className='bg-base-100/95 border-base-content/10 absolute top-full left-0 z-[60] mt-2 w-[min(92vw,28rem)] rounded-xl border shadow-xl backdrop-blur-md'
         >
           <div className='border-base-content/8 border-b p-2'>
-            <input
-              type='text'
-              value={searchTerm}
-              onInput={e => setSearchTerm(e.target.value)}
-              placeholder={`Search ${label.toLowerCase()}...`}
-              className='input input-sm input-bordered border-base-content/10 bg-base-100/70 h-8 min-h-0 w-full text-xs'
-            />
+            <div className='flex items-center gap-2'>
+              <input
+                type='text'
+                value={searchTerm}
+                onInput={e => setSearchTerm(e.target.value)}
+                placeholder={`Search ${label.toLowerCase()}...`}
+                className='input input-sm input-bordered border-base-content/10 bg-base-100/70 h-8 min-h-0 w-full flex-1 text-xs'
+              />
+              {onTogglePin ? (
+                <button
+                  type='button'
+                  aria-label={`${showPinnedOnly ? 'Show all' : 'Show pinned only'} ${label.toLowerCase()}`}
+                  title={`${showPinnedOnly ? 'Show all' : 'Show pinned only'} ${label.toLowerCase()}`}
+                  onClick={() => setShowPinnedOnly(value => !value)}
+                  className={getAnalyzerIconButtonClasses({
+                    tone: showPinnedOnly ? 'primary' : 'subtle',
+                    className: `h-8 w-8 shrink-0 bg-transparent text-xs ${
+                      showPinnedOnly ? 'text-primary hover:text-primary' : ''
+                    }`,
+                  })}
+                >
+                  <FontAwesomeIcon icon={faThumbtack} />
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div
@@ -331,7 +384,9 @@ export function StatisticsMultiSelectDropdown({
             style={{ maxHeight: `${panelMaxHeight}px`, overflowY: 'auto' }}
           >
             {filteredItems.length === 0 ? (
-              <div className='px-2 py-3 text-xs opacity-60'>No items found.</div>
+              <div className='px-2 py-3 text-xs opacity-60'>
+                {showPinnedOnly ? 'No pinned items found.' : 'No items found.'}
+              </div>
             ) : (
               filteredItems.map((item, index) => {
                 const isSelected = selectedSet.has(item.id);
@@ -373,8 +428,39 @@ export function StatisticsMultiSelectDropdown({
                     </button>
 
                     <div className='min-w-0 flex-1'>
-                      <div className='truncate text-xs font-semibold'>
-                        {item.primary || item.id}
+                      <div className='flex items-center gap-1.5'>
+                        <div className='min-w-0 flex-1 truncate text-xs font-semibold'>
+                          {item.primary || item.id}
+                        </div>
+                        {onTogglePin ? (
+                          <button
+                            type='button'
+                            aria-label={`${item.isPinned ? 'Unpin' : 'Pin'} ${item.primary || item.id}`}
+                            aria-disabled={!item.isPinned && !!item.pinDisabledReason}
+                            title={
+                              item.pinDisabledReason ||
+                              `${item.isPinned ? 'Unpin' : 'Pin'} ${singularLabel}`
+                            }
+                            className={getAnalyzerIconButtonClasses({
+                              tone: item.isPinned ? 'primary' : 'subtle',
+                              className:
+                                `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
+                                  item.isPinned ? 'text-primary hover:text-primary' : ''
+                                } ${
+                                  !item.isPinned && item.pinDisabledReason
+                                    ? 'cursor-not-allowed opacity-35'
+                                    : ''
+                                }`,
+                            })}
+                            onClick={event => {
+                              event.stopPropagation();
+                              if (!item.isPinned && item.pinDisabledReason) return;
+                              onTogglePin(item);
+                            }}
+                          >
+                            <FontAwesomeIcon icon={faThumbtack} />
+                          </button>
+                        ) : null}
                       </div>
                       {item.secondary && (
                         <div className='truncate text-[10px] opacity-65'>{item.secondary}</div>

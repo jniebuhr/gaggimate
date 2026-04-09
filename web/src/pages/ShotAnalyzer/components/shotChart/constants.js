@@ -161,6 +161,7 @@ export const VISIBILITY_KEY_BY_LABEL = {
 export const INITIAL_VISIBILITY = {
   phaseNames: true,
   stops: true,
+  brewModeLabel: true,
   temp: true,
   targetTemp: true,
   pressure: true,

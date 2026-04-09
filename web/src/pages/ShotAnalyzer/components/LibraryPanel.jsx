@@ -1,28 +1,38 @@
 /**
  * LibraryPanel.jsx
- * * Main library panel component for Shot Analyzer.
- * * Features:
- * - English UI & GitHub-ready comments.
- * - JS-powered sticky StatusBar.
- * - Glass-effect dropdown overlay.
- * - Confirmed Bulk Export & Delete with item counts.
- * - Pins matching shots/profiles to the top of the list.
+ * Main library surface for the Shot Analyzer.
+ * It owns data refresh, sticky header state, and the selection/pinning rules
+ * that feed the two library tables.
  */
 
 import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUpDown } from '@fortawesome/free-solid-svg-icons/faUpDown';
 import { StatusBar } from './StatusBar';
 import { NotesBar } from './NotesBar';
 import { LibrarySection } from './LibrarySection';
-import { getAnalyzerTextButtonClasses } from './analyzerControlStyles';
+import { getAnalyzerIconButtonClasses, getAnalyzerTextButtonClasses } from './analyzerControlStyles';
 import { libraryService } from '../services/LibraryService';
 import { indexedDBService } from '../services/IndexedDBService';
 import { notesService } from '../services/NotesService';
 import { ApiServiceContext } from '../../../services/ApiService';
 import {
   ANALYZER_DB_KEYS,
+  MAX_PINNED_PROFILES,
+  MAX_PINNED_SHOTS_PER_PROFILE,
+  PINNED_NO_PROFILE_BUCKET,
   cleanName,
+  getPinnedProfiles,
+  getPinnedShotsByProfile,
+  getProfilePinKey,
+  getShotIdentityKey,
+  getShotPinBucketKey,
+  isProfilePinned,
+  isShotPinned,
   loadFromStorage,
   saveToStorage,
+  toggleProfilePin,
+  toggleShotPin,
 } from '../utils/analyzerUtils';
 import { downloadJson } from '../../../utils/download';
 
@@ -38,6 +48,10 @@ export function LibraryPanel({
   currentProfile,
   currentShotName = 'No Shot Loaded',
   currentProfileName = 'No Profile Loaded',
+  secondaryShot = null,
+  secondaryProfile = null,
+  secondaryShotName = 'No Shot Loaded',
+  secondaryProfileName = 'No Profile Loaded',
   onShotLoadStart,
   onShotLoad,
   onProfileLoad,
@@ -45,24 +59,35 @@ export function LibraryPanel({
   onProfileUnload,
   onShowStats,
   statsHref = '/statistics',
+  secondaryStatsHref = '/statistics',
   importMode = 'temp',
   onImportModeChange,
   onShotLoadedFromLibrary,
+  compareMode = false,
+  compareHasSecondaryShot = false,
+  compareSelectedCount = 0,
+  compareSelectionKeys = new Set(),
+  comparePendingKeys = [],
+  compareSecondaryShotKey = '',
+  compareSecondaryProfileName = '',
+  onCompareModeToggle,
+  onCompareShotToggle,
+  onCompareProfileLoad,
+  onCompareProfileUnload,
+  onCompareSwap,
+  onRetryProfileSearch,
+  onRetryCompareProfileSearch,
   isMatchingProfile = false, // Used for highlighting
   isMatchingShot = false, // Used for highlighting
   isSearchingProfile = false, // Spinner state for profile search
+  compareIsSearchingProfile = false,
 }) {
-  const getShotStorageKey = shot => {
-    if (!shot) return '';
-    if (shot.source === 'gaggimate') return String(shot.id || '');
-    return String(shot.storageKey || shot.name || shot.id || '');
-  };
-
   const apiService = useContext(ApiServiceContext);
   const panelRef = useRef(null);
   const sentinelRef = useRef(null);
   const barRef = useRef(null);
   const refreshIdRef = useRef(0);
+  const shotLoadIdRef = useRef(0);
 
   // UI State
   const [isStuck, setIsStuck] = useState(false);
@@ -73,9 +98,13 @@ export function LibraryPanel({
   const [collapsed, setCollapsed] = useState(true);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false); // Specific state for import spinner
-  const [notesExpanded, setNotesExpanded] = useState(false);
-  const [notesIsEditing, setNotesIsEditing] = useState(false);
-  const [notesExpandedHeight, setNotesExpandedHeight] = useState(0);
+  const [librarySelectionTarget, setLibrarySelectionTarget] = useState('primaryShot');
+  const [primaryNotesExpanded, setPrimaryNotesExpanded] = useState(false);
+  const [primaryNotesIsEditing, setPrimaryNotesIsEditing] = useState(false);
+  const [primaryNotesExpandedHeight, setPrimaryNotesExpandedHeight] = useState(0);
+  const [secondaryNotesExpanded, setSecondaryNotesExpanded] = useState(false);
+  const [secondaryNotesIsEditing, setSecondaryNotesIsEditing] = useState(false);
+  const [secondaryNotesExpandedHeight, setSecondaryNotesExpandedHeight] = useState(0);
 
   // Data State
   const [shots, setShots] = useState([]);
@@ -95,10 +124,55 @@ export function LibraryPanel({
   const [profilesSearch, setProfilesSearch] = useState('');
   const [profilesSort, setProfilesSort] = useState({ key: 'name', order: 'asc' });
   const [mobileActiveSection, setMobileActiveSection] = useState('shots');
+  const [pinnedProfiles, setPinnedProfiles] = useState(() => getPinnedProfiles());
+  const [pinnedShotsByProfile, setPinnedShotsByProfile] = useState(() => getPinnedShotsByProfile());
+  const [shotsPinnedFirst, setShotsPinnedFirst] = useState(false);
+  const [profilesPinnedFirst, setProfilesPinnedFirst] = useState(false);
+
+  const handleLibraryProfileStatsOpen = useCallback(
+    profileItem => {
+      if (!profileItem) return;
+      try {
+        const statsInitialContext = {
+          profileName: profileItem.label || profileItem.name || '',
+          source: 'both',
+        };
+        if (compareMode) {
+          statsInitialContext.preferredDetailSection = 'compare';
+        }
+        sessionStorage.setItem('statsInitialContext', JSON.stringify(statsInitialContext));
+      } catch {
+        // Ignore session storage issues and keep navigation working.
+      }
+    },
+    [compareMode],
+  );
 
   // Debounced search values to avoid re-fetching on every keystroke
   const [debouncedShotsSearch, setDebouncedShotsSearch] = useState('');
   const [debouncedProfilesSearch, setDebouncedProfilesSearch] = useState('');
+  const normalizedCurrentProfileName = cleanName(currentProfileName).toLowerCase();
+  const normalizedCurrentShotProfileName = cleanName(currentShot?.profile || '').toLowerCase();
+  const normalizedCompareSecondaryProfileName = cleanName(compareSecondaryProfileName).toLowerCase();
+  const resolveRealProfilePinKey = useCallback(profileValue => {
+    const key = getProfilePinKey(profileValue);
+    return key && key !== 'no profile loaded' ? key : '';
+  }, []);
+  const activeShotPinBucketKey = (() => {
+    const explicitProfileKey = resolveRealProfilePinKey(currentProfileName);
+    if (explicitProfileKey) return explicitProfileKey;
+
+    // When only a shot is active, derive the implicit profile bucket from the
+    // shot metadata so pinned shots can still be promoted for that context.
+    if (currentShot || currentProfile) {
+      const shotProfileKey = resolveRealProfilePinKey(
+        currentShot?.profile || currentShot?.profileName || '',
+      );
+      return shotProfileKey || PINNED_NO_PROFILE_BUCKET;
+    }
+
+    return '';
+  })();
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedShotsSearch(shotsSearch), 250);
@@ -181,19 +255,40 @@ export function LibraryPanel({
   }, [updateRect]);
 
   useEffect(() => {
-    if (!notesExpanded) {
-      setNotesIsEditing(false);
-      setNotesExpandedHeight(0);
+    if (!primaryNotesExpanded) {
+      setPrimaryNotesIsEditing(false);
+      setPrimaryNotesExpandedHeight(0);
     }
-  }, [notesExpanded]);
+  }, [primaryNotesExpanded]);
+
+  useEffect(() => {
+    if (!secondaryNotesExpanded) {
+      setSecondaryNotesIsEditing(false);
+      setSecondaryNotesExpandedHeight(0);
+    }
+  }, [secondaryNotesExpanded]);
 
   useEffect(() => {
     if (!currentShot) {
-      setNotesExpanded(false);
-      setNotesIsEditing(false);
-      setNotesExpandedHeight(0);
+      setPrimaryNotesExpanded(false);
+      setPrimaryNotesIsEditing(false);
+      setPrimaryNotesExpandedHeight(0);
     }
   }, [currentShot]);
+
+  useEffect(() => {
+    if (!secondaryShot || !compareMode) {
+      setSecondaryNotesExpanded(false);
+      setSecondaryNotesIsEditing(false);
+      setSecondaryNotesExpandedHeight(0);
+    }
+  }, [secondaryShot, compareMode]);
+
+  useEffect(() => {
+    if (!compareMode) {
+      setLibrarySelectionTarget('primaryShot');
+    }
+  }, [compareMode]);
 
   // Close panel on outside click
   useEffect(() => {
@@ -209,7 +304,7 @@ export function LibraryPanel({
 
   /**
    * Fetch, Filter, and Sort data from sources.
-   * Pins matching items (current shot/profile) to the top.
+   * Reorders rows by selection match and pin state after the base sort.
    */
   const refreshLibraries = async () => {
     const id = ++refreshIdRef.current;
@@ -224,7 +319,15 @@ export function LibraryPanel({
 
       if (id !== refreshIdRef.current) return; // stale request, discard
 
-      // Helper: Sort logic based on config keys
+      const getShotSearchPriority = (item, query) => {
+        const normalizedId = String(item?.id || '').toLowerCase();
+        const normalizedName = (item?.name || item?.label || item?.title || '').toLowerCase();
+        return normalizedName.includes(query) || normalizedId.includes(query) ? 0 : 1;
+      };
+
+      // Apply the user-selected base sort first. Match promotion and pin
+      // promotion happen afterwards so they remain stable overlays on top of the
+      // explicit sort choice instead of replacing it.
       const applySort = (items, cfg) => {
         return [...items].sort((a, b) => {
           let valA, valB;
@@ -255,63 +358,37 @@ export function LibraryPanel({
         });
       };
 
-      // Helper: Pin matches to top
-      const pinMatches = (items, isShotTable) => {
-        return items.sort((a, b) => {
-          const matchA = isShotTable
-            ? currentProfile &&
-              cleanName(a.profile || '').toLowerCase() ===
-                cleanName(currentProfileName).toLowerCase()
-            : currentShot &&
-              cleanName(a.name || a.label || '').toLowerCase() ===
-                cleanName(currentShot.profile || '').toLowerCase();
-          const matchB = isShotTable
-            ? currentProfile &&
-              cleanName(b.profile || '').toLowerCase() ===
-                cleanName(currentProfileName).toLowerCase()
-            : currentShot &&
-              cleanName(b.name || b.label || '').toLowerCase() ===
-                cleanName(currentShot.profile || '').toLowerCase();
-
-          if (matchA && !matchB) return -1;
-          if (!matchA && matchB) return 1;
-          return 0;
+      const promoteItems = (items, predicate) => {
+        const promoted = [];
+        const remaining = [];
+        items.forEach(item => {
+          if (predicate(item)) promoted.push(item);
+          else remaining.push(item);
         });
+        return [...promoted, ...remaining];
       };
 
-      // Filter by search string (using debounced values)
-      // Shot search: matches name, ID, filename, or profile name
+      // Shot search intentionally stays broad: operators usually remember a shot
+      // by id, exported file name, or associated profile rather than one field.
       let fShots = shotsData;
       if (debouncedShotsSearch) {
         const sSearch = debouncedShotsSearch.toLowerCase();
 
-        // UPDATED: Robust filtering logic
         fShots = shotsData.filter(s => {
-          // Check Display Name / Label
           const nameMatch = (s.name || s.label || s.title || '').toLowerCase().includes(sSearch);
-          // Check Profile Name
           const profileMatch = (s.profile || s.profileName || '').toLowerCase().includes(sSearch);
-          // Check ID specifically (convert to string first)
           const idMatch = String(s.id || '')
             .toLowerCase()
             .includes(sSearch);
-          // Check Filename / ExportName (e.g. for "shot-6")
           const fileMatch = (s.fileName || s.exportName || '').toLowerCase().includes(sSearch);
 
           return nameMatch || profileMatch || idMatch || fileMatch;
         });
 
-        // Sort: Prioritize direct Name or ID matches over Profile-Name matches
+        // Name/id hits are promoted ahead of indirect profile-name hits so a
+        // search like "shot-12" or "#123" feels deterministic.
         fShots.sort((a, b) => {
-          const aId = String(a.id || '').toLowerCase();
-          const aName = (a.name || a.label || a.title || '').toLowerCase();
-          const aPrio = aName.includes(sSearch) || aId.includes(sSearch) ? 0 : 1;
-
-          const bId = String(b.id || '').toLowerCase();
-          const bName = (b.name || b.label || b.title || '').toLowerCase();
-          const bPrio = bName.includes(sSearch) || bId.includes(sSearch) ? 0 : 1;
-
-          return aPrio - bPrio;
+          return getShotSearchPriority(a, sSearch) - getShotSearchPriority(b, sSearch);
         });
       }
 
@@ -329,8 +406,37 @@ export function LibraryPanel({
           (p.name || p.label || '').toLowerCase().includes(debouncedProfilesSearch.toLowerCase()),
       );
 
-      setShots(pinMatches(applySort(fShots, shotsSort), true));
-      setProfiles(pinMatches(applySort(fProfiles, profilesSort), false));
+      const hasActiveProfileMatch =
+        normalizedCurrentProfileName && normalizedCurrentProfileName !== 'no profile loaded';
+      const hasActiveShotProfileMatch =
+        normalizedCurrentShotProfileName && normalizedCurrentShotProfileName !== 'no profile loaded';
+      const promoteMatchedShots = item =>
+        hasActiveProfileMatch &&
+        cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName;
+      const promoteMatchedProfiles = item =>
+        hasActiveShotProfileMatch &&
+        cleanName(item.name || item.label || '').toLowerCase() === normalizedCurrentShotProfileName;
+
+      // Promotion order matters: active profile matches win first, then pins can
+      // optionally re-order within that already-sorted subset.
+      let nextShots = promoteItems(applySort(fShots, shotsSort), promoteMatchedShots);
+      if (shotsPinnedFirst) {
+        nextShots = promoteItems(nextShots, item =>
+          isShotPinned(item, getShotPinBucketKey(item), pinnedShotsByProfile),
+        );
+      } else if (activeShotPinBucketKey) {
+        nextShots = promoteItems(nextShots, item =>
+          isShotPinned(item, activeShotPinBucketKey, pinnedShotsByProfile),
+        );
+      }
+
+      let nextProfiles = promoteItems(applySort(fProfiles, profilesSort), promoteMatchedProfiles);
+      if (profilesPinnedFirst) {
+        nextProfiles = promoteItems(nextProfiles, item => isProfilePinned(item, pinnedProfiles));
+      }
+
+      setShots(nextShots);
+      setProfiles(nextProfiles);
     } catch (error) {
       if (id !== refreshIdRef.current) return;
       console.error('Library refresh failed:', error);
@@ -350,9 +456,17 @@ export function LibraryPanel({
     shotsSort,
     debouncedProfilesSearch,
     profilesSort,
+    pinnedProfiles,
+    pinnedShotsByProfile,
+    shotsPinnedFirst,
+    profilesPinnedFirst,
+    activeShotPinBucketKey,
+    normalizedCurrentProfileName,
+    normalizedCurrentShotProfileName,
   ]);
 
-  // Re-sort with updated pins when library panel is opened
+  // Re-run the promotion logic when the panel reopens so any pin changes made
+  // elsewhere in the app are reflected immediately.
   const prevCollapsed = useRef(collapsed);
   useEffect(() => {
     if (prevCollapsed.current && !collapsed) {
@@ -362,6 +476,46 @@ export function LibraryPanel({
   }, [collapsed]);
 
   // --- Action Handlers ---
+
+  const getProfilePinDisabledReason = useCallback(
+    item => {
+      if (isProfilePinned(item, pinnedProfiles)) return '';
+      if (pinnedProfiles.length >= MAX_PINNED_PROFILES) {
+        return `Maximum ${MAX_PINNED_PROFILES} pinned profiles`;
+      }
+      return '';
+    },
+    [pinnedProfiles],
+  );
+
+  const getShotPinDisabledReason = useCallback(
+    item => {
+      const bucketKey = getShotPinBucketKey(item);
+      if (isShotPinned(item, bucketKey, pinnedShotsByProfile)) return '';
+
+      const pinnedCount = (pinnedShotsByProfile[bucketKey] || []).length;
+      if (pinnedCount >= MAX_PINNED_SHOTS_PER_PROFILE) {
+        return bucketKey === PINNED_NO_PROFILE_BUCKET
+          ? `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile`
+          : `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile`;
+      }
+
+      return '';
+    },
+    [pinnedShotsByProfile],
+  );
+
+  const handleProfilePinToggle = useCallback(item => {
+    const result = toggleProfilePin(item);
+    if (!result.changed) return;
+    setPinnedProfiles(result.pinnedProfiles);
+  }, []);
+
+  const handleShotPinToggle = useCallback(item => {
+    const result = toggleShotPin(item, getShotPinBucketKey(item));
+    if (!result.changed) return;
+    setPinnedShotsByProfile(result.pinnedShotsByProfile);
+  }, []);
 
   // Uses libraryService.exportItem to fetch data, then uses UI helper 'downloadJson'
   const handleExport = async (item, isShot) => {
@@ -395,16 +549,25 @@ export function LibraryPanel({
     }
   };
 
-  const handleImport = async files => {
-    setImporting(true); // START IMPORT SPINNER
+  const handleImport = async (files, { targetType = 'any', slot = 'primary' } = {}) => {
+    setImporting(true);
 
-    // Defer import logic to allow UI update
+    // Let the spinner paint before the import work begins so the action feels responsive.
     setTimeout(async () => {
+      let appliedImportCount = 0;
+      let mismatchedImportCount = 0;
+      let blockedSecondaryProfileImport = false;
+
       try {
         for (const file of Array.from(files)) {
           const text = await file.text();
           const data = JSON.parse(text);
           if (data.samples) {
+            if (targetType === 'profile') {
+              mismatchedImportCount += 1;
+              continue;
+            }
+
             const source = importMode === 'browser' ? 'browser' : 'temp';
             const storageKey = file.name;
             let notesWithId = null;
@@ -436,8 +599,21 @@ export function LibraryPanel({
 
             // Keep loaded object aligned with storage metadata (name/storageKey),
             // so NotesBar can resolve notes immediately after import.
-            onShotLoad(notesWithId ? { ...shot, notes: notesWithId } : shot, file.name);
+            const importedShot = notesWithId ? { ...shot, notes: notesWithId } : shot;
+            if (slot === 'secondary' && currentShot) {
+              await onCompareShotToggle?.(importedShot, true);
+            } else {
+              await onShotLoad(importedShot, file.name, {
+                preserveCompare: compareMode,
+              });
+            }
+            appliedImportCount += 1;
           } else if (data.phases) {
+            if (targetType === 'shot') {
+              mismatchedImportCount += 1;
+              continue;
+            }
+
             // Use profile label from JSON as canonical name (not the filename)
             const profileName = data.label || cleanName(file.name);
             const profile = {
@@ -447,7 +623,33 @@ export function LibraryPanel({
               source: importMode === 'browser' ? 'browser' : 'temp',
             };
             if (importMode === 'browser') await indexedDBService.saveProfile(profile);
-            onProfileLoad(data, profileName, profile.source);
+
+            if (slot === 'secondary') {
+              if (secondaryShot) {
+                onCompareProfileLoad?.(data, profileName, profile.source);
+                appliedImportCount += 1;
+              } else if (!currentShot) {
+                onProfileLoad(data, profileName, profile.source);
+                appliedImportCount += 1;
+              } else {
+                blockedSecondaryProfileImport = true;
+              }
+            } else {
+              onProfileLoad(data, profileName, profile.source);
+              appliedImportCount += 1;
+            }
+          }
+        }
+
+        if (appliedImportCount === 0) {
+          if (blockedSecondaryProfileImport) {
+            alert('Load a secondary shot before importing a secondary profile.');
+          } else if (mismatchedImportCount > 0) {
+            alert(
+              targetType === 'shot'
+                ? 'Only shot files can be imported in the shot field.'
+                : 'Only profile files can be imported in the profile field.',
+            );
           }
         }
       } catch (e) {
@@ -460,21 +662,135 @@ export function LibraryPanel({
     }, 50);
   };
 
-  const handleLoadShot = async item => {
+  const handleLoadShot = async (
+    item,
+    { closeLibrary = true, triggerSelectionScroll = true, preserveCompare = false } = {},
+  ) => {
+    const loadId = ++shotLoadIdRef.current;
+
     try {
       const wasLibraryOpen = !collapsed;
       onShotLoadStart();
-      setCollapsed(true);
+      if (closeLibrary) {
+        setCollapsed(true);
+      }
       const loadKey =
         item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
       const full = item.loaded ? item : await libraryService.loadShot(loadKey, item.source);
-      await onShotLoad(full, item.name || item.storageKey || item.id);
-      if (wasLibraryOpen) {
+      if (loadId !== shotLoadIdRef.current) return;
+      await onShotLoad(full, item.name || item.storageKey || item.id, { preserveCompare });
+      if (loadId !== shotLoadIdRef.current) return;
+      if (closeLibrary && triggerSelectionScroll && wasLibraryOpen) {
         onShotLoadedFromLibrary?.();
       }
     } catch (e) {
+      if (loadId !== shotLoadIdRef.current) return;
       console.error('Failed to load shot:', e);
     }
+  };
+
+  const openLibraryForTarget = useCallback(
+    target => {
+      const nextMobileSection =
+        target === 'primaryProfile' || target === 'secondaryProfile' ? 'profiles' : 'shots';
+
+      setMobileActiveSection(nextMobileSection);
+
+      if (!collapsed && librarySelectionTarget === target) {
+        setCollapsed(true);
+        return;
+      }
+
+      setLibrarySelectionTarget(target);
+      setCollapsed(false);
+    },
+    [collapsed, librarySelectionTarget],
+  );
+
+  const handleShotRowAction = async item => {
+    const currentShotKey = currentShot ? getShotIdentityKey(currentShot) : '';
+    const itemShotKey = item ? getShotIdentityKey(item) : '';
+
+    if (compareMode && !currentShot && itemShotKey) {
+      await handleLoadShot(item, {
+        closeLibrary: false,
+        triggerSelectionScroll: false,
+        preserveCompare: true,
+      });
+      setLibrarySelectionTarget('secondaryShot');
+      return;
+    }
+
+    if (librarySelectionTarget === 'secondaryShot') {
+      if (!currentShot || !itemShotKey || itemShotKey === currentShotKey) return;
+      setCollapsed(true);
+      await onCompareShotToggle?.(item, true);
+      return;
+    }
+
+    if (compareMode && compareSecondaryShotKey && itemShotKey === compareSecondaryShotKey) {
+      setCollapsed(true);
+      handleSwapCompareSlots();
+      return;
+    }
+
+    await handleLoadShot(item, {
+      preserveCompare: compareMode,
+    });
+  };
+
+  const handleStatusBarCompareToggle = () => {
+    if (!compareMode) {
+      onCompareModeToggle?.();
+      openLibraryForTarget(currentShot ? 'secondaryShot' : 'primaryShot');
+      return;
+    }
+
+    onCompareModeToggle?.();
+  };
+
+  const handleProfileRowAction = item => {
+    if (librarySelectionTarget === 'secondaryProfile') {
+      if (!secondaryShot) return;
+      onCompareProfileLoad?.(item.data || item, item.label || item.name, item.source);
+      setCollapsed(true);
+      return;
+    }
+
+    onProfileLoad(item.data || item, item.label || item.name, item.source);
+    setCollapsed(true);
+  };
+
+  const handleNavigateShot = async item => {
+    await handleLoadShot(item, {
+      closeLibrary: false,
+      triggerSelectionScroll: false,
+      preserveCompare: compareMode && compareHasSecondaryShot,
+    });
+  };
+
+  const handleNavigateCompareShot = async item => {
+    if (!secondaryShot) return;
+    await onCompareShotToggle?.(item, true);
+  };
+
+  const handleClearSecondaryShot = () => {
+    if (!secondaryShot) return;
+    setSecondaryNotesExpanded(false);
+    setSecondaryNotesIsEditing(false);
+    setSecondaryNotesExpandedHeight(0);
+    onCompareShotToggle?.(secondaryShot, false);
+  };
+
+  const handleSwapCompareSlots = () => {
+    if (!currentShot || !secondaryShot) return;
+    setPrimaryNotesExpanded(false);
+    setPrimaryNotesIsEditing(false);
+    setPrimaryNotesExpandedHeight(0);
+    setSecondaryNotesExpanded(false);
+    setSecondaryNotesIsEditing(false);
+    setSecondaryNotesExpandedHeight(0);
+    onCompareSwap?.();
   };
 
   // Styling logic for fixed bar
@@ -489,7 +805,10 @@ export function LibraryPanel({
         zIndex: 50,
       }
     : {};
-  const dropdownTop = Math.max(0, barRect.height - (notesIsEditing ? notesExpandedHeight : 0));
+  const expandedEditingOffset =
+    (primaryNotesIsEditing ? primaryNotesExpandedHeight : 0) +
+    (secondaryNotesIsEditing ? secondaryNotesExpandedHeight : 0);
+  const dropdownTop = Math.max(0, barRect.height - expandedEditingOffset);
   const dropdownStyle = {
     position: 'fixed',
     top: `${dropdownTop}px`,
@@ -500,6 +819,15 @@ export function LibraryPanel({
   const desktopSectionHeight = isMobileViewport
     ? undefined
     : `max(18rem, calc(100dvh - ${dropdownTop}px - 2rem))`;
+  const primaryProfileMismatch =
+    currentShot &&
+    currentProfile &&
+    cleanName(currentShot.profile || '').toLowerCase() !== cleanName(currentProfileName).toLowerCase();
+  const secondaryProfileMismatch =
+    secondaryShot &&
+    secondaryProfile &&
+    cleanName(secondaryShot.profile || '').toLowerCase() !==
+      cleanName(secondaryProfileName).toLowerCase();
 
   return (
     <div ref={panelRef} className='relative'>
@@ -508,52 +836,166 @@ export function LibraryPanel({
 
       <div ref={barRef} style={fixedBarStyle}>
         <div
-          className={`bg-base-100/80 border-base-content/10 overflow-hidden border backdrop-blur-md transition-all duration-200 ${
+          className={`bg-base-100/80 border-base-content/10 ${compareMode ? 'overflow-visible' : 'overflow-hidden'} border backdrop-blur-md transition-all duration-200 ${
             collapsed ? 'rounded-xl shadow-lg' : 'rounded-t-xl border-b-0 shadow-none'
           }`}
         >
-          <StatusBar
-            currentShot={currentShot}
-            currentProfile={currentProfile}
-            currentShotName={currentShotName}
-            currentProfileName={currentProfileName}
-            onUnloadShot={onShotUnload}
-            onUnloadProfile={onProfileUnload}
-            onTogglePanel={() => setCollapsed(!collapsed)}
-            onImport={handleImport}
-            onShowStats={onShowStats}
-            statsHref={statsHref}
-            isMismatch={
-              currentShot &&
-              currentProfile &&
-              cleanName(currentShot.profile || '').toLowerCase() !==
-                cleanName(currentProfileName).toLowerCase()
-            }
-            isExpanded={!collapsed}
-            hasNotesBar={!!currentShot}
-            isImporting={importing}
-            isSearchingProfile={isSearchingProfile}
-          />
-          <NotesBar
-            currentShot={currentShot}
-            currentShotName={currentShotName}
-            shotList={shots}
-            onNavigate={handleLoadShot}
-            importMode={importMode}
-            onImportModeChange={onImportModeChange}
-            isExpanded={!collapsed}
-            notesExpanded={notesExpanded}
-            onToggleNotesExpanded={() => setNotesExpanded(v => !v)}
-            onEditingChange={setNotesIsEditing}
-            onExpandedHeightChange={setNotesExpandedHeight}
-          />
+          {compareMode ? (
+            <div>
+              <StatusBar
+                currentShot={currentShot}
+                currentProfile={currentProfile}
+                currentShotName={currentShotName}
+                currentProfileName={currentProfileName}
+                onUnloadShot={onShotUnload}
+                onUnloadProfile={onProfileUnload}
+                onCompareModeToggle={handleStatusBarCompareToggle}
+                onRetryProfileSearch={onRetryProfileSearch}
+                onShotPanelToggle={() => openLibraryForTarget('primaryShot')}
+                onProfilePanelToggle={() => openLibraryForTarget('primaryProfile')}
+                onImportShot={files => handleImport(files, { targetType: 'shot', slot: 'primary' })}
+                onImportProfile={files =>
+                  handleImport(files, { targetType: 'profile', slot: 'primary' })
+                }
+                onShowStats={onShowStats}
+                statsHref={statsHref}
+                compareAvailable={shots.length > 0}
+                compareMode={compareMode}
+                isMismatch={primaryProfileMismatch}
+                isImporting={importing}
+                isSearchingProfile={isSearchingProfile}
+                compact={true}
+                compareBadgeNumber={1}
+              />
+              <NotesBar
+                currentShot={currentShot}
+                currentShotName={currentShotName}
+                shotList={shots}
+                onNavigate={handleNavigateShot}
+                importMode={importMode}
+                onImportModeChange={onImportModeChange}
+                isExpanded={!collapsed}
+                notesExpanded={primaryNotesExpanded}
+                onToggleNotesExpanded={() => setPrimaryNotesExpanded(value => !value)}
+                onEditingChange={setPrimaryNotesIsEditing}
+                onExpandedHeightChange={setPrimaryNotesExpandedHeight}
+              />
+              <div className='flex -translate-y-2 items-center justify-center py-0'>
+                <button
+                  type='button'
+                  onClick={handleSwapCompareSlots}
+                  disabled={!currentShot || !secondaryShot}
+                  className={getAnalyzerIconButtonClasses({
+                    tone: !currentShot || !secondaryShot ? 'subtle' : 'primary',
+                    className:
+                      'h-5 w-5 rounded-none border-none bg-transparent p-0 shadow-none hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40',
+                  })}
+                  title='Swap shot 1 and shot 2'
+                  aria-label='Swap shot 1 and shot 2'
+                >
+                  <FontAwesomeIcon icon={faUpDown} className='text-[11px]' />
+                </button>
+              </div>
+              <StatusBar
+                currentShot={secondaryShot}
+                currentProfile={secondaryProfile}
+                currentShotName={secondaryShotName}
+                currentProfileName={secondaryProfileName}
+                onUnloadShot={handleClearSecondaryShot}
+                onUnloadProfile={onCompareProfileUnload}
+                onRetryProfileSearch={onRetryCompareProfileSearch}
+                onShotPanelToggle={() => openLibraryForTarget(currentShot ? 'secondaryShot' : 'primaryShot')}
+                onProfilePanelToggle={() => {
+                  if (!secondaryShot) return;
+                  openLibraryForTarget('secondaryProfile');
+                }}
+                onImportShot={files =>
+                  handleImport(files, {
+                    targetType: 'shot',
+                    slot: currentShot ? 'secondary' : 'primary',
+                  })
+                }
+                onImportProfile={files =>
+                  handleImport(files, {
+                    targetType: 'profile',
+                    slot: currentShot ? 'secondary' : 'primary',
+                  })
+                }
+                onShowStats={onShowStats}
+                statsHref={secondaryStatsHref}
+                compareAvailable={false}
+                compareMode={compareMode}
+                isMismatch={secondaryProfileMismatch}
+                isImporting={importing}
+                isSearchingProfile={compareIsSearchingProfile}
+                compact={true}
+                showCompareButton={false}
+                compareBadgeNumber={2}
+                ghosted={true}
+              />
+              <NotesBar
+                currentShot={secondaryShot}
+                currentShotName={secondaryShotName}
+                shotList={shots}
+                onNavigate={handleNavigateCompareShot}
+                importMode={importMode}
+                onImportModeChange={onImportModeChange}
+                isExpanded={!collapsed}
+                notesExpanded={secondaryNotesExpanded}
+                onToggleNotesExpanded={() => setSecondaryNotesExpanded(value => !value)}
+                onEditingChange={setSecondaryNotesIsEditing}
+                onExpandedHeightChange={setSecondaryNotesExpandedHeight}
+                showImportModeToggle={false}
+                enableKeyboardNavigation={false}
+              />
+            </div>
+          ) : (
+            <div>
+              <StatusBar
+                currentShot={currentShot}
+                currentProfile={currentProfile}
+                currentShotName={currentShotName}
+                currentProfileName={currentProfileName}
+                onUnloadShot={onShotUnload}
+                onUnloadProfile={onProfileUnload}
+                onCompareModeToggle={handleStatusBarCompareToggle}
+                onRetryProfileSearch={onRetryProfileSearch}
+                onShotPanelToggle={() => openLibraryForTarget('primaryShot')}
+                onProfilePanelToggle={() => openLibraryForTarget('primaryProfile')}
+                onImportShot={files => handleImport(files, { targetType: 'shot', slot: 'primary' })}
+                onImportProfile={files =>
+                  handleImport(files, { targetType: 'profile', slot: 'primary' })
+                }
+                onShowStats={onShowStats}
+                statsHref={statsHref}
+                compareAvailable={shots.length > 0}
+                compareMode={compareMode}
+                isMismatch={primaryProfileMismatch}
+                isImporting={importing}
+                isSearchingProfile={isSearchingProfile}
+              />
+              <NotesBar
+                currentShot={currentShot}
+                currentShotName={currentShotName}
+                shotList={shots}
+                onNavigate={handleNavigateShot}
+                importMode={importMode}
+                onImportModeChange={onImportModeChange}
+                isExpanded={!collapsed}
+                notesExpanded={primaryNotesExpanded}
+                onToggleNotesExpanded={() => setPrimaryNotesExpanded(value => !value)}
+                onEditingChange={setPrimaryNotesIsEditing}
+                onExpandedHeightChange={setPrimaryNotesExpandedHeight}
+              />
+            </div>
+          )}
         </div>
       </div>
 
       {!collapsed && (
         <>
           <div
-            className='fixed inset-0 bg-black/20 backdrop-blur-[1px]'
+            className='fixed inset-0 cursor-pointer bg-black/20 backdrop-blur-[1px]'
             style={{ zIndex: 40 }}
             onClick={() => setCollapsed(true)}
           />
@@ -601,6 +1043,7 @@ export function LibraryPanel({
                       title='Shots'
                       items={shots}
                       isShot={true}
+                      compareMode={compareMode}
                       sectionHeight={desktopSectionHeight}
                       searchValue={shotsSearch}
                       sortKey={shotsSort.key}
@@ -616,9 +1059,22 @@ export function LibraryPanel({
                         })
                       }
                       onSourceFilterChange={setShotsSourceFilter}
-                      onLoad={handleLoadShot}
+                      onLoad={handleShotRowAction}
                       onExport={item => handleExport(item, true)} // Pass true for shots
                       onDelete={handleDelete}
+                      compareSelectedCount={compareSelectedCount}
+                      compareSelectionKeys={compareSelectionKeys}
+                      comparePendingKeys={comparePendingKeys}
+                      compareReferenceKey={currentShot ? getShotIdentityKey(currentShot) : ''}
+                      getCompareBadgeNumber={item => {
+                        if (!compareMode) return null;
+                        const itemKey = getShotIdentityKey(item);
+                        if (!itemKey) return null;
+                        if (currentShot && itemKey === getShotIdentityKey(currentShot)) return 1;
+                        if (compareSecondaryShotKey && itemKey === compareSecondaryShotKey) return 2;
+                        return null;
+                      }}
+                      onCompareToggle={onCompareShotToggle}
                       isLoading={loading} // Pass loading state to show spinner in list
                       onExportAll={() => {
                         if (shots.length === 0) return;
@@ -647,14 +1103,20 @@ export function LibraryPanel({
                       }}
                       getMatchStatus={item =>
                         currentProfile &&
-                        cleanName(item.profile || '').toLowerCase() ===
-                          cleanName(currentProfileName).toLowerCase()
+                        cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName
                       }
                       getActiveStatus={item =>
                         currentShot &&
-                        getShotStorageKey(item) === getShotStorageKey(currentShot) &&
+                        getShotIdentityKey(item) === getShotIdentityKey(currentShot) &&
                         item.source === currentShot.source
                       }
+                      getPinStatus={item =>
+                        isShotPinned(item, getShotPinBucketKey(item), pinnedShotsByProfile)
+                      }
+                      getPinDisabledReason={getShotPinDisabledReason}
+                      pinnedFirstEnabled={shotsPinnedFirst}
+                      onPinnedFirstToggle={() => setShotsPinnedFirst(value => !value)}
+                      onPinToggle={handleShotPinToggle}
                     />
                   </div>
 
@@ -668,6 +1130,7 @@ export function LibraryPanel({
                       title='Profiles'
                       items={profiles}
                       isShot={false}
+                      compareMode={compareMode}
                       sectionHeight={desktopSectionHeight}
                       searchValue={profilesSearch}
                       sortKey={profilesSort.key}
@@ -685,10 +1148,8 @@ export function LibraryPanel({
                         })
                       }
                       onSourceFilterChange={setProfilesSourceFilter}
-                      onLoad={item => {
-                        onProfileLoad(item.data || item, item.label || item.name, item.source);
-                        setCollapsed(true);
-                      }}
+                      onLoad={handleProfileRowAction}
+                      onShowStats={handleLibraryProfileStatsOpen}
                       onExport={item => handleExport(item, false)} // Pass false for profiles
                       onDelete={handleDelete}
                       isLoading={loading} // Pass loading state to show spinner in list
@@ -720,13 +1181,42 @@ export function LibraryPanel({
                       getMatchStatus={item =>
                         currentShot &&
                         cleanName(item.name || item.label || '').toLowerCase() ===
-                          cleanName(currentShot.profile || '').toLowerCase()
+                          normalizedCurrentShotProfileName
                       }
+                      getCompareStatus={item =>
+                        Boolean(
+                          compareSecondaryProfileName &&
+                            normalizedCompareSecondaryProfileName &&
+                            normalizedCompareSecondaryProfileName !== 'no profile loaded' &&
+                            cleanName(item.name || item.label || '').toLowerCase() ===
+                              normalizedCompareSecondaryProfileName,
+                        )
+                      }
+                      getCompareBadgeNumber={item => {
+                        if (!compareMode) return null;
+                        const itemProfileName = cleanName(item.name || item.label || '').toLowerCase();
+                        if (!itemProfileName) return null;
+                        if (currentProfile && itemProfileName === normalizedCurrentProfileName) return 1;
+                        if (
+                          compareSecondaryProfileName &&
+                          normalizedCompareSecondaryProfileName &&
+                          normalizedCompareSecondaryProfileName !== 'no profile loaded' &&
+                          itemProfileName === normalizedCompareSecondaryProfileName
+                        ) {
+                          return 2;
+                        }
+                        return null;
+                      }}
                       getActiveStatus={item =>
                         currentProfile &&
                         cleanName(item.name || item.label || '').toLowerCase() ===
-                          cleanName(currentProfileName).toLowerCase()
+                          normalizedCurrentProfileName
                       }
+                      getPinStatus={item => isProfilePinned(item, pinnedProfiles)}
+                      getPinDisabledReason={getProfilePinDisabledReason}
+                      pinnedFirstEnabled={profilesPinnedFirst}
+                      onPinnedFirstToggle={() => setProfilesPinnedFirst(value => !value)}
+                      onPinToggle={handleProfilePinToggle}
                     />
                   </div>
                 </div>

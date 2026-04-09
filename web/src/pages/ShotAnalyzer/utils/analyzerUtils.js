@@ -1,22 +1,31 @@
 /**
  * analyzerUtils.js
- * * Configuration and utility functions for Shot Analyzer
- * * Contains:
- * - Column definitions for analysis table
- * - Group labels for UI organization
- * - Storage keys for localStorage
- * - Helper functions for data formatting
+ * Shared Shot Analyzer constants, storage keys, and formatting helpers.
  */
 /**
- * LocalStorage Keys for Analyzer Data
+ * LocalStorage keys used by Analyzer and Statistics shared state.
  */
 export const ANALYZER_DB_KEYS = {
   SHOTS: 'gaggimate_shots',
   PROFILES: 'gaggimate_profiles',
   PRESETS: 'gaggimate_column_presets',
   USER_STANDARD: 'gaggimate_user_standard_cols',
+  COMPARE_TARGET_DISPLAY_MODE: 'gaggimate_compare_target_display_mode',
+  COMPARE_ANNOTATIONS_ENABLED: 'gaggimate_compare_annotations_enabled',
   LIBRARY_SHOTS_SOURCE_FILTER: 'gaggimate_library_shots_source_filter',
   LIBRARY_PROFILES_SOURCE_FILTER: 'gaggimate_library_profiles_source_filter',
+  PINNED_PROFILES: 'gaggimate_pinned_profiles',
+  PINNED_SHOTS_BY_PROFILE: 'gaggimate_pinned_shots_by_profile',
+};
+
+export const MAX_PINNED_PROFILES = 10;
+export const MAX_PINNED_SHOTS_PER_PROFILE = 3;
+export const PINNED_NO_PROFILE_BUCKET = '__no_profile__';
+
+export const COMPARE_TARGET_DISPLAY_MODES = {
+  NONE: 'none',
+  PER_SHOT: 'perShot',
+  MAIN_SHOT_ONLY: 'mainShotOnly',
 };
 
 /**
@@ -475,6 +484,187 @@ export const getColumnsByGroup = groupKey => {
 export const cleanName = name => {
   if (!name) return '';
   return name.replace(/\.json$/i, '');
+};
+
+export const normalizeCompareTargetDisplayMode = value => {
+  if (value === COMPARE_TARGET_DISPLAY_MODES.NONE) return value;
+  if (value === COMPARE_TARGET_DISPLAY_MODES.MAIN_SHOT_ONLY) return value;
+  if (value === COMPARE_TARGET_DISPLAY_MODES.PER_SHOT) return value;
+  return COMPARE_TARGET_DISPLAY_MODES.NONE;
+};
+
+export const getShotIdentityKey = shot => {
+  if (!shot) return '';
+
+  const source = shot.source || 'temp';
+  if (source === 'gaggimate') {
+    return `gaggimate:${String(shot.id || '')}`;
+  }
+
+  return `browser:${String(shot.storageKey || shot.name || shot.id || '')}`;
+};
+
+export const getProfilePinKey = profile => {
+  let rawValue = '';
+  if (!profile) return '';
+
+  if (typeof profile === 'string') {
+    rawValue = profile;
+  } else {
+    rawValue =
+      profile.canonicalProfileName ||
+      profile.profileName ||
+      profile.profile ||
+      profile.label ||
+      profile.name ||
+      '';
+  }
+
+  const normalized = cleanName(rawValue).trim().toLowerCase();
+  return normalized === 'no profile loaded' ? '' : normalized;
+};
+
+export const getShotPinBucketKey = shot => {
+  const profileKey = getProfilePinKey(shot);
+  return profileKey || PINNED_NO_PROFILE_BUCKET;
+};
+
+function normalizePinnedProfiles(rawValue) {
+  if (!Array.isArray(rawValue)) return [];
+
+  const seen = new Set();
+  const normalized = [];
+  for (const entry of rawValue) {
+    // Persist only canonical profile keys so Analyzer and Statistics can share
+    // the same pin state even when the backing source differs.
+    const key = getProfilePinKey(entry);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(key);
+  }
+  return normalized;
+}
+
+function normalizePinnedShotsByProfile(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return {};
+
+  const normalized = {};
+
+  Object.entries(rawValue).forEach(([bucketKey, shotKeys]) => {
+    // Each bucket represents one profile context (or the explicit no-profile
+    // bucket), so duplicates need to be removed per bucket instead of globally.
+    const resolvedBucketKey = String(bucketKey || '').trim() || PINNED_NO_PROFILE_BUCKET;
+    if (!Array.isArray(shotKeys)) return;
+
+    const seen = new Set();
+    const normalizedShotKeys = [];
+    shotKeys.forEach(shotKey => {
+      const nextShotKey = String(shotKey || '').trim();
+      if (!nextShotKey || seen.has(nextShotKey)) return;
+      seen.add(nextShotKey);
+      normalizedShotKeys.push(nextShotKey);
+    });
+
+    if (normalizedShotKeys.length > 0) {
+      normalized[resolvedBucketKey] = normalizedShotKeys;
+    }
+  });
+
+  return normalized;
+}
+
+export const getPinnedProfiles = () =>
+  normalizePinnedProfiles(loadFromStorage(ANALYZER_DB_KEYS.PINNED_PROFILES, []));
+
+export const getPinnedShotsByProfile = () =>
+  normalizePinnedShotsByProfile(loadFromStorage(ANALYZER_DB_KEYS.PINNED_SHOTS_BY_PROFILE, {}));
+
+export const isProfilePinned = (profile, pinnedProfiles = getPinnedProfiles()) =>
+  pinnedProfiles.includes(getProfilePinKey(profile));
+
+export const isShotPinned = (
+  shot,
+  bucketKey = getShotPinBucketKey(shot),
+  pinnedShotsByProfile = getPinnedShotsByProfile(),
+) => {
+  const shotKey = typeof shot === 'string' ? shot : getShotIdentityKey(shot);
+  if (!shotKey) return false;
+  return (pinnedShotsByProfile[bucketKey] || []).includes(shotKey);
+};
+
+export const isShotPinnedAnywhere = (shot, pinnedShotsByProfile = getPinnedShotsByProfile()) => {
+  const shotKey = typeof shot === 'string' ? shot : getShotIdentityKey(shot);
+  if (!shotKey) return false;
+  return Object.values(pinnedShotsByProfile).some(bucket => bucket.includes(shotKey));
+};
+
+export const toggleProfilePin = profile => {
+  const profileKey = getProfilePinKey(profile);
+  const pinnedProfiles = getPinnedProfiles();
+  if (!profileKey) {
+    return { changed: false, reason: 'invalid-profile', pinnedProfiles };
+  }
+
+  const isPinned = pinnedProfiles.includes(profileKey);
+  if (!isPinned && pinnedProfiles.length >= MAX_PINNED_PROFILES) {
+    return { changed: false, reason: 'profile-limit', pinnedProfiles };
+  }
+
+  const nextPinnedProfiles = isPinned
+    ? pinnedProfiles.filter(entry => entry !== profileKey)
+    : [...pinnedProfiles, profileKey];
+
+  saveToStorage(ANALYZER_DB_KEYS.PINNED_PROFILES, nextPinnedProfiles);
+  return { changed: true, reason: null, pinnedProfiles: nextPinnedProfiles, profileKey };
+};
+
+export const toggleShotPin = (shot, explicitBucketKey = '') => {
+  const shotKey = typeof shot === 'string' ? shot : getShotIdentityKey(shot);
+  const bucketKey = explicitBucketKey || getShotPinBucketKey(shot);
+  const pinnedShotsByProfile = getPinnedShotsByProfile();
+
+  if (!shotKey) {
+    return { changed: false, reason: 'invalid-shot', pinnedShotsByProfile, bucketKey };
+  }
+
+  // Shot pins are scoped to the active profile bucket so the same shot can be
+  // promoted differently depending on which profile context is currently active.
+  const currentBucket = [...(pinnedShotsByProfile[bucketKey] || [])];
+  const isPinned = currentBucket.includes(shotKey);
+
+  if (!isPinned && currentBucket.length >= MAX_PINNED_SHOTS_PER_PROFILE) {
+    return { changed: false, reason: 'shot-limit', pinnedShotsByProfile, bucketKey };
+  }
+
+  const nextBucket = isPinned
+    ? currentBucket.filter(entry => entry !== shotKey)
+    : [...currentBucket, shotKey];
+
+  const nextPinnedShotsByProfile = { ...pinnedShotsByProfile };
+  if (nextBucket.length > 0) {
+    nextPinnedShotsByProfile[bucketKey] = nextBucket;
+  } else {
+    delete nextPinnedShotsByProfile[bucketKey];
+  }
+
+  saveToStorage(ANALYZER_DB_KEYS.PINNED_SHOTS_BY_PROFILE, nextPinnedShotsByProfile);
+  return {
+    changed: true,
+    reason: null,
+    pinnedShotsByProfile: nextPinnedShotsByProfile,
+    bucketKey,
+    shotKey,
+  };
+};
+
+export const getShotDisplayName = shot => {
+  if (!shot) return 'Unknown';
+
+  if (shot.source === 'gaggimate') {
+    return `#${shot.id || shot.name || 'Unknown'}`;
+  }
+
+  return cleanName(shot.name || shot.storageKey || shot.id || 'Unknown');
 };
 
 /**

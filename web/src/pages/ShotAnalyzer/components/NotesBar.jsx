@@ -83,7 +83,7 @@ function LoadedShotSummary({
   return (
     <button
       type='button'
-      className='scrollbar-none block w-full min-w-0 cursor-pointer overflow-x-auto px-1 py-1.5 text-center'
+      className='shot-analyzer-notes-scroll block w-full min-w-0 cursor-pointer overflow-x-auto overflow-y-hidden px-1 py-1.5 text-center'
       onClick={() => !isEditing && onToggleNotesExpanded && onToggleNotesExpanded()}
       title='Click to expand notes'
     >
@@ -193,6 +193,8 @@ export function NotesBar({
   onToggleNotesExpanded,
   onEditingChange,
   onExpandedHeightChange,
+  showImportModeToggle = true,
+  enableKeyboardNavigation = true,
 }) {
   // Shared responsive spacing for nav arrows and center info chips.
   // Keeps a visible minimum separation while adapting on wider layouts.
@@ -348,7 +350,7 @@ export function NotesBar({
 
   // Keyboard navigation: ArrowLeft / ArrowRight
   useEffect(() => {
-    if (!currentShot) return;
+    if (!currentShot || !enableKeyboardNavigation) return;
 
     const handleKeyDown = e => {
       if (e.defaultPrevented) return;
@@ -366,7 +368,7 @@ export function NotesBar({
 
     globalThis.addEventListener('keydown', handleKeyDown);
     return () => globalThis.removeEventListener('keydown', handleKeyDown);
-  }, [currentShot, canGoPrev, canGoNext, currentIndex, shotList, onNavigate]);
+  }, [currentShot, canGoPrev, canGoNext, currentIndex, shotList, onNavigate, enableKeyboardNavigation]);
 
   useEffect(() => {
     onEditingChange?.(isEditing);
@@ -498,7 +500,7 @@ export function NotesBar({
 
   return (
     <div>
-      <div className={`transition-all duration-200 ${borderClasses}`}>
+      <div className={`overflow-hidden transition-all duration-200 ${borderClasses}`}>
         <div
           className='grid w-full items-center px-1.5 py-0.5 sm:px-2'
           style={{
@@ -547,30 +549,34 @@ export function NotesBar({
             </button>
           )}
 
-          <button
-            ref={modeButtonRef}
-            type='button'
-            className={`${modeButtonClasses} ${importMode === 'browser' ? 'opacity-75' : 'opacity-60'}`}
-            style={
-              importMode === 'browser' ? { color: analyzerUiColors.sourceBadgeWebText } : undefined
-            }
-            onClick={handleModeToggle}
-            title={
-              importMode === 'browser'
-                ? 'Save to Browser. Click to switch imports to View temporarily.'
-                : 'View temporarily. Click to switch imports to Save to Browser.'
-            }
-            aria-label={
-              importMode === 'browser'
-                ? 'Switch import mode to View temporarily'
-                : 'Switch import mode to Save to Browser'
-            }
-          >
-            <FontAwesomeIcon
-              icon={importMode === 'browser' ? faLaptopFile : faEye}
-              className='text-xs'
-            />
-          </button>
+          {showImportModeToggle ? (
+            <button
+              ref={modeButtonRef}
+              type='button'
+              className={`${modeButtonClasses} ${importMode === 'browser' ? 'opacity-75' : 'opacity-60'}`}
+              style={
+                importMode === 'browser' ? { color: analyzerUiColors.sourceBadgeWebText } : undefined
+              }
+              onClick={handleModeToggle}
+              title={
+                importMode === 'browser'
+                  ? 'Save to Browser. Click to switch imports to View temporarily.'
+                  : 'View temporarily. Click to switch imports to Save to Browser.'
+              }
+              aria-label={
+                importMode === 'browser'
+                  ? 'Switch import mode to View temporarily'
+                  : 'Switch import mode to Save to Browser'
+              }
+            >
+              <FontAwesomeIcon
+                icon={importMode === 'browser' ? faLaptopFile : faEye}
+                className='text-xs'
+              />
+            </button>
+          ) : (
+            <span aria-hidden='true' className='h-6 w-6 flex-shrink-0' />
+          )}
         </div>
 
         {/* Loading indicator */}

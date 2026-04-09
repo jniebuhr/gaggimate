@@ -1,16 +1,42 @@
 import { useState, useEffect, useRef, useContext, useMemo } from 'preact/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
+import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { ApiServiceContext } from '../../../services/ApiService';
 import { libraryService } from '../../ShotAnalyzer/services/LibraryService';
 import { calculateShotMetrics, detectAutoDelay } from '../../ShotAnalyzer/services/AnalyzerService';
 import { computeStatistics } from '../services/StatisticsService';
-import { cleanName } from '../../ShotAnalyzer/utils/analyzerUtils';
+import {
+  ANALYZER_DB_KEYS,
+  MAX_PINNED_PROFILES,
+  MAX_PINNED_SHOTS_PER_PROFILE,
+  PINNED_NO_PROFILE_BUCKET,
+  cleanName,
+  getPinnedProfiles,
+  getPinnedShotsByProfile,
+  getProfilePinKey,
+  getShotDisplayName,
+  getShotPinBucketKey,
+  isProfilePinned,
+  isShotPinned,
+  isShotPinnedAnywhere,
+  loadFromStorage,
+  normalizeCompareTargetDisplayMode,
+  saveToStorage,
+  toggleProfilePin,
+  toggleShotPin,
+} from '../../ShotAnalyzer/utils/analyzerUtils';
 import { StatisticsToolbar } from './StatisticsToolbar';
 import { SummaryCards } from './SummaryCards';
 import { MetricsTable } from './MetricsTable';
 import { ProfileGroupTable } from './ProfileGroupTable';
 import { PhaseStatistics } from './PhaseStatistics';
+import { StatisticsShotCompareSection } from './StatisticsShotCompareSection';
 import { TrendChart } from './TrendChart';
 import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
+import { SourceMarker } from '../../ShotAnalyzer/components/SourceMarker';
 import {
   buildShotCandidatePredicate,
   parseStatisticsQuery,
@@ -158,84 +184,205 @@ function buildShotSelectionItem(shot, dateBasisMode) {
   };
 }
 
-function getPreferredStatisticsDetailSection(runMode) {
+function getStatisticsCompareFallbackKey(entry, index) {
+  return entry?.meta?.selectionKey || `${entry?.meta?.source || 'shot'}:${entry?.meta?.id || index}`;
+}
+
+function buildStatisticsCompareEntry(entry, { key, isReference = false } = {}) {
+  if (!entry?.shotData || !entry?.analysis) return null;
+
+  return {
+    key,
+    shot: entry.shotData,
+    shotName: entry.shotData.name || entry.meta?.id,
+    label: entry.meta?.displayName || getShotDisplayName(entry.shotData),
+    profile: entry.profileData || null,
+    profileName: entry.meta?.profileName,
+    results: entry.analysis,
+    isReference,
+  };
+}
+
+function getPreferredStatisticsDetailSection({
+  runMode,
+  hasCompareStatistics,
+  hasMetricStatistics,
+  hasTrendStatistics,
+}) {
+  if (hasMetricStatistics) return 'metrics';
+  if (hasTrendStatistics) return 'trends';
+  if (hasCompareStatistics) return 'compare';
   return runMode === 'profile' ? 'phase' : 'profile';
+}
+
+function normalizeStatisticsDetailSection(value) {
+  return ['metrics', 'trends', 'compare', 'profile', 'phase'].includes(value) ? value : null;
 }
 
 function resolveStatisticsDetailSectionChoice({
   candidate,
+  hasCompareStatistics,
+  hasMetricStatistics,
+  hasTrendStatistics,
   hasProfileGroupStatistics,
   hasPhaseStatistics,
 }) {
-  if (candidate === 'phase' && !hasPhaseStatistics && hasProfileGroupStatistics) return 'profile';
-  if (candidate === 'profile' && !hasProfileGroupStatistics && hasPhaseStatistics) return 'phase';
+  if (candidate === 'compare' && !hasCompareStatistics) {
+    if (hasMetricStatistics) return 'metrics';
+    if (hasTrendStatistics) return 'trends';
+    if (hasProfileGroupStatistics) return 'profile';
+    if (hasPhaseStatistics) return 'phase';
+  }
+  if (candidate === 'metrics' && !hasMetricStatistics) {
+    if (hasCompareStatistics) return 'compare';
+    if (hasTrendStatistics) return 'trends';
+    if (hasProfileGroupStatistics) return 'profile';
+    if (hasPhaseStatistics) return 'phase';
+  }
+  if (candidate === 'trends' && !hasTrendStatistics) {
+    if (hasCompareStatistics) return 'compare';
+    if (hasMetricStatistics) return 'metrics';
+    if (hasProfileGroupStatistics) return 'profile';
+    if (hasPhaseStatistics) return 'phase';
+  }
+  if (candidate === 'profile' && !hasProfileGroupStatistics) {
+    if (hasCompareStatistics) return 'compare';
+    if (hasMetricStatistics) return 'metrics';
+    if (hasTrendStatistics) return 'trends';
+    if (hasPhaseStatistics) return 'phase';
+  }
+  if (candidate === 'phase' && !hasPhaseStatistics) {
+    if (hasCompareStatistics) return 'compare';
+    if (hasMetricStatistics) return 'metrics';
+    if (hasTrendStatistics) return 'trends';
+    if (hasProfileGroupStatistics) return 'profile';
+  }
   return candidate;
 }
 
 function StatisticsDetailHeader({
+  hasCompareStatistics,
+  hasMetricStatistics,
+  hasTrendStatistics,
   hasPhaseStatistics,
   hasProfileGroupStatistics,
   resolvedStatisticsDetailSection,
   setStatisticsDetailSection,
 }) {
-  if (hasProfileGroupStatistics && hasPhaseStatistics) {
+  const availableTabs = [
+    hasMetricStatistics ? { id: 'metrics', label: 'Global metric averages' } : null,
+    hasTrendStatistics ? { id: 'trends', label: 'Trends' } : null,
+    hasCompareStatistics ? { id: 'compare', label: 'Shot Charts' } : null,
+    hasProfileGroupStatistics ? { id: 'profile', label: 'Per-profile statistics' } : null,
+    hasPhaseStatistics ? { id: 'phase', label: 'Per-phase statistics' } : null,
+  ].filter(Boolean);
+
+  if (availableTabs.length > 1) {
     return (
       <div role='tablist' className='tabs tabs-border'>
-        <button
-          type='button'
-          role='tab'
-          className={`tab ${resolvedStatisticsDetailSection === 'profile' ? 'tab-active' : ''}`}
-          aria-selected={resolvedStatisticsDetailSection === 'profile'}
-          onClick={() => setStatisticsDetailSection('profile')}
-        >
-          Per-profile statistics
-        </button>
-        <button
-          type='button'
-          role='tab'
-          className={`tab ${resolvedStatisticsDetailSection === 'phase' ? 'tab-active' : ''}`}
-          aria-selected={resolvedStatisticsDetailSection === 'phase'}
-          onClick={() => setStatisticsDetailSection('phase')}
-        >
-          Per-phase statistics
-        </button>
+        {availableTabs.map(tab => (
+          <button
+            key={tab.id}
+            type='button'
+            role='tab'
+            className={`tab ${resolvedStatisticsDetailSection === tab.id ? 'tab-active' : ''}`}
+            aria-selected={resolvedStatisticsDetailSection === tab.id}
+            onClick={() => setStatisticsDetailSection(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
     );
   }
 
-  const title = hasProfileGroupStatistics ? 'Per-profile statistics' : 'Per-phase statistics';
+  const title = availableTabs[0]?.label || 'Statistics';
   return <h3 className={STATISTICS_SECTION_TITLE_CLASS}>{title}</h3>;
 }
 
 function StatisticsDetailSectionPanel({
+  compareEntries,
+  compareTargetDisplayMode,
+  onCompareTargetDisplayModeChange,
+  hasMetricStatistics,
+  hasTrendStatistics,
   hasPhaseStatistics,
   hasProfileGroupStatistics,
   resolvedStatisticsDetailSection,
   result,
   setStatisticsDetailSection,
+  hidePhaseExitReasons = false,
+  chartRunKey = 'idle',
 }) {
-  if (!hasProfileGroupStatistics && !hasPhaseStatistics) return null;
+  const hasCompareStatistics = Array.isArray(compareEntries) && compareEntries.length > 0;
+
+  if (
+    !hasCompareStatistics &&
+    !hasMetricStatistics &&
+    !hasTrendStatistics &&
+    !hasProfileGroupStatistics &&
+    !hasPhaseStatistics
+  ) {
+    return null;
+  }
+
+  const shouldUsePanelSurface = resolvedStatisticsDetailSection !== 'metrics';
+
+  const sectionContent = (
+    <>
+      {hasCompareStatistics && resolvedStatisticsDetailSection === 'compare' && (
+        <StatisticsShotCompareSection
+          key={`statistics-shot-charts-${chartRunKey}`}
+          compareEntries={compareEntries}
+          compareTargetDisplayMode={compareTargetDisplayMode}
+          onCompareTargetDisplayModeChange={onCompareTargetDisplayModeChange}
+          showTitle={false}
+          embedded={true}
+        />
+      )}
+
+      {hasMetricStatistics &&
+        resolvedStatisticsDetailSection === 'metrics' && (
+          <MetricsTable metrics={result.metrics} />
+        )}
+
+      {hasTrendStatistics &&
+        resolvedStatisticsDetailSection === 'trends' && (
+          <TrendChart key={`statistics-trends-${chartRunKey}`} trends={result.trends} />
+        )}
+
+      {hasProfileGroupStatistics &&
+        resolvedStatisticsDetailSection === 'profile' && (
+          <ProfileGroupTable profileGroups={result.profileGroups} showTitle={false} />
+        )}
+
+      {hasPhaseStatistics &&
+        resolvedStatisticsDetailSection === 'phase' && (
+          <PhaseStatistics
+            phaseStats={result.phaseStats}
+            showTitle={false}
+            hideExitReasons={hidePhaseExitReasons}
+          />
+        )}
+    </>
+  );
 
   return (
     <div className='space-y-2'>
       <StatisticsDetailHeader
+        hasCompareStatistics={hasCompareStatistics}
+        hasMetricStatistics={hasMetricStatistics}
+        hasTrendStatistics={hasTrendStatistics}
         hasPhaseStatistics={hasPhaseStatistics}
         hasProfileGroupStatistics={hasProfileGroupStatistics}
         resolvedStatisticsDetailSection={resolvedStatisticsDetailSection}
         setStatisticsDetailSection={setStatisticsDetailSection}
       />
-
-      <div className={`${STATISTICS_PANEL_CLASS} p-4`}>
-        {hasProfileGroupStatistics &&
-          (!hasPhaseStatistics || resolvedStatisticsDetailSection === 'profile') && (
-            <ProfileGroupTable profileGroups={result.profileGroups} showTitle={false} />
-          )}
-
-        {hasPhaseStatistics &&
-          (!hasProfileGroupStatistics || resolvedStatisticsDetailSection === 'phase') && (
-            <PhaseStatistics phaseStats={result.phaseStats} showTitle={false} />
-          )}
-      </div>
+      {shouldUsePanelSurface ? (
+        <div className={`${STATISTICS_PANEL_CLASS} p-4`}>{sectionContent}</div>
+      ) : (
+        sectionContent
+      )}
     </div>
   );
 }
@@ -276,7 +423,16 @@ export function StatisticsView({ initialContext }) {
   const [runRequest, setRunRequest] = useState(null);
   const [calcMode, setCalcMode] = useState(false);
   const [preparingRun, setPreparingRun] = useState(false);
-  const [statisticsDetailSection, setStatisticsDetailSection] = useState('profile');
+  const [statisticsDetailSection, setStatisticsDetailSection] = useState(
+    () => normalizeStatisticsDetailSection(initialContext?.preferredDetailSection) || 'metrics',
+  );
+  const [compareTargetDisplayMode, setCompareTargetDisplayMode] = useState(() =>
+    normalizeCompareTargetDisplayMode(
+      loadFromStorage(ANALYZER_DB_KEYS.COMPARE_TARGET_DISPLAY_MODE),
+    ),
+  );
+  const [pinnedProfiles, setPinnedProfiles] = useState(() => getPinnedProfiles());
+  const [pinnedShotsByProfile, setPinnedShotsByProfile] = useState(() => getPinnedShotsByProfile());
 
   const metaLoadIdRef = useRef(0);
   const analyzeLoadIdRef = useRef(0);
@@ -290,6 +446,13 @@ export function StatisticsView({ initialContext }) {
   useEffect(() => {
     libraryService.setApiService(apiService);
   }, [apiService]);
+
+  useEffect(() => {
+    saveToStorage(
+      ANALYZER_DB_KEYS.COMPARE_TARGET_DISPLAY_MODE,
+      normalizeCompareTargetDisplayMode(compareTargetDisplayMode),
+    );
+  }, [compareTargetDisplayMode]);
 
   useEffect(() => {
     const loadId = ++metaLoadIdRef.current;
@@ -363,6 +526,45 @@ export function StatisticsView({ initialContext }) {
     }
     return map;
   }, [rawShotCandidates, normalizedAvailableProfilesMap]);
+
+  const getCanonicalShotProfilePinKey = shotMeta => {
+    const shotKey = getShotSelectionKey(shotMeta);
+    const canonicalProfile = shotKeyToCanonicalProfile.get(shotKey);
+    return canonicalProfile
+      ? getProfilePinKey(canonicalProfile)
+      : getProfilePinKey(shotMeta?.profile || shotMeta?.profileName || '');
+  };
+
+  const matchesPinnedShotMeta = shotMeta => {
+    const shotKey = getShotSelectionKey(shotMeta);
+    const profilePinKey = getCanonicalShotProfilePinKey(shotMeta);
+    return (
+      isShotPinnedAnywhere(shotKey, pinnedShotsByProfile) ||
+      (profilePinKey ? isProfilePinned(profilePinKey, pinnedProfiles) : false)
+    );
+  };
+
+  const getProfilePinDisabledReason = profileName => {
+    if (isProfilePinned(profileName, pinnedProfiles)) return '';
+    if (pinnedProfiles.length >= MAX_PINNED_PROFILES) {
+      return `Maximum ${MAX_PINNED_PROFILES} pinned profiles`;
+    }
+    return '';
+  };
+
+  const getShotPinDisabledReason = shotMeta => {
+    const bucketKey = getCanonicalShotProfilePinKey(shotMeta) || getShotPinBucketKey(shotMeta);
+    if (isShotPinned(shotMeta, bucketKey, pinnedShotsByProfile)) return '';
+
+    const pinnedCount = (pinnedShotsByProfile[bucketKey] || []).length;
+    if (pinnedCount >= MAX_PINNED_SHOTS_PER_PROFILE) {
+      return bucketKey === PINNED_NO_PROFILE_BUCKET
+        ? `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile`
+        : `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile`;
+    }
+
+    return '';
+  };
 
   const dateBasisWarningState = useMemo(() => {
     let missingShotTimestampCount = 0;
@@ -490,8 +692,9 @@ export function StatisticsView({ initialContext }) {
     () =>
       buildShotCandidatePredicate(parsedDslQuery, {
         dateBasisMode,
+        matchesPinnedShot: matchesPinnedShotMeta,
       }),
-    [parsedDslQuery, dateBasisMode],
+    [parsedDslQuery, dateBasisMode, matchesPinnedShotMeta],
   );
 
   const visualDateFrom = useMemo(() => parseDateInputMs(dateFromLocal, 'start'), [dateFromLocal]);
@@ -599,8 +802,10 @@ export function StatisticsView({ initialContext }) {
           id: name,
           primary: name,
           searchText: name,
+          isPinned: isProfilePinned(name, pinnedProfiles),
+          pinDisabledReason: getProfilePinDisabledReason(name),
         })),
-    [availableProfiles, profilesPresentInBaseFilteredShots],
+    [availableProfiles, profilesPresentInBaseFilteredShots, pinnedProfiles, getProfilePinDisabledReason],
   );
 
   const visibleProfileIdSet = useMemo(
@@ -611,9 +816,25 @@ export function StatisticsView({ initialContext }) {
   const baseShotSelectionItems = useMemo(
     () =>
       (selectionScopeShots || [])
-        .map(shot => buildShotSelectionItem(shot, dateBasisMode))
+        .map(shot => {
+          const baseItem = buildShotSelectionItem(shot, dateBasisMode);
+          const pinBucketKey = getCanonicalShotProfilePinKey(shot) || getShotPinBucketKey(shot);
+          return {
+            ...baseItem,
+            shotMeta: shot,
+            pinBucketKey,
+            isPinned: isShotPinned(shot, pinBucketKey, pinnedShotsByProfile),
+            pinDisabledReason: getShotPinDisabledReason(shot),
+          };
+        })
         .filter(item => item.id),
-    [selectionScopeShots, dateBasisMode],
+    [
+      selectionScopeShots,
+      dateBasisMode,
+      pinnedShotsByProfile,
+      getCanonicalShotProfilePinKey,
+      getShotPinDisabledReason,
+    ],
   );
 
   const selectedProfileNormalizedSet = useMemo(
@@ -648,9 +869,25 @@ export function StatisticsView({ initialContext }) {
   const byProfileShotSelectionItems = useMemo(
     () =>
       byProfileEligibleShots
-        .map(shot => buildShotSelectionItem(shot, dateBasisMode))
+        .map(shot => {
+          const baseItem = buildShotSelectionItem(shot, dateBasisMode);
+          const pinBucketKey = getCanonicalShotProfilePinKey(shot) || getShotPinBucketKey(shot);
+          return {
+            ...baseItem,
+            shotMeta: shot,
+            pinBucketKey,
+            isPinned: isShotPinned(shot, pinBucketKey, pinnedShotsByProfile),
+            pinDisabledReason: getShotPinDisabledReason(shot),
+          };
+        })
         .filter(item => item.id),
-    [byProfileEligibleShots, dateBasisMode],
+    [
+      byProfileEligibleShots,
+      dateBasisMode,
+      pinnedShotsByProfile,
+      getCanonicalShotProfilePinKey,
+      getShotPinDisabledReason,
+    ],
   );
 
   const selectedShotKeySet = useMemo(() => new Set(selectedShotKeys || []), [selectedShotKeys]);
@@ -678,6 +915,18 @@ export function StatisticsView({ initialContext }) {
     mode === 'profile' ? byProfileShotSelectionItems : baseShotSelectionItems;
   const displayedProfileSelection =
     mode === 'shots' ? derivedProfilesFromSelectedShots : selectedProfileNames;
+
+  const handleProfilePinToggle = item => {
+    const result = toggleProfilePin(item?.id || item?.primary || item);
+    if (!result.changed) return;
+    setPinnedProfiles(result.pinnedProfiles);
+  };
+
+  const handleShotPinToggle = item => {
+    const result = toggleShotPin(item?.id || item?.shotMeta, item?.pinBucketKey || '');
+    if (!result.changed) return;
+    setPinnedShotsByProfile(result.pinnedShotsByProfile);
+  };
 
   // Stage 2 filtering: apply mode-specific profile/shot selections on top of the base filter.
   const candidateFilterState = useMemo(() => {
@@ -934,8 +1183,20 @@ export function StatisticsView({ initialContext }) {
           const batchResults = await Promise.all(
             batch.map(async shot => {
               try {
-                const shotId = shot.source === 'gaggimate' ? shot.id : shot.name || shot.id;
-                const fullShot = await libraryService.loadShot(shotId, shot.source);
+                const shotId =
+                  shot.source === 'gaggimate'
+                    ? shot.id
+                    : shot.storageKey || shot.name || shot.id;
+                const loadedShot = await libraryService.loadShot(shotId, shot.source);
+                const fullShot = loadedShot
+                  ? {
+                      ...loadedShot,
+                      source: loadedShot.source || shot.source,
+                      storageKey:
+                        loadedShot.storageKey || shot.storageKey || shot.name || String(shotId),
+                      name: loadedShot.name || shot.name || shot.storageKey || String(shotId),
+                    }
+                  : null;
                 if (!fullShot || !fullShot.samples || fullShot.samples.length === 0) return null;
 
                 const profileField = fullShot.profile || '';
@@ -972,6 +1233,14 @@ export function StatisticsView({ initialContext }) {
                   }
                 }
 
+                if (
+                  matchedProfile &&
+                  matchedProfileEntry?.source &&
+                  !matchedProfile.source
+                ) {
+                  matchedProfile = { ...matchedProfile, source: matchedProfileEntry.source };
+                }
+
                 const settings = { ...DEFAULT_SETTINGS };
                 const autoResult = detectAutoDelay(fullShot, matchedProfile, settings.scaleDelayMs);
                 if (autoResult.auto) {
@@ -983,8 +1252,12 @@ export function StatisticsView({ initialContext }) {
 
                 return {
                   analysis,
+                  shotData: fullShot,
+                  profileData: matchedProfile,
                   meta: {
                     id: shotId,
+                    selectionKey: getShotSelectionKey(shot),
+                    displayName: getShotDisplayName(fullShot),
                     timestamp: shot.timestamp || shot.shotDate || shot.uploadedAt || 0,
                     profileName: cleanName(profileField) || '(Unknown)',
                     source: shot.source,
@@ -1041,16 +1314,16 @@ export function StatisticsView({ initialContext }) {
       : mode === 'shots' && selectedShotKeys.length === 0
         ? 'Select one or more shots.'
         : null;
+  const canRunStatistics =
+    !loading &&
+    !preparingRun &&
+    !metadataLoading &&
+    !metadataError &&
+    candidateFilterState.parseErrors.length === 0 &&
+    !isSelectionMissing;
 
   const handleGo = () => {
-    if (
-      loading ||
-      preparingRun ||
-      metadataLoading ||
-      metadataError ||
-      candidateFilterState.parseErrors.length > 0 ||
-      isSelectionMissing
-    ) {
+    if (!canRunStatistics) {
       return;
     }
 
@@ -1059,6 +1332,7 @@ export function StatisticsView({ initialContext }) {
     const fallbackSource = getStatisticsFallbackSource(source);
     const shotSnapshot = [...candidateFilterState.filteredShots];
     const profileSnapshot = [...rawProfiles];
+    const orderedShotKeysSnapshot = [...selectedShotKeys];
     const nextCalcMode = calcMode;
     setPreparingRun(true);
 
@@ -1075,13 +1349,16 @@ export function StatisticsView({ initialContext }) {
 
         if (prepareRunIdRef.current !== prepareRunId) return;
 
-        // Persist a run snapshot so UI changes after clicking "Go" do not mutate the active run.
+        // Persist a run snapshot so toolbar changes after clicking Play do not
+        // mutate the dataset currently being analyzed.
         setRunRequest({
           id: nextRunId,
           shots: shotSnapshot,
           profiles: profileSnapshot,
           fallbackProfiles: Array.isArray(fallbackProfiles) ? fallbackProfiles : [],
+          orderedShotKeys: orderedShotKeysSnapshot,
           calcMode: nextCalcMode,
+          dateBasisMode,
           mode,
         });
       } finally {
@@ -1107,34 +1384,174 @@ export function StatisticsView({ initialContext }) {
     if (!result || !runRequest?.id) return;
     if (initializedDetailSectionRunIdRef.current === runRequest.id) return;
 
+    // Lock the first valid detail tab for each run once, then let the user own
+    // subsequent tab changes without re-resolving on every render.
+    const hasCompareStatistics = Array.isArray(entriesRef.current) && entriesRef.current.length > 0;
     const hasProfileGroups = Array.isArray(result.profileGroups) && result.profileGroups.length > 0;
     const hasPhaseStats = Array.isArray(result.phaseStats) && result.phaseStats.length > 0;
-    const preferredSection = getPreferredStatisticsDetailSection(runRequest.mode);
+    const hasMetricStats = Boolean(result.metrics && Object.keys(result.metrics).length > 0);
+    const hasTrendStats = Array.isArray(result.trends) && result.trends.length > 1;
+    const defaultSection = getPreferredStatisticsDetailSection({
+      runMode: runRequest.mode,
+      hasCompareStatistics,
+      hasMetricStatistics: hasMetricStats,
+      hasTrendStatistics: hasTrendStats,
+    });
     const nextSection = resolveStatisticsDetailSectionChoice({
-      candidate: preferredSection,
+      candidate: normalizeStatisticsDetailSection(statisticsDetailSection) || defaultSection,
+      hasCompareStatistics,
+      hasMetricStatistics: hasMetricStats,
+      hasTrendStatistics: hasTrendStats,
       hasProfileGroupStatistics: hasProfileGroups,
       hasPhaseStatistics: hasPhaseStats,
     });
 
     setStatisticsDetailSection(nextSection);
     initializedDetailSectionRunIdRef.current = runRequest.id;
-  }, [result, runRequest]);
+  }, [result, runRequest, statisticsDetailSection]);
 
   const hasProfileGroupStatistics = result?.profileGroups?.length > 0;
   const hasPhaseStatistics = result?.phaseStats?.length > 0;
-  const preferredStatisticsDetailSection = getPreferredStatisticsDetailSection(runRequest?.mode);
+  const hasMetricStatistics = Boolean(result?.metrics && Object.keys(result.metrics).length > 0);
+  const hasTrendStatistics = Array.isArray(result?.trends) && result.trends.length > 1;
+  const hasStatisticsCompare = Array.isArray(entriesRef.current) && entriesRef.current.length > 0;
+  const fallbackStatisticsDetailSection = getPreferredStatisticsDetailSection({
+    runMode: runRequest?.mode,
+    hasCompareStatistics: hasStatisticsCompare,
+    hasMetricStatistics,
+    hasTrendStatistics,
+  });
   const detailSectionCandidate =
     initializedDetailSectionRunIdRef.current === runRequest?.id
       ? statisticsDetailSection
-      : preferredStatisticsDetailSection;
+      : normalizeStatisticsDetailSection(statisticsDetailSection) || fallbackStatisticsDetailSection;
   const resolvedStatisticsDetailSection = resolveStatisticsDetailSectionChoice({
     candidate: detailSectionCandidate,
+    hasCompareStatistics: hasStatisticsCompare,
+    hasMetricStatistics,
+    hasTrendStatistics,
     hasProfileGroupStatistics,
     hasPhaseStatistics,
   });
+  const statisticsCompareEntries = useMemo(() => {
+    if (!result) return [];
+
+    const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
+    const entryBySelectionKey = new Map(
+      cachedEntries.map(entry => [entry?.meta?.selectionKey, entry]),
+    );
+    const orderedShotKeys = Array.isArray(runRequest?.orderedShotKeys)
+      ? runRequest.orderedShotKeys.filter(Boolean)
+      : [];
+    const fallbackShotKeys = Array.isArray(runRequest?.shots)
+      ? runRequest.shots.map(getShotSelectionKey).filter(Boolean)
+      : [];
+    const preferredShotOrder = orderedShotKeys.length > 0 ? orderedShotKeys : fallbackShotKeys;
+
+    // Preserve the user's selection order when possible so compare charts stay
+    // aligned with the active run snapshot instead of whichever order the async
+    // analysis happened to finish in.
+    const orderedCompareEntries = preferredShotOrder
+      .map((selectionKey, index) =>
+        buildStatisticsCompareEntry(entryBySelectionKey.get(selectionKey), {
+          key: selectionKey,
+          isReference: index === 0,
+        }),
+      )
+      .filter(Boolean);
+
+    const matchedCompareKeys = new Set(orderedCompareEntries.map(entry => entry.key));
+    const unmatchedCompareEntries = cachedEntries
+      .map((entry, index) => {
+        const fallbackKey = getStatisticsCompareFallbackKey(entry, index);
+        if (matchedCompareKeys.has(fallbackKey)) return null;
+
+        return buildStatisticsCompareEntry(entry, {
+          key: fallbackKey,
+          isReference: orderedCompareEntries.length === 0 && index === 0,
+        });
+      })
+      .filter(Boolean);
+
+    if (preferredShotOrder.length > 0) {
+      if (orderedCompareEntries.length === cachedEntries.length) {
+        return orderedCompareEntries;
+      }
+      if (orderedCompareEntries.length > 0 || unmatchedCompareEntries.length > 0) {
+        return [...orderedCompareEntries, ...unmatchedCompareEntries];
+      }
+    }
+
+    return cachedEntries
+      .map((entry, index) =>
+        buildStatisticsCompareEntry(entry, {
+          key: getStatisticsCompareFallbackKey(entry, index),
+          isReference: index === 0,
+        }),
+      )
+      .filter(Boolean);
+  }, [result, runRequest]);
+  const shouldHidePhaseExitReasons = statisticsCompareEntries.length > 2;
+  const builtShotCount = Number.isFinite(result?.summary?.totalShots) ? result.summary.totalShots : 0;
+  const builtProfileCount = useMemo(() => {
+    const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
+    const profileNames = new Set();
+
+    cachedEntries.forEach(entry => {
+      const rawName =
+        entry?.meta?.profileName || entry?.profileData?.name || entry?.profileData?.label || '';
+      const cleanedName = cleanName(rawName || '');
+      if (cleanedName) {
+        profileNames.add(cleanedName);
+      }
+    });
+
+    return profileNames.size;
+  }, [result, runRequest]);
+  const builtDateRange = useMemo(() => {
+    const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
+    const timestamps = cachedEntries
+      .map(entry =>
+        resolveShotEffectiveTimestampMs(entry?.shotData || entry?.meta, runRequest?.dateBasisMode || 'auto'),
+      )
+      .filter(value => Number.isFinite(value) && value > 0)
+      .sort((a, b) => a - b);
+
+    if (timestamps.length === 0) {
+      return { startMs: null, endMs: null };
+    }
+
+    // The collapsed toolbar summarizes the actual built dataset, not the raw
+    // filter inputs, so it reflects the first and last analyzed shots.
+    return {
+      startMs: timestamps[0],
+      endMs: timestamps[timestamps.length - 1],
+    };
+  }, [result, runRequest]);
+
+  // Build the detail panel once so the surrounding render path can switch
+  // between loading, empty, and populated states without duplicating the tab logic.
+  const statisticsDetailSectionPanel = (
+    <StatisticsDetailSectionPanel
+      chartRunKey={runRequest?.id || 'idle'}
+      compareEntries={statisticsCompareEntries}
+      compareTargetDisplayMode={compareTargetDisplayMode}
+      onCompareTargetDisplayModeChange={setCompareTargetDisplayMode}
+      hasMetricStatistics={hasMetricStatistics}
+      hasTrendStatistics={hasTrendStatistics}
+      hasPhaseStatistics={hasPhaseStatistics}
+      hasProfileGroupStatistics={hasProfileGroupStatistics}
+      resolvedStatisticsDetailSection={resolvedStatisticsDetailSection}
+      result={result}
+      setStatisticsDetailSection={setStatisticsDetailSection}
+      hidePhaseExitReasons={shouldHidePhaseExitReasons}
+    />
+  );
+  const shouldShowEmptyStatisticsState =
+    !preparingRun && !loading && !result && !error && !metadataError;
 
   return (
-    <div className='space-y-5'>
+    <div className={shouldShowEmptyStatisticsState ? 'space-y-6' : 'space-y-5'}>
       <div className='bg-base-100/80 border-base-content/10 z-50 rounded-xl border shadow-lg backdrop-blur-md lg:sticky lg:top-0'>
         <div className='px-1.5 py-1.5 sm:px-2 sm:py-2'>
           <StatisticsToolbar
@@ -1147,26 +1564,22 @@ export function StatisticsView({ initialContext }) {
             onGo={handleGo}
             calcMode={calcMode}
             onCalcModeChange={setCalcMode}
+            startLoading={preparingRun}
             loading={loading}
             metadataLoading={metadataLoading}
-            canGo={
-              !loading &&
-              !preparingRun &&
-              !metadataLoading &&
-              !metadataError &&
-              candidateFilterState.parseErrors.length === 0 &&
-              !isSelectionMissing
-            }
+            canGo={canRunStatistics}
             profileSelectionItems={profileSelectionItems}
             selectedProfileNames={displayedProfileSelection}
             onSelectedProfileNamesChange={
               mode === 'shots' ? handleByShotsProfileSelectionChange : handleProfileSelectionChange
             }
+            onProfilePinToggle={handleProfilePinToggle}
             shotSelectionItems={shotSelectionItems}
             selectedShotKeys={selectedShotKeys}
             onSelectedShotKeysChange={
               mode === 'profile' ? handleByProfileShotSelectionChange : handleShotSelectionChange
             }
+            onShotPinToggle={handleShotPinToggle}
             query={query}
             onQueryChange={setQuery}
             dateFromLocal={dateFromLocal}
@@ -1185,6 +1598,11 @@ export function StatisticsView({ initialContext }) {
             onClearFilters={handleClearFilters}
             metadataError={metadataError}
             selectionHint={selectionHint}
+            hasBuiltStatistics={Boolean(result)}
+            builtShotCount={builtShotCount}
+            builtProfileCount={builtProfileCount}
+            builtDateRangeStartMs={builtDateRange.startMs}
+            builtDateRangeEndMs={builtDateRange.endMs}
           />
         </div>
       </div>
@@ -1192,13 +1610,19 @@ export function StatisticsView({ initialContext }) {
       {loading && (
         <div className={`${STATISTICS_PANEL_CLASS} p-6 text-center`}>
           <div className='mb-2 text-sm font-semibold opacity-70'>
-            Analyzing shot {progress.current} of {progress.total}...
+            {progress.total > 0
+              ? `Analyzing shot ${progress.current} of ${progress.total}...`
+              : 'Preparing statistics...'}
           </div>
-          <progress
-            className='progress progress-primary w-full max-w-xs'
-            value={progress.current}
-            max={progress.total || 1}
-          />
+          {progress.total > 0 ? (
+            <progress
+              className='progress progress-primary w-full max-w-xs'
+              value={progress.current}
+              max={progress.total}
+            />
+          ) : (
+            <progress className='progress progress-primary w-full max-w-xs' />
+          )}
         </div>
       )}
 
@@ -1218,27 +1642,7 @@ export function StatisticsView({ initialContext }) {
         <div className='space-y-5'>
           <SummaryCards summary={result.summary} />
 
-          <div className='space-y-2'>
-            <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Global metric averages</h3>
-            <MetricsTable metrics={result.metrics} />
-          </div>
-
-          {result.trends.length > 1 && (
-            <div className='space-y-2'>
-              <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Trends</h3>
-              <div className={`${STATISTICS_PANEL_CLASS} p-4`}>
-                <TrendChart trends={result.trends} />
-              </div>
-            </div>
-          )}
-
-          <StatisticsDetailSectionPanel
-            hasPhaseStatistics={hasPhaseStatistics}
-            hasProfileGroupStatistics={hasProfileGroupStatistics}
-            resolvedStatisticsDetailSection={resolvedStatisticsDetailSection}
-            result={result}
-            setStatisticsDetailSection={setStatisticsDetailSection}
-          />
+          {statisticsDetailSectionPanel}
 
           {result.summary.totalShots === 0 && (
             <div className={`${STATISTICS_PANEL_CLASS} p-8 text-center`}>
@@ -1248,18 +1652,90 @@ export function StatisticsView({ initialContext }) {
         </div>
       )}
 
-      {!loading && !result && !error && !metadataError && metadataLoading && (
-        <div className={`${STATISTICS_PANEL_CLASS} p-12 text-center`}>
-          <span className='loading loading-spinner loading-lg text-base-content/30' />
-          <p className='mt-3 text-sm opacity-50'>Loading shots and profiles...</p>
-        </div>
-      )}
+      {shouldShowEmptyStatisticsState && (
+        <div className='w-full'>
+          <div className='bg-base-200/60 border-base-content/5 w-full space-y-6 rounded-xl border p-8 text-left shadow-sm'>
+            <div className='border-base-content/10 space-y-2 border-b pb-4 text-center'>
+              <h3 className='text-base-content text-2xl font-bold'>No Statistics Built Yet</h3>
+              <p className='text-base-content text-sm opacity-70'>
+                Press{' '}
+                <span
+                  className='inline-flex h-5 w-5 items-center justify-center rounded-md bg-success'
+                  style={{ color: 'var(--color-base-content)' }}
+                >
+                  <FontAwesomeIcon icon={faPlay} className='text-[10px]' />
+                </span>{' '}
+                to build an overall statistic for all GaggiMate shots.
+              </p>
+            </div>
 
-      {!loading && !result && !error && !metadataError && !metadataLoading && (
-        <div className={`${STATISTICS_PANEL_CLASS} p-8 text-center`}>
-          <p className='text-sm opacity-50'>
-            Configure your filters and press Go to generate statistics.
-          </p>
+            <p className='text-base-content border-base-content/10 mb-4 border-b pb-2 text-sm font-bold tracking-wide uppercase'>
+              Basic Selection
+            </p>
+
+            <div className='space-y-5'>
+              <div className='flex items-start gap-4'>
+                <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center text-success'>
+                  <FontAwesomeIcon icon={faChartSimple} className='text-base' />
+                </div>
+                <div className='flex-1'>
+                  <h4 className='text-base-content mb-1 text-sm font-bold'>Statistics Mode</h4>
+                  <p className='text-base-content text-xs leading-relaxed'>
+                    <span className='font-bold'>All</span> builds one overall result.
+                    <span className='font-bold'> By Profile</span> and
+                    <span className='font-bold'> By Shots</span> reorganize the same dataset into
+                    grouped views.
+                  </p>
+                </div>
+              </div>
+
+              <div className='bg-base-content/5 h-px w-full'></div>
+
+              <div className='flex items-start gap-4'>
+                <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center gap-1.5'>
+                  <SourceMarker source='gaggimate' variant='large' />
+                  <SourceMarker source='browser' variant='large' />
+                </div>
+                <div className='flex-1'>
+                  <h4 className='text-base-content mb-1 text-sm font-bold'>Source</h4>
+                  <p className='text-base-content text-xs leading-relaxed'>
+                    The Source menu switches between GaggiMate shots, local browser storage, or
+                    both combined.
+                  </p>
+                </div>
+              </div>
+
+              <div className='bg-base-content/5 h-px w-full'></div>
+
+              <div className='flex items-start gap-4'>
+                <div className='text-base-content/45 flex h-8 w-10 flex-shrink-0 items-center justify-center'>
+                  <FontAwesomeIcon icon={faCalendarDays} className='text-base' />
+                </div>
+                <div className='flex-1'>
+                  <h4 className='text-base-content mb-1 text-sm font-bold'>Date Range</h4>
+                  <p className='text-base-content text-xs leading-relaxed'>
+                    The date selection limits the analysis to a specific time window. Leaving it
+                    empty keeps the current automatic range.
+                  </p>
+                </div>
+              </div>
+
+              <div className='bg-base-content/5 h-px w-full'></div>
+
+              <div className='flex items-start gap-4'>
+                <div className='text-base-content/45 flex h-8 w-10 flex-shrink-0 items-center justify-center'>
+                  <FontAwesomeIcon icon={faMagnifyingGlass} className='text-base' />
+                </div>
+                <div className='flex-1'>
+                  <h4 className='text-base-content mb-1 text-sm font-bold'>Advanced Search</h4>
+                  <p className='text-base-content text-xs leading-relaxed'>
+                    The Advanced query can narrow the current selection further when more precise
+                    filtering is required.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -4,7 +4,13 @@ import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons/faArrowRight
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
+import { SourceMarker } from '../../ShotAnalyzer/components/SourceMarker';
+import {
+  getAnalyzerSurfaceTriggerClasses,
+  getAnalyzerTextButtonClasses,
+} from '../../ShotAnalyzer/components/analyzerControlStyles';
 import { StatisticsSearchHelp } from './StatisticsSearchHelp';
 import { StatisticsMultiSelectDropdown } from './StatisticsMultiSelectDropdown';
 import './StatisticsToolbar.css';
@@ -29,12 +35,13 @@ const DATE_BASIS_OPTIONS = [
   { value: 'upload', label: 'Upload' },
 ];
 
+const STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS = 'btn btn-md h-10 min-h-10 border-none shadow-none';
 const SEGMENT_GROUP_CLASS =
-  'inline-flex overflow-hidden rounded-lg border border-base-content/10 bg-base-100/50 shadow-sm';
+  'inline-flex overflow-hidden rounded-lg bg-base-content/4 divide-x divide-base-content/10';
 const SEGMENT_BUTTON_BASE_CLASS =
-  'flex h-11 min-h-0 items-center justify-center border-0 border-r border-base-content/10 px-2 text-xs font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5';
+  'flex h-11 min-h-0 items-center justify-center border-0 px-2 text-xs font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5';
 const COMPACT_SEGMENT_BUTTON_BASE_CLASS =
-  'flex h-9 min-h-0 items-center justify-center border-0 border-r border-base-content/10 px-1.5 text-[11px] font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40';
+  'flex h-9 min-h-0 items-center justify-center border-0 px-1.5 text-[11px] font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40';
 const CALC_ACTIVE_SEGMENT_STYLE = {
   color: 'var(--analyzer-pred-info-blue)',
   backgroundColor: 'color-mix(in srgb, var(--analyzer-pred-info-blue) 12%, transparent)',
@@ -45,7 +52,51 @@ const WARNING_ORANGE_TEXT_MUTED_STYLE = {
 };
 
 function getPrimaryDropdownToneClasses() {
-  return 'border-primary/22 bg-primary/10 text-primary hover:bg-primary/15';
+  return 'bg-primary text-primary-content hover:bg-primary/92';
+}
+
+function getNeutralDropdownToneClasses() {
+  return 'bg-transparent text-base-content/70 hover:text-base-content';
+}
+
+function getMenuItemClasses({ tone = 'neutral', isActive = false } = {}) {
+  if (tone === 'primary') {
+    return isActive
+      ? 'bg-primary text-primary-content hover:bg-primary/92'
+      : 'text-primary hover:bg-primary/12';
+  }
+
+  return isActive
+    ? 'text-base-content hover:bg-base-content/5'
+    : 'text-base-content/75 hover:bg-base-content/5 hover:text-base-content';
+}
+
+function renderSourceSummary(option) {
+  if (!option) return null;
+  if (option.value === 'both') {
+    return <span>{option.label}</span>;
+  }
+
+  return (
+    <span className='inline-flex items-center gap-1.5'>
+      <SourceMarker source={option.value} variant='compact' />
+      <span>{option.label}</span>
+    </span>
+  );
+}
+
+function renderSourceOptionContent(option) {
+  if (!option) return null;
+  if (option.value === 'both') {
+    return <span>{option.label}</span>;
+  }
+
+  return (
+    <span className='inline-flex items-center gap-2'>
+      <SourceMarker source={option.value} variant='compact' />
+      <span>{option.label}</span>
+    </span>
+  );
 }
 
 function closeParentDetails(target) {
@@ -53,15 +104,22 @@ function closeParentDetails(target) {
   if (details) details.open = false;
 }
 
+function isInteractiveToolbarTarget(target) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      'button, input, summary, details, a, label, select, textarea, [role="button"]',
+    ),
+  );
+}
+
 function getSegmentButtonClasses({
   isActive,
-  isLast,
   disabled = false,
   activeTone = 'primary',
   compact = false,
 }) {
   const baseClass = compact ? COMPACT_SEGMENT_BUTTON_BASE_CLASS : SEGMENT_BUTTON_BASE_CLASS;
-  const base = `${baseClass} ${isLast ? 'border-r-0' : ''}`;
   let activeClass = 'bg-primary text-primary-content';
   if (activeTone === 'secondary') {
     activeClass = 'bg-secondary text-secondary-content';
@@ -74,7 +132,7 @@ function getSegmentButtonClasses({
     ? activeClass
     : 'bg-base-100/50 text-base-content/75 hover:bg-base-200/70';
   const disabledClass = disabled ? 'pointer-events-none opacity-40' : '';
-  return `${base} ${resolvedClass} ${disabledClass}`;
+  return `${baseClass} ${resolvedClass} ${disabledClass}`;
 }
 
 function formatToolbarDateTimeDisplay(value) {
@@ -138,6 +196,18 @@ function getDateRangeDisplay({
   return { label: 'Auto Range', fromText: 'No dates', toText: '', isAuto: true };
 }
 
+function formatCountLabel(value, singular, plural) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return `0 ${plural}`;
+  return `${numericValue} ${numericValue === 1 ? singular : plural}`;
+}
+
+function formatCollapsedDateRangeText(startValue, endValue) {
+  const fromText = formatToolbarDateTimeDisplay(startValue) || 'No dates';
+  const toText = formatToolbarDateTimeDisplay(endValue) || '';
+  return toText ? `${fromText} - ${toText}` : fromText;
+}
+
 export function StatisticsToolbar({
   source,
   onSourceChange,
@@ -146,15 +216,18 @@ export function StatisticsToolbar({
   onGo,
   calcMode,
   onCalcModeChange,
-  loading,
+  startLoading = false,
+  loading = false,
   metadataLoading = false,
   canGo = true,
   profileSelectionItems,
   selectedProfileNames,
   onSelectedProfileNamesChange,
+  onProfilePinToggle,
   shotSelectionItems,
   selectedShotKeys,
   onSelectedShotKeysChange,
+  onShotPinToggle,
   query,
   onQueryChange,
   dateFromLocal,
@@ -173,13 +246,23 @@ export function StatisticsToolbar({
   onClearFilters,
   metadataError = null,
   selectionHint = null,
+  hasBuiltStatistics = false,
+  builtShotCount = 0,
+  builtProfileCount = 0,
+  builtDateRangeStartMs = null,
+  builtDateRangeEndMs = null,
 }) {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(() => !!query);
   const [showDslSelectionPreview, setShowDslSelectionPreview] = useState(
     () => !!String(query || '').trim(),
   );
   const dslInputRef = useRef(null);
-  const isBusy = loading || metadataLoading;
+  const toolbarContainerRef = useRef(null);
+  const [isCollapsedStripExpanded, setIsCollapsedStripExpanded] = useState(false);
+  // Keep the toolbar locked while metadata or a statistics run is active, but
+  // reserve the centered spinner for short startup phases only.
+  const isBusy = startLoading || loading || metadataLoading;
+  const showBusyOverlay = startLoading || metadataLoading;
   const canExecute = canGo && !isBusy;
   const topError = parseErrors[0]?.message || null;
   const topWarning = !topError ? parseWarnings[0]?.message : null;
@@ -224,6 +307,45 @@ export function StatisticsToolbar({
     hasDslQuery &&
     showDslSelectionPreview &&
     (profilePreviewItems.length > 0 || shotPreviewItems.length > 0);
+  const shouldCollapseToolbar = Boolean(hasBuiltStatistics);
+  // After a run is built, the toolbar collapses into a compact summary strip
+  // and only expands again when the user explicitly reopens it.
+  const isToolbarExpanded = !shouldCollapseToolbar || isCollapsedStripExpanded;
+  const collapsedShotCountLabel = formatCountLabel(builtShotCount, 'shot', 'shots');
+  const collapsedProfileCountLabel = formatCountLabel(builtProfileCount, 'profile', 'profiles');
+  const collapsedDateRangeText = formatCollapsedDateRangeText(
+    builtDateRangeStartMs,
+    builtDateRangeEndMs,
+  );
+  const sourceTriggerClasses = getAnalyzerSurfaceTriggerClasses({
+    className: `flex h-9 min-h-0 w-[4.75rem] list-none items-center justify-between rounded-lg bg-transparent px-2 text-xs font-bold tracking-wide uppercase [&::-webkit-details-marker]:hidden ${getNeutralDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`,
+  });
+  const modeTriggerClasses = getAnalyzerSurfaceTriggerClasses({
+    className: `${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-[7rem] list-none justify-between rounded-lg px-2 text-sm font-semibold [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`,
+  });
+  const resetButtonClasses = getAnalyzerSurfaceTriggerClasses({
+    className:
+      `inline-flex ${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-12 flex-col items-center justify-center gap-0.5 rounded-lg bg-base-content/4 px-0 text-base-content/70 hover:bg-base-content/7 hover:text-base-content disabled:cursor-not-allowed disabled:opacity-40`,
+  });
+  const runButtonClasses = getAnalyzerSurfaceTriggerClasses({
+    className:
+      `inline-flex ${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-[6rem] items-center justify-center rounded-lg bg-success px-0 text-success-content hover:bg-success/92 hover:text-success-content disabled:cursor-not-allowed disabled:opacity-40`,
+  });
+  const compactNeutralButtonClasses = getAnalyzerTextButtonClasses({
+    className:
+      'h-9 min-h-0 rounded-lg bg-transparent px-2 text-xs font-semibold text-base-content/65 hover:text-base-content disabled:cursor-not-allowed disabled:opacity-40',
+  });
+  const activeCompactNeutralButtonClasses = getAnalyzerTextButtonClasses({
+    className:
+      'h-9 min-h-0 rounded-lg bg-transparent px-2 text-xs font-semibold text-base-content hover:text-base-content disabled:cursor-not-allowed disabled:opacity-40',
+  });
+  const dateTriggerClasses = getAnalyzerSurfaceTriggerClasses({
+    className: `flex h-9 min-h-0 w-[11.25rem] list-none items-center gap-1.5 rounded-lg bg-transparent px-2 text-left text-xs sm:w-[12.5rem] md:w-[15rem] [&::-webkit-details-marker]:hidden ${
+      hasDateFilter
+        ? 'text-base-content'
+        : 'text-base-content/70 hover:text-base-content'
+    }`,
+  });
 
   useEffect(() => {
     if (query || parseErrors.length > 0 || parseWarnings.length > 0) {
@@ -244,7 +366,7 @@ export function StatisticsToolbar({
   }, [query]);
 
   useEffect(() => {
-    if (!shouldShowDslSelectionPreview) return;
+    if (!shouldShowDslSelectionPreview || !isToolbarExpanded) return;
 
     const handlePointerDown = event => {
       const inputNode = dslInputRef.current;
@@ -257,314 +379,393 @@ export function StatisticsToolbar({
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown);
     };
-  }, [shouldShowDslSelectionPreview]);
+  }, [shouldShowDslSelectionPreview, isToolbarExpanded]);
+
+  useEffect(() => {
+    if (isToolbarExpanded) return;
+
+    setShowDslSelectionPreview(false);
+    const toolbarNode = toolbarContainerRef.current;
+    if (!toolbarNode) return;
+    // Collapse should reset transient UI state so reopened toolbars never show
+    // stale dropdowns from the previous expanded session.
+    toolbarNode.querySelectorAll('details[open]').forEach(detailsNode => {
+      detailsNode.open = false;
+    });
+  }, [isToolbarExpanded]);
+
+  useEffect(() => {
+    if (!shouldCollapseToolbar) {
+      setIsCollapsedStripExpanded(false);
+    }
+  }, [shouldCollapseToolbar]);
+
+  useEffect(() => {
+    if (!shouldCollapseToolbar || !isCollapsedStripExpanded) return;
+
+    const handlePointerDown = event => {
+      const toolbarNode = toolbarContainerRef.current;
+      if (!toolbarNode) return;
+      if (toolbarNode.contains(event.target)) return;
+      setIsCollapsedStripExpanded(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [shouldCollapseToolbar, isCollapsedStripExpanded]);
 
   return (
-    <div className='flex w-full min-w-0 flex-col gap-2.5'>
-      <div className='flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1'>
-        <details className='dropdown max-w-full'>
-          <summary
-            className={`flex h-11 min-h-0 w-[4rem] list-none items-center justify-between rounded-lg border px-1.5 text-xs font-bold tracking-wide uppercase shadow-sm transition-colors [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`}
-            aria-label='Select source'
-            title='Select source'
-          >
-            <span>{currentSourceOption.label}</span>
-            <FontAwesomeIcon icon={faChevronDown} className='-ml-0.5 text-[10px] opacity-70' />
-          </summary>
-
-          <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-36 rounded-xl border p-1.5 shadow-xl backdrop-blur-md'>
-            <div className='grid gap-1'>
-              {SOURCE_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type='button'
-                  className={`flex h-9 min-h-0 items-center justify-between rounded-lg border px-3 text-xs font-bold tracking-wide uppercase transition-colors ${getPrimaryDropdownToneClasses()} ${source === opt.value ? 'ring-1 ring-current/15' : ''}`}
-                  onClick={e => {
-                    onSourceChange(opt.value);
-                    closeParentDetails(e.currentTarget);
-                  }}
-                  disabled={isBusy}
-                >
-                  <span>{opt.label}</span>
-                  {source === opt.value && <span className='text-[10px] opacity-70'>Active</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-        </details>
-
-        <details className='dropdown max-w-full'>
-          <summary
-            className={`flex h-11 min-h-0 w-[6.75rem] list-none items-center justify-between rounded-lg border px-2 text-xs font-semibold shadow-sm transition-colors [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`}
-            aria-label='Select statistics mode'
-            title='Select statistics mode'
-          >
-            <span className='truncate'>{currentModeOption.label}</span>
-            <FontAwesomeIcon icon={faChevronDown} className='-ml-0.5 text-[10px] opacity-70' />
-          </summary>
-
-          <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-40 rounded-xl border p-1.5 shadow-xl backdrop-blur-md'>
-            <div className='grid gap-1'>
-              {MODE_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type='button'
-                  className={`flex h-9 min-h-0 items-center justify-between rounded-lg border px-3 text-xs font-semibold transition-colors ${getPrimaryDropdownToneClasses()} ${mode === opt.value ? 'ring-1 ring-current/15' : ''}`}
-                  onClick={e => {
-                    onModeChange(opt.value);
-                    closeParentDetails(e.currentTarget);
-                  }}
-                  disabled={isBusy}
-                >
-                  <span>{opt.label}</span>
-                  {mode === opt.value && <span className='text-[10px] opacity-70'>Active</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-        </details>
-
-        {mode === 'profile' && (
-          <>
-            <StatisticsMultiSelectDropdown
-              label='Profiles'
-              items={profileSelectionItems}
-              selectedIds={selectedProfileNames}
-              onChange={onSelectedProfileNamesChange}
-              disabled={isBusy}
-              accentTone='primary'
-              emptyText='Select Profiles...'
-            />
-            <StatisticsMultiSelectDropdown
-              label='Shots'
-              items={shotSelectionItems}
-              selectedIds={selectedShotKeys}
-              onChange={onSelectedShotKeysChange}
-              disabled={isBusy}
-              accentTone='primary'
-              emptyText='Select Shots...'
-            />
-          </>
-        )}
-
-        {mode === 'shots' && (
-          <>
-            <StatisticsMultiSelectDropdown
-              label='Shots'
-              items={shotSelectionItems}
-              selectedIds={selectedShotKeys}
-              onChange={onSelectedShotKeysChange}
-              disabled={isBusy}
-              accentTone='primary'
-              emptyText='Select Shots...'
-            />
-            <StatisticsMultiSelectDropdown
-              label='Profiles'
-              items={profileSelectionItems}
-              selectedIds={selectedProfileNames}
-              onChange={onSelectedProfileNamesChange}
-              disabled={isBusy}
-              accentTone='primary'
-              emptyText='Select Profiles...'
-            />
-          </>
-        )}
-
-        <div className='ml-auto flex items-center gap-2'>
-          <button
-            type='button'
-            onClick={onClearFilters}
-            className='border-base-content/10 bg-base-100/45 text-base-content/70 hover:bg-base-200/70 hover:text-base-content inline-flex h-11 min-h-0 w-11 flex-col items-center justify-center gap-0.5 rounded-lg border px-0 shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40'
-            disabled={isBusy}
-            aria-label={`Clear filters and selections (${resetAriaCount})`}
-            title={`Clear filters and selections (${resetAriaCount})`}
-          >
-            <FontAwesomeIcon icon={faUndo} className='text-lg leading-none' />
-            <span className='text-[10px] leading-none font-semibold tabular-nums'>
-              {candidateLabel}
-            </span>
-          </button>
-
-          <button
-            type='button'
-            onClick={() => {
-              setShowDslSelectionPreview(false);
-              onGo();
-            }}
-            disabled={!canExecute}
-            className='border-success/50 text-success hover:bg-success hover:border-success bg-base-100/50 inline-flex h-11 min-h-0 w-[5.5rem] items-center justify-center rounded-lg border-2 shadow-sm transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-40'
-            aria-label='Run statistics'
-            title='Run statistics'
-          >
-            <FontAwesomeIcon icon={faPlay} className='text-lg' />
-          </button>
+    <div
+      ref={toolbarContainerRef}
+      className='relative flex w-full min-w-0 flex-col gap-1.5'
+      onClick={event => {
+        if (!shouldCollapseToolbar || !isToolbarExpanded) return;
+        if (isInteractiveToolbarTarget(event.target)) return;
+        setIsCollapsedStripExpanded(false);
+      }}
+    >
+      {showBusyOverlay ? (
+        <div className='pointer-events-none absolute inset-0 z-10 flex items-center justify-center'>
+          <span className='loading loading-spinner loading-md text-base-content/35' />
         </div>
-      </div>
-
-      <div className='flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1'>
-        <details className='dropdown'>
-          <summary
-            className={`flex h-9 min-h-0 w-[11.25rem] list-none items-center gap-1.5 rounded-lg border px-2 text-left text-[10px] shadow-sm transition-colors sm:w-[12.5rem] md:w-[15rem] [&::-webkit-details-marker]:hidden ${
-              hasDateFilter
-                ? 'border-base-content/14 bg-base-100/55 text-base-content'
-                : 'border-base-content/8 bg-base-100/30 text-base-content/70 hover:bg-base-100/40'
-            }`}
-            aria-label='Edit date range filter'
-            title='Edit date range filter'
-          >
-            <FontAwesomeIcon
-              icon={faCalendarDays}
-              className={`shrink-0 ${hasDateFilter ? 'text-base-content/70' : 'text-base-content/45'}`}
-            />
-            {showDateRangeLabelInTrigger && (
-              <>
-                <span className='shrink-0 font-semibold tracking-wide'>
-                  {dateRangeDisplay.label}
-                </span>
-                <span className='text-base-content/35 shrink-0'>·</span>
-              </>
-            )}
-            <span className='min-w-0 flex-1 truncate'>
-              {dateRangeDisplay.fromText || 'No dates'}
-              {dateRangeDisplay.toText && (
-                <>
-                  <span className='text-base-content/35 mx-1.5 inline-block align-middle'>
-                    <FontAwesomeIcon icon={faArrowRightLong} className='text-[9px]' />
-                  </span>
-                  {dateRangeDisplay.toText}
-                </>
-              )}
-            </span>
-            <FontAwesomeIcon
-              icon={faChevronDown}
-              className='-ml-0.5 shrink-0 text-[9px] opacity-50'
-            />
-          </summary>
-
-          <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-[min(92vw,26rem)] rounded-xl border p-3 shadow-xl backdrop-blur-md'>
-            <div className='grid gap-2'>
-              <label className='text-base-content/75 flex items-center gap-2 text-[11px] font-semibold'>
-                <span className='w-10 shrink-0'>From</span>
-                <input
-                  type='date'
-                  value={dateFromLocal}
-                  onInput={e => onDateFromChange(e.target.value)}
-                  className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
-                  disabled={isBusy}
-                  aria-label='Start date'
-                  title='Start date'
-                />
-              </label>
-
-              <label className='text-base-content/75 flex items-center gap-2 text-[11px] font-semibold'>
-                <span className='w-10 shrink-0'>To</span>
-                <input
-                  type='date'
-                  value={dateToLocal}
-                  onInput={e => onDateToChange(e.target.value)}
-                  className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
-                  disabled={isBusy}
-                  aria-label='End date'
-                  title='End date'
-                />
-              </label>
+      ) : null}
+      {shouldCollapseToolbar && !isToolbarExpanded ? (
+        <button
+          type='button'
+          onClick={() => setIsCollapsedStripExpanded(true)}
+          className='-mx-1.5 -my-1.5 flex h-6 min-h-0 w-[calc(100%+0.75rem)] cursor-pointer items-center rounded-lg bg-transparent px-2 text-[10px] font-semibold text-base-content/70 transition-colors duration-150 hover:bg-base-content/4 hover:text-base-content sm:-mx-2 sm:-my-2 sm:w-[calc(100%+1rem)]'
+          aria-label='Expand statistics toolbar'
+          title='Expand statistics toolbar'
+        >
+          <div className='flex h-6 w-full min-w-0 items-center gap-2 px-2'>
+            <div className='flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-left'>
+              <span className='shrink-0'>{collapsedShotCountLabel}</span>
+              <span className='text-base-content/25 shrink-0' aria-hidden='true'>
+                ·
+              </span>
+              <span className='shrink-0'>{collapsedProfileCountLabel}</span>
+              <span className='text-base-content/25 shrink-0' aria-hidden='true'>
+                ·
+              </span>
+              <span className='min-w-0 truncate'>{collapsedDateRangeText}</span>
             </div>
+            <span className='text-base-content/55 inline-flex h-4 w-4 shrink-0 items-center justify-center text-[10px]'>
+              <FontAwesomeIcon icon={faPlus} />
+            </span>
+          </div>
+        </button>
+      ) : (
+        <>
+          <div className='flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1'>
+          <details className='dropdown max-w-full'>
+            <summary
+              className={modeTriggerClasses}
+              aria-label='Select statistics mode'
+              title='Select statistics mode'
+            >
+              <span className='truncate'>{currentModeOption.label}</span>
+              <FontAwesomeIcon icon={faChevronDown} className='-ml-0.5 text-[10px] opacity-70' />
+            </summary>
 
-            <div className='mt-3 flex items-center justify-between gap-2'>
-              <div className='text-base-content/55 text-[10px]'>
-                {dateRangeDisplay.isAuto
-                  ? 'Using auto range from current shot selection.'
-                  : 'Manual date filter is active.'}
+            <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-40 rounded-xl border p-1.5 shadow-xl backdrop-blur-md'>
+              <div className='grid gap-1'>
+                {MODE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type='button'
+                    className={`flex h-9 min-h-0 items-center justify-between rounded-lg px-3 text-xs font-semibold transition-colors ${getMenuItemClasses({ tone: 'primary', isActive: mode === opt.value })}`}
+                    onClick={e => {
+                      onModeChange(opt.value);
+                      closeParentDetails(e.currentTarget);
+                    }}
+                    disabled={isBusy}
+                  >
+                    <span>{opt.label}</span>
+                    {mode === opt.value && <span className='text-[10px] opacity-70'>Active</span>}
+                  </button>
+                ))}
               </div>
+            </div>
+          </details>
+
+          {mode === 'profile' && (
+            <>
+              <StatisticsMultiSelectDropdown
+                label='Profiles'
+                items={profileSelectionItems}
+                selectedIds={selectedProfileNames}
+                onChange={onSelectedProfileNamesChange}
+                onTogglePin={onProfilePinToggle}
+                disabled={isBusy}
+                accentTone='primary'
+                emptyText='Select Profiles...'
+                triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
+              />
+              <StatisticsMultiSelectDropdown
+                label='Shots'
+                items={shotSelectionItems}
+                selectedIds={selectedShotKeys}
+                onChange={onSelectedShotKeysChange}
+                onTogglePin={onShotPinToggle}
+                disabled={isBusy}
+                accentTone='primary'
+                emptyText='Select Shots...'
+                triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
+              />
+            </>
+          )}
+
+          {mode === 'shots' && (
+            <>
+              <StatisticsMultiSelectDropdown
+                label='Shots'
+                items={shotSelectionItems}
+                selectedIds={selectedShotKeys}
+                onChange={onSelectedShotKeysChange}
+                onTogglePin={onShotPinToggle}
+                disabled={isBusy}
+                accentTone='primary'
+                emptyText='Select Shots...'
+                triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
+              />
+              <StatisticsMultiSelectDropdown
+                label='Profiles'
+                items={profileSelectionItems}
+                selectedIds={selectedProfileNames}
+                onChange={onSelectedProfileNamesChange}
+                onTogglePin={onProfilePinToggle}
+                disabled={isBusy}
+                accentTone='primary'
+                emptyText='Select Profiles...'
+                triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
+              />
+            </>
+          )}
+
+          <div className='ml-auto flex items-center gap-2'>
+            <button
+              type='button'
+              onClick={onClearFilters}
+              className={resetButtonClasses}
+              disabled={isBusy}
+              aria-label={`Clear filters and selections (${resetAriaCount})`}
+              title={`Clear filters and selections (${resetAriaCount})`}
+            >
+              <FontAwesomeIcon icon={faUndo} className='text-lg leading-none' />
+              <span className='text-[10px] leading-none font-semibold tabular-nums'>
+                {candidateLabel}
+              </span>
+            </button>
+
+            <button
+              type='button'
+              onClick={() => {
+                setShowDslSelectionPreview(false);
+                onGo();
+              }}
+              disabled={!canExecute}
+              className={runButtonClasses}
+              aria-label='Play statistics'
+              title='Play statistics'
+            >
+              <FontAwesomeIcon icon={faPlay} className='text-[1.35rem]' />
+            </button>
+          </div>
+        </div>
+
+          <div className='flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 pt-0.5'>
+            <details className='dropdown max-w-full'>
+              <summary
+                className={sourceTriggerClasses}
+                aria-label='Select source'
+                title='Select source'
+              >
+                <span className='truncate'>{renderSourceSummary(currentSourceOption)}</span>
+                <FontAwesomeIcon icon={faChevronDown} className='-ml-0.5 text-[10px] opacity-70' />
+              </summary>
+
+              <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-40 rounded-xl border p-1.5 shadow-xl backdrop-blur-md'>
+                <div className='grid gap-1'>
+                  {SOURCE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      type='button'
+                      className={`flex h-9 min-h-0 items-center justify-between rounded-lg px-3 text-xs font-bold tracking-wide uppercase transition-colors ${getMenuItemClasses({ tone: 'neutral', isActive: source === opt.value })}`}
+                      onClick={e => {
+                        onSourceChange(opt.value);
+                        closeParentDetails(e.currentTarget);
+                      }}
+                      disabled={isBusy}
+                    >
+                      {renderSourceOptionContent(opt)}
+                      {source === opt.value && <span className='text-[10px] opacity-70'>Active</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </details>
+
+            <details className='dropdown'>
+              <summary
+                className={dateTriggerClasses}
+                aria-label='Edit date range filter'
+                title='Edit date range filter'
+              >
+                <FontAwesomeIcon
+                  icon={faCalendarDays}
+                  className={`shrink-0 ${hasDateFilter ? 'text-base-content/70' : 'text-base-content/45'}`}
+                />
+                {showDateRangeLabelInTrigger && (
+                  <>
+                    <span className='shrink-0 font-semibold tracking-wide'>
+                      {dateRangeDisplay.label}
+                    </span>
+                    <span className='text-base-content/35 shrink-0'>·</span>
+                  </>
+                )}
+                <span className='min-w-0 flex-1 truncate'>
+                  {dateRangeDisplay.fromText || 'No dates'}
+                  {dateRangeDisplay.toText && (
+                    <>
+                      <span className='text-base-content/35 mx-1.5 inline-block align-middle'>
+                        <FontAwesomeIcon icon={faArrowRightLong} className='text-[9px]' />
+                      </span>
+                      {dateRangeDisplay.toText}
+                    </>
+                  )}
+                </span>
+                <FontAwesomeIcon
+                  icon={faChevronDown}
+                  className='-ml-0.5 shrink-0 text-[9px] opacity-50'
+                />
+              </summary>
+
+              <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-[min(92vw,26rem)] rounded-xl border p-3 shadow-xl backdrop-blur-md'>
+                <div className='grid gap-2'>
+                  <label className='text-base-content/75 flex items-center gap-2 text-[11px] font-semibold'>
+                    <span className='w-10 shrink-0'>From</span>
+                    <input
+                      type='date'
+                      value={dateFromLocal}
+                      onInput={e => onDateFromChange(e.target.value)}
+                      className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
+                      disabled={isBusy}
+                      aria-label='Start date'
+                      title='Start date'
+                    />
+                  </label>
+
+                  <label className='text-base-content/75 flex items-center gap-2 text-[11px] font-semibold'>
+                    <span className='w-10 shrink-0'>To</span>
+                    <input
+                      type='date'
+                      value={dateToLocal}
+                      onInput={e => onDateToChange(e.target.value)}
+                      className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
+                      disabled={isBusy}
+                      aria-label='End date'
+                      title='End date'
+                    />
+                  </label>
+                </div>
+
+                <div className='mt-3 flex items-center justify-between gap-2'>
+                  <div className='text-base-content/55 text-[10px]'>
+                    {dateRangeDisplay.isAuto
+                      ? 'Using auto range from current shot selection.'
+                      : 'Manual date filter is active.'}
+                  </div>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      onDateFromChange('');
+                      onDateToChange('');
+                    }}
+                    disabled={isBusy || (!dateFromLocal && !dateToLocal)}
+                    className={compactNeutralButtonClasses}
+                    title='Clear date filter'
+                  >
+                    Clear Date Filter
+                  </button>
+                </div>
+              </div>
+            </details>
+
+            <div
+              className={`flex min-w-0 items-center justify-end gap-2 ${
+                showAdvancedSearch
+                  ? 'basis-full flex-wrap md:ml-auto md:flex-1 md:basis-auto md:flex-nowrap'
+                  : 'ml-auto'
+              }`}
+            >
+              {showAdvancedSearch && (
+                <div
+                  ref={dslInputRef}
+                  className='min-w-0 basis-full md:max-w-[38rem] md:min-w-[16rem] md:flex-1'
+                >
+                  <input
+                    type='text'
+                    value={query}
+                    onInput={e => {
+                      setShowDslSelectionPreview(!!String(e.target.value || '').trim());
+                      onQueryChange(e.target.value);
+                    }}
+                    onFocus={() => setShowDslSelectionPreview(true)}
+                    onClick={() => setShowDslSelectionPreview(true)}
+                    placeholder='name:"325"; profile:3_0_25; date:>h-7d;'
+                    className='input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
+                    disabled={isBusy}
+                  />
+                </div>
+              )}
+
+              {showAdvancedSearch && (
+                <button
+                  type='button'
+                  className={
+                    calcMode ? activeCompactNeutralButtonClasses : compactNeutralButtonClasses
+                  }
+                  style={calcMode ? CALC_ACTIVE_SEGMENT_STYLE : undefined}
+                  onClick={() => onCalcModeChange(!calcMode)}
+                  disabled={isBusy}
+                  aria-label={`Toggle calculation mode (currently ${calcMode ? 'Calc' : 'Raw'})`}
+                  title={`Current: ${calcMode ? 'Calc' : 'Raw'} (click to switch)`}
+                >
+                  {calcMode ? 'Calc' : 'Raw'}
+                </button>
+              )}
+
+              {showAdvancedSearch && <StatisticsSearchHelp />}
+
               <button
                 type='button'
-                onClick={() => {
-                  onDateFromChange('');
-                  onDateToChange('');
-                }}
-                disabled={isBusy || (!dateFromLocal && !dateToLocal)}
-                className='btn btn-ghost btn-xs border-base-content/10 h-7 min-h-0 rounded-md border px-2 text-[10px] font-semibold'
-                title='Clear date filter'
+                onClick={() =>
+                  setShowAdvancedSearch(prev => {
+                    const next = !prev;
+                    if (!next) setShowDslSelectionPreview(false);
+                    return next;
+                  })
+                }
+                disabled={isBusy}
+                aria-pressed={showAdvancedSearch}
+                aria-label='Toggle advanced search'
+                title='Toggle advanced search'
+                className={
+                  showAdvancedSearch
+                    ? activeCompactNeutralButtonClasses
+                    : compactNeutralButtonClasses
+                }
               >
-                Clear Date Filter
+                Advanced
               </button>
             </div>
           </div>
-        </details>
+        </>
+      )}
 
-        <div
-          className={`flex min-w-0 items-center justify-end gap-2 ${
-            showAdvancedSearch
-              ? 'basis-full flex-wrap md:ml-auto md:flex-1 md:basis-auto md:flex-nowrap'
-              : 'ml-auto'
-          }`}
-        >
-          {showAdvancedSearch && (
-            <div
-              ref={dslInputRef}
-              className='min-w-0 basis-full md:max-w-[38rem] md:min-w-[16rem] md:flex-1'
-            >
-              <input
-                type='text'
-                value={query}
-                onInput={e => {
-                  setShowDslSelectionPreview(!!String(e.target.value || '').trim());
-                  onQueryChange(e.target.value);
-                }}
-                onFocus={() => setShowDslSelectionPreview(true)}
-                onClick={() => setShowDslSelectionPreview(true)}
-                placeholder='name:"325"; profile:3_0_25; date:>h-7d;'
-                className='input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs shadow-sm'
-                disabled={isBusy}
-              />
-            </div>
-          )}
-
-          {showAdvancedSearch && (
-            <button
-              type='button'
-              className={`border-base-content/10 inline-flex h-9 min-h-0 w-12 items-center justify-center rounded-lg border px-2 text-[10px] font-medium tracking-wide shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                calcMode
-                  ? 'text-base-content/80 hover:bg-base-200/50 hover:text-base-content'
-                  : 'bg-base-100/45 text-base-content/70 hover:bg-base-200/60 hover:text-base-content'
-              }`}
-              style={calcMode ? CALC_ACTIVE_SEGMENT_STYLE : undefined}
-              onClick={() => onCalcModeChange(!calcMode)}
-              disabled={isBusy}
-              aria-label={`Toggle calculation mode (currently ${calcMode ? 'Calc' : 'Raw'})`}
-              title={`Current: ${calcMode ? 'Calc' : 'Raw'} (click to switch)`}
-            >
-              {calcMode ? 'Calc' : 'Raw'}
-            </button>
-          )}
-
-          {showAdvancedSearch && <StatisticsSearchHelp />}
-
-          <button
-            type='button'
-            onClick={() =>
-              setShowAdvancedSearch(prev => {
-                const next = !prev;
-                if (!next) setShowDslSelectionPreview(false);
-                return next;
-              })
-            }
-            disabled={isBusy}
-            aria-pressed={showAdvancedSearch}
-            aria-label='Toggle advanced search'
-            title='Toggle advanced search'
-            className={`inline-flex h-9 min-h-0 w-24 items-center justify-center rounded-lg border px-2 text-[10px] font-semibold whitespace-nowrap shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-              showAdvancedSearch
-                ? 'border-base-content/20 bg-base-content/8 text-base-content hover:bg-base-content/12'
-                : 'border-base-content/10 bg-base-100/45 text-base-content/70 hover:bg-base-200/60 hover:text-base-content'
-            }`}
-          >
-            Advanced
-          </button>
-        </div>
-      </div>
-
-      {showDateBasisWarning && (
+      {isToolbarExpanded && showDateBasisWarning && (
         <div
           className='flex w-full min-w-0 flex-wrap items-center gap-2 rounded-lg border px-2 py-2'
           style={{
@@ -585,13 +786,12 @@ export function StatisticsToolbar({
             </span>
           </div>
           <div className={SEGMENT_GROUP_CLASS}>
-            {DATE_BASIS_OPTIONS.map((opt, index) => (
+            {DATE_BASIS_OPTIONS.map(opt => (
               <button
                 key={opt.value}
                 type='button'
                 className={getSegmentButtonClasses({
                   isActive: dateBasisMode === opt.value,
-                  isLast: index === DATE_BASIS_OPTIONS.length - 1,
                   activeTone: opt.value === 'auto' ? 'secondary' : 'neutral',
                   compact: true,
                 })}
@@ -612,7 +812,7 @@ export function StatisticsToolbar({
         </div>
       )}
 
-      {(topError || topWarning || metadataError) && (
+      {isToolbarExpanded && (topError || topWarning || metadataError) && (
         <div className='flex min-h-5 items-center gap-2 px-1 text-[11px]'>
           {topError ? (
             <span className='text-error font-semibold'>{topError}</span>
@@ -634,7 +834,7 @@ export function StatisticsToolbar({
         </div>
       )}
 
-      {!topError && !metadataError && selectionHint && (
+      {isToolbarExpanded && !topError && !metadataError && selectionHint && (
         <div
           className='px-1 text-[11px] font-semibold'
           style={{ color: 'var(--analyzer-warning-orange)' }}
@@ -643,7 +843,7 @@ export function StatisticsToolbar({
         </div>
       )}
 
-      {shouldShowDslSelectionPreview && (
+      {isToolbarExpanded && shouldShowDslSelectionPreview && (
         <div className='bg-base-100/55 border-base-content/10 flex w-full min-w-0 flex-col gap-3 rounded-lg border p-3 shadow-sm'>
           {profilePreviewItems.length > 0 && (
             <div className='min-w-0 space-y-2'>
