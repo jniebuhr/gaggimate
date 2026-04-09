@@ -10,6 +10,7 @@ class GearpumpAddon {
     GearpumpAddon(uint8_t addr, uint8_t sda, uint8_t scl, uint8_t interrupt);
     void setup(float *power);
     void loop();
+    void stop();
 
   private:
     uint8_t _addr;
@@ -18,6 +19,7 @@ class GearpumpAddon {
     uint8_t _interrupt;
 
     float *_power = nullptr;
+    float _currentPower = 0.0f;
     SoftWire *i2c;
     MCP4725 *mcp;
 

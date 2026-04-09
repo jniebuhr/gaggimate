@@ -11,6 +11,7 @@
 #include <peripherals/Pump.h>
 #include <peripherals/SimpleRelay.h>
 #include <peripherals/addons/GearpumpAddon.h>
+#include <peripherals/FlowSensor.h>
 #include <vector>
 
 constexpr double PING_TIMEOUT_SECONDS = 20.0;
@@ -50,6 +51,7 @@ class GaggiMateController {
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
     ADSAdc *adc = nullptr;
+    FlowSensor *flowSensor = nullptr;
 
     GearpumpAddon *gearpumpAddon = nullptr;
 

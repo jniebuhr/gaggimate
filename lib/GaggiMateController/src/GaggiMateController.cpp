@@ -40,7 +40,7 @@ void GaggiMateController::setup() {
     }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
-
+    // this->flowSensor = new FlowSensor(_config.steamButtonPin, [](float) {});
     // 4-Pin peripheral port
     /*
     if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
@@ -76,6 +76,7 @@ void GaggiMateController::setup() {
     }
     this->brewBtn->setup();
     this->steamBtn->setup();
+    // this->flowSensor->setup();
     if (_config.capabilites.pressure) {
         this->adc->setup();
         this->pressureSensor->setup();
@@ -99,6 +100,11 @@ void GaggiMateController::setup() {
             return;
         }
         this->pump->setPower(pumpSetpoint);
+        if (pumpSetpoint == 0.0f) {
+            if (gearpumpAddon != nullptr) {
+                gearpumpAddon->stop();
+            }
+        }
         this->valve->set(valve);
         this->heater->setSetpoint(heaterSetpoint);
         if (!_config.capabilites.dimming) {
@@ -152,6 +158,7 @@ void GaggiMateController::setup() {
         }
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         dimmedPump->tare();
+        flowSensor->tare();
     });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }
@@ -244,6 +251,7 @@ void GaggiMateController::sendSensorData() {
                             dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
         if (this->valve->getState()) {
             _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+            // _ble.sendVolumetricMeasurement(flowSensor->getVolume());
         }
     } else {
         _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
