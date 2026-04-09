@@ -33,6 +33,7 @@ function getSingularLabel(label) {
     .trim()
     .toLowerCase();
   if (normalized.endsWith('ies')) return `${normalized.slice(0, -3)}y`;
+  if (/(ches|shes|xes|zes|sses|oes)$/.test(normalized)) return normalized.slice(0, -2);
   if (normalized.endsWith('s')) return normalized.slice(0, -1);
   return normalized || 'item';
 }

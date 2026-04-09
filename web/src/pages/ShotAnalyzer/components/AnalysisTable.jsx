@@ -543,7 +543,7 @@ export function AnalysisTable({
               <tbody>
                 {Array.from({ length: maxComparePhaseCount }, (_, phaseIndex) => (
                   <Fragment key={`phase-group-${phaseIndex}`}>
-                    <tr key={`phase-group-${phaseIndex}`} className='bg-base-200/55'>
+                    <tr className='bg-base-200/55'>
                       <td
                         colSpan={visibleColumns.length + 3}
                         className='border-base-content/10 px-3 py-2 text-left text-[10px] font-bold tracking-wide uppercase'

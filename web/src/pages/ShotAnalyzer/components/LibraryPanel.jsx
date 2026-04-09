@@ -138,7 +138,7 @@ export function LibraryPanel({
       try {
         const statsInitialContext = {
           profileName: profileItem.label || profileItem.name || '',
-          source: 'both',
+          source: profileItem.source || profileItem.src || 'both',
         };
         if (compareMode) {
           statsInitialContext.preferredDetailSection = 'compare';
@@ -178,6 +178,10 @@ export function LibraryPanel({
 
     return '';
   })();
+  const getEffectiveShotPinBucketKey = useCallback(
+    item => activeShotPinBucketKey || getShotPinBucketKey(item),
+    [activeShotPinBucketKey],
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedShotsSearch(shotsSearch), 250);
@@ -496,7 +500,7 @@ export function LibraryPanel({
 
   const getShotPinDisabledReason = useCallback(
     item => {
-      const bucketKey = getShotPinBucketKey(item);
+      const bucketKey = getEffectiveShotPinBucketKey(item);
       if (isShotPinned(item, bucketKey, pinnedShotsByProfile)) return '';
 
       const pinnedCount = (pinnedShotsByProfile[bucketKey] || []).length;
@@ -508,7 +512,7 @@ export function LibraryPanel({
 
       return '';
     },
-    [pinnedShotsByProfile],
+    [getEffectiveShotPinBucketKey, pinnedShotsByProfile],
   );
 
   const handleProfilePinToggle = useCallback(item => {
@@ -518,10 +522,10 @@ export function LibraryPanel({
   }, []);
 
   const handleShotPinToggle = useCallback(item => {
-    const result = toggleShotPin(item, getShotPinBucketKey(item));
+    const result = toggleShotPin(item, getEffectiveShotPinBucketKey(item));
     if (!result.changed) return;
     setPinnedShotsByProfile(result.pinnedShotsByProfile);
-  }, []);
+  }, [getEffectiveShotPinBucketKey]);
 
   // Uses libraryService.exportItem to fetch data, then uses UI helper 'downloadJson'
   const handleExport = async (item, isShot) => {
@@ -1121,7 +1125,7 @@ export function LibraryPanel({
                         item.source === currentShot.source
                       }
                       getPinStatus={item =>
-                        isShotPinned(item, getShotPinBucketKey(item), pinnedShotsByProfile)
+                        isShotPinned(item, getEffectiveShotPinBucketKey(item), pinnedShotsByProfile)
                       }
                       getPinDisabledReason={getShotPinDisabledReason}
                       pinnedFirstEnabled={shotsPinnedFirst}

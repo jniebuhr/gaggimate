@@ -148,7 +148,7 @@ function PhaseSection({ phase, hideExitReasons = false }) {
                 Exit Reasons
               </div>
               <div className='flex flex-wrap gap-1'>
-                {Object.entries(phase.exitReasonDistribution)
+                {Object.entries(phase.exitReasonDistribution ?? {})
                   .sort((a, b) => b[1] - a[1])
                   .map(([reason, count]) => (
                     <span

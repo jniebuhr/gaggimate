@@ -1,15 +1,25 @@
 .shot-analyzer-page button:not(:disabled),
 .shot-analyzer-page a[href],
 .shot-analyzer-page select:not(:disabled),
-.shot-analyzer-page [role='button'] {
+.shot-analyzer-page [role='button']:not([aria-disabled='true']) {
   cursor: pointer;
 }
 
-.shot-analyzer-page button,
-.shot-analyzer-page [role='button'],
-.shot-analyzer-page a[href] {
-  box-shadow: none !important;
-  border-color: transparent !important;
+.shot-analyzer-page button:not(:focus-visible),
+.shot-analyzer-page [role='button']:not([aria-disabled='true']):not(:focus-visible),
+.shot-analyzer-page a[href]:not(:focus-visible),
+.shot-analyzer-page select:not(:focus-visible) {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.shot-analyzer-page button:focus-visible,
+.shot-analyzer-page [role='button']:not([aria-disabled='true']):focus-visible,
+.shot-analyzer-page a[href]:focus-visible,
+.shot-analyzer-page select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 72%, white 28%);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
 
 .shot-analyzer-page .shot-analyzer-notes-scroll {

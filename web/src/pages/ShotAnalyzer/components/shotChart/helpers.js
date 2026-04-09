@@ -197,7 +197,7 @@ export function getSpikeResistantSeriesMax(
   let sustainedMax = -Infinity;
   for (let i = 0; i < finitePoints.length; i += 1) {
     const candidate = finitePoints[i].y;
-    if (!(candidate > 0)) continue;
+    if (!Number.isFinite(candidate) || candidate <= 0) continue;
 
     const threshold = candidate * supportRatio;
     let startX = finitePoints[i].x;

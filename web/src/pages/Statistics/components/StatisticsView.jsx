@@ -229,36 +229,24 @@ function resolveStatisticsDetailSectionChoice({
   hasProfileGroupStatistics,
   hasPhaseStatistics,
 }) {
-  if (candidate === 'compare' && !hasCompareStatistics) {
-    if (hasMetricStatistics) return 'metrics';
-    if (hasTrendStatistics) return 'trends';
-    if (hasProfileGroupStatistics) return 'profile';
-    if (hasPhaseStatistics) return 'phase';
+  const availabilityBySection = {
+    compare: hasCompareStatistics,
+    metrics: hasMetricStatistics,
+    trends: hasTrendStatistics,
+    profile: hasProfileGroupStatistics,
+    phase: hasPhaseStatistics,
+  };
+
+  if (availabilityBySection[candidate]) {
+    return candidate;
   }
-  if (candidate === 'metrics' && !hasMetricStatistics) {
-    if (hasCompareStatistics) return 'compare';
-    if (hasTrendStatistics) return 'trends';
-    if (hasProfileGroupStatistics) return 'profile';
-    if (hasPhaseStatistics) return 'phase';
+
+  const fallbackOrder = ['compare', 'metrics', 'trends', 'profile', 'phase'];
+  const fallbackSection = fallbackOrder.find(section => availabilityBySection[section]);
+  if (fallbackSection) {
+    return fallbackSection;
   }
-  if (candidate === 'trends' && !hasTrendStatistics) {
-    if (hasCompareStatistics) return 'compare';
-    if (hasMetricStatistics) return 'metrics';
-    if (hasProfileGroupStatistics) return 'profile';
-    if (hasPhaseStatistics) return 'phase';
-  }
-  if (candidate === 'profile' && !hasProfileGroupStatistics) {
-    if (hasCompareStatistics) return 'compare';
-    if (hasMetricStatistics) return 'metrics';
-    if (hasTrendStatistics) return 'trends';
-    if (hasPhaseStatistics) return 'phase';
-  }
-  if (candidate === 'phase' && !hasPhaseStatistics) {
-    if (hasCompareStatistics) return 'compare';
-    if (hasMetricStatistics) return 'metrics';
-    if (hasTrendStatistics) return 'trends';
-    if (hasProfileGroupStatistics) return 'profile';
-  }
+
   return candidate;
 }
 

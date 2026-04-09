@@ -500,6 +500,9 @@ export const getShotIdentityKey = shot => {
   if (source === 'gaggimate') {
     return `gaggimate:${String(shot.id || '')}`;
   }
+  if (source === 'temp') {
+    return `temp:${String(shot.storageKey || shot.name || shot.id || '')}`;
+  }
 
   return `browser:${String(shot.storageKey || shot.name || shot.id || '')}`;
 };

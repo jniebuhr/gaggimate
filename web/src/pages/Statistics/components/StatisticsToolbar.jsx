@@ -414,9 +414,17 @@ export function StatisticsToolbar({
     <div
       ref={toolbarContainerRef}
       className='relative flex w-full min-w-0 flex-col gap-1.5'
+      tabIndex={shouldCollapseToolbar && isToolbarExpanded ? 0 : undefined}
       onClick={event => {
         if (!shouldCollapseToolbar || !isToolbarExpanded) return;
         if (isInteractiveToolbarTarget(event.target)) return;
+        setIsCollapsedStripExpanded(false);
+      }}
+      onKeyDown={event => {
+        if (event.key !== 'Escape') return;
+        if (!shouldCollapseToolbar || !isToolbarExpanded) return;
+        if (isInteractiveToolbarTarget(event.target)) return;
+        event.preventDefault();
         setIsCollapsedStripExpanded(false);
       }}
     >

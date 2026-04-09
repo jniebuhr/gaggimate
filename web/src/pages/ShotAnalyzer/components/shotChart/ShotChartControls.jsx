@@ -153,7 +153,7 @@ export function ShotChartControls({
 
         <div className='flex shrink-0 flex-wrap items-center justify-end gap-2'>
           <div className={ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES}>
-            {!isCompareMode ? (
+            {isCompareMode ? null : (
               <>
                 <button
                   type='button'
@@ -309,7 +309,7 @@ export function ShotChartControls({
                   ) : null}
                 </div>
               </>
-            ) : null}
+            )}
             <button
               type='button'
               onClick={onChartHeightToggle}

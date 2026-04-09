@@ -88,7 +88,12 @@ export function LibraryRow({
     >
       {showCompareSelection && (
         <td className='px-2 py-2 text-center first:rounded-l-md'>
-          <div className='flex items-center justify-center' onClick={e => e.stopPropagation()}>
+          <span
+            className='flex items-center justify-center'
+            role='presentation'
+            tabIndex={-1}
+            onClick={e => e.stopPropagation()}
+          >
             {isComparePending ? (
               <FontAwesomeIcon icon={faCircleNotch} spin className='text-primary text-xs' />
             ) : (
@@ -102,7 +107,7 @@ export function LibraryRow({
                 className='checkbox checkbox-xs border-base-content/20 rounded-sm'
               />
             )}
-          </div>
+          </span>
         </td>
       )}
       <td
