@@ -44,6 +44,58 @@ function getBrewModeLabel(isBrewByWeight) {
   return isBrewByWeight ? 'Brew by Weight' : 'Brew by Time';
 }
 
+function getHighScaleDelayTitle(results) {
+  return results?.highScaleDelayMs
+    ? `Estimated scale delay exceeds 2000 ms (${results.highScaleDelayMs} ms), or the shot may have been manually stopped near the target. Please review scale-delay settings.`
+    : 'Estimated scale delay exceeds 2000 ms, or the shot may have been manually stopped near the target. Please review scale-delay settings.';
+}
+
+function getDelayReviewLabel(results) {
+  return results?.delayReviewPhaseNumber
+    ? `REVIEW PHASE ${results.delayReviewPhaseNumber}`
+    : 'PHASE REVIEW ADVISED';
+}
+
+function buildAnalysisWarningBadges(results) {
+  const badges = [];
+
+  if (results?.globalScaleLost) {
+    badges.push({
+      key: 'scale-lost',
+      label: 'SCALE LOST',
+      colorClass: 'text-white shadow-sm',
+      style: {
+        backgroundColor: utilityColors.warningOrange,
+        borderColor: utilityColors.warningOrange,
+      },
+    });
+  }
+
+  if (results?.highScaleDelay) {
+    badges.push({
+      key: 'high-scale-delay',
+      label: 'HIGH SCALE DELAY',
+      colorClass: 'text-white shadow-sm',
+      title: getHighScaleDelayTitle(results),
+      style: {
+        backgroundColor: utilityColors.warningOrange,
+        borderColor: utilityColors.warningOrange,
+      },
+    });
+  }
+
+  if (results?.delayReviewHint) {
+    badges.push({
+      key: 'delay-review',
+      label: getDelayReviewLabel(results),
+      colorClass: NEUTRAL_STATUS_BADGE_CLASS,
+      title: results.delayReviewMessage || 'Unusually high inferred delay detected.',
+    });
+  }
+
+  return badges;
+}
+
 function StopCalculationHelpPopover() {
   const detailsRef = useRef(null);
   const [isWideViewport, setIsWideViewport] = useState(false);
@@ -259,7 +311,7 @@ export function AnalysisTable({
   onAnalyze,
 }) {
   const compareMode = isCompareActive && Array.isArray(compareEntries) && compareEntries.length > 1;
-  if ((!results || !results.phases) && !compareMode) return null;
+  if (!results?.phases && !compareMode) return null;
 
   // State for Table Zoom (Font Size) - Default 11px
   const [tableFontSize, setTableFontSize] = useState(11);
@@ -382,6 +434,7 @@ export function AnalysisTable({
   const strongDividerClass = 'border-base-content/12 border-r-2';
   const primaryTableTextClass = 'text-base-content/90 font-semibold';
   const secondaryTableTextClass = 'text-base-content/65 font-medium';
+  const analysisWarningBadges = buildAnalysisWarningBadges(results);
 
   return (
     <div className='flex w-full flex-col'>
@@ -392,42 +445,15 @@ export function AnalysisTable({
 
       {/* Keep the top strip focused on global warnings and phase-review hints only. */}
       <div className='mb-2 flex flex-wrap gap-2 px-1'>
-        {results.globalScaleLost && (
+        {analysisWarningBadges.map(badge => (
           <StatusBadge
-            label='SCALE LOST'
-            style={{
-              backgroundColor: utilityColors.warningOrange,
-              borderColor: utilityColors.warningOrange,
-            }}
-            colorClass='text-white shadow-sm'
+            key={badge.key}
+            label={badge.label}
+            style={badge.style}
+            colorClass={badge.colorClass}
+            title={badge.title}
           />
-        )}
-        {results.highScaleDelay && (
-          <StatusBadge
-            label='HIGH SCALE DELAY'
-            style={{
-              backgroundColor: utilityColors.warningOrange,
-              borderColor: utilityColors.warningOrange,
-            }}
-            colorClass='text-white shadow-sm'
-            title={
-              results.highScaleDelayMs
-                ? `Estimated scale delay exceeds 2000 ms (${results.highScaleDelayMs} ms), or the shot may have been manually stopped near the target. Please review scale-delay settings.`
-                : 'Estimated scale delay exceeds 2000 ms, or the shot may have been manually stopped near the target. Please review scale-delay settings.'
-            }
-          />
-        )}
-        {results.delayReviewHint && (
-          <StatusBadge
-            label={
-              results.delayReviewPhaseNumber
-                ? `REVIEW PHASE ${results.delayReviewPhaseNumber}`
-                : 'PHASE REVIEW ADVISED'
-            }
-            colorClass={NEUTRAL_STATUS_BADGE_CLASS}
-            title={results.delayReviewMessage || 'Unusually high inferred delay detected.'}
-          />
-        )}
+        ))}
       </div>
 
       {/* 2. MAIN CARD WRAPPER */}

@@ -17,7 +17,6 @@ import {
   getDefaultColumns,
   cleanName,
   ANALYZER_DB_KEYS,
-  COMPARE_TARGET_DISPLAY_MODES,
   getShotDisplayName,
   getShotIdentityKey,
   loadFromStorage,

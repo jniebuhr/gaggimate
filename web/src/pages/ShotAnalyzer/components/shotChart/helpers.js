@@ -136,6 +136,37 @@ function getPercentileValue(values, percentile) {
   return sorted[lowerIndex] + (sorted[upperIndex] - sorted[lowerIndex]) * ratio;
 }
 
+function isTransientScaleSpikePoint({
+  rawFinitePoints,
+  point,
+  index,
+  windowSec,
+  minTransientRise,
+  recoveryTolerance,
+}) {
+  const baselineValues = rawFinitePoints
+    .slice(0, index)
+    .filter(candidate => point.x - candidate.x <= SCALE_SPIKE_BASELINE_LOOKBACK_SEC)
+    .map(candidate => candidate.y);
+  const futureValues = rawFinitePoints
+    .slice(index + 1)
+    .filter(candidate => candidate.x - point.x <= windowSec)
+    .map(candidate => candidate.y);
+
+  if (baselineValues.length === 0 || futureValues.length === 0) return false;
+
+  const baseline = getMedianValue(baselineValues);
+  if (!Number.isFinite(baseline)) return false;
+
+  const rise = point.y - baseline;
+  if (rise < minTransientRise) return false;
+
+  // Ignore brief touch-induced scale spikes that rise sharply and then fall
+  // back near the local baseline within the look-ahead window.
+  const futureMin = Math.min(...futureValues);
+  return futureMin <= baseline + recoveryTolerance;
+}
+
 export function getSpikeResistantSeriesMax(
   points,
   {
@@ -163,27 +194,14 @@ export function getSpikeResistantSeriesMax(
       : Math.max(0.35, seriesRange * 0.04);
 
   const finitePoints = rawFinitePoints.filter((point, index) => {
-    const baselineValues = rawFinitePoints
-      .slice(0, index)
-      .filter(candidate => point.x - candidate.x <= SCALE_SPIKE_BASELINE_LOOKBACK_SEC)
-      .map(candidate => candidate.y);
-    const futureValues = rawFinitePoints
-      .slice(index + 1)
-      .filter(candidate => candidate.x - point.x <= windowSec)
-      .map(candidate => candidate.y);
-
-    if (baselineValues.length === 0 || futureValues.length === 0) return true;
-
-    const baseline = getMedianValue(baselineValues);
-    if (!Number.isFinite(baseline)) return true;
-
-    const rise = point.y - baseline;
-    if (rise < minTransientRise) return true;
-
-    // Ignore brief touch-induced scale spikes that rise sharply and then fall
-    // back near the local baseline within the look-ahead window.
-    const futureMin = Math.min(...futureValues);
-    return futureMin > baseline + recoveryTolerance;
+    return !isTransientScaleSpikePoint({
+      rawFinitePoints,
+      point,
+      index,
+      windowSec,
+      minTransientRise,
+      recoveryTolerance,
+    });
   });
 
   if (finitePoints.length === 0) return fallback;

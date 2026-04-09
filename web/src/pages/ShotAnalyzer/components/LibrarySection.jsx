@@ -64,6 +64,11 @@ function renderLibrarySourceOptionContent(value) {
   return <span>ALL</span>;
 }
 
+function getNameColumnWidth(isShot, showCompareSelection) {
+  if (!isShot) return '55%';
+  return showCompareSelection ? '24%' : '30%';
+}
+
 export function LibrarySection({
   title,
   items,
@@ -114,7 +119,7 @@ export function LibrarySection({
   // inside that cell instead of adding separate narrow columns.
   const showCompareSelection = false;
   const widthCompare = showCompareSelection ? '6%' : '0%';
-  const widthName = isShot ? (showCompareSelection ? '24%' : '30%') : '55%';
+  const widthName = getNameColumnWidth(isShot, showCompareSelection);
   const widthSource = '10%';
   const widthDate = isShot ? '25%' : '0%';
   const widthProfile = isShot ? '25%' : '0%';
@@ -317,7 +322,7 @@ export function LibrarySection({
           </thead>
           <tbody className='text-sm'>
             {hasCompareBadges ? (
-              <tr aria-hidden='true'>
+              <tr>
                 <td colSpan={columnCount} className='h-1.5 p-0' />
               </tr>
             ) : null}

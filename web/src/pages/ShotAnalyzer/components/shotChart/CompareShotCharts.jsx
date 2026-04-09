@@ -216,6 +216,12 @@ function getComparePointStyle(isTarget = false) {
   };
 }
 
+function getDetailChartAxisScaleMode(seriesKey) {
+  if (seriesKey === 'weight') return 'weight';
+  if (seriesKey === 'weightFlow') return 'weightFlow';
+  return undefined;
+}
+
 function formatCompareChartTitle(title) {
   if (typeof title !== 'string' || title.length === 0) return '';
   if (title.includes(' ')) return title;
@@ -356,6 +362,83 @@ function getStatisticsAxisPercentile(datasetCount, axisScaleMode) {
   if (datasetCount >= 12) return 0.78;
   if (datasetCount >= 8) return 0.82;
   return 0.88;
+}
+
+function getDetailChartRangeOptions({ shotStylePreset, chartId, compareModelCount }) {
+  if (shotStylePreset !== 'statistics') {
+    return {
+      paddingRatio: 0.05,
+      minimumPadding: 0.2,
+      maxStrategy: 'absolute',
+      maxPercentile: 0.9,
+    };
+  }
+
+  if (chartId === 'weight') {
+    return {
+      paddingRatio: 0.08,
+      minimumPadding: 1.5,
+      maxStrategy: 'datasetPercentile',
+      maxPercentile: getStatisticsAxisPercentile(compareModelCount, 'weight'),
+    };
+  }
+
+  if (chartId === 'weight-flow') {
+    return {
+      paddingRatio: 0.06,
+      minimumPadding: 0.25,
+      maxStrategy: 'datasetPercentile',
+      maxPercentile: getStatisticsAxisPercentile(compareModelCount, 'weightFlow'),
+    };
+  }
+
+  return {
+    paddingRatio: 0.05,
+    minimumPadding: 0.2,
+    maxStrategy: 'absolute',
+    maxPercentile: 0.9,
+  };
+}
+
+function getDetailChartHeight(mainChartHeight, isFullDisplay) {
+  if (isFullDisplay) return DETAIL_CHART_HEIGHT_FULL;
+  if (mainChartHeight > MAIN_CHART_HEIGHT_DEFAULT) return DETAIL_CHART_HEIGHT_BIG;
+  return DETAIL_CHART_HEIGHT_SMALL;
+}
+
+function getCompareTooltipPlugin({
+  enableHoverInfo,
+  compareTooltipMode,
+  hideExternalTooltip,
+  setExternalTooltipState,
+}) {
+  const baseTooltipConfig = {
+    enabled: false,
+    caretSize: 0,
+    caretPadding: 0,
+  };
+
+  if (!enableHoverInfo) {
+    return baseTooltipConfig;
+  }
+
+  return {
+    ...baseTooltipConfig,
+    external: ({ chart, tooltip }) => {
+      const nextState = buildExternalTooltipState({
+        chart,
+        tooltip,
+        tooltipMode: compareTooltipMode,
+      });
+
+      if (!nextState.visible) {
+        hideExternalTooltip();
+        return;
+      }
+
+      setExternalTooltipState(prev => (areTooltipStatesEqual(prev, nextState) ? prev : nextState));
+    },
+  };
 }
 
 function getDatasetScaleMax(dataset) {
@@ -768,12 +851,7 @@ function buildDetailChartDatasets({
         label: `${entry.label} ${chart.title}`,
         compareTooltipBaseLabel: chart.tooltipBaseLabel,
         data: actualSeries,
-        axisScaleMode:
-          chart.seriesKey === 'weight'
-            ? 'weight'
-            : chart.seriesKey === 'weightFlow'
-              ? 'weightFlow'
-              : undefined,
+        axisScaleMode: getDetailChartAxisScaleMode(chart.seriesKey),
         borderColor: applyColorAlpha(baseColor, shotStyle.opacity),
         backgroundColor: applyColorAlpha(baseColor, shotStyle.opacity),
         borderWidth: shotStyle.lineWidth,
@@ -918,42 +996,20 @@ function CompareChartCanvas({
         return areTooltipStatesEqual(prev, hiddenState) ? prev : hiddenState;
       });
     };
+    const nextPlugins = config.options?.plugins ? { ...config.options.plugins } : {};
+    nextPlugins.tooltip = getCompareTooltipPlugin({
+      enableHoverInfo,
+      compareTooltipMode,
+      hideExternalTooltip,
+      setExternalTooltipState,
+    });
 
     const nextConfig = {
       ...config,
       options: {
         ...config.options,
         events: [],
-        plugins: {
-          ...(config.options?.plugins || {}),
-          tooltip: enableHoverInfo
-            ? {
-                enabled: false,
-                caretSize: 0,
-                caretPadding: 0,
-                external: ({ chart, tooltip }) => {
-                  const nextState = buildExternalTooltipState({
-                    chart,
-                    tooltip,
-                    tooltipMode: compareTooltipMode,
-                  });
-
-                  if (!nextState.visible) {
-                    hideExternalTooltip();
-                    return;
-                  }
-
-                  setExternalTooltipState(prev =>
-                    areTooltipStatesEqual(prev, nextState) ? prev : nextState,
-                  );
-                },
-              }
-            : {
-                enabled: false,
-                caretSize: 0,
-                caretPadding: 0,
-              },
-        },
+        plugins: nextPlugins,
       },
     };
 
@@ -970,7 +1026,8 @@ function CompareChartCanvas({
       if (!point) return;
       applyCompareHover(chart, point.clientX, point.clientY);
     };
-    const supportsPointerEvents = typeof window !== 'undefined' && Boolean(window.PointerEvent);
+    const supportsPointerEvents =
+      typeof globalThis.window !== 'undefined' && Boolean(globalThis.window.PointerEvent);
 
     if (hoverSurface && enableHoverInfo) {
       if (supportsPointerEvents) {
@@ -1205,11 +1262,7 @@ export function CompareShotCharts({
     },
   };
 
-  const detailChartHeight = isFullDisplay
-    ? DETAIL_CHART_HEIGHT_FULL
-    : mainChartHeight > MAIN_CHART_HEIGHT_DEFAULT
-      ? DETAIL_CHART_HEIGHT_BIG
-      : DETAIL_CHART_HEIGHT_SMALL;
+  const detailChartHeight = getDetailChartHeight(mainChartHeight, isFullDisplay);
 
   const detailCharts = DETAIL_CHARTS.map(chart => {
     const datasets = buildDetailChartDatasets({
@@ -1223,6 +1276,11 @@ export function CompareShotCharts({
 
     if (datasets.length === 0) return null;
 
+    const detailChartRangeOptions = getDetailChartRangeOptions({
+      shotStylePreset,
+      chartId: chart.id,
+      compareModelCount: compareModels.length,
+    });
     const axisRange =
       chart.id === 'temperature'
         ? {
@@ -1234,29 +1292,10 @@ export function CompareShotCharts({
             beginAtZero: chart.beginAtZero,
             fallbackMin: chart.beginAtZero ? 0 : 80,
             fallbackMax: chart.beginAtZero ? 12 : 100,
-            paddingRatio:
-              shotStylePreset === 'statistics' && chart.id === 'weight'
-                ? 0.08
-                : shotStylePreset === 'statistics' && chart.id === 'weight-flow'
-                  ? 0.06
-                  : 0.05,
-            minimumPadding:
-              shotStylePreset === 'statistics' && chart.id === 'weight'
-                ? 1.5
-                : shotStylePreset === 'statistics' && chart.id === 'weight-flow'
-                  ? 0.25
-                  : 0.2,
-            maxStrategy:
-              shotStylePreset === 'statistics' &&
-              (chart.id === 'weight' || chart.id === 'weight-flow')
-                ? 'datasetPercentile'
-                : 'absolute',
-            maxPercentile:
-              shotStylePreset === 'statistics' && chart.id === 'weight'
-                ? getStatisticsAxisPercentile(compareModels.length, 'weight')
-                : shotStylePreset === 'statistics' && chart.id === 'weight-flow'
-                  ? getStatisticsAxisPercentile(compareModels.length, 'weightFlow')
-                  : 0.9,
+            paddingRatio: detailChartRangeOptions.paddingRatio,
+            minimumPadding: detailChartRangeOptions.minimumPadding,
+            maxStrategy: detailChartRangeOptions.maxStrategy,
+            maxPercentile: detailChartRangeOptions.maxPercentile,
           });
 
     return {

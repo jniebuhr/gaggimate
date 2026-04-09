@@ -19,6 +19,27 @@ const COMPARE_PENDING_ROW_CLASSES = 'bg-primary/12 border border-primary/24 opac
 const COMPARE_ROW_CLASSES = 'bg-primary/16 border border-primary/42 shadow-sm';
 const MATCH_ROW_CLASSES = 'bg-primary/8 border border-primary/24 shadow-sm';
 
+function getLibraryDisplayName(item, itemName, isShot) {
+  if (!isShot) return itemName.replace(/\.json$/i, '');
+  if (item.source === 'gaggimate') return `#${item.id || itemName}`;
+  return cleanName(item.name || item.storageKey || item.id || itemName);
+}
+
+function getLibraryRowClasses({ isActive, isComparePending, isCompareHighlight, isMatch }) {
+  if (isActive) return ACTIVE_ROW_CLASSES;
+  if (isComparePending) return COMPARE_PENDING_ROW_CLASSES;
+  if (isCompareHighlight) return COMPARE_ROW_CLASSES;
+  if (isMatch) return MATCH_ROW_CLASSES;
+  return 'hover:bg-base-content/5 border border-transparent';
+}
+
+function getLibraryNameClasses({ isActive, isCompareHighlight, isMatch }) {
+  if (isActive) return 'text-primary font-bold';
+  if (isCompareHighlight) return 'text-primary font-semibold opacity-95';
+  if (isMatch) return 'text-primary font-medium opacity-70';
+  return 'font-medium';
+}
+
 export function LibraryRow({
   item,
   compareBadgeNumber = null,
@@ -42,11 +63,7 @@ export function LibraryRow({
   onPinToggle,
 }) {
   const itemName = item.name || item.label || 'Unknown';
-  const displayName = isShot
-    ? item.source === 'gaggimate'
-      ? `#${item.id || itemName}`
-      : cleanName(item.name || item.storageKey || item.id || itemName)
-    : itemName.replace(/\.json$/i, '');
+  const displayName = getLibraryDisplayName(item, itemName, isShot);
 
   // Format Date & Time
   const dateStr = formatTimestamp(item.timestamp || item.shotDate);
@@ -61,23 +78,17 @@ export function LibraryRow({
   const isCompareHighlight = isCompareSelected || isCompareRelated;
   const statisticsIcon = compareMode ? faChartArea : faChartSimple;
 
-  const rowClasses = isActive
-    ? ACTIVE_ROW_CLASSES
-    : isComparePending
-      ? COMPARE_PENDING_ROW_CLASSES
-      : isCompareHighlight
-        ? COMPARE_ROW_CLASSES
-        : isMatch
-          ? MATCH_ROW_CLASSES
-          : 'hover:bg-base-content/5 border border-transparent';
-
-  const nameClasses = isActive
-    ? 'text-primary font-bold'
-    : isCompareHighlight
-      ? 'text-primary font-semibold opacity-95'
-      : isMatch
-        ? 'text-primary font-medium opacity-70'
-        : 'font-medium';
+  const rowClasses = getLibraryRowClasses({
+    isActive,
+    isComparePending,
+    isCompareHighlight,
+    isMatch,
+  });
+  const nameClasses = getLibraryNameClasses({
+    isActive,
+    isCompareHighlight,
+    isMatch,
+  });
 
   return (
     <tr
@@ -88,12 +99,7 @@ export function LibraryRow({
     >
       {showCompareSelection && (
         <td className='px-2 py-2 text-center first:rounded-l-md'>
-          <span
-            className='flex items-center justify-center'
-            role='presentation'
-            tabIndex={-1}
-            onClick={e => e.stopPropagation()}
-          >
+          <span className='flex items-center justify-center'>
             {isComparePending ? (
               <FontAwesomeIcon icon={faCircleNotch} spin className='text-primary text-xs' />
             ) : (
@@ -103,6 +109,7 @@ export function LibraryRow({
                 disabled={isCompareSelectionDisabled}
                 title={isCompareReference ? 'Reference shot' : 'Compare shot'}
                 aria-label={isCompareReference ? 'Reference shot' : 'Compare shot'}
+                onClick={event => event.stopPropagation()}
                 onChange={event => onCompareToggle?.(event.currentTarget.checked)}
                 className='checkbox checkbox-xs border-base-content/20 rounded-sm'
               />

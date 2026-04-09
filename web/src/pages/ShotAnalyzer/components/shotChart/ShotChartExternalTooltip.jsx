@@ -142,7 +142,9 @@ function buildCompareDifferenceRow(rows) {
 
   const delta = secondRow.numericValue - firstRow.numericValue;
   const unit = UNIT_BY_LABEL[firstRow.label];
-  const formattedValue = `${delta > 0 ? '+' : ''}${delta.toFixed(1)}${unit ? ` ${unit}` : ''}`;
+  const deltaPrefix = delta > 0 ? '+' : '';
+  const deltaSuffix = unit ? ` ${unit}` : '';
+  const formattedValue = `${deltaPrefix}${delta.toFixed(1)}${deltaSuffix}`;
 
   return {
     label: firstRow.label,
@@ -151,6 +153,39 @@ function buildCompareDifferenceRow(rows) {
     color: firstRow.color,
     spacerBefore: true,
   };
+}
+
+function buildCompareWaterRows({ shotLabel, shotOrder, phaseWaterMl, totalWaterMl, color }) {
+  return [
+    {
+      shotLabel,
+      shotOrder,
+      label: WATER_DRAWN_PHASE_LABEL,
+      displayLabel: getShotChartDisplayLabel(WATER_DRAWN_PHASE_LABEL),
+      valueText: Number.isFinite(phaseWaterMl) ? `${phaseWaterMl.toFixed(1)} ml` : '-',
+      color,
+    },
+    {
+      shotLabel,
+      shotOrder,
+      label: WATER_DRAWN_TOTAL_LABEL,
+      displayLabel: getShotChartDisplayLabel(WATER_DRAWN_TOTAL_LABEL),
+      valueText: Number.isFinite(totalWaterMl) ? `${totalWaterMl.toFixed(1)} ml` : '-',
+      color,
+    },
+  ];
+}
+
+function resolveTooltipAnchorX(chart, tooltip) {
+  if (Number.isFinite(chart.$fixedTooltipPointerX)) return chart.$fixedTooltipPointerX;
+  if (Number.isFinite(tooltip.caretX)) return tooltip.caretX;
+  return chart.chartArea.left + EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X;
+}
+
+function resolveTooltipAnchorY(chart, tooltip) {
+  if (Number.isFinite(chart.$fixedTooltipPointerY)) return chart.$fixedTooltipPointerY;
+  if (Number.isFinite(tooltip.caretY)) return tooltip.caretY;
+  return chart.chartArea.top;
 }
 
 function buildTooltipRowModel(tooltipItem, getHoverWaterValuesAtX, tooltipColorByLabel) {
@@ -254,23 +289,8 @@ export function buildCompareExternalTooltipRows({ chart, xValue }) {
     })
     .filter(Boolean);
 
-  waterByShotOrder.forEach(({ shotLabel, shotOrder, phaseWaterMl, totalWaterMl, color }) => {
-    compareRows.push({
-      shotLabel,
-      shotOrder,
-      label: WATER_DRAWN_PHASE_LABEL,
-      displayLabel: getShotChartDisplayLabel(WATER_DRAWN_PHASE_LABEL),
-      valueText: Number.isFinite(phaseWaterMl) ? `${phaseWaterMl.toFixed(1)} ml` : '-',
-      color,
-    });
-    compareRows.push({
-      shotLabel,
-      shotOrder,
-      label: WATER_DRAWN_TOTAL_LABEL,
-      displayLabel: getShotChartDisplayLabel(WATER_DRAWN_TOTAL_LABEL),
-      valueText: Number.isFinite(totalWaterMl) ? `${totalWaterMl.toFixed(1)} ml` : '-',
-      color,
-    });
+  waterByShotOrder.forEach(waterValues => {
+    compareRows.push(...buildCompareWaterRows(waterValues));
   });
 
   compareRows.sort((a, b) => {
@@ -377,16 +397,8 @@ export function buildExternalTooltipState({
     visible: true,
     titleLines,
     rows,
-    anchorX: Number.isFinite(chart.$fixedTooltipPointerX)
-      ? chart.$fixedTooltipPointerX
-      : Number.isFinite(tooltip.caretX)
-        ? tooltip.caretX
-        : chart.chartArea.left + EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X,
-    anchorY: Number.isFinite(chart.$fixedTooltipPointerY)
-      ? chart.$fixedTooltipPointerY
-      : Number.isFinite(tooltip.caretY)
-        ? tooltip.caretY
-        : chart.chartArea.top,
+    anchorX: resolveTooltipAnchorX(chart, tooltip),
+    anchorY: resolveTooltipAnchorY(chart, tooltip),
     chartWidth: chart.width,
     chartHeight: chart.height,
     chartAreaLeft: chart.chartArea.left,

@@ -521,11 +521,14 @@ export function LibraryPanel({
     setPinnedProfiles(result.pinnedProfiles);
   }, []);
 
-  const handleShotPinToggle = useCallback(item => {
-    const result = toggleShotPin(item, getEffectiveShotPinBucketKey(item));
-    if (!result.changed) return;
-    setPinnedShotsByProfile(result.pinnedShotsByProfile);
-  }, [getEffectiveShotPinBucketKey]);
+  const handleShotPinToggle = useCallback(
+    item => {
+      const result = toggleShotPin(item, getEffectiveShotPinBucketKey(item));
+      if (!result.changed) return;
+      setPinnedShotsByProfile(result.pinnedShotsByProfile);
+    },
+    [getEffectiveShotPinBucketKey],
+  );
 
   // Uses libraryService.exportItem to fetch data, then uses UI helper 'downloadJson'
   const handleExport = async (item, isShot) => {
@@ -634,16 +637,17 @@ export function LibraryPanel({
             };
             if (importMode === 'browser') await indexedDBService.saveProfile(profile);
 
-            if (slot === 'secondary') {
-              if (secondaryShot) {
-                onCompareProfileLoad?.(data, profileName, profile.source);
-                appliedImportCount += 1;
-              } else if (!currentShot) {
-                onProfileLoad(data, profileName, profile.source);
-                appliedImportCount += 1;
-              } else {
-                blockedSecondaryProfileImport = true;
-              }
+            if (slot !== 'secondary') {
+              onProfileLoad(data, profileName, profile.source);
+              appliedImportCount += 1;
+              continue;
+            }
+
+            if (secondaryShot) {
+              onCompareProfileLoad?.(data, profileName, profile.source);
+              appliedImportCount += 1;
+            } else if (currentShot) {
+              blockedSecondaryProfileImport = true;
             } else {
               onProfileLoad(data, profileName, profile.source);
               appliedImportCount += 1;

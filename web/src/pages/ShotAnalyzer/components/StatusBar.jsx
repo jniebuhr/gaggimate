@@ -33,6 +33,16 @@ function getProfileBadgeClasses({ isMismatch, currentProfile, badgeBaseClass, lo
   return `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
 }
 
+function getShotBadgeClasses({ ghosted, badgeBaseClass, currentShot }) {
+  if (ghosted) {
+    return getGhostedBadgeClasses(badgeBaseClass, Boolean(currentShot));
+  }
+  if (currentShot) {
+    return `${badgeBaseClass} bg-primary border-primary text-primary-content`;
+  }
+  return `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
+}
+
 function getGhostedBadgeClasses(baseClasses, isActive) {
   if (isActive) {
     // Secondary compare slots stay visually tied to the active theme while
@@ -47,6 +57,32 @@ function getProfileBadgeTitle(isMismatch) {
     return 'Profile mismatch detected. Use the import icon or drop files here to import.';
   }
   return 'Click to open the library. Use the import icon or drop files here to import.';
+}
+
+function getCompareBadgeIconButtonClasses({
+  compareMode,
+  currentShot,
+  activeBadgeIconButtonClasses,
+  neutralImportButtonClasses,
+}) {
+  if (compareMode) {
+    return `${activeBadgeIconButtonClasses} bg-black/10 opacity-100 ring-1 ring-current/15`;
+  }
+  return currentShot ? activeBadgeIconButtonClasses : neutralImportButtonClasses;
+}
+
+function getCompareSlotBadgeClasses({ currentShot, ghosted }) {
+  if (!currentShot) return 'bg-base-100 text-base-content/55 ring-base-200';
+  return ghosted
+    ? 'bg-primary/70 text-primary-content ring-base-100'
+    : 'bg-primary text-primary-content ring-base-100';
+}
+
+function getShotBadgeLabel(currentShot, currentShotName) {
+  if (currentShot?.source === 'gaggimate') {
+    return `#${currentShot.id}`;
+  }
+  return cleanName(currentShotName);
 }
 
 function CompareIcon({ className = 'inline-block h-4.5 w-4.5' }) {
@@ -181,11 +217,11 @@ export function StatusBar({
   const badgeBaseClass = compact
     ? 'flex items-center justify-between flex-1 px-2 h-full rounded-md border cursor-pointer transition-all min-w-0'
     : 'flex items-center justify-between flex-1 px-2 sm:px-3 h-full rounded-lg border-2 cursor-pointer transition-all min-w-0';
-  const shotBadgeClasses = ghosted
-    ? getGhostedBadgeClasses(badgeBaseClass, Boolean(currentShot))
-    : currentShot
-      ? `${badgeBaseClass} bg-primary border-primary text-primary-content`
-      : `${badgeBaseClass} bg-base-200/50 border-base-content/10 text-base-content hover:bg-base-200`;
+  const shotBadgeClasses = getShotBadgeClasses({
+    ghosted,
+    badgeBaseClass,
+    currentShot,
+  });
 
   const mismatchProfileBadgeStyle = isMismatch
     ? {
@@ -222,21 +258,22 @@ export function StatusBar({
         : 'opacity-75 hover:bg-black/10 hover:text-current hover:opacity-100'
     }`,
   });
-  const compareBadgeIconButtonClasses = compareMode
-    ? `${activeBadgeIconButtonClasses} bg-black/10 opacity-100 ring-1 ring-current/15`
-    : currentShot
-      ? activeBadgeIconButtonClasses
-      : neutralImportButtonClasses;
+  const compareBadgeIconButtonClasses = getCompareBadgeIconButtonClasses({
+    compareMode,
+    currentShot,
+    activeBadgeIconButtonClasses,
+    neutralImportButtonClasses,
+  });
   const profileStatsButtonClasses =
     currentProfile || isMismatch ? activeBadgeIconButtonClasses : neutralImportButtonClasses;
   const statisticsIcon = compareMode ? faChartArea : faChartSimple;
   // Empty compare slots keep a neutral badge so slot numbers communicate state
   // without suggesting that a shot is already loaded.
-  const compareBadgeClasses = currentShot
-    ? ghosted
-      ? 'bg-primary/70 text-primary-content ring-base-100'
-      : 'bg-primary text-primary-content ring-base-100'
-    : 'bg-base-100 text-base-content/55 ring-base-200';
+  const compareBadgeClasses = getCompareSlotBadgeClasses({ currentShot, ghosted });
+  const shotBadgeLabel = getShotBadgeLabel(currentShot, currentShotName);
+  const showShotChevron = !currentShot;
+  const showSearchingProfileLabel = isSearchingProfile && !currentProfile;
+  const showProfileChevron = !currentProfile && !isSearchingProfile;
 
   const renderImportButton = (label, useCurrentTone = false, target = 'shot') => (
     <button
@@ -413,12 +450,8 @@ export function StatusBar({
               title='Open library'
             >
               <span className='inline-flex max-w-full items-center justify-center gap-1'>
-                <span className='truncate'>
-                  {currentShot?.source === 'gaggimate'
-                    ? `#${currentShot.id}`
-                    : cleanName(currentShotName)}
-                </span>
-                {!currentShot ? (
+                <span className='truncate'>{shotBadgeLabel}</span>
+                {showShotChevron ? (
                   <FontAwesomeIcon
                     icon={faChevronDown}
                     className='shrink-0 text-[11px] opacity-40'
@@ -451,7 +484,7 @@ export function StatusBar({
               title={getProfileBadgeTitle(isMismatch)}
             >
               <span className='inline-flex max-w-full items-center justify-center gap-1'>
-                {isSearchingProfile && !currentProfile ? (
+                {showSearchingProfileLabel ? (
                   <span className='truncate italic opacity-50'>Searching Profile...</span>
                 ) : (
                   <>
@@ -461,7 +494,7 @@ export function StatusBar({
                     <span className='truncate'>{cleanName(currentProfileName)}</span>
                   </>
                 )}
-                {!currentProfile && !isSearchingProfile ? (
+                {showProfileChevron ? (
                   <FontAwesomeIcon
                     icon={faChevronDown}
                     className='shrink-0 text-[11px] opacity-40'

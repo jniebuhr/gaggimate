@@ -21,14 +21,13 @@ export function StatisticsPage() {
     return null;
   });
   const routeInitialContext = useMemo(() => parseStatisticsProfileRouteParams(params), [params]);
-  const initialContext = useMemo(
-    () => ({
-      source: 'gaggimate',
-      ...(sessionInitialContext || {}),
-      ...(routeInitialContext || {}),
-    }),
-    [routeInitialContext, sessionInitialContext],
-  );
+  const initialContext = useMemo(() => {
+    const baseContext = sessionInitialContext
+      ? { source: 'gaggimate', ...sessionInitialContext }
+      : { source: 'gaggimate' };
+
+    return routeInitialContext ? { ...baseContext, ...routeInitialContext } : baseContext;
+  }, [routeInitialContext, sessionInitialContext]);
 
   return (
     <div className='pb-20'>

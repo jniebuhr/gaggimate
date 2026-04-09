@@ -6,9 +6,14 @@ import {
   getAnalyzerIconButtonClasses,
   getAnalyzerSurfaceTriggerClasses,
 } from '../../ShotAnalyzer/components/analyzerControlStyles';
+import {
+  STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS,
+  STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE,
+} from './statisticsDropdownSurface';
 
 const LONG_PRESS_MS = 220;
 const MOVE_CANCEL_PX = 10;
+const STATISTICS_MULTISELECT_PANEL_CLASS = `absolute top-full left-0 mt-2 w-[min(92vw,28rem)] ${STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS}`;
 
 // Reusable multiselect dropdown with desktop modifiers and touch "paint" selection.
 function normalizeSearchText(value) {
@@ -68,6 +73,7 @@ export function StatisticsMultiSelectDropdown({
   emptyText = 'Select...',
   maxVisibleItems = 12,
   triggerClassName = 'h-11 min-h-0',
+  rootClassName = '',
 }) {
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
@@ -329,7 +335,7 @@ export function StatisticsMultiSelectDropdown({
   const singularLabel = getSingularLabel(label);
 
   return (
-    <div ref={rootRef} className='relative'>
+    <div ref={rootRef} className={`relative ${rootClassName}`.trim()}>
       <button
         ref={triggerRef}
         type='button'
@@ -353,7 +359,8 @@ export function StatisticsMultiSelectDropdown({
       {open && (
         <div
           ref={listRef}
-          className='bg-base-100/95 border-base-content/10 absolute top-full left-0 z-[60] mt-2 w-[min(92vw,28rem)] rounded-xl border shadow-xl backdrop-blur-md'
+          className={STATISTICS_MULTISELECT_PANEL_CLASS}
+          style={STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE}
         >
           <div className='border-base-content/8 border-b p-2'>
             <div className='flex items-center gap-2'>

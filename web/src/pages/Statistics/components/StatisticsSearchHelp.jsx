@@ -1,6 +1,12 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion';
 import { getAnalyzerIconButtonClasses } from '../../ShotAnalyzer/components/analyzerControlStyles';
+import {
+  STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS,
+  STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE,
+} from './statisticsDropdownSurface';
+
+const STATISTICS_SEARCH_HELP_PANEL_CLASS = `dropdown-content mt-2 w-[min(92vw,34rem)] p-3 ${STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS}`;
 
 export function StatisticsSearchHelp() {
   return (
@@ -15,7 +21,10 @@ export function StatisticsSearchHelp() {
       >
         <FontAwesomeIcon icon={faCircleQuestion} className='text-sm' />
       </summary>
-      <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[60] mt-2 w-[min(92vw,34rem)] rounded-xl border p-3 shadow-xl backdrop-blur-md'>
+      <div
+        className={STATISTICS_SEARCH_HELP_PANEL_CLASS}
+        style={STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE}
+      >
         <div className='space-y-2 text-xs leading-relaxed'>
           <p className='font-semibold'>Statistics Search DSL</p>
           <p className='opacity-80'>

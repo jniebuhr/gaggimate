@@ -1543,7 +1543,7 @@ export function StatisticsView({ initialContext }) {
 
   return (
     <div className={shouldShowEmptyStatisticsState ? 'space-y-6' : 'space-y-5'}>
-      <div className='bg-base-100/80 border-base-content/10 z-50 rounded-xl border shadow-lg backdrop-blur-md lg:sticky lg:top-0'>
+      <div className='bg-base-100/80 border-base-content/10 relative z-[80] rounded-xl border shadow-lg backdrop-blur-md lg:sticky lg:top-0'>
         <div className='px-1.5 py-1.5 sm:px-2 sm:py-2'>
           <StatisticsToolbar
             source={source}
@@ -1672,9 +1672,9 @@ export function StatisticsView({ initialContext }) {
                 <div className='flex-1'>
                   <h4 className='text-base-content mb-1 text-sm font-bold'>Statistics Mode</h4>
                   <p className='text-base-content text-xs leading-relaxed'>
-                    <span className='font-bold'>All</span> builds one overall result.
-                    <span className='font-bold'> By Profile</span> and
-                    <span className='font-bold'> By Shots</span> reorganize the same dataset into
+                    <span className='font-bold'>All</span> builds one overall result.{' '}
+                    <span className='font-bold'>By Profile</span> and{' '}
+                    <span className='font-bold'>By Shots</span> reorganize the same dataset into
                     grouped views.
                   </p>
                 </div>
