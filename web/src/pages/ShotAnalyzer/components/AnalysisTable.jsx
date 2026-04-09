@@ -564,7 +564,9 @@ export function AnalysisTable({
                           >
                             {phaseIndex + 1}
                           </td>
-                          <td className={`px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass}`}>
+                          <td
+                            className={`px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass}`}
+                          >
                             <div
                               className={`leading-tight font-semibold ${entry.isReference ? 'text-primary' : 'text-base-content/90'}`}
                             >
@@ -576,7 +578,9 @@ export function AnalysisTable({
                               </div>
                             ) : null}
                           </td>
-                          <td className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass}`}>
+                          <td
+                            className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass}`}
+                          >
                             <ComparePhaseLabel
                               phase={phase}
                               phaseIndex={phaseIndex}
@@ -632,7 +636,12 @@ export function AnalysisTable({
                         key={`${entry.key}-total-${col.id}`}
                         className={`border-l px-3 py-2 text-right font-mono tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
                       >
-                        <CellContent phase={null} col={col} results={entry.results} isTotal={true} />
+                        <CellContent
+                          phase={null}
+                          col={col}
+                          results={entry.results}
+                          isTotal={true}
+                        />
                       </td>
                     ))}
                   </tr>

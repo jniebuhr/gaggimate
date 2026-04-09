@@ -185,7 +185,9 @@ function buildShotSelectionItem(shot, dateBasisMode) {
 }
 
 function getStatisticsCompareFallbackKey(entry, index) {
-  return entry?.meta?.selectionKey || `${entry?.meta?.source || 'shot'}:${entry?.meta?.id || index}`;
+  return (
+    entry?.meta?.selectionKey || `${entry?.meta?.source || 'shot'}:${entry?.meta?.id || index}`
+  );
 }
 
 function buildStatisticsCompareEntry(entry, { key, isReference = false } = {}) {
@@ -341,29 +343,25 @@ function StatisticsDetailSectionPanel({
         />
       )}
 
-      {hasMetricStatistics &&
-        resolvedStatisticsDetailSection === 'metrics' && (
-          <MetricsTable metrics={result.metrics} />
-        )}
+      {hasMetricStatistics && resolvedStatisticsDetailSection === 'metrics' && (
+        <MetricsTable metrics={result.metrics} />
+      )}
 
-      {hasTrendStatistics &&
-        resolvedStatisticsDetailSection === 'trends' && (
-          <TrendChart key={`statistics-trends-${chartRunKey}`} trends={result.trends} />
-        )}
+      {hasTrendStatistics && resolvedStatisticsDetailSection === 'trends' && (
+        <TrendChart key={`statistics-trends-${chartRunKey}`} trends={result.trends} />
+      )}
 
-      {hasProfileGroupStatistics &&
-        resolvedStatisticsDetailSection === 'profile' && (
-          <ProfileGroupTable profileGroups={result.profileGroups} showTitle={false} />
-        )}
+      {hasProfileGroupStatistics && resolvedStatisticsDetailSection === 'profile' && (
+        <ProfileGroupTable profileGroups={result.profileGroups} showTitle={false} />
+      )}
 
-      {hasPhaseStatistics &&
-        resolvedStatisticsDetailSection === 'phase' && (
-          <PhaseStatistics
-            phaseStats={result.phaseStats}
-            showTitle={false}
-            hideExitReasons={hidePhaseExitReasons}
-          />
-        )}
+      {hasPhaseStatistics && resolvedStatisticsDetailSection === 'phase' && (
+        <PhaseStatistics
+          phaseStats={result.phaseStats}
+          showTitle={false}
+          hideExitReasons={hidePhaseExitReasons}
+        />
+      )}
     </>
   );
 
@@ -805,7 +803,12 @@ export function StatisticsView({ initialContext }) {
           isPinned: isProfilePinned(name, pinnedProfiles),
           pinDisabledReason: getProfilePinDisabledReason(name),
         })),
-    [availableProfiles, profilesPresentInBaseFilteredShots, pinnedProfiles, getProfilePinDisabledReason],
+    [
+      availableProfiles,
+      profilesPresentInBaseFilteredShots,
+      pinnedProfiles,
+      getProfilePinDisabledReason,
+    ],
   );
 
   const visibleProfileIdSet = useMemo(
@@ -1184,9 +1187,7 @@ export function StatisticsView({ initialContext }) {
             batch.map(async shot => {
               try {
                 const shotId =
-                  shot.source === 'gaggimate'
-                    ? shot.id
-                    : shot.storageKey || shot.name || shot.id;
+                  shot.source === 'gaggimate' ? shot.id : shot.storageKey || shot.name || shot.id;
                 const loadedShot = await libraryService.loadShot(shotId, shot.source);
                 const fullShot = loadedShot
                   ? {
@@ -1233,11 +1234,7 @@ export function StatisticsView({ initialContext }) {
                   }
                 }
 
-                if (
-                  matchedProfile &&
-                  matchedProfileEntry?.source &&
-                  !matchedProfile.source
-                ) {
+                if (matchedProfile && matchedProfileEntry?.source && !matchedProfile.source) {
                   matchedProfile = { ...matchedProfile, source: matchedProfileEntry.source };
                 }
 
@@ -1424,7 +1421,8 @@ export function StatisticsView({ initialContext }) {
   const detailSectionCandidate =
     initializedDetailSectionRunIdRef.current === runRequest?.id
       ? statisticsDetailSection
-      : normalizeStatisticsDetailSection(statisticsDetailSection) || fallbackStatisticsDetailSection;
+      : normalizeStatisticsDetailSection(statisticsDetailSection) ||
+        fallbackStatisticsDetailSection;
   const resolvedStatisticsDetailSection = resolveStatisticsDetailSectionChoice({
     candidate: detailSectionCandidate,
     hasCompareStatistics: hasStatisticsCompare,
@@ -1492,7 +1490,9 @@ export function StatisticsView({ initialContext }) {
       .filter(Boolean);
   }, [result, runRequest]);
   const shouldHidePhaseExitReasons = statisticsCompareEntries.length > 2;
-  const builtShotCount = Number.isFinite(result?.summary?.totalShots) ? result.summary.totalShots : 0;
+  const builtShotCount = Number.isFinite(result?.summary?.totalShots)
+    ? result.summary.totalShots
+    : 0;
   const builtProfileCount = useMemo(() => {
     const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
     const profileNames = new Set();
@@ -1512,7 +1512,10 @@ export function StatisticsView({ initialContext }) {
     const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
     const timestamps = cachedEntries
       .map(entry =>
-        resolveShotEffectiveTimestampMs(entry?.shotData || entry?.meta, runRequest?.dateBasisMode || 'auto'),
+        resolveShotEffectiveTimestampMs(
+          entry?.shotData || entry?.meta,
+          runRequest?.dateBasisMode || 'auto',
+        ),
       )
       .filter(value => Number.isFinite(value) && value > 0)
       .sort((a, b) => a - b);
@@ -1660,7 +1663,7 @@ export function StatisticsView({ initialContext }) {
               <p className='text-base-content text-sm opacity-70'>
                 Press{' '}
                 <span
-                  className='inline-flex h-5 w-5 items-center justify-center rounded-md bg-success'
+                  className='bg-success inline-flex h-5 w-5 items-center justify-center rounded-md'
                   style={{ color: 'var(--color-base-content)' }}
                 >
                   <FontAwesomeIcon icon={faPlay} className='text-[10px]' />
@@ -1675,7 +1678,7 @@ export function StatisticsView({ initialContext }) {
 
             <div className='space-y-5'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center text-success'>
+                <div className='text-success flex h-8 w-10 flex-shrink-0 items-center justify-center'>
                   <FontAwesomeIcon icon={faChartSimple} className='text-base' />
                 </div>
                 <div className='flex-1'>
@@ -1699,8 +1702,8 @@ export function StatisticsView({ initialContext }) {
                 <div className='flex-1'>
                   <h4 className='text-base-content mb-1 text-sm font-bold'>Source</h4>
                   <p className='text-base-content text-xs leading-relaxed'>
-                    The Source menu switches between GaggiMate shots, local browser storage, or
-                    both combined.
+                    The Source menu switches between GaggiMate shots, local browser storage, or both
+                    combined.
                   </p>
                 </div>
               </div>

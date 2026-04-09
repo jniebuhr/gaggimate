@@ -368,7 +368,15 @@ export function NotesBar({
 
     globalThis.addEventListener('keydown', handleKeyDown);
     return () => globalThis.removeEventListener('keydown', handleKeyDown);
-  }, [currentShot, canGoPrev, canGoNext, currentIndex, shotList, onNavigate, enableKeyboardNavigation]);
+  }, [
+    currentShot,
+    canGoPrev,
+    canGoNext,
+    currentIndex,
+    shotList,
+    onNavigate,
+    enableKeyboardNavigation,
+  ]);
 
   useEffect(() => {
     onEditingChange?.(isEditing);
@@ -555,7 +563,9 @@ export function NotesBar({
               type='button'
               className={`${modeButtonClasses} ${importMode === 'browser' ? 'opacity-75' : 'opacity-60'}`}
               style={
-                importMode === 'browser' ? { color: analyzerUiColors.sourceBadgeWebText } : undefined
+                importMode === 'browser'
+                  ? { color: analyzerUiColors.sourceBadgeWebText }
+                  : undefined
               }
               onClick={handleModeToggle}
               title={

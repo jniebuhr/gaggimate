@@ -143,7 +143,9 @@ export function ShotAnalyzer() {
   const [comparePendingKeys, setComparePendingKeys] = useState([]);
   const [compareResults, setCompareResults] = useState([]);
   const [compareTargetDisplayMode, setCompareTargetDisplayMode] = useState(() =>
-    normalizeCompareTargetDisplayMode(loadFromStorage(ANALYZER_DB_KEYS.COMPARE_TARGET_DISPLAY_MODE)),
+    normalizeCompareTargetDisplayMode(
+      loadFromStorage(ANALYZER_DB_KEYS.COMPARE_TARGET_DISPLAY_MODE),
+    ),
   );
   const [compareIsSearchingProfile, setCompareIsSearchingProfile] = useState(false);
   const [pendingMobileAnalysisScroll, setPendingMobileAnalysisScroll] = useState(false);
@@ -313,12 +315,7 @@ export function ShotAnalyzer() {
     const nextShotKey = getShotIdentityKey(shotWithMetadata);
     const currentShotKey = currentShot ? getShotIdentityKey(currentShot) : '';
 
-    if (
-      !preserveCompare &&
-      currentShotKey &&
-      nextShotKey &&
-      currentShotKey !== nextShotKey
-    ) {
+    if (!preserveCompare && currentShotKey && nextShotKey && currentShotKey !== nextShotKey) {
       resetCompareState();
     }
 
@@ -619,7 +616,9 @@ export function ShotAnalyzer() {
           ? {
               ...entry,
               profile: null,
-              profileName: entry.shot?.profile ? cleanName(entry.shot.profile) : 'No Profile Loaded',
+              profileName: entry.shot?.profile
+                ? cleanName(entry.shot.profile)
+                : 'No Profile Loaded',
               profileSelectionMode: 'none',
             }
           : entry,
@@ -639,7 +638,10 @@ export function ShotAnalyzer() {
       const allProfiles = await libraryService.getAllProfiles('both');
       if (matchId !== compareProfileMatchIdRef.current) return;
 
-      const matchedProfile = await loadPreferredAutoMatchedProfile(secondaryEntry.shot, allProfiles);
+      const matchedProfile = await loadPreferredAutoMatchedProfile(
+        secondaryEntry.shot,
+        allProfiles,
+      );
       if (matchId !== compareProfileMatchIdRef.current) return;
 
       if (matchedProfile) {
@@ -788,10 +790,7 @@ export function ShotAnalyzer() {
               if (compareMode) {
                 statsInitialContext.preferredDetailSection = 'compare';
               }
-              sessionStorage.setItem(
-                'statsInitialContext',
-                JSON.stringify(statsInitialContext),
-              );
+              sessionStorage.setItem('statsInitialContext', JSON.stringify(statsInitialContext));
             }}
             statsHref={statsHref}
             importMode={importMode}

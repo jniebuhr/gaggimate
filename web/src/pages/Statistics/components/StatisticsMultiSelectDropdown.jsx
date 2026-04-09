@@ -29,7 +29,9 @@ function buildOrderedSelection(items, nextSet) {
 }
 
 function getSingularLabel(label) {
-  const normalized = String(label ?? '').trim().toLowerCase();
+  const normalized = String(label ?? '')
+    .trim()
+    .toLowerCase();
   if (normalized.endsWith('ies')) return `${normalized.slice(0, -3)}y`;
   if (normalized.endsWith('s')) return normalized.slice(0, -1);
   return normalized || 'item';
@@ -340,7 +342,10 @@ export function StatisticsMultiSelectDropdown({
       >
         <span className='truncate text-left'>{triggerText}</span>
         <span className='text-[10px] opacity-65'>
-          <FontAwesomeIcon icon={faChevronDown} className={open ? 'rotate-180 transition-transform' : 'transition-transform'} />
+          <FontAwesomeIcon
+            icon={faChevronDown}
+            className={open ? 'rotate-180 transition-transform' : 'transition-transform'}
+          />
         </span>
       </button>
 
@@ -443,14 +448,13 @@ export function StatisticsMultiSelectDropdown({
                             }
                             className={getAnalyzerIconButtonClasses({
                               tone: item.isPinned ? 'primary' : 'subtle',
-                              className:
-                                `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
-                                  item.isPinned ? 'text-primary hover:text-primary' : ''
-                                } ${
-                                  !item.isPinned && item.pinDisabledReason
-                                    ? 'cursor-not-allowed opacity-35'
-                                    : ''
-                                }`,
+                              className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
+                                item.isPinned ? 'text-primary hover:text-primary' : ''
+                              } ${
+                                !item.isPinned && item.pinDisabledReason
+                                  ? 'cursor-not-allowed opacity-35'
+                                  : ''
+                              }`,
                             })}
                             onClick={event => {
                               event.stopPropagation();

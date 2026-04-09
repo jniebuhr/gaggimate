@@ -8,7 +8,7 @@ export function StatisticsSearchHelp() {
       <summary
         className={`${getAnalyzerIconButtonClasses({
           className:
-            'bg-transparent text-base-content/60 flex h-9 min-h-0 w-9 list-none items-center justify-center px-0 hover:text-base-content',
+            'text-base-content/60 hover:text-base-content flex h-9 min-h-0 w-9 list-none items-center justify-center bg-transparent px-0',
         })} [&::-webkit-details-marker]:hidden`}
         aria-label='Search help'
         title='Search help'

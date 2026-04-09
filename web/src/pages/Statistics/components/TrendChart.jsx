@@ -239,7 +239,9 @@ export function TrendChart({ trends }) {
     <div>
       <div className='mb-2 flex items-center justify-end px-1'>
         <div className='ml-auto flex items-center gap-1.5'>
-          <div className={`relative flex shrink-0 ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} items-center`}>
+          <div
+            className={`relative flex shrink-0 ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} items-center`}
+          >
             <select
               className={getAnalyzerSurfaceTriggerClasses({
                 className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} w-[8.75rem] max-w-[8.75rem] appearance-none rounded-md border-0 bg-transparent px-2.5 pr-6 text-[10px] font-semibold tracking-normal normal-case shadow-none outline-none`,
@@ -259,7 +261,9 @@ export function TrendChart({ trends }) {
               <FontAwesomeIcon icon={faChevronDown} />
             </span>
           </div>
-          <div className={`relative flex shrink-0 ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} items-center`}>
+          <div
+            className={`relative flex shrink-0 ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} items-center`}
+          >
             <select
               className={getAnalyzerSurfaceTriggerClasses({
                 className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} w-[5rem] max-w-[5rem] appearance-none rounded-md border-0 bg-transparent px-2.5 pr-6 text-[10px] font-semibold tracking-normal normal-case shadow-none outline-none`,

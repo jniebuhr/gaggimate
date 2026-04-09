@@ -107,9 +107,7 @@ function closeParentDetails(target) {
 function isInteractiveToolbarTarget(target) {
   if (!(target instanceof Element)) return false;
   return Boolean(
-    target.closest(
-      'button, input, summary, details, a, label, select, textarea, [role="button"]',
-    ),
+    target.closest('button, input, summary, details, a, label, select, textarea, [role="button"]'),
   );
 }
 
@@ -324,12 +322,10 @@ export function StatisticsToolbar({
     className: `${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-[7rem] list-none justify-between rounded-lg px-2 text-sm font-semibold [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`,
   });
   const resetButtonClasses = getAnalyzerSurfaceTriggerClasses({
-    className:
-      `inline-flex ${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-12 flex-col items-center justify-center gap-0.5 rounded-lg bg-base-content/4 px-0 text-base-content/70 hover:bg-base-content/7 hover:text-base-content disabled:cursor-not-allowed disabled:opacity-40`,
+    className: `inline-flex ${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-12 flex-col items-center justify-center gap-0.5 rounded-lg bg-base-content/4 px-0 text-base-content/70 hover:bg-base-content/7 hover:text-base-content disabled:cursor-not-allowed disabled:opacity-40`,
   });
   const runButtonClasses = getAnalyzerSurfaceTriggerClasses({
-    className:
-      `inline-flex ${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-[6rem] items-center justify-center rounded-lg bg-success px-0 text-success-content hover:bg-success/92 hover:text-success-content disabled:cursor-not-allowed disabled:opacity-40`,
+    className: `inline-flex ${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-[6rem] items-center justify-center rounded-lg bg-success px-0 text-success-content hover:bg-success/92 hover:text-success-content disabled:cursor-not-allowed disabled:opacity-40`,
   });
   const compactNeutralButtonClasses = getAnalyzerTextButtonClasses({
     className:
@@ -341,9 +337,7 @@ export function StatisticsToolbar({
   });
   const dateTriggerClasses = getAnalyzerSurfaceTriggerClasses({
     className: `flex h-9 min-h-0 w-[11.25rem] list-none items-center gap-1.5 rounded-lg bg-transparent px-2 text-left text-xs sm:w-[12.5rem] md:w-[15rem] [&::-webkit-details-marker]:hidden ${
-      hasDateFilter
-        ? 'text-base-content'
-        : 'text-base-content/70 hover:text-base-content'
+      hasDateFilter ? 'text-base-content' : 'text-base-content/70 hover:text-base-content'
     }`,
   });
 
@@ -435,7 +429,7 @@ export function StatisticsToolbar({
         <button
           type='button'
           onClick={() => setIsCollapsedStripExpanded(true)}
-          className='-mx-1.5 -my-1.5 flex h-6 min-h-0 w-[calc(100%+0.75rem)] cursor-pointer items-center rounded-lg bg-transparent px-2 text-[10px] font-semibold text-base-content/70 transition-colors duration-150 hover:bg-base-content/4 hover:text-base-content sm:-mx-2 sm:-my-2 sm:w-[calc(100%+1rem)]'
+          className='text-base-content/70 hover:bg-base-content/4 hover:text-base-content -mx-1.5 -my-1.5 flex h-6 min-h-0 w-[calc(100%+0.75rem)] cursor-pointer items-center rounded-lg bg-transparent px-2 text-[10px] font-semibold transition-colors duration-150 sm:-mx-2 sm:-my-2 sm:w-[calc(100%+1rem)]'
           aria-label='Expand statistics toolbar'
           title='Expand statistics toolbar'
         >
@@ -459,121 +453,121 @@ export function StatisticsToolbar({
       ) : (
         <>
           <div className='flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1'>
-          <details className='dropdown max-w-full'>
-            <summary
-              className={modeTriggerClasses}
-              aria-label='Select statistics mode'
-              title='Select statistics mode'
-            >
-              <span className='truncate'>{currentModeOption.label}</span>
-              <FontAwesomeIcon icon={faChevronDown} className='-ml-0.5 text-[10px] opacity-70' />
-            </summary>
+            <details className='dropdown max-w-full'>
+              <summary
+                className={modeTriggerClasses}
+                aria-label='Select statistics mode'
+                title='Select statistics mode'
+              >
+                <span className='truncate'>{currentModeOption.label}</span>
+                <FontAwesomeIcon icon={faChevronDown} className='-ml-0.5 text-[10px] opacity-70' />
+              </summary>
 
-            <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-40 rounded-xl border p-1.5 shadow-xl backdrop-blur-md'>
-              <div className='grid gap-1'>
-                {MODE_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    type='button'
-                    className={`flex h-9 min-h-0 items-center justify-between rounded-lg px-3 text-xs font-semibold transition-colors ${getMenuItemClasses({ tone: 'primary', isActive: mode === opt.value })}`}
-                    onClick={e => {
-                      onModeChange(opt.value);
-                      closeParentDetails(e.currentTarget);
-                    }}
-                    disabled={isBusy}
-                  >
-                    <span>{opt.label}</span>
-                    {mode === opt.value && <span className='text-[10px] opacity-70'>Active</span>}
-                  </button>
-                ))}
+              <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-40 rounded-xl border p-1.5 shadow-xl backdrop-blur-md'>
+                <div className='grid gap-1'>
+                  {MODE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      type='button'
+                      className={`flex h-9 min-h-0 items-center justify-between rounded-lg px-3 text-xs font-semibold transition-colors ${getMenuItemClasses({ tone: 'primary', isActive: mode === opt.value })}`}
+                      onClick={e => {
+                        onModeChange(opt.value);
+                        closeParentDetails(e.currentTarget);
+                      }}
+                      disabled={isBusy}
+                    >
+                      <span>{opt.label}</span>
+                      {mode === opt.value && <span className='text-[10px] opacity-70'>Active</span>}
+                    </button>
+                  ))}
+                </div>
               </div>
+            </details>
+
+            {mode === 'profile' && (
+              <>
+                <StatisticsMultiSelectDropdown
+                  label='Profiles'
+                  items={profileSelectionItems}
+                  selectedIds={selectedProfileNames}
+                  onChange={onSelectedProfileNamesChange}
+                  onTogglePin={onProfilePinToggle}
+                  disabled={isBusy}
+                  accentTone='primary'
+                  emptyText='Select Profiles...'
+                  triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
+                />
+                <StatisticsMultiSelectDropdown
+                  label='Shots'
+                  items={shotSelectionItems}
+                  selectedIds={selectedShotKeys}
+                  onChange={onSelectedShotKeysChange}
+                  onTogglePin={onShotPinToggle}
+                  disabled={isBusy}
+                  accentTone='primary'
+                  emptyText='Select Shots...'
+                  triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
+                />
+              </>
+            )}
+
+            {mode === 'shots' && (
+              <>
+                <StatisticsMultiSelectDropdown
+                  label='Shots'
+                  items={shotSelectionItems}
+                  selectedIds={selectedShotKeys}
+                  onChange={onSelectedShotKeysChange}
+                  onTogglePin={onShotPinToggle}
+                  disabled={isBusy}
+                  accentTone='primary'
+                  emptyText='Select Shots...'
+                  triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
+                />
+                <StatisticsMultiSelectDropdown
+                  label='Profiles'
+                  items={profileSelectionItems}
+                  selectedIds={selectedProfileNames}
+                  onChange={onSelectedProfileNamesChange}
+                  onTogglePin={onProfilePinToggle}
+                  disabled={isBusy}
+                  accentTone='primary'
+                  emptyText='Select Profiles...'
+                  triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
+                />
+              </>
+            )}
+
+            <div className='ml-auto flex items-center gap-2'>
+              <button
+                type='button'
+                onClick={onClearFilters}
+                className={resetButtonClasses}
+                disabled={isBusy}
+                aria-label={`Clear filters and selections (${resetAriaCount})`}
+                title={`Clear filters and selections (${resetAriaCount})`}
+              >
+                <FontAwesomeIcon icon={faUndo} className='text-lg leading-none' />
+                <span className='text-[10px] leading-none font-semibold tabular-nums'>
+                  {candidateLabel}
+                </span>
+              </button>
+
+              <button
+                type='button'
+                onClick={() => {
+                  setShowDslSelectionPreview(false);
+                  onGo();
+                }}
+                disabled={!canExecute}
+                className={runButtonClasses}
+                aria-label='Play statistics'
+                title='Play statistics'
+              >
+                <FontAwesomeIcon icon={faPlay} className='text-[1.35rem]' />
+              </button>
             </div>
-          </details>
-
-          {mode === 'profile' && (
-            <>
-              <StatisticsMultiSelectDropdown
-                label='Profiles'
-                items={profileSelectionItems}
-                selectedIds={selectedProfileNames}
-                onChange={onSelectedProfileNamesChange}
-                onTogglePin={onProfilePinToggle}
-                disabled={isBusy}
-                accentTone='primary'
-                emptyText='Select Profiles...'
-                triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
-              />
-              <StatisticsMultiSelectDropdown
-                label='Shots'
-                items={shotSelectionItems}
-                selectedIds={selectedShotKeys}
-                onChange={onSelectedShotKeysChange}
-                onTogglePin={onShotPinToggle}
-                disabled={isBusy}
-                accentTone='primary'
-                emptyText='Select Shots...'
-                triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
-              />
-            </>
-          )}
-
-          {mode === 'shots' && (
-            <>
-              <StatisticsMultiSelectDropdown
-                label='Shots'
-                items={shotSelectionItems}
-                selectedIds={selectedShotKeys}
-                onChange={onSelectedShotKeysChange}
-                onTogglePin={onShotPinToggle}
-                disabled={isBusy}
-                accentTone='primary'
-                emptyText='Select Shots...'
-                triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
-              />
-              <StatisticsMultiSelectDropdown
-                label='Profiles'
-                items={profileSelectionItems}
-                selectedIds={selectedProfileNames}
-                onChange={onSelectedProfileNamesChange}
-                onTogglePin={onProfilePinToggle}
-                disabled={isBusy}
-                accentTone='primary'
-                emptyText='Select Profiles...'
-                triggerClassName={STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS}
-              />
-            </>
-          )}
-
-          <div className='ml-auto flex items-center gap-2'>
-            <button
-              type='button'
-              onClick={onClearFilters}
-              className={resetButtonClasses}
-              disabled={isBusy}
-              aria-label={`Clear filters and selections (${resetAriaCount})`}
-              title={`Clear filters and selections (${resetAriaCount})`}
-            >
-              <FontAwesomeIcon icon={faUndo} className='text-lg leading-none' />
-              <span className='text-[10px] leading-none font-semibold tabular-nums'>
-                {candidateLabel}
-              </span>
-            </button>
-
-            <button
-              type='button'
-              onClick={() => {
-                setShowDslSelectionPreview(false);
-                onGo();
-              }}
-              disabled={!canExecute}
-              className={runButtonClasses}
-              aria-label='Play statistics'
-              title='Play statistics'
-            >
-              <FontAwesomeIcon icon={faPlay} className='text-[1.35rem]' />
-            </button>
           </div>
-        </div>
 
           <div className='flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 pt-0.5'>
             <details className='dropdown max-w-full'>
@@ -600,7 +594,9 @@ export function StatisticsToolbar({
                       disabled={isBusy}
                     >
                       {renderSourceOptionContent(opt)}
-                      {source === opt.value && <span className='text-[10px] opacity-70'>Active</span>}
+                      {source === opt.value && (
+                        <span className='text-[10px] opacity-70'>Active</span>
+                      )}
                     </button>
                   ))}
                 </div>

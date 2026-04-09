@@ -11,7 +11,10 @@ import { faUpDown } from '@fortawesome/free-solid-svg-icons/faUpDown';
 import { StatusBar } from './StatusBar';
 import { NotesBar } from './NotesBar';
 import { LibrarySection } from './LibrarySection';
-import { getAnalyzerIconButtonClasses, getAnalyzerTextButtonClasses } from './analyzerControlStyles';
+import {
+  getAnalyzerIconButtonClasses,
+  getAnalyzerTextButtonClasses,
+} from './analyzerControlStyles';
 import { libraryService } from '../services/LibraryService';
 import { indexedDBService } from '../services/IndexedDBService';
 import { notesService } from '../services/NotesService';
@@ -153,7 +156,9 @@ export function LibraryPanel({
   const [debouncedProfilesSearch, setDebouncedProfilesSearch] = useState('');
   const normalizedCurrentProfileName = cleanName(currentProfileName).toLowerCase();
   const normalizedCurrentShotProfileName = cleanName(currentShot?.profile || '').toLowerCase();
-  const normalizedCompareSecondaryProfileName = cleanName(compareSecondaryProfileName).toLowerCase();
+  const normalizedCompareSecondaryProfileName = cleanName(
+    compareSecondaryProfileName,
+  ).toLowerCase();
   const resolveRealProfilePinKey = useCallback(profileValue => {
     const key = getProfilePinKey(profileValue);
     return key && key !== 'no profile loaded' ? key : '';
@@ -409,7 +414,8 @@ export function LibraryPanel({
       const hasActiveProfileMatch =
         normalizedCurrentProfileName && normalizedCurrentProfileName !== 'no profile loaded';
       const hasActiveShotProfileMatch =
-        normalizedCurrentShotProfileName && normalizedCurrentShotProfileName !== 'no profile loaded';
+        normalizedCurrentShotProfileName &&
+        normalizedCurrentShotProfileName !== 'no profile loaded';
       const promoteMatchedShots = item =>
         hasActiveProfileMatch &&
         cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName;
@@ -822,7 +828,8 @@ export function LibraryPanel({
   const primaryProfileMismatch =
     currentShot &&
     currentProfile &&
-    cleanName(currentShot.profile || '').toLowerCase() !== cleanName(currentProfileName).toLowerCase();
+    cleanName(currentShot.profile || '').toLowerCase() !==
+      cleanName(currentProfileName).toLowerCase();
   const secondaryProfileMismatch =
     secondaryShot &&
     secondaryProfile &&
@@ -904,7 +911,9 @@ export function LibraryPanel({
                 onUnloadShot={handleClearSecondaryShot}
                 onUnloadProfile={onCompareProfileUnload}
                 onRetryProfileSearch={onRetryCompareProfileSearch}
-                onShotPanelToggle={() => openLibraryForTarget(currentShot ? 'secondaryShot' : 'primaryShot')}
+                onShotPanelToggle={() =>
+                  openLibraryForTarget(currentShot ? 'secondaryShot' : 'primaryShot')
+                }
                 onProfilePanelToggle={() => {
                   if (!secondaryShot) return;
                   openLibraryForTarget('secondaryProfile');
@@ -1071,7 +1080,8 @@ export function LibraryPanel({
                         const itemKey = getShotIdentityKey(item);
                         if (!itemKey) return null;
                         if (currentShot && itemKey === getShotIdentityKey(currentShot)) return 1;
-                        if (compareSecondaryShotKey && itemKey === compareSecondaryShotKey) return 2;
+                        if (compareSecondaryShotKey && itemKey === compareSecondaryShotKey)
+                          return 2;
                         return null;
                       }}
                       onCompareToggle={onCompareShotToggle}
@@ -1194,9 +1204,12 @@ export function LibraryPanel({
                       }
                       getCompareBadgeNumber={item => {
                         if (!compareMode) return null;
-                        const itemProfileName = cleanName(item.name || item.label || '').toLowerCase();
+                        const itemProfileName = cleanName(
+                          item.name || item.label || '',
+                        ).toLowerCase();
                         if (!itemProfileName) return null;
-                        if (currentProfile && itemProfileName === normalizedCurrentProfileName) return 1;
+                        if (currentProfile && itemProfileName === normalizedCurrentProfileName)
+                          return 1;
                         if (
                           compareSecondaryProfileName &&
                           normalizedCompareSecondaryProfileName &&

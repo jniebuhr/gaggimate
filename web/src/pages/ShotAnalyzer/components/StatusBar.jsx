@@ -216,12 +216,11 @@ export function StatusBar({
   });
 
   const activeBadgeIconButtonClasses = getAnalyzerIconButtonClasses({
-    className:
-      `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full text-current ${
-        ghosted
-          ? 'opacity-90 hover:bg-primary/12 hover:text-current hover:opacity-100'
-          : 'opacity-75 hover:bg-black/10 hover:text-current hover:opacity-100'
-      }`,
+    className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full text-current ${
+      ghosted
+        ? 'opacity-90 hover:bg-primary/12 hover:text-current hover:opacity-100'
+        : 'opacity-75 hover:bg-black/10 hover:text-current hover:opacity-100'
+    }`,
   });
   const compareBadgeIconButtonClasses = compareMode
     ? `${activeBadgeIconButtonClasses} bg-black/10 opacity-100 ring-1 ring-current/15`
@@ -352,7 +351,9 @@ export function StatusBar({
             title={compareAvailable ? compareTitle : 'No shots available to compare'}
             aria-label={compareAvailable ? compareTitle : 'No shots available to compare'}
           >
-            <CompareIcon className={compact ? 'inline-block h-4 w-4' : 'inline-block h-4.5 w-4.5'} />
+            <CompareIcon
+              className={compact ? 'inline-block h-4 w-4' : 'inline-block h-4.5 w-4.5'}
+            />
           </button>
         ) : null}
 
@@ -408,7 +409,7 @@ export function StatusBar({
             <button
               type='button'
               onClick={handleShotPanelToggle}
-              className={`mx-1.5 flex min-w-0 flex-1 self-stretch items-center justify-center overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
+              className={`mx-1.5 flex min-w-0 flex-1 items-center justify-center self-stretch overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
               title='Open library'
             >
               <span className='inline-flex max-w-full items-center justify-center gap-1'>
@@ -418,7 +419,10 @@ export function StatusBar({
                     : cleanName(currentShotName)}
                 </span>
                 {!currentShot ? (
-                  <FontAwesomeIcon icon={faChevronDown} className='shrink-0 text-[11px] opacity-40' />
+                  <FontAwesomeIcon
+                    icon={faChevronDown}
+                    className='shrink-0 text-[11px] opacity-40'
+                  />
                 ) : null}
               </span>
             </button>
@@ -443,7 +447,7 @@ export function StatusBar({
             <button
               type='button'
               onClick={handleProfilePanelToggle}
-              className={`mx-1.5 flex min-w-0 flex-1 self-stretch items-center justify-center overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
+              className={`mx-1.5 flex min-w-0 flex-1 items-center justify-center self-stretch overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
               title={getProfileBadgeTitle(isMismatch)}
             >
               <span className='inline-flex max-w-full items-center justify-center gap-1'>
@@ -458,7 +462,10 @@ export function StatusBar({
                   </>
                 )}
                 {!currentProfile && !isSearchingProfile ? (
-                  <FontAwesomeIcon icon={faChevronDown} className='shrink-0 text-[11px] opacity-40' />
+                  <FontAwesomeIcon
+                    icon={faChevronDown}
+                    className='shrink-0 text-[11px] opacity-40'
+                  />
                 ) : null}
               </span>
             </button>

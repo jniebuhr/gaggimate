@@ -112,7 +112,7 @@ export function LibraryRow({
       >
         {compareBadgeNumber ? (
           <span
-            className={`pointer-events-none absolute -top-1.5 -left-1 z-[1] inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold shadow-md ring-2 ring-base-100 ${
+            className={`ring-base-100 pointer-events-none absolute -top-1.5 -left-1 z-[1] inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold shadow-md ring-2 ${
               compareBadgeNumber === 1
                 ? 'bg-primary text-primary-content'
                 : 'bg-primary/70 text-primary-content'
@@ -122,8 +122,12 @@ export function LibraryRow({
           </span>
         ) : null}
         <div className='flex items-center gap-1.5'>
-          {compareBadgeNumber ? <span className='sr-only'>Compare slot {compareBadgeNumber}</span> : null}
-          <span className={`block min-w-0 flex-1 truncate text-sm ${nameClasses}`}>{displayName}</span>
+          {compareBadgeNumber ? (
+            <span className='sr-only'>Compare slot {compareBadgeNumber}</span>
+          ) : null}
+          <span className={`block min-w-0 flex-1 truncate text-sm ${nameClasses}`}>
+            {displayName}
+          </span>
           {onPinToggle ? (
             <button
               type='button'
@@ -141,12 +145,9 @@ export function LibraryRow({
               }}
               className={getAnalyzerIconButtonClasses({
                 tone: isPinned ? 'primary' : 'subtle',
-                className:
-                  `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
-                    isPinned ? 'text-primary hover:text-primary' : ''
-                  } ${
-                    !isPinned && pinDisabledReason ? 'cursor-not-allowed opacity-35' : ''
-                  }`,
+                className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
+                  isPinned ? 'text-primary hover:text-primary' : ''
+                } ${!isPinned && pinDisabledReason ? 'cursor-not-allowed opacity-35' : ''}`,
               })}
             >
               <FontAwesomeIcon icon={faThumbtack} />

@@ -202,7 +202,10 @@ export function LibrarySection({
           <thead className='sticky top-0 z-20 text-[10px] font-bold tracking-wider uppercase'>
             <tr>
               {showCompareSelection && (
-                <th className={`${stickyHeaderCellClass} px-2 py-3 text-center`} style={{ width: widthCompare }}>
+                <th
+                  className={`${stickyHeaderCellClass} px-2 py-3 text-center`}
+                  style={{ width: widthCompare }}
+                >
                   Cmp
                 </th>
               )}
@@ -245,12 +248,15 @@ export function LibrarySection({
                   ) : null}
                 </div>
               </th>
-              <th className={`${stickyHeaderCellClass} px-1 py-3 text-center`} style={{ width: widthSource }}>
+              <th
+                className={`${stickyHeaderCellClass} px-1 py-3 text-center`}
+                style={{ width: widthSource }}
+              >
                 <details className='dropdown'>
                   <summary
                     className={getAnalyzerSurfaceTriggerClasses({
                       className:
-                        'inline-flex list-none cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-bold outline-none [&::-webkit-details-marker]:hidden',
+                        'inline-flex cursor-pointer list-none items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-bold outline-none [&::-webkit-details-marker]:hidden',
                     })}
                     aria-label='Filter library source'
                     title='Filter library source'
@@ -296,11 +302,17 @@ export function LibrarySection({
                 </th>
               )}
               {isShot && (
-                <th className={`${stickyHeaderCellClass} px-3 py-3 text-left`} style={{ width: widthProfile }}>
+                <th
+                  className={`${stickyHeaderCellClass} px-3 py-3 text-left`}
+                  style={{ width: widthProfile }}
+                >
                   Profile
                 </th>
               )}
-              <th className={`${stickyHeaderCellClass} px-2 py-3 text-right`} style={{ width: widthAction }} />
+              <th
+                className={`${stickyHeaderCellClass} px-2 py-3 text-right`}
+                style={{ width: widthAction }}
+              />
             </tr>
           </thead>
           <tbody className='text-sm'>

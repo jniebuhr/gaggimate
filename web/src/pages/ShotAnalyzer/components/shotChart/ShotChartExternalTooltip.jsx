@@ -323,23 +323,22 @@ export function buildExternalTooltipState({
       ? chart.$fixedTooltipXValue
       : Number.isFinite(tooltipItems[0]?.parsed?.x) && isCompareTooltipMode
         ? tooltipItems[0].parsed.x
-      : Number.isFinite(chart.scales?.x?.getValueForPixel?.(tooltip.caretX))
-        ? chart.scales.x.getValueForPixel(tooltip.caretX)
-        : null;
+        : Number.isFinite(chart.scales?.x?.getValueForPixel?.(tooltip.caretX))
+          ? chart.scales.x.getValueForPixel(tooltip.caretX)
+          : null;
   const rows =
     tooltipMode === 'compare'
       ? buildCompareExternalTooltipRows({ chart, xValue: compareXValue })
       : tooltipMode === 'compareTitleOnly'
         ? []
-      : buildExternalTooltipRows(tooltipItems, getHoverWaterValuesAtX, tooltipColorByLabel);
-  const titleLines =
-    isCompareTooltipMode
-      ? Number.isFinite(compareXValue)
-        ? [`${compareXValue.toFixed(2)} s`]
-        : []
-      : Array.isArray(tooltip.title)
-        ? tooltip.title.filter(title => typeof title === 'string' && title.trim().length > 0)
-        : [];
+        : buildExternalTooltipRows(tooltipItems, getHoverWaterValuesAtX, tooltipColorByLabel);
+  const titleLines = isCompareTooltipMode
+    ? Number.isFinite(compareXValue)
+      ? [`${compareXValue.toFixed(2)} s`]
+      : []
+    : Array.isArray(tooltip.title)
+      ? tooltip.title.filter(title => typeof title === 'string' && title.trim().length > 0)
+      : [];
 
   if (rows.length === 0 && titleLines.length === 0) {
     return createHiddenExternalTooltipState();
@@ -387,7 +386,9 @@ export function getExternalTooltipLayout({
     chartHeight: tooltipState.chartHeight || fallbackHeight || 0,
     tooltipWidth,
     tooltipHeight,
-    boundsLeft: Number.isFinite(tooltipState.chartAreaLeft) ? tooltipState.chartAreaLeft : undefined,
+    boundsLeft: Number.isFinite(tooltipState.chartAreaLeft)
+      ? tooltipState.chartAreaLeft
+      : undefined,
     boundsRight: Number.isFinite(tooltipState.chartAreaRight)
       ? tooltipState.chartAreaRight
       : undefined,
@@ -405,7 +406,7 @@ export function ShotChartExternalTooltip({ tooltipRef, state, layout, isFullDisp
   return (
     <div
       ref={tooltipRef}
-      className={`shot-chart-tooltip${isFullDisplay ? ' shot-chart-tooltip--fullscreen' : ''}${isTitleOnly ? ' shot-chart-tooltip--title-only' : ''}`}
+      className={`shot-chart-tooltip${isFullDisplay ? 'shot-chart-tooltip--fullscreen' : ''}${isTitleOnly ? 'shot-chart-tooltip--title-only' : ''}`}
       style={{
         left: `${layout.x}px`,
         top: `${layout.y}px`,
@@ -426,7 +427,7 @@ export function ShotChartExternalTooltip({ tooltipRef, state, layout, isFullDisp
         return (
           <div
             key={`${row.shotLabel || ''}-${row.label}-${row.valueText}-${index}`}
-            className={`shot-chart-tooltip__row${row.spacerBefore ? ' shot-chart-tooltip__row--spacer' : ''}`}
+            className={`shot-chart-tooltip__row${row.spacerBefore ? 'shot-chart-tooltip__row--spacer' : ''}`}
           >
             {rowIcon ? (
               <FontAwesomeIcon

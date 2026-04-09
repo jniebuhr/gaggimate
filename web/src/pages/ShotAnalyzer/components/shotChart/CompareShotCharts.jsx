@@ -191,10 +191,7 @@ function applyColorAlpha(color, alpha) {
     const green = Number.parseInt(hex.slice(2, 4), 16);
     const blue = Number.parseInt(hex.slice(4, 6), 16);
     const existingAlpha = hex.length === 8 ? Number.parseInt(hex.slice(6, 8), 16) / 255 : 1;
-    const nextAlpha = Math.max(
-      0,
-      Math.min(1, existingAlpha * Math.max(0, Math.min(1, alpha))),
-    );
+    const nextAlpha = Math.max(0, Math.min(1, existingAlpha * Math.max(0, Math.min(1, alpha))));
     return `rgba(${red}, ${green}, ${blue}, ${nextAlpha})`;
   }
 
@@ -317,11 +314,7 @@ function prefixCompareAnnotations(
     Object.entries(annotations).map(([key, annotation]) => {
       const nextAnnotation = cloneCompareAnnotation(annotation, { ghosted });
 
-      if (
-        key === 'shot_start' &&
-        startLabelSuffix &&
-        nextAnnotation?.label?.content
-      ) {
+      if (key === 'shot_start' && startLabelSuffix && nextAnnotation?.label?.content) {
         nextAnnotation.label = {
           ...nextAnnotation.label,
           content: `${nextAnnotation.label.content} ${startLabelSuffix}`,
@@ -335,9 +328,7 @@ function prefixCompareAnnotations(
 
 function collectVisibleYValues(datasets) {
   return datasets.flatMap(dataset =>
-    (dataset.data || [])
-      .map(point => Number(point?.y))
-      .filter(value => Number.isFinite(value)),
+    (dataset.data || []).map(point => Number(point?.y)).filter(value => Number.isFinite(value)),
   );
 }
 
@@ -1085,7 +1076,9 @@ export function CompareShotCharts({
     ...(showPhaseAnnotations ? [] : ['Phase Names']),
     ...(showStopAnnotations ? [] : ['Stops']),
   ];
-  const hasWeightData = compareEntries.some(entry => entry.shot?.samples?.some(sample => Number(sample?.v) > 0));
+  const hasWeightData = compareEntries.some(entry =>
+    entry.shot?.samples?.some(sample => Number(sample?.v) > 0),
+  );
   const hasWeightFlowData = compareEntries.some(entry =>
     entry.shot?.samples?.some(sample => Number(sample?.vf) > 0),
   );
@@ -1390,7 +1383,9 @@ export function CompareShotCharts({
           : null
       }
       isCompareMode={true}
-      onChartHeightToggle={() => setMainChartHeight(currentHeight => getNextChartHeight(currentHeight))}
+      onChartHeightToggle={() =>
+        setMainChartHeight(currentHeight => getNextChartHeight(currentHeight))
+      }
       onCloseExportMenu={() => {}}
       onExportAction={() => {}}
       onExportMenuToggle={() => {}}
