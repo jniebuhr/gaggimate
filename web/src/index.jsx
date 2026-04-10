@@ -60,12 +60,18 @@ export function App() {
 
             <main className='flex-1'>
               <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
-                <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
+                <div
+                  className={`grid grid-cols-1 ${
+                    desktopNavCollapsed
+                      ? 'gap-3 lg:grid-cols-[2.75rem_minmax(0,1fr)]'
+                      : 'gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]'
+                  }`}
+                >
                   <Navigation
                     collapsed={desktopNavCollapsed}
                     onToggleCollapsed={() => setDesktopNavCollapsed(collapsed => !collapsed)}
                   />
-                  <div className={desktopNavCollapsed ? 'lg:col-span-11' : 'lg:col-span-10'}>
+                  <div className='min-w-0'>
                     <ErrorBoundary>
                       <Router>
                         <Route path='/' component={Home} />

@@ -29,7 +29,7 @@ export function StatisticsPage() {
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Statistics</h2>
       </div>
 
-      <div className='container mx-auto max-w-7xl'>
+      <div className='w-full'>
         <StatisticsView initialContext={initialContext} />
       </div>
     </div>

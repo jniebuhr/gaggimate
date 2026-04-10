@@ -9,8 +9,8 @@ import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
+import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
 
 const NAVIGATION_SECTIONS = [
   [{ label: 'Dashboard', link: '/', icon: faHome }],
@@ -32,10 +32,10 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
   const { path } = useLocation();
   const isActive = path === link;
   const baseClassName = collapsed
-    ? 'btn btn-square btn-md w-full justify-center text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-0'
+    ? 'btn btn-square btn-md h-11 min-h-0 w-10 min-w-0 rounded-xl border-none bg-transparent px-0 text-base-content hover:bg-base-content/10 hover:text-base-content'
     : 'btn btn-md justify-start gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
   const activeClassName = collapsed
-    ? 'btn btn-square btn-md w-full justify-center bg-primary text-primary-content hover:bg-primary hover:text-primary-content border-none px-0'
+    ? 'btn btn-square btn-md h-11 min-h-0 w-10 min-w-0 rounded-xl border-none bg-primary px-0 text-primary-content hover:bg-primary hover:text-primary-content'
     : 'btn btn-md justify-start gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
   const className = isActive ? activeClassName : baseClassName;
 
@@ -60,8 +60,8 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
 
 export function Navigation({ collapsed = false, onToggleCollapsed }) {
   return (
-    <nav className={`hidden lg:block ${collapsed ? 'lg:col-span-1' : 'lg:col-span-2'}`}>
-      <div className={collapsed ? 'mx-auto w-full max-w-[3.5rem]' : 'w-full'}>
+    <nav className='hidden lg:block'>
+      <div className={collapsed ? 'w-10' : 'w-full'}>
         {NAVIGATION_SECTIONS.map((section, sectionIndex) => (
           <div key={`nav-section-${sectionIndex}`}>
             {sectionIndex > 0 ? <hr className='h-5 border-0' /> : null}
@@ -73,15 +73,19 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
           </div>
         ))}
 
-        <div className={`mt-4 flex ${collapsed ? 'justify-center' : 'justify-end'}`}>
+        <div className={`mt-4 flex ${collapsed ? 'justify-start' : 'justify-end'}`}>
           <button
             type='button'
             onClick={onToggleCollapsed}
-            className='btn btn-square btn-sm text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
+            className={
+              collapsed
+                ? 'btn btn-square btn-md h-11 min-h-0 w-10 min-w-0 rounded-xl border-none bg-transparent px-0 text-base-content hover:bg-base-content/10 hover:text-base-content'
+                : 'btn btn-square btn-sm border-none bg-transparent text-base-content hover:bg-base-content/10 hover:text-base-content'
+            }
             aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
             title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
           >
-            <FontAwesomeIcon icon={collapsed ? faChevronRight : faChevronLeft} />
+            <FontAwesomeIcon icon={collapsed ? faCircleChevronRight : faCircleChevronLeft} />
           </button>
         </div>
       </div>
