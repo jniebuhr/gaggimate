@@ -39,6 +39,9 @@ const DATE_BASIS_OPTIONS = [
   { value: 'upload', label: 'Upload' },
 ];
 
+export const STATISTICS_RUN_BUTTON_TONE_CLASS =
+  'bg-success text-success-content hover:bg-success/92 hover:text-success-content';
+
 const STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS = 'btn btn-md h-10 min-h-10 border-none shadow-none';
 const SEGMENT_GROUP_CLASS =
   'inline-flex overflow-hidden rounded-lg bg-base-content/4 divide-x divide-base-content/10';
@@ -327,7 +330,7 @@ export function StatisticsToolbar({
     className: `inline-flex ${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-12 flex-col items-center justify-center gap-0.5 rounded-lg bg-base-content/4 px-0 text-base-content/70 hover:bg-base-content/7 hover:text-base-content disabled:cursor-not-allowed disabled:opacity-40`,
   });
   const runButtonClasses = getAnalyzerSurfaceTriggerClasses({
-    className: `inline-flex ${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-[6rem] items-center justify-center rounded-lg bg-success px-0 text-success-content hover:bg-success/92 hover:text-success-content disabled:cursor-not-allowed disabled:opacity-40`,
+    className: `inline-flex ${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-[6rem] items-center justify-center rounded-lg px-0 ${STATISTICS_RUN_BUTTON_TONE_CLASS} disabled:cursor-not-allowed disabled:opacity-40`,
   });
   const compactNeutralButtonClasses = getAnalyzerTextButtonClasses({
     className:

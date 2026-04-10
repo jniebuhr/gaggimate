@@ -25,7 +25,7 @@ import {
   toggleProfilePin,
   toggleShotPin,
 } from '../../ShotAnalyzer/utils/analyzerUtils';
-import { StatisticsToolbar } from './StatisticsToolbar';
+import { StatisticsToolbar, STATISTICS_RUN_BUTTON_TONE_CLASS } from './StatisticsToolbar';
 import { SummaryCards } from './SummaryCards';
 import { MetricsTable } from './MetricsTable';
 import { ProfileGroupTable } from './ProfileGroupTable';
@@ -1948,8 +1948,7 @@ export function StatisticsView({ initialContext }) {
               <p className='text-base-content text-sm opacity-70'>
                 Press{' '}
                 <span
-                  className='bg-success inline-flex h-5 w-5 items-center justify-center rounded-md'
-                  style={{ color: 'var(--color-base-content)' }}
+                  className={`inline-flex h-5 w-5 items-center justify-center rounded-md ${STATISTICS_RUN_BUTTON_TONE_CLASS}`}
                 >
                   <FontAwesomeIcon icon={faPlay} className='text-[10px]' />
                 </span>{' '}

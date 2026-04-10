@@ -283,7 +283,7 @@ export function LibrarySection({
                       type='button'
                       className={getAnalyzerIconButtonClasses({
                         tone: pinnedFirstEnabled ? 'primary' : 'subtle',
-                        className: `h-full min-h-full w-8 shrink-0 rounded-none bg-transparent p-0 text-[11px] ${
+                        className: `mr-3 h-full min-h-full w-5 shrink-0 justify-self-end rounded-none bg-transparent p-0 text-[11px] ${
                           pinnedFirstEnabled ? 'text-primary hover:text-primary' : ''
                         }`,
                       })}
