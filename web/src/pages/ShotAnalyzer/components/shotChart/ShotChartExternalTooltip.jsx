@@ -447,9 +447,10 @@ export function ShotChartExternalTooltip({ tooltipRef, state, layout, isFullDisp
   return (
     <div
       ref={tooltipRef}
+      // Build tooltip modifiers via array join so formatting cannot remove the class separators.
       className={[
         'shot-chart-tooltip',
-        isFullDisplay ? ' shot-chart-tooltip--fullscreen' : '',
+        isFullDisplay ? 'shot-chart-tooltip--fullscreen' : '',
         isTitleOnly ? 'shot-chart-tooltip--title-only' : '',
       ]
         .filter(Boolean)
@@ -474,7 +475,13 @@ export function ShotChartExternalTooltip({ tooltipRef, state, layout, isFullDisp
         return (
           <div
             key={`${row.shotLabel || ''}-${row.label}-${row.valueText}-${index}`}
-            className={`shot-chart-tooltip__row${row.spacerBefore ? ' shot-chart-tooltip__row--spacer' : ''}`}
+            // Keep row modifiers formatter-safe for the same reason as the outer tooltip classes.
+            className={[
+              'shot-chart-tooltip__row',
+              row.spacerBefore ? 'shot-chart-tooltip__row--spacer' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
             {rowIcon ? (
               <FontAwesomeIcon

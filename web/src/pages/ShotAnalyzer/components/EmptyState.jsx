@@ -124,19 +124,19 @@ export function EmptyState({ loading }) {
             <div className='text-base-content'>
               <span className='bg-base-content/8 border-base-content/10 mr-2 inline-flex min-w-6 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
                 X
-              </span>
+              </span>{' '}
               Open or close the library.
             </div>
             <div className='text-base-content'>
               <span className='bg-base-content/8 border-base-content/10 mr-2 inline-flex min-w-6 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
                 C
-              </span>
+              </span>{' '}
               Start or end compare mode.
             </div>
             <div className='text-base-content'>
               <span className='bg-base-content/8 border-base-content/10 mr-2 inline-flex min-w-12 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
                 ← →
-              </span>
+              </span>{' '}
               Switch between shots.
             </div>
           </div>

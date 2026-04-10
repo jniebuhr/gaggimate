@@ -195,6 +195,37 @@ function useStatusBarImportState({ isImporting, onImportShot, onImportProfile, o
   };
 }
 
+function getMismatchProfileBadgeStyle({ isMismatch, ghosted }) {
+  if (!isMismatch) return undefined;
+
+  return {
+    backgroundColor: ghosted
+      ? `color-mix(in srgb, ${analyzerUiColors.warningOrange} 34%, transparent)`
+      : analyzerUiColors.warningOrange,
+    borderColor: ghosted
+      ? `color-mix(in srgb, ${analyzerUiColors.warningOrangeStrong} 46%, transparent)`
+      : analyzerUiColors.warningOrangeStrong,
+    boxShadow: `0 1px 2px 0 ${analyzerUiColors.warningOrangeShadow}`,
+  };
+}
+
+function getStatusBarIconButtonClassSet({ compact, ghosted }) {
+  return {
+    neutralImportButtonClasses: getAnalyzerIconButtonClasses({
+      className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full ${
+        ghosted ? 'opacity-85 hover:opacity-100' : 'opacity-75 hover:opacity-100'
+      }`,
+    }),
+    activeBadgeIconButtonClasses: getAnalyzerIconButtonClasses({
+      className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full text-current ${
+        ghosted
+          ? 'opacity-90 hover:bg-primary/12 hover:text-current hover:opacity-100'
+          : 'opacity-75 hover:bg-black/10 hover:text-current hover:opacity-100'
+      }`,
+    }),
+  };
+}
+
 function getStatusBarViewModel({
   compact,
   ghosted,
@@ -213,17 +244,10 @@ function getStatusBarViewModel({
     currentShot,
   });
 
-  const mismatchProfileBadgeStyle = isMismatch
-    ? {
-        backgroundColor: ghosted
-          ? `color-mix(in srgb, ${analyzerUiColors.warningOrange} 34%, transparent)`
-          : analyzerUiColors.warningOrange,
-        borderColor: ghosted
-          ? `color-mix(in srgb, ${analyzerUiColors.warningOrangeStrong} 46%, transparent)`
-          : analyzerUiColors.warningOrangeStrong,
-        boxShadow: `0 1px 2px 0 ${analyzerUiColors.warningOrangeShadow}`,
-      }
-    : undefined;
+  const mismatchProfileBadgeStyle = getMismatchProfileBadgeStyle({
+    isMismatch,
+    ghosted,
+  });
 
   const profileBadgeClasses =
     ghosted && !isMismatch
@@ -235,19 +259,11 @@ function getStatusBarViewModel({
           loadedShadowClass: '',
         });
 
-  const neutralImportButtonClasses = getAnalyzerIconButtonClasses({
-    className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full ${
-      ghosted ? 'opacity-85 hover:opacity-100' : 'opacity-75 hover:opacity-100'
-    }`,
-  });
-
-  const activeBadgeIconButtonClasses = getAnalyzerIconButtonClasses({
-    className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full text-current ${
-      ghosted
-        ? 'opacity-90 hover:bg-primary/12 hover:text-current hover:opacity-100'
-        : 'opacity-75 hover:bg-black/10 hover:text-current hover:opacity-100'
-    }`,
-  });
+  const { neutralImportButtonClasses, activeBadgeIconButtonClasses } =
+    getStatusBarIconButtonClassSet({
+      compact,
+      ghosted,
+    });
 
   return {
     shotBadgeClasses,

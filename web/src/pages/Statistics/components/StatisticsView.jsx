@@ -1960,13 +1960,13 @@ export function StatisticsView({ initialContext }) {
                   <span>
                     <span className='bg-base-content/8 border-base-content/10 mr-1.5 inline-flex min-w-10 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
                       Enter
-                    </span>
+                    </span>{' '}
                     Build
                   </span>
                   <span>
                     <span className='bg-base-content/8 border-base-content/10 mr-1.5 inline-flex min-w-6 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
                       C
-                    </span>
+                    </span>{' '}
                     Build and show Shot Charts
                   </span>
                 </div>
