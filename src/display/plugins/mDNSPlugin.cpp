@@ -3,6 +3,10 @@
 #include "../core/Event.h"
 #include <ESPmDNS.h>
 #include <WiFi.h>
+#include <esp_log.h>
+#include <version.h>
+
+static constexpr char LOG_TAG[] = "mDNSPlugin";
 
 void mDNSPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
@@ -13,6 +17,19 @@ void mDNSPlugin::start(Event const &event) const {
     if (apMode)
         return;
     if (!MDNS.begin(controller->getSettings().getMdnsName().c_str())) {
-        Serial.println(F("Error setting up MDNS responder!"));
+        ESP_LOGE(LOG_TAG, "Error setting up mDNS responder");
+        return;
     }
+
+    // Advertise HTTP service for web interface
+    MDNS.addService("http", "tcp", 80);
+
+    // Advertise custom gaggimate service for Home Assistant discovery
+    MDNS.addService("gaggimate", "tcp", 80);
+
+    // Add service metadata as TXT records
+    MDNS.addServiceTxt("gaggimate", "tcp", "version", BUILD_GIT_VERSION);
+    MDNS.addServiceTxt("gaggimate", "tcp", "type", "espresso_machine");
+
+    ESP_LOGI(LOG_TAG, "mDNS responder started with service advertisement");
 }

@@ -22,6 +22,9 @@ class ProfileManager {
     bool loadSelectedProfile(Profile &outProfile);
     std::vector<String> getFavoritedProfiles(bool validate = false);
 
+    void addFavoritedProfile(String id);
+    void removeFavoritedProfile(String id);
+
   private:
     Profile selectedProfile{};
     PluginManager *_plugin_manager;

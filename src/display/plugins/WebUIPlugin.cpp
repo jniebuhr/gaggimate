@@ -52,6 +52,16 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
 
+    // Forward shot history rebuild progress events to WebSocket clients
+    pluginManager->on("evt:history-rebuild-progress", [this](Event const &event) {
+        JsonDocument doc;
+        doc["tp"] = "evt:history-rebuild-progress";
+        doc["total"] = event.getInt("total");
+        doc["current"] = event.getInt("current");
+        doc["status"] = event.getString("status");
+        ws.textAll(doc.as<String>());
+    });
+
     // Subscribe to Bluetooth scale weight updates
     pluginManager->on("controller:volumetric-measurement:bluetooth:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
@@ -76,7 +86,7 @@ void WebUIPlugin::loop() {
         lastUpdateCheck = now;
         updateOTAStatus(ota->getCurrentVersion());
     }
-    if (now > lastStatus + STATUS_PERIOD) {
+    if (now > lastStatus + STATUS_PERIOD && !ws.getClients().empty()) {
         lastStatus = now;
         JsonDocument doc;
         doc["tp"] = "evt:status";
@@ -92,13 +102,18 @@ void WebUIPlugin::loop() {
         doc["cd"] = controller->getSystemInfo().capabilities.dimming;
         doc["tw"] = profileManager->getSelectedProfile().getTotalVolume(); // total target weight for the process
         doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
-        doc["bt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+        doc["bt"] =
+            controller->isVolumetricAvailable() && controller->getProfileManager()->getSelectedProfile().isVolumetric() ? 1 : 0;
         doc["btd"] = profileManager->getSelectedProfile().getTotalDuration();
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
         doc["gtd"] = controller->getTargetGrindDuration();
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
         doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["gact"] = controller->isGrindActive() ? 1 : 0;
+        doc["rssi"] = 0;
+        if (controller->getClientController()->getClient()->isConnected()) {
+            doc["rssi"] = controller->getClientController()->getClient()->getRssi();
+        }
 
         bool bleConnected = BLEScales.isConnected();
         // Add Bluetooth scale weight information
@@ -318,6 +333,19 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                         auto target = doc["target"].as<uint8_t>();
                         controller->getSettings().setVolumetricTarget(target);
                     }
+                } else if (msgType == "req:history:rebuild") {
+                    // Handle rebuild asynchronously - send immediate ack, progress comes via events
+                    JsonDocument resp;
+                    resp["tp"] = "res:history:rebuild";
+                    if (doc["rid"].is<const char *>()) {
+                        resp["rid"] = doc["rid"];
+                    }
+                    resp["msg"] = "Rebuild started";
+                    size_t bufferSize = measureJson(resp);
+                    auto *buffer = ws.makeBuffer(bufferSize);
+                    serializeJson(resp, buffer->get(), bufferSize);
+                    client->text(buffer);
+                    ShotHistory.startAsyncRebuild();
                 } else if (msgType.startsWith("req:history")) {
                     JsonDocument resp;
                     ShotHistory.handleRequest(doc, resp);
@@ -404,10 +432,10 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
         profileManager->selectProfile(id);
     } else if (type == "req:profiles:favorite") {
         auto id = request["id"].as<String>();
-        controller->getSettings().addFavoritedProfile(id);
+        profileManager->addFavoritedProfile(id);
     } else if (type == "req:profiles:unfavorite") {
         auto id = request["id"].as<String>();
-        controller->getSettings().removeFavoritedProfile(id);
+        profileManager->removeFavoritedProfile(id);
     } else if (type == "req:profiles:reorder") {
         // Expect an array of profile IDs in desired order
         if (request["order"].is<JsonArray>()) {
@@ -643,6 +671,7 @@ void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
         JsonDocument scale;
         scale["uuid"] = device.getAddress().toString();
         scale["name"] = device.getName();
+        scale["rssi"] = device.getRSSI();
         scalesArray.add(scale);
     }
     AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -681,12 +710,16 @@ void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
     doc["connected"] = BLEScales.isConnected();
     doc["name"] = BLEScales.getName();
     doc["uuid"] = BLEScales.getUUID();
+    doc["rssi"] = BLEScales.getRSSI();
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
     request->send(response);
 }
 
 void WebUIPlugin::updateOTAStatus(const String &version) {
+    if (ws.getClients().empty()) {
+        return;
+    }
     Settings const &settings = controller->getSettings();
     JsonDocument doc;
     doc["latestVersion"] = ota->getCurrentVersion();
@@ -708,9 +741,17 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
         doc["spiffsUsed"] = static_cast<uint32_t>(used);
         doc["spiffsFree"] = static_cast<uint32_t>(freeBytes);
         if (total > 0) {
-            // Provide integer percentage to avoid float JSON
             doc["spiffsUsedPct"] = static_cast<uint8_t>((used * 100) / total);
         }
+    }
+    // Memory usage metrics
+    {
+        size_t free = heap_caps_get_free_size(MALLOC_CAP_DEFAULT|MALLOC_CAP_INTERNAL);
+        size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT|MALLOC_CAP_INTERNAL);
+        size_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT|MALLOC_CAP_INTERNAL);
+        doc["heapFree"] = static_cast<uint32_t>(free);
+        doc["heapLargest"] = static_cast<uint32_t>(largest);
+        doc["heapTotal"] = static_cast<uint32_t>(total);
     }
     if (controller->isSDCard()) {
         const uint64_t total = SD_MMC.cardSize();

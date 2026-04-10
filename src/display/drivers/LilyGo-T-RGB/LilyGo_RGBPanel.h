@@ -57,6 +57,8 @@ class LilyGo_RGBPanel : public Display {
 
     bool begin(LilyGo_RGBPanel_Color_Order order = LILYGO_T_RGB_ORDER_RGB);
 
+    void initExtension();
+
     bool installSD();
 
     void uninstallSD();
@@ -109,6 +111,7 @@ class LilyGo_RGBPanel : public Display {
     LilyGo_RGBPanel_Color_Order _order;
 
     bool _has_init;
+    bool _extension_initialized = false;
 
     LilyGo_RGBPanel_Wakeup_Method _wakeupMethod;
 

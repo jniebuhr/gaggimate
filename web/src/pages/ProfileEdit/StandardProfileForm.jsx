@@ -5,6 +5,7 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { Tooltip } from '../../components/Tooltip.jsx';
 
 export function StandardProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
@@ -241,15 +242,16 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
               onChange={e => onFieldChange('name', e.target.value)}
               aria-label='Enter a name for this phase'
             />
-            <button
-              type='button'
-              onClick={onRemove}
-              className='btn btn-sm btn-ghost text-error'
-              title='Delete this phase'
-              aria-label={`Delete phase ${index + 1}`}
-            >
-              <FontAwesomeIcon icon={faTrashCan} />
-            </button>
+            <Tooltip content='Delete this phase'>
+              <button
+                type='button'
+                onClick={onRemove}
+                className='btn btn-sm btn-ghost text-error'
+                aria-label={`Delete phase ${index + 1}`}
+              >
+                <FontAwesomeIcon icon={faTrashCan} />
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>

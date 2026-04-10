@@ -48,8 +48,6 @@ void AmoledDisplayDriver::init() {
     }
 
     beginLvglHelper(*panel);
-
-    panel->setBrightness(16);
 }
 
 bool AmoledDisplayDriver::supportsSDCard() { return true; }

@@ -3,6 +3,7 @@ import { isNumber } from 'chart.js/helpers';
 import { useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { Tooltip } from '../../components/Tooltip.jsx';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const onFieldChange = (field, value) => {
@@ -45,7 +46,9 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
   const pumpPower = isNumber(phase.pump) ? phase.pump : 100;
   const pressure = !isNumber(phase.pump) ? phase.pump.pressure : 0;
   const flow = !isNumber(phase.pump) ? phase.pump.flow : 0;
-  const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
+  let mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
+  if (mode === 'pressure' && phase.pump.pressure === -1) mode = 'hold-pressure';
+  if (mode === 'flow' && phase.pump.flow === -1) mode = 'hold-flow';
   const availableTargetTypes = TargetTypes.filter(
     t => !targets.find(t2 => t2.type === t.type && t2.operator === t.operator),
   );
@@ -160,7 +163,11 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       <div className='form-control'>
         <fieldset>
           <legend className='mb-2 block text-sm font-medium'>Pump Mode</legend>
-          <div className='join' role='group' aria-label='Pump mode selection'>
+          <div
+            className='join max-sm:join-vertical min-w-[50%]'
+            role='group'
+            aria-label='Pump mode selection'
+          >
             <button
               type='button'
               className={`join-item btn btn-sm ${mode === 'off' ? 'btn-primary' : 'btn-outline'}`}
@@ -188,8 +195,8 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     mode !== 'pressure' &&
                     onFieldChange('pump', {
                       target: 'pressure',
-                      pressure: phase.pump.pressure || 0,
-                      flow: phase.pump?.flow || 0,
+                      pressure: Math.max(phase.pump.pressure || 0, 0),
+                      flow: Math.max(phase.pump?.flow || 0, 0),
                     })
                   }
                   aria-pressed={mode === 'pressure'}
@@ -204,14 +211,46 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     mode !== 'flow' &&
                     onFieldChange('pump', {
                       target: 'flow',
-                      pressure: phase.pump.pressure || 0,
-                      flow: phase.pump?.flow || 0,
+                      pressure: Math.max(phase.pump.pressure || 0, 0),
+                      flow: Math.max(phase.pump?.flow || 0, 0),
                     })
                   }
                   aria-pressed={mode === 'flow'}
                   aria-label='Pump flow mode'
                 >
                   Flow
+                </button>
+                <button
+                  type='button'
+                  className={`join-item btn btn-sm ${mode === 'hold-pressure' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() =>
+                    mode !== 'hold-pressure' &&
+                    onFieldChange('pump', {
+                      target: 'pressure',
+                      pressure: -1,
+                      flow: Math.max(phase.pump?.flow || 0, 0),
+                    })
+                  }
+                  aria-pressed={mode === 'hold-pressure'}
+                  aria-label='Pump Maintain pressure mode'
+                >
+                  Maintain Pressure
+                </button>
+                <button
+                  type='button'
+                  className={`join-item btn btn-sm ${mode === 'hold-flow' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() =>
+                    mode !== 'hold-flow' &&
+                    onFieldChange('pump', {
+                      target: 'flow',
+                      pressure: Math.max(phase.pump.pressure || 0, 0),
+                      flow: -1,
+                    })
+                  }
+                  aria-pressed={mode === 'hold-flow'}
+                  aria-label='Pump Maintain flow mode'
+                >
+                  Maintain Flow
                 </button>
               </>
             )}
@@ -243,53 +282,61 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
         </div>
       )}
 
-      {(mode === 'pressure' || mode === 'flow') && (
+      {(mode === 'pressure' ||
+        mode === 'flow' ||
+        mode === 'hold-pressure' ||
+        mode === 'hold-flow') && (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <div className='form-control'>
-            <label htmlFor={`phase-${index}-pressure`} className='mb-2 block text-sm font-medium'>
-              {mode === 'pressure' ? 'Target' : 'Maximum'} Pressure{' '}
-              {mode === 'flow' && '(0 = Ignore)'}
-            </label>
-            <div className='input-group'>
-              <label htmlFor={`phase-${index}-pressure`} className='input w-full'>
-                <input
-                  id={`phase-${index}-pressure`}
-                  className='grow'
-                  type='number'
-                  step='0.01'
-                  min={mode === 'pressure' ? '0.1' : '0'}
-                  value={pressure.toString()}
-                  onChange={e =>
-                    onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
-                  }
-                  aria-label='Pressure in bar'
-                />
-                <span aria-label='bar'>bar</span>
+          {mode !== 'hold-pressure' && (
+            <div className='form-control'>
+              <label htmlFor={`phase-${index}-pressure`} className='mb-2 block text-sm font-medium'>
+                {mode === 'pressure' ? 'Target' : 'Maximum'} Pressure{' '}
+                {mode === 'flow' && '(0 = Ignore)'}
               </label>
+              <div className='input-group'>
+                <label htmlFor={`phase-${index}-pressure`} className='input w-full'>
+                  <input
+                    id={`phase-${index}-pressure`}
+                    className='grow'
+                    type='number'
+                    step='0.01'
+                    min={mode === 'pressure' ? '0.1' : '0'}
+                    value={pressure.toString()}
+                    onChange={e =>
+                      onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
+                    }
+                    aria-label='Pressure in bar'
+                  />
+                  <span aria-label='bar'>bar</span>
+                </label>
+              </div>
             </div>
-          </div>
-          <div className='form-control'>
-            <label htmlFor={`phase-${index}-flow`} className='mb-2 block text-sm font-medium'>
-              {mode === 'flow' ? 'Target' : 'Maximum'} Flow {mode === 'pressure' && '(0 = Ignore)'}
-            </label>
-            <div className='input-group'>
-              <label htmlFor={`phase-${index}-flow`} className='input w-full'>
-                <input
-                  id={`phase-${index}-flow`}
-                  className='grow'
-                  type='number'
-                  step='0.01'
-                  value={flow.toString()}
-                  onChange={e =>
-                    onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
-                  }
-                  aria-label='Flow rate in grams per second'
-                  min={mode === 'flow' ? '0.1' : '0'}
-                />
-                <span aria-label='grams per second'>g/s</span>
+          )}
+          {mode !== 'hold-flow' && (
+            <div className='form-control'>
+              <label htmlFor={`phase-${index}-flow`} className='mb-2 block text-sm font-medium'>
+                {mode === 'flow' ? 'Target' : 'Maximum'} Flow{' '}
+                {mode === 'pressure' && '(0 = Ignore)'}
               </label>
+              <div className='input-group'>
+                <label htmlFor={`phase-${index}-flow`} className='input w-full'>
+                  <input
+                    id={`phase-${index}-flow`}
+                    className='grow'
+                    type='number'
+                    step='0.01'
+                    value={flow.toString()}
+                    onChange={e =>
+                      onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
+                    }
+                    aria-label='Flow rate in grams per second'
+                    min={mode === 'flow' ? '0.1' : '0'}
+                  />
+                  <span aria-label='grams per second'>g/s</span>
+                </label>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -300,7 +347,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
             <div
               className='join max-sm:join-vertical min-w-[50%]'
               role='group'
-              aria-label='Pump mode selection'
+              aria-label='Ramp style selection'
             >
               <button
                 type='button'
@@ -424,14 +471,16 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       <div className='mt-2 flex flex-row gap-4'>
         <h3 className='text-lg font-medium'>Stop when</h3>
         <div className='dropdown'>
-          <div
-            tabIndex='0'
-            role='button'
-            className='join-item btn btn-sm btn-outline'
-            aria-label='Add target'
-          >
-            <FontAwesomeIcon icon={faPlus} />
-          </div>
+          <Tooltip content='Add stop condition'>
+            <div
+              tabIndex='0'
+              role='button'
+              className='join-item btn btn-sm btn-outline'
+              aria-label='Add target'
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </div>
+          </Tooltip>
           <ul
             tabIndex='0'
             className='menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm'
