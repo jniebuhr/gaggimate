@@ -162,6 +162,75 @@ function applyMatchedCompareProfile(setCompareShots, shotKey, matchedProfile) {
   );
 }
 
+function isCurrentCompareLoad(loadId, compareLoadIdRef) {
+  return loadId === compareLoadIdRef.current;
+}
+
+function beginCompareShotLoad({
+  compareLoadIdRef,
+  setCompareShots,
+  setCompareResults,
+  setComparePendingKeys,
+  setCompareIsSearchingProfile,
+  shotKey,
+}) {
+  const loadId = ++compareLoadIdRef.current;
+  setCompareShots([]);
+  setCompareResults([]);
+  setComparePendingKeys([shotKey]);
+  setCompareIsSearchingProfile(false);
+  return loadId;
+}
+
+async function loadCompareShotSelection({ item, importMode }) {
+  const loadKey = item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
+  const loadedShot = item.samples ? item : await libraryService.loadShot(loadKey, item.source);
+  const shotWithMetadata = buildCompareShotWithMetadata({
+    item,
+    loadedShot,
+    importMode,
+    loadKey,
+  });
+
+  return {
+    loadKey,
+    shotWithMetadata,
+  };
+}
+
+async function tryAutoMatchCompareShotProfile({
+  loadId,
+  compareLoadIdRef,
+  shotKey,
+  shotWithMetadata,
+  setCompareIsSearchingProfile,
+  setCompareShots,
+}) {
+  if (!shotWithMetadata.profile) {
+    return;
+  }
+
+  try {
+    setCompareIsSearchingProfile(true);
+    const allProfiles = await libraryService.getAllProfiles('both');
+    if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return;
+
+    const matchedProfile = await loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles);
+    if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return;
+
+    if (matchedProfile) {
+      applyMatchedCompareProfile(setCompareShots, shotKey, matchedProfile);
+    }
+  } catch (profileError) {
+    if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return;
+    console.warn('Compare profile auto-match failed:', profileError);
+  } finally {
+    if (isCurrentCompareLoad(loadId, compareLoadIdRef)) {
+      setCompareIsSearchingProfile(false);
+    }
+  }
+}
+
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
@@ -565,56 +634,36 @@ export function ShotAnalyzer() {
     if (comparePendingKeys.includes(shotKey)) return;
     if (compareShots[0]?.key === shotKey) return;
 
-    const loadId = ++compareLoadIdRef.current;
-    setCompareShots([]);
-    setCompareResults([]);
-    setComparePendingKeys([shotKey]);
-    setCompareIsSearchingProfile(false);
+    const loadId = beginCompareShotLoad({
+      compareLoadIdRef,
+      setCompareShots,
+      setCompareResults,
+      setComparePendingKeys,
+      setCompareIsSearchingProfile,
+      shotKey,
+    });
 
     try {
-      const loadKey =
-        item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
-      const loadedShot = item.samples ? item : await libraryService.loadShot(loadKey, item.source);
-      if (loadId !== compareLoadIdRef.current) return;
-
-      const shotWithMetadata = buildCompareShotWithMetadata({
-        item,
-        loadedShot,
-        importMode,
-        loadKey,
-      });
+      const { shotWithMetadata, loadKey } = await loadCompareShotSelection({ item, importMode });
+      if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return;
 
       setCompareShots([createCompareShotEntry({ shotKey, shotWithMetadata, item, loadKey })]);
       setComparePendingKeys([]);
 
-      if (shotWithMetadata.profile) {
-        try {
-          setCompareIsSearchingProfile(true);
-          const allProfiles = await libraryService.getAllProfiles('both');
-          if (loadId !== compareLoadIdRef.current) return;
-          const matchedProfile = await loadPreferredAutoMatchedProfile(
-            shotWithMetadata,
-            allProfiles,
-          );
-          if (loadId !== compareLoadIdRef.current) return;
-          if (matchedProfile) {
-            applyMatchedCompareProfile(setCompareShots, shotKey, matchedProfile);
-          }
-        } catch (profileError) {
-          if (loadId !== compareLoadIdRef.current) return;
-          console.warn('Compare profile auto-match failed:', profileError);
-        } finally {
-          if (loadId === compareLoadIdRef.current) {
-            setCompareIsSearchingProfile(false);
-          }
-        }
-      }
+      await tryAutoMatchCompareShotProfile({
+        loadId,
+        compareLoadIdRef,
+        shotKey,
+        shotWithMetadata,
+        setCompareIsSearchingProfile,
+        setCompareShots,
+      });
     } catch (error) {
-      if (loadId !== compareLoadIdRef.current) return;
+      if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return;
       console.error('Failed to load compare shot:', error);
       alert(`Compare load failed: ${error.message}`);
     } finally {
-      if (loadId === compareLoadIdRef.current) {
+      if (isCurrentCompareLoad(loadId, compareLoadIdRef)) {
         setComparePendingKeys([]);
         if (!item?.profile) {
           setCompareIsSearchingProfile(false);

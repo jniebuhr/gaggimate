@@ -46,6 +46,10 @@ function getCompareBadgeClasses(compareBadgeNumber) {
     : 'bg-primary/70 text-primary-content';
 }
 
+function stopRowClick(event) {
+  event.stopPropagation();
+}
+
 function splitLibraryDateTime(value) {
   return value.includes(', ') ? value.split(', ') : [value, ''];
 }
@@ -79,6 +83,44 @@ function CompareSelectionCell({
   );
 }
 
+function LibraryCompareBadge({ compareBadgeNumber }) {
+  if (!compareBadgeNumber) return null;
+
+  return (
+    <span
+      className={`ring-base-100 pointer-events-none absolute -top-1.5 -left-1 z-[1] inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold shadow-md ring-2 ${getCompareBadgeClasses(compareBadgeNumber)}`}
+    >
+      {compareBadgeNumber}
+    </span>
+  );
+}
+
+function LibraryPinButton({ item, isPinned, pinDisabledReason, onPinToggle, displayName, isShot }) {
+  if (!onPinToggle) return null;
+
+  return (
+    <button
+      type='button'
+      aria-label={`${isPinned ? 'Unpin' : 'Pin'} ${displayName}`}
+      aria-disabled={!isPinned && !!pinDisabledReason}
+      title={pinDisabledReason || `${isPinned ? 'Unpin' : 'Pin'} ${isShot ? 'shot' : 'profile'}`}
+      onClick={event => {
+        stopRowClick(event);
+        if (!isPinned && pinDisabledReason) return;
+        onPinToggle(item);
+      }}
+      className={getAnalyzerIconButtonClasses({
+        tone: isPinned ? 'primary' : 'subtle',
+        className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
+          isPinned ? 'text-primary hover:text-primary' : ''
+        } ${!isPinned && pinDisabledReason ? 'cursor-not-allowed opacity-35' : ''}`,
+      })}
+    >
+      <FontAwesomeIcon icon={faThumbtack} />
+    </button>
+  );
+}
+
 function LibraryNameCell({
   item,
   isShot,
@@ -96,13 +138,7 @@ function LibraryNameCell({
         showCompareSelection ? '' : 'first:rounded-l-md'
       }`}
     >
-      {compareBadgeNumber ? (
-        <span
-          className={`ring-base-100 pointer-events-none absolute -top-1.5 -left-1 z-[1] inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold shadow-md ring-2 ${getCompareBadgeClasses(compareBadgeNumber)}`}
-        >
-          {compareBadgeNumber}
-        </span>
-      ) : null}
+      <LibraryCompareBadge compareBadgeNumber={compareBadgeNumber} />
       <div className='flex items-center gap-1.5'>
         {compareBadgeNumber ? (
           <span className='sr-only'>Compare slot {compareBadgeNumber}</span>
@@ -110,30 +146,42 @@ function LibraryNameCell({
         <span className={`block min-w-0 flex-1 truncate text-sm ${nameClasses}`}>
           {displayName}
         </span>
-        {onPinToggle ? (
-          <button
-            type='button'
-            aria-label={`${isPinned ? 'Unpin' : 'Pin'} ${displayName}`}
-            aria-disabled={!isPinned && !!pinDisabledReason}
-            title={
-              pinDisabledReason || `${isPinned ? 'Unpin' : 'Pin'} ${isShot ? 'shot' : 'profile'}`
-            }
-            onClick={event => {
-              event.stopPropagation();
-              if (!isPinned && pinDisabledReason) return;
-              onPinToggle(item);
-            }}
-            className={getAnalyzerIconButtonClasses({
-              tone: isPinned ? 'primary' : 'subtle',
-              className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
-                isPinned ? 'text-primary hover:text-primary' : ''
-              } ${!isPinned && pinDisabledReason ? 'cursor-not-allowed opacity-35' : ''}`,
-            })}
-          >
-            <FontAwesomeIcon icon={faThumbtack} />
-          </button>
-        ) : null}
+        <LibraryPinButton
+          item={item}
+          isPinned={isPinned}
+          pinDisabledReason={pinDisabledReason}
+          onPinToggle={onPinToggle}
+          displayName={displayName}
+          isShot={isShot}
+        />
       </div>
+    </td>
+  );
+}
+
+function LibrarySourceCell({ source }) {
+  return (
+    <td className='px-2 py-2 text-center'>
+      <SourceMarker source={source} variant='library' />
+    </td>
+  );
+}
+
+function LibraryDateCell({ datePart, timePart }) {
+  return (
+    <td className='px-3 py-2 whitespace-nowrap'>
+      <div className='flex flex-col leading-tight'>
+        <span className='text-xs font-medium'>{datePart}</span>
+        <span className='text-[10px] opacity-40'>{timePart}</span>
+      </div>
+    </td>
+  );
+}
+
+function LibraryProfileCell({ profileName }) {
+  return (
+    <td className='px-3 py-2'>
+      <span className='block max-w-[100px] truncate text-xs opacity-50'>{profileName || '-'}</span>
     </td>
   );
 }
@@ -149,12 +197,12 @@ function LibraryActionsCell({
 }) {
   return (
     <td className='px-4 py-2 text-right last:rounded-r-md'>
-      <div className='flex justify-end gap-2' onClick={event => event.stopPropagation()}>
+      <div className='flex justify-end gap-2'>
         {!isShot && (
           <a
             href={profileStatsHref || '/statistics'}
             onClick={event => {
-              event.stopPropagation();
+              stopRowClick(event);
               onShowStats?.(item);
             }}
             className={getAnalyzerIconButtonClasses({
@@ -167,7 +215,11 @@ function LibraryActionsCell({
           </a>
         )}
         <button
-          onClick={() => onExport(item)}
+          type='button'
+          onClick={event => {
+            stopRowClick(event);
+            onExport(item);
+          }}
           className={getAnalyzerIconButtonClasses({
             tone: 'subtle',
             className: 'h-6 w-6',
@@ -176,7 +228,11 @@ function LibraryActionsCell({
           <FontAwesomeIcon icon={faFileExport} size='xs' />
         </button>
         <button
-          onClick={() => onDelete(item)}
+          type='button'
+          onClick={event => {
+            stopRowClick(event);
+            onDelete(item);
+          }}
           className={getAnalyzerIconButtonClasses({
             tone: 'error',
             className: 'h-6 w-6',
@@ -244,7 +300,7 @@ export function LibraryRow({
       className={`group relative isolate cursor-pointer rounded-md transition-all duration-200 ${
         compareBadgeNumber ? 'z-[1]' : 'z-0'
       } ${rowClasses}`}
-      onClick={event => onLoad(event)}
+      onClick={onLoad}
     >
       {showCompareSelection && (
         <CompareSelectionCell
@@ -266,24 +322,9 @@ export function LibraryRow({
         pinDisabledReason={pinDisabledReason}
         onPinToggle={onPinToggle}
       />
-      <td className='px-2 py-2 text-center'>
-        <SourceMarker source={item.source} variant='library' />
-      </td>
-      {isShot && (
-        <td className='px-3 py-2 whitespace-nowrap'>
-          <div className='flex flex-col leading-tight'>
-            <span className='text-xs font-medium'>{datePart}</span>
-            <span className='text-[10px] opacity-40'>{timePart}</span>
-          </div>
-        </td>
-      )}
-      {isShot && (
-        <td className='px-3 py-2'>
-          <span className='block max-w-[100px] truncate text-xs opacity-50'>
-            {item.profileName || item.profile || '-'}
-          </span>
-        </td>
-      )}
+      <LibrarySourceCell source={item.source} />
+      {isShot && <LibraryDateCell datePart={datePart} timePart={timePart} />}
+      {isShot && <LibraryProfileCell profileName={item.profileName || item.profile} />}
       <LibraryActionsCell
         isShot={isShot}
         item={item}

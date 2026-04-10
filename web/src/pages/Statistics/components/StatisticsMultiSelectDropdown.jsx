@@ -82,13 +82,10 @@ function StatisticsMultiSelectRow({
 }) {
   return (
     <div
-      role='option'
-      aria-selected={isSelected}
       data-stat-multi-item-id={item.id}
       className={`group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors ${
         isSelected ? 'bg-base-content/6' : 'hover:bg-base-content/4'
       }`}
-      onClick={event => onRowClick(item.id, index, event)}
     >
       <button
         type='button'
@@ -105,37 +102,41 @@ function StatisticsMultiSelectRow({
         />
       </button>
 
-      <div className='min-w-0 flex-1'>
-        <div className='flex items-center gap-1.5'>
-          <div className='min-w-0 flex-1 truncate text-xs font-semibold'>
-            {item.primary || item.id}
-          </div>
-          {onTogglePin ? (
-            <button
-              type='button'
-              aria-label={`${item.isPinned ? 'Unpin' : 'Pin'} ${item.primary || item.id}`}
-              aria-disabled={!item.isPinned && !!item.pinDisabledReason}
-              title={
-                item.pinDisabledReason || `${item.isPinned ? 'Unpin' : 'Pin'} ${singularLabel}`
-              }
-              className={getAnalyzerIconButtonClasses({
-                tone: item.isPinned ? 'primary' : 'subtle',
-                className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
-                  item.isPinned ? 'text-primary hover:text-primary' : ''
-                } ${!item.isPinned && item.pinDisabledReason ? 'cursor-not-allowed opacity-35' : ''}`,
-              })}
-              onClick={event => {
-                event.stopPropagation();
-                if (!item.isPinned && item.pinDisabledReason) return;
-                onTogglePin(item);
-              }}
-            >
-              <FontAwesomeIcon icon={faThumbtack} />
-            </button>
+      <button
+        type='button'
+        className='min-w-0 flex-1 text-left'
+        aria-pressed={isSelected}
+        onClick={event => onRowClick(item.id, index, event)}
+      >
+        <div className='min-w-0'>
+          <div className='truncate text-xs font-semibold'>{item.primary || item.id}</div>
+          {item.secondary ? (
+            <div className='truncate text-[10px] opacity-65'>{item.secondary}</div>
           ) : null}
         </div>
-        {item.secondary && <div className='truncate text-[10px] opacity-65'>{item.secondary}</div>}
-      </div>
+      </button>
+
+      {onTogglePin ? (
+        <button
+          type='button'
+          aria-label={`${item.isPinned ? 'Unpin' : 'Pin'} ${item.primary || item.id}`}
+          aria-disabled={!item.isPinned && !!item.pinDisabledReason}
+          title={item.pinDisabledReason || `${item.isPinned ? 'Unpin' : 'Pin'} ${singularLabel}`}
+          className={getAnalyzerIconButtonClasses({
+            tone: item.isPinned ? 'primary' : 'subtle',
+            className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
+              item.isPinned ? 'text-primary hover:text-primary' : ''
+            } ${!item.isPinned && item.pinDisabledReason ? 'cursor-not-allowed opacity-35' : ''}`,
+          })}
+          onClick={event => {
+            event.stopPropagation();
+            if (!item.isPinned && item.pinDisabledReason) return;
+            onTogglePin(item);
+          }}
+        >
+          <FontAwesomeIcon icon={faThumbtack} />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -419,7 +420,7 @@ export function StatisticsMultiSelectDropdown({
         type='button'
         disabled={disabled}
         aria-expanded={open}
-        aria-haspopup='listbox'
+        aria-haspopup='menu'
         onClick={() => setOpen(v => !v)}
         className={getAnalyzerSurfaceTriggerClasses({
           className: `inline-flex ${triggerClassName} max-w-[15rem] min-w-[8.5rem] items-center justify-between gap-1 rounded-lg px-2 text-xs font-semibold ${getAccentTriggerClasses(accentTone, selectedCount > 0)} disabled:cursor-not-allowed disabled:opacity-40`,
@@ -469,8 +470,6 @@ export function StatisticsMultiSelectDropdown({
           </div>
 
           <div
-            role='listbox'
-            aria-multiselectable='true'
             className='overscroll-contain p-1'
             style={{ maxHeight: `${panelMaxHeight}px`, overflowY: 'auto' }}
           >

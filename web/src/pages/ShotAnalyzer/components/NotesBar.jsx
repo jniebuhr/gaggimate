@@ -70,6 +70,12 @@ function getModeHintCopy(nextMode) {
     : 'View temporarily. Imported shots and profiles will now open temporarily in the analyzer.';
 }
 
+function getShotNotesKey(shot) {
+  if (!shot) return '';
+  if (shot.source === 'gaggimate') return String(shot.id || '');
+  return String(shot.storageKey || shot.name || shot.id || '');
+}
+
 function hydrateLoadedShotNotes({ loaded, currentShot, extractDoseFromProfile, calculateRatio }) {
   const nextNotes = { ...loaded };
   let autoSave = false;
@@ -221,6 +227,115 @@ function ModeHintPortal({ modeHint, modeHintBadgeStyle, modeHintPosition, modeHi
   );
 }
 
+function useNotesBarModeHint({ importMode, onImportModeChange }) {
+  const modeButtonRef = useRef(null);
+  const modeHintTimerRef = useRef(null);
+  const modeHintDismissArmTimerRef = useRef(null);
+  const modeHintDismissReadyRef = useRef(false);
+  const [modeHint, setModeHint] = useState('');
+  const [modeHintVariant, setModeHintVariant] = useState('temp');
+  const [modeHintPosition, setModeHintPosition] = useState({ top: 0, left: 12 });
+
+  const clearModeHintTimers = useCallback(() => {
+    if (modeHintTimerRef.current) {
+      globalThis.clearTimeout(modeHintTimerRef.current);
+      modeHintTimerRef.current = null;
+    }
+    if (modeHintDismissArmTimerRef.current) {
+      globalThis.clearTimeout(modeHintDismissArmTimerRef.current);
+      modeHintDismissArmTimerRef.current = null;
+    }
+  }, []);
+
+  const updateModeHintPosition = useCallback(() => {
+    const rect = modeButtonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const viewportWidth = globalThis.innerWidth || 0;
+    const hintWidth = Math.min(352, Math.max(0, viewportWidth - 32));
+    const maxLeft = Math.max(12, viewportWidth - hintWidth - 12);
+    setModeHintPosition({
+      top: rect.bottom + 10,
+      left: Math.min(Math.max(12, rect.left), maxLeft),
+    });
+  }, []);
+
+  const showModeHint = useCallback(
+    nextMode => {
+      const browserMode = nextMode === 'browser';
+      setModeHintVariant(browserMode ? 'browser' : 'temp');
+      setModeHint(getModeHintCopy(nextMode));
+      updateModeHintPosition();
+      clearModeHintTimers();
+      modeHintDismissReadyRef.current = false;
+      modeHintDismissArmTimerRef.current = globalThis.setTimeout(() => {
+        modeHintDismissReadyRef.current = true;
+      }, 180);
+      modeHintTimerRef.current = globalThis.setTimeout(() => {
+        setModeHint('');
+      }, 4200);
+    },
+    [clearModeHintTimers, updateModeHintPosition],
+  );
+
+  const handleModeToggle = useCallback(
+    event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!onImportModeChange) return;
+      const nextMode = importMode === 'browser' ? 'temp' : 'browser';
+      onImportModeChange(nextMode);
+      showModeHint(nextMode);
+    },
+    [importMode, onImportModeChange, showModeHint],
+  );
+
+  useEffect(() => {
+    return () => {
+      clearModeHintTimers();
+    };
+  }, [clearModeHintTimers]);
+
+  useEffect(() => {
+    if (!modeHint) return;
+    updateModeHintPosition();
+    const handleViewportChange = () => updateModeHintPosition();
+    globalThis.addEventListener('resize', handleViewportChange);
+    globalThis.addEventListener('scroll', handleViewportChange, true);
+    return () => {
+      globalThis.removeEventListener('resize', handleViewportChange);
+      globalThis.removeEventListener('scroll', handleViewportChange, true);
+    };
+  }, [modeHint, updateModeHintPosition]);
+
+  useEffect(() => {
+    if (!modeHint) return;
+    const dismissHint = () => {
+      if (!modeHintDismissReadyRef.current) return;
+      setModeHint('');
+    };
+    document.addEventListener('pointerdown', dismissHint, true);
+    return () => {
+      document.removeEventListener('pointerdown', dismissHint, true);
+    };
+  }, [modeHint]);
+
+  return {
+    modeButtonRef,
+    modeHint,
+    modeHintVariant,
+    modeHintPosition,
+    modeHintBadgeStyle:
+      modeHintVariant === 'browser'
+        ? {
+            backgroundColor: analyzerUiColors.sourceBadgeWebBg,
+            borderColor: analyzerUiColors.sourceBadgeWebBorder,
+            color: analyzerUiColors.sourceBadgeWebText,
+          }
+        : undefined,
+    handleModeToggle,
+  };
+}
+
 export function NotesBar({
   currentShot,
   currentShotName,
@@ -240,12 +355,6 @@ export function NotesBar({
   // Keeps a visible minimum separation while adapting on wider layouts.
   const chipGap = 'clamp(0.35rem, 0.9vw, 0.7rem)';
 
-  const getShotNotesKey = useCallback(shot => {
-    if (!shot) return '';
-    if (shot.source === 'gaggimate') return String(shot.id || '');
-    return String(shot.storageKey || shot.name || shot.id || '');
-  }, []);
-
   const [notes, setNotes] = useState(notesService.getDefaults(null));
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -253,13 +362,17 @@ export function NotesBar({
   const hasShot = !!currentShot;
   const showExpanded = hasShot && notesExpanded;
   const expandedPanelRef = useRef(null);
-  const modeButtonRef = useRef(null);
-  const modeHintTimerRef = useRef(null);
-  const modeHintDismissArmTimerRef = useRef(null);
-  const modeHintDismissReadyRef = useRef(false);
-  const [modeHint, setModeHint] = useState('');
-  const [modeHintVariant, setModeHintVariant] = useState('temp');
-  const [modeHintPosition, setModeHintPosition] = useState({ top: 0, left: 12 });
+  const {
+    modeButtonRef,
+    modeHint,
+    modeHintVariant,
+    modeHintPosition,
+    modeHintBadgeStyle,
+    handleModeToggle,
+  } = useNotesBarModeHint({
+    importMode,
+    onImportModeChange,
+  });
 
   const calculateRatio = useCallback((doseIn, doseOut) => {
     if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
@@ -427,89 +540,6 @@ export function NotesBar({
     return () => resizeObserver.disconnect();
   }, [showExpanded, onExpandedHeightChange]);
 
-  const clearModeHintTimers = useCallback(() => {
-    if (modeHintTimerRef.current) {
-      globalThis.clearTimeout(modeHintTimerRef.current);
-      modeHintTimerRef.current = null;
-    }
-    if (modeHintDismissArmTimerRef.current) {
-      globalThis.clearTimeout(modeHintDismissArmTimerRef.current);
-      modeHintDismissArmTimerRef.current = null;
-    }
-  }, []);
-
-  const updateModeHintPosition = useCallback(() => {
-    const rect = modeButtonRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const viewportWidth = globalThis.innerWidth || 0;
-    const hintWidth = Math.min(352, Math.max(0, viewportWidth - 32));
-    const maxLeft = Math.max(12, viewportWidth - hintWidth - 12);
-    setModeHintPosition({
-      top: rect.bottom + 10,
-      left: Math.min(Math.max(12, rect.left), maxLeft),
-    });
-  }, []);
-
-  const showModeHint = useCallback(
-    nextMode => {
-      const browserMode = nextMode === 'browser';
-      setModeHintVariant(browserMode ? 'browser' : 'temp');
-      setModeHint(getModeHintCopy(nextMode));
-      updateModeHintPosition();
-      clearModeHintTimers();
-      modeHintDismissReadyRef.current = false;
-      modeHintDismissArmTimerRef.current = globalThis.setTimeout(() => {
-        modeHintDismissReadyRef.current = true;
-      }, 180);
-      modeHintTimerRef.current = globalThis.setTimeout(() => {
-        setModeHint('');
-      }, 4200);
-    },
-    [clearModeHintTimers, updateModeHintPosition],
-  );
-
-  const handleModeToggle = useCallback(
-    event => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (!onImportModeChange) return;
-      const nextMode = importMode === 'browser' ? 'temp' : 'browser';
-      onImportModeChange(nextMode);
-      showModeHint(nextMode);
-    },
-    [importMode, onImportModeChange, showModeHint],
-  );
-
-  useEffect(() => {
-    return () => {
-      clearModeHintTimers();
-    };
-  }, [clearModeHintTimers]);
-
-  useEffect(() => {
-    if (!modeHint) return;
-    updateModeHintPosition();
-    const handleViewportChange = () => updateModeHintPosition();
-    globalThis.addEventListener('resize', handleViewportChange);
-    globalThis.addEventListener('scroll', handleViewportChange, true);
-    return () => {
-      globalThis.removeEventListener('resize', handleViewportChange);
-      globalThis.removeEventListener('scroll', handleViewportChange, true);
-    };
-  }, [modeHint, updateModeHintPosition]);
-
-  useEffect(() => {
-    if (!modeHint) return;
-    const dismissHint = () => {
-      if (!modeHintDismissReadyRef.current) return;
-      setModeHint('');
-    };
-    document.addEventListener('pointerdown', dismissHint, true);
-    return () => {
-      document.removeEventListener('pointerdown', dismissHint, true);
-    };
-  }, [modeHint]);
-
   const borderClasses = 'border-base-content/5 border-t';
 
   const fieldCls =
@@ -521,14 +551,6 @@ export function NotesBar({
     tone: 'subtle',
     className: 'btn btn-xs btn-ghost h-6 w-6 flex-shrink-0 rounded-lg p-0 hover:opacity-100',
   });
-  const modeHintBadgeStyle =
-    modeHintVariant === 'browser'
-      ? {
-          backgroundColor: analyzerUiColors.sourceBadgeWebBg,
-          borderColor: analyzerUiColors.sourceBadgeWebBorder,
-          color: analyzerUiColors.sourceBadgeWebText,
-        }
-      : undefined;
 
   return (
     <div>

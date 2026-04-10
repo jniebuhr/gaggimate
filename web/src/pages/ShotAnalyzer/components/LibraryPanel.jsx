@@ -220,6 +220,171 @@ function buildPromotedLibraryItems({
   return { nextShots, nextProfiles };
 }
 
+function useLibraryPanelLayoutState({ sentinelRef, barRef }) {
+  const [isStuck, setIsStuck] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false,
+  );
+  const [barRect, setBarRect] = useState({ width: 0, left: 0, height: 0 });
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(([entry]) => setIsStuck(!entry.isIntersecting), {
+      threshold: 0,
+    });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [sentinelRef]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    const handleChange = event => setIsMobileViewport(event.matches);
+
+    setIsMobileViewport(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
+
+  const updateRect = useCallback(() => {
+    if (!sentinelRef.current) return;
+    const rect = sentinelRef.current.getBoundingClientRect();
+    setBarRect({
+      width: rect.width,
+      left: rect.left,
+      height: barRef.current?.offsetHeight || 64,
+    });
+  }, [barRef, sentinelRef]);
+
+  useEffect(() => {
+    updateRect();
+    window.addEventListener('resize', updateRect);
+    window.addEventListener('scroll', updateRect, { passive: true });
+    return () => {
+      window.removeEventListener('resize', updateRect);
+      window.removeEventListener('scroll', updateRect);
+    };
+  }, [updateRect]);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(() => updateRect());
+    if (barRef.current) resizeObserver.observe(barRef.current);
+    if (sentinelRef.current) resizeObserver.observe(sentinelRef.current);
+    return () => resizeObserver.disconnect();
+  }, [barRef, sentinelRef, updateRect]);
+
+  return {
+    isStuck,
+    isMobileViewport,
+    barRect,
+  };
+}
+
+function useLibraryPanelNotesState({ currentShot, secondaryShot, compareMode }) {
+  const [primaryNotesExpanded, setPrimaryNotesExpanded] = useState(false);
+  const [primaryNotesIsEditing, setPrimaryNotesIsEditing] = useState(false);
+  const [primaryNotesExpandedHeight, setPrimaryNotesExpandedHeight] = useState(0);
+  const [secondaryNotesExpanded, setSecondaryNotesExpanded] = useState(false);
+  const [secondaryNotesIsEditing, setSecondaryNotesIsEditing] = useState(false);
+  const [secondaryNotesExpandedHeight, setSecondaryNotesExpandedHeight] = useState(0);
+
+  useEffect(() => {
+    if (!primaryNotesExpanded) {
+      setPrimaryNotesIsEditing(false);
+      setPrimaryNotesExpandedHeight(0);
+    }
+  }, [primaryNotesExpanded]);
+
+  useEffect(() => {
+    if (!secondaryNotesExpanded) {
+      setSecondaryNotesIsEditing(false);
+      setSecondaryNotesExpandedHeight(0);
+    }
+  }, [secondaryNotesExpanded]);
+
+  useEffect(() => {
+    if (!currentShot) {
+      setPrimaryNotesExpanded(false);
+      setPrimaryNotesIsEditing(false);
+      setPrimaryNotesExpandedHeight(0);
+    }
+  }, [currentShot]);
+
+  useEffect(() => {
+    if (!secondaryShot || !compareMode) {
+      setSecondaryNotesExpanded(false);
+      setSecondaryNotesIsEditing(false);
+      setSecondaryNotesExpandedHeight(0);
+    }
+  }, [secondaryShot, compareMode]);
+
+  return {
+    primaryNotesExpanded,
+    setPrimaryNotesExpanded,
+    primaryNotesIsEditing,
+    setPrimaryNotesIsEditing,
+    primaryNotesExpandedHeight,
+    setPrimaryNotesExpandedHeight,
+    secondaryNotesExpanded,
+    setSecondaryNotesExpanded,
+    secondaryNotesIsEditing,
+    setSecondaryNotesIsEditing,
+    secondaryNotesExpandedHeight,
+    setSecondaryNotesExpandedHeight,
+  };
+}
+
+function getLibraryPanelLayoutStyles({
+  collapsed,
+  isMobileViewport,
+  isStuck,
+  barRect,
+  primaryNotesIsEditing,
+  primaryNotesExpandedHeight,
+  secondaryNotesIsEditing,
+  secondaryNotesExpandedHeight,
+}) {
+  const shouldBeFixed = !collapsed || (!isMobileViewport && isStuck);
+  const fixedBarStyle = shouldBeFixed
+    ? {
+        position: 'fixed',
+        top: 0,
+        left: `${barRect.left}px`,
+        width: `${barRect.width}px`,
+        zIndex: 50,
+      }
+    : {};
+  const expandedEditingOffset =
+    (primaryNotesIsEditing ? primaryNotesExpandedHeight : 0) +
+    (secondaryNotesIsEditing ? secondaryNotesExpandedHeight : 0);
+  const dropdownTop = Math.max(0, barRect.height - expandedEditingOffset);
+
+  return {
+    shouldBeFixed,
+    fixedBarStyle,
+    dropdownTop,
+    dropdownStyle: {
+      position: 'fixed',
+      top: `${dropdownTop}px`,
+      left: `${barRect.left}px`,
+      width: `${barRect.width}px`,
+      zIndex: 49,
+    },
+    desktopSectionHeight: isMobileViewport
+      ? undefined
+      : `max(18rem, calc(100dvh - ${dropdownTop}px - 2rem))`,
+  };
+}
+
 export function LibraryPanel({
   currentShot,
   currentProfile,
@@ -267,21 +432,32 @@ export function LibraryPanel({
   const shotLoadIdRef = useRef(0);
 
   // UI State
-  const [isStuck, setIsStuck] = useState(false);
-  const [isMobileViewport, setIsMobileViewport] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false,
-  );
-  const [barRect, setBarRect] = useState({ width: 0, left: 0, height: 0 });
   const [collapsed, setCollapsed] = useState(true);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false); // Specific state for import spinner
   const [librarySelectionTarget, setLibrarySelectionTarget] = useState('primaryShot');
-  const [primaryNotesExpanded, setPrimaryNotesExpanded] = useState(false);
-  const [primaryNotesIsEditing, setPrimaryNotesIsEditing] = useState(false);
-  const [primaryNotesExpandedHeight, setPrimaryNotesExpandedHeight] = useState(0);
-  const [secondaryNotesExpanded, setSecondaryNotesExpanded] = useState(false);
-  const [secondaryNotesIsEditing, setSecondaryNotesIsEditing] = useState(false);
-  const [secondaryNotesExpandedHeight, setSecondaryNotesExpandedHeight] = useState(0);
+  const { isStuck, isMobileViewport, barRect } = useLibraryPanelLayoutState({
+    sentinelRef,
+    barRef,
+  });
+  const {
+    primaryNotesExpanded,
+    setPrimaryNotesExpanded,
+    primaryNotesIsEditing,
+    setPrimaryNotesIsEditing,
+    primaryNotesExpandedHeight,
+    setPrimaryNotesExpandedHeight,
+    secondaryNotesExpanded,
+    setSecondaryNotesExpanded,
+    secondaryNotesIsEditing,
+    setSecondaryNotesIsEditing,
+    secondaryNotesExpandedHeight,
+    setSecondaryNotesExpandedHeight,
+  } = useLibraryPanelNotesState({
+    currentShot,
+    secondaryShot,
+    compareMode,
+  });
 
   // Data State
   const [shots, setShots] = useState([]);
@@ -383,93 +559,6 @@ export function LibraryPanel({
   useEffect(() => {
     if (apiService) libraryService.setApiService(apiService);
   }, [apiService]);
-
-  // IntersectionObserver to toggle sticky 'fixed' positioning
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(([entry]) => setIsStuck(!entry.isIntersecting), {
-      threshold: 0,
-    });
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-
-    const mediaQuery = window.matchMedia('(max-width: 1023px)');
-    const handleChange = event => setIsMobileViewport(event.matches);
-
-    setIsMobileViewport(mediaQuery.matches);
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-
-    mediaQuery.addListener(handleChange);
-    return () => mediaQuery.removeListener(handleChange);
-  }, []);
-
-  // Sync dimensions for fixed positioning
-  const updateRect = useCallback(() => {
-    if (!sentinelRef.current) return;
-    const rect = sentinelRef.current.getBoundingClientRect();
-    setBarRect({
-      width: rect.width,
-      left: rect.left,
-      height: barRef.current?.offsetHeight || 64,
-    });
-  }, []);
-
-  useEffect(() => {
-    updateRect();
-    window.addEventListener('resize', updateRect);
-    window.addEventListener('scroll', updateRect, { passive: true });
-    return () => {
-      window.removeEventListener('resize', updateRect);
-      window.removeEventListener('scroll', updateRect);
-    };
-  }, [updateRect]);
-
-  useEffect(() => {
-    if (typeof ResizeObserver === 'undefined') return;
-    const resizeObserver = new ResizeObserver(() => updateRect());
-    if (barRef.current) resizeObserver.observe(barRef.current);
-    if (sentinelRef.current) resizeObserver.observe(sentinelRef.current);
-    return () => resizeObserver.disconnect();
-  }, [updateRect]);
-
-  useEffect(() => {
-    if (!primaryNotesExpanded) {
-      setPrimaryNotesIsEditing(false);
-      setPrimaryNotesExpandedHeight(0);
-    }
-  }, [primaryNotesExpanded]);
-
-  useEffect(() => {
-    if (!secondaryNotesExpanded) {
-      setSecondaryNotesIsEditing(false);
-      setSecondaryNotesExpandedHeight(0);
-    }
-  }, [secondaryNotesExpanded]);
-
-  useEffect(() => {
-    if (!currentShot) {
-      setPrimaryNotesExpanded(false);
-      setPrimaryNotesIsEditing(false);
-      setPrimaryNotesExpandedHeight(0);
-    }
-  }, [currentShot]);
-
-  useEffect(() => {
-    if (!secondaryShot || !compareMode) {
-      setSecondaryNotesExpanded(false);
-      setSecondaryNotesIsEditing(false);
-      setSecondaryNotesExpandedHeight(0);
-    }
-  }, [secondaryShot, compareMode]);
 
   useEffect(() => {
     if (!compareMode) {
@@ -883,32 +972,17 @@ export function LibraryPanel({
     onCompareSwap?.();
   };
 
-  // Styling logic for fixed bar
-  // Keep the panel anchored while it is open, but let the collapsed bar scroll normally on mobile.
-  const shouldBeFixed = !collapsed || (!isMobileViewport && isStuck);
-  const fixedBarStyle = shouldBeFixed
-    ? {
-        position: 'fixed',
-        top: 0,
-        left: `${barRect.left}px`,
-        width: `${barRect.width}px`,
-        zIndex: 50,
-      }
-    : {};
-  const expandedEditingOffset =
-    (primaryNotesIsEditing ? primaryNotesExpandedHeight : 0) +
-    (secondaryNotesIsEditing ? secondaryNotesExpandedHeight : 0);
-  const dropdownTop = Math.max(0, barRect.height - expandedEditingOffset);
-  const dropdownStyle = {
-    position: 'fixed',
-    top: `${dropdownTop}px`,
-    left: `${barRect.left}px`,
-    width: `${barRect.width}px`,
-    zIndex: 49,
-  };
-  const desktopSectionHeight = isMobileViewport
-    ? undefined
-    : `max(18rem, calc(100dvh - ${dropdownTop}px - 2rem))`;
+  const { shouldBeFixed, fixedBarStyle, dropdownTop, dropdownStyle, desktopSectionHeight } =
+    getLibraryPanelLayoutStyles({
+      collapsed,
+      isMobileViewport,
+      isStuck,
+      barRect,
+      primaryNotesIsEditing,
+      primaryNotesExpandedHeight,
+      secondaryNotesIsEditing,
+      secondaryNotesExpandedHeight,
+    });
   const primaryProfileMismatch =
     currentShot &&
     currentProfile &&

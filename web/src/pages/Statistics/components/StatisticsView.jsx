@@ -562,72 +562,26 @@ function StatisticsDetailSectionPanel({
   );
 }
 
-export function StatisticsView({ initialContext }) {
-  const apiService = useContext(ApiServiceContext);
-  const initialProfileName = getInitialProfileName(initialContext);
-
-  const [source, setSource] = useState(() => {
-    if (initialContext?.source === 'gaggimate' || initialContext?.source === 'browser') {
-      return initialContext.source;
-    }
-    return 'both';
-  });
-
-  const [mode, setMode] = useState(() => (initialProfileName ? 'profile' : 'all'));
-
-  const [selectedProfileNames, setSelectedProfileNames] = useState(() =>
-    initialProfileName ? [initialProfileName] : [],
-  );
-  const [selectedShotKeys, setSelectedShotKeys] = useState([]);
-  const [query, setQuery] = useState('');
-  const [dateFromLocal, setDateFromLocal] = useState('');
-  const [dateToLocal, setDateToLocal] = useState('');
-  const [dateBasisMode, setDateBasisMode] = useState('auto');
-
+function useStatisticsMetadataState({
+  apiService,
+  source,
+  initialProfileName,
+  setSelectedProfileNames,
+  setSelectedShotKeys,
+}) {
   const [rawShotCandidates, setRawShotCandidates] = useState([]);
   const [rawProfiles, setRawProfiles] = useState([]);
   const [metadataLoading, setMetadataLoading] = useState(false);
   const [metadataLoaded, setMetadataLoaded] = useState(false);
   const [metadataError, setMetadataError] = useState(null);
   const [metadataReloadNonce, setMetadataReloadNonce] = useState(0);
-
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState({ current: 0, total: 0 });
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-  const [runRequest, setRunRequest] = useState(null);
-  const [calcMode, setCalcMode] = useState(false);
-  const [preparingRun, setPreparingRun] = useState(false);
-  const [statisticsDetailSection, setStatisticsDetailSection] = useState(
-    () => normalizeStatisticsDetailSection(initialContext?.preferredDetailSection) || 'metrics',
-  );
-  const [compareTargetDisplayMode, setCompareTargetDisplayMode] = useState(() =>
-    normalizeCompareTargetDisplayMode(
-      loadFromStorage(ANALYZER_DB_KEYS.COMPARE_TARGET_DISPLAY_MODE),
-    ),
-  );
-  const [pinnedProfiles, setPinnedProfiles] = useState(() => getPinnedProfiles());
-  const [pinnedShotsByProfile, setPinnedShotsByProfile] = useState(() => getPinnedShotsByProfile());
-
   const metaLoadIdRef = useRef(0);
-  const analyzeLoadIdRef = useRef(0);
-  const prepareRunIdRef = useRef(0);
-  const entriesRef = useRef(null);
   const initialProfilePresetAppliedRef = useRef(false);
-  const profileModeShotSeedSignatureRef = useRef('');
   const gmPrefillRetryCountRef = useRef(0);
-  const initializedDetailSectionRunIdRef = useRef(null);
 
   useEffect(() => {
     libraryService.setApiService(apiService);
   }, [apiService]);
-
-  useEffect(() => {
-    saveToStorage(
-      ANALYZER_DB_KEYS.COMPARE_TARGET_DISPLAY_MODE,
-      normalizeCompareTargetDisplayMode(compareTargetDisplayMode),
-    );
-  }, [compareTargetDisplayMode]);
 
   useEffect(() => {
     const loadId = ++metaLoadIdRef.current;
@@ -639,7 +593,6 @@ export function StatisticsView({ initialContext }) {
       setMetadataError(null);
 
       try {
-        // Load filter metadata eagerly so the toolbar can update counts before "Go".
         const [shotList, profileList] = await Promise.all([
           libraryService.getAllShots(source),
           libraryService.getAllProfiles(source),
@@ -702,24 +655,6 @@ export function StatisticsView({ initialContext }) {
     return map;
   }, [rawShotCandidates, normalizedAvailableProfilesMap]);
 
-  const matchesPinnedShotMeta = shotMeta =>
-    matchesPinnedShotMetaWithPins(shotMeta, {
-      shotKeyToCanonicalProfile,
-      pinnedShotsByProfile,
-      pinnedProfiles,
-    });
-
-  const getProfilePinDisabledReason = profileName =>
-    getProfilePinDisabledReasonText(profileName, pinnedProfiles);
-
-  const getShotPinDisabledReason = shotMeta =>
-    getShotPinDisabledReasonText(shotMeta, shotKeyToCanonicalProfile, pinnedShotsByProfile);
-
-  const dateBasisWarningState = useMemo(
-    () => buildDateBasisWarningState(rawShotCandidates),
-    [rawShotCandidates],
-  );
-
   useEffect(() => {
     if (!metadataLoaded) return;
 
@@ -730,6 +665,7 @@ export function StatisticsView({ initialContext }) {
         normalizedAvailableProfiles.set(normalized, name);
       }
     }
+
     setSelectedProfileNames(prev => {
       const next = [];
       const seen = new Set();
@@ -754,7 +690,13 @@ export function StatisticsView({ initialContext }) {
         ? prev
         : next;
     });
-  }, [availableProfiles, rawShotCandidates, metadataLoaded]);
+  }, [
+    availableProfiles,
+    rawShotCandidates,
+    metadataLoaded,
+    setSelectedProfileNames,
+    setSelectedShotKeys,
+  ]);
 
   useEffect(() => {
     if (!metadataLoaded || initialProfilePresetAppliedRef.current) return;
@@ -770,9 +712,8 @@ export function StatisticsView({ initialContext }) {
     if (!canonical) return;
 
     initialProfilePresetAppliedRef.current = true;
-    setMode('profile');
     setSelectedProfileNames([canonical]);
-  }, [availableProfiles, initialProfileName, metadataLoaded]);
+  }, [availableProfiles, initialProfileName, metadataLoaded, setSelectedProfileNames]);
 
   useEffect(() => {
     if (source !== 'gaggimate') return;
@@ -782,10 +723,9 @@ export function StatisticsView({ initialContext }) {
     if ((availableProfiles || []).length > 0) return;
     if (gmPrefillRetryCountRef.current >= 3) return;
 
-    // GM metadata can briefly arrive empty after route-prefill navigation; retry a few times.
     const timer = setTimeout(() => {
       gmPrefillRetryCountRef.current += 1;
-      setMetadataReloadNonce(n => n + 1);
+      setMetadataReloadNonce(value => value + 1);
     }, 450);
 
     return () => clearTimeout(timer);
@@ -798,8 +738,53 @@ export function StatisticsView({ initialContext }) {
     availableProfiles,
   ]);
 
-  const parsedDslQuery = useMemo(() => parseStatisticsQuery(query), [query]);
+  return {
+    rawShotCandidates,
+    rawProfiles,
+    metadataLoading,
+    metadataLoaded,
+    metadataError,
+    rawShotKeyOrder,
+    shotKeyToCanonicalProfile,
+    availableProfiles,
+  };
+}
 
+function useStatisticsSelectionModel({
+  rawShotCandidates,
+  availableProfiles,
+  rawShotKeyOrder,
+  shotKeyToCanonicalProfile,
+  pinnedProfiles,
+  pinnedShotsByProfile,
+  mode,
+  selectedProfileNames,
+  setSelectedProfileNames,
+  selectedShotKeys,
+  setSelectedShotKeys,
+  query,
+  dateFromLocal,
+  dateToLocal,
+  dateBasisMode,
+}) {
+  const matchesPinnedShotMeta = shotMeta =>
+    matchesPinnedShotMetaWithPins(shotMeta, {
+      shotKeyToCanonicalProfile,
+      pinnedShotsByProfile,
+      pinnedProfiles,
+    });
+
+  const getProfilePinDisabledReason = profileName =>
+    getProfilePinDisabledReasonText(profileName, pinnedProfiles);
+
+  const getShotPinDisabledReason = shotMeta =>
+    getShotPinDisabledReasonText(shotMeta, shotKeyToCanonicalProfile, pinnedShotsByProfile);
+
+  const dateBasisWarningState = useMemo(
+    () => buildDateBasisWarningState(rawShotCandidates),
+    [rawShotCandidates],
+  );
+  const parsedDslQuery = useMemo(() => parseStatisticsQuery(query), [query]);
   const compiledDslFilter = useMemo(
     () =>
       buildShotCandidatePredicate(parsedDslQuery, {
@@ -808,11 +793,9 @@ export function StatisticsView({ initialContext }) {
       }),
     [parsedDslQuery, dateBasisMode, matchesPinnedShotMeta],
   );
-
   const visualDateFrom = useMemo(() => parseDateInputMs(dateFromLocal, 'start'), [dateFromLocal]);
   const visualDateTo = useMemo(() => parseDateInputMs(dateToLocal, 'end'), [dateToLocal]);
 
-  // Stage 1 filtering: date + DSL only. This drives visible selection scopes and parse feedback.
   const baseFilterState = useMemo(
     () =>
       buildBaseFilterState({
@@ -936,7 +919,6 @@ export function StatisticsView({ initialContext }) {
     () => byProfileEligibleShots.map(getShotSelectionKey).filter(Boolean),
     [byProfileEligibleShots],
   );
-
   const byProfileEligibleShotKeySet = useMemo(
     () => new Set(byProfileEligibleShotKeys),
     [byProfileEligibleShotKeys],
@@ -994,19 +976,6 @@ export function StatisticsView({ initialContext }) {
   const displayedProfileSelection =
     mode === 'shots' ? derivedProfilesFromSelectedShots : selectedProfileNames;
 
-  const handleProfilePinToggle = item => {
-    const result = toggleProfilePin(item?.id || item?.primary || item);
-    if (!result.changed) return;
-    setPinnedProfiles(result.pinnedProfiles);
-  };
-
-  const handleShotPinToggle = item => {
-    const result = toggleShotPin(item?.id || item?.shotMeta, item?.pinBucketKey || '');
-    if (!result.changed) return;
-    setPinnedShotsByProfile(result.pinnedShotsByProfile);
-  };
-
-  // Stage 2 filtering: apply mode-specific profile/shot selections on top of the base filter.
   const candidateFilterState = useMemo(
     () =>
       buildCandidateFilterState({
@@ -1024,7 +993,6 @@ export function StatisticsView({ initialContext }) {
       return { fromLocal: '', toLocal: '' };
     }
 
-    // Preview range is display-only and should not activate the date filter by itself.
     let minTs = Infinity;
     let maxTs = -Infinity;
     for (const shot of candidateFilterState.filteredShots || []) {
@@ -1044,7 +1012,6 @@ export function StatisticsView({ initialContext }) {
     };
   }, [candidateFilterState.filteredShots, dateBasisMode, dateFromLocal, dateToLocal]);
 
-  // Preserve the original metadata order when rebuilding a selection set.
   const orderShotSelection = nextSet => rawShotKeyOrder.filter(key => nextSet.has(key));
 
   const handleProfileSelectionChange = nextProfileNames => {
@@ -1077,8 +1044,6 @@ export function StatisticsView({ initialContext }) {
     setSelectedShotKeys(Array.isArray(nextShotKeys) ? nextShotKeys : []);
   };
 
-  // In "By Shots" mode, toggling a profile in the sidebar adds/removes all its shots.
-  // We diff against the currently derived profile set to determine which shots to add or remove.
   const handleByShotsProfileSelectionChange = nextProfileNames => {
     if (hasBaseParseErrors) return;
 
@@ -1101,6 +1066,45 @@ export function StatisticsView({ initialContext }) {
     setSelectedShotKeys(orderShotSelection(nextShotSet));
   };
 
+  return {
+    dateBasisWarningState,
+    getProfilePinDisabledReason,
+    getShotPinDisabledReason,
+    baseFilterState,
+    candidateFilterState,
+    hasBaseParseErrors,
+    selectionScopeShotKeySet,
+    visibleProfileIdSet,
+    byProfileEligibleShotKeys,
+    byProfileEligibleShotKeySet,
+    profileSelectionItems,
+    shotSelectionItems,
+    displayedProfileSelection,
+    derivedProfilesFromSelectedShots,
+    baseCanonicalProfileToShotKeys,
+    dateInputPreviewRange,
+    handleProfileSelectionChange,
+    handleByProfileShotSelectionChange,
+    handleShotSelectionChange,
+    handleByShotsProfileSelectionChange,
+  };
+}
+
+function useStatisticsSelectionSync({
+  mode,
+  metadataLoaded,
+  hasBaseParseErrors,
+  visibleProfileIdSet,
+  source,
+  selectedProfileNames,
+  byProfileEligibleShotKeys,
+  byProfileEligibleShotKeySet,
+  selectionScopeShotKeySet,
+  setSelectedProfileNames,
+  setSelectedShotKeys,
+}) {
+  const profileModeShotSeedSignatureRef = useRef('');
+
   useEffect(() => {
     if (mode !== 'profile') {
       profileModeShotSeedSignatureRef.current = '';
@@ -1116,16 +1120,14 @@ export function StatisticsView({ initialContext }) {
         ? prev
         : next;
     });
-  }, [mode, metadataLoaded, hasBaseParseErrors, visibleProfileIdSet]);
+  }, [mode, metadataLoaded, hasBaseParseErrors, visibleProfileIdSet, setSelectedProfileNames]);
 
   useEffect(() => {
     if (mode !== 'profile' || !metadataLoaded || hasBaseParseErrors) return;
 
-    // Reseed eligible shots only when the profile selection scope changes, not on every UI update.
     const signature = JSON.stringify({
       mode,
       source,
-      metaLoadId: metaLoadIdRef.current,
       profiles: [...selectedProfileNames].sort((a, b) => a.localeCompare(b)),
     });
     const shouldSeedAll = profileModeShotSeedSignatureRef.current !== signature;
@@ -1146,6 +1148,7 @@ export function StatisticsView({ initialContext }) {
     selectedProfileNames,
     byProfileEligibleShotKeys,
     byProfileEligibleShotKeySet,
+    setSelectedShotKeys,
   ]);
 
   useEffect(() => {
@@ -1157,7 +1160,138 @@ export function StatisticsView({ initialContext }) {
         ? prev
         : next;
     });
-  }, [mode, metadataLoaded, hasBaseParseErrors, selectionScopeShotKeySet]);
+  }, [mode, metadataLoaded, hasBaseParseErrors, selectionScopeShotKeySet, setSelectedShotKeys]);
+}
+
+export function StatisticsView({ initialContext }) {
+  const apiService = useContext(ApiServiceContext);
+  const initialProfileName = getInitialProfileName(initialContext);
+
+  const [source, setSource] = useState(() => {
+    if (initialContext?.source === 'gaggimate' || initialContext?.source === 'browser') {
+      return initialContext.source;
+    }
+    return 'both';
+  });
+
+  const [mode, setMode] = useState(() => (initialProfileName ? 'profile' : 'all'));
+
+  const [selectedProfileNames, setSelectedProfileNames] = useState(() =>
+    initialProfileName ? [initialProfileName] : [],
+  );
+  const [selectedShotKeys, setSelectedShotKeys] = useState([]);
+  const [query, setQuery] = useState('');
+  const [dateFromLocal, setDateFromLocal] = useState('');
+  const [dateToLocal, setDateToLocal] = useState('');
+  const [dateBasisMode, setDateBasisMode] = useState('auto');
+
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [runRequest, setRunRequest] = useState(null);
+  const [calcMode, setCalcMode] = useState(false);
+  const [preparingRun, setPreparingRun] = useState(false);
+  const [statisticsDetailSection, setStatisticsDetailSection] = useState(
+    () => normalizeStatisticsDetailSection(initialContext?.preferredDetailSection) || 'metrics',
+  );
+  const [compareTargetDisplayMode, setCompareTargetDisplayMode] = useState(() =>
+    normalizeCompareTargetDisplayMode(
+      loadFromStorage(ANALYZER_DB_KEYS.COMPARE_TARGET_DISPLAY_MODE),
+    ),
+  );
+  const [pinnedProfiles, setPinnedProfiles] = useState(() => getPinnedProfiles());
+  const [pinnedShotsByProfile, setPinnedShotsByProfile] = useState(() => getPinnedShotsByProfile());
+
+  const analyzeLoadIdRef = useRef(0);
+  const prepareRunIdRef = useRef(0);
+  const entriesRef = useRef(null);
+  const initializedDetailSectionRunIdRef = useRef(null);
+
+  useEffect(() => {
+    saveToStorage(
+      ANALYZER_DB_KEYS.COMPARE_TARGET_DISPLAY_MODE,
+      normalizeCompareTargetDisplayMode(compareTargetDisplayMode),
+    );
+  }, [compareTargetDisplayMode]);
+
+  const {
+    rawShotCandidates,
+    rawProfiles,
+    metadataLoading,
+    metadataLoaded,
+    metadataError,
+    rawShotKeyOrder,
+    shotKeyToCanonicalProfile,
+    availableProfiles,
+  } = useStatisticsMetadataState({
+    apiService,
+    source,
+    initialProfileName,
+    setSelectedProfileNames,
+    setSelectedShotKeys,
+  });
+
+  const handleProfilePinToggle = item => {
+    const result = toggleProfilePin(item?.id || item?.primary || item);
+    if (!result.changed) return;
+    setPinnedProfiles(result.pinnedProfiles);
+  };
+
+  const handleShotPinToggle = item => {
+    const result = toggleShotPin(item?.id || item?.shotMeta, item?.pinBucketKey || '');
+    if (!result.changed) return;
+    setPinnedShotsByProfile(result.pinnedShotsByProfile);
+  };
+  const {
+    dateBasisWarningState,
+    getProfilePinDisabledReason,
+    getShotPinDisabledReason,
+    candidateFilterState,
+    hasBaseParseErrors,
+    selectionScopeShotKeySet,
+    visibleProfileIdSet,
+    byProfileEligibleShotKeys,
+    byProfileEligibleShotKeySet,
+    profileSelectionItems,
+    shotSelectionItems,
+    displayedProfileSelection,
+    dateInputPreviewRange,
+    handleProfileSelectionChange,
+    handleByProfileShotSelectionChange,
+    handleShotSelectionChange,
+    handleByShotsProfileSelectionChange,
+  } = useStatisticsSelectionModel({
+    rawShotCandidates,
+    availableProfiles,
+    rawShotKeyOrder,
+    shotKeyToCanonicalProfile,
+    pinnedProfiles,
+    pinnedShotsByProfile,
+    mode,
+    selectedProfileNames,
+    setSelectedProfileNames,
+    selectedShotKeys,
+    setSelectedShotKeys,
+    query,
+    dateFromLocal,
+    dateToLocal,
+    dateBasisMode,
+  });
+
+  useStatisticsSelectionSync({
+    mode,
+    metadataLoaded,
+    hasBaseParseErrors,
+    visibleProfileIdSet,
+    source,
+    selectedProfileNames,
+    byProfileEligibleShotKeys,
+    byProfileEligibleShotKeySet,
+    selectionScopeShotKeySet,
+    setSelectedProfileNames,
+    setSelectedShotKeys,
+  });
 
   // Run analysis only when "Go" is clicked, using a snapshot of the filtered candidates.
   useEffect(() => {

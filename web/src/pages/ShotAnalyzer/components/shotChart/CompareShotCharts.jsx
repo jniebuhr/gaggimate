@@ -682,7 +682,7 @@ function buildCompareLegendItems(compareEntries, colors, shotStylePreset) {
   });
 }
 
-function buildMainChartDatasetSpecs({
+function buildMainPressureDatasetSpecs({
   entry,
   model,
   visibility,
@@ -690,8 +690,6 @@ function buildMainChartDatasetSpecs({
   shotStyle,
   showTargets,
   compareDatasetMeta,
-  showWeightInMainChart,
-  showWeightFlowInMainChart,
 }) {
   return [
     visibility.pressure && model.series.pressure.length > 0
@@ -724,6 +722,19 @@ function buildMainChartDatasetSpecs({
           ...compareDatasetMeta,
         }
       : null,
+  ];
+}
+
+function buildMainFlowDatasetSpecs({
+  entry,
+  model,
+  visibility,
+  colors,
+  shotStyle,
+  showTargets,
+  compareDatasetMeta,
+}) {
+  return [
     visibility.flow && model.series.flow.length > 0
       ? {
           label: `${entry.label} Flow`,
@@ -768,6 +779,20 @@ function buildMainChartDatasetSpecs({
           ...compareDatasetMeta,
         }
       : null,
+  ];
+}
+
+function buildMainWeightDatasetSpecs({
+  entry,
+  model,
+  visibility,
+  colors,
+  shotStyle,
+  compareDatasetMeta,
+  showWeightInMainChart,
+  showWeightFlowInMainChart,
+}) {
+  return [
     showWeightInMainChart && visibility.weight && model.series.weight.length > 0
       ? {
           label: `${entry.label} Weight`,
@@ -798,6 +823,49 @@ function buildMainChartDatasetSpecs({
           ...compareDatasetMeta,
         }
       : null,
+  ];
+}
+
+function buildMainChartDatasetSpecs({
+  entry,
+  model,
+  visibility,
+  colors,
+  shotStyle,
+  showTargets,
+  compareDatasetMeta,
+  showWeightInMainChart,
+  showWeightFlowInMainChart,
+}) {
+  return [
+    ...buildMainPressureDatasetSpecs({
+      entry,
+      model,
+      visibility,
+      colors,
+      shotStyle,
+      showTargets,
+      compareDatasetMeta,
+    }),
+    ...buildMainFlowDatasetSpecs({
+      entry,
+      model,
+      visibility,
+      colors,
+      shotStyle,
+      showTargets,
+      compareDatasetMeta,
+    }),
+    ...buildMainWeightDatasetSpecs({
+      entry,
+      model,
+      visibility,
+      colors,
+      shotStyle,
+      compareDatasetMeta,
+      showWeightInMainChart,
+      showWeightFlowInMainChart,
+    }),
   ].filter(Boolean);
 }
 
@@ -928,7 +996,7 @@ function createCompareChartConfig(
       ...config.options,
       events: [],
       plugins: {
-        ...(config.options?.plugins || {}),
+        ...config.options?.plugins,
         tooltip: getCompareTooltipPlugin({
           enableHoverInfo,
           compareTooltipMode,

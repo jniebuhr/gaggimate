@@ -105,6 +105,124 @@ function CompareIcon({ className = 'inline-block h-4.5 w-4.5' }) {
   );
 }
 
+function useStatusBarImportState({ isImporting, onImportShot, onImportProfile, onImport }) {
+  const fileInputRef = useRef(null);
+  const dragDepthRef = useRef(0);
+  const importTargetRef = useRef('shot');
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  const clearDragState = () => {
+    dragDepthRef.current = 0;
+    setIsDragActive(false);
+  };
+
+  const resolveImportHandler = target =>
+    (target === 'profile' ? onImportProfile : onImportShot) || onImport;
+
+  const getImportTargetFromEvent = event => {
+    const targetElement = event?.target;
+    if (!targetElement || typeof targetElement.closest !== 'function') return 'shot';
+    return targetElement.closest('[data-import-target="profile"]') ? 'profile' : 'shot';
+  };
+
+  const openFilePicker = (event, target = 'shot') => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    if (isImporting) return;
+    importTargetRef.current = target;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileSelect = event => {
+    const files = event.target.files;
+    const importHandler = resolveImportHandler(importTargetRef.current);
+    if (files && files.length > 0 && importHandler) {
+      clearDragState();
+      importHandler(files);
+      event.target.value = '';
+    }
+  };
+
+  const handleDragEnter = event => {
+    if (isImporting || !hasFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current += 1;
+    setIsDragActive(true);
+  };
+
+  const handleDragOver = event => {
+    if (isImporting || !hasFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+    if (!isDragActive) setIsDragActive(true);
+  };
+
+  const handleDragLeave = event => {
+    if (isImporting || !isDragActive) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setIsDragActive(false);
+  };
+
+  const handleDrop = event => {
+    if (isImporting || !hasFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    clearDragState();
+    const files = event.dataTransfer.files;
+    const importTarget = getImportTargetFromEvent(event);
+    const importHandler = resolveImportHandler(importTarget);
+    if (files && files.length > 0 && importHandler) {
+      importHandler(files);
+    }
+  };
+
+  return {
+    fileInputRef,
+    isDragActive,
+    handleFileSelect,
+    handleDragEnter,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    openFilePicker,
+  };
+}
+
+function StatusBarImportButton({
+  label,
+  useCurrentTone = false,
+  target = 'shot',
+  openFilePicker,
+  activeBadgeIconButtonClasses,
+  neutralImportButtonClasses,
+  isImporting,
+  compact,
+}) {
+  return (
+    <button
+      type='button'
+      onClick={event => openFilePicker(event, target)}
+      className={useCurrentTone ? activeBadgeIconButtonClasses : neutralImportButtonClasses}
+      title={`Import ${label}`}
+      aria-label={`Import ${label}`}
+      disabled={isImporting}
+    >
+      <FontAwesomeIcon
+        icon={isImporting ? faCircleNotch : faFileImport}
+        spin={isImporting}
+        className={compact ? 'text-xs' : 'text-sm'}
+      />
+    </button>
+  );
+}
+
 function ProfileTrailingControl({
   currentProfile,
   isMismatch,
@@ -242,6 +360,151 @@ function ShotTrailingControl({
   );
 }
 
+function ShotBadge({
+  currentShot,
+  currentShotName,
+  compact,
+  shotBadgeClasses,
+  showShotChevron,
+  handleShotPanelToggle,
+  openFilePicker,
+  activeBadgeIconButtonClasses,
+  neutralImportButtonClasses,
+  isImporting,
+  showCompareButton,
+  compareMode,
+  compareAvailable,
+  compareBadgeIconButtonClasses,
+  onCompareModeToggle,
+  onUnloadShot,
+}) {
+  return (
+    <div
+      data-import-target='shot'
+      className={shotBadgeClasses}
+      title='Click to open the library. Use the import icon or drop files here to import.'
+    >
+      <div className='flex flex-shrink-0 items-center gap-2'>
+        <StatusBarImportButton
+          label='files into the Shot Analyzer'
+          useCurrentTone={Boolean(currentShot)}
+          target='shot'
+          openFilePicker={openFilePicker}
+          activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
+          neutralImportButtonClasses={neutralImportButtonClasses}
+          isImporting={isImporting}
+          compact={compact}
+        />
+      </div>
+      <button
+        type='button'
+        onClick={handleShotPanelToggle}
+        className={`mx-1.5 flex min-w-0 flex-1 items-center justify-center self-stretch overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
+        title='Open library'
+      >
+        <span className='inline-flex max-w-full items-center justify-center gap-1'>
+          <span className='truncate'>{getShotBadgeLabel(currentShot, currentShotName)}</span>
+          {showShotChevron ? (
+            <FontAwesomeIcon icon={faChevronDown} className='shrink-0 text-[11px] opacity-40' />
+          ) : null}
+        </span>
+      </button>
+      <ShotTrailingControl
+        showCompareButton={showCompareButton}
+        compareMode={compareMode}
+        compareAvailable={compareAvailable}
+        currentShot={currentShot}
+        compact={compact}
+        compareBadgeIconButtonClasses={compareBadgeIconButtonClasses}
+        activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
+        onCompareModeToggle={onCompareModeToggle}
+        onUnloadShot={onUnloadShot}
+      />
+    </div>
+  );
+}
+
+function ProfileBadge({
+  currentProfile,
+  currentProfileName,
+  compact,
+  profileBadgeClasses,
+  mismatchProfileBadgeStyle,
+  isMismatch,
+  showSearchingProfileLabel,
+  showProfileChevron,
+  handleProfilePanelToggle,
+  openFilePicker,
+  activeBadgeIconButtonClasses,
+  neutralImportButtonClasses,
+  isImporting,
+  isSearchingProfile,
+  onRetryProfileSearch,
+  onShowStats,
+  onUnloadProfile,
+  statsHref,
+  profileStatsButtonClasses,
+  statisticsIcon,
+}) {
+  return (
+    <div
+      data-import-target='profile'
+      className={profileBadgeClasses}
+      style={mismatchProfileBadgeStyle}
+      title={getProfileBadgeTitle(isMismatch)}
+    >
+      <div className='flex flex-shrink-0 items-center gap-2'>
+        <StatusBarImportButton
+          label='files into the Shot Analyzer'
+          useCurrentTone={Boolean(currentProfile) || isMismatch}
+          target='profile'
+          openFilePicker={openFilePicker}
+          activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
+          neutralImportButtonClasses={neutralImportButtonClasses}
+          isImporting={isImporting}
+          compact={compact}
+        />
+      </div>
+
+      <button
+        type='button'
+        onClick={handleProfilePanelToggle}
+        className={`mx-1.5 flex min-w-0 flex-1 items-center justify-center self-stretch overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
+        title={getProfileBadgeTitle(isMismatch)}
+      >
+        <span className='inline-flex max-w-full items-center justify-center gap-1'>
+          {showSearchingProfileLabel ? (
+            <span className='truncate italic opacity-50'>Searching Profile...</span>
+          ) : (
+            <>
+              {isMismatch ? (
+                <FontAwesomeIcon icon={faTriangleExclamation} className='mr-1 shrink-0' />
+              ) : null}
+              <span className='truncate'>{cleanName(currentProfileName)}</span>
+            </>
+          )}
+          {showProfileChevron ? (
+            <FontAwesomeIcon icon={faChevronDown} className='shrink-0 text-[11px] opacity-40' />
+          ) : null}
+        </span>
+      </button>
+
+      <ProfileTrailingControl
+        currentProfile={currentProfile}
+        isMismatch={isMismatch}
+        isSearchingProfile={isSearchingProfile}
+        onRetryProfileSearch={onRetryProfileSearch}
+        onShowStats={onShowStats}
+        onUnloadProfile={onUnloadProfile}
+        statsHref={statsHref}
+        profileStatsButtonClasses={profileStatsButtonClasses}
+        activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
+        statisticsIcon={statisticsIcon}
+      />
+    </div>
+  );
+}
+
 export function StatusBar({
   currentShot,
   currentProfile,
@@ -269,84 +532,21 @@ export function StatusBar({
   compareBadgeNumber = null,
   ghosted = false,
 }) {
-  const fileInputRef = useRef(null);
-  const dragDepthRef = useRef(0);
-  const importTargetRef = useRef('shot');
-  const [isDragActive, setIsDragActive] = useState(false);
-
-  const clearDragState = () => {
-    dragDepthRef.current = 0;
-    setIsDragActive(false);
-  };
-
-  const resolveImportHandler = target =>
-    (target === 'profile' ? onImportProfile : onImportShot) || onImport;
-
-  const getImportTargetFromEvent = event => {
-    const targetElement = event?.target;
-    if (!targetElement || typeof targetElement.closest !== 'function') return 'shot';
-    // Compare mode reuses the same drop zone for shots and profiles, so the
-    // nearest target marker decides which import handler receives the files.
-    return targetElement.closest('[data-import-target="profile"]') ? 'profile' : 'shot';
-  };
-
-  const openFilePicker = (event, target = 'shot') => {
-    event?.preventDefault?.();
-    event?.stopPropagation?.();
-    if (isImporting) return;
-    importTargetRef.current = target;
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileSelect = e => {
-    const files = e.target.files;
-    const importHandler = resolveImportHandler(importTargetRef.current);
-    if (files && files.length > 0 && importHandler) {
-      clearDragState();
-      importHandler(files);
-      e.target.value = '';
-    }
-  };
-
-  const handleDragEnter = e => {
-    if (isImporting || !hasFileDrag(e)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    dragDepthRef.current += 1;
-    setIsDragActive(true);
-  };
-
-  const handleDragOver = e => {
-    if (isImporting || !hasFileDrag(e)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'copy';
-    if (!isDragActive) setIsDragActive(true);
-  };
-
-  const handleDragLeave = e => {
-    if (isImporting || !isDragActive) return;
-    e.preventDefault();
-    e.stopPropagation();
-    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
-    if (dragDepthRef.current === 0) setIsDragActive(false);
-  };
-
-  const handleDrop = e => {
-    if (isImporting || !hasFileDrag(e)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    clearDragState();
-    const files = e.dataTransfer.files;
-    const importTarget = getImportTargetFromEvent(e);
-    const importHandler = resolveImportHandler(importTarget);
-    if (files && files.length > 0 && importHandler) {
-      importHandler(files);
-    }
-  };
+  const {
+    fileInputRef,
+    isDragActive,
+    handleFileSelect,
+    handleDragEnter,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    openFilePicker,
+  } = useStatusBarImportState({
+    isImporting,
+    onImportShot,
+    onImportProfile,
+    onImport,
+  });
 
   const handleShotPanelToggle = onShotPanelToggle || onTogglePanel;
   const handleProfilePanelToggle = onProfilePanelToggle || onTogglePanel;
@@ -407,27 +607,9 @@ export function StatusBar({
   // Empty compare slots keep a neutral badge so slot numbers communicate state
   // without suggesting that a shot is already loaded.
   const compareBadgeClasses = getCompareSlotBadgeClasses({ currentShot, ghosted });
-  const shotBadgeLabel = getShotBadgeLabel(currentShot, currentShotName);
   const showShotChevron = !currentShot;
   const showSearchingProfileLabel = isSearchingProfile && !currentProfile;
   const showProfileChevron = !currentProfile && !isSearchingProfile;
-
-  const renderImportButton = (label, useCurrentTone = false, target = 'shot') => (
-    <button
-      type='button'
-      onClick={event => openFilePicker(event, target)}
-      className={useCurrentTone ? activeBadgeIconButtonClasses : neutralImportButtonClasses}
-      title={`Import ${label}`}
-      aria-label={`Import ${label}`}
-      disabled={isImporting}
-    >
-      <FontAwesomeIcon
-        icon={isImporting ? faCircleNotch : faFileImport}
-        spin={isImporting}
-        className={compact ? 'text-xs' : 'text-sm'}
-      />
-    </button>
-  );
 
   return (
     <div
@@ -454,97 +636,48 @@ export function StatusBar({
           }}
         >
           {/* --- CENTER: SHOT BADGE --- */}
-          <div
-            data-import-target='shot'
-            className={shotBadgeClasses}
-            title='Click to open the library. Use the import icon or drop files here to import.'
-          >
-            <div className='flex flex-shrink-0 items-center gap-2'>
-              {renderImportButton('files into the Shot Analyzer', Boolean(currentShot), 'shot')}
-            </div>
-            <button
-              type='button'
-              onClick={handleShotPanelToggle}
-              className={`mx-1.5 flex min-w-0 flex-1 items-center justify-center self-stretch overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
-              title='Open library'
-            >
-              <span className='inline-flex max-w-full items-center justify-center gap-1'>
-                <span className='truncate'>{shotBadgeLabel}</span>
-                {showShotChevron ? (
-                  <FontAwesomeIcon
-                    icon={faChevronDown}
-                    className='shrink-0 text-[11px] opacity-40'
-                  />
-                ) : null}
-              </span>
-            </button>
-            <ShotTrailingControl
-              showCompareButton={showCompareButton}
-              compareMode={compareMode}
-              compareAvailable={compareAvailable}
-              currentShot={currentShot}
-              compact={compact}
-              compareBadgeIconButtonClasses={compareBadgeIconButtonClasses}
-              activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
-              onCompareModeToggle={onCompareModeToggle}
-              onUnloadShot={onUnloadShot}
-            />
-          </div>
+          <ShotBadge
+            currentShot={currentShot}
+            currentShotName={currentShotName}
+            compact={compact}
+            shotBadgeClasses={shotBadgeClasses}
+            showShotChevron={showShotChevron}
+            handleShotPanelToggle={handleShotPanelToggle}
+            openFilePicker={openFilePicker}
+            activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
+            neutralImportButtonClasses={neutralImportButtonClasses}
+            isImporting={isImporting}
+            showCompareButton={showCompareButton}
+            compareMode={compareMode}
+            compareAvailable={compareAvailable}
+            compareBadgeIconButtonClasses={compareBadgeIconButtonClasses}
+            onCompareModeToggle={onCompareModeToggle}
+            onUnloadShot={onUnloadShot}
+          />
 
           {/* --- CENTER: PROFILE BADGE --- */}
-          <div
-            data-import-target='profile'
-            className={profileBadgeClasses}
-            style={mismatchProfileBadgeStyle}
-            title={getProfileBadgeTitle(isMismatch)}
-          >
-            <div className='flex flex-shrink-0 items-center gap-2'>
-              {renderImportButton(
-                'files into the Shot Analyzer',
-                Boolean(currentProfile) || isMismatch,
-                'profile',
-              )}
-            </div>
-
-            <button
-              type='button'
-              onClick={handleProfilePanelToggle}
-              className={`mx-1.5 flex min-w-0 flex-1 items-center justify-center self-stretch overflow-hidden text-center ${compact ? 'text-xs font-semibold' : 'text-sm font-bold'}`}
-              title={getProfileBadgeTitle(isMismatch)}
-            >
-              <span className='inline-flex max-w-full items-center justify-center gap-1'>
-                {showSearchingProfileLabel ? (
-                  <span className='truncate italic opacity-50'>Searching Profile...</span>
-                ) : (
-                  <>
-                    {isMismatch ? (
-                      <FontAwesomeIcon icon={faTriangleExclamation} className='mr-1 shrink-0' />
-                    ) : null}
-                    <span className='truncate'>{cleanName(currentProfileName)}</span>
-                  </>
-                )}
-                {showProfileChevron ? (
-                  <FontAwesomeIcon
-                    icon={faChevronDown}
-                    className='shrink-0 text-[11px] opacity-40'
-                  />
-                ) : null}
-              </span>
-            </button>
-
-            <ProfileTrailingControl
-              currentProfile={currentProfile}
-              isMismatch={isMismatch}
-              isSearchingProfile={isSearchingProfile}
-              onRetryProfileSearch={onRetryProfileSearch}
-              onShowStats={onShowStats}
-              onUnloadProfile={onUnloadProfile}
-              statsHref={statsHref}
-              profileStatsButtonClasses={profileStatsButtonClasses}
-              activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
-              statisticsIcon={statisticsIcon}
-            />
-          </div>
+          <ProfileBadge
+            currentProfile={currentProfile}
+            currentProfileName={currentProfileName}
+            compact={compact}
+            profileBadgeClasses={profileBadgeClasses}
+            mismatchProfileBadgeStyle={mismatchProfileBadgeStyle}
+            isMismatch={isMismatch}
+            showSearchingProfileLabel={showSearchingProfileLabel}
+            showProfileChevron={showProfileChevron}
+            handleProfilePanelToggle={handleProfilePanelToggle}
+            openFilePicker={openFilePicker}
+            activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
+            neutralImportButtonClasses={neutralImportButtonClasses}
+            isImporting={isImporting}
+            isSearchingProfile={isSearchingProfile}
+            onRetryProfileSearch={onRetryProfileSearch}
+            onShowStats={onShowStats}
+            onUnloadProfile={onUnloadProfile}
+            statsHref={statsHref}
+            profileStatsButtonClasses={profileStatsButtonClasses}
+            statisticsIcon={statisticsIcon}
+          />
         </div>
         <input
           ref={fileInputRef}
