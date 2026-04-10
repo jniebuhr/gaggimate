@@ -195,6 +195,82 @@ function useStatusBarImportState({ isImporting, onImportShot, onImportProfile, o
   };
 }
 
+function getStatusBarViewModel({
+  compact,
+  ghosted,
+  currentShot,
+  currentProfile,
+  isMismatch,
+  compareMode,
+  isSearchingProfile,
+}) {
+  const badgeBaseClass = compact
+    ? 'flex items-center justify-between flex-1 px-2 h-full rounded-md border cursor-pointer transition-all min-w-0'
+    : 'flex items-center justify-between flex-1 px-2 sm:px-3 h-full rounded-lg border-2 cursor-pointer transition-all min-w-0';
+  const shotBadgeClasses = getShotBadgeClasses({
+    ghosted,
+    badgeBaseClass,
+    currentShot,
+  });
+
+  const mismatchProfileBadgeStyle = isMismatch
+    ? {
+        backgroundColor: ghosted
+          ? `color-mix(in srgb, ${analyzerUiColors.warningOrange} 34%, transparent)`
+          : analyzerUiColors.warningOrange,
+        borderColor: ghosted
+          ? `color-mix(in srgb, ${analyzerUiColors.warningOrangeStrong} 46%, transparent)`
+          : analyzerUiColors.warningOrangeStrong,
+        boxShadow: `0 1px 2px 0 ${analyzerUiColors.warningOrangeShadow}`,
+      }
+    : undefined;
+
+  const profileBadgeClasses =
+    ghosted && !isMismatch
+      ? getGhostedBadgeClasses(badgeBaseClass, Boolean(currentProfile))
+      : getProfileBadgeClasses({
+          isMismatch,
+          currentProfile,
+          badgeBaseClass,
+          loadedShadowClass: '',
+        });
+
+  const neutralImportButtonClasses = getAnalyzerIconButtonClasses({
+    className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full ${
+      ghosted ? 'opacity-85 hover:opacity-100' : 'opacity-75 hover:opacity-100'
+    }`,
+  });
+
+  const activeBadgeIconButtonClasses = getAnalyzerIconButtonClasses({
+    className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full text-current ${
+      ghosted
+        ? 'opacity-90 hover:bg-primary/12 hover:text-current hover:opacity-100'
+        : 'opacity-75 hover:bg-black/10 hover:text-current hover:opacity-100'
+    }`,
+  });
+
+  return {
+    shotBadgeClasses,
+    mismatchProfileBadgeStyle,
+    profileBadgeClasses,
+    neutralImportButtonClasses,
+    activeBadgeIconButtonClasses,
+    compareBadgeIconButtonClasses: getCompareBadgeIconButtonClasses({
+      compareMode,
+      currentShot,
+      activeBadgeIconButtonClasses,
+      neutralImportButtonClasses,
+    }),
+    profileStatsButtonClasses:
+      currentProfile || isMismatch ? activeBadgeIconButtonClasses : neutralImportButtonClasses,
+    statisticsIcon: compareMode ? faChartArea : faChartSimple,
+    compareBadgeClasses: getCompareSlotBadgeClasses({ currentShot, ghosted }),
+    showShotChevron: !currentShot,
+    showSearchingProfileLabel: isSearchingProfile && !currentProfile,
+    showProfileChevron: !currentProfile && !isSearchingProfile,
+  };
+}
+
 function StatusBarImportButton({
   label,
   useCurrentTone = false,
@@ -551,65 +627,28 @@ export function StatusBar({
   const handleShotPanelToggle = onShotPanelToggle || onTogglePanel;
   const handleProfilePanelToggle = onProfilePanelToggle || onTogglePanel;
 
-  const badgeBaseClass = compact
-    ? 'flex items-center justify-between flex-1 px-2 h-full rounded-md border cursor-pointer transition-all min-w-0'
-    : 'flex items-center justify-between flex-1 px-2 sm:px-3 h-full rounded-lg border-2 cursor-pointer transition-all min-w-0';
-  const shotBadgeClasses = getShotBadgeClasses({
-    ghosted,
-    badgeBaseClass,
-    currentShot,
-  });
-
-  const mismatchProfileBadgeStyle = isMismatch
-    ? {
-        backgroundColor: ghosted
-          ? `color-mix(in srgb, ${analyzerUiColors.warningOrange} 34%, transparent)`
-          : analyzerUiColors.warningOrange,
-        borderColor: ghosted
-          ? `color-mix(in srgb, ${analyzerUiColors.warningOrangeStrong} 46%, transparent)`
-          : analyzerUiColors.warningOrangeStrong,
-        boxShadow: `0 1px 2px 0 ${analyzerUiColors.warningOrangeShadow}`,
-      }
-    : undefined;
-
-  const profileBadgeClasses =
-    ghosted && !isMismatch
-      ? getGhostedBadgeClasses(badgeBaseClass, Boolean(currentProfile))
-      : getProfileBadgeClasses({
-          isMismatch,
-          currentProfile,
-          badgeBaseClass,
-          loadedShadowClass: '',
-        });
-
-  const neutralImportButtonClasses = getAnalyzerIconButtonClasses({
-    className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full ${
-      ghosted ? 'opacity-85 hover:opacity-100' : 'opacity-75 hover:opacity-100'
-    }`,
-  });
-
-  const activeBadgeIconButtonClasses = getAnalyzerIconButtonClasses({
-    className: `${compact ? 'h-5 w-5' : 'h-6 w-6'} flex-shrink-0 rounded-full text-current ${
-      ghosted
-        ? 'opacity-90 hover:bg-primary/12 hover:text-current hover:opacity-100'
-        : 'opacity-75 hover:bg-black/10 hover:text-current hover:opacity-100'
-    }`,
-  });
-  const compareBadgeIconButtonClasses = getCompareBadgeIconButtonClasses({
-    compareMode,
-    currentShot,
-    activeBadgeIconButtonClasses,
+  const {
+    shotBadgeClasses,
+    mismatchProfileBadgeStyle,
+    profileBadgeClasses,
     neutralImportButtonClasses,
+    activeBadgeIconButtonClasses,
+    compareBadgeIconButtonClasses,
+    profileStatsButtonClasses,
+    statisticsIcon,
+    compareBadgeClasses,
+    showShotChevron,
+    showSearchingProfileLabel,
+    showProfileChevron,
+  } = getStatusBarViewModel({
+    compact,
+    ghosted,
+    currentShot,
+    compareMode,
+    currentProfile,
+    isMismatch,
+    isSearchingProfile,
   });
-  const profileStatsButtonClasses =
-    currentProfile || isMismatch ? activeBadgeIconButtonClasses : neutralImportButtonClasses;
-  const statisticsIcon = compareMode ? faChartArea : faChartSimple;
-  // Empty compare slots keep a neutral badge so slot numbers communicate state
-  // without suggesting that a shot is already loaded.
-  const compareBadgeClasses = getCompareSlotBadgeClasses({ currentShot, ghosted });
-  const showShotChevron = !currentShot;
-  const showSearchingProfileLabel = isSearchingProfile && !currentProfile;
-  const showProfileChevron = !currentProfile && !isSearchingProfile;
 
   return (
     <div

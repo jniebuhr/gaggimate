@@ -64,6 +64,19 @@ function renderLibrarySourceOptionContent(value) {
   return <span>ALL</span>;
 }
 
+function renderLibrarySourceHeaderContent(value) {
+  if (value === 'gaggimate' || value === 'browser') {
+    return <SourceMarker source={value} variant='compact' />;
+  }
+
+  return (
+    <span className='inline-flex items-center gap-1'>
+      <SourceMarker source='gaggimate' variant='compact' />
+      <SourceMarker source='browser' variant='compact' />
+    </span>
+  );
+}
+
 function getNameColumnWidth(isShot, showCompareSelection) {
   if (!isShot) return '55%';
   return showCompareSelection ? '24%' : '30%';
@@ -73,7 +86,7 @@ function getLibraryColumnLayout(isShot, showCompareSelection) {
   return {
     widthCompare: showCompareSelection ? '6%' : '0%',
     widthName: getNameColumnWidth(isShot, showCompareSelection),
-    widthSource: '10%',
+    widthSource: '7%',
     widthDate: isShot ? '25%' : '0%',
     widthProfile: isShot ? '25%' : '0%',
     widthAction: '10%',
@@ -242,7 +255,7 @@ export function LibrarySection({
         )}
 
         <table className='relative w-full border-separate border-spacing-0'>
-          <thead className='sticky top-0 z-20 text-[10px] font-bold tracking-wider uppercase'>
+          <thead className='sticky top-0 z-20 text-[10px] font-bold tracking-wide'>
             <tr>
               {showCompareSelection && (
                 <th
@@ -252,16 +265,13 @@ export function LibrarySection({
                   Cmp
                 </th>
               )}
-              <th
-                className={`${stickyHeaderCellClass} px-3 py-3 text-left`}
-                style={{ width: widthName }}
-              >
-                <div className='flex items-center justify-between gap-2'>
+              <th className={`${stickyHeaderCellClass} p-0 text-left`} style={{ width: widthName }}>
+                <div className='grid h-full w-full grid-cols-[minmax(0,1fr)_auto] items-stretch'>
                   <button
                     type='button'
                     className={getAnalyzerSurfaceTriggerClasses({
                       className:
-                        'flex min-w-0 flex-1 cursor-pointer items-center gap-1 text-left text-[10px] font-bold tracking-wider uppercase',
+                        'flex h-full w-full min-w-0 cursor-pointer items-center gap-1 px-3 py-3 text-left text-[10px] font-bold tracking-wide',
                     })}
                     onClick={() => onSortChange('name')}
                   >
@@ -273,7 +283,7 @@ export function LibrarySection({
                       type='button'
                       className={getAnalyzerIconButtonClasses({
                         tone: pinnedFirstEnabled ? 'primary' : 'subtle',
-                        className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
+                        className: `h-full min-h-full w-8 shrink-0 rounded-none bg-transparent p-0 text-[11px] ${
                           pinnedFirstEnabled ? 'text-primary hover:text-primary' : ''
                         }`,
                       })}
@@ -292,19 +302,19 @@ export function LibrarySection({
                 </div>
               </th>
               <th
-                className={`${stickyHeaderCellClass} px-1 py-3 text-center`}
+                className={`${stickyHeaderCellClass} p-0 text-center`}
                 style={{ width: widthSource }}
               >
-                <details className='dropdown'>
+                <details className='dropdown block h-full w-full'>
                   <summary
                     className={getAnalyzerSurfaceTriggerClasses({
                       className:
-                        'inline-flex cursor-pointer list-none items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-bold outline-none [&::-webkit-details-marker]:hidden',
+                        'flex h-full w-full cursor-pointer list-none items-center justify-center gap-1 px-1 py-3 text-[10px] font-bold outline-none [&::-webkit-details-marker]:hidden',
                     })}
                     aria-label='Filter library source'
                     title='Filter library source'
                   >
-                    {renderLibrarySourceOptionContent(sourceFilter)}
+                    {renderLibrarySourceHeaderContent(sourceFilter)}
                     <FontAwesomeIcon icon={faChevronDown} className='text-[9px] opacity-60' />
                   </summary>
 
@@ -335,13 +345,20 @@ export function LibrarySection({
               </th>
               {isShot && (
                 <th
-                  className={getAnalyzerSurfaceTriggerClasses({
-                    className: `${stickyHeaderCellClass} cursor-pointer px-3 py-3 text-left`,
-                  })}
+                  className={`${stickyHeaderCellClass} p-0 text-left`}
                   style={{ width: widthDate }}
-                  onClick={() => onSortChange('shotDate')}
                 >
-                  Date {getSortIcon('shotDate')}
+                  <button
+                    type='button'
+                    className={getAnalyzerSurfaceTriggerClasses({
+                      className:
+                        'flex h-full w-full cursor-pointer items-center gap-1 px-3 py-3 text-left text-[10px] font-bold tracking-wide',
+                    })}
+                    onClick={() => onSortChange('shotDate')}
+                  >
+                    <span>Date</span>
+                    {getSortIcon('shotDate')}
+                  </button>
                 </th>
               )}
               {isShot && (

@@ -385,6 +385,18 @@ function getLibraryPanelLayoutStyles({
   };
 }
 
+function isLibraryHotkeyTypingTarget(target) {
+  const activeElement =
+    typeof Element !== 'undefined' && target instanceof Element ? target : document.activeElement;
+  if (!activeElement) return false;
+  const tag = activeElement.tagName?.toLowerCase();
+  if (activeElement.isContentEditable) return true;
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+  return !!activeElement.closest(
+    'input, textarea, select, [contenteditable="true"], [role="textbox"]',
+  );
+}
+
 export function LibraryPanel({
   currentShot,
   currentProfile,
@@ -928,6 +940,33 @@ export function LibraryPanel({
     onCompareModeToggle?.();
   };
 
+  useEffect(() => {
+    const handleKeyDown = event => {
+      if (event.defaultPrevented || event.repeat) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isLibraryHotkeyTypingTarget(event.target)) return;
+
+      const key = String(event.key || '').toLowerCase();
+      if (key === 'x') {
+        event.preventDefault();
+        if (collapsed) {
+          openLibraryForTarget(librarySelectionTarget || 'primaryShot');
+        } else {
+          setCollapsed(true);
+        }
+        return;
+      }
+
+      if (key === 'c') {
+        event.preventDefault();
+        handleStatusBarCompareToggle();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [collapsed, librarySelectionTarget, openLibraryForTarget, handleStatusBarCompareToggle]);
+
   const handleProfileRowAction = item => {
     if (librarySelectionTarget === 'secondaryProfile') {
       if (!secondaryShot) return;
@@ -972,7 +1011,7 @@ export function LibraryPanel({
     onCompareSwap?.();
   };
 
-  const { shouldBeFixed, fixedBarStyle, dropdownTop, dropdownStyle, desktopSectionHeight } =
+  const { shouldBeFixed, fixedBarStyle, dropdownStyle, desktopSectionHeight } =
     getLibraryPanelLayoutStyles({
       collapsed,
       isMobileViewport,
@@ -1018,10 +1057,7 @@ export function LibraryPanel({
                 onRetryProfileSearch={onRetryProfileSearch}
                 onShotPanelToggle={() => openLibraryForTarget('primaryShot')}
                 onProfilePanelToggle={() => openLibraryForTarget('primaryProfile')}
-                onImportShot={files => handleImport(files, { targetType: 'shot', slot: 'primary' })}
-                onImportProfile={files =>
-                  handleImport(files, { targetType: 'profile', slot: 'primary' })
-                }
+                onImport={files => handleImport(files, { slot: 'primary' })}
                 onShowStats={onShowStats}
                 statsHref={statsHref}
                 compareAvailable={shots.length > 0}
@@ -1076,15 +1112,8 @@ export function LibraryPanel({
                   if (!secondaryShot) return;
                   openLibraryForTarget('secondaryProfile');
                 }}
-                onImportShot={files =>
+                onImport={files =>
                   handleImport(files, {
-                    targetType: 'shot',
-                    slot: currentShot ? 'secondary' : 'primary',
-                  })
-                }
-                onImportProfile={files =>
-                  handleImport(files, {
-                    targetType: 'profile',
                     slot: currentShot ? 'secondary' : 'primary',
                   })
                 }
@@ -1129,10 +1158,7 @@ export function LibraryPanel({
                 onRetryProfileSearch={onRetryProfileSearch}
                 onShotPanelToggle={() => openLibraryForTarget('primaryShot')}
                 onProfilePanelToggle={() => openLibraryForTarget('primaryProfile')}
-                onImportShot={files => handleImport(files, { targetType: 'shot', slot: 'primary' })}
-                onImportProfile={files =>
-                  handleImport(files, { targetType: 'profile', slot: 'primary' })
-                }
+                onImport={files => handleImport(files, { slot: 'primary' })}
                 onShowStats={onShowStats}
                 statsHref={statsHref}
                 compareAvailable={shots.length > 0}

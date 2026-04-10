@@ -1,8 +1,5 @@
-import { useState, useEffect, useRef, useContext, useMemo } from 'preact/hooks';
+import { useState, useEffect, useRef, useContext, useMemo, useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
-import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { ApiServiceContext } from '../../../services/ApiService';
 import { libraryService } from '../../ShotAnalyzer/services/LibraryService';
@@ -36,7 +33,6 @@ import { PhaseStatistics } from './PhaseStatistics';
 import { StatisticsShotCompareSection } from './StatisticsShotCompareSection';
 import { TrendChart } from './TrendChart';
 import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
-import { SourceMarker } from '../../ShotAnalyzer/components/SourceMarker';
 import {
   buildShotCandidatePredicate,
   parseStatisticsQuery,
@@ -171,6 +167,18 @@ function getShotFileStem(shotMeta) {
 function getShotDisplaySecondary(shotMeta, dateBasisMode) {
   const ts = resolveShotEffectiveTimestampMs(shotMeta, dateBasisMode || 'auto');
   return `${formatShotDateTime(ts)} • ${getSourceShortLabel(shotMeta?.source)}`;
+}
+
+function isStatisticsHotkeyBlockedTarget(target) {
+  const activeElement =
+    typeof Element !== 'undefined' && target instanceof Element ? target : document.activeElement;
+  if (!activeElement) return false;
+  const tag = activeElement.tagName?.toLowerCase();
+  if (activeElement.isContentEditable) return true;
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') return true;
+  return !!activeElement.closest(
+    'input, textarea, select, button, summary, a[href], [contenteditable="true"], [role="textbox"]',
+  );
 }
 
 function buildShotSelectionItem(shot, dateBasisMode) {
@@ -1068,9 +1076,6 @@ function useStatisticsSelectionModel({
 
   return {
     dateBasisWarningState,
-    getProfilePinDisabledReason,
-    getShotPinDisabledReason,
-    baseFilterState,
     candidateFilterState,
     hasBaseParseErrors,
     selectionScopeShotKeySet,
@@ -1163,6 +1168,381 @@ function useStatisticsSelectionSync({
   }, [mode, metadataLoaded, hasBaseParseErrors, selectionScopeShotKeySet, setSelectedShotKeys]);
 }
 
+function useStatisticsRunExecution({
+  runRequest,
+  calcMode,
+  analyzeLoadIdRef,
+  entriesRef,
+  setLoading,
+  setError,
+  setResult,
+  setProgress,
+}) {
+  useEffect(() => {
+    if (!runRequest) return;
+
+    const loadId = ++analyzeLoadIdRef.current;
+    let cancelled = false;
+
+    async function loadAndAnalyze() {
+      setLoading(true);
+      setError(null);
+      setResult(null);
+      setProgress({ current: 0, total: 0 });
+
+      try {
+        const shotList = Array.isArray(runRequest.shots) ? runRequest.shots : [];
+        const profileList = Array.isArray(runRequest.profiles) ? runRequest.profiles : [];
+        const fallbackProfileList = Array.isArray(runRequest.fallbackProfiles)
+          ? runRequest.fallbackProfiles
+          : [];
+
+        const profileMap = new Map();
+        for (const p of profileList) {
+          const displayName = cleanName(p.name || p.label || '');
+          const key = displayName.toLowerCase();
+          if (key) profileMap.set(key, p);
+        }
+        const fallbackProfileMap = new Map();
+        for (const p of fallbackProfileList) {
+          const displayName = cleanName(p.name || p.label || '');
+          const key = displayName.toLowerCase();
+          if (key && !profileMap.has(key)) fallbackProfileMap.set(key, p);
+        }
+
+        const loadedProfileCache = new Map();
+        const total = shotList.length;
+        setProgress({ current: 0, total });
+
+        if (total === 0) {
+          entriesRef.current = [];
+          setResult(computeStatistics([], { calcMode: !!runRequest.calcMode }));
+          setLoading(false);
+          return;
+        }
+
+        const entries = [];
+
+        for (let i = 0; i < total; i += BATCH_SIZE) {
+          if (loadId !== analyzeLoadIdRef.current) return;
+
+          const batch = shotList.slice(i, i + BATCH_SIZE);
+          const batchResults = await Promise.all(
+            batch.map(async shot => {
+              try {
+                const shotId =
+                  shot.source === 'gaggimate' ? shot.id : shot.storageKey || shot.name || shot.id;
+                const loadedShot = await libraryService.loadShot(shotId, shot.source);
+                const fullShot = loadedShot
+                  ? {
+                      ...loadedShot,
+                      source: loadedShot.source || shot.source,
+                      storageKey:
+                        loadedShot.storageKey || shot.storageKey || shot.name || String(shotId),
+                      name: loadedShot.name || shot.name || shot.storageKey || String(shotId),
+                    }
+                  : null;
+                if (!fullShot || !fullShot.samples || fullShot.samples.length === 0) return null;
+
+                const profileField = fullShot.profile || '';
+                const profileKey = cleanName(profileField).toLowerCase();
+                const matchedProfileEntry = profileKey
+                  ? profileMap.get(profileKey) || fallbackProfileMap.get(profileKey) || null
+                  : null;
+
+                let matchedProfile = null;
+                if (matchedProfileEntry) {
+                  if (matchedProfileEntry.data) {
+                    matchedProfile = matchedProfileEntry.data;
+                  } else {
+                    const pid =
+                      matchedProfileEntry.source === 'gaggimate'
+                        ? matchedProfileEntry.profileId || matchedProfileEntry.id
+                        : matchedProfileEntry.name;
+                    try {
+                      const cacheKey = `${matchedProfileEntry.source}:${String(pid || '')}`;
+                      if (pid) {
+                        if (!loadedProfileCache.has(cacheKey)) {
+                          loadedProfileCache.set(
+                            cacheKey,
+                            libraryService
+                              .loadProfile(pid, matchedProfileEntry.source)
+                              .catch(() => null),
+                          );
+                        }
+                        matchedProfile = await loadedProfileCache.get(cacheKey);
+                      }
+                    } catch {
+                      // Analyze without profile if profile load fails.
+                    }
+                  }
+                }
+
+                if (matchedProfile && matchedProfileEntry?.source && !matchedProfile.source) {
+                  matchedProfile = { ...matchedProfile, source: matchedProfileEntry.source };
+                }
+
+                const settings = { ...DEFAULT_SETTINGS };
+                const autoResult = detectAutoDelay(fullShot, matchedProfile, settings.scaleDelayMs);
+                if (autoResult.auto) {
+                  settings.scaleDelayMs = autoResult.delay;
+                  settings.isAutoAdjusted = true;
+                }
+
+                return {
+                  analysis: calculateShotMetrics(fullShot, matchedProfile, settings),
+                  shotData: fullShot,
+                  profileData: matchedProfile,
+                  meta: {
+                    id: shotId,
+                    selectionKey: getShotSelectionKey(shot),
+                    displayName: getShotDisplayName(fullShot),
+                    timestamp: shot.timestamp || shot.shotDate || shot.uploadedAt || 0,
+                    profileName: cleanName(profileField) || '(Unknown)',
+                    source: shot.source,
+                  },
+                };
+              } catch {
+                return null;
+              }
+            }),
+          );
+
+          for (const entry of batchResults) {
+            if (entry) entries.push(entry);
+          }
+
+          if (loadId !== analyzeLoadIdRef.current) return;
+          setProgress({ current: Math.min(i + BATCH_SIZE, total), total });
+        }
+
+        if (cancelled || loadId !== analyzeLoadIdRef.current) return;
+        entriesRef.current = entries;
+        setResult(computeStatistics(entries, { calcMode: !!runRequest.calcMode }));
+      } catch {
+        if (cancelled || loadId !== analyzeLoadIdRef.current) return;
+        setError('Failed to load statistics. Please try again.');
+      } finally {
+        if (!cancelled && loadId === analyzeLoadIdRef.current) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadAndAnalyze();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [runRequest, analyzeLoadIdRef, entriesRef, setError, setLoading, setProgress, setResult]);
+
+  useEffect(() => {
+    if (entriesRef.current) {
+      setResult(computeStatistics(entriesRef.current, { calcMode }));
+    }
+  }, [calcMode, entriesRef, setResult]);
+}
+
+function buildStatisticsCompareEntries(result, runRequest, entriesRef) {
+  if (!result) return [];
+
+  const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
+  const entryBySelectionKey = new Map(
+    cachedEntries.map(entry => [entry?.meta?.selectionKey, entry]),
+  );
+  const orderedShotKeys = Array.isArray(runRequest?.orderedShotKeys)
+    ? runRequest.orderedShotKeys.filter(Boolean)
+    : [];
+  const fallbackShotKeys = Array.isArray(runRequest?.shots)
+    ? runRequest.shots.map(getShotSelectionKey).filter(Boolean)
+    : [];
+  const preferredShotOrder = orderedShotKeys.length > 0 ? orderedShotKeys : fallbackShotKeys;
+
+  const orderedCompareEntries = preferredShotOrder
+    .map((selectionKey, index) =>
+      buildStatisticsCompareEntry(entryBySelectionKey.get(selectionKey), {
+        key: selectionKey,
+        isReference: index === 0,
+      }),
+    )
+    .filter(Boolean);
+
+  const matchedCompareKeys = new Set(orderedCompareEntries.map(entry => entry.key));
+  const unmatchedCompareEntries = cachedEntries
+    .map((entry, index) => {
+      const fallbackKey = getStatisticsCompareFallbackKey(entry, index);
+      if (matchedCompareKeys.has(fallbackKey)) return null;
+
+      return buildStatisticsCompareEntry(entry, {
+        key: fallbackKey,
+        isReference: orderedCompareEntries.length === 0 && index === 0,
+      });
+    })
+    .filter(Boolean);
+
+  if (preferredShotOrder.length > 0) {
+    if (orderedCompareEntries.length === cachedEntries.length) {
+      return orderedCompareEntries;
+    }
+    if (orderedCompareEntries.length > 0 || unmatchedCompareEntries.length > 0) {
+      return [...orderedCompareEntries, ...unmatchedCompareEntries];
+    }
+  }
+
+  return cachedEntries
+    .map((entry, index) =>
+      buildStatisticsCompareEntry(entry, {
+        key: getStatisticsCompareFallbackKey(entry, index),
+        isReference: index === 0,
+      }),
+    )
+    .filter(Boolean);
+}
+
+function getBuiltProfileCount(entriesRef) {
+  const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
+  const profileNames = new Set();
+
+  cachedEntries.forEach(entry => {
+    const rawName =
+      entry?.meta?.profileName || entry?.profileData?.name || entry?.profileData?.label || '';
+    const cleanedName = cleanName(rawName || '');
+    if (cleanedName) {
+      profileNames.add(cleanedName);
+    }
+  });
+
+  return profileNames.size;
+}
+
+function getBuiltDateRange(entriesRef, dateBasisMode) {
+  const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
+  const timestamps = cachedEntries
+    .map(entry => resolveShotEffectiveTimestampMs(entry?.shotData || entry?.meta, dateBasisMode))
+    .filter(value => Number.isFinite(value) && value > 0)
+    .sort((a, b) => a - b);
+
+  if (timestamps.length === 0) {
+    return { startMs: null, endMs: null };
+  }
+
+  return {
+    startMs: timestamps[0],
+    endMs: timestamps[timestamps.length - 1],
+  };
+}
+
+function useStatisticsResultViewState({
+  result,
+  runRequest,
+  statisticsDetailSection,
+  setStatisticsDetailSection,
+  initializedDetailSectionRunIdRef,
+  entriesRef,
+  preparingRun,
+  loading,
+  error,
+  metadataError,
+}) {
+  useEffect(() => {
+    if (!result || !runRequest?.id) return;
+    if (initializedDetailSectionRunIdRef.current === runRequest.id) return;
+
+    const hasCompareStatistics = Array.isArray(entriesRef.current) && entriesRef.current.length > 0;
+    const hasProfileGroups = Array.isArray(result.profileGroups) && result.profileGroups.length > 0;
+    const hasPhaseStats = Array.isArray(result.phaseStats) && result.phaseStats.length > 0;
+    const hasMetricStats = Boolean(result.metrics && Object.keys(result.metrics).length > 0);
+    const hasTrendStats = Array.isArray(result.trends) && result.trends.length > 1;
+    const defaultSection = getPreferredStatisticsDetailSection({
+      runMode: runRequest.mode,
+      hasCompareStatistics,
+      hasMetricStatistics: hasMetricStats,
+      hasTrendStatistics: hasTrendStats,
+    });
+    const preferredRunSection = normalizeStatisticsDetailSection(runRequest.preferredDetailSection);
+    const nextSection = resolveStatisticsDetailSectionChoice({
+      candidate:
+        preferredRunSection ||
+        normalizeStatisticsDetailSection(statisticsDetailSection) ||
+        defaultSection,
+      hasCompareStatistics,
+      hasMetricStatistics: hasMetricStats,
+      hasTrendStatistics: hasTrendStats,
+      hasProfileGroupStatistics: hasProfileGroups,
+      hasPhaseStatistics: hasPhaseStats,
+    });
+
+    setStatisticsDetailSection(nextSection);
+    initializedDetailSectionRunIdRef.current = runRequest.id;
+  }, [
+    entriesRef,
+    initializedDetailSectionRunIdRef,
+    result,
+    runRequest,
+    setStatisticsDetailSection,
+    statisticsDetailSection,
+  ]);
+
+  const hasProfileGroupStatistics = result?.profileGroups?.length > 0;
+  const hasPhaseStatistics = result?.phaseStats?.length > 0;
+  const hasMetricStatistics = Boolean(result?.metrics && Object.keys(result.metrics).length > 0);
+  const hasTrendStatistics = Array.isArray(result?.trends) && result.trends.length > 1;
+  const hasStatisticsCompare = Array.isArray(entriesRef.current) && entriesRef.current.length > 0;
+  const fallbackStatisticsDetailSection = getPreferredStatisticsDetailSection({
+    runMode: runRequest?.mode,
+    hasCompareStatistics: hasStatisticsCompare,
+    hasMetricStatistics,
+    hasTrendStatistics,
+  });
+  const preferredRunSection = normalizeStatisticsDetailSection(runRequest?.preferredDetailSection);
+  const detailSectionCandidate =
+    initializedDetailSectionRunIdRef.current === runRequest?.id
+      ? statisticsDetailSection
+      : preferredRunSection ||
+        normalizeStatisticsDetailSection(statisticsDetailSection) ||
+        fallbackStatisticsDetailSection;
+  const resolvedStatisticsDetailSection = resolveStatisticsDetailSectionChoice({
+    candidate: detailSectionCandidate,
+    hasCompareStatistics: hasStatisticsCompare,
+    hasMetricStatistics,
+    hasTrendStatistics,
+    hasProfileGroupStatistics,
+    hasPhaseStatistics,
+  });
+  const statisticsCompareEntries = useMemo(
+    () => buildStatisticsCompareEntries(result, runRequest, entriesRef),
+    [entriesRef, result, runRequest],
+  );
+  const shouldHidePhaseExitReasons = statisticsCompareEntries.length > 2;
+  const builtShotCount = Number.isFinite(result?.summary?.totalShots)
+    ? result.summary.totalShots
+    : 0;
+  const builtProfileCount = useMemo(
+    () => getBuiltProfileCount(entriesRef),
+    [entriesRef, result, runRequest],
+  );
+  const builtDateRange = useMemo(
+    () => getBuiltDateRange(entriesRef, runRequest?.dateBasisMode || 'auto'),
+    [entriesRef, result, runRequest],
+  );
+  const shouldShowEmptyStatisticsState =
+    !preparingRun && !loading && !result && !error && !metadataError;
+
+  return {
+    hasProfileGroupStatistics,
+    hasPhaseStatistics,
+    hasMetricStatistics,
+    hasTrendStatistics,
+    resolvedStatisticsDetailSection,
+    statisticsCompareEntries,
+    shouldHidePhaseExitReasons,
+    builtShotCount,
+    builtProfileCount,
+    builtDateRange,
+    shouldShowEmptyStatisticsState,
+  };
+}
+
 export function StatisticsView({ initialContext }) {
   const apiService = useContext(ApiServiceContext);
   const initialProfileName = getInitialProfileName(initialContext);
@@ -1245,8 +1625,6 @@ export function StatisticsView({ initialContext }) {
   };
   const {
     dateBasisWarningState,
-    getProfilePinDisabledReason,
-    getShotPinDisabledReason,
     candidateFilterState,
     hasBaseParseErrors,
     selectionScopeShotKeySet,
@@ -1293,175 +1671,16 @@ export function StatisticsView({ initialContext }) {
     setSelectedShotKeys,
   });
 
-  // Run analysis only when "Go" is clicked, using a snapshot of the filtered candidates.
-  useEffect(() => {
-    if (!runRequest) return;
-
-    const loadId = ++analyzeLoadIdRef.current;
-    let cancelled = false;
-
-    async function loadAndAnalyze() {
-      setLoading(true);
-      setError(null);
-      setResult(null);
-      setProgress({ current: 0, total: 0 });
-
-      try {
-        const shotList = Array.isArray(runRequest.shots) ? runRequest.shots : [];
-        const profileList = Array.isArray(runRequest.profiles) ? runRequest.profiles : [];
-        const fallbackProfileList = Array.isArray(runRequest.fallbackProfiles)
-          ? runRequest.fallbackProfiles
-          : [];
-
-        const profileMap = new Map();
-        for (const p of profileList) {
-          const displayName = cleanName(p.name || p.label || '');
-          const key = displayName.toLowerCase();
-          if (key) profileMap.set(key, p);
-        }
-        const fallbackProfileMap = new Map();
-        for (const p of fallbackProfileList) {
-          const displayName = cleanName(p.name || p.label || '');
-          const key = displayName.toLowerCase();
-          if (key && !profileMap.has(key)) fallbackProfileMap.set(key, p);
-        }
-        // Deduplicate repeated profile loads within the same run (especially useful for GM profiles).
-        const loadedProfileCache = new Map();
-
-        const total = shotList.length;
-        setProgress({ current: 0, total });
-
-        if (total === 0) {
-          entriesRef.current = [];
-          setResult(computeStatistics([], { calcMode: !!runRequest.calcMode }));
-          setLoading(false);
-          return;
-        }
-
-        const entries = [];
-
-        for (let i = 0; i < total; i += BATCH_SIZE) {
-          if (loadId !== analyzeLoadIdRef.current) return;
-
-          const batch = shotList.slice(i, i + BATCH_SIZE);
-          const batchResults = await Promise.all(
-            batch.map(async shot => {
-              try {
-                const shotId =
-                  shot.source === 'gaggimate' ? shot.id : shot.storageKey || shot.name || shot.id;
-                const loadedShot = await libraryService.loadShot(shotId, shot.source);
-                const fullShot = loadedShot
-                  ? {
-                      ...loadedShot,
-                      source: loadedShot.source || shot.source,
-                      storageKey:
-                        loadedShot.storageKey || shot.storageKey || shot.name || String(shotId),
-                      name: loadedShot.name || shot.name || shot.storageKey || String(shotId),
-                    }
-                  : null;
-                if (!fullShot || !fullShot.samples || fullShot.samples.length === 0) return null;
-
-                const profileField = fullShot.profile || '';
-                const profileKey = cleanName(profileField).toLowerCase();
-                const matchedProfileEntry = profileKey
-                  ? profileMap.get(profileKey) || fallbackProfileMap.get(profileKey) || null
-                  : null;
-
-                let matchedProfile = null;
-                if (matchedProfileEntry) {
-                  if (matchedProfileEntry.data) {
-                    matchedProfile = matchedProfileEntry.data;
-                  } else {
-                    const pid =
-                      matchedProfileEntry.source === 'gaggimate'
-                        ? matchedProfileEntry.profileId || matchedProfileEntry.id
-                        : matchedProfileEntry.name;
-                    try {
-                      const cacheKey = `${matchedProfileEntry.source}:${String(pid || '')}`;
-                      if (pid) {
-                        if (!loadedProfileCache.has(cacheKey)) {
-                          loadedProfileCache.set(
-                            cacheKey,
-                            libraryService
-                              .loadProfile(pid, matchedProfileEntry.source)
-                              .catch(() => null),
-                          );
-                        }
-                        matchedProfile = await loadedProfileCache.get(cacheKey);
-                      }
-                    } catch {
-                      // Analyze without profile if profile load fails.
-                    }
-                  }
-                }
-
-                if (matchedProfile && matchedProfileEntry?.source && !matchedProfile.source) {
-                  matchedProfile = { ...matchedProfile, source: matchedProfileEntry.source };
-                }
-
-                const settings = { ...DEFAULT_SETTINGS };
-                const autoResult = detectAutoDelay(fullShot, matchedProfile, settings.scaleDelayMs);
-                if (autoResult.auto) {
-                  settings.scaleDelayMs = autoResult.delay;
-                  settings.isAutoAdjusted = true;
-                }
-
-                const analysis = calculateShotMetrics(fullShot, matchedProfile, settings);
-
-                return {
-                  analysis,
-                  shotData: fullShot,
-                  profileData: matchedProfile,
-                  meta: {
-                    id: shotId,
-                    selectionKey: getShotSelectionKey(shot),
-                    displayName: getShotDisplayName(fullShot),
-                    timestamp: shot.timestamp || shot.shotDate || shot.uploadedAt || 0,
-                    profileName: cleanName(profileField) || '(Unknown)',
-                    source: shot.source,
-                  },
-                };
-              } catch {
-                return null;
-              }
-            }),
-          );
-
-          for (const entry of batchResults) {
-            if (entry) entries.push(entry);
-          }
-
-          if (loadId !== analyzeLoadIdRef.current) return;
-          setProgress({ current: Math.min(i + BATCH_SIZE, total), total });
-        }
-
-        if (cancelled || loadId !== analyzeLoadIdRef.current) return;
-        entriesRef.current = entries;
-        setResult(computeStatistics(entries, { calcMode: !!runRequest.calcMode }));
-      } catch {
-        if (cancelled || loadId !== analyzeLoadIdRef.current) return;
-        setError('Failed to load statistics. Please try again.');
-      } finally {
-        if (!cancelled && loadId === analyzeLoadIdRef.current) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadAndAnalyze();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [runRequest]);
-
-  // Recompute statistics from cached entries when the Raw/Calc toggle changes,
-  // avoiding a full re-fetch and re-analysis of all shots.
-  useEffect(() => {
-    if (entriesRef.current) {
-      setResult(computeStatistics(entriesRef.current, { calcMode }));
-    }
-  }, [calcMode]);
+  useStatisticsRunExecution({
+    runRequest,
+    calcMode,
+    analyzeLoadIdRef,
+    entriesRef,
+    setLoading,
+    setError,
+    setResult,
+    setProgress,
+  });
 
   const isSelectionMissing =
     (mode === 'profile' && selectedProfileNames.length === 0) ||
@@ -1480,54 +1699,91 @@ export function StatisticsView({ initialContext }) {
     candidateFilterState.parseErrors.length === 0 &&
     !isSelectionMissing;
 
-  const handleGo = () => {
-    if (!canRunStatistics) {
-      return;
-    }
+  const handleGo = useCallback(
+    ({ preferredDetailSection = null } = {}) => {
+      if (!canRunStatistics) {
+        return;
+      }
 
-    const prepareRunId = ++prepareRunIdRef.current;
-    const nextRunId = `${Date.now()}-${prepareRunId}`;
-    const fallbackSource = getStatisticsFallbackSource(source);
-    const shotSnapshot = [...candidateFilterState.filteredShots];
-    const profileSnapshot = [...rawProfiles];
-    const orderedShotKeysSnapshot = [...selectedShotKeys];
-    const nextCalcMode = calcMode;
-    setPreparingRun(true);
+      const prepareRunId = ++prepareRunIdRef.current;
+      const nextRunId = `${Date.now()}-${prepareRunId}`;
+      const fallbackSource = getStatisticsFallbackSource(source);
+      const shotSnapshot = [...candidateFilterState.filteredShots];
+      const profileSnapshot = [...rawProfiles];
+      const orderedShotKeysSnapshot = [...selectedShotKeys];
+      const nextCalcMode = calcMode;
+      setPreparingRun(true);
 
-    async function prepareRunRequest() {
-      try {
-        let fallbackProfiles = [];
-        if (fallbackSource) {
-          try {
-            fallbackProfiles = await libraryService.getAllProfiles(fallbackSource);
-          } catch {
-            fallbackProfiles = [];
+      async function prepareRunRequest() {
+        try {
+          let fallbackProfiles = [];
+          if (fallbackSource) {
+            try {
+              fallbackProfiles = await libraryService.getAllProfiles(fallbackSource);
+            } catch {
+              fallbackProfiles = [];
+            }
+          }
+
+          if (prepareRunIdRef.current !== prepareRunId) return;
+
+          // Persist a run snapshot so toolbar changes after clicking Play do not
+          // mutate the dataset currently being analyzed.
+          setRunRequest({
+            id: nextRunId,
+            shots: shotSnapshot,
+            profiles: profileSnapshot,
+            fallbackProfiles: Array.isArray(fallbackProfiles) ? fallbackProfiles : [],
+            orderedShotKeys: orderedShotKeysSnapshot,
+            calcMode: nextCalcMode,
+            dateBasisMode,
+            mode,
+            preferredDetailSection:
+              normalizeStatisticsDetailSection(preferredDetailSection) || null,
+          });
+        } finally {
+          if (prepareRunIdRef.current === prepareRunId) {
+            setPreparingRun(false);
           }
         }
-
-        if (prepareRunIdRef.current !== prepareRunId) return;
-
-        // Persist a run snapshot so toolbar changes after clicking Play do not
-        // mutate the dataset currently being analyzed.
-        setRunRequest({
-          id: nextRunId,
-          shots: shotSnapshot,
-          profiles: profileSnapshot,
-          fallbackProfiles: Array.isArray(fallbackProfiles) ? fallbackProfiles : [],
-          orderedShotKeys: orderedShotKeysSnapshot,
-          calcMode: nextCalcMode,
-          dateBasisMode,
-          mode,
-        });
-      } finally {
-        if (prepareRunIdRef.current === prepareRunId) {
-          setPreparingRun(false);
-        }
       }
-    }
 
-    prepareRunRequest();
-  };
+      prepareRunRequest();
+    },
+    [
+      canRunStatistics,
+      source,
+      candidateFilterState.filteredShots,
+      rawProfiles,
+      selectedShotKeys,
+      calcMode,
+      dateBasisMode,
+      mode,
+    ],
+  );
+
+  useEffect(() => {
+    const handleKeyDown = event => {
+      if (event.defaultPrevented || event.repeat) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isStatisticsHotkeyBlockedTarget(event.target)) return;
+
+      const key = String(event.key || '').toLowerCase();
+      if (key === 'enter') {
+        event.preventDefault();
+        handleGo();
+        return;
+      }
+
+      if (key === 'c') {
+        event.preventDefault();
+        handleGo({ preferredDetailSection: 'compare' });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleGo]);
 
   const handleClearFilters = () => {
     setSelectedProfileNames([]);
@@ -1538,160 +1794,30 @@ export function StatisticsView({ initialContext }) {
     setDateBasisMode('auto');
   };
 
-  useEffect(() => {
-    if (!result || !runRequest?.id) return;
-    if (initializedDetailSectionRunIdRef.current === runRequest.id) return;
-
-    // Lock the first valid detail tab for each run once, then let the user own
-    // subsequent tab changes without re-resolving on every render.
-    const hasCompareStatistics = Array.isArray(entriesRef.current) && entriesRef.current.length > 0;
-    const hasProfileGroups = Array.isArray(result.profileGroups) && result.profileGroups.length > 0;
-    const hasPhaseStats = Array.isArray(result.phaseStats) && result.phaseStats.length > 0;
-    const hasMetricStats = Boolean(result.metrics && Object.keys(result.metrics).length > 0);
-    const hasTrendStats = Array.isArray(result.trends) && result.trends.length > 1;
-    const defaultSection = getPreferredStatisticsDetailSection({
-      runMode: runRequest.mode,
-      hasCompareStatistics,
-      hasMetricStatistics: hasMetricStats,
-      hasTrendStatistics: hasTrendStats,
-    });
-    const nextSection = resolveStatisticsDetailSectionChoice({
-      candidate: normalizeStatisticsDetailSection(statisticsDetailSection) || defaultSection,
-      hasCompareStatistics,
-      hasMetricStatistics: hasMetricStats,
-      hasTrendStatistics: hasTrendStats,
-      hasProfileGroupStatistics: hasProfileGroups,
-      hasPhaseStatistics: hasPhaseStats,
-    });
-
-    setStatisticsDetailSection(nextSection);
-    initializedDetailSectionRunIdRef.current = runRequest.id;
-  }, [result, runRequest, statisticsDetailSection]);
-
-  const hasProfileGroupStatistics = result?.profileGroups?.length > 0;
-  const hasPhaseStatistics = result?.phaseStats?.length > 0;
-  const hasMetricStatistics = Boolean(result?.metrics && Object.keys(result.metrics).length > 0);
-  const hasTrendStatistics = Array.isArray(result?.trends) && result.trends.length > 1;
-  const hasStatisticsCompare = Array.isArray(entriesRef.current) && entriesRef.current.length > 0;
-  const fallbackStatisticsDetailSection = getPreferredStatisticsDetailSection({
-    runMode: runRequest?.mode,
-    hasCompareStatistics: hasStatisticsCompare,
-    hasMetricStatistics,
-    hasTrendStatistics,
-  });
-  const detailSectionCandidate =
-    initializedDetailSectionRunIdRef.current === runRequest?.id
-      ? statisticsDetailSection
-      : normalizeStatisticsDetailSection(statisticsDetailSection) ||
-        fallbackStatisticsDetailSection;
-  const resolvedStatisticsDetailSection = resolveStatisticsDetailSectionChoice({
-    candidate: detailSectionCandidate,
-    hasCompareStatistics: hasStatisticsCompare,
-    hasMetricStatistics,
-    hasTrendStatistics,
+  const {
     hasProfileGroupStatistics,
     hasPhaseStatistics,
+    hasMetricStatistics,
+    hasTrendStatistics,
+    resolvedStatisticsDetailSection,
+    statisticsCompareEntries,
+    shouldHidePhaseExitReasons,
+    builtShotCount,
+    builtProfileCount,
+    builtDateRange,
+    shouldShowEmptyStatisticsState,
+  } = useStatisticsResultViewState({
+    result,
+    runRequest,
+    statisticsDetailSection,
+    setStatisticsDetailSection,
+    initializedDetailSectionRunIdRef,
+    entriesRef,
+    preparingRun,
+    loading,
+    error,
+    metadataError,
   });
-  const statisticsCompareEntries = useMemo(() => {
-    if (!result) return [];
-
-    const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
-    const entryBySelectionKey = new Map(
-      cachedEntries.map(entry => [entry?.meta?.selectionKey, entry]),
-    );
-    const orderedShotKeys = Array.isArray(runRequest?.orderedShotKeys)
-      ? runRequest.orderedShotKeys.filter(Boolean)
-      : [];
-    const fallbackShotKeys = Array.isArray(runRequest?.shots)
-      ? runRequest.shots.map(getShotSelectionKey).filter(Boolean)
-      : [];
-    const preferredShotOrder = orderedShotKeys.length > 0 ? orderedShotKeys : fallbackShotKeys;
-
-    // Preserve the user's selection order when possible so compare charts stay
-    // aligned with the active run snapshot instead of whichever order the async
-    // analysis happened to finish in.
-    const orderedCompareEntries = preferredShotOrder
-      .map((selectionKey, index) =>
-        buildStatisticsCompareEntry(entryBySelectionKey.get(selectionKey), {
-          key: selectionKey,
-          isReference: index === 0,
-        }),
-      )
-      .filter(Boolean);
-
-    const matchedCompareKeys = new Set(orderedCompareEntries.map(entry => entry.key));
-    const unmatchedCompareEntries = cachedEntries
-      .map((entry, index) => {
-        const fallbackKey = getStatisticsCompareFallbackKey(entry, index);
-        if (matchedCompareKeys.has(fallbackKey)) return null;
-
-        return buildStatisticsCompareEntry(entry, {
-          key: fallbackKey,
-          isReference: orderedCompareEntries.length === 0 && index === 0,
-        });
-      })
-      .filter(Boolean);
-
-    if (preferredShotOrder.length > 0) {
-      if (orderedCompareEntries.length === cachedEntries.length) {
-        return orderedCompareEntries;
-      }
-      if (orderedCompareEntries.length > 0 || unmatchedCompareEntries.length > 0) {
-        return [...orderedCompareEntries, ...unmatchedCompareEntries];
-      }
-    }
-
-    return cachedEntries
-      .map((entry, index) =>
-        buildStatisticsCompareEntry(entry, {
-          key: getStatisticsCompareFallbackKey(entry, index),
-          isReference: index === 0,
-        }),
-      )
-      .filter(Boolean);
-  }, [result, runRequest]);
-  const shouldHidePhaseExitReasons = statisticsCompareEntries.length > 2;
-  const builtShotCount = Number.isFinite(result?.summary?.totalShots)
-    ? result.summary.totalShots
-    : 0;
-  const builtProfileCount = useMemo(() => {
-    const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
-    const profileNames = new Set();
-
-    cachedEntries.forEach(entry => {
-      const rawName =
-        entry?.meta?.profileName || entry?.profileData?.name || entry?.profileData?.label || '';
-      const cleanedName = cleanName(rawName || '');
-      if (cleanedName) {
-        profileNames.add(cleanedName);
-      }
-    });
-
-    return profileNames.size;
-  }, [result, runRequest]);
-  const builtDateRange = useMemo(() => {
-    const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
-    const timestamps = cachedEntries
-      .map(entry =>
-        resolveShotEffectiveTimestampMs(
-          entry?.shotData || entry?.meta,
-          runRequest?.dateBasisMode || 'auto',
-        ),
-      )
-      .filter(value => Number.isFinite(value) && value > 0)
-      .sort((a, b) => a - b);
-
-    if (timestamps.length === 0) {
-      return { startMs: null, endMs: null };
-    }
-
-    // The collapsed toolbar summarizes the actual built dataset, not the raw
-    // filter inputs, so it reflects the first and last analyzed shots.
-    return {
-      startMs: timestamps[0],
-      endMs: timestamps[timestamps.length - 1],
-    };
-  }, [result, runRequest]);
 
   // Build the detail panel once so the surrounding render path can switch
   // between loading, empty, and populated states without duplicating the tab logic.
@@ -1711,8 +1837,6 @@ export function StatisticsView({ initialContext }) {
       hidePhaseExitReasons={shouldHidePhaseExitReasons}
     />
   );
-  const shouldShowEmptyStatisticsState =
-    !preparingRun && !loading && !result && !error && !metadataError;
 
   return (
     <div className={shouldShowEmptyStatisticsState ? 'space-y-6' : 'space-y-5'}>
@@ -1819,7 +1943,7 @@ export function StatisticsView({ initialContext }) {
       {shouldShowEmptyStatisticsState && (
         <div className='w-full'>
           <div className='bg-base-200/60 border-base-content/5 w-full space-y-6 rounded-xl border p-8 text-left shadow-sm'>
-            <div className='border-base-content/10 space-y-2 border-b pb-4 text-center'>
+            <div className='space-y-2 text-center'>
               <h3 className='text-base-content text-2xl font-bold'>No Statistics Built Yet</h3>
               <p className='text-base-content text-sm opacity-70'>
                 Press{' '}
@@ -1829,73 +1953,22 @@ export function StatisticsView({ initialContext }) {
                 >
                   <FontAwesomeIcon icon={faPlay} className='text-[10px]' />
                 </span>{' '}
-                to build an overall statistic for all GaggiMate shots.
+                to build a statistic.
               </p>
-            </div>
-
-            <p className='text-base-content border-base-content/10 mb-4 border-b pb-2 text-sm font-bold tracking-wide uppercase'>
-              Basic Selection
-            </p>
-
-            <div className='space-y-5'>
-              <div className='flex items-start gap-4'>
-                <div className='text-success flex h-8 w-10 flex-shrink-0 items-center justify-center'>
-                  <FontAwesomeIcon icon={faChartSimple} className='text-base' />
-                </div>
-                <div className='flex-1'>
-                  <h4 className='text-base-content mb-1 text-sm font-bold'>Statistics Mode</h4>
-                  <p className='text-base-content text-xs leading-relaxed'>
-                    <span className='font-bold'>All</span> builds one overall result.{' '}
-                    <span className='font-bold'>By Profile</span> and{' '}
-                    <span className='font-bold'>By Shots</span> reorganize the same dataset into
-                    grouped views.
-                  </p>
-                </div>
-              </div>
-
-              <div className='bg-base-content/5 h-px w-full'></div>
-
-              <div className='flex items-start gap-4'>
-                <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center gap-1.5'>
-                  <SourceMarker source='gaggimate' variant='large' />
-                  <SourceMarker source='browser' variant='large' />
-                </div>
-                <div className='flex-1'>
-                  <h4 className='text-base-content mb-1 text-sm font-bold'>Source</h4>
-                  <p className='text-base-content text-xs leading-relaxed'>
-                    The Source menu switches between GaggiMate shots, local browser storage, or both
-                    combined.
-                  </p>
-                </div>
-              </div>
-
-              <div className='bg-base-content/5 h-px w-full'></div>
-
-              <div className='flex items-start gap-4'>
-                <div className='text-base-content/45 flex h-8 w-10 flex-shrink-0 items-center justify-center'>
-                  <FontAwesomeIcon icon={faCalendarDays} className='text-base' />
-                </div>
-                <div className='flex-1'>
-                  <h4 className='text-base-content mb-1 text-sm font-bold'>Date Range</h4>
-                  <p className='text-base-content text-xs leading-relaxed'>
-                    The date selection limits the analysis to a specific time window. Leaving it
-                    empty keeps the current automatic range.
-                  </p>
-                </div>
-              </div>
-
-              <div className='bg-base-content/5 h-px w-full'></div>
-
-              <div className='flex items-start gap-4'>
-                <div className='text-base-content/45 flex h-8 w-10 flex-shrink-0 items-center justify-center'>
-                  <FontAwesomeIcon icon={faMagnifyingGlass} className='text-base' />
-                </div>
-                <div className='flex-1'>
-                  <h4 className='text-base-content mb-1 text-sm font-bold'>Advanced Search</h4>
-                  <p className='text-base-content text-xs leading-relaxed'>
-                    The Advanced query can narrow the current selection further when more precise
-                    filtering is required.
-                  </p>
+              <div className='border-base-content/10 mt-5 border-t pt-4 text-center'>
+                <div className='text-base-content/60 flex flex-wrap items-center justify-center gap-3 text-xs'>
+                  <span>
+                    <span className='bg-base-content/8 border-base-content/10 mr-1.5 inline-flex min-w-10 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
+                      Enter
+                    </span>
+                    Build
+                  </span>
+                  <span>
+                    <span className='bg-base-content/8 border-base-content/10 mr-1.5 inline-flex min-w-6 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
+                      C
+                    </span>
+                    Build and show Shot Charts
+                  </span>
                 </div>
               </div>
             </div>
