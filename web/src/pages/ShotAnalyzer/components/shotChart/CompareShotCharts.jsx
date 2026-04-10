@@ -682,6 +682,169 @@ function buildCompareLegendItems(compareEntries, colors, shotStylePreset) {
   });
 }
 
+function buildMainChartDatasetSpecs({
+  entry,
+  model,
+  visibility,
+  colors,
+  shotStyle,
+  showTargets,
+  compareDatasetMeta,
+  showWeightInMainChart,
+  showWeightFlowInMainChart,
+}) {
+  return [
+    visibility.pressure && model.series.pressure.length > 0
+      ? {
+          label: `${entry.label} Pressure`,
+          compareTooltipBaseLabel: 'Pressure',
+          data: model.series.pressure,
+          borderColor: applyColorAlpha(colors.pressure, shotStyle.opacity),
+          backgroundColor: applyColorAlpha(colors.pressure, shotStyle.opacity),
+          yAxisID: 'yMain',
+          borderWidth: shotStyle.lineWidth,
+          tension: 0.2,
+          ...getComparePointStyle(false),
+          ...compareDatasetMeta,
+        }
+      : null,
+    visibility.targetPressure && showTargets && model.series.targetPressure.length > 0
+      ? {
+          label: `${entry.label} Target Pressure`,
+          compareTooltipBaseLabel: 'Target P',
+          data: model.series.targetPressure,
+          borderColor: applyColorAlpha(colors.pressure, Math.max(0.26, shotStyle.opacity * 0.72)),
+          backgroundColor: 'transparent',
+          yAxisID: 'yMain',
+          borderWidth: Math.max(1.2, shotStyle.lineWidth - 1.2),
+          borderDash: [6, 4],
+          tension: 0,
+          order: entry.isReference ? -10 : -20,
+          ...getComparePointStyle(true),
+          ...compareDatasetMeta,
+        }
+      : null,
+    visibility.flow && model.series.flow.length > 0
+      ? {
+          label: `${entry.label} Flow`,
+          compareTooltipBaseLabel: 'Flow',
+          data: model.series.flow,
+          borderColor: applyColorAlpha(colors.flow, shotStyle.opacity),
+          backgroundColor: applyColorAlpha(colors.flow, shotStyle.opacity),
+          yAxisID: 'yMain',
+          borderWidth: shotStyle.lineWidth,
+          tension: 0.2,
+          ...getComparePointStyle(false),
+          ...compareDatasetMeta,
+        }
+      : null,
+    visibility.targetFlow && showTargets && model.series.targetFlow.length > 0
+      ? {
+          label: `${entry.label} Target Flow`,
+          compareTooltipBaseLabel: 'Target F',
+          data: model.series.targetFlow,
+          borderColor: applyColorAlpha(colors.flow, Math.max(0.26, shotStyle.opacity * 0.72)),
+          backgroundColor: 'transparent',
+          yAxisID: 'yMain',
+          borderWidth: Math.max(1.2, shotStyle.lineWidth - 1.2),
+          borderDash: [6, 4],
+          tension: 0,
+          order: entry.isReference ? -10 : -20,
+          ...getComparePointStyle(true),
+          ...compareDatasetMeta,
+        }
+      : null,
+    visibility.puckFlow && model.series.puckFlow.length > 0
+      ? {
+          label: `${entry.label} Puck Flow`,
+          compareTooltipBaseLabel: 'Puck Flow',
+          data: model.series.puckFlow,
+          borderColor: applyColorAlpha(colors.puckFlow, shotStyle.opacity),
+          backgroundColor: applyColorAlpha(colors.puckFlow, shotStyle.opacity),
+          yAxisID: 'yMain',
+          borderWidth: Math.max(1.2, shotStyle.lineWidth - 0.8),
+          tension: 0.2,
+          ...getComparePointStyle(false),
+          ...compareDatasetMeta,
+        }
+      : null,
+    showWeightInMainChart && visibility.weight && model.series.weight.length > 0
+      ? {
+          label: `${entry.label} Weight`,
+          compareTooltipBaseLabel: 'Weight',
+          data: model.series.weight,
+          axisScaleMode: 'weight',
+          borderColor: applyColorAlpha(colors.weight, shotStyle.opacity),
+          backgroundColor: applyColorAlpha(colors.weight, shotStyle.opacity),
+          yAxisID: 'yWeight',
+          borderWidth: shotStyle.lineWidth,
+          tension: 0.2,
+          ...getComparePointStyle(false),
+          ...compareDatasetMeta,
+        }
+      : null,
+    showWeightFlowInMainChart && visibility.weightFlow && model.series.weightFlow.length > 0
+      ? {
+          label: `${entry.label} Weight Flow`,
+          compareTooltipBaseLabel: 'Weight Flow',
+          data: model.series.weightFlow,
+          axisScaleMode: 'weightFlow',
+          borderColor: applyColorAlpha(colors.weightFlow, shotStyle.opacity),
+          backgroundColor: applyColorAlpha(colors.weightFlow, shotStyle.opacity),
+          yAxisID: 'yMain',
+          borderWidth: Math.max(1.2, shotStyle.lineWidth - 0.8),
+          tension: 0.2,
+          ...getComparePointStyle(false),
+          ...compareDatasetMeta,
+        }
+      : null,
+  ].filter(Boolean);
+}
+
+function buildDetailChartDatasetSpecs({
+  chart,
+  entry,
+  actualSeries,
+  targetSeries,
+  baseColor,
+  shotStyle,
+  compareDatasetMeta,
+  visibility,
+  showTargets,
+}) {
+  return [
+    visibility[chart.visibleKey] && actualSeries.length > 0
+      ? {
+          label: `${entry.label} ${chart.title}`,
+          compareTooltipBaseLabel: chart.tooltipBaseLabel,
+          data: actualSeries,
+          axisScaleMode: getDetailChartAxisScaleMode(chart.seriesKey),
+          borderColor: applyColorAlpha(baseColor, shotStyle.opacity),
+          backgroundColor: applyColorAlpha(baseColor, shotStyle.opacity),
+          borderWidth: shotStyle.lineWidth,
+          tension: 0.2,
+          ...getComparePointStyle(false),
+          ...compareDatasetMeta,
+        }
+      : null,
+    showTargets && targetSeries.length > 0
+      ? {
+          label: `${entry.label} ${chart.title} Target`,
+          compareTooltipBaseLabel: chart.targetTooltipBaseLabel,
+          data: targetSeries,
+          borderColor: applyColorAlpha(baseColor, Math.max(0.26, shotStyle.opacity * 0.72)),
+          backgroundColor: 'transparent',
+          borderWidth: Math.max(1.2, shotStyle.lineWidth - 1.2),
+          borderDash: [6, 4],
+          tension: 0,
+          order: entry.isReference ? -10 : -20,
+          ...getComparePointStyle(true),
+          ...compareDatasetMeta,
+        }
+      : null,
+  ].filter(Boolean);
+}
+
 function buildMainChartDatasets({
   compareModels,
   colors,
@@ -693,7 +856,6 @@ function buildMainChartDatasets({
 }) {
   return compareModels.flatMap(({ entry, model }, index) => {
     const shotStyle = getShotStyle(index, shotStylePreset);
-    const datasets = [];
     const showTargets = shouldShowTargetsForEntry({
       entry,
       targetDisplayMode,
@@ -703,119 +865,17 @@ function buildMainChartDatasets({
       compareTooltipShotOrder: index,
       compareTooltipGetHoverWaterValuesAtX: model.getHoverWaterValuesAtX,
     };
-
-    if (visibility.pressure && model.series.pressure.length > 0) {
-      datasets.push({
-        label: `${entry.label} Pressure`,
-        compareTooltipBaseLabel: 'Pressure',
-        data: model.series.pressure,
-        borderColor: applyColorAlpha(colors.pressure, shotStyle.opacity),
-        backgroundColor: applyColorAlpha(colors.pressure, shotStyle.opacity),
-        yAxisID: 'yMain',
-        borderWidth: shotStyle.lineWidth,
-        tension: 0.2,
-        ...getComparePointStyle(false),
-        ...compareDatasetMeta,
-      });
-    }
-
-    if (visibility.targetPressure && showTargets && model.series.targetPressure.length > 0) {
-      datasets.push({
-        label: `${entry.label} Target Pressure`,
-        compareTooltipBaseLabel: 'Target P',
-        data: model.series.targetPressure,
-        borderColor: applyColorAlpha(colors.pressure, Math.max(0.26, shotStyle.opacity * 0.72)),
-        backgroundColor: 'transparent',
-        yAxisID: 'yMain',
-        borderWidth: Math.max(1.2, shotStyle.lineWidth - 1.2),
-        borderDash: [6, 4],
-        tension: 0,
-        order: entry.isReference ? -10 : -20,
-        ...getComparePointStyle(true),
-        ...compareDatasetMeta,
-      });
-    }
-
-    if (visibility.flow && model.series.flow.length > 0) {
-      datasets.push({
-        label: `${entry.label} Flow`,
-        compareTooltipBaseLabel: 'Flow',
-        data: model.series.flow,
-        borderColor: applyColorAlpha(colors.flow, shotStyle.opacity),
-        backgroundColor: applyColorAlpha(colors.flow, shotStyle.opacity),
-        yAxisID: 'yMain',
-        borderWidth: shotStyle.lineWidth,
-        tension: 0.2,
-        ...getComparePointStyle(false),
-        ...compareDatasetMeta,
-      });
-    }
-
-    if (visibility.targetFlow && showTargets && model.series.targetFlow.length > 0) {
-      datasets.push({
-        label: `${entry.label} Target Flow`,
-        compareTooltipBaseLabel: 'Target F',
-        data: model.series.targetFlow,
-        borderColor: applyColorAlpha(colors.flow, Math.max(0.26, shotStyle.opacity * 0.72)),
-        backgroundColor: 'transparent',
-        yAxisID: 'yMain',
-        borderWidth: Math.max(1.2, shotStyle.lineWidth - 1.2),
-        borderDash: [6, 4],
-        tension: 0,
-        order: entry.isReference ? -10 : -20,
-        ...getComparePointStyle(true),
-        ...compareDatasetMeta,
-      });
-    }
-
-    if (visibility.puckFlow && model.series.puckFlow.length > 0) {
-      datasets.push({
-        label: `${entry.label} Puck Flow`,
-        compareTooltipBaseLabel: 'Puck Flow',
-        data: model.series.puckFlow,
-        borderColor: applyColorAlpha(colors.puckFlow, shotStyle.opacity),
-        backgroundColor: applyColorAlpha(colors.puckFlow, shotStyle.opacity),
-        yAxisID: 'yMain',
-        borderWidth: Math.max(1.2, shotStyle.lineWidth - 0.8),
-        tension: 0.2,
-        ...getComparePointStyle(false),
-        ...compareDatasetMeta,
-      });
-    }
-
-    if (showWeightInMainChart && visibility.weight && model.series.weight.length > 0) {
-      datasets.push({
-        label: `${entry.label} Weight`,
-        compareTooltipBaseLabel: 'Weight',
-        data: model.series.weight,
-        axisScaleMode: 'weight',
-        borderColor: applyColorAlpha(colors.weight, shotStyle.opacity),
-        backgroundColor: applyColorAlpha(colors.weight, shotStyle.opacity),
-        yAxisID: 'yWeight',
-        borderWidth: shotStyle.lineWidth,
-        tension: 0.2,
-        ...getComparePointStyle(false),
-        ...compareDatasetMeta,
-      });
-    }
-
-    if (showWeightFlowInMainChart && visibility.weightFlow && model.series.weightFlow.length > 0) {
-      datasets.push({
-        label: `${entry.label} Weight Flow`,
-        compareTooltipBaseLabel: 'Weight Flow',
-        data: model.series.weightFlow,
-        axisScaleMode: 'weightFlow',
-        borderColor: applyColorAlpha(colors.weightFlow, shotStyle.opacity),
-        backgroundColor: applyColorAlpha(colors.weightFlow, shotStyle.opacity),
-        yAxisID: 'yMain',
-        borderWidth: Math.max(1.2, shotStyle.lineWidth - 0.8),
-        tension: 0.2,
-        ...getComparePointStyle(false),
-        ...compareDatasetMeta,
-      });
-    }
-
-    return datasets;
+    return buildMainChartDatasetSpecs({
+      entry,
+      model,
+      visibility,
+      colors,
+      shotStyle,
+      showTargets,
+      compareDatasetMeta,
+      showWeightInMainChart,
+      showWeightFlowInMainChart,
+    });
   });
 }
 
@@ -829,7 +889,6 @@ function buildDetailChartDatasets({
 }) {
   return compareModels.flatMap(({ entry, model }, index) => {
     const shotStyle = getShotStyle(index, shotStylePreset);
-    const datasets = [];
     const actualSeries = model.series[chart.seriesKey] || [];
     const targetSeries = chart.targetSeriesKey ? model.series[chart.targetSeriesKey] || [] : [];
     const baseColor = colors[chart.axisColorKey];
@@ -845,39 +904,137 @@ function buildDetailChartDatasets({
       compareTooltipShotLabel: entry.label,
       compareTooltipShotOrder: index,
     };
+    return buildDetailChartDatasetSpecs({
+      chart,
+      entry,
+      actualSeries,
+      targetSeries,
+      baseColor,
+      shotStyle,
+      compareDatasetMeta,
+      visibility,
+      showTargets,
+    });
+  });
+}
 
-    if (visibility[chart.visibleKey] && actualSeries.length > 0) {
-      datasets.push({
-        label: `${entry.label} ${chart.title}`,
-        compareTooltipBaseLabel: chart.tooltipBaseLabel,
-        data: actualSeries,
-        axisScaleMode: getDetailChartAxisScaleMode(chart.seriesKey),
-        borderColor: applyColorAlpha(baseColor, shotStyle.opacity),
-        backgroundColor: applyColorAlpha(baseColor, shotStyle.opacity),
-        borderWidth: shotStyle.lineWidth,
-        tension: 0.2,
-        ...getComparePointStyle(false),
-        ...compareDatasetMeta,
-      });
-    }
+function createCompareChartConfig(
+  config,
+  { enableHoverInfo, compareTooltipMode, hideExternalTooltip, setExternalTooltipState },
+) {
+  return {
+    ...config,
+    options: {
+      ...config.options,
+      events: [],
+      plugins: {
+        ...(config.options?.plugins || {}),
+        tooltip: getCompareTooltipPlugin({
+          enableHoverInfo,
+          compareTooltipMode,
+          hideExternalTooltip,
+          setExternalTooltipState,
+        }),
+      },
+    },
+  };
+}
 
-    if (showTargets && targetSeries.length > 0) {
-      datasets.push({
-        label: `${entry.label} ${chart.title} Target`,
-        compareTooltipBaseLabel: chart.targetTooltipBaseLabel,
-        data: targetSeries,
-        borderColor: applyColorAlpha(baseColor, Math.max(0.26, shotStyle.opacity * 0.72)),
-        backgroundColor: 'transparent',
-        borderWidth: Math.max(1.2, shotStyle.lineWidth - 1.2),
-        borderDash: [6, 4],
-        tension: 0,
-        order: entry.isReference ? -10 : -20,
-        ...getComparePointStyle(true),
-        ...compareDatasetMeta,
-      });
-    }
+function addCompareHoverListeners(
+  hoverSurface,
+  supportsPointerEvents,
+  handleHoverMove,
+  clearHover,
+) {
+  if (supportsPointerEvents) {
+    hoverSurface.addEventListener('pointerdown', handleHoverMove, { passive: true });
+    hoverSurface.addEventListener('pointermove', handleHoverMove, { passive: true });
+    hoverSurface.addEventListener('pointerup', clearHover);
+    hoverSurface.addEventListener('pointerleave', clearHover);
+    hoverSurface.addEventListener('pointercancel', clearHover);
+    return;
+  }
 
-    return datasets;
+  hoverSurface.addEventListener('mousemove', handleHoverMove);
+  hoverSurface.addEventListener('mouseleave', clearHover);
+  hoverSurface.addEventListener('touchstart', handleHoverMove, { passive: true });
+  hoverSurface.addEventListener('touchmove', handleHoverMove, { passive: true });
+  hoverSurface.addEventListener('touchend', clearHover);
+  hoverSurface.addEventListener('touchcancel', clearHover);
+}
+
+function removeCompareHoverListeners(
+  hoverSurface,
+  supportsPointerEvents,
+  handleHoverMove,
+  clearHover,
+) {
+  if (supportsPointerEvents) {
+    hoverSurface.removeEventListener('pointerdown', handleHoverMove);
+    hoverSurface.removeEventListener('pointermove', handleHoverMove);
+    hoverSurface.removeEventListener('pointerup', clearHover);
+    hoverSurface.removeEventListener('pointerleave', clearHover);
+    hoverSurface.removeEventListener('pointercancel', clearHover);
+    return;
+  }
+
+  hoverSurface.removeEventListener('mousemove', handleHoverMove);
+  hoverSurface.removeEventListener('mouseleave', clearHover);
+  hoverSurface.removeEventListener('touchstart', handleHoverMove);
+  hoverSurface.removeEventListener('touchmove', handleHoverMove);
+  hoverSurface.removeEventListener('touchend', clearHover);
+  hoverSurface.removeEventListener('touchcancel', clearHover);
+}
+
+function getCompareWeightAxisRange({
+  shotStylePreset,
+  weightDatasets,
+  mainDatasets,
+  mainAxisRange,
+  compareModelCount,
+}) {
+  if (shotStylePreset === 'statistics') {
+    return getStatisticsMainChartWeightAxisRange({
+      weightDatasets,
+      mainDatasets,
+      mainAxisRange,
+      weightMaxPercentile: getStatisticsAxisPercentile(compareModelCount, 'weight'),
+    });
+  }
+
+  return getAxisRange({
+    datasets: weightDatasets,
+    beginAtZero: true,
+    fallbackMin: 0,
+    fallbackMax: 50,
+    paddingRatio: 0.05,
+    minimumPadding: 0.2,
+  });
+}
+
+function getCompareDetailAxisRange({ chart, compareModels, datasets, shotStylePreset }) {
+  if (chart.id === 'temperature') {
+    return {
+      min: Math.min(...compareModels.map(entry => entry.model.tempAxisMin || 80)),
+      max: Math.max(...compareModels.map(entry => entry.model.tempAxisMax || 100)),
+    };
+  }
+
+  const detailChartRangeOptions = getDetailChartRangeOptions({
+    shotStylePreset,
+    chartId: chart.id,
+    compareModelCount: compareModels.length,
+  });
+
+  return getAxisRange({
+    datasets,
+    beginAtZero: chart.beginAtZero,
+    fallbackMin: chart.beginAtZero ? 0 : 80,
+    fallbackMax: chart.beginAtZero ? 12 : 100,
+    paddingRatio: detailChartRangeOptions.paddingRatio,
+    minimumPadding: detailChartRangeOptions.minimumPadding,
+    maxStrategy: detailChartRangeOptions.maxStrategy,
+    maxPercentile: detailChartRangeOptions.maxPercentile,
   });
 }
 
@@ -996,22 +1153,12 @@ function CompareChartCanvas({
         return areTooltipStatesEqual(prev, hiddenState) ? prev : hiddenState;
       });
     };
-    const nextPlugins = config.options?.plugins ? { ...config.options.plugins } : {};
-    nextPlugins.tooltip = getCompareTooltipPlugin({
+    const nextConfig = createCompareChartConfig(config, {
       enableHoverInfo,
       compareTooltipMode,
       hideExternalTooltip,
       setExternalTooltipState,
     });
-
-    const nextConfig = {
-      ...config,
-      options: {
-        ...config.options,
-        events: [],
-        plugins: nextPlugins,
-      },
-    };
 
     const chart = new Chart(canvasRef.current, nextConfig);
     chart.$compareTooltipShowDifference = Boolean(config.compareTooltipShowDifference);
@@ -1027,41 +1174,20 @@ function CompareChartCanvas({
       applyCompareHover(chart, point.clientX, point.clientY);
     };
     const supportsPointerEvents =
-      typeof globalThis.window !== 'undefined' && Boolean(globalThis.window.PointerEvent);
+      globalThis.window !== undefined && Boolean(globalThis.window.PointerEvent);
 
     if (hoverSurface && enableHoverInfo) {
-      if (supportsPointerEvents) {
-        hoverSurface.addEventListener('pointerdown', handleHoverMove, { passive: true });
-        hoverSurface.addEventListener('pointermove', handleHoverMove, { passive: true });
-        hoverSurface.addEventListener('pointerup', clearHover);
-        hoverSurface.addEventListener('pointerleave', clearHover);
-        hoverSurface.addEventListener('pointercancel', clearHover);
-      } else {
-        hoverSurface.addEventListener('mousemove', handleHoverMove);
-        hoverSurface.addEventListener('mouseleave', clearHover);
-        hoverSurface.addEventListener('touchstart', handleHoverMove, { passive: true });
-        hoverSurface.addEventListener('touchmove', handleHoverMove, { passive: true });
-        hoverSurface.addEventListener('touchend', clearHover);
-        hoverSurface.addEventListener('touchcancel', clearHover);
-      }
+      addCompareHoverListeners(hoverSurface, supportsPointerEvents, handleHoverMove, clearHover);
     }
 
     return () => {
       if (hoverSurface && enableHoverInfo) {
-        if (supportsPointerEvents) {
-          hoverSurface.removeEventListener('pointerdown', handleHoverMove);
-          hoverSurface.removeEventListener('pointermove', handleHoverMove);
-          hoverSurface.removeEventListener('pointerup', clearHover);
-          hoverSurface.removeEventListener('pointerleave', clearHover);
-          hoverSurface.removeEventListener('pointercancel', clearHover);
-        } else {
-          hoverSurface.removeEventListener('mousemove', handleHoverMove);
-          hoverSurface.removeEventListener('mouseleave', clearHover);
-          hoverSurface.removeEventListener('touchstart', handleHoverMove);
-          hoverSurface.removeEventListener('touchmove', handleHoverMove);
-          hoverSurface.removeEventListener('touchend', clearHover);
-          hoverSurface.removeEventListener('touchcancel', clearHover);
-        }
+        removeCompareHoverListeners(
+          hoverSurface,
+          supportsPointerEvents,
+          handleHoverMove,
+          clearHover,
+        );
       }
 
       chart.destroy();
@@ -1182,22 +1308,13 @@ export function CompareShotCharts({
   });
   const weightDatasets = mainDatasets.filter(dataset => dataset.yAxisID === 'yWeight');
   const hasMainChartWeightData = weightDatasets.length > 0;
-  const weightAxisRange =
-    shotStylePreset === 'statistics'
-      ? getStatisticsMainChartWeightAxisRange({
-          weightDatasets,
-          mainDatasets,
-          mainAxisRange,
-          weightMaxPercentile: getStatisticsAxisPercentile(compareModels.length, 'weight'),
-        })
-      : getAxisRange({
-          datasets: weightDatasets,
-          beginAtZero: true,
-          fallbackMin: 0,
-          fallbackMax: 50,
-          paddingRatio: 0.05,
-          minimumPadding: 0.2,
-        });
+  const weightAxisRange = getCompareWeightAxisRange({
+    shotStylePreset,
+    weightDatasets,
+    mainDatasets,
+    mainAxisRange,
+    compareModelCount: compareModels.length,
+  });
 
   const mainChartConfig = {
     type: 'line',
@@ -1276,27 +1393,12 @@ export function CompareShotCharts({
 
     if (datasets.length === 0) return null;
 
-    const detailChartRangeOptions = getDetailChartRangeOptions({
+    const axisRange = getCompareDetailAxisRange({
+      chart,
+      compareModels,
+      datasets,
       shotStylePreset,
-      chartId: chart.id,
-      compareModelCount: compareModels.length,
     });
-    const axisRange =
-      chart.id === 'temperature'
-        ? {
-            min: Math.min(...compareModels.map(entry => entry.model.tempAxisMin || 80)),
-            max: Math.max(...compareModels.map(entry => entry.model.tempAxisMax || 100)),
-          }
-        : getAxisRange({
-            datasets,
-            beginAtZero: chart.beginAtZero,
-            fallbackMin: chart.beginAtZero ? 0 : 80,
-            fallbackMax: chart.beginAtZero ? 12 : 100,
-            paddingRatio: detailChartRangeOptions.paddingRatio,
-            minimumPadding: detailChartRangeOptions.minimumPadding,
-            maxStrategy: detailChartRangeOptions.maxStrategy,
-            maxPercentile: detailChartRangeOptions.maxPercentile,
-          });
 
     return {
       ...chart,

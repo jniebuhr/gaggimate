@@ -70,6 +70,46 @@ function getModeHintCopy(nextMode) {
     : 'View temporarily. Imported shots and profiles will now open temporarily in the analyzer.';
 }
 
+function hydrateLoadedShotNotes({ loaded, currentShot, extractDoseFromProfile, calculateRatio }) {
+  const nextNotes = { ...loaded };
+  let autoSave = false;
+
+  if (!nextNotes.doseIn && currentShot.profile) {
+    const extractedDose = extractDoseFromProfile(currentShot.profile);
+    if (extractedDose) {
+      nextNotes.doseIn = extractedDose;
+      autoSave = true;
+    }
+  }
+
+  if (!nextNotes.doseOut && currentShot.volume) {
+    nextNotes.doseOut = currentShot.volume.toFixed(1);
+    autoSave = true;
+  }
+
+  if (nextNotes.doseIn && nextNotes.doseOut) {
+    nextNotes.ratio = calculateRatio(nextNotes.doseIn, nextNotes.doseOut);
+  }
+
+  return { nextNotes, autoSave };
+}
+
+function getNotesBarNavigationState({ hasShot, shotList, currentShot, getShotNotesKey }) {
+  const currentIndex = hasShot
+    ? shotList.findIndex(
+        shot =>
+          getShotNotesKey(shot) === getShotNotesKey(currentShot) &&
+          shot.source === currentShot?.source,
+      )
+    : -1;
+
+  return {
+    currentIndex,
+    canGoPrev: hasShot && currentIndex > 0,
+    canGoNext: hasShot && currentIndex >= 0 && currentIndex < shotList.length - 1,
+  };
+}
+
 function LoadedShotSummary({
   chipGap,
   currentShot,
@@ -258,32 +298,18 @@ export function NotesBar({
         if (cancelled) return;
         // Inline notes (from fresh import) should win over empty/default persistence results.
         loaded = inlineNotes ? { ...loaded, ...inlineNotes, id: notesKey } : loaded;
-        let autoSave = false;
+        const { nextNotes, autoSave } = hydrateLoadedShotNotes({
+          loaded,
+          currentShot,
+          extractDoseFromProfile,
+          calculateRatio,
+        });
 
-        // Auto-populate doseIn from profile name if empty
-        if (!loaded.doseIn && currentShot.profile) {
-          const extracted = extractDoseFromProfile(currentShot.profile);
-          if (extracted) {
-            loaded.doseIn = extracted;
-            autoSave = true;
-          }
-        }
-
-        // Auto-populate doseOut from shot volume if empty
-        if (!loaded.doseOut && currentShot.volume) {
-          loaded.doseOut = currentShot.volume.toFixed(1);
-          autoSave = true;
-        }
-
-        if (loaded.doseIn && loaded.doseOut) {
-          loaded.ratio = calculateRatio(loaded.doseIn, loaded.doseOut);
-        }
-
-        setNotes(loaded);
+        setNotes(nextNotes);
 
         // Auto-save if we populated new values
         if (autoSave && currentShot.source !== 'temp') {
-          notesService.saveNotes(notesKey, currentShot.source, loaded);
+          notesService.saveNotes(notesKey, currentShot.source, nextNotes);
         }
       })
       .finally(() => {
@@ -339,14 +365,12 @@ export function NotesBar({
   };
 
   // Navigation
-  const currentIndex = hasShot
-    ? shotList.findIndex(
-        s =>
-          getShotNotesKey(s) === getShotNotesKey(currentShot) && s.source === currentShot?.source,
-      )
-    : -1;
-  const canGoPrev = hasShot && currentIndex > 0;
-  const canGoNext = hasShot && currentIndex >= 0 && currentIndex < shotList.length - 1;
+  const { currentIndex, canGoPrev, canGoNext } = getNotesBarNavigationState({
+    hasShot,
+    shotList,
+    currentShot,
+    getShotNotesKey,
+  });
 
   // Keyboard navigation: ArrowLeft / ArrowRight
   useEffect(() => {

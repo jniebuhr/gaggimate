@@ -19,12 +19,14 @@ export const ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES =
 const iconToneClasses = {
   neutral: 'text-base-content/55 hover:text-primary',
   subtle: 'text-base-content/35 hover:text-primary',
+  primary: 'text-primary hover:text-primary',
   success: 'text-base-content/35 hover:text-success',
   error: 'text-base-content/35 hover:text-error',
 };
 
 const textToneClasses = {
   neutral: 'text-base-content/70 hover:text-primary',
+  primary: 'text-primary hover:text-primary',
   success: 'text-base-content/55 hover:text-success',
   error: 'text-base-content/55 hover:text-error',
 };

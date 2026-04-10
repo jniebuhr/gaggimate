@@ -216,20 +216,11 @@ export function getSpikeResistantSeriesMax(
   for (let i = 0; i < finitePoints.length; i += 1) {
     const candidate = finitePoints[i].y;
     if (!Number.isFinite(candidate) || candidate <= 0) continue;
-
-    const threshold = candidate * supportRatio;
-    let startX = finitePoints[i].x;
-    let endX = finitePoints[i].x;
-
-    for (let left = i - 1; left >= 0; left -= 1) {
-      if (finitePoints[left].y < threshold) break;
-      startX = finitePoints[left].x;
-    }
-
-    for (let right = i + 1; right < finitePoints.length; right += 1) {
-      if (finitePoints[right].y < threshold) break;
-      endX = finitePoints[right].x;
-    }
+    const { startX, endX } = getSupportedSeriesWindow({
+      finitePoints,
+      index: i,
+      supportRatio,
+    });
 
     // A candidate max is only accepted when it stays near that level long
     // enough; otherwise we fall back to a percentile-based ceiling.
@@ -247,6 +238,25 @@ export function getSpikeResistantSeriesMax(
     fallbackPercentile,
   );
   return Math.max(fallback, Number.isFinite(percentileMax) ? percentileMax : rawMax);
+}
+
+function getSupportedSeriesWindow({ finitePoints, index, supportRatio }) {
+  const candidate = finitePoints[index];
+  const threshold = candidate.y * supportRatio;
+  let startX = candidate.x;
+  let endX = candidate.x;
+
+  for (let left = index - 1; left >= 0; left -= 1) {
+    if (finitePoints[left].y < threshold) break;
+    startX = finitePoints[left].x;
+  }
+
+  for (let right = index + 1; right < finitePoints.length; right += 1) {
+    if (finitePoints[right].y < threshold) break;
+    endX = finitePoints[right].x;
+  }
+
+  return { startX, endX };
 }
 
 export function getLegendColorByLabel(colors) {

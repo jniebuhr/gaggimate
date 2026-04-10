@@ -69,6 +69,42 @@ function getNameColumnWidth(isShot, showCompareSelection) {
   return showCompareSelection ? '24%' : '30%';
 }
 
+function getLibraryColumnLayout(isShot, showCompareSelection) {
+  return {
+    widthCompare: showCompareSelection ? '6%' : '0%',
+    widthName: getNameColumnWidth(isShot, showCompareSelection),
+    widthSource: '10%',
+    widthDate: isShot ? '25%' : '0%',
+    widthProfile: isShot ? '25%' : '0%',
+    widthAction: '10%',
+    columnCount: (showCompareSelection ? 1 : 0) + 1 + 1 + (isShot ? 2 : 0) + 1,
+  };
+}
+
+function getLibraryCompareState({
+  item,
+  isShot,
+  compareSelectionKeys,
+  comparePendingKeys,
+  compareReferenceKey,
+  getCompareStatus,
+  getCompareBadgeNumber,
+}) {
+  const compareKey = isShot ? getShotIdentityKey(item) : '';
+  const isCompareSelected = isShot && compareSelectionKeys.has(compareKey);
+  const isComparePending = isShot && comparePendingKeys.includes(compareKey);
+  const isCompareReference = isShot && compareKey === compareReferenceKey;
+
+  return {
+    isCompareSelected,
+    isComparePending,
+    isCompareReference,
+    isCompareSelectionDisabled: isComparePending || isCompareReference,
+    isCompareRelated: Boolean(getCompareStatus?.(item)),
+    compareBadgeNumber: getCompareBadgeNumber?.(item) || null,
+  };
+}
+
 export function LibrarySection({
   title,
   items,
@@ -118,13 +154,15 @@ export function LibrarySection({
   // Keep the name column flexible because pinning and compare badges both live
   // inside that cell instead of adding separate narrow columns.
   const showCompareSelection = false;
-  const widthCompare = showCompareSelection ? '6%' : '0%';
-  const widthName = getNameColumnWidth(isShot, showCompareSelection);
-  const widthSource = '10%';
-  const widthDate = isShot ? '25%' : '0%';
-  const widthProfile = isShot ? '25%' : '0%';
-  const widthAction = '10%';
-  const columnCount = (showCompareSelection ? 1 : 0) + 1 + 1 + (isShot ? 2 : 0) + 1;
+  const {
+    widthCompare,
+    widthName,
+    widthSource,
+    widthDate,
+    widthProfile,
+    widthAction,
+    columnCount,
+  } = getLibraryColumnLayout(isShot, showCompareSelection);
   const hasCompareBadges = items.some(item => Boolean(getCompareBadgeNumber?.(item)));
   const stickyHeaderCellClass = 'relative z-20 bg-base-200';
 
@@ -327,13 +365,22 @@ export function LibrarySection({
               </tr>
             ) : null}
             {items.map(item => {
-              const compareKey = isShot ? getShotIdentityKey(item) : '';
-              const isCompareSelected = isShot && compareSelectionKeys.has(compareKey);
-              const isComparePending = isShot && comparePendingKeys.includes(compareKey);
-              const isCompareReference = isShot && compareKey === compareReferenceKey;
-              const isCompareSelectionDisabled = isComparePending || isCompareReference;
-              const isCompareRelated = Boolean(getCompareStatus?.(item));
-              const compareBadgeNumber = getCompareBadgeNumber?.(item) || null;
+              const {
+                isCompareSelected,
+                isComparePending,
+                isCompareReference,
+                isCompareSelectionDisabled,
+                isCompareRelated,
+                compareBadgeNumber,
+              } = getLibraryCompareState({
+                item,
+                isShot,
+                compareSelectionKeys,
+                comparePendingKeys,
+                compareReferenceKey,
+                getCompareStatus,
+                getCompareBadgeNumber,
+              });
 
               return (
                 <LibraryRow

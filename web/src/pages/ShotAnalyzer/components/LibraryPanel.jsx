@@ -32,6 +32,7 @@ import {
   getShotPinBucketKey,
   isProfilePinned,
   isShotPinned,
+  isShotPinnedAnywhere,
   loadFromStorage,
   saveToStorage,
   toggleProfilePin,
@@ -44,6 +45,179 @@ function getStoredLibrarySourceFilter(storageKey) {
   return storedValue === 'gaggimate' || storedValue === 'browser' || storedValue === 'all'
     ? storedValue
     : 'all';
+}
+
+function getLibraryRequestSource(sourceFilter) {
+  return sourceFilter === 'all' ? 'both' : sourceFilter;
+}
+
+function getLibraryShotSearchPriority(item, query) {
+  const normalizedId = String(item?.id || '').toLowerCase();
+  const normalizedName = (item?.name || item?.label || item?.title || '').toLowerCase();
+  return normalizedName.includes(query) || normalizedId.includes(query) ? 0 : 1;
+}
+
+function applyLibrarySort(items, cfg) {
+  return [...items].sort((a, b) => {
+    let valA;
+    let valB;
+
+    switch (cfg.key) {
+      case 'shotDate':
+        valA = a.timestamp || 0;
+        valB = b.timestamp || 0;
+        break;
+      case 'name':
+        valA = (a.name || a.label || a.profile || '').toLowerCase();
+        valB = (b.name || b.label || b.profile || '').toLowerCase();
+        break;
+      case 'data.rating':
+        valA = a.rating || 0;
+        valB = b.rating || 0;
+        break;
+      case 'duration':
+        valA = parseFloat(a.duration) || 0;
+        valB = parseFloat(b.duration) || 0;
+        break;
+      default:
+        valA = a[cfg.key];
+        valB = b[cfg.key];
+    }
+
+    if (valA < valB) return cfg.order === 'asc' ? -1 : 1;
+    if (valA > valB) return cfg.order === 'asc' ? 1 : -1;
+    return 0;
+  });
+}
+
+function promoteLibraryItems(items, predicate) {
+  const promoted = [];
+  const remaining = [];
+
+  items.forEach(item => {
+    if (predicate(item)) promoted.push(item);
+    else remaining.push(item);
+  });
+
+  return [...promoted, ...remaining];
+}
+
+function filterLibraryShots(shotsData, shotSearch, profileSearch) {
+  let filteredShots = shotsData;
+
+  if (shotSearch) {
+    const normalizedShotSearch = shotSearch.toLowerCase();
+    filteredShots = shotsData.filter(shot => {
+      const nameMatch = (shot.name || shot.label || shot.title || '')
+        .toLowerCase()
+        .includes(normalizedShotSearch);
+      const profileMatch = (shot.profile || shot.profileName || '')
+        .toLowerCase()
+        .includes(normalizedShotSearch);
+      const idMatch = String(shot.id || '')
+        .toLowerCase()
+        .includes(normalizedShotSearch);
+      const fileMatch = (shot.fileName || shot.exportName || '')
+        .toLowerCase()
+        .includes(normalizedShotSearch);
+
+      return nameMatch || profileMatch || idMatch || fileMatch;
+    });
+
+    filteredShots.sort(
+      (a, b) =>
+        getLibraryShotSearchPriority(a, normalizedShotSearch) -
+        getLibraryShotSearchPriority(b, normalizedShotSearch),
+    );
+  }
+
+  if (!profileSearch) return filteredShots;
+
+  const normalizedProfileSearch = profileSearch.toLowerCase();
+  return filteredShots.filter(shot =>
+    (shot.profile || shot.profileName || '').toLowerCase().includes(normalizedProfileSearch),
+  );
+}
+
+function filterLibraryProfiles(profilesData, profileSearch) {
+  if (!profileSearch) return profilesData;
+  const normalizedProfileSearch = profileSearch.toLowerCase();
+  return profilesData.filter(profile =>
+    (profile.name || profile.label || '').toLowerCase().includes(normalizedProfileSearch),
+  );
+}
+
+function resolveActiveLibraryShotPinBucketKey({
+  currentProfileName,
+  currentShot,
+  currentProfile,
+  resolveRealProfilePinKey,
+}) {
+  const explicitProfileKey = resolveRealProfilePinKey(currentProfileName);
+  if (explicitProfileKey) return explicitProfileKey;
+
+  if (currentShot || currentProfile) {
+    const shotProfileKey = resolveRealProfilePinKey(
+      currentShot?.profile || currentShot?.profileName || '',
+    );
+    return shotProfileKey || PINNED_NO_PROFILE_BUCKET;
+  }
+
+  return '';
+}
+
+function buildPromotedLibraryItems({
+  shotsData,
+  profilesData,
+  shotSearch,
+  profileSearch,
+  shotsSort,
+  profilesSort,
+  normalizedCurrentProfileName,
+  normalizedCurrentShotProfileName,
+  pinnedProfiles,
+  pinnedShotsByProfile,
+  shotsPinnedFirst,
+  profilesPinnedFirst,
+  activeShotPinBucketKey,
+}) {
+  const filteredShots = filterLibraryShots(shotsData, shotSearch, profileSearch);
+  const filteredProfiles = filterLibraryProfiles(profilesData, profileSearch);
+  const hasActiveProfileMatch =
+    normalizedCurrentProfileName && normalizedCurrentProfileName !== 'no profile loaded';
+  const hasActiveShotProfileMatch =
+    normalizedCurrentShotProfileName && normalizedCurrentShotProfileName !== 'no profile loaded';
+  const promoteMatchedShots = item =>
+    hasActiveProfileMatch &&
+    cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName;
+  const promoteMatchedProfiles = item =>
+    hasActiveShotProfileMatch &&
+    cleanName(item.name || item.label || '').toLowerCase() === normalizedCurrentShotProfileName;
+
+  let nextShots = applyLibrarySort(filteredShots, shotsSort);
+  if (shotsPinnedFirst) {
+    nextShots = promoteLibraryItems(nextShots, item =>
+      isShotPinnedAnywhere(item, pinnedShotsByProfile),
+    );
+  } else {
+    nextShots = promoteLibraryItems(nextShots, promoteMatchedShots);
+  }
+
+  if (!shotsPinnedFirst && activeShotPinBucketKey) {
+    nextShots = promoteLibraryItems(nextShots, item =>
+      isShotPinned(item, activeShotPinBucketKey, pinnedShotsByProfile),
+    );
+  }
+
+  let nextProfiles = promoteLibraryItems(
+    applyLibrarySort(filteredProfiles, profilesSort),
+    promoteMatchedProfiles,
+  );
+  if (profilesPinnedFirst) {
+    nextProfiles = promoteLibraryItems(nextProfiles, item => isProfilePinned(item, pinnedProfiles));
+  }
+
+  return { nextShots, nextProfiles };
 }
 
 export function LibraryPanel({
@@ -163,24 +337,28 @@ export function LibraryPanel({
     const key = getProfilePinKey(profileValue);
     return key && key !== 'no profile loaded' ? key : '';
   }, []);
-  const activeShotPinBucketKey = (() => {
-    const explicitProfileKey = resolveRealProfilePinKey(currentProfileName);
-    if (explicitProfileKey) return explicitProfileKey;
-
-    // When only a shot is active, derive the implicit profile bucket from the
-    // shot metadata so pinned shots can still be promoted for that context.
-    if (currentShot || currentProfile) {
-      const shotProfileKey = resolveRealProfilePinKey(
-        currentShot?.profile || currentShot?.profileName || '',
-      );
-      return shotProfileKey || PINNED_NO_PROFILE_BUCKET;
-    }
-
-    return '';
-  })();
+  const activeShotPinBucketKey = resolveActiveLibraryShotPinBucketKey({
+    currentProfileName,
+    currentShot,
+    currentProfile,
+    resolveRealProfilePinKey,
+  });
   const getEffectiveShotPinBucketKey = useCallback(
     item => activeShotPinBucketKey || getShotPinBucketKey(item),
     [activeShotPinBucketKey],
+  );
+  const getPinnedShotBucketKey = useCallback(
+    item => {
+      const shotKey = getShotIdentityKey(item);
+      if (!shotKey) return '';
+
+      return (
+        Object.entries(pinnedShotsByProfile).find(([, shotKeys]) =>
+          shotKeys.includes(shotKey),
+        )?.[0] || ''
+      );
+    },
+    [pinnedShotsByProfile],
   );
 
   useEffect(() => {
@@ -315,135 +493,31 @@ export function LibraryPanel({
    * Fetch, Filter, and Sort data from sources.
    * Reorders rows by selection match and pin state after the base sort.
    */
-  const refreshLibraries = async () => {
+  const refreshLibraries = useCallback(async () => {
     const id = ++refreshIdRef.current;
     setLoading(true);
     try {
       const [shotsData, profilesData] = await Promise.all([
-        libraryService.getAllShots(shotsSourceFilter === 'all' ? 'both' : shotsSourceFilter),
-        libraryService.getAllProfiles(
-          profilesSourceFilter === 'all' ? 'both' : profilesSourceFilter,
-        ),
+        libraryService.getAllShots(getLibraryRequestSource(shotsSourceFilter)),
+        libraryService.getAllProfiles(getLibraryRequestSource(profilesSourceFilter)),
       ]);
 
       if (id !== refreshIdRef.current) return; // stale request, discard
-
-      const getShotSearchPriority = (item, query) => {
-        const normalizedId = String(item?.id || '').toLowerCase();
-        const normalizedName = (item?.name || item?.label || item?.title || '').toLowerCase();
-        return normalizedName.includes(query) || normalizedId.includes(query) ? 0 : 1;
-      };
-
-      // Apply the user-selected base sort first. Match promotion and pin
-      // promotion happen afterwards so they remain stable overlays on top of the
-      // explicit sort choice instead of replacing it.
-      const applySort = (items, cfg) => {
-        return [...items].sort((a, b) => {
-          let valA, valB;
-          switch (cfg.key) {
-            case 'shotDate':
-              valA = a.timestamp || 0;
-              valB = b.timestamp || 0;
-              break;
-            case 'name':
-              valA = (a.name || a.label || a.profile || '').toLowerCase();
-              valB = (b.name || b.label || b.profile || '').toLowerCase();
-              break;
-            case 'data.rating':
-              valA = a.rating || 0;
-              valB = b.rating || 0;
-              break;
-            case 'duration':
-              valA = parseFloat(a.duration) || 0;
-              valB = parseFloat(b.duration) || 0;
-              break;
-            default:
-              valA = a[cfg.key];
-              valB = b[cfg.key];
-          }
-          if (valA < valB) return cfg.order === 'asc' ? -1 : 1;
-          if (valA > valB) return cfg.order === 'asc' ? 1 : -1;
-          return 0;
-        });
-      };
-
-      const promoteItems = (items, predicate) => {
-        const promoted = [];
-        const remaining = [];
-        items.forEach(item => {
-          if (predicate(item)) promoted.push(item);
-          else remaining.push(item);
-        });
-        return [...promoted, ...remaining];
-      };
-
-      // Shot search intentionally stays broad: operators usually remember a shot
-      // by id, exported file name, or associated profile rather than one field.
-      let fShots = shotsData;
-      if (debouncedShotsSearch) {
-        const sSearch = debouncedShotsSearch.toLowerCase();
-
-        fShots = shotsData.filter(s => {
-          const nameMatch = (s.name || s.label || s.title || '').toLowerCase().includes(sSearch);
-          const profileMatch = (s.profile || s.profileName || '').toLowerCase().includes(sSearch);
-          const idMatch = String(s.id || '')
-            .toLowerCase()
-            .includes(sSearch);
-          const fileMatch = (s.fileName || s.exportName || '').toLowerCase().includes(sSearch);
-
-          return nameMatch || profileMatch || idMatch || fileMatch;
-        });
-
-        // Name/id hits are promoted ahead of indirect profile-name hits so a
-        // search like "shot-12" or "#123" feels deterministic.
-        fShots.sort((a, b) => {
-          return getShotSearchPriority(a, sSearch) - getShotSearchPriority(b, sSearch);
-        });
-      }
-
-      // Profile search filter
-      if (debouncedProfilesSearch) {
-        const pSearch = debouncedProfilesSearch.toLowerCase();
-        fShots = fShots.filter(s =>
-          (s.profile || s.profileName || '').toLowerCase().includes(pSearch),
-        );
-      }
-
-      const fProfiles = profilesData.filter(
-        p =>
-          !debouncedProfilesSearch ||
-          (p.name || p.label || '').toLowerCase().includes(debouncedProfilesSearch.toLowerCase()),
-      );
-
-      const hasActiveProfileMatch =
-        normalizedCurrentProfileName && normalizedCurrentProfileName !== 'no profile loaded';
-      const hasActiveShotProfileMatch =
-        normalizedCurrentShotProfileName &&
-        normalizedCurrentShotProfileName !== 'no profile loaded';
-      const promoteMatchedShots = item =>
-        hasActiveProfileMatch &&
-        cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName;
-      const promoteMatchedProfiles = item =>
-        hasActiveShotProfileMatch &&
-        cleanName(item.name || item.label || '').toLowerCase() === normalizedCurrentShotProfileName;
-
-      // Promotion order matters: active profile matches win first, then pins can
-      // optionally re-order within that already-sorted subset.
-      let nextShots = promoteItems(applySort(fShots, shotsSort), promoteMatchedShots);
-      if (shotsPinnedFirst) {
-        nextShots = promoteItems(nextShots, item =>
-          isShotPinned(item, getShotPinBucketKey(item), pinnedShotsByProfile),
-        );
-      } else if (activeShotPinBucketKey) {
-        nextShots = promoteItems(nextShots, item =>
-          isShotPinned(item, activeShotPinBucketKey, pinnedShotsByProfile),
-        );
-      }
-
-      let nextProfiles = promoteItems(applySort(fProfiles, profilesSort), promoteMatchedProfiles);
-      if (profilesPinnedFirst) {
-        nextProfiles = promoteItems(nextProfiles, item => isProfilePinned(item, pinnedProfiles));
-      }
+      const { nextShots, nextProfiles } = buildPromotedLibraryItems({
+        shotsData,
+        profilesData,
+        shotSearch: debouncedShotsSearch,
+        profileSearch: debouncedProfilesSearch,
+        shotsSort,
+        profilesSort,
+        normalizedCurrentProfileName,
+        normalizedCurrentShotProfileName,
+        pinnedProfiles,
+        pinnedShotsByProfile,
+        shotsPinnedFirst,
+        profilesPinnedFirst,
+        activeShotPinBucketKey,
+      });
 
       setShots(nextShots);
       setProfiles(nextProfiles);
@@ -455,25 +529,25 @@ export function LibraryPanel({
         setLoading(false);
       }
     }
-  };
-
-  useEffect(() => {
-    refreshLibraries();
   }, [
     shotsSourceFilter,
     profilesSourceFilter,
     debouncedShotsSearch,
-    shotsSort,
     debouncedProfilesSearch,
+    shotsSort,
     profilesSort,
+    normalizedCurrentProfileName,
+    normalizedCurrentShotProfileName,
     pinnedProfiles,
     pinnedShotsByProfile,
     shotsPinnedFirst,
     profilesPinnedFirst,
     activeShotPinBucketKey,
-    normalizedCurrentProfileName,
-    normalizedCurrentShotProfileName,
   ]);
+
+  useEffect(() => {
+    refreshLibraries();
+  }, [refreshLibraries]);
 
   // Re-run the promotion logic when the panel reopens so any pin changes made
   // elsewhere in the app are reflected immediately.
@@ -483,7 +557,7 @@ export function LibraryPanel({
       refreshLibraries();
     }
     prevCollapsed.current = collapsed;
-  }, [collapsed]);
+  }, [collapsed, refreshLibraries]);
 
   // --- Action Handlers ---
 
@@ -523,11 +597,13 @@ export function LibraryPanel({
 
   const handleShotPinToggle = useCallback(
     item => {
-      const result = toggleShotPin(item, getEffectiveShotPinBucketKey(item));
+      const resolvedBucketKey =
+        (shotsPinnedFirst && getPinnedShotBucketKey(item)) || getEffectiveShotPinBucketKey(item);
+      const result = toggleShotPin(item, resolvedBucketKey);
       if (!result.changed) return;
       setPinnedShotsByProfile(result.pinnedShotsByProfile);
     },
-    [getEffectiveShotPinBucketKey],
+    [getEffectiveShotPinBucketKey, getPinnedShotBucketKey, shotsPinnedFirst],
   );
 
   // Uses libraryService.exportItem to fetch data, then uses UI helper 'downloadJson'
@@ -1129,7 +1205,13 @@ export function LibraryPanel({
                         item.source === currentShot.source
                       }
                       getPinStatus={item =>
-                        isShotPinned(item, getEffectiveShotPinBucketKey(item), pinnedShotsByProfile)
+                        shotsPinnedFirst
+                          ? Boolean(getPinnedShotBucketKey(item))
+                          : isShotPinned(
+                              item,
+                              getEffectiveShotPinBucketKey(item),
+                              pinnedShotsByProfile,
+                            )
                       }
                       getPinDisabledReason={getShotPinDisabledReason}
                       pinnedFirstEnabled={shotsPinnedFirst}

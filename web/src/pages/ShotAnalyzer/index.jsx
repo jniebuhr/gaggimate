@@ -109,6 +109,59 @@ function analyzeShotWithSettings(shotData, profileData, settings) {
   });
 }
 
+function clearCompareSelectionState({
+  compareLoadIdRef,
+  setCompareShots,
+  setComparePendingKeys,
+  setCompareResults,
+  setCompareIsSearchingProfile,
+}) {
+  compareLoadIdRef.current += 1;
+  setCompareShots([]);
+  setComparePendingKeys([]);
+  setCompareResults([]);
+  setCompareIsSearchingProfile(false);
+}
+
+function buildCompareShotWithMetadata({ item, loadedShot, importMode, loadKey }) {
+  return {
+    ...loadedShot,
+    source: loadedShot.source || item.source || importMode,
+    storageKey: loadedShot.storageKey || item.storageKey || item.name || String(loadKey),
+    name: loadedShot.name || item.name || item.storageKey || String(loadKey),
+  };
+}
+
+function createCompareShotEntry({ shotKey, shotWithMetadata, item, loadKey }) {
+  const matchedProfileName = shotWithMetadata.profile
+    ? cleanName(shotWithMetadata.profile)
+    : 'No Profile Loaded';
+
+  return {
+    key: shotKey,
+    shot: shotWithMetadata,
+    shotName: shotWithMetadata.name || item.name || String(loadKey),
+    profile: null,
+    profileName: matchedProfileName,
+    profileSelectionMode: 'none',
+  };
+}
+
+function applyMatchedCompareProfile(setCompareShots, shotKey, matchedProfile) {
+  setCompareShots(currentEntries =>
+    currentEntries.map(entry =>
+      entry.key === shotKey
+        ? {
+            ...entry,
+            profile: matchedProfile.profile || null,
+            profileName: matchedProfile.profileName,
+            profileSelectionMode: matchedProfile.profile ? 'auto' : 'none',
+          }
+        : entry,
+    ),
+  );
+}
+
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
@@ -499,11 +552,13 @@ export function ShotAnalyzer() {
     if (!shotKey || shotKey === currentShotKey) return;
 
     if (!checked) {
-      compareLoadIdRef.current += 1;
-      setCompareShots([]);
-      setComparePendingKeys([]);
-      setCompareResults([]);
-      setCompareIsSearchingProfile(false);
+      clearCompareSelectionState({
+        compareLoadIdRef,
+        setCompareShots,
+        setComparePendingKeys,
+        setCompareResults,
+        setCompareIsSearchingProfile,
+      });
       return;
     }
 
@@ -522,28 +577,14 @@ export function ShotAnalyzer() {
       const loadedShot = item.samples ? item : await libraryService.loadShot(loadKey, item.source);
       if (loadId !== compareLoadIdRef.current) return;
 
-      const shotWithMetadata = {
-        ...loadedShot,
-        source: loadedShot.source || item.source || importMode,
-        storageKey: loadedShot.storageKey || item.storageKey || item.name || String(loadKey),
-        name: loadedShot.name || item.name || item.storageKey || String(loadKey),
-      };
+      const shotWithMetadata = buildCompareShotWithMetadata({
+        item,
+        loadedShot,
+        importMode,
+        loadKey,
+      });
 
-      let matchedProfile = null;
-      let matchedProfileName = shotWithMetadata.profile
-        ? cleanName(shotWithMetadata.profile)
-        : 'No Profile Loaded';
-
-      setCompareShots([
-        {
-          key: shotKey,
-          shot: shotWithMetadata,
-          shotName: shotWithMetadata.name || item.name || String(loadKey),
-          profile: null,
-          profileName: matchedProfileName,
-          profileSelectionMode: 'none',
-        },
-      ]);
+      setCompareShots([createCompareShotEntry({ shotKey, shotWithMetadata, item, loadKey })]);
       setComparePendingKeys([]);
 
       if (shotWithMetadata.profile) {
@@ -551,22 +592,13 @@ export function ShotAnalyzer() {
           setCompareIsSearchingProfile(true);
           const allProfiles = await libraryService.getAllProfiles('both');
           if (loadId !== compareLoadIdRef.current) return;
-          matchedProfile = await loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles);
+          const matchedProfile = await loadPreferredAutoMatchedProfile(
+            shotWithMetadata,
+            allProfiles,
+          );
           if (loadId !== compareLoadIdRef.current) return;
           if (matchedProfile) {
-            matchedProfileName = matchedProfile.profileName;
-            setCompareShots(currentEntries =>
-              currentEntries.map(entry =>
-                entry.key === shotKey
-                  ? {
-                      ...entry,
-                      profile: matchedProfile.profile || null,
-                      profileName: matchedProfileName,
-                      profileSelectionMode: matchedProfile.profile ? 'auto' : 'none',
-                    }
-                  : entry,
-              ),
-            );
+            applyMatchedCompareProfile(setCompareShots, shotKey, matchedProfile);
           }
         } catch (profileError) {
           if (loadId !== compareLoadIdRef.current) return;

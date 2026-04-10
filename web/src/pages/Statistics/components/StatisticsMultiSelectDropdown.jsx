@@ -62,6 +62,84 @@ function getAccentCircleClasses(accentTone, selected) {
   return 'border-base-content/45 bg-base-content/10';
 }
 
+function getAccentSelectionDotClasses(accentTone, isSelected) {
+  if (!isSelected) return 'bg-transparent opacity-0';
+  if (accentTone === 'secondary') return 'bg-secondary';
+  if (accentTone === 'primary') return 'bg-primary';
+  return 'bg-base-content';
+}
+
+function StatisticsMultiSelectRow({
+  item,
+  index,
+  isSelected,
+  accentTone,
+  singularLabel,
+  onTogglePin,
+  onRowClick,
+  onCirclePointerDown,
+  onCircleClick,
+}) {
+  return (
+    <div
+      role='option'
+      aria-selected={isSelected}
+      data-stat-multi-item-id={item.id}
+      className={`group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors ${
+        isSelected ? 'bg-base-content/6' : 'hover:bg-base-content/4'
+      }`}
+      onClick={event => onRowClick(item.id, index, event)}
+    >
+      <button
+        type='button'
+        aria-label={`${isSelected ? 'Deselect' : 'Select'} ${item.primary || item.id}`}
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${getAccentCircleClasses(accentTone, isSelected)}`}
+        onClick={event => onCircleClick(item.id, index, event)}
+        onPointerDown={event => {
+          event.stopPropagation();
+          onCirclePointerDown(event, item.id);
+        }}
+      >
+        <span
+          className={`h-2.5 w-2.5 rounded-full transition-opacity ${getAccentSelectionDotClasses(accentTone, isSelected)}`}
+        />
+      </button>
+
+      <div className='min-w-0 flex-1'>
+        <div className='flex items-center gap-1.5'>
+          <div className='min-w-0 flex-1 truncate text-xs font-semibold'>
+            {item.primary || item.id}
+          </div>
+          {onTogglePin ? (
+            <button
+              type='button'
+              aria-label={`${item.isPinned ? 'Unpin' : 'Pin'} ${item.primary || item.id}`}
+              aria-disabled={!item.isPinned && !!item.pinDisabledReason}
+              title={
+                item.pinDisabledReason || `${item.isPinned ? 'Unpin' : 'Pin'} ${singularLabel}`
+              }
+              className={getAnalyzerIconButtonClasses({
+                tone: item.isPinned ? 'primary' : 'subtle',
+                className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
+                  item.isPinned ? 'text-primary hover:text-primary' : ''
+                } ${!item.isPinned && item.pinDisabledReason ? 'cursor-not-allowed opacity-35' : ''}`,
+              })}
+              onClick={event => {
+                event.stopPropagation();
+                if (!item.isPinned && item.pinDisabledReason) return;
+                onTogglePin(item);
+              }}
+            >
+              <FontAwesomeIcon icon={faThumbtack} />
+            </button>
+          ) : null}
+        </div>
+        {item.secondary && <div className='truncate text-[10px] opacity-65'>{item.secondary}</div>}
+      </div>
+    </div>
+  );
+}
+
 export function StatisticsMultiSelectDropdown({
   label,
   items,
@@ -404,81 +482,23 @@ export function StatisticsMultiSelectDropdown({
               filteredItems.map((item, index) => {
                 const isSelected = selectedSet.has(item.id);
                 return (
-                  <div
+                  <StatisticsMultiSelectRow
                     key={item.id}
-                    role='option'
-                    aria-selected={isSelected}
-                    data-stat-multi-item-id={item.id}
-                    className={`group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors ${
-                      isSelected ? 'bg-base-content/6' : 'hover:bg-base-content/4'
-                    }`}
-                    onClick={event => handleItemInteraction(item.id, index, event)}
-                  >
-                    <button
-                      type='button'
-                      aria-label={`${isSelected ? 'Deselect' : 'Select'} ${item.primary || item.id}`}
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${getAccentCircleClasses(accentTone, isSelected)}`}
-                      onClick={event => {
-                        event.stopPropagation();
-                        handleItemInteraction(item.id, index, event, { circleOnlyToggle: true });
-                      }}
-                      onPointerDown={event => {
-                        event.stopPropagation();
-                        handleCirclePointerDown(event, item.id);
-                      }}
-                    >
-                      <span
-                        className={`h-2.5 w-2.5 rounded-full transition-opacity ${
-                          isSelected
-                            ? accentTone === 'secondary'
-                              ? 'bg-secondary'
-                              : accentTone === 'primary'
-                                ? 'bg-primary'
-                                : 'bg-base-content'
-                            : 'bg-transparent opacity-0'
-                        }`}
-                      />
-                    </button>
-
-                    <div className='min-w-0 flex-1'>
-                      <div className='flex items-center gap-1.5'>
-                        <div className='min-w-0 flex-1 truncate text-xs font-semibold'>
-                          {item.primary || item.id}
-                        </div>
-                        {onTogglePin ? (
-                          <button
-                            type='button'
-                            aria-label={`${item.isPinned ? 'Unpin' : 'Pin'} ${item.primary || item.id}`}
-                            aria-disabled={!item.isPinned && !!item.pinDisabledReason}
-                            title={
-                              item.pinDisabledReason ||
-                              `${item.isPinned ? 'Unpin' : 'Pin'} ${singularLabel}`
-                            }
-                            className={getAnalyzerIconButtonClasses({
-                              tone: item.isPinned ? 'primary' : 'subtle',
-                              className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
-                                item.isPinned ? 'text-primary hover:text-primary' : ''
-                              } ${
-                                !item.isPinned && item.pinDisabledReason
-                                  ? 'cursor-not-allowed opacity-35'
-                                  : ''
-                              }`,
-                            })}
-                            onClick={event => {
-                              event.stopPropagation();
-                              if (!item.isPinned && item.pinDisabledReason) return;
-                              onTogglePin(item);
-                            }}
-                          >
-                            <FontAwesomeIcon icon={faThumbtack} />
-                          </button>
-                        ) : null}
-                      </div>
-                      {item.secondary && (
-                        <div className='truncate text-[10px] opacity-65'>{item.secondary}</div>
-                      )}
-                    </div>
-                  </div>
+                    item={item}
+                    index={index}
+                    isSelected={isSelected}
+                    accentTone={accentTone}
+                    singularLabel={singularLabel}
+                    onTogglePin={onTogglePin}
+                    onRowClick={handleItemInteraction}
+                    onCirclePointerDown={handleCirclePointerDown}
+                    onCircleClick={(itemId, itemIndex, event) => {
+                      event.stopPropagation();
+                      handleItemInteraction(itemId, itemIndex, event, {
+                        circleOnlyToggle: true,
+                      });
+                    }}
+                  />
                 );
               })
             )}

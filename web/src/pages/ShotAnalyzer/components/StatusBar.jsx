@@ -105,6 +105,143 @@ function CompareIcon({ className = 'inline-block h-4.5 w-4.5' }) {
   );
 }
 
+function ProfileTrailingControl({
+  currentProfile,
+  isMismatch,
+  isSearchingProfile,
+  onRetryProfileSearch,
+  onShowStats,
+  onUnloadProfile,
+  statsHref,
+  profileStatsButtonClasses,
+  activeBadgeIconButtonClasses,
+  statisticsIcon,
+}) {
+  const statsTitle = currentProfile
+    ? 'Open profile statistics'
+    : 'Load a profile to open statistics';
+  const retryTitle = 'Retry automatic profile search';
+
+  if (currentProfile) {
+    return (
+      <div className='flex items-center gap-1'>
+        <a
+          href={statsHref || '/statistics'}
+          onClick={event => {
+            event.stopPropagation();
+            onShowStats?.();
+          }}
+          className={profileStatsButtonClasses}
+          title={statsTitle}
+          aria-label={statsTitle}
+        >
+          <FontAwesomeIcon icon={statisticsIcon} className='text-xs' />
+        </a>
+
+        {isMismatch && onRetryProfileSearch ? (
+          <button
+            type='button'
+            onClick={event => {
+              event.stopPropagation();
+              onRetryProfileSearch();
+            }}
+            className={activeBadgeIconButtonClasses}
+            title={retryTitle}
+            aria-label={retryTitle}
+            disabled={isSearchingProfile}
+          >
+            <FontAwesomeIcon
+              icon={isSearchingProfile ? faCircleNotch : faRotateRight}
+              spin={isSearchingProfile}
+              className='text-xs'
+            />
+          </button>
+        ) : null}
+
+        {isSearchingProfile && !isMismatch ? (
+          <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
+        ) : (
+          <button
+            type='button'
+            onClick={event => {
+              event.stopPropagation();
+              onUnloadProfile();
+            }}
+            className={activeBadgeIconButtonClasses}
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className='flex items-center gap-1'>
+      <button
+        type='button'
+        disabled={true}
+        className={profileStatsButtonClasses}
+        title={statsTitle}
+        aria-label={statsTitle}
+      >
+        <FontAwesomeIcon icon={statisticsIcon} className='text-xs' />
+      </button>
+
+      {isSearchingProfile ? (
+        <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
+      ) : null}
+    </div>
+  );
+}
+
+function ShotTrailingControl({
+  showCompareButton,
+  compareMode,
+  compareAvailable,
+  currentShot,
+  compact,
+  compareBadgeIconButtonClasses,
+  activeBadgeIconButtonClasses,
+  onCompareModeToggle,
+  onUnloadShot,
+}) {
+  const compareTitle = compareMode ? 'Disable compare mode' : 'Enable compare mode';
+
+  return (
+    <div className='flex items-center gap-1'>
+      {showCompareButton ? (
+        <button
+          type='button'
+          onClick={event => {
+            event.stopPropagation();
+            onCompareModeToggle?.();
+          }}
+          disabled={!compareAvailable}
+          className={compareBadgeIconButtonClasses}
+          title={compareAvailable ? compareTitle : 'No shots available to compare'}
+          aria-label={compareAvailable ? compareTitle : 'No shots available to compare'}
+        >
+          <CompareIcon className={compact ? 'inline-block h-4 w-4' : 'inline-block h-4.5 w-4.5'} />
+        </button>
+      ) : null}
+
+      {currentShot ? (
+        <button
+          type='button'
+          onClick={event => {
+            event.stopPropagation();
+            onUnloadShot();
+          }}
+          className={activeBadgeIconButtonClasses}
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function StatusBar({
   currentShot,
   currentProfile,
@@ -292,124 +429,6 @@ export function StatusBar({
     </button>
   );
 
-  const renderProfileTrailingControl = () => {
-    const statsTitle = currentProfile
-      ? 'Open profile statistics'
-      : 'Load a profile to open statistics';
-    const retryTitle = 'Retry automatic profile search';
-
-    if (currentProfile) {
-      return (
-        <div className='flex items-center gap-1'>
-          <a
-            href={statsHref || '/statistics'}
-            onClick={event => {
-              event.stopPropagation();
-              onShowStats?.();
-            }}
-            className={profileStatsButtonClasses}
-            title={statsTitle}
-            aria-label={statsTitle}
-          >
-            <FontAwesomeIcon icon={statisticsIcon} className='text-xs' />
-          </a>
-
-          {isMismatch && onRetryProfileSearch ? (
-            <button
-              type='button'
-              onClick={event => {
-                event.stopPropagation();
-                onRetryProfileSearch();
-              }}
-              className={activeBadgeIconButtonClasses}
-              title={retryTitle}
-              aria-label={retryTitle}
-              disabled={isSearchingProfile}
-            >
-              <FontAwesomeIcon
-                icon={isSearchingProfile ? faCircleNotch : faRotateRight}
-                spin={isSearchingProfile}
-                className='text-xs'
-              />
-            </button>
-          ) : null}
-
-          {isSearchingProfile && !isMismatch ? (
-            <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
-          ) : (
-            <button
-              type='button'
-              onClick={e => {
-                e.stopPropagation();
-                onUnloadProfile();
-              }}
-              className={activeBadgeIconButtonClasses}
-            >
-              <FontAwesomeIcon icon={faTimes} />
-            </button>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <div className='flex items-center gap-1'>
-        <button
-          type='button'
-          disabled={true}
-          className={profileStatsButtonClasses}
-          title={statsTitle}
-          aria-label={statsTitle}
-        >
-          <FontAwesomeIcon icon={statisticsIcon} className='text-xs' />
-        </button>
-
-        {isSearchingProfile ? (
-          <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
-        ) : null}
-      </div>
-    );
-  };
-
-  const renderShotTrailingControl = () => {
-    const compareTitle = compareMode ? 'Disable compare mode' : 'Enable compare mode';
-
-    return (
-      <div className='flex items-center gap-1'>
-        {showCompareButton ? (
-          <button
-            type='button'
-            onClick={event => {
-              event.stopPropagation();
-              onCompareModeToggle?.();
-            }}
-            disabled={!compareAvailable}
-            className={compareBadgeIconButtonClasses}
-            title={compareAvailable ? compareTitle : 'No shots available to compare'}
-            aria-label={compareAvailable ? compareTitle : 'No shots available to compare'}
-          >
-            <CompareIcon
-              className={compact ? 'inline-block h-4 w-4' : 'inline-block h-4.5 w-4.5'}
-            />
-          </button>
-        ) : null}
-
-        {currentShot ? (
-          <button
-            type='button'
-            onClick={e => {
-              e.stopPropagation();
-              onUnloadShot();
-            }}
-            className={activeBadgeIconButtonClasses}
-          >
-            <FontAwesomeIcon icon={faTimes} />
-          </button>
-        ) : null}
-      </div>
-    );
-  };
-
   return (
     <div
       className='relative w-full overflow-visible'
@@ -459,7 +478,17 @@ export function StatusBar({
                 ) : null}
               </span>
             </button>
-            {renderShotTrailingControl()}
+            <ShotTrailingControl
+              showCompareButton={showCompareButton}
+              compareMode={compareMode}
+              compareAvailable={compareAvailable}
+              currentShot={currentShot}
+              compact={compact}
+              compareBadgeIconButtonClasses={compareBadgeIconButtonClasses}
+              activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
+              onCompareModeToggle={onCompareModeToggle}
+              onUnloadShot={onUnloadShot}
+            />
           </div>
 
           {/* --- CENTER: PROFILE BADGE --- */}
@@ -503,7 +532,18 @@ export function StatusBar({
               </span>
             </button>
 
-            {renderProfileTrailingControl()}
+            <ProfileTrailingControl
+              currentProfile={currentProfile}
+              isMismatch={isMismatch}
+              isSearchingProfile={isSearchingProfile}
+              onRetryProfileSearch={onRetryProfileSearch}
+              onShowStats={onShowStats}
+              onUnloadProfile={onUnloadProfile}
+              statsHref={statsHref}
+              profileStatsButtonClasses={profileStatsButtonClasses}
+              activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
+              statisticsIcon={statisticsIcon}
+            />
           </div>
         </div>
         <input

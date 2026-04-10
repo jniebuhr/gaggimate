@@ -250,6 +250,195 @@ function resolveStatisticsDetailSectionChoice({
   return candidate;
 }
 
+function getCanonicalShotProfilePinKeyFromMap(shotMeta, shotKeyToCanonicalProfile) {
+  const shotKey = getShotSelectionKey(shotMeta);
+  const canonicalProfile = shotKeyToCanonicalProfile.get(shotKey);
+  return canonicalProfile
+    ? getProfilePinKey(canonicalProfile)
+    : getProfilePinKey(shotMeta?.profile || shotMeta?.profileName || '');
+}
+
+function matchesPinnedShotMetaWithPins(
+  shotMeta,
+  { shotKeyToCanonicalProfile, pinnedShotsByProfile, pinnedProfiles },
+) {
+  const shotKey = getShotSelectionKey(shotMeta);
+  const profilePinKey = getCanonicalShotProfilePinKeyFromMap(shotMeta, shotKeyToCanonicalProfile);
+  return (
+    isShotPinnedAnywhere(shotKey, pinnedShotsByProfile) ||
+    (profilePinKey ? isProfilePinned(profilePinKey, pinnedProfiles) : false)
+  );
+}
+
+function getProfilePinDisabledReasonText(profileName, pinnedProfiles) {
+  if (isProfilePinned(profileName, pinnedProfiles)) return '';
+  if (pinnedProfiles.length >= MAX_PINNED_PROFILES) {
+    return `Maximum ${MAX_PINNED_PROFILES} pinned profiles`;
+  }
+  return '';
+}
+
+function getShotPinDisabledReasonText(shotMeta, shotKeyToCanonicalProfile, pinnedShotsByProfile) {
+  const bucketKey =
+    getCanonicalShotProfilePinKeyFromMap(shotMeta, shotKeyToCanonicalProfile) ||
+    getShotPinBucketKey(shotMeta);
+  if (isShotPinned(shotMeta, bucketKey, pinnedShotsByProfile)) return '';
+
+  const pinnedCount = (pinnedShotsByProfile[bucketKey] || []).length;
+  if (pinnedCount >= MAX_PINNED_SHOTS_PER_PROFILE) {
+    return bucketKey === PINNED_NO_PROFILE_BUCKET
+      ? `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile`
+      : `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile`;
+  }
+
+  return '';
+}
+
+function buildDateBasisWarningState(rawShotCandidates) {
+  let missingShotTimestampCount = 0;
+  let uploadFallbackCount = 0;
+  let noUsableDateCount = 0;
+
+  for (const shot of rawShotCandidates || []) {
+    const shotTs = resolveShotEffectiveTimestampMs(shot, 'shot');
+    if (Number.isFinite(shotTs)) continue;
+
+    missingShotTimestampCount += 1;
+    const uploadTs = resolveShotEffectiveTimestampMs(shot, 'upload');
+    if (Number.isFinite(uploadTs)) uploadFallbackCount += 1;
+    else noUsableDateCount += 1;
+  }
+
+  const showDateBasisWarning = missingShotTimestampCount > 0;
+  let dateBasisWarningMessage = null;
+
+  if (showDateBasisWarning) {
+    if (uploadFallbackCount > 0 && noUsableDateCount > 0) {
+      dateBasisWarningMessage =
+        'Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering.';
+    } else if (uploadFallbackCount > 0) {
+      dateBasisWarningMessage =
+        'Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only).';
+    } else {
+      dateBasisWarningMessage =
+        'Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available.';
+    }
+  }
+
+  return {
+    showDateBasisWarning,
+    dateBasisWarningMessage,
+    missingShotTimestampCount,
+    uploadFallbackCount,
+    noUsableDateCount,
+  };
+}
+
+function buildBaseFilterState({
+  compiledDslFilter,
+  visualDateFrom,
+  visualDateTo,
+  dateBasisMode,
+  rawShotCandidates,
+}) {
+  const parseErrors = [...compiledDslFilter.errors];
+  const parseWarnings = [...compiledDslFilter.warnings];
+
+  if (visualDateFrom.error) {
+    parseErrors.push({
+      code: 'visual_date_from_invalid',
+      message: visualDateFrom.error,
+    });
+  }
+  if (visualDateTo.error) {
+    parseErrors.push({
+      code: 'visual_date_to_invalid',
+      message: visualDateTo.error,
+    });
+  }
+
+  if (
+    Number.isFinite(visualDateFrom.valueMs) &&
+    Number.isFinite(visualDateTo.valueMs) &&
+    visualDateFrom.valueMs > visualDateTo.valueMs
+  ) {
+    parseErrors.push({
+      code: 'visual_date_range_invalid',
+      message: 'Date range invalid: From is after To.',
+    });
+  }
+
+  if (parseErrors.length > 0) {
+    return { filteredShots: [], count: null, parseErrors, parseWarnings };
+  }
+
+  const filteredShots = (rawShotCandidates || []).filter(shot => {
+    if (Number.isFinite(visualDateFrom.valueMs) || Number.isFinite(visualDateTo.valueMs)) {
+      const ts = resolveShotEffectiveTimestampMs(shot, dateBasisMode);
+      if (!Number.isFinite(ts)) return false;
+      if (Number.isFinite(visualDateFrom.valueMs) && ts < visualDateFrom.valueMs) return false;
+      if (Number.isFinite(visualDateTo.valueMs) && ts > visualDateTo.valueMs) return false;
+    }
+
+    return compiledDslFilter.predicate(shot);
+  });
+
+  return {
+    filteredShots,
+    count: filteredShots.length,
+    parseErrors,
+    parseWarnings,
+  };
+}
+
+function buildCandidateFilterState({
+  baseFilterState,
+  mode,
+  selectedProfileNames,
+  selectedShotKeys,
+  shotKeyToCanonicalProfile,
+}) {
+  const parseErrors = [...baseFilterState.parseErrors];
+  const parseWarnings = [...baseFilterState.parseWarnings];
+
+  if (parseErrors.length > 0) {
+    return { filteredShots: [], count: null, parseErrors, parseWarnings };
+  }
+  if (mode === 'profile' && selectedProfileNames.length === 0) {
+    return { filteredShots: [], count: 0, parseErrors, parseWarnings };
+  }
+  if (mode === 'shots' && selectedShotKeys.length === 0) {
+    return { filteredShots: [], count: 0, parseErrors, parseWarnings };
+  }
+
+  const selectedProfileSet = new Set(
+    selectedProfileNames.map(name => cleanName(name).toLowerCase()),
+  );
+  const selectedShotKeySetLocal = new Set(selectedShotKeys);
+  const filteredShots = (baseFilterState.filteredShots || []).filter(shot => {
+    const shotKey = getShotSelectionKey(shot);
+    if (!shotKey) return false;
+
+    if (mode === 'profile') {
+      const canonical = shotKeyToCanonicalProfile.get(shotKey);
+      const profileKey = canonical ? cleanName(canonical).toLowerCase() : '';
+      if (!selectedProfileSet.has(profileKey)) return false;
+      if (!selectedShotKeySetLocal.has(shotKey)) return false;
+    } else if (mode === 'shots' && !selectedShotKeySetLocal.has(shotKey)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  return {
+    filteredShots,
+    count: filteredShots.length,
+    parseErrors,
+    parseWarnings,
+  };
+}
+
 function StatisticsDetailHeader({
   hasCompareStatistics,
   hasMetricStatistics,
@@ -513,86 +702,23 @@ export function StatisticsView({ initialContext }) {
     return map;
   }, [rawShotCandidates, normalizedAvailableProfilesMap]);
 
-  const getCanonicalShotProfilePinKey = shotMeta => {
-    const shotKey = getShotSelectionKey(shotMeta);
-    const canonicalProfile = shotKeyToCanonicalProfile.get(shotKey);
-    return canonicalProfile
-      ? getProfilePinKey(canonicalProfile)
-      : getProfilePinKey(shotMeta?.profile || shotMeta?.profileName || '');
-  };
+  const matchesPinnedShotMeta = shotMeta =>
+    matchesPinnedShotMetaWithPins(shotMeta, {
+      shotKeyToCanonicalProfile,
+      pinnedShotsByProfile,
+      pinnedProfiles,
+    });
 
-  const matchesPinnedShotMeta = shotMeta => {
-    const shotKey = getShotSelectionKey(shotMeta);
-    const profilePinKey = getCanonicalShotProfilePinKey(shotMeta);
-    return (
-      isShotPinnedAnywhere(shotKey, pinnedShotsByProfile) ||
-      (profilePinKey ? isProfilePinned(profilePinKey, pinnedProfiles) : false)
-    );
-  };
+  const getProfilePinDisabledReason = profileName =>
+    getProfilePinDisabledReasonText(profileName, pinnedProfiles);
 
-  const getProfilePinDisabledReason = profileName => {
-    if (isProfilePinned(profileName, pinnedProfiles)) return '';
-    if (pinnedProfiles.length >= MAX_PINNED_PROFILES) {
-      return `Maximum ${MAX_PINNED_PROFILES} pinned profiles`;
-    }
-    return '';
-  };
+  const getShotPinDisabledReason = shotMeta =>
+    getShotPinDisabledReasonText(shotMeta, shotKeyToCanonicalProfile, pinnedShotsByProfile);
 
-  const getShotPinDisabledReason = shotMeta => {
-    const bucketKey = getCanonicalShotProfilePinKey(shotMeta) || getShotPinBucketKey(shotMeta);
-    if (isShotPinned(shotMeta, bucketKey, pinnedShotsByProfile)) return '';
-
-    const pinnedCount = (pinnedShotsByProfile[bucketKey] || []).length;
-    if (pinnedCount >= MAX_PINNED_SHOTS_PER_PROFILE) {
-      return bucketKey === PINNED_NO_PROFILE_BUCKET
-        ? `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile`
-        : `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile`;
-    }
-
-    return '';
-  };
-
-  const dateBasisWarningState = useMemo(() => {
-    let missingShotTimestampCount = 0;
-    let uploadFallbackCount = 0;
-    let noUsableDateCount = 0;
-
-    for (const shot of rawShotCandidates || []) {
-      const shotTs = resolveShotEffectiveTimestampMs(shot, 'shot');
-      if (Number.isFinite(shotTs)) continue;
-
-      missingShotTimestampCount += 1;
-      const uploadTs = resolveShotEffectiveTimestampMs(shot, 'upload');
-      if (Number.isFinite(uploadTs)) uploadFallbackCount += 1;
-      else noUsableDateCount += 1;
-    }
-
-    // The warning is shown whenever the dataset contains missing shot timestamps,
-    // even if no date filter is currently active.
-    const showDateBasisWarning = missingShotTimestampCount > 0;
-    let dateBasisWarningMessage = null;
-
-    if (showDateBasisWarning) {
-      if (uploadFallbackCount > 0 && noUsableDateCount > 0) {
-        dateBasisWarningMessage =
-          'Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering.';
-      } else if (uploadFallbackCount > 0) {
-        dateBasisWarningMessage =
-          'Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only).';
-      } else {
-        dateBasisWarningMessage =
-          'Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available.';
-      }
-    }
-
-    return {
-      showDateBasisWarning,
-      dateBasisWarningMessage,
-      missingShotTimestampCount,
-      uploadFallbackCount,
-      noUsableDateCount,
-    };
-  }, [rawShotCandidates]);
+  const dateBasisWarningState = useMemo(
+    () => buildDateBasisWarningState(rawShotCandidates),
+    [rawShotCandidates],
+  );
 
   useEffect(() => {
     if (!metadataLoaded) return;
@@ -687,60 +813,17 @@ export function StatisticsView({ initialContext }) {
   const visualDateTo = useMemo(() => parseDateInputMs(dateToLocal, 'end'), [dateToLocal]);
 
   // Stage 1 filtering: date + DSL only. This drives visible selection scopes and parse feedback.
-  const baseFilterState = useMemo(() => {
-    const parseErrors = [...compiledDslFilter.errors];
-    const parseWarnings = [...compiledDslFilter.warnings];
-
-    if (visualDateFrom.error) {
-      parseErrors.push({
-        code: 'visual_date_from_invalid',
-        message: visualDateFrom.error,
-      });
-    }
-    if (visualDateTo.error) {
-      parseErrors.push({
-        code: 'visual_date_to_invalid',
-        message: visualDateTo.error,
-      });
-    }
-
-    if (
-      Number.isFinite(visualDateFrom.valueMs) &&
-      Number.isFinite(visualDateTo.valueMs) &&
-      visualDateFrom.valueMs > visualDateTo.valueMs
-    ) {
-      parseErrors.push({
-        code: 'visual_date_range_invalid',
-        message: 'Date range invalid: From is after To.',
-      });
-    }
-
-    if (parseErrors.length > 0) {
-      return {
-        filteredShots: [],
-        count: null,
-        parseErrors,
-        parseWarnings,
-      };
-    }
-    const filteredShots = (rawShotCandidates || []).filter(shot => {
-      if (Number.isFinite(visualDateFrom.valueMs) || Number.isFinite(visualDateTo.valueMs)) {
-        const ts = resolveShotEffectiveTimestampMs(shot, dateBasisMode);
-        if (!Number.isFinite(ts)) return false;
-        if (Number.isFinite(visualDateFrom.valueMs) && ts < visualDateFrom.valueMs) return false;
-        if (Number.isFinite(visualDateTo.valueMs) && ts > visualDateTo.valueMs) return false;
-      }
-
-      return compiledDslFilter.predicate(shot);
-    });
-
-    return {
-      filteredShots,
-      count: filteredShots.length,
-      parseErrors,
-      parseWarnings,
-    };
-  }, [compiledDslFilter, dateBasisMode, rawShotCandidates, visualDateFrom, visualDateTo]);
+  const baseFilterState = useMemo(
+    () =>
+      buildBaseFilterState({
+        compiledDslFilter,
+        visualDateFrom,
+        visualDateTo,
+        dateBasisMode,
+        rawShotCandidates,
+      }),
+    [compiledDslFilter, dateBasisMode, rawShotCandidates, visualDateFrom, visualDateTo],
+  );
 
   const hasBaseParseErrors = baseFilterState.parseErrors.length > 0;
   const selectionScopeShots = useMemo(
@@ -809,7 +892,9 @@ export function StatisticsView({ initialContext }) {
       (selectionScopeShots || [])
         .map(shot => {
           const baseItem = buildShotSelectionItem(shot, dateBasisMode);
-          const pinBucketKey = getCanonicalShotProfilePinKey(shot) || getShotPinBucketKey(shot);
+          const pinBucketKey =
+            getCanonicalShotProfilePinKeyFromMap(shot, shotKeyToCanonicalProfile) ||
+            getShotPinBucketKey(shot);
           return {
             ...baseItem,
             shotMeta: shot,
@@ -823,7 +908,7 @@ export function StatisticsView({ initialContext }) {
       selectionScopeShots,
       dateBasisMode,
       pinnedShotsByProfile,
-      getCanonicalShotProfilePinKey,
+      shotKeyToCanonicalProfile,
       getShotPinDisabledReason,
     ],
   );
@@ -862,7 +947,9 @@ export function StatisticsView({ initialContext }) {
       byProfileEligibleShots
         .map(shot => {
           const baseItem = buildShotSelectionItem(shot, dateBasisMode);
-          const pinBucketKey = getCanonicalShotProfilePinKey(shot) || getShotPinBucketKey(shot);
+          const pinBucketKey =
+            getCanonicalShotProfilePinKeyFromMap(shot, shotKeyToCanonicalProfile) ||
+            getShotPinBucketKey(shot);
           return {
             ...baseItem,
             shotMeta: shot,
@@ -876,7 +963,7 @@ export function StatisticsView({ initialContext }) {
       byProfileEligibleShots,
       dateBasisMode,
       pinnedShotsByProfile,
-      getCanonicalShotProfilePinKey,
+      shotKeyToCanonicalProfile,
       getShotPinDisabledReason,
     ],
   );
@@ -920,65 +1007,17 @@ export function StatisticsView({ initialContext }) {
   };
 
   // Stage 2 filtering: apply mode-specific profile/shot selections on top of the base filter.
-  const candidateFilterState = useMemo(() => {
-    const parseErrors = [...baseFilterState.parseErrors];
-    const parseWarnings = [...baseFilterState.parseWarnings];
-
-    if (parseErrors.length > 0) {
-      return {
-        filteredShots: [],
-        count: null,
-        parseErrors,
-        parseWarnings,
-      };
-    }
-
-    if (mode === 'profile' && selectedProfileNames.length === 0) {
-      return {
-        filteredShots: [],
-        count: 0,
-        parseErrors,
-        parseWarnings,
-      };
-    }
-
-    if (mode === 'shots' && selectedShotKeys.length === 0) {
-      return {
-        filteredShots: [],
-        count: 0,
-        parseErrors,
-        parseWarnings,
-      };
-    }
-
-    const selectedProfileSet = new Set(
-      selectedProfileNames.map(name => cleanName(name).toLowerCase()),
-    );
-    const selectedShotKeySetLocal = new Set(selectedShotKeys);
-
-    const filteredShots = (baseFilterState.filteredShots || []).filter(shot => {
-      const shotKey = getShotSelectionKey(shot);
-      if (!shotKey) return false;
-
-      if (mode === 'profile') {
-        const canonical = shotKeyToCanonicalProfile.get(shotKey);
-        const profileKey = canonical ? cleanName(canonical).toLowerCase() : '';
-        if (!selectedProfileSet.has(profileKey)) return false;
-        if (!selectedShotKeySetLocal.has(shotKey)) return false;
-      } else if (mode === 'shots') {
-        if (!selectedShotKeySetLocal.has(shotKey)) return false;
-      }
-
-      return true;
-    });
-
-    return {
-      filteredShots,
-      count: filteredShots.length,
-      parseErrors,
-      parseWarnings,
-    };
-  }, [baseFilterState, mode, selectedProfileNames, selectedShotKeys, shotKeyToCanonicalProfile]);
+  const candidateFilterState = useMemo(
+    () =>
+      buildCandidateFilterState({
+        baseFilterState,
+        mode,
+        selectedProfileNames,
+        selectedShotKeys,
+        shotKeyToCanonicalProfile,
+      }),
+    [baseFilterState, mode, selectedProfileNames, selectedShotKeys, shotKeyToCanonicalProfile],
+  );
 
   const dateInputPreviewRange = useMemo(() => {
     if (dateFromLocal || dateToLocal) {
