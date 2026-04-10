@@ -9,6 +9,7 @@ void NimBLEClientController::initClient() {
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
     NimBLEDevice::setMTU(128);
     client = NimBLEDevice::createClient();
+    scanner = NimBLEDevice::getScan();
     if (client == nullptr) {
         ESP_LOGE(LOG_TAG, "Failed to create BLE client");
         return;
@@ -17,14 +18,19 @@ void NimBLEClientController::initClient() {
 
     // Scan for BLE Server
     scan();
+    xTaskCreate(loopTask, "NimBLEClientController::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
 }
 
 void NimBLEClientController::scan() {
-    NimBLEScan *pBLEScan = NimBLEDevice::getScan();
-    pBLEScan->clearDuplicateCache();
-    pBLEScan->setAdvertisedDeviceCallbacks(this); // Use this class as the callback handler
-    pBLEScan->setActiveScan(true);
-    pBLEScan->start(BLE_SCAN_DURATION_SECONDS, nullptr, false);
+    readyForConnection = false;
+    scanner->clearDuplicateCache();
+    scanner->setAdvertisedDeviceCallbacks(this, true);
+    scanner->setInterval(2000);
+    scanner->setWindow(100);
+    scanner->setMaxResults(0);
+    scanner->setDuplicateFilter(false);
+    scanner->setActiveScan(true);
+    scanner->start(0, nullptr, false); // Set to 0 for continuous
 }
 
 void NimBLEClientController::tare() {
@@ -51,6 +57,8 @@ void NimBLEClientController::registerVolumetricMeasurementCallback(const float_c
 
 void NimBLEClientController::registerTofMeasurementCallback(const int_callback_t &callback) { tofMeasurementCallback = callback; }
 
+void NimBLEClientController::registerDisconnectCallback(const void_callback_t &callback) { disconnectCallback = callback; }
+
 std::string NimBLEClientController::readInfo() const {
     if (infoChar != nullptr && infoChar->canRead()) {
         return infoChar->readValue();
@@ -62,21 +70,20 @@ bool NimBLEClientController::connectToServer() {
     ESP_LOGI(LOG_TAG, "Connecting to advertised device");
 
     unsigned int tries = 0;
-    while (!client->isConnected()) {
-        if (!client->connect(NimBLEAddress(serverDevice->getAddress()))) {
-            ESP_LOGE(LOG_TAG, "Failed connecting to BLE server. Retrying...");
-        }
-
-        tries++;
-
+    do {
         if (tries >= MAX_CONNECT_RETRIES) {
             ESP_LOGE(LOG_TAG, "Connection timeout! Unable to connect to BLE server.");
             scan();
             return false; // Exit the connection attempt if timed out
         }
 
-        delay(500); // Add a small delay to avoid busy-waiting
-    }
+        if (!client->connect(NimBLEAddress(serverDevice->getAddress()))) {
+            ESP_LOGE(LOG_TAG, "Failed connecting to BLE server. Retrying...");
+            delay(500); // Add a small delay to avoid busy-waiting
+        }
+
+        tries++;
+    } while (!client->isConnected());
     client->updateConnParams(6, 8, 0, 400);
 
     ESP_LOGI(LOG_TAG, "Successfully connected to BLE server");
@@ -85,6 +92,7 @@ bool NimBLEClientController::connectToServer() {
     NimBLERemoteService *pRemoteService = client->getService(NimBLEUUID(SERVICE_UUID));
     if (pRemoteService == nullptr) {
         ESP_LOGE(LOG_TAG, "Error getting remote service");
+        scan();
         return false;
     }
 
@@ -151,6 +159,13 @@ bool NimBLEClientController::connectToServer() {
     return true;
 }
 
+void NimBLEClientController::loop() {
+    if (!readyForConnection && !client->isConnected() && !scanner->isScanning()) {
+        ESP_LOGI("NimBLEClientController", "Scan interrupted. Restarting...");
+        scan();
+    }
+}
+
 void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure,
                                                        float flow) {
     if (client->isConnected() && outputControlChar != nullptr) {
@@ -215,7 +230,7 @@ void NimBLEClientController::sendAutotune(int testTime, int samples) {
 
 bool NimBLEClientController::isReadyForConnection() const { return readyForConnection; }
 
-bool NimBLEClientController::isConnected() { return client->isConnected(); }
+bool NimBLEClientController::isConnected() { return client != nullptr && client->isConnected(); }
 
 // BLEAdvertisedDeviceCallbacks override
 void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
@@ -226,7 +241,7 @@ void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) 
         ESP_LOGI(LOG_TAG, "Found BLE service. Checking for ID...");
         if (advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))) {
             ESP_LOGI(LOG_TAG, "Found target BLE device. Connecting...");
-            NimBLEDevice::getScan()->stop(); // Stop scanning once we find the correct device
+            scanner->stop();
             serverDevice = advertisedDevice;
             readyForConnection = true;
         }
@@ -235,6 +250,30 @@ void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) 
 
 void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
     ESP_LOGI(LOG_TAG, "Disconnected from server, trying to reconnect...");
+    tempControlChar = nullptr;
+    pumpControlChar = nullptr;
+    valveControlChar = nullptr;
+    altControlChar = nullptr;
+    tempReadChar = nullptr;
+    pingChar = nullptr;
+    pidControlChar = nullptr;
+    pumpModelCoeffsChar = nullptr;
+    errorChar = nullptr;
+    autotuneChar = nullptr;
+    autotuneResultChar = nullptr;
+    brewBtnChar = nullptr;
+    steamBtnChar = nullptr;
+    infoChar = nullptr;
+    sensorChar = nullptr;
+    outputControlChar = nullptr;
+    pressureScaleChar = nullptr;
+    volumetricMeasurementChar = nullptr;
+    volumetricTareChar = nullptr;
+    ledControlChar = nullptr;
+    tofMeasurementChar = nullptr;
+    if (disconnectCallback != nullptr) {
+        disconnectCallback();
+    }
     scan();
 }
 
@@ -309,5 +348,14 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         if (tofMeasurementCallback != nullptr) {
             tofMeasurementCallback(value);
         }
+    }
+}
+
+void NimBLEClientController::loopTask(void *arg) {
+    TickType_t lastWake = xTaskGetTickCount();
+    auto *controller = static_cast<NimBLEClientController *>(arg);
+    while (true) {
+        controller->loop();
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(5000));
     }
 }

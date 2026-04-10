@@ -50,6 +50,8 @@ extern lv_obj_t *ui_BrewScreen_upDurationButton;
 extern void ui_event_BrewScreen_downDurationButton(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_downDurationButton;
 extern lv_obj_t *ui_BrewScreen_Image4;
+extern void ui_event_BrewScreen_byTimeButton(lv_event_t *e);
+extern lv_obj_t *ui_BrewScreen_byTimeButton;
 extern void ui_event_BrewScreen_saveButton(lv_event_t *e);
 extern lv_obj_t *ui_BrewScreen_saveButton;
 extern void ui_event_BrewScreen_acceptButton(lv_event_t *e);

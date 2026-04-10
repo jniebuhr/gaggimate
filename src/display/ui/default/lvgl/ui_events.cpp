@@ -18,13 +18,25 @@ void onBrewCancel(lv_event_t *e) {
 
 void onBrewStart(lv_event_t *e) { controller.activate(); }
 
-void onBrewTempLower(lv_event_t *e) { controller.lowerTemp(); }
+void onBrewTempLower(lv_event_t *e) {
+    controller.getUI()->markProfileDirty();
+    controller.lowerTemp();
+}
 
-void onBrewTempRaise(lv_event_t *e) { controller.raiseTemp(); }
+void onBrewTempRaise(lv_event_t *e) {
+    controller.getUI()->markProfileDirty();
+    controller.raiseTemp();
+}
 
-void onBrewTimeLower(lv_event_t *e) { controller.lowerBrewTarget(); }
+void onBrewTimeLower(lv_event_t *e) {
+    controller.getUI()->markProfileDirty();
+    controller.lowerBrewTarget();
+}
 
-void onBrewTimeRaise(lv_event_t *e) { controller.raiseBrewTarget(); }
+void onBrewTimeRaise(lv_event_t *e) {
+    controller.getUI()->markProfileDirty();
+    controller.raiseBrewTarget();
+}
 
 void onSteamTempLower(lv_event_t *e) { controller.lowerTemp(); }
 
@@ -49,6 +61,10 @@ void onSteamScreen(lv_event_t *e) {
 }
 
 void onWakeup(lv_event_t *e) {
+    if (controller.isUpdating() || controller.isErrorState() || controller.isAutotuning() ||
+        !controller.getClientController()->isConnected()) {
+        return;
+    }
     controller.getUI()->changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
     controller.deactivate();
     controller.setMode(MODE_BREW);
@@ -75,15 +91,7 @@ void onGrindScreen(lv_event_t *e) {
     controller.setMode(MODE_GRIND);
 }
 
-void onVolumetricClick(lv_event_t *e) {
-    // Only execute click if hold wasn't triggered
-    if (!volumetricHoldTriggered) {
-        controller.onTargetToggle();
-        controller.getUI()->markDirty();
-    }
-    // Reset the hold flag for next interaction
-    volumetricHoldTriggered = false;
-}
+void onVolumetricClick(lv_event_t *e) {}
 
 void onPreviousProfile(lv_event_t *e) { controller.getUI()->onPreviousProfile(); }
 
@@ -120,6 +128,10 @@ void onBrewScreenLoad(lv_event_t *e) {
     lv_obj_set_ext_click_area(ui_BrewScreen_startButton, 25);
     lv_obj_set_ext_click_area(ui_BrewScreen_profileSelectBtn, 25);
     lv_obj_set_ext_click_area(ui_BrewScreen_ImgButton5, 20);
+    lv_obj_set_ext_click_area(ui_BrewScreen_upDurationButton, 15);
+    lv_obj_set_ext_click_area(ui_BrewScreen_downDurationButton, 15);
+    lv_obj_set_ext_click_area(ui_BrewScreen_upTempButton, 15);
+    lv_obj_set_ext_click_area(ui_BrewScreen_downTempButton, 15);
 }
 
 void onSimpleProcessScreenLoad(lv_event_t *e) {
@@ -145,6 +157,7 @@ void onProfileSettings(lv_event_t *e) { controller.getUI()->changeBrewScreenMode
 
 void onProfileSave(lv_event_t *e) {
     controller.onProfileSave();
+    controller.getUI()->markProfileClean();
     controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew);
 }
 
@@ -152,6 +165,7 @@ void onProfileAccept(lv_event_t *e) { controller.getUI()->changeBrewScreenMode(B
 
 void onProfileSaveAsNew(lv_event_t *e) {
     controller.onProfileSaveAsNew();
+    controller.getUI()->markProfileClean();
     controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew);
 }
 
@@ -162,3 +176,5 @@ void onVolumetricHold(lv_event_t *e) {
     controller.getClientController()->tare();
     BLEScales.tare();
 }
+
+void onVolumetricDelete(lv_event_t *e) { controller.getUI()->onVolumetricDelete(); }

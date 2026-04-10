@@ -452,38 +452,37 @@ const ProcessControls = props => {
       )}
 
       <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {((brew && !active && !finished && status.value.volumetricAvailable) ||
-          (grind &&
-            showGrindTab &&
-            !active &&
-            !finished &&
-            isGrindAvailable &&
-            status.value.volumetricAvailable)) && (
-          <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
-            <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
-                (brew && !brewTarget) || (grind && status.value.grindTarget === 0)
-                  ? 'bg-primary text-primary-content font-medium'
-                  : 'text-base-content/60 hover:text-base-content'
-              }`}
-              onClick={() => changeTarget(0)}
-            >
-              <FontAwesomeIcon icon={faClock} />
-              <span className='ml-1'>Time</span>
-            </button>
-            <button
-              className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
-                (brew && brewTarget) || (grind && status.value.grindTarget === 1)
-                  ? 'bg-primary text-primary-content font-medium'
-                  : 'text-base-content/60 hover:text-base-content'
-              }`}
-              onClick={() => changeTarget(1)}
-            >
-              <FontAwesomeIcon icon={faWeightScale} />
-              <span className='ml-1'>Weight</span>
-            </button>
-          </div>
-        )}
+        {grind &&
+          showGrindTab &&
+          !active &&
+          !finished &&
+          isGrindAvailable &&
+          status.value.volumetricAvailable && (
+            <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
+              <button
+                className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
+                  (brew && !brewTarget) || (grind && status.value.grindTarget === 0)
+                    ? 'bg-primary text-primary-content font-medium'
+                    : 'text-base-content/60 hover:text-base-content'
+                }`}
+                onClick={() => changeTarget(0)}
+              >
+                <FontAwesomeIcon icon={faClock} />
+                <span className='ml-1'>Time</span>
+              </button>
+              <button
+                className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
+                  (brew && brewTarget) || (grind && status.value.grindTarget === 1)
+                    ? 'bg-primary text-primary-content font-medium'
+                    : 'text-base-content/60 hover:text-base-content'
+                }`}
+                onClick={() => changeTarget(1)}
+              >
+                <FontAwesomeIcon icon={faWeightScale} />
+                <span className='ml-1'>Weight</span>
+              </button>
+            </div>
+          )}
         {/* Controls for different modes */}
         {mode === 1 && (
           <div className='flex flex-col items-center gap-4 space-y-4'>

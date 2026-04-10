@@ -29,9 +29,11 @@ export default function VisualizerUploadModal({
       // Save credentials to localStorage if requested
       if (rememberCredentials) {
         localStorage.setItem('visualizer_username', username.trim());
+        localStorage.setItem('visualizer_password', password);
         localStorage.setItem('visualizer_remember', 'true');
       } else {
         localStorage.removeItem('visualizer_username');
+        localStorage.removeItem('visualizer_password');
         localStorage.removeItem('visualizer_remember');
       }
 
@@ -57,11 +59,15 @@ export default function VisualizerUploadModal({
   useEffect(() => {
     if (isOpen) {
       const savedUsername = localStorage.getItem('visualizer_username');
+      const savedPassword = localStorage.getItem('visualizer_password');
       const savedRemember = localStorage.getItem('visualizer_remember') === 'true';
 
       if (savedRemember && savedUsername) {
         setUsername(savedUsername);
         setRememberCredentials(true);
+        if (savedPassword) {
+          setPassword(savedPassword);
+        }
       }
     }
   }, [isOpen]);
@@ -160,7 +166,7 @@ export default function VisualizerUploadModal({
                 className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50'
               />
               <label htmlFor='remember' className='ml-2 text-sm text-gray-600 dark:text-gray-300'>
-                Remember username
+                Remember credentials
               </label>
             </div>
 

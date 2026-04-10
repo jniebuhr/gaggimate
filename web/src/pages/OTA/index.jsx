@@ -249,6 +249,32 @@ export function OTA() {
               </div>
             )}
 
+            {formData.heapTotal !== undefined && (
+              <div className='flex flex-col space-y-2'>
+                <label className='text-sm font-medium'>Memory</label>
+                <div className='flex flex-col gap-1'>
+                  <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+                    <div
+                      className='bg-primary h-full transition-all'
+                      style={{
+                        width: `${((formData.heapTotal - formData.heapFree) / formData.heapTotal) * 100 || 0}%`,
+                      }}
+                    />
+                  </div>
+                  <div className='text-xs opacity-75'>
+                    {((formData.heapTotal - formData.heapFree || 0) / 1024).toFixed(1)} kB /{' '}
+                    {(formData.heapTotal / 1024).toFixed(1)} kB (
+                    {(
+                      ((formData.heapTotal - formData.heapFree) / formData.heapTotal) *
+                      100
+                    ).toFixed(2)}
+                    %) (Fragmentation:{' '}
+                    {(100 - (formData.heapLargest * 100) / formData.heapFree).toFixed(2)}%)
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className='alert alert-warning'>
               <span>
                 Make sure to backup your profiles from the profile screen before updating the
