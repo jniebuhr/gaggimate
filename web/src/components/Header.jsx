@@ -21,11 +21,11 @@ const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
 function HeaderItem(props) {
   const { path } = useLocation();
   let className =
-    'btn btn-sm justify-start gap-3 w-full rounded-full border border-transparent bg-transparent px-3 text-base-content/80 hover:border-base-content/10 hover:bg-base-content/5 hover:text-base-content focus-visible:border-primary/30 focus-visible:bg-primary/10 focus-visible:text-base-content focus-visible:outline-none';
+    'btn btn-sm h-10 justify-start gap-3 w-full rounded-xl border border-transparent bg-transparent px-3 text-base-content/80 hover:border-base-content/10 hover:bg-base-content/5 hover:text-base-content focus-visible:border-primary/30 focus-visible:bg-primary/10 focus-visible:text-base-content focus-visible:outline-none';
 
   if (path === props.link) {
     className =
-      'btn btn-sm justify-start gap-3 w-full rounded-full border border-primary/10 bg-primary px-3 text-primary-content hover:bg-primary hover:text-primary-content shadow-sm focus-visible:outline-none';
+      'btn btn-sm h-10 justify-start gap-3 w-full rounded-xl border border-primary/20 bg-primary px-3 text-primary-content hover:bg-primary hover:text-primary-content shadow-[0_12px_24px_-16px_rgba(0,0,0,0.9)] focus-visible:outline-none';
   }
 
   return (
@@ -70,7 +70,7 @@ export function Header() {
   return (
     <header id='page-header' className='sticky top-0 z-50'>
       <div className='mx-auto px-4 pt-3 lg:px-8 xl:container'>
-        <div className='rounded-[1.75rem] border border-base-300/70 bg-base-100/80 px-4 py-3 shadow-lg shadow-base-content/5 backdrop-blur-xl lg:px-6'>
+        <div className='rounded-2xl border border-base-300/65 bg-base-100/90 px-4 py-3 shadow-[0_26px_60px_-42px_rgba(0,0,0,0.9)] backdrop-blur-xl lg:px-6'>
           <div className='flex items-center justify-between gap-4'>
             <a href='/' className='inline-flex items-center gap-3' onClick={() => openCb(false)}>
               <span className='grid size-10 place-items-center rounded-2xl bg-primary text-primary-content shadow-sm'>
@@ -87,7 +87,7 @@ export function Header() {
             </a>
 
             <div className='hidden min-w-0 items-center gap-2 lg:flex'>
-              <div className='status-live-pill rounded-full border border-base-300/70 bg-base-100/70 px-3 py-2 shadow-sm'>
+              <div className='status-live-pill rounded-2xl border border-base-300/65 bg-base-100/95 px-3 py-2 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]'>
                 <div className='flex items-center gap-2'>
                   <span
                     className={`status-live-dot inline-flex size-2.5 rounded-full ${connected ? 'bg-success shadow-[0_0_0_5px_rgba(52,211,153,0.12)]' : 'bg-error shadow-[0_0_0_5px_rgba(248,113,113,0.12)]'}`}
@@ -102,13 +102,13 @@ export function Header() {
                   <span>{modeLabel}</span>
                 </div>
               </div>
-              <div className='status-live-pill max-w-[12rem] rounded-full border border-base-300/70 bg-base-100/70 px-3 py-2 text-right shadow-sm'>
+              <div className='status-live-pill max-w-[12rem] rounded-2xl border border-base-300/65 bg-base-100/95 px-3 py-2 text-right shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]'>
                 <div className='text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-base-content/55'>
                   Active profile
                 </div>
                 <div className='truncate text-sm font-semibold'>{profileLabel}</div>
               </div>
-              <div className='status-live-pill max-w-[12rem] rounded-full border border-base-300/70 bg-base-100/70 px-3 py-2 text-right shadow-sm'>
+              <div className='status-live-pill max-w-[12rem] rounded-2xl border border-base-300/65 bg-base-100/95 px-3 py-2 text-right shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]'>
                 <div className='text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-base-content/55'>
                   Active bean
                 </div>
@@ -167,7 +167,7 @@ export function Header() {
             id='mobile-navigation'
             className={`${open ? 'grid' : 'hidden'} mt-4 max-h-[calc(100vh-8.5rem)] gap-3 overflow-y-auto pb-1 lg:hidden`}
           >
-            <div className='space-y-2 rounded-2xl border border-base-300/70 bg-base-100/90 p-3'>
+            <div className='space-y-2 rounded-2xl border border-base-300/65 bg-base-100/95 p-3'>
               <div className='px-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-base-content/45'>
                 Control
               </div>
@@ -191,7 +191,7 @@ export function Header() {
                 onClick={() => openCb(false)}
               />
             </div>
-            <div className='space-y-2 rounded-2xl border border-base-300/70 bg-base-100/90 p-3'>
+            <div className='space-y-2 rounded-2xl border border-base-300/65 bg-base-100/95 p-3'>
               <div className='px-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-base-content/45'>
                 Review
               </div>

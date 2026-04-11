@@ -42,10 +42,10 @@ export function App() {
 
             <main id='main-content' className='flex-1'>
               <div className='mx-auto w-full px-4 py-4 lg:px-8 lg:py-6 xl:container'>
-                <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
+                <div className='grid grid-cols-1 gap-5 lg:grid-cols-12'>
                   <Navigation />
                   <div className='lg:col-span-10'>
-                    <div className='rounded-[2rem] border border-base-300/70 bg-base-100/65 p-4 shadow-2xl shadow-base-content/5 backdrop-blur-xl lg:p-6'>
+                    <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
                       <ErrorBoundary>
                         <Router>
                           <Route path='/' component={Home} />

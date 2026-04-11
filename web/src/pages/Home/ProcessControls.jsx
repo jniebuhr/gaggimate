@@ -40,13 +40,13 @@ function SelectorCard({
   disabled = false,
 }) {
   return (
-    <label className='block rounded-[1.5rem] border border-base-300/70 bg-base-100/70 p-4 text-left shadow-sm backdrop-blur'>
+    <label className='block rounded-2xl border border-base-300/60 bg-base-100/90 p-4 text-left shadow-[0_12px_30px_-24px_rgba(0,0,0,0.85)] backdrop-blur'>
       <div className='mb-3 flex items-center gap-2 text-sm text-base-content/60'>
         <FontAwesomeIcon icon={icon} className='text-base' />
         <span>{label}</span>
       </div>
       <select
-        className='select select-bordered w-full rounded-2xl border-base-300/80 bg-base-100/80 text-base font-semibold'
+        className='select select-bordered w-full rounded-xl border-base-300/80 bg-base-100 text-base font-semibold'
         value={value}
         onChange={onChange}
         disabled={disabled || loading}
@@ -497,8 +497,8 @@ const ProcessControls = props => {
 
   return (
     <div className={`flex min-h-[250px] flex-col justify-between lg:min-h-[350px]`}>
-      <div className='mb-2 flex justify-center'>
-        <div className='bg-base-300 flex w-full max-w-md rounded-full p-1'>
+      <div className='mb-3 flex justify-center'>
+        <div className='bg-base-300/90 flex w-full max-w-md rounded-xl border border-base-300/65 p-1'>
           {[
             { id: 0, label: 'Standby' },
             { id: 1, label: 'Brew' },
@@ -508,9 +508,9 @@ const ProcessControls = props => {
           ].map(tab => (
             <button
               key={tab.id}
-              className={`flex-1 cursor-pointer rounded-full px-1 py-1 text-sm transition-all duration-200 sm:px-4 lg:px-2 lg:py-2 ${
+              className={`flex-1 cursor-pointer rounded-lg px-1 py-1.5 text-sm transition-all duration-200 sm:px-4 lg:px-2 lg:py-2 ${
                 mode === tab.id
-                  ? 'bg-primary text-primary-content font-medium'
+                  ? 'bg-primary text-primary-content font-medium shadow-[0_12px_24px_-16px_rgba(0,0,0,0.9)]'
                   : 'text-base-content/60 hover:text-base-content'
               }`}
               onClick={() => changeMode(tab.id)}
@@ -672,11 +672,11 @@ const ProcessControls = props => {
           !finished &&
           isGrindAvailable &&
           status.value.volumetricAvailable && (
-            <div className='bg-base-300 flex w-full max-w-xs rounded-full p-1'>
+            <div className='bg-base-300/90 flex w-full max-w-xs rounded-xl border border-base-300/65 p-1'>
               <button
-                className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
+                className={`flex-1 cursor-pointer rounded-lg px-3 py-1.5 text-sm transition-all duration-200 lg:py-2 ${
                   (brew && !brewTarget) || (grind && status.value.grindTarget === 0)
-                    ? 'bg-primary text-primary-content font-medium'
+                    ? 'bg-primary text-primary-content font-medium shadow-[0_10px_22px_-16px_rgba(0,0,0,0.9)]'
                     : 'text-base-content/60 hover:text-base-content'
                 }`}
                 onClick={() => changeTarget(0)}
@@ -685,9 +685,9 @@ const ProcessControls = props => {
                 <span className='ml-1'>Time</span>
               </button>
               <button
-                className={`flex-1 cursor-pointer rounded-full px-3 py-1 text-sm transition-all duration-200 lg:py-2 ${
+                className={`flex-1 cursor-pointer rounded-lg px-3 py-1.5 text-sm transition-all duration-200 lg:py-2 ${
                   (brew && brewTarget) || (grind && status.value.grindTarget === 1)
-                    ? 'bg-primary text-primary-content font-medium'
+                    ? 'bg-primary text-primary-content font-medium shadow-[0_10px_22px_-16px_rgba(0,0,0,0.9)]'
                     : 'text-base-content/60 hover:text-base-content'
                 }`}
                 onClick={() => changeTarget(1)}

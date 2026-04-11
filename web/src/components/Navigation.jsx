@@ -13,11 +13,11 @@ import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 
 function MenuItem(props) {
   let className =
-    'btn btn-sm justify-start gap-3 w-full rounded-full border border-transparent bg-transparent px-3 text-base-content/80 hover:border-base-content/10 hover:bg-base-content/5 hover:text-base-content focus-visible:border-primary/30 focus-visible:bg-primary/10 focus-visible:text-base-content focus-visible:outline-none';
+    'btn btn-sm h-10 justify-start gap-3 w-full rounded-xl border border-transparent bg-transparent px-3 text-base-content/78 hover:border-base-content/12 hover:bg-base-content/6 hover:text-base-content focus-visible:border-primary/30 focus-visible:bg-primary/10 focus-visible:text-base-content focus-visible:outline-none';
   const { path } = useLocation();
   if (props.active || path === props.link) {
     className =
-      'btn btn-sm justify-start gap-3 w-full rounded-full border border-primary/10 bg-primary px-3 text-primary-content hover:bg-primary hover:text-primary-content shadow-sm focus-visible:outline-none';
+      'btn btn-sm h-10 justify-start gap-3 w-full rounded-xl border border-primary/20 bg-primary/88 px-3 text-primary-content hover:bg-primary hover:text-primary-content shadow-[0_12px_24px_-16px_rgba(0,0,0,0.9)] focus-visible:outline-none';
   }
   return (
     <a href={props.link} className={className}>
@@ -35,9 +35,9 @@ function MenuItem(props) {
 export function Navigation(props) {
   return (
     <nav className='hidden lg:col-span-2 lg:block lg:sticky lg:top-28'>
-      <div className='max-h-[calc(100vh-8rem)] space-y-3 overflow-y-auto rounded-[1.75rem] border border-base-300/70 bg-base-100/80 p-4 shadow-lg shadow-base-content/5 backdrop-blur-xl'>
+      <div className='max-h-[calc(100vh-8rem)] space-y-4 overflow-y-auto rounded-2xl border border-base-300/65 bg-base-100/90 p-4 shadow-[0_26px_60px_-44px_rgba(0,0,0,0.9)] backdrop-blur-xl'>
         <div className='space-y-2'>
-          <div className='px-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-base-content/45'>
+          <div className='px-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-base-content/45'>
             Control
           </div>
           <MenuItem label='Dashboard' link='/' icon={faHome} />
@@ -46,7 +46,7 @@ export function Navigation(props) {
           <MenuItem label='Settings' link='/settings' icon={faCog} />
         </div>
         <div className='space-y-2'>
-          <div className='px-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-base-content/45'>
+          <div className='px-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-base-content/45'>
             Review
           </div>
           <MenuItem label='Profiles' link='/profiles' icon={faList} />

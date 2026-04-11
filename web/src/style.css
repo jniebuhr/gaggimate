@@ -629,16 +629,16 @@ body {
 
 :root {
   --app-background:
-    radial-gradient(circle at top left, rgba(234, 122, 47, 0.14), transparent 32%),
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 30%),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-base-200) 82%, transparent), var(--color-base-300));
+    radial-gradient(circle at -5% -10%, rgba(234, 122, 47, 0.16), transparent 34%),
+    radial-gradient(circle at 105% -8%, rgba(14, 165, 233, 0.14), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-base-200) 84%, transparent), var(--color-base-300));
   --app-overlay:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0, transparent 28%),
-    radial-gradient(circle at center, transparent 0, rgba(15, 23, 42, 0.02) 100%);
-  --app-overlay-opacity: 0.8;
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0, transparent 26%),
+    radial-gradient(circle at center, transparent 0, rgba(15, 23, 42, 0.04) 100%);
+  --app-overlay-opacity: 0.86;
   --app-shell-glow:
-    radial-gradient(circle at top left, rgba(234, 122, 47, 0.14), transparent 30%),
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.11), transparent 28%);
+    radial-gradient(circle at top left, rgba(234, 122, 47, 0.13), transparent 30%),
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 30%);
 }
 
 html[data-theme='amoled'] {
