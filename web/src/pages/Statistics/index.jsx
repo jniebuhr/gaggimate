@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
 import { StatisticsView } from './components/StatisticsView';
-import { parseStatisticsProfileRouteParams } from './utils/statisticsRoute';
+import {
+  normalizeStatisticsSourceSelection,
+  parseStatisticsProfileRouteParams,
+} from './utils/statisticsRoute';
 
 // Statistics entry page: merges deep-link context with transient session hints.
-// Route params stay canonical for source/profile selection, while session state
-// can still contribute one-off UI preferences like the initial detail tab.
+// Route params stay canonical for profile source/name, while session state can
+// carry extra one-off UI context like the current shot source and detail tab.
 export function StatisticsPage() {
   const { params } = useRoute();
   const [sessionInitialContext] = useState(() => {
@@ -22,11 +25,29 @@ export function StatisticsPage() {
   });
   const routeInitialContext = useMemo(() => parseStatisticsProfileRouteParams(params), [params]);
   const initialContext = useMemo(() => {
-    const baseContext = sessionInitialContext
-      ? { source: 'gaggimate', ...sessionInitialContext }
-      : { source: 'gaggimate' };
+    const sessionContext = sessionInitialContext || {};
+    const legacySource = normalizeStatisticsSourceSelection(sessionContext.source, '');
+    const baseContext = {
+      ...sessionContext,
+      shotSource: normalizeStatisticsSourceSelection(
+        sessionContext.shotSource || legacySource,
+        'gaggimate',
+      ),
+      profileSource: normalizeStatisticsSourceSelection(
+        sessionContext.profileSource || legacySource,
+        'gaggimate',
+      ),
+    };
+    baseContext.source = baseContext.profileSource;
 
-    return routeInitialContext ? { ...baseContext, ...routeInitialContext } : baseContext;
+    if (!routeInitialContext) return baseContext;
+
+    return {
+      ...baseContext,
+      ...routeInitialContext,
+      profileSource: routeInitialContext.source,
+      source: routeInitialContext.source,
+    };
   }, [routeInitialContext, sessionInitialContext]);
 
   return (
@@ -35,7 +56,7 @@ export function StatisticsPage() {
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Statistics</h2>
       </div>
 
-      <div className='container mx-auto max-w-7xl'>
+      <div className='w-full'>
         <StatisticsView initialContext={initialContext} />
       </div>
     </div>

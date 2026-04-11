@@ -797,6 +797,23 @@ export function ShotAnalyzer() {
     source: compareSecondaryProfile?.source,
     profileName: compareSecondaryShot?.profileName,
   });
+  const persistStatisticsInitialContext = ({
+    shotSource = currentShot?.source || 'both',
+    profileSource = currentProfile?.source || 'both',
+    profileName = currentProfileName,
+    preferredDetailSection = null,
+  } = {}) => {
+    const statsInitialContext = {
+      profileName,
+      shotSource,
+      profileSource,
+      source: profileSource,
+    };
+    if (preferredDetailSection) {
+      statsInitialContext.preferredDetailSection = preferredDetailSection;
+    }
+    sessionStorage.setItem('statsInitialContext', JSON.stringify(statsInitialContext));
+  };
   const referenceCompareEntry =
     currentShot && analysisResults
       ? {
@@ -837,7 +854,7 @@ export function ShotAnalyzer() {
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Deep Dive Shot Analyzer</h2>
       </div>
 
-      <div className='container mx-auto max-w-7xl'>
+      <div className='w-full'>
         {/* Library Panel (Always visible) */}
         <div className='mt-4'>
           <LibraryPanel
@@ -862,15 +879,11 @@ export function ShotAnalyzer() {
               setCurrentProfileName('No Profile Loaded');
               setCurrentProfileSelectionMode('none');
             }}
-            onShowStats={() => {
-              const statsInitialContext = {
-                profileName: currentProfileName,
-                source: 'both',
-              };
-              if (compareMode) {
-                statsInitialContext.preferredDetailSection = 'compare';
-              }
-              sessionStorage.setItem('statsInitialContext', JSON.stringify(statsInitialContext));
+            onShowStats={context => {
+              persistStatisticsInitialContext({
+                ...context,
+                preferredDetailSection: compareMode ? 'compare' : null,
+              });
             }}
             statsHref={statsHref}
             importMode={importMode}

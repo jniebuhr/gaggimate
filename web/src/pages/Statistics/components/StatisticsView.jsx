@@ -38,7 +38,10 @@ import {
   parseStatisticsQuery,
   resolveShotEffectiveTimestampMs,
 } from '../utils/statisticsSearchDsl';
-import { STATISTICS_SOURCE_FALLBACK } from '../utils/statisticsRoute';
+import {
+  normalizeStatisticsSourceSelection,
+  STATISTICS_SOURCE_FALLBACK,
+} from '../utils/statisticsRoute';
 
 // StatisticsView orchestrates metadata loading, filter state, and batch analysis runs.
 // StatisticsService remains pure; this component handles UI-specific selection semantics.
@@ -572,7 +575,8 @@ function StatisticsDetailSectionPanel({
 
 function useStatisticsMetadataState({
   apiService,
-  source,
+  shotSource,
+  profileSource,
   initialProfileName,
   setSelectedProfileNames,
   setSelectedShotKeys,
@@ -602,8 +606,8 @@ function useStatisticsMetadataState({
 
       try {
         const [shotList, profileList] = await Promise.all([
-          libraryService.getAllShots(source),
-          libraryService.getAllProfiles(source),
+          libraryService.getAllShots(shotSource),
+          libraryService.getAllProfiles(profileSource),
         ]);
 
         if (cancelled || loadId !== metaLoadIdRef.current) return;
@@ -628,11 +632,11 @@ function useStatisticsMetadataState({
     return () => {
       cancelled = true;
     };
-  }, [source, apiService, metadataReloadNonce]);
+  }, [shotSource, profileSource, apiService, metadataReloadNonce]);
 
   useEffect(() => {
     gmPrefillRetryCountRef.current = 0;
-  }, [source, initialProfileName]);
+  }, [profileSource, initialProfileName]);
 
   const availableProfiles = useMemo(() => getAvailableProfileNames(rawProfiles), [rawProfiles]);
   const normalizedAvailableProfilesMap = useMemo(() => {
@@ -724,7 +728,7 @@ function useStatisticsMetadataState({
   }, [availableProfiles, initialProfileName, metadataLoaded, setSelectedProfileNames]);
 
   useEffect(() => {
-    if (source !== 'gaggimate') return;
+    if (profileSource !== 'gaggimate') return;
     if (!initialProfileName) return;
     if (!metadataLoaded || metadataLoading || metadataError) return;
     if (initialProfilePresetAppliedRef.current) return;
@@ -738,7 +742,7 @@ function useStatisticsMetadataState({
 
     return () => clearTimeout(timer);
   }, [
-    source,
+    profileSource,
     initialProfileName,
     metadataLoaded,
     metadataLoading,
@@ -1100,7 +1104,8 @@ function useStatisticsSelectionSync({
   metadataLoaded,
   hasBaseParseErrors,
   visibleProfileIdSet,
-  source,
+  shotSource,
+  profileSource,
   selectedProfileNames,
   byProfileEligibleShotKeys,
   byProfileEligibleShotKeySet,
@@ -1132,7 +1137,8 @@ function useStatisticsSelectionSync({
 
     const signature = JSON.stringify({
       mode,
-      source,
+      shotSource,
+      profileSource,
       profiles: [...selectedProfileNames].sort((a, b) => a.localeCompare(b)),
     });
     const shouldSeedAll = profileModeShotSeedSignatureRef.current !== signature;
@@ -1149,7 +1155,8 @@ function useStatisticsSelectionSync({
     mode,
     metadataLoaded,
     hasBaseParseErrors,
-    source,
+    shotSource,
+    profileSource,
     selectedProfileNames,
     byProfileEligibleShotKeys,
     byProfileEligibleShotKeySet,
@@ -1547,12 +1554,18 @@ export function StatisticsView({ initialContext }) {
   const apiService = useContext(ApiServiceContext);
   const initialProfileName = getInitialProfileName(initialContext);
 
-  const [source, setSource] = useState(() => {
-    if (initialContext?.source === 'gaggimate' || initialContext?.source === 'browser') {
-      return initialContext.source;
-    }
-    return 'both';
-  });
+  const [shotSource, setShotSource] = useState(() =>
+    normalizeStatisticsSourceSelection(
+      initialContext?.shotSource || initialContext?.source,
+      'gaggimate',
+    ),
+  );
+  const [profileSource, setProfileSource] = useState(() =>
+    normalizeStatisticsSourceSelection(
+      initialContext?.profileSource || initialContext?.source,
+      'gaggimate',
+    ),
+  );
 
   const [mode, setMode] = useState(() => (initialProfileName ? 'profile' : 'all'));
 
@@ -1606,7 +1619,8 @@ export function StatisticsView({ initialContext }) {
     availableProfiles,
   } = useStatisticsMetadataState({
     apiService,
-    source,
+    shotSource,
+    profileSource,
     initialProfileName,
     setSelectedProfileNames,
     setSelectedShotKeys,
@@ -1662,7 +1676,8 @@ export function StatisticsView({ initialContext }) {
     metadataLoaded,
     hasBaseParseErrors,
     visibleProfileIdSet,
-    source,
+    shotSource,
+    profileSource,
     selectedProfileNames,
     byProfileEligibleShotKeys,
     byProfileEligibleShotKeySet,
@@ -1707,7 +1722,7 @@ export function StatisticsView({ initialContext }) {
 
       const prepareRunId = ++prepareRunIdRef.current;
       const nextRunId = `${Date.now()}-${prepareRunId}`;
-      const fallbackSource = getStatisticsFallbackSource(source);
+      const fallbackSource = getStatisticsFallbackSource(profileSource);
       const shotSnapshot = [...candidateFilterState.filteredShots];
       const profileSnapshot = [...rawProfiles];
       const orderedShotKeysSnapshot = [...selectedShotKeys];
@@ -1752,7 +1767,7 @@ export function StatisticsView({ initialContext }) {
     },
     [
       canRunStatistics,
-      source,
+      profileSource,
       candidateFilterState.filteredShots,
       rawProfiles,
       selectedShotKeys,
@@ -1843,10 +1858,10 @@ export function StatisticsView({ initialContext }) {
       <div className='bg-base-100/80 border-base-content/10 relative z-[80] rounded-xl border shadow-lg backdrop-blur-md lg:sticky lg:top-0'>
         <div className='px-1.5 py-1.5 sm:px-2 sm:py-2'>
           <StatisticsToolbar
-            source={source}
-            onSourceChange={value => {
-              setSource(value);
-            }}
+            shotSource={shotSource}
+            onShotSourceChange={setShotSource}
+            profileSource={profileSource}
+            onProfileSourceChange={setProfileSource}
             mode={mode}
             onModeChange={setMode}
             onGo={handleGo}

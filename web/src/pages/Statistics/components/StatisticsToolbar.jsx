@@ -93,6 +93,40 @@ function renderSourceSummary(option) {
   );
 }
 
+function renderCompactSourceSummary(option) {
+  if (!option) return null;
+  if (option.value === 'both') {
+    return (
+      <span className='inline-flex items-center gap-0.5'>
+        <SourceMarker source='gaggimate' variant='compact' />
+        <SourceMarker source='browser' variant='compact' />
+      </span>
+    );
+  }
+
+  return <SourceMarker source={option.value} variant='compact' />;
+}
+
+function renderCombinedSourceSummary({ shotOption, profileOption }) {
+  return (
+    <span className='inline-flex min-w-0 items-center gap-1.5'>
+      <span className='inline-flex min-w-0 items-center gap-1.5'>
+        <span className='shrink-0'>{renderCompactSourceSummary(shotOption)}</span>
+        <span className='text-base-content/70 min-w-0 truncate text-[11px] font-semibold'>
+          Shots
+        </span>
+      </span>
+      <span className='text-base-content/35 shrink-0'>·</span>
+      <span className='inline-flex min-w-0 items-center gap-1.5'>
+        <span className='shrink-0'>{renderCompactSourceSummary(profileOption)}</span>
+        <span className='text-base-content/70 min-w-0 truncate text-[11px] font-semibold'>
+          Profiles
+        </span>
+      </span>
+    </span>
+  );
+}
+
 function renderSourceOptionContent(option) {
   if (!option) return null;
   if (option.value === 'both') {
@@ -208,8 +242,10 @@ function formatCollapsedDateRangeText(startValue, endValue) {
 }
 
 export function StatisticsToolbar({
-  source,
-  onSourceChange,
+  shotSource,
+  onShotSourceChange,
+  profileSource,
+  onProfileSourceChange,
   mode,
   onModeChange,
   onGo,
@@ -282,7 +318,10 @@ export function StatisticsToolbar({
     candidateLabel = String(candidateCount);
     resetAriaCount = `${candidateCount} candidates`;
   }
-  const currentSourceOption = SOURCE_OPTIONS.find(opt => opt.value === source) || SOURCE_OPTIONS[0];
+  const currentShotSourceOption =
+    SOURCE_OPTIONS.find(opt => opt.value === shotSource) || SOURCE_OPTIONS[0];
+  const currentProfileSourceOption =
+    SOURCE_OPTIONS.find(opt => opt.value === profileSource) || SOURCE_OPTIONS[0];
   const currentModeOption = MODE_OPTIONS.find(opt => opt.value === mode) || MODE_OPTIONS[0];
   const hasDslQuery = !!String(query || '').trim();
   const shotSelectionItemMap = new Map((shotSelectionItems || []).map(item => [item.id, item]));
@@ -321,7 +360,7 @@ export function StatisticsToolbar({
     builtDateRangeEndMs,
   );
   const sourceTriggerClasses = getAnalyzerSurfaceTriggerClasses({
-    className: `flex h-9 min-h-0 w-[4.75rem] list-none items-center justify-between rounded-lg bg-transparent px-2 text-xs font-bold tracking-wide uppercase [&::-webkit-details-marker]:hidden ${getNeutralDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`,
+    className: `flex h-9 min-h-0 w-[15rem] max-w-full list-none items-center justify-between gap-2 rounded-lg bg-transparent px-2 text-xs font-bold [&::-webkit-details-marker]:hidden ${getNeutralDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`,
   });
   const modeTriggerClasses = getAnalyzerSurfaceTriggerClasses({
     className: `${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-[7rem] list-none justify-between rounded-lg px-2 text-sm font-semibold [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`,
@@ -637,34 +676,55 @@ export function StatisticsToolbar({
             >
               <summary
                 className={sourceTriggerClasses}
-                aria-label='Select source'
-                title='Select source'
+                aria-label='Select shot and profile sources'
+                title='Select shot and profile sources'
               >
-                <span className='truncate'>{renderSourceSummary(currentSourceOption)}</span>
+                <span className='min-w-0 flex-1 truncate text-left'>
+                  {renderCombinedSourceSummary({
+                    shotOption: currentShotSourceOption,
+                    profileOption: currentProfileSourceOption,
+                  })}
+                </span>
                 <FontAwesomeIcon icon={faChevronDown} className='-ml-0.5 text-[10px] opacity-70' />
               </summary>
 
               <div
-                className={`${STATISTICS_DROPDOWN_PANEL_CLASSES} w-40 p-1.5`}
+                className={`${STATISTICS_DROPDOWN_PANEL_CLASSES} w-[min(92vw,18rem)] p-2`}
                 style={STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE}
               >
-                <div className='grid gap-1'>
-                  {SOURCE_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      type='button'
-                      className={`flex h-9 min-h-0 items-center justify-between rounded-lg px-3 text-xs font-bold tracking-wide uppercase transition-colors ${getMenuItemClasses({ tone: 'neutral', isActive: source === opt.value })}`}
-                      onClick={e => {
-                        onSourceChange(opt.value);
-                        closeParentDetails(e.currentTarget);
-                      }}
-                      disabled={isBusy}
-                    >
-                      {renderSourceOptionContent(opt)}
-                      {source === opt.value && (
-                        <span className='text-[10px] opacity-70'>Active</span>
-                      )}
-                    </button>
+                <div className='grid gap-2'>
+                  {[
+                    {
+                      label: 'Shots',
+                      value: shotSource,
+                      onChange: onShotSourceChange,
+                    },
+                    {
+                      label: 'Profiles',
+                      value: profileSource,
+                      onChange: onProfileSourceChange,
+                    },
+                  ].map(group => (
+                    <div key={group.label} className='grid gap-1.5'>
+                      <div className='text-base-content/55 px-1 text-[10px] font-semibold tracking-wide'>
+                        {group.label}
+                      </div>
+                      <div className='grid grid-cols-3 gap-1'>
+                        {SOURCE_OPTIONS.map(opt => (
+                          <button
+                            key={`${group.label}-${opt.value}`}
+                            type='button'
+                            className={`flex h-9 min-h-0 items-center justify-center rounded-lg px-2 text-[11px] font-bold tracking-wide uppercase transition-colors ${getMenuItemClasses({ tone: 'neutral', isActive: group.value === opt.value })}`}
+                            onClick={() => {
+                              group.onChange(opt.value);
+                            }}
+                            disabled={isBusy}
+                          >
+                            {renderSourceOptionContent(opt)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

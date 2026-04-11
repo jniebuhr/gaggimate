@@ -498,9 +498,17 @@ export function LibraryPanel({
     profileItem => {
       if (!profileItem) return;
       try {
+        const currentAnalyzerShotSource =
+          currentShot?.source ||
+          secondaryShot?.source ||
+          getLibraryRequestSource(shotsSourceFilter) ||
+          'both';
+        const profileSource = profileItem.source || profileItem.src || 'both';
         const statsInitialContext = {
           profileName: profileItem.label || profileItem.name || '',
-          source: profileItem.source || profileItem.src || 'both',
+          shotSource: currentAnalyzerShotSource,
+          profileSource,
+          source: profileSource,
         };
         if (compareMode) {
           statsInitialContext.preferredDetailSection = 'compare';
@@ -510,7 +518,7 @@ export function LibraryPanel({
         // Ignore session storage issues and keep navigation working.
       }
     },
-    [compareMode],
+    [compareMode, currentShot?.source, secondaryShot?.source, shotsSourceFilter],
   );
 
   // Debounced search values to avoid re-fetching on every keystroke
@@ -1058,7 +1066,13 @@ export function LibraryPanel({
                 onShotPanelToggle={() => openLibraryForTarget('primaryShot')}
                 onProfilePanelToggle={() => openLibraryForTarget('primaryProfile')}
                 onImport={files => handleImport(files, { slot: 'primary' })}
-                onShowStats={onShowStats}
+                onShowStats={() =>
+                  onShowStats?.({
+                    shotSource: currentShot?.source || 'both',
+                    profileSource: currentProfile?.source || 'both',
+                    profileName: currentProfileName,
+                  })
+                }
                 statsHref={statsHref}
                 compareAvailable={shots.length > 0}
                 compareMode={compareMode}
@@ -1117,7 +1131,13 @@ export function LibraryPanel({
                     slot: currentShot ? 'secondary' : 'primary',
                   })
                 }
-                onShowStats={onShowStats}
+                onShowStats={() =>
+                  onShowStats?.({
+                    shotSource: secondaryShot?.source || currentShot?.source || 'both',
+                    profileSource: secondaryProfile?.source || 'both',
+                    profileName: secondaryProfileName,
+                  })
+                }
                 statsHref={secondaryStatsHref}
                 compareAvailable={false}
                 compareMode={compareMode}
@@ -1159,7 +1179,13 @@ export function LibraryPanel({
                 onShotPanelToggle={() => openLibraryForTarget('primaryShot')}
                 onProfilePanelToggle={() => openLibraryForTarget('primaryProfile')}
                 onImport={files => handleImport(files, { slot: 'primary' })}
-                onShowStats={onShowStats}
+                onShowStats={() =>
+                  onShowStats?.({
+                    shotSource: currentShot?.source || 'both',
+                    profileSource: currentProfile?.source || 'both',
+                    profileName: currentProfileName,
+                  })
+                }
                 statsHref={statsHref}
                 compareAvailable={shots.length > 0}
                 compareMode={compareMode}
