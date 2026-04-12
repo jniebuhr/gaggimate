@@ -98,8 +98,11 @@ COPY --from=node-builder /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 # Non-root user — UID defaults to 1000 (matches most CI runners).
 # Override at build time with: docker build --build-arg UID=$(id -u) ...
+# ubuntu:24.04 ships with a default 'ubuntu' user at UID 1000, so we
+# remove it first to avoid conflicts.
 ARG UID=1000
-RUN useradd -m -u ${UID} -s /bin/bash builder \
+RUN userdel -r ubuntu 2>/dev/null || true \
+    && useradd -m -u ${UID} -s /bin/bash builder \
     && chown -R builder:builder /opt/pio-core
 
 USER builder
