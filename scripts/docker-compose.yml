@@ -1,24 +1,50 @@
 services:
   homeassistant:
     container_name: homeassistant
-    image: "homeassistant/home-assistant:stable"
+    image: "homeassistant/home-assistant:2025.4"
     volumes:
       - ./ha:/config
       - /etc/localtime:/etc/localtime:ro
       - /run/dbus:/run/dbus:ro
     restart: unless-stopped
-    privileged: true
+    # Avoid privileged: true — grant only what Home Assistant actually needs
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      - gaggimate
     ports:
-      - 8123:8123/tcp
-    links:
-      - mosquitto
+      - "8123:8123"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8123')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   mosquitto:
     container_name: mosquitto
     hostname: mosquitto
-    image: eclipse-mosquitto
+    image: eclipse-mosquitto:2.0
     volumes:
-      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/config:/mosquitto/config:ro
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
     ports:
-      - 1883:1883/tcp
+      - "1883:1883"
+    networks:
+      - gaggimate
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  gaggimate:
+    driver: bridge
