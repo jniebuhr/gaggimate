@@ -28,8 +28,9 @@ class BrewProcess : public Process {
     explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
         : profile(profile), target(target), brewDelay(brewDelay) {
         currentPhase = profile.phases.at(phaseIndex);
-        processStarted = millis();
-        currentPhaseStarted = millis();
+        unsigned long now = millis();
+        processStarted = now;
+        currentPhaseStarted = now;
         phaseStartPressure = currentPhase.transition.adaptive ? currentPressure : 0;
         phaseStartFlow = currentPhase.transition.adaptive ? currentFlow : 0;
         computeEffectiveTargetsForCurrentPhase();

@@ -136,44 +136,42 @@ void WebUIPlugin::loop() {
         doc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
         doc["bc"] = bleConnected;                                    // bluetooth scale connected status
 
-        Process *process = controller->getProcess();
-        if (process == nullptr) {
-            process = controller->getLastProcess();
-        }
-        if (process != nullptr) {
+        // Use thread-safe snapshot to avoid use-after-free race conditions
+        ProcessSnapshot proc = controller->getProcessSnapshot();
+        if (proc.exists) {
             auto pObj = doc["process"].to<JsonObject>();
-            pObj["a"] = controller->isActive() ? 1 : 0;
-            if (process->getType() == MODE_BREW) {
-                auto *brew = static_cast<BrewProcess *>(process);
-                unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
-                pObj["s"] = brew->currentPhase.phase == PhaseType::PHASE_TYPE_BREW ? "brew" : "infusion";
-                pObj["l"] = brew->isActive() ? brew->currentPhase.name.c_str() : "Finished";
-                pObj["e"] = ts - brew->processStarted;
-                const bool isVolumetric = brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget() &&
+            // Use snapshot state only to avoid TOCTOU race condition
+            pObj["a"] = proc.isActive ? 1 : 0;
+            if (proc.isBrew) {
+                // Use snapshot state consistently - no redundant isActive() call
+                unsigned long ts = proc.isActive ? millis() : proc.finished;
+                pObj["s"] = proc.phaseType == static_cast<int>(PhaseType::PHASE_TYPE_BREW) ? "brew" : "infusion";
+                pObj["l"] = proc.isActive ? proc.phaseName.c_str() : "Finished";
+                pObj["e"] = ts - proc.started;
+                const bool isVolumetric = proc.target == ProcessTarget::VOLUMETRIC && proc.hasVolumetricTarget &&
                                           controller->isVolumetricAvailable();
                 pObj["tt"] = isVolumetric ? "volumetric" : "time";
                 if (isVolumetric) {
-                    Target t = brew->currentPhase.getVolumetricTarget();
-                    pObj["pt"] = t.value;
-                    pObj["pp"] = brew->currentVolume;
+                    pObj["pt"] = proc.volumetricTargetValue;
+                    pObj["pp"] = proc.currentVolume;
                 } else {
-                    pObj["pt"] = brew->getPhaseDuration();
-                    pObj["pp"] = ts - brew->currentPhaseStarted;
+                    pObj["pt"] = proc.phaseDuration;
+                    pObj["pp"] = ts - proc.currentPhaseStarted;
                 }
-            } else if (process->getType() == MODE_GRIND) {
-                auto *grind = static_cast<GrindProcess *>(process);
-                unsigned long ts = grind->isActive() && controller->isActive() ? millis() : grind->finished;
+            } else if (proc.isGrind) {
+                // Use snapshot state consistently - no redundant isActive() call
+                unsigned long ts = proc.isActive ? millis() : proc.finished;
                 pObj["s"] = "grind";
-                pObj["l"] = grind->isActive() ? "Grinding" : "Finished";
-                pObj["e"] = ts - grind->started;
-                const bool isVolumetric = grind->target == ProcessTarget::VOLUMETRIC && controller->isVolumetricAvailable();
+                pObj["l"] = proc.isActive ? "Grinding" : "Finished";
+                pObj["e"] = ts - proc.started;
+                const bool isVolumetric = proc.target == ProcessTarget::VOLUMETRIC && controller->isVolumetricAvailable();
                 pObj["tt"] = isVolumetric ? "volumetric" : "time";
                 if (isVolumetric) {
-                    pObj["pt"] = grind->grindVolume;
-                    pObj["pp"] = grind->currentVolume;
+                    pObj["pt"] = proc.grindVolume;
+                    pObj["pp"] = proc.currentVolume;
                 } else {
-                    pObj["pt"] = grind->time;
-                    pObj["pp"] = ts - grind->started;
+                    pObj["pt"] = proc.grindTime;
+                    pObj["pp"] = ts - proc.started;
                 }
             }
         }

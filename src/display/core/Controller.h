@@ -6,9 +6,42 @@
 #include "PluginManager.h"
 #include "Settings.h"
 #include <WiFi.h>
+#include <freertos/semphr.h>
 #include <display/core/BeanManager.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
+
+// Thread-safe snapshot of process state for UI/plugins
+struct ProcessSnapshot {
+    bool exists = false;
+    bool isActive = false;
+    bool isComplete = false;
+    int type = -1;
+    unsigned long started = 0;
+    unsigned long finished = 0;
+    
+    // Brew-specific fields
+    bool isBrew = false;
+    uint8_t phaseIndex = 0;
+    String phaseName;
+    int phaseType = 0; // PhaseType enum value
+    unsigned long currentPhaseStarted = 0;
+    float currentVolume = 0.0f;
+    ProcessTarget target = ProcessTarget::TIME;
+    bool hasVolumetricTarget = false;
+    float volumetricTargetValue = 0.0f;
+    unsigned long phaseDuration = 0;
+    size_t phaseCount = 0;
+    unsigned long totalDuration = 0;
+    float brewVolume = 0.0f;
+    bool isAdvancedPump = false;
+    float pumpPressure = 0.0f;
+    
+    // Grind-specific fields
+    bool isGrind = false;
+    float grindVolume = 0.0f;
+    unsigned long grindTime = 0;
+};
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/Driver.h>
 #include <display/ui/default/DefaultUI.h>
@@ -16,6 +49,10 @@
 
 const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space
 const IPAddress WIFI_SUBNET_MASK(255, 255, 255, 0); // no need to change: https://avinetworks.com/glossary/subnet-mask/
+
+// Mutex timeout for UI/event loop methods to prevent deadlocks
+// Chosen to prevent UI freezes while allowing reasonable wait for mutex
+constexpr TickType_t UI_MUTEX_TIMEOUT_MS = 100;
 
 enum class VolumetricMeasurementSource { INACTIVE, FLOW_ESTIMATION, BLUETOOTH };
 
@@ -41,6 +78,7 @@ class Controller {
     int getTargetGrindDuration() const;
     virtual float getCurrentTemp() const { return currentTemp; }
     bool isActive() const;
+    bool isActiveSafe() const;
     bool isGrindActive() const;
     bool isUpdating() const;
     bool isAutotuning() const;
@@ -55,8 +93,23 @@ class Controller {
 
     void autotune(int testTime, int samples);
     void startProcess(Process *process);
+    
+    // DEPRECATED: Direct pointer access is unsafe due to race conditions.
+    // Use getProcessSnapshot() or other thread-safe accessor methods instead.
+    // This method will be removed in a future version.
+    [[deprecated("Use getProcessSnapshot() or thread-safe accessor methods instead")]]
     Process *getProcess() const { return currentProcess; }
+    
     Process *getLastProcess() const { return lastProcess; }
+    
+    // Thread-safe methods to get process info without exposing raw pointer
+    int getProcessType() const;
+    uint8_t getBrewProcessPhaseIndex() const;
+    bool isBrewProcessVolumetric() const;
+    bool isBrewProcessUtility() const;
+    
+    // Thread-safe snapshot of current process state
+    ProcessSnapshot getProcessSnapshot() const;
     Settings &getSettings() { return settings; }
     BeanManager *getBeanManager() { return beanManager; }
     ProfileManager *getProfileManager() { return profileManager; }
@@ -152,6 +205,7 @@ class Controller {
 
     Process *currentProcess = nullptr;
     Process *lastProcess = nullptr;
+    SemaphoreHandle_t processMutex = nullptr;
 
     unsigned long grindActiveUntil = 0;
     unsigned long lastPing = 0;

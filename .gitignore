@@ -4,6 +4,7 @@ pcb/**/Gaggimate-backups
 pcb/**/*.kicad_sch_old
 .vscode
 .idea
+.bob
 node_modules/
 __pycache__
 data/w

@@ -32,6 +32,12 @@ const String LOG_TAG = F("Controller");
 
 void Controller::setup() {
     mode = settings.getStartupMode();
+    
+    // Initialize process mutex for thread-safe access
+    processMutex = xSemaphoreCreateMutex();
+    if (processMutex == nullptr) {
+        ESP_LOGE(LOG_TAG, "Failed to create process mutex");
+    }
 
     if (!SPIFFS.begin(true)) {
         Serial.println(F("An Error has occurred while mounting SPIFFS"));
@@ -273,7 +279,7 @@ void Controller::loop() {
     // If BLE scanning has been running for a while without finding the controller,
     // notify the UI so it can update the startup label accordingly.
     if (!waitingForController && initialized && !clientController.isConnected() &&
-        (now - connectStartTime) > CONTROLLER_WAITING_TIMEOUT_MS) {
+        (long)(now - connectStartTime) > CONTROLLER_WAITING_TIMEOUT_MS) {
         waitingForController = true;
         pluginManager->trigger("controller:bluetooth:waiting");
     }
@@ -306,17 +312,24 @@ void Controller::loop() {
             steamReady = true;
         }
 
-        // Handle current process
-        if (currentProcess != nullptr) {
-            updateLastAction();
-            if (currentProcess->getType() == MODE_BREW) {
-                auto brewProcess = static_cast<BrewProcess *>(currentProcess);
-                brewProcess->updatePressure(pressure);
-                brewProcess->updateFlow(currentPumpFlow);
-            }
-            currentProcess->progress();
-            if (!isActive()) {
-                deactivate();
+        // Handle current process with mutex protection
+        if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+            if (currentProcess != nullptr) {
+                updateLastAction();
+                if (currentProcess->getType() == MODE_BREW) {
+                    auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+                    brewProcess->updatePressure(pressure);
+                    brewProcess->updateFlow(currentPumpFlow);
+                }
+                currentProcess->progress();
+                bool stillActive = currentProcess->isActive();
+                xSemaphoreGive(processMutex);
+                
+                if (!stillActive) {
+                    deactivate();
+                }
+            } else {
+                xSemaphoreGive(processMutex);
             }
         }
 
@@ -347,9 +360,9 @@ void Controller::loop() {
         lastProgress = now;
     }
 
-    if (grindActiveUntil != 0 && now > grindActiveUntil)
+    if (grindActiveUntil != 0 && (long)(now - grindActiveUntil) > 0)
         deactivateGrind();
-    if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
+    if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && (long)(now - lastAction) > settings.getStandbyTimeout())
         activateStandby();
 }
 
@@ -374,7 +387,7 @@ bool Controller::isVolumetricAvailable() const {
 }
 
 void Controller::autotune(int testTime, int samples) {
-    if (isActive() || !isReady()) {
+    if (isActiveSafe() || !isReady()) {
         return;
     }
     if (mode != MODE_STANDBY) {
@@ -386,33 +399,77 @@ void Controller::autotune(int testTime, int samples) {
 }
 
 void Controller::startProcess(Process *process) {
-    if (isActive() || !isReady()) {
+    if (!isReady()) {
         delete process;
         return;
     }
+    
+    // Acquire mutex first to prevent TOCTOU race condition
+    // Use portMAX_DELAY (blocking) with ESP_LOGE: failure here is critical and should never happen
+    if (xSemaphoreTake(processMutex, portMAX_DELAY) != pdTRUE) {
+        ESP_LOGE(LOG_TAG, "Failed to acquire mutex in startProcess");
+        delete process;
+        return;
+    }
+    
+    // Check if process is already active while holding the mutex
+    if (currentProcess != nullptr && currentProcess->isActive()) {
+        xSemaphoreGive(processMutex);
+        delete process;
+        return;
+    }
+    
     processCompleted = false;
     this->currentProcess = process;
+    
+    xSemaphoreGive(processMutex);
+    
     pluginManager->trigger("controller:process:start");
     updateLastAction();
 }
 
 float Controller::getTargetTemp() const {
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(10)) != pdTRUE) {
+        // If we can't get mutex, return safe default based on mode
+        switch (mode) {
+        case MODE_BREW:
+        case MODE_GRIND:
+            return profileManager->getSelectedProfile().temperature;
+        case MODE_STEAM:
+            return settings.getTargetSteamTemp();
+        case MODE_WATER:
+            return settings.getTargetWaterTemp();
+        default:
+            return 0;
+        }
+    }
+    
     Process *proc = currentProcess;
+    float result = 0;
+    
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
         if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
             auto brewProcess = static_cast<BrewProcess *>(proc);
-            return brewProcess->getTemperature();
+            result = brewProcess->getTemperature();
+        } else {
+            result = profileManager->getSelectedProfile().temperature;
         }
-        return profileManager->getSelectedProfile().temperature;
+        break;
     case MODE_STEAM:
-        return settings.getTargetSteamTemp();
+        result = settings.getTargetSteamTemp();
+        break;
     case MODE_WATER:
-        return settings.getTargetWaterTemp();
+        result = settings.getTargetWaterTemp();
+        break;
     default:
-        return 0;
+        result = 0;
+        break;
     }
+    
+    xSemaphoreGive(processMutex);
+    return result;
 }
 
 void Controller::setTargetTemp(float temperature) {
@@ -522,49 +579,104 @@ void Controller::lowerGrindTarget() {
 }
 
 void Controller::updateControl() {
-    // Local capture to avoid race condition with deactivate() running on another core
+    // Thread-safe access to currentProcess with mutex protection
+    // Hold mutex for entire duration to prevent use-after-free
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(10)) != pdTRUE) {
+        return; // Skip this update if we can't get the mutex quickly
+    }
+    
     Process *proc = currentProcess;
-    bool active = isActive();
+    bool active = proc != nullptr && proc->isActive();
+    
+    // Copy values we need while holding the mutex to minimize lock time
+    bool isAltRelayActive = false;
+    int procType = -1;
+    float pumpValue = 0.0f;
+    bool relayActive = false;
+    bool isAdvancedPump = false;
+    bool brewPumpTargetIsPressure = false;
+    float brewPumpPressure = 0.0f;
+    float brewPumpFlow = 0.0f;
+    float targetTemp = 0.0f;
+    
+    if (active) {
+        procType = proc->getType();
+        pumpValue = proc->getPumpValue();
+        relayActive = proc->isRelayActive();
+        isAltRelayActive = proc->isAltRelayActive();
+        
+        if (procType == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(proc);
+            isAdvancedPump = brewProcess->isAdvancedPump();
+            if (isAdvancedPump) {
+                brewPumpTargetIsPressure = (brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE);
+                brewPumpPressure = brewProcess->getPumpPressure();
+                brewPumpFlow = brewProcess->getPumpFlow();
+            }
+            targetTemp = brewProcess->getTemperature();
+        }
+    }
+    
+    // Get target temp while still holding mutex to avoid race condition
+    // Inline the logic from getTargetTemp() to avoid deadlock
+    if (targetTemp == 0.0f) {
+        switch (mode) {
+        case MODE_BREW:
+        case MODE_GRIND:
+            targetTemp = profileManager->getSelectedProfile().temperature;
+            break;
+        case MODE_STEAM:
+            targetTemp = settings.getTargetSteamTemp();
+            break;
+        case MODE_WATER:
+            targetTemp = settings.getTargetWaterTemp();
+            break;
+        default:
+            targetTemp = 0;
+            break;
+        }
+    }
+    
+    // Release mutex now that we've copied all needed values
+    xSemaphoreGive(processMutex);
 
-    float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
 
     bool altRelayActive = false;
-    if (active && proc->isAltRelayActive()) {
-        if (proc->getType() == MODE_GRIND && settings.getAltRelayFunction() == ALT_RELAY_GRIND) {
+    if (active && isAltRelayActive) {
+        if (procType == MODE_GRIND && settings.getAltRelayFunction() == ALT_RELAY_GRIND) {
             altRelayActive = true;
         }
     }
 
     clientController.sendAltControl(altRelayActive);
     if (active && systemInfo.capabilities.pressure) {
-        if (proc->getType() == MODE_STEAM) {
+        if (procType == MODE_STEAM) {
             targetPressure = settings.getSteamPumpCutoff();
-            targetFlow = proc->getPumpValue() * 0.1f;
+            targetFlow = pumpValue * 0.1f;
             clientController.sendAdvancedOutputControl(false, targetTemp, false, targetPressure, targetFlow);
             return;
         }
-        if (proc->getType() == MODE_BREW) {
-            auto *brewProcess = static_cast<BrewProcess *>(proc);
-            if (brewProcess->isAdvancedPump()) {
-                clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), targetTemp,
-                                                           brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
-                                                           brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
-                targetPressure = brewProcess->getPumpPressure();
-                targetFlow = brewProcess->getPumpFlow();
+        if (procType == MODE_BREW) {
+            if (isAdvancedPump) {
+                clientController.sendAdvancedOutputControl(relayActive, targetTemp,
+                                                           brewPumpTargetIsPressure,
+                                                           brewPumpPressure, brewPumpFlow);
+                targetPressure = brewPumpPressure;
+                targetFlow = brewPumpFlow;
                 return;
             }
         }
     }
     targetPressure = 0.0f;
     targetFlow = 0.0f;
-    clientController.sendOutputControl(active && proc->isRelayActive(), active ? proc->getPumpValue() : 0, targetTemp);
+    clientController.sendOutputControl(active && relayActive, active ? pumpValue : 0, targetTemp);
 }
 
 void Controller::activate() {
-    if (isActive())
+    if (isActiveSafe())
         return;
     clear();
     clientController.tare();
@@ -596,18 +708,35 @@ void Controller::activate() {
         break;
     default:;
     }
-    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+    
+    // Check if we started a brew process (with mutex protection)
+    bool isBrewProcess = false;
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        isBrewProcess = currentProcess != nullptr && currentProcess->getType() == MODE_BREW;
+        xSemaphoreGive(processMutex);
+    }
+    
+    if (isBrewProcess) {
         pluginManager->trigger("controller:brew:start");
     }
 }
 
 void Controller::deactivate() {
+    // Use portMAX_DELAY (blocking) with ESP_LOGE: failure here is critical and should never happen
+    if (xSemaphoreTake(processMutex, portMAX_DELAY) != pdTRUE) {
+        ESP_LOGE(LOG_TAG, "Failed to acquire mutex in deactivate");
+        return;
+    }
+    
     if (currentProcess == nullptr) {
+        xSemaphoreGive(processMutex);
         return;
     }
     delete lastProcess;
     lastProcess = currentProcess;
     currentProcess = nullptr;
+    
+    xSemaphoreGive(processMutex);
     if (lastProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:end");
     } else if (lastProcess->getType() == MODE_GRIND) {
@@ -619,11 +748,21 @@ void Controller::deactivate() {
 
 void Controller::clear() {
     processCompleted = true;
+    
+    // Protect lastProcess access with mutex to prevent race with getProcessSnapshot() and onVolumetricMeasurement()
+    if (xSemaphoreTake(processMutex, portMAX_DELAY) != pdTRUE) {
+        ESP_LOGE(LOG_TAG, "Failed to acquire mutex in clear");
+        return;
+    }
+    
     if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:clear");
     }
     delete lastProcess;
     lastProcess = nullptr;
+    
+    xSemaphoreGive(processMutex);
+    
     currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
 }
 
@@ -657,13 +796,179 @@ void Controller::deactivateStandby() {
 }
 
 bool Controller::isActive() const {
+    // Use consistent timeout to prevent deadlocks in UI/event loops
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(UI_MUTEX_TIMEOUT_MS)) != pdTRUE) {
+        // For UI/display code: return false on timeout to avoid false positives
+        ESP_LOGW(LOG_TAG, "Mutex timeout in isActive - returning false (UI-safe: assume inactive)");
+        return false;
+    }
+    
     Process *proc = currentProcess;
-    return proc != nullptr && proc->isActive();
+    bool result = proc != nullptr && proc->isActive();
+    
+    xSemaphoreGive(processMutex);
+    return result;
+}
+
+bool Controller::isActiveSafe() const {
+    // Use consistent timeout to prevent deadlocks in UI/event loops
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(UI_MUTEX_TIMEOUT_MS)) != pdTRUE) {
+        // CRITICAL: Return true on timeout to prevent activate()/onFlush() from calling clear()
+        // while a process may actually be running. False negatives are safer than false positives.
+        ESP_LOGW(LOG_TAG, "Mutex timeout in isActiveSafe - returning true (conservative: assume active)");
+        return true;
+    }
+    
+    Process *proc = currentProcess;
+    bool result = proc != nullptr && proc->isActive();
+    
+    xSemaphoreGive(processMutex);
+    return result;
 }
 
 bool Controller::isGrindActive() const {
+    // Use consistent timeout to prevent deadlocks in UI/event loops
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(UI_MUTEX_TIMEOUT_MS)) != pdTRUE) {
+        ESP_LOGW(LOG_TAG, "Mutex timeout in isGrindActive - returning false (process may be active)");
+        return false;
+    }
+    
     Process *proc = currentProcess;
-    return proc != nullptr && proc->isActive() && proc->getType() == MODE_GRIND;
+    bool result = proc != nullptr && proc->isActive() && proc->getType() == MODE_GRIND;
+    
+    xSemaphoreGive(processMutex);
+    return result;
+}
+
+int Controller::getProcessType() const {
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(UI_MUTEX_TIMEOUT_MS)) != pdTRUE) {
+        ESP_LOGW(LOG_TAG, "Mutex timeout in getProcessType - returning -1");
+        return -1;
+    }
+    
+    int type = -1;
+    if (currentProcess != nullptr) {
+        type = currentProcess->getType();
+    }
+    
+    xSemaphoreGive(processMutex);
+    return type;
+}
+
+uint8_t Controller::getBrewProcessPhaseIndex() const {
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(UI_MUTEX_TIMEOUT_MS)) != pdTRUE) {
+        ESP_LOGW(LOG_TAG, "Mutex timeout in getBrewProcessPhaseIndex - returning 0");
+        return 0;
+    }
+    
+    uint8_t phaseIndex = 0;
+    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+        auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
+        phaseIndex = static_cast<uint8_t>(brewProcess->phaseIndex);
+    }
+    
+    xSemaphoreGive(processMutex);
+    return phaseIndex;
+}
+
+bool Controller::isBrewProcessVolumetric() const {
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(UI_MUTEX_TIMEOUT_MS)) != pdTRUE) {
+        ESP_LOGW(LOG_TAG, "Mutex timeout in isBrewProcessVolumetric - returning false");
+        return false;
+    }
+    
+    bool isVolumetric = false;
+    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+        auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
+        isVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC &&
+                      brewProcess->currentPhase.hasVolumetricTarget() && isVolumetricAvailable();
+    }
+    
+    xSemaphoreGive(processMutex);
+    return isVolumetric;
+}
+
+bool Controller::isBrewProcessUtility() const {
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(UI_MUTEX_TIMEOUT_MS)) != pdTRUE) {
+        ESP_LOGW(LOG_TAG, "Mutex timeout in isBrewProcessUtility - returning false");
+        return false;
+    }
+    
+    bool isUtility = false;
+    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+        auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
+        isUtility = brewProcess->isUtility();
+    }
+    
+    xSemaphoreGive(processMutex);
+    return isUtility;
+}
+
+ProcessSnapshot Controller::getProcessSnapshot() const {
+    ProcessSnapshot snapshot;
+    
+    // Use consistent timeout strategy to prevent deadlocks
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(UI_MUTEX_TIMEOUT_MS)) != pdTRUE) {
+        ESP_LOGW(LOG_TAG, "Mutex timeout in getProcessSnapshot - returning empty snapshot");
+        return snapshot;
+    }
+    
+    Process *proc = currentProcess;
+    if (proc == nullptr) {
+        proc = lastProcess;
+    }
+    
+    if (proc != nullptr) {
+        snapshot.exists = true;
+        snapshot.isActive = proc->isActive();
+        snapshot.isComplete = proc->isComplete();
+        snapshot.type = proc->getType();
+        // Note: These fields are only available in BrewProcess, not in base Process class
+        if (proc->getType() == MODE_BREW) {
+            auto *brew = static_cast<BrewProcess *>(proc);
+            snapshot.started = brew->processStarted;
+            snapshot.finished = brew->finished;
+        } else {
+            snapshot.started = 0;
+            snapshot.finished = 0;
+        }
+        
+        if (proc->getType() == MODE_BREW) {
+            auto *brew = static_cast<BrewProcess *>(proc);
+            snapshot.isBrew = true;
+            snapshot.phaseIndex = static_cast<uint8_t>(brew->phaseIndex);
+            snapshot.phaseName = brew->currentPhase.name;
+            snapshot.phaseType = static_cast<int>(brew->currentPhase.phase);
+            snapshot.currentPhaseStarted = brew->currentPhaseStarted;
+            snapshot.currentVolume = brew->currentVolume;
+            snapshot.target = brew->target;
+            snapshot.hasVolumetricTarget = brew->currentPhase.hasVolumetricTarget();
+            if (snapshot.hasVolumetricTarget) {
+                Target t = brew->currentPhase.getVolumetricTarget();
+                snapshot.volumetricTargetValue = t.value;
+            }
+            snapshot.phaseDuration = brew->getPhaseDuration();
+            snapshot.phaseCount = brew->profile.phases.size();
+            snapshot.totalDuration = brew->getTotalDuration();
+            snapshot.brewVolume = brew->getBrewVolume();
+            if (brew->processPhase != ProcessPhase::FINISHED) {
+                snapshot.isAdvancedPump = brew->isAdvancedPump();
+                if (snapshot.isAdvancedPump) {
+                    snapshot.pumpPressure = brew->getPumpPressure();
+                }
+            }
+        } else if (proc->getType() == MODE_GRIND) {
+            snapshot.isGrind = true;
+            auto *grind = static_cast<GrindProcess *>(proc);
+            snapshot.target = grind->target;
+            snapshot.grindVolume = grind->grindVolume;
+            snapshot.grindTime = grind->time;
+            snapshot.currentVolume = grind->currentVolume;
+        }
+    }
+    
+    xSemaphoreGive(processMutex);
+    return snapshot;
 }
 
 int Controller::getMode() const { return mode; }
@@ -714,21 +1019,27 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
         return;
     }
-    if (currentProcess != nullptr) {
-        currentProcess->updateVolume(measurement);
-    }
-    if (lastProcess != nullptr && !lastProcess->isComplete()) {
-        lastProcess->updateVolume(measurement);
+    
+    // Update volume with mutex protection for both currentProcess and lastProcess
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        if (currentProcess != nullptr) {
+            currentProcess->updateVolume(measurement);
+        }
+        // Also update lastProcess while holding mutex to prevent race with clear()
+        if (lastProcess != nullptr && !lastProcess->isComplete()) {
+            lastProcess->updateVolume(measurement);
+        }
+        xSemaphoreGive(processMutex);
     }
 }
 
 bool Controller::isBluetoothScaleHealthy() const {
-    unsigned long timeSinceLastBluetooth = millis() - lastBluetoothMeasurement;
+    long timeSinceLastBluetooth = (long)(millis() - lastBluetoothMeasurement);
     return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
 }
 
 void Controller::onFlush() {
-    if (isActive()) {
+    if (isActiveSafe()) {
         return;
     }
     clear();
@@ -750,7 +1061,7 @@ void Controller::handleBrewButton(int brewButtonStatus) {
             deactivateStandby();
             break;
         case MODE_BREW:
-            if (!isActive()) {
+            if (!isActiveSafe()) {
                 deactivateStandby();
                 clear();
                 activate();
@@ -770,7 +1081,7 @@ void Controller::handleBrewButton(int brewButtonStatus) {
         }
     } else if (!settings.isMomentaryButtons()) {
         if (getMode() == MODE_BREW) {
-            if (isActive()) {
+            if (isActiveSafe()) {
                 deactivate();
                 clear();
             } else {

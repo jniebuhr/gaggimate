@@ -108,7 +108,7 @@ class IndexedDBService {
   }
 
   /**
-   * Clear all data and close connection
+   * Clear all browser storage and close the database connection
    */
   async clearAll() {
     const db = await this.init();
