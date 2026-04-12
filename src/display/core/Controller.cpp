@@ -735,11 +735,12 @@ void Controller::deactivate() {
     delete lastProcess;
     lastProcess = currentProcess;
     currentProcess = nullptr;
+    const int endedProcessType = lastProcess->getType();
     
     xSemaphoreGive(processMutex);
-    if (lastProcess->getType() == MODE_BREW) {
+    if (endedProcessType == MODE_BREW) {
         pluginManager->trigger("controller:brew:end");
-    } else if (lastProcess->getType() == MODE_GRIND) {
+    } else if (endedProcessType == MODE_GRIND) {
         pluginManager->trigger("controller:grind:end");
     }
     pluginManager->trigger("controller:process:end");

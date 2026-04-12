@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback, useMemo } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import Card from '../../components/Card.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,47 +8,64 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { faSignal } from '@fortawesome/free-solid-svg-icons/faSignal';
 import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 
-export function Scales() {
-  const [key, setKey] = useState(0);
-  const [scaleData, setScaleData] = useState([]);
-  const [isScanning, setIsScanning] = useState(false);
-  const mode = machine.value.status.mode;
+// RSSI signal strength thresholds in dBm
+const RSSI_POOR_THRESHOLD = -90;
+const RSSI_WEAK_THRESHOLD = -80;
+
+/**
+ * Custom hook for auto-refreshing data at a specified interval
+ * @param {number} intervalMs - Refresh interval in milliseconds
+ * @returns {number} refreshKey - Timestamp that updates on each interval
+ */
+function useAutoRefresh(intervalMs = 10000) {
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const intervalHandle = setInterval(() => {
-      setKey(Date.now().valueOf());
-    }, 10000);
-
+      setRefreshKey(Date.now());
+    }, intervalMs);
     return () => clearInterval(intervalHandle);
-  }, []);
+  }, [intervalMs]);
 
+  return refreshKey;
+}
+
+/**
+ * Helper function to determine RSSI signal strength status class
+ * @param {number} rssi - RSSI value in dBm
+ * @returns {string} CSS class for signal strength indicator
+ */
+function getRssiStatusClass(rssi) {
+  if (rssi < RSSI_POOR_THRESHOLD) return 'status-error';
+  if (rssi < RSSI_WEAK_THRESHOLD) return 'status-warning';
+  return 'status-success';
+}
+
+export function Scales() {
+  const [isScanning, setIsScanning] = useState(false);
+  const [manualRefreshKey, setManualRefreshKey] = useState(0);
+  const refreshKey = useAutoRefresh(10000) + manualRefreshKey;
+  const mode = machine.value.status.mode;
+
+  // Combined query for both scales list and info - single network round-trip
   const {
     isLoading,
     isError,
-    data: fetchedScales = [],
-  } = useQuery(`scales-${key}`, async () => {
-    const response = await fetch(`/api/scales/list`);
-    const data = await response.json();
-    return data;
+    data,
+  } = useQuery(`scales-${refreshKey}`, async () => {
+    const [scalesRes, infoRes] = await Promise.all([
+      fetch('/api/scales/list'),
+      fetch('/api/scales/info'),
+    ]);
+    const [scales, info] = await Promise.all([scalesRes.json(), infoRes.json()]);
+    return { scales, info };
   });
 
-  const {
-    isInfoLoading,
-    isInfoError,
-    data: connectedScale = [],
-  } = useQuery(`scale-info-${key}`, async () => {
-    const response = await fetch(`/api/scales/info`);
-    const data = await response.json();
-    return data;
-  });
-
-  useEffect(() => {
-    if (!connectedScale || fetchedScales.length === 0) {
-      return;
-    }
-    const scales = connectedScale.connected ? [connectedScale] : fetchedScales;
-    setScaleData(scales);
-  }, [connectedScale, fetchedScales]);
+  // Derive scaleData from combined query result
+  const scaleData = useMemo(() => {
+    if (!data) return [];
+    return data.info.connected ? [data.info] : data.scales;
+  }, [data]);
 
   const onScan = useCallback(async () => {
     setIsScanning(true);
@@ -56,31 +73,33 @@ export function Scales() {
       await fetch('/api/scales/scan', {
         method: 'post',
       });
-      // Refresh the data after scan
-      setKey(Date.now().valueOf());
+      setManualRefreshKey(Date.now());
     } catch (error) {
       console.error('Scan failed:', error);
     } finally {
       setIsScanning(false);
     }
-  }, [setIsScanning]);
-
-  const onConnect = useCallback(async uuid => {
-    try {
-      const data = new FormData();
-      data.append('uuid', uuid);
-      await fetch('/api/scales/connect', {
-        method: 'post',
-        body: data,
-      });
-      // Refresh the data after connection
-      setKey(Date.now().valueOf());
-    } catch (error) {
-      console.error('Connection failed:', error);
-    }
   }, []);
 
-  const loading = isLoading || isInfoLoading || isScanning;
+  const onConnect = useCallback(
+    async uuid => {
+      try {
+        const data = new FormData();
+        data.append('uuid', uuid);
+        await fetch('/api/scales/connect', {
+          method: 'post',
+          body: data,
+        });
+        setManualRefreshKey(Date.now());
+      } catch (error) {
+        console.error('Connection failed:', error);
+      }
+    },
+    []
+  );
+
+  // Memoize loading state
+  const loading = useMemo(() => isLoading || isScanning, [isLoading, isScanning]);
 
   return (
     <>
@@ -110,7 +129,6 @@ export function Scales() {
             <ScaleList
               isLoading={loading}
               isError={isError}
-              isInfoError={isInfoError}
               scaleData={scaleData}
               onConnect={onConnect}
             />
@@ -130,8 +148,8 @@ export function Scales() {
 }
 
 function ScaleList(props) {
-  const { isLoading, isInfoLoading, isError, isInfoError, scaleData, onConnect } = props;
-  if (isError || isInfoError) {
+  const { isLoading, isError, scaleData, onConnect } = props;
+  if (isError) {
     return (
       <div className='alert alert-error'>
         <span>Error loading devices. Please try again.</span>
@@ -151,11 +169,9 @@ function ScaleList(props) {
                 <h3 className='text-base-content font-semibold'>{scale.name}</h3>
                 <p className='text-base-content/60 text-sm'>
                   <FontAwesomeIcon icon={faNetworkWired} /> {scale.uuid}
-                  <span className='mx-2'></span>
-                  <FontAwesomeIcon icon={faSignal} /> {scale.rssi}dB
-                  <span
-                    className={`indicator-item status ml-2 ${scale.rssi < -90 ? 'status-error' : scale.rssi < -80 ? 'status-warning' : 'status-success'}`}
-                  ></span>
+                  <span className='mx-2' />
+                  <FontAwesomeIcon icon={faSignal} /> {scale.rssi ?? 0}dB
+                  <span className={`indicator-item status ml-2 ${getRssiStatusClass(scale.rssi ?? 0)}`} />
                 </p>
               </div>
               <div className='flex items-center space-x-3'>
@@ -175,7 +191,7 @@ function ScaleList(props) {
   }
   return (
     <>
-      {isLoading || isInfoLoading ? (
+      {isLoading ? (
         <div className='flex items-center justify-center py-12'>
           <span className='loading loading-spinner loading-lg' />
           <span className='text-base-content/70 ml-3'>Loading devices...</span>
