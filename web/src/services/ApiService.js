@@ -10,6 +10,8 @@ function randomId() {
 }
 
 export default class ApiService {
+  static HISTORY_MAX_SIZE = 600;
+  
   socket = null;
   listeners = {};
   reconnectAttempts = 0;
@@ -54,15 +56,15 @@ export default class ApiService {
       this.socket.addEventListener('open', this._boundOnOpen);
     } catch (error) {
       console.error('WebSocket connection error:', error);
-      this._scheduleReconnect();
-    } finally {
       this.isConnecting = false;
+      this._scheduleReconnect();
     }
   }
 
   _onOpen() {
     console.log('WebSocket connected successfully');
     this.reconnectAttempts = 0;
+    this.isConnecting = false;
     machine.value = {
       ...machine.value,
       connected: true,
@@ -71,6 +73,7 @@ export default class ApiService {
 
   _onClose() {
     console.log('WebSocket connection closed');
+    this.isConnecting = false; // Reset flag to allow reconnection
     machine.value = {
       ...machine.value,
       connected: false,
@@ -80,6 +83,7 @@ export default class ApiService {
 
   _onError(error) {
     console.error('WebSocket error:', error);
+    this.isConnecting = false; // Reset flag to allow reconnection
     if (this.socket) {
       this.socket.close();
     }
@@ -108,15 +112,27 @@ export default class ApiService {
     let message;
     try {
       message = JSON.parse(event.data);
-    } catch {
+    } catch (error) {
+      console.warn('Failed to parse WebSocket message:', error);
       return; // Discard malformed messages to avoid crashing the WS handler.
     }
+    
+    // Validate message structure
+    if (!message || typeof message !== 'object' || !message.tp) {
+      console.warn('Invalid message structure:', message);
+      return;
+    }
+    
     const listeners = Object.values(this.listeners[message.tp] || {});
     if (message.tp === 'evt:status') {
       this._onStatus(message);
     }
     for (const listener of listeners) {
-      listener(message);
+      try {
+        listener(message);
+      } catch (error) {
+        console.error('Error in message listener:', error);
+      }
     }
   }
 
@@ -190,6 +206,26 @@ export default class ApiService {
     delete this.listeners[type][id];
   }
 
+  /**
+   * Adds an entry to history with a fixed maximum size.
+   * Note: Array.shift() is O(n) as it must shift all elements, but this is
+   * acceptable given the relatively small HISTORY_MAX_SIZE (600 entries).
+   * @param {Array} history - The current history array
+   * @param {Object} entry - The new entry to add
+   * @returns {Array} The updated history array
+   */
+  _addToHistory(history, entry) {
+    // Create a shallow copy to maintain immutability for signal reactivity
+    const newHistory = [...history];
+    
+    if (newHistory.length >= ApiService.HISTORY_MAX_SIZE) {
+      newHistory.shift(); // Remove oldest entry - O(n) operation
+    }
+    newHistory.push(entry); // Add new entry - O(1)
+    
+    return newHistory;
+  }
+
   _onStatus(message) {
     const newStatus = {
       currentTemperature: message.ct,
@@ -219,11 +255,8 @@ export default class ApiService {
     const historyEntry = { ...newStatus };
     delete historyEntry.process;
     
-    // More efficient history management - avoid creating oversized arrays
-    const currentHistory = machine.value.history;
-    const newHistory = currentHistory.length >= 600
-      ? [...currentHistory.slice(-599), historyEntry]
-      : [...currentHistory, historyEntry];
+    // Efficient history management using circular buffer approach
+    const newHistory = this._addToHistory(machine.value.history, historyEntry);
     
     machine.value = {
       ...machine.value,

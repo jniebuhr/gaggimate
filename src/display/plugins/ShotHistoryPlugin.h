@@ -6,12 +6,16 @@
 #include <display/core/Plugin.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 constexpr size_t SHOT_HISTORY_INTERVAL = 100;
 constexpr size_t MIN_FREE_SPACE_BYTES = 500 * 1024;         // 500 KB reserved free space
 constexpr unsigned long EXTENDED_RECORDING_DURATION = 3000; // 3 seconds
 constexpr unsigned long WEIGHT_STABILIZATION_TIME = 1000;   // 1 second
 constexpr float WEIGHT_STABILIZATION_THRESHOLD = 0.1f;      // 0.1g threshold
+constexpr int SHOT_ID_LENGTH = 6;                           // Shot ID padding length
+constexpr unsigned long STATE_MUTEX_TIMEOUT_MS = 100;       // Mutex timeout for state access
 
 class ShotHistoryPlugin : public Plugin {
   public:
@@ -44,6 +48,20 @@ class ShotHistoryPlugin : public Plugin {
     void startRecording();
 
     uint16_t getSystemInfo(); // Helper to pack system state bits
+
+    // Phase 1 refactoring: extracted helper methods from record()
+    bool openLogFileIfNeeded();
+    void initializeHeader();
+    ShotLogSample createSample();
+    void updateBluetoothFlow();
+    bool writeSampleToBuffer(const ShotLogSample &sample);
+    void checkEarlyIndexCreation();
+    void closeLogFile();
+    void patchHeaderWithFinalData();
+    bool isShotTooShort() const;
+    void handleFailedShot();
+    void handleCompletedShot();
+    void appendCompletedShotToIndex();
 
     unsigned long getTime();
 
@@ -88,7 +106,8 @@ class ShotHistoryPlugin : public Plugin {
     bool rebuildInProgress = false;
 
     xTaskHandle taskHandle;
-    void flushBuffer();
+    SemaphoreHandle_t stateMutex = nullptr; // Protects shared state accessed by record()
+    bool flushBuffer();
     static void loopTask(void *arg);
 };
 

@@ -105,7 +105,7 @@ void onFlush(lv_event_t *e) { controller.onFlush(); }
 
 void onSimpleProcessToggle(lv_event_t *e) {
     if (controller.getMode() != MODE_STEAM) {
-        controller.isActive() ? controller.deactivate() : controller.activate();
+        controller.isActiveSafe() ? controller.deactivate() : controller.activate();
     }
 }
 

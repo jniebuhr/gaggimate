@@ -24,7 +24,7 @@ void LedControlPlugin::updateControl() {
         sendControl(0, 0, 0, 0, 0);
         return;
     }
-    if (this->controller->isActive() && mode == MODE_BREW) {
+    if (this->controller->isActiveSafe() && mode == MODE_BREW) {
         sendControl(0, 0, 255, 20, settings.getSunriseExtBrightness());
         return;
     }
