@@ -1,4 +1,5 @@
 #include "NimBLEClientController.h"
+#include <cstdio>
 
 constexpr size_t MAX_CONNECT_RETRIES = 3;
 
@@ -169,19 +170,17 @@ void NimBLEClientController::loop() {
 void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure,
                                                        float flow) {
     if (client->isConnected() && outputControlChar != nullptr) {
-        const std::string value = "1," + std::to_string(valve ? 1 : 0) + ",100.0," + std::to_string(boilerSetpoint) + "," +
-                                  std::to_string(pressureTarget ? 1 : 0) + "," + float_to_string(pressure) + "," +
-                                  float_to_string(flow);
-        _lastOutputControl = String(value.c_str());
+        snprintf(advancedOutputBuffer, sizeof(advancedOutputBuffer), "1,%d,100.0,%.3f,%d,%.3f,%.3f", valve ? 1 : 0, boilerSetpoint,
+                 pressureTarget ? 1 : 0, pressure, flow);
+        _lastOutputControl = String(advancedOutputBuffer);
         outputControlChar->writeValue(_lastOutputControl, false);
     }
 }
 
 void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint) {
     if (client->isConnected() && outputControlChar != nullptr) {
-        const std::string value =
-            "0," + std::to_string(valve ? 1 : 0) + "," + std::to_string(pumpSetpoint) + "," + std::to_string(boilerSetpoint);
-        _lastOutputControl = String(value.c_str());
+        snprintf(outputBuffer, sizeof(outputBuffer), "0,%d,%.3f,%.3f", valve ? 1 : 0, pumpSetpoint, boilerSetpoint);
+        _lastOutputControl = String(outputBuffer);
         outputControlChar->writeValue(_lastOutputControl, false);
     }
 }
@@ -200,13 +199,14 @@ void NimBLEClientController::sendPumpModelCoeffs(const String &pumpModelCoeffs) 
 
 void NimBLEClientController::setPressureScale(float scale) {
     if (client->isConnected() && pressureScaleChar != nullptr) {
-        pressureScaleChar->writeValue(float_to_string(scale));
+        snprintf(pressureScaleBuffer, sizeof(pressureScaleBuffer), "%.3f", scale);
+        pressureScaleChar->writeValue(pressureScaleBuffer);
     }
 }
 
 void NimBLEClientController::sendLedControl(uint8_t channel, uint8_t brightness) {
     if (client->isConnected() && ledControlChar != nullptr) {
-        ledControlChar->writeValue(String(channel) + "," + String(brightness));
+        ledControlChar->writeValue(String(channel) + "," + String(brightness), false);
     }
 }
 
@@ -218,13 +218,14 @@ void NimBLEClientController::sendAltControl(bool pinState) {
 
 void NimBLEClientController::sendPing() {
     if (pingChar != nullptr && client->isConnected()) {
-        pingChar->writeValue("1");
+        pingChar->writeValue("1", false);
     }
 }
 
 void NimBLEClientController::sendAutotune(int testTime, int samples) {
     if (autotuneChar != nullptr && client->isConnected()) {
-        autotuneChar->writeValue(std::to_string(testTime) + "," + std::to_string(samples));
+        snprintf(autotuneBuffer, sizeof(autotuneBuffer), "%d,%d", testTime, samples);
+        autotuneChar->writeValue(autotuneBuffer);
     }
 }
 
