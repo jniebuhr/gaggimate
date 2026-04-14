@@ -158,7 +158,7 @@ void GaggiMateController::setup() {
         }
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         dimmedPump->tare();
-        flowSensor->tare();
+        // flowSensor->tare();
     });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }
