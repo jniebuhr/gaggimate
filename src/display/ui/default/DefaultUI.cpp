@@ -1,6 +1,7 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
+#include <utility>
 #include <display/core/Controller.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
@@ -272,17 +273,20 @@ void DefaultUI::loop() {
 
 void DefaultUI::loopProfiles() {
     if (!profileLoaded) {
+        const auto favoritedIds = profileManager->getFavoritedProfiles();
         favoritedProfileIds.clear();
         favoritedProfiles.clear();
+        favoritedProfileIds.reserve(favoritedIds.size() + 1);
         favoritedProfileIds.emplace_back(controller->getSettings().getSelectedProfile());
-        for (auto &id : profileManager->getFavoritedProfiles()) {
+        for (const auto &id : favoritedIds) {
             if (std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id) == favoritedProfileIds.end())
                 favoritedProfileIds.emplace_back(id);
         }
+        favoritedProfiles.reserve(favoritedProfileIds.size());
         for (const auto &profileId : favoritedProfileIds) {
             Profile profile{};
             profileManager->loadProfile(profileId, profile);
-            favoritedProfiles.emplace_back(profile);
+            favoritedProfiles.emplace_back(std::move(profile));
         }
         profileLoaded = 1;
     }
