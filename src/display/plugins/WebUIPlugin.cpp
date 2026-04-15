@@ -240,7 +240,18 @@ void WebUIPlugin::setupServer() {
         }
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
-    server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
+    server.on("/test", [](AsyncWebServerRequest *request) {
+        ESP_LOGI("WebUI", "TEST endpoint hit!");
+        request->send(200, "text/plain", "ESP32 server is alive!");
+    });
+    // Handle missing favicon/icons explicitly before serveStatic
+    server.on("/favicon.ico", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/gm.png", "image/png"); });
+    server.on("/apple-touch-icon.png", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/gm.png", "image/png"); });
+    server.on("/apple-touch-icon-precomposed.png", [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/gm.png", "image/png"); });
+    // onNotFound must be registered BEFORE serveStatic so it catches unmatched paths
+    server.onNotFound([](AsyncWebServerRequest *request) {
+        request->send(SPIFFS, "/w/index.html");
+    });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
     ws.onEvent(
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
@@ -529,6 +540,10 @@ void WebUIPlugin::handleBeanRequest(uint32_t clientId, JsonDocument &request) {
 
     size_t bufferSize = measureJson(response);
     auto *buffer = ws.makeBuffer(bufferSize);
+    if (!buffer) {
+        ESP_LOGE("WebUIPlugin", "Failed to allocate WebSocket buffer");
+        return;
+    }
     serializeJson(response, buffer->get(), bufferSize);
     ws.text(clientId, buffer);
 }
