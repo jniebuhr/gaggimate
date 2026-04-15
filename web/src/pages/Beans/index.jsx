@@ -248,7 +248,7 @@ export function BeansPage() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
-        <div className='lg:col-span-8'>
+        <div className='lg:col-span-12'>
           <BeanManagerCard
             beans={visibleBeans}
             draft={beanDraft}
@@ -261,16 +261,6 @@ export function BeansPage() {
             onCancel={resetBeanDraft}
             busy={busy}
           />
-        </div>
-        <div className='lg:col-span-4'>
-          <div className='rounded-[1.75rem] border border-base-content/10 bg-base-100/45 p-5 shadow-sm'>
-            <h2 className='text-lg font-semibold'>Suggested Next Steps</h2>
-            <ul className='mt-3 space-y-3 text-sm leading-relaxed text-base-content/70'>
-              <li>Set the remaining grams when you open a new bag so shot notes can decrement it later.</li>
-              <li>Archive finished beans instead of deleting them so old shots still make sense.</li>
-              <li>Use Export Beans before major updates if you want an extra manual backup.</li>
-            </ul>
-          </div>
         </div>
       </div>
     </>

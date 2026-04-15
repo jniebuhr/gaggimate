@@ -3,6 +3,7 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faMugHot } from '@fortawesome/free-solid-svg-icons/faMugHot';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch';
+import { faCoffee } from '@fortawesome/free-solid-svg-icons/faCoffee';
 import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
 // Presentational only: renders a high-signal summary layer from StatisticsService.summary.
@@ -18,7 +19,7 @@ function fmtNumber(value, digits = 1) {
   return Number.isFinite(value) ? value.toFixed(digits) : '-';
 }
 
-function SummaryStatCard({ icon, label, value, accentColorVar, tone = 'muted' }) {
+function SummaryStatCard({ icon, label, value, accentColorVar, tone = 'muted', highlightColor }) {
   const accent = `var(${accentColorVar})`;
   const isStrong = tone === 'strong';
 
@@ -47,8 +48,8 @@ function SummaryStatCard({ icon, label, value, accentColorVar, tone = 'muted' })
 
         <div className='min-w-0 flex-1 text-center'>
           <div
-            className='truncate text-xl leading-tight font-bold sm:text-2xl'
-            style={{ color: isStrong ? accent : 'inherit' }}
+            className={`truncate text-xl leading-tight font-bold sm:text-2xl ${highlightColor || ''}`}
+            style={highlightColor ? {} : { color: isStrong ? accent : 'inherit' }}
           >
             {value}
           </div>
@@ -83,6 +84,15 @@ export function SummaryCards({ summary }) {
       tone: 'strong',
     },
     {
+      key: 'totalDoseIn',
+      label: 'Total Coffee Used',
+      value: `${fmtNumber(summary.totalDoseIn)}g`,
+      icon: faCoffee,
+      accentColorVar: '--statistics-summary-coffee',
+      tone: 'strong',
+      highlightColor: 'text-red-500',
+    },
+    {
       key: 'totalWater',
       label: 'Total Water',
       value: `${fmtNumber(summary.totalWater)}ml`,
@@ -103,7 +113,7 @@ export function SummaryCards({ summary }) {
   return (
     <div className='space-y-2'>
       <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Totals</h3>
-      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+      <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5'>
         {totalCards.map(card => (
           <SummaryStatCard key={card.key} {...card} />
         ))}

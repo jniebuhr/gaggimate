@@ -11,6 +11,7 @@ npm ci
 npm run build
 
 cp -R dist/* ../data/w/
-gzip ../data/w/assets/*.js
-gzip ../data/w/assets/*.css
-gzip ../data/w/*.html
+# Compress assets for SPIFFS storage savings, but keep originals for browsers that don't support gzip
+gzip -k ../data/w/assets/*.js
+gzip -k ../data/w/assets/*.css
+gzip -k ../data/w/*.html
