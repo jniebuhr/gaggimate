@@ -13,4 +13,5 @@ void setup() {
 
 void loop() {
     controller.loop();
+    delay(2);  // Yield to FreeRTOS idle task to prevent watchdog starvation
 }
