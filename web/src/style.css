@@ -259,6 +259,7 @@
   --statistics-summary-shots-brown: #8b5e3c;
   --statistics-summary-water: #0ea5e9;
   --statistics-summary-duration: #64748b;
+  --statistics-summary-coffee: #dc2626;
   --statistics-summary-surface-strong: color-mix(
     in srgb,
     var(--color-base-100) 92%,
@@ -334,6 +335,7 @@
     --statistics-summary-shots-brown: #b4835f;
     --statistics-summary-water: #38bdf8;
     --statistics-summary-duration: #94a3b8;
+    --statistics-summary-coffee: #ef4444;
     --statistics-summary-surface-strong: color-mix(
       in srgb,
       var(--color-base-100) 86%,
@@ -400,6 +402,7 @@ html[data-theme='nord'] {
   --statistics-summary-shots-brown: #8b5e3c;
   --statistics-summary-water: #0ea5e9;
   --statistics-summary-duration: #64748b;
+  --statistics-summary-coffee: #dc2626;
   --statistics-summary-surface-strong: color-mix(
     in srgb,
     var(--color-base-100) 92%,
@@ -464,6 +467,7 @@ html[data-theme='coffee'] {
   --statistics-summary-shots-brown: #b4835f;
   --statistics-summary-water: #67e8f9;
   --statistics-summary-duration: #a8a29e;
+  --statistics-summary-coffee: #f87171;
   --statistics-summary-surface-strong: color-mix(
     in srgb,
     var(--color-base-100) 86%,
@@ -528,6 +532,7 @@ html[data-theme='amoled'] {
   --statistics-summary-shots-brown: #c08a5f;
   --statistics-summary-water: #67e8f9;
   --statistics-summary-duration: #a3a3a3;
+  --statistics-summary-coffee: #fca5a5;
   --statistics-summary-surface-strong: color-mix(
     in srgb,
     var(--color-base-100) 96%,

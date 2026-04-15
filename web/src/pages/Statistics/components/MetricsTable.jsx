@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faCoffee } from '@fortawesome/free-solid-svg-icons/faCoffee';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faFaucet } from '@fortawesome/free-solid-svg-icons/faFaucet';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
@@ -31,6 +32,16 @@ const METRIC_ROWS = [
     accentColor: 'var(--statistics-summary-water)',
     icon: faDroplet,
     averageDescription: 'Per-shot water drawn average',
+  },
+  {
+    key: 'avgDoseIn',
+    label: 'Avg Dose In',
+    unit: 'g',
+    colorClass: 'text-[var(--statistics-summary-coffee)]',
+    accentColor: 'var(--statistics-summary-coffee)',
+    icon: faCoffee,
+    averageDescription: 'Average coffee dose from shot notes',
+    avgOnly: true,
   },
   {
     key: 'duration',
@@ -156,7 +167,7 @@ function MetricRangeViz({ row, metric }) {
 
   return (
     <div
-      className='flex h-full min-h-[11.5rem] flex-col rounded-2xl border p-3 shadow-sm transition-shadow sm:p-3.5'
+      className='flex h-full min-h-[9rem] flex-col rounded-2xl border p-3 shadow-sm transition-shadow sm:p-3.5'
       style={{
         borderColor: `color-mix(in srgb, ${row.accentColor} 18%, var(--statistics-summary-border))`,
         background: 'var(--statistics-summary-surface-muted)',
@@ -189,7 +200,7 @@ function MetricRangeViz({ row, metric }) {
       </div>
 
       <div
-        className='mt-3 rounded-xl border px-3 py-2 shadow-sm'
+        className='mt-2 rounded-xl border px-2 py-1.5 shadow-sm'
         style={{
           borderColor: `color-mix(in srgb, ${row.accentColor} ${avgBorderPct}%, var(--color-base-content) 12%)`,
           background: 'var(--statistics-summary-surface-strong)',
@@ -199,21 +210,21 @@ function MetricRangeViz({ row, metric }) {
           <div className='text-[10px] font-semibold tracking-wide uppercase opacity-60'>Range</div>
           <div className='text-right'>
             <div className='text-[10px] opacity-55'>Std Dev</div>
-            <div className='font-mono text-xs'>{fmt(metric.stdDev, row.digits)}</div>
+            <div className='font-mono text-[11px]'>{fmt(metric.stdDev, row.digits)}</div>
           </div>
         </div>
 
-        <div className='mt-2 flex items-center gap-2'>
-          <div className='shrink-0 font-mono text-[11px] opacity-65'>
+        <div className='mt-1.5 flex items-center gap-2'>
+          <div className='shrink-0 font-mono text-[10px] opacity-65'>
             {fmt(metric.min, row.digits)}
           </div>
-          <div className='relative h-5 min-w-0 flex-1'>
+          <div className='relative h-4 min-w-0 flex-1'>
             <div className='bg-base-content/20 absolute top-1/2 right-0 left-0 h-px -translate-y-1/2' />
-            <div className='bg-base-content/30 absolute top-1/2 left-0 h-2 w-px -translate-y-1/2' />
-            <div className='bg-base-content/30 absolute top-1/2 right-0 h-2 w-px -translate-y-1/2' />
+            <div className='bg-base-content/30 absolute top-1/2 left-0 h-1.5 w-px -translate-y-1/2' />
+            <div className='bg-base-content/30 absolute top-1/2 right-0 h-1.5 w-px -translate-y-1/2' />
             {positions.hasRange && positions.stdWidth > 0 && (
               <div
-                className='absolute top-1/2 h-2 -translate-y-1/2 rounded-full'
+                className='absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full'
                 style={{
                   left: `${positions.stdStart}%`,
                   width: `${positions.stdWidth}%`,
@@ -226,7 +237,7 @@ function MetricRangeViz({ row, metric }) {
               />
             )}
             <div
-              className='absolute top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full'
+              className='absolute top-1/2 h-3 w-0.5 -translate-y-1/2 rounded-full'
               style={{
                 left: `calc(${positions.avgPos}% - 1px)`,
                 backgroundColor: row.accentColor,
@@ -234,7 +245,7 @@ function MetricRangeViz({ row, metric }) {
               }}
             />
           </div>
-          <div className='shrink-0 font-mono text-[11px] opacity-65'>
+          <div className='shrink-0 font-mono text-[10px] opacity-65'>
             {fmt(metric.max, row.digits)}
           </div>
         </div>
@@ -253,7 +264,7 @@ export function MetricsTable({ metrics }) {
 
   return (
     <div>
-      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5'>
         {metricCardRows.map(row => {
           const metric = metrics[row.key];
           if (!metric) return null;
