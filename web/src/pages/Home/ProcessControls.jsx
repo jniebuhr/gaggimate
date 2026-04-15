@@ -1,6 +1,7 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext, useState } from 'preact/hooks';
+import { useCallback, useContext, useState, useMemo } from 'preact/hooks';
+import { memo } from 'preact/compat';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';

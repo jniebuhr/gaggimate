@@ -34,11 +34,12 @@ function StatPill({ label, value, tone = 'neutral', icon }) {
     secondary: 'border-secondary/25 bg-secondary/12 text-secondary',
     error: 'border-error/25 bg-error/12 text-error',
     warning: 'border-warning/25 bg-warning/12 text-warning-content',
+    purple: 'border-purple-500/25 bg-purple-500/12 text-purple-500',
   };
 
   return (
     <div
-      className={`status-indicator-card flex-1 min-w-0 rounded-2xl border px-4 py-3 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)] backdrop-blur ${toneClasses[tone]}`}
+      className={`stat-pill status-indicator-card flex-1 min-w-0 rounded-2xl border px-4 py-3 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)] backdrop-blur ${toneClasses[tone]}`}
     >
       <div className='flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] opacity-70'>
         <span className='inline-flex size-7 items-center justify-center rounded-xl border border-current/15 bg-current/10'>
@@ -46,7 +47,7 @@ function StatPill({ label, value, tone = 'neutral', icon }) {
         </span>
         <span>{label}</span>
       </div>
-      <div className='mt-1 text-[clamp(0.7rem,1.4vw,1.125rem)] font-semibold leading-tight'>{value}</div>
+      <div className='mt-1 text-[clamp(0.6rem,1.2vw,1rem)] font-semibold leading-tight text-wrap balance truncate'>{value}</div>
     </div>
   );
 }
@@ -135,7 +136,7 @@ export function Header() {
               <StatPill
                 label='Active Bean'
                 value={activeBean?.beanName || 'Not selected'}
-                tone='neutral'
+                tone='purple'
                 icon={faLeaf}
               />
               <StatPill

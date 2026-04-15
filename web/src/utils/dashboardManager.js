@@ -1,5 +1,10 @@
 const DASHBOARD_LAYOUT_KEY = 'dashboardLayout';
 
+export const DASHBOARD_LAYOUTS = {
+  ORDER_FIRST: 'order-first',
+  ORDER_LAST: 'order-last',
+};
+
 export const getDashboardLayout = () => {
   if (typeof window === 'undefined' || !window.localStorage) {
     return DASHBOARD_LAYOUTS.ORDER_FIRST;
@@ -26,9 +31,4 @@ export const setDashboardLayout = layout => {
     console.error('setDashboardLayout: Failed to store layout in localStorage:', error);
     return false;
   }
-};
-
-export const DASHBOARD_LAYOUTS = {
-  ORDER_FIRST: 'order-first',
-  ORDER_LAST: 'order-last',
 };
