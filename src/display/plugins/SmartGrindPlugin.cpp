@@ -22,18 +22,31 @@ void SmartGrindPlugin::stop() {
     Settings &settings = controller->getSettings();
     controlRelay(COMMAND_OFF);
     if (settings.getSmartGrindMode() == SG_MODE_OFF_ON) {
-        delay(500);
-        controlRelay(COMMAND_ON);
+        // Schedule delayed ON command; loop() will execute it without blocking
+        pendingCommand = COMMAND_ON;
+        delayedCommandTime = millis() + 500;
     }
 }
 
-void SmartGrindPlugin::controlRelay(String command) {
+void SmartGrindPlugin::loop() {
+    if (pendingCommand.length() == 0) {
+        return;
+    }
+    if ((long)(millis() - delayedCommandTime) >= 0) {
+        controlRelay(pendingCommand);
+        pendingCommand = "";
+    }
+}
+
+bool SmartGrindPlugin::controlRelay(String command) {
     HTTPClient http;
     Settings &settings = controller->getSettings();
     String serverPath = "http://" + settings.getSmartGrindIp() + "/cm?cmnd=" + command;
     http.begin(serverPath);
     int responseCode = http.GET();
     if (responseCode != 200) {
-        printf("Failed to switch Relay\n");
+        ESP_LOGE("SmartGrindPlugin", "Failed to switch Relay via %s - HTTP %d", serverPath.c_str(), responseCode);
     }
+    http.end();
+    return responseCode == 200;
 }

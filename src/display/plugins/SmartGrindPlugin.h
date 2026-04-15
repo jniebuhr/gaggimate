@@ -15,14 +15,16 @@ struct Event;
 class SmartGrindPlugin : public Plugin {
   public:
     void setup(Controller *controller, PluginManager *pluginManager) override;
-    void loop() override {};
+    void loop() override;
 
   private:
     void start();
     void stop();
-    void controlRelay(String command);
+    bool controlRelay(String command);
 
     Controller *controller = nullptr;
+    String pendingCommand = "";
+    unsigned long delayedCommandTime = 0;
 };
 
 #endif // SMARTGRINDPLUGIN_H
