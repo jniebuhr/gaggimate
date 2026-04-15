@@ -13,10 +13,43 @@ import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
+import { faPlugCircleBolt } from '@fortawesome/free-solid-svg-icons/faPlugCircleBolt';
+import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
+import { faTemperatureHigh } from '@fortawesome/free-solid-svg-icons/faTemperatureHigh';
 import { machine } from '../services/ApiService.js';
 import { getCurrentBeanSelection } from '../utils/beanManager.js';
 
 const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
+
+function formatReading(value, suffix) {
+  return `${Number.isFinite(value) ? value.toFixed(1) : '0.0'}${suffix}`;
+}
+
+function StatPill({ label, value, tone = 'neutral', icon }) {
+  const toneClasses = {
+    neutral: 'border-base-300/60 bg-base-100/90 text-base-content',
+    accent: 'border-primary/25 bg-primary/12 text-primary',
+    success: 'border-success/25 bg-success/12 text-success',
+    secondary: 'border-secondary/25 bg-secondary/12 text-secondary',
+    error: 'border-error/25 bg-error/12 text-error',
+    warning: 'border-warning/25 bg-warning/12 text-warning-content',
+  };
+
+  return (
+    <div
+      className={`status-indicator-card flex-1 min-w-0 rounded-2xl border px-4 py-3 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)] backdrop-blur ${toneClasses[tone]}`}
+    >
+      <div className='flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] opacity-70'>
+        <span className='inline-flex size-7 items-center justify-center rounded-xl border border-current/15 bg-current/10'>
+          <FontAwesomeIcon icon={icon} className='text-xs' />
+        </span>
+        <span>{label}</span>
+      </div>
+      <div className='mt-1 text-[clamp(0.7rem,1.4vw,1.125rem)] font-semibold leading-tight'>{value}</div>
+    </div>
+  );
+}
 
 function HeaderItem(props) {
   const { path } = useLocation();
@@ -40,14 +73,11 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [activeBean, setActiveBean] = useState(() => getCurrentBeanSelection());
   const connected = machine.value.connected;
-  const modeLabel = MODE_LABELS[machine.value.status.mode] || 'Unknown';
+  const mode = machine.value.status.mode;
+  const currentMode = MODE_LABELS[mode] || 'Unknown';
   const profileLabel = machine.value.status.selectedProfile || 'Default';
-  const openCb = useCallback(
-    newState => {
-      setOpen(newState);
-    },
-    [setOpen],
-  );
+  const temp = formatReading(machine.value.status.currentTemperature, '\u00B0C');
+  const pressure = formatReading(machine.value.status.currentPressure, ' bar');
 
   useEffect(() => {
     const syncBean = event => {
@@ -66,6 +96,13 @@ export function Header() {
       window.removeEventListener('storage', syncBean);
     };
   }, []);
+
+  const openCb = useCallback(
+    newState => {
+      setOpen(newState);
+    },
+    [setOpen],
+  );
 
   return (
     <header id='page-header' className='sticky top-0 z-50'>
@@ -87,35 +124,26 @@ export function Header() {
             </a>
 
             <div className='hidden min-w-0 items-center gap-2 lg:flex'>
-              <div className='status-live-pill rounded-2xl border border-base-300/65 bg-base-100/95 px-3 py-2 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]'>
-                <div className='flex items-center gap-2'>
-                  <span
-                    className={`status-live-dot inline-flex size-2.5 rounded-full ${connected ? 'bg-success shadow-[0_0_0_5px_rgba(52,211,153,0.12)]' : 'bg-error shadow-[0_0_0_5px_rgba(248,113,113,0.12)]'}`}
-                  />
-                  <span className='text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-base-content/55'>
-                    Live state
-                  </span>
-                </div>
-                <div className='mt-1 flex items-center gap-2 text-sm font-semibold'>
-                  <span>{connected ? 'Connected' : 'Offline'}</span>
-                  <span className='text-base-content/30'>{'\u2022'}</span>
-                  <span>{modeLabel}</span>
-                </div>
-              </div>
-              <div className='status-live-pill max-w-[12rem] rounded-2xl border border-base-300/65 bg-base-100/95 px-3 py-2 text-right shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]'>
-                <div className='text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-base-content/55'>
-                  Active profile
-                </div>
-                <div className='truncate text-sm font-semibold'>{profileLabel}</div>
-              </div>
-              <div className='status-live-pill max-w-[12rem] rounded-2xl border border-base-300/65 bg-base-100/95 px-3 py-2 text-right shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]'>
-                <div className='text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-base-content/55'>
-                  Active bean
-                </div>
-                <div className='truncate text-sm font-semibold'>
-                  {activeBean?.beanName || 'Not selected'}
-                </div>
-              </div>
+              <StatPill
+                label='Connection'
+                value={connected ? 'Online' : 'Offline'}
+                tone={connected ? 'success' : 'warning'}
+                icon={faPlugCircleBolt}
+              />
+              <StatPill label='Mode' value={currentMode} tone='accent' icon={faSliders} />
+              <StatPill label='Profile' value={profileLabel} tone='secondary' icon={faBookmark} />
+              <StatPill
+                label='Active Bean'
+                value={activeBean?.beanName || 'Not selected'}
+                tone='neutral'
+                icon={faLeaf}
+              />
+              <StatPill
+                label='Temp / Pressure'
+                value={`${temp} \u00B7 ${pressure}`}
+                tone='error'
+                icon={faTemperatureHigh}
+              />
             </div>
 
             <div className='flex items-center gap-1 lg:gap-5'>

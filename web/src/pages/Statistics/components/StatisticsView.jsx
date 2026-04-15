@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useContext, useMemo } from 'preact/hooks';
 import { ApiServiceContext } from '../../../services/ApiService';
 import { libraryService } from '../../ShotAnalyzer/services/LibraryService';
 import { calculateShotMetrics, detectAutoDelay } from '../../ShotAnalyzer/services/AnalyzerService';
+import { notesService } from '../../ShotAnalyzer/services/NotesService';
 import { computeStatistics } from '../services/StatisticsService';
 import { cleanName } from '../../ShotAnalyzer/utils/analyzerUtils';
 import { StatisticsToolbar } from './StatisticsToolbar';
@@ -981,6 +982,13 @@ export function StatisticsView({ initialContext }) {
 
                 const analysis = calculateShotMetrics(fullShot, matchedProfile, settings);
 
+                const notesKey =
+                  shot.source === 'gaggimate'
+                    ? shotId
+                    : String(shot.storageKey || shot.name || shot.id || shotId);
+                const notes = await notesService.loadNotes(notesKey, shot.source);
+                const doseIn = parseFloat(notes?.doseIn) || 0;
+
                 return {
                   analysis,
                   meta: {
@@ -989,6 +997,7 @@ export function StatisticsView({ initialContext }) {
                     profileName: cleanName(profileField) || '(Unknown)',
                     source: shot.source,
                   },
+                  doseIn,
                 };
               } catch {
                 return null;

@@ -1,826 +1,268 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext, useState, useEffect } from 'preact/hooks';
-import { useQuery } from 'preact-fetching';
+import { useCallback, useContext, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
-import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faThermometerHalf } from '@fortawesome/free-solid-svg-icons/faThermometerHalf';
-import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
-import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
-import { faLeaf } from '@fortawesome/free-solid-svg-icons/faLeaf';
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
-import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
-import { ProcessProfileChart } from '../../components/ProcessProfileChart.jsx';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { Tooltip } from '../../components/Tooltip.jsx';
-import {
-  clearCurrentBeanSelection,
-  getCurrentBeanSelection,
-  listBeans,
-  recordBeanSelection,
-} from '../../utils/beanManager.js';
+import { ModeTabBar } from '../../components/ModeTabBar.jsx';
+import { TemperatureControls } from '../../components/TemperatureControls.jsx';
+import { GrindTargetBar } from '../../components/GrindTargetBar.jsx';
+import { ProcessDisplay } from '../../components/ProcessDisplay.jsx';
+import { ModeIdleDisplay } from '../../components/ModeIdleDisplay.jsx';
+import { useProfileData } from '../../hooks/useProfileData.js';
+import { useGrindSettings } from '../../hooks/useGrindSettings.js';
+import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
+import { useProcessActions } from '../../hooks/useProcessActions.js';
 
 const status = computed(() => machine.value.status);
+const TEMP_READY_THRESHOLD = 5;
 
-const zeroPad = (num, places) => String(num).padStart(places, '0');
+// Button configuration map for different states
+const BUTTON_CONFIGS = {
+  active: { icon: faPause, label: 'Pause', action: 'pause' },
+  finished: { icon: faCheck, label: 'Finish', action: 'finish' },
+  idle: { icon: faPlay, label: 'Start', action: 'start' },
+};
 
-function SelectorCard({
-  label,
-  icon,
-  value,
-  options,
-  onChange,
-  loading = false,
-  emptyLabel,
-  disabled = false,
-}) {
-  return (
-    <label className='block rounded-2xl border border-base-300/60 bg-base-100/90 p-4 text-left shadow-[0_12px_30px_-24px_rgba(0,0,0,0.85)] backdrop-blur'>
-      <div className='mb-3 flex items-center gap-2 text-sm text-base-content/60'>
-        <FontAwesomeIcon icon={icon} className='text-base' />
-        <span>{label}</span>
+// Action handlers map for button clicks
+const ACTION_HANDLERS = {
+  pause: (handlers, isFlushing) => {
+    handlers.onDeactivate();
+    if (isFlushing) handlers.onClear();
+  },
+  finish: (handlers) => handlers.onClear(),
+  start: (handlers) => handlers.onActivate(),
+};
+
+const GrindTargetControls = ({ grindTarget, grindTargetVolume, grindTargetDuration, onLowerTarget, onRaiseTarget }) => (
+  <div className='flex flex-col items-center gap-2'>
+    <div className='text-base-content/60 text-xs font-light tracking-wider'>GRIND TARGET</div>
+    <div className='flex items-center space-x-2'>
+      <Tooltip content='Decrease target'>
+        <button
+          onClick={onLowerTarget}
+          className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+        >
+          <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
+        </button>
+      </Tooltip>
+      <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
+        {grindTarget === 1 ? `${grindTargetVolume}g` : `${Math.round(grindTargetDuration / 1000)}s`}
       </div>
-      <select
-        className='select select-bordered w-full rounded-xl border-base-300/80 bg-base-100 text-base font-semibold'
-        value={value}
-        onChange={onChange}
-        disabled={disabled || loading}
-      >
-        <option value=''>{loading ? `Loading ${label.toLowerCase()}...` : emptyLabel}</option>
-        {options.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function formatDuration(duration) {
-  const minutes = Math.floor(duration / 60);
-  const seconds = duration % 60;
-  return `${zeroPad(minutes, 1)}:${zeroPad(seconds, 2)}`;
-}
-
-const GrindProgress = props => {
-  const { processInfo } = props;
-  const active = !!processInfo.a;
-  const progress = (processInfo.pp / processInfo.pt) * 100.0;
-  const elapsed = Math.floor(processInfo.e / 1000);
-
-  return (
-    <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
-      {active && (
-        <>
-          <div className='space-y-2 text-center'>
-            <div className='text-base-content/60 text-xs font-light tracking-wider sm:text-sm'>
-              GRINDING
-            </div>
-            <div className='text-base-content text-2xl font-bold sm:text-4xl'>{processInfo.l}</div>
-          </div>
-
-          <div className='w-full max-w-md'>
-            <div className='bg-base-content/20 h-2 w-full rounded-full'>
-              <div
-                className='bg-primary h-2 rounded-full transition-all duration-300 ease-out'
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-
-          <div className='space-y-2 text-center'>
-            <div className='text-base-content/60 text-xs sm:text-sm'>
-              {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(0)}s`}
-              {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(1)}g`}
-            </div>
-            <div className='text-base-content text-2xl font-bold sm:text-3xl'>
-              {formatDuration(elapsed)}
-            </div>
-          </div>
-        </>
-      )}
-      {!active && (
-        <div className='space-y-2 text-center'>
-          <div className='text-base-content text-xl font-bold sm:text-2xl'>Finished</div>
-          <div className='text-base-content text-2xl font-bold sm:text-3xl'>
-            {formatDuration(elapsed)}
-          </div>
-        </div>
-      )}
+      <Tooltip content='Increase target'>
+        <button
+          onClick={onRaiseTarget}
+          className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+        >
+          <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
+        </button>
+      </Tooltip>
     </div>
-  );
+  </div>
+);
+
+const FlushButton = memo(({ onFlush }) => (
+  <button
+    className='btn text-base-content/60 hover:text-base-content rounded-full text-sm transition-colors duration-200'
+    onClick={onFlush}
+    aria-label='Flush water'
+  >
+    <FontAwesomeIcon icon={faTint} />
+    Flush
+  </button>
+));
+
+FlushButton.displayName = 'FlushButton';
+
+FlushButton.propTypes = {
+  onFlush: PropTypes.func.isRequired,
 };
 
-const BrewProgress = props => {
-  const { processInfo } = props;
-  const active = !!processInfo.a;
-  const progress = (processInfo.pp / processInfo.pt) * 100.0;
-  const elapsed = Math.floor(processInfo.e / 1000);
+const ActionButtons = memo(({ brew, active, finished, isFlushing, onActivate, onDeactivate, onClear, onFlush }) => {
+  // Single source of truth for state-dependent UI
+  const buttonConfig = useMemo(() => {
+    if (active) return BUTTON_CONFIGS.active;
+    if (finished) return BUTTON_CONFIGS.finished;
+    return BUTTON_CONFIGS.idle;
+  }, [active, finished]);
+
+  const handleClick = useCallback(() => {
+    const handler = ACTION_HANDLERS[buttonConfig.action];
+    if (handler) {
+      handler({ onDeactivate, onClear, onActivate }, isFlushing);
+    }
+  }, [buttonConfig.action, onDeactivate, onClear, onActivate, isFlushing]);
 
   return (
-    <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
-      {active && (
-        <>
-          <div className='space-y-2 text-center'>
-            <div className='text-base-content/60 text-xs font-light tracking-wider sm:text-sm'>
-              {processInfo.s === 'brew' ? 'INFUSION' : 'PREINFUSION'}
-            </div>
-            <div className='text-base-content text-2xl font-bold sm:text-4xl'>{processInfo.l}</div>
-          </div>
+    <div className='flex flex-col items-center gap-4'>
+      <Tooltip content={buttonConfig.label}>
+        <button className='btn btn-circle btn-lg btn-primary' onClick={handleClick}>
+          <FontAwesomeIcon icon={buttonConfig.icon} className='text-2xl' />
+        </button>
+      </Tooltip>
 
-          <div className='w-full max-w-md'>
-            <div className='bg-base-content/20 h-2 w-full rounded-full'>
-              <div
-                className='bg-primary h-2 rounded-full transition-all duration-300 ease-out'
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-
-          <div className='space-y-2 text-center'>
-            <div className='text-base-content/60 text-xs sm:text-sm'>
-              {processInfo.tt === 'time' && `${(processInfo.pt / 1000).toFixed(0)}s`}
-              {processInfo.tt === 'volumetric' && `${processInfo.pt.toFixed(0)}g`}
-            </div>
-            <div className='text-base-content text-2xl font-bold sm:text-3xl'>
-              {formatDuration(elapsed)}
-            </div>
-          </div>
-        </>
-      )}
-      {!active && (
-        <div className='space-y-2 text-center'>
-          <div className='text-base-content text-xl font-bold sm:text-2xl'>Finished</div>
-          <div className='text-base-content text-2xl font-bold sm:text-3xl'>
-            {formatDuration(elapsed)}
-          </div>
-        </div>
-      )}
+      {brew && !active && !finished && <FlushButton onFlush={onFlush} />}
     </div>
   );
+});
+
+ActionButtons.displayName = 'ActionButtons';
+
+ActionButtons.propTypes = {
+  brew: PropTypes.bool.isRequired,
+  active: PropTypes.bool.isRequired,
+  finished: PropTypes.bool.isRequired,
+  isFlushing: PropTypes.bool.isRequired,
+  onActivate: PropTypes.func.isRequired,
+  onDeactivate: PropTypes.func.isRequired,
+  onClear: PropTypes.func.isRequired,
+  onFlush: PropTypes.func.isRequired,
 };
 
-const ProcessControls = props => {
-  // brew is true when mode equals 1 (Brew mode), false otherwise
-  const { brew, mode, changeMode } = props;
-  // Coerce brewTarget to strict boolean
-  const brewTarget = !!status.value.brewTarget;
+const ProcessControls = ({ brew, mode, changeMode }) => {
+  const api = useContext(ApiServiceContext);
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
-  const grind = mode === 4; // Grind mode
-  const apiService = useContext(ApiServiceContext);
+  const grind = mode === 4;
   const [isFlushing, setIsFlushing] = useState(false);
-  const [profileData, setProfileData] = useState(null);
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [activeBean, setActiveBean] = useState(() => getCurrentBeanSelection());
-  const [profiles, setProfiles] = useState([]);
-  const [profilesLoading, setProfilesLoading] = useState(false);
-  const [beans, setBeans] = useState([]);
-  const [beansLoading, setBeansLoading] = useState(false);
-  const [profileSelectBusy, setProfileSelectBusy] = useState(false);
-  const [beanSelectBusy, setBeanSelectBusy] = useState(false);
 
-  useEffect(() => {
-    if (!apiService || !brew) return;
+  // Use custom hooks for settings and profile data
+  const { isGrindAvailable, showGrindTab } = useGrindSettings(mode);
+  const { profiles, profileData, loading } = useProfileData(api, brew, status.value.selectedProfileId);
 
-    let cancelled = false;
-
-    const loadProfiles = async () => {
-      try {
-        setProfilesLoading(true);
-        const response = await apiService.request({ tp: 'req:profiles:list' });
-        if (!cancelled) {
-          setProfiles(Array.isArray(response?.profiles) ? response.profiles : []);
-        }
-      } catch (error) {
-        console.error('Failed to load profiles:', error);
-        if (!cancelled) {
-          setProfiles([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setProfilesLoading(false);
-        }
-      }
-    };
-
-    loadProfiles();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [apiService, brew]);
-
-  useEffect(() => {
-    if (!brew) return;
-
-    let cancelled = false;
-
-    const loadBeans = async () => {
-      try {
-        setBeansLoading(true);
-        const availableBeans = (await listBeans(apiService)).filter(bean => !bean.archived);
-        if (!cancelled) {
-          setBeans(availableBeans);
-        }
-      } catch (error) {
-        console.error('Failed to load beans:', error);
-        if (!cancelled) {
-          setBeans([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setBeansLoading(false);
-        }
-      }
-    };
-
-    const syncBeans = () => {
-      loadBeans();
-    };
-
-    loadBeans();
-    window.addEventListener('beans-library-changed', syncBeans);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener('beans-library-changed', syncBeans);
-    };
-  }, [apiService, brew]);
-
-  // Fetch profile data when the selected profileID changes
-  // selectedProfile (name string) is intentionally excluded — the ID is the
-  // unique identifier and the name can change reference on every status update.
-  useEffect(() => {
-    const selectedProfileId = status.value.selectedProfileId;
-
-    if (!selectedProfileId || !apiService) {
-      setProfileData(null);
-      return;
-    }
-
-    const fetchProfile = async () => {
-      try {
-        setProfileLoading(true);
-        // Load profile directly by ID
-        const profileResponse = await apiService.request({
-          tp: 'req:profiles:load',
-          id: selectedProfileId,
-        });
-        if (profileResponse.profile && profileResponse.profile.type === 'pro') {
-          setProfileData(profileResponse.profile);
-        } else {
-          setProfileData(null);
-        }
-      } catch (error) {
-        console.error('Failed to load profile:', error);
-        setProfileData(null);
-      } finally {
-        setProfileLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [status.value.selectedProfileId, apiService]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const syncBean = event => {
-      if (event?.detail !== undefined) {
-        setActiveBean(event.detail);
-        return;
-      }
-      setActiveBean(getCurrentBeanSelection());
-    };
-
-    window.addEventListener('bean-selection-changed', syncBean);
-    window.addEventListener('storage', syncBean);
-
-    return () => {
-      window.removeEventListener('bean-selection-changed', syncBean);
-      window.removeEventListener('storage', syncBean);
-    };
-  }, []);
-
-  // Get settings to check if SmartGrind is enabled
-  const { data: settings } = useQuery(
-    'settings-cache',
-    async () => {
-      const response = await fetch('/api/settings');
-      return response.json();
-    },
-    {
-      staleTime: 30000, // Cache for 30 seconds
-      refetchOnWindowFocus: false,
-    },
+  // Extract status values once for cleaner access
+  const statusValues = useMemo(
+    () => ({
+      grindTarget: status.value.grindTarget,
+      grindTargetVolume: status.value.grindTargetVolume,
+      grindTargetDuration: status.value.grindTargetDuration,
+      volumetricAvailable: status.value.volumetricAvailable,
+      currentTemperature: status.value.currentTemperature,
+      targetTemperature: status.value.targetTemperature,
+      selectedProfileId: status.value.selectedProfileId,
+    }),
+    [
+      status.value.grindTarget,
+      status.value.grindTargetVolume,
+      status.value.grindTargetDuration,
+      status.value.volumetricAvailable,
+      status.value.currentTemperature,
+      status.value.targetTemperature,
+      status.value.selectedProfileId,
+    ]
   );
 
-  const isSmartGrindEnabled = settings?.smartGrindActive || false;
-  const altRelayFunction = settings?.altRelayFunction !== undefined ? settings.altRelayFunction : 1;
-
-  // Show grind elements if SmartGrind is enabled OR if Alt Relay is set to grind
-  const isGrindAvailable = isSmartGrindEnabled || altRelayFunction === 1; // ALT_RELAY_GRIND = 1
-
-  // If currently in grind mode, always show it even if both SmartGrind is disabled and Alt Relay is not grind
-  // to avoid confusion for users who might be in grind mode when settings change
-  const showGrindTab = isGrindAvailable || mode === 4;
-
-  // Determine if we should show expanded view
-  const shouldExpand =
-    (brew && (active || finished || (brew && !active && !finished))) ||
-    (grind && showGrindTab && (active || finished || (grind && !active && !finished)));
-
-  const changeTarget = useCallback(
-    target => {
-      const messageType = grind ? 'req:change-grind-target' : 'req:change-brew-target';
-      apiService.send({
-        tp: messageType,
-        target,
-      });
-    },
-    [apiService, grind],
+  // Memoize derived state values
+  const derivedState = useMemo(
+    () => ({
+      shouldExpand: brew && (active || finished),
+      tempReady: Math.abs(statusValues.targetTemperature - statusValues.currentTemperature) < TEMP_READY_THRESHOLD,
+    }),
+    [brew, active, finished, statusValues.targetTemperature, statusValues.currentTemperature]
   );
 
-  const activate = useCallback(() => {
-    const messageType = grind ? 'req:grind:activate' : 'req:process:activate';
-    apiService.send({
-      tp: messageType,
-    });
-  }, [apiService, grind]);
-
-  const deactivate = useCallback(() => {
-    const messageType = grind ? 'req:grind:deactivate' : 'req:process:deactivate';
-    apiService.send({
-      tp: messageType,
-    });
-  }, [apiService, grind]);
-
-  const clear = useCallback(() => {
-    apiService.send({
-      tp: 'req:process:clear',
-    });
-  }, [apiService]);
-
-  const raiseTemp = useCallback(() => {
-    apiService.send({
-      tp: 'req:raise-temp',
-    });
-  }, [apiService]);
-
-  const lowerTemp = useCallback(() => {
-    apiService.send({
-      tp: 'req:lower-temp',
-    });
-  }, [apiService]);
-
-  const raiseTarget = useCallback(() => {
-    const messageType = grind ? 'req:raise-grind-target' : 'req:raise-brew-target';
-    apiService.send({
-      tp: messageType,
-    });
-  }, [apiService, grind]);
-
-  const lowerTarget = useCallback(() => {
-    const messageType = grind ? 'req:lower-grind-target' : 'req:lower-brew-target';
-    apiService.send({
-      tp: messageType,
-    });
-  }, [apiService, grind]);
-
-  const startFlush = useCallback(() => {
-    setIsFlushing(true);
-    apiService
-      .request({
-        tp: 'req:flush:start',
-      })
-      .catch(error => {
-        console.error('Flush start failed:', error);
-        setIsFlushing(false);
-      });
-  }, [apiService]);
-
-  const handleButtonClick = () => {
-    if (active) {
-      deactivate();
-
-      if (isFlushing) {
-        clear();
-        setIsFlushing(false);
-      }
-    } else if (finished) {
-      clear();
-    } else {
-      activate();
-    }
-  };
-
-  const getButtonIcon = () => {
-    if (active) {
-      return faPause;
-    } else if (finished) {
-      return faCheck;
-    }
-    return faPlay;
-  };
-
-  const handleProfileSelect = useCallback(
-    async event => {
-      const nextProfileId = event.target.value;
-      if (!nextProfileId || nextProfileId === status.value.selectedProfileId) {
-        return;
-      }
-
-      try {
-        setProfileSelectBusy(true);
-        await apiService.request({ tp: 'req:profiles:select', id: nextProfileId });
-      } catch (error) {
-        console.error('Failed to select profile:', error);
-      } finally {
-        setProfileSelectBusy(false);
-      }
-    },
-    [apiService, status.value.selectedProfileId],
+  // Get visibility flags for control elements
+  const visibility = useControlsVisibility(
+    mode,
+    active,
+    finished,
+    isGrindAvailable,
+    showGrindTab,
+    statusValues.volumetricAvailable
   );
 
-  const handleBeanSelect = useCallback(
-    async event => {
-      const nextBeanId = event.target.value;
-      if (!nextBeanId) {
-        clearCurrentBeanSelection();
-        apiService.send({ tp: 'req:beans:select', name: '' });
-        return;
-      }
-
-      const selectedBean = beans.find(bean => bean.id === nextBeanId);
-      if (!selectedBean) return;
-
-      try {
-        setBeanSelectBusy(true);
-        recordBeanSelection({
-          profileId: status.value.selectedProfileId,
-          profileLabel: status.value.selectedProfile || '',
-          bean: selectedBean,
-        });
-        apiService.send({ tp: 'req:beans:select', name: selectedBean.name });
-      } catch (error) {
-        console.error('Failed to select bean:', error);
-      } finally {
-        setBeanSelectBusy(false);
-      }
-    },
-    [apiService, beans, status.value.selectedProfile, status.value.selectedProfileId],
-  );
-
-  const profileOptions = profiles.map(profile => ({
-    value: profile.id,
-    label: profile.label || 'Untitled profile',
-  }));
-
-  const beanOptions = beans.map(bean => ({
-    value: bean.id,
-    label: [bean.name, bean.roaster, bean.quantity !== null && bean.quantity !== undefined ? `${bean.quantity}g` : '']
-      .filter(Boolean)
-      .join(' • '),
-  }));
-  const selectedProfileValue = profileOptions.some(profile => profile.value === status.value.selectedProfileId)
-    ? status.value.selectedProfileId
-    : '';
-  const selectedBeanValue = beanOptions.some(bean => bean.value === activeBean?.beanId)
-    ? activeBean.beanId
-    : '';
+  // Get action handlers
+  const actions = useProcessActions(api, grind, setIsFlushing);
 
   return (
-    <div className={`flex min-h-[250px] flex-col justify-between lg:min-h-[350px]`}>
-      <div className='mb-3 flex justify-center'>
-        <div className='bg-base-300/90 flex w-full max-w-md rounded-xl border border-base-300/65 p-1'>
-          {[
-            { id: 0, label: 'Standby' },
-            { id: 1, label: 'Brew' },
-            { id: 2, label: 'Steam' },
-            { id: 3, label: 'Water' },
-            ...(showGrindTab ? [{ id: 4, label: 'Grind' }] : []),
-          ].map(tab => (
-            <button
-              key={tab.id}
-              className={`flex-1 cursor-pointer rounded-lg px-1 py-1.5 text-sm transition-all duration-200 sm:px-4 lg:px-2 lg:py-2 ${
-                mode === tab.id
-                  ? 'bg-primary text-primary-content font-medium shadow-[0_12px_24px_-16px_rgba(0,0,0,0.9)]'
-                  : 'text-base-content/60 hover:text-base-content'
-              }`}
-              onClick={() => changeMode(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+    <div className='flex min-h-[250px] flex-col justify-between lg:min-h-[350px]'>
+      <div className='mb-3'>
+        <ModeTabBar mode={mode} changeMode={changeMode} showGrindTab={showGrindTab} />
       </div>
 
-      <div className='mt-1 mb-2 flex flex-col items-center justify-between space-y-2 sm:flex-row sm:space-y-0'>
-        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
-          <FontAwesomeIcon icon={faThermometerHalf} className='text-base-content/60' />
-          <span className='text-base-content'>
-            {status.value.currentTemperature.toFixed(1) || 0}
-          </span>
-          <span className='text-success font-semibold'>
-            {' '}
-            / {status.value.targetTemperature || 0}°C
-          </span>
-        </div>
-        {status.value.volumetricAvailable && mode !== 0 && (
-          <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
-            <i className='fa fa-weight-scale text-base-content/60' />
-            {brewTarget && (mode === 1 || mode === 3) && (
-              <>
-                <span className='text-base-content'>
-                  {(status.value.currentWeight ?? 0).toFixed(1)}g
-                </span>
-                <span className='text-success font-semibold'>
-                  {' '}
-                  / {(status.value.targetWeight ?? 0).toFixed(0)}g
-                </span>
-              </>
-            )}
-          </div>
-        )}
-        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
-          <FontAwesomeIcon icon={faGauge} className='text-base-content/60' />
-          <span className='text-base-content'>
-            {status.value.currentPressure?.toFixed(1) || 0} /{' '}
-            {status.value.targetPressure?.toFixed(1) || 0} bar
-          </span>
-        </div>
-      </div>
-      {brew && (
-        <div className='mb-2 text-center'>
-          <div className='mb-2 grid gap-3 sm:grid-cols-2'>
-            <SelectorCard
-              label='Current Profile'
-              icon={faRectangleList}
-              value={selectedProfileValue}
-              options={profileOptions}
-              onChange={handleProfileSelect}
-              loading={profilesLoading || profileSelectBusy}
-              emptyLabel={status.value.selectedProfile || 'Default'}
-              disabled={!apiService}
-            />
-            <SelectorCard
-              label='Current Bean'
-              icon={faLeaf}
-              value={selectedBeanValue}
-              options={beanOptions}
-              onChange={handleBeanSelect}
-              loading={beansLoading || beanSelectBusy}
-              emptyLabel={activeBean?.beanName || 'Not selected'}
-              disabled={!apiService}
-            />
-          </div>
-          {status.value.selectedProfileId && (
-            <div className='mb-2'>
-              {profileLoading && (
-                <div className='flex max-h-20 w-full items-center justify-center'>
-                  <div className='loading loading-spinner loading-xs opacity-60'></div>
-                </div>
-              )}
-              {!profileLoading && profileData && (
-                <ProcessProfileChart
-                  data={profileData}
-                  processInfo={processInfo}
-                  className='max-h-36 w-full'
-                />
-              )}
-            </div>
-          )}
-        </div>
+      {derivedState.shouldExpand && (
+        <ProcessDisplay
+          brew={brew}
+          grind={grind}
+          showGrindTab={showGrindTab}
+          active={active}
+          finished={finished}
+          processInfo={processInfo}
+          status={{
+            mode,
+            currentTemperature: statusValues.currentTemperature,
+            targetTemperature: statusValues.targetTemperature,
+            isGrindAvailable,
+            volumetricAvailable: statusValues.volumetricAvailable,
+            grindTarget: statusValues.grindTarget,
+            grindTargetVolume: statusValues.grindTargetVolume,
+            grindTargetDuration: statusValues.grindTargetDuration,
+          }}
+        />
       )}
 
-      {shouldExpand && (
-        <>
-          <div className='flex flex-1 items-center justify-center'>
-            {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
-            {(active || finished) && grind && showGrindTab && (
-              <GrindProgress processInfo={processInfo} />
-            )}
-            {!brew && !(grind && showGrindTab) && (
-              <div className='space-y-2 text-center'>
-                <div className='text-xl font-bold sm:text-2xl'>
-                  {mode === 0 && 'Standby Mode'}
-                  {mode === 2 && 'Steam Mode'}
-                  {mode === 3 && 'Water Mode'}
-                </div>
-                <div className='text-base-content/60 text-sm'>
-                  {mode === 0 && 'Machine is ready'}
-                  {mode === 3 && 'Start and open steam valve to pull water'}
-                  {mode === 2 &&
-                    (Math.abs(status.value.targetTemperature - status.value.currentTemperature) < 5
-                      ? 'Steam is ready'
-                      : 'Preheating')}
-                </div>
-              </div>
-            )}
-            {grind && showGrindTab && !active && !finished && (
-              <div className='space-y-2 text-center'>
-                <div className='text-xl font-bold sm:text-2xl'>Grind</div>
-                <div className='text-base-content/60 text-sm'>
-                  {isGrindAvailable
-                    ? 'Select grind target to start'
-                    : 'Grind function not available'}
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {!shouldExpand && (
+      {!derivedState.shouldExpand && (
         <div className='flex flex-1 items-center justify-center'>
-          <div className='space-y-2 text-center'>
-            <div className='text-lg font-semibold sm:text-xl'>
-              {mode === 0 && 'Standby'}
-              {mode === 1 && 'Brew'}
-              {mode === 2 && 'Steam'}
-              {mode === 3 && 'Water'}
-              {mode === 4 && showGrindTab && 'Grind'}
-            </div>
-            <div className='text-base-content/60 text-sm'>
-              {mode === 0 && 'Machine is ready'}
-              {mode === 1 && 'Select brew target to start'}
-              {mode === 2 &&
-                (Math.abs(status.value.targetTemperature - status.value.currentTemperature) < 5
-                  ? 'Steam is ready'
-                  : 'Preheating')}
-              {mode === 3 && 'Start and open steam valve to pull water'}
-              {mode === 4 &&
-                showGrindTab &&
-                (isGrindAvailable
-                  ? 'Select grind target to start'
-                  : 'Grind function not available')}
-            </div>
-          </div>
+          <ModeIdleDisplay
+            mode={mode}
+            showGrindTab={showGrindTab}
+            tempReady={derivedState.tempReady}
+            isGrindAvailable={isGrindAvailable}
+          />
         </div>
       )}
 
       <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {grind &&
-          showGrindTab &&
-          !active &&
-          !finished &&
-          isGrindAvailable &&
-          status.value.volumetricAvailable && (
-            <div className='bg-base-300/90 flex w-full max-w-xs rounded-xl border border-base-300/65 p-1'>
-              <button
-                className={`flex-1 cursor-pointer rounded-lg px-3 py-1.5 text-sm transition-all duration-200 lg:py-2 ${
-                  (brew && !brewTarget) || (grind && status.value.grindTarget === 0)
-                    ? 'bg-primary text-primary-content font-medium shadow-[0_10px_22px_-16px_rgba(0,0,0,0.9)]'
-                    : 'text-base-content/60 hover:text-base-content'
-                }`}
-                onClick={() => changeTarget(0)}
-              >
-                <FontAwesomeIcon icon={faClock} />
-                <span className='ml-1'>Time</span>
-              </button>
-              <button
-                className={`flex-1 cursor-pointer rounded-lg px-3 py-1.5 text-sm transition-all duration-200 lg:py-2 ${
-                  (brew && brewTarget) || (grind && status.value.grindTarget === 1)
-                    ? 'bg-primary text-primary-content font-medium shadow-[0_10px_22px_-16px_rgba(0,0,0,0.9)]'
-                    : 'text-base-content/60 hover:text-base-content'
-                }`}
-                onClick={() => changeTarget(1)}
-              >
-                <FontAwesomeIcon icon={faWeightScale} />
-                <span className='ml-1'>Weight</span>
-              </button>
-            </div>
-          )}
-        {/* Controls for different modes */}
-        {mode === 1 && (
-          <div className='flex flex-col items-center gap-4 space-y-4'>
-            {/* Brew mode has no additional controls beyond common ones */}
-          </div>
-        )}
-        {mode === 2 && (
-          <div className='flex flex-col items-center gap-4 space-y-4'>
-            {/* Temperature adjustment controls for steam mode */}
-            <div className='flex flex-col items-center gap-2'>
-              <div className='text-base-content/60 text-xs font-light tracking-wider'>
-                TEMPERATURE
-              </div>
-              <div className='flex items-center space-x-2'>
-                <Tooltip content='Lower temperature'>
-                  <button
-                    onClick={lowerTemp}
-                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                  >
-                    <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
-                  </button>
-                </Tooltip>
-                <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
-                  {status.value.targetTemperature}°C
-                </div>
-                <Tooltip content='Raise temperature'>
-                  <button
-                    onClick={raiseTemp}
-                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                  >
-                    <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
-                  </button>
-                </Tooltip>
-              </div>
-            </div>
-          </div>
-        )}
-        {mode === 3 && (
-          <div className='flex flex-col items-center gap-4 space-y-4'>
-            {/* Temperature adjustment controls for water mode */}
-            <div className='flex flex-col items-center gap-2'>
-              <div className='text-base-content/60 text-xs font-light tracking-wider'>
-                TEMPERATURE
-              </div>
-              <div className='flex items-center space-x-2'>
-                <Tooltip content='Lower temperature'>
-                  <button
-                    onClick={lowerTemp}
-                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                  >
-                    <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
-                  </button>
-                </Tooltip>
-                <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
-                  {status.value.targetTemperature}°C
-                </div>
-                <Tooltip content='Raise temperature'>
-                  <button
-                    onClick={raiseTemp}
-                    className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                  >
-                    <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
-                  </button>
-                </Tooltip>
-              </div>
-            </div>
-          </div>
-        )}
-        {mode === 4 && showGrindTab && (
-          <div className='flex flex-col items-center gap-4 space-y-4'>
-            {/* Target adjustment controls for grind mode */}
-            {grind && !active && !finished && isGrindAvailable && (
-              <div className='flex flex-col items-center gap-2'>
-                <div className='text-base-content/60 text-xs font-light tracking-wider'>
-                  GRIND TARGET
-                </div>
-                <div className='flex items-center space-x-2'>
-                  <Tooltip content='Decrease target'>
-                    <button
-                      onClick={lowerTarget}
-                      className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                    >
-                      <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
-                    </button>
-                  </Tooltip>
-                  <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
-                    {status.value.grindTarget === 1 && status.value.volumetricAvailable
-                      ? `${status.value.grindTargetVolume}g`
-                      : `${Math.round(status.value.grindTargetDuration / 1000)}s`}
-                  </div>
-                  <Tooltip content='Increase target'>
-                    <button
-                      onClick={raiseTarget}
-                      className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-                    >
-                      <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
-                    </button>
-                  </Tooltip>
-                </div>
-              </div>
-            )}
-          </div>
+        {/* Grind target time/weight selector */}
+        {visibility.showGrindTargetBar && (
+          <GrindTargetBar
+            grindTarget={statusValues.grindTarget}
+            grindTargetVolume={statusValues.grindTargetVolume}
+            grindTargetDuration={statusValues.grindTargetDuration}
+            volumetricAvailable={statusValues.volumetricAvailable}
+            onChangeTarget={actions.changeTarget}
+          />
         )}
 
-        {/* Common controls for all modes that need them */}
-        {(mode === 1 || mode === 3 || (mode === 4 && showGrindTab && isGrindAvailable)) && (
-          <div className='flex flex-col items-center gap-4 space-y-4'>
-            <Tooltip content={active ? 'Pause' : finished ? 'Finish' : 'Start'}>
-              <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
-                <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />
-              </button>
-            </Tooltip>
+        {/* Temperature controls for Steam / Water modes */}
+        {visibility.showTemperatureControls && (
+          <TemperatureControls
+            targetTemperature={statusValues.targetTemperature}
+            onLower={actions.lowerTemp}
+            onRaise={actions.raiseTemp}
+          />
+        )}
 
-            {brew && !active && !finished && (
-              <button
-                className='btn text-base-content/60 hover:text-base-content rounded-full text-sm transition-colors duration-200'
-                onClick={startFlush}
-                aria-label='Flush water'
-              >
-                <FontAwesomeIcon icon={faTint} />
-                Flush
-              </button>
-            )}
-          </div>
+        {/* Grind target adjustment */}
+        {visibility.showGrindTargetControls && (
+          <GrindTargetControls
+            grindTarget={statusValues.grindTarget}
+            grindTargetVolume={statusValues.grindTargetVolume}
+            grindTargetDuration={statusValues.grindTargetDuration}
+            onLowerTarget={actions.lowerTarget}
+            onRaiseTarget={actions.raiseTarget}
+          />
+        )}
+
+        {/* Play/Pause/Finish button */}
+        {visibility.showActionButtons && (
+          <ActionButtons
+            brew={brew}
+            active={active}
+            finished={finished}
+            isFlushing={isFlushing}
+            onActivate={actions.activate}
+            onDeactivate={actions.deactivate}
+            onClear={actions.clear}
+            onFlush={actions.startFlush}
+          />
         )}
       </div>
     </div>
@@ -834,3 +276,5 @@ ProcessControls.propTypes = {
 };
 
 export default ProcessControls;
+
+// Made with Bob

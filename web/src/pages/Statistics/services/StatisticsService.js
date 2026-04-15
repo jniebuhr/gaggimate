@@ -71,6 +71,7 @@ function computeSummary(entries) {
   let totalDuration = 0;
   let totalWater = 0;
   let totalWeight = 0;
+  let totalDoseIn = 0;
   let earliest = Infinity;
   let latest = -Infinity;
   let gmCount = 0;
@@ -79,7 +80,7 @@ function computeSummary(entries) {
   const tempAvgs = [];
   const tempTargetDeviations = [];
 
-  for (const { analysis, meta } of entries) {
+  for (const { analysis, meta, doseIn } of entries) {
     const total = analysis.total;
     if (total) {
       if (Number.isFinite(total.duration)) totalDuration += total.duration;
@@ -89,6 +90,7 @@ function computeSummary(entries) {
       const tempTargetDeviation = getTotalTempTargetDeviation(total);
       if (Number.isFinite(tempTargetDeviation)) tempTargetDeviations.push(tempTargetDeviation);
     }
+    if (Number.isFinite(doseIn) && doseIn > 0) totalDoseIn += doseIn;
     if (Number.isFinite(meta.timestamp)) {
       if (meta.timestamp < earliest) earliest = meta.timestamp;
       if (meta.timestamp > latest) latest = meta.timestamp;
@@ -105,9 +107,11 @@ function computeSummary(entries) {
     totalDuration,
     totalWater,
     totalWeight,
+    totalDoseIn,
     avgDuration: totalShots ? totalDuration / totalShots : 0,
     avgWater: totalShots ? totalWater / totalShots : 0,
     avgWeight: totalShots ? totalWeight / totalShots : 0,
+    avgDoseIn: totalShots ? totalDoseIn / totalShots : 0,
     avgTemp,
     avgTempTargetDeviation,
     dateRange: {
@@ -131,6 +135,14 @@ function computeMetricAverages(entries) {
   metrics.water = aggregateValueStats(totals.map(total => total.water));
   metrics.duration = aggregateValueStats(totals.map(total => total.duration));
   metrics.ttDelta = aggregateValueStats(totals.map(getTotalTempTargetDeviation));
+
+  // doseIn from shot notes (only positive values count)
+  const doseIns = entries.map(e => e.doseIn).filter(v => Number.isFinite(v) && v > 0);
+  metrics.avgDoseIn = aggregateValueStats(doseIns);
+  metrics.avgDoseIn.min = doseIns.length > 0 ? metrics.avgDoseIn.min : 0;
+  metrics.avgDoseIn.max = doseIns.length > 0 ? metrics.avgDoseIn.max : 0;
+  metrics.avgDoseIn.stdDev = doseIns.length > 0 ? metrics.avgDoseIn.stdDev : 0;
+
   return metrics;
 }
 
@@ -151,6 +163,7 @@ function computeProfileGroups(entries) {
     const durations = totals.map(t => t.duration).filter(Number.isFinite);
     const weights = totals.map(t => t.weight).filter(Number.isFinite);
     const waters = totals.map(t => t.water).filter(Number.isFinite);
+    const doseIns = groupEntries.map(e => e.doseIn).filter(v => Number.isFinite(v) && v > 0);
 
     const keys = ['p', 'f', 'pf', 't', 'w'];
     const metrics = {};
@@ -167,6 +180,7 @@ function computeProfileGroups(entries) {
       avgDuration: averageOf(durations),
       avgWeight: averageOf(weights),
       avgWater: averageOf(waters),
+      avgDoseIn: averageOf(doseIns),
       metrics,
     });
   }
@@ -369,9 +383,11 @@ export function computeStatistics(entries, options = {}) {
         totalDuration: 0,
         totalWater: 0,
         totalWeight: 0,
+        totalDoseIn: 0,
         avgDuration: 0,
         avgWater: 0,
         avgWeight: 0,
+        avgDoseIn: 0,
         avgTemp: 0,
         avgTempTargetDeviation: 0,
         dateRange: { earliest: null, latest: null },
