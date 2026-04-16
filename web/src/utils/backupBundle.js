@@ -17,6 +17,41 @@ import {
 } from './googleDriveBackup.js';
 import { getStoredTheme, setStoredTheme } from './themeManager.js';
 
+const CURRENT_VERSION = 2;
+
+const MIGRATIONS = {
+  // v1 -> v2: rename type from 'gaggimate-google-drive-backup' to 'gaggimate-backup'
+  1: (bundle) => ({
+    ...bundle,
+    type: 'gaggimate-backup',
+    version: 2,
+  }),
+};
+
+export function migrateToCurrent(bundle) {
+  if (!bundle) {
+    throw new Error('Cannot migrate null or undefined bundle.');
+  }
+  let current = bundle;
+
+  // Handle legacy bundles with no version field (treat as v1)
+  if (current.version === undefined) {
+    current = { ...current, version: 1 };
+  }
+
+  const targetVersion = CURRENT_VERSION;
+
+  while (current.version < targetVersion) {
+    const nextVersion = current.version + 1;
+    const migration = MIGRATIONS[current.version];
+    if (!migration) {
+      throw new Error(`No migration available from v${current.version} to v${nextVersion}`);
+    }
+    current = migration(current);
+  }
+  return current;
+}
+
 function sanitizeProfile(profile) {
   return { ...profile };
 }
@@ -31,7 +66,11 @@ async function fetchSettingsSnapshot() {
 
 async function fetchProfilesSnapshot(apiService) {
   const response = await apiService.request({ tp: 'req:profiles:list' });
-  return Array.isArray(response.profiles) ? response.profiles.map(sanitizeProfile) : [];
+  if (!Array.isArray(response.profiles)) {
+    console.warn('Profiles response missing expected array:', response);
+    return [];
+  }
+  return response.profiles.map(sanitizeProfile);
 }
 
 async function fetchShotHistorySnapshot(apiService) {
@@ -80,8 +119,8 @@ export async function createBackupBundle(apiService) {
   ]);
 
   return {
-    type: 'gaggimate-google-drive-backup',
-    version: 1,
+    type: 'gaggimate-backup',
+    version: CURRENT_VERSION,
     exportedAt: new Date().toISOString(),
     web: {
       theme: getStoredTheme(),
@@ -139,36 +178,38 @@ async function restoreSelectedProfile(apiService, profiles) {
 }
 
 export async function restoreBackupBundle(apiService, bundle) {
-  if (bundle?.type !== 'gaggimate-google-drive-backup') {
+  const migrated = migrateToCurrent(bundle);
+
+  if (migrated.type !== 'gaggimate-backup') {
     throw new Error('Unsupported backup format.');
   }
 
   notesService.setApiService(apiService);
 
-  if (bundle.web?.theme) {
-    setStoredTheme(bundle.web.theme);
+  if (migrated.web?.theme) {
+    setStoredTheme(migrated.web.theme);
   }
-  if (bundle.web?.dashboardLayout) {
-    setDashboardLayout(bundle.web.dashboardLayout);
+  if (migrated.web?.dashboardLayout) {
+    setDashboardLayout(migrated.web.dashboardLayout);
   }
-  if (bundle.web?.googleDriveClientId) {
-    setStoredGoogleDriveClientId(bundle.web.googleDriveClientId);
+  if (migrated.web?.googleDriveClientId) {
+    setStoredGoogleDriveClientId(migrated.web.googleDriveClientId);
   }
 
-  if (bundle.settings) {
-    await restoreSettingsSnapshot(bundle.settings);
+  if (migrated.settings) {
+    await restoreSettingsSnapshot(migrated.settings);
   }
-  if (bundle.profiles) {
-    await restoreProfilesSnapshot(apiService, bundle.profiles);
-    await restoreSelectedProfile(apiService, bundle.profiles);
+  if (migrated.profiles) {
+    await restoreProfilesSnapshot(apiService, migrated.profiles);
+    await restoreSelectedProfile(apiService, migrated.profiles);
   }
-  if (bundle.beans) {
-    await restoreBeanData(apiService, bundle.beans);
+  if (migrated.beans) {
+    await restoreBeanData(apiService, migrated.beans);
   }
-  if (bundle.selectedBean?.beanName !== undefined) {
-    apiService.send({ tp: 'req:beans:select', name: bundle.selectedBean?.beanName || '' });
+  if (migrated.selectedBean?.beanName !== undefined) {
+    apiService.send({ tp: 'req:beans:select', name: migrated.selectedBean?.beanName || '' });
   }
-  if (bundle.shotHistory) {
-    await importShotHistoryArchive(bundle.shotHistory);
+  if (migrated.shotHistory) {
+    await importShotHistoryArchive(migrated.shotHistory);
   }
 }
