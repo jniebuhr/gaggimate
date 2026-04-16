@@ -333,31 +333,34 @@ void Controller::loop() {
             }
         }
 
-        // Handle last process - Calculate auto delay
-        if (lastProcess != nullptr && !lastProcess->isComplete()) {
-            lastProcess->progress();
-        }
-        if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
-            processCompleted = true;
-            if (lastProcess->getType() == MODE_BREW) {
-                if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
-                    brewProcess->target == ProcessTarget::VOLUMETRIC) {
-                    double newDelay = brewProcess->getNewDelayTime();
-                    if (newDelay >= 0) {
-                        settings.setBrewDelay(newDelay);
+        // Handle last process - Calculate auto delay (mutex protected against clear()/deactivate())
+        if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+            if (lastProcess != nullptr && !lastProcess->isComplete()) {
+                lastProcess->progress();
+            }
+            if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
+                processCompleted = true;
+                if (lastProcess->getType() == MODE_BREW) {
+                    if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
+                        brewProcess->target == ProcessTarget::VOLUMETRIC) {
+                        double newDelay = brewProcess->getNewDelayTime();
+                        if (newDelay >= 0) {
+                            settings.setBrewDelay(newDelay);
+                        }
                     }
-                }
-            } else if (lastProcess->getType() == MODE_GRIND) {
-                if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
-                    grindProcess->target == ProcessTarget::VOLUMETRIC) {
-                    double newDelay = grindProcess->getNewDelayTime();
-                    if (newDelay >= 0) {
-                        settings.setGrindDelay(newDelay);
+                } else if (lastProcess->getType() == MODE_GRIND) {
+                    if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
+                        grindProcess->target == ProcessTarget::VOLUMETRIC) {
+                        double newDelay = grindProcess->getNewDelayTime();
+                        if (newDelay >= 0) {
+                            settings.setGrindDelay(newDelay);
+                        }
                     }
                 }
             }
+            lastProgress = now;
+            xSemaphoreGive(processMutex);
         }
-        lastProgress = now;
     }
 
     if (grindActiveUntil != 0 && (long)(now - grindActiveUntil) > 0)

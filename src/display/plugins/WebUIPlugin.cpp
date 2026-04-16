@@ -292,6 +292,10 @@ void WebUIPlugin::stop() {
         delete dnsServer;
         dnsServer = nullptr;
     }
+    if (ota != nullptr) {
+        delete ota;
+        ota = nullptr;
+    }
     serverRunning = false;
 }
 
@@ -384,6 +388,11 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     resp["msg"] = "Rebuild started";
                     size_t bufferSize = measureJson(resp);
                     auto *buffer = ws.makeBuffer(bufferSize);
+                    if (!buffer) {
+                        ESP_LOGE("WebUIPlugin", "Failed to allocate WebSocket buffer");
+                        client->text("{\"tp\":\"res:history:rebuild\",\"msg\":\"Buffer allocation failed\"}");
+                        return;
+                    }
                     serializeJson(resp, buffer->get(), bufferSize);
                     client->text(buffer);
                     ShotHistory.startAsyncRebuild();
@@ -392,6 +401,11 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     ShotHistory.handleRequest(doc, resp);
                     size_t bufferSize = measureJson(resp);
                     auto *buffer = ws.makeBuffer(bufferSize);
+                    if (!buffer) {
+                        ESP_LOGE("WebUIPlugin", "Failed to allocate WebSocket buffer");
+                        client->text("{\"tp\":\"res:history\",\"msg\":\"Buffer allocation failed\"}");
+                        return;
+                    }
                     serializeJson(resp, buffer->get(), bufferSize);
                     client->text(buffer);
                 } else if (msgType == "req:flush:start") {
@@ -495,6 +509,19 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
 
     size_t bufferSize = measureJson(response);
     auto *buffer = ws.makeBuffer(bufferSize);
+    if (!buffer) {
+        ESP_LOGE("WebUIPlugin", "Failed to allocate WebSocket buffer");
+        JsonDocument errResp;
+        errResp["tp"] = String("res:") + type.substring(4);
+        errResp["rid"] = request["rid"];
+        errResp["error"] = F("Server error: buffer allocation failed");
+        auto *errBuf = ws.makeBuffer(measureJson(errResp));
+        if (errBuf) {
+            serializeJson(errResp, errBuf->get(), measureJson(errResp));
+            ws.text(clientId, errBuf);
+        }
+        return;
+    }
     serializeJson(response, buffer->get(), bufferSize);
     ws.text(clientId, buffer);
 }
@@ -542,6 +569,15 @@ void WebUIPlugin::handleBeanRequest(uint32_t clientId, JsonDocument &request) {
     auto *buffer = ws.makeBuffer(bufferSize);
     if (!buffer) {
         ESP_LOGE("WebUIPlugin", "Failed to allocate WebSocket buffer");
+        JsonDocument errResp;
+        errResp["tp"] = String("res:") + type.substring(4);
+        errResp["rid"] = request["rid"];
+        errResp["error"] = F("Server error: buffer allocation failed");
+        auto *errBuf = ws.makeBuffer(measureJson(errResp));
+        if (errBuf) {
+            serializeJson(errResp, errBuf->get(), measureJson(errResp));
+            ws.text(clientId, errBuf);
+        }
         return;
     }
     serializeJson(response, buffer->get(), bufferSize);
