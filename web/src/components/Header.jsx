@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from 'preact/hooks';
+import { useCallback, useEffect, useState, useRef, useContext } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
@@ -20,7 +20,7 @@ import { faTemperatureHigh } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
-import { machine } from '../services/ApiService.js';
+import { ApiServiceContext, machine } from '../services/ApiService.js';
 import { getCurrentBeanSelection, listBeans } from '../utils/beanManager.js';
 
 const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
@@ -253,6 +253,7 @@ const ModePopover = ({ currentMode, onSelect }) => (
 export function Header() {
   const [open, setOpen] = useState(false);
   const [activeBean, setActiveBean] = useState(() => getCurrentBeanSelection());
+  const apiService = useContext(ApiServiceContext);
   const connected = machine.value.connected;
   const mode = machine.value.status.mode;
   const currentMode = MODE_LABELS[mode] || 'Unknown';
@@ -409,12 +410,12 @@ export function Header() {
 
   const handleModeSelect = useCallback((newMode) => {
     try {
-      machine.send({ tp: 'req:change-mode', mode: newMode });
+      apiService.send({ tp: 'req:change-mode', mode: newMode });
       setActivePopover(null);
     } catch (err) {
       console.error('Failed to change mode:', err);
     }
-  }, []);
+  }, [apiService]);
 
   return (
     <header id='page-header' className='sticky top-0 z-50'>
