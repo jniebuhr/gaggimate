@@ -29,6 +29,9 @@ const MIGRATIONS = {
 };
 
 export function migrateToCurrent(bundle) {
+  if (!bundle) {
+    throw new Error('Cannot migrate null or undefined bundle.');
+  }
   let current = bundle;
 
   // Handle legacy bundles with no version field (treat as v1)
@@ -40,7 +43,7 @@ export function migrateToCurrent(bundle) {
 
   while (current.version < targetVersion) {
     const nextVersion = current.version + 1;
-    const migration = MIGRATIONS[nextVersion];
+    const migration = MIGRATIONS[current.version];
     if (!migration) {
       throw new Error(`No migration available from v${current.version} to v${nextVersion}`);
     }
