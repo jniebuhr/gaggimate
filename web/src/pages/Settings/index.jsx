@@ -3,19 +3,17 @@ import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState, useContext } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { timezones } from '../../config/zones.js';
-import { machine } from '../../services/ApiService.js';
+import { machine, ApiServiceContext } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
 import { downloadJson, prepareDownload } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
-import { useContext } from 'preact/hooks';
-import { ApiServiceContext } from '../../services/ApiService.js';
 import { GoogleDriveBackupCard } from './GoogleDriveBackupCard.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
@@ -106,54 +104,39 @@ export function Settings() {
 
   const onChange = key => {
     return e => {
-      let value = e.currentTarget.value;
+      const value = e.currentTarget.value;
       if (key === 'homekit') {
-        value = !formData.homekit;
-      }
-      if (key === 'boilerFillActive') {
-        value = !formData.boilerFillActive;
-      }
-      if (key === 'smartGrindActive') {
-        value = !formData.smartGrindActive;
-      }
-      if (key === 'smartGrindToggle') {
-        value = !formData.smartGrindToggle;
-      }
-      if (key === 'homeAssistant') {
-        value = !formData.homeAssistant;
-      }
-      if (key === 'momentaryButtons') {
-        value = !formData.momentaryButtons;
-      }
-      if (key === 'delayAdjust') {
-        value = !formData.delayAdjust;
-      }
-      if (key === 'clock24hFormat') {
-        value = !formData.clock24hFormat;
-      }
-      if (key === 'autowakeupEnabled') {
-        value = !formData.autowakeupEnabled;
-      }
-      if (key === 'standbyDisplayEnabled') {
-        value = !formData.standbyDisplayEnabled;
-        // Set standby brightness to 0 when toggle is off
-        const newFormData = {
-          ...formData,
-          [key]: value,
-        };
-        if (!value) {
-          newFormData.standbyBrightness = 0;
-        }
-        setFormData(newFormData);
-        return;
-      }
-      if (key === 'dashboardLayout') {
+        setFormData(prev => ({ ...prev, homekit: !prev.homekit }));
+      } else if (key === 'boilerFillActive') {
+        setFormData(prev => ({ ...prev, boilerFillActive: !prev.boilerFillActive }));
+      } else if (key === 'smartGrindActive') {
+        setFormData(prev => ({ ...prev, smartGrindActive: !prev.smartGrindActive }));
+      } else if (key === 'smartGrindToggle') {
+        setFormData(prev => ({ ...prev, smartGrindToggle: !prev.smartGrindToggle }));
+      } else if (key === 'homeAssistant') {
+        setFormData(prev => ({ ...prev, homeAssistant: !prev.homeAssistant }));
+      } else if (key === 'momentaryButtons') {
+        setFormData(prev => ({ ...prev, momentaryButtons: !prev.momentaryButtons }));
+      } else if (key === 'delayAdjust') {
+        setFormData(prev => ({ ...prev, delayAdjust: !prev.delayAdjust }));
+      } else if (key === 'clock24hFormat') {
+        setFormData(prev => ({ ...prev, clock24hFormat: !prev.clock24hFormat }));
+      } else if (key === 'autowakeupEnabled') {
+        setFormData(prev => ({ ...prev, autowakeupEnabled: !prev.autowakeupEnabled }));
+      } else if (key === 'standbyDisplayEnabled') {
+        setFormData(prev => {
+          const newFormData = { ...prev, standbyDisplayEnabled: !prev.standbyDisplayEnabled };
+          if (newFormData.standbyDisplayEnabled === false) {
+            newFormData.standbyBrightness = 0;
+          }
+          return newFormData;
+        });
+      } else if (key === 'dashboardLayout') {
         setDashboardLayout(value);
+        setFormData(prev => ({ ...prev, dashboardLayout: value }));
+      } else {
+        setFormData(prev => ({ ...prev, [key]: value }));
       }
-      setFormData({
-        ...formData,
-        [key]: value,
-      });
     };
   };
 
@@ -190,49 +173,60 @@ export function Settings() {
     async (e, restart = false) => {
       e.preventDefault();
       setSubmitting(true);
-      const form = formRef.current;
-      const formDataToSubmit = new FormData(form);
-      formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
-      formDataToSubmit.set(
-        'altRelayFunction',
-        formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
-      );
+      try {
+        const form = formRef.current;
+        const formDataToSubmit = new FormData(form);
+        formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
+        formDataToSubmit.set(
+          'altRelayFunction',
+          formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
+        );
 
-      // Combine PID and Kf into single PID string
-      if (formData.pid && formData.kf !== undefined) {
-        const combinedPid = `${formData.pid},${formData.kf}`;
-        formDataToSubmit.set('pid', combinedPid);
+        // Combine PID and Kf into single PID string
+        if (formData.pid && formData.kf !== undefined) {
+          const combinedPid = `${formData.pid},${formData.kf}`;
+          formDataToSubmit.set('pid', combinedPid);
+        }
+
+        // Add auto-wakeup schedules
+        const schedulesStr = autowakeupSchedules
+          .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
+          .join(';');
+        formDataToSubmit.set('autowakeupSchedules', schedulesStr);
+
+        // Ensure standbyBrightness is included even when the field is disabled
+        if (!formData.standbyDisplayEnabled) {
+          formDataToSubmit.set('standbyBrightness', '0');
+        }
+
+        if (restart) {
+          formDataToSubmit.append('restart', '1');
+        }
+        const response = await fetch(form.action, {
+          method: 'post',
+          body: formDataToSubmit,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Only preserve standbyDisplayEnabled if brightness is greater than 0
+        // If brightness is 0, let the useEffect recalculate it based on the saved value
+        const updatedData = {
+          ...data,
+          standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
+        };
+
+        setFormData(updatedData);
+      } catch (error) {
+        console.error('Failed to save settings:', error);
+        alert('Failed to save settings. Please try again.');
+      } finally {
+        setSubmitting(false);
       }
-
-      // Add auto-wakeup schedules
-      const schedulesStr = autowakeupSchedules
-        .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
-        .join(';');
-      formDataToSubmit.set('autowakeupSchedules', schedulesStr);
-
-      // Ensure standbyBrightness is included even when the field is disabled
-      if (!formData.standbyDisplayEnabled) {
-        formDataToSubmit.set('standbyBrightness', '0');
-      }
-
-      if (restart) {
-        formDataToSubmit.append('restart', '1');
-      }
-      const response = await fetch(form.action, {
-        method: 'post',
-        body: formDataToSubmit,
-      });
-      const data = await response.json();
-
-      // Only preserve standbyDisplayEnabled if brightness is greater than 0
-      // If brightness is 0, let the useEffect recalculate it based on the saved value
-      const updatedData = {
-        ...data,
-        standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
-      };
-
-      setFormData(updatedData);
-      setSubmitting(false);
     },
     [setFormData, formRef, formData, autowakeupSchedules],
   );
@@ -253,8 +247,13 @@ export function Settings() {
       const file = evt.target.files[0];
       const reader = new FileReader();
       reader.onload = async e => {
-        const data = JSON.parse(e.target.result);
-        setFormData(data);
+        try {
+          const data = JSON.parse(e.target.result);
+          setFormData(data);
+        } catch (error) {
+          console.error('Failed to parse settings file:', error);
+          alert('Failed to parse settings file. Please ensure it is valid JSON.');
+        }
       };
       reader.readAsText(file);
     }
@@ -475,6 +474,8 @@ export function Settings() {
                 <option value='coffee'>Coffee</option>
                 <option value='nord'>Nord</option>
                 <option value='amoled'>AMOLED</option>
+                <option value='stealth'>Stealth</option>
+                <option value='crisp'>Crisp</option>
               </select>
             </div>
             <div className='form-control'>
