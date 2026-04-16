@@ -100,16 +100,16 @@ async function requestAccessToken(clientId) {
 async function authorizedFetch(clientId, url, options = {}) {
   let token = getValidAccessToken() || (await requestAccessToken(clientId));
 
-  const doFetch = async (authToken) => {
+  const doFetch = async (authToken, retried = false) => {
     const headers = new Headers(options.headers || {});
     headers.set('Authorization', `Bearer ${authToken}`);
     const response = await fetch(url, { ...options, headers });
 
-    if (response.status === 401) {
+    if (response.status === 401 && !retried) {
       // Token revoked or expired server-side - force re-request
       invalidateToken();
       const newToken = await requestAccessToken(clientId);
-      return doFetch(newToken);
+      return doFetch(newToken, true);
     }
     return response;
   };
