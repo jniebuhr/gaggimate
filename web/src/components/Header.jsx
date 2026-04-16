@@ -86,7 +86,7 @@ const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading }) => (
     </div>
     {loading ? (
       <div className='flex items-center justify-center py-8'>
-        <span className='loading loading-spinner loading-md text-primary' />
+        <span className='loading loading-spinner loading-md text-secondary' />
       </div>
     ) : (
       <div className='space-y-1 max-h-56 overflow-y-auto pr-1 custom-scrollbar'>
@@ -114,14 +114,14 @@ const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading }) => (
 const BeanPopover = ({ beans, activeBean, onSelect, loading }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
-      <span className='flex size-8 items-center justify-center rounded-xl border border-secondary/20 bg-secondary/10'>
-        <FontAwesomeIcon icon={faLeaf} className='text-sm text-secondary' />
+      <span className='flex size-8 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10'>
+        <FontAwesomeIcon icon={faLeaf} className='text-sm text-purple-500' />
       </span>
       <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Bean</span>
     </div>
     {loading ? (
       <div className='flex items-center justify-center py-8'>
-        <span className='loading loading-spinner loading-md text-secondary' />
+        <span className='loading loading-spinner loading-md text-purple-500' />
       </div>
     ) : (
       <div className='space-y-1 max-h-56 overflow-y-auto pr-1 custom-scrollbar'>
