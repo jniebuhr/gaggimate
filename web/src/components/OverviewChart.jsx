@@ -20,6 +20,15 @@ export const clearPhaseTransitions = () => {
 };
 
 function getChartData(data) {
+  // Guard against null/undefined/missing data array
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return {
+      type: 'line',
+      data: { datasets: [] },
+      options: { responsive: true, maintainAspectRatio: false },
+    };
+  }
+
   // Stabilize the end time by rounding to the nearest second to prevent jiggling
   let end = new Date();
   end.setMilliseconds(0); // Round to nearest second for stability
