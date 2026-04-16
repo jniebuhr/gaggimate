@@ -34,38 +34,91 @@ describe('GoogleDriveProvider', () => {
   describe('listBackups', () => {
     it('returns empty array when no files exist', async () => {
       const originalFetch = window.fetch;
-      window.fetch = async () => ({
-        ok: true,
-        json: async () => ({ files: [] }),
-      });
+      try {
+        window.google = {
+          accounts: {
+            oauth2: {
+              initTokenClient: ({ callback }) => {
+                callback({ access_token: 'fake-access-token', expires_in: 3600 });
+              },
+            },
+          },
+        };
+        window.fetch = async () => ({
+          ok: true,
+          json: async () => ({ files: [] }),
+        });
 
-      const provider = createGoogleDriveProvider({ clientId: 'test' });
-      const result = await provider.listBackups();
-      expect(result).toEqual([]);
-
-      window.fetch = originalFetch;
+        const provider = createGoogleDriveProvider({ clientId: 'test' });
+        const result = await provider.listBackups();
+        expect(result).toEqual([]);
+      } finally {
+        window.fetch = originalFetch;
+        delete window.google;
+      }
     });
 
     it('returns mapped files with fileId, modifiedTime, size', async () => {
       const originalFetch = window.fetch;
-      const mockFiles = [
-        { id: 'file-1', modifiedTime: '2025-01-01T00:00:00Z', size: 1234 },
-        { id: 'file-2', modifiedTime: '2025-01-02T00:00:00Z', size: 5678 },
-      ];
-      window.fetch = async () => ({
-        ok: true,
-        json: async () => ({ files: mockFiles }),
-      });
+      try {
+        window.google = {
+          accounts: {
+            oauth2: {
+              initTokenClient: ({ callback }) => {
+                callback({ access_token: 'fake-access-token', expires_in: 3600 });
+              },
+            },
+          },
+        };
+        const mockFiles = [
+          { id: 'file-1', modifiedTime: '2025-01-01T00:00:00Z', size: 1234 },
+          { id: 'file-2', modifiedTime: '2025-01-02T00:00:00Z', size: 5678 },
+        ];
+        window.fetch = async () => ({
+          ok: true,
+          json: async () => ({ files: mockFiles }),
+        });
 
-      const provider = createGoogleDriveProvider({ clientId: 'test' });
-      const result = await provider.listBackups();
+        const provider = createGoogleDriveProvider({ clientId: 'test' });
+        const result = await provider.listBackups();
 
-      expect(result).toEqual([
-        { fileId: 'file-1', modifiedTime: '2025-01-01T00:00:00Z', size: 1234 },
-        { fileId: 'file-2', modifiedTime: '2025-01-02T00:00:00Z', size: 5678 },
-      ]);
+        expect(result).toEqual([
+          { fileId: 'file-1', modifiedTime: '2025-01-01T00:00:00Z', size: 1234 },
+          { fileId: 'file-2', modifiedTime: '2025-01-02T00:00:00Z', size: 5678 },
+        ]);
+      } finally {
+        window.fetch = originalFetch;
+        delete window.google;
+      }
+    });
+  });
 
-      window.fetch = originalFetch;
+  describe('uploadBackup', () => {
+    it('uploads bundle and returns fileId and modifiedTime', async () => {
+      const originalFetch = window.fetch;
+      try {
+        window.google = {
+          accounts: {
+            oauth2: {
+              initTokenClient: ({ callback }) => {
+                callback({ access_token: 'fake-access-token', expires_in: 3600 });
+              },
+            },
+          },
+        };
+        window.fetch = async () => ({
+          ok: true,
+          json: async () => ({ id: 'uploaded-file-id', modifiedTime: '2025-01-01T00:00:00Z' }),
+        });
+        const provider = createGoogleDriveProvider({ clientId: 'test' });
+        const bundle = { type: 'gaggimate-backup', version: 2 };
+        const result = await provider.uploadBackup(bundle);
+        expect(result.fileId).toBe('uploaded-file-id');
+        expect(result.modifiedTime).toBe('2025-01-01T00:00:00Z');
+      } finally {
+        window.fetch = originalFetch;
+        delete window.google;
+      }
     });
   });
 
