@@ -17,6 +17,9 @@ import { faPlugCircleBolt } from '@fortawesome/free-solid-svg-icons/faPlugCircle
 import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
 import { faTemperatureHigh } from '@fortawesome/free-solid-svg-icons/faTemperatureHigh';
+import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { machine } from '../services/ApiService.js';
 import { getCurrentBeanSelection } from '../utils/beanManager.js';
 
@@ -72,6 +75,130 @@ function HeaderItem(props) {
     </a>
   );
 }
+
+const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading }) => (
+  <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
+    <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
+      <span className='flex size-8 items-center justify-center rounded-xl border border-secondary/20 bg-secondary/10'>
+        <FontAwesomeIcon icon={faBookmark} className='text-sm text-secondary' />
+      </span>
+      <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Profile</span>
+    </div>
+    {loading ? (
+      <div className='flex items-center justify-center py-8'>
+        <span className='loading loading-spinner loading-md text-primary' />
+      </div>
+    ) : (
+      <div className='space-y-1 max-h-56 overflow-y-auto pr-1 custom-scrollbar'>
+        {profiles.map(profile => (
+          <button
+            key={profile.id}
+            onClick={() => onSelect(profile.id)}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+              profile.id === selectedProfileId
+                ? 'bg-secondary/15 text-secondary border border-secondary/30 shadow-sm'
+                : 'hover:bg-base-content/5 text-base-content/80 border border-transparent hover:border-base-300/30'
+            }`}
+          >
+            <span className='flex items-center gap-2'>
+              <FontAwesomeIcon icon={faRectangleList} className='text-xs opacity-50' />
+              {profile.name || profile.id}
+            </span>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+const BeanPopover = ({ beans, activeBean, onSelect, loading }) => (
+  <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
+    <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
+      <span className='flex size-8 items-center justify-center rounded-xl border border-secondary/20 bg-secondary/10'>
+        <FontAwesomeIcon icon={faLeaf} className='text-sm text-secondary' />
+      </span>
+      <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Bean</span>
+    </div>
+    {loading ? (
+      <div className='flex items-center justify-center py-8'>
+        <span className='loading loading-spinner loading-md text-secondary' />
+      </div>
+    ) : (
+      <div className='space-y-1 max-h-56 overflow-y-auto pr-1 custom-scrollbar'>
+        {beans.map(bean => (
+          <button
+            key={bean.id}
+            onClick={() => onSelect(bean.name)}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+              bean.id === activeBean?.beanId
+                ? 'bg-purple-500/15 text-purple-500 border border-purple-500/30 shadow-sm'
+                : 'hover:bg-base-content/5 text-base-content/80 border border-transparent hover:border-base-300/30'
+            }`}
+          >
+            <span className='flex items-center gap-2'>
+              <FontAwesomeIcon icon={faLeaf} className='text-xs opacity-50' />
+              {bean.name}
+            </span>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
+  <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-56 rounded-2xl border border-base-300/60 bg-base-100/95 p-5 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
+    <div className='mb-5 flex items-center gap-2 border-b border-base-300/40 pb-3'>
+      <span className='flex size-8 items-center justify-center rounded-xl border border-error/20 bg-error/10'>
+        <FontAwesomeIcon icon={faTemperatureHigh} className='text-sm text-error' />
+      </span>
+      <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Temperature</span>
+    </div>
+
+    <div className='flex items-center justify-between gap-3'>
+      <button
+        onClick={() => onChange(-1)}
+        className='btn btn-circle btn-lg border-2 border-primary bg-primary/10 hover:bg-primary/20 hover:border-primary text-primary shadow-md transition-all duration-200 hover:scale-105'
+      >
+        <FontAwesomeIcon icon={faMinus} className='text-xl' />
+      </button>
+
+      <div className='flex flex-col items-center'>
+        <div className='text-3xl font-bold text-base-content tracking-tight'>{targetTemp}</div>
+        <div className='text-xs font-medium uppercase tracking-wider text-base-content/50'>Target °C</div>
+        <div className='mt-1 text-xs text-base-content/40'>Current: {currentTemp.toFixed(1)}°C</div>
+      </div>
+
+      <button
+        onClick={() => onChange(1)}
+        className='btn btn-circle btn-lg border-2 border-primary bg-primary/10 hover:bg-primary/20 hover:border-primary text-primary shadow-md transition-all duration-200 hover:scale-105'
+      >
+        <FontAwesomeIcon icon={faPlus} className='text-xl' />
+      </button>
+    </div>
+
+    <div className='mt-4 grid grid-cols-3 gap-1 text-center text-xs'>
+      <button
+        onClick={() => onChange(-5)}
+        className='rounded-lg border border-base-300/40 bg-base-100/50 py-2 font-medium text-base-content/60 hover:bg-base-content/5 hover:text-base-content transition-colors'
+      >
+        -5
+      </button>
+      <button
+        onClick={() => onChange(5)}
+        className='rounded-lg border border-base-300/40 bg-base-100/50 py-2 font-medium text-base-content/60 hover:bg-base-content/5 hover:text-base-content transition-colors'
+      >
+        +5
+      </button>
+      <button
+        onClick={() => onChange(-10)}
+        className='rounded-lg border border-base-300/40 bg-base-100/50 py-2 font-medium text-base-content/60 hover:bg-base-content/5 hover:text-base-content transition-colors'
+      >
+        -10
+      </button>
+    </div>
+  </div>
+);
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -208,28 +335,49 @@ export function Header() {
             </a>
 
             <div className='hidden min-w-0 items-center gap-2 lg:flex'>
-              <StatPill
-                label='Connection'
-                value={connected ? 'Online' : 'Offline'}
-                tone={connected ? 'success' : 'warning'}
-                icon={faPlugCircleBolt}
-              />
+              {/* Connection - not clickable */}
+              <StatPill label='Connection' value={connected ? 'Online' : 'Offline'} tone={connected ? 'success' : 'warning'} icon={faPlugCircleBolt} />
+
+              {/* Mode - not clickable */}
               <StatPill label='Mode' value={currentMode} tone='accent' icon={faSliders} />
-              <StatPill label='Profile' value={profileLabel} tone='secondary' icon={faBookmark} onClick={handleProfileClick} />
-              <StatPill
-                label='Active Bean'
-                value={activeBean?.beanName || 'Not selected'}
-                tone='purple'
-                icon={faLeaf}
-                onClick={handleBeanClick}
-              />
-              <StatPill
-                label='Temp / Pressure'
-                value={`${temp} · ${pressure}`}
-                tone='error'
-                icon={faTemperatureHigh}
-                onClick={handleTempClick}
-              />
+
+              {/* Profile - clickable */}
+              <div className='relative'>
+                <StatPill label='Profile' value={profileLabel} tone='secondary' icon={faBookmark} onClick={handleProfileClick} />
+                {activePopover === 'profile' && (
+                  <ProfilePopover
+                    profiles={profileOptions}
+                    selectedProfileId={machine.value.status.selectedProfileId}
+                    onSelect={handleProfileSelect}
+                    loading={loadingProfiles}
+                  />
+                )}
+              </div>
+
+              {/* Bean - clickable */}
+              <div className='relative'>
+                <StatPill label='Active Bean' value={activeBean?.beanName || 'Not selected'} tone='purple' icon={faLeaf} onClick={handleBeanClick} />
+                {activePopover === 'bean' && (
+                  <BeanPopover
+                    beans={beanOptions}
+                    activeBean={activeBean}
+                    onSelect={handleBeanSelect}
+                    loading={loadingBeans}
+                  />
+                )}
+              </div>
+
+              {/* Temp - clickable */}
+              <div className='relative'>
+                <StatPill label='Temp / Pressure' value={`${temp} · ${pressure}`} tone='error' icon={faTemperatureHigh} onClick={handleTempClick} />
+                {activePopover === 'temp' && (
+                  <TempPopover
+                    currentTemp={machine.value.status.currentTemperature}
+                    targetTemp={machine.value.status.targetTemperature}
+                    onChange={handleTempChange}
+                  />
+                )}
+              </div>
             </div>
 
             <div className='flex items-center gap-1 lg:gap-5'>
