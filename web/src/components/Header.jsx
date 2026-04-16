@@ -43,7 +43,8 @@ function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
     success: 'border-success/25 bg-success/12 text-success',
     secondary: 'border-secondary/25 bg-secondary/12 text-secondary',
     error: 'border-error/25 bg-error/12 text-error',
-    warning: 'border-warning/25 bg-warning/12 text-warning-content',
+    warning: 'border-warning/30 bg-warning/20 text-warning',
+    orange: 'border-orange-500/30 bg-orange-500/15 text-orange-600',
     purple: 'border-purple-500/25 bg-purple-500/12 text-purple-500',
   };
 
@@ -440,7 +441,7 @@ export function Header() {
 
               {/* Mode - clickable */}
               <div className='relative'>
-                <StatPill label='Mode' value={currentMode} tone='warning' icon={faSliders} onClick={handleModeClick} />
+                <StatPill label='Mode' value={currentMode} tone='orange' icon={faSliders} onClick={handleModeClick} />
                 {activePopover === 'mode' && (
                   <ModePopover currentMode={mode} onSelect={handleModeSelect} />
                 )}
