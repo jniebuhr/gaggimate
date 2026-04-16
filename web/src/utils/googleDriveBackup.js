@@ -134,7 +134,7 @@ export function setStoredGoogleDriveClientId(clientId) {
   }
 }
 
-export async function listGoogleDriveBackups(clientId) {
+async function listGoogleDriveBackups(clientId) {
   const params = new URLSearchParams({
     spaces: 'appDataFolder',
     fields: 'files(id,name,modifiedTime,size)',
@@ -150,7 +150,7 @@ export async function listGoogleDriveBackups(clientId) {
   return Array.isArray(data.files) ? data.files : [];
 }
 
-export async function uploadGoogleDriveBackup(clientId, bundle) {
+async function uploadGoogleDriveBackup(clientId, bundle) {
   const existingFiles = await listGoogleDriveBackups(clientId);
   const content = JSON.stringify(bundle, null, 2);
   const metadata = existingFiles[0]
@@ -174,12 +174,49 @@ export async function uploadGoogleDriveBackup(clientId, bundle) {
   return response.json();
 }
 
-export async function downloadGoogleDriveBackup(clientId, fileId) {
+async function downloadGoogleDriveBackup(clientId, fileId) {
   const response = await authorizedFetch(
     clientId,
     `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
   );
   return response.json();
+}
+
+/**
+ * Creates a Google Drive cloud backup provider.
+ * @param {{ clientId: string }} config
+ * @returns {import('./cloudBackupManager').CloudBackupProvider}
+ */
+export function createGoogleDriveProvider({ clientId }) {
+  return {
+    providerId: 'google-drive',
+    providerName: 'Google Drive',
+
+    isConfigured() {
+      return Boolean(clientId && clientId.trim().length > 0);
+    },
+
+    async listBackups() {
+      const files = await listGoogleDriveBackups(clientId);
+      return files.map(f => ({
+        fileId: f.id,
+        modifiedTime: f.modifiedTime,
+        size: f.size,
+      }));
+    },
+
+    async uploadBackup(bundle) {
+      const result = await uploadGoogleDriveBackup(clientId, bundle);
+      return {
+        fileId: result.id,
+        modifiedTime: result.modifiedTime,
+      };
+    },
+
+    async downloadBackup(fileId) {
+      return downloadGoogleDriveBackup(clientId, fileId);
+    },
+  };
 }
 
 export { BACKUP_FILENAME, GOOGLE_DRIVE_SCOPE };
