@@ -1,25 +1,32 @@
 import { machine } from '../services/ApiService.js';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart.jsx';
 
-// Global state to track phase transitions during brewing
-let phaseTransitions = [];
-let lastKnownPhase = null;
-let brewStartTime = null;
-let lastProcessState = null;
-let initialPhaseName = null; // Store the first phase name
+// Brew time window constants (in milliseconds)
+const BREW_WINDOW_INITIAL = 30000; // First 30 seconds: 30s window
+const BREW_WINDOW_GROWING = 45000; // 30-45 seconds: 45s window
+const BREW_WINDOW_MAX = 60000; // After 45 seconds: 60s window
+const BREW_WINDOW_RECENT = 60000; // Recently finished brewing: 1 minute
+const NORMAL_WINDOW = 60000; // Normal mode: 1 minute
+
+// Brew phase tracking state - stored in refs to persist across renders
+const brewStateRef = {
+  phaseTransitions: [],
+  lastKnownPhase: null,
+  brewStartTime: null,
+  lastProcessState: null,
+  initialPhaseName: null,
+};
 
 // Function to clear phase transitions (can be called from outside)
 export const clearPhaseTransitions = () => {
-  phaseTransitions = [];
-  lastKnownPhase = null;
-  brewStartTime = null;
-  lastProcessState = null;
-  initialPhaseName = null;
+  brewStateRef.phaseTransitions = [];
+  brewStateRef.lastKnownPhase = null;
+  brewStateRef.brewStartTime = null;
+  brewStateRef.lastProcessState = null;
+  brewStateRef.initialPhaseName = null;
 };
 
-function getChartData(data) {
+function getChartData(data, brewState) {
   // Guard against null/undefined/missing data array
   if (!data || !Array.isArray(data) || data.length === 0) {
     return {
@@ -29,9 +36,9 @@ function getChartData(data) {
     };
   }
 
-  // Stabilize the end time by rounding to the nearest second to prevent jiggling
+  // Stabilize the end time by clearing milliseconds to prevent jiggling
   let end = new Date();
-  end.setMilliseconds(0); // Round to nearest second for stability
+  end.setMilliseconds(0); // Clear milliseconds for stability
 
   // Track phase transitions for brew process
   const currentProcess = machine.value.status.process;
@@ -53,23 +60,23 @@ function getChartData(data) {
 
     if (brewElapsedSeconds < 30) {
       // First 30 seconds: show 30s window
-      timeWindowMs = 30000;
+      timeWindowMs = BREW_WINDOW_INITIAL;
     } else if (brewElapsedSeconds < 45) {
       // 30-45 seconds: show 45s window
-      timeWindowMs = 45000;
+      timeWindowMs = BREW_WINDOW_GROWING;
     } else {
       // After 45 seconds: show 60s window
-      timeWindowMs = 60000;
+      timeWindowMs = BREW_WINDOW_MAX;
     }
 
     maxTicksLimit = 8; // More ticks for better resolution
-  } else if (phaseTransitions.length > 0) {
+  } else if (brewState.phaseTransitions.length > 0) {
     // Recently finished brewing: show a bit more context
-    timeWindowMs = 60000; // 1 minute
+    timeWindowMs = BREW_WINDOW_RECENT;
     maxTicksLimit = 6;
   } else {
     // Normal mode: show 1 minute
-    timeWindowMs = 60000;
+    timeWindowMs = NORMAL_WINDOW;
     maxTicksLimit = 5;
   }
 
@@ -102,49 +109,49 @@ function getChartData(data) {
     : null;
 
   // Detect brew start/restart - check if we transitioned to active or if process restarted
-  if (isBrewActive && (!brewStartTime || processState !== lastProcessState)) {
+  if (isBrewActive && (!brewState.brewStartTime || processState !== brewState.lastProcessState)) {
     // If elapsed time is very small (< 2 seconds), this is likely a new brew
     if (!currentProcess.e || currentProcess.e < 2000) {
-      brewStartTime = new Date();
-      phaseTransitions = [];
-      lastKnownPhase = null;
-      initialPhaseName = currentProcess.l; // Capture the initial phase name
+      brewState.brewStartTime = new Date();
+      brewState.phaseTransitions = [];
+      brewState.lastKnownPhase = null;
+      brewState.initialPhaseName = currentProcess.l; // Capture the initial phase name
     }
   }
 
   // Detect brew end - process stopped being active
-  if (!isBrewActive && brewStartTime) {
+  if (!isBrewActive && brewState.brewStartTime) {
     // Don't immediately clear - let the user see the phase markers for a while
     // They will be cleared when a new brew starts
   }
 
   // Track phase changes during brewing
-  if (isBrewActive && currentProcess.l && brewStartTime) {
+  if (isBrewActive && currentProcess.l && brewState.brewStartTime) {
     const currentPhase = currentProcess.l;
     const currentPhaseType = currentProcess.s;
 
     // Only add transition if phase name actually changed and we're not on the first phase
-    if (lastKnownPhase !== null && lastKnownPhase !== currentPhase) {
+    if (brewState.lastKnownPhase !== null && brewState.lastKnownPhase !== currentPhase) {
       // Check if we already have this transition (avoid duplicates)
-      const existingTransition = phaseTransitions.find(t => t.phaseName === currentPhase);
+      const existingTransition = brewState.phaseTransitions.find(t => t.phaseName === currentPhase);
       if (!existingTransition) {
-        phaseTransitions.push({
+        brewState.phaseTransitions.push({
           timestamp: new Date(),
           phaseName: currentPhase,
           phaseType: currentPhaseType,
         });
       }
     }
-    lastKnownPhase = currentPhase;
+    brewState.lastKnownPhase = currentPhase;
   }
 
-  lastProcessState = processState;
+  brewState.lastProcessState = processState;
 
   // Create phase annotations for Chart.js
   const phaseAnnotations = {};
   const isSmall = window.innerWidth < 640;
   // Add phase transition lines
-  phaseTransitions.forEach((transition, index) => {
+  brewState.phaseTransitions.forEach((transition, index) => {
     const transitionTime = transition.timestamp.getTime();
     const chartStart = start.getTime();
     const chartEnd = end.getTime();
@@ -179,21 +186,21 @@ function getChartData(data) {
   });
 
   // Add brew start line if within timeframe
-  if (brewStartTime) {
-    const brewStartMs = brewStartTime.getTime();
+  if (brewState.brewStartTime) {
+    const brewStartMs = brewState.brewStartTime.getTime();
     const chartStart = start.getTime();
     const chartEnd = end.getTime();
 
     if (brewStartMs >= chartStart && brewStartMs <= chartEnd) {
       phaseAnnotations['brew_start'] = {
         type: 'line',
-        xMin: brewStartTime.toISOString(),
-        xMax: brewStartTime.toISOString(),
+        xMin: brewState.brewStartTime.toISOString(),
+        xMax: brewState.brewStartTime.toISOString(),
         borderColor: '#06B6D4', // Cyan accent for brew start
         borderWidth: 2,
         label: {
           display: true,
-          content: initialPhaseName || 'Start',
+          content: brewState.initialPhaseName || 'Start',
           rotation: -90,
           position: 'end',
           xAdjust: -10,
@@ -313,7 +320,7 @@ function getChartData(data) {
           display: true,
           text: isBrewActive
             ? `Brew Progress - ${Math.round(timeWindowMs / 1000)}s View`
-            : phaseTransitions.length > 0
+            : brewState.phaseTransitions.length > 0
               ? 'Temperature History - Recent Brew'
               : 'Temperature History',
           font: {
@@ -403,7 +410,7 @@ function getChartData(data) {
             source: 'auto',
             autoSkip: true,
             autoSkipPadding: 0,
-            callback: (value, index, ticks) => {
+            callback: (value) => {
               if (isBrewActive) {
                 // For brewing: show relative time from chart end in a clean format
                 const chartEnd = end.getTime();
@@ -434,7 +441,8 @@ function getChartData(data) {
 }
 
 export function OverviewChart() {
-  const chartData = getChartData(machine.value.history);
+  // Pass brewStateRef to getChartData for phase tracking
+  const chartData = getChartData(machine.value.history, brewStateRef);
 
   return (
     <ChartComponent

@@ -24,14 +24,12 @@ import { useProcessActions } from '../../hooks/useProcessActions.js';
 const status = computed(() => machine.value.status);
 const TEMP_READY_THRESHOLD = 5;
 
-// Button configuration map for different states
 const BUTTON_CONFIGS = {
   active: { icon: faPause, label: 'Pause', action: 'pause' },
   finished: { icon: faCheck, label: 'Finish', action: 'finish' },
   idle: { icon: faPlay, label: 'Start', action: 'start' },
 };
 
-// Action handlers map for button clicks
 const ACTION_HANDLERS = {
   pause: (handlers, isFlushing) => {
     handlers.onDeactivate();
@@ -108,7 +106,6 @@ StateIndicator.propTypes = {
 };
 
 const ActionButtons = memo(({ brew, active, finished, isFlushing, onActivate, onDeactivate, onClear, onFlush }) => {
-  // Single source of truth for state-dependent UI
   const buttonConfig = useMemo(() => {
     if (active) return BUTTON_CONFIGS.active;
     if (finished) return BUTTON_CONFIGS.finished;
@@ -158,7 +155,7 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
 
   // Use custom hooks for settings and profile data
   const { isGrindAvailable, showGrindTab } = useGrindSettings(mode);
-  const { profiles, profileData, loading } = useProfileData(api, brew, status.value.selectedProfileId);
+  useProfileData(api, brew, status.value.selectedProfileId);
 
   // Extract status values once for cleaner access
   const statusValues = useMemo(
@@ -302,5 +299,3 @@ ProcessControls.propTypes = {
 };
 
 export default ProcessControls;
-
-// Made with Bob

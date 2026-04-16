@@ -277,9 +277,9 @@
 }
 
 /* Analyzer color mapping (columns + analysis table + shared statistics visuals incl. trends/summary cards):
-   - default follows OS light/dark
-   - nord is forced to light mapping
-   - coffee is forced to dark mapping
+   - default/nord: light theme
+   - dark/coffee/amoled/stealth: dark theme
+   - crisp: light theme
 */
 :root {
   --analyzer-pressure-text: #0066cc;

@@ -38,7 +38,10 @@ export function useProcessActions(api, grind, setIsFlushing) {
       },
       startFlush: () => {
         setIsFlushing(true);
-        api.request({ tp: 'req:flush:start' }).catch(() => setIsFlushing(false));
+        api.request({ tp: 'req:flush:start' }).catch(error => {
+          console.error('Flush request failed:', error);
+          setIsFlushing(false);
+        });
       },
     }),
     [api, grind, setIsFlushing]
