@@ -146,22 +146,22 @@ function getChartData(data) {
         type: 'line',
         xMin: transition.timestamp.toISOString(),
         xMax: transition.timestamp.toISOString(),
-        borderColor: '#22C55E', // Light green for all phase transitions
-        borderWidth: 1, // Thinner line
+        borderColor: '#06B6D4', // Cyan accent for phase transitions
+        borderWidth: 2,
         label: {
           display: true,
           content: transition.phaseName,
           rotation: -90,
-          position: 'end', // anchor at top of line
-          xAdjust: -10, // tweak first label inward to compensate for y-axis padding
+          position: 'end',
+          xAdjust: -10,
           yAdjust: 0,
-          padding: { x: 6, y: 0 },
+          padding: { x: 8, y: 4 },
           color: 'rgb(255,255,255)',
-          backgroundColor: 'rgba(22,33,50,0.75)',
+          backgroundColor: 'rgba(22,33,50,0.85)',
           textAlign: 'start',
           font: {
-            size: isSmall ? 9 : 11,
-            weight: 500,
+            size: isSmall ? 10 : 12,
+            weight: 600,
           },
           clip: false,
         },
@@ -180,22 +180,22 @@ function getChartData(data) {
         type: 'line',
         xMin: brewStartTime.toISOString(),
         xMax: brewStartTime.toISOString(),
-        borderColor: '#10B981', // Keep the darker green for brew start
-        borderWidth: 2, // Slightly thicker for brew start
+        borderColor: '#06B6D4', // Cyan accent for brew start
+        borderWidth: 2,
         label: {
           display: true,
           content: initialPhaseName || 'Start',
           rotation: -90,
-          position: 'end', // anchor at top of line
-          xAdjust: -10, // tweak first label inward to compensate for y-axis padding
+          position: 'end',
+          xAdjust: -10,
           yAdjust: 0,
-          padding: { x: 6, y: 0 },
+          padding: { x: 8, y: 4 },
           color: 'rgb(255,255,255)',
-          backgroundColor: 'rgba(22,33,50,0.75)',
+          backgroundColor: 'rgba(22,33,50,0.85)',
           textAlign: 'start',
           font: {
-            size: isSmall ? 9 : 11,
-            weight: 500,
+            size: isSmall ? 10 : 12,
+            weight: 600,
           },
           clip: false,
         },
@@ -209,6 +209,8 @@ function getChartData(data) {
     {
       label: 'Current Temperature',
       borderColor: '#F0561D',
+      borderWidth: 3,
+      tension: 0.3,
       pointStyle: false,
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentTemperature })),
     },
@@ -217,12 +219,16 @@ function getChartData(data) {
       fill: true,
       borderColor: '#731F00',
       borderDash: [6, 6],
+      borderWidth: 3,
+      tension: 0.3,
       pointStyle: false,
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetTemperature })),
     },
     {
       label: 'Current Pressure',
       borderColor: '#0066CC',
+      borderWidth: 3,
+      tension: 0.3,
       pointStyle: false,
       yAxisID: 'y1',
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentPressure })),
@@ -232,6 +238,8 @@ function getChartData(data) {
       fill: true,
       borderColor: '#003366',
       borderDash: [6, 6],
+      borderWidth: 3,
+      tension: 0.3,
       pointStyle: false,
       yAxisID: 'y1',
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetPressure })),
@@ -239,6 +247,8 @@ function getChartData(data) {
     {
       label: 'Current Flow',
       borderColor: '#63993D',
+      borderWidth: 3,
+      tension: 0.3,
       pointStyle: false,
       yAxisID: 'y1',
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentFlow })),
@@ -248,6 +258,8 @@ function getChartData(data) {
     datasets.push({
       label: 'Current Weight',
       borderColor: '#8B5CF6',
+      borderWidth: 3,
+      tension: 0.3,
       pointStyle: false,
       yAxisID: 'y2',
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentWeight || 0 })),
@@ -257,6 +269,8 @@ function getChartData(data) {
       fill: true,
       borderColor: '#4C1D95',
       borderDash: [6, 6],
+      borderWidth: 3,
+      tension: 0.3,
       pointStyle: false,
       yAxisID: 'y2',
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.activeTargetWeight || 0 })),
@@ -278,23 +292,23 @@ function getChartData(data) {
           labels: {
             usePointStyle: true,
             pointStyle: 'line',
-            pointStyleWidth: 20,
-            padding: 8,
+            pointStyleWidth: 24,
+            padding: 12,
             font: {
-              size: window.innerWidth < 640 ? 10 : 12,
+              size: window.innerWidth < 640 ? 11 : 13,
+              weight: 500,
             },
             generateLabels: function (chart) {
               const original = Chart.defaults.plugins.legend.labels.generateLabels;
               const labels = original.call(this, chart);
-
               labels.forEach((label, index) => {
                 const dataset = chart.data.datasets[index];
                 label.lineWidth = 3;
+                label.borderWidth = 3;
                 if (dataset.borderDash && dataset.borderDash.length > 0) {
                   label.lineDash = dataset.borderDash;
                 }
               });
-
               return labels;
             },
           },
@@ -308,26 +322,40 @@ function getChartData(data) {
               : 'Temperature History',
           font: {
             size: window.innerWidth < 640 ? 14 : 16,
+            weight: 600,
+          },
+          padding: {
+            top: 8,
+            bottom: 12,
           },
         },
         annotation: {
           annotations: phaseAnnotations,
         },
       },
-      animation: false,
+      animation: {
+        duration: 150,
+        easing: 'easeOutQuart',
+      },
       scales: {
         y: {
           type: 'linear',
           min: tempMin,
           max: tempMax,
           ticks: {
-            stepSize: 5, // Force 5-degree increments for clean scale
+            stepSize: 5,
             font: {
-              size: window.innerWidth < 640 ? 10 : 12,
+              size: window.innerWidth < 640 ? 11 : 13,
+              weight: 500,
             },
             callback: value => {
-              return `${Math.round(value)} °C`; // Round displayed values to integers
+              return `${Math.round(value)}°C`;
             },
+            maxRotation: 0,
+            minRotation: 0,
+          },
+          grid: {
+            color: 'rgba(128, 128, 128, 0.15)',
           },
         },
         y1: {
