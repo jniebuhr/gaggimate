@@ -3,9 +3,22 @@ const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 const BACKUP_FILENAME = 'gaggimate-backup.json';
 const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 
+const ERROR_MESSAGES = {
+  'access_denied': 'Access to Google Drive was denied. Please try again and authorize.',
+  'popup_closed': 'Sign-in window was closed before completing authorization.',
+  'network': 'Network error. Check your connection and try again.',
+  'quota_exceeded': 'Google Drive storage quota exceeded. Free up space and try again.',
+  'idpiframe_initialization_failed': 'Google sign-in is not available in this browser.',
+};
+
 let gisScriptPromise = null;
 let accessToken = '';
 let accessTokenExpiryMs = 0;
+
+function invalidateToken() {
+  accessToken = '';
+  accessTokenExpiryMs = 0;
+}
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -64,7 +77,8 @@ async function requestAccessToken(clientId) {
       scope: GOOGLE_DRIVE_SCOPE,
       callback: tokenResponse => {
         if (tokenResponse.error) {
-          reject(new Error(tokenResponse.error));
+          const friendly = ERROR_MESSAGES[tokenResponse.error] || tokenResponse.error;
+          reject(new Error(friendly));
           return;
         }
 
@@ -73,7 +87,10 @@ async function requestAccessToken(clientId) {
         accessTokenExpiryMs = Date.now() + Math.max(expiresInMs - 60_000, 0);
         resolve(accessToken);
       },
-      error_callback: error => reject(new Error(error?.message || 'Google sign-in failed.')),
+      error_callback: error => {
+        const friendly = ERROR_MESSAGES[error?.message] || error?.message || 'Google sign-in failed.';
+        reject(new Error(friendly));
+      },
     });
 
     tokenClient.requestAccessToken({ prompt: getValidAccessToken() ? '' : 'consent' });
@@ -81,14 +98,23 @@ async function requestAccessToken(clientId) {
 }
 
 async function authorizedFetch(clientId, url, options = {}) {
-  const token = getValidAccessToken() || (await requestAccessToken(clientId));
-  const headers = new Headers(options.headers || {});
-  headers.set('Authorization', `Bearer ${token}`);
+  let token = getValidAccessToken() || (await requestAccessToken(clientId));
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  const doFetch = async (authToken) => {
+    const headers = new Headers(options.headers || {});
+    headers.set('Authorization', `Bearer ${authToken}`);
+    const response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401) {
+      // Token revoked or expired server-side - force re-request
+      invalidateToken();
+      const newToken = await requestAccessToken(clientId);
+      return doFetch(newToken);
+    }
+    return response;
+  };
+
+  const response = await doFetch(token);
 
   if (!response.ok) {
     let details = '';
