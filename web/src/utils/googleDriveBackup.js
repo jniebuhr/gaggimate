@@ -15,6 +15,11 @@ let gisScriptPromise = null;
 let accessToken = '';
 let accessTokenExpiryMs = 0;
 
+/**
+ * Clears locally-cached access token. The GIS token client's internal
+ * state is unaffected -- the next requestAccessToken call will detect
+ * the empty token and trigger a fresh OAuth flow.
+ */
 function invalidateToken() {
   accessToken = '';
   accessTokenExpiryMs = 0;
@@ -77,7 +82,7 @@ async function requestAccessToken(clientId) {
       scope: GOOGLE_DRIVE_SCOPE,
       callback: tokenResponse => {
         if (tokenResponse.error) {
-          const friendly = ERROR_MESSAGES[tokenResponse.error] || tokenResponse.error;
+          const friendly = ERROR_MESSAGES[tokenResponse.error] || tokenResponse.error || 'Google sign-in failed.';
           reject(new Error(friendly));
           return;
         }
