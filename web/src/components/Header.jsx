@@ -440,7 +440,7 @@ export function Header() {
 
               {/* Mode - clickable */}
               <div className='relative'>
-                <StatPill label='Mode' value={currentMode} tone={MODE_COLORS[mode] || 'accent'} icon={faSliders} onClick={handleModeClick} />
+                <StatPill label='Mode' value={currentMode} tone='warning' icon={faSliders} onClick={handleModeClick} />
                 {activePopover === 'mode' && (
                   <ModePopover currentMode={mode} onSelect={handleModeSelect} />
                 )}
