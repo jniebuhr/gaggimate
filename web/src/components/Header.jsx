@@ -21,7 +21,7 @@ import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleLi
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { ApiServiceContext, machine } from '../services/ApiService.js';
-import { getCurrentBeanSelection, listBeans } from '../utils/beanManager.js';
+import { getCurrentBeanSelection, listBeans, recordBeanSelection } from '../utils/beanManager.js';
 
 const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
 const MODE_DOT_COLORS = ['bg-base-content/30', 'bg-primary', 'bg-warning', 'bg-error', 'bg-secondary'];
@@ -106,7 +106,7 @@ const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error 
           >
             <span className='flex items-center gap-2'>
               <FontAwesomeIcon icon={faRectangleList} className='text-xs opacity-50' />
-              {profile.name || profile.id}
+              {profile.label || profile.id}
             </span>
           </button>
         ))}
@@ -323,9 +323,10 @@ export function Header() {
     setLoadingBeans(true);
     setBeanError(null);
     try {
-      const beans = await listBeans(machine);
+      const beans = await listBeans(apiService);
       if (mountedRef.current) {
-        setBeanOptions(beans || []);
+        // Filter out archived beans
+        setBeanOptions((beans || []).filter(bean => !bean.archived));
       }
     } catch (err) {
       console.error('Failed to load beans:', err);
@@ -337,7 +338,7 @@ export function Header() {
         setLoadingBeans(false);
       }
     }
-  }, [beanOptions.length]);
+  }, [beanOptions.length, apiService]);
 
   const handleProfileClick = useCallback(() => {
     loadProfileOptions();
@@ -369,11 +370,20 @@ export function Header() {
   const handleBeanSelect = useCallback((beanName) => {
     try {
       apiService.send({ tp: 'req:beans:select', name: beanName });
+      // Find the selected bean to record it
+      const selectedBean = beanOptions.find(b => b.name === beanName);
+      if (selectedBean) {
+        recordBeanSelection({
+          profileId: machine.value.status.selectedProfileId,
+          profileLabel: machine.value.status.selectedProfile,
+          bean: selectedBean,
+        });
+      }
       setActivePopover(null);
     } catch (err) {
       console.error('Failed to select bean:', err);
     }
-  }, [apiService]);
+  }, [apiService, beanOptions, machine]);
 
   const handleTempChange = useCallback((delta) => {
     try {
