@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState, useRef, useContext } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
@@ -17,29 +17,37 @@ import { faPlugCircleBolt } from '@fortawesome/free-solid-svg-icons/faPlugCircle
 import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
 import { faTemperatureHigh } from '@fortawesome/free-solid-svg-icons/faTemperatureHigh';
-import { machine } from '../services/ApiService.js';
-import { getCurrentBeanSelection } from '../utils/beanManager.js';
+import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { ApiServiceContext, machine } from '../services/ApiService.js';
+import { getCurrentBeanSelection, listBeans } from '../utils/beanManager.js';
 
 const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
+const MODE_DOT_COLORS = ['bg-base-content/30', 'bg-primary', 'bg-warning', 'bg-error', 'bg-secondary'];
 
 function formatReading(value, suffix) {
   return `${Number.isFinite(value) ? value.toFixed(1) : '0.0'}${suffix}`;
 }
 
-function StatPill({ label, value, tone = 'neutral', icon }) {
+function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
   const toneClasses = {
     neutral: 'border-base-300/60 bg-base-100/90 text-base-content',
     accent: 'border-primary/25 bg-primary/12 text-primary',
     success: 'border-success/25 bg-success/12 text-success',
     secondary: 'border-secondary/25 bg-secondary/12 text-secondary',
     error: 'border-error/25 bg-error/12 text-error',
-    warning: 'border-warning/25 bg-warning/12 text-warning-content',
+    warning: 'border-warning/30 bg-warning/20 text-warning',
+    orange: 'border-orange-500/30 bg-orange-500/15 text-orange-600',
     purple: 'border-purple-500/25 bg-purple-500/12 text-purple-500',
   };
 
+  const clickableClass = onClick ? 'cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 stat-pill-clickable' : '';
+
   return (
     <div
-      className={`stat-pill status-indicator-card flex-1 min-w-0 rounded-2xl border px-4 py-3 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)] backdrop-blur ${toneClasses[tone]}`}
+      onClick={onClick}
+      className={`stat-pill status-indicator-card flex-1 min-w-0 rounded-2xl border px-4 py-3 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)] backdrop-blur ${toneClasses[tone]} ${clickableClass}`}
     >
       <div className='flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] opacity-70'>
         <span className='inline-flex size-7 items-center justify-center rounded-xl border border-current/15 bg-current/10'>
@@ -70,15 +78,173 @@ function HeaderItem(props) {
   );
 }
 
+const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error }) => (
+  <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
+    <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
+      <span className='flex size-8 items-center justify-center rounded-xl border border-secondary/20 bg-secondary/10'>
+        <FontAwesomeIcon icon={faBookmark} className='text-sm text-secondary' />
+      </span>
+      <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Profile</span>
+    </div>
+    {loading ? (
+      <div className='flex items-center justify-center py-8'>
+        <span className='loading loading-spinner loading-md text-secondary' />
+      </div>
+    ) : error ? (
+      <div className='py-4 text-center text-sm text-error'>{error}</div>
+    ) : (
+      <div className='space-y-1 max-h-56 overflow-y-auto pr-1 custom-scrollbar'>
+        {profiles.map(profile => (
+          <button
+            key={profile.id}
+            onClick={() => onSelect(profile.id)}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+              profile.id === selectedProfileId
+                ? 'bg-secondary/15 text-secondary border border-secondary/30 shadow-sm'
+                : 'hover:bg-base-content/5 text-base-content/80 border border-transparent hover:border-base-300/30'
+            }`}
+          >
+            <span className='flex items-center gap-2'>
+              <FontAwesomeIcon icon={faRectangleList} className='text-xs opacity-50' />
+              {profile.name || profile.id}
+            </span>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+const BeanPopover = ({ beans, activeBean, onSelect, loading, error }) => (
+  <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
+    <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
+      <span className='flex size-8 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10'>
+        <FontAwesomeIcon icon={faLeaf} className='text-sm text-purple-500' />
+      </span>
+      <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Bean</span>
+    </div>
+    {loading ? (
+      <div className='flex items-center justify-center py-8'>
+        <span className='loading loading-spinner loading-md text-purple-500' />
+      </div>
+    ) : error ? (
+      <div className='py-4 text-center text-sm text-error'>{error}</div>
+    ) : (
+      <div className='space-y-1 max-h-56 overflow-y-auto pr-1 custom-scrollbar'>
+        {beans.map(bean => (
+          <button
+            key={bean.id}
+            onClick={() => onSelect(bean.name)}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+              bean.id === activeBean?.beanId
+                ? 'bg-purple-500/15 text-purple-500 border border-purple-500/30 shadow-sm'
+                : 'hover:bg-base-content/5 text-base-content/80 border border-transparent hover:border-base-300/30'
+            }`}
+          >
+            <span className='flex items-center gap-2'>
+              <FontAwesomeIcon icon={faLeaf} className='text-xs opacity-50' />
+              {bean.name}
+            </span>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
+  <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-56 rounded-2xl border border-base-300/60 bg-base-100/95 p-5 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
+    <div className='mb-5 flex items-center gap-2 border-b border-base-300/40 pb-3'>
+      <span className='flex size-8 items-center justify-center rounded-xl border border-error/20 bg-error/10'>
+        <FontAwesomeIcon icon={faTemperatureHigh} className='text-sm text-error' />
+      </span>
+      <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Temperature</span>
+    </div>
+
+    <div className='flex items-center justify-between gap-3'>
+      <button
+        onClick={() => onChange(-1)}
+        className='btn btn-circle btn-lg border-2 border-primary bg-primary/10 hover:bg-primary/20 hover:border-primary text-primary shadow-md transition-all duration-200 hover:scale-105'
+      >
+        <FontAwesomeIcon icon={faMinus} className='text-xl' />
+      </button>
+
+      <div className='flex flex-col items-center'>
+        <div className='text-3xl font-bold text-base-content tracking-tight'>{targetTemp}</div>
+        <div className='text-xs font-medium uppercase tracking-wider text-base-content/50'>Target °C</div>
+        <div className='mt-1 text-xs text-base-content/40'>Current: {formatReading(currentTemp, '\u00B0C')}</div>
+      </div>
+
+      <button
+        onClick={() => onChange(1)}
+        className='btn btn-circle btn-lg border-2 border-primary bg-primary/10 hover:bg-primary/20 hover:border-primary text-primary shadow-md transition-all duration-200 hover:scale-105'
+      >
+        <FontAwesomeIcon icon={faPlus} className='text-xl' />
+      </button>
+    </div>
+
+    <div className='mt-4 grid grid-cols-3 gap-1 text-center text-xs'>
+      {[-5, 5, -10].map(delta => (
+        <button
+          key={delta}
+          onClick={() => onChange(delta)}
+          className='rounded-lg border border-base-300/40 bg-base-100/50 py-2 font-medium text-base-content/60 hover:bg-base-content/5 hover:text-base-content transition-colors'
+        >
+          {delta > 0 ? `+${delta}` : delta}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const ModePopover = ({ currentMode, onSelect }) => (
+  <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-48 rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
+    <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
+      <span className='flex size-8 items-center justify-center rounded-xl border border-primary/20 bg-primary/10'>
+        <FontAwesomeIcon icon={faSliders} className='text-sm text-primary' />
+      </span>
+      <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Mode</span>
+    </div>
+    <div className='space-y-1'>
+      {MODE_LABELS.map((label, index) => (
+        <button
+          key={index}
+          onClick={() => onSelect(index)}
+          className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+            index === currentMode
+              ? 'bg-primary/15 text-primary border border-primary/30 shadow-sm'
+              : 'hover:bg-base-content/5 text-base-content/80 border border-transparent hover:border-base-300/30'
+          }`}
+        >
+          <span className='flex items-center gap-2'>
+            <span className={`size-2 rounded-full ${MODE_DOT_COLORS[index]}`} />
+            {label}
+          </span>
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
 export function Header() {
   const [open, setOpen] = useState(false);
   const [activeBean, setActiveBean] = useState(() => getCurrentBeanSelection());
+  const apiService = useContext(ApiServiceContext);
   const connected = machine.value.connected;
   const mode = machine.value.status.mode;
   const currentMode = MODE_LABELS[mode] || 'Unknown';
   const profileLabel = machine.value.status.selectedProfile || 'Default';
   const temp = formatReading(machine.value.status.currentTemperature, '\u00B0C');
   const pressure = formatReading(machine.value.status.currentPressure, ' bar');
+
+  const [activePopover, setActivePopover] = useState(null); // 'profile' | 'bean' | 'temp' | 'mode' | null
+  const [profileOptions, setProfileOptions] = useState([]);
+  const [beanOptions, setBeanOptions] = useState([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
+  const [loadingBeans, setLoadingBeans] = useState(false);
+  const [profileError, setProfileError] = useState(null);
+  const [beanError, setBeanError] = useState(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     const syncBean = event => {
@@ -98,12 +264,133 @@ export function Header() {
     };
   }, []);
 
+  // Close popover when clicking outside or pressing Escape
+  useEffect(() => {
+    if (!activePopover) return;
+
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.stat-pill-popover') && !e.target.closest('.stat-pill-clickable')) {
+        setActivePopover(null);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setActivePopover(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activePopover]);
+
   const openCb = useCallback(
     newState => {
       setOpen(newState);
     },
     [setOpen],
   );
+
+  // Load profile options when profile popover opens
+  const loadProfileOptions = useCallback(async () => {
+    if (profileOptions.length > 0) return;
+    setLoadingProfiles(true);
+    setProfileError(null);
+    try {
+      const response = await apiService.request({ tp: 'req:profiles:list' });
+      if (mountedRef.current) {
+        setProfileOptions(response.profiles || []);
+      }
+    } catch (err) {
+      console.error('Failed to load profiles:', err);
+      if (mountedRef.current) {
+        setProfileError('Could not load profiles. Check your machine connection.');
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoadingProfiles(false);
+      }
+    }
+  }, [profileOptions.length, apiService]);
+
+  // Load bean options when bean popover opens
+  const loadBeanOptions = useCallback(async () => {
+    if (beanOptions.length > 0) return;
+    setLoadingBeans(true);
+    setBeanError(null);
+    try {
+      const beans = await listBeans(machine);
+      if (mountedRef.current) {
+        setBeanOptions(beans || []);
+      }
+    } catch (err) {
+      console.error('Failed to load beans:', err);
+      if (mountedRef.current) {
+        setBeanError('Could not load beans. Check your machine connection.');
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoadingBeans(false);
+      }
+    }
+  }, [beanOptions.length]);
+
+  const handleProfileClick = useCallback(() => {
+    loadProfileOptions();
+    setActivePopover(activePopover === 'profile' ? null : 'profile');
+  }, [activePopover, loadProfileOptions]);
+
+  const handleBeanClick = useCallback(() => {
+    loadBeanOptions();
+    setActivePopover(activePopover === 'bean' ? null : 'bean');
+  }, [activePopover, loadBeanOptions]);
+
+  const handleTempClick = useCallback(() => {
+    setActivePopover(activePopover === 'temp' ? null : 'temp');
+  }, [activePopover]);
+
+  const handleModeClick = useCallback(() => {
+    setActivePopover(activePopover === 'mode' ? null : 'mode');
+  }, [activePopover]);
+
+  const handleProfileSelect = useCallback(async (profileId) => {
+    try {
+      await apiService.request({ tp: 'req:profiles:select', id: profileId });
+      setActivePopover(null);
+    } catch (err) {
+      console.error('Failed to select profile:', err);
+    }
+  }, [apiService]);
+
+  const handleBeanSelect = useCallback((beanName) => {
+    try {
+      apiService.send({ tp: 'req:beans:select', name: beanName });
+      setActivePopover(null);
+    } catch (err) {
+      console.error('Failed to select bean:', err);
+    }
+  }, [apiService]);
+
+  const handleTempChange = useCallback((delta) => {
+    try {
+      apiService.send({ tp: delta > 0 ? 'req:raise-temp' : 'req:lower-temp' });
+    } catch (err) {
+      console.error('Failed to change temperature:', err);
+    }
+  }, [apiService]);
+
+  const handleModeSelect = useCallback((newMode) => {
+    try {
+      apiService.send({ tp: 'req:change-mode', mode: newMode });
+      setActivePopover(null);
+    } catch (err) {
+      console.error('Failed to change mode:', err);
+    }
+  }, [apiService]);
 
   return (
     <header id='page-header' className='sticky top-0 z-50'>
@@ -125,26 +412,56 @@ export function Header() {
             </a>
 
             <div className='hidden min-w-0 items-center gap-2 lg:flex'>
-              <StatPill
-                label='Connection'
-                value={connected ? 'Online' : 'Offline'}
-                tone={connected ? 'success' : 'warning'}
-                icon={faPlugCircleBolt}
-              />
-              <StatPill label='Mode' value={currentMode} tone='accent' icon={faSliders} />
-              <StatPill label='Profile' value={profileLabel} tone='secondary' icon={faBookmark} />
-              <StatPill
-                label='Active Bean'
-                value={activeBean?.beanName || 'Not selected'}
-                tone='purple'
-                icon={faLeaf}
-              />
-              <StatPill
-                label='Temp / Pressure'
-                value={`${temp} \u00B7 ${pressure}`}
-                tone='error'
-                icon={faTemperatureHigh}
-              />
+              {/* Connection - not clickable */}
+              <StatPill label='Connection' value={connected ? 'Online' : 'Offline'} tone={connected ? 'success' : 'warning'} icon={faPlugCircleBolt} />
+
+              {/* Mode - clickable */}
+              <div className='relative'>
+                <StatPill label='Mode' value={currentMode} tone='orange' icon={faSliders} onClick={handleModeClick} />
+                {activePopover === 'mode' && (
+                  <ModePopover currentMode={mode} onSelect={handleModeSelect} />
+                )}
+              </div>
+
+              {/* Profile - clickable */}
+              <div className='relative'>
+                <StatPill label='Profile' value={profileLabel} tone='secondary' icon={faBookmark} onClick={handleProfileClick} />
+                {activePopover === 'profile' && (
+                  <ProfilePopover
+                    profiles={profileOptions}
+                    selectedProfileId={machine.value.status.selectedProfileId}
+                    onSelect={handleProfileSelect}
+                    loading={loadingProfiles}
+                    error={profileError}
+                  />
+                )}
+              </div>
+
+              {/* Bean - clickable */}
+              <div className='relative'>
+                <StatPill label='Active Bean' value={activeBean?.beanName || 'Not selected'} tone='purple' icon={faLeaf} onClick={handleBeanClick} />
+                {activePopover === 'bean' && (
+                  <BeanPopover
+                    beans={beanOptions}
+                    activeBean={activeBean}
+                    onSelect={handleBeanSelect}
+                    loading={loadingBeans}
+                    error={beanError}
+                  />
+                )}
+              </div>
+
+              {/* Temp - clickable */}
+              <div className='relative'>
+                <StatPill label='Temp / Pressure' value={`${temp} · ${pressure}`} tone='error' icon={faTemperatureHigh} onClick={handleTempClick} />
+                {activePopover === 'temp' && (
+                  <TempPopover
+                    currentTemp={machine.value.status.currentTemperature}
+                    targetTemp={machine.value.status.targetTemperature}
+                    onChange={handleTempChange}
+                  />
+                )}
+              </div>
             </div>
 
             <div className='flex items-center gap-1 lg:gap-5'>

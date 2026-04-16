@@ -4,11 +4,11 @@ const BACKUP_FILENAME = 'gaggimate-backup.json';
 const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 
 const ERROR_MESSAGES = {
-  'access_denied': 'Access to Google Drive was denied. Please try again and authorize.',
-  'popup_closed': 'Sign-in window was closed before completing authorization.',
-  'network': 'Network error. Check your connection and try again.',
-  'quota_exceeded': 'Google Drive storage quota exceeded. Free up space and try again.',
-  'idpiframe_initialization_failed': 'Google sign-in is not available in this browser.',
+  access_denied: 'Access to Google Drive was denied. Please try again and authorize.',
+  popup_closed: 'Sign-in window was closed before completing authorization.',
+  network: 'Network error. Check your connection and try again.',
+  quota_exceeded: 'Google Drive storage quota exceeded. Free up space and try again.',
+  idpiframe_initialization_failed: 'Google sign-in is not available in this browser.',
 };
 
 let gisScriptPromise = null;
@@ -259,3 +259,4 @@ export function createGoogleDriveProvider({ clientId }) {
 }
 
 export { BACKUP_FILENAME, GOOGLE_DRIVE_SCOPE };
+export { listGoogleDriveBackups, uploadGoogleDriveBackup, downloadGoogleDriveBackup };
