@@ -166,7 +166,7 @@ const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
       <div className='flex flex-col items-center'>
         <div className='text-3xl font-bold text-base-content tracking-tight'>{targetTemp}</div>
         <div className='text-xs font-medium uppercase tracking-wider text-base-content/50'>Target °C</div>
-        <div className='mt-1 text-xs text-base-content/40'>Current: {currentTemp.toFixed(1)}°C</div>
+        <div className='mt-1 text-xs text-base-content/40'>Current: {formatReading(currentTemp, '\u00B0C')}</div>
       </div>
 
       <button

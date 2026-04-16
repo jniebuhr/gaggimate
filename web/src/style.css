@@ -918,9 +918,9 @@ html[data-theme='amoled'] {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: oklch(var(--b3));
+  background: oklch(var(--color-base-300));
   border-radius: 3px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: oklch(var(--b2));
+  background: oklch(var(--color-base-200));
 }
