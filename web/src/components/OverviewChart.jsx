@@ -298,19 +298,6 @@ function getChartData(data) {
               size: window.innerWidth < 640 ? 11 : 13,
               weight: 500,
             },
-            generateLabels: function (chart) {
-              const original = Chart.defaults.plugins.legend.labels.generateLabels;
-              const labels = original.call(this, chart);
-              labels.forEach((label, index) => {
-                const dataset = chart.data.datasets[index];
-                label.lineWidth = 3;
-                label.borderWidth = 3;
-                if (dataset.borderDash && dataset.borderDash.length > 0) {
-                  label.lineDash = dataset.borderDash;
-                }
-              });
-              return labels;
-            },
           },
         },
         title: {

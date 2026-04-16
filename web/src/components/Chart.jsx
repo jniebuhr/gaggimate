@@ -72,8 +72,11 @@ export function ChartComponent({ data, className, chartClassName }) {
     const handleResize = () => {
       const isSmallScreen = window.innerWidth < 640;
 
-      // Update legend font size
-      ensureFont(['plugins', 'legend', 'labels']).font.size = isSmallScreen ? 10 : 12;
+      // Update font size while preserving weight
+      const legendFont = ensureFont(['plugins', 'legend', 'labels']);
+      const originalWeight = legendFont.font.weight;
+      legendFont.font.size = isSmallScreen ? 10 : 12;
+      if (originalWeight) legendFont.font.weight = originalWeight;
 
       // Update title font size
       ensureFont(['plugins', 'title']).font.size = isSmallScreen ? 14 : 16;
