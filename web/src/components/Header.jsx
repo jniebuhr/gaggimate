@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState, useRef } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
@@ -21,9 +21,16 @@ import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleLi
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { machine } from '../services/ApiService.js';
-import { getCurrentBeanSelection } from '../utils/beanManager.js';
+import { getCurrentBeanSelection, listBeans } from '../utils/beanManager.js';
 
 const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
+const MODE_COLORS = {
+  0: 'neutral',  // Standby
+  1: 'accent',   // Brew
+  2: 'warning',  // Steam
+  3: 'error',    // Water
+  4: 'secondary', // Grind
+};
 
 function formatReading(value, suffix) {
   return `${Number.isFinite(value) ? value.toFixed(1) : '0.0'}${suffix}`;
@@ -76,7 +83,7 @@ function HeaderItem(props) {
   );
 }
 
-const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading }) => (
+const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-secondary/20 bg-secondary/10'>
@@ -88,6 +95,8 @@ const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading }) => (
       <div className='flex items-center justify-center py-8'>
         <span className='loading loading-spinner loading-md text-secondary' />
       </div>
+    ) : error ? (
+      <div className='py-4 text-center text-sm text-error'>{error}</div>
     ) : (
       <div className='space-y-1 max-h-56 overflow-y-auto pr-1 custom-scrollbar'>
         {profiles.map(profile => (
@@ -111,7 +120,7 @@ const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading }) => (
   </div>
 );
 
-const BeanPopover = ({ beans, activeBean, onSelect, loading }) => (
+const BeanPopover = ({ beans, activeBean, onSelect, loading, error }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10'>
@@ -123,6 +132,8 @@ const BeanPopover = ({ beans, activeBean, onSelect, loading }) => (
       <div className='flex items-center justify-center py-8'>
         <span className='loading loading-spinner loading-md text-purple-500' />
       </div>
+    ) : error ? (
+      <div className='py-4 text-center text-sm text-error'>{error}</div>
     ) : (
       <div className='space-y-1 max-h-56 overflow-y-auto pr-1 custom-scrollbar'>
         {beans.map(bean => (
@@ -200,6 +211,44 @@ const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
   </div>
 );
 
+const ModePopover = ({ currentMode, onSelect }) => (
+  <div
+    className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-48 rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'
+    onKeyDown={(e) => e.key === 'Escape' && setActivePopover(null)}
+  >
+    <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
+      <span className='flex size-8 items-center justify-center rounded-xl border border-primary/20 bg-primary/10'>
+        <FontAwesomeIcon icon={faSliders} className='text-sm text-primary' />
+      </span>
+      <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Mode</span>
+    </div>
+    <div className='space-y-1'>
+      {MODE_LABELS.map((label, index) => (
+        <button
+          key={index}
+          onClick={() => onSelect(index)}
+          className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+            index === currentMode
+              ? 'bg-primary/15 text-primary border border-primary/30 shadow-sm'
+              : 'hover:bg-base-content/5 text-base-content/80 border border-transparent hover:border-base-300/30'
+          }`}
+        >
+          <span className='flex items-center gap-2'>
+            <span className={`size-2 rounded-full ${
+              index === 0 ? 'bg-base-content/30' :
+              index === 1 ? 'bg-primary' :
+              index === 2 ? 'bg-warning' :
+              index === 3 ? 'bg-error' :
+              'bg-secondary'
+            }`} />
+            {label}
+          </span>
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
 export function Header() {
   const [open, setOpen] = useState(false);
   const [activeBean, setActiveBean] = useState(() => getCurrentBeanSelection());
@@ -210,11 +259,14 @@ export function Header() {
   const temp = formatReading(machine.value.status.currentTemperature, '\u00B0C');
   const pressure = formatReading(machine.value.status.currentPressure, ' bar');
 
-  const [activePopover, setActivePopover] = useState(null); // 'profile' | 'bean' | 'temp' | null
+  const [activePopover, setActivePopover] = useState(null); // 'profile' | 'bean' | 'temp' | 'mode' | null
   const [profileOptions, setProfileOptions] = useState([]);
   const [beanOptions, setBeanOptions] = useState([]);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
   const [loadingBeans, setLoadingBeans] = useState(false);
+  const [profileError, setProfileError] = useState(null);
+  const [beanError, setBeanError] = useState(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     const syncBean = event => {
@@ -234,7 +286,7 @@ export function Header() {
     };
   }, []);
 
-  // Close popover when clicking outside
+  // Close popover when clicking outside or pressing Escape
   useEffect(() => {
     if (!activePopover) return;
 
@@ -244,8 +296,18 @@ export function Header() {
       }
     };
 
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setActivePopover(null);
+      }
+    };
+
     document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [activePopover]);
 
   const openCb = useCallback(
@@ -259,13 +321,21 @@ export function Header() {
   const loadProfileOptions = useCallback(async () => {
     if (profileOptions.length > 0) return;
     setLoadingProfiles(true);
+    setProfileError(null);
     try {
       const response = await machine.request({ tp: 'req:profiles:list' });
-      setProfileOptions(response.profiles || []);
+      if (mountedRef.current) {
+        setProfileOptions(response.profiles || []);
+      }
     } catch (err) {
       console.error('Failed to load profiles:', err);
+      if (mountedRef.current) {
+        setProfileError('Could not load profiles. Check your machine connection.');
+      }
     } finally {
-      setLoadingProfiles(false);
+      if (mountedRef.current) {
+        setLoadingProfiles(false);
+      }
     }
   }, [profileOptions.length]);
 
@@ -273,13 +343,21 @@ export function Header() {
   const loadBeanOptions = useCallback(async () => {
     if (beanOptions.length > 0) return;
     setLoadingBeans(true);
+    setBeanError(null);
     try {
-      const beans = await import('../utils/beanManager.js').then(m => m.listBeans(machine));
-      setBeanOptions(beans || []);
+      const beans = await listBeans(machine);
+      if (mountedRef.current) {
+        setBeanOptions(beans || []);
+      }
     } catch (err) {
       console.error('Failed to load beans:', err);
+      if (mountedRef.current) {
+        setBeanError('Could not load beans. Check your machine connection.');
+      }
     } finally {
-      setLoadingBeans(false);
+      if (mountedRef.current) {
+        setLoadingBeans(false);
+      }
     }
   }, [beanOptions.length]);
 
@@ -297,22 +375,44 @@ export function Header() {
     setActivePopover(activePopover === 'temp' ? null : 'temp');
   }, [activePopover]);
 
+  const handleModeClick = useCallback(() => {
+    setActivePopover(activePopover === 'mode' ? null : 'mode');
+  }, [activePopover]);
+
   const handleProfileSelect = useCallback(async (profileId) => {
     try {
       await machine.request({ tp: 'req:profiles:select', id: profileId });
       setActivePopover(null);
     } catch (err) {
       console.error('Failed to select profile:', err);
+      // Keep popover open on failure - user should see the error
     }
   }, []);
 
   const handleBeanSelect = useCallback((beanName) => {
-    machine.send({ tp: 'req:beans:select', name: beanName });
-    setActivePopover(null);
+    try {
+      machine.send({ tp: 'req:beans:select', name: beanName });
+      setActivePopover(null);
+    } catch (err) {
+      console.error('Failed to select bean:', err);
+    }
   }, []);
 
   const handleTempChange = useCallback((delta) => {
-    machine.send({ tp: delta > 0 ? 'req:raise-temp' : 'req:lower-temp' });
+    try {
+      machine.send({ tp: delta > 0 ? 'req:raise-temp' : 'req:lower-temp' });
+    } catch (err) {
+      console.error('Failed to change temperature:', err);
+    }
+  }, []);
+
+  const handleModeSelect = useCallback((newMode) => {
+    try {
+      machine.send({ tp: 'req:change-mode', mode: newMode });
+      setActivePopover(null);
+    } catch (err) {
+      console.error('Failed to change mode:', err);
+    }
   }, []);
 
   return (
@@ -338,8 +438,13 @@ export function Header() {
               {/* Connection - not clickable */}
               <StatPill label='Connection' value={connected ? 'Online' : 'Offline'} tone={connected ? 'success' : 'warning'} icon={faPlugCircleBolt} />
 
-              {/* Mode - not clickable */}
-              <StatPill label='Mode' value={currentMode} tone='accent' icon={faSliders} />
+              {/* Mode - clickable */}
+              <div className='relative'>
+                <StatPill label='Mode' value={currentMode} tone={MODE_COLORS[mode] || 'accent'} icon={faSliders} onClick={handleModeClick} />
+                {activePopover === 'mode' && (
+                  <ModePopover currentMode={mode} onSelect={handleModeSelect} />
+                )}
+              </div>
 
               {/* Profile - clickable */}
               <div className='relative'>
@@ -350,6 +455,7 @@ export function Header() {
                     selectedProfileId={machine.value.status.selectedProfileId}
                     onSelect={handleProfileSelect}
                     loading={loadingProfiles}
+                    error={profileError}
                   />
                 )}
               </div>
@@ -363,6 +469,7 @@ export function Header() {
                     activeBean={activeBean}
                     onSelect={handleBeanSelect}
                     loading={loadingBeans}
+                    error={beanError}
                   />
                 )}
               </div>
