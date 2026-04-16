@@ -24,13 +24,7 @@ import { ApiServiceContext, machine } from '../services/ApiService.js';
 import { getCurrentBeanSelection, listBeans } from '../utils/beanManager.js';
 
 const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
-const MODE_COLORS = {
-  0: 'neutral',  // Standby
-  1: 'accent',   // Brew
-  2: 'warning',  // Steam
-  3: 'error',    // Water
-  4: 'secondary', // Grind
-};
+const MODE_DOT_COLORS = ['bg-base-content/30', 'bg-primary', 'bg-warning', 'bg-error', 'bg-secondary'];
 
 function formatReading(value, suffix) {
   return `${Number.isFinite(value) ? value.toFixed(1) : '0.0'}${suffix}`;
@@ -190,33 +184,21 @@ const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
     </div>
 
     <div className='mt-4 grid grid-cols-3 gap-1 text-center text-xs'>
-      <button
-        onClick={() => onChange(-5)}
-        className='rounded-lg border border-base-300/40 bg-base-100/50 py-2 font-medium text-base-content/60 hover:bg-base-content/5 hover:text-base-content transition-colors'
-      >
-        -5
-      </button>
-      <button
-        onClick={() => onChange(5)}
-        className='rounded-lg border border-base-300/40 bg-base-100/50 py-2 font-medium text-base-content/60 hover:bg-base-content/5 hover:text-base-content transition-colors'
-      >
-        +5
-      </button>
-      <button
-        onClick={() => onChange(-10)}
-        className='rounded-lg border border-base-300/40 bg-base-100/50 py-2 font-medium text-base-content/60 hover:bg-base-content/5 hover:text-base-content transition-colors'
-      >
-        -10
-      </button>
+      {[-5, 5, -10].map(delta => (
+        <button
+          key={delta}
+          onClick={() => onChange(delta)}
+          className='rounded-lg border border-base-300/40 bg-base-100/50 py-2 font-medium text-base-content/60 hover:bg-base-content/5 hover:text-base-content transition-colors'
+        >
+          {delta > 0 ? `+${delta}` : delta}
+        </button>
+      ))}
     </div>
   </div>
 );
 
 const ModePopover = ({ currentMode, onSelect }) => (
-  <div
-    className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-48 rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'
-    onKeyDown={(e) => e.key === 'Escape' && setActivePopover(null)}
-  >
+  <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-48 rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-primary/20 bg-primary/10'>
         <FontAwesomeIcon icon={faSliders} className='text-sm text-primary' />
@@ -235,13 +217,7 @@ const ModePopover = ({ currentMode, onSelect }) => (
           }`}
         >
           <span className='flex items-center gap-2'>
-            <span className={`size-2 rounded-full ${
-              index === 0 ? 'bg-base-content/30' :
-              index === 1 ? 'bg-primary' :
-              index === 2 ? 'bg-warning' :
-              index === 3 ? 'bg-error' :
-              'bg-secondary'
-            }`} />
+            <span className={`size-2 rounded-full ${MODE_DOT_COLORS[index]}`} />
             {label}
           </span>
         </button>
@@ -325,7 +301,7 @@ export function Header() {
     setLoadingProfiles(true);
     setProfileError(null);
     try {
-      const response = await machine.request({ tp: 'req:profiles:list' });
+      const response = await apiService.request({ tp: 'req:profiles:list' });
       if (mountedRef.current) {
         setProfileOptions(response.profiles || []);
       }
@@ -339,7 +315,7 @@ export function Header() {
         setLoadingProfiles(false);
       }
     }
-  }, [profileOptions.length]);
+  }, [profileOptions.length, apiService]);
 
   // Load bean options when bean popover opens
   const loadBeanOptions = useCallback(async () => {
@@ -383,30 +359,29 @@ export function Header() {
 
   const handleProfileSelect = useCallback(async (profileId) => {
     try {
-      await machine.request({ tp: 'req:profiles:select', id: profileId });
+      await apiService.request({ tp: 'req:profiles:select', id: profileId });
       setActivePopover(null);
     } catch (err) {
       console.error('Failed to select profile:', err);
-      // Keep popover open on failure - user should see the error
     }
-  }, []);
+  }, [apiService]);
 
   const handleBeanSelect = useCallback((beanName) => {
     try {
-      machine.send({ tp: 'req:beans:select', name: beanName });
+      apiService.send({ tp: 'req:beans:select', name: beanName });
       setActivePopover(null);
     } catch (err) {
       console.error('Failed to select bean:', err);
     }
-  }, []);
+  }, [apiService]);
 
   const handleTempChange = useCallback((delta) => {
     try {
-      machine.send({ tp: delta > 0 ? 'req:raise-temp' : 'req:lower-temp' });
+      apiService.send({ tp: delta > 0 ? 'req:raise-temp' : 'req:lower-temp' });
     } catch (err) {
       console.error('Failed to change temperature:', err);
     }
-  }, []);
+  }, [apiService]);
 
   const handleModeSelect = useCallback((newMode) => {
     try {
