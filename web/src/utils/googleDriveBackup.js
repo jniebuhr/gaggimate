@@ -93,7 +93,7 @@ async function requestAccessToken(clientId) {
         resolve(accessToken);
       },
       error_callback: error => {
-        const friendly = ERROR_MESSAGES[error?.message] || error?.message || 'Google sign-in failed.';
+        const friendly = ERROR_MESSAGES[error] || error?.message || 'Google sign-in failed.';
         reject(new Error(friendly));
       },
     });
@@ -116,26 +116,26 @@ async function authorizedFetch(clientId, url, options = {}) {
       const newToken = await requestAccessToken(clientId);
       return doFetch(newToken, true);
     }
+
+    if (!response.ok) {
+      let details = '';
+      try {
+        details = await response.text();
+      } catch (e) {
+        console.warn('Could not read error response body:', e);
+        details = '';
+      }
+      throw new Error(`Google Drive request failed (${response.status}). ${details}`.trim());
+    }
+
     return response;
   };
 
-  const response = await doFetch(token);
-
-  if (!response.ok) {
-    let details = '';
-    try {
-      details = await response.text();
-    } catch {
-      details = '';
-    }
-    throw new Error(`Google Drive request failed (${response.status}). ${details}`.trim());
-  }
-
-  return response;
+  return doFetch(token);
 }
 
 function buildMultipartBody(metadata, content) {
-  const boundary = `gaggimate-${Date.now().toString(16)}`;
+  const boundary = `gaggimate-${crypto.randomUUID()}`;
   const body = [
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
     `--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n`,
@@ -151,7 +151,8 @@ function buildMultipartBody(metadata, content) {
 export function getStoredGoogleDriveClientId() {
   try {
     return localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || '';
-  } catch {
+  } catch (e) {
+    console.error('Failed to read Google Drive client ID from storage:', e);
     return '';
   }
 }
@@ -160,7 +161,8 @@ export function setStoredGoogleDriveClientId(clientId) {
   try {
     localStorage.setItem(GOOGLE_CLIENT_ID_KEY, String(clientId || '').trim());
     return true;
-  } catch {
+  } catch (e) {
+    console.error('Failed to save Google Drive client ID:', e);
     return false;
   }
 }
@@ -178,7 +180,10 @@ async function listGoogleDriveBackups(clientId) {
     `https://www.googleapis.com/drive/v3/files?${params.toString()}`,
   );
   const data = await response.json();
-  return Array.isArray(data.files) ? data.files : [];
+  if (!Array.isArray(data.files)) {
+    throw new Error('Unexpected response from Google Drive API.');
+  }
+  return data.files;
 }
 
 async function uploadGoogleDriveBackup(clientId, bundle) {
@@ -238,6 +243,9 @@ export function createGoogleDriveProvider({ clientId }) {
 
     async uploadBackup(bundle) {
       const result = await uploadGoogleDriveBackup(clientId, bundle);
+      if (!result?.id) {
+        throw new Error('Upload succeeded but did not return a file ID.');
+      }
       return {
         fileId: result.id,
         modifiedTime: result.modifiedTime,

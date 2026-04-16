@@ -66,7 +66,11 @@ async function fetchSettingsSnapshot() {
 
 async function fetchProfilesSnapshot(apiService) {
   const response = await apiService.request({ tp: 'req:profiles:list' });
-  return Array.isArray(response.profiles) ? response.profiles.map(sanitizeProfile) : [];
+  if (!Array.isArray(response.profiles)) {
+    console.warn('Profiles response missing expected array:', response);
+    return [];
+  }
+  return response.profiles.map(sanitizeProfile);
 }
 
 async function fetchShotHistorySnapshot(apiService) {

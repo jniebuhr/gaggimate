@@ -120,6 +120,66 @@ describe('GoogleDriveProvider', () => {
         delete window.google;
       }
     });
+
+    it('throws when upload does not return a file ID', async () => {
+      const originalFetch = window.fetch;
+      try {
+        window.google = {
+          accounts: {
+            oauth2: {
+              initTokenClient: ({ callback }) => {
+                callback({ access_token: 'fake-access-token', expires_in: 3600 });
+              },
+            },
+          },
+        };
+        window.fetch = async () => ({
+          ok: true,
+          json: async () => ({}),
+        });
+        const provider = createGoogleDriveProvider({ clientId: 'test' });
+        const bundle = { type: 'gaggimate-backup', version: 2 };
+        let threw = false;
+        try {
+          await provider.uploadBackup(bundle);
+        } catch (e) {
+          threw = true;
+          expect(e.message).toBe('Upload succeeded but did not return a file ID.');
+        }
+        expect(threw).toBe(true);
+      } finally {
+        window.fetch = originalFetch;
+        delete window.google;
+      }
+    });
+  });
+
+  describe('downloadBackup', () => {
+    it('downloads and parses backup content for given fileId', async () => {
+      const originalFetch = window.fetch;
+      try {
+        window.google = {
+          accounts: {
+            oauth2: {
+              initTokenClient: ({ callback }) => {
+                callback({ access_token: 'fake-access-token', expires_in: 3600 });
+              },
+            },
+          },
+        };
+        const mockBundle = { type: 'gaggimate-backup', version: 2, settings: {} };
+        window.fetch = async () => ({
+          ok: true,
+          json: async () => mockBundle,
+        });
+        const provider = createGoogleDriveProvider({ clientId: 'test' });
+        const result = await provider.downloadBackup('file-id-123');
+        expect(result).toEqual(mockBundle);
+      } finally {
+        window.fetch = originalFetch;
+        delete window.google;
+      }
+    });
   });
 
 });
