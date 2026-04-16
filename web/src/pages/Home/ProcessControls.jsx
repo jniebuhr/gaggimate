@@ -24,14 +24,12 @@ import { useProcessActions } from '../../hooks/useProcessActions.js';
 const status = computed(() => machine.value.status);
 const TEMP_READY_THRESHOLD = 5;
 
-// Button configuration map for different states
 const BUTTON_CONFIGS = {
   active: { icon: faPause, label: 'Pause', action: 'pause' },
   finished: { icon: faCheck, label: 'Finish', action: 'finish' },
   idle: { icon: faPlay, label: 'Start', action: 'start' },
 };
 
-// Action handlers map for button clicks
 const ACTION_HANDLERS = {
   pause: (handlers, isFlushing) => {
     handlers.onDeactivate();
@@ -85,8 +83,29 @@ FlushButton.propTypes = {
   onFlush: PropTypes.func.isRequired,
 };
 
+const StateIndicator = memo(({ active, finished }) => {
+  const state = active ? 'Brewing' : finished ? 'Finished' : 'Idle';
+  const stateClass = active
+    ? 'bg-warning/20 text-warning border-warning'
+    : finished
+    ? 'bg-success/20 text-success border-success'
+    : 'bg-base-300/50 text-base-content/60 border-base-300';
+
+  return (
+    <div className={`badge badge-lg border-2 font-semibold ${stateClass}`}>
+      {state}
+    </div>
+  );
+});
+
+StateIndicator.displayName = 'StateIndicator';
+
+StateIndicator.propTypes = {
+  active: PropTypes.bool.isRequired,
+  finished: PropTypes.bool.isRequired,
+};
+
 const ActionButtons = memo(({ brew, active, finished, isFlushing, onActivate, onDeactivate, onClear, onFlush }) => {
-  // Single source of truth for state-dependent UI
   const buttonConfig = useMemo(() => {
     if (active) return BUTTON_CONFIGS.active;
     if (finished) return BUTTON_CONFIGS.finished;
@@ -103,7 +122,7 @@ const ActionButtons = memo(({ brew, active, finished, isFlushing, onActivate, on
   return (
     <div className='flex flex-col items-center gap-4'>
       <Tooltip content={buttonConfig.label}>
-        <button className='btn btn-circle btn-lg btn-primary' onClick={handleClick}>
+        <button className='btn btn-circle btn-lg border-2 border-primary bg-primary/10 hover:bg-primary/20 hover:border-primary text-primary' onClick={handleClick}>
           <FontAwesomeIcon icon={buttonConfig.icon} className='text-2xl' />
         </button>
       </Tooltip>
@@ -136,7 +155,7 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
 
   // Use custom hooks for settings and profile data
   const { isGrindAvailable, showGrindTab } = useGrindSettings(mode);
-  const { profiles, profileData, loading } = useProfileData(api, brew, status.value.selectedProfileId);
+  useProfileData(api, brew, status.value.selectedProfileId);
 
   // Extract status values once for cleaner access
   const statusValues = useMemo(
@@ -254,7 +273,9 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
 
         {/* Play/Pause/Finish button */}
         {visibility.showActionButtons && (
-          <ActionButtons
+          <div className='flex flex-col items-center gap-2'>
+            <StateIndicator active={active} finished={finished} />
+            <ActionButtons
             brew={brew}
             active={active}
             finished={finished}
@@ -263,7 +284,8 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
             onDeactivate={actions.deactivate}
             onClear={actions.clear}
             onFlush={actions.startFlush}
-          />
+            />
+          </div>
         )}
       </div>
     </div>
@@ -277,5 +299,3 @@ ProcessControls.propTypes = {
 };
 
 export default ProcessControls;
-
-// Made with Bob

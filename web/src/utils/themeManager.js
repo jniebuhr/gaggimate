@@ -1,5 +1,5 @@
 const THEME_STORAGE_KEY = 'gaggimate-daisyui-theme';
-const AVAILABLE_THEMES = ['light', 'dark', 'coffee', 'nord', 'amoled'];
+const AVAILABLE_THEMES = ['light', 'dark', 'coffee', 'nord', 'amoled', 'stealth', 'crisp'];
 
 export function getStoredTheme() {
   try {
@@ -28,6 +28,11 @@ export function setStoredTheme(theme) {
 export function applyTheme(theme) {
   if (AVAILABLE_THEMES.includes(theme)) {
     document.documentElement.setAttribute('data-theme', theme);
+    // Also check the corresponding theme-controller radio so daisyUI 5 CSS selectors work
+    const radio = document.querySelector(`input.theme-controller[value="${theme}"]`);
+    if (radio) {
+      radio.checked = true;
+    }
   }
 }
 
@@ -42,6 +47,11 @@ export function getAvailableThemes() {
 export function initializeTheme() {
   const theme = getStoredTheme();
   applyTheme(theme);
+  // Also check the stored theme's radio on load
+  const radio = document.querySelector(`input.theme-controller[value="${theme}"]`);
+  if (radio) {
+    radio.checked = true;
+  }
 }
 
 // Simple function to handle theme change from select element

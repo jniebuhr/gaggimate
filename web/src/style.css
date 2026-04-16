@@ -204,10 +204,82 @@
   --noise: 0;
 }
 
+/* https://daisyui.com/theme-generator/ */
+@plugin "daisyui/theme" {
+  name: 'stealth';
+  default: false;
+  prefersdark: true;
+  color-scheme: 'dark';
+  --color-base-100: oklch(3.592% 0.015 265.754);
+  --color-base-200: oklch(7.821% 0.029 265.754);
+  --color-base-300: oklch(12.051% 0.043 265.754);
+  --color-base-content: oklch(97.715% 0.003 265.754);
+  --color-primary: oklch(73.376% 0.151 232.661);
+  --color-primary-content: oklch(3.592% 0.015 265.754);
+  --color-secondary: oklch(72.36% 0.176 290);
+  --color-secondary-content: oklch(97.715% 0.003 350.048);
+  --color-accent: oklch(73.376% 0.151 232.661);
+  --color-accent-content: oklch(3.592% 0.015 232.661);
+  --color-neutral: oklch(14.596% 0.022 265.754);
+  --color-neutral-content: oklch(97.715% 0.003 265.754);
+  --color-info: oklch(68.455% 0.148 237.251);
+  --color-info-content: oklch(3.592% 0.015 237.251);
+  --color-success: oklch(78.452% 0.132 181.911);
+  --color-success-content: oklch(3.592% 0.015 181.911);
+  --color-warning: oklch(83.242% 0.139 82.95);
+  --color-warning-content: oklch(3.592% 0.015 82.95);
+  --color-error: oklch(71.785% 0.17 13.118);
+  --color-error-content: oklch(97.715% 0.003 13.118);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* https://daisyui.com/theme-generator/ */
+@plugin "daisyui/theme" {
+  name: 'crisp';
+  default: false;
+  prefersdark: false;
+  color-scheme: 'light';
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98.715% 0.003 265.754);
+  --color-base-300: oklch(96.43% 0.006 265.754);
+  --color-base-content: oklch(14.596% 0.022 265.754);
+  --color-primary: oklch(50% 0.151 232.661);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(50.412% 0.176 296.788);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(55.923% 0.151 232.661);
+  --color-accent-content: oklch(100% 0 0);
+  --color-neutral: oklch(88.43% 0.008 265.754);
+  --color-neutral-content: oklch(14.596% 0.022 265.754);
+  --color-info: oklch(62.784% 0.148 237.251);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(70.7% 0.132 181.911);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(78.45% 0.139 82.95);
+  --color-warning-content: oklch(14.596% 0.022 82.95);
+  --color-error: oklch(63.521% 0.17 13.118);
+  --color-error-content: oklch(100% 0 0);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
 /* Analyzer color mapping (columns + analysis table + shared statistics visuals incl. trends/summary cards):
-   - default follows OS light/dark
-   - nord is forced to light mapping
-   - coffee is forced to dark mapping
+   - default/nord: light theme
+   - dark/coffee/amoled/stealth: dark theme
+   - crisp: light theme
 */
 :root {
   --analyzer-pressure-text: #0066cc;
@@ -545,6 +617,136 @@ html[data-theme='amoled'] {
   );
   --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 12%, transparent);
   --statistics-summary-shadow: rgba(0, 0, 0, 0.42);
+}
+
+html[data-theme='stealth'] {
+  --analyzer-pressure-text: #58a6ff;
+  --analyzer-pressure-anchor: #58a6ff;
+  --analyzer-target-pressure-text: #58a6ff;
+  --analyzer-target-pressure-anchor: #58a6ff;
+  --analyzer-flow-text: #82c952;
+  --analyzer-flow-anchor: #82c952;
+  --analyzer-target-flow-text: #82c952;
+  --analyzer-target-flow-anchor: #82c952;
+  --analyzer-puckflow-text: #10b981;
+  --analyzer-puckflow-anchor: #10b981;
+  --analyzer-temp-text: #ff7a45;
+  --analyzer-temp-anchor: #ff7a45;
+  --analyzer-target-temp-text: #bc2d00;
+  --analyzer-target-temp-anchor: #bc2d00;
+  --analyzer-weight-text: #a78bfa;
+  --analyzer-weight-anchor: #a78bfa;
+  --analyzer-weight-det-text: #a78bfa;
+  --analyzer-weight-det-anchor: #a78bfa;
+  --analyzer-weightflow-text: #7c3aed;
+  --analyzer-weightflow-anchor: #7c3aed;
+  --analyzer-pred-stop-red: #ef4444;
+  --analyzer-pred-info-blue: #60a5fa;
+  --analyzer-warning-orange: #f39a52;
+  --analyzer-warning-orange-strong: #dd7f31;
+  --analyzer-warning-orange-shadow: rgba(243, 154, 82, 0.3);
+  --analyzer-brew-by-time-label-bg: #475569;
+  --analyzer-brew-by-time-label-border: #64748b;
+  --analyzer-brew-by-time-label-text: #ffffff;
+  --analyzer-brew-by-weight-label-bg: #a78bfa;
+  --analyzer-brew-by-weight-label-border: #8f6be8;
+  --analyzer-brew-by-weight-label-text: #ffffff;
+  --analyzer-notes-taste-bitter: #d39a6a;
+  --analyzer-notes-taste-balanced: #8fb58b;
+  --analyzer-notes-taste-sour: #d6b66a;
+  --analyzer-phase-line: rgba(148, 163, 184, 0.45);
+  --analyzer-stop-label: rgba(239, 68, 68, 0.85);
+  --analyzer-hover-tooltip-bg: rgba(12, 12, 12, 0.94);
+  --analyzer-hover-tooltip-border: rgba(255, 255, 255, 0.1);
+  --analyzer-hover-tooltip-text: #ffffff;
+  --analyzer-hover-tooltip-shadow: rgba(0, 0, 0, 0.34);
+  --statistics-trend-duration: #94a3b8;
+  --statistics-trend-water: #38bdf8;
+  --statistics-trend-shots-brown: #b4835f;
+  --statistics-trend-axis-tick: #9ca3af;
+  --statistics-trend-grid: rgba(200, 200, 200, 0.12);
+  --statistics-trend-tooltip-bg: rgba(12, 12, 12, 0.92);
+  --statistics-summary-shots-brown: #b4835f;
+  --statistics-summary-water: #38bdf8;
+  --statistics-summary-duration: #94a3b8;
+  --statistics-summary-coffee: #ef4444;
+  --statistics-summary-surface-strong: color-mix(
+    in srgb,
+    var(--color-base-100) 86%,
+    var(--color-base-content) 4%
+  );
+  --statistics-summary-surface-muted: color-mix(
+    in srgb,
+    var(--color-base-100) 92%,
+    var(--color-base-content) 2%
+  );
+  --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 14%, transparent);
+  --statistics-summary-shadow: rgba(0, 0, 0, 0.22);
+}
+
+html[data-theme='crisp'] {
+  --analyzer-pressure-text: #0066cc;
+  --analyzer-pressure-anchor: #0066cc;
+  --analyzer-target-pressure-text: #0066cc;
+  --analyzer-target-pressure-anchor: #0066cc;
+  --analyzer-flow-text: #63993d;
+  --analyzer-flow-anchor: #63993d;
+  --analyzer-target-flow-text: #63993d;
+  --analyzer-target-flow-anchor: #63993d;
+  --analyzer-puckflow-text: #059669;
+  --analyzer-puckflow-anchor: #059669;
+  --analyzer-temp-text: #f0561d;
+  --analyzer-temp-anchor: #f0561d;
+  --analyzer-target-temp-text: #731f00;
+  --analyzer-target-temp-anchor: #731f00;
+  --analyzer-weight-text: #8b5cf6;
+  --analyzer-weight-anchor: #8b5cf6;
+  --analyzer-weight-det-text: #8b5cf6;
+  --analyzer-weight-det-anchor: #8b5cf6;
+  --analyzer-weightflow-text: #6d28d9;
+  --analyzer-weightflow-anchor: #6d28d9;
+  --analyzer-pred-stop-red: #dc2626;
+  --analyzer-pred-info-blue: #2563eb;
+  --analyzer-warning-orange: #ea7a2f;
+  --analyzer-warning-orange-strong: #c95f1d;
+  --analyzer-warning-orange-shadow: rgba(234, 122, 47, 0.3);
+  --analyzer-brew-by-time-label-bg: #475569;
+  --analyzer-brew-by-time-label-border: #334155;
+  --analyzer-brew-by-time-label-text: #ffffff;
+  --analyzer-brew-by-weight-label-bg: #8b5cf6;
+  --analyzer-brew-by-weight-label-border: #6d3fe0;
+  --analyzer-brew-by-weight-label-text: #ffffff;
+  --analyzer-notes-taste-bitter: #b16a3c;
+  --analyzer-notes-taste-balanced: #5f8a57;
+  --analyzer-notes-taste-sour: #b7963f;
+  --analyzer-phase-line: rgba(107, 114, 128, 0.5);
+  --analyzer-stop-label: rgba(220, 38, 38, 0.85);
+  --analyzer-hover-tooltip-bg: rgba(20, 20, 20, 0.92);
+  --analyzer-hover-tooltip-border: rgba(255, 255, 255, 0.08);
+  --analyzer-hover-tooltip-text: #ffffff;
+  --analyzer-hover-tooltip-shadow: rgba(15, 23, 42, 0.26);
+  --statistics-trend-duration: #64748b;
+  --statistics-trend-water: #0ea5e9;
+  --statistics-trend-shots-brown: #8b5e3c;
+  --statistics-trend-axis-tick: #888888;
+  --statistics-trend-grid: rgba(200, 200, 200, 0.1);
+  --statistics-trend-tooltip-bg: rgba(20, 20, 20, 0.9);
+  --statistics-summary-shots-brown: #8b5e3c;
+  --statistics-summary-water: #0ea5e9;
+  --statistics-summary-duration: #64748b;
+  --statistics-summary-coffee: #dc2626;
+  --statistics-summary-surface-strong: color-mix(
+    in srgb,
+    var(--color-base-100) 92%,
+    var(--color-base-content) 2%
+  );
+  --statistics-summary-surface-muted: color-mix(
+    in srgb,
+    var(--color-base-100) 97%,
+    var(--color-base-content) 1%
+  );
+  --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  --statistics-summary-shadow: rgba(15, 23, 42, 0.08);
 }
 
 @theme {
