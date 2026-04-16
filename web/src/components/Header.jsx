@@ -37,7 +37,7 @@ function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
     purple: 'border-purple-500/25 bg-purple-500/12 text-purple-500',
   };
 
-  const clickableClass = onClick ? 'cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-200' : '';
+  const clickableClass = onClick ? 'cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 stat-pill-clickable' : '';
 
   return (
     <div
