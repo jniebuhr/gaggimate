@@ -85,6 +85,28 @@ FlushButton.propTypes = {
   onFlush: PropTypes.func.isRequired,
 };
 
+const StateIndicator = memo(({ active, finished }) => {
+  const state = active ? 'Brewing' : finished ? 'Finished' : 'Idle';
+  const stateClass = active
+    ? 'bg-warning/20 text-warning border-warning'
+    : finished
+    ? 'bg-success/20 text-success border-success'
+    : 'bg-base-300/50 text-base-content/60 border-base-300';
+
+  return (
+    <div className={`badge badge-lg border-2 font-semibold ${stateClass}`}>
+      {state}
+    </div>
+  );
+});
+
+StateIndicator.displayName = 'StateIndicator';
+
+StateIndicator.propTypes = {
+  active: PropTypes.bool.isRequired,
+  finished: PropTypes.bool.isRequired,
+};
+
 const ActionButtons = memo(({ brew, active, finished, isFlushing, onActivate, onDeactivate, onClear, onFlush }) => {
   // Single source of truth for state-dependent UI
   const buttonConfig = useMemo(() => {
@@ -103,7 +125,7 @@ const ActionButtons = memo(({ brew, active, finished, isFlushing, onActivate, on
   return (
     <div className='flex flex-col items-center gap-4'>
       <Tooltip content={buttonConfig.label}>
-        <button className='btn btn-circle btn-lg btn-primary' onClick={handleClick}>
+        <button className='btn btn-circle btn-lg border-2 border-primary bg-primary/10 hover:bg-primary/20 hover:border-primary text-primary' onClick={handleClick}>
           <FontAwesomeIcon icon={buttonConfig.icon} className='text-2xl' />
         </button>
       </Tooltip>
@@ -254,7 +276,9 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
 
         {/* Play/Pause/Finish button */}
         {visibility.showActionButtons && (
-          <ActionButtons
+          <div className='flex flex-col items-center gap-2'>
+            <StateIndicator active={active} finished={finished} />
+            <ActionButtons
             brew={brew}
             active={active}
             finished={finished}
@@ -263,7 +287,8 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
             onDeactivate={actions.deactivate}
             onClear={actions.clear}
             onFlush={actions.startFlush}
-          />
+            />
+          </div>
         )}
       </div>
     </div>
