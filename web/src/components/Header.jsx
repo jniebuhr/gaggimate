@@ -26,7 +26,7 @@ function formatReading(value, suffix) {
   return `${Number.isFinite(value) ? value.toFixed(1) : '0.0'}${suffix}`;
 }
 
-function StatPill({ label, value, tone = 'neutral', icon }) {
+function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
   const toneClasses = {
     neutral: 'border-base-300/60 bg-base-100/90 text-base-content',
     accent: 'border-primary/25 bg-primary/12 text-primary',
@@ -37,9 +37,12 @@ function StatPill({ label, value, tone = 'neutral', icon }) {
     purple: 'border-purple-500/25 bg-purple-500/12 text-purple-500',
   };
 
+  const clickableClass = onClick ? 'cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-200' : '';
+
   return (
     <div
-      className={`stat-pill status-indicator-card flex-1 min-w-0 rounded-2xl border px-4 py-3 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)] backdrop-blur ${toneClasses[tone]}`}
+      onClick={onClick}
+      className={`stat-pill status-indicator-card flex-1 min-w-0 rounded-2xl border px-4 py-3 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)] backdrop-blur ${toneClasses[tone]} ${clickableClass}`}
     >
       <div className='flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] opacity-70'>
         <span className='inline-flex size-7 items-center justify-center rounded-xl border border-current/15 bg-current/10'>
@@ -80,6 +83,12 @@ export function Header() {
   const temp = formatReading(machine.value.status.currentTemperature, '\u00B0C');
   const pressure = formatReading(machine.value.status.currentPressure, ' bar');
 
+  const [activePopover, setActivePopover] = useState(null); // 'profile' | 'bean' | 'temp' | null
+  const [profileOptions, setProfileOptions] = useState([]);
+  const [beanOptions, setBeanOptions] = useState([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
+  const [loadingBeans, setLoadingBeans] = useState(false);
+
   useEffect(() => {
     const syncBean = event => {
       if (event?.detail !== undefined) {
@@ -98,12 +107,86 @@ export function Header() {
     };
   }, []);
 
+  // Close popover when clicking outside
+  useEffect(() => {
+    if (!activePopover) return;
+
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.stat-pill-popover') && !e.target.closest('.stat-pill-clickable')) {
+        setActivePopover(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [activePopover]);
+
   const openCb = useCallback(
     newState => {
       setOpen(newState);
     },
     [setOpen],
   );
+
+  // Load profile options when profile popover opens
+  const loadProfileOptions = useCallback(async () => {
+    if (profileOptions.length > 0) return;
+    setLoadingProfiles(true);
+    try {
+      const response = await machine.request({ tp: 'req:profiles:list' });
+      setProfileOptions(response.profiles || []);
+    } catch (err) {
+      console.error('Failed to load profiles:', err);
+    } finally {
+      setLoadingProfiles(false);
+    }
+  }, [profileOptions.length]);
+
+  // Load bean options when bean popover opens
+  const loadBeanOptions = useCallback(async () => {
+    if (beanOptions.length > 0) return;
+    setLoadingBeans(true);
+    try {
+      const beans = await import('../utils/beanManager.js').then(m => m.listBeans(machine));
+      setBeanOptions(beans || []);
+    } catch (err) {
+      console.error('Failed to load beans:', err);
+    } finally {
+      setLoadingBeans(false);
+    }
+  }, [beanOptions.length]);
+
+  const handleProfileClick = useCallback(() => {
+    loadProfileOptions();
+    setActivePopover(activePopover === 'profile' ? null : 'profile');
+  }, [activePopover, loadProfileOptions]);
+
+  const handleBeanClick = useCallback(() => {
+    loadBeanOptions();
+    setActivePopover(activePopover === 'bean' ? null : 'bean');
+  }, [activePopover, loadBeanOptions]);
+
+  const handleTempClick = useCallback(() => {
+    setActivePopover(activePopover === 'temp' ? null : 'temp');
+  }, [activePopover]);
+
+  const handleProfileSelect = useCallback(async (profileId) => {
+    try {
+      await machine.request({ tp: 'req:profiles:select', id: profileId });
+      setActivePopover(null);
+    } catch (err) {
+      console.error('Failed to select profile:', err);
+    }
+  }, []);
+
+  const handleBeanSelect = useCallback((beanName) => {
+    machine.send({ tp: 'req:beans:select', name: beanName });
+    setActivePopover(null);
+  }, []);
+
+  const handleTempChange = useCallback((delta) => {
+    machine.send({ tp: delta > 0 ? 'req:raise-temp' : 'req:lower-temp' });
+  }, []);
 
   return (
     <header id='page-header' className='sticky top-0 z-50'>
@@ -132,18 +215,20 @@ export function Header() {
                 icon={faPlugCircleBolt}
               />
               <StatPill label='Mode' value={currentMode} tone='accent' icon={faSliders} />
-              <StatPill label='Profile' value={profileLabel} tone='secondary' icon={faBookmark} />
+              <StatPill label='Profile' value={profileLabel} tone='secondary' icon={faBookmark} onClick={handleProfileClick} />
               <StatPill
                 label='Active Bean'
                 value={activeBean?.beanName || 'Not selected'}
                 tone='purple'
                 icon={faLeaf}
+                onClick={handleBeanClick}
               />
               <StatPill
                 label='Temp / Pressure'
-                value={`${temp} \u00B7 ${pressure}`}
+                value={`${temp} · ${pressure}`}
                 tone='error'
                 icon={faTemperatureHigh}
+                onClick={handleTempClick}
               />
             </div>
 
