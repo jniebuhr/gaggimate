@@ -370,7 +370,7 @@ export function Settings() {
                 Flush Duration
               </label>
               <div className='mb-2 text-xs opacity-70'>
-                Maximum duration for flushing.  (1-60s)
+                Maximum duration for flushing. (1-60s)
               </div>
               <div className='input-group'>
                 <label htmlFor='flushDuration' className='input w-full'>
