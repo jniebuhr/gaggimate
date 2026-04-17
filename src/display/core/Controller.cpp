@@ -730,7 +730,9 @@ void Controller::onFlush() {
         return;
     }
     clear();
-    startProcess(new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay()));
+    Profile flushProfile = FLUSH_PROFILE;
+    flushProfile.phases[0].duration = settings.getFlushDuration() / 1000.0f;
+    startProcess(new BrewProcess(flushProfile, ProcessTarget::TIME, settings.getBrewDelay()));
     pluginManager->trigger("controller:brew:start");
 }
 

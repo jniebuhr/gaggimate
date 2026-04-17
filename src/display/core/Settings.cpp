@@ -12,6 +12,7 @@ Settings::Settings() {
     targetGrindDuration = preferences.getInt("tgd", 25000);
     brewDelay = preferences.getDouble("del_br", 800.0);
     grindDelay = preferences.getDouble("del_gd", 1000.0);
+    flushDuration = preferences.getInt("fd", 5000);
     delayAdjust = preferences.getBool("del_ad", true);
     temperatureOffset = preferences.getInt("to", DEFAULT_TEMPERATURE_OFFSET);
     pressureScaling = preferences.getFloat("ps", DEFAULT_PRESSURE_SCALING);
@@ -160,6 +161,10 @@ void Settings::setBrewDelay(double brew_Delay) {
 
 void Settings::setGrindDelay(double grind_Delay) {
     grindDelay = std::clamp(grind_Delay, 0.0, 4000.0);
+    save();
+}
+void Settings::setFlushDuration(int flush_duration) {
+    flushDuration = std::clamp(flush_duration, 1000, 60000);
     save();
 }
 
@@ -436,6 +441,7 @@ void Settings::doSave() {
     preferences.putDouble("del_br", brewDelay);
     preferences.putDouble("del_gd", grindDelay);
     preferences.putBool("del_ad", delayAdjust);
+    preferences.putInt("fd", flushDuration);
     preferences.putInt("to", temperatureOffset);
     preferences.putFloat("ps", pressureScaling);
     preferences.putString("pid", pid);
