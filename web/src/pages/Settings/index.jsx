@@ -438,6 +438,29 @@ export function Settings() {
             </div>
 
             <div className='divider'>Switch Control</div>
+            <div className='form-control mb-4'>
+              <label htmlFor='flushDuration' className='mb-2 block text-sm font-medium'>
+                Flush Duration
+              </label>
+              <div className='mb-2 text-xs opacity-70'>
+                Maximum duration for flushing. (1-60s)
+              </div>
+              <div className='input-group'>
+                <label htmlFor='flushDuration' className='input w-full'>
+                  <input
+                    id='flushDuration'
+                    name='flushDuration'
+                    type='number'
+                    min='1'
+                    max='60'
+                    placeholder='5'
+                    value={formData.flushDuration}
+                    onChange={onChange('flushDuration')}
+                  />
+                  <span aria-label='seconds'>s</span>
+                </label>
+              </div>
+            </div>
             <div className='form-control'>
               <label className='label cursor-pointer'>
                 <span className='label-text'>Use momentary switches</span>

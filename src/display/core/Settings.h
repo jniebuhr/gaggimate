@@ -111,6 +111,8 @@ class Settings {
     int getAltRelayFunction() const { return altRelayFunction; }
     bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
+    int getFlushDuration() const { return flushDuration; }
+    void setFlushDuration(int flush_duration);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
@@ -220,6 +222,7 @@ class Settings {
     float steamPumpPercentage = DEFAULT_STEAM_PUMP_PERCENTAGE;
     float steamPumpCutoff = DEFAULT_STEAM_PUMP_CUTOFF;
     int historyIndex = 0;
+    int flushDuration = 5000;
 
     // Display settings
     int mainBrightness = 16;
