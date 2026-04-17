@@ -15,7 +15,8 @@
     "id": {
       "type": "string",
       "pattern": "^[A-Za-z0-9_-]+$",
-      "description": "Stable identifier used as the on-disk filename (`<id>.json`) and referenced from the shot history. Optional on import: if omitted, the firmware generates a 10-character alphanumeric ID via `generateShortID()` (`src/display/core/utils.cpp:9`). Must be filesystem-safe — only letters, digits, underscore, and hyphen.",
+      "readOnly": true,
+      "description": "Firmware-managed identifier used as the on-disk filename (`<id>.json`) and referenced by shot history entries. **Do not set this in hand-authored or imported profiles.** The web UI deletes this field on new imports, exports, and duplicates; a fresh id is generated server-side via `generateShortID()` (`src/display/core/utils.cpp:9`) when the firmware saves a profile without an id. Present only in profiles exported by the firmware itself — the pattern constraint documents what shape the firmware produces. Must be filesystem-safe — only letters, digits, underscore, and hyphen.",
       "examples": ["9bar", "adapt", "aB3xYz90Pq"]
     },
     "label": {
