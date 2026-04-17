@@ -456,6 +456,11 @@ export function Settings() {
                     placeholder='5'
                     value={formData.flushDuration}
                     onChange={onChange('flushDuration')}
+                    onBlur={e => {
+                      const val = parseInt(e.target.value) || 5;
+                      const clamped = Math.min(60, Math.max(1, val));
+                      setFormData(prev => ({ ...prev, flushDuration: clamped }));
+                    }}
                   />
                   <span aria-label='seconds'>s</span>
                 </label>
