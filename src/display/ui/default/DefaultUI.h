@@ -44,7 +44,11 @@ class DefaultUI {
         }
     };
 
+    void onVolumetricDelete();
+
     void markDirty() { rerender = true; }
+    void markProfileDirty() { profileDirty = true; }
+    void markProfileClean() { profileDirty = false; }
 
     void applyTheme();
 
@@ -72,6 +76,7 @@ class DefaultUI {
     void updateTempHistory();
     void updateTempStableFlag();
     void adjustHeatingIndicator(lv_obj_t *contentPanel);
+    void reloadProfiles();
 
     Driver *panelDriver = nullptr;
     Controller *controller;
@@ -90,10 +95,13 @@ class DefaultUI {
     int volumetricAvailable = false;
     int bluetoothScales = false;
     int volumetricMode = false;
+    int brewVolumetric = false;
+    int profileVolumetric = false;
     int grindActive = false;
     int active = false;
     int smartGrindActive = false;
     int grindAvailable = false;
+    int initialized = false;
 
     // Seasonal flags
     int christmasMode = false;
@@ -115,17 +123,17 @@ class DefaultUI {
     double bluetoothWeight = 0.0;
     BrewScreenState brewScreenState = BrewScreenState::Brew;
 
+    int profileDirty = 0;
     int currentProfileIdx;
-    String currentProfileId = "";
     int profileLoaded = 0;
-    Profile currentProfileChoice{};
-    std::vector<String> favoritedProfiles;
+    std::vector<String> favoritedProfileIds;
+    std::vector<Profile> favoritedProfiles;
     int currentThemeMode = -1; // Force applyTheme on first loop
 
     // Screen change
-    lv_obj_t **targetScreen = &ui_InitScreen;
-    lv_obj_t *currentScreen = ui_InitScreen;
-    void (*targetScreenInit)(void) = &ui_InitScreen_screen_init;
+    lv_obj_t **targetScreen = &ui_StandbyScreen;
+    lv_obj_t *currentScreen = ui_StandbyScreen;
+    void (*targetScreenInit)(void) = &ui_StandbyScreen_screen_init;
 
     // Standby brightness control
     unsigned long standbyEnterTime = 0;

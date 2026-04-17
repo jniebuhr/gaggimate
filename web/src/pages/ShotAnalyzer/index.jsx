@@ -23,6 +23,70 @@ import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute'
 
 import { EmptyState } from './components/EmptyState.jsx';
 
+const clampNonNegativeDelay = value => {
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue)) return 0;
+  return Math.max(0, Math.round(parsedValue));
+};
+
+const PROFILE_AUTO_MATCH_INITIAL_DELAY_MS = 250;
+const PROFILE_AUTO_MATCH_RETRY_DELAY_MS = 450;
+const PROFILE_AUTO_MATCH_MAX_ATTEMPTS = 4;
+
+function findPreferredProfileMatch(allProfiles, shotProfileName, shotSource) {
+  const target = cleanName(shotProfileName).toLowerCase();
+  const matches = allProfiles.filter(
+    profile => cleanName(profile.name || profile.label || '').toLowerCase() === target,
+  );
+  return matches.find(profile => profile.source === shotSource) || matches[0] || null;
+}
+
+function getProfileLookupId(profileMatch) {
+  return profileMatch.source === 'gaggimate'
+    ? profileMatch.profileId || profileMatch.id
+    : profileMatch.name;
+}
+
+function normalizeMatchedProfileSource(profileData, profileSource) {
+  if (
+    profileSource &&
+    (profileSource === 'gaggimate' || profileSource === 'browser') &&
+    !profileData?.source
+  ) {
+    return { ...profileData, source: profileSource };
+  }
+  return profileData;
+}
+
+function shouldAutoScrollAnalyzerOnSelection() {
+  const viewportWindow = globalThis.window;
+  if (!viewportWindow || typeof viewportWindow.matchMedia !== 'function') return false;
+  return viewportWindow.matchMedia('(max-width: 1023px)').matches;
+}
+
+async function loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles) {
+  const preferredMatch = findPreferredProfileMatch(
+    allProfiles,
+    shotWithMetadata.profile,
+    shotWithMetadata.source,
+  );
+
+  if (!preferredMatch) return null;
+
+  const profileName = preferredMatch.label || preferredMatch.name;
+  const profileId = getProfileLookupId(preferredMatch);
+  const fullProfile = preferredMatch.data
+    ? preferredMatch.data
+    : await libraryService.loadProfile(profileId, preferredMatch.source);
+
+  if (!fullProfile) return null;
+
+  return {
+    profile: normalizeMatchedProfileSource(fullProfile, preferredMatch.source),
+    profileName,
+  };
+}
+
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
@@ -55,6 +119,24 @@ export function ShotAnalyzer() {
   const profileMatchIdRef = useRef(0);
   const analysisIdRef = useRef(0);
   const profileSearchTimerRef = useRef(null);
+
+  const handleSettingsChange = nextSettings => {
+    setSettings(prevSettings => ({
+      ...prevSettings,
+      ...nextSettings,
+      scaleDelay: clampNonNegativeDelay(nextSettings?.scaleDelay ?? prevSettings.scaleDelay),
+      sensorDelay: clampNonNegativeDelay(nextSettings?.sensorDelay ?? prevSettings.sensorDelay),
+      autoDelay: Boolean(nextSettings?.autoDelay ?? prevSettings.autoDelay),
+    }));
+  };
+
+  const scheduleProfileAutoMatchRetry = (attempt, callback) => {
+    if (attempt + 1 >= PROFILE_AUTO_MATCH_MAX_ATTEMPTS) return false;
+    profileSearchTimerRef.current = setTimeout(() => {
+      callback(attempt + 1);
+    }, PROFILE_AUTO_MATCH_RETRY_DELAY_MS);
+    return true;
+  };
 
   // Cleanup pending profile search on unmount
   useEffect(() => {
@@ -192,46 +274,51 @@ export function ShotAnalyzer() {
       setIsMatchingProfile(true);
       setIsSearchingProfile(true);
 
-      // Debounce: wait for rapid navigation to settle before searching
-      profileSearchTimerRef.current = setTimeout(async () => {
+      const attemptProfileAutoMatch = async (attempt = 0) => {
         profileSearchTimerRef.current = null;
         try {
-          const target = cleanName(shotWithMetadata.profile).toLowerCase();
           const allProfiles = await libraryService.getAllProfiles('both');
 
           if (matchId !== profileMatchIdRef.current) return; // stale
 
-          const match = allProfiles.find(
-            p => cleanName(p.name || p.label || '').toLowerCase() === target,
+          const matchedProfile = await loadPreferredAutoMatchedProfile(
+            shotWithMetadata,
+            allProfiles,
           );
 
-          if (match) {
-            const pid = match.source === 'gaggimate' ? match.profileId || match.id : match.name;
-            const fullP = match.data
-              ? match.data
-              : await libraryService.loadProfile(pid, match.source);
+          if (matchId !== profileMatchIdRef.current) return; // stale
 
-            if (matchId !== profileMatchIdRef.current) return; // stale
+          if (matchedProfile) {
+            // Keep the matched name visible while searching, but only promote the
+            // profile to currentProfile after the full payload has been loaded.
+            // This prevents the analyzer from re-running against a partial list item
+            // that may not contain the phase data required for profile comparison.
+            setCurrentProfile(matchedProfile.profile);
+            setCurrentProfileName(matchedProfile.profileName);
+            return;
+          }
 
-            setCurrentProfile(
-              match.source &&
-                (match.source === 'gaggimate' || match.source === 'browser') &&
-                !fullP?.source
-                ? { ...fullP, source: match.source }
-                : fullP,
-            );
-            setCurrentProfileName(match.label || match.name);
+          if (scheduleProfileAutoMatchRetry(attempt, attemptProfileAutoMatch)) {
+            return;
           }
         } catch (e) {
           if (matchId !== profileMatchIdRef.current) return;
+          if (scheduleProfileAutoMatchRetry(attempt, attemptProfileAutoMatch)) {
+            return;
+          }
           console.warn('Profile auto-match failed:', e);
         } finally {
-          if (matchId === profileMatchIdRef.current) {
+          if (matchId === profileMatchIdRef.current && !profileSearchTimerRef.current) {
             setIsMatchingProfile(false);
             setIsSearchingProfile(false);
           }
         }
-      }, 250);
+      };
+
+      // Debounce: wait for rapid navigation to settle before searching
+      profileSearchTimerRef.current = setTimeout(() => {
+        attemptProfileAutoMatch(0);
+      }, PROFILE_AUTO_MATCH_INITIAL_DELAY_MS);
     } else {
       // Shot has no profile field — clear search states immediately
       profileMatchIdRef.current++;
@@ -243,10 +330,7 @@ export function ShotAnalyzer() {
   };
 
   const handleProfileLoad = (data, name, source) => {
-    const nextProfile =
-      source && (source === 'gaggimate' || source === 'browser') && !data?.source
-        ? { ...data, source }
-        : data;
+    const nextProfile = normalizeMatchedProfileSource(data, source);
     setCurrentProfile(nextProfile);
     setCurrentProfileName(data?.label || data?.name || name);
   };
@@ -296,7 +380,9 @@ export function ShotAnalyzer() {
             importMode={importMode}
             onImportModeChange={setImportMode}
             onShotLoadedFromLibrary={() => {
-              setPendingMobileAnalysisScroll(true);
+              if (shouldAutoScrollAnalyzerOnSelection()) {
+                setPendingMobileAnalysisScroll(true);
+              }
             }}
             isMatchingProfile={isMatchingProfile}
             isSearchingProfile={isSearchingProfile} // <- pass prop
@@ -305,32 +391,30 @@ export function ShotAnalyzer() {
 
         {currentShot ? (
           // --- Active Analysis View ---
-          <div ref={analysisSectionRef} className='animate-fade-in mt-8 space-y-5'>
-            <div className='bg-base-200/50 border-base-content/5 rounded-lg border p-5 shadow-sm backdrop-blur-sm'>
-              <div className='text-base-content border-base-content/10 mb-4 border-b-2 pb-2.5 text-lg font-bold tracking-wide uppercase'>
-                Shot Analysis
-              </div>
-
-              <div className='mb-8'>
+          <div ref={analysisSectionRef} className='animate-fade-in mt-8'>
+            <div className='bg-base-100 border-base-content/10 rounded-lg border p-5 shadow-sm'>
+              <div>
                 <ShotChart shotData={currentShot} results={analysisResults} />
               </div>
-
-              {analysisResults && (
-                <div className='mt-4 space-y-6'>
-                  <AnalysisTable
-                    results={analysisResults}
-                    activeColumns={activeColumns}
-                    onColumnsChange={setActiveColumns}
-                    settings={settings}
-                    onSettingsChange={setSettings}
-                    onAnalyze={performAnalysis}
-                  />
-                </div>
-              )}
             </div>
+
+            {analysisResults && (
+              <div className='mt-2'>
+                <AnalysisTable
+                  results={analysisResults}
+                  activeColumns={activeColumns}
+                  onColumnsChange={setActiveColumns}
+                  settings={settings}
+                  onSettingsChange={handleSettingsChange}
+                  onAnalyze={performAnalysis}
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <EmptyState loading={loading} />
+          <div className='mt-6'>
+            <EmptyState loading={loading} />
+          </div>
         )}
       </div>
     </div>

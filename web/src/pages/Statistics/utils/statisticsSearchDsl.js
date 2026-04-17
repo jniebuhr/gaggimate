@@ -117,9 +117,7 @@ export function parseStatisticsQuery(queryString) {
     }
 
     if (field === 'date') {
-      const dateMatch = String(valueRaw ?? '')
-        .trim()
-        .match(/^(>=|<=|>|<|=)\s*(\S.*)$/);
+      const dateMatch = /^(>=|<=|>|<|=)\s*(\S.*)$/.exec(String(valueRaw ?? '').trim());
       if (!dateMatch) {
         errors.push({
           code: 'date_operator_required',

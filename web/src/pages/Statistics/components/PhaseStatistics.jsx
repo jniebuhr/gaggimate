@@ -1,16 +1,39 @@
 import { useState } from 'preact/hooks';
 import { fmt } from '../utils/format';
-
-const EXIT_REASON_COLORS = {
-  'Time Stop': 'badge-info',
-  'Weight Stop': 'badge-success',
-  'Flow Stop': 'badge-warning',
-  'Pressure Stop': 'badge-error',
-  'Pumped Stop': 'badge-secondary',
-  Unknown: 'badge-ghost',
-};
+import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
 const DELTA_COLOR = 'var(--analyzer-pred-info-blue)';
+const EXIT_REASON_UNKNOWN_STYLE = {
+  color: 'color-mix(in srgb, var(--color-base-content) 72%, transparent)',
+  borderColor: 'var(--statistics-summary-border)',
+  background: 'var(--statistics-summary-surface-muted)',
+};
+
+function getExitReasonAccent(reason) {
+  const normalized = String(reason || '')
+    .trim()
+    .toLowerCase();
+  if (!normalized) return null;
+  if (normalized.includes('weight')) return 'var(--analyzer-weight-text)';
+  if (normalized.includes('flow')) return 'var(--analyzer-flow-text)';
+  if (normalized.includes('pressure')) return 'var(--analyzer-pressure-text)';
+  if (normalized.includes('time')) return 'var(--statistics-summary-duration)';
+  if (normalized.includes('water') || normalized.includes('pumped')) {
+    return 'var(--statistics-summary-water)';
+  }
+  return null;
+}
+
+function getExitReasonBadgeStyle(reason) {
+  const accentColor = getExitReasonAccent(reason);
+  if (!accentColor) return EXIT_REASON_UNKNOWN_STYLE;
+
+  return {
+    color: accentColor,
+    borderColor: `color-mix(in srgb, ${accentColor} 30%, var(--statistics-summary-border))`,
+    background: `color-mix(in srgb, ${accentColor} 12%, var(--statistics-summary-surface-muted))`,
+  };
+}
 
 function fmtDelta(val) {
   if (!Number.isFinite(val)) return null;
@@ -122,7 +145,8 @@ function PhaseSection({ phase }) {
                 .map(([reason, count]) => (
                   <span
                     key={reason}
-                    className={`badge badge-sm ${EXIT_REASON_COLORS[reason] || 'badge-ghost'}`}
+                    className='badge badge-sm border font-medium'
+                    style={getExitReasonBadgeStyle(reason)}
                   >
                     {reason}: {count}
                   </span>
@@ -135,7 +159,7 @@ function PhaseSection({ phase }) {
   );
 }
 
-export function PhaseStatistics({ phaseStats }) {
+export function PhaseStatistics({ phaseStats, showTitle = true }) {
   if (!phaseStats || phaseStats.length === 0) return null;
 
   // Separate regular phases from total row
@@ -144,7 +168,9 @@ export function PhaseStatistics({ phaseStats }) {
 
   return (
     <div>
-      <h3 className='mb-2 text-sm font-bold uppercase opacity-70'>Per-Phase Statistics</h3>
+      {showTitle && (
+        <h3 className={`mb-2 ${STATISTICS_SECTION_TITLE_CLASS}`}>Per-phase statistics</h3>
+      )}
       <div className='space-y-2'>
         {phases.map(phase => (
           <PhaseSection key={phase.phaseName} phase={phase} />

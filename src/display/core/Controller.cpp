@@ -134,8 +134,14 @@ void Controller::setupPanel() {
 #endif
 
 void Controller::setupBluetooth() {
-    lastScanTime = millis();
     clientController.initClient();
+    clientController.registerDisconnectCallback([this]() {
+        if (initialized) {
+            pluginManager->trigger("controller:bluetooth:disconnect");
+            waitingForController = true;
+            setMode(MODE_STANDBY);
+        }
+    });
     clientController.registerSensorCallback(
         [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow, const float puckResistance) {
             onTempRead(temp);
@@ -202,10 +208,10 @@ void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.setHostname(settings.getMdnsName().c_str());
         WiFi.mode(WIFI_STA);
+        WiFi.setAutoReconnect(true);
         WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        WiFi.setAutoReconnect(true);
         for (int attempts = 0; attempts < WIFI_CONNECT_ATTEMPTS; attempts++) {
             if (WiFi.status() == WL_CONNECTED) {
                 break;
@@ -221,7 +227,8 @@ void Controller::setupWifi() {
                          WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
             WiFi.onEvent(
                 [this](WiFiEvent_t, WiFiEventInfo_t info) {
-                    ESP_LOGI(LOG_TAG, "Lost WiFi connection. Reason: %d", info.wifi_sta_disconnected.reason);
+                    ESP_LOGI(LOG_TAG, "Lost WiFi connection. Reason: %s",
+                             WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(info.wifi_sta_disconnected.reason)));
                     pluginManager->trigger("controller:wifi:disconnect");
                 },
                 WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
@@ -259,47 +266,32 @@ void Controller::loop() {
         connect();
     }
 
+    unsigned long now = millis();
+
     // If BLE scanning has been running for a while without finding the controller,
     // notify the UI so it can update the startup label accordingly.
     if (!waitingForController && initialized && !clientController.isConnected() &&
-        (millis() - connectStartTime) > CONTROLLER_WAITING_TIMEOUT_MS) {
+        (now - connectStartTime) > CONTROLLER_WAITING_TIMEOUT_MS) {
         waitingForController = true;
         pluginManager->trigger("controller:bluetooth:waiting");
     }
 
-    // Periodically restart BLE scan while waiting for the controller to appear.
-    if (initialized && !clientController.isConnected() &&
-        (millis() - lastScanTime) > (NimBLEClientController::BLE_SCAN_DURATION_SECONDS * 1000UL + 500UL)) {
-        lastScanTime = millis();
-        clientController.scan();
-    }
-
-    if (clientController.isReadyForConnection()) {
+    if (clientController.isReadyForConnection() && clientController.connectToServer()) {
         waitingForController = false;
-        clientController.connectToServer();
         setupInfos();
-        pluginManager->trigger("controller:bluetooth:connect");
+        ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
+        setPressureScale();
+        clientController.sendPidSettings(settings.getPid());
+        clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
         if (!loaded) {
             loaded = true;
             if (settings.getStartupMode() == MODE_STANDBY)
                 activateStandby();
 
-            ESP_LOGI(LOG_TAG, "setting pressure scale to %.2f\n", settings.getPressureScaling());
-            setPressureScale();
-            clientController.sendPidSettings(settings.getPid());
-            clientController.sendPumpModelCoeffs(settings.getPumpModelCoeffs());
-
             pluginManager->trigger("controller:ready");
         }
+        pluginManager->trigger("controller:bluetooth:connect");
     }
-
-    unsigned long now = millis();
-
-    // Disable ping as we send output control frequently
-    // if (now - lastPing > PING_INTERVAL) {
-    //     lastPing = now;
-    //     clientController.sendPing();
-    // }
 
     if (isErrorState()) {
         return;
@@ -335,12 +327,18 @@ void Controller::loop() {
             if (lastProcess->getType() == MODE_BREW) {
                 if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
                     brewProcess->target == ProcessTarget::VOLUMETRIC) {
-                    settings.setBrewDelay(brewProcess->getNewDelayTime());
+                    double newDelay = brewProcess->getNewDelayTime();
+                    if (newDelay >= 0) {
+                        settings.setBrewDelay(newDelay);
+                    }
                 }
             } else if (lastProcess->getType() == MODE_GRIND) {
                 if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
                     grindProcess->target == ProcessTarget::VOLUMETRIC) {
-                    settings.setGrindDelay(grindProcess->getNewDelayTime());
+                    double newDelay = grindProcess->getNewDelayTime();
+                    if (newDelay >= 0) {
+                        settings.setGrindDelay(newDelay);
+                    }
                 }
             }
         }
@@ -474,7 +472,7 @@ void Controller::lowerTemp() {
 }
 
 void Controller::raiseBrewTarget() {
-    if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
+    if (isVolumetricAvailable() && profileManager->getSelectedProfile().isVolumetric()) {
         profileManager->getSelectedProfile().adjustVolumetricTarget(1);
     } else {
         profileManager->getSelectedProfile().adjustDuration(1);
@@ -483,7 +481,7 @@ void Controller::raiseBrewTarget() {
 }
 
 void Controller::lowerBrewTarget() {
-    if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
+    if (isVolumetricAvailable() && profileManager->getSelectedProfile().isVolumetric()) {
         profileManager->getSelectedProfile().adjustVolumetricTarget(-1);
     } else {
         profileManager->getSelectedProfile().adjustDuration(-1);
@@ -585,8 +583,9 @@ void Controller::activate() {
     switch (mode) {
     case MODE_BREW:
         startProcess(new BrewProcess(profileManager->getSelectedProfile(),
-                                     settings.isVolumetricTarget() && isVolumetricAvailable() ? ProcessTarget::VOLUMETRIC
-                                                                                              : ProcessTarget::TIME,
+                                     profileManager->getSelectedProfile().isVolumetric() && isVolumetricAvailable()
+                                         ? ProcessTarget::VOLUMETRIC
+                                         : ProcessTarget::TIME,
                                      settings.getBrewDelay()));
         break;
     case MODE_STEAM:
@@ -698,8 +697,8 @@ void Controller::onProfileSaveAsNew() {
     profile.label = "Copy of " + profileManager->getSelectedProfile().label;
     profile.id = generateShortID();
     settings.setSelectedProfile(profile.id);
-    settings.addFavoritedProfile(profile.id);
     profileManager->saveProfile(profileManager->getSelectedProfile());
+    profileManager->addFavoritedProfile(profile.id);
 }
 
 void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
@@ -718,7 +717,7 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     if (currentProcess != nullptr) {
         currentProcess->updateVolume(measurement);
     }
-    if (lastProcess != nullptr) {
+    if (lastProcess != nullptr && !lastProcess->isComplete()) {
         lastProcess->updateVolume(measurement);
     }
 }
@@ -735,6 +734,12 @@ void Controller::onFlush() {
     clear();
     startProcess(new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay()));
     pluginManager->trigger("controller:brew:start");
+}
+
+void Controller::onVolumetricDelete() {
+    if (profileManager->getSelectedProfile().isVolumetric()) {
+        profileManager->getSelectedProfile().removeVolumetricTarget();
+    }
 }
 
 void Controller::handleBrewButton(int brewButtonStatus) {

@@ -10,6 +10,10 @@ import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { getNotesTasteStyle } from '../utils/analyzerUtils';
+import {
+  getAnalyzerSurfaceTriggerClasses,
+  getAnalyzerTextButtonClasses,
+} from './analyzerControlStyles';
 
 const tasteOptions = [
   { value: 'bitter', label: 'Bitter' },
@@ -84,7 +88,9 @@ export function NotesBarExpanded({
                       key={opt.value}
                       type='button'
                       onClick={() => onInputChange('balanceTaste', opt.value)}
-                      className={`flex-1 rounded-md border-2 px-2 py-1.5 text-xs font-medium transition-all ${
+                      className={`${getAnalyzerSurfaceTriggerClasses({
+                        className: 'flex-1 border-2 px-2 py-1.5 text-xs font-medium',
+                      })} ${
                         notes.balanceTaste === opt.value
                           ? ''
                           : 'border-base-content/10 text-base-content/40 hover:border-base-content/30'
@@ -178,7 +184,13 @@ export function NotesBarExpanded({
 
             {/* Action Buttons */}
             <div className='flex justify-end gap-2 pt-1'>
-              <button className='btn btn-sm btn-ghost' onClick={onCancel} disabled={saving}>
+              <button
+                className={getAnalyzerTextButtonClasses({
+                  className: 'btn btn-sm btn-ghost',
+                })}
+                onClick={onCancel}
+                disabled={saving}
+              >
                 <FontAwesomeIcon icon={faTimes} className='mr-1' />
                 Cancel
               </button>
@@ -205,14 +217,21 @@ export function NotesBarExpanded({
           /* ── VIEW MODE: Notes text + edit button ── */
           <div className='flex items-start gap-3'>
             <div
-              className='bg-base-200/50 hover:bg-base-200/80 min-h-[2rem] min-w-0 flex-1 cursor-pointer rounded-md px-3 py-2 text-xs'
+              className={getAnalyzerSurfaceTriggerClasses({
+                className:
+                  'bg-base-200/50 hover:text-base-content/80 min-h-[2rem] min-w-0 flex-1 cursor-pointer px-3 py-2 text-xs',
+              })}
               onClick={onCollapse}
               title='Click to collapse'
             >
               {notes.notes || 'No notes added'}
             </div>
             <button
-              className='btn btn-sm btn-outline flex-shrink-0'
+              className={getAnalyzerTextButtonClasses({
+                className:
+                  'btn btn-sm border-base-content/10 text-base-content/70 flex-shrink-0 bg-transparent shadow-none',
+                tone: 'neutral',
+              })}
               onClick={onEdit}
               title='Edit notes'
             >

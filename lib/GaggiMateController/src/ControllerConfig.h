@@ -219,4 +219,36 @@ const ControllerConfig GM_PRO_REV_11 = {.name = "GaggiMate Pro Rev 1.1",
                                             .tof = false,
                                         }};
 
+const ControllerConfig GM_STANDARD_REV_3X = {.name = "GaggiMate Standard Rev 3.x",
+                                             .autodetectValue = 1, // Voltage divider was missing in Rev 1.0 so it's 0
+                                             .heaterPin = 14,
+                                             .pumpPin = 9,
+                                             .pumpOn = 1,
+                                             .valvePin = 10,
+                                             .valveOn = 1,
+                                             .altPin = 47,
+                                             .altOn = 1,
+                                             .maxSckPin = 6,
+                                             .maxCsPin = 7,
+                                             .maxMisoPin = 4,
+                                             .brewButtonPin = 38,
+                                             .steamButtonPin = 48,
+                                             .scaleSclPin = 17,
+                                             .scaleSdaPin = 18,
+                                             .scaleSda1Pin = 39,
+                                             .sunriseSclPin = 44,
+                                             .sunriseSdaPin = 43,
+                                             .ext1Pin = 1,
+                                             .ext2Pin = 2,
+                                             .ext3Pin = 8,
+                                             .ext4Pin = 12,
+                                             .ext5Pin = 13,
+                                             .capabilites = {
+                                                 .dimming = false,
+                                                 .pressure = false,
+                                                 .ssrPump = true,
+                                                 .ledControls = false,
+                                                 .tof = false,
+                                             }};
+
 #endif // CONTROLLERCONFIG_H

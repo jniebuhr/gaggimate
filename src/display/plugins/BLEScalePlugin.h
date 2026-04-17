@@ -35,6 +35,12 @@ class BLEScalePlugin : public Plugin {
         }
         return "";
     };
+    int getRSSI() {
+        if (scale != nullptr && scale->isConnected()) {
+            return scale->getRSSI();
+        }
+        return 0;
+    };
 
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
     void tare() const;

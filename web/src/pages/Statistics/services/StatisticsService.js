@@ -48,6 +48,24 @@ function aggregateMetricStats(totals, key) {
   };
 }
 
+function aggregateValueStats(values) {
+  const finiteValues = values.filter(Number.isFinite);
+  const avg = averageOf(finiteValues);
+  return {
+    avg,
+    min: finiteValues.length ? Math.min(...finiteValues) : 0,
+    max: finiteValues.length ? Math.max(...finiteValues) : 0,
+    stdDev: stdDevOf(finiteValues, avg),
+  };
+}
+
+function getTotalTempTargetDeviation(total) {
+  const actualAvg = Number(total?.t?.avg);
+  const targetAvg = Number(total?.tt?.avg);
+  if (!Number.isFinite(actualAvg) || !Number.isFinite(targetAvg)) return null;
+  return Math.abs(actualAvg - targetAvg);
+}
+
 function computeSummary(entries) {
   const totalShots = entries.length;
   let totalDuration = 0;
@@ -68,9 +86,8 @@ function computeSummary(entries) {
       if (Number.isFinite(total.water)) totalWater += total.water;
       if (Number.isFinite(total.weight)) totalWeight += total.weight;
       if (total.t && Number.isFinite(total.t.avg)) tempAvgs.push(total.t.avg);
-      if (total.t && Number.isFinite(total.t.avg) && total.tt && Number.isFinite(total.tt.avg)) {
-        tempTargetDeviations.push(Math.abs(total.t.avg - total.tt.avg));
-      }
+      const tempTargetDeviation = getTotalTempTargetDeviation(total);
+      if (Number.isFinite(tempTargetDeviation)) tempTargetDeviations.push(tempTargetDeviation);
     }
     if (Number.isFinite(meta.timestamp)) {
       if (meta.timestamp < earliest) earliest = meta.timestamp;
@@ -106,8 +123,14 @@ function computeMetricAverages(entries) {
   const keys = ['p', 'f', 'pf', 't', 'w'];
   const metrics = {};
   for (const key of keys) {
-    metrics[key] = aggregateMetricStats(totals, key);
+    metrics[key] =
+      key === 'w'
+        ? aggregateValueStats(totals.map(total => total.weight))
+        : aggregateMetricStats(totals, key);
   }
+  metrics.water = aggregateValueStats(totals.map(total => total.water));
+  metrics.duration = aggregateValueStats(totals.map(total => total.duration));
+  metrics.ttDelta = aggregateValueStats(totals.map(getTotalTempTargetDeviation));
   return metrics;
 }
 
@@ -132,7 +155,10 @@ function computeProfileGroups(entries) {
     const keys = ['p', 'f', 'pf', 't', 'w'];
     const metrics = {};
     for (const key of keys) {
-      metrics[key] = aggregateMetricStats(totals, key);
+      metrics[key] =
+        key === 'w'
+          ? aggregateValueStats(totals.map(total => total.weight))
+          : aggregateMetricStats(totals, key);
     }
 
     result.push({

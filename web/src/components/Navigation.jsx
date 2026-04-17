@@ -21,7 +21,12 @@ function MenuItem(props) {
   return (
     <a href={props.link} className={className}>
       <FontAwesomeIcon icon={props.icon} />
-      <span>{props.label}</span>
+      <div className='indicator'>
+        {props.isNew && (
+          <span className='indicator-item text-success pl-8 text-xs font-bold'>NEW</span>
+        )}
+        <span>{props.label}</span>
+      </div>
     </a>
   );
 }
@@ -34,13 +39,13 @@ export function Navigation(props) {
       <div className='space-y-1.5'>
         <MenuItem label='Profiles' link='/profiles' icon={faList} />
         <MenuItem label='Shot History' link='/history' icon={faTimeline} />
-        <MenuItem label='Shot Analyzer' link='/analyzer' icon={faMagnifyingGlassChart} />
-        <MenuItem label='Statistics' link='/statistics' icon={faChartSimple} />
+        <MenuItem label='Shot Analyzer' link='/analyzer' icon={faMagnifyingGlassChart} isNew />
+        <MenuItem label='Statistics' link='/statistics' icon={faChartSimple} isNew />
       </div>
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
         <MenuItem label='PID Autotune' link='/pidtune' icon={faTemperatureHalf} />
-        <MenuItem label='Bluetooth Scales' link='/scales' icon={faBluetoothB} />
+        <MenuItem label='Bluetooth Devices' link='/scales' icon={faBluetoothB} />
         <MenuItem label='Settings' link='/settings' icon={faCog} />
       </div>
       <hr className='h-5 border-0' />

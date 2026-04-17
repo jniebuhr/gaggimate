@@ -88,6 +88,12 @@ function withAlpha(color, alphaHex) {
   return trimmed;
 }
 
+function formatTrendMetricValue(value, metricKey) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '';
+  return metricKey === 'shotCount' ? String(Math.round(numericValue)) : numericValue.toFixed(1);
+}
+
 export function TrendChart({ trends }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
@@ -174,9 +180,7 @@ export function TrendChart({ trends }) {
                   return formatTrendBucketTooltipTitle(raw, selectedGranularity);
                 },
                 label: ctx =>
-                  metricDef.key === 'shotCount'
-                    ? `${metricLabel}: ${Math.round(ctx.parsed.y)}`
-                    : `${metricLabel}: ${ctx.parsed.y.toFixed(1)}`,
+                  `${metricLabel}: ${formatTrendMetricValue(ctx.parsed.y, metricDef.key)}`,
                 afterBody: ctx => {
                   if (metricDef.key === 'shotCount') return [];
                   const raw = ctx?.[0]?.raw;
@@ -204,8 +208,7 @@ export function TrendChart({ trends }) {
               ticks: {
                 font: { size: 10 },
                 color: metricColor,
-                callback: value =>
-                  metricDef.key === 'shotCount' ? Math.round(Number(value)) : value,
+                callback: value => formatTrendMetricValue(value, metricDef.key),
               },
               grid: { color: gridColor },
             },
@@ -228,8 +231,7 @@ export function TrendChart({ trends }) {
 
   return (
     <div>
-      <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
-        <h3 className='text-sm font-bold uppercase opacity-70'>Trends</h3>
+      <div className='mb-2 flex flex-wrap items-center justify-end gap-2'>
         <div className='ml-auto flex flex-wrap items-center gap-2'>
           <select
             className='select select-xs select-bordered'

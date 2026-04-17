@@ -93,7 +93,12 @@ export default class ApiService {
   }
 
   _onMessage(event) {
-    const message = JSON.parse(event.data);
+    let message;
+    try {
+      message = JSON.parse(event.data);
+    } catch {
+      return; // Discard malformed messages to avoid crashing the WS handler.
+    }
     const listeners = Object.values(this.listeners[message.tp] || {});
     if (message.tp === 'evt:status') {
       this._onStatus(message);
@@ -120,10 +125,13 @@ export default class ApiService {
     const rid = uuidv4();
     const message = { ...data, rid };
     return new Promise((resolve, reject) => {
+      let timeoutId;
+
       // Create a listener for the response with matching rid
       const listenerId = this.on(returnType, response => {
         if (response.rid === rid) {
-          // Clean up the listener
+          // Clean up the listener and cancel the timeout to free the closure.
+          clearTimeout(timeoutId);
           this.off(returnType, listenerId);
           resolve(response);
         }
@@ -132,8 +140,8 @@ export default class ApiService {
       // Send the request
       this.send(message);
 
-      // Optional: Add timeout
-      setTimeout(() => {
+      // Timeout: reject if no matching response arrives within 30 seconds
+      timeoutId = setTimeout(() => {
         this.off(returnType, listenerId);
         reject(new Error(`Request ${data.tp} timed out`));
       }, 30000); // 30 second timeout
@@ -176,6 +184,7 @@ export default class ApiService {
       bluetoothConnected: message.bc || false,
       process: message.process || null,
       timestamp: new Date(),
+      rssi: message.rssi || 0,
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;

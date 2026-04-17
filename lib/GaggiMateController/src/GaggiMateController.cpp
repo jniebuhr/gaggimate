@@ -11,6 +11,7 @@
 GaggiMateController::GaggiMateController(String version) : _version(std::move(version)) {
     configs.push_back(GM_STANDARD_REV_1X);
     configs.push_back(GM_STANDARD_REV_2X);
+    configs.push_back(GM_STANDARD_REV_3X);
     configs.push_back(GM_PRO_REV_1x);
     configs.push_back(GM_PRO_LEGO);
     configs.push_back(GM_PRO_REV_11);

@@ -95,6 +95,8 @@ class Controller {
         return static_cast<int>((reversedLevel - settings.getFullTankDistance()) /
                                 static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance()) * 100.0f);
     };
+
+    void onVolumetricDelete();
     bool isLowWaterLevel() const { return getWaterLevel() < 20; };
 
     SystemInfo getSystemInfo() const { return systemInfo; }
@@ -160,7 +162,6 @@ class Controller {
     bool screenReady = false;
     bool waitingForController = false;
     unsigned long connectStartTime = 0;
-    unsigned long lastScanTime = 0;
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;

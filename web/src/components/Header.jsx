@@ -137,7 +137,7 @@ export function Header() {
               onClick={() => openCb(false)}
             />
             <HeaderItem
-              label='Bluetooth Scales'
+              label='Bluetooth Devices'
               link='/scales'
               icon={faBluetoothB}
               onClick={() => openCb(false)}

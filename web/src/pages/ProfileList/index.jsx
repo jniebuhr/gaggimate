@@ -745,9 +745,14 @@ export function ProfileList() {
       reader.onload = async e => {
         const result = e.target.result;
         if (typeof result === 'string') {
-          const profiles = parseProfile(result);
-          for (const p of profiles) {
-            await apiService.request({ tp: 'req:profiles:save', profile: p });
+          setLoading(true);
+          try {
+            const profiles = parseProfile(result);
+            for (const p of profiles) {
+              await apiService.request({ tp: 'req:profiles:save', profile: p });
+            }
+          } catch {
+            // Individual save errors are surfaced by WS timeout; continue to reload list.
           }
           await loadProfiles();
         }
@@ -757,12 +762,13 @@ export function ProfileList() {
   };
 
   const onClear = useCallback(async () => {
+    setLoading(true);
     for (const p of profiles) {
       if (!p.selected) {
         await apiService.request({ tp: 'req:profiles:delete', id: p.id });
       }
-      await loadProfiles();
     }
+    await loadProfiles();
   }, [profiles, apiService]);
 
   // Filtered profiles

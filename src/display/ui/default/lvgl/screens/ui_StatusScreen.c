@@ -253,7 +253,7 @@ void ui_StatusScreen_screen_init(void) {
     lv_obj_set_height(ui_StatusScreen_brewLabel, 20);
     lv_obj_set_flex_grow(ui_StatusScreen_brewLabel, 10);
     lv_obj_set_align(ui_StatusScreen_brewLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_StatusScreen_brewLabel, "27s");
+    lv_label_set_text(ui_StatusScreen_brewLabel, "12.5 / 36.0g");
     ui_object_set_themeable_style_property(ui_StatusScreen_brewLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_COLOR,
                                            _ui_theme_color_SemiDark);
     ui_object_set_themeable_style_property(ui_StatusScreen_brewLabel, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_TEXT_OPA,

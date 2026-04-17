@@ -49,7 +49,7 @@ void ProfileManager::migrate() {
     saveProfile(profile);
     _settings.setSelectedProfile(profile.id);
     for (String id : listProfiles()) {
-        _settings.addFavoritedProfile(id);
+        addFavoritedProfile(id);
     }
 }
 
@@ -101,7 +101,7 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
         return false;
     }
     outProfile.selected = outProfile.id == _settings.getSelectedProfile();
-    std::vector<String> favoritedProfiles = _settings.getFavoritedProfiles();
+    const auto &favoritedProfiles = _settings.getFavoritedProfiles();
     outProfile.favorite = std::find(favoritedProfiles.begin(), favoritedProfiles.end(), outProfile.id) != favoritedProfiles.end();
     return true;
 }
@@ -135,13 +135,13 @@ bool ProfileManager::saveProfile(Profile &profile) {
     selectProfile(_settings.getSelectedProfile());
     _plugin_manager->trigger("profiles:profile:save", "id", profile.id);
     if (isNew) {
-        _settings.addFavoritedProfile(profile.id);
+        addFavoritedProfile(profile.id);
     }
     return ok;
 }
 
 bool ProfileManager::deleteProfile(const String &uuid) {
-    _settings.removeFavoritedProfile(uuid);
+    removeFavoritedProfile(uuid);
     return _fs->remove(profilePath(uuid));
 }
 
@@ -161,7 +161,7 @@ bool ProfileManager::loadSelectedProfile(Profile &outProfile) { return loadProfi
 
 std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
 
-    auto rawFavorites = _settings.getFavoritedProfiles();
+    const auto &rawFavorites = _settings.getFavoritedProfiles();
     std::vector<String> result;
 
     auto storedProfileOrder = _settings.getProfileOrder();
@@ -191,4 +191,14 @@ std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
         }
     }
     return result;
+}
+
+void ProfileManager::removeFavoritedProfile(String id) {
+    _settings.removeFavoritedProfile(id);
+    _plugin_manager->trigger("profiles:profile:unfavorite", "id", id);
+}
+
+void ProfileManager::addFavoritedProfile(String id) {
+    _settings.addFavoritedProfile(id);
+    _plugin_manager->trigger("profiles:profile:favorite", "id", id);
 }

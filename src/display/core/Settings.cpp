@@ -10,7 +10,7 @@ Settings::Settings() {
     targetWaterTemp = preferences.getInt("tw", 80);
     targetGrindVolume = preferences.getDouble("tgv", 18.0);
     targetGrindDuration = preferences.getInt("tgd", 25000);
-    brewDelay = preferences.getDouble("del_br", 1000.0);
+    brewDelay = preferences.getDouble("del_br", 800.0);
     grindDelay = preferences.getDouble("del_gd", 1000.0);
     delayAdjust = preferences.getBool("del_ad", true);
     temperatureOffset = preferences.getInt("to", DEFAULT_TEMPERATURE_OFFSET);
