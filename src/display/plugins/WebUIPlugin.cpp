@@ -711,6 +711,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 }
                 settings->setAutoWakeupSchedules(schedules);
             }
+            if (request->hasArg("flushDuration"))
+                settings->setFlushDuration(request->arg("flushDuration").toInt() * 1000);
             settings->save(true);
         });
         pluginManager->trigger("settings:changed");
@@ -768,6 +770,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["altRelayFunction"] = settings.getAltRelayFunction();
     // Add auto-wakeup settings to response
     doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
+    doc["flushDuration"] = settings.getFlushDuration() / 1000;
 
     // Add schedule format with days
     std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();

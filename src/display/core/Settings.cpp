@@ -48,6 +48,7 @@ Settings::Settings() {
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
     steamPumpCutoff = preferences.getFloat("spc", DEFAULT_STEAM_PUMP_CUTOFF);
     historyIndex = preferences.getInt("hi", 0);
+    flushDuration = preferences.getInt("fd", 5000);
     autowakeupEnabled = preferences.getBool("ab_en", false);
 
     // Load schedule format: "time1|days1;time2|days2" where days is 7-bit string (e.g., "1111100" for weekdays only)
@@ -380,6 +381,11 @@ void Settings::setHistoryIndex(int history_index) {
     save();
 }
 
+void Settings::setFlushDuration(int flush_duration) {
+    flushDuration = std::clamp(flush_duration, 1000, 60000);
+    save();
+}
+
 void Settings::setSunriseR(int sunrise_r) {
     sunriseR = sunrise_r;
     save();
@@ -477,6 +483,7 @@ void Settings::doSave() {
     preferences.putFloat("spp", steamPumpPercentage);
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
+    preferences.putInt("fd", flushDuration);
     preferences.putBool("ab_en", autowakeupEnabled);
 
     // Save schedule format
