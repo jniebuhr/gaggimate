@@ -201,16 +201,38 @@
           ]
         },
         "pressure": {
-          "type": "number",
-          "minimum": -1,
-          "maximum": 12,
-          "description": "Pressure in **bar**. Role depends on `target`: setpoint when `target=\"pressure\"`, soft upper limit when `target=\"flow\"`. Sentinel `-1`: hold the pressure measured at phase entry. Sentinel `0` (only meaningful as a limit): ignore the limit entirely. Physical hardware caps around 9–12 bar; the parser does not validate this range."
+          "description": "Pressure value in **bar**. Role depends on `target`: setpoint when `target=\"pressure\"`, soft upper limit when `target=\"flow\"`. Either a positive bar value or the `-1` sentinel — intermediate negative values are not meaningful.",
+          "oneOf": [
+            {
+              "const": -1,
+              "title": "Maintain current pressure",
+              "description": "Sentinel: hold the pressure measured at phase entry. The pump carries over whatever pressure existed when the phase started rather than driving toward a fixed setpoint (`src/display/core/process/BrewProcess.h:206-209`)."
+            },
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 12,
+              "title": "Explicit pressure in bar",
+              "description": "Numeric pressure setpoint (or limit) in bar. Physical hardware typically caps at 9–12 bar; the parser does not validate this range. A value of `0` is only meaningful as a limit (i.e. when this field is the non-target side, meaning \"ignore this limit\")."
+            }
+          ]
         },
         "flow": {
-          "type": "number",
-          "minimum": -1,
-          "maximum": 15,
-          "description": "Flow in **g/s** (internally treated as ml/s for water). Role depends on `target`: setpoint when `target=\"flow\"`, soft upper limit when `target=\"pressure\"`. Sentinel `-1`: hold the flow measured at phase entry. Sentinel `0` (only meaningful as a limit): ignore the limit entirely. Note: the UI label for pump.flow says `g/s` while the UI label for `targets[].type=\"flow\"` says `ml/s`; the firmware treats them as the same physical quantity (1 g ≈ 1 mL for water)."
+          "description": "Flow value in **g/s** (internally treated as ml/s for water — 1 g ≈ 1 mL). Role depends on `target`: setpoint when `target=\"flow\"`, soft upper limit when `target=\"pressure\"`. Either a positive flow value or the `-1` sentinel — intermediate negative values are not meaningful. Note the unit discrepancy with `targets[].type=\"flow\"`, which the UI labels as `ml/s`; firmware treats them as the same quantity.",
+          "oneOf": [
+            {
+              "const": -1,
+              "title": "Maintain current flow",
+              "description": "Sentinel: hold the flow measured at phase entry. The pump carries over whatever flow existed when the phase started rather than driving toward a fixed setpoint (`src/display/core/process/BrewProcess.h:206-209`)."
+            },
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 15,
+              "title": "Explicit flow in g/s",
+              "description": "Numeric flow setpoint (or limit) in g/s. A value of `0` is only meaningful as a limit (i.e. when this field is the non-target side, meaning \"ignore this limit\")."
+            }
+          ]
         }
       }
     },
