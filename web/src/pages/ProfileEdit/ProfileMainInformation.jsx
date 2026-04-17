@@ -1,7 +1,6 @@
 import Card from '../../components/Card.jsx';
 
 export function ProfileMainInformation(props) {
-  console.log(props.data);
   return (
     <Card sm={10} title='Profile Information'>
       <div className='form-control'>
@@ -55,17 +54,21 @@ export function ProfileMainInformation(props) {
       </div>
       <div className='form-control'>
         <label htmlFor='utility' className='mb-2 block text-sm font-medium'>
-          Utility
+          Type
         </label>
         <input
           id='utility'
           name='utility'
           type='checkbox'
-          className='toggle toggle-primary'
+          className='toggle border-primary checked:border-primary text-primary checked:text-primary'
           checked={!!props.data?.utility}
           onChange={props.onChangeUtility}
         />
+        <label htmlFor='utility' className='ml-2'>
+          {props.data?.utility ? 'Utility' : 'Extraction'}
+        </label>
       </div>
     </Card>
   );
 }
+
