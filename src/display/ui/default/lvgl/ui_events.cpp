@@ -91,7 +91,15 @@ void onGrindScreen(lv_event_t *e) {
     controller.setMode(MODE_GRIND);
 }
 
-void onVolumetricClick(lv_event_t *e) {}
+void onVolumetricClick(lv_event_t *e) {
+    if (volumetricHoldTriggered) {
+        // The click event that follows a long-press release should not also
+        // toggle the brew target — the hold handler already tared the scale.
+        volumetricHoldTriggered = false;
+        return;
+    }
+    controller.onTargetToggle();
+}
 
 void onPreviousProfile(lv_event_t *e) { controller.getUI()->onPreviousProfile(); }
 
