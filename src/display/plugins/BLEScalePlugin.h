@@ -56,9 +56,11 @@ class BLEScalePlugin : public Plugin {
     ScaleWeightUnit getWeightUnit() const {
         return scale != nullptr && scale->hasWeightUnit() ? scale->getWeightUnit() : ScaleWeightUnit::UNKNOWN;
     }
+    bool hasWeightUnit() const { return scale != nullptr && scale->hasWeightUnit(); }
     uint32_t getScaleTimerMs() const {
         return scale != nullptr && scale->hasScaleTimer() ? scale->getScaleTimerMs() : 0;
     }
+    bool hasScaleTimer() const { return scale != nullptr && scale->hasScaleTimer(); }
 
   private:
     void update();

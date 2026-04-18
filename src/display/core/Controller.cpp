@@ -364,6 +364,16 @@ bool Controller::isAutotuning() const { return autotuning; }
 bool Controller::isReady() const { return !isUpdating() && !isErrorState() && !isAutotuning(); }
 
 bool Controller::isVolumetricAvailable() const {
+    // Safety gate: if the BLE scale is physically toggled to ounces, its weight
+    // samples are ~28x off from grams -- volumetric stops would either fire
+    // immediately (target 36g reached at v=1.3 "oz" which is actually 36.8g) or
+    // never fire (target 36g but scale values never exceed a few units). Either
+    // way the shot would be silently wrong. Refuse volumetric routing when the
+    // unit is explicitly ounces. UNKNOWN (driver doesn't parse unit) is treated
+    // as GRAM for backwards compatibility with scales that don't report it.
+    if (BLEScales.hasWeightUnit() && BLEScales.getWeightUnit() == ScaleWeightUnit::OUNCE) {
+        return false;
+    }
 #ifdef NIGHTLY_BUILD
     return isBluetoothScaleHealthy() || systemInfo.capabilities.dimming;
 #else
