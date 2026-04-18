@@ -666,10 +666,12 @@ void DefaultUI::setupReactive() {
             _ui_flag_modify(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN,
                             brewScreenState == BrewScreenState::Brew && volumetricAvailable);
             if (volumetricAvailable) {
-                lv_img_set_src(ui_BrewScreen_volumetricButton, bluetoothScales ? &ui_img_1424216268 : &ui_img_flowmeter_png);
+                // Reflect the current brew target (mode) on the button, not just scale availability —
+                // otherwise the icon never changes when the user toggles the target.
+                lv_img_set_src(ui_BrewScreen_volumetricButton, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
             }
         },
-        &brewScreenState, &volumetricAvailable, &bluetoothScales);
+        &brewScreenState, &volumetricAvailable, &volumetricMode);
     effect_mgr.use_effect(
         [=] { return currentScreen == ui_BrewScreen; },
         [=]() {
