@@ -910,24 +910,21 @@ export function ProfileList() {
           </label>
         </div>
         <div className='flex flex-grow items-center justify-end gap-2'>
-          <Tooltip content='Export all profiles'>
-            <button
-              onClick={onExport}
-              className='btn btn-ghost btn-sm'
-              aria-label='Export all profiles'
-            >
-              <FontAwesomeIcon icon={faFileExport} />
-            </button>
-          </Tooltip>
-          <Tooltip content='Import profiles'>
-            <label
-              htmlFor='profileImport'
-              className='btn btn-ghost btn-sm cursor-pointer'
-              aria-label='Import profiles'
-            >
-              <FontAwesomeIcon icon={faFileImport} />
-            </label>
-          </Tooltip>
+          <button
+            onClick={onExport}
+            className='btn btn-sm btn-outline'
+            disabled={profiles.length === 0}
+          >
+            <FontAwesomeIcon icon={faFileExport} />
+            Export Profiles
+          </button>
+          <button
+            onClick={() => document.getElementById('profileImport')?.click()}
+            className='btn btn-sm btn-outline'
+          >
+            <FontAwesomeIcon icon={faFileImport} />
+            Import Profiles
+          </button>
           <input
             onChange={onUpload}
             className='hidden'
