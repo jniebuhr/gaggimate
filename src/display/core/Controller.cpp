@@ -327,10 +327,10 @@ void Controller::loop() {
             if (lastProcess->getType() == MODE_BREW) {
                 if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
                     brewProcess->target == ProcessTarget::VOLUMETRIC) {
-                    double newDelay = brewProcess->getNewDelayTime();
-                    if (newDelay >= 0) {
-                        settings.setBrewDelay(newDelay);
-                    }
+                    // setBrewDelay already clamps to [0, 4000ms], so a single shot can
+                    // always make partial progress toward convergence even if the raw
+                    // computation falls outside the range.
+                    settings.setBrewDelay(brewProcess->getNewDelayTime());
                 }
             } else if (lastProcess->getType() == MODE_GRIND) {
                 if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);

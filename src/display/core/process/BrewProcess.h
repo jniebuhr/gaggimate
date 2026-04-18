@@ -80,11 +80,10 @@ class BrewProcess : public Process {
     }
 
     double getNewDelayTime() {
-        double newDelay = brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(getBrewVolume(), currentVolume);
-        if (newDelay <= 0.0 || newDelay >= PREDICTIVE_TIME) {
-            return -1;
-        }
-        return newDelay;
+        // Always return the raw computation; the caller (Controller / Settings::setBrewDelay)
+        // clamps to [0, 4000ms]. Returning -1 to skip out-of-range adjustments would leave
+        // users seeded at an extreme stuck (single-shot adjust > 4000ms = no update, ever).
+        return brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(getBrewVolume(), currentVolume);
     }
 
     bool isRelayActive() override {
