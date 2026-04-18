@@ -52,6 +52,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     }
 
     this->controller = controller;
+    this->pluginManager = manager;
     this->pluginRegistry = RemoteScalesPluginRegistry::getInstance();
 
     // Apply scale plugins with error checking
@@ -149,6 +150,10 @@ void BLEScalePlugin::update() {
                     scanner->initializeAsyncScan();
                 }
             }
+        } else {
+            // Poll slow-changing metadata (battery, unit). Flow rate is
+            // emitted inline with each weight measurement, not polled here.
+            pollScaleMetadata();
         }
     } else if (controller->getSettings().getSavedScale() != "" && scanner != nullptr) {
         // Protected scanner access with null checks
@@ -203,6 +208,10 @@ void BLEScalePlugin::disconnect() {
         uuid = "";
         doConnect = false;
         reconnectionTries = 0;
+        // Reset metadata caches so we re-emit change events when a new scale
+        // connects (possibly a different model with different capabilities).
+        lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
+        lastWeightUnit = ScaleWeightUnit::UNKNOWN;
     }
 }
 
@@ -319,6 +328,44 @@ void BLEScalePlugin::onMeasurement(float value) const {
 
     // Safe to call controller method
     controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::BLUETOOTH);
+
+    // If the scale driver also provides native flow rate (e.g. Bookoo), emit
+    // it on the same tick so consumers get it at the scale's native cadence
+    // (~10 Hz) without having to poll. Controller.onVolumetricMeasurement
+    // updates lastBluetoothMeasurement timestamps as a side effect; we reuse
+    // a lighter path here since flow is not gating shot state.
+    if (scale != nullptr && scale->hasFlowRate() && pluginManager != nullptr) {
+        pluginManager->trigger(
+            "controller:volumetric-measurement:scale-flow:change",
+            "value", scale->getFlowRate());
+    }
+}
+
+void BLEScalePlugin::pollScaleMetadata() {
+    if (scale == nullptr || !scale->isConnected() || pluginManager == nullptr) {
+        return;
+    }
+    auto *pm = pluginManager;
+
+    // Battery % -- fire event only on change so consumers can subscribe without
+    // being hammered at 1 Hz with duplicate values.
+    if (scale->hasBatteryLevel()) {
+        const uint8_t pct = scale->getBatteryLevel();
+        if (pct != lastBatteryLevel && pct != REMOTE_SCALES_BATTERY_UNKNOWN) {
+            lastBatteryLevel = pct;
+            pm->trigger("scale:battery:change", "value", static_cast<int>(pct));
+        }
+    }
+
+    // Weight unit -- fire once when we first learn the unit, then only when
+    // the user switches unit on the scale physically (rare).
+    if (scale->hasWeightUnit()) {
+        const ScaleWeightUnit u = scale->getWeightUnit();
+        if (u != lastWeightUnit && u != ScaleWeightUnit::UNKNOWN) {
+            lastWeightUnit = u;
+            pm->trigger("scale:weight-unit:change", "value", static_cast<int>(u));
+        }
+    }
 }
 
 std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const {
