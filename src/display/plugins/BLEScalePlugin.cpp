@@ -207,16 +207,53 @@ void BLEScalePlugin::disconnect() {
 }
 
 void BLEScalePlugin::onProcessStart() const {
-    if (scale != nullptr && scale->isConnected()) {
-        // Double tare with validation
-        scale->tare();
-        delay(50);
-
-        // Check if scale is still connected before second tare
-        if (scale != nullptr && scale->isConnected()) {
-            scale->tare();
-        }
+    if (scale == nullptr || !scale->isConnected()) {
+        return;
     }
+
+    // Double-send the tare command: BLE packet loss happens occasionally on
+    // the ESP32-S3 radio, and a missed first tare would leave the scale with
+    // a non-zero baseline for the entire shot.
+    scale->tare();
+    delay(50);
+    if (scale == nullptr || !scale->isConnected()) {
+        return;
+    }
+    scale->tare();
+
+    // Wait for the scale to actually settle at ~0g. Bookoo and most BLE
+    // espresso scales take 200-800 ms for a physical tare to complete and
+    // the first post-tare weight sample to arrive. If the pump starts
+    // before this settles, water flowing onto the portafilter prevents the
+    // scale from finishing the tare — the baseline becomes non-zero and the
+    // volumetric stop fires against a wrong reference, throwing the shot
+    // yield off by the in-progress weight.
+    constexpr unsigned long TARE_TIMEOUT_MS = 1500;
+    constexpr unsigned long TARE_STABLE_MS = 200;  // sustained within tolerance
+    constexpr float TARE_TOLERANCE_G = 0.3f;
+    const unsigned long start = millis();
+    unsigned long stableSince = 0;
+    while (millis() - start < TARE_TIMEOUT_MS) {
+        if (scale == nullptr || !scale->isConnected()) {
+            return;  // BLE dropped mid-wait; nothing we can do
+        }
+        const float w = scale->getWeight();
+        if (std::abs(w) <= TARE_TOLERANCE_G) {
+            if (stableSince == 0) {
+                stableSince = millis();
+            }
+            if (millis() - stableSince >= TARE_STABLE_MS) {
+                ESP_LOGI("BLEScalePlugin", "Tare confirmed at %.2fg after %lums", w, millis() - start);
+                return;
+            }
+        } else {
+            stableSince = 0;
+        }
+        delay(20);  // yield to FreeRTOS; Bookoo pushes ~10Hz so 20ms is fine
+    }
+    ESP_LOGW("BLEScalePlugin",
+             "Tare did not settle within %lums, last weight %.2fg -- proceeding anyway; shot yield may be off",
+             TARE_TIMEOUT_MS, scale != nullptr ? scale->getWeight() : 0.0f);
 }
 
 void BLEScalePlugin::tare() const { onProcessStart(); }
