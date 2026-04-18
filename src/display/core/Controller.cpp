@@ -1,5 +1,6 @@
 #include "Controller.h"
 #include "ArduinoJson.h"
+#include "brew_target.h"
 #include "esp_sntp.h"
 #include <SD_MMC.h>
 #include <SPIFFS.h>
@@ -579,13 +580,13 @@ void Controller::activate() {
     }
     delay(200);
     switch (mode) {
-    case MODE_BREW:
-        startProcess(new BrewProcess(profileManager->getSelectedProfile(),
-                                     profileManager->getSelectedProfile().isVolumetric() && isVolumetricAvailable()
-                                         ? ProcessTarget::VOLUMETRIC
-                                         : ProcessTarget::TIME,
-                                     settings.getBrewDelay()));
+    case MODE_BREW: {
+        const Profile &selectedProfile = profileManager->getSelectedProfile();
+        const ProcessTarget brewTarget =
+            chooseBrewTarget(selectedProfile.isVolumetric(), settings.isVolumetricTarget(), isVolumetricAvailable());
+        startProcess(new BrewProcess(selectedProfile, brewTarget, settings.getBrewDelay()));
         break;
+    }
     case MODE_STEAM:
         startProcess(new SteamProcess(STEAM_SAFETY_DURATION_MS, settings.getSteamPumpPercentage()));
         break;
