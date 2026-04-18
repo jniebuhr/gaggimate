@@ -34,6 +34,13 @@ bool BookooScales::connect() {
   }
   subscribeToNotifications();
   RemoteScales::setWeight(0.f);
+
+  // Disable the scale-side flow-smoothing EMA so consumers see raw per-sample
+  // flow in getFlowRate(). Firmware-side code (ShotHistoryPlugin,
+  // VolumetricRateCalculator) is free to filter if needed; running both EMAs
+  // compounds lag without adding accuracy.
+  disableScaleSmoothing();
+
   return true;
 }
 
@@ -60,11 +67,30 @@ void BookooScales::update() {
 
 bool BookooScales::tare() {
   if (!isConnected()) return false;
-  RemoteScales::log("Tare sent");
-  uint8_t payload[6] = { 0x03, 0x0a, 0x01, 0x00, 0x00, 0x08 };
+  RemoteScales::log("Tare+StartTimer sent (cmd 0x07)");
+  // Use command 0x07 (Tare + Start Timer), officially recommended by Bookoo over
+  // the plain 0x01 tare: it atomically resets the weight AND marks the scale as
+  // "shot is in progress", which prevents the scale from auto-sleeping or drifting
+  // during a long brew. The firmware does not currently consume the scale's timer
+  // output, so this is behaviorally equivalent to 0x01 for our purposes, but is
+  // future-proof if we ever want to cross-check shot timing against the scale.
+  // sendMessage() computes and writes the final checksum byte.
+  uint8_t payload[6] = { 0x03, 0x0A, 0x07, 0x00, 0x00, 0x00 };
   sendMessage(BookooMessageType::SYSTEM, payload, sizeof(payload));
 
   return true;
+};
+
+void BookooScales::disableScaleSmoothing() {
+  if (!isConnected()) return;
+  RemoteScales::log("Flow-smoothing OFF (cmd 0x08 0x00)");
+  // Command 0x08 disables the scale's own EMA on its reported flow rate, so
+  // getFlowRate() returns raw per-sample flow rather than scale-side filtered
+  // output. Firmware consumers (ShotHistoryPlugin, VolumetricRateCalculator)
+  // can then apply their own filtering or use the raw signal directly --
+  // avoiding a double-EMA pipeline that adds lag with no accuracy benefit.
+  uint8_t payload[6] = { 0x03, 0x0A, 0x08, 0x00, 0x00, 0x00 };
+  sendMessage(BookooMessageType::SYSTEM, payload, sizeof(payload));
 };
 
 //-----------------------------------------------------------------------------------/
@@ -116,13 +142,62 @@ bool BookooScales::decodeAndHandleNotification() {
       return false;
     }
 
-    float weight = (dataBuffer[7] << 16) | (dataBuffer[8] << 8) | dataBuffer[9];
+    // Parse the full 20-byte weight notification per the Bookoo protocol spec:
+    // https://github.com/BooKooCode/OpenSource/blob/main/bookoo_ultra_scale/protocols.md
+    //
+    // Byte layout (0-indexed):
+    //   [0]    product id (0x03)
+    //   [1]    message type (0x0B = weight)
+    //   [2-4]  scale-internal timestamp (ms, 3 bytes unsigned)
+    //   [5]    weight unit (0x01 = ounce, 0x02 = gram)
+    //   [6]    weight sign ('+' = 0x2B, '-' = 0x2D)
+    //   [7-9]  weight * 100 in grams (3 bytes unsigned)
+    //   [10]   flow sign
+    //   [11-12] flow rate * 100 in g/s (2 bytes unsigned)
+    //   [13]   battery percentage (0-100)
+    //   [14-15] standby timer (minutes, 2 bytes unsigned) -- not surfaced yet
+    //   [16]   buzzer gear                                 -- not surfaced yet
+    //   [17]   flow-smoothing switch (0/1)                 -- not surfaced yet
+    //   [18]   Ultra: auto-mode stop condition (0/1); Mini: reserved
+    //   [19]   checksum
 
-    if (dataBuffer[6] == 45) { // Check if the value is negative
-      weight = -weight;
+    // Scale timer (bytes 2-4, 3 bytes big-endian unsigned, milliseconds).
+    const uint32_t timerMs = (static_cast<uint32_t>(dataBuffer[2]) << 16) |
+                             (static_cast<uint32_t>(dataBuffer[3]) << 8)  |
+                              static_cast<uint32_t>(dataBuffer[4]);
+    RemoteScales::setScaleTimerMs(timerMs);
+
+    // Weight unit (byte 5).
+    switch (dataBuffer[5]) {
+      case 0x01: RemoteScales::setWeightUnit(ScaleWeightUnit::OUNCE); break;
+      case 0x02: RemoteScales::setWeightUnit(ScaleWeightUnit::GRAM); break;
+      default:   RemoteScales::setWeightUnit(ScaleWeightUnit::UNKNOWN); break;
     }
 
-    RemoteScales::setWeight(weight * 0.01f); // Convert to floating point
+    // Weight (sign byte 6 + value bytes 7-9, 0.01g resolution).
+    int32_t rawWeight = (static_cast<int32_t>(dataBuffer[7]) << 16) |
+                        (static_cast<int32_t>(dataBuffer[8]) << 8)  |
+                         static_cast<int32_t>(dataBuffer[9]);
+    if (dataBuffer[6] == 0x2D) { // '-'
+      rawWeight = -rawWeight;
+    }
+    RemoteScales::setWeight(rawWeight * 0.01f);
+
+    // Flow rate (sign byte 10 + value bytes 11-12, 0.01 g/s resolution).
+    int32_t rawFlow = (static_cast<int32_t>(dataBuffer[11]) << 8) |
+                       static_cast<int32_t>(dataBuffer[12]);
+    if (dataBuffer[10] == 0x2D) { // '-'
+      rawFlow = -rawFlow;
+    }
+    RemoteScales::setFlowRate(rawFlow * 0.01f);
+
+    // Battery percentage (byte 13).
+    RemoteScales::setBatteryLevel(dataBuffer[13]);
+
+    // Auto-mode stop condition (byte 18) -- only meaningful on Ultra scales
+    // where hasAutoModeStopCondition() returns true. We still store it so an
+    // Ultra-aware subclass (or a future firmware-side model check) can read it.
+    RemoteScales::setAutoModeStopCondition(dataBuffer[18]);
   }
   else if (productNumber == 0x03 && messageType == BookooMessageType::SYSTEM) {
     BookooScales::tare();

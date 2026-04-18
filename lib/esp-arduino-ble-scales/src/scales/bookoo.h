@@ -23,11 +23,25 @@ public:
   bool isConnected() override;
   bool tare() override;
 
-private:
-  std::string weightUnits;
-  float time;
-  uint8_t battery;
+  // Capability overrides — Bookoo parses all of these out of the 20-byte
+  // weight notification (0x0B). See decodeAndHandleNotification() for layout.
+  bool hasFlowRate() const override { return true; }
+  bool hasBatteryLevel() const override { return true; }
+  bool hasScaleTimer() const override { return true; }
+  bool hasWeightUnit() const override { return true; }
+  // NOTE: byte 18 of the weight notification is "auto-mode stop condition" on
+  // Ultra-tier scales and reserved (0x00) on Mini. Without a way to identify
+  // Ultra vs Mini at discovery time we can't claim this safely — consumers
+  // reading getAutoModeStopCondition() on a Mini would get a meaningless 0.
+  // Leaving hasAutoModeStopCondition() at its default (false) until an
+  // Ultra-specific subclass or discovery path exists.
 
+  // Ask the scale to turn off its own flow-rate EMA so firmware consumers
+  // see raw native flow instead of double-filtered output. Idempotent;
+  // safe to call repeatedly. Does nothing if disconnected.
+  void disableScaleSmoothing();
+
+private:
   uint32_t lastHeartbeat = 0;
 
   bool markedForReconnection = false;
