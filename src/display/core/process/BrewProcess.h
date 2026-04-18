@@ -144,6 +144,10 @@ class BrewProcess : public Process {
                 phaseStartFlow = nextPhase.transition.adaptive ? currentFlow : getPumpFlow();
                 currentPhase = nextPhase;
                 currentPhaseStarted = millis();
+                // Drop stale samples so the linear-fit window does not average across
+                // the prior phase.s flow regime (e.g. low-flow pre-infusion contaminating
+                // the rate read at end of the volumetric brew phase).
+                volumetricRateCalculator.clear();
                 computeEffectiveTargetsForCurrentPhase();
             } else {
                 processPhase = ProcessPhase::FINISHED;
