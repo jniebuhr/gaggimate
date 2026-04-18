@@ -100,7 +100,14 @@ function ProfileCard({
     delete download.selected;
     delete download.favorite;
 
-    downloadJson(download, `profile-${data.id}.json`);
+    const prepared = prepareDownload(`profile-${data.id}.json`);
+    try {
+      downloadJson(download, `profile-${data.id}.json`, prepared);
+    } catch (error) {
+      prepared.fail(error);
+      console.error('Failed to export profile:', error);
+      alert(`Profile export failed: ${error.message}`);
+    }
   }, [data]);
   const statsHref = buildStatisticsProfileHref({ source: 'gaggimate', profileName: data.label });
 
