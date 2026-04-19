@@ -256,7 +256,6 @@ const ProcessControls = ({ brew, mode }) => {
         <ProcessDisplay
           brew={brew}
           grind={grind}
-          showGrindTab={showGrindTab}
           active={active}
           finished={finished}
           processInfo={processInfo}
@@ -277,7 +276,6 @@ const ProcessControls = ({ brew, mode }) => {
         <div className='flex flex-1 items-center justify-center'>
           <ModeIdleDisplay
             mode={mode}
-            showGrindTab={showGrindTab}
             tempReady={derivedState.tempReady}
             isGrindAvailable={isGrindAvailable}
           />
