@@ -35,7 +35,7 @@ void NimBLEClientController::scan() {
 }
 
 void NimBLEClientController::tare() {
-    if (volumetricTareChar != nullptr && client->isConnected()) {
+    if (volumetricTareChar != nullptr && isConnected()) {
         volumetricTareChar->writeValue("1");
     }
 }
@@ -161,6 +161,9 @@ bool NimBLEClientController::connectToServer() {
 }
 
 void NimBLEClientController::loop() {
+    if (client == nullptr || scanner == nullptr) {
+        return;
+    }
     if (!readyForConnection && !client->isConnected() && !scanner->isScanning()) {
         ESP_LOGI("NimBLEClientController", "Scan interrupted. Restarting...");
         scan();
@@ -169,7 +172,7 @@ void NimBLEClientController::loop() {
 
 void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure,
                                                        float flow) {
-    if (client->isConnected() && outputControlChar != nullptr) {
+    if (isConnected() && outputControlChar != nullptr) {
         snprintf(advancedOutputBuffer, sizeof(advancedOutputBuffer), "1,%d,100.0,%.3f,%d,%.3f,%.3f", valve ? 1 : 0,
                  boilerSetpoint, pressureTarget ? 1 : 0, pressure, flow);
         _lastOutputControl = String(advancedOutputBuffer);
@@ -178,7 +181,7 @@ void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerS
 }
 
 void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint) {
-    if (client->isConnected() && outputControlChar != nullptr) {
+    if (isConnected() && outputControlChar != nullptr) {
         snprintf(outputBuffer, sizeof(outputBuffer), "0,%d,%.3f,%.3f", valve ? 1 : 0, pumpSetpoint, boilerSetpoint);
         _lastOutputControl = String(outputBuffer);
         outputControlChar->writeValue(_lastOutputControl, false);
@@ -186,44 +189,44 @@ void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, f
 }
 
 void NimBLEClientController::sendPidSettings(const String &pid) {
-    if (pidControlChar != nullptr && client->isConnected()) {
+    if (pidControlChar != nullptr && isConnected()) {
         pidControlChar->writeValue(pid);
     }
 }
 
 void NimBLEClientController::sendPumpModelCoeffs(const String &pumpModelCoeffs) {
-    if (pumpModelCoeffsChar != nullptr && client->isConnected()) {
+    if (pumpModelCoeffsChar != nullptr && isConnected()) {
         pumpModelCoeffsChar->writeValue(pumpModelCoeffs);
     }
 }
 
 void NimBLEClientController::setPressureScale(float scale) {
-    if (client->isConnected() && pressureScaleChar != nullptr) {
+    if (isConnected() && pressureScaleChar != nullptr) {
         snprintf(pressureScaleBuffer, sizeof(pressureScaleBuffer), "%.3f", scale);
         pressureScaleChar->writeValue(pressureScaleBuffer);
     }
 }
 
 void NimBLEClientController::sendLedControl(uint8_t channel, uint8_t brightness) {
-    if (client->isConnected() && ledControlChar != nullptr) {
+    if (isConnected() && ledControlChar != nullptr) {
         ledControlChar->writeValue(String(channel) + "," + String(brightness), false);
     }
 }
 
 void NimBLEClientController::sendAltControl(bool pinState) {
-    if (altControlChar != nullptr && client->isConnected()) {
+    if (altControlChar != nullptr && isConnected()) {
         altControlChar->writeValue(pinState ? "1" : "0");
     }
 }
 
 void NimBLEClientController::sendPing() {
-    if (pingChar != nullptr && client->isConnected()) {
+    if (pingChar != nullptr && isConnected()) {
         pingChar->writeValue("1", false);
     }
 }
 
 void NimBLEClientController::sendAutotune(int testTime, int samples) {
-    if (autotuneChar != nullptr && client->isConnected()) {
+    if (autotuneChar != nullptr && isConnected()) {
         snprintf(autotuneBuffer, sizeof(autotuneBuffer), "%d,%d", testTime, samples);
         autotuneChar->writeValue(autotuneBuffer);
     }

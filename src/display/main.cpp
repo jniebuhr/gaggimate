@@ -8,6 +8,7 @@ Controller controller;
 
 void setup() {
     Serial.begin(115200);
+    delay(3000);
     controller.setup();
 }
 

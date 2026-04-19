@@ -1,6 +1,7 @@
 #include "Controller.h"
 #include "ArduinoJson.h"
 #include "BLECoordinator.h"
+#include "esp_heap_caps.h"
 #include "esp_sntp.h"
 #include <SD_MMC.h>
 #include <SPIFFS.h>
@@ -33,15 +34,25 @@
 
 const String LOG_TAG = F("Controller");
 
+#define HEAP_LOG(tag)                                                                                                              \
+    ESP_LOGI("HEAP", tag " internal=%u largest=%u total=%u",                                                                       \
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),                                                               \
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),                                                      \
+             (unsigned)ESP.getFreeHeap())
+
 void Controller::setup() {
+    HEAP_LOG("boot     ");
+    settings.load();
     mode = settings.getStartupMode();
 
     if (!SPIFFS.begin(true)) {
         Serial.println(F("An Error has occurred while mounting SPIFFS"));
     }
+    HEAP_LOG("post-spiffs");
 
 #ifndef GAGGIMATE_HEADLESS
     setupPanel();
+    HEAP_LOG("post-panel ");
 #endif
 
     pluginManager = new PluginManager();
@@ -78,6 +89,7 @@ void Controller::setup() {
     pluginManager->registerPlugin(new MatterPlugin());
 #endif
     pluginManager->setup(this);
+    HEAP_LOG("post-plugins");
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
         String id = event.getString("id");
@@ -89,7 +101,9 @@ void Controller::setup() {
     pluginManager->on("profiles:profile:select", [this](Event const &event) { this->handleProfileUpdate(); });
 
 #ifndef GAGGIMATE_HEADLESS
+    HEAP_LOG("pre-ui   ");
     ui->init();
+    HEAP_LOG("post-ui  ");
 #endif
     this->onScreenReady();
 
@@ -110,8 +124,20 @@ void Controller::connect() {
     connectStartTime = millis();
     pluginManager->trigger("controller:startup");
 
-    setupWifi();
+    ESP_LOGI("HEAP", "pre-BT   internal=%u largest=%u total=%u",
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+             (unsigned)ESP.getFreeHeap());
     setupBluetooth();
+    ESP_LOGI("HEAP", "post-BT  internal=%u largest=%u total=%u",
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+             (unsigned)ESP.getFreeHeap());
+    setupWifi();
+    ESP_LOGI("HEAP", "post-WIFI internal=%u largest=%u total=%u",
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+             (unsigned)ESP.getFreeHeap());
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
     pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
 

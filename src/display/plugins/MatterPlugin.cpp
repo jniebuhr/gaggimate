@@ -96,8 +96,11 @@ void MatterPlugin::start(Event const &event) {
     if (started)
         return;
     const int apMode = event.getInt("AP");
-    if (apMode)
+    if (apMode) {
+        ESP_LOGI(LOG_TAG, "AP mode, Matter not started; releasing BLE to NimBLE client");
+        BLECoordinator::instance().notifyBLEReleased();
         return;
+    }
 
     esp_matter::node::config_t node_cfg;
     esp_matter::node_t *node = esp_matter::node::create(&node_cfg, matter_attr_update_cb, nullptr);

@@ -10,7 +10,6 @@
 #include "LilyGo_RGBPanel.h"
 #include "utilities.h"
 #include <display/drivers/common/RGBPanelInit.h>
-#include <esp_adc_cal.h>
 
 static void TouchDrvDigitalWrite(uint32_t gpio, uint8_t level);
 static int TouchDrvDigitalRead(uint32_t gpio);
@@ -280,22 +279,13 @@ bool LilyGo_RGBPanel::isPressed() {
 }
 
 uint16_t LilyGo_RGBPanel::getBattVoltage() {
-    esp_adc_cal_characteristics_t adc_chars;
-    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
-
     const int number_of_samples = 20;
     uint32_t sum = 0;
-    uint16_t raw_buffer[number_of_samples] = {0};
     for (int i = 0; i < number_of_samples; i++) {
-        raw_buffer[i] = analogRead(BOARD_ADC_DET);
+        sum += analogReadMilliVolts(BOARD_ADC_DET);
         delay(2);
     }
-    for (int i = 0; i < number_of_samples; i++) {
-        sum += raw_buffer[i];
-    }
-    sum = sum / number_of_samples;
-
-    return esp_adc_cal_raw_to_voltage(sum, &adc_chars) * 2;
+    return (sum / number_of_samples) * 2;
 }
 
 void LilyGo_RGBPanel::initBUS() {

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <utility>
 
-Settings::Settings() {
+void Settings::load() {
     preferences.begin(PREFERENCES_KEY, true);
     startupMode = preferences.getInt("sm", MODE_STANDBY);
     targetSteamTemp = preferences.getInt("ts", 145);

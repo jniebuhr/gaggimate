@@ -48,8 +48,9 @@ using SettingsCallback = std::function<void(Settings *)>;
 
 class Settings {
   public:
-    Settings();
+    Settings() = default;
 
+    void load();
     void batchUpdate(const SettingsCallback &callback);
     void save(bool noDelay = false);
 

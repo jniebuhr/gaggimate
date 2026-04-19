@@ -10,11 +10,7 @@ BLECoordinator &BLECoordinator::instance() {
 }
 
 BLECoordinator::BLECoordinator() {
-#ifdef GAGGIMATE_MATTER
-    released = false;
-#else
     released = true;
-#endif
 }
 
 void BLECoordinator::requestNimBleInit(InitCallback cb) {
