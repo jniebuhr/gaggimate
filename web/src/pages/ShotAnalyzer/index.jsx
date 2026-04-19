@@ -361,7 +361,7 @@ export function ShotAnalyzer() {
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Deep Dive Shot Analyzer</h2>
       </div>
 
-      <div className='container mx-auto max-w-7xl'>
+      <div className='w-full'>
         {/* Library Panel (Always visible) */}
         <div className='mt-4'>
           <LibraryPanel
