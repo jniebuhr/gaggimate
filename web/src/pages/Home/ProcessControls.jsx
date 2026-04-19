@@ -204,41 +204,21 @@ const ProcessControls = ({ brew, mode }) => {
   const finished = !!processInfo?.e && !active;
   const grind = mode === 4;
   const [isFlushing, setIsFlushing] = useState(false);
+  const {
+    grindTarget,
+    grindTargetVolume,
+    grindTargetDuration,
+    volumetricAvailable,
+    currentTemperature,
+    targetTemperature,
+    selectedProfileId,
+  } = status.value;
 
   // Use custom hooks for settings and profile data
   const { isGrindAvailable } = useGrindSettings(mode);
-  const { profileData } = useProfileData(api, brew, status.value.selectedProfileId);
-
-  // Extract status values once for cleaner access
-  const statusValues = useMemo(
-    () => ({
-      grindTarget: status.value.grindTarget,
-      grindTargetVolume: status.value.grindTargetVolume,
-      grindTargetDuration: status.value.grindTargetDuration,
-      volumetricAvailable: status.value.volumetricAvailable,
-      currentTemperature: status.value.currentTemperature,
-      targetTemperature: status.value.targetTemperature,
-      selectedProfileId: status.value.selectedProfileId,
-    }),
-    [
-      status.value.grindTarget,
-      status.value.grindTargetVolume,
-      status.value.grindTargetDuration,
-      status.value.volumetricAvailable,
-      status.value.currentTemperature,
-      status.value.targetTemperature,
-      status.value.selectedProfileId,
-    ]
-  );
-
-  // Memoize derived state values
-  const derivedState = useMemo(
-    () => ({
-      shouldExpand: brew && (active || finished),
-      tempReady: Math.abs(statusValues.targetTemperature - statusValues.currentTemperature) < TEMP_READY_THRESHOLD,
-    }),
-    [brew, active, finished, statusValues.targetTemperature, statusValues.currentTemperature]
-  );
+  const { profileData } = useProfileData(api, brew, selectedProfileId);
+  const shouldExpand = brew && (active || finished);
+  const tempReady = Math.abs(targetTemperature - currentTemperature) < TEMP_READY_THRESHOLD;
 
   // Get visibility flags for control elements
   const visibility = useControlsVisibility(
@@ -246,7 +226,7 @@ const ProcessControls = ({ brew, mode }) => {
     active,
     finished,
     isGrindAvailable,
-    statusValues.volumetricAvailable
+    volumetricAvailable
   );
 
   // Get action handlers
@@ -259,13 +239,13 @@ const ProcessControls = ({ brew, mode }) => {
           mode={mode}
           active={active}
           finished={finished}
-          targetTemperature={statusValues.targetTemperature}
-          grindTarget={statusValues.grindTarget}
-          grindTargetVolume={statusValues.grindTargetVolume}
-          grindTargetDuration={statusValues.grindTargetDuration}
+          targetTemperature={targetTemperature}
+          grindTarget={grindTarget}
+          grindTargetVolume={grindTargetVolume}
+          grindTargetDuration={grindTargetDuration}
         />
       </div>
-      {derivedState.shouldExpand && (
+      {shouldExpand && (
         <ProcessDisplay
           brew={brew}
           grind={grind}
@@ -275,18 +255,18 @@ const ProcessControls = ({ brew, mode }) => {
           profileData={profileData}
           status={{
             mode,
-            currentTemperature: statusValues.currentTemperature,
-            targetTemperature: statusValues.targetTemperature,
+            currentTemperature,
+            targetTemperature,
             isGrindAvailable,
-            volumetricAvailable: statusValues.volumetricAvailable,
-            grindTarget: statusValues.grindTarget,
-            grindTargetVolume: statusValues.grindTargetVolume,
-            grindTargetDuration: statusValues.grindTargetDuration,
+            volumetricAvailable,
+            grindTarget,
+            grindTargetVolume,
+            grindTargetDuration,
           }}
         />
       )}
 
-      {!derivedState.shouldExpand && (
+      {!shouldExpand && (
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-2'>
           {brew && profileData ? (
             <ProcessProfileChart
@@ -297,7 +277,7 @@ const ProcessControls = ({ brew, mode }) => {
           ) : (
             <ModeIdleDisplay
               mode={mode}
-              tempReady={derivedState.tempReady}
+              tempReady={tempReady}
               isGrindAvailable={isGrindAvailable}
             />
           )}
@@ -308,10 +288,10 @@ const ProcessControls = ({ brew, mode }) => {
         {/* Grind target time/weight selector */}
         {visibility.showGrindTargetBar && (
           <GrindTargetBar
-            grindTarget={statusValues.grindTarget}
-            grindTargetVolume={statusValues.grindTargetVolume}
-            grindTargetDuration={statusValues.grindTargetDuration}
-            volumetricAvailable={statusValues.volumetricAvailable}
+            grindTarget={grindTarget}
+            grindTargetVolume={grindTargetVolume}
+            grindTargetDuration={grindTargetDuration}
+            volumetricAvailable={volumetricAvailable}
             onChangeTarget={actions.changeTarget}
           />
         )}
@@ -319,7 +299,7 @@ const ProcessControls = ({ brew, mode }) => {
         {/* Temperature controls for Steam / Water modes */}
         {visibility.showTemperatureControls && (
           <TemperatureControls
-            targetTemperature={statusValues.targetTemperature}
+            targetTemperature={targetTemperature}
             onLower={actions.lowerTemp}
             onRaise={actions.raiseTemp}
           />
@@ -328,9 +308,9 @@ const ProcessControls = ({ brew, mode }) => {
         {/* Grind target adjustment */}
         {visibility.showGrindTargetControls && (
           <GrindTargetControls
-            grindTarget={statusValues.grindTarget}
-            grindTargetVolume={statusValues.grindTargetVolume}
-            grindTargetDuration={statusValues.grindTargetDuration}
+            grindTarget={grindTarget}
+            grindTargetVolume={grindTargetVolume}
+            grindTargetDuration={grindTargetDuration}
             onLowerTarget={actions.lowerTarget}
             onRaiseTarget={actions.raiseTarget}
           />
@@ -341,14 +321,14 @@ const ProcessControls = ({ brew, mode }) => {
           <div className='flex flex-col items-center gap-2'>
             <StateIndicator active={active} finished={finished} />
             <ActionButtons
-            brew={brew}
-            active={active}
-            finished={finished}
-            isFlushing={isFlushing}
-            onActivate={actions.activate}
-            onDeactivate={actions.deactivate}
-            onClear={actions.clear}
-            onFlush={actions.startFlush}
+              brew={brew}
+              active={active}
+              finished={finished}
+              isFlushing={isFlushing}
+              onActivate={actions.activate}
+              onDeactivate={actions.deactivate}
+              onClear={actions.clear}
+              onFlush={actions.startFlush}
             />
           </div>
         )}

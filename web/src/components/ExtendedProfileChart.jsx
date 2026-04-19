@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'preact/hooks';
+import { useMemo } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart';
 
@@ -152,7 +152,7 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            generateLabels: function (chart) {
+            generateLabels(chart) {
               const original = Chart.defaults.plugins.legend.labels.generateLabels;
               const labels = original.call(this, chart);
 
@@ -188,9 +188,7 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
           title: {},
           ticks: {
             source: 'auto',
-            callback: (value, index, ticks) => {
-              return `${value?.toFixed()}s`;
-            },
+            callback: value => `${value?.toFixed()}s`,
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
@@ -260,8 +258,6 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
   const chartWidth = window.innerWidth;
   const showLabels = chartWidth >= 520;
   const isSmall = window.innerWidth < 640;
-  const yMax = chartData.options.scales.y.max ?? 12;
-
   let phaseStart = 0;
   for (let i = 0; i < data.phases.length; i++) {
     const phase = data.phases[i];
@@ -304,18 +300,21 @@ export function ExtendedProfileChart({
   className = 'max-h-36 w-full',
   selectedPhase = null,
 }) {
-  // Guard against invalid data
-  if (!data || !data.phases || !Array.isArray(data.phases)) {
-    return null;
-  }
-
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
+  const hasValidPhases = Array.isArray(data?.phases);
+
   // Memoize chart config to prevent unnecessary recalculations
   const config = useMemo(() => {
+    if (!hasValidPhases) {
+      return null;
+    }
     return makeChartData(data, selectedPhase, isDarkMode());
-  }, [data, selectedPhase]);
+  }, [data, hasValidPhases, selectedPhase]);
+
+  if (!config) {
+    return null;
+  }
 
   return (
     <ChartComponent

@@ -128,26 +128,38 @@ const ProgressDisplay = ({ processInfo, type }) => {
 const GrindProgress = ({ processInfo }) => <ProgressDisplay processInfo={processInfo} type='grind' />;
 
 const BrewProgress = ({ processInfo, profileData }) => {
-  // Calculate progress from processInfo
-  const { pt: progressTotal, pp: progressPosition, e: elapsedMs, s: stage, l: label, tt: targetType } = processInfo;
+  const { a: isActive, pt: progressTotal, pp: progressPosition, e: elapsedMs, s: stage, l: label, tt: targetType } = processInfo;
+  const active = !!isActive;
   const progress = progressTotal > 0 ? (progressPosition / progressTotal) * 100.0 : 0;
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
+  const statusLabel = stage === 'brew' ? 'INFUSION' : 'PREINFUSION';
   const targetPrecision = targetType === 'volumetric' ? 1 : 0;
-  const targetDisplay = targetType === 'time' ? `${(progressTotal / 1000).toFixed(0)}s` : targetType === 'volumetric' ? `${progressTotal.toFixed(targetPrecision)}g` : '';
+  const targetDisplay =
+    targetType === 'time'
+      ? `${(progressTotal / 1000).toFixed(0)}s`
+      : targetType === 'volumetric'
+      ? `${progressTotal.toFixed(targetPrecision)}g`
+      : '';
+
+  if (!active) {
+    return <FinishedProgress elapsedSeconds={elapsedSeconds} />;
+  }
 
   return (
     <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
+      <div className='space-y-2 text-center'>
+        <div className='text-base-content/60 text-xs font-light tracking-wider sm:text-sm'>
+          {statusLabel}
+        </div>
+        <div className='text-base-content text-2xl font-bold sm:text-4xl'>{label || 'Unknown'}</div>
+      </div>
       {profileData ? (
         <ProcessProfileChart
           data={profileData}
           processInfo={processInfo}
           className='max-h-72 w-full sm:max-h-96'
         />
-      ) : (
-        <div className='text-center'>
-          <div className='text-base-content text-2xl font-bold sm:text-4xl'>{label || 'Unknown'}</div>
-        </div>
-      )}
+      ) : null}
       <ProgressBar progress={progress} />
       <div className='space-y-2 text-center'>
         <div className='text-base-content/60 text-xs sm:text-sm'>{targetDisplay}</div>
