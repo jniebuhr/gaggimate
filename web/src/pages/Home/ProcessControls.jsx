@@ -206,7 +206,7 @@ const ProcessControls = ({ brew, mode }) => {
 
   // Use custom hooks for settings and profile data
   const { isGrindAvailable } = useGrindSettings(mode);
-  useProfileData(api, brew, status.value.selectedProfileId);
+  const { profileData } = useProfileData(api, brew, status.value.selectedProfileId);
 
   // Extract status values once for cleaner access
   const statusValues = useMemo(
@@ -271,6 +271,7 @@ const ProcessControls = ({ brew, mode }) => {
           active={active}
           finished={finished}
           processInfo={processInfo}
+          profileData={profileData}
           status={{
             mode,
             currentTemperature: statusValues.currentTemperature,
