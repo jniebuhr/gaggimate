@@ -9,7 +9,7 @@ function formatDuration(duration) {
   return `${zeroPad(minutes, 1)}:${zeroPad(seconds, 2)}`;
 }
 
-export function ProcessDisplay({ brew, grind, active, finished, processInfo, status: statusProp }) {
+export function ProcessDisplay({ brew, grind, active, finished, processInfo, profileData, status: statusProp }) {
   const { mode, isGrindAvailable } = statusProp;
 
   return (
@@ -134,5 +134,6 @@ ProcessDisplay.propTypes = {
   active: PropTypes.bool.isRequired,
   finished: PropTypes.bool.isRequired,
   processInfo: PropTypes.object.isRequired,
+  profileData: PropTypes.object,
   status: PropTypes.object.isRequired,
 };
