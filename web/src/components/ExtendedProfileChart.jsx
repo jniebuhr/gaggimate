@@ -301,6 +301,11 @@ export function ExtendedProfileChart({
   className = 'max-h-36 w-full',
   selectedPhase = null,
 }) {
+  // Guard against invalid data
+  if (!data || !data.phases || !Array.isArray(data.phases)) {
+    return null;
+  }
+
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   

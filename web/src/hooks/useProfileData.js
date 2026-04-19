@@ -27,6 +27,7 @@ function useAsyncEffect(asyncFn, deps, options = {}) {
         setData(result);
       } catch (err) {
         if (abortController.signal.aborted) return;
+        console.error('Failed to load profile data:', err);
         setError(err);
         setData(options.fallbackData ?? null);
       } finally {
