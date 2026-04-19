@@ -11,7 +11,6 @@ import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { Tooltip } from '../../components/Tooltip.jsx';
-import { ModeTabBar } from '../../components/ModeTabBar.jsx';
 import { TemperatureControls } from '../../components/TemperatureControls.jsx';
 import { GrindTargetBar } from '../../components/GrindTargetBar.jsx';
 import { ProcessDisplay } from '../../components/ProcessDisplay.jsx';
@@ -195,7 +194,7 @@ ActionButtons.propTypes = {
   onFlush: PropTypes.func.isRequired,
 };
 
-const ProcessControls = ({ brew, mode, changeMode }) => {
+const ProcessControls = ({ brew, mode }) => {
   const api = useContext(ApiServiceContext);
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
@@ -204,7 +203,7 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
   const [isFlushing, setIsFlushing] = useState(false);
 
   // Use custom hooks for settings and profile data
-  const { isGrindAvailable, showGrindTab } = useGrindSettings(mode);
+  const { isGrindAvailable } = useGrindSettings(mode);
   useProfileData(api, brew, status.value.selectedProfileId);
 
   // Extract status values once for cleaner access
@@ -244,7 +243,7 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
     active,
     finished,
     isGrindAvailable,
-    showGrindTab,
+    false, // showGrindTab - no longer needed since ModeTabBar removed
     statusValues.volumetricAvailable
   );
 
@@ -253,10 +252,6 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
 
   return (
     <div className='flex min-h-[250px] flex-col justify-between lg:min-h-[350px]'>
-      <div className='mb-3'>
-        <ModeTabBar mode={mode} changeMode={changeMode} showGrindTab={showGrindTab} />
-      </div>
-
       {derivedState.shouldExpand && (
         <ProcessDisplay
           brew={brew}
@@ -345,7 +340,6 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
 ProcessControls.propTypes = {
   brew: PropTypes.bool.isRequired,
   mode: PropTypes.oneOf([0, 1, 2, 3, 4]).isRequired,
-  changeMode: PropTypes.func.isRequired,
 };
 
 export default ProcessControls;
