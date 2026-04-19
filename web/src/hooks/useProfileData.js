@@ -1,49 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 
 /**
- * Generic hook for handling async operations with cancellation support
- * @param {Function} asyncFn - Async function to execute
- * @param {Array} deps - Dependency array for useEffect
- * @param {Object} options - Configuration options
- * @returns {Object} { data, loading, error }
- */
-function useAsyncEffect(asyncFn, deps, options = {}) {
-  const [data, setData] = useState(options.initialData ?? null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (options.skip) return;
-
-    const abortController = new AbortController();
-
-    const execute = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await asyncFn();
-        
-        if (abortController.signal.aborted) return;
-        setData(result);
-      } catch (err) {
-        if (abortController.signal.aborted) return;
-        setError(err);
-        setData(options.fallbackData ?? null);
-      } finally {
-        if (!abortController.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    execute();
-    return () => abortController.abort();
-  }, deps);
-
-  return { data, loading, error };
-}
-
-/**
  * Custom hook to fetch the list of available profiles
  *
  * @param {Object} api - ApiService instance
@@ -51,18 +8,47 @@ function useAsyncEffect(asyncFn, deps, options = {}) {
  * @returns {Object} { data, loading, error }
  */
 function useProfilesList(api, brew) {
-  return useAsyncEffect(
-    async () => {
-      const response = await api.request({ tp: 'req:profiles:list' });
-      return response?.profiles ?? [];
-    },
-    [api, brew],
-    {
-      skip: !api || !brew,
-      initialData: [],
-      fallbackData: [],
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!api || !brew) {
+      setData([]);
+      setLoading(false);
+      setError(null);
+      return;
     }
-  );
+
+    let cancelled = false;
+
+    const execute = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.request({ tp: 'req:profiles:list' });
+
+        if (cancelled) return;
+        setData(response?.profiles ?? []);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Failed to load profiles list:', err);
+        setError(err);
+        setData([]);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    execute();
+    return () => {
+      cancelled = true;
+    };
+  }, [api, brew]);
+
+  return { data, loading, error };
 }
 
 /**
@@ -74,21 +60,50 @@ function useProfilesList(api, brew) {
  * @returns {Object} { data, loading, error }
  */
 function useSelectedProfile(api, selectedProfileId) {
-  return useAsyncEffect(
-    async () => {
-      const response = await api.request({
-        tp: 'req:profiles:load',
-        id: selectedProfileId,
-      });
-      return response?.profile?.type === 'pro' ? response.profile : null;
-    },
-    [api, selectedProfileId],
-    {
-      skip: !api || !selectedProfileId,
-      initialData: null,
-      fallbackData: null,
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!api || !selectedProfileId) {
+      setData(null);
+      setLoading(false);
+      setError(null);
+      return;
     }
-  );
+
+    let cancelled = false;
+
+    const execute = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.request({
+          tp: 'req:profiles:load',
+          id: selectedProfileId,
+        });
+
+        if (cancelled) return;
+        setData(response?.profile?.type === 'pro' ? response.profile : null);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Failed to load profile data:', err);
+        setError(err);
+        setData(null);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    execute();
+    return () => {
+      cancelled = true;
+    };
+  }, [api, selectedProfileId]);
+
+  return { data, loading, error };
 }
 
 /**

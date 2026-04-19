@@ -7,7 +7,7 @@ import { ExtendedProfileChart } from './ExtendedProfileChart.jsx';
 export function ProcessProfileChart({ data, processInfo = null, className = 'max-h-36 w-full' }) {
   // Determine which phase is currently active based on the process info
   const getActivePhaseIndex = () => {
-    if (!processInfo || !processInfo.a || !processInfo.l || !data?.phases) {
+    if (!processInfo || !processInfo.a || !processInfo.l || !data?.phases || !Array.isArray(data.phases)) {
       return null;
     }
 
