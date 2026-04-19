@@ -281,7 +281,7 @@ const ProcessControls = ({ brew, mode }) => {
             <ProcessProfileChart
               data={profileData}
               processInfo={null}
-              className='max-h-56 w-full sm:max-h-64'
+              className='max-h-72 w-full sm:max-h-96'
             />
           ) : (
             <ModeIdleDisplay
