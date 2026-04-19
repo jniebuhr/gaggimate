@@ -56,6 +56,7 @@ public:
   virtual bool hasScaleTimer() const { return false; }
   virtual bool hasWeightUnit() const { return false; }
   virtual bool hasAutoModeStopCondition() const { return false; }
+  virtual bool hasTimerControl() const { return false; }
 
   void setWeightUpdatedCallback(void (*callback)(float), bool onlyChanges = false);
   void setLogCallback(LogCallback logCallback) { this->logCallback = logCallback; }
@@ -69,6 +70,10 @@ public:
   virtual bool connect() = 0;
   virtual void disconnect() = 0;
   virtual void update() = 0;
+
+  virtual void startTimer() {}
+  virtual void stopTimer() {}
+  virtual void resetTimer() {}
 
   virtual ~RemoteScales() { clientCleanup(); }
 protected:
