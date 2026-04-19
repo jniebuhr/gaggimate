@@ -70,7 +70,7 @@ public:
   virtual void disconnect() = 0;
   virtual void update() = 0;
 
-  ~RemoteScales() { clientCleanup(); }
+  virtual ~RemoteScales() { clientCleanup(); }
 protected:
   RemoteScales(const DiscoveredDevice& device);
   const DiscoveredDevice& getDevice() const { return device; }
