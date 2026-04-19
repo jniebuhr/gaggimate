@@ -200,7 +200,7 @@ bool BookooScales::decodeAndHandleNotification() {
     RemoteScales::setAutoModeStopCondition(dataBuffer[18]);
   }
   else if (productNumber == 0x03 && messageType == BookooMessageType::SYSTEM) {
-    BookooScales::tare();
+    RemoteScales::log("Inbound SYSTEM message ignored: %s\n", RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
   }
   else {
     RemoteScales::log("Unknown message type %02X: %s\n", messageType, RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
