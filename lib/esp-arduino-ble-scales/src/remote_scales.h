@@ -71,11 +71,11 @@ public:
   virtual void disconnect() = 0;
   virtual void update() = 0;
 
-  virtual void startTimer() {}
-  virtual void stopTimer() {}
-  virtual void resetTimer() {}
+  virtual void startTimer() { /* default no-op; drivers with hasTimerControl()==true override this */ }
+  virtual void stopTimer()  { /* default no-op; drivers with hasTimerControl()==true override this */ }
+  virtual void resetTimer() { /* default no-op; drivers with hasTimerControl()==true override this */ }
 
-  virtual ~RemoteScales() { clientCleanup(); }
+  virtual ~RemoteScales() noexcept { clientCleanup(); }
 protected:
   RemoteScales(const DiscoveredDevice& device);
   const DiscoveredDevice& getDevice() const { return device; }

@@ -1,5 +1,6 @@
 #include "bookoo.h"
 #include "remote_scales_plugin_registry.h"
+#include <array>
 
 /*
 Handle protocol according to the spec found at
@@ -75,8 +76,8 @@ bool BookooScales::tare() {
   // output, so this is behaviorally equivalent to 0x01 for our purposes, but is
   // future-proof if we ever want to cross-check shot timing against the scale.
   // sendMessage() computes and writes the final checksum byte.
-  uint8_t payload[6] = { 0x03, 0x0A, 0x07, 0x00, 0x00, 0x00 };
-  sendMessage(payload, sizeof(payload));
+  std::array<uint8_t, 6> payload = { 0x03, 0x0A, 0x07, 0x00, 0x00, 0x00 };
+  sendMessage(payload.data(), payload.size());
 
   return true;
 };
@@ -89,8 +90,8 @@ void BookooScales::disableScaleSmoothing() {
   // output. Firmware consumers (ShotHistoryPlugin, VolumetricRateCalculator)
   // can then apply their own filtering or use the raw signal directly --
   // avoiding a double-EMA pipeline that adds lag with no accuracy benefit.
-  uint8_t payload[6] = { 0x03, 0x0A, 0x08, 0x00, 0x00, 0x00 };
-  sendMessage(payload, sizeof(payload));
+  std::array<uint8_t, 6> payload = { 0x03, 0x0A, 0x08, 0x00, 0x00, 0x00 };
+  sendMessage(payload.data(), payload.size());
 };
 
 // Note: on Bookoo Ultra these are only effective in timing-mode/ratio-mode
@@ -99,22 +100,22 @@ void BookooScales::disableScaleSmoothing() {
 void BookooScales::startTimer() {
   if (!isConnected()) return;
   RemoteScales::log("Timer START (cmd 0x0A 0x04)");
-  uint8_t payload[6] = { 0x03, 0x0A, 0x04, 0x00, 0x00, 0x00 };
-  sendMessage(payload, sizeof(payload));
+  std::array<uint8_t, 6> payload = { 0x03, 0x0A, 0x04, 0x00, 0x00, 0x00 };
+  sendMessage(payload.data(), payload.size());
 }
 
 void BookooScales::stopTimer() {
   if (!isConnected()) return;
   RemoteScales::log("Timer STOP (cmd 0x0A 0x05)");
-  uint8_t payload[6] = { 0x03, 0x0A, 0x05, 0x00, 0x00, 0x00 };
-  sendMessage(payload, sizeof(payload));
+  std::array<uint8_t, 6> payload = { 0x03, 0x0A, 0x05, 0x00, 0x00, 0x00 };
+  sendMessage(payload.data(), payload.size());
 }
 
 void BookooScales::resetTimer() {
   if (!isConnected()) return;
   RemoteScales::log("Timer RESET (cmd 0x0A 0x06)");
-  uint8_t payload[6] = { 0x03, 0x0A, 0x06, 0x00, 0x00, 0x00 };
-  sendMessage(payload, sizeof(payload));
+  std::array<uint8_t, 6> payload = { 0x03, 0x0A, 0x06, 0x00, 0x00, 0x00 };
+  sendMessage(payload.data(), payload.size());
 }
 
 //-----------------------------------------------------------------------------------/
