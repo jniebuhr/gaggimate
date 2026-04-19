@@ -234,10 +234,10 @@ const ProcessControls = ({ brew, mode }) => {
   // Memoize derived state values
   const derivedState = useMemo(
     () => ({
-      shouldExpand: brew,
+      shouldExpand: brew && (active || finished),
       tempReady: Math.abs(statusValues.targetTemperature - statusValues.currentTemperature) < TEMP_READY_THRESHOLD,
     }),
-    [brew, statusValues.targetTemperature, statusValues.currentTemperature]
+    [brew, active, finished, statusValues.targetTemperature, statusValues.currentTemperature]
   );
 
   // Get visibility flags for control elements
@@ -291,7 +291,7 @@ const ProcessControls = ({ brew, mode }) => {
           {brew && profileData ? (
             <ProcessProfileChart
               data={profileData}
-              processInfo={processInfo}
+              processInfo={null}
               className='max-h-48 w-full'
             />
           ) : (
