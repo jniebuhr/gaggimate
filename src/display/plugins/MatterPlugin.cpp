@@ -89,6 +89,7 @@ void MatterPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     pluginManager->on("controller:wifi:connect", [this](Event const &event) { start(event); });
     pluginManager->on("controller:mode:change", [this](Event const &e) { onModeChange(e.getInt("value")); });
     pluginManager->on("boiler:targetTemperature:change", [this](Event const &e) { onTargetTempChange(e.getFloat("value")); });
+    pluginManager->on("boiler:currentTemperature:change", [this](Event const &e) { onCurrentTempChange(e.getFloat("value")); });
 }
 
 void MatterPlugin::start(Event const &event) {
@@ -127,6 +128,11 @@ void MatterPlugin::start(Event const &event) {
     tc_cfg.temperature_number.max_temperature = kTempMaxCentiC;
     tc_cfg.features = esp_matter::cluster::temperature_control::feature::temperature_number::get_id();
     esp_matter::cluster::temperature_control::create(ep, &tc_cfg, esp_matter::CLUSTER_FLAG_SERVER, tc_cfg.features);
+
+    esp_matter::cluster::temperature_measurement::config_t tm_cfg;
+    tm_cfg.min_measured_value = kTempMinCentiC;
+    tm_cfg.max_measured_value = kTempMaxCentiC;
+    esp_matter::cluster::temperature_measurement::create(ep, &tm_cfg, esp_matter::CLUSTER_FLAG_SERVER);
 
     const esp_err_t dt_err = esp_matter::endpoint::add_device_type(ep, kGaggiMateDeviceTypeId, kGaggiMateDeviceTypeVersion);
     if (dt_err != ESP_OK) {
@@ -187,6 +193,14 @@ void MatterPlugin::onTargetTempChange(float temperature) {
     esp_matter_attr_val_t v = esp_matter_int16(floatCtoCenti(temperature));
     esp_matter::attribute::update(endpointId, chip::app::Clusters::TemperatureControl::Id,
                                   chip::app::Clusters::TemperatureControl::Attributes::TemperatureSetpoint::Id, &v);
+}
+
+void MatterPlugin::onCurrentTempChange(float temperature) {
+    if (!started)
+        return;
+    esp_matter_attr_val_t v = esp_matter_nullable_int16(floatCtoCenti(temperature));
+    esp_matter::attribute::update(endpointId, chip::app::Clusters::TemperatureMeasurement::Id,
+                                  chip::app::Clusters::TemperatureMeasurement::Attributes::MeasuredValue::Id, &v);
 }
 
 #endif // GAGGIMATE_MATTER

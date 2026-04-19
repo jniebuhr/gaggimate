@@ -20,6 +20,7 @@ class MatterPlugin : public Plugin {
     void start(Event const &event);
     void onModeChange(int mode);
     void onTargetTempChange(float temperature);
+    void onCurrentTempChange(float temperature);
 
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
