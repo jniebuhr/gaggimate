@@ -1,5 +1,6 @@
 #include "Controller.h"
 #include "ArduinoJson.h"
+#include "BLECoordinator.h"
 #include "esp_sntp.h"
 #include <SD_MMC.h>
 #include <SPIFFS.h>
@@ -130,7 +131,7 @@ void Controller::setupPanel() {
 #endif
 
 void Controller::setupBluetooth() {
-    clientController.initClient();
+    BLECoordinator::instance().requestNimBleInit([this]() { clientController.initClient(); });
     clientController.registerDisconnectCallback([this]() {
         if (initialized) {
             pluginManager->trigger("controller:bluetooth:disconnect");
