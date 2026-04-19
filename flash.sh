@@ -1,11 +1,22 @@
 #!/usr/bin/env bash
 # Build and flash the display firmware and SPIFFS to ESP32
-# Usage: ./flash.sh [upload_port]
+#
+# Usage: ./flash.sh <upload_port>
 # Example: ./flash.sh COM4
+#
+# Note: <upload_port> is required. Find it in Device Manager (Windows)
+#       or via: ls /dev/tty.* (macOS) or ls /dev/ttyUSB* (Linux)
 
 set -e
 
-PORT=${1:-COM4}
+if [ -z "$1" ]; then
+  echo "Error: upload_port required"
+  echo "Usage: ./flash.sh <upload_port>"
+  echo "Example: ./flash.sh COM4"
+  exit 1
+fi
+
+PORT=$1
 
 echo "=== Step 1: Build web UI ==="
 cd web
