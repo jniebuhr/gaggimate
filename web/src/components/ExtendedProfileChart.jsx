@@ -62,6 +62,9 @@ function applyEasing(t, type) {
 }
 
 function prepareData(phases, target) {
+  if (!phases || phases.length === 0) {
+    return [];
+  }
   const data = [];
   let time = 0;
   let phaseTime = 0;
