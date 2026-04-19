@@ -9,17 +9,17 @@ function formatDuration(duration) {
   return `${zeroPad(minutes, 1)}:${zeroPad(seconds, 2)}`;
 }
 
-export function ProcessDisplay({ brew, grind, showGrindTab, active, finished, processInfo, status: statusProp }) {
+export function ProcessDisplay({ brew, grind, active, finished, processInfo, status: statusProp }) {
   const { mode, isGrindAvailable } = statusProp;
 
   return (
     <div className='flex flex-1 items-center justify-center'>
       {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
-      {(active || finished) && grind && showGrindTab && <GrindProgress processInfo={processInfo} />}
-      {!brew && !(grind && showGrindTab) && (
+      {(active || finished) && grind && <GrindProgress processInfo={processInfo} />}
+      {!brew && !grind && (
         <ModeMessage mode={mode} tempReady={Math.abs(statusProp.targetTemperature - statusProp.currentTemperature) < 5} />
       )}
-      {grind && showGrindTab && !active && !finished && (
+      {grind && !active && !finished && (
         <GrindIdleMessage isGrindAvailable={isGrindAvailable} />
       )}
     </div>
@@ -131,7 +131,6 @@ const BrewProgress = ({ processInfo }) => <ProgressDisplay processInfo={processI
 ProcessDisplay.propTypes = {
   brew: PropTypes.bool.isRequired,
   grind: PropTypes.bool.isRequired,
-  showGrindTab: PropTypes.bool.isRequired,
   active: PropTypes.bool.isRequired,
   finished: PropTypes.bool.isRequired,
   processInfo: PropTypes.object.isRequired,

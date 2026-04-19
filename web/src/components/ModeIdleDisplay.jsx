@@ -17,11 +17,11 @@ const MODE_CONFIG = {
 /**
  * Displays the idle state message for different machine modes
  */
-export const ModeIdleDisplay = ({ mode, showGrindTab, tempReady, isGrindAvailable }) => {
+export const ModeIdleDisplay = ({ mode, tempReady, isGrindAvailable }) => {
   const config = MODE_CONFIG[mode];
-  
+
   // Don't render if mode is invalid or grind mode without grind tab
-  if (!config || (mode === 4 && !showGrindTab)) return null;
+  if (!config || (mode === 4 && !isGrindAvailable)) return null;
 
   // Compute subtitle - can be static string or function
   const subtitle =
@@ -39,7 +39,6 @@ export const ModeIdleDisplay = ({ mode, showGrindTab, tempReady, isGrindAvailabl
 
 ModeIdleDisplay.propTypes = {
   mode: PropTypes.oneOf([0, 1, 2, 3, 4]).isRequired,
-  showGrindTab: PropTypes.bool.isRequired,
   tempReady: PropTypes.bool.isRequired,
   isGrindAvailable: PropTypes.bool.isRequired,
 };

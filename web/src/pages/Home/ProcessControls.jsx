@@ -11,7 +11,6 @@ import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { Tooltip } from '../../components/Tooltip.jsx';
-import { ModeTabBar } from '../../components/ModeTabBar.jsx';
 import { TemperatureControls } from '../../components/TemperatureControls.jsx';
 import { GrindTargetBar } from '../../components/GrindTargetBar.jsx';
 import { ProcessDisplay } from '../../components/ProcessDisplay.jsx';
@@ -20,6 +19,8 @@ import { useProfileData } from '../../hooks/useProfileData.js';
 import { useGrindSettings } from '../../hooks/useGrindSettings.js';
 import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
+
+const MODE_DOT_COLORS = ['bg-base-content/30', 'bg-primary', 'bg-warning', 'bg-error', 'bg-secondary'];
 
 const status = computed(() => machine.value.status);
 const TEMP_READY_THRESHOLD = 5;
@@ -105,6 +106,56 @@ StateIndicator.propTypes = {
   finished: PropTypes.bool.isRequired,
 };
 
+const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
+
+const QuickStatusStrip = memo(({ mode, active, finished, targetTemperature, grindTarget, grindTargetVolume, grindTargetDuration }) => {
+  const state = active ? 'Brewing' : finished ? 'Finished' : MODE_LABELS[mode];
+  const stateClass = active
+    ? 'bg-warning/20 text-warning border-warning'
+    : finished
+    ? 'bg-success/20 text-success border-success'
+    : 'bg-base-300/50 text-base-content/60 border-base-300';
+
+  const showTemp = mode === 2 || mode === 3;
+  const showGrind = mode === 4;
+
+  return (
+    <div className='flex items-center justify-center gap-3 py-2 px-3 rounded-xl border border-base-300/40 bg-base-100/50'>
+      {/* Mode dot */}
+      <span className={`size-2.5 rounded-full ${MODE_DOT_COLORS[mode]}`} />
+
+      {/* State badge */}
+      <span className={`badge badge-sm badge-outline font-semibold ${stateClass}`}>
+        {state}
+      </span>
+
+      {/* Contextual target */}
+      {showTemp && (
+        <span className='text-sm text-base-content/60'>
+          · {targetTemperature}°C
+        </span>
+      )}
+      {showGrind && (
+        <span className='text-sm text-base-content/60'>
+          · {grindTarget === 1 ? `${grindTargetVolume}g` : `${Math.round(grindTargetDuration / 1000)}s`}
+        </span>
+      )}
+    </div>
+  );
+});
+
+QuickStatusStrip.displayName = 'QuickStatusStrip';
+
+QuickStatusStrip.propTypes = {
+  mode: PropTypes.number.isRequired,
+  active: PropTypes.bool.isRequired,
+  finished: PropTypes.bool.isRequired,
+  targetTemperature: PropTypes.number.isRequired,
+  grindTarget: PropTypes.number.isRequired,
+  grindTargetVolume: PropTypes.number.isRequired,
+  grindTargetDuration: PropTypes.number.isRequired,
+};
+
 const ActionButtons = memo(({ brew, active, finished, isFlushing, onActivate, onDeactivate, onClear, onFlush }) => {
   const buttonConfig = useMemo(() => {
     if (active) return BUTTON_CONFIGS.active;
@@ -145,7 +196,7 @@ ActionButtons.propTypes = {
   onFlush: PropTypes.func.isRequired,
 };
 
-const ProcessControls = ({ brew, mode, changeMode }) => {
+const ProcessControls = ({ brew, mode }) => {
   const api = useContext(ApiServiceContext);
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
@@ -154,7 +205,7 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
   const [isFlushing, setIsFlushing] = useState(false);
 
   // Use custom hooks for settings and profile data
-  const { isGrindAvailable, showGrindTab } = useGrindSettings(mode);
+  const { isGrindAvailable } = useGrindSettings(mode);
   useProfileData(api, brew, status.value.selectedProfileId);
 
   // Extract status values once for cleaner access
@@ -194,7 +245,6 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
     active,
     finished,
     isGrindAvailable,
-    showGrindTab,
     statusValues.volumetricAvailable
   );
 
@@ -204,14 +254,20 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
   return (
     <div className='flex min-h-[250px] flex-col justify-between lg:min-h-[350px]'>
       <div className='mb-3'>
-        <ModeTabBar mode={mode} changeMode={changeMode} showGrindTab={showGrindTab} />
+        <QuickStatusStrip
+          mode={mode}
+          active={active}
+          finished={finished}
+          targetTemperature={statusValues.targetTemperature}
+          grindTarget={statusValues.grindTarget}
+          grindTargetVolume={statusValues.grindTargetVolume}
+          grindTargetDuration={statusValues.grindTargetDuration}
+        />
       </div>
-
       {derivedState.shouldExpand && (
         <ProcessDisplay
           brew={brew}
           grind={grind}
-          showGrindTab={showGrindTab}
           active={active}
           finished={finished}
           processInfo={processInfo}
@@ -232,7 +288,6 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
         <div className='flex flex-1 items-center justify-center'>
           <ModeIdleDisplay
             mode={mode}
-            showGrindTab={showGrindTab}
             tempReady={derivedState.tempReady}
             isGrindAvailable={isGrindAvailable}
           />
@@ -295,7 +350,6 @@ const ProcessControls = ({ brew, mode, changeMode }) => {
 ProcessControls.propTypes = {
   brew: PropTypes.bool.isRequired,
   mode: PropTypes.oneOf([0, 1, 2, 3, 4]).isRequired,
-  changeMode: PropTypes.func.isRequired,
 };
 
 export default ProcessControls;
