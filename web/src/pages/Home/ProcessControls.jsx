@@ -22,7 +22,6 @@ import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
 
 const MODE_DOT_COLORS = ['bg-base-content/30', 'bg-primary', 'bg-warning', 'bg-error', 'bg-secondary'];
-const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
 
 const status = computed(() => machine.value.status);
 const TEMP_READY_THRESHOLD = 5;
