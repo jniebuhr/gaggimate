@@ -96,8 +96,6 @@ bool NimBLEClientController::connectToServer() {
         return false;
     }
 
-
-    
     // Obtain the remote write characteristics
     outputControlChar = pRemoteService->getCharacteristic(NimBLEUUID(OUTPUT_CONTROL_UUID));
     altControlChar = pRemoteService->getCharacteristic(NimBLEUUID(ALT_CONTROL_CHAR_UUID));
@@ -118,14 +116,13 @@ bool NimBLEClientController::connectToServer() {
                                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
-     buttonsStateChar = pRemoteService->getCharacteristic(NimBLEUUID(BUTTONS_STATE_UUID));
+    buttonsStateChar = pRemoteService->getCharacteristic(NimBLEUUID(BUTTONS_STATE_UUID));
     if (buttonsStateChar != nullptr && buttonsStateChar->canNotify()) {
         buttonsStateChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                                     std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
     autotuneResultChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_RESULT_UUID));
-
 
     autotuneResultChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_RESULT_UUID));
     if (autotuneResultChar != nullptr && autotuneResultChar->canNotify()) {
@@ -291,10 +288,10 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BUTTONS_STATE_UUID))) {
-    uint8_t buttonsStatus = atoi(rawData.c_str());
-    ESP_LOGV(LOG_TAG, "buttons state: %d", buttonsStatus);
-    if (buttonsCallback != nullptr) {
-        buttonsCallback(buttonsStatus);
+        uint8_t buttonsStatus = atoi(rawData.c_str());
+        ESP_LOGV(LOG_TAG, "buttons state: %d", buttonsStatus);
+        if (buttonsCallback != nullptr) {
+            buttonsCallback(buttonsStatus);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {

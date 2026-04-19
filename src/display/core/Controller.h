@@ -120,7 +120,7 @@ class Controller {
 
     void handleProfileUpdate();
 
-    //Steam, water, brew button
+    // Steam, water, brew button
     void handleButtonsState(uint8_t buttonsStatus);
 
     // Private Attributes

@@ -1,8 +1,7 @@
 #include "DigitalInput.h"
 
 // Single pin constructor
-DigitalInput::DigitalInput(uint8_t pin, const input_callback_t &callback)
-    : _pin1(pin), _singleCallback(callback) {}
+DigitalInput::DigitalInput(uint8_t pin, const input_callback_t &callback) : _pin1(pin), _singleCallback(callback) {}
 
 // Dual pin constructor
 DigitalInput::DigitalInput(uint8_t pin1, uint8_t pin2, const combined_callback_t &callback)
@@ -25,7 +24,7 @@ void DigitalInput::loopSingle() {
 }
 
 void DigitalInput::loopCombined() {
-    uint8_t brew  = !digitalRead(_pin1); // active low
+    uint8_t brew = !digitalRead(_pin1);  // active low
     uint8_t steam = !digitalRead(_pin2); // active low
     uint8_t current = (brew << 1) | steam;
     if (current != _lastState) {

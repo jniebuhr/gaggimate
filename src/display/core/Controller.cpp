@@ -739,9 +739,8 @@ void Controller::onVolumetricDelete() {
     }
 }
 
-
 void Controller::handleButtonsState(uint8_t buttonsStatus) {
-    bool isBrewPressed  = (buttonsStatus >> 1) & 1;
+    bool isBrewPressed = (buttonsStatus >> 1) & 1;
     bool isSteamPressed = buttonsStatus & 1;
 
     if (isBrewPressed && isSteamPressed) {
@@ -750,14 +749,21 @@ void Controller::handleButtonsState(uint8_t buttonsStatus) {
             deactivateStandby();
             setMode(MODE_WATER);
         }
-        if (!isActive()) activate();
+        if (!isActive())
+            activate();
     } else if (!isBrewPressed && !isSteamPressed) {
         // Both released
         if (getMode() == MODE_WATER) {
-            if (isActive()) deactivate();
+            if (isActive())
+                deactivate();
         } else if (!settings.isMomentaryButtons()) {
             if (getMode() == MODE_BREW) {
-                if (isActive()) { deactivate(); clear(); } else { clear(); }
+                if (isActive()) {
+                    deactivate();
+                    clear();
+                } else {
+                    clear();
+                }
             } else if (getMode() == MODE_STEAM) {
                 deactivate();
                 setMode(MODE_BREW);
@@ -766,27 +772,37 @@ void Controller::handleButtonsState(uint8_t buttonsStatus) {
     } else if (isBrewPressed) {
         // Only brew
         if (getMode() == MODE_WATER || getMode() == MODE_STEAM) {
-            if (isActive()) deactivate();
+            if (isActive())
+                deactivate();
             setMode(MODE_BREW);
             return;
         }
         switch (getMode()) {
-            case MODE_STANDBY: deactivateStandby(); break;
-            case MODE_BREW:
-                if (!isActive()) { deactivateStandby(); clear(); activate(); }
-                else if (settings.isMomentaryButtons()) { deactivate(); clear(); }
-                break;
-            default: break;
+        case MODE_STANDBY:
+            deactivateStandby();
+            break;
+        case MODE_BREW:
+            if (!isActive()) {
+                deactivateStandby();
+                clear();
+                activate();
+            } else if (settings.isMomentaryButtons()) {
+                deactivate();
+                clear();
+            }
+            break;
+        default:
+            break;
         }
     } else if (isSteamPressed) {
         // Only steam
         if (getMode() == MODE_WATER || getMode() == MODE_BREW || getMode() == MODE_STANDBY) {
-            if (isActive()) deactivate();
+            if (isActive())
+                deactivate();
             setMode(MODE_STEAM);
         }
     }
 }
-
 
 void Controller::handleProfileUpdate() {
     pluginManager->trigger("boiler:targetTemperature:change", "value", profileManager->getSelectedProfile().temperature);
