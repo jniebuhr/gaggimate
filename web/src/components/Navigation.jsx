@@ -67,7 +67,7 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
   );
 }
 
-export function Navigation({ collapsed = false, onToggleCollapsed }) {
+export function Navigation({ collapsed = false, onToggleCollapsed = () => {} }) {
   return (
     <nav className='hidden lg:block lg:sticky lg:top-28'>
       <div className={collapsed ? 'w-10' : 'w-full'}>
