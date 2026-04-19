@@ -75,7 +75,15 @@ public:
   virtual void stopTimer()  { /* default no-op; drivers with hasTimerControl()==true override this */ }
   virtual void resetTimer() { /* default no-op; drivers with hasTimerControl()==true override this */ }
 
-  virtual ~RemoteScales() noexcept { clientCleanup(); }
+  virtual ~RemoteScales() noexcept {
+    try {
+      clientCleanup();
+    } catch (...) {
+      // Swallow: destructors must not propagate exceptions (noexcept guarantee).
+      // clientCleanup calls into NimBLE stack which in practice doesn't throw,
+      // but being explicit satisfies the type system and SonarCloud S1048.
+    }
+  }
 protected:
   RemoteScales(const DiscoveredDevice& device);
   const DiscoveredDevice& getDevice() const { return device; }
