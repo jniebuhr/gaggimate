@@ -1,4 +1,3 @@
-/* global globalThis */
 // Only load debug mode in development
 if (import.meta.env.DEV) {
   await import('preact/debug');
@@ -9,7 +8,6 @@ import { initializeTheme } from './utils/themeManager.js';
 
 import { render } from 'preact';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
-import { useEffect, useState } from 'preact/hooks';
 
 import { Header } from './components/Header.jsx';
 import { Footer } from './components/Footer.jsx';
@@ -29,33 +27,8 @@ import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
 import { StatisticsPage } from './pages/Statistics/index.jsx';
 
 const apiService = new ApiService();
-const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
-
-function readInitialDesktopNavCollapsed() {
-  const storage = globalThis.window?.localStorage;
-  if (!storage) return false;
-
-  try {
-    return storage.getItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
 
 export function App() {
-  const [desktopNavCollapsed, setDesktopNavCollapsed] = useState(readInitialDesktopNavCollapsed);
-
-  useEffect(() => {
-    const storage = globalThis.window?.localStorage;
-    if (!storage) return;
-
-    try {
-      storage.setItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY, String(desktopNavCollapsed));
-    } catch {
-      // Ignore storage write failures so the navigation still works in restricted browsers.
-    }
-  }, [desktopNavCollapsed]);
-
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
@@ -69,11 +42,8 @@ export function App() {
 
             <main id='main-content' className='flex-1'>
               <div className='mx-auto w-full px-4 py-4 lg:px-8 lg:py-6 xl:container'>
-                <div className={`grid grid-cols-1 ${desktopNavCollapsed ? 'gap-3 lg:grid-cols-[2.75rem_minmax(0,1fr)]' : 'gap-5 lg:grid-cols-[14rem_minmax(0,1fr)]'}`}>
-                  <Navigation
-                    collapsed={desktopNavCollapsed}
-                    onToggleCollapsed={() => setDesktopNavCollapsed(collapsed => !collapsed)}
-                  />
+                <div className='grid grid-cols-[auto_1fr]'>
+                  <Navigation />
                   <div className='min-w-0'>
                     <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
                       <ErrorBoundary>
