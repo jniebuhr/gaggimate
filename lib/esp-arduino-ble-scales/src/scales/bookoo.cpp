@@ -76,7 +76,7 @@ bool BookooScales::tare() {
   // future-proof if we ever want to cross-check shot timing against the scale.
   // sendMessage() computes and writes the final checksum byte.
   uint8_t payload[6] = { 0x03, 0x0A, 0x07, 0x00, 0x00, 0x00 };
-  sendMessage(BookooMessageType::SYSTEM, payload, sizeof(payload));
+  sendMessage(payload, sizeof(payload));
 
   return true;
 };
@@ -90,7 +90,7 @@ void BookooScales::disableScaleSmoothing() {
   // can then apply their own filtering or use the raw signal directly --
   // avoiding a double-EMA pipeline that adds lag with no accuracy benefit.
   uint8_t payload[6] = { 0x03, 0x0A, 0x08, 0x00, 0x00, 0x00 };
-  sendMessage(BookooMessageType::SYSTEM, payload, sizeof(payload));
+  sendMessage(payload, sizeof(payload));
 };
 
 //-----------------------------------------------------------------------------------/
@@ -265,7 +265,7 @@ void BookooScales::sendEvent(const uint8_t* payload, size_t length) {
     bytes[i + 1] = payload[i] & 0xFF;
   }
 
-  sendMessage(BookooMessageType::SYSTEM, bytes.get(), length + 1);
+  sendMessage(bytes.get(), length + 1);
 }
 
 void BookooScales::sendHeartbeat() {
@@ -279,10 +279,10 @@ void BookooScales::sendHeartbeat() {
   }
 
   uint8_t payload1[] = { 0x02,0x00 };
-  sendMessage(BookooMessageType::SYSTEM, payload1, 2);
+  sendMessage(payload1, 2);
   sendNotificationRequest();
   uint8_t payload2[] = { 0x00 };
-  sendMessage(BookooMessageType::SYSTEM, payload2, 1);
+  sendMessage(payload2, 1);
   lastHeartbeat = now;
 }
 
@@ -304,7 +304,8 @@ void BookooScales::subscribeToNotifications() {
   }
 }
 
-void BookooScales::sendMessage(BookooMessageType msgType, const uint8_t* payload, size_t length, bool waitResponse) {
+// NOTE: the last byte of `payload` is overwritten with the XOR checksum — callers must reserve it.
+void BookooScales::sendMessage(const uint8_t* payload, size_t length, bool waitResponse) {
 
   auto bytes = std::make_unique<uint8_t[]>(length);
 
