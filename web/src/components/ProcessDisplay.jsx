@@ -16,7 +16,7 @@ export function ProcessDisplay({ brew, grind, active, finished, processInfo, sta
     <div className='flex flex-1 items-center justify-center'>
       {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
       {(active || finished) && grind && <GrindProgress processInfo={processInfo} />}
-      {!brew && !(grind && <GrindProgress processInfo={processInfo} />) && (
+      {!brew && !grind && (
         <ModeMessage mode={mode} tempReady={Math.abs(statusProp.targetTemperature - statusProp.currentTemperature) < 5} />
       )}
       {grind && !active && !finished && (
