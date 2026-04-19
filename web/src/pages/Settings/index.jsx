@@ -274,17 +274,17 @@ export function Settings() {
         <button
           type='button'
           onClick={onExport}
-          className='btn btn-ghost btn-sm'
-          title='Export Settings'
+          className='btn btn-sm btn-outline'
         >
           <FontAwesomeIcon icon={faFileExport} />
+          Export Settings
         </button>
         <label
           htmlFor='settingsImport'
-          className='btn btn-ghost btn-sm cursor-pointer'
-          title='Import Settings'
+          className='btn btn-sm btn-outline cursor-pointer'
         >
           <FontAwesomeIcon icon={faFileImport} />
+          Import Settings
         </label>
         <input
           onChange={onUpload}

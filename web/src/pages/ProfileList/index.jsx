@@ -93,14 +93,17 @@ function ProfileCard({
   }, [data.favorite, unfavoriteDisabled, favoriteDisabled, onUnfavorite, onFavorite, data.id]);
 
   const onDownload = useCallback(() => {
-    const download = {
-      ...data,
-    };
-    delete download.id;
-    delete download.selected;
-    delete download.favorite;
+    const { id, selected, favorite, ...profileData } = data;
+    const filename = `profile-${data.id}.json`;
+    const prepared = prepareDownload(filename);
 
-    downloadJson(download, `profile-${data.id}.json`);
+    if (!prepared.targetWindow) {
+      console.error('Failed to create download window - popup blocker may be active');
+      alert('Download failed: Please allow popups for this site and try again.');
+      return;
+    }
+
+    downloadJson(profileData, filename, prepared);
   }, [data]);
   const statsHref = buildStatisticsProfileHref({ source: 'gaggimate', profileName: data.label });
 
@@ -910,31 +913,27 @@ export function ProfileList() {
           </label>
         </div>
         <div className='flex flex-grow items-center justify-end gap-2'>
-          <Tooltip content='Export all profiles'>
-            <button
-              onClick={onExport}
-              className='btn btn-ghost btn-sm'
-              aria-label='Export all profiles'
-            >
-              <FontAwesomeIcon icon={faFileExport} />
-            </button>
-          </Tooltip>
-          <Tooltip content='Import profiles'>
-            <label
-              htmlFor='profileImport'
-              className='btn btn-ghost btn-sm cursor-pointer'
-              aria-label='Import profiles'
-            >
-              <FontAwesomeIcon icon={faFileImport} />
-            </label>
-          </Tooltip>
+          <button
+            onClick={onExport}
+            className='btn btn-sm btn-outline'
+            disabled={profiles.length === 0}
+          >
+            <FontAwesomeIcon icon={faFileExport} />
+            Export Profiles
+          </button>
+          <label
+            htmlFor='profileImport'
+            className='btn btn-sm btn-outline cursor-pointer'
+          >
+            <FontAwesomeIcon icon={faFileImport} />
+            Import Profiles
+          </label>
           <input
             onChange={onUpload}
             className='hidden'
             id='profileImport'
             type='file'
-            accept='.json,application/json,.tcl'
-            aria-label='Select a JSON file containing profile data to import'
+            accept='.json,application/json'
           />
           <ConfirmButton
             onAction={onClear}
