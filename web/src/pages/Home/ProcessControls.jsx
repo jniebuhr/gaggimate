@@ -245,7 +245,6 @@ const ProcessControls = ({ brew, mode }) => {
     active,
     finished,
     isGrindAvailable,
-    false, // showGrindTab - no longer needed since ModeTabBar removed
     statusValues.volumetricAvailable
   );
 
