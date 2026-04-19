@@ -385,6 +385,7 @@ void LilyGo_RGBPanel::initBUS() {
         .vsync_gpio_num = BOARD_TFT_VSYNC,
         .de_gpio_num = BOARD_TFT_DE,
         .pclk_gpio_num = BOARD_TFT_PCLK,
+        .disp_gpio_num = GPIO_NUM_NC,
         .data_gpio_nums =
             {
                 // BOARD_TFT_DATA0,
@@ -408,9 +409,6 @@ void LilyGo_RGBPanel::initBUS() {
                 BOARD_TFT_DATA4,
                 BOARD_TFT_DATA5,
             },
-        .disp_gpio_num = GPIO_NUM_NC,
-        .on_frame_trans_done = NULL,
-        .user_ctx = NULL,
         .flags =
             {
                 .fb_in_psram = 1, // allocate frame buffer in PSRAM

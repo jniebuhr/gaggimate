@@ -271,7 +271,7 @@ bool Amoled_DisplayPanel::initDisplay(Amoled_Display_Panel_Color_Order colorOrde
             new Arduino_ESP32QSPI(hwConfig.lcd_cs /* CS */, hwConfig.lcd_sclk /* SCK */, hwConfig.lcd_sdio0 /* SDIO0 */,
                                   hwConfig.lcd_sdio1 /* SDIO1 */, hwConfig.lcd_sdio2 /* SDIO2 */, hwConfig.lcd_sdio3 /* SDIO3 */);
 
-        display = new CO5300(displayBus, hwConfig.lcd_rst /* RST */, _rotation /* rotation */, false /* IPS */,
+        display = new CO5300(displayBus, hwConfig.lcd_rst /* RST */, _rotation /* rotation */,
                              hwConfig.lcd_width, hwConfig.lcd_height, hwConfig.lcd_gram_offset_x /* col offset 1 */,
                              0 /* row offset 1 */, hwConfig.lcd_gram_offset_y /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
     }
@@ -300,7 +300,7 @@ bool Amoled_DisplayPanel::initDisplay(Amoled_Display_Panel_Color_Order colorOrde
 
     // required for correct GRAM initialization
     displayBus->writeCommand(CO5300_C_PTLON);
-    display->fillScreen(BLACK);
+    display->fillScreen(RGB565_BLACK);
 
     return success;
 }
