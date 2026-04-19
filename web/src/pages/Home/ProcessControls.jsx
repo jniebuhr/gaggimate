@@ -106,8 +106,10 @@ StateIndicator.propTypes = {
   finished: PropTypes.bool.isRequired,
 };
 
+const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
+
 const QuickStatusStrip = memo(({ mode, active, finished, targetTemperature, grindTarget, grindTargetVolume, grindTargetDuration }) => {
-  const state = active ? 'Brewing' : finished ? 'Finished' : 'Idle';
+  const state = active ? 'Brewing' : finished ? 'Finished' : MODE_LABELS[mode];
   const stateClass = active
     ? 'bg-warning/20 text-warning border-warning'
     : finished
