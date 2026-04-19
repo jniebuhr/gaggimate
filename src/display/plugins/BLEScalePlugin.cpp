@@ -212,6 +212,7 @@ void BLEScalePlugin::disconnect() {
         // connects (possibly a different model with different capabilities).
         lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
         lastWeightUnit = ScaleWeightUnit::UNKNOWN;
+        warnedOunceMidBrew = false;
     }
 }
 
@@ -324,6 +325,26 @@ void BLEScalePlugin::onMeasurement(float value) const {
     if (!isfinite(value) || value < -1000.0f || value > 10000.0f) {
         ESP_LOGW("BLEScalePlugin", "Invalid measurement value: %f, ignoring", value);
         return;
+    }
+
+    // Mid-shot unit-flip guard: the shot-start guard in
+    // Controller::isVolumetricAvailable() only covers entry into the shot.
+    // If the user physically toggles the scale to ounces *during* a brew,
+    // weight samples drop ~28x and the volumetric target is never hit --
+    // shot would then run until the time-safety cutoff. Detect oz per-sample
+    // and disable volumetric routing so the remainder of the shot falls
+    // through to time-based stop.
+    if (scale != nullptr && scale->hasWeightUnit() && scale->getWeightUnit() == ScaleWeightUnit::OUNCE) {
+        if (controller->isActive() && !warnedOunceMidBrew) {
+            ESP_LOGW("BLEScalePlugin",
+                     "Scale switched to oz mid-brew -- aborting volumetric, falling back to time stop");
+            warnedOunceMidBrew = true;
+        }
+        controller->setVolumetricOverride(false);
+    } else {
+        // Unit returned to grams (or is unknown again) -- re-arm the latch
+        // so a subsequent flip back to oz warns again.
+        warnedOunceMidBrew = false;
     }
 
     // Safe to call controller method

@@ -81,6 +81,11 @@ class BLEScalePlugin : public Plugin {
     uint8_t lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
     ScaleWeightUnit lastWeightUnit = ScaleWeightUnit::UNKNOWN;
 
+    // Latch so the mid-brew oz warning + volumetric abort fires once per
+    // transition into ounces, not once per sample at ~10 Hz. Reset on
+    // disconnect and when the unit returns to grams.
+    mutable bool warnedOunceMidBrew = false;
+
     // Rate limiting for callbacks
     mutable unsigned long lastMeasurementTime = 0;
     static constexpr unsigned long MIN_MEASUREMENT_INTERVAL_MS = 10; // Max 100 measurements per second
