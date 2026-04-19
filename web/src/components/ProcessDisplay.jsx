@@ -141,7 +141,7 @@ const BrewProgress = ({ processInfo, profileData }) => {
         <ProcessProfileChart
           data={profileData}
           processInfo={processInfo}
-          className='max-h-48 w-full'
+          className='max-h-56 w-full sm:max-h-64'
         />
       ) : (
         <div className='text-center'>

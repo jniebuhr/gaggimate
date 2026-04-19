@@ -254,17 +254,6 @@ const ProcessControls = ({ brew, mode }) => {
 
   return (
     <div className='flex min-h-[250px] flex-col justify-between lg:min-h-[350px]'>
-      <div className='mb-3'>
-        <QuickStatusStrip
-          mode={mode}
-          active={active}
-          finished={finished}
-          targetTemperature={statusValues.targetTemperature}
-          grindTarget={statusValues.grindTarget}
-          grindTargetVolume={statusValues.grindTargetVolume}
-          grindTargetDuration={statusValues.grindTargetDuration}
-        />
-      </div>
       {derivedState.shouldExpand && (
         <ProcessDisplay
           brew={brew}
@@ -287,12 +276,12 @@ const ProcessControls = ({ brew, mode }) => {
       )}
 
       {!derivedState.shouldExpand && (
-        <div className='flex flex-1 flex-col items-center justify-center gap-4'>
+        <div className='flex flex-1 flex-col items-center justify-center gap-4 px-2'>
           {brew && profileData ? (
             <ProcessProfileChart
               data={profileData}
               processInfo={null}
-              className='max-h-48 w-full'
+              className='max-h-56 w-full sm:max-h-64'
             />
           ) : (
             <ModeIdleDisplay
