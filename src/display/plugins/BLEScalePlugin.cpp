@@ -89,6 +89,11 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
         scanner->stopAsyncScan();
     });
     manager->on("controller:brew:prestart", [this](Event const &) { onProcessStart(); });
+    manager->on("controller:brew:end", [this](Event const &) {
+        if (scale != nullptr && scale->isConnected() && scale->hasTimerControl()) {
+            scale->stopTimer();
+        }
+    });
     manager->on("controller:grind:start", [this](Event const &) { onProcessStart(); });
     manager->on("controller:mode:change", [this](Event const &event) {
         if (event.getInt("value") != MODE_STANDBY) {
