@@ -129,7 +129,7 @@ const GrindProgress = ({ processInfo }) => <ProgressDisplay processInfo={process
 
 const BrewProgress = ({ processInfo, profileData }) => {
   // Calculate progress from processInfo
-  const { a: isActive, pt: progressTotal, pp: progressPosition, e: elapsedMs, s: stage, l: label, tt: targetType } = processInfo;
+  const { pt: progressTotal, pp: progressPosition, e: elapsedMs, s: stage, l: label, tt: targetType } = processInfo;
   const progress = progressTotal > 0 ? (progressPosition / progressTotal) * 100.0 : 0;
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
   const targetPrecision = targetType === 'volumetric' ? 1 : 0;
