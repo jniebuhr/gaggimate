@@ -4,6 +4,7 @@
 #ifdef GAGGIMATE_MATTER
 
 #include "../core/Plugin.h"
+#include <cstdint>
 
 struct Event;
 
@@ -12,11 +13,18 @@ class MatterPlugin : public Plugin {
     void setup(Controller *controller, PluginManager *pluginManager) override;
     void loop() override {};
 
+    // val is actually `esp_matter_attr_val_t *`; kept opaque to avoid pulling Matter headers into this include.
+    void onAttributeWrite(uint16_t endpoint_id, uint32_t cluster_id, uint32_t attribute_id, void *val);
+
   private:
     void start(Event const &event);
+    void onModeChange(int mode);
+    void onTargetTempChange(float temperature);
 
     Controller *controller = nullptr;
+    PluginManager *pluginManager = nullptr;
     bool started = false;
+    uint16_t endpointId = 0;
 };
 
 #endif // GAGGIMATE_MATTER

@@ -18,6 +18,9 @@
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
+#ifdef GAGGIMATE_MATTER
+#include <display/plugins/MatterPlugin.h>
+#endif
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
@@ -71,6 +74,9 @@ void Controller::setup() {
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
+#ifdef GAGGIMATE_MATTER
+    pluginManager->registerPlugin(new MatterPlugin());
+#endif
     pluginManager->setup(this);
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
