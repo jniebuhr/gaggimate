@@ -153,8 +153,7 @@ void Controller::setupBluetooth() {
             pluginManager->trigger("pump:flow:change", "value", pumpFlow);
             pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
         });
-    clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
-    clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
+    clientController.registerButtonsCallback([this](const uint8_t buttonsStatus) { handleButtonsState(buttonsStatus); });
     clientController.registerRemoteErrorCallback([this](const int error) {
         if (error != ERROR_CODE_TIMEOUT && error != this->error) {
             this->error = error;
@@ -740,64 +739,54 @@ void Controller::onVolumetricDelete() {
     }
 }
 
-void Controller::handleBrewButton(int brewButtonStatus) {
-    printf("current screen %d, brew button %d\n", getMode(), brewButtonStatus);
-    if (brewButtonStatus) {
-        switch (getMode()) {
-        case MODE_STANDBY:
+
+void Controller::handleButtonsState(uint8_t buttonsStatus) {
+    bool isBrewPressed  = (buttonsStatus >> 1) & 1;
+    bool isSteamPressed = buttonsStatus & 1;
+
+    if (isBrewPressed && isSteamPressed) {
+        // Both pressed — water mode
+        if (getMode() != MODE_WATER) {
             deactivateStandby();
-            break;
-        case MODE_BREW:
-            if (!isActive()) {
-                deactivateStandby();
-                clear();
-                activate();
-            } else if (settings.isMomentaryButtons()) {
-                deactivate();
-                clear();
-            }
-            break;
-        case MODE_WATER:
-            activate();
-            break;
-        case MODE_STEAM:
-            deactivate();
-            setMode(MODE_BREW);
-        default:
-            break;
+            setMode(MODE_WATER);
         }
-    } else if (!settings.isMomentaryButtons()) {
-        if (getMode() == MODE_BREW) {
-            if (isActive()) {
+        if (!isActive()) activate();
+    } else if (!isBrewPressed && !isSteamPressed) {
+        // Both released
+        if (getMode() == MODE_WATER) {
+            if (isActive()) deactivate();
+        } else if (!settings.isMomentaryButtons()) {
+            if (getMode() == MODE_BREW) {
+                if (isActive()) { deactivate(); clear(); } else { clear(); }
+            } else if (getMode() == MODE_STEAM) {
                 deactivate();
-                clear();
-            } else {
-                clear();
+                setMode(MODE_BREW);
             }
-        } else if (getMode() == MODE_WATER) {
-            deactivate();
+        }
+    } else if (isBrewPressed) {
+        // Only brew
+        if (getMode() == MODE_WATER || getMode() == MODE_STEAM) {
+            if (isActive()) deactivate();
+            setMode(MODE_BREW);
+            return;
+        }
+        switch (getMode()) {
+            case MODE_STANDBY: deactivateStandby(); break;
+            case MODE_BREW:
+                if (!isActive()) { deactivateStandby(); clear(); activate(); }
+                else if (settings.isMomentaryButtons()) { deactivate(); clear(); }
+                break;
+            default: break;
+        }
+    } else if (isSteamPressed) {
+        // Only steam
+        if (getMode() == MODE_WATER || getMode() == MODE_BREW || getMode() == MODE_STANDBY) {
+            if (isActive()) deactivate();
+            setMode(MODE_STEAM);
         }
     }
 }
 
-void Controller::handleSteamButton(int steamButtonStatus) {
-    printf("current screen %d, steam button %d\n", getMode(), steamButtonStatus);
-    if (steamButtonStatus) {
-        switch (getMode()) {
-        case MODE_STANDBY:
-            setMode(MODE_STEAM);
-            break;
-        case MODE_BREW:
-            setMode(MODE_STEAM);
-            break;
-        default:
-            break;
-        }
-    } else if (!settings.isMomentaryButtons() && getMode() == MODE_STEAM) {
-        deactivate();
-        setMode(MODE_BREW);
-    }
-}
 
 void Controller::handleProfileUpdate() {
     pluginManager->trigger("boiler:targetTemperature:change", "value", profileManager->getSelectedProfile().temperature);

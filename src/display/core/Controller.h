@@ -118,12 +118,10 @@ class Controller {
     // Event handlers
     void onTempRead(float temperature);
 
-    // brew button
-    void handleBrewButton(int brewButtonStatus);
-
-    // steam button
-    void handleSteamButton(int steamButtonStatus);
     void handleProfileUpdate();
+
+    //Steam, water, brew button
+    void handleButtonsState(uint8_t buttonsStatus);
 
     // Private Attributes
 #ifndef GAGGIMATE_HEADLESS

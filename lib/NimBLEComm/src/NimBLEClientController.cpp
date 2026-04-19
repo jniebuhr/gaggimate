@@ -43,8 +43,7 @@ void NimBLEClientController::tare() {
 void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callback_t &callback) {
     remoteErrorCallback = callback;
 }
-void NimBLEClientController::registerBrewBtnCallback(const brew_callback_t &callback) { brewBtnCallback = callback; }
-void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &callback) { steamBtnCallback = callback; }
+void NimBLEClientController::registerButtonsCallback(const buttons_callback_t &callback) { buttonsCallback = callback; }
 
 void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t &callback) { sensorCallback = callback; }
 
@@ -97,6 +96,8 @@ bool NimBLEClientController::connectToServer() {
         return false;
     }
 
+
+    
     // Obtain the remote write characteristics
     outputControlChar = pRemoteService->getCharacteristic(NimBLEUUID(OUTPUT_CONTROL_UUID));
     altControlChar = pRemoteService->getCharacteristic(NimBLEUUID(ALT_CONTROL_CHAR_UUID));
@@ -117,17 +118,14 @@ bool NimBLEClientController::connectToServer() {
                                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
-    brewBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(BREW_BTN_UUID));
-    if (brewBtnChar != nullptr && brewBtnChar->canNotify()) {
-        brewBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
-                                               std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+     buttonsStateChar = pRemoteService->getCharacteristic(NimBLEUUID(BUTTONS_STATE_UUID));
+    if (buttonsStateChar != nullptr && buttonsStateChar->canNotify()) {
+        buttonsStateChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                                    std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
-    steamBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(STEAM_BTN_UUID));
-    if (steamBtnChar != nullptr && steamBtnChar->canNotify()) {
-        steamBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
-                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-    }
+    autotuneResultChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_RESULT_UUID));
+
 
     autotuneResultChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_RESULT_UUID));
     if (autotuneResultChar != nullptr && autotuneResultChar->canNotify()) {
@@ -262,8 +260,7 @@ void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
     errorChar = nullptr;
     autotuneChar = nullptr;
     autotuneResultChar = nullptr;
-    brewBtnChar = nullptr;
-    steamBtnChar = nullptr;
+    buttonsStateChar = nullptr;
     infoChar = nullptr;
     sensorChar = nullptr;
     outputControlChar = nullptr;
@@ -293,18 +290,11 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             remoteErrorCallback(errorCode);
         }
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
-        int brewButtonStatus = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
-        if (brewBtnCallback != nullptr) {
-            brewBtnCallback(brewButtonStatus);
-        }
-    }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
-        int steamButtonStatus = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
-        if (steamBtnCallback != nullptr) {
-            steamBtnCallback(steamButtonStatus);
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BUTTONS_STATE_UUID))) {
+    uint8_t buttonsStatus = atoi(rawData.c_str());
+    ESP_LOGV(LOG_TAG, "buttons state: %d", buttonsStatus);
+    if (buttonsCallback != nullptr) {
+        buttonsCallback(buttonsStatus);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
