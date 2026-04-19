@@ -23,11 +23,16 @@ public:
   bool isConnected() override;
   bool tare() override;
 
+  void startTimer() override;
+  void stopTimer() override;
+  void resetTimer() override;
+
   // Capability overrides — Bookoo parses all of these out of the 20-byte
   // weight notification (0x0B). See decodeAndHandleNotification() for layout.
   bool hasFlowRate() const override { return true; }
   bool hasBatteryLevel() const override { return true; }
   bool hasScaleTimer() const override { return true; }
+  bool hasTimerControl() const override { return true; }
   bool hasWeightUnit() const override { return true; }
   // NOTE: byte 18 of the weight notification is "auto-mode stop condition" on
   // Ultra-tier scales and reserved (0x00) on Mini. Without a way to identify

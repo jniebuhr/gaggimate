@@ -93,6 +93,30 @@ void BookooScales::disableScaleSmoothing() {
   sendMessage(payload, sizeof(payload));
 };
 
+// Note: on Bookoo Ultra these are only effective in timing-mode/ratio-mode
+// (no BLE mode-switch command exists); Mini has no restriction. Use tare()
+// (0x07 = tare + start timer) for unconditional start.
+void BookooScales::startTimer() {
+  if (!isConnected()) return;
+  RemoteScales::log("Timer START (cmd 0x0A 0x04)");
+  uint8_t payload[6] = { 0x03, 0x0A, 0x04, 0x00, 0x00, 0x00 };
+  sendMessage(payload, sizeof(payload));
+}
+
+void BookooScales::stopTimer() {
+  if (!isConnected()) return;
+  RemoteScales::log("Timer STOP (cmd 0x0A 0x05)");
+  uint8_t payload[6] = { 0x03, 0x0A, 0x05, 0x00, 0x00, 0x00 };
+  sendMessage(payload, sizeof(payload));
+}
+
+void BookooScales::resetTimer() {
+  if (!isConnected()) return;
+  RemoteScales::log("Timer RESET (cmd 0x0A 0x06)");
+  uint8_t payload[6] = { 0x03, 0x0A, 0x06, 0x00, 0x00, 0x00 };
+  sendMessage(payload, sizeof(payload));
+}
+
 //-----------------------------------------------------------------------------------/
 //---------------------------       PRIVATE       -----------------------------------/
 //-----------------------------------------------------------------------------------/
