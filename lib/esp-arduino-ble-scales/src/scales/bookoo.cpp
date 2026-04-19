@@ -122,7 +122,7 @@ bool BookooScales::decodeAndHandleNotification() {
   BookooMessageType messageType = static_cast<BookooMessageType>(dataBuffer[1]);
   uint8_t productNumber = dataBuffer[0];
 
-  size_t messageLength = dataBuffer.size();
+  size_t messageLength = RECEIVE_PROTOCOL_LENGTH;
 
   // Handle different message types
   if (productNumber == 0x03 && messageType == BookooMessageType::WEIGHT) {
@@ -207,10 +207,10 @@ bool BookooScales::decodeAndHandleNotification() {
   }
 
   // Remove processed message from the buffer
-  dataBuffer.erase(dataBuffer.begin(), dataBuffer.end());
+  dataBuffer.erase(dataBuffer.begin(), dataBuffer.begin() + messageLength);
 
   // Return whether there's more data to process
-  return dataBuffer.size() < RECEIVE_PROTOCOL_LENGTH;
+  return dataBuffer.size() >= RECEIVE_PROTOCOL_LENGTH;
 }
 
 bool BookooScales::performConnectionHandshake() {
