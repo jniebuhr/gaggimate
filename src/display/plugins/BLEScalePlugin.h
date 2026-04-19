@@ -12,7 +12,7 @@ constexpr unsigned int RECONNECTION_TRIES = 15;
 class BLEScalePlugin : public Plugin {
   public:
     BLEScalePlugin();
-    ~BLEScalePlugin();
+    ~BLEScalePlugin() noexcept;
 
     void setup(Controller *controller, PluginManager *pluginManager) override;
     void loop() override;

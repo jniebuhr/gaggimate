@@ -25,23 +25,28 @@ BLEScalePlugin BLEScales;
 
 BLEScalePlugin::BLEScalePlugin() = default;
 
-BLEScalePlugin::~BLEScalePlugin() {
-    // Disable active flag first to stop processing
-    active = false;
+BLEScalePlugin::~BLEScalePlugin() noexcept {
+    try {
+        // Disable active flag first to stop processing
+        active = false;
 
-    // Give any running callbacks time to complete
-    delay(100);
+        // Give any running callbacks time to complete
+        delay(100);
 
-    // Ensure proper cleanup
-    disconnect();
+        // Ensure proper cleanup
+        disconnect();
 
-    if (scanner != nullptr) {
-        // Stop scanning first
-        scanner->stopAsyncScan();
-        // Give it time to actually stop
-        delay(50);
-        delete scanner;
-        scanner = nullptr;
+        if (scanner != nullptr) {
+            // Stop scanning first
+            scanner->stopAsyncScan();
+            // Give it time to actually stop
+            delay(50);
+            delete scanner;
+            scanner = nullptr;
+        }
+    } catch (...) {
+        // Swallow: destructors must not propagate exceptions.
+        // NimBLE + Arduino delay() calls don't throw in practice; belt-and-braces.
     }
 }
 
