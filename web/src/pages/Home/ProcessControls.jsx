@@ -14,6 +14,7 @@ import { Tooltip } from '../../components/Tooltip.jsx';
 import { TemperatureControls } from '../../components/TemperatureControls.jsx';
 import { GrindTargetBar } from '../../components/GrindTargetBar.jsx';
 import { ProcessDisplay } from '../../components/ProcessDisplay.jsx';
+import { ProcessProfileChart } from '../../components/ProcessProfileChart.jsx';
 import { ModeIdleDisplay } from '../../components/ModeIdleDisplay.jsx';
 import { useProfileData } from '../../hooks/useProfileData.js';
 import { useGrindSettings } from '../../hooks/useGrindSettings.js';
@@ -233,10 +234,10 @@ const ProcessControls = ({ brew, mode }) => {
   // Memoize derived state values
   const derivedState = useMemo(
     () => ({
-      shouldExpand: brew && (active || finished),
+      shouldExpand: brew,
       tempReady: Math.abs(statusValues.targetTemperature - statusValues.currentTemperature) < TEMP_READY_THRESHOLD,
     }),
-    [brew, active, finished, statusValues.targetTemperature, statusValues.currentTemperature]
+    [brew, statusValues.targetTemperature, statusValues.currentTemperature]
   );
 
   // Get visibility flags for control elements
@@ -286,12 +287,20 @@ const ProcessControls = ({ brew, mode }) => {
       )}
 
       {!derivedState.shouldExpand && (
-        <div className='flex flex-1 items-center justify-center'>
-          <ModeIdleDisplay
-            mode={mode}
-            tempReady={derivedState.tempReady}
-            isGrindAvailable={isGrindAvailable}
-          />
+        <div className='flex flex-1 flex-col items-center justify-center gap-4'>
+          {brew && profileData ? (
+            <ProcessProfileChart
+              data={profileData}
+              processInfo={processInfo}
+              className='max-h-48 w-full'
+            />
+          ) : (
+            <ModeIdleDisplay
+              mode={mode}
+              tempReady={derivedState.tempReady}
+              isGrindAvailable={isGrindAvailable}
+            />
+          )}
         </div>
       )}
 
