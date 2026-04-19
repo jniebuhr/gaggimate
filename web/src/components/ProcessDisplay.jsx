@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { useMemo, memo } from 'preact/compat';
+import { ProcessProfileChart } from './ProcessProfileChart.jsx';
 
 const zeroPad = (num, places) => String(num).padStart(places, '0');
 
@@ -14,7 +15,7 @@ export function ProcessDisplay({ brew, grind, active, finished, processInfo, pro
 
   return (
     <div className='flex flex-1 items-center justify-center'>
-      {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
+      {(active || finished) && brew && <BrewProgress processInfo={processInfo} profileData={profileData} />}
       {(active || finished) && grind && <GrindProgress processInfo={processInfo} />}
       {!brew && !grind && (
         <ModeMessage mode={mode} tempReady={Math.abs(statusProp.targetTemperature - statusProp.currentTemperature) < 5} />
@@ -126,7 +127,35 @@ const ProgressDisplay = ({ processInfo, type }) => {
 
 const GrindProgress = ({ processInfo }) => <ProgressDisplay processInfo={processInfo} type='grind' />;
 
-const BrewProgress = ({ processInfo }) => <ProgressDisplay processInfo={processInfo} type='brew' />;
+const BrewProgress = ({ processInfo, profileData }) => {
+  // Calculate progress from processInfo
+  const { a: isActive, pt: progressTotal, pp: progressPosition, e: elapsedMs, s: stage, l: label, tt: targetType } = processInfo;
+  const progress = progressTotal > 0 ? (progressPosition / progressTotal) * 100.0 : 0;
+  const elapsedSeconds = Math.floor(elapsedMs / 1000);
+  const targetPrecision = targetType === 'volumetric' ? 1 : 0;
+  const targetDisplay = targetType === 'time' ? `${(progressTotal / 1000).toFixed(0)}s` : targetType === 'volumetric' ? `${progressTotal.toFixed(targetPrecision)}g` : '';
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center space-y-4 px-4'>
+      {profileData ? (
+        <ProcessProfileChart
+          data={profileData}
+          processInfo={processInfo}
+          className='max-h-48 w-full'
+        />
+      ) : (
+        <div className='text-center'>
+          <div className='text-base-content text-2xl font-bold sm:text-4xl'>{label || 'Unknown'}</div>
+        </div>
+      )}
+      <ProgressBar progress={progress} />
+      <div className='space-y-2 text-center'>
+        <div className='text-base-content/60 text-xs sm:text-sm'>{targetDisplay}</div>
+        <div className='text-base-content text-2xl font-bold sm:text-3xl'>{formatDuration(elapsedSeconds)}</div>
+      </div>
+    </div>
+  );
+};
 
 ProcessDisplay.propTypes = {
   brew: PropTypes.bool.isRequired,
