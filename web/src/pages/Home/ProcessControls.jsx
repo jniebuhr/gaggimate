@@ -252,6 +252,17 @@ const ProcessControls = ({ brew, mode }) => {
 
   return (
     <div className='flex min-h-[250px] flex-col justify-between lg:min-h-[350px]'>
+      <div className='mb-3'>
+        <QuickStatusStrip
+          mode={mode}
+          active={active}
+          finished={finished}
+          targetTemperature={statusValues.targetTemperature}
+          grindTarget={statusValues.grindTarget}
+          grindTargetVolume={statusValues.grindTargetVolume}
+          grindTargetDuration={statusValues.grindTargetDuration}
+        />
+      </div>
       {derivedState.shouldExpand && (
         <ProcessDisplay
           brew={brew}

@@ -1,5 +1,5 @@
-import { useCallback, useContext, useState, useEffect } from 'preact/hooks';
-import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { useState, useEffect } from 'preact/hooks';
+import { machine } from '../../services/ApiService.js';
 import {
   Chart,
   LineController,
@@ -20,7 +20,6 @@ Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement
 
 export function Home() {
   const [dashboardLayout, setDashboardLayout] = useState(DASHBOARD_LAYOUTS.ORDER_FIRST);
-  const apiService = useContext(ApiServiceContext);
 
   useEffect(() => {
     setDashboardLayout(getDashboardLayout());
@@ -38,16 +37,6 @@ export function Home() {
     };
   }, []);
 
-  const changeMode = useCallback(
-    mode => {
-      apiService.send({
-        tp: 'req:change-mode',
-        mode,
-      });
-    },
-    [apiService],
-  );
-
   const mode = machine.value.status.mode;
 
   return (
@@ -58,7 +47,7 @@ export function Home() {
         className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
         title='Process Controls'
       >
-        <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
+        <ProcessControls brew={mode === 1} mode={mode} />
       </Card>
 
       <Card
