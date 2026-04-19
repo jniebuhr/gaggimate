@@ -4,7 +4,7 @@
 #include "NimBLEComm.h"
 #include "cstring"
 
-class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLEClientCallbacks {
+class NimBLEClientController : public NimBLEScanCallbacks, NimBLEClientCallbacks {
   public:
     NimBLEClientController();
     void initClient();
@@ -61,7 +61,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *volumetricTareChar = nullptr;
     NimBLERemoteCharacteristic *ledControlChar = nullptr;
     NimBLERemoteCharacteristic *tofMeasurementChar = nullptr;
-    NimBLEAdvertisedDevice *serverDevice = nullptr;
+    NimBLEAddress serverAddress{};
     bool readyForConnection = false;
     xTaskHandle taskHandle;
 
@@ -80,14 +80,15 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     char autotuneBuffer[24]{};
     char pressureScaleBuffer[10]{};
 
-    // BLEAdvertisedDeviceCallbacks override
-    void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;
+    // NimBLEScanCallbacks override
+    void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override;
 
     // NimBLEClientCallbacks override
-    void onDisconnect(NimBLEClient *pServer) override;
+    void onDisconnect(NimBLEClient *pClient, int reason) override;
 
-    // Notification callback
-    void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) const;
+    // Notification callback (NimBLE-Arduino 2.x passes const payload)
+    void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, const uint8_t *pData, size_t length,
+                        bool isNotify) const;
 
     const char *LOG_TAG = "NimBLEClientController";
     static void loopTask(void *arg);

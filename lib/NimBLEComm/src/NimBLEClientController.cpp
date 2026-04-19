@@ -7,7 +7,7 @@ NimBLEClientController::NimBLEClientController() : client(nullptr) {}
 
 void NimBLEClientController::initClient() {
     NimBLEDevice::init("GPBLC");
-    NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
+    NimBLEDevice::setPower(9); // +9 dBm — maximum power
     NimBLEDevice::setMTU(128);
     client = NimBLEDevice::createClient();
     scanner = NimBLEDevice::getScan();
@@ -24,14 +24,14 @@ void NimBLEClientController::initClient() {
 
 void NimBLEClientController::scan() {
     readyForConnection = false;
-    scanner->clearDuplicateCache();
-    scanner->setAdvertisedDeviceCallbacks(this, true);
+    scanner->clearResults();
+    scanner->setScanCallbacks(this, true);
     scanner->setInterval(2000);
     scanner->setWindow(100);
     scanner->setMaxResults(0);
     scanner->setDuplicateFilter(false);
     scanner->setActiveScan(true);
-    scanner->start(0, nullptr, false); // Set to 0 for continuous
+    scanner->start(0, false, false); // duration=0 continuous, isContinue=false, restart=false
 }
 
 void NimBLEClientController::tare() {
@@ -78,7 +78,7 @@ bool NimBLEClientController::connectToServer() {
             return false; // Exit the connection attempt if timed out
         }
 
-        if (!client->connect(NimBLEAddress(serverDevice->getAddress()))) {
+        if (!client->connect(serverAddress)) {
             ESP_LOGE(LOG_TAG, "Failed connecting to BLE server. Retrying...");
             delay(500); // Add a small delay to avoid busy-waiting
         }
@@ -233,8 +233,8 @@ bool NimBLEClientController::isReadyForConnection() const { return readyForConne
 
 bool NimBLEClientController::isConnected() { return client != nullptr && client->isConnected(); }
 
-// BLEAdvertisedDeviceCallbacks override
-void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
+// NimBLEScanCallbacks override
+void NimBLEClientController::onResult(const NimBLEAdvertisedDevice *advertisedDevice) {
     ESP_LOGV(LOG_TAG, "Advertised Device found: %s \n", advertisedDevice->toString().c_str());
 
     // Check if this is the device we're looking for
@@ -243,13 +243,13 @@ void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) 
         if (advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))) {
             ESP_LOGI(LOG_TAG, "Found target BLE device. Connecting...");
             scanner->stop();
-            serverDevice = advertisedDevice;
+            serverAddress = advertisedDevice->getAddress();
             readyForConnection = true;
         }
     }
 }
 
-void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
+void NimBLEClientController::onDisconnect(NimBLEClient *pClient, int reason) {
     ESP_LOGI(LOG_TAG, "Disconnected from server, trying to reconnect...");
     tempControlChar = nullptr;
     pumpControlChar = nullptr;
@@ -279,8 +279,8 @@ void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
 }
 
 // Notification callback
-void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length,
-                                            bool) const {
+void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, const uint8_t *pData,
+                                            size_t length, bool) const {
     char rawData[129];
     size_t copyLength = length < (sizeof(rawData) - 1) ? length : (sizeof(rawData) - 1);
     memcpy(rawData, pData, copyLength);

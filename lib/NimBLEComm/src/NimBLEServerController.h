@@ -72,12 +72,12 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     char tofBuffer[16]{};
     char volumetricBuffer[16]{};
 
-    // BLEServerCallbacks overrides
-    void onConnect(NimBLEServer *pServer) override;
-    void onDisconnect(NimBLEServer *pServer) override;
+    // NimBLEServerCallbacks overrides (2.x gained NimBLEConnInfo + reason)
+    void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo) override;
+    void onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason) override;
 
-    // BLECharacteristicCallbacks overrides
-    void onWrite(NimBLECharacteristic *pCharacteristic) override;
+    // NimBLECharacteristicCallbacks overrides
+    void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) override;
 
     BLE_OTA_DFU ota_dfu_ble;
 
