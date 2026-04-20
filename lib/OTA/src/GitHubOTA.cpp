@@ -52,6 +52,7 @@ void GitHubOTA::checkForUpdates() {
         semver_str.replace("/", "");
         ESP_LOGI(TAG, "semver_str %s\n", semver_str.c_str());
         _latest_version_string = semver_str;
+        semver_free(&_latest_version);
         _latest_version = from_string(semver_str.c_str());
     } else {
         _latest_url = _release_url + "/";
@@ -65,6 +66,7 @@ void GitHubOTA::checkForUpdates() {
 
         version = version.substring(1);
         _latest_version_string = version;
+        semver_free(&_latest_version);
         _latest_version = from_string(version.c_str());
     }
 }
@@ -150,5 +152,6 @@ HTTPUpdateResult GitHubOTA::update_filesystem(const String &url) {
 }
 
 void GitHubOTA::setControllerVersion(const String &controller_version) {
+    semver_free(&_controller_version);
     _controller_version = from_string(controller_version.substring(1).c_str());
 }

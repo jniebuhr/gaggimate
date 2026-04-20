@@ -42,3 +42,23 @@ String implode(const std::vector<String> &strings, String delim) {
     return std::accumulate(std::next(strings.begin()), strings.end(), strings[0],
                            [delim](String a, String b) { return a + delim + b; });
 }
+
+void measure_heap(const String &label, std::function<void()> callback) {
+    ESP_LOGI("Common", "%s measurement started", label.c_str());
+    size_t freeBefore = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    size_t largestBefore = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    size_t totalBefore = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    float usedPercentBefore = (totalBefore - freeBefore) / (float)totalBefore * 100;
+    float fragmentationBefore = 100 - (largestBefore * 100) / freeBefore;
+
+    callback();
+
+    size_t freeAfter = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    size_t largestAfter = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    size_t totalAfter = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    float usedPercentAfter = (totalAfter - freeAfter) / (float)totalAfter * 100;
+    float fragmentationAfter = 100 - (largestAfter * 100) / freeAfter;
+
+    ESP_LOGI("Common", "%s changed heap usage from %.2f%% to %.2f%% by %dkB (%.2f%% to %.2f%% fragmentation)", label.c_str(),
+             usedPercentBefore, usedPercentAfter, (freeBefore - freeAfter) / 1024, fragmentationBefore, fragmentationAfter);
+}
