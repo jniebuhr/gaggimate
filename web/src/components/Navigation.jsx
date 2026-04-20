@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
@@ -35,14 +36,15 @@ const NAVIGATION_SECTIONS = [
   },
 ];
 
-function MenuItem({ icon, isNew = false, label, link }) {
+function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
   const { path } = useLocation();
   const isActive = path === link;
   const sharedClassName =
     'btn btn-sm relative h-10 w-full rounded-xl border transition-[gap,padding] duration-300 ease-in-out lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-3';
   const baseClassName = `${sharedClassName} border-transparent bg-transparent text-base-content/78 hover:border-base-content/12 hover:bg-base-content/6 hover:text-base-content focus-visible:border-primary/30 focus-visible:bg-primary/10 focus-visible:text-base-content focus-visible:outline-none`;
-  const activeClassName = `${sharedClassName} border border-primary/20 bg-primary/88 text-primary-content shadow-[0_12px24px_-16px_rgba(0,0,0,0.9)] hover:bg-primary hover:text-primary-content focus-visible:outline-none`;
+  const activeClassName = `${sharedClassName} border border-primary/20 bg-primary/88 text-primary-content shadow-[0_12px_24px_-16px_rgba(0,0,0,0.9)] hover:bg-primary hover:text-primary-content focus-visible:outline-none`;
   const className = isActive ? activeClassName : baseClassName;
+  const iconSize = collapsed ? 'lg' : undefined;
 
   return (
     <a
@@ -51,7 +53,7 @@ function MenuItem({ icon, isNew = false, label, link }) {
       aria-current={isActive ? 'page' : undefined}
       title={label}
     >
-      <FontAwesomeIcon icon={icon} />
+      <FontAwesomeIcon icon={icon} size={iconSize} />
       <span className='nav-text flex max-w-0 items-center gap-2 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 ease-in-out lg:group-hover:max-w-[10rem] lg:group-hover:opacity-100'>
         <span className='truncate'>{label}</span>
         {isNew && <span className='text-success text-[0.65rem] font-bold shrink-0'>NEW</span>}
@@ -61,16 +63,22 @@ function MenuItem({ icon, isNew = false, label, link }) {
 }
 
 export function Navigation() {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <nav className='nav-sidebar hidden lg:block lg:sticky lg:top-28 group'>
-      <div className='nav-content w-14 transition-all duration-300 ease-in-out group-hover:w-[14rem]'>
+    <nav
+      className='nav-sidebar hidden lg:block lg:sticky lg:top-28 group'
+      onMouseEnter={() => setCollapsed(false)}
+      onMouseLeave={() => setCollapsed(true)}
+    >
+      <div className={collapsed ? 'w-14' : 'w-[14rem]'}>
         <div className='max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-base-300/65 bg-base-100/90 p-4 shadow-[0_26px_60px_-44px_rgba(0,0,0,0.9)] backdrop-blur-xl'>
           {NAVIGATION_SECTIONS.map(section => (
             <div key={section.id}>
               {section.showDivider && <div className='h-3' />}
               <div className='space-y-2'>
                 {section.items.map(item => (
-                  <MenuItem key={item.link} {...item} />
+                  <MenuItem key={item.link} collapsed={collapsed} {...item} />
                 ))}
               </div>
             </div>
