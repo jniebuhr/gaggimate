@@ -156,18 +156,6 @@ bool WeighMyBrewScales::performConnectionHandshake() {
   }
   RemoteScales::log("Got weightCharacteristic and commandCharacteristic\n");
 
-  // Subscribe
-  NimBLERemoteDescriptor* notifyDescriptor = weightCharacteristic->getDescriptor(NimBLEUUID((uint16_t)0x2902));
-  RemoteScales::log("Got notifyDescriptor\n");
-  if (notifyDescriptor != nullptr) {
-    uint8_t value[2] = { 0x00, 0x01 };
-    notifyDescriptor->writeValue(value, 2, true);
-  }
-  else {
-    clientCleanup();
-    return false;
-  }
-
   sendNotificationRequest();
   RemoteScales::log("Sent notification request\n");
   lastHeartbeat = millis();
