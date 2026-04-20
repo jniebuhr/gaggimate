@@ -57,15 +57,6 @@ public:
   uint16_t write_binary(fs::FS *file_system, const char *path, uint8_t *data,
                         uint16_t length, bool keep_open = true);
   void onWrite(BLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) override;
-
-private:
-  // Per-command handlers split out of onWrite to keep cognitive complexity low.
-  void cmdFormatAndSendSize();
-  void cmdWriteRamChunk(const uint8_t *pData, uint16_t len);
-  void cmdFlushToFlash(const uint8_t *pData);
-  void cmdResetUpdate();
-  void cmdSetFileSize(const uint8_t *pData);
-  void cmdSetUpdateMode(const uint8_t *pData);
 };
 
 class BLE_OTA_DFU {
