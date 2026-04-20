@@ -51,7 +51,10 @@ class Settings {
     Settings() = default;
 
     void load();
-    void batchUpdate(const SettingsCallback &callback);
+    template <typename Callback> void batchUpdate(Callback &&callback) {
+        callback(this);
+        save();
+    }
     void save(bool noDelay = false);
 
     // Getters and setters

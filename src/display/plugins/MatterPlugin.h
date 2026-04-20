@@ -11,6 +11,7 @@ struct Event;
 class MatterPlugin : public Plugin {
   public:
     void setup(Controller *controller, PluginManager *pluginManager) override;
+    // All Matter work is event-driven; no per-tick polling needed.
     void loop() override {};
 
     // val is actually `esp_matter_attr_val_t *`; kept opaque to avoid pulling Matter headers into this include.

@@ -19,7 +19,7 @@ class BLECoordinator {
   private:
     BLECoordinator();
 
-    bool released;
+    bool released = true;
     bool invoked = false;
     std::vector<InitCallback> pending;
 };

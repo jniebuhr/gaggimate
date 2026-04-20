@@ -289,76 +289,99 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
     memcpy(rawData, pData, copyLength);
     rawData[copyLength] = '\0';
 
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(ERROR_CHAR_UUID))) {
-        int errorCode = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "Error read: %d", errorCode);
-        if (remoteErrorCallback != nullptr) {
-            remoteErrorCallback(errorCode);
-        }
+    const NimBLEUUID &uuid = pRemoteCharacteristic->getUUID();
+    if (uuid.equals(NimBLEUUID(ERROR_CHAR_UUID))) {
+        handleErrorNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(BREW_BTN_UUID))) {
+        handleBrewBtnNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(STEAM_BTN_UUID))) {
+        handleSteamBtnNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(SENSOR_DATA_UUID))) {
+        handleSensorDataNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
+        handleAutotuneResultNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
+        handleVolumetricNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
+        handleTofNotify(rawData);
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
-        int brewButtonStatus = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
-        if (brewBtnCallback != nullptr) {
-            brewBtnCallback(brewButtonStatus);
-        }
-    }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
-        int steamButtonStatus = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
-        if (steamBtnCallback != nullptr) {
-            steamBtnCallback(steamButtonStatus);
-        }
-    }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
-        float temperature = 0.0f;
-        float pressure = 0.0f;
-        float puckFlow = 0.0f;
-        float pumpFlow = 0.0f;
-        float puckResistance = 0.0f;
+}
 
-        int parsed = sscanf(rawData, "%f,%f,%f,%f,%f", &temperature, &pressure, &puckFlow, &pumpFlow, &puckResistance);
-        if (parsed < 5) {
-            ESP_LOGW(LOG_TAG, "Malformed sensor data payload: %s", rawData);
-            return;
-        }
+void NimBLEClientController::handleErrorNotify(const char *rawData) const {
+    int errorCode = atoi(rawData);
+    ESP_LOGV(LOG_TAG, "Error read: %d", errorCode);
+    if (remoteErrorCallback != nullptr) {
+        remoteErrorCallback(errorCode);
+    }
+}
 
-        ESP_LOGV(LOG_TAG,
-                 "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f",
-                 temperature, pressure, puckFlow, pumpFlow, puckResistance);
-        if (sensorCallback != nullptr) {
-            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
-        }
+void NimBLEClientController::handleBrewBtnNotify(const char *rawData) const {
+    int brewButtonStatus = atoi(rawData);
+    ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
+    if (brewBtnCallback != nullptr) {
+        brewBtnCallback(brewButtonStatus);
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
-        ESP_LOGV(LOG_TAG, "autotune result: %s", rawData);
-        if (autotuneResultCallback != nullptr) {
-            float Kp = 0.0f;
-            float Ki = 0.0f;
-            float Kd = 0.0f;
-            float Kf = 0.0f; // optional, defaults to zero
-            int parsed = sscanf(rawData, "%f,%f,%f,%f", &Kp, &Ki, &Kd, &Kf);
-            if (parsed < 3) {
-                ESP_LOGW(LOG_TAG, "Malformed autotune payload: %s", rawData);
-                return;
-            }
+}
 
-            autotuneResultCallback(Kp, Ki, Kd, Kf);
-        }
+void NimBLEClientController::handleSteamBtnNotify(const char *rawData) const {
+    int steamButtonStatus = atoi(rawData);
+    ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
+    if (steamBtnCallback != nullptr) {
+        steamBtnCallback(steamButtonStatus);
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
-        float value = atof(rawData);
-        ESP_LOGV(LOG_TAG, "Volumetric measurement: %.2f", value);
-        if (volumetricMeasurementCallback != nullptr) {
-            volumetricMeasurementCallback(value);
-        }
+}
+
+void NimBLEClientController::handleSensorDataNotify(const char *rawData) const {
+    float temperature = 0.0f;
+    float pressure = 0.0f;
+    float puckFlow = 0.0f;
+    float pumpFlow = 0.0f;
+    float puckResistance = 0.0f;
+
+    int parsed = sscanf(rawData, "%f,%f,%f,%f,%f", &temperature, &pressure, &puckFlow, &pumpFlow, &puckResistance);
+    if (parsed < 5) {
+        ESP_LOGW(LOG_TAG, "Malformed sensor data payload: %s", rawData);
+        return;
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
-        int value = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "ToF measurement: %d", value);
-        if (tofMeasurementCallback != nullptr) {
-            tofMeasurementCallback(value);
-        }
+
+    ESP_LOGV(LOG_TAG,
+             "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f",
+             temperature, pressure, puckFlow, pumpFlow, puckResistance);
+    if (sensorCallback != nullptr) {
+        sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
+    }
+}
+
+void NimBLEClientController::handleAutotuneResultNotify(const char *rawData) const {
+    ESP_LOGV(LOG_TAG, "autotune result: %s", rawData);
+    if (autotuneResultCallback == nullptr) {
+        return;
+    }
+    float Kp = 0.0f;
+    float Ki = 0.0f;
+    float Kd = 0.0f;
+    float Kf = 0.0f; // optional, defaults to zero
+    int parsed = sscanf(rawData, "%f,%f,%f,%f", &Kp, &Ki, &Kd, &Kf);
+    if (parsed < 3) {
+        ESP_LOGW(LOG_TAG, "Malformed autotune payload: %s", rawData);
+        return;
+    }
+    autotuneResultCallback(Kp, Ki, Kd, Kf);
+}
+
+void NimBLEClientController::handleVolumetricNotify(const char *rawData) const {
+    float value = atof(rawData);
+    ESP_LOGV(LOG_TAG, "Volumetric measurement: %.2f", value);
+    if (volumetricMeasurementCallback != nullptr) {
+        volumetricMeasurementCallback(value);
+    }
+}
+
+void NimBLEClientController::handleTofNotify(const char *rawData) const {
+    int value = atoi(rawData);
+    ESP_LOGV(LOG_TAG, "ToF measurement: %d", value);
+    if (tofMeasurementCallback != nullptr) {
+        tofMeasurementCallback(value);
     }
 }
 

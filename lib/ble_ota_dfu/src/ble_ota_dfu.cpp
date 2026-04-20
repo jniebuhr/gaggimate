@@ -151,133 +151,122 @@ uint16_t BLEOverTheAirDeviceFirmwareUpdate::write_binary(fs::FS *file_system, co
 }
 
 void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacteristic, NimBLEConnInfo & /*connInfo*/) {
-    // uint8_t *pData;
     std::string value = pCharacteristic->getValue();
     uint16_t len = value.length();
-    // pData = pCharacteristic->getData();
     uint8_t *pData = (uint8_t *)value.data();
 
-    // Check that data have been received
-    if (pData != NULL) {
-// #define DEBUG_BLE_OTA_DFU_RX
+    if (pData == nullptr) {
+        delay(1);
+        return;
+    }
+
 #ifdef DEBUG_BLE_OTA_DFU_RX
-        ESP_LOGD(TAG, "Write callback for characteristic %s of data length %d", pCharacteristic->getUUID().toString().c_str(),
-                 len);
-        Serial.print("RX  ");
-        for (uint16_t index = 0; index < len; index++) {
-            Serial.printf("%02X ", pData[i]);
-        }
-        Serial.println();
+    ESP_LOGD(TAG, "Write callback for characteristic %s of data length %d", pCharacteristic->getUUID().toString().c_str(), len);
+    Serial.print("RX  ");
+    for (uint16_t index = 0; index < len; index++) {
+        Serial.printf("%02X ", pData[index]);
+    }
+    Serial.println();
 #endif
-        switch (pData[0]) {
-            // Send total and used sizes
-        case 0xEF: {
-            FLASH.format();
 
-            // Send flash size
-            uint16_t total_size = FLASH.totalBytes();
-            uint16_t used_size = FLASH.usedBytes();
-            uint8_t flash_size[] = {0xEF,
-                                    static_cast<uint8_t>(total_size >> 16),
-                                    static_cast<uint8_t>(total_size >> 8),
-                                    static_cast<uint8_t>(total_size),
-                                    static_cast<uint8_t>(used_size >> 16),
-                                    static_cast<uint8_t>(used_size >> 8),
-                                    static_cast<uint8_t>(used_size)};
-            OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(flash_size, 7);
-            OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
-            delay(10);
-        } break;
-
-            // Write parts to RAM
-        case 0xFB: {
-            // pData[1] is the position of the next part
-            for (uint16_t index = 0; index < len - 2; index++) {
-                updater[!selected_updater][(pData[1] * MTU) + index] = pData[index + 2];
-            }
-        } break;
-
-            // Write updater content to the flash
-        case 0xFC: {
-            selected_updater = !selected_updater;
-            write_len[selected_updater] = (pData[1] * 256) + pData[2];
-            current_progression = (pData[3] * 256) + pData[4];
-
-            received_file_size += write_binary(&FLASH, "/update.bin", updater[selected_updater], write_len[selected_updater]);
-
-            if ((current_progression < parts - 1) && !FASTMODE) {
-                uint8_t progression[] = {0xF1, (uint8_t)((current_progression + 1) / 256),
-                                         (uint8_t)((current_progression + 1) % 256)};
-                OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(progression, 3);
-                OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
-                delay(10);
-            }
-
-            ESP_LOGI(TAG, "Upload progress: %d/%d", current_progression + 1, parts);
-            if (current_progression + 1 == parts) {
-                // If all the file has been received, send the progression
-                uint8_t progression[] = {0xF2, (uint8_t)((current_progression + 1) / 256),
-                                         (uint8_t)((current_progression + 1) % 256)};
-                OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(progression, 3);
-                OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
-                delay(10);
-
-                if (received_file_size != expected_file_size) {
-                    // received_file_size += (pData[1] * 256) + pData[2];
-                    received_file_size +=
-                        write_binary(&FLASH, "/update.bin", updater[selected_updater], write_len[selected_updater]);
-
-                    if (received_file_size > expected_file_size) {
-                        ESP_LOGW(TAG, "Unexpected size:\n Expected: %d\nReceived: %d", expected_file_size, received_file_size);
-                    }
-
-                } else {
-                    ESP_LOGI(TAG, "Installing update");
-
-                    // Start the installation
-                    write_binary(&FLASH, "/update.bin", nullptr, 0, false);
-                    bool start_update = true;
-                    xQueueOverwrite(start_update_queue, &start_update);
-                }
-            }
-        } break;
-
-            // Remove previous file and send transfer mode
-        case 0xFD: {
-            // Remove previous (failed?) update
-            if (FLASH.exists("/update.bin")) {
-                ESP_LOGI(TAG, "Removing previous update");
-                FLASH.remove("/update.bin");
-            }
-
-            // Send mode ("fast" or "slow")
-            uint8_t mode[] = {0xAA, FASTMODE};
-            OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(mode, 2);
-            OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
-            delay(10);
-        } break;
-
-            // Keep track of the received file and of the expected file sizes
-        case 0xFE:
-            received_file_size = 0;
-            expected_file_size = (pData[1] * 16777216) + (pData[2] * 65536) + (pData[3] * 256) + pData[4];
-
-            ESP_LOGI(TAG, "Available space: %d\nFile Size: %d\n", FLASH.totalBytes() - FLASH.usedBytes(), expected_file_size);
-            break;
-
-            // Switch to update mode
-        case 0xFF:
-            parts = (pData[1] * 256) + pData[2];
-            MTU = (pData[3] * 256) + pData[4];
-            break;
-
-        default:
-            ESP_LOGW(TAG, "Unknown command: %02X", pData[0]);
-            break;
-        }
-        // ESP_LOGE(TAG, "Not stuck in loop");
+    switch (pData[0]) {
+    case 0xEF: cmdFormatAndSendSize(); break;
+    case 0xFB: cmdWriteRamChunk(pData, len); break;
+    case 0xFC: cmdFlushToFlash(pData); break;
+    case 0xFD: cmdResetUpdate(); break;
+    case 0xFE: cmdSetFileSize(pData); break;
+    case 0xFF: cmdSetUpdateMode(pData); break;
+    default:   ESP_LOGW(TAG, "Unknown command: %02X", pData[0]); break;
     }
     delay(1);
+}
+
+void BLEOverTheAirDeviceFirmwareUpdate::cmdFormatAndSendSize() {
+    FLASH.format();
+
+    uint16_t total_size = FLASH.totalBytes();
+    uint16_t used_size = FLASH.usedBytes();
+    uint8_t flash_size[] = {0xEF,
+                            static_cast<uint8_t>(total_size >> 16),
+                            static_cast<uint8_t>(total_size >> 8),
+                            static_cast<uint8_t>(total_size),
+                            static_cast<uint8_t>(used_size >> 16),
+                            static_cast<uint8_t>(used_size >> 8),
+                            static_cast<uint8_t>(used_size)};
+    OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(flash_size, 7);
+    OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
+    delay(10);
+}
+
+void BLEOverTheAirDeviceFirmwareUpdate::cmdWriteRamChunk(const uint8_t *pData, uint16_t len) {
+    // pData[1] is the position of the next part
+    for (uint16_t index = 0; index < len - 2; index++) {
+        updater[!selected_updater][(pData[1] * MTU) + index] = pData[index + 2];
+    }
+}
+
+void BLEOverTheAirDeviceFirmwareUpdate::cmdFlushToFlash(const uint8_t *pData) {
+    selected_updater = !selected_updater;
+    write_len[selected_updater] = (pData[1] * 256) + pData[2];
+    current_progression = (pData[3] * 256) + pData[4];
+
+    received_file_size += write_binary(&FLASH, "/update.bin", updater[selected_updater], write_len[selected_updater]);
+
+    if ((current_progression < parts - 1) && !FASTMODE) {
+        uint8_t progression[] = {0xF1, (uint8_t)((current_progression + 1) / 256),
+                                 (uint8_t)((current_progression + 1) % 256)};
+        OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(progression, 3);
+        OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
+        delay(10);
+    }
+
+    ESP_LOGI(TAG, "Upload progress: %d/%d", current_progression + 1, parts);
+    if (current_progression + 1 != parts) {
+        return;
+    }
+
+    // Full file received: ack, then either fill remainder or start install.
+    uint8_t progression[] = {0xF2, (uint8_t)((current_progression + 1) / 256),
+                             (uint8_t)((current_progression + 1) % 256)};
+    OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(progression, 3);
+    OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
+    delay(10);
+
+    if (received_file_size != expected_file_size) {
+        received_file_size += write_binary(&FLASH, "/update.bin", updater[selected_updater], write_len[selected_updater]);
+        if (received_file_size > expected_file_size) {
+            ESP_LOGW(TAG, "Unexpected size:\n Expected: %d\nReceived: %d", expected_file_size, received_file_size);
+        }
+        return;
+    }
+
+    ESP_LOGI(TAG, "Installing update");
+    write_binary(&FLASH, "/update.bin", nullptr, 0, false);
+    bool start_update = true;
+    xQueueOverwrite(start_update_queue, &start_update);
+}
+
+void BLEOverTheAirDeviceFirmwareUpdate::cmdResetUpdate() {
+    if (FLASH.exists("/update.bin")) {
+        ESP_LOGI(TAG, "Removing previous update");
+        FLASH.remove("/update.bin");
+    }
+
+    uint8_t mode[] = {0xAA, FASTMODE};
+    OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(mode, 2);
+    OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
+    delay(10);
+}
+
+void BLEOverTheAirDeviceFirmwareUpdate::cmdSetFileSize(const uint8_t *pData) {
+    received_file_size = 0;
+    expected_file_size = (pData[1] * 16777216) + (pData[2] * 65536) + (pData[3] * 256) + pData[4];
+    ESP_LOGI(TAG, "Available space: %d\nFile Size: %d\n", FLASH.totalBytes() - FLASH.usedBytes(), expected_file_size);
+}
+
+void BLEOverTheAirDeviceFirmwareUpdate::cmdSetUpdateMode(const uint8_t *pData) {
+    parts = (pData[1] * 256) + pData[2];
+    MTU = (pData[3] * 256) + pData[4];
 }
 
 bool BLE_OTA_DFU::configure_OTA(NimBLEServer *pServer) {

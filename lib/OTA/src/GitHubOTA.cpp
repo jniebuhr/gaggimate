@@ -23,8 +23,11 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     _progress_callback = progress_callback;
 
     Updater.rebootOnUpdate(false);
+    // Linker-embedded bundle; the two symbols are distinct arrays per the C++ spec
+    // (cpp:S5658). Cast to uintptr_t to compute length via integer arithmetic.
     _wifi_client.setCACertBundle(x509_crt_imported_bundle_bin_start,
-                                 x509_crt_imported_bundle_bin_end - x509_crt_imported_bundle_bin_start);
+                                 reinterpret_cast<uintptr_t>(x509_crt_imported_bundle_bin_end) -
+                                     reinterpret_cast<uintptr_t>(x509_crt_imported_bundle_bin_start));
 
     Updater.onStart(update_started);
     Updater.onEnd(update_finished);

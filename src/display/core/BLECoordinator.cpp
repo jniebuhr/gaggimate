@@ -9,9 +9,7 @@ BLECoordinator &BLECoordinator::instance() {
     return inst;
 }
 
-BLECoordinator::BLECoordinator() {
-    released = true;
-}
+BLECoordinator::BLECoordinator() = default;
 
 void BLECoordinator::requestNimBleInit(InitCallback cb) {
     if (!cb)
