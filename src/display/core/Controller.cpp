@@ -745,7 +745,6 @@ void Controller::handleWaterPress() {
         setMode(MODE_WATER);
     }
     if (!isActive()) { activate(); return; }
-    if (settings.isMomentaryButtons()) { deactivate(); }
 }
 
 void Controller::handleRelease() {
