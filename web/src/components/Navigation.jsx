@@ -1,16 +1,28 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
-import { faList } from '@fortawesome/free-solid-svg-icons/faList';
-import { faLeaf } from '@fortawesome/free-solid-svg-icons/faLeaf';
-import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
 import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faList } from '@fortawesome/free-solid-svg-icons/faList';
+import { faLeaf } from '@fortawesome/free-solid-svg-icons/faLeaf';
+import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
+
+const STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
+
+const readCollapsed = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    // Default to true (collapsed) if nothing stored yet
+    return stored === null ? true : stored === 'true';
+  } catch {
+    return true;
+  }
+};
 
 const NAVIGATION_SECTIONS = [
   {
@@ -62,8 +74,15 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
   );
 }
 
-export function Navigation() {
-  const [collapsed, setCollapsed] = useState(true);
+export function Navigation({ onCollapsedChange } = {}) {
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(collapsed));
+    } catch {}
+    onCollapsedChange?.(collapsed);
+  }, [collapsed]);
 
   return (
     <nav
@@ -71,7 +90,7 @@ export function Navigation() {
       onMouseEnter={() => setCollapsed(false)}
       onMouseLeave={() => setCollapsed(true)}
     >
-      <div className={collapsed ? 'w-14' : 'w-[14rem]'}>
+      <div className={`transition-[width] duration-300 ease-in-out ${collapsed ? 'w-14' : 'w-[14rem]'}`}>
         <div className='max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-base-300/65 bg-base-100/90 p-4 shadow-[0_26px_60px_-44px_rgba(0,0,0,0.9)] backdrop-blur-xl'>
           {NAVIGATION_SECTIONS.map(section => (
             <div key={section.id}>
