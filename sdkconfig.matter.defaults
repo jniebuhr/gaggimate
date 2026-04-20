@@ -1,14 +1,9 @@
-# GaggiMate Matter sdkconfig defaults — dual-framework (arduino + espidf)
-# under pioarduino 55.03.38-1 (IDF 5.5.4, Arduino core 3.3.x).
-# Wired via board_build.cmake_extra_args=-DSDKCONFIG_DEFAULTS=sdkconfig.matter.defaults
-# on env:display ONLY. Dedicated filename so pio's arduino-only envs can't
-# clobber it when they regenerate sdkconfig.defaults from the Arduino template.
+# Matter sdkconfig for env:display (+ display-headless variants). Applied via
+# board_build.cmake_extra_args=-DSDKCONFIG_DEFAULTS=sdkconfig.matter.defaults.
 
 CONFIG_IDF_TARGET="esp32s3"
 
-# --- Flash: LilyGo-T-RGB is QIO flash + OPI PSRAM (memory_type=qio_opi). ---
-# Must set QIO explicitly; Arduino template baked DIO into ESPTOOLPY_FLASHMODE
-# string and bootloader compiled for DIO panics in ROM before logs come up.
+# --- Flash: QIO + 80 MHz for LilyGo-T-RGB (memory_type=qio_opi) ---
 CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
 CONFIG_ESPTOOLPY_FLASHMODE="qio"
 CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
@@ -41,9 +36,7 @@ CONFIG_USE_BLE_ONLY_FOR_COMMISSIONING=y
 CONFIG_ENABLE_ESP32_BLE_CONTROLLER=y
 CONFIG_BT_CTRL_RUN_IN_FLASH_ONLY=y
 
-# Quiet the NimBLE host-stack GATT chatter — every read/write was logging
-# at INFO which floods serial. Kconfig choice: must unset INFO (template
-# default) before WARNING gets picked up.
+# Must explicitly unset template's default=INFO for Kconfig choice to honour WARN.
 # CONFIG_BT_NIMBLE_LOG_LEVEL_INFO is not set
 CONFIG_BT_NIMBLE_LOG_LEVEL_WARNING=y
 
@@ -71,17 +64,11 @@ CONFIG_MBEDTLS_KEY_EXCHANGE_RSA_PSK=y
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
 
-# --- Socket knobs borrowed from ESPHome PR #10647 ---
-# CORE_LOCKING: 24-200% socket op speedup per ESPHome's benchmarks. Was the
-# Arduino framework default; IDF default was off.
+# --- LWIP (socket tuning borrowed from ESPHome PR #10647) ---
 CONFIG_LWIP_TCPIP_CORE_LOCKING=y
-# Catches socket API misuse from non-tcpip threads at assert time instead of
-# silently stomping internal state (later manifests as mystery resets).
 CONFIG_LWIP_CHECK_THREAD_SAFETY=y
-# NOTE: ESPHome also sets CONFIG_LOG_DYNAMIC_LEVEL_CONTROL=n to save DRAM.
-# We keep it enabled — MatterPlugin::start() calls esp_log_level_set() to
-# quiet esp_matter_attribute + chip[DIS] at runtime. Disabling the knob
-# makes esp_log_level_set a no-op and the spam returns.
+# Keep LOG_DYNAMIC_LEVEL_CONTROL=y: MatterPlugin::start() uses
+# esp_log_level_set() at runtime to quiet esp_matter_attribute + chip[DIS].
 
 # --- IPv6 ---
 CONFIG_LWIP_IPV6_AUTOCONFIG=y
@@ -90,14 +77,7 @@ CONFIG_LWIP_IPV6_NUM_ADDRESSES=6
 # --- OpenThread off (ESP32-S3 has no 802.15.4 radio) ---
 CONFIG_OPENTHREAD_ENABLED=n
 
-# --- Task WDT: keep task checks, drop idle-task checks ---
-# task_wdt fires when a registered task fails to feed the WDT in time —
-# that's a genuine hang and should panic (default: keep CONFIG_ESP_TASK_WDT
-# + PANIC enabled). But CPU0/CPU1 idle-task checks fire when *legitimate*
-# long-running operations (e.g. ProfileManager::listProfiles() walking
-# SPIFFS entries, which blocks on esp_flash_read per stat) starve IDLE
-# for > 5 s. That's a latency characteristic, not a bug. ESPHome PR
-# #10647 ships with both idle checks disabled for the same reason.
+# --- Task WDT: drop idle-task checks (long SPIFFS scans starve IDLE legitimately) ---
 CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
 CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
 
@@ -113,12 +93,8 @@ CONFIG_CHIP_TASK_STACK_SIZE=8192
 # --- Logging ---
 CONFIG_CHIP_LOG_DEFAULT_LEVEL_PROGRESS=y
 
-# Silence esp_matter_attribute's per-read/write INFO spam. It fires on every
-# attribute read AND write (temperature streams at ~4 Hz -> 8 lines/sec just
-# for MeasuredValue). Lift to WARNING so the interesting state transitions
-# still log but steady-state traffic is quiet.
-# Applied via esp_log_level_set() in MatterPlugin::start() at runtime; the
-# Kconfig compile-time level below is the fallback for CHIP subsystem tags.
+# esp_matter_attribute / chip[DIS] tags further silenced at runtime via
+# esp_log_level_set() in MatterPlugin::start().
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 CONFIG_LOG_MAXIMUM_LEVEL_VERBOSE=y
 
@@ -132,6 +108,5 @@ CONFIG_PARTITION_TABLE_FILENAME="partitions/matter_16mb.csv"
 
 # --- Arduino (as-component) trims — real fix via scripts/patch_arduino_libs.py ---
 CONFIG_ARDUINO_SELECTIVE_COMPILATION=y
-# Arduino's cores/esp32/main.cpp only defines app_main when this is set;
-# our src/ does not supply one.
+# Arduino's cores/esp32/main.cpp only defines app_main when =y; src/ has no app_main.
 CONFIG_AUTOSTART_ARDUINO=y
