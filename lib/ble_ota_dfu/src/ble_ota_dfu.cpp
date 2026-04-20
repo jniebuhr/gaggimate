@@ -4,6 +4,29 @@
 QueueHandle_t start_update_queue;
 QueueHandle_t update_uploading_queue;
 
+// Hex-dump the current value of a TX characteristic prior to notify().
+// Enabled by defining DEBUG_BLE_OTA_DFU_TX at build time; compiles to a no-op
+// otherwise. Replaces the former NimBLECharacteristicCallbacks::onNotify hook
+// (removed from the base class in NimBLE-Arduino 2.x).
+static inline void logTxPacket(BLECharacteristic *pChar) {
+#ifdef DEBUG_BLE_OTA_DFU_TX
+    if (pChar == nullptr) {
+        return;
+    }
+    std::string value = pChar->getValue();
+    uint16_t len = value.length();
+    const uint8_t *pData = reinterpret_cast<const uint8_t *>(value.data());
+    ESP_LOGD(TAG, "TX on %s length=%u", pChar->getUUID().toString().c_str(), (unsigned)len);
+    Serial.print("TX  ");
+    for (uint16_t i = 0; i < len; i++) {
+        Serial.printf("%02X ", pData[i]);
+    }
+    Serial.println();
+#else
+    (void)pChar;
+#endif
+}
+
 void task_install_update(void *parameters) {
     FS file_system = FLASH;
     const char path[] = "/update.bin";
@@ -194,6 +217,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::cmdFormatAndSendSize() {
                             static_cast<uint8_t>(used_size >> 8),
                             static_cast<uint8_t>(used_size)};
     OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(flash_size, 7);
+    logTxPacket(OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX);
     OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
     delay(10);
 }
@@ -216,6 +240,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::cmdFlushToFlash(const uint8_t *pData) {
         uint8_t progression[] = {0xF1, (uint8_t)((current_progression + 1) / 256),
                                  (uint8_t)((current_progression + 1) % 256)};
         OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(progression, 3);
+        logTxPacket(OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX);
         OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
         delay(10);
     }
@@ -229,6 +254,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::cmdFlushToFlash(const uint8_t *pData) {
     uint8_t progression[] = {0xF2, (uint8_t)((current_progression + 1) / 256),
                              (uint8_t)((current_progression + 1) % 256)};
     OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(progression, 3);
+    logTxPacket(OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX);
     OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
     delay(10);
 
@@ -254,6 +280,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::cmdResetUpdate() {
 
     uint8_t mode[] = {0xAA, FASTMODE};
     OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(mode, 2);
+    logTxPacket(OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX);
     OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->notify();
     delay(10);
 }
@@ -368,15 +395,18 @@ bool BLE_OTA_DFU::connected() {
 void BLE_OTA_DFU::send_OTA_DFU(uint8_t value) {
     uint8_t _value = value;
     this->pCharacteristic_BLE_OTA_DFU_TX->setValue(&_value, 1);
+    logTxPacket(this->pCharacteristic_BLE_OTA_DFU_TX);
     this->pCharacteristic_BLE_OTA_DFU_TX->notify();
 }
 
 void BLE_OTA_DFU::send_OTA_DFU(uint8_t *value, size_t size) {
     this->pCharacteristic_BLE_OTA_DFU_TX->setValue(value, size);
+    logTxPacket(this->pCharacteristic_BLE_OTA_DFU_TX);
     this->pCharacteristic_BLE_OTA_DFU_TX->notify();
 }
 
 void BLE_OTA_DFU::send_OTA_DFU(String value) {
     this->pCharacteristic_BLE_OTA_DFU_TX->setValue(value.c_str());
+    logTxPacket(this->pCharacteristic_BLE_OTA_DFU_TX);
     this->pCharacteristic_BLE_OTA_DFU_TX->notify();
 }
