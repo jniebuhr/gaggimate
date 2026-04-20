@@ -237,7 +237,7 @@ class Settings {
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
 
     void doSave();
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
     [[noreturn]] static void loopTask(void *arg);
 };
 

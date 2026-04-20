@@ -12,3 +12,20 @@ data/w
 *.orig
 src/version.h
 src/display/ui/default/lvgl/project.info
+
+# ESP-IDF / pioarduino build artifacts regenerated on every build
+sdkconfig.display
+sdkconfig.display-headless
+sdkconfig.display-headless-8m
+sdkconfig.display-headless-4m
+sdkconfig.controller
+sdkconfig.display.stale
+managed_components/
+managed_components.bak/
+dependencies.lock
+third_party/
+.dummy/
+.cache/
+CMakeCache.txt
+# Claude / Serena workspace
+.claude/

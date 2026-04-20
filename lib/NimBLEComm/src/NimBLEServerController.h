@@ -82,7 +82,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     BLE_OTA_DFU ota_dfu_ble;
 
     const char *LOG_TAG = "NimBLEClientController";
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
     static void loopTask(void *arg);
 };
 

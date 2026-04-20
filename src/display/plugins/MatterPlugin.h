@@ -26,6 +26,10 @@ class MatterPlugin : public Plugin {
     PluginManager *pluginManager = nullptr;
     bool started = false;
     uint16_t endpointId = 0;
+    // Breaks the Matter write → Controller::setX → event → onXChange → Matter
+    // update → pre-attribute-change callback → Matter write ... recursion
+    // that stack-overflows in ~25 frames.
+    bool applyingFromMatter = false;
 };
 
 #endif // GAGGIMATE_MATTER

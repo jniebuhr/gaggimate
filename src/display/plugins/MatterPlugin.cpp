@@ -166,23 +166,27 @@ void MatterPlugin::onAttributeWrite(uint16_t endpoint_id, uint32_t cluster_id, u
     if (cluster_id == OnOff::Id && attribute_id == OnOff::Attributes::OnOff::Id) {
         const bool on = val->val.b;
         ESP_LOGI(LOG_TAG, "OnOff write: %d", on);
+        applyingFromMatter = true;
         if (on) {
             controller->deactivateStandby();
         } else {
             controller->activateStandby();
         }
+        applyingFromMatter = false;
         return;
     }
     if (cluster_id == TemperatureControl::Id && attribute_id == TemperatureControl::Attributes::TemperatureSetpoint::Id) {
         const float temp = centiToFloatC(val->val.i16);
         ESP_LOGI(LOG_TAG, "TemperatureSetpoint write: %.2f C", temp);
+        applyingFromMatter = true;
         controller->setTargetTemp(temp);
+        applyingFromMatter = false;
         return;
     }
 }
 
 void MatterPlugin::onModeChange(int mode) {
-    if (!started)
+    if (!started || applyingFromMatter)
         return;
     const bool on = (mode != MODE_STANDBY);
     esp_matter_attr_val_t v = esp_matter_bool(on);
@@ -191,7 +195,7 @@ void MatterPlugin::onModeChange(int mode) {
 }
 
 void MatterPlugin::onTargetTempChange(float temperature) {
-    if (!started)
+    if (!started || applyingFromMatter)
         return;
     esp_matter_attr_val_t v = esp_matter_int16(floatCtoCenti(temperature));
     esp_matter::attribute::update(endpointId, chip::app::Clusters::TemperatureControl::Id,
@@ -199,7 +203,7 @@ void MatterPlugin::onTargetTempChange(float temperature) {
 }
 
 void MatterPlugin::onCurrentTempChange(float temperature) {
-    if (!started)
+    if (!started || applyingFromMatter)
         return;
     esp_matter_attr_val_t v = esp_matter_nullable_int16(floatCtoCenti(temperature));
     esp_matter::attribute::update(endpointId, chip::app::Clusters::TemperatureMeasurement::Id,

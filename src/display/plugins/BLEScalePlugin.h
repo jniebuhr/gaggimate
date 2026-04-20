@@ -56,7 +56,9 @@ class BLEScalePlugin : public Plugin {
     std::string uuid;
 
     unsigned long lastUpdate = 0;
+    unsigned long lastConnectAttempt = 0;
     unsigned int reconnectionTries = 0;
+    static constexpr unsigned long CONNECT_RETRY_INTERVAL_MS = 2000;
 
     // Rate limiting for callbacks
     mutable unsigned long lastMeasurementTime = 0;

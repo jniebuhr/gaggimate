@@ -32,10 +32,10 @@ class PressureSensor {
     int16_t _adc_floor;
     ADS1115 *ads = nullptr;
     pressure_callback_t _callback;
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
 
     const char *LOG_TAG = "PressureSensor";
-    static void loopTask(void *arg);
+    [[noreturn]] static void loopTask(void *arg);
 };
 
 #endif // PRESSURESENSOR_H

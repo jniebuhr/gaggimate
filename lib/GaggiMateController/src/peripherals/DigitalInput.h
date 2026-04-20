@@ -16,7 +16,7 @@ class DigitalInput {
   private:
     uint8_t _pin;
     uint8_t _last_state = HIGH;
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
     input_callback_t _callback;
 
     const char *LOG_TAG = "Heater";

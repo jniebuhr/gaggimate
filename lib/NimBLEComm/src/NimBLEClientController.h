@@ -63,7 +63,7 @@ class NimBLEClientController : public NimBLEScanCallbacks, NimBLEClientCallbacks
     NimBLERemoteCharacteristic *tofMeasurementChar = nullptr;
     NimBLEAddress serverAddress{};
     bool readyForConnection = false;
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
 
     remote_err_callback_t remoteErrorCallback = nullptr;
     brew_callback_t brewBtnCallback = nullptr;

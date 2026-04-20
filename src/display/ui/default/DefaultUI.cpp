@@ -701,7 +701,9 @@ void DefaultUI::handleScreenChange() {
         }
 
         _ui_screen_change(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0, targetScreenInit);
-        lv_obj_del(current);
+        if (current && lv_obj_is_valid(current) && current != *targetScreen) {
+            lv_obj_del(current);
+        }
         rerender = true;
     }
 }

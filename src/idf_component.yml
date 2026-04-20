@@ -1,2 +1,5 @@
 dependencies:
-  idf: '>=5.1'
+  espressif/esp_matter:
+    version: 1.4.0
+  idf:
+    version: '>=5.5,<5.6'
