@@ -2,13 +2,11 @@
 if (import.meta.env.DEV) {
   await import('preact/debug');
 }
-
 import './style.css';
+import { useState } from 'preact/hooks';
 import { initializeTheme } from './utils/themeManager.js';
-
 import { render } from 'preact';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
-
 import { Header } from './components/Header.jsx';
 import { Footer } from './components/Footer.jsx';
 import { Home } from './pages/Home/index.jsx';
@@ -29,6 +27,8 @@ import { StatisticsPage } from './pages/Statistics/index.jsx';
 const apiService = new ApiService();
 
 export function App() {
+  const [navCollapsed, setNavCollapsed] = useState(true);
+
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
@@ -39,12 +39,15 @@ export function App() {
               Skip to main content
             </a>
             <Header />
-
             <main id='main-content' className='flex-1'>
               <div className='mx-auto w-full px-4 py-4 lg:px-8 lg:py-6 xl:container'>
-                <div className='grid grid-cols-1 gap-5 lg:grid-cols-12'>
-                  <Navigation />
-                  <div className='lg:col-span-10'>
+                <div
+                  className={`grid transition-[grid-template-columns] duration-300 ease-in-out ${
+                    navCollapsed ? 'grid-cols-[3.5rem_1fr]' : 'grid-cols-[14rem_1fr]'
+                  }`}
+                >
+                  <Navigation onCollapsedChange={setNavCollapsed} />
+                  <div className='min-w-0'>
                     <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
                       <ErrorBoundary>
                         <Router>
@@ -83,5 +86,4 @@ export function App() {
 
 // Must be called before render
 initializeTheme();
-
 render(<App />, document.getElementById('app'));
