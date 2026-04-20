@@ -71,12 +71,35 @@ CONFIG_MBEDTLS_KEY_EXCHANGE_RSA_PSK=y
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
 
+# --- Socket knobs borrowed from ESPHome PR #10647 ---
+# CORE_LOCKING: 24-200% socket op speedup per ESPHome's benchmarks. Was the
+# Arduino framework default; IDF default was off.
+CONFIG_LWIP_TCPIP_CORE_LOCKING=y
+# Catches socket API misuse from non-tcpip threads at assert time instead of
+# silently stomping internal state (later manifests as mystery resets).
+CONFIG_LWIP_CHECK_THREAD_SAFETY=y
+# NOTE: ESPHome also sets CONFIG_LOG_DYNAMIC_LEVEL_CONTROL=n to save DRAM.
+# We keep it enabled — MatterPlugin::start() calls esp_log_level_set() to
+# quiet esp_matter_attribute + chip[DIS] at runtime. Disabling the knob
+# makes esp_log_level_set a no-op and the spam returns.
+
 # --- IPv6 ---
 CONFIG_LWIP_IPV6_AUTOCONFIG=y
 CONFIG_LWIP_IPV6_NUM_ADDRESSES=6
 
 # --- OpenThread off (ESP32-S3 has no 802.15.4 radio) ---
 CONFIG_OPENTHREAD_ENABLED=n
+
+# --- Task WDT: keep task checks, drop idle-task checks ---
+# task_wdt fires when a registered task fails to feed the WDT in time —
+# that's a genuine hang and should panic (default: keep CONFIG_ESP_TASK_WDT
+# + PANIC enabled). But CPU0/CPU1 idle-task checks fire when *legitimate*
+# long-running operations (e.g. ProfileManager::listProfiles() walking
+# SPIFFS entries, which blocks on esp_flash_read per stat) starve IDLE
+# for > 5 s. That's a latency characteristic, not a bug. ESPHome PR
+# #10647 ships with both idle checks disabled for the same reason.
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
 
 # --- FreeRTOS ---
 CONFIG_FREERTOS_HZ=1000
