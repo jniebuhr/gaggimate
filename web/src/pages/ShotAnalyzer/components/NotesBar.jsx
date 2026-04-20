@@ -140,9 +140,7 @@ function LoadedShotSummary({
     <button
       type='button'
       className='shot-analyzer-notes-scroll block w-full min-w-0 cursor-pointer overflow-x-auto overflow-y-hidden px-1 py-1.5 text-center'
-      onClick={() =>
-        !isEditing && !isSelectionPending && onToggleNotesExpanded && onToggleNotesExpanded()
-      }
+      onClick={() => !isEditing && !isSelectionPending && onToggleNotesExpanded?.()}
       title={isSelectionPending ? 'Loading shot...' : 'Click to expand notes'}
     >
       <div
@@ -350,143 +348,72 @@ function useNotesBarModeHint({ importMode, onImportModeChange }) {
   };
 }
 
-export function NotesBar({
+function getNotesBarDisplayState({
   currentShot,
   currentShotName,
-  selectedShot = null,
-  selectedShotName = 'No Shot Loaded',
-  selectedProfileName = 'No Profile Loaded',
-  shotList = [],
-  onNavigate,
-  importMode = 'temp',
-  onImportModeChange,
-  isExpanded = false,
-  isSelectionPending = false,
-  isProfilePending = false,
-  notesExpanded = false,
-  onToggleNotesExpanded,
-  onEditingChange,
-  onExpandedHeightChange,
-  showImportModeToggle = true,
-  enableKeyboardNavigation = true,
+  selectedShot,
+  selectedShotName,
+  selectedProfileName,
+  notesExpanded,
+  isSelectionPending,
 }) {
-  // Shared responsive spacing for nav arrows and center info chips.
-  // Keeps a visible minimum separation while adapting on wider layouts.
-  const chipGap = 'clamp(0.35rem, 0.9vw, 0.7rem)';
-
-  const [notes, setNotes] = useState(notesService.getDefaults(null));
-  const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
   const displayShot = selectedShot || currentShot;
-  const displayShotName = selectedShot ? selectedShotName : currentShotName;
-  const displayProfileName = cleanName(
-    selectedProfileName || displayShot?.profile || 'No Profile Loaded',
-  );
-  const hasLoadedShot = !!currentShot;
-  const hasDisplayShot = !!displayShot;
-  const showExpanded = hasLoadedShot && notesExpanded && !isSelectionPending;
-  const expandedPanelRef = useRef(null);
+  return {
+    displayShot,
+    displayShotName: selectedShot ? selectedShotName : currentShotName,
+    displayProfileName: cleanName(
+      selectedProfileName || displayShot?.profile || 'No Profile Loaded',
+    ),
+    hasLoadedShot: Boolean(currentShot),
+    hasDisplayShot: Boolean(displayShot),
+    showExpanded: Boolean(currentShot) && notesExpanded && !isSelectionPending,
+  };
+}
+
+function getLoadIndicatorTargetProgress({ isSelectionPending, isProfilePending, loading }) {
+  if (isSelectionPending) return 0.36;
+  if (isProfilePending) return 0.78;
+  if (loading) return 0.92;
+  return 1;
+}
+
+function getLoadIndicatorWidth(loadIndicatorVisible, loadIndicatorProgress) {
+  if (!loadIndicatorVisible) return '0%';
+  return `${Math.min(100, Math.max(loadIndicatorProgress * 100, 8))}%`;
+}
+
+function getDisplayedNotes(notes, isSelectionPending) {
+  if (!isSelectionPending) return notes;
+  return {
+    ...notes,
+    ratio: '',
+    doseIn: '',
+    doseOut: '',
+    beanType: '',
+    grindSetting: '',
+    balanceTaste: '',
+    rating: 0,
+  };
+}
+
+function useNotesBarLoadIndicator({ isSelectionPending, isProfilePending, loading }) {
   const loadIndicatorHideTimerRef = useRef(null);
   const [loadIndicatorVisible, setLoadIndicatorVisible] = useState(false);
   const [loadIndicatorProgress, setLoadIndicatorProgress] = useState(0);
-  const {
-    modeButtonRef,
-    modeHint,
-    modeHintVariant,
-    modeHintPosition,
-    modeHintBadgeStyle,
-    handleModeToggle,
-  } = useNotesBarModeHint({
-    importMode,
-    onImportModeChange,
-  });
+
   const clearLoadIndicatorHideTimer = useCallback(() => {
     if (loadIndicatorHideTimerRef.current) {
       globalThis.clearTimeout(loadIndicatorHideTimerRef.current);
       loadIndicatorHideTimerRef.current = null;
     }
   }, []);
+
   const isCombinedLoadActive = isSelectionPending || isProfilePending || loading;
-  const loadIndicatorTargetProgress = isSelectionPending
-    ? 0.36
-    : isProfilePending
-      ? 0.78
-      : loading
-        ? 0.92
-        : 1;
-  const loadIndicatorWidth = loadIndicatorVisible
-    ? `${Math.min(100, Math.max(loadIndicatorProgress * 100, 8))}%`
-    : '0%';
-
-  const calculateRatio = useCallback((doseIn, doseOut) => {
-    if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
-      return (parseFloat(doseOut) / parseFloat(doseIn)).toFixed(2);
-    }
-    return '';
-  }, []);
-
-  // Load notes when shot changes
-  useEffect(() => {
-    if (!currentShot) {
-      setLoading(false);
-      setIsEditing(false);
-      setNotes(notesService.getDefaults(null));
-      return;
-    }
-    let cancelled = false;
-    const notesKey = getShotNotesKey(currentShot);
-    const inlineNotes =
-      currentShot.notes && typeof currentShot.notes === 'object'
-        ? { ...notesService.getDefaults(notesKey), ...currentShot.notes, id: notesKey }
-        : null;
-    setLoading(true);
-    setIsEditing(false);
-
-    // Show imported notes immediately (before async persistence load resolves).
-    if (inlineNotes) {
-      setNotes(inlineNotes);
-    }
-
-    notesService
-      .loadNotes(notesKey, currentShot.source)
-      .then(loaded => {
-        if (cancelled) return;
-        // Inline notes (from fresh import) should win over empty/default persistence results.
-        loaded = inlineNotes ? { ...loaded, ...inlineNotes, id: notesKey } : loaded;
-        const { nextNotes, autoSave } = hydrateLoadedShotNotes({
-          loaded,
-          currentShot,
-          calculateRatio,
-        });
-
-        setNotes(nextNotes);
-
-        // Auto-save if we populated new values
-        if (autoSave && currentShot.source !== 'temp') {
-          notesService.saveNotes(notesKey, currentShot.source, nextNotes);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    currentShot,
-    currentShot?.id,
-    currentShot?.name,
-    currentShot?.storageKey,
-    currentShot?.source,
-    calculateRatio,
-  ]);
-
-  useEffect(() => {
-    if (!isSelectionPending) return;
-    setIsEditing(false);
-  }, [isSelectionPending]);
+  const loadIndicatorTargetProgress = getLoadIndicatorTargetProgress({
+    isSelectionPending,
+    isProfilePending,
+    loading,
+  });
 
   useEffect(() => {
     clearLoadIndicatorHideTimer();
@@ -519,31 +446,104 @@ export function NotesBar({
 
   useEffect(() => clearLoadIndicatorHideTimer, [clearLoadIndicatorHideTimer]);
 
-  const handleInputChange = (field, value) => {
-    setNotes(prev => {
-      const updated = { ...prev, [field]: value };
-      if (field === 'doseIn' || field === 'doseOut') {
-        const dIn = field === 'doseIn' ? value : prev.doseIn;
-        const dOut = field === 'doseOut' ? value : prev.doseOut;
-        updated.ratio = calculateRatio(dIn, dOut);
-      }
-      return updated;
-    });
+  return {
+    loadIndicatorVisible,
+    loadIndicatorWidth: getLoadIndicatorWidth(loadIndicatorVisible, loadIndicatorProgress),
   };
+}
 
-  const handleSave = async () => {
+function useNotesBarNotesState({ currentShot, calculateRatio, isSelectionPending }) {
+  const [notes, setNotes] = useState(notesService.getDefaults(null));
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!currentShot) {
+      setLoading(false);
+      setIsEditing(false);
+      setNotes(notesService.getDefaults(null));
+      return;
+    }
+    let cancelled = false;
+    const notesKey = getShotNotesKey(currentShot);
+    const inlineNotes =
+      currentShot.notes && typeof currentShot.notes === 'object'
+        ? { ...notesService.getDefaults(notesKey), ...currentShot.notes, id: notesKey }
+        : null;
+    setLoading(true);
+    setIsEditing(false);
+
+    if (inlineNotes) {
+      setNotes(inlineNotes);
+    }
+
+    notesService
+      .loadNotes(notesKey, currentShot.source)
+      .then(loaded => {
+        if (cancelled) return;
+        const persistedNotes = inlineNotes ? { ...loaded, ...inlineNotes, id: notesKey } : loaded;
+        const { nextNotes, autoSave } = hydrateLoadedShotNotes({
+          loaded: persistedNotes,
+          currentShot,
+          calculateRatio,
+        });
+
+        setNotes(nextNotes);
+
+        if (autoSave && currentShot.source !== 'temp') {
+          notesService.saveNotes(notesKey, currentShot.source, nextNotes);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    calculateRatio,
+    currentShot,
+    currentShot?.id,
+    currentShot?.name,
+    currentShot?.source,
+    currentShot?.storageKey,
+  ]);
+
+  useEffect(() => {
+    if (!isSelectionPending) return;
+    setIsEditing(false);
+  }, [isSelectionPending]);
+
+  const handleInputChange = useCallback(
+    (field, value) => {
+      setNotes(prev => {
+        const updated = { ...prev, [field]: value };
+        if (field === 'doseIn' || field === 'doseOut') {
+          const dIn = field === 'doseIn' ? value : prev.doseIn;
+          const dOut = field === 'doseOut' ? value : prev.doseOut;
+          updated.ratio = calculateRatio(dIn, dOut);
+        }
+        return updated;
+      });
+    },
+    [calculateRatio],
+  );
+
+  const handleSave = useCallback(async () => {
     setSaving(true);
     try {
       await notesService.saveNotes(getShotNotesKey(currentShot), currentShot.source, notes);
       setIsEditing(false);
-    } catch (e) {
-      console.error('Failed to save notes:', e);
+    } catch (error) {
+      console.error('Failed to save notes:', error);
     } finally {
       setSaving(false);
     }
-  };
+  }, [currentShot, notes]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setIsEditing(false);
     notesService.loadNotes(getShotNotesKey(currentShot), currentShot.source).then(loaded => {
       if (loaded.doseIn && loaded.doseOut) {
@@ -551,7 +551,91 @@ export function NotesBar({
       }
       setNotes(loaded);
     });
+  }, [calculateRatio, currentShot]);
+
+  return {
+    notes,
+    isEditing,
+    saving,
+    loading,
+    setIsEditing,
+    handleInputChange,
+    handleSave,
+    handleCancel,
   };
+}
+
+export function NotesBar({
+  currentShot,
+  currentShotName,
+  selectedShot = null,
+  selectedShotName = 'No Shot Loaded',
+  selectedProfileName = 'No Profile Loaded',
+  shotList = [],
+  onNavigate,
+  importMode = 'temp',
+  onImportModeChange,
+  isExpanded = false,
+  isSelectionPending = false,
+  isProfilePending = false,
+  notesExpanded = false,
+  onToggleNotesExpanded,
+  onEditingChange,
+  onExpandedHeightChange,
+  showImportModeToggle = true,
+  enableKeyboardNavigation = true,
+}) {
+  // Shared responsive spacing for nav arrows and center info chips.
+  // Keeps a visible minimum separation while adapting on wider layouts.
+  const chipGap = 'clamp(0.35rem, 0.9vw, 0.7rem)';
+  const expandedPanelRef = useRef(null);
+  const {
+    modeButtonRef,
+    modeHint,
+    modeHintVariant,
+    modeHintPosition,
+    modeHintBadgeStyle,
+    handleModeToggle,
+  } = useNotesBarModeHint({
+    importMode,
+    onImportModeChange,
+  });
+
+  const calculateRatio = useCallback((doseIn, doseOut) => {
+    if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
+      return (parseFloat(doseOut) / parseFloat(doseIn)).toFixed(2);
+    }
+    return '';
+  }, []);
+  const { displayShot, displayShotName, displayProfileName, hasDisplayShot, showExpanded } =
+    getNotesBarDisplayState({
+      currentShot,
+      currentShotName,
+      selectedShot,
+      selectedShotName,
+      selectedProfileName,
+      notesExpanded,
+      isSelectionPending,
+    });
+  const {
+    notes,
+    isEditing,
+    saving,
+    loading,
+    setIsEditing,
+    handleInputChange,
+    handleSave,
+    handleCancel,
+  } = useNotesBarNotesState({
+    currentShot,
+    calculateRatio,
+    isSelectionPending,
+  });
+  const { loadIndicatorVisible, loadIndicatorWidth } = useNotesBarLoadIndicator({
+    isSelectionPending,
+    isProfilePending,
+    loading,
+  });
 
   const handleNavigateToIndex = useCallback(
     (targetIndex, direction) => {
@@ -673,20 +757,7 @@ export function NotesBar({
               currentProfileName={displayProfileName}
               fieldCls={fieldCls}
               getDurationLabel={getShotDuration(displayShot)}
-              notes={
-                isSelectionPending
-                  ? {
-                      ...notes,
-                      ratio: '',
-                      doseIn: '',
-                      doseOut: '',
-                      beanType: '',
-                      grindSetting: '',
-                      balanceTaste: '',
-                      rating: 0,
-                    }
-                  : notes
-              }
+              notes={getDisplayedNotes(notes, isSelectionPending)}
               isEditing={isEditing}
               isSelectionPending={isSelectionPending}
               onToggleNotesExpanded={onToggleNotesExpanded}

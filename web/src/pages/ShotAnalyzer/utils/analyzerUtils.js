@@ -832,41 +832,61 @@ function isRangeValueAfter(text, unitIndex) {
   return afterWordIndex < text.length && isDigitChar(text[afterWordIndex]);
 }
 
+function readDoseCandidate(text, startIndex) {
+  const numberToken = readDoseNumberToken(text, startIndex);
+  if (!numberToken) {
+    return { nextIndex: startIndex + 1, value: null };
+  }
+
+  const unitIndex = skipWhitespaceForward(text, numberToken.end);
+  if (unitIndex >= text.length || text[unitIndex] !== 'g') {
+    return {
+      nextIndex: Math.max(startIndex + 1, numberToken.end),
+      value: null,
+    };
+  }
+
+  const charAfterUnit = text[unitIndex + 1];
+  if (charAfterUnit && (isAsciiLetterChar(charAfterUnit) || isDigitChar(charAfterUnit))) {
+    return {
+      nextIndex: unitIndex + 1,
+      value: null,
+    };
+  }
+
+  if (isRangeValueBefore(text, startIndex) || isRangeValueAfter(text, unitIndex)) {
+    return {
+      nextIndex: unitIndex + 1,
+      value: null,
+    };
+  }
+
+  const value = Number.parseFloat(numberToken.raw);
+  return {
+    nextIndex: unitIndex + 1,
+    value:
+      Number.isFinite(value) && value > 0 && value <= MAX_AUTO_DETECTED_DOSE_GRAMS ? value : null,
+  };
+}
+
 export const detectDoseFromProfileName = profileName => {
   if (!profileName) return null;
 
   const lower = profileName.toLowerCase();
   const candidates = [];
 
-  for (let index = 0; index < lower.length; index += 1) {
-    if (!isDigitChar(lower[index])) continue;
-
-    const numberToken = readDoseNumberToken(lower, index);
-    if (!numberToken) continue;
-
-    const unitIndex = skipWhitespaceForward(lower, numberToken.end);
-    if (unitIndex >= lower.length || lower[unitIndex] !== 'g') {
-      index = numberToken.end - 1;
+  let cursor = 0;
+  while (cursor < lower.length) {
+    if (!isDigitChar(lower[cursor])) {
+      cursor += 1;
       continue;
     }
 
-    const charAfterUnit = lower[unitIndex + 1];
-    if (charAfterUnit && (isAsciiLetterChar(charAfterUnit) || isDigitChar(charAfterUnit))) {
-      index = unitIndex;
-      continue;
+    const candidate = readDoseCandidate(lower, cursor);
+    if (candidate.value !== null) {
+      candidates.push(candidate.value);
     }
-
-    if (isRangeValueBefore(lower, index) || isRangeValueAfter(lower, unitIndex)) {
-      index = unitIndex;
-      continue;
-    }
-
-    const value = Number.parseFloat(numberToken.raw);
-    if (Number.isFinite(value) && value > 0 && value <= MAX_AUTO_DETECTED_DOSE_GRAMS) {
-      candidates.push(value);
-    }
-
-    index = unitIndex;
+    cursor = candidate.nextIndex;
   }
 
   return candidates.length === 1 ? candidates[0] : null;

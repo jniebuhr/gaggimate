@@ -1,3 +1,5 @@
+/* global globalThis */
+
 import { createPortal } from 'preact/compat';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
@@ -1241,7 +1243,7 @@ function CompareChartCanvas({
       if (!point) return;
       applyCompareHover(chart, point.clientX, point.clientY);
     };
-    const supportsPointerEvents = typeof window !== 'undefined' && Boolean(window.PointerEvent);
+    const supportsPointerEvents = Boolean(globalThis.window?.PointerEvent);
 
     if (hoverSurface && enableHoverInfo) {
       addCompareHoverListeners(hoverSurface, supportsPointerEvents, handleHoverMove, clearHover);

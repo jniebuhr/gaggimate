@@ -4,6 +4,8 @@
  * Handles shot loading, chart visualization, and data tables.
  */
 
+/* global globalThis */
+
 import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
 import { LibraryPanel } from './components/LibraryPanel';
@@ -57,6 +59,33 @@ function getShotSelectionProfileName(item) {
   return item?.profile ? cleanName(item.profile) : 'No Profile Loaded';
 }
 
+function createSelectionBaseRequest(request) {
+  const isRequestObject = Boolean(request) && typeof request === 'object';
+  return isRequestObject && Object.hasOwn(request, 'item') ? request : { item: request };
+}
+
+function normalizeSelectionRequest(request, importMode, defaults = {}) {
+  const baseRequest = createSelectionBaseRequest(request);
+  const item = baseRequest?.item;
+  if (!item) return null;
+
+  const shotItem = {
+    ...item,
+    source: item.source || importMode,
+  };
+
+  return {
+    direction: 0,
+    targetIndex: -1,
+    debounceMs: SHOT_SELECTION_DEBOUNCE_MS,
+    ...defaults,
+    ...baseRequest,
+    item: shotItem,
+    name: baseRequest.name || getShotSelectionName(shotItem),
+    listSnapshot: Array.isArray(baseRequest.listSnapshot) ? baseRequest.listSnapshot : [],
+  };
+}
+
 function getNextDirectionalSelection(request) {
   if (!request?.direction || !Array.isArray(request.listSnapshot)) return null;
 
@@ -101,7 +130,7 @@ function normalizeMatchedProfileSource(profileData, profileSource) {
 }
 
 function shouldAutoScrollAnalyzerOnSelection() {
-  const viewportWindow = typeof window === 'undefined' ? null : window;
+  const viewportWindow = globalThis.window;
   if (!viewportWindow || typeof viewportWindow.matchMedia !== 'function') return false;
   return viewportWindow.matchMedia('(max-width: 1023px)').matches;
 }
@@ -201,6 +230,133 @@ function applyMatchedCompareProfile(setCompareShots, shotKey, matchedProfile) {
 
 function isCurrentCompareLoad(loadId, compareLoadIdRef) {
   return loadId === compareLoadIdRef.current;
+}
+
+function clearComparePendingSelectionState({
+  setPendingCompareSelection,
+  setComparePendingKeys,
+  setCompareIsSearchingProfile,
+}) {
+  setPendingCompareSelection(null);
+  setComparePendingKeys([]);
+  setCompareIsSearchingProfile(false);
+}
+
+function applyPendingCompareSelectionState(
+  selectionRequest,
+  setPendingCompareSelection,
+  setComparePendingKeys,
+) {
+  const nextShotKey = getShotIdentityKey(selectionRequest?.item);
+  setPendingCompareSelection({
+    shot: selectionRequest.item,
+    name: selectionRequest.name,
+  });
+  setComparePendingKeys(nextShotKey ? [nextShotKey] : []);
+}
+
+function getDirectionalCompareSelectionRequest(selectionRequest, loadId) {
+  const nextSelection = getNextDirectionalSelection(selectionRequest);
+  if (!nextSelection) return null;
+  return {
+    ...nextSelection,
+    loadId,
+  };
+}
+
+async function executeCompareSelectionLoad({
+  requestId,
+  selectionRequest,
+  importMode,
+  compareSelectionRequestIdRef,
+  compareLoadIdRef,
+  pendingPrimarySelectionRef,
+  currentShotRef,
+  setPendingCompareSelection,
+  setComparePendingKeys,
+  setCompareIsSearchingProfile,
+  setCompareShots,
+}) {
+  const clearPendingState = () =>
+    clearComparePendingSelectionState({
+      setPendingCompareSelection,
+      setComparePendingKeys,
+      setCompareIsSearchingProfile,
+    });
+
+  let activeRequest = selectionRequest;
+
+  while (activeRequest) {
+    const { item, loadId } = activeRequest;
+    const targetShotKey = getShotIdentityKey(item);
+    const activePrimaryShot = pendingPrimarySelectionRef.current?.shot || currentShotRef.current;
+    const activePrimaryShotKey = activePrimaryShot ? getShotIdentityKey(activePrimaryShot) : '';
+
+    if (!targetShotKey) {
+      clearPendingState();
+      return false;
+    }
+
+    if (activePrimaryShotKey && targetShotKey === activePrimaryShotKey) {
+      activeRequest = getDirectionalCompareSelectionRequest(activeRequest, loadId);
+      if (!activeRequest) {
+        clearPendingState();
+        return false;
+      }
+      applyPendingCompareSelectionState(
+        activeRequest,
+        setPendingCompareSelection,
+        setComparePendingKeys,
+      );
+      continue;
+    }
+
+    try {
+      const { shotWithMetadata, loadKey } = await loadCompareShotSelection({ item, importMode });
+      if (requestId !== compareSelectionRequestIdRef.current) return false;
+      if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return false;
+
+      setCompareShots([
+        createCompareShotEntry({ shotKey: targetShotKey, shotWithMetadata, item, loadKey }),
+      ]);
+      setPendingCompareSelection(null);
+      setComparePendingKeys([]);
+
+      await tryAutoMatchCompareShotProfile({
+        loadId,
+        compareLoadIdRef,
+        shotKey: targetShotKey,
+        shotWithMetadata,
+        setCompareIsSearchingProfile,
+        setCompareShots,
+      });
+
+      return true;
+    } catch (error) {
+      if (requestId !== compareSelectionRequestIdRef.current) return false;
+      if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return false;
+
+      console.warn('Failed to load compare shot:', error);
+
+      activeRequest = getDirectionalCompareSelectionRequest(activeRequest, loadId);
+      if (!activeRequest) {
+        clearPendingState();
+        return false;
+      }
+      applyPendingCompareSelectionState(
+        activeRequest,
+        setPendingCompareSelection,
+        setComparePendingKeys,
+      );
+    } finally {
+      if (requestId === compareSelectionRequestIdRef.current && !item?.profile) {
+        setCompareIsSearchingProfile(false);
+      }
+    }
+  }
+
+  clearPendingState();
+  return false;
 }
 
 async function loadShotSelection({ item, importMode }) {
@@ -515,14 +671,14 @@ export function ShotAnalyzer() {
 
   useEffect(() => {
     if (!pendingMobileAnalysisScroll || !currentShot) return;
-    if (typeof window === 'undefined') return;
+    if (!globalThis.window) return;
 
-    const timer = window.setTimeout(() => {
+    const timer = globalThis.window.setTimeout(() => {
       analysisSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setPendingMobileAnalysisScroll(false);
     }, 90);
 
-    return () => window.clearTimeout(timer);
+    return () => globalThis.window?.clearTimeout(timer);
   }, [pendingMobileAnalysisScroll, currentShot]);
 
   useEffect(() => {
@@ -548,62 +704,16 @@ export function ShotAnalyzer() {
 
   // --- Data Handlers ---
   const normalizePrimarySelectionRequest = useCallback(
-    request => {
-      const baseRequest =
-        request &&
-        typeof request === 'object' &&
-        Object.prototype.hasOwnProperty.call(request, 'item')
-          ? request
-          : { item: request };
-      const item = baseRequest?.item;
-      if (!item) return null;
-
-      const shotItem = {
-        ...item,
-        source: item.source || importMode,
-      };
-
-      return {
-        direction: 0,
-        targetIndex: -1,
+    request =>
+      normalizeSelectionRequest(request, importMode, {
         preserveCompare: false,
         requestSelectionScroll: false,
-        debounceMs: SHOT_SELECTION_DEBOUNCE_MS,
-        ...baseRequest,
-        item: shotItem,
-        name: baseRequest.name || getShotSelectionName(shotItem),
-        listSnapshot: Array.isArray(baseRequest.listSnapshot) ? baseRequest.listSnapshot : [],
-      };
-    },
+      }),
     [importMode],
   );
 
   const normalizeCompareSelectionRequest = useCallback(
-    request => {
-      const baseRequest =
-        request &&
-        typeof request === 'object' &&
-        Object.prototype.hasOwnProperty.call(request, 'item')
-          ? request
-          : { item: request };
-      const item = baseRequest?.item;
-      if (!item) return null;
-
-      const shotItem = {
-        ...item,
-        source: item.source || importMode,
-      };
-
-      return {
-        direction: 0,
-        targetIndex: -1,
-        debounceMs: SHOT_SELECTION_DEBOUNCE_MS,
-        ...baseRequest,
-        item: shotItem,
-        name: baseRequest.name || getShotSelectionName(shotItem),
-        listSnapshot: Array.isArray(baseRequest.listSnapshot) ? baseRequest.listSnapshot : [],
-      };
-    },
+    request => normalizeSelectionRequest(request, importMode),
     [importMode],
   );
 
@@ -772,6 +882,15 @@ export function ShotAnalyzer() {
     [commitPrimaryShotLoad, importMode],
   );
 
+  const launchPrimarySelectionLoad = useCallback(
+    (requestId, selectionRequest) => {
+      tryLoadPrimarySelection(requestId, selectionRequest).catch(error => {
+        console.error('Primary selection load failed:', error);
+      });
+    },
+    [tryLoadPrimarySelection],
+  );
+
   const handleShotSelect = useCallback(
     request => {
       const selectionRequest = normalizePrimarySelectionRequest(request);
@@ -803,16 +922,16 @@ export function ShotAnalyzer() {
         !currentCommittedShot ||
         selectionRequest.debounceMs <= 0
       ) {
-        void tryLoadPrimarySelection(requestId, selectionRequest);
+        launchPrimarySelectionLoad(requestId, selectionRequest);
         return;
       }
 
       primarySelectionTimerRef.current = setTimeout(() => {
         primarySelectionTimerRef.current = null;
-        void tryLoadPrimarySelection(requestId, selectionRequest);
+        launchPrimarySelectionLoad(requestId, selectionRequest);
       }, selectionRequest.debounceMs);
     },
-    [clearPrimarySelectionTimer, normalizePrimarySelectionRequest, tryLoadPrimarySelection],
+    [clearPrimarySelectionTimer, launchPrimarySelectionLoad, normalizePrimarySelectionRequest],
   );
 
   const handleProfileLoad = (data, name, source) => {
@@ -902,92 +1021,30 @@ export function ShotAnalyzer() {
   };
 
   const tryLoadCompareSelection = useCallback(
-    async (requestId, selectionRequest) => {
-      const { item, loadId } = selectionRequest;
-      const targetShotKey = getShotIdentityKey(item);
-      const activePrimaryShot = pendingPrimarySelectionRef.current?.shot || currentShotRef.current;
-      const activePrimaryShotKey = activePrimaryShot ? getShotIdentityKey(activePrimaryShot) : '';
-
-      if (!targetShotKey) {
-        setPendingCompareSelection(null);
-        setComparePendingKeys([]);
-        setCompareIsSearchingProfile(false);
-        return false;
-      }
-
-      if (activePrimaryShotKey && targetShotKey === activePrimaryShotKey) {
-        const nextSelection = getNextDirectionalSelection(selectionRequest);
-        if (nextSelection) {
-          const nextShotKey = getShotIdentityKey(nextSelection.item);
-          setPendingCompareSelection({
-            shot: nextSelection.item,
-            name: nextSelection.name,
-          });
-          setComparePendingKeys(nextShotKey ? [nextShotKey] : []);
-          return tryLoadCompareSelection(requestId, {
-            ...nextSelection,
-            loadId,
-          });
-        }
-
-        setPendingCompareSelection(null);
-        setComparePendingKeys([]);
-        setCompareIsSearchingProfile(false);
-        return false;
-      }
-
-      try {
-        const { shotWithMetadata, loadKey } = await loadCompareShotSelection({ item, importMode });
-        if (requestId !== compareSelectionRequestIdRef.current) return false;
-        if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return false;
-
-        setCompareShots([
-          createCompareShotEntry({ shotKey: targetShotKey, shotWithMetadata, item, loadKey }),
-        ]);
-        setPendingCompareSelection(null);
-        setComparePendingKeys([]);
-
-        await tryAutoMatchCompareShotProfile({
-          loadId,
-          compareLoadIdRef,
-          shotKey: targetShotKey,
-          shotWithMetadata,
-          setCompareIsSearchingProfile,
-          setCompareShots,
-        });
-
-        return true;
-      } catch (error) {
-        if (requestId !== compareSelectionRequestIdRef.current) return false;
-        if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return false;
-
-        console.warn('Failed to load compare shot:', error);
-
-        const nextSelection = getNextDirectionalSelection(selectionRequest);
-        if (nextSelection) {
-          const nextShotKey = getShotIdentityKey(nextSelection.item);
-          setPendingCompareSelection({
-            shot: nextSelection.item,
-            name: nextSelection.name,
-          });
-          setComparePendingKeys(nextShotKey ? [nextShotKey] : []);
-          return tryLoadCompareSelection(requestId, {
-            ...nextSelection,
-            loadId,
-          });
-        }
-
-        setPendingCompareSelection(null);
-        setComparePendingKeys([]);
-        setCompareIsSearchingProfile(false);
-        return false;
-      } finally {
-        if (requestId === compareSelectionRequestIdRef.current && !item?.profile) {
-          setCompareIsSearchingProfile(false);
-        }
-      }
-    },
+    (requestId, selectionRequest) =>
+      executeCompareSelectionLoad({
+        requestId,
+        selectionRequest,
+        importMode,
+        compareSelectionRequestIdRef,
+        compareLoadIdRef,
+        pendingPrimarySelectionRef,
+        currentShotRef,
+        setPendingCompareSelection,
+        setComparePendingKeys,
+        setCompareIsSearchingProfile,
+        setCompareShots,
+      }),
     [importMode],
+  );
+
+  const launchCompareSelectionLoad = useCallback(
+    (requestId, selectionRequest) => {
+      tryLoadCompareSelection(requestId, selectionRequest).catch(error => {
+        console.error('Compare selection load failed:', error);
+      });
+    },
+    [tryLoadCompareSelection],
   );
 
   const handleCompareShotToggle = useCallback(
@@ -1043,21 +1100,21 @@ export function ShotAnalyzer() {
         !compareShotsRef.current[0]?.shot ||
         selectionRequest.debounceMs <= 0
       ) {
-        void tryLoadCompareSelection(requestId, nextSelectionRequest);
+        launchCompareSelectionLoad(requestId, nextSelectionRequest);
         return;
       }
 
       compareSelectionTimerRef.current = setTimeout(() => {
         compareSelectionTimerRef.current = null;
-        void tryLoadCompareSelection(requestId, nextSelectionRequest);
+        launchCompareSelectionLoad(requestId, nextSelectionRequest);
       }, selectionRequest.debounceMs);
     },
     [
       clearCompareSelectionTimer,
       clearPendingCompareSelection,
       compareMode,
+      launchCompareSelectionLoad,
       normalizeCompareSelectionRequest,
-      tryLoadCompareSelection,
     ],
   );
 
