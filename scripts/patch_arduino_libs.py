@@ -10,7 +10,6 @@ reproducible fix. Idempotent — safe to rerun on every build.
 
 Run via `extra_scripts = pre:scripts/patch_arduino_libs.py` on Matter envs.
 """
-import os
 from pathlib import Path
 
 Import("env")  # noqa: F821 — provided by PlatformIO
@@ -23,6 +22,26 @@ STRIP = (
     "ArduinoOTA WebServer)"
 )
 
+
+def _resolved_under(path, parent):
+    """True iff `path` (after symlink resolution) is strictly inside `parent`.
+
+    Guards the two file writes below against path-injection in the framework
+    dir PlatformIO hands us: we only edit files whose resolved absolute path
+    lives inside the PlatformIO packages tree *and* matches an exact expected
+    relative layout. Defence-in-depth — in practice `platform.get_package_dir`
+    returns a deterministic path under `~/.platformio/packages/`, but the
+    static analyser can't prove that, and neither can we if someone ever
+    symlinks the package dir elsewhere.
+    """
+    try:
+        path_r = path.resolve(strict=True)
+        parent_r = parent.resolve(strict=True)
+    except OSError:
+        return False
+    return parent_r in path_r.parents
+
+
 platform = env.PioPlatform()
 framework_path = platform.get_package_dir("framework-arduinoespressif32")
 if not framework_path:
@@ -30,35 +49,60 @@ if not framework_path:
     Return()  # noqa: F821
 
 framework_dir = Path(framework_path)
-cmakelists = framework_dir / "CMakeLists.txt"
+# Invariant: PlatformIO installs framework packages under `<core_dir>/packages/`.
+# Refuse to patch anything sitting outside that tree — defence against a
+# misconfigured `PLATFORMIO_PACKAGES_DIR` or a hand-edited symlink pointing
+# at a system location.
+try:
+    _resolved_framework = framework_dir.resolve(strict=True)
+except OSError as exc:
+    raise RuntimeError(f"patch_arduino_libs: cannot resolve {framework_dir}: {exc}")
+if _resolved_framework.parent.name != "packages":
+    raise RuntimeError(
+        f"patch_arduino_libs: refusing to patch {_resolved_framework} — its "
+        "parent directory is not named 'packages'. Check your PIO setup."
+    )
 
-if not cmakelists.is_file():
-    print(f"*** patch_arduino_libs: {cmakelists} not found, skipping ***")
-    Return()  # noqa: F821
 
-text = cmakelists.read_text()
-if SENTINEL in text:
-    print("*** patch_arduino_libs: already patched ***")
-else:
+def _patch_file(target, expected_name, sentinel, patcher):
+    """Validate `target` is the expected file under `framework_dir`, then
+    atomically apply `patcher(text) -> text` if the sentinel is absent."""
+    if target.name != expected_name:
+        raise RuntimeError(f"patch_arduino_libs: unexpected filename {target}")
+    if not _resolved_under(target, framework_dir):
+        raise RuntimeError(
+            f"patch_arduino_libs: {target} resolves outside {framework_dir}; refusing to write."
+        )
+    if not target.is_file():
+        print(f"*** patch_arduino_libs: {target} not found, skipping ***")
+        return
+    text = target.read_text()
+    if sentinel in text:
+        return
+    new_text = patcher(text)
+    if new_text is None:
+        return
+    target.write_text(new_text)
+    print(f"*** patch_arduino_libs: patched {target} ***")
+
+
+def _patch_cmakelists(text):
     anchor = "set(ARDUINO_LIBRARIES_SRCS)"
     if anchor not in text:
         raise RuntimeError(
-            f"patch_arduino_libs: anchor '{anchor}' not found in {cmakelists}; "
+            f"patch_arduino_libs: anchor '{anchor}' not found in CMakeLists.txt; "
             "pioarduino layout changed, update the script."
         )
-    patched = text.replace(
-        anchor,
-        f"{anchor}\n{SENTINEL}\n{STRIP}",
-        1,
-    )
-    cmakelists.write_text(patched)
-    print(f"*** patch_arduino_libs: patched {cmakelists} ***")
+    return text.replace(anchor, f"{anchor}\n{SENTINEL}\n{STRIP}", 1)
+
+
+_patch_file(framework_dir / "CMakeLists.txt", "CMakeLists.txt", SENTINEL, _patch_cmakelists)
+
 
 # HTTPClient.h — PlatformIO LDF still compiles it because src/ #include's
 # <HTTPClient.h>. GCC 14 rejects emplace_back(h,v) without an explicit ctor
 # on the aggregate RequestArgument. Add it so the library compiles; the
 # pioarduino fork hasn't picked up the upstream fix yet.
-http_header = framework_dir / "libraries" / "HTTPClient" / "src" / "HTTPClient.h"
 HTTP_SENTINEL = "// GaggiMate Matter: explicit RequestArgument ctor for GCC 14"
 HTTP_OLD = "  struct RequestArgument {\n    String key;\n    String value;\n  };"
 HTTP_NEW = (
@@ -70,12 +114,18 @@ HTTP_NEW = (
     "    RequestArgument(const String &k, const String &v) : key(k), value(v) {}\n"
     "  };"
 )
-if http_header.is_file():
-    http_text = http_header.read_text()
-    if HTTP_SENTINEL in http_text:
-        pass
-    elif HTTP_OLD in http_text:
-        http_header.write_text(http_text.replace(HTTP_OLD, HTTP_NEW, 1))
-        print(f"*** patch_arduino_libs: patched {http_header} ***")
-    else:
-        print(f"*** patch_arduino_libs: HTTPClient.h structure changed, skipping ***")
+
+
+def _patch_httpclient(text):
+    if HTTP_OLD not in text:
+        print("*** patch_arduino_libs: HTTPClient.h structure changed, skipping ***")
+        return None
+    return text.replace(HTTP_OLD, HTTP_NEW, 1)
+
+
+_patch_file(
+    framework_dir / "libraries" / "HTTPClient" / "src" / "HTTPClient.h",
+    "HTTPClient.h",
+    HTTP_SENTINEL,
+    _patch_httpclient,
+)
