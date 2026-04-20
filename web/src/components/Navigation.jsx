@@ -63,7 +63,7 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
 }
 
 export function Navigation() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <nav
