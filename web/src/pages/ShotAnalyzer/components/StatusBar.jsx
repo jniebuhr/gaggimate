@@ -282,7 +282,6 @@ function getStatusBarViewModel({
     statisticsIcon: compareMode ? faChartArea : faChartSimple,
     compareBadgeClasses: getCompareSlotBadgeClasses({ currentShot, ghosted }),
     showShotChevron: !currentShot,
-    showSearchingProfileLabel: isSearchingProfile && !currentProfile,
     showProfileChevron: !currentProfile && !isSearchingProfile,
   };
 }
@@ -317,8 +316,10 @@ function StatusBarImportButton({
 
 function ProfileTrailingControl({
   currentProfile,
+  currentProfileName,
   isMismatch,
   isSearchingProfile,
+  canRetryProfileSearch,
   onRetryProfileSearch,
   onShowStats,
   onUnloadProfile,
@@ -331,6 +332,8 @@ function ProfileTrailingControl({
     ? 'Open profile statistics'
     : 'Load a profile to open statistics';
   const retryTitle = 'Retry automatic profile search';
+  const hasDismissibleProfileState =
+    isSearchingProfile || cleanName(currentProfileName || '').toLowerCase() !== 'no profile loaded';
 
   if (currentProfile) {
     return (
@@ -348,7 +351,7 @@ function ProfileTrailingControl({
           <FontAwesomeIcon icon={statisticsIcon} className='text-xs' />
         </a>
 
-        {isMismatch && onRetryProfileSearch ? (
+        {(isMismatch || canRetryProfileSearch) && onRetryProfileSearch ? (
           <button
             type='button'
             onClick={event => {
@@ -360,28 +363,20 @@ function ProfileTrailingControl({
             aria-label={retryTitle}
             disabled={isSearchingProfile}
           >
-            <FontAwesomeIcon
-              icon={isSearchingProfile ? faCircleNotch : faRotateRight}
-              spin={isSearchingProfile}
-              className='text-xs'
-            />
+            <FontAwesomeIcon icon={faRotateRight} className='text-xs' />
           </button>
         ) : null}
 
-        {isSearchingProfile && !isMismatch ? (
-          <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
-        ) : (
-          <button
-            type='button'
-            onClick={event => {
-              event.stopPropagation();
-              onUnloadProfile();
-            }}
-            className={activeBadgeIconButtonClasses}
-          >
-            <FontAwesomeIcon icon={faTimes} />
-          </button>
-        )}
+        <button
+          type='button'
+          onClick={event => {
+            event.stopPropagation();
+            onUnloadProfile();
+          }}
+          className={activeBadgeIconButtonClasses}
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
       </div>
     );
   }
@@ -398,8 +393,33 @@ function ProfileTrailingControl({
         <FontAwesomeIcon icon={statisticsIcon} className='text-xs' />
       </button>
 
-      {isSearchingProfile ? (
-        <FontAwesomeIcon icon={faCircleNotch} spin className='text-xs opacity-70' />
+      {canRetryProfileSearch && onRetryProfileSearch ? (
+        <button
+          type='button'
+          onClick={event => {
+            event.stopPropagation();
+            onRetryProfileSearch();
+          }}
+          className={activeBadgeIconButtonClasses}
+          title={retryTitle}
+          aria-label={retryTitle}
+          disabled={isSearchingProfile}
+        >
+          <FontAwesomeIcon icon={faRotateRight} className='text-xs' />
+        </button>
+      ) : null}
+
+      {hasDismissibleProfileState ? (
+        <button
+          type='button'
+          onClick={event => {
+            event.stopPropagation();
+            onUnloadProfile();
+          }}
+          className={activeBadgeIconButtonClasses}
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
       ) : null}
     </div>
   );
@@ -455,6 +475,7 @@ function ShotTrailingControl({
 function ShotBadge({
   currentShot,
   currentShotName,
+  isShotPending,
   compact,
   shotBadgeClasses,
   showShotChevron,
@@ -496,6 +517,13 @@ function ShotBadge({
       >
         <span className='inline-flex max-w-full items-center justify-center gap-1'>
           <span className='truncate'>{getShotBadgeLabel(currentShot, currentShotName)}</span>
+          {isShotPending ? (
+            <FontAwesomeIcon
+              icon={faCircleNotch}
+              spin
+              className='shrink-0 text-[11px] opacity-60'
+            />
+          ) : null}
           {showShotChevron ? (
             <FontAwesomeIcon icon={faChevronDown} className='shrink-0 text-[11px] opacity-40' />
           ) : null}
@@ -523,7 +551,6 @@ function ProfileBadge({
   profileBadgeClasses,
   mismatchProfileBadgeStyle,
   isMismatch,
-  showSearchingProfileLabel,
   showProfileChevron,
   handleProfilePanelToggle,
   openFilePicker,
@@ -531,6 +558,7 @@ function ProfileBadge({
   neutralImportButtonClasses,
   isImporting,
   isSearchingProfile,
+  canRetryProfileSearch,
   onRetryProfileSearch,
   onShowStats,
   onUnloadProfile,
@@ -565,16 +593,21 @@ function ProfileBadge({
         title={getProfileBadgeTitle(isMismatch)}
       >
         <span className='inline-flex max-w-full items-center justify-center gap-1'>
-          {showSearchingProfileLabel ? (
-            <span className='truncate italic opacity-50'>Searching Profile...</span>
-          ) : (
-            <>
-              {isMismatch ? (
-                <FontAwesomeIcon icon={faTriangleExclamation} className='mr-1 shrink-0' />
-              ) : null}
-              <span className='truncate'>{cleanName(currentProfileName)}</span>
-            </>
-          )}
+          {isMismatch ? (
+            <FontAwesomeIcon icon={faTriangleExclamation} className='mr-1 shrink-0' />
+          ) : null}
+          <span
+            className={`truncate ${isSearchingProfile && !currentProfile ? 'italic opacity-75' : ''}`}
+          >
+            {cleanName(currentProfileName)}
+          </span>
+          {isSearchingProfile ? (
+            <FontAwesomeIcon
+              icon={faCircleNotch}
+              spin
+              className='shrink-0 text-[11px] opacity-60'
+            />
+          ) : null}
           {showProfileChevron ? (
             <FontAwesomeIcon icon={faChevronDown} className='shrink-0 text-[11px] opacity-40' />
           ) : null}
@@ -583,8 +616,10 @@ function ProfileBadge({
 
       <ProfileTrailingControl
         currentProfile={currentProfile}
+        currentProfileName={currentProfileName}
         isMismatch={isMismatch}
         isSearchingProfile={isSearchingProfile}
+        canRetryProfileSearch={canRetryProfileSearch}
         onRetryProfileSearch={onRetryProfileSearch}
         onShowStats={onShowStats}
         onUnloadProfile={onUnloadProfile}
@@ -602,6 +637,8 @@ export function StatusBar({
   currentProfile,
   currentShotName,
   currentProfileName,
+  isShotPending = false,
+  canRetryProfileSearch = false,
   onUnloadShot,
   onUnloadProfile,
   onShowStats,
@@ -654,7 +691,6 @@ export function StatusBar({
     statisticsIcon,
     compareBadgeClasses,
     showShotChevron,
-    showSearchingProfileLabel,
     showProfileChevron,
   } = getStatusBarViewModel({
     compact,
@@ -694,6 +730,7 @@ export function StatusBar({
           <ShotBadge
             currentShot={currentShot}
             currentShotName={currentShotName}
+            isShotPending={isShotPending}
             compact={compact}
             shotBadgeClasses={shotBadgeClasses}
             showShotChevron={showShotChevron}
@@ -718,7 +755,6 @@ export function StatusBar({
             profileBadgeClasses={profileBadgeClasses}
             mismatchProfileBadgeStyle={mismatchProfileBadgeStyle}
             isMismatch={isMismatch}
-            showSearchingProfileLabel={showSearchingProfileLabel}
             showProfileChevron={showProfileChevron}
             handleProfilePanelToggle={handleProfilePanelToggle}
             openFilePicker={openFilePicker}
@@ -726,6 +762,7 @@ export function StatusBar({
             neutralImportButtonClasses={neutralImportButtonClasses}
             isImporting={isImporting}
             isSearchingProfile={isSearchingProfile}
+            canRetryProfileSearch={canRetryProfileSearch}
             onRetryProfileSearch={onRetryProfileSearch}
             onShowStats={onShowStats}
             onUnloadProfile={onUnloadProfile}

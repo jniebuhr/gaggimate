@@ -22,7 +22,7 @@ import { faGears } from '@fortawesome/free-solid-svg-icons/faGears';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faLaptopFile } from '@fortawesome/free-solid-svg-icons/faLaptopFile';
 import { notesService } from '../services/NotesService';
-import { cleanName, analyzerUiColors } from '../utils/analyzerUtils';
+import { cleanName, analyzerUiColors, detectDoseFromProfileName } from '../utils/analyzerUtils';
 import { NotesBarExpanded } from './NotesBarExpanded';
 import { SourceMarker } from './SourceMarker';
 import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
@@ -51,10 +51,18 @@ function formatNotesBarDateTime(timestamp) {
 }
 
 function getShotDuration(currentShot) {
-  if (!currentShot?.samples?.length) return '—';
-  const first = currentShot.samples[0].t;
-  const last = currentShot.samples[currentShot.samples.length - 1].t;
-  return `${Math.round((last - first) / 1000)}s`;
+  if (currentShot?.samples?.length) {
+    const first = currentShot.samples[0].t;
+    const last = currentShot.samples[currentShot.samples.length - 1].t;
+    return `${Math.round((last - first) / 1000)}s`;
+  }
+
+  const fallbackDuration = Number.parseFloat(currentShot?.duration);
+  if (Number.isFinite(fallbackDuration) && fallbackDuration > 0) {
+    return `${Math.round(fallbackDuration)}s`;
+  }
+
+  return '—';
 }
 
 function getShotDisplayName(currentShot, currentShotName) {
@@ -76,14 +84,14 @@ function getShotNotesKey(shot) {
   return String(shot.storageKey || shot.name || shot.id || '');
 }
 
-function hydrateLoadedShotNotes({ loaded, currentShot, extractDoseFromProfile, calculateRatio }) {
+function hydrateLoadedShotNotes({ loaded, currentShot, calculateRatio }) {
   const nextNotes = { ...loaded };
   let autoSave = false;
 
   if (!nextNotes.doseIn && currentShot.profile) {
-    const extractedDose = extractDoseFromProfile(currentShot.profile);
-    if (extractedDose) {
-      nextNotes.doseIn = extractedDose;
+    const extractedDose = detectDoseFromProfileName(currentShot.profile);
+    if (extractedDose !== null) {
+      nextNotes.doseIn = String(extractedDose);
       autoSave = true;
     }
   }
@@ -100,12 +108,12 @@ function hydrateLoadedShotNotes({ loaded, currentShot, extractDoseFromProfile, c
   return { nextNotes, autoSave };
 }
 
-function getNotesBarNavigationState({ hasShot, shotList, currentShot, getShotNotesKey }) {
+function getNotesBarNavigationState({ hasShot, shotList, activeShot, getShotNotesKey }) {
   const currentIndex = hasShot
     ? shotList.findIndex(
         shot =>
-          getShotNotesKey(shot) === getShotNotesKey(currentShot) &&
-          shot.source === currentShot?.source,
+          getShotNotesKey(shot) === getShotNotesKey(activeShot) &&
+          shot.source === activeShot?.source,
       )
     : -1;
 
@@ -120,18 +128,22 @@ function LoadedShotSummary({
   chipGap,
   currentShot,
   currentShotName,
+  currentProfileName,
   fieldCls,
   getDurationLabel,
   notes,
   isEditing,
+  isSelectionPending,
   onToggleNotesExpanded,
 }) {
   return (
     <button
       type='button'
       className='shot-analyzer-notes-scroll block w-full min-w-0 cursor-pointer overflow-x-auto overflow-y-hidden px-1 py-1.5 text-center'
-      onClick={() => !isEditing && onToggleNotesExpanded && onToggleNotesExpanded()}
-      title='Click to expand notes'
+      onClick={() =>
+        !isEditing && !isSelectionPending && onToggleNotesExpanded && onToggleNotesExpanded()
+      }
+      title={isSelectionPending ? 'Loading shot...' : 'Click to expand notes'}
     >
       <div
         className='mx-auto inline-flex min-w-max items-center justify-center'
@@ -150,7 +162,9 @@ function LoadedShotSummary({
           <SourceMarker source={currentShot?.source} variant='library' />
         )}
         <span className={fieldCls}>{getShotDisplayName(currentShot, currentShotName)}</span>
-        <span className={fieldCls}>{cleanName(currentShot.profile || '—')}</span>
+        <span className={fieldCls}>
+          {cleanName(currentProfileName || currentShot.profile || '—')}
+        </span>
         <span className={fieldCls}>{formatNotesBarDateTime(currentShot.timestamp)}</span>
         <span className={`${fieldCls} flex items-center gap-1`}>
           <FontAwesomeIcon icon={faClock} className='text-[10px] opacity-50' />
@@ -339,11 +353,16 @@ function useNotesBarModeHint({ importMode, onImportModeChange }) {
 export function NotesBar({
   currentShot,
   currentShotName,
+  selectedShot = null,
+  selectedShotName = 'No Shot Loaded',
+  selectedProfileName = 'No Profile Loaded',
   shotList = [],
   onNavigate,
   importMode = 'temp',
   onImportModeChange,
   isExpanded = false,
+  isSelectionPending = false,
+  isProfilePending = false,
   notesExpanded = false,
   onToggleNotesExpanded,
   onEditingChange,
@@ -359,9 +378,18 @@ export function NotesBar({
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  const hasShot = !!currentShot;
-  const showExpanded = hasShot && notesExpanded;
+  const displayShot = selectedShot || currentShot;
+  const displayShotName = selectedShot ? selectedShotName : currentShotName;
+  const displayProfileName = cleanName(
+    selectedProfileName || displayShot?.profile || 'No Profile Loaded',
+  );
+  const hasLoadedShot = !!currentShot;
+  const hasDisplayShot = !!displayShot;
+  const showExpanded = hasLoadedShot && notesExpanded && !isSelectionPending;
   const expandedPanelRef = useRef(null);
+  const loadIndicatorHideTimerRef = useRef(null);
+  const [loadIndicatorVisible, setLoadIndicatorVisible] = useState(false);
+  const [loadIndicatorProgress, setLoadIndicatorProgress] = useState(0);
   const {
     modeButtonRef,
     modeHint,
@@ -373,6 +401,23 @@ export function NotesBar({
     importMode,
     onImportModeChange,
   });
+  const clearLoadIndicatorHideTimer = useCallback(() => {
+    if (loadIndicatorHideTimerRef.current) {
+      globalThis.clearTimeout(loadIndicatorHideTimerRef.current);
+      loadIndicatorHideTimerRef.current = null;
+    }
+  }, []);
+  const isCombinedLoadActive = isSelectionPending || isProfilePending || loading;
+  const loadIndicatorTargetProgress = isSelectionPending
+    ? 0.36
+    : isProfilePending
+      ? 0.78
+      : loading
+        ? 0.92
+        : 1;
+  const loadIndicatorWidth = loadIndicatorVisible
+    ? `${Math.min(100, Math.max(loadIndicatorProgress * 100, 8))}%`
+    : '0%';
 
   const calculateRatio = useCallback((doseIn, doseOut) => {
     if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
@@ -381,16 +426,14 @@ export function NotesBar({
     return '';
   }, []);
 
-  // Extract dose-in from profile name (e.g. "Direct Lever v2 [20g]" → "20", "Auto 16g" → "16")
-  const extractDoseFromProfile = useCallback(profileName => {
-    if (!profileName) return '';
-    const match = profileName.match(/\[?\b(\d+(?:\.\d+)?)\s*g\b\]?/i);
-    return match ? match[1] : '';
-  }, []);
-
   // Load notes when shot changes
   useEffect(() => {
-    if (!currentShot) return;
+    if (!currentShot) {
+      setLoading(false);
+      setIsEditing(false);
+      setNotes(notesService.getDefaults(null));
+      return;
+    }
     let cancelled = false;
     const notesKey = getShotNotesKey(currentShot);
     const inlineNotes =
@@ -414,7 +457,6 @@ export function NotesBar({
         const { nextNotes, autoSave } = hydrateLoadedShotNotes({
           loaded,
           currentShot,
-          extractDoseFromProfile,
           calculateRatio,
         });
 
@@ -439,9 +481,43 @@ export function NotesBar({
     currentShot?.storageKey,
     currentShot?.source,
     calculateRatio,
-    extractDoseFromProfile,
-    getShotNotesKey,
   ]);
+
+  useEffect(() => {
+    if (!isSelectionPending) return;
+    setIsEditing(false);
+  }, [isSelectionPending]);
+
+  useEffect(() => {
+    clearLoadIndicatorHideTimer();
+
+    if (isCombinedLoadActive) {
+      setLoadIndicatorVisible(true);
+      setLoadIndicatorProgress(loadIndicatorTargetProgress);
+      return undefined;
+    }
+
+    if (!loadIndicatorVisible) {
+      setLoadIndicatorProgress(0);
+      return undefined;
+    }
+
+    setLoadIndicatorProgress(1);
+    loadIndicatorHideTimerRef.current = globalThis.setTimeout(() => {
+      setLoadIndicatorVisible(false);
+      setLoadIndicatorProgress(0);
+      loadIndicatorHideTimerRef.current = null;
+    }, 220);
+
+    return clearLoadIndicatorHideTimer;
+  }, [
+    clearLoadIndicatorHideTimer,
+    isCombinedLoadActive,
+    loadIndicatorTargetProgress,
+    loadIndicatorVisible,
+  ]);
+
+  useEffect(() => clearLoadIndicatorHideTimer, [clearLoadIndicatorHideTimer]);
 
   const handleInputChange = (field, value) => {
     setNotes(prev => {
@@ -477,17 +553,30 @@ export function NotesBar({
     });
   };
 
+  const handleNavigateToIndex = useCallback(
+    (targetIndex, direction) => {
+      if (targetIndex < 0 || targetIndex >= shotList.length) return;
+      onNavigate?.({
+        item: shotList[targetIndex],
+        direction,
+        listSnapshot: shotList,
+        targetIndex,
+      });
+    },
+    [onNavigate, shotList],
+  );
+
   // Navigation
   const { currentIndex, canGoPrev, canGoNext } = getNotesBarNavigationState({
-    hasShot,
+    hasShot: hasDisplayShot,
     shotList,
-    currentShot,
+    activeShot: displayShot,
     getShotNotesKey,
   });
 
   // Keyboard navigation: ArrowLeft / ArrowRight
   useEffect(() => {
-    if (!currentShot || !enableKeyboardNavigation) return;
+    if (!displayShot || !enableKeyboardNavigation) return;
 
     const handleKeyDown = e => {
       if (e.defaultPrevented) return;
@@ -496,22 +585,21 @@ export function NotesBar({
 
       if (e.key === 'ArrowLeft' && canGoPrev) {
         e.preventDefault();
-        onNavigate(shotList[currentIndex - 1]);
+        handleNavigateToIndex(currentIndex - 1, -1);
       } else if (e.key === 'ArrowRight' && canGoNext) {
         e.preventDefault();
-        onNavigate(shotList[currentIndex + 1]);
+        handleNavigateToIndex(currentIndex + 1, 1);
       }
     };
 
     globalThis.addEventListener('keydown', handleKeyDown);
     return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, [
-    currentShot,
+    displayShot,
     canGoPrev,
     canGoNext,
     currentIndex,
-    shotList,
-    onNavigate,
+    handleNavigateToIndex,
     enableKeyboardNavigation,
   ]);
 
@@ -559,16 +647,16 @@ export function NotesBar({
           className='grid w-full items-center px-1.5 py-0.5 sm:px-2'
           style={{
             columnGap: chipGap,
-            gridTemplateColumns: hasShot
+            gridTemplateColumns: hasDisplayShot
               ? 'auto minmax(0, 1fr) auto auto'
               : 'auto minmax(0, 1fr) auto',
           }}
         >
-          {hasShot ? (
+          {hasDisplayShot ? (
             <button
               className={navButtonClasses}
               disabled={!canGoPrev}
-              onClick={() => canGoPrev && onNavigate(shotList[currentIndex - 1])}
+              onClick={() => canGoPrev && handleNavigateToIndex(currentIndex - 1, -1)}
               title='Previous shot'
             >
               <FontAwesomeIcon icon={faChevronLeft} />
@@ -577,26 +665,41 @@ export function NotesBar({
             <span aria-hidden='true' className='h-6 w-6 flex-shrink-0' />
           )}
 
-          {hasShot ? (
+          {hasDisplayShot ? (
             <LoadedShotSummary
               chipGap={chipGap}
-              currentShot={currentShot}
-              currentShotName={currentShotName}
+              currentShot={displayShot}
+              currentShotName={displayShotName}
+              currentProfileName={displayProfileName}
               fieldCls={fieldCls}
-              getDurationLabel={getShotDuration(currentShot)}
-              notes={notes}
+              getDurationLabel={getShotDuration(displayShot)}
+              notes={
+                isSelectionPending
+                  ? {
+                      ...notes,
+                      ratio: '',
+                      doseIn: '',
+                      doseOut: '',
+                      beanType: '',
+                      grindSetting: '',
+                      balanceTaste: '',
+                      rating: 0,
+                    }
+                  : notes
+              }
               isEditing={isEditing}
+              isSelectionPending={isSelectionPending}
               onToggleNotesExpanded={onToggleNotesExpanded}
             />
           ) : (
             <PlaceholderShotSummary />
           )}
 
-          {hasShot && (
+          {hasDisplayShot && (
             <button
               className={navButtonClasses}
               disabled={!canGoNext}
-              onClick={() => canGoNext && onNavigate(shotList[currentIndex + 1])}
+              onClick={() => canGoNext && handleNavigateToIndex(currentIndex + 1, 1)}
               title='Next shot'
             >
               <FontAwesomeIcon icon={faChevronRight} />
@@ -635,10 +738,12 @@ export function NotesBar({
           )}
         </div>
 
-        {/* Loading indicator */}
-        {loading && (
-          <div className='bg-primary/20 h-0.5 w-full'>
-            <div className='bg-primary h-full w-1/3 animate-pulse rounded-full' />
+        {loadIndicatorVisible && (
+          <div className='bg-primary/15 h-0.5 w-full overflow-hidden'>
+            <div
+              className='bg-primary h-full rounded-full transition-[width] duration-200 ease-out'
+              style={{ width: loadIndicatorWidth }}
+            />
           </div>
         )}
       </div>

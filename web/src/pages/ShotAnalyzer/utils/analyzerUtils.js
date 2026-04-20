@@ -704,46 +704,172 @@ export const formatDuration = samples => {
 
 /**
  * Auto-detect dose in from profile name (e.g., "18g Turbo")
- * Scans all 'g' occurrences from right-to-left to handle cases like "My Great 18g Profile"
+ * Accepts only one standalone gram value in the 0-30g range and ignores
+ * ranges or ambiguous patterns such as "10-20g" or "10 to 20 g".
  * @param {string} profileName - Profile name
  * @returns {number|null} Detected dose or null
  */
-export const detectDoseFromProfileName = profileName => {
-  if (!profileName) return null;
+const MAX_AUTO_DETECTED_DOSE_GRAMS = 30;
+const RANGE_SEPARATOR_CHARS = new Set(['-', '–', '—', '−']);
 
-  // Find dose patterns like "18g", "20.5g" without regex (avoids ReDoS, SonarQube S5852)
-  const lower = profileName.toLowerCase();
-  let searchPos = lower.length;
-  let gIndex;
+function isDigitChar(char) {
+  return char >= '0' && char <= '9';
+}
 
-  // Scan all 'g' occurrences from right-to-left
-  while ((gIndex = lower.lastIndexOf('g', searchPos - 1)) !== -1) {
-    if (gIndex < 1) {
-      searchPos = gIndex;
+function isAsciiLetterChar(char) {
+  return char >= 'a' && char <= 'z';
+}
+
+function isWhitespaceChar(char) {
+  return char === ' ' || char === '\n' || char === '\r' || char === '\t';
+}
+
+function skipWhitespaceForward(text, index) {
+  let cursor = index;
+  while (cursor < text.length && isWhitespaceChar(text[cursor])) {
+    cursor += 1;
+  }
+  return cursor;
+}
+
+function skipWhitespaceBackward(text, index) {
+  let cursor = index;
+  while (cursor >= 0 && isWhitespaceChar(text[cursor])) {
+    cursor -= 1;
+  }
+  return cursor;
+}
+
+function readAsciiWordForward(text, index) {
+  let cursor = index;
+  while (cursor < text.length && isAsciiLetterChar(text[cursor])) {
+    cursor += 1;
+  }
+  return text.slice(index, cursor);
+}
+
+function readAsciiWordBackward(text, index) {
+  let cursor = index;
+  while (cursor >= 0 && isAsciiLetterChar(text[cursor])) {
+    cursor -= 1;
+  }
+  return text.slice(cursor + 1, index + 1);
+}
+
+function readDoseNumberToken(text, index) {
+  let cursor = index;
+  let seenDecimalSeparator = false;
+
+  while (cursor < text.length) {
+    const char = text[cursor];
+    if (isDigitChar(char)) {
+      cursor += 1;
       continue;
     }
 
-    // Walk backwards from 'g' to collect the number
-    let start = gIndex;
-    while (
-      start > 0 &&
-      ((lower[start - 1] >= '0' && lower[start - 1] <= '9') || lower[start - 1] === '.')
+    const nextChar = text[cursor + 1];
+    const previousChar = text[cursor - 1];
+    if (
+      char === '.' &&
+      !seenDecimalSeparator &&
+      isDigitChar(previousChar) &&
+      isDigitChar(nextChar)
     ) {
-      start--;
+      seenDecimalSeparator = true;
+      cursor += 1;
+      continue;
     }
 
-    if (start < gIndex) {
-      const candidate = lower.slice(start, gIndex);
-      const value = parseFloat(candidate);
-      if (!isNaN(value) && value > 0) {
-        return value;
-      }
-    }
-
-    searchPos = gIndex;
+    break;
   }
 
-  return null;
+  if (cursor === index) return null;
+
+  return {
+    raw: text.slice(index, cursor),
+    end: cursor,
+  };
+}
+
+function isRangeValueBefore(text, numberStart) {
+  const previousTokenIndex = skipWhitespaceBackward(text, numberStart - 1);
+  if (previousTokenIndex < 0) return false;
+
+  const previousChar = text[previousTokenIndex];
+  if (RANGE_SEPARATOR_CHARS.has(previousChar)) {
+    const beforeSeparatorIndex = skipWhitespaceBackward(text, previousTokenIndex - 1);
+    return (
+      beforeSeparatorIndex >= 0 &&
+      (isDigitChar(text[beforeSeparatorIndex]) || text[beforeSeparatorIndex] === 'g')
+    );
+  }
+
+  if (!isAsciiLetterChar(previousChar)) return false;
+
+  const previousWord = readAsciiWordBackward(text, previousTokenIndex);
+  if (previousWord !== 'to') return false;
+
+  const beforeWordIndex = skipWhitespaceBackward(text, previousTokenIndex - previousWord.length);
+  return beforeWordIndex >= 0 && isDigitChar(text[beforeWordIndex]);
+}
+
+function isRangeValueAfter(text, unitIndex) {
+  const nextTokenIndex = skipWhitespaceForward(text, unitIndex + 1);
+  if (nextTokenIndex >= text.length) return false;
+
+  const nextChar = text[nextTokenIndex];
+  if (RANGE_SEPARATOR_CHARS.has(nextChar)) {
+    const afterSeparatorIndex = skipWhitespaceForward(text, nextTokenIndex + 1);
+    return afterSeparatorIndex < text.length && isDigitChar(text[afterSeparatorIndex]);
+  }
+
+  if (!isAsciiLetterChar(nextChar)) return false;
+
+  const nextWord = readAsciiWordForward(text, nextTokenIndex);
+  if (nextWord !== 'to') return false;
+
+  const afterWordIndex = skipWhitespaceForward(text, nextTokenIndex + nextWord.length);
+  return afterWordIndex < text.length && isDigitChar(text[afterWordIndex]);
+}
+
+export const detectDoseFromProfileName = profileName => {
+  if (!profileName) return null;
+
+  const lower = profileName.toLowerCase();
+  const candidates = [];
+
+  for (let index = 0; index < lower.length; index += 1) {
+    if (!isDigitChar(lower[index])) continue;
+
+    const numberToken = readDoseNumberToken(lower, index);
+    if (!numberToken) continue;
+
+    const unitIndex = skipWhitespaceForward(lower, numberToken.end);
+    if (unitIndex >= lower.length || lower[unitIndex] !== 'g') {
+      index = numberToken.end - 1;
+      continue;
+    }
+
+    const charAfterUnit = lower[unitIndex + 1];
+    if (charAfterUnit && (isAsciiLetterChar(charAfterUnit) || isDigitChar(charAfterUnit))) {
+      index = unitIndex;
+      continue;
+    }
+
+    if (isRangeValueBefore(lower, index) || isRangeValueAfter(lower, unitIndex)) {
+      index = unitIndex;
+      continue;
+    }
+
+    const value = Number.parseFloat(numberToken.raw);
+    if (Number.isFinite(value) && value > 0 && value <= MAX_AUTO_DETECTED_DOSE_GRAMS) {
+      candidates.push(value);
+    }
+
+    index = unitIndex;
+  }
+
+  return candidates.length === 1 ? candidates[0] : null;
 };
 
 /**

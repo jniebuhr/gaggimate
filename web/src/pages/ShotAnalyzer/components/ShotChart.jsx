@@ -47,6 +47,8 @@ import './ShotChart.css';
 
 Chart.register(annotationPlugin);
 
+const EMPTY_SHOT_SAMPLES = Object.freeze([]);
+
 function SingleShotChart({ shotData, results }) {
   // These refs point to the mounted DOM and Chart.js instances. They stay local
   // to the component because only the top-level orchestrator owns mounting and teardown.
@@ -75,15 +77,17 @@ function SingleShotChart({ shotData, results }) {
     chartColorsRef.current = getShotChartColors();
   }
 
+  const shotSamples = Array.isArray(shotData?.samples) ? shotData.samples : EMPTY_SHOT_SAMPLES;
+
   const hasWeightData = Boolean(
-    shotData?.samples?.some(sample => {
+    shotSamples.some(sample => {
       const rawWeight = sample?.v ?? sample?.w ?? sample?.weight ?? sample?.m;
       const numericWeight = Number(rawWeight);
       return Number.isFinite(numericWeight) && numericWeight > 0;
     }),
   );
   const hasWeightFlowData = Boolean(
-    shotData?.samples?.some(sample => {
+    shotSamples.some(sample => {
       const value = Number(sample?.vf ?? sample?.weight_flow);
       return Number.isFinite(value) && value > 0;
     }),
@@ -135,6 +139,21 @@ function SingleShotChart({ shotData, results }) {
     hasWeightData,
     hasWeightFlowData,
   });
+
+  const chartLifecycleRef = useRef({
+    replayRuntimeRef,
+    clearAllHoverRef,
+    isReplayingRef,
+    isExportingRef,
+    stopReplayAnimation,
+    abortActiveExport,
+  });
+  chartLifecycleRef.current.replayRuntimeRef = replayRuntimeRef;
+  chartLifecycleRef.current.clearAllHoverRef = clearAllHoverRef;
+  chartLifecycleRef.current.isReplayingRef = isReplayingRef;
+  chartLifecycleRef.current.isExportingRef = isExportingRef;
+  chartLifecycleRef.current.stopReplayAnimation = stopReplayAnimation;
+  chartLifecycleRef.current.abortActiveExport = abortActiveExport;
 
   // Full-display stays as a separate behavioral hook so the chart component only
   // decides where to render, not how the overlay manages viewport and scroll state.
@@ -205,6 +224,7 @@ function SingleShotChart({ shotData, results }) {
   };
 
   useEffect(() => {
+    const chartLifecycle = chartLifecycleRef.current;
     const destroyCharts = () => {
       if (mainChartInstance.current) {
         mainChartInstance.current.destroy();
@@ -216,13 +236,16 @@ function SingleShotChart({ shotData, results }) {
       }
     };
 
-    stopReplayAnimation(true);
-    replayRuntimeRef.current = null;
+    chartLifecycle.stopReplayAnimation(true);
+    chartLifecycle.replayRuntimeRef.current = null;
     hideExternalTooltip();
 
     // Chart.js must be recreated when the data, visible datasets, or render host changes.
     // In full-display mode the canvases move into a portal, so rebuilding is intentional.
-    if (!shotData?.samples?.length) {
+    // Replay/export helpers are intentionally excluded from the rebuild triggers because
+    // their identity changes during hover/replay state updates and would tear charts down
+    // mid-interaction, which breaks the single-chart tooltip and replay lifecycle.
+    if (shotSamples.length === 0) {
       destroyCharts();
       return undefined;
     }
@@ -331,7 +354,7 @@ function SingleShotChart({ shotData, results }) {
 
     // Build the transformed replay model once per chart build so playback only
     // appends precomputed frame chunks instead of reparsing sample data live.
-    replayRuntimeRef.current = {
+    chartLifecycle.replayRuntimeRef.current = {
       sampleTimesSec: [...model.sampleTimesSec],
       shotStartSec: model.shotStartSec,
       maxTime: model.maxTime,
@@ -351,18 +374,18 @@ function SingleShotChart({ shotData, results }) {
       mainChart,
       tempChart,
       hideExternalTooltip,
-      clearAllHoverRef,
-      isReplayingRef,
-      isExportingRef,
+      clearAllHoverRef: chartLifecycle.clearAllHoverRef,
+      isReplayingRef: chartLifecycle.isReplayingRef,
+      isExportingRef: chartLifecycle.isExportingRef,
     });
 
     return () => {
       // Abort any running export before destroying the charts so recorder callbacks
       // never try to touch a Chart.js instance that has already been torn down.
-      abortActiveExport();
-      stopReplayAnimation(true);
-      replayRuntimeRef.current = null;
-      clearAllHoverRef.current = () => {};
+      chartLifecycle.abortActiveExport();
+      chartLifecycle.stopReplayAnimation(true);
+      chartLifecycle.replayRuntimeRef.current = null;
+      chartLifecycle.clearAllHoverRef.current = () => {};
       detachHoverSync();
       detachTempChartLayoutSync();
       destroyCharts();
@@ -372,12 +395,13 @@ function SingleShotChart({ shotData, results }) {
     results,
     visibility,
     isFullDisplay,
+    shotSamples,
     hasWeightData,
     hasWeightFlowData,
     hideExternalTooltip,
   ]);
 
-  if (!shotData?.samples?.length) {
+  if (shotSamples.length === 0) {
     return null;
   }
 

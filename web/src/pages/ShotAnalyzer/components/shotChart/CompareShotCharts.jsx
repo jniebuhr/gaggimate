@@ -1241,8 +1241,7 @@ function CompareChartCanvas({
       if (!point) return;
       applyCompareHover(chart, point.clientX, point.clientY);
     };
-    const supportsPointerEvents =
-      globalThis.window !== undefined && Boolean(globalThis.window.PointerEvent);
+    const supportsPointerEvents = typeof window !== 'undefined' && Boolean(window.PointerEvent);
 
     if (hoverSurface && enableHoverInfo) {
       addCompareHoverListeners(hoverSurface, supportsPointerEvents, handleHoverMove, clearHover);
@@ -1327,11 +1326,15 @@ export function CompareShotCharts({
     ...(showPhaseAnnotations ? [] : ['Phase Names']),
     ...(showStopAnnotations ? [] : ['Stops']),
   ];
-  const hasWeightData = compareEntries.some(entry =>
-    entry.shot?.samples?.some(sample => Number(sample?.v) > 0),
+  const hasWeightData = compareEntries.some(
+    entry =>
+      Array.isArray(entry.shot?.samples) &&
+      entry.shot.samples.some(sample => Number(sample?.v) > 0),
   );
-  const hasWeightFlowData = compareEntries.some(entry =>
-    entry.shot?.samples?.some(sample => Number(sample?.vf) > 0),
+  const hasWeightFlowData = compareEntries.some(
+    entry =>
+      Array.isArray(entry.shot?.samples) &&
+      entry.shot.samples.some(sample => Number(sample?.vf) > 0),
   );
 
   useEffect(() => {
