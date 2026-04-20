@@ -130,6 +130,13 @@ void MatterPlugin::start(Event const &event) {
     // chip[DIS] retries advertiser init on every IP event for ~5s at startup;
     // drop to WARN so only genuine failures surface.
     esp_log_level_set("chip[DIS]", ESP_LOG_WARN);
+#ifdef GAGGIMATE_MATTER_BLE_DEBUG
+    // Crank BLE/BTP logs to DEBUG so the TX (handshake-response) side shows up
+    // when diagnosing commissioning hangs. Off by default — stream is chatty.
+    esp_log_level_set("chip[BLE]", ESP_LOG_DEBUG);
+    esp_log_level_set("chip[DL]", ESP_LOG_DEBUG);
+    esp_log_level_set("NimBLE", ESP_LOG_DEBUG);
+#endif
 
     esp_matter::node::config_t node_cfg;
     esp_matter::node_t *node = esp_matter::node::create(&node_cfg, matter_attr_update_cb, nullptr);
