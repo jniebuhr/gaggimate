@@ -925,11 +925,3 @@ html[data-theme='amoled'] {
   background: oklch(var(--color-base-200));
 }
 
-/* Navigation sidebar auto-expand text */
-.nav-sidebar .nav-text {
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-}
-.nav-sidebar:hover .nav-text {
-  opacity: 1;
-}

@@ -38,19 +38,21 @@ const NAVIGATION_SECTIONS = [
 function MenuItem({ icon, isNew = false, label, link }) {
   const { path } = useLocation();
   const isActive = path === link;
-  const baseClassName = 'btn btn-sm h-10 justify-start gap-3 w-full rounded-xl border border-transparent bg-transparent px-3 text-base-content/78 hover:border-base-content/12 hover:bg-base-content/6 hover:text-base-content focus-visible:border-primary/30 focus-visible:bg-primary/10 focus-visible:text-base-content focus-visible:outline-none';
-  const activeClassName = 'btn btn-sm h-10 justify-start gap-3 w-full rounded-xl border border-primary/20 bg-primary/88 px-3 text-primary-content hover:bg-primary hover:text-primary-content shadow-[0_12px24px_-16px_rgba(0,0,0,0.9)] focus-visible:outline-none';
+  const sharedClassName =
+    'btn btn-sm relative h-10 w-full rounded-xl border transition-[gap,padding] duration-300 ease-in-out lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-3';
+  const baseClassName = `${sharedClassName} border-transparent bg-transparent text-base-content/78 hover:border-base-content/12 hover:bg-base-content/6 hover:text-base-content focus-visible:border-primary/30 focus-visible:bg-primary/10 focus-visible:text-base-content focus-visible:outline-none`;
+  const activeClassName = `${sharedClassName} border border-primary/20 bg-primary/88 text-primary-content shadow-[0_12px24px_-16px_rgba(0,0,0,0.9)] hover:bg-primary hover:text-primary-content focus-visible:outline-none`;
   const className = isActive ? activeClassName : baseClassName;
 
   return (
     <a
       href={link}
-      className={`${className} relative`}
+      className={className}
       aria-current={isActive ? 'page' : undefined}
       title={label}
     >
       <FontAwesomeIcon icon={icon} />
-      <span className='nav-text overflow-hidden whitespace-nowrap flex items-center gap-2'>
+      <span className='nav-text flex max-w-0 items-center gap-2 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 ease-in-out lg:group-hover:max-w-[10rem] lg:group-hover:opacity-100'>
         <span className='truncate'>{label}</span>
         {isNew && <span className='text-success text-[0.65rem] font-bold shrink-0'>NEW</span>}
       </span>
