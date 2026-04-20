@@ -1,6 +1,5 @@
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { MatterCard } from './MatterCard.jsx';
 
 export function PluginCard({
   formData,
@@ -120,8 +119,6 @@ export function PluginCard({
           </div>
         )}
       </div>
-
-      <MatterCard />
 
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>

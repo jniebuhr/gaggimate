@@ -11,6 +11,7 @@ import { machine } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
+import { MatterCard } from './MatterCard.jsx';
 import { PluginCard } from './PluginCard.jsx';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
@@ -963,6 +964,10 @@ export function Settings() {
               </div>
             </Card>
           )}
+
+          <Card sm={10} title='Matter'>
+            <MatterCard />
+          </Card>
 
           <Card sm={10} title='Plugins'>
             <PluginCard

@@ -98,9 +98,8 @@ export function MatterCard() {
   };
 
   return (
-    <div className='bg-base-200 rounded-lg p-4'>
-      <div className='flex items-center justify-between'>
-        <span className='text-xl font-medium'>Matter</span>
+    <div className='space-y-4'>
+      <div className='flex items-center justify-end'>
         <button
           type='button'
           className='btn btn-ghost btn-xs'
@@ -110,7 +109,7 @@ export function MatterCard() {
           Refresh
         </button>
       </div>
-      <div className='border-base-300 mt-4 border-t pt-4'>{renderBody()}</div>
+      {renderBody()}
     </div>
   );
 }
