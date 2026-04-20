@@ -567,6 +567,47 @@ function AnalyzerPanelSlot({ statusBarProps, notesBarProps }) {
   );
 }
 
+function useLibraryPanelHotkeys({
+  collapsed,
+  librarySelectionTarget,
+  openLibraryForTarget,
+  setCollapsed,
+  handleStatusBarCompareToggle,
+}) {
+  useEffect(() => {
+    const handleKeyDown = event => {
+      if (event.defaultPrevented || event.repeat) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isLibraryHotkeyTypingTarget(event.target)) return;
+
+      const key = String(event.key || '').toLowerCase();
+      if (key === 'x') {
+        event.preventDefault();
+        if (collapsed) {
+          openLibraryForTarget(librarySelectionTarget || 'primaryShot');
+        } else {
+          setCollapsed(true);
+        }
+        return;
+      }
+
+      if (key === 'c') {
+        event.preventDefault();
+        handleStatusBarCompareToggle();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [
+    collapsed,
+    librarySelectionTarget,
+    openLibraryForTarget,
+    setCollapsed,
+    handleStatusBarCompareToggle,
+  ]);
+}
+
 function getLibraryPanelLayoutStyles({
   collapsed,
   isMobileViewport,
@@ -1110,32 +1151,13 @@ export function LibraryPanel({
     onCompareModeToggle?.();
   }, [compareMode, onCompareModeToggle, openLibraryForTarget, primaryDisplayShot]);
 
-  useEffect(() => {
-    const handleKeyDown = event => {
-      if (event.defaultPrevented || event.repeat) return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if (isLibraryHotkeyTypingTarget(event.target)) return;
-
-      const key = String(event.key || '').toLowerCase();
-      if (key === 'x') {
-        event.preventDefault();
-        if (collapsed) {
-          openLibraryForTarget(librarySelectionTarget || 'primaryShot');
-        } else {
-          setCollapsed(true);
-        }
-        return;
-      }
-
-      if (key === 'c') {
-        event.preventDefault();
-        handleStatusBarCompareToggle();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [collapsed, librarySelectionTarget, openLibraryForTarget, handleStatusBarCompareToggle]);
+  useLibraryPanelHotkeys({
+    collapsed,
+    librarySelectionTarget,
+    openLibraryForTarget,
+    setCollapsed,
+    handleStatusBarCompareToggle,
+  });
 
   const handleProfileRowAction = item => {
     if (librarySelectionTarget === 'secondaryProfile') {
