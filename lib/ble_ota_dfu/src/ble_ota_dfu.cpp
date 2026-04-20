@@ -15,7 +15,7 @@ static inline void logTxPacket(BLECharacteristic *pChar) {
     }
     std::string value = pChar->getValue();
     uint16_t len = value.length();
-    const uint8_t *pData = reinterpret_cast<const uint8_t *>(value.data());
+    const auto *pData = reinterpret_cast<const uint8_t *>(value.data());
     ESP_LOGD(TAG, "TX on %s length=%u", pChar->getUUID().toString().c_str(), (unsigned)len);
     Serial.print("TX  ");
     for (uint16_t i = 0; i < len; i++) {
