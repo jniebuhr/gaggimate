@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 constexpr int INPUT_CHECK_INTERVAL_MS = 100;
+static constexpr uint8_t PIN_NOT_CONFIGURED = 255;
 
 using input_callback_t = std::function<void(const bool state)>;
 using combined_callback_t = std::function<void(const uint8_t state)>;
@@ -21,7 +22,7 @@ class DigitalInput {
 
   private:
     uint8_t _pin1;
-    uint8_t _pin2 = 255; // 255 = not used (single pin mode)
+    uint8_t _pin2 = PIN_NOT_CONFIGURED;
     uint8_t _lastState = 0;
     input_callback_t _singleCallback;
     combined_callback_t _combinedCallback;

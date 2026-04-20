@@ -9,7 +9,7 @@ DigitalInput::DigitalInput(uint8_t pin1, uint8_t pin2, const combined_callback_t
 
 void DigitalInput::setup() {
     pinMode(_pin1, INPUT_PULLUP);
-    if (_pin2 != 255) {
+    if (_pin2 != PIN_NOT_CONFIGURED) {
         pinMode(_pin2, INPUT_PULLUP);
     }
     xTaskCreate(loopTask, "DigitalInput::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
@@ -36,7 +36,7 @@ void DigitalInput::loopCombined() {
 void DigitalInput::loopTask(void *arg) {
     auto *input = static_cast<DigitalInput *>(arg);
     while (true) {
-        if (input->_pin2 == 255) {
+        if (input->_pin2 == PIN_NOT_CONFIGURED) {
             input->loopSingle();
         } else {
             input->loopCombined();

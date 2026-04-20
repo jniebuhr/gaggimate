@@ -64,8 +64,6 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     led_control_callback_t ledControlCallback = nullptr;
     char sensorDataBuffer[80]{};
     char errorBuffer[12]{};
-    char brewBtnBuffer[4]{};
-    char steamBtnBuffer[4]{};
     char autotuneResultBuffer[64]{};
     char tofBuffer[16]{};
     char volumetricBuffer[16]{};

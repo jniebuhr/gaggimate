@@ -122,6 +122,10 @@ class Controller {
 
     // Steam, water, brew button
     void handleButtonsState(uint8_t buttonsStatus);
+    void handleWaterPress();
+    void handleBrewPress();
+    void handleSteamPress();
+    void handleRelease();
 
     // Private Attributes
 #ifndef GAGGIMATE_HEADLESS
@@ -159,6 +163,7 @@ class Controller {
     bool initialized = false;
     bool screenReady = false;
     bool waitingForController = false;
+    bool wasWaterMode = false;
     unsigned long connectStartTime = 0;
     bool volumetricOverride = false;
     bool processCompleted = false;
