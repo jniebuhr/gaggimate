@@ -102,6 +102,15 @@ void MatterPlugin::start(Event const &event) {
         return;
     }
 
+    // Silence per-attribute R/W trace (esp_matter_attribute fires on every
+    // read AND write; temperature stream alone generates ~8 lines/sec at
+    // INFO). State transitions we care about are still logged via our own
+    // LOG_TAG at INFO.
+    esp_log_level_set("esp_matter_attribute", ESP_LOG_WARN);
+    // chip[DIS] retries advertiser init on every IP event for ~5s at startup;
+    // drop to WARN so only genuine failures surface.
+    esp_log_level_set("chip[DIS]", ESP_LOG_WARN);
+
     esp_matter::node::config_t node_cfg;
     esp_matter::node_t *node = esp_matter::node::create(&node_cfg, matter_attr_update_cb, nullptr);
     if (!node) {

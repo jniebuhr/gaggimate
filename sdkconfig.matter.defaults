@@ -90,6 +90,15 @@ CONFIG_CHIP_TASK_STACK_SIZE=8192
 # --- Logging ---
 CONFIG_CHIP_LOG_DEFAULT_LEVEL_PROGRESS=y
 
+# Silence esp_matter_attribute's per-read/write INFO spam. It fires on every
+# attribute read AND write (temperature streams at ~4 Hz -> 8 lines/sec just
+# for MeasuredValue). Lift to WARNING so the interesting state transitions
+# still log but steady-state traffic is quiet.
+# Applied via esp_log_level_set() in MatterPlugin::start() at runtime; the
+# Kconfig compile-time level below is the fallback for CHIP subsystem tags.
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_LOG_MAXIMUM_LEVEL_VERBOSE=y
+
 # --- Nano newlib ---
 CONFIG_NEWLIB_NANO_FORMAT=y
 
