@@ -965,7 +965,7 @@ export function Settings() {
             </Card>
           )}
 
-          <Card sm={10} title='Matter'>
+          <Card sm={10} lg={5} title='Matter'>
             <MatterCard />
           </Card>
 
