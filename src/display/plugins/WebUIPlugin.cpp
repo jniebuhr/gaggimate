@@ -224,7 +224,10 @@ void WebUIPlugin::setupServer() {
     ws.onEvent(
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
             if (type == WS_EVT_CONNECT) {
-                client->setCloseClientOnQueueFull(true);
+                // Drop excess frames under backpressure instead of force-closing the client.
+                // Force-close destroys AsyncWebSocketClient from the tcpip callback; any in-flight
+                // AsyncMiddlewareChain::_runChain on the same request then deref's freed state.
+                client->setCloseClientOnQueueFull(false);
                 ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DISCONNECT) {
                 ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
