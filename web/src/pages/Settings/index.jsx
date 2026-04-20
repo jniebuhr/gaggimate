@@ -103,9 +103,6 @@ export function Settings() {
   const onChange = key => {
     return e => {
       let value = e.currentTarget.value;
-      if (key === 'homekit') {
-        value = !formData.homekit;
-      }
       if (key === 'boilerFillActive') {
         value = !formData.boilerFillActive;
       }

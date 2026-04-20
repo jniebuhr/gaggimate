@@ -9,6 +9,7 @@
 #include "../core/constants.h"
 #include <app-common/zap-generated/ids/Attributes.h>
 #include <app-common/zap-generated/ids/Clusters.h>
+#include <app/server/OnboardingCodesUtil.h>
 #include <app/server/Server.h>
 #include <cstring>
 #include <esp_log.h>
@@ -17,6 +18,8 @@
 #include <esp_matter_core.h>
 #include <esp_matter_endpoint.h>
 #include <platform/CHIPDeviceEvent.h>
+#include <platform/CommissionableDataProvider.h>
+#include <platform/DeviceInstanceInfoProvider.h>
 
 static constexpr char LOG_TAG[] = "MatterPlugin";
 
@@ -32,6 +35,8 @@ static constexpr int16_t kTempMaxCentiC = 16000;  // 160.00 C
 static constexpr int16_t kTempDefaultCentiC = 9300; // 93.00 C
 
 static MatterPlugin *s_instance = nullptr;
+
+MatterPlugin *MatterPlugin::instance() { return s_instance; }
 
 static int16_t floatCtoCenti(float v) {
     if (v < -327.0f) v = -327.0f;
@@ -61,6 +66,9 @@ static void matter_event_cb(const ChipDeviceEvent *event, intptr_t /*arg*/) {
     switch (event->Type) {
     case kServerReady:
         ESP_LOGI(LOG_TAG, "Matter server ready");
+        // Log QR + manual pairing codes for convenient first-time commissioning;
+        // same info is surfaced to the web UI via /api/matter/info.
+        PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
         if (chip::Server::GetInstance().GetFabricTable().FabricCount() > 0) {
             ESP_LOGI(LOG_TAG, "Fabric present, releasing BLE immediately");
             BLECoordinator::instance().notifyBLEReleased();
@@ -217,6 +225,60 @@ void MatterPlugin::onCurrentTempChange(float temperature) {
     esp_matter_attr_val_t v = esp_matter_nullable_int16(floatCtoCenti(temperature));
     esp_matter::attribute::update(endpointId, chip::app::Clusters::TemperatureMeasurement::Id,
                                   chip::app::Clusters::TemperatureMeasurement::Attributes::MeasuredValue::Id, &v);
+}
+
+bool MatterPlugin::getOnboardingInfo(OnboardingInfo &out) const {
+    out = OnboardingInfo{};
+    out.started = started;
+    if (!started) {
+        return false;
+    }
+
+    auto &fabrics = chip::Server::GetInstance().GetFabricTable();
+    out.fabricCount = fabrics.FabricCount();
+    out.commissioned = out.fabricCount > 0;
+
+    auto *provider = chip::DeviceLayer::GetCommissionableDataProvider();
+    if (provider != nullptr) {
+        uint32_t passcode = 0;
+        if (provider->GetSetupPasscode(passcode) == CHIP_NO_ERROR) {
+            out.passcode = passcode;
+        }
+        uint16_t discriminator = 0;
+        if (provider->GetSetupDiscriminator(discriminator) == CHIP_NO_ERROR) {
+            out.discriminator = discriminator;
+        }
+    }
+
+    auto *instanceInfo = chip::DeviceLayer::GetDeviceInstanceInfoProvider();
+    if (instanceInfo != nullptr) {
+        uint16_t vendorId = 0;
+        if (instanceInfo->GetVendorId(vendorId) == CHIP_NO_ERROR) {
+            out.vendorId = vendorId;
+        }
+        uint16_t productId = 0;
+        if (instanceInfo->GetProductId(productId) == CHIP_NO_ERROR) {
+            out.productId = productId;
+        }
+    }
+
+    const chip::RendezvousInformationFlags flags(chip::RendezvousInformationFlag::kBLE);
+
+    chip::MutableCharSpan qrSpan(out.qrPayload);
+    if (GetQRCode(qrSpan, flags) == CHIP_NO_ERROR && qrSpan.size() < sizeof(out.qrPayload)) {
+        out.qrPayload[qrSpan.size()] = '\0';
+    } else {
+        out.qrPayload[0] = '\0';
+    }
+
+    chip::MutableCharSpan manualSpan(out.manualCode);
+    if (GetManualPairingCode(manualSpan, flags) == CHIP_NO_ERROR && manualSpan.size() < sizeof(out.manualCode)) {
+        out.manualCode[manualSpan.size()] = '\0';
+    } else {
+        out.manualCode[0] = '\0';
+    }
+
+    return true;
 }
 
 #endif // GAGGIMATE_MATTER

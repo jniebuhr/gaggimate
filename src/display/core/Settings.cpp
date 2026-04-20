@@ -20,7 +20,7 @@ void Settings::load() {
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
-    homekit = preferences.getBool("hk", false);
+    // NVS key "hk" is legacy HomeKit/HomeSpan (removed in favour of Matter) — left orphaned.
     volumetricTarget = preferences.getBool("vt", false);
     otaChannel = preferences.getString("oc", DEFAULT_OTA_CHANNEL);
     savedScale = preferences.getString("ssc", "");
@@ -195,11 +195,6 @@ void Settings::setWifiPassword(const String &wifiPassword) {
 
 void Settings::setMdnsName(const String &mdnsName) {
     this->mdnsName = mdnsName;
-    save();
-}
-
-void Settings::setHomekit(const bool homekit) {
-    this->homekit = homekit;
     save();
 }
 
@@ -438,7 +433,6 @@ void Settings::doSave() {
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
     preferences.putString("mn", mdnsName);
-    preferences.putBool("hk", homekit);
     preferences.putBool("vt", volumetricTarget);
     preferences.putString("oc", otaChannel);
     preferences.putString("ssc", savedScale);

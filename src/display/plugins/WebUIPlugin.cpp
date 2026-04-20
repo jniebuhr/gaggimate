@@ -1,6 +1,9 @@
 #include "WebUIPlugin.h"
 #include <DNSServer.h>
 #include <SPIFFS.h>
+#ifdef GAGGIMATE_MATTER
+#include <display/plugins/MatterPlugin.h>
+#endif
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
@@ -219,6 +222,9 @@ void WebUIPlugin::setupServer() {
         }
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
+#ifdef GAGGIMATE_MATTER
+    server.on("/api/matter/info", HTTP_GET, [this](AsyncWebServerRequest *request) { handleMatterInfo(request); });
+#endif
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
     server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
     ws.onEvent(
@@ -484,7 +490,6 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMdnsName(request->arg("mdnsName"));
             if (request->hasArg("wifiPassword") && request->arg("wifiPassword") != "---unchanged---")
                 settings->setWifiPassword(request->arg("wifiPassword"));
-            settings->setHomekit(request->hasArg("homekit"));
             settings->setBoilerFillActive(request->hasArg("boilerFillActive"));
             if (request->hasArg("startupFillTime"))
                 settings->setStartupFillTime(request->arg("startupFillTime").toInt() * 1000);
@@ -601,7 +606,6 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["startupMode"] = settings.getStartupMode() == MODE_BREW ? "brew" : "standby";
     doc["targetSteamTemp"] = settings.getTargetSteamTemp();
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
-    doc["homekit"] = settings.isHomekit();
     doc["homeAssistant"] = settings.isHomeAssistant();
     doc["haUser"] = settings.getHomeAssistantUser();
     doc["haPassword"] = settings.getHomeAssistantPassword();
@@ -846,3 +850,29 @@ void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {
 
     request->send(response);
 }
+
+#ifdef GAGGIMATE_MATTER
+void WebUIPlugin::handleMatterInfo(AsyncWebServerRequest *request) {
+    JsonDocument doc;
+    MatterPlugin *matter = MatterPlugin::instance();
+    MatterPlugin::OnboardingInfo info;
+    const bool ok = (matter != nullptr) && matter->getOnboardingInfo(info);
+
+    doc["started"] = info.started;
+    doc["commissioned"] = info.commissioned;
+    doc["fabricCount"] = info.fabricCount;
+    if (ok) {
+        doc["vendorId"] = info.vendorId;
+        doc["productId"] = info.productId;
+        doc["discriminator"] = info.discriminator;
+        doc["passcode"] = info.passcode;
+        doc["qrPayload"] = info.qrPayload;
+        doc["manualCode"] = info.manualCode;
+    }
+
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    response->addHeader("Cache-Control", "no-store");
+    serializeJson(doc, *response);
+    request->send(response);
+}
+#endif

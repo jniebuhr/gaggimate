@@ -53,6 +53,10 @@ class WebUIPlugin : public Plugin {
     // Core dump download
     void handleCoreDumpDownload(AsyncWebServerRequest *request);
 
+#ifdef GAGGIMATE_MATTER
+    void handleMatterInfo(AsyncWebServerRequest *request);
+#endif
+
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
     AsyncWebSocket ws;

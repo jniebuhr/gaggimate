@@ -1,6 +1,6 @@
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import homekitImage from '../../assets/homekit.png';
+import { MatterCard } from './MatterCard.jsx';
 
 export function PluginCard({
   formData,
@@ -121,30 +121,7 @@ export function PluginCard({
         )}
       </div>
 
-      <div className='bg-base-200 rounded-lg p-4'>
-        <div className='flex items-center justify-between'>
-          <span className='text-xl font-medium'>HomeKit</span>
-          <input
-            id='homekit'
-            name='homekit'
-            value='homekit'
-            type='checkbox'
-            className='toggle toggle-primary'
-            checked={!!formData.homekit}
-            onChange={onChange('homekit')}
-            aria-label='Enable HomeKit'
-          />
-        </div>
-        {formData.homekit && (
-          <div className='border-base-300 mt-4 flex flex-col items-center justify-center gap-4 border-t pt-4'>
-            <img src={homekitImage} alt='HomeKit Setup Code' />
-            <p className='text-center'>
-              Open the Home app on your iOS device, select Add Accessory, and enter the setup code
-              shown above.
-            </p>
-          </div>
-        )}
-      </div>
+      <MatterCard />
 
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>

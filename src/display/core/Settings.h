@@ -74,7 +74,6 @@ class Settings {
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
     String getMdnsName() const { return mdnsName; }
-    bool isHomekit() const { return homekit; }
     bool isVolumetricTarget() const { return volumetricTarget; }
     String getOTAChannel() const { return otaChannel; }
     String getSavedScale() const { return savedScale; }
@@ -130,7 +129,6 @@ class Settings {
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
     void setMdnsName(const String &mdnsName);
-    void setHomekit(bool homekit);
     void setVolumetricTarget(bool volumetric_target);
     void setOTAChannel(const String &otaChannel);
     void setSavedScale(const String &savedScale);
@@ -197,7 +195,6 @@ class Settings {
     String wifiPassword = "";
     String mdnsName = DEFAULT_MDNS_NAME;
     String savedScale = "";
-    bool homekit = false;
     bool volumetricTarget = false;
     bool boilerFillActive = false;
     int startupFillTime = 0;
