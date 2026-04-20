@@ -228,7 +228,7 @@ bool BookooScales::decodeAndHandleNotification() {
     RemoteScales::log("Inbound SYSTEM message ignored: %s\n", RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
   }
   else {
-    RemoteScales::log("Unknown message type %02X: %s\n", messageType, RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
+    RemoteScales::log("Unknown message type %02X: %s\n", static_cast<uint8_t>(messageType), RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
   }
 
   // Remove processed message from the buffer
