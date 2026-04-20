@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'preact/hooks';
-import QRCode from 'qrcode';
+import { renderSVG } from 'uqr';
 
 export function MatterCard() {
   const [info, setInfo] = useState(null);
-  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [qrSvg, setQrSvg] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -23,12 +23,14 @@ export function MatterCard() {
 
   useEffect(() => {
     if (!info?.qrPayload) {
-      setQrDataUrl('');
+      setQrSvg('');
       return;
     }
-    QRCode.toDataURL(info.qrPayload, { width: 256, margin: 2, errorCorrectionLevel: 'M' })
-      .then(setQrDataUrl)
-      .catch(e => setError(e.message || String(e)));
+    try {
+      setQrSvg(renderSVG(info.qrPayload, { ecc: 'M', border: 2 }));
+    } catch (e) {
+      setError(e.message || String(e));
+    }
   }, [info?.qrPayload]);
 
   const renderBody = () => {
@@ -65,13 +67,12 @@ export function MatterCard() {
     }
     return (
       <div className='flex flex-col items-center justify-center gap-4'>
-        {qrDataUrl ? (
-          <img
-            src={qrDataUrl}
-            alt='Matter commissioning QR code'
-            className='bg-white p-2'
-            width={256}
-            height={256}
+        {qrSvg ? (
+          <div
+            className='bg-white p-2 [&_svg]:h-64 [&_svg]:w-64'
+            role='img'
+            aria-label='Matter commissioning QR code'
+            dangerouslySetInnerHTML={{ __html: qrSvg }}
           />
         ) : (
           <p className='text-sm opacity-70'>Generating QR code…</p>
