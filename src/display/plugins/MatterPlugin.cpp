@@ -19,6 +19,7 @@
 #include <esp_matter_endpoint.h>
 #include <platform/CHIPDeviceEvent.h>
 #include <platform/CommissionableDataProvider.h>
+#include <platform/ConnectivityManager.h>
 #include <platform/DeviceInstanceInfoProvider.h>
 
 static constexpr char LOG_TAG[] = "MatterPlugin";
@@ -27,6 +28,17 @@ static constexpr char LOG_TAG[] = "MatterPlugin";
 // Matter 1.4 does not define a Coffee Maker type; `0xFFF1xxxx` is the hobby range.
 static constexpr uint32_t kGaggiMateDeviceTypeId = 0xFFF1FC01;
 static constexpr uint8_t kGaggiMateDeviceTypeVersion = 1;
+
+// Identity strings surfaced to Matter controllers. BLE GAP name is shown
+// during commissioning; NodeLabel/VendorName/ProductName appear in Apple Home,
+// Google Home, HA etc. after pairing. VendorName/ProductName default to
+// "TEST_VENDOR"/"TEST_PRODUCT" from CHIP_DEVICE_CONFIG_* until we ship factory
+// data via mfg_tool with a CSA-assigned VID; this runtime override at least
+// keeps controller UIs from showing "TEST_" strings.
+static constexpr char kNodeLabel[] = "GaggiMate";
+static constexpr char kVendorName[] = "GaggiMate";
+static constexpr char kProductName[] = "GaggiMate Espresso";
+static constexpr char kBleDeviceName[] = "GaggiMate";
 
 // Temperature values on the Matter TemperatureControl cluster are in hundredths
 // of a degree Celsius (int16).
@@ -163,11 +175,32 @@ void MatterPlugin::start(Event const &event) {
     ESP_LOGI(LOG_TAG, "Matter endpoint %u built (device_type=0x%08lx)", endpointId,
              (unsigned long)kGaggiMateDeviceTypeId);
 
+    // Override GAP name used in BLE commissioning advertisement.
+    if (chip::DeviceLayer::ConnectivityMgr().SetBLEDeviceName(kBleDeviceName) != CHIP_NO_ERROR) {
+        ESP_LOGW(LOG_TAG, "Failed to set BLE device name");
+    }
+
     const esp_err_t err = esp_matter::start(matter_event_cb);
     if (err != ESP_OK) {
         ESP_LOGE(LOG_TAG, "esp_matter::start failed: %d", err);
         BLECoordinator::instance().notifyBLEReleased();
         return;
+    }
+
+    // BasicInformation attributes live on endpoint 0 (root node). Override
+    // VendorName, ProductName, and NodeLabel so controller UIs show GaggiMate
+    // instead of the CHIP_DEVICE_CONFIG_* defaults.
+    {
+        esp_matter_attr_val_t val;
+        val = esp_matter_char_str(const_cast<char *>(kVendorName), sizeof(kVendorName) - 1);
+        esp_matter::attribute::update(0, chip::app::Clusters::BasicInformation::Id,
+                                      chip::app::Clusters::BasicInformation::Attributes::VendorName::Id, &val);
+        val = esp_matter_char_str(const_cast<char *>(kProductName), sizeof(kProductName) - 1);
+        esp_matter::attribute::update(0, chip::app::Clusters::BasicInformation::Id,
+                                      chip::app::Clusters::BasicInformation::Attributes::ProductName::Id, &val);
+        val = esp_matter_char_str(const_cast<char *>(kNodeLabel), sizeof(kNodeLabel) - 1);
+        esp_matter::attribute::update(0, chip::app::Clusters::BasicInformation::Id,
+                                      chip::app::Clusters::BasicInformation::Attributes::NodeLabel::Id, &val);
     }
 
     started = true;
