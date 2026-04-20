@@ -3,6 +3,7 @@
 #include "BLECoordinator.h"
 #include "esp_heap_caps.h"
 #include "esp_sntp.h"
+#include "utils.h"
 #include <SD_MMC.h>
 #include <SPIFFS.h>
 #include <ctime>
@@ -124,20 +125,8 @@ void Controller::connect() {
     connectStartTime = millis();
     pluginManager->trigger("controller:startup");
 
-    ESP_LOGI("HEAP", "pre-BT   internal=%u largest=%u total=%u",
-             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
-             (unsigned)ESP.getFreeHeap());
-    setupBluetooth();
-    ESP_LOGI("HEAP", "post-BT  internal=%u largest=%u total=%u",
-             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
-             (unsigned)ESP.getFreeHeap());
-    setupWifi();
-    ESP_LOGI("HEAP", "post-WIFI internal=%u largest=%u total=%u",
-             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
-             (unsigned)ESP.getFreeHeap());
+    measure_heap("setupBluetooth", [this] { setupBluetooth(); });
+    measure_heap("setupWifi", [this] { setupWifi(); });
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
     pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
 
