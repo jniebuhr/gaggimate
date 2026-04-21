@@ -8,5 +8,19 @@ node_modules/
 __pycache__
 data/w
 .codebuddy
+*.orig
 src/version.h
 src/display/ui/default/lvgl/project.info
+
+# pioarduino build artifacts (regenerated each build)
+sdkconfig.display
+sdkconfig.display-headless
+sdkconfig.display-headless-8m
+sdkconfig.display-headless-4m
+sdkconfig.controller
+managed_components/
+dependencies.lock
+
+# Editor / agent workspaces
+.serena/
+.claude/
