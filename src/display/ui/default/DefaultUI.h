@@ -138,9 +138,9 @@ class DefaultUI {
     // Standby brightness control
     unsigned long standbyEnterTime = 0;
 
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
     static void loopTask(void *arg);
-    xTaskHandle profileTaskHandle;
+    TaskHandle_t profileTaskHandle;
     static void profileLoopTask(void *arg);
 };
 

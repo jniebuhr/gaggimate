@@ -4,7 +4,7 @@
 #include "NimBLEComm.h"
 #include "cstring"
 
-class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLEClientCallbacks {
+class NimBLEClientController : public NimBLEScanCallbacks, NimBLEClientCallbacks {
   public:
     NimBLEClientController();
     void initClient();
@@ -61,9 +61,9 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *volumetricTareChar = nullptr;
     NimBLERemoteCharacteristic *ledControlChar = nullptr;
     NimBLERemoteCharacteristic *tofMeasurementChar = nullptr;
-    NimBLEAdvertisedDevice *serverDevice = nullptr;
+    NimBLEAddress serverAddress{};
     bool readyForConnection = false;
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
 
     remote_err_callback_t remoteErrorCallback = nullptr;
     brew_callback_t brewBtnCallback = nullptr;
@@ -80,14 +80,24 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     char autotuneBuffer[24]{};
     char pressureScaleBuffer[10]{};
 
-    // BLEAdvertisedDeviceCallbacks override
-    void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;
+    // NimBLEScanCallbacks override
+    void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override;
 
     // NimBLEClientCallbacks override
-    void onDisconnect(NimBLEClient *pServer) override;
+    void onDisconnect(NimBLEClient *pClient, int reason) override;
 
-    // Notification callback
-    void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) const;
+    // Notification callback (NimBLE-Arduino 2.x passes const payload)
+    void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, const uint8_t *pData, size_t length,
+                        bool isNotify) const;
+
+    // Per-UUID handlers split out to keep notifyCallback's complexity low.
+    void handleErrorNotify(const char *rawData) const;
+    void handleBrewBtnNotify(const char *rawData) const;
+    void handleSteamBtnNotify(const char *rawData) const;
+    void handleSensorDataNotify(const char *rawData) const;
+    void handleAutotuneResultNotify(const char *rawData) const;
+    void handleVolumetricNotify(const char *rawData) const;
+    void handleTofNotify(const char *rawData) const;
 
     const char *LOG_TAG = "NimBLEClientController";
     static void loopTask(void *arg);

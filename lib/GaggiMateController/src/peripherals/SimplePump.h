@@ -21,7 +21,7 @@ class SimplePump : public Pump {
     float _windowSize = 5000.0f;
     unsigned long windowStartTime = 0;
     unsigned long nextSwitchTime = 0;
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
 
     const char *LOG_TAG = "SimplePump";
     static void loopTask(void *arg);

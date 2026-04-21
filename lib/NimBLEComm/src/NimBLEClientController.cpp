@@ -7,7 +7,7 @@ NimBLEClientController::NimBLEClientController() : client(nullptr) {}
 
 void NimBLEClientController::initClient() {
     NimBLEDevice::init("GPBLC");
-    NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
+    NimBLEDevice::setPower(9); // +9 dBm — maximum power
     NimBLEDevice::setMTU(128);
     client = NimBLEDevice::createClient();
     scanner = NimBLEDevice::getScan();
@@ -24,18 +24,18 @@ void NimBLEClientController::initClient() {
 
 void NimBLEClientController::scan() {
     readyForConnection = false;
-    scanner->clearDuplicateCache();
-    scanner->setAdvertisedDeviceCallbacks(this, true);
+    scanner->clearResults();
+    scanner->setScanCallbacks(this, true);
     scanner->setInterval(2000);
     scanner->setWindow(100);
     scanner->setMaxResults(0);
     scanner->setDuplicateFilter(false);
     scanner->setActiveScan(true);
-    scanner->start(0, nullptr, false); // Set to 0 for continuous
+    scanner->start(0, false, false); // duration=0 continuous, isContinue=false, restart=false
 }
 
 void NimBLEClientController::tare() {
-    if (volumetricTareChar != nullptr && client->isConnected()) {
+    if (volumetricTareChar != nullptr && isConnected()) {
         volumetricTareChar->writeValue("1");
     }
 }
@@ -78,7 +78,7 @@ bool NimBLEClientController::connectToServer() {
             return false; // Exit the connection attempt if timed out
         }
 
-        if (!client->connect(NimBLEAddress(serverDevice->getAddress()))) {
+        if (!client->connect(serverAddress)) {
             ESP_LOGE(LOG_TAG, "Failed connecting to BLE server. Retrying...");
             delay(500); // Add a small delay to avoid busy-waiting
         }
@@ -161,6 +161,9 @@ bool NimBLEClientController::connectToServer() {
 }
 
 void NimBLEClientController::loop() {
+    if (client == nullptr || scanner == nullptr) {
+        return;
+    }
     if (!readyForConnection && !client->isConnected() && !scanner->isScanning()) {
         ESP_LOGI("NimBLEClientController", "Scan interrupted. Restarting...");
         scan();
@@ -169,7 +172,7 @@ void NimBLEClientController::loop() {
 
 void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure,
                                                        float flow) {
-    if (client->isConnected() && outputControlChar != nullptr) {
+    if (isConnected() && outputControlChar != nullptr) {
         snprintf(advancedOutputBuffer, sizeof(advancedOutputBuffer), "1,%d,100.0,%.3f,%d,%.3f,%.3f", valve ? 1 : 0,
                  boilerSetpoint, pressureTarget ? 1 : 0, pressure, flow);
         _lastOutputControl = String(advancedOutputBuffer);
@@ -178,7 +181,7 @@ void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerS
 }
 
 void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint) {
-    if (client->isConnected() && outputControlChar != nullptr) {
+    if (isConnected() && outputControlChar != nullptr) {
         snprintf(outputBuffer, sizeof(outputBuffer), "0,%d,%.3f,%.3f", valve ? 1 : 0, pumpSetpoint, boilerSetpoint);
         _lastOutputControl = String(outputBuffer);
         outputControlChar->writeValue(_lastOutputControl, false);
@@ -186,44 +189,44 @@ void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, f
 }
 
 void NimBLEClientController::sendPidSettings(const String &pid) {
-    if (pidControlChar != nullptr && client->isConnected()) {
+    if (pidControlChar != nullptr && isConnected()) {
         pidControlChar->writeValue(pid);
     }
 }
 
 void NimBLEClientController::sendPumpModelCoeffs(const String &pumpModelCoeffs) {
-    if (pumpModelCoeffsChar != nullptr && client->isConnected()) {
+    if (pumpModelCoeffsChar != nullptr && isConnected()) {
         pumpModelCoeffsChar->writeValue(pumpModelCoeffs);
     }
 }
 
 void NimBLEClientController::setPressureScale(float scale) {
-    if (client->isConnected() && pressureScaleChar != nullptr) {
+    if (isConnected() && pressureScaleChar != nullptr) {
         snprintf(pressureScaleBuffer, sizeof(pressureScaleBuffer), "%.3f", scale);
         pressureScaleChar->writeValue(pressureScaleBuffer);
     }
 }
 
 void NimBLEClientController::sendLedControl(uint8_t channel, uint8_t brightness) {
-    if (client->isConnected() && ledControlChar != nullptr) {
+    if (isConnected() && ledControlChar != nullptr) {
         ledControlChar->writeValue(String(channel) + "," + String(brightness), false);
     }
 }
 
 void NimBLEClientController::sendAltControl(bool pinState) {
-    if (altControlChar != nullptr && client->isConnected()) {
+    if (altControlChar != nullptr && isConnected()) {
         altControlChar->writeValue(pinState ? "1" : "0");
     }
 }
 
 void NimBLEClientController::sendPing() {
-    if (pingChar != nullptr && client->isConnected()) {
+    if (pingChar != nullptr && isConnected()) {
         pingChar->writeValue("1", false);
     }
 }
 
 void NimBLEClientController::sendAutotune(int testTime, int samples) {
-    if (autotuneChar != nullptr && client->isConnected()) {
+    if (autotuneChar != nullptr && isConnected()) {
         snprintf(autotuneBuffer, sizeof(autotuneBuffer), "%d,%d", testTime, samples);
         autotuneChar->writeValue(autotuneBuffer);
     }
@@ -233,8 +236,8 @@ bool NimBLEClientController::isReadyForConnection() const { return readyForConne
 
 bool NimBLEClientController::isConnected() { return client != nullptr && client->isConnected(); }
 
-// BLEAdvertisedDeviceCallbacks override
-void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
+// NimBLEScanCallbacks override
+void NimBLEClientController::onResult(const NimBLEAdvertisedDevice *advertisedDevice) {
     ESP_LOGV(LOG_TAG, "Advertised Device found: %s \n", advertisedDevice->toString().c_str());
 
     // Check if this is the device we're looking for
@@ -243,13 +246,13 @@ void NimBLEClientController::onResult(NimBLEAdvertisedDevice *advertisedDevice) 
         if (advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))) {
             ESP_LOGI(LOG_TAG, "Found target BLE device. Connecting...");
             scanner->stop();
-            serverDevice = advertisedDevice;
+            serverAddress = advertisedDevice->getAddress();
             readyForConnection = true;
         }
     }
 }
 
-void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
+void NimBLEClientController::onDisconnect(NimBLEClient *pClient, int reason) {
     ESP_LOGI(LOG_TAG, "Disconnected from server, trying to reconnect...");
     tempControlChar = nullptr;
     pumpControlChar = nullptr;
@@ -279,83 +282,106 @@ void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
 }
 
 // Notification callback
-void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length,
-                                            bool) const {
+void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, const uint8_t *pData,
+                                            size_t length, bool) const {
     char rawData[129];
     size_t copyLength = length < (sizeof(rawData) - 1) ? length : (sizeof(rawData) - 1);
     memcpy(rawData, pData, copyLength);
     rawData[copyLength] = '\0';
 
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(ERROR_CHAR_UUID))) {
-        int errorCode = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "Error read: %d", errorCode);
-        if (remoteErrorCallback != nullptr) {
-            remoteErrorCallback(errorCode);
-        }
+    const NimBLEUUID &uuid = pRemoteCharacteristic->getUUID();
+    if (uuid.equals(NimBLEUUID(ERROR_CHAR_UUID))) {
+        handleErrorNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(BREW_BTN_UUID))) {
+        handleBrewBtnNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(STEAM_BTN_UUID))) {
+        handleSteamBtnNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(SENSOR_DATA_UUID))) {
+        handleSensorDataNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
+        handleAutotuneResultNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
+        handleVolumetricNotify(rawData);
+    } else if (uuid.equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
+        handleTofNotify(rawData);
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
-        int brewButtonStatus = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
-        if (brewBtnCallback != nullptr) {
-            brewBtnCallback(brewButtonStatus);
-        }
-    }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
-        int steamButtonStatus = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
-        if (steamBtnCallback != nullptr) {
-            steamBtnCallback(steamButtonStatus);
-        }
-    }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
-        float temperature = 0.0f;
-        float pressure = 0.0f;
-        float puckFlow = 0.0f;
-        float pumpFlow = 0.0f;
-        float puckResistance = 0.0f;
+}
 
-        int parsed = sscanf(rawData, "%f,%f,%f,%f,%f", &temperature, &pressure, &puckFlow, &pumpFlow, &puckResistance);
-        if (parsed < 5) {
-            ESP_LOGW(LOG_TAG, "Malformed sensor data payload: %s", rawData);
-            return;
-        }
+void NimBLEClientController::handleErrorNotify(const char *rawData) const {
+    int errorCode = atoi(rawData);
+    ESP_LOGV(LOG_TAG, "Error read: %d", errorCode);
+    if (remoteErrorCallback != nullptr) {
+        remoteErrorCallback(errorCode);
+    }
+}
 
-        ESP_LOGV(LOG_TAG,
-                 "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f",
-                 temperature, pressure, puckFlow, pumpFlow, puckResistance);
-        if (sensorCallback != nullptr) {
-            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
-        }
+void NimBLEClientController::handleBrewBtnNotify(const char *rawData) const {
+    int brewButtonStatus = atoi(rawData);
+    ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
+    if (brewBtnCallback != nullptr) {
+        brewBtnCallback(brewButtonStatus);
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
-        ESP_LOGV(LOG_TAG, "autotune result: %s", rawData);
-        if (autotuneResultCallback != nullptr) {
-            float Kp = 0.0f;
-            float Ki = 0.0f;
-            float Kd = 0.0f;
-            float Kf = 0.0f; // optional, defaults to zero
-            int parsed = sscanf(rawData, "%f,%f,%f,%f", &Kp, &Ki, &Kd, &Kf);
-            if (parsed < 3) {
-                ESP_LOGW(LOG_TAG, "Malformed autotune payload: %s", rawData);
-                return;
-            }
+}
 
-            autotuneResultCallback(Kp, Ki, Kd, Kf);
-        }
+void NimBLEClientController::handleSteamBtnNotify(const char *rawData) const {
+    int steamButtonStatus = atoi(rawData);
+    ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
+    if (steamBtnCallback != nullptr) {
+        steamBtnCallback(steamButtonStatus);
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
-        float value = atof(rawData);
-        ESP_LOGV(LOG_TAG, "Volumetric measurement: %.2f", value);
-        if (volumetricMeasurementCallback != nullptr) {
-            volumetricMeasurementCallback(value);
-        }
+}
+
+void NimBLEClientController::handleSensorDataNotify(const char *rawData) const {
+    float temperature = 0.0f;
+    float pressure = 0.0f;
+    float puckFlow = 0.0f;
+    float pumpFlow = 0.0f;
+    float puckResistance = 0.0f;
+
+    int parsed = sscanf(rawData, "%f,%f,%f,%f,%f", &temperature, &pressure, &puckFlow, &pumpFlow, &puckResistance);
+    if (parsed < 5) {
+        ESP_LOGW(LOG_TAG, "Malformed sensor data payload: %s", rawData);
+        return;
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
-        int value = atoi(rawData);
-        ESP_LOGV(LOG_TAG, "ToF measurement: %d", value);
-        if (tofMeasurementCallback != nullptr) {
-            tofMeasurementCallback(value);
-        }
+
+    ESP_LOGV(LOG_TAG,
+             "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f",
+             temperature, pressure, puckFlow, pumpFlow, puckResistance);
+    if (sensorCallback != nullptr) {
+        sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
+    }
+}
+
+void NimBLEClientController::handleAutotuneResultNotify(const char *rawData) const {
+    ESP_LOGV(LOG_TAG, "autotune result: %s", rawData);
+    if (autotuneResultCallback == nullptr) {
+        return;
+    }
+    float Kp = 0.0f;
+    float Ki = 0.0f;
+    float Kd = 0.0f;
+    float Kf = 0.0f; // optional, defaults to zero
+    int parsed = sscanf(rawData, "%f,%f,%f,%f", &Kp, &Ki, &Kd, &Kf);
+    if (parsed < 3) {
+        ESP_LOGW(LOG_TAG, "Malformed autotune payload: %s", rawData);
+        return;
+    }
+    autotuneResultCallback(Kp, Ki, Kd, Kf);
+}
+
+void NimBLEClientController::handleVolumetricNotify(const char *rawData) const {
+    float value = atof(rawData);
+    ESP_LOGV(LOG_TAG, "Volumetric measurement: %.2f", value);
+    if (volumetricMeasurementCallback != nullptr) {
+        volumetricMeasurementCallback(value);
+    }
+}
+
+void NimBLEClientController::handleTofNotify(const char *rawData) const {
+    int value = atoi(rawData);
+    ESP_LOGV(LOG_TAG, "ToF measurement: %d", value);
+    if (tofMeasurementCallback != nullptr) {
+        tofMeasurementCallback(value);
     }
 }
 

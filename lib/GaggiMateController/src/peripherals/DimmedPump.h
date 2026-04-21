@@ -39,7 +39,7 @@ class DimmedPump : public Pump {
     PSM _psm;
     PressureSensor *_pressureSensor;
     PressureController _pressureController;
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
 
     ControlMode _mode = ControlMode::POWER;
     float _power = 0.0f;

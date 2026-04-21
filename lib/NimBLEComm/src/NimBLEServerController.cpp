@@ -6,7 +6,7 @@ NimBLEServerController::NimBLEServerController() {}
 void NimBLEServerController::initServer(const String infoString) {
     this->infoString = infoString;
     NimBLEDevice::init("GPBLS");
-    NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
+    NimBLEDevice::setPower(9); // +9 dBm — maximum power
     NimBLEDevice::setMTU(128);
 
     // Create BLE Server
@@ -75,7 +75,7 @@ void NimBLEServerController::initServer(const String infoString) {
 
     advertising = NimBLEDevice::getAdvertising();
     advertising->addServiceUUID(SERVICE_UUID);
-    advertising->setScanResponse(true);
+    advertising->enableScanResponse(true);
     advertising->start();
     ESP_LOGI(LOG_TAG, "BLE Server started, advertising...\n");
     xTaskCreate(loopTask, "NimBLEServerController::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
@@ -177,20 +177,20 @@ void NimBLEServerController::registerPumpModelCoeffsCallback(const pump_model_co
     pumpModelCoeffsCallback = callback;
 }
 
-// BLEServerCallbacks override
-void NimBLEServerController::onConnect(NimBLEServer *pServer) {
+// NimBLEServerCallbacks override (2.x)
+void NimBLEServerController::onConnect(NimBLEServer *pServer, NimBLEConnInfo & /*connInfo*/) {
     ESP_LOGI(LOG_TAG, "Client connected.");
     deviceConnected = true;
     pServer->stopAdvertising();
 }
 
-void NimBLEServerController::onDisconnect(NimBLEServer *pServer) {
+void NimBLEServerController::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo & /*connInfo*/, int /*reason*/) {
     ESP_LOGI(LOG_TAG, "Client disconnected.");
     deviceConnected = false;
     pServer->startAdvertising(); // Restart advertising so clients can reconnect
 }
 
-void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
+void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo & /*connInfo*/) {
     ESP_LOGV(LOG_TAG, "Write received!");
 
     if (pCharacteristic->getUUID().equals(NimBLEUUID(OUTPUT_CONTROL_UUID))) {

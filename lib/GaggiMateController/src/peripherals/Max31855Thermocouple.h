@@ -27,7 +27,7 @@ class Max31855Thermocouple : public TemperatureSensor {
 
   private:
     MAX31855 *max31855;
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
 
     int errorCount = 0;
     std::array<int, MAX31855_ERROR_WINDOW> resultBuffer{};
@@ -44,7 +44,7 @@ class Max31855Thermocouple : public TemperatureSensor {
     temperature_error_callback_t error_callback;
 
     const char *LOG_TAG = "Max31855Thermocouple";
-    static void monitorTask(void *arg);
+    [[noreturn]] static void monitorTask(void *arg);
 };
 
 #endif // MAX31855THERMOCOUPLE_H

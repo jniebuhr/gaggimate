@@ -10,8 +10,8 @@
 GitHubOTA::GitHubOTA(const String &display_version, const String &controller_version, const String &release_url,
                      const phase_callback_t &phase_callback, const progress_callback_t &progress_callback,
                      const String &firmware_name, const String &filesystem_name, const String &controller_firmware_name) {
-    ESP_LOGV("GitHubOTA", "GitHubOTA(version: %s, firmware_name: %s, fetch_url_via_redirect: %d)\n", version.c_str(),
-             firmware_name.c_str(), fetch_url_via_redirect);
+    ESP_LOGV("GitHubOTA", "GitHubOTA(display_version: %s, controller_version: %s, firmware_name: %s)\n",
+             display_version.c_str(), controller_version.c_str(), firmware_name.c_str());
 
     _version = from_string(display_version.substring(1).c_str());
     _controller_version = from_string(controller_version.substring(1).c_str());
@@ -23,7 +23,11 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     _progress_callback = progress_callback;
 
     Updater.rebootOnUpdate(false);
-    _wifi_client.setCACertBundle(x509_crt_imported_bundle_bin_start);
+    // Linker-embedded bundle; the two symbols are distinct arrays per the C++ spec
+    // (cpp:S5658). Cast to uintptr_t to compute length via integer arithmetic.
+    _wifi_client.setCACertBundle(x509_crt_imported_bundle_bin_start,
+                                 reinterpret_cast<uintptr_t>(x509_crt_imported_bundle_bin_end) -
+                                     reinterpret_cast<uintptr_t>(x509_crt_imported_bundle_bin_start));
 
     Updater.onStart(update_started);
     Updater.onEnd(update_finished);

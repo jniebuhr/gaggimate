@@ -28,7 +28,7 @@
 #include <display/drivers/WaveshareDriver.h>
 #endif
 
-const String LOG_TAG = F("Controller");
+static constexpr const char *LOG_TAG = "Controller";
 
 void Controller::setup() {
     mode = settings.getStartupMode();
