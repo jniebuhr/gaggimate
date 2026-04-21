@@ -32,7 +32,7 @@ void DimmedPump::setPower(float setpoint) {
     if (_power == 0.0f) {
         _currentFlow = 0.0f;
     }
-    _psm.set(static_cast<int>(_power));
+    _psm.set(static_cast<int>(_binaryMode ? (_power > 0 ? 100.0f : 0.0f) : _power));
 }
 
 float DimmedPump::getCoffeeVolume() { return _pressureController.getCoffeeOutputEstimate(); }
@@ -62,7 +62,12 @@ void DimmedPump::updatePower() {
     if (_mode != ControlMode::POWER) {
         _power = _controllerPower;
     }
-    _psm.set(static_cast<int>(_power));
+    if (_binaryMode) {
+        int binaryPower = (_controllerPower > 0 || _ctrlPressure > 0 || _ctrlFlow > 0) ? 100 : 0;
+        _psm.set(binaryPower);
+    } else {
+        _psm.set(static_cast<int>(_power));
+    }
 }
 
 void DimmedPump::setFlowTarget(float targetFlow, float pressureLimit) {
@@ -80,6 +85,8 @@ void DimmedPump::setPressureTarget(float targetPressure, float flowLimit) {
 }
 
 void DimmedPump::setValveState(bool open) { _valveStatus = open; }
+
+void DimmedPump::setBinaryMode(bool binaryMode) { _binaryMode = binaryMode; }
 
 void DimmedPump::setPumpFlowCoeff(float oneBarFlow, float nineBarFlow) {
     _pressureController.setPumpFlowCoeff(oneBarFlow, nineBarFlow);

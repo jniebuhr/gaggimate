@@ -1,15 +1,10 @@
 #include "FlowSensor.h"
 
-
 FlowSensor *FlowSensor::_instance = nullptr;
 
-void FlowSensor::onInterrupt() {
-    _instance->addValue(1);
-}
+void FlowSensor::onInterrupt() { _instance->addValue(1); }
 
-FlowSensor::FlowSensor(uint8_t pin, flow_amount_callback_t callback) : _pin(pin), _callback(callback) {
-    _instance = this;
-}
+FlowSensor::FlowSensor(uint8_t pin, flow_amount_callback_t callback) : _pin(pin), _callback(callback) { _instance = this; }
 
 void FlowSensor::setup() {
     pinMode(_pin, INPUT_PULLUP);
@@ -27,25 +22,20 @@ void FlowSensor::loop() {
     float flow = intervalVolume * 10.0f;
     _lastRunTicks = _ticks;
     _currentFlow = flow * 0.1f + _currentFlow * 0.9f;
-    ESP_LOGV("FlowSensor", "Interval Volume: %.2f, Interval Ticks: %d, Interval Flow: %.2f, Flow: %.2f", intervalVolume, intervalTicks, flow, _currentFlow);
+    ESP_LOGV("FlowSensor", "Interval Volume: %.2f, Interval Ticks: %d, Interval Flow: %.2f, Flow: %.2f", intervalVolume,
+             intervalTicks, flow, _currentFlow);
 }
 
-void FlowSensor::tare() {
-    updateValue(0.0f);
-}
+void FlowSensor::tare() { updateValue(0.0f); }
 
 void FlowSensor::updateValue(int ticks) {
     ESP_LOGV("FlowSensor", "Updating ticks: %d", ticks);
     _ticks = ticks;
 }
 
-void FlowSensor::addValue(int ticks) {
-    updateValue(_ticks + ticks);
-}
+void FlowSensor::addValue(int ticks) { updateValue(_ticks + ticks); }
 
-float FlowSensor::getFlow() const {
-    return _currentFlow;
-}
+float FlowSensor::getFlow() const { return _currentFlow; }
 
 void FlowSensor::loopTask(void *arg) {
     auto *sensor = static_cast<FlowSensor *>(arg);

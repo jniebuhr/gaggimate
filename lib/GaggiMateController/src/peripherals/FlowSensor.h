@@ -7,7 +7,7 @@ constexpr float ML_PER_PULSE = 0.19;
 using flow_amount_callback_t = std::function<void(float)>;
 
 class FlowSensor {
-public:
+  public:
     FlowSensor(uint8_t pin, flow_amount_callback_t callback);
     ~FlowSensor() = default;
 
@@ -23,7 +23,7 @@ public:
     };
     float getFlow() const;
 
-private:
+  private:
     void updateValue(int ticks);
     void addValue(int ticks);
 
@@ -40,4 +40,4 @@ private:
     static FlowSensor *_instance;
 };
 
-#endif //FLOWSENSOR_H
+#endif // FLOWSENSOR_H

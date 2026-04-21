@@ -42,7 +42,8 @@ void sda_low(const SoftWire *i2c) {
     ESP_LOGV("MCP4725", "Write SDA: %d", 0);
 }
 
-GearpumpAddon::GearpumpAddon(uint8_t addr, uint8_t sda, uint8_t scl, uint8_t interrupt) : _addr(addr), _sda(sda), _scl(scl), _interrupt(interrupt) {}
+GearpumpAddon::GearpumpAddon(uint8_t addr, uint8_t sda, uint8_t scl, uint8_t interrupt)
+    : _addr(addr), _sda(sda), _scl(scl), _interrupt(interrupt) {}
 
 void GearpumpAddon::setup(float *power) {
     _power = power;
@@ -90,9 +91,7 @@ void GearpumpAddon::loop() {
     }
 }
 
-void GearpumpAddon::stop() {
-    _currentPower = 0.0f;
-}
+void GearpumpAddon::stop() { _currentPower = 0.0f; }
 
 void GearpumpAddon::loopTask(void *arg) {
     auto *pump = static_cast<GearpumpAddon *>(arg);

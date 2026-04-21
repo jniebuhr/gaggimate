@@ -1,7 +1,6 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
-#include <utility>
 #include <display/core/Controller.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
@@ -14,6 +13,7 @@
 #include <display/ui/default/lvgl/ui_theme_manager.h>
 #include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
+#include <utility>
 
 #include "esp_sntp.h"
 

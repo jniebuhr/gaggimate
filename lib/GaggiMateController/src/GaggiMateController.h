@@ -4,6 +4,7 @@
 #include "NimBLEServerController.h"
 #include <peripherals/DigitalInput.h>
 #include <peripherals/DistanceSensor.h>
+#include <peripherals/FlowSensor.h>
 #include <peripherals/Heater.h>
 #include <peripherals/LedController.h>
 #include <peripherals/Max31855Thermocouple.h>
@@ -11,7 +12,6 @@
 #include <peripherals/Pump.h>
 #include <peripherals/SimpleRelay.h>
 #include <peripherals/addons/GearpumpAddon.h>
-#include <peripherals/FlowSensor.h>
 #include <vector>
 
 constexpr double PING_TIMEOUT_SECONDS = 20.0;

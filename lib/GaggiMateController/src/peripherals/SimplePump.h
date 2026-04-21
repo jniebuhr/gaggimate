@@ -12,7 +12,7 @@ class SimplePump : public Pump {
     void setup() override;
     void loop() override;
     void setPower(float setpoint) override;
-    float *getPumpPowerPtr() override { return &_setpoint; }       // For external pump control
+    float *getPumpPowerPtr() override { return &_setpoint; } // For external pump control
 
   private:
     int _pin;

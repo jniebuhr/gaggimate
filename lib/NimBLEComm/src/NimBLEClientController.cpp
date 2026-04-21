@@ -170,8 +170,8 @@ void NimBLEClientController::loop() {
 void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure,
                                                        float flow) {
     if (client->isConnected() && outputControlChar != nullptr) {
-        snprintf(advancedOutputBuffer, sizeof(advancedOutputBuffer), "1,%d,100.0,%.3f,%d,%.3f,%.3f", valve ? 1 : 0, boilerSetpoint,
-                 pressureTarget ? 1 : 0, pressure, flow);
+        snprintf(advancedOutputBuffer, sizeof(advancedOutputBuffer), "1,%d,100.0,%.3f,%d,%.3f,%.3f", valve ? 1 : 0,
+                 boilerSetpoint, pressureTarget ? 1 : 0, pressure, flow);
         _lastOutputControl = String(advancedOutputBuffer);
         outputControlChar->writeValue(_lastOutputControl, false);
     }

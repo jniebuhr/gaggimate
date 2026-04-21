@@ -73,6 +73,8 @@ void GaggiMateController::setup() {
     this->pump->setup();
     if (this->gearpumpAddon != nullptr) {
         this->gearpumpAddon->setup(this->pump->getPumpPowerPtr());
+        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        dimmedPump->setBinaryMode(true);
     }
     this->brewBtn->setup();
     this->steamBtn->setup();
