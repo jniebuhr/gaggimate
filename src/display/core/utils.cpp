@@ -45,6 +45,7 @@ String implode(const std::vector<String> &strings, String delim) {
 }
 
 void measure_heap(const String &label, std::function<void()> callback) {
+#if GAGGIMATE_HEAP_PROFILE
     ESP_LOGI("Common", "%s measurement started", label.c_str());
     const size_t intFreeBefore = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
     const size_t intLargestBefore = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
@@ -65,8 +66,13 @@ void measure_heap(const String &label, std::function<void()> callback) {
     ESP_LOGI("Common", "%s int=%.2f%%→%.2f%% (Δ%+dkB, frag %.0f%%→%.0f%%) psramΔ=%+dkB", label.c_str(), intUsedBefore,
              intUsedAfter, (int)((int)intFreeBefore - (int)intFreeAfter) / 1024, intFragBefore, intFragAfter,
              (int)((int)psramFreeBefore - (int)psramFreeAfter) / 1024);
+#else
+    (void)label;
+    callback();
+#endif
 }
 
+#if GAGGIMATE_HEAP_PROFILE
 namespace {
 
 struct HeapSnapshot {
@@ -90,10 +96,16 @@ HeapSnapshot takeHeapSnapshot() {
 }
 
 } // namespace
+#endif
 
-void heap_checkpoint_reset() { s_lastCheckpoint = HeapSnapshot{}; }
+void heap_checkpoint_reset() {
+#if GAGGIMATE_HEAP_PROFILE
+    s_lastCheckpoint = HeapSnapshot{};
+#endif
+}
 
 void heap_checkpoint(const char *label) {
+#if GAGGIMATE_HEAP_PROFILE
     const HeapSnapshot now = takeHeapSnapshot();
     const float intFrag = now.intFree ? 100.0f - (now.intLargest * 100.0f) / now.intFree : 0.0f;
     const float psramFrag = now.psramFree ? 100.0f - (now.psramLargest * 100.0f) / now.psramFree : 0.0f;
@@ -111,11 +123,18 @@ void heap_checkpoint(const char *label) {
                  (unsigned)now.psramLargest, psramFrag);
     }
     s_lastCheckpoint = now;
+#else
+    (void)label;
+#endif
 }
 
 void heap_dump(const char *label) {
+#if GAGGIMATE_HEAP_PROFILE
     ESP_LOGI("HeapProfile", "[%s] heap_caps_print_heap_info(MALLOC_CAP_INTERNAL):", label);
     heap_caps_print_heap_info(MALLOC_CAP_INTERNAL);
     ESP_LOGI("HeapProfile", "[%s] heap_caps_print_heap_info(MALLOC_CAP_SPIRAM):", label);
     heap_caps_print_heap_info(MALLOC_CAP_SPIRAM);
+#else
+    (void)label;
+#endif
 }

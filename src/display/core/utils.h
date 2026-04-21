@@ -27,20 +27,23 @@ extern uint8_t randomByte();
 extern String generateShortID(uint8_t length = 10);
 extern std::vector<String> explode(const String &input, char delim);
 extern String implode(const std::vector<String> &strings, String delim);
+// Runtime heap observability (60 s sampler, onFailedAlloc, panic hook) lives
+// in src/display/core/MemoryMonitor.* and is always compiled.
+//
+// The helpers below are debug-only boot/trace profilers, compiled to no-ops
+// unless the build defines -DGAGGIMATE_HEAP_PROFILE=1 (see platformio.ini).
 extern void measure_heap(const String &label, std::function<void()> callback);
 
 // Per-subsystem heap checkpoint. Logs current internal + PSRAM free/largest/
-// fragmentation, plus delta since the previous call. Always compiled; cost
-// is a handful of heap_caps_* reads + one ESP_LOGI per call.
+// fragmentation, plus delta since the previous call. No-op unless
+// GAGGIMATE_HEAP_PROFILE=1.
 extern void heap_checkpoint(const char *label);
 
-// Reset the heap_checkpoint() baseline. Call once at the very start of
-// setup() so the first real checkpoint's delta is measured from boot, not
-// from a stale prior run.
+// Reset the heap_checkpoint() baseline. No-op unless GAGGIMATE_HEAP_PROFILE=1.
 extern void heap_checkpoint_reset();
 
-// Heavyweight dump: prints the full heap_caps_print_heap_info() table for
-// both internal and PSRAM to stdout. Use sparingly — large output.
+// Heavyweight dump of heap_caps_print_heap_info() for both regions. No-op
+// unless GAGGIMATE_HEAP_PROFILE=1.
 extern void heap_dump(const char *label);
 
 #endif // UTILS_H
