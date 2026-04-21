@@ -48,6 +48,7 @@ class BLEScalePlugin : public Plugin {
   private:
     void update();
     void onProcessStart() const;
+    bool autoScanAllowed() const;
 
     void establishConnection();
 

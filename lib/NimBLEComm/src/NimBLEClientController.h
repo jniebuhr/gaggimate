@@ -90,15 +90,6 @@ class NimBLEClientController : public NimBLEScanCallbacks, NimBLEClientCallbacks
     void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, const uint8_t *pData, size_t length,
                         bool isNotify) const;
 
-    // Per-UUID handlers split out to keep notifyCallback's complexity low.
-    void handleErrorNotify(const char *rawData) const;
-    void handleBrewBtnNotify(const char *rawData) const;
-    void handleSteamBtnNotify(const char *rawData) const;
-    void handleSensorDataNotify(const char *rawData) const;
-    void handleAutotuneResultNotify(const char *rawData) const;
-    void handleVolumetricNotify(const char *rawData) const;
-    void handleTofNotify(const char *rawData) const;
-
     const char *LOG_TAG = "NimBLEClientController";
     static void loopTask(void *arg);
 };

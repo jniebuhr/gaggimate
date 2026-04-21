@@ -103,6 +103,8 @@ class Controller {
 
     NimBLEClientController *getClientController() { return &clientController; }
 
+    bool isApMode() const { return isApConnection; }
+
   private:
     // Initialization methods
 #ifndef GAGGIMATE_HEADLESS

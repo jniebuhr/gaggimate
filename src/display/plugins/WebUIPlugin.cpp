@@ -81,10 +81,15 @@ void WebUIPlugin::loop() {
     }
     const long now = millis();
     if ((lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL)) {
-        ota->checkForUpdates();
-        pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
+        // Skip OTA check in AP mode: no route to GitHub, and mbedtls handshake
+        // allocates ~30 KB internal heap that the pioarduino 55.x prebuilt
+        // can't spare — spike triggers BLE_INIT malloc failures.
+        if (!apMode) {
+            ota->checkForUpdates();
+            pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
+            updateOTAStatus(ota->getCurrentVersion());
+        }
         lastUpdateCheck = now;
-        updateOTAStatus(ota->getCurrentVersion());
     }
     if (now > lastStatus + STATUS_PERIOD && !ws.getClients().empty()) {
         lastStatus = now;

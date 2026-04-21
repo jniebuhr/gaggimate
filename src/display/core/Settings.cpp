@@ -3,7 +3,12 @@
 #include <algorithm>
 #include <utility>
 
-Settings::Settings() {
+Settings::Settings() = default;
+
+void Settings::load() {
+    if (taskHandle != nullptr) {
+        return; // already loaded — guard against re-entry spawning a second save task
+    }
     preferences.begin(PREFERENCES_KEY, true);
     startupMode = preferences.getInt("sm", MODE_STANDBY);
     targetSteamTemp = preferences.getInt("ts", 145);
