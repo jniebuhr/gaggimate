@@ -79,7 +79,14 @@ CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 CONFIG_LOG_MAXIMUM_LEVEL_VERBOSE=y
 
 # --- Nano newlib ---
-CONFIG_NEWLIB_NANO_FORMAT=y
+# Disabled: HomeSpan 2.1.7 uses GNU `%m` scanf extension in
+# Span::configureNetwork() — nano-newlib drops it, leaving `d` uninitialized
+# and crashing on strlen(d). Full newlib costs ~15-25 KB flash.
+# NOTE: IDF 5.5 renamed this Kconfig symbol from NEWLIB_NANO_FORMAT to
+# LIBC_NEWLIB_NANO_FORMAT. The old name is now only a header alias
+# (`#define CONFIG_NEWLIB_NANO_FORMAT CONFIG_LIBC_NEWLIB_NANO_FORMAT`) —
+# setting it in defaults is silently ignored. Use the LIBC_* name.
+CONFIG_LIBC_NEWLIB_NANO_FORMAT=n
 
 # Partition table driven via PIO's `board_build.partitions` in platformio.ini;
 # leaving IDF's CONFIG_PARTITION_TABLE_* at defaults so PIO can override without
