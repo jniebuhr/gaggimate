@@ -228,7 +228,7 @@ void LilyGo_RGBPanel::sleep() {
     }
 
     if (_panelDrv) {
-        esp_lcd_panel_disp_off(_panelDrv, true);
+        esp_lcd_panel_disp_on_off(_panelDrv, false);
         esp_lcd_panel_del(_panelDrv);
     }
 

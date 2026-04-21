@@ -68,8 +68,6 @@ void NimBLEServerController::initServer(const String infoString) {
     ledControlChar = pService->createCharacteristic(LED_CONTROL_UUID, NIMBLE_PROPERTY::WRITE);
     ledControlChar->setCallbacks(this);
 
-    pService->start();
-
     ota_dfu_ble.configure_OTA(server);
     ota_dfu_ble.start_OTA();
 

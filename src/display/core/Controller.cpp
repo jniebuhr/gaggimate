@@ -258,8 +258,8 @@ void Controller::setupWifi() {
             setenv("TZ", resolve_timezone(settings.getTimezone()), 1);
             tzset();
             sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
-            sntp_setservername(0, NTP_SERVER);
-            sntp_init();
+            esp_sntp_setservername(0, NTP_SERVER);
+            esp_sntp_init();
         } else {
             WiFi.disconnect(true, true);
             ESP_LOGI(LOG_TAG, "Timed out while connecting to WiFi");

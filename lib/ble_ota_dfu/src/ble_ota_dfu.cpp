@@ -351,8 +351,6 @@ bool BLE_OTA_DFU::configure_OTA(NimBLEServer *pServer) {
         return false;
     }
 
-    // Start the BLE UART service
-    pServiceOTA->start();
     return true;
 }
 
