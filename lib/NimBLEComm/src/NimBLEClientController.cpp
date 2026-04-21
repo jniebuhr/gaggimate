@@ -3,7 +3,7 @@
 
 constexpr size_t MAX_CONNECT_RETRIES = 3;
 
-NimBLEClientController::NimBLEClientController() : client(nullptr) {}
+NimBLEClientController::NimBLEClientController() : client(nullptr), scanner(nullptr), taskHandle(nullptr) {}
 
 void NimBLEClientController::initClient() {
     NimBLEDevice::init("GPBLC");

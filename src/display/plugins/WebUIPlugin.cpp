@@ -747,10 +747,11 @@ void WebUIPlugin::handleDebugHeap(AsyncWebServerRequest *request) {
             rp = &rs;
     }
     JsonObject internalObj = doc["internal"].to<JsonObject>();
-    internalObj["free"] = ri ? ri->freeBytes : heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
-    internalObj["largest"] = ri ? ri->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
-    internalObj["total"] = heap_caps_get_total_size(MALLOC_CAP_INTERNAL);
-    internalObj["minimum_free"] = ri ? ri->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+    constexpr uint32_t kInternalCaps = MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL;
+    internalObj["free"] = ri ? ri->freeBytes : heap_caps_get_free_size(kInternalCaps);
+    internalObj["largest"] = ri ? ri->largestFreeBlock : heap_caps_get_largest_free_block(kInternalCaps);
+    internalObj["total"] = heap_caps_get_total_size(kInternalCaps);
+    internalObj["minimum_free"] = ri ? ri->minimumFreeBytes : heap_caps_get_minimum_free_size(kInternalCaps);
     JsonObject psObj = doc["psram"].to<JsonObject>();
     psObj["free"] = rp ? rp->freeBytes : heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
     psObj["largest"] = rp ? rp->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);

@@ -17,7 +17,7 @@
 // and we don't use it). Provide a local stub so the link resolves. Returning
 // false means "do not defer rollback" — safe default: firmware gets marked
 // valid immediately rather than waiting on an external rollback verifier.
-extern "C" bool verifyRollbackLater() { return false; }
+extern "C" __attribute__((weak)) bool verifyRollbackLater() { return false; }
 
 namespace {
 
@@ -112,7 +112,9 @@ void HomekitPlugin::setup(::Controller *controller, PluginManager *pluginManager
         // Give HomeSpan a no-op WiFi-begin callback: GaggiMate's Controller
         // already owns the STA lifecycle. Without this, HomeSpan's internal
         // WIFI_ALARM watchdog calls ESP.restart() on every WiFi disconnect.
-        homeSpan.setWifiBegin([](const char *, const char *) {});
+        homeSpan.setWifiBegin([](const char *, const char *) {
+            // GaggiMate's Controller owns STA lifecycle; suppress HomeSpan WiFi restarts.
+        });
         homeSpan.begin(Category::Thermostats, kDeviceName, impl->controller->getSettings().getMdnsName().c_str());
         impl->spanAccessory = new SpanAccessory();
         impl->accessoryInformation = new Service::AccessoryInformation();

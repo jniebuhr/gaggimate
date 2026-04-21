@@ -1,6 +1,7 @@
+# ruff: noqa: F821 — `env` is injected by PlatformIO/SCons at runtime
 import os
 
-Import("env")  # noqa: F821 — provided by PlatformIO
+Import("env")
 
 env.Append(CXXFLAGS=["-Wno-deprecated-enum-enum-conversion"])
 

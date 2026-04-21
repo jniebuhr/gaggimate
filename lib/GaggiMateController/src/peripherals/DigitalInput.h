@@ -19,7 +19,7 @@ class DigitalInput {
     TaskHandle_t taskHandle;
     input_callback_t _callback;
 
-    const char *LOG_TAG = "Heater";
+    const char *LOG_TAG = "DigitalInput";
     static void loopTask(void *arg);
 };
 
