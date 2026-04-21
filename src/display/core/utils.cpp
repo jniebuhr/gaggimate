@@ -83,7 +83,7 @@ struct HeapSnapshot {
     bool valid = false;
 };
 
-static HeapSnapshot s_lastCheckpoint;
+HeapSnapshot s_lastCheckpoint;
 
 HeapSnapshot takeHeapSnapshot() {
     HeapSnapshot snap;

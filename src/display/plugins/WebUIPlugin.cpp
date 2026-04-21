@@ -212,41 +212,7 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
-    server.on("/api/debug/heap", [](AsyncWebServerRequest *request) {
-        AsyncResponseStream *response = request->beginResponseStream("application/json");
-        JsonDocument doc;
-        MemorySnapshot snap;
-        if (gaggimate::memmon::isReady()) {
-            snap = gaggimate::memmon::instance().sampleNow();
-        }
-        auto pick = [&](MemoryRegion r) -> const RegionStats * {
-            for (const auto &rs : snap.regions)
-                if (rs.region == r)
-                    return &rs;
-            return nullptr;
-        };
-        const RegionStats *ri = pick(MemoryRegion::Internal);
-        const RegionStats *rp = pick(MemoryRegion::Psram);
-        JsonObject internalObj = doc["internal"].to<JsonObject>();
-        internalObj["free"] = ri ? ri->freeBytes : heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
-        internalObj["largest"] = ri ? ri->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
-        internalObj["total"] = heap_caps_get_total_size(MALLOC_CAP_INTERNAL);
-        internalObj["minimum_free"] = ri ? ri->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
-        JsonObject psObj = doc["psram"].to<JsonObject>();
-        psObj["free"] = rp ? rp->freeBytes : heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
-        psObj["largest"] = rp ? rp->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
-        psObj["total"] = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
-        psObj["minimum_free"] = rp ? rp->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
-        doc["fragmentation_internal"] = ri ? ri->fragmentation : 0.0f;
-        doc["fragmentation_psram"] = rp ? rp->fragmentation : 0.0f;
-        if (ri) {
-            internalObj["slope"] = ri->freeBytesSlope;
-            internalObj["seconds_to_warn"] = ri->secondsToWarn;
-            internalObj["seconds_to_critical"] = ri->secondsToCritical;
-        }
-        serializeJson(doc, *response);
-        request->send(response);
-    });
+    server.on("/api/debug/heap", [this](AsyncWebServerRequest *request) { handleDebugHeap(request); });
     FS *fs = &SPIFFS;
     if (controller->isSDCard()) {
         fs = &SD_MMC;
@@ -761,6 +727,42 @@ void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
     doc["uuid"] = BLEScales.getUUID();
     doc["rssi"] = BLEScales.getRSSI();
     AsyncResponseStream *response = request->beginResponseStream("application/json");
+    serializeJson(doc, *response);
+    request->send(response);
+}
+
+void WebUIPlugin::handleDebugHeap(AsyncWebServerRequest *request) {
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    JsonDocument doc;
+    MemorySnapshot snap;
+    if (gaggimate::memmon::isReady()) {
+        snap = gaggimate::memmon::instance().sampleNow();
+    }
+    const RegionStats *ri = nullptr;
+    const RegionStats *rp = nullptr;
+    for (const auto &rs : snap.regions) {
+        if (rs.region == MemoryRegion::Internal)
+            ri = &rs;
+        else if (rs.region == MemoryRegion::Psram)
+            rp = &rs;
+    }
+    JsonObject internalObj = doc["internal"].to<JsonObject>();
+    internalObj["free"] = ri ? ri->freeBytes : heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    internalObj["largest"] = ri ? ri->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+    internalObj["total"] = heap_caps_get_total_size(MALLOC_CAP_INTERNAL);
+    internalObj["minimum_free"] = ri ? ri->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+    JsonObject psObj = doc["psram"].to<JsonObject>();
+    psObj["free"] = rp ? rp->freeBytes : heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    psObj["largest"] = rp ? rp->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
+    psObj["total"] = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+    psObj["minimum_free"] = rp ? rp->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
+    doc["fragmentation_internal"] = ri ? ri->fragmentation : 0.0f;
+    doc["fragmentation_psram"] = rp ? rp->fragmentation : 0.0f;
+    if (ri) {
+        internalObj["slope"] = ri->freeBytesSlope;
+        internalObj["seconds_to_warn"] = ri->secondsToWarn;
+        internalObj["seconds_to_critical"] = ri->secondsToCritical;
+    }
     serializeJson(doc, *response);
     request->send(response);
 }
