@@ -793,14 +793,29 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
             doc["spiffsUsedPct"] = static_cast<uint8_t>((used * 100) / total);
         }
     }
-    // Memory usage metrics
+    // Memory usage metrics — sourced from ESPMemoryMonitor so the settings UI
+    // shares a single source of truth with /api/debug/heap and the 60 s sampler
+    // task. Falls back to heap_caps_* during the boot window before init().
     {
-        size_t free = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-        size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-        size_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-        doc["heapFree"] = static_cast<uint32_t>(free);
-        doc["heapLargest"] = static_cast<uint32_t>(largest);
+        const RegionStats *ri = nullptr;
+        MemorySnapshot snap;
+        if (gaggimate::memmon::isReady()) {
+            snap = gaggimate::memmon::instance().sampleNow();
+            for (const auto &rs : snap.regions) {
+                if (rs.region == MemoryRegion::Internal) {
+                    ri = &rs;
+                    break;
+                }
+            }
+        }
+        const size_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+        doc["heapFree"] = static_cast<uint32_t>(ri ? ri->freeBytes
+                                                   : heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL));
+        doc["heapLargest"] = static_cast<uint32_t>(
+            ri ? ri->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL));
         doc["heapTotal"] = static_cast<uint32_t>(total);
+        doc["heapMinimum"] = static_cast<uint32_t>(
+            ri ? ri->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL));
     }
     if (controller->isSDCard()) {
         const uint64_t total = SD_MMC.cardSize();
