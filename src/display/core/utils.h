@@ -29,4 +29,18 @@ extern std::vector<String> explode(const String &input, char delim);
 extern String implode(const std::vector<String> &strings, String delim);
 extern void measure_heap(const String &label, std::function<void()> callback);
 
+// Per-subsystem heap checkpoint. Logs current internal + PSRAM free/largest/
+// fragmentation, plus delta since the previous call. Always compiled; cost
+// is a handful of heap_caps_* reads + one ESP_LOGI per call.
+extern void heap_checkpoint(const char *label);
+
+// Reset the heap_checkpoint() baseline. Call once at the very start of
+// setup() so the first real checkpoint's delta is measured from boot, not
+// from a stale prior run.
+extern void heap_checkpoint_reset();
+
+// Heavyweight dump: prints the full heap_caps_print_heap_info() table for
+// both internal and PSRAM to stdout. Use sparingly — large output.
+extern void heap_dump(const char *label);
+
 #endif // UTILS_H

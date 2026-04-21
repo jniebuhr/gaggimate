@@ -32,27 +32,35 @@
 static constexpr const char *LOG_TAG = "Controller";
 
 void Controller::setup() {
+    heap_checkpoint_reset();
+    heap_checkpoint("setup/enter");
+
     // NVS read deferred out of the Settings ctor (which runs during C++ global
     // init, before Arduino's init()) — call it here once the runtime is ready.
     settings.load();
     mode = settings.getStartupMode();
+    heap_checkpoint("setup/after-settings-load");
 
     if (!SPIFFS.begin(true)) {
         Serial.println(F("An Error has occurred while mounting SPIFFS"));
     }
+    heap_checkpoint("setup/after-spiffs-mount");
 
 #ifndef GAGGIMATE_HEADLESS
     setupPanel();
+    heap_checkpoint("setup/after-setup-panel");
 #endif
 
     pluginManager = new PluginManager();
 #ifndef GAGGIMATE_HEADLESS
     ui = new DefaultUI(this, driver, pluginManager);
+    heap_checkpoint("setup/after-default-ui-ctor");
     if (driver->supportsSDCard() && driver->installSDCard()) {
         sdcard = true;
         ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
         ESP_LOGI(LOG_TAG, "Used: %lluMB, Capacity: %lluMB", SD_MMC.usedBytes() / 1024 / 1024, SD_MMC.cardSize() / 1024 / 1024);
     }
+    heap_checkpoint("setup/after-sd-probe");
 #endif
     FS *fs = &SPIFFS;
     if (sdcard) {
@@ -60,6 +68,7 @@ void Controller::setup() {
     }
     profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
+    heap_checkpoint("setup/after-profile-manager");
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     else
@@ -78,7 +87,9 @@ void Controller::setup() {
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
+    heap_checkpoint("setup/after-plugin-register");
     pluginManager->setup(this);
+    heap_checkpoint("setup/after-plugin-setup");
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
         String id = event.getString("id");
@@ -91,11 +102,13 @@ void Controller::setup() {
 
 #ifndef GAGGIMATE_HEADLESS
     ui->init();
+    heap_checkpoint("setup/after-ui-init");
 #endif
     this->onScreenReady();
 
     updateLastAction();
     xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
+    heap_checkpoint("setup/end");
 }
 
 void Controller::onScreenReady() { screenReady = true; }
@@ -111,8 +124,11 @@ void Controller::connect() {
     connectStartTime = millis();
     pluginManager->trigger("controller:startup");
 
+    heap_checkpoint("connect/before-wifi");
     setupWifi();
+    heap_checkpoint("connect/after-wifi");
     setupBluetooth();
+    heap_checkpoint("connect/after-bluetooth");
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
     pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
 

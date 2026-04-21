@@ -8,6 +8,7 @@
 #include "../core/Event.h"
 #include "../core/PluginManager.h"
 #include "../core/constants.h"
+#include "../core/utils.h"
 #include <utility>
 
 // HomeSpan's Span::configureNetwork() references verifyRollbackLater(). The
@@ -101,6 +102,7 @@ void HomekitPlugin::setup(::Controller *controller, PluginManager *pluginManager
         int apMode = event.getInt("AP");
         if (apMode)
             return;
+        heap_checkpoint("homekit/before-homespan-begin");
         homeSpan.setHostNameSuffix("");
         homeSpan.setPortNum(kHomeSpanPort);
         homeSpan.begin(Category::Thermostats, kDeviceName, impl->controller->getSettings().getMdnsName().c_str());
@@ -110,6 +112,7 @@ void HomekitPlugin::setup(::Controller *controller, PluginManager *pluginManager
         impl->identify = new Characteristic::Identify();
         impl->accessory = new HomekitAccessory([this]() { impl->actionRequired = true; });
         homeSpan.autoPoll();
+        heap_checkpoint("homekit/after-homespan-begin");
     });
 
     pluginManager->on("boiler:targetTemperature:change", [this](Event const &event) {

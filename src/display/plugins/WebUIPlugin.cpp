@@ -8,6 +8,7 @@
 #include <display/models/profile.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
+#include <esp_heap_caps.h>
 #include <esp_partition.h>
 #include <esp_system.h>
 
@@ -210,6 +211,35 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
+    server.on("/api/debug/heap", [](AsyncWebServerRequest *request) {
+        AsyncResponseStream *response = request->beginResponseStream("application/json");
+        JsonDocument doc;
+        const size_t intFree = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+        const size_t intLargest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+        const size_t intTotal = heap_caps_get_total_size(MALLOC_CAP_INTERNAL);
+        const size_t intMin = heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+        const size_t psFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+        const size_t psLargest = heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
+        const size_t psTotal = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+        const size_t psMin = heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
+        auto frag = [](size_t free, size_t largest) {
+            return free ? 1.0f - (float)largest / (float)free : 0.0f;
+        };
+        JsonObject internalObj = doc["internal"].to<JsonObject>();
+        internalObj["free"] = intFree;
+        internalObj["largest"] = intLargest;
+        internalObj["total"] = intTotal;
+        internalObj["minimum_free"] = intMin;
+        JsonObject psObj = doc["psram"].to<JsonObject>();
+        psObj["free"] = psFree;
+        psObj["largest"] = psLargest;
+        psObj["total"] = psTotal;
+        psObj["minimum_free"] = psMin;
+        doc["fragmentation_internal"] = frag(intFree, intLargest);
+        doc["fragmentation_psram"] = frag(psFree, psLargest);
+        serializeJson(doc, *response);
+        request->send(response);
+    });
     FS *fs = &SPIFFS;
     if (controller->isSDCard()) {
         fs = &SD_MMC;

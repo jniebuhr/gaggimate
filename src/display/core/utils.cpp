@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <array>
+#include <esp_heap_caps.h>
 #include <iomanip>
 #include <memory>
 #include <numeric>
@@ -45,20 +46,76 @@ String implode(const std::vector<String> &strings, String delim) {
 
 void measure_heap(const String &label, std::function<void()> callback) {
     ESP_LOGI("Common", "%s measurement started", label.c_str());
-    size_t freeBefore = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-    size_t largestBefore = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-    size_t totalBefore = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-    float usedPercentBefore = (totalBefore - freeBefore) / (float)totalBefore * 100;
-    float fragmentationBefore = 100 - (largestBefore * 100) / freeBefore;
+    const size_t intFreeBefore = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    const size_t intLargestBefore = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    const size_t intTotalBefore = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    const size_t psramFreeBefore = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    const float intUsedBefore = intTotalBefore ? (intTotalBefore - intFreeBefore) / (float)intTotalBefore * 100 : 0.0f;
+    const float intFragBefore = intFreeBefore ? 100 - (intLargestBefore * 100) / intFreeBefore : 0.0f;
 
     callback();
 
-    size_t freeAfter = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-    size_t largestAfter = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-    size_t totalAfter = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-    float usedPercentAfter = (totalAfter - freeAfter) / (float)totalAfter * 100;
-    float fragmentationAfter = 100 - (largestAfter * 100) / freeAfter;
+    const size_t intFreeAfter = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    const size_t intLargestAfter = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    const size_t intTotalAfter = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+    const size_t psramFreeAfter = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    const float intUsedAfter = intTotalAfter ? (intTotalAfter - intFreeAfter) / (float)intTotalAfter * 100 : 0.0f;
+    const float intFragAfter = intFreeAfter ? 100 - (intLargestAfter * 100) / intFreeAfter : 0.0f;
 
-    ESP_LOGI("Common", "%s changed heap usage from %.2f%% to %.2f%% by %dkB (%.2f%% to %.2f%% fragmentation)", label.c_str(),
-             usedPercentBefore, usedPercentAfter, (freeBefore - freeAfter) / 1024, fragmentationBefore, fragmentationAfter);
+    ESP_LOGI("Common", "%s int=%.2f%%→%.2f%% (Δ%+dkB, frag %.0f%%→%.0f%%) psramΔ=%+dkB", label.c_str(), intUsedBefore,
+             intUsedAfter, (int)((int)intFreeBefore - (int)intFreeAfter) / 1024, intFragBefore, intFragAfter,
+             (int)((int)psramFreeBefore - (int)psramFreeAfter) / 1024);
+}
+
+namespace {
+
+struct HeapSnapshot {
+    size_t intFree = 0;
+    size_t intLargest = 0;
+    size_t psramFree = 0;
+    size_t psramLargest = 0;
+    bool valid = false;
+};
+
+static HeapSnapshot s_lastCheckpoint;
+
+HeapSnapshot takeHeapSnapshot() {
+    HeapSnapshot snap;
+    snap.intFree = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    snap.intLargest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+    snap.psramFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    snap.psramLargest = heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
+    snap.valid = true;
+    return snap;
+}
+
+} // namespace
+
+void heap_checkpoint_reset() { s_lastCheckpoint = HeapSnapshot{}; }
+
+void heap_checkpoint(const char *label) {
+    const HeapSnapshot now = takeHeapSnapshot();
+    const float intFrag = now.intFree ? 100.0f - (now.intLargest * 100.0f) / now.intFree : 0.0f;
+    const float psramFrag = now.psramFree ? 100.0f - (now.psramLargest * 100.0f) / now.psramFree : 0.0f;
+
+    if (!s_lastCheckpoint.valid) {
+        ESP_LOGI("HeapProfile", "[%s] int: free=%u largest=%u frag=%.0f%% | psram: free=%u largest=%u frag=%.0f%%", label,
+                 (unsigned)now.intFree, (unsigned)now.intLargest, intFrag, (unsigned)now.psramFree,
+                 (unsigned)now.psramLargest, psramFrag);
+    } else {
+        const int dInt = (int)now.intFree - (int)s_lastCheckpoint.intFree;
+        const int dPsram = (int)now.psramFree - (int)s_lastCheckpoint.psramFree;
+        ESP_LOGI("HeapProfile",
+                 "[%s] int: free=%u (Δ%+dB) largest=%u frag=%.0f%% | psram: free=%u (Δ%+dB) largest=%u frag=%.0f%%",
+                 label, (unsigned)now.intFree, dInt, (unsigned)now.intLargest, intFrag, (unsigned)now.psramFree, dPsram,
+                 (unsigned)now.psramLargest, psramFrag);
+    }
+    s_lastCheckpoint = now;
+}
+
+void heap_dump(const char *label) {
+    ESP_LOGI("HeapProfile", "[%s] heap_caps_print_heap_info(MALLOC_CAP_INTERNAL):", label);
+    heap_caps_print_heap_info(MALLOC_CAP_INTERNAL);
+    ESP_LOGI("HeapProfile", "[%s] heap_caps_print_heap_info(MALLOC_CAP_SPIRAM):", label);
+    heap_caps_print_heap_info(MALLOC_CAP_SPIRAM);
 }
