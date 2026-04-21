@@ -23,12 +23,6 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     _progress_callback = progress_callback;
 
     Updater.rebootOnUpdate(false);
-    // Linker-embedded bundle; the two symbols are distinct arrays per the C++ spec
-    // (cpp:S5658). Cast to uintptr_t to compute length via integer arithmetic.
-    _wifi_client.setCACertBundle(x509_crt_imported_bundle_bin_start,
-                                 reinterpret_cast<uintptr_t>(x509_crt_imported_bundle_bin_end) -
-                                     reinterpret_cast<uintptr_t>(x509_crt_imported_bundle_bin_start));
-
     Updater.onStart(update_started);
     Updater.onEnd(update_finished);
     Updater.onProgress([progress_callback, this](int bytesReceived, int totalBytes) {
@@ -140,6 +134,7 @@ HTTPUpdateResult GitHubOTA::update_firmware(const String &url) {
     const char *TAG = "update_firmware";
     ESP_LOGI(TAG, "Download URL: %s\n", url.c_str());
 
+    attach_ca_bundle(_wifi_client);
     auto result = Updater.update(_wifi_client, url);
 
     print_update_result(Updater, result, TAG);
@@ -150,6 +145,7 @@ HTTPUpdateResult GitHubOTA::update_filesystem(const String &url) {
     const char *TAG = "update_filesystem";
     ESP_LOGI(TAG, "Download URL: %s\n", url.c_str());
 
+    attach_ca_bundle(_wifi_client);
     auto result = Updater.updateSpiffs(_wifi_client, url);
     print_update_result(Updater, result, TAG);
     return result;
