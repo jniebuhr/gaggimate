@@ -224,7 +224,14 @@ void WebUIPlugin::setupServer() {
     ws.onEvent(
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
             if (type == WS_EVT_CONNECT) {
-                client->setCloseClientOnQueueFull(true);
+                // Drop excess frames under backpressure instead of force-closing the client.
+                // The library's default (`true`) makes `AsyncWebSocketClient::_queueMessage`
+                // call `_client->close()` synchronously on queue overflow, which tears the
+                // client down from the tcpip callback and blows up any in-flight
+                // `AsyncMiddlewareChain::_runChain` on the same request (torn std::function,
+                // LoadProhibited at EXCVADDR 0x14). Upstream report:
+                //   https://github.com/ESP32Async/ESPAsyncWebServer/issues/433
+                client->setCloseClientOnQueueFull(false);
                 ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DISCONNECT) {
                 ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
