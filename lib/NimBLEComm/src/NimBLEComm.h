@@ -67,4 +67,17 @@ struct SystemInfo {
 
 String get_token(const String &from, uint8_t index, char separator, String default_value = "");
 
+// BLE TX power, in dBm. Passed to NimBLEDevice::setPower() on both the
+// client (display) and server (controller) sides.
+//
+// NimBLE-Arduino 2.x replaced the old `setPower(esp_power_level_t)` enum
+// overload with `setPower(int8_t dbm)` — absolute dBm, not the enum value.
+// Passing `ESP_PWR_LVL_P9` here would silently mis-target the radio: on
+// ESP32-S3 the enum has value 11, and NimBLE's dbm-to-level quantization
+// (NimBLEDevice.cpp:507-528) rounds `11 % 3 == 2` up to 12 / 3 = P12, so
+// you'd get +12 dBm instead of the intended +9 dBm. +9 dBm preserves the
+// pre-refresh behavior of `setPower(ESP_PWR_LVL_P9)` under NimBLE 1.x.
+// See: https://github.com/h2zero/NimBLE-Arduino/blob/2.5.0/docs/1.x_to2.x_migration_guide.md#ble-device
+static constexpr int8_t kBleTxPowerDbm = 9;
+
 #endif // NIMBLECOMM_H

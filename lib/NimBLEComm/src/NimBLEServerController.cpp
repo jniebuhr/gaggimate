@@ -6,7 +6,7 @@ NimBLEServerController::NimBLEServerController() {}
 void NimBLEServerController::initServer(const String infoString) {
     this->infoString = infoString;
     NimBLEDevice::init("GPBLS");
-    NimBLEDevice::setPower(9); // +9 dBm — maximum power
+    NimBLEDevice::setPower(kBleTxPowerDbm);
     NimBLEDevice::setMTU(128);
 
     // Create BLE Server

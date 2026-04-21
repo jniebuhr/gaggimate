@@ -7,7 +7,7 @@ NimBLEClientController::NimBLEClientController() : client(nullptr) {}
 
 void NimBLEClientController::initClient() {
     NimBLEDevice::init("GPBLC");
-    NimBLEDevice::setPower(9); // +9 dBm — maximum power
+    NimBLEDevice::setPower(kBleTxPowerDbm);
     NimBLEDevice::setMTU(128);
     client = NimBLEDevice::createClient();
     scanner = NimBLEDevice::getScan();
