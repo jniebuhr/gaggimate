@@ -1,15 +1,11 @@
-"""Strip Arduino libraries that don't compile under IDF 5.5.4 + GCC 14 or
-that we don't need under dual-framework (framework = arduino, espidf), plus
+"""Strip Arduino-bundled libraries that don't compile under IDF 5.5.4 + GCC 14
+or that we don't need under dual-framework (framework = arduino, espidf), plus
 patch HTTPClient.h for the GCC 14 RequestArgument ctor regression.
 
 Kconfig `ARDUINO_SELECTIVE_*` disables are unreliable (kconfig parser ignores
 `# CONFIG_X is not set` when `default y; depends on COMPILATION` latches).
 Direct `list(REMOVE_ITEM ARDUINO_ALL_LIBRARIES ...)` patch is the only
 reproducible fix. Idempotent — safe to rerun on every build.
-
-Ported from feature/matter-migration trimmed for the pure-BLE branch: keeps
-HTTPClient.h GCC 14 patch (we still use HTTPClient via lib_deps); strips libs
-we don't use + ones that break under IDF 5.5/GCC 14.
 """
 from pathlib import Path
 

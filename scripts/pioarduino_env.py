@@ -9,8 +9,8 @@ env.Append(CXXFLAGS=["-Wno-deprecated-enum-enum-conversion"])
 # library.properties, so LDF (even `deep+`) won't wire up sibling include paths
 # for every compile unit. Inject a narrow allowlist of Arduino-bundled libs
 # we actually use. Keep this list tight — globbing every library pulls in
-# paths for Matter/Insights/Zigbee/OpenThread/SimpleBLE/BLE/BluetoothSerial/
-# USB/RainMaker/ESP_SR/TFLiteMicro we don't want.
+# paths for framework libs we don't need (protocol stacks, radio helpers, DSP,
+# etc.) and can collide or inflate compile time.
 #
 # CXXFLAGS, not CPPPATH: under dual-framework or hybrid-compile builds IDF C
 # sources (e.g. spiffs_api.c, sdmmc_*.c) share the project include path set

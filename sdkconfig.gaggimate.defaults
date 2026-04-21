@@ -1,8 +1,8 @@
 # Dual-framework sdkconfig for display envs. Applied via:
 #   board_build.cmake_extra_args = -DSDKCONFIG_DEFAULTS=sdkconfig.gaggimate.defaults
-# Trimmed from feature/matter-migration:sdkconfig.matter.defaults — Matter/CHIP
-# keys removed (no esp-matter on this branch). Keeps the BT+PSRAM+LWIP tuning
-# that the Matter branch proved avoids BLE_INIT malloc storms on ESP32-S3.
+# Routes NimBLE host + WiFi/LWIP + BSS to PSRAM and keeps 16 KB internal
+# reserved for DMA-bound callers. Avoids BLE_INIT malloc storms under the
+# combined pressure of WiFi AP + HomeSpan + BLE GATT links on ESP32-S3.
 
 CONFIG_IDF_TARGET="esp32s3"
 
