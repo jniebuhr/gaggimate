@@ -10,6 +10,14 @@
 #include "../core/constants.h"
 #include <utility>
 
+// HomeSpan's Span::configureNetwork() references verifyRollbackLater(). The
+// real definition lives in Arduino's RainMaker library, which patch_arduino_libs.py
+// strips under dual-framework (RainMaker doesn't compile under IDF 5.5/GCC 14
+// and we don't use it). Provide a local stub so the link resolves. Returning
+// false means "do not defer rollback" — safe default: firmware gets marked
+// valid immediately rather than waiting on an external rollback verifier.
+extern "C" bool verifyRollbackLater() { return false; }
+
 namespace {
 
 constexpr uint16_t kHomeSpanPort = 8080;

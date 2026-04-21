@@ -18,8 +18,11 @@ sdkconfig.display-headless
 sdkconfig.display-headless-8m
 sdkconfig.display-headless-4m
 sdkconfig.controller
+sdkconfig.defaults
 managed_components/
 dependencies.lock
+# pioarduino dual-framework hybrid-compile scaffold (auto-generated)
+.dummy/
 
 # Editor / agent workspaces
 .serena/

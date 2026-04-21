@@ -1,39 +1,29 @@
 """Strip Arduino libraries that don't compile under IDF 5.5.4 + GCC 14 or
-conflict with esp-matter: ESP_SR (missing ESP_I2S.h), HTTPClient (GCC-14
-RequestArgument ctor regression), plus Matter/Insights/RainMaker/etc. whose
-transitive deps clash with esp_matter@1.4.0's pins.
+that we don't need under dual-framework (framework = arduino, espidf), plus
+patch HTTPClient.h for the GCC 14 RequestArgument ctor regression.
 
 Kconfig `ARDUINO_SELECTIVE_*` disables are unreliable (kconfig parser ignores
 `# CONFIG_X is not set` when `default y; depends on COMPILATION` latches).
 Direct `list(REMOVE_ITEM ARDUINO_ALL_LIBRARIES ...)` patch is the only
 reproducible fix. Idempotent — safe to rerun on every build.
 
-Run via `extra_scripts = pre:scripts/patch_arduino_libs.py` on Matter envs.
+Ported from feature/matter-migration trimmed for the pure-BLE branch: keeps
+HTTPClient.h GCC 14 patch (we still use HTTPClient via lib_deps); strips libs
+we don't use + ones that break under IDF 5.5/GCC 14.
 """
 from pathlib import Path
 
 Import("env")  # noqa: F821 — provided by PlatformIO
 
-SENTINEL = "# GaggiMate Matter: strip libs that break IDF 5.5 + esp_matter 1.4.0"
+SENTINEL = "# GaggiMate: strip libs that break IDF 5.5 + GCC 14"
 STRIP = (
     "list(REMOVE_ITEM ARDUINO_ALL_LIBRARIES "
     "ESP_SR Zigbee BluetoothSerial Matter Insights RainMaker "
-    "OpenThread SimpleBLE ESP_HostedOTA HTTPClient HTTPUpdate "
-    "ArduinoOTA WebServer)"
+    "OpenThread SimpleBLE ESP_HostedOTA)"
 )
 
 
 def _resolved_under(path, parent):
-    """True iff `path` (after symlink resolution) is strictly inside `parent`.
-
-    Guards the two file writes below against path-injection in the framework
-    dir PlatformIO hands us: we only edit files whose resolved absolute path
-    lives inside the PlatformIO packages tree *and* matches an exact expected
-    relative layout. Defence-in-depth — in practice `platform.get_package_dir`
-    returns a deterministic path under `~/.platformio/packages/`, but the
-    static analyser can't prove that, and neither can we if someone ever
-    symlinks the package dir elsewhere.
-    """
     try:
         path_r = path.resolve(strict=True)
         parent_r = parent.resolve(strict=True)
@@ -49,10 +39,6 @@ if not framework_path:
     Return()  # noqa: F821
 
 framework_dir = Path(framework_path)
-# Invariant: PlatformIO installs framework packages under `<core_dir>/packages/`.
-# Refuse to patch anything sitting outside that tree — defence against a
-# misconfigured `PLATFORMIO_PACKAGES_DIR` or a hand-edited symlink pointing
-# at a system location.
 try:
     _resolved_framework = framework_dir.resolve(strict=True)
 except OSError as exc:
@@ -65,8 +51,6 @@ if _resolved_framework.parent.name != "packages":
 
 
 def _patch_file(target, expected_name, sentinel, patcher):
-    """Validate `target` is the expected file under `framework_dir`, then
-    atomically apply `patcher(text) -> text` if the sentinel is absent."""
     if target.name != expected_name:
         raise RuntimeError(f"patch_arduino_libs: unexpected filename {target}")
     if not _resolved_under(target, framework_dir):
@@ -99,11 +83,9 @@ def _patch_cmakelists(text):
 _patch_file(framework_dir / "CMakeLists.txt", "CMakeLists.txt", SENTINEL, _patch_cmakelists)
 
 
-# HTTPClient.h — PlatformIO LDF still compiles it because src/ #include's
-# <HTTPClient.h>. GCC 14 rejects emplace_back(h,v) without an explicit ctor
-# on the aggregate RequestArgument. Add it so the library compiles; the
-# pioarduino fork hasn't picked up the upstream fix yet.
-HTTP_SENTINEL = "// GaggiMate Matter: explicit RequestArgument ctor for GCC 14"
+# HTTPClient.h — GCC 14 rejects emplace_back(h,v) without an explicit ctor
+# on the aggregate RequestArgument. Add it so the library compiles.
+HTTP_SENTINEL = "// GaggiMate: explicit RequestArgument ctor for GCC 14"
 HTTP_OLD = "  struct RequestArgument {\n    String key;\n    String value;\n  };"
 HTTP_NEW = (
     "  struct RequestArgument {\n"

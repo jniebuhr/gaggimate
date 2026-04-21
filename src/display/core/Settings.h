@@ -50,6 +50,12 @@ class Settings {
   public:
     Settings();
 
+    // Open NVS + populate fields + start the async-save task.
+    // Split from the ctor so we don't touch NVS during C++ global init
+    // (Controller is a global; under IDF 5.5 the NVS driver is only
+    // guaranteed ready once Arduino's init() has run).
+    void load();
+
     void batchUpdate(const SettingsCallback &callback);
     void save(bool noDelay = false);
 
@@ -236,7 +242,7 @@ class Settings {
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
 
     void doSave();
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle = nullptr;
     [[noreturn]] static void loopTask(void *arg);
 };
 
