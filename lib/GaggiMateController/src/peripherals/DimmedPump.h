@@ -21,8 +21,9 @@ class DimmedPump : public Pump {
     float getPumpFlow();
     float getPuckFlow();
     float getPuckResistance();
-    float *getPumpFlowPtr() { return &_currentFlow; }  // For thermal feedforward
-    int *getValveStatusPtr() { return &_valveStatus; } // For thermal feedforward valve state
+    float *getPumpFlowPtr() { return &_currentFlow; }     // For thermal feedforward
+    int *getValveStatusPtr() { return &_valveStatus; }    // For thermal feedforward valve state
+    float *getPumpPowerPtr() override { return &_power; } // For external pump control
     void tare();
 
     void setFlowTarget(float targetFlow, float pressureLimit);
@@ -32,6 +33,7 @@ class DimmedPump : public Pump {
     void stop();
     void fullPower();
     void setValveState(bool open);
+    void setBinaryMode(bool binaryMode);
 
   private:
     uint8_t _ssr_pin;
@@ -39,6 +41,7 @@ class DimmedPump : public Pump {
     PSM _psm;
     PressureSensor *_pressureSensor;
     PressureController _pressureController;
+
     xTaskHandle taskHandle;
 
     ControlMode _mode = ControlMode::POWER;
@@ -51,6 +54,7 @@ class DimmedPump : public Pump {
     float _lastPressure = 0.0f;
     int _valveStatus = 0;
     int _cps = MAX_FREQ;
+    bool _binaryMode = false;
 
     float _opvPressure = 0.0f;
 

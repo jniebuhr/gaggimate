@@ -1,8 +1,7 @@
 #include "GaggiMateController.h"
 #include "utilities.h"
 #include <Arduino.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
+#include <ExtensionIOXL9555.hpp>
 #include <peripherals/DimmedPump.h>
 #include <peripherals/SimplePump.h>
 
@@ -31,7 +30,8 @@ void GaggiMateController::setup() {
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
     if (_config.capabilites.pressure) {
-        pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { /* noop */ });
+        this->adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 3);
+        this->pressureSensor = new PressureSensor(this->adc);
     }
     if (_config.capabilites.dimming) {
         pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor);
@@ -40,8 +40,9 @@ void GaggiMateController::setup() {
     }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
-
+    // this->flowSensor = new FlowSensor(_config.steamButtonPin, [](float) {});
     // 4-Pin peripheral port
+    /*
     if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
         ESP_LOGE(LOG_TAG, "Failed to initialize I2C bus");
     }
@@ -53,6 +54,7 @@ void GaggiMateController::setup() {
         _ble.registerLedControlCallback(
             [this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
     }
+    */
 
     String systemInfo = make_system_info(_config, _version);
     _ble.initServer(systemInfo);
@@ -69,10 +71,17 @@ void GaggiMateController::setup() {
     this->valve->setup();
     this->alt->setup();
     this->pump->setup();
+    if (this->gearpumpAddon != nullptr) {
+        this->gearpumpAddon->setup(this->pump->getPumpPowerPtr());
+        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        dimmedPump->setBinaryMode(true);
+    }
     this->brewBtn->setup();
     this->steamBtn->setup();
+    // this->flowSensor->setup();
     if (_config.capabilites.pressure) {
-        pressureSensor->setup();
+        this->adc->setup();
+        this->pressureSensor->setup();
         _ble.registerPressureScaleCallback([this](float scale) { this->pressureSensor->setScale(scale); });
     }
     // Set up thermal feedforward for main heater if pressure/dimming capability exists
@@ -93,6 +102,11 @@ void GaggiMateController::setup() {
             return;
         }
         this->pump->setPower(pumpSetpoint);
+        if (pumpSetpoint == 0.0f) {
+            if (gearpumpAddon != nullptr) {
+                gearpumpAddon->stop();
+            }
+        }
         this->valve->set(valve);
         this->heater->setSetpoint(heaterSetpoint);
         if (!_config.capabilites.dimming) {
@@ -146,6 +160,7 @@ void GaggiMateController::setup() {
         }
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         dimmedPump->tare();
+        // flowSensor->tare();
     });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }
@@ -189,7 +204,17 @@ void GaggiMateController::detectBoard() {
 }
 
 void GaggiMateController::detectAddon() {
-    // TODO: Add I2C scanning for extensions
+    Wire.begin(_config.ext3Pin, _config.ext2Pin, 400000);
+    for (uint8_t addr = XL9555_SLAVE_ADDRESS0; addr <= XL9555_SLAVE_ADDRESS7; ++addr) {
+        Wire.beginTransmission(addr);
+        if (Wire.endTransmission(addr) == 0) {
+            ESP_LOGI(LOG_TAG, "Found an extension at address 0x%X", addr);
+            if (addr == 0x26) {
+                ESP_LOGI(LOG_TAG, "Identified addon as Gearpump Addon");
+                gearpumpAddon = new GearpumpAddon(addr, _config.ext3Pin, _config.ext2Pin, _config.ext1Pin);
+            }
+        }
+    }
 }
 
 void GaggiMateController::handlePing() {
@@ -228,6 +253,7 @@ void GaggiMateController::sendSensorData() {
                             dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
         if (this->valve->getState()) {
             _ble.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+            // _ble.sendVolumetricMeasurement(flowSensor->getVolume());
         }
     } else {
         _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);

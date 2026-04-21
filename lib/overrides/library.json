@@ -1,0 +1,18 @@
+{
+  "name": "overrides",
+  "keywords": "GaggiMate overrides Lib",
+  "description": "GaggiMate overrides Lib",
+  "repository":
+  {
+    "type": "email",
+    "url": "mail@gaggimate.eu"
+  },
+  "version": "1.0.0",
+  "exclude": "doc",
+  "frameworks": "arduino",
+  "platforms": ["esp32"],
+  "dependencies": {
+    "stevemarple/SoftWire": "2.0.10",
+    "stevemarple/AsyncDelay": "^1.1.2"
+  }
+}
