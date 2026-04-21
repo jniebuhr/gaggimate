@@ -99,14 +99,21 @@ void HomekitPlugin::setup(::Controller *controller, PluginManager *pluginManager
     impl->controller = controller;
 
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
-        int apMode = event.getInt("AP");
-        if (apMode)
+        if (impl->spanAccessory != nullptr)
+            return; // already begun — handler must be idempotent
+        if (event.getInt("AP"))
             return;
         heap_checkpoint("homekit/before-homespan-begin");
         homeSpan.setHostNameSuffix("");
         homeSpan.setPortNum(kHomeSpanPort);
-        homeSpan.begin(Category::Thermostats, kDeviceName, impl->controller->getSettings().getMdnsName().c_str());
+        // Credentials before begin() so HomeSpan's NVS has them before its
+        // WiFi supervisor starts — otherwise the watchdog fires on first drop.
         homeSpan.setWifiCredentials(impl->wifiSsid.c_str(), impl->wifiPassword.c_str());
+        // Give HomeSpan a no-op WiFi-begin callback: GaggiMate's Controller
+        // already owns the STA lifecycle. Without this, HomeSpan's internal
+        // WIFI_ALARM watchdog calls ESP.restart() on every WiFi disconnect.
+        homeSpan.setWifiBegin([](const char *, const char *) {});
+        homeSpan.begin(Category::Thermostats, kDeviceName, impl->controller->getSettings().getMdnsName().c_str());
         impl->spanAccessory = new SpanAccessory();
         impl->accessoryInformation = new Service::AccessoryInformation();
         impl->identify = new Characteristic::Identify();
