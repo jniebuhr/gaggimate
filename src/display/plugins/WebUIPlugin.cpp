@@ -2,6 +2,7 @@
 #include <DNSServer.h>
 #include <SPIFFS.h>
 #include <display/core/Controller.h>
+#include <display/core/MemoryMonitor.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
@@ -214,29 +215,35 @@ void WebUIPlugin::setupServer() {
     server.on("/api/debug/heap", [](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
         JsonDocument doc;
-        const size_t intFree = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
-        const size_t intLargest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
-        const size_t intTotal = heap_caps_get_total_size(MALLOC_CAP_INTERNAL);
-        const size_t intMin = heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
-        const size_t psFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
-        const size_t psLargest = heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
-        const size_t psTotal = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
-        const size_t psMin = heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
-        auto frag = [](size_t free, size_t largest) {
-            return free ? 1.0f - (float)largest / (float)free : 0.0f;
+        MemorySnapshot snap;
+        if (gaggimate::memmon::isReady()) {
+            snap = gaggimate::memmon::instance().sampleNow();
+        }
+        auto pick = [&](MemoryRegion r) -> const RegionStats * {
+            for (const auto &rs : snap.regions)
+                if (rs.region == r)
+                    return &rs;
+            return nullptr;
         };
+        const RegionStats *ri = pick(MemoryRegion::Internal);
+        const RegionStats *rp = pick(MemoryRegion::Psram);
         JsonObject internalObj = doc["internal"].to<JsonObject>();
-        internalObj["free"] = intFree;
-        internalObj["largest"] = intLargest;
-        internalObj["total"] = intTotal;
-        internalObj["minimum_free"] = intMin;
+        internalObj["free"] = ri ? ri->freeBytes : heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+        internalObj["largest"] = ri ? ri->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+        internalObj["total"] = heap_caps_get_total_size(MALLOC_CAP_INTERNAL);
+        internalObj["minimum_free"] = ri ? ri->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
         JsonObject psObj = doc["psram"].to<JsonObject>();
-        psObj["free"] = psFree;
-        psObj["largest"] = psLargest;
-        psObj["total"] = psTotal;
-        psObj["minimum_free"] = psMin;
-        doc["fragmentation_internal"] = frag(intFree, intLargest);
-        doc["fragmentation_psram"] = frag(psFree, psLargest);
+        psObj["free"] = rp ? rp->freeBytes : heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+        psObj["largest"] = rp ? rp->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
+        psObj["total"] = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+        psObj["minimum_free"] = rp ? rp->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
+        doc["fragmentation_internal"] = ri ? ri->fragmentation : 0.0f;
+        doc["fragmentation_psram"] = rp ? rp->fragmentation : 0.0f;
+        if (ri) {
+            internalObj["slope"] = ri->freeBytesSlope;
+            internalObj["seconds_to_warn"] = ri->secondsToWarn;
+            internalObj["seconds_to_critical"] = ri->secondsToCritical;
+        }
         serializeJson(doc, *response);
         request->send(response);
     });

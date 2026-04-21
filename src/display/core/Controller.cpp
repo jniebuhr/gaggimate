@@ -6,6 +6,7 @@
 #include <ctime>
 #include <display/config.h>
 #include <display/core/constants.h>
+#include <display/core/MemoryMonitor.h>
 #include <display/core/utils.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
@@ -32,6 +33,7 @@
 static constexpr const char *LOG_TAG = "Controller";
 
 void Controller::setup() {
+    gaggimate::memmon::init();
     heap_checkpoint_reset();
     heap_checkpoint("setup/enter");
 
@@ -828,14 +830,8 @@ void Controller::handleProfileUpdate() {
 void Controller::loopTask(void *arg) {
     TickType_t lastWake = xTaskGetTickCount();
     auto *controller = static_cast<Controller *>(arg);
-    uint32_t lastHeapLog = 0;
     while (true) {
         controller->loopControl();
-        const uint32_t now = millis();
-        if (now - lastHeapLog >= 60000) {
-            lastHeapLog = now;
-            measure_heap("heartbeat", [] {});
-        }
         xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : 100));
     }
 }
