@@ -5,9 +5,6 @@ Import("env")
 
 env.Append(CXXFLAGS=["-Wno-deprecated-enum-enum-conversion"])
 
-# Only needed under dual-framework: under pure arduino, pioarduino-build.py
-# already injects framework/libraries CPPPATH globally.
-#
 # pioarduino 55.x split WiFi → Network/NetworkClientSecure. Arduino-bundled libs
 # declare transitive deps only via `#include`, not `depends=` in
 # library.properties, so LDF (even `deep+`) won't wire up sibling include paths
@@ -21,9 +18,6 @@ env.Append(CXXFLAGS=["-Wno-deprecated-enum-enum-conversion"])
 # with our C++ code. Arduino's FS.h / SPIFFS's spiffs.h are C++ headers —
 # leaking them into C compilation trips `#include <memory>` with "No such
 # file or directory". `-I` via CXXFLAGS applies to C++ only.
-if "espidf" not in env.subst("$PIOFRAMEWORK"):
-    Return()  # noqa: F821
-
 ARDUINO_LIBS_ALLOWLIST = [
     "Network",
     "NetworkClientSecure",
