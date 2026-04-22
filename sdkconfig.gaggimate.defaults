@@ -92,7 +92,18 @@ CONFIG_LIBC_NEWLIB_NANO_FORMAT=n
 # leaving IDF's CONFIG_PARTITION_TABLE_* at defaults so PIO can override without
 # conflict. PIO passes its selection into IDF via cmake_extra_args.
 
-# --- Arduino (as-component) trims — real fix via scripts/patch_arduino_libs.py ---
+# --- Arduino (as-component) trims ---
+# SELECTIVE_COMPILATION=y + per-lib =n gates out libs that break IDF 5.5+GCC 14
+# or add unused flash. ESP_HostedOTA has no Kconfig guard; stripped via
+# patch_arduino_libs.py REMOVE_ITEM instead.
 CONFIG_ARDUINO_SELECTIVE_COMPILATION=y
+CONFIG_ARDUINO_SELECTIVE_ESP_SR=n
+CONFIG_ARDUINO_SELECTIVE_Zigbee=n
+CONFIG_ARDUINO_SELECTIVE_BluetoothSerial=n
+CONFIG_ARDUINO_SELECTIVE_Matter=n
+CONFIG_ARDUINO_SELECTIVE_Insights=n
+CONFIG_ARDUINO_SELECTIVE_RainMaker=n
+CONFIG_ARDUINO_SELECTIVE_OpenThread=n
+CONFIG_ARDUINO_SELECTIVE_SimpleBLE=n
 # Arduino's cores/esp32/main.cpp only defines app_main when =y; src/ has no app_main.
 CONFIG_AUTOSTART_ARDUINO=y
