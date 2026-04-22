@@ -94,8 +94,9 @@ CONFIG_LIBC_NEWLIB_NANO_FORMAT=n
 
 # --- Arduino (as-component) trims ---
 # SELECTIVE_COMPILATION=y + per-lib =n gates out libs that break IDF 5.5+GCC 14
-# or add unused flash. ESP_HostedOTA has no Kconfig guard; stripped via
-# patch_arduino_libs.py REMOVE_ITEM instead.
+# or add unused flash. ESP_HostedOTA has no SELECTIVE Kconfig guard, but its
+# entire body is wrapped in #if CONFIG_ESP_WIFI_REMOTE_ENABLED (esp32p4-only),
+# so it compiles to a zero-symbol stub on esp32s3 — no exclusion needed.
 CONFIG_ARDUINO_SELECTIVE_COMPILATION=y
 CONFIG_ARDUINO_SELECTIVE_ESP_SR=n
 CONFIG_ARDUINO_SELECTIVE_Zigbee=n
