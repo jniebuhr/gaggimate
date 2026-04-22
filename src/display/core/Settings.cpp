@@ -115,10 +115,6 @@ void Settings::load() {
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
 }
 
-void Settings::batchUpdate(const SettingsCallback &callback) {
-    callback(this);
-    save();
-}
 
 void Settings::save(bool noDelay) {
     if (noDelay) {

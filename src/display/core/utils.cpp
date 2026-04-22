@@ -34,7 +34,7 @@ std::vector<String> explode(const String &input, char delim) {
 }
 
 String implode(const std::vector<String> &strings, String delim) {
-    if (strings.size() == 0) {
+    if (strings.empty()) {
         return "";
     }
     if (strings.size() == 1) {

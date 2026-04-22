@@ -43,9 +43,6 @@ struct AutoWakeupSchedule {
     }
 };
 
-class Settings;
-using SettingsCallback = std::function<void(Settings *)>;
-
 class Settings {
   public:
     Settings();
@@ -56,7 +53,11 @@ class Settings {
     // guaranteed ready once Arduino's init() has run).
     void load();
 
-    void batchUpdate(const SettingsCallback &callback);
+    template <typename F>
+    void batchUpdate(const F &callback) {
+        callback(this);
+        save();
+    }
     void save(bool noDelay = false);
 
     // Getters and setters
