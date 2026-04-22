@@ -11,12 +11,18 @@
 #include "../core/utils.h"
 #include <utility>
 
-// HomeSpan's Span::configureNetwork() references verifyRollbackLater(). The
-// real definition lives in Arduino's RainMaker library, which patch_arduino_libs.py
-// strips under dual-framework (RainMaker doesn't compile under IDF 5.5/GCC 14
-// and we don't use it). Provide a local stub so the link resolves. Returning
-// false means "do not defer rollback" — safe default: firmware gets marked
-// valid immediately rather than waiting on an external rollback verifier.
+// HomeSpan's Span::pollTask() calls verifyRollbackLater() once as a diagnostic
+// log (HomeSpan.cpp:608). Two upstream definitions exist, both excluded from
+// our build:
+//   1. arduino-esp32 core (cores/esp32/esp32-hal-misc.c) — weak default
+//      returning false, gated by #ifdef CONFIG_APP_ROLLBACK_ENABLE which we
+//      don't set in sdkconfig.gaggimate.defaults.
+//   2. Arduino RainMaker (libraries/RainMaker/src/RMaker.cpp) — strong
+//      override returning true, excluded via CONFIG_ARDUINO_SELECTIVE_RainMaker=n.
+// HomeSpan's reference is unconditional, so we must provide the symbol. Weak
+// so a real RainMaker link (if selective-compilation ever changes) wins.
+// Return false to match Arduino's own default; HomeSpan then prints
+// "Auto Rollback: Disabled" — truthful for a build with no rollback verifier.
 extern "C" __attribute__((weak)) bool verifyRollbackLater() { return false; }
 
 namespace {
