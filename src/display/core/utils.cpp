@@ -62,3 +62,7 @@ void measure_heap(const String &label, std::function<void()> callback) {
     ESP_LOGI("Common", "%s changed heap usage from %.2f%% to %.2f%% by %dkB (%.2f%% to %.2f%% fragmentation)", label.c_str(),
              usedPercentBefore, usedPercentAfter, (freeBefore - freeAfter) / 1024, fragmentationBefore, fragmentationAfter);
 }
+
+bool is_task_healthy(const eTaskState task_state) {
+    return task_state == eRunning || task_state == eBlocked || task_state == eReady;
+}
