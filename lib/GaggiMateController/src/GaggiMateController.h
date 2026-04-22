@@ -34,6 +34,7 @@ class GaggiMateController {
     void startPidAutotune(void);
     void stopPidAutotune(void);
     void sendSensorData(void);
+    void handleSerialCommand(char c);
 
     ControllerConfig _config = ControllerConfig{};
     NimBLEServerController _ble;
