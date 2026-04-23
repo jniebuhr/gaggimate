@@ -23,6 +23,7 @@ class Heater {
     void loop();
 
     void setSetpoint(float setpoint);
+    float getSetpoint() { return setpoint; };
     void setTunings(float Kp, float Ki, float Kd);
     void autotune(int goal, int windowSize);
 
