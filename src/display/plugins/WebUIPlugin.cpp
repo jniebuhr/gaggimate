@@ -120,6 +120,16 @@ void WebUIPlugin::loop() {
         doc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
         doc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
         doc["bc"] = bleConnected;                                    // bluetooth scale connected status
+        // Scale battery — only surfaced when the driver reports one and the
+        // value isn't the UNKNOWN sentinel (255). UI omits the battery pill
+        // entirely when `sbat` is absent, so disconnected/unknown scales don't
+        // render a stale stub.
+        if (bleConnected && BLEScales.hasBatteryLevel()) {
+            const uint8_t pct = BLEScales.getBatteryLevel();
+            if (pct != REMOTE_SCALES_BATTERY_UNKNOWN) {
+                doc["sbat"] = pct;
+            }
+        }
 
         Process *process = controller->getProcess();
         if (process == nullptr) {
@@ -711,6 +721,15 @@ void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
     doc["name"] = BLEScales.getName();
     doc["uuid"] = BLEScales.getUUID();
     doc["rssi"] = BLEScales.getRSSI();
+    doc["hasBattery"] = BLEScales.hasBatteryLevel();
+    // Only surface the numeric when the scale reports one — a 255 sentinel
+    // (REMOTE_SCALES_BATTERY_UNKNOWN) would otherwise render as a fake "255%".
+    if (BLEScales.hasBatteryLevel()) {
+        const uint8_t pct = BLEScales.getBatteryLevel();
+        if (pct != REMOTE_SCALES_BATTERY_UNKNOWN) {
+            doc["battery"] = pct;
+        }
+    }
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
     request->send(response);
