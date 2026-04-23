@@ -8,7 +8,7 @@ Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_
     : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback) {
 
     simplePid = new SimplePID(&output, &temperature, &setpoint);
-    autotuner = new Autotune();
+    tuner = new sTune(&temperature, &output, sTune::NoOvershoot_PID, sTune::directIP, sTune::printOFF);
 }
 
 void Heater::setup() {
@@ -25,12 +25,18 @@ void Heater::setupPid() {
     simplePid->reset();
 }
 
-void Heater::setupAutotune(int goal, int windowSize) {
-    autotuner->setWindowsize(windowSize);
-    autotuner->setEpsilon(0.1f);
-    autotuner->setRequiredConfirmations(3);
-    autotuner->setTuningGoal(goal);
-    autotuner->reset();
+void Heater::setupAutotune(int testTimeSec, int samples) {
+    // inputSpan covers the boiler's practical operating range (°C).
+    // outputSpan matches TUNER_OUTPUT_SPAN (ms soft-PWM window).
+    // outputStep = half power — keeps peak temperature below MAX_AUTOTUNE_TEMP
+    // on a cold-start test while still producing a clear S-curve reaction.
+    // Gains are later rescaled by outputSpan/inputSpan to convert sTune's
+    // normalised dimensionless gains into SimplePID engineering units (ms/°C).
+    const float inputSpan = 200.0f;
+    const int safeSamples = samples < 200 ? 200 : samples;
+    tuner->Configure(inputSpan, TUNER_OUTPUT_SPAN, 0.0f, TUNER_OUTPUT_SPAN / 2.0f,
+                     static_cast<uint32_t>(testTimeSec), 5, static_cast<uint16_t>(safeSamples));
+    tuner->SetEmergencyStop(MAX_AUTOTUNE_TEMP);
 }
 
 void Heater::loop() {
@@ -82,8 +88,8 @@ void Heater::setFeedforwardScale(float combinedKff) {
     ESP_LOGI(LOG_TAG, "Combined feedforward gain (Kff) set to: %.3f output units per watt", combinedKff);
 }
 
-void Heater::autotune(int goal, int windowSize) {
-    setupAutotune(goal, windowSize);
+void Heater::autotune(int testTimeSec, int samples) {
+    setupAutotune(testTimeSec, samples);
     autotuning = true;
 }
 
@@ -125,42 +131,44 @@ void Heater::loopPid() {
 
 void Heater::loopAutotune() {
     simplePid->setMode(SimplePID::Control::manual);
-    autotuner->reset();
-    long microseconds;
-    long loopInterval = (static_cast<long>(TUNER_OUTPUT_SPAN) - 1L) * 1000L;
-    while (!autotuner->isFinished()) {
-        microseconds = micros();
-        temperature = sensor->read();
+    temperature = sensor->read();
+
+    if (temperature > MAX_AUTOTUNE_TEMP) {
         output = 0.0f;
-        if (autotuner->maxPowerOn) {
-            output = TUNER_OUTPUT_SPAN;
-        }
-        ESP_LOGI(LOG_TAG, "Autotuner Cycle: Temperature=%.2f", temperature);
-        autotuner->update(temperature, millis() / 1000.0f);
-        while (micros() - microseconds < loopInterval) {
-            softPwm(TUNER_OUTPUT_SPAN);
-            vTaskDelay(1 / portTICK_PERIOD_MS);
-        }
-        if (temperature > MAX_AUTOTUNE_TEMP) {
-            output = 0.0f;
+        autotuning = false;
+        softPwm(TUNER_OUTPUT_SPAN);
+        ESP_LOGW(LOG_TAG, "Autotune aborted: temperature %.1f°C exceeds limit %.1f°C",
+                 temperature, MAX_AUTOTUNE_TEMP);
+        return;
+    }
+
+    // sTune manages its own sample timing via micros(); call Run() every heater
+    // tick (10 ms) — it processes a real sample only when its interval has elapsed.
+    switch (tuner->Run()) {
+        case sTune::tunings: {
+            float kp, ki, kd;
+            tuner->GetAutoTunings(&kp, &ki, &kd);
+            // sTune gains are dimensionless (normalised by inputSpan/outputSpan).
+            // Scale to SimplePID engineering units: ms/°C, ms/(°C·s), ms·s/°C.
+            const float scale = TUNER_OUTPUT_SPAN / 200.0f; // outputSpan / inputSpan
+            kp *= scale;
+            ki *= scale;
+            kd *= scale;
+            ESP_LOGI(LOG_TAG,
+                     "Autotune done: Kp=%.4f Ki=%.4f Kd=%.4f | dead_time=%.2fs tau=%.2fs process_gain=%.4f",
+                     kp, ki, kd, tuner->GetDeadTime(), tuner->GetTau(), tuner->GetProcessGain());
             autotuning = false;
+            output = 0.0f;
             softPwm(TUNER_OUTPUT_SPAN);
-            pid_callback(0, 0, 0);
+            pid_callback(kp, ki, kd);
+            setTunings(kp, ki, kd);
             return;
         }
+        default:
+            break;
     }
-    output = 0.0f;
-    autotuning = false;
+
     softPwm(TUNER_OUTPUT_SPAN);
-
-    pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
-
-    setTunings(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
-
-    ESP_LOGI(LOG_TAG, "Autotuning finished: Kp=%.4f, Ki=%.4f, Kd=%.4f, Kff=%.4f\n", autotuner->getKp() * 1000.0f,
-             autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, autotuner->getKff() * 1000.0f);
-    ESP_LOGI(LOG_TAG, "System delay: %.2f s, System gain: %.4f Setpoint Freq: %.4f Hz\n", autotuner->getSystemDelay(),
-             autotuner->getSystemGain(), autotuner->getCrossoverFreq() / 2);
 }
 
 float Heater::softPwm(uint32_t windowSize) {

@@ -1,9 +1,9 @@
 #ifndef HEATER_H
 #define HEATER_H
-#include "Autotune/Autotune.h"
 #include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
 #include <SimplePID/SimplePID.h>
+#include <sTune.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
@@ -24,7 +24,7 @@ class Heater {
 
     void setSetpoint(float setpoint);
     void setTunings(float Kp, float Ki, float Kd);
-    void autotune(int goal, int windowSize);
+    void autotune(int testTimeSec, int samples);
 
     // Thermal feedforward control
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
@@ -32,19 +32,18 @@ class Heater {
 
   private:
     void setupPid();
-    void setupAutotune(int goal, int windowSize);
+    void setupAutotune(int testTimeSec, int samples);
     void loopPid();
     void loopAutotune();
     float softPwm(uint32_t windowSize);
     void plot(float optimumOutput, float outputScale, uint8_t everyNth);
-    void setTuningGoal(float percent);
     float calculateDisturbanceFeedforwardGain();
     float calculateSafetyScaling(float tempError);
     TemperatureSensor *sensor;
     uint8_t heaterPin;
     xTaskHandle taskHandle;
     SimplePID *simplePid = nullptr;
-    Autotune *autotuner = nullptr;
+    sTune *tuner = nullptr;
 
     heater_error_callback_t error_callback;
     pid_result_callback_t pid_callback;
