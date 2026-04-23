@@ -57,6 +57,12 @@ public:
   virtual bool hasWeightUnit() const { return false; }
   virtual bool hasAutoModeStopCondition() const { return false; }
   virtual bool hasTimerControl() const { return false; }
+  // Scale-side flow-rate EMA state. Drivers that can detect whether the
+  // peripheral currently has its own flow smoothing enabled should override
+  // (Bookoo does this via byte 17 of the weight notification). Default: false
+  // (unknown / not reported). Useful for verifying commands like
+  // disableScaleSmoothing() were honored by the peripheral.
+  virtual bool isFlowSmoothingOn() const { return false; }
 
   void setWeightUpdatedCallback(void (*callback)(float), bool onlyChanges = false);
   void setLogCallback(LogCallback logCallback) { this->logCallback = logCallback; }
