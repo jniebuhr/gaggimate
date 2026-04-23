@@ -51,6 +51,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         ota->init(controller->getClientController()->getClient());
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
+    pluginManager->on("controller:autotune:failed", [this](Event const &event) { sendAutotuneFailed(); });
 
     // Forward shot history rebuild progress events to WebSocket clients
     pluginManager->on("evt:history-rebuild-progress", [this](Event const &event) {
@@ -781,6 +782,13 @@ void WebUIPlugin::sendAutotuneResult() {
     JsonDocument doc;
     doc["tp"] = "evt:autotune-result";
     doc["pid"] = controller->getSettings().getPid();
+    String message = doc.as<String>();
+    ws.textAll(message);
+}
+
+void WebUIPlugin::sendAutotuneFailed() {
+    JsonDocument doc;
+    doc["tp"] = "evt:autotune-failed";
     String message = doc.as<String>();
     ws.textAll(message);
 }
