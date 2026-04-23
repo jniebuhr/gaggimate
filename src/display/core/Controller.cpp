@@ -166,8 +166,15 @@ void Controller::setupBluetooth() {
     });
     clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd, const float Kf) {
         ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
+        const bool invalid = !isfinite(Kp) || !isfinite(Ki) || !isfinite(Kd) || !isfinite(Kf) ||
+                             (Kp == 0.0f && Ki == 0.0f && Kd == 0.0f);
+        if (invalid) {
+            ESP_LOGW(LOG_TAG, "Rejecting autotune result: invalid gains, preserving existing PID");
+            pluginManager->trigger("controller:autotune:failed");
+            autotuning = false;
+            return;
+        }
         char pid[64];
-        // Store in simplified format with combined Kf
         snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
         settings.setPid(String(pid));
         pluginManager->trigger("controller:autotune:result");
