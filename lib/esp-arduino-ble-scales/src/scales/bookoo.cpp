@@ -15,7 +15,12 @@ const NimBLEUUID commandCharacteristicUUID("FF12");
 //-----------------------------------------------------------------------------------/
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
-BookooScales::BookooScales(const DiscoveredDevice& device) : RemoteScales(device) {}
+BookooScales::BookooScales(const DiscoveredDevice& device)
+  : RemoteScales(device),
+    // Model discrimination at construction time — see the header for the rationale.
+    // BOOKOO_SC_U<serial> = Ultra; everything else (BOOKOO_SC_M<serial>, unknown)
+    // defaults to the Mini-compatible subset. rfind(..., 0) == 0 is a prefix match.
+    isUltra_(device.getName().rfind("BOOKOO_SC_U", 0) == 0) {}
 
 bool BookooScales::connect() {
   if (RemoteScales::clientIsConnected()) {
@@ -125,6 +130,20 @@ void BookooScales::resetTimer() {
   if (!isConnected()) return;
   RemoteScales::log("Timer RESET (cmd 0x0A 0x06)");
   std::array<uint8_t, 6> payload = { 0x03, 0x0A, 0x06, 0x00, 0x00, 0x00 };
+  sendMessage(payload.data(), payload.size());
+}
+
+void BookooScales::setAutoModeStopConditionOnScale(bool onContainerRemoval) {
+  if (!isConnected() || !isUltra_) return; // Mini firmware silently ignores 0x0B
+  RemoteScales::log("Set auto-mode stop condition (cmd 0x0A 0x0B %u)", onContainerRemoval ? 1 : 0);
+  std::array<uint8_t, 6> payload = { 0x03, 0x0A, 0x0B, static_cast<uint8_t>(onContainerRemoval ? 0x01 : 0x00), 0x00, 0x00 };
+  sendMessage(payload.data(), payload.size());
+}
+
+void BookooScales::calibrate() {
+  if (!isConnected() || !isUltra_) return; // 0x09 not defined in the Mini protocol
+  RemoteScales::log("Calibrate (cmd 0x0A 0x09)");
+  std::array<uint8_t, 6> payload = { 0x03, 0x0A, 0x09, 0x00, 0x00, 0x00 };
   sendMessage(payload.data(), payload.size());
 }
 

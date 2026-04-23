@@ -34,12 +34,31 @@ public:
   bool hasScaleTimer() const override { return true; }
   bool hasTimerControl() const override { return true; }
   bool hasWeightUnit() const override { return true; }
-  // NOTE: byte 18 of the weight notification is "auto-mode stop condition" on
-  // Ultra-tier scales and reserved (0x00) on Mini. Without a way to identify
-  // Ultra vs Mini at discovery time we can't claim this safely — consumers
-  // reading getAutoModeStopCondition() on a Mini would get a meaningless 0.
-  // Leaving hasAutoModeStopCondition() at its default (false) until an
-  // Ultra-specific subclass or discovery path exists.
+  // Ultra reports an auto-mode stop condition in byte 18 of the weight
+  // notification (0 = stop on liquid-flow-stop, 1 = stop on container-removal);
+  // Mini always sends 0x00 (reserved). Gate this capability on Ultra detection
+  // via the advertising name (BOOKOO_SC_U prefix) — see isUltra_ in the
+  // constructor. Consumers reading getAutoModeStopCondition() on a Mini would
+  // otherwise see a misleading 0.
+  bool hasAutoModeStopCondition() const override { return isUltra_; }
+
+  // True when the advertised name marks this device as an Ultra (BOOKOO_SC_U
+  // prefix). Mini (and unknown future models) default to false.
+  bool isUltra() const { return isUltra_; }
+
+  // Ultra-only commands. No-op on Mini scales. See the Bookoo Ultra protocol
+  // spec for byte-level details:
+  //   https://github.com/BooKooCode/OpenSource/blob/main/bookoo_ultra_scale/protocols.md
+  //
+  // setAutoModeStopConditionOnScale: command 0x0B, writes the scale's own
+  // auto-mode stop condition (0 = liquid-flow-stop, 1 = container-removal).
+  // Only meaningful if the scale is in auto-mode; does not affect GaggiMate's
+  // own brew-by-weight flow (which uses Timer mode).
+  void setAutoModeStopConditionOnScale(bool onContainerRemoval);
+
+  // calibrate: command 0x09, triggers factory calibration. Only effective
+  // when the scale is physically in weight-mode; no-op otherwise and on Mini.
+  void calibrate();
 
   // Ask the scale to turn off its own flow-rate EMA so firmware consumers
   // see raw native flow instead of double-filtered output. Idempotent;
@@ -50,6 +69,12 @@ private:
   uint32_t lastHeartbeat = 0;
 
   bool markedForReconnection = false;
+
+  // Set once at construction time from the advertising name. Ultra devices
+  // advertise as BOOKOO_SC_U<...>; Mini as BOOKOO_SC_M<...>. Default false
+  // (Mini-compatible) for any name that doesn't match the Ultra prefix so
+  // we never accidentally enable Ultra-only commands on a Mini.
+  const bool isUltra_;
 
   NimBLERemoteService* service;
   NimBLERemoteCharacteristic* weightCharacteristic;
