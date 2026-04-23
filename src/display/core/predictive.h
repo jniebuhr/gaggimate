@@ -2,14 +2,22 @@
 #define PREDICTIVE_H
 
 #include <Arduino.h>
+#include <deque>
 
 class VolumetricRateCalculator {
   public:
     explicit VolumetricRateCalculator(double window_duration) : windowDuration(window_duration) {}
 
     void addMeasurement(double volume) {
+        const unsigned long now = millis();
         measurements.emplace_back(volume);
-        measurementTimes.emplace_back(millis());
+        measurementTimes.emplace_back(now);
+
+        const double cutoff = static_cast<double>(now) - windowDuration;
+        while (!measurementTimes.empty() && measurementTimes.front() <= cutoff) {
+            measurements.pop_front();
+            measurementTimes.pop_front();
+        }
     }
 
     double getRate(double time = 0) const {
@@ -78,8 +86,8 @@ class VolumetricRateCalculator {
     }
 
   private:
-    std::vector<double> measurements;
-    std::vector<double> measurementTimes;
+    std::deque<double> measurements;
+    std::deque<double> measurementTimes;
     const double windowDuration;
 };
 
