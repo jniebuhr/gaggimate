@@ -9,6 +9,7 @@ export default function Card({
   className = '',
   role,
   fullHeight = false,
+  bgColorClass = 'bg-base-100',
 }) {
   const getGridClasses = () => {
     const breakpoints = [
@@ -29,7 +30,7 @@ export default function Card({
 
   return (
     <div
-      className={`card bg-base-100 shadow-xl ${gridClasses} ${fullHeight ? 'h-full' : ''} ${className}`}
+      className={`card ${bgColorClass} shadow-xl ${gridClasses} ${fullHeight ? 'h-full' : ''} ${className}`}
       role={role}
     >
       {title && (
