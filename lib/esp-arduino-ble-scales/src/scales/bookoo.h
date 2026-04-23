@@ -46,6 +46,13 @@ public:
   // prefix). Mini (and unknown future models) default to false.
   bool isUltra() const { return isUltra_; }
 
+  // Mirror of byte 17 (flow-smoothing switch) from the most recent weight
+  // notification. We send cmd 0x08 0x00 in connect() to disable the scale's
+  // own EMA so consumers see raw per-sample flow; this lets callers verify
+  // the scale actually honored the request. False until the first
+  // notification is parsed.
+  bool isFlowSmoothingOn() const override { return lastFlowSmoothingOn_; }
+
   // Ultra-only commands. No-op on Mini scales. See the Bookoo Ultra protocol
   // spec for byte-level details:
   //   https://github.com/BooKooCode/OpenSource/blob/main/bookoo_ultra_scale/protocols.md
@@ -75,6 +82,9 @@ private:
   // (Mini-compatible) for any name that doesn't match the Ultra prefix so
   // we never accidentally enable Ultra-only commands on a Mini.
   const bool isUltra_;
+
+  // Mirrors byte 17 of the most recently parsed weight notification.
+  mutable bool lastFlowSmoothingOn_ = false;
 
   NimBLERemoteService* service;
   NimBLERemoteCharacteristic* weightCharacteristic;

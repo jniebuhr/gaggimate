@@ -61,6 +61,10 @@ class BLEScalePlugin : public Plugin {
         return scale != nullptr && scale->hasScaleTimer() ? scale->getScaleTimerMs() : 0;
     }
     bool hasScaleTimer() const { return scale != nullptr && scale->hasScaleTimer(); }
+    // Surface the scale's reported flow-smoothing state so the debug endpoint
+    // can verify our disableScaleSmoothing() command took. Drivers that don't
+    // track this return false by default (RemoteScales base impl).
+    bool isFlowSmoothingOn() const { return scale != nullptr && scale->isFlowSmoothingOn(); }
 
   private:
     void update();

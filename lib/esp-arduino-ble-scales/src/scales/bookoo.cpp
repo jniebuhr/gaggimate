@@ -258,6 +258,11 @@ bool BookooScales::decodeAndHandleNotification() {
     // where hasAutoModeStopCondition() returns true. We still store it so an
     // Ultra-aware subclass (or a future firmware-side model check) can read it.
     RemoteScales::setAutoModeStopCondition(dataBuffer[18]);
+
+    // Flow-smoothing switch (byte 17) — we disable it via cmd 0x08 0x00 in
+    // connect() so firmware consumers see raw per-sample flow. Track the
+    // scale's reported state so we can verify the command was honored.
+    lastFlowSmoothingOn_ = (dataBuffer[17] != 0x00);
   }
   else if (productNumber == 0x03 && messageType == BookooMessageType::SYSTEM) {
     RemoteScales::log("Inbound SYSTEM message ignored: %s\n", RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
