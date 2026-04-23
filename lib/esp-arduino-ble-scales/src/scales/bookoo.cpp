@@ -202,12 +202,18 @@ bool BookooScales::decodeAndHandleNotification() {
                               static_cast<uint32_t>(dataBuffer[4]);
     RemoteScales::setScaleTimerMs(timerMs);
 
-    // Weight unit (byte 5).
-    switch (dataBuffer[5]) {
-      case 0x01: RemoteScales::setWeightUnit(ScaleWeightUnit::OUNCE); break;
-      case 0x02: RemoteScales::setWeightUnit(ScaleWeightUnit::GRAM); break;
-      default:   RemoteScales::setWeightUnit(ScaleWeightUnit::UNKNOWN); break;
-    }
+    // Byte 5 is the scale's *display* unit indicator (0x01 = Ounce shown on
+    // the LCD, 0x02 = Gram shown on the LCD) -- NOT the unit of the weight
+    // value in bytes 7-9. Per the Bookoo Ultra protocol spec:
+    //   https://github.com/BooKooCode/OpenSource/blob/main/bookoo_ultra_scale/protocols.md
+    //   > The weight value returned in the data packet is always in grams
+    // Consequently getWeightUnit() must always report GRAM for Bookoo so
+    // that Controller::isVolumetricAvailable()'s ounce guard (which assumes
+    // the reported weight unit matches the *value* unit) doesn't block
+    // volumetric routing when the user has the scale's display toggled to
+    // oz. The value-level math is always correct because the values are
+    // always grams.
+    RemoteScales::setWeightUnit(ScaleWeightUnit::GRAM);
 
     // Weight (sign byte 6 + value bytes 7-9, 0.01g resolution).
     int32_t rawWeight = (static_cast<int32_t>(dataBuffer[7]) << 16) |
