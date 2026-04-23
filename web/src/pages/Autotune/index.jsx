@@ -119,7 +119,7 @@ export function Autotune() {
                     max='300'
                     className='input input-bordered w-full'
                     value={time}
-                    onChange={e => setTime(parseInt(e.target.value, 10) || 0)}
+                    onChange={e => setTime(Number.parseInt(e.target.value, 10) || 0)}
                     placeholder='90'
                   />
                   <div className='mb-2 text-xs opacity-70'>
@@ -139,7 +139,7 @@ export function Autotune() {
                     max='500'
                     className='input input-bordered w-full'
                     value={samples}
-                    onChange={e => setSamples(parseInt(e.target.value, 10) || 200)}
+                    onChange={e => setSamples(Number.parseInt(e.target.value, 10) || 200)}
                     placeholder='250'
                   />
                   <div className='mb-2 text-xs opacity-70'>

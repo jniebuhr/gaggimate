@@ -51,7 +51,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         ota->init(controller->getClientController()->getClient());
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
-    pluginManager->on("controller:autotune:failed", [this](Event const &event) { sendAutotuneFailed(); });
+    pluginManager->on("controller:autotune:failed", [this](Event const &) { sendAutotuneFailed(); });
 
     // Forward shot history rebuild progress events to WebSocket clients
     pluginManager->on("evt:history-rebuild-progress", [this](Event const &event) {

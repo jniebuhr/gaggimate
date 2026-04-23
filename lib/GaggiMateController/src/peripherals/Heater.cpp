@@ -144,28 +144,26 @@ void Heater::loopAutotune() {
 
     // sTune manages its own sample timing via micros(); call Run() every heater
     // tick (10 ms) — it processes a real sample only when its interval has elapsed.
-    switch (tuner->Run()) {
-        case sTune::tunings: {
-            float kp, ki, kd;
-            tuner->GetAutoTunings(&kp, &ki, &kd);
-            // sTune gains are dimensionless (normalised by inputSpan/outputSpan).
-            // Scale to SimplePID engineering units: ms/°C, ms/(°C·s), ms·s/°C.
-            const float scale = TUNER_OUTPUT_SPAN / 200.0f; // outputSpan / inputSpan
-            kp *= scale;
-            ki *= scale;
-            kd *= scale;
-            ESP_LOGI(LOG_TAG,
-                     "Autotune done: Kp=%.4f Ki=%.4f Kd=%.4f | dead_time=%.2fs tau=%.2fs process_gain=%.4f",
-                     kp, ki, kd, tuner->GetDeadTime(), tuner->GetTau(), tuner->GetProcessGain());
-            autotuning = false;
-            output = 0.0f;
-            softPwm(TUNER_OUTPUT_SPAN);
-            pid_callback(kp, ki, kd);
-            setTunings(kp, ki, kd);
-            return;
-        }
-        default:
-            break;
+    if (tuner->Run() == sTune::tunings) {
+        float kp = 0.0f;
+        float ki = 0.0f;
+        float kd = 0.0f;
+        tuner->GetAutoTunings(&kp, &ki, &kd);
+        // sTune gains are dimensionless (normalised by inputSpan/outputSpan).
+        // Scale to SimplePID engineering units: ms/°C, ms/(°C·s), ms·s/°C.
+        const float scale = TUNER_OUTPUT_SPAN / 200.0f; // outputSpan / inputSpan
+        kp *= scale;
+        ki *= scale;
+        kd *= scale;
+        ESP_LOGI(LOG_TAG,
+                 "Autotune done: Kp=%.4f Ki=%.4f Kd=%.4f | dead_time=%.2fs tau=%.2fs process_gain=%.4f",
+                 kp, ki, kd, tuner->GetDeadTime(), tuner->GetTau(), tuner->GetProcessGain());
+        autotuning = false;
+        output = 0.0f;
+        softPwm(TUNER_OUTPUT_SPAN);
+        pid_callback(kp, ki, kd);
+        setTunings(kp, ki, kd);
+        return;
     }
 
     softPwm(TUNER_OUTPUT_SPAN);
