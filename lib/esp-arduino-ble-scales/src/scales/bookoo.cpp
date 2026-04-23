@@ -33,7 +33,17 @@ bool BookooScales::connect() {
   if (!performConnectionHandshake()) {
     return false;
   }
+  // Subscribe BEFORE issuing the start-notifications command. The scale's
+  // weight characteristic only begins emitting notifications once its CCCD
+  // descriptor is enabled; if we send sendNotificationRequest() first, the
+  // scale processes it while CCCD is still off and silently never starts.
+  // Symptom: GATT link is up, scale->isConnected() returns true, but no
+  // weight notifications ever arrive and the UI shows no live weight. This
+  // regressed when the manual CCCD write in performConnectionHandshake()
+  // was removed (9e1ec2a5) in favor of NimBLE's subscribe(true, ...) —
+  // subscribe() does the right thing, it just needs to run first.
   subscribeToNotifications();
+  sendNotificationRequest();
   RemoteScales::setWeight(0.f);
 
   // Disable the scale-side flow-smoothing EMA so consumers see raw per-sample
@@ -258,8 +268,10 @@ bool BookooScales::performConnectionHandshake() {
   }
   RemoteScales::log("Got weightCharacteristic and commandCharacteristic\n");
 
-  sendNotificationRequest();
-  RemoteScales::log("Sent notification request\n");
+  // Notification-request command is issued in connect() AFTER
+  // subscribeToNotifications() so the scale's CCCD is already enabled
+  // when it receives the start command — otherwise the scale silently
+  // ignores it and never emits weight notifications.
   lastHeartbeat = millis();
   return true;
 }
