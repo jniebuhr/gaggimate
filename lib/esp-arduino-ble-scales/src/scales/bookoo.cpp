@@ -318,13 +318,30 @@ void BookooScales::subscribeToNotifications() {
     notifyCallback(characteristic, data, length, isNotify);
     };
 
+  // Belt-and-suspenders CCCD enable. NimBLE-Arduino issue #340 reports that
+  // subscribe(true, ...) can return without actually writing CCCD on some
+  // ESP32 builds, which leaves the scale silent despite a healthy GATT link.
+  // Explicitly write 0x0001 (LE, notifications enabled) to the 0x2902
+  // descriptor before subscribe(), so a silent subscribe() failure still
+  // leaves the peripheral configured. Subscribe() is still called to wire
+  // the callback on our side.
+  auto writeCccdNotify = [](NimBLERemoteCharacteristic* ch) {
+    if (ch == nullptr) return;
+    NimBLERemoteDescriptor* cccd = ch->getDescriptor(NimBLEUUID(static_cast<uint16_t>(0x2902)));
+    if (cccd == nullptr) return;
+    uint8_t enable[2] = { 0x01, 0x00 }; // LE 0x0001 = notifications
+    cccd->writeValue(enable, 2, true);
+  };
+
   if (weightCharacteristic->canNotify()) {
     RemoteScales::log("Registering callback for weight characteristic\n");
+    writeCccdNotify(weightCharacteristic);
     weightCharacteristic->subscribe(true, callback);
   }
 
   if (commandCharacteristic->canNotify()) {
     RemoteScales::log("Registering callback for command characteristic\n");
+    writeCccdNotify(commandCharacteristic);
     commandCharacteristic->subscribe(true, callback);
   }
 }
