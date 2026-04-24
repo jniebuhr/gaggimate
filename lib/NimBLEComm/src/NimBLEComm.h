@@ -31,6 +31,11 @@ constexpr size_t ERROR_CODE_COMM_RCV = 2;
 constexpr size_t ERROR_CODE_PROTO_ERR = 3;
 constexpr size_t ERROR_CODE_RUNAWAY = 4;
 constexpr size_t ERROR_CODE_TIMEOUT = 5;
+// Autotune hit test-duration window without detecting reaction/inflection.
+// Controller skips NVS persist on this fire — display PID preserved. Distinct
+// from generic TIMEOUT so display UI can surface it without watchdog-
+// disconnect UX.
+constexpr size_t ERROR_CODE_AUTOTUNE_TIMEOUT = 6;
 
 using pin_control_callback_t = std::function<void(bool isActive)>;
 using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kf)>;

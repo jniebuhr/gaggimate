@@ -13,19 +13,21 @@ constexpr float MAX_AUTOTUNE_TEMP = 125.0f;
 constexpr float TUNER_OUTPUT_SPAN = 1000.0f;
 
 using heater_error_callback_t = std::function<void()>;
+using heater_autotune_fail_callback_t = std::function<void()>;
 using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd)>;
 
 class Heater {
   public:
     Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
-           const pid_result_callback_t &pid_callback);
+           const pid_result_callback_t &pid_callback,
+           const heater_autotune_fail_callback_t &autotune_fail_callback = nullptr);
     void setup();
     void loop();
 
     void setSetpoint(float setpoint);
     float getSetpoint() { return setpoint; };
     void setTunings(float Kp, float Ki, float Kd);
-    void autotune(int goal, int windowSize);
+    void autotune(int testTimeSec, int windowSize);
 
     // Thermal feedforward control
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
@@ -33,12 +35,11 @@ class Heater {
 
   private:
     void setupPid();
-    void setupAutotune(int goal, int windowSize);
+    void setupAutotune(int testTimeSec, int windowSize);
     void loopPid();
     void loopAutotune();
     float softPwm(uint32_t windowSize);
     void plot(float optimumOutput, float outputScale, uint8_t everyNth);
-    void setTuningGoal(float percent);
     float calculateDisturbanceFeedforwardGain();
     float calculateSafetyScaling(float tempError);
     TemperatureSensor *sensor;
@@ -49,6 +50,7 @@ class Heater {
 
     heater_error_callback_t error_callback;
     pid_result_callback_t pid_callback;
+    heater_autotune_fail_callback_t autotune_fail_callback;
 
     float temperature = 0.0f;
     float output = 0.0f;
