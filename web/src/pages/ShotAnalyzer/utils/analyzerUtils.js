@@ -486,6 +486,24 @@ export const cleanName = name => {
   return name.replace(/\.json$/i, '');
 };
 
+export const getProfileDisplayLabel = (profile, fallback = 'Unknown') => {
+  if (typeof profile === 'string') {
+    return cleanName(profile).trim() || fallback;
+  }
+
+  const rawLabel =
+    profile?.label ||
+    profile?.data?.label ||
+    profile?.name ||
+    profile?.data?.name ||
+    profile?.fileName ||
+    profile?.data?.fileName ||
+    profile?.exportName ||
+    profile?.data?.exportName ||
+    fallback;
+  return cleanName(String(rawLabel || '')).trim() || fallback;
+};
+
 export const normalizeCompareTargetDisplayMode = value => {
   if (value === COMPARE_TARGET_DISPLAY_MODES.NONE) return value;
   if (value === COMPARE_TARGET_DISPLAY_MODES.MAIN_SHOT_ONLY) return value;
@@ -519,7 +537,13 @@ export const getProfilePinKey = profile => {
       profile.profileName ||
       profile.profile ||
       profile.label ||
+      profile.data?.label ||
       profile.name ||
+      profile.data?.name ||
+      profile.fileName ||
+      profile.data?.fileName ||
+      profile.exportName ||
+      profile.data?.exportName ||
       '';
   }
 

@@ -19,6 +19,7 @@ import {
   getDefaultColumns,
   cleanName,
   ANALYZER_DB_KEYS,
+  getProfileDisplayLabel,
   getShotDisplayName,
   getShotIdentityKey,
   loadFromStorage,
@@ -104,10 +105,21 @@ function getNextDirectionalSelection(request) {
   };
 }
 
-function findPreferredProfileMatch(allProfiles, shotProfileName, shotSource) {
+function findPreferredProfileMatch(allProfiles, shotProfileName, shotSource, shotProfileId = '') {
+  const targetId = String(shotProfileId || '').trim();
+  if (targetId) {
+    const idMatches = allProfiles.filter(
+      profile => String(profile.profileId || profile.id || '').trim() === targetId,
+    );
+    const preferredIdMatch = idMatches.find(profile => profile.source === shotSource) || idMatches[0];
+    if (preferredIdMatch) return preferredIdMatch;
+  }
+
   const target = cleanName(shotProfileName).toLowerCase();
+  if (!target) return null;
+
   const matches = allProfiles.filter(
-    profile => cleanName(profile.name || profile.label || '').toLowerCase() === target,
+    profile => getProfileDisplayLabel(profile, '').toLowerCase() === target,
   );
   return matches.find(profile => profile.source === shotSource) || matches[0] || null;
 }
@@ -115,7 +127,14 @@ function findPreferredProfileMatch(allProfiles, shotProfileName, shotSource) {
 function getProfileLookupId(profileMatch) {
   return profileMatch.source === 'gaggimate'
     ? profileMatch.profileId || profileMatch.id
-    : profileMatch.name;
+    : profileMatch.label ||
+        profileMatch.data?.label ||
+        profileMatch.name ||
+        profileMatch.data?.name ||
+        profileMatch.fileName ||
+        profileMatch.data?.fileName ||
+        profileMatch.exportName ||
+        profileMatch.data?.exportName;
 }
 
 function normalizeMatchedProfileSource(profileData, profileSource) {
@@ -140,11 +159,12 @@ async function loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles) {
     allProfiles,
     shotWithMetadata.profile,
     shotWithMetadata.source,
+    shotWithMetadata.profileId,
   );
 
   if (!preferredMatch) return null;
 
-  const profileName = preferredMatch.label || preferredMatch.name;
+  const profileName = getProfileDisplayLabel(preferredMatch, '');
   const profileId = getProfileLookupId(preferredMatch);
   const fullProfile = preferredMatch.data
     ? preferredMatch.data
@@ -851,6 +871,7 @@ export function ShotAnalyzer() {
               allProfiles,
               shotWithMetadata.profile,
               shotWithMetadata.source,
+              shotWithMetadata.profileId,
             );
 
             if (!preferredMatch) {
@@ -1022,7 +1043,7 @@ export function ShotAnalyzer() {
     cancelPrimaryProfileSearch();
     const nextProfile = normalizeMatchedProfileSource(data, source);
     setCurrentProfile(nextProfile);
-    setCurrentProfileName(data?.label || data?.name || name);
+    setCurrentProfileName(getProfileDisplayLabel(data, name));
     setCurrentProfileSelectionMode('manual');
   };
 
@@ -1055,6 +1076,7 @@ export function ShotAnalyzer() {
           allProfiles,
           shotWithMetadata.profile,
           shotWithMetadata.source,
+          shotWithMetadata.profileId,
         );
 
         if (!preferredMatch) {
@@ -1211,7 +1233,7 @@ export function ShotAnalyzer() {
           ? {
               ...entry,
               profile: nextProfile,
-              profileName: data?.label || data?.name || name,
+              profileName: getProfileDisplayLabel(data, name),
               profileSelectionMode: 'manual',
             }
           : entry,

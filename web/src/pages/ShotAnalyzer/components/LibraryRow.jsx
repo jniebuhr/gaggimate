@@ -9,7 +9,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
-import { cleanName, formatTimestamp } from '../utils/analyzerUtils';
+import { cleanName, formatTimestamp, getProfileDisplayLabel } from '../utils/analyzerUtils';
 import { buildStatisticsProfileHref } from '../../Statistics/utils/statisticsRoute';
 import { SourceMarker } from './SourceMarker';
 import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
@@ -267,7 +267,7 @@ export function LibraryRow({
   pinDisabledReason = '',
   onPinToggle,
 }) {
-  const itemName = item.name || item.label || 'Unknown';
+  const itemName = isShot ? item.name || item.label || 'Unknown' : getProfileDisplayLabel(item);
   const displayName = getLibraryDisplayName(item, itemName, isShot);
 
   // Format Date & Time
@@ -276,7 +276,7 @@ export function LibraryRow({
   const profileStatsHref = !isShot
     ? buildStatisticsProfileHref({
         source: item.source,
-        profileName: item.label || item.name || '',
+        profileName: getProfileDisplayLabel(item, ''),
       })
     : null;
 

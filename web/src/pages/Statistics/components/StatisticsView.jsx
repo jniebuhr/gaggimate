@@ -13,6 +13,7 @@ import {
   cleanName,
   getPinnedProfiles,
   getPinnedShotsByProfile,
+  getProfileDisplayLabel,
   getProfilePinKey,
   getShotDisplayName,
   getShotPinBucketKey,
@@ -63,7 +64,7 @@ function getInitialProfileName(initialContext) {
 function getAvailableProfileNames(profileList) {
   const profileNames = [];
   for (const p of profileList || []) {
-    const displayName = cleanName(p?.name || p?.label || '');
+    const displayName = getProfileDisplayLabel(p, '');
     if (displayName) profileNames.push(displayName);
   }
   profileNames.sort((a, b) => a.localeCompare(b));
@@ -1206,13 +1207,13 @@ function useStatisticsRunExecution({
 
         const profileMap = new Map();
         for (const p of profileList) {
-          const displayName = cleanName(p.name || p.label || '');
+          const displayName = getProfileDisplayLabel(p, '');
           const key = displayName.toLowerCase();
           if (key) profileMap.set(key, p);
         }
         const fallbackProfileMap = new Map();
         for (const p of fallbackProfileList) {
-          const displayName = cleanName(p.name || p.label || '');
+          const displayName = getProfileDisplayLabel(p, '');
           const key = displayName.toLowerCase();
           if (key && !profileMap.has(key)) fallbackProfileMap.set(key, p);
         }
@@ -1265,7 +1266,7 @@ function useStatisticsRunExecution({
                     const pid =
                       matchedProfileEntry.source === 'gaggimate'
                         ? matchedProfileEntry.profileId || matchedProfileEntry.id
-                        : matchedProfileEntry.name;
+                        : matchedProfileEntry.label || matchedProfileEntry.name;
                     try {
                       const cacheKey = `${matchedProfileEntry.source}:${String(pid || '')}`;
                       if (pid) {
@@ -1411,8 +1412,7 @@ function getBuiltProfileCount(entriesRef) {
   const profileNames = new Set();
 
   cachedEntries.forEach(entry => {
-    const rawName =
-      entry?.meta?.profileName || entry?.profileData?.name || entry?.profileData?.label || '';
+    const rawName = entry?.meta?.profileName || getProfileDisplayLabel(entry?.profileData, '');
     const cleanedName = cleanName(rawName || '');
     if (cleanedName) {
       profileNames.add(cleanedName);

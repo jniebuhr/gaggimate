@@ -25,6 +25,7 @@ import {
   MAX_PINNED_SHOTS_PER_PROFILE,
   PINNED_NO_PROFILE_BUCKET,
   cleanName,
+  getProfileDisplayLabel,
   getPinnedProfiles,
   getPinnedShotsByProfile,
   getProfilePinKey,
@@ -68,8 +69,8 @@ function applyLibrarySort(items, cfg) {
         valB = b.timestamp || 0;
         break;
       case 'name':
-        valA = (a.name || a.label || a.profile || '').toLowerCase();
-        valB = (b.name || b.label || b.profile || '').toLowerCase();
+        valA = getProfileDisplayLabel(a, a.profile || '').toLowerCase();
+        valB = getProfileDisplayLabel(b, b.profile || '').toLowerCase();
         break;
       case 'data.rating':
         valA = a.rating || 0;
@@ -143,8 +144,48 @@ function filterLibraryProfiles(profilesData, profileSearch) {
   if (!profileSearch) return profilesData;
   const normalizedProfileSearch = profileSearch.toLowerCase();
   return profilesData.filter(profile =>
-    (profile.name || profile.label || '').toLowerCase().includes(normalizedProfileSearch),
+    getProfileDisplayLabel(profile, '').toLowerCase().includes(normalizedProfileSearch),
   );
+}
+
+function getProfileIdentityId(profile) {
+  return String(
+    profile?.profileId || profile?.id || profile?.data?.profileId || profile?.data?.id || '',
+  ).trim();
+}
+
+function doesProfileMatchShot(profile, shot, fallbackProfileName = '') {
+  if (!profile || !shot) return false;
+
+  const shotProfileId = String(shot.profileId || '').trim();
+  const profileId = getProfileIdentityId(profile);
+  if (shotProfileId && profileId) {
+    return shotProfileId === profileId;
+  }
+
+  const expectedProfileName = cleanName(shot.profile || '').toLowerCase();
+  if (!expectedProfileName) return false;
+
+  return (
+    getProfileDisplayLabel(profile, fallbackProfileName).toLowerCase() === expectedProfileName
+  );
+}
+
+function doesProfileMatchProfile(profile, selectedProfile, selectedProfileName = '') {
+  if (!profile || !selectedProfile) return false;
+
+  const profileId = getProfileIdentityId(profile);
+  const selectedProfileId = getProfileIdentityId(selectedProfile);
+  if (profileId && selectedProfileId) {
+    return profileId === selectedProfileId;
+  }
+
+  const selectedLabel = getProfileDisplayLabel(selectedProfile, selectedProfileName).toLowerCase();
+  return getProfileDisplayLabel(profile, '').toLowerCase() === selectedLabel;
+}
+
+function hasLoadedProfileMismatch(shot, profile, fallbackProfileName = '') {
+  return Boolean(shot && profile && !doesProfileMatchShot(profile, shot, fallbackProfileName));
 }
 
 function buildPromotedLibraryItems({
@@ -177,7 +218,7 @@ function buildPromotedLibraryItems({
     cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName;
   const promoteMatchedProfiles = item =>
     hasActiveShotProfileMatch &&
-    cleanName(item.name || item.label || '').toLowerCase() === normalizedCurrentShotProfileName;
+    doesProfileMatchShot(item, { profile: normalizedCurrentShotProfileName });
 
   let nextShots = applyLibrarySort(filteredShots, shotsSort);
   if (shotsPinnedFirst) {
@@ -368,16 +409,16 @@ function getLibraryPanelDisplayState({
     : secondaryProfileName;
   const isPrimarySelectionPending = Boolean(pendingPrimarySelection);
   const isCompareSelectionPending = Boolean(pendingCompareSelection);
-  const primaryProfileMismatch =
-    primaryDisplayShot &&
-    primaryDisplayProfile &&
-    cleanName(primaryDisplayShot.profile || '').toLowerCase() !==
-      cleanName(primaryDisplayProfileName).toLowerCase();
-  const secondaryProfileMismatch =
-    secondaryDisplayShot &&
-    secondaryDisplayProfile &&
-    cleanName(secondaryDisplayShot.profile || '').toLowerCase() !==
-      cleanName(secondaryDisplayProfileName).toLowerCase();
+  const primaryProfileMismatch = hasLoadedProfileMismatch(
+    primaryDisplayShot,
+    primaryDisplayProfile,
+    primaryDisplayProfileName,
+  );
+  const secondaryProfileMismatch = hasLoadedProfileMismatch(
+    secondaryDisplayShot,
+    secondaryDisplayProfile,
+    secondaryDisplayProfileName,
+  );
   const isPrimaryProfileSearching = !isPrimarySelectionPending && isSearchingProfile;
   const isCompareProfileSearching = !isCompareSelectionPending && compareIsSearchingProfile;
   const normalizedPrimaryExpectedProfileName = cleanName(
@@ -498,27 +539,28 @@ function useLibraryPanelImportHandler({
             }
 
             const profileName = data.label || cleanName(file.name);
+            const profileData = data.label ? data : { ...data, label: profileName };
             const profile = {
-              ...data,
-              name: profileName,
-              data,
+              ...profileData,
+              data: profileData,
+              fileName: file.name,
               source: importMode === 'browser' ? 'browser' : 'temp',
             };
             if (importMode === 'browser') await indexedDBService.saveProfile(profile);
 
             if (slot !== 'secondary') {
-              onProfileLoad(data, profileName, profile.source);
+              onProfileLoad(profileData, profileName, profile.source);
               appliedImportCount += 1;
               continue;
             }
 
             if (secondaryShot) {
-              onCompareProfileLoad?.(data, profileName, profile.source);
+              onCompareProfileLoad?.(profileData, profileName, profile.source);
               appliedImportCount += 1;
             } else if (currentShot) {
               blockedSecondaryProfileImport = true;
             } else {
-              onProfileLoad(data, profileName, profile.source);
+              onProfileLoad(profileData, profileName, profile.source);
               appliedImportCount += 1;
             }
           }
@@ -800,7 +842,7 @@ export function LibraryPanel({
           'both';
         const profileSource = profileItem.source || profileItem.src || 'both';
         const statsInitialContext = {
-          profileName: profileItem.label || profileItem.name || '',
+          profileName: getProfileDisplayLabel(profileItem, ''),
           shotSource: currentAnalyzerShotSource,
           profileSource,
           source: profileSource,
@@ -1070,7 +1112,7 @@ export function LibraryPanel({
         await libraryService.deleteShot(deleteKey, item.source);
       } else {
         const deleteKey =
-          item.source === 'gaggimate' ? item.profileId || item.id : item.name || item.label;
+          item.source === 'gaggimate' ? item.profileId || item.id : item.label || item.name;
         await libraryService.deleteProfile(deleteKey, item.source);
       }
       refreshLibraries();
@@ -1162,12 +1204,12 @@ export function LibraryPanel({
   const handleProfileRowAction = item => {
     if (librarySelectionTarget === 'secondaryProfile') {
       if (!secondaryShot) return;
-      onCompareProfileLoad?.(item.data || item, item.label || item.name, item.source);
+      onCompareProfileLoad?.(item.data || item, getProfileDisplayLabel(item, ''), item.source);
       setCollapsed(true);
       return;
     }
 
-    onProfileLoad(item.data || item, item.label || item.name, item.source);
+    onProfileLoad(item.data || item, getProfileDisplayLabel(item, ''), item.source);
     setCollapsed(true);
   };
 
@@ -1560,42 +1602,41 @@ export function LibraryPanel({
                         ) {
                           for (const p of profiles) {
                             const deleteKey =
-                              p.source === 'gaggimate' ? p.profileId || p.id : p.name || p.label;
+                              p.source === 'gaggimate' ? p.profileId || p.id : p.label || p.name;
                             await libraryService.deleteProfile(deleteKey, p.source);
                           }
                           refreshLibraries();
                         }
                       }}
                       getMatchStatus={item =>
-                        primaryDisplayShot &&
-                        cleanName(item.name || item.label || '').toLowerCase() ===
-                          normalizedCurrentShotProfileName
+                        primaryDisplayShot && doesProfileMatchShot(item, primaryDisplayShot)
                       }
                       getCompareStatus={item =>
                         Boolean(
                           secondaryDisplayProfileName &&
                             normalizedCompareSecondaryProfileName &&
                             normalizedCompareSecondaryProfileName !== 'no profile loaded' &&
-                            cleanName(item.name || item.label || '').toLowerCase() ===
-                              normalizedCompareSecondaryProfileName,
+                            doesProfileMatchShot(item, secondaryDisplayShot),
                         )
                       }
                       getCompareBadgeNumber={item => {
                         if (!compareMode) return null;
-                        const itemProfileName = cleanName(
-                          item.name || item.label || '',
-                        ).toLowerCase();
-                        if (!itemProfileName) return null;
                         if (
                           primaryDisplayProfile &&
-                          itemProfileName === normalizedCurrentProfileName
+                          doesProfileMatchProfile(
+                            item,
+                            primaryDisplayProfile,
+                            primaryDisplayProfileName,
+                          )
                         )
                           return 1;
                         if (
-                          secondaryDisplayProfileName &&
-                          normalizedCompareSecondaryProfileName &&
-                          normalizedCompareSecondaryProfileName !== 'no profile loaded' &&
-                          itemProfileName === normalizedCompareSecondaryProfileName
+                          secondaryDisplayProfile &&
+                          doesProfileMatchProfile(
+                            item,
+                            secondaryDisplayProfile,
+                            secondaryDisplayProfileName,
+                          )
                         ) {
                           return 2;
                         }
@@ -1603,8 +1644,7 @@ export function LibraryPanel({
                       }}
                       getActiveStatus={item =>
                         primaryDisplayProfile &&
-                        cleanName(item.name || item.label || '').toLowerCase() ===
-                          normalizedCurrentProfileName
+                        doesProfileMatchProfile(item, primaryDisplayProfile, primaryDisplayProfileName)
                       }
                       getPinStatus={item => isProfilePinned(item, pinnedProfiles)}
                       getPinDisabledReason={getProfilePinDisabledReason}

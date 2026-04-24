@@ -25,10 +25,14 @@ function getLibraryItemKey(item, isShot) {
   }
 
   if (item.source === 'gaggimate') {
-    return `gaggimate-profile:${String(item.profileId || item.id || item.name || item.label || '')}`;
+    return `gaggimate-profile:${String(
+      item.profileId || item.id || item.label || item.name || item.fileName || item.exportName || '',
+    )}`;
   }
 
-  return `browser-profile:${String(item.name || item.label || item.id || '')}`;
+  return `browser-profile:${String(
+    item.label || item.name || item.fileName || item.exportName || item.id || '',
+  )}`;
 }
 
 const SOURCE_FILTER_OPTIONS = [
