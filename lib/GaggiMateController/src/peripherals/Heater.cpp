@@ -27,13 +27,14 @@ void Heater::setupPid() {
     simplePid->reset();
 }
 
-void Heater::setupAutotune(int testTimeSec, int windowSize) {
+void Heater::setupAutotune(int testTimeSec, int windowSize, int heaterWattage) {
     // SIMC rebuild: first BLE arg = test-duration seconds (see Autotune.h),
     // not legacy phase-margin aggressiveness. Slope threshold + confirmation
     // count owned by Autotune.h defaults (0.1 °C/s, 5 confirms) — quantisation
-    // resilience.
+    // resilience. Wattage stashed for loopAutotune → combinedKff = 1000 / W.
     autotuner->setWindowsize(windowSize > 0 ? windowSize : 6);
     autotuner->setTimeOut(static_cast<float>(testTimeSec > 0 ? testTimeSec : 120));
+    autotuneHeaterWattage = heaterWattage > 0 ? heaterWattage : 0;
     autotuner->reset();
 }
 
@@ -86,8 +87,8 @@ void Heater::setFeedforwardScale(float combinedKff) {
     ESP_LOGI(LOG_TAG, "Combined feedforward gain (Kff) set to: %.3f output units per watt", combinedKff);
 }
 
-void Heater::autotune(int testTimeSec, int windowSize) {
-    setupAutotune(testTimeSec, windowSize);
+void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
+    setupAutotune(testTimeSec, windowSize, heaterWattage);
     autotuning = true;
 }
 
@@ -191,14 +192,29 @@ void Heater::loopAutotune() {
         return;
     }
 
-    pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
+    // Disturbance feedforward (output units per watt of heat loss). With
+    // TUNER_OUTPUT_SPAN=1000 and a known heater wattage, "1 watt of
+    // compensation maps to (1000 / wattage) PWM duty units". 0 when wattage
+    // wasn't supplied — preserves prior no-disturbance-FF behaviour.
+    // Variable name avoids shadowing the Heater member combinedKff (Sonar
+    // cpp:S1117).
+    const float kffFromWattage = autotuneHeaterWattage > 0
+                                     ? TUNER_OUTPUT_SPAN / static_cast<float>(autotuneHeaterWattage)
+                                     : 0.0f;
+
+    pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, kffFromWattage);
 
     setTunings(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
+    setFeedforwardScale(kffFromWattage);
 
     ESP_LOGI(LOG_TAG, "Autotuning finished: Kp=%.4f, Ki=%.4f, Kd=%.4f, Kff=%.4f", autotuner->getKp() * 1000.0f,
-             autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, autotuner->getKff() * 1000.0f);
-    ESP_LOGI(LOG_TAG, "SIMC params: L=%.2fs k'=%.4f°C/s tau2=%.2fs fc=%.4fHz", autotuner->getSystemDelay(),
-             autotuner->getSystemGain(), autotuner->getSystemTau2(), autotuner->getCrossoverFreq());
+             autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, kffFromWattage);
+    // Setpoint-FF (SIMC's 1/k') logged for diagnostics — currently unrouted
+    // (SimplePID gainFF stays 0); useful for sanity-checking the identifier
+    // without affecting the runtime FF path that uses kffFromWattage above.
+    ESP_LOGI(LOG_TAG, "SIMC params: L=%.2fs k'=%.4f°C/s tau2=%.2fs fc=%.4fHz wattage=%dW setpoint_FF=%.2f",
+             autotuner->getSystemDelay(), autotuner->getSystemGain(), autotuner->getSystemTau2(),
+             autotuner->getCrossoverFreq(), autotuneHeaterWattage, autotuner->getKff() * 1000.0f);
 }
 
 float Heater::softPwm(uint32_t windowSize) {

@@ -27,7 +27,7 @@ void GaggiMateController::setup() {
         [this]() { thermalRunawayShutdown(); });
     this->heater = new Heater(
         this->thermocouple, _config.heaterPin, [this]() { thermalRunawayShutdown(); },
-        [this](float Kp, float Ki, float Kd) { _ble.sendAutotuneResult(Kp, Ki, Kd); },
+        [this](float Kp, float Ki, float Kd, float Kff) { _ble.sendAutotuneResult(Kp, Ki, Kd, Kff); },
         [this]() { _ble.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
@@ -140,7 +140,9 @@ void GaggiMateController::setup() {
         }
     });
     _ble.registerPingCallback([this]() { handlePing(); });
-    _ble.registerAutotuneCallback([this](int goal, int windowSize) { this->heater->autotune(goal, windowSize); });
+    _ble.registerAutotuneCallback([this](int testTimeSec, int windowSize, int heaterWattage) {
+        this->heater->autotune(testTimeSec, windowSize, heaterWattage);
+    });
     _ble.registerTareCallback([this]() {
         if (!_config.capabilites.dimming) {
             return;

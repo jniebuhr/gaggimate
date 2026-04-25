@@ -14,7 +14,10 @@ constexpr float TUNER_OUTPUT_SPAN = 1000.0f;
 
 using heater_error_callback_t = std::function<void()>;
 using heater_autotune_fail_callback_t = std::function<void()>;
-using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd)>;
+// Kff = combinedKff = output units per watt (disturbance feedforward), derived
+// in Heater::loopAutotune as 1000 / heaterWattage when wattage > 0; 0 when the
+// caller didn't supply a wattage.
+using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kff)>;
 
 class Heater {
   public:
@@ -27,7 +30,7 @@ class Heater {
     void setSetpoint(float setpoint);
     float getSetpoint() { return setpoint; };
     void setTunings(float Kp, float Ki, float Kd);
-    void autotune(int testTimeSec, int windowSize);
+    void autotune(int testTimeSec, int windowSize, int heaterWattage);
 
     // Thermal feedforward control
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
@@ -35,7 +38,7 @@ class Heater {
 
   private:
     void setupPid();
-    void setupAutotune(int testTimeSec, int windowSize);
+    void setupAutotune(int testTimeSec, int windowSize, int heaterWattage);
     void loopPid();
     void loopAutotune();
     float softPwm(uint32_t windowSize);
@@ -67,6 +70,10 @@ class Heater {
     // Autotune variables
     bool startup = true;
     bool autotuning = false;
+    // Stashed at autotune-start (BLE field 3) so loopAutotune can derive
+    // combinedKff = 1000 / wattage on completion. 0 ⇒ caller didn't supply
+    // wattage (older display firmware) ⇒ skip combinedKff derivation.
+    int autotuneHeaterWattage = 0;
 
     // Thermal feedforward variables
     float *pumpFlowRate = nullptr;

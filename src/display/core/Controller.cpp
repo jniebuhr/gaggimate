@@ -390,7 +390,7 @@ bool Controller::isVolumetricAvailable() const {
 #endif
 }
 
-void Controller::autotune(int testTime, int samples) {
+void Controller::autotune(int testTime, int samples, int heaterWattage) {
     if (isActive() || !isReady()) {
         return;
     }
@@ -398,7 +398,7 @@ void Controller::autotune(int testTime, int samples) {
         activateStandby();
     }
     autotuning = true;
-    clientController.sendAutotune(testTime, samples);
+    clientController.sendAutotune(testTime, samples, heaterWattage);
     pluginManager->trigger("controller:autotune:start");
 }
 

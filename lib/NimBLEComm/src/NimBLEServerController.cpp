@@ -124,10 +124,9 @@ void NimBLEServerController::sendSteamBtnState(bool steamButtonStatus) {
     }
 }
 
-void NimBLEServerController::sendAutotuneResult(float Kp, float Ki, float Kd) {
+void NimBLEServerController::sendAutotuneResult(float Kp, float Ki, float Kd, float Kf) {
     if (deviceConnected) {
-        // Send with default Kf=0.0 (disabled)
-        snprintf(autotuneResultBuffer, sizeof(autotuneResultBuffer), "%.3f,%.3f,%.3f,0.0", Kp, Ki, Kd);
+        snprintf(autotuneResultBuffer, sizeof(autotuneResultBuffer), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
         autotuneResultChar->setValue(autotuneResultBuffer);
         autotuneResultChar->notify();
     }
@@ -232,7 +231,11 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
             auto autotune = String(pCharacteristic->getValue().c_str());
             int testTime = get_token(autotune, 0, ',').toInt();
             int samples = get_token(autotune, 1, ',').toInt();
-            autotuneCallback(testTime, samples);
+            // Optional 3rd field — older display firmware sends only 2.
+            // Wattage 0 ⇒ controller skips combinedKff derivation, autotune
+            // still runs and persists Kp/Ki/Kd as before.
+            int wattage = get_token(autotune, 2, ',').toInt();
+            autotuneCallback(testTime, samples, wattage);
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(PID_CONTROL_CHAR_UUID))) {
         auto pid = String(pCharacteristic->getValue().c_str());

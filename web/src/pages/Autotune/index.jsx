@@ -11,17 +11,23 @@ export function Autotune() {
   const [failed, setFailed] = useState(false);
   const [time, setTime] = useState(120);
   const [samples, setSamples] = useState(6);
+  // Default 680 W matches Gaggia Classic Pro 2019 / E24 boiler element on
+  // 230 V. (120 V variant is 570 W; cafeparts.com EF0030-A datasheet.) Used
+  // controller-side as combinedKff = TUNER_OUTPUT_SPAN / wattage so the
+  // Thermal Feedforward Gain is auto-populated on completion.
+  const [wattage, setWattage] = useState(680);
 
   const onStart = useCallback(() => {
     apiService.send({
       tp: 'req:autotune-start',
       time,
       samples,
+      wattage,
     });
     setFailed(false);
     setResult(null);
     setActive(true);
-  }, [time, samples, apiService]);
+  }, [time, samples, wattage, apiService]);
 
   useEffect(() => {
     const resultListener = apiService.on('evt:autotune-result', msg => {
@@ -148,6 +154,27 @@ export function Autotune() {
                     MAX31855 quantisation but lag the inflection. 6 is the sweet spot.
                   </div>
                 </div>
+
+                <div className='form-control'>
+                  <label htmlFor='heaterWattage' className='mb-2 block text-sm font-medium'>
+                    Heater Wattage (W)
+                  </label>
+                  <input
+                    id='heaterWattage'
+                    type='number'
+                    min='300'
+                    max='1500'
+                    className='input input-bordered w-full'
+                    value={wattage}
+                    onChange={e => setWattage(Number.parseInt(e.target.value, 10) || 0)}
+                    placeholder='680'
+                  />
+                  <div className='mb-2 text-xs opacity-70'>
+                    Boiler heating element wattage. Defaults: Gaggia Classic Pro 2019 / E24 = 680 W
+                    (230 V) or 570 W (120 V); Rancilio Silvia ≈ 1100 W. Used to derive Thermal
+                    Feedforward Gain after autotune completes.
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -160,7 +187,14 @@ export function Autotune() {
             <button
               className='btn btn-primary'
               onClick={onStart}
-              disabled={time < 30 || time > 300 || samples < 4 || samples > 20}
+              disabled={
+                time < 30 ||
+                time > 300 ||
+                samples < 4 ||
+                samples > 20 ||
+                wattage < 300 ||
+                wattage > 1500
+              }
             >
               Start Autotune
             </button>

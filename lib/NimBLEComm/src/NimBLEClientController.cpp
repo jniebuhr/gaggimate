@@ -222,9 +222,9 @@ void NimBLEClientController::sendPing() {
     }
 }
 
-void NimBLEClientController::sendAutotune(int testTime, int samples) {
+void NimBLEClientController::sendAutotune(int testTime, int samples, int heaterWattage) {
     if (autotuneChar != nullptr && client->isConnected()) {
-        snprintf(autotuneBuffer, sizeof(autotuneBuffer), "%d,%d", testTime, samples);
+        snprintf(autotuneBuffer, sizeof(autotuneBuffer), "%d,%d,%d", testTime, samples, heaterWattage);
         autotuneChar->writeValue(autotuneBuffer);
     }
 }

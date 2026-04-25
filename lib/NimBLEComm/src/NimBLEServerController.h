@@ -15,7 +15,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void sendError(int errorCode);
     void sendBrewBtnState(bool brewButtonStatus);
     void sendSteamBtnState(bool steamButtonStatus);
-    void sendAutotuneResult(float Kp, float Ki, float Kd);
+    void sendAutotuneResult(float Kp, float Ki, float Kd, float Kf);
     void sendVolumetricMeasurement(float value);
     void sendTofMeasurement(int value);
     void registerOutputControlCallback(const simple_output_callback_t &callback);

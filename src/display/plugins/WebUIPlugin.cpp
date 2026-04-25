@@ -390,7 +390,12 @@ void WebUIPlugin::handleOTAStart(uint32_t clientId, JsonDocument &request) {
 void WebUIPlugin::handleAutotuneStart(uint32_t clientId, JsonDocument &request) {
     int testTime = request["time"].as<int>();
     int samples = request["samples"].as<int>();
-    controller->autotune(testTime, samples);
+    // Heater wattage drives combinedKff = TUNER_OUTPUT_SPAN / wattage on the
+    // controller. 0 = "skip combinedKff derivation" — happens when older Web
+    // UI builds omit the field. WebUI form default is 680 W (Gaggia Classic
+    // Pro 2019 / E24, 230 V boiler).
+    int heaterWattage = request["wattage"] | 0;
+    controller->autotune(testTime, samples, heaterWattage);
 }
 
 void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request) {
