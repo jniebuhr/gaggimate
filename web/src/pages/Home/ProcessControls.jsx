@@ -415,6 +415,11 @@ export default function ProcessControls({ brew, mode }) {
         value: `${formatNumber(currentFlow)} g/s`,
         toneClass: 'text-lime-400',
       },
+      {
+        label: 'Current Weight',
+        value: `${formatNumber(currentWeight)} g`,
+        toneClass: 'text-lime-400',
+      },
     ];
   }, [
     grind,

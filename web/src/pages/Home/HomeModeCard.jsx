@@ -321,12 +321,13 @@ export default function HomeModeCard({ mode }) {
               </span>
               <span>Temperature</span>
             </div>
-            <div className='flex items-center justify-between'>
-              <span className='h-8 flex items-center text-[clamp(0.6rem,1.2vw,1rem)] font-semibold leading-tight'>
+            <div className='mt-1 flex h-8 items-baseline gap-1.5 whitespace-nowrap text-[clamp(0.72rem,1.2vw,1rem)] leading-tight'>
+              <span className='font-semibold text-error'>
                 {formatNumber(currentTemperature)}°C
               </span>
-              <span className='h-8 flex items-center text-[clamp(0.6rem,1.2vw,1rem)] font-semibold leading-tight text-error/70'>
-                / {formatNumber(targetTemperature)}°C
+              <span className='text-error/55'>/</span>
+              <span className='font-medium text-error/72'>
+                {formatNumber(targetTemperature)}°C target
               </span>
             </div>
           </div>
