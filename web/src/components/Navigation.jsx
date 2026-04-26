@@ -66,12 +66,6 @@ export function Navigation({ open = false, onClose } = {}) {
   const { path } = useLocation();
 
   useEffect(() => {
-    if (open) {
-      onClose?.();
-    }
-  }, [open, path, onClose]);
-
-  useEffect(() => {
     if (!open) return;
 
     const handleKeyDown = event => {
