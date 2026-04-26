@@ -395,7 +395,7 @@ export function Header({ navOpen = false, onNavToggle }) {
               </span>
             </button>
 
-            {!isHomeRoute && <div className='hidden min-w-0 items-center gap-2 lg:flex'>
+            {!isHomeRoute && <div className='hidden min-w-0 items-center gap-2'>
               {/* Connection - not clickable */}
               <StatPill label='Connection' value={connected ? 'Online' : 'Offline'} tone={connected ? 'success' : 'warning'} icon={faPlugCircleBolt} />
 
