@@ -40,6 +40,185 @@ function getProgressPercent(processInfo) {
   return Math.max(0, Math.min(100, (processInfo.pp / processInfo.pt) * 100));
 }
 
+function clampPercent(value) {
+  return Math.max(0, Math.min(100, value));
+}
+
+function getTemperatureProgress(currentTemperature, targetTemperature) {
+  if (!Number.isFinite(targetTemperature) || targetTemperature <= 0) return 0;
+  return clampPercent((currentTemperature / targetTemperature) * 100);
+}
+
+function getProfilePhaseSegments(profileData) {
+  const phases = Array.isArray(profileData?.phases) ? profileData.phases : [];
+  if (profileData?.type !== 'pro' || phases.length === 0) return [];
+
+  const numericDurations = phases.map(phase =>
+    Number.isFinite(Number(phase?.duration)) && Number(phase.duration) > 0 ? Number(phase.duration) : 0
+  );
+  const totalDuration = numericDurations.reduce((sum, duration) => sum + duration, 0);
+  const fallbackWeight = 1 / phases.length;
+  let cursor = 0;
+
+  return phases.map((phase, index) => {
+    const weight = totalDuration > 0 ? numericDurations[index] / totalDuration : fallbackWeight;
+    const start = cursor;
+    const end = index === phases.length - 1 ? 1 : cursor + weight;
+    cursor = end;
+
+    return {
+      index,
+      name: phase?.name || `Phase ${index + 1}`,
+      duration: numericDurations[index],
+      totalDuration,
+      start,
+      end,
+    };
+  });
+}
+
+function resolveActivePhaseIndex(processInfo, phaseSegments) {
+  if (!phaseSegments.length) return -1;
+
+  const normalizedLabel = processInfo?.l?.trim().toLowerCase();
+  if (normalizedLabel) {
+    const phaseLabelIndex = phaseSegments.findIndex(
+      phase => phase.name.trim().toLowerCase() === normalizedLabel
+    );
+    if (phaseLabelIndex >= 0) return phaseLabelIndex;
+  }
+
+  const totalDuration = phaseSegments.reduce((sum, segment) => sum + (segment.duration || 0), 0);
+  const approximateRatio =
+    totalDuration > 0
+      ? Math.max(0, Math.min(1, (Number(processInfo?.e) || 0) / totalDuration))
+      : clampPercent((Number(processInfo?.pp) / Math.max(Number(processInfo?.pt) || 1, 1)) * 100) / 100;
+  const ratioIndex = phaseSegments.findIndex(segment => approximateRatio <= segment.end);
+  return ratioIndex >= 0 ? ratioIndex : 0;
+}
+
+function buildRingBackground(fillStops) {
+  return [
+    'radial-gradient(circle at 50% 50%, transparent 58%, rgba(255, 255, 255, 0.05) 58%, rgba(255, 255, 255, 0.05) 59%, transparent 60%)',
+    `conic-gradient(from 210deg, ${fillStops})`,
+  ].join(', ');
+}
+
+function buildSolidRingBackground(progressPercent, fillColorVar) {
+  const progress = clampPercent(progressPercent);
+  return buildRingBackground(
+    `${fillColorVar} 0%, ${fillColorVar} ${progress}%, var(--home-ring-track) ${progress}%, var(--home-ring-track) 100%`
+  );
+}
+
+function buildSegmentedRingBackground(phaseSegments, activeIndex, inPhaseProgress, fillColorVar) {
+  const stops = [];
+
+  phaseSegments.forEach((segment, index) => {
+    const startPercent = segment.start * 100;
+    const endPercent = segment.end * 100;
+    const spanPercent = endPercent - startPercent;
+    const segmentProgress =
+      index < activeIndex ? 1 : index === activeIndex ? Math.max(0, Math.min(1, inPhaseProgress)) : 0;
+    const fillEnd = startPercent + spanPercent * segmentProgress;
+
+    stops.push(`var(--home-ring-track) ${startPercent}%`);
+    if (segmentProgress > 0) {
+      stops.push(`${fillColorVar} ${startPercent}%`);
+      stops.push(`${fillColorVar} ${fillEnd}%`);
+    }
+    stops.push(`var(--home-ring-track) ${fillEnd}%`);
+    stops.push(`var(--home-ring-track) ${endPercent}%`);
+  });
+
+  if (!stops.length) {
+    stops.push('var(--home-ring-track) 0%', 'var(--home-ring-track) 100%');
+  }
+
+  return buildRingBackground(stops.join(', '));
+}
+
+function getRingVisual({
+  active,
+  brew,
+  currentTemperature,
+  finished,
+  mode,
+  processInfo,
+  profileData,
+  targetTemperature,
+}) {
+  if (finished) {
+    return {
+      background: buildSolidRingBackground(100, 'var(--home-ring-brew-active)'),
+      progress: 100,
+    };
+  }
+
+  if (active && brew) {
+    const phaseSegments = getProfilePhaseSegments(profileData);
+    const inPhaseProgress = getProgressPercent(processInfo) / 100;
+    const activeIndex = resolveActivePhaseIndex(processInfo, phaseSegments);
+
+    if (phaseSegments.length && activeIndex >= 0) {
+      const progress = clampPercent(
+        phaseSegments.reduce((total, segment, index) => {
+          const segmentSpan = (segment.end - segment.start) * 100;
+          if (index < activeIndex) return total + segmentSpan;
+          if (index === activeIndex)
+            return total + segmentSpan * Math.max(0, Math.min(1, inPhaseProgress));
+          return total;
+        }, 0)
+      );
+
+      return {
+        background: buildSegmentedRingBackground(
+          phaseSegments,
+          activeIndex,
+          inPhaseProgress,
+          'var(--home-ring-brew-active)'
+        ),
+        progress,
+      };
+    }
+
+    const progress = getProgressPercent(processInfo);
+    return {
+      background: buildSolidRingBackground(progress, 'var(--home-ring-brew-active)'),
+      progress,
+    };
+  }
+
+  if (!active && mode === 1) {
+    const progress = getTemperatureProgress(currentTemperature, targetTemperature);
+    return {
+      background: buildSolidRingBackground(progress, 'var(--home-ring-brew-heat)'),
+      progress,
+    };
+  }
+
+  if (!active && mode === 2) {
+    const progress = getTemperatureProgress(currentTemperature, targetTemperature);
+    return {
+      background: buildSolidRingBackground(progress, 'var(--home-ring-steam)'),
+      progress,
+    };
+  }
+
+  if (!active && mode === 3) {
+    const progress = getTemperatureProgress(currentTemperature, targetTemperature);
+    return {
+      background: buildSolidRingBackground(progress, 'var(--home-ring-water)'),
+      progress,
+    };
+  }
+
+  return {
+    background: buildSolidRingBackground(mode === 1 ? 18 : 8, 'var(--home-ring-idle)'),
+    progress: mode === 1 ? 18 : 8,
+  };
+}
+
 function getDisplayState({ mode, active, finished, processInfo, currentTemperature, targetTemperature, isGrindAvailable }) {
   if (active) {
     return {
@@ -135,13 +314,12 @@ export default function ProcessControls({ brew, mode }) {
     grindTargetDuration,
     grindTargetVolume,
     selectedProfileId,
-    targetPressure,
     targetTemperature,
     volumetricAvailable,
   } = status.value;
 
   const { isGrindAvailable } = useGrindSettings(mode);
-  useProfileData(api, brew, selectedProfileId);
+  const { profileData } = useProfileData(api, brew, selectedProfileId);
 
   const visibility = useControlsVisibility(
     mode,
@@ -153,7 +331,16 @@ export default function ProcessControls({ brew, mode }) {
   const actions = useProcessActions(api, grind, setIsFlushing);
 
   const progressPercent = getProgressPercent(processInfo);
-  const ringProgress = active ? progressPercent : finished ? 100 : mode === 1 ? 18 : 8;
+  const ringVisual = getRingVisual({
+    active,
+    brew,
+    currentTemperature,
+    finished,
+    mode,
+    processInfo,
+    profileData,
+    targetTemperature,
+  });
   const displayState = getDisplayState({
     mode,
     active,
@@ -238,8 +425,6 @@ export default function ProcessControls({ brew, mode }) {
     grindTarget,
     grindTargetDuration,
     grindTargetVolume,
-    targetPressure,
-    targetTemperature,
   ]);
 
   return (
@@ -249,7 +434,8 @@ export default function ProcessControls({ brew, mode }) {
           <div
             className='home-process-ring'
             style={{
-              '--ring-progress': `${ringProgress}%`,
+              '--ring-progress': `${ringVisual.progress}%`,
+              '--ring-background': ringVisual.background,
             }}
           >
             <div className='home-process-ring-inner'>
@@ -259,7 +445,7 @@ export default function ProcessControls({ brew, mode }) {
               <div className='mt-2 text-sm text-base-content/48'>{displayState.subtitle}</div>
               {(active || finished) && (
                 <div className='mt-4 text-xs uppercase tracking-[0.22em] text-base-content/34'>
-                  {Math.round(progressPercent)}% complete
+                  {Math.round(active ? ringVisual.progress : progressPercent)}% complete
                 </div>
               )}
             </div>

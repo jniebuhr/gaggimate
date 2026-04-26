@@ -4,8 +4,6 @@ import { useLocation } from 'preact-iso';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTemperatureHigh } from '@fortawesome/free-solid-svg-icons/faTemperatureHigh';
-import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders';
 import { faPlugCircleBolt } from '@fortawesome/free-solid-svg-icons/faPlugCircleBolt';
 import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
@@ -22,14 +20,6 @@ import { ProfilePopover, BeanPopover, TempPopover, StatPill, ModePopover } from 
 const status = computed(() => machine.value.status);
 
 const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
-const MODE_DOT_CLASSES = [
-  'bg-base-content/30',
-  'bg-primary',
-  'bg-warning',
-  'bg-error',
-  'bg-secondary',
-];
-
 function formatNumber(value, digits = 1) {
   return Number.isFinite(value) ? value.toFixed(digits) : '0.0';
 }
@@ -117,19 +107,15 @@ export default function HomeModeCard({ mode }) {
   const api = useContext(ApiServiceContext);
   const { path } = useLocation();
   const {
-    currentFlow,
-    currentPressure,
     currentTemperature,
     selectedBean,
     selectedProfile,
     selectedProfileId,
     targetPressure,
-    targetFlow,
     targetTemperature,
   } = status.value;
   const connected = machine.value.connected;
   const pressureAvailable = machine.value.capabilities.pressure;
-  const isTempAdjustable = mode === 2 || mode === 3;
 
   const [activePopover, setActivePopover] = useState(null);
   const [profileOptions, setProfileOptions] = useState([]);

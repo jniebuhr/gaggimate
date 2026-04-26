@@ -29,7 +29,7 @@ function MobilePill({ icon, label, toneClass, value }) {
 
 export default function HomeStatusStrip() {
   const currentMode = MODE_LABELS[status.value.mode] || 'Standby';
-  const temp = formatReading(status.value.currentTemperature, 'C');
+  const temp = formatReading(status.value.currentTemperature, '°C');
   const pressure = formatReading(status.value.currentPressure, ' bar');
 
   return (
