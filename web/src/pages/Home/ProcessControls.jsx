@@ -1,7 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext, useState, useMemo } from 'preact/hooks';
-import { memo } from 'preact/compat';
+import { useContext, useMemo, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
@@ -11,216 +10,139 @@ import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { Tooltip } from '../../components/Tooltip.jsx';
-import { TemperatureControls } from '../../components/TemperatureControls.jsx';
 import { GrindTargetBar } from '../../components/GrindTargetBar.jsx';
-import { ProcessDisplay } from '../../components/ProcessDisplay.jsx';
-import { ProcessProfileChart } from '../../components/ProcessProfileChart.jsx';
-import { ModeIdleDisplay } from '../../components/ModeIdleDisplay.jsx';
 import { useProfileData } from '../../hooks/useProfileData.js';
 import { useGrindSettings } from '../../hooks/useGrindSettings.js';
 import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
 
-const MODE_DOT_COLORS = ['bg-base-content/30', 'bg-primary', 'bg-warning', 'bg-error', 'bg-secondary'];
-
 const status = computed(() => machine.value.status);
-const TEMP_READY_THRESHOLD = 5;
-
-const BUTTON_CONFIGS = {
-  active: { icon: faPause, label: 'Pause', action: 'pause' },
-  finished: { icon: faCheck, label: 'Finish', action: 'finish' },
-  idle: { icon: faPlay, label: 'Start', action: 'start' },
-};
-
-const ACTION_HANDLERS = {
-  pause: (handlers, isFlushing) => {
-    handlers.onDeactivate();
-    if (isFlushing) handlers.onClear();
-  },
-  finish: (handlers) => handlers.onClear(),
-  start: (handlers) => handlers.onActivate(),
-};
-
-const GrindTargetControls = ({ grindTarget, grindTargetVolume, grindTargetDuration, onLowerTarget, onRaiseTarget }) => (
-  <div className='flex flex-col items-center gap-2'>
-    <div className='text-base-content/60 text-xs font-light tracking-wider'>GRIND TARGET</div>
-    <div className='flex items-center space-x-2'>
-      <Tooltip content='Decrease target'>
-        <button
-          onClick={onLowerTarget}
-          className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-        >
-          <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
-        </button>
-      </Tooltip>
-      <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
-        {grindTarget === 1 ? `${grindTargetVolume}g` : `${Math.round(grindTargetDuration / 1000)}s`}
-      </div>
-      <Tooltip content='Increase target'>
-        <button
-          onClick={onRaiseTarget}
-          className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
-        >
-          <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
-        </button>
-      </Tooltip>
-    </div>
-  </div>
-);
-
-const FlushButton = memo(({ onFlush }) => (
-  <button
-    className='btn text-base-content/60 hover:text-base-content rounded-full text-sm transition-colors duration-200'
-    onClick={onFlush}
-    aria-label='Flush water'
-  >
-    <FontAwesomeIcon icon={faTint} />
-    Flush
-  </button>
-));
-
-FlushButton.displayName = 'FlushButton';
-
-FlushButton.propTypes = {
-  onFlush: PropTypes.func.isRequired,
-};
-
-const StateIndicator = memo(({ active, finished }) => {
-  const state = active ? 'Brewing' : finished ? 'Finished' : 'Idle';
-  const stateClass = active
-    ? 'bg-warning/20 text-warning border-warning'
-    : finished
-    ? 'bg-success/20 text-success border-success'
-    : 'bg-base-300/50 text-base-content/60 border-base-300';
-
-  return (
-    <div className={`badge badge-lg border-2 font-semibold ${stateClass}`}>
-      {state}
-    </div>
-  );
-});
-
-StateIndicator.displayName = 'StateIndicator';
-
-StateIndicator.propTypes = {
-  active: PropTypes.bool.isRequired,
-  finished: PropTypes.bool.isRequired,
-};
 
 const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
-
-const QuickStatusStrip = memo(({ mode, active, finished, targetTemperature, grindTarget, grindTargetVolume, grindTargetDuration }) => {
-  const state = active ? 'Brewing' : finished ? 'Finished' : MODE_LABELS[mode];
-  const stateClass = active
-    ? 'bg-warning/20 text-warning border-warning'
-    : finished
-    ? 'bg-success/20 text-success border-success'
-    : 'bg-base-300/50 text-base-content/60 border-base-300';
-
-  const showTemp = mode === 2 || mode === 3;
-  const showGrind = mode === 4;
-
-  return (
-    <div className='flex items-center justify-center gap-3 py-2 px-3 rounded-xl border border-base-300/40 bg-base-100/50'>
-      {/* Mode dot */}
-      <span className={`size-2.5 rounded-full ${MODE_DOT_COLORS[mode]}`} />
-
-      {/* State badge */}
-      <span className={`badge badge-sm badge-outline font-semibold ${stateClass}`}>
-        {state}
-      </span>
-
-      {/* Contextual target */}
-      {showTemp && (
-        <span className='text-sm text-base-content/60'>
-          · {targetTemperature}°C
-        </span>
-      )}
-      {showGrind && (
-        <span className='text-sm text-base-content/60'>
-          · {grindTarget === 1 ? `${grindTargetVolume}g` : `${Math.round(grindTargetDuration / 1000)}s`}
-        </span>
-      )}
-    </div>
-  );
-});
-
-QuickStatusStrip.displayName = 'QuickStatusStrip';
-
-QuickStatusStrip.propTypes = {
-  mode: PropTypes.number.isRequired,
-  active: PropTypes.bool.isRequired,
-  finished: PropTypes.bool.isRequired,
-  targetTemperature: PropTypes.number.isRequired,
-  grindTarget: PropTypes.number.isRequired,
-  grindTargetVolume: PropTypes.number.isRequired,
-  grindTargetDuration: PropTypes.number.isRequired,
+const MODE_SUBTITLES = {
+  0: 'System idle',
+  1: 'Ready to extract',
+  2: 'Steam staging',
+  3: 'Water ready',
+  4: 'Grind staging',
 };
 
-const ActionButtons = memo(({ brew, active, finished, isFlushing, onActivate, onDeactivate, onClear, onFlush }) => {
-  const buttonConfig = useMemo(() => {
-    if (active) return BUTTON_CONFIGS.active;
-    if (finished) return BUTTON_CONFIGS.finished;
-    return BUTTON_CONFIGS.idle;
-  }, [active, finished]);
+function formatNumber(value, digits = 1) {
+  return Number.isFinite(value) ? value.toFixed(digits) : '0.0';
+}
 
-  const handleClick = useCallback(() => {
-    const handler = ACTION_HANDLERS[buttonConfig.action];
-    if (handler) {
-      handler({ onDeactivate, onClear, onActivate }, isFlushing);
-    }
-  }, [buttonConfig.action, onDeactivate, onClear, onActivate, isFlushing]);
+function formatTarget(grindTarget, grindTargetVolume, grindTargetDuration) {
+  return grindTarget === 1 ? `${formatNumber(grindTargetVolume)}g` : `${Math.round(grindTargetDuration / 1000)}s`;
+}
+
+function getProgressPercent(processInfo) {
+  if (!processInfo?.a || !processInfo?.pt) return processInfo?.e ? 100 : 0;
+  return Math.max(0, Math.min(100, (processInfo.pp / processInfo.pt) * 100));
+}
+
+function getDisplayState({ mode, active, finished, processInfo, currentTemperature, targetTemperature, isGrindAvailable }) {
+  if (active) {
+    return {
+      title: processInfo?.l || 'Running',
+      subtitle: processInfo?.s === 'brew' ? 'Extraction in progress' : 'Process in progress',
+    };
+  }
+
+  if (finished) {
+    return {
+      title: 'Finished',
+      subtitle: `${Math.floor((processInfo?.e || 0) / 1000)}s total time`,
+    };
+  }
+
+  if (mode === 2) {
+    return {
+      title: 'Steam',
+      subtitle: Math.abs(targetTemperature - currentTemperature) < 5 ? 'Steam is ready' : 'Preheating',
+    };
+  }
+
+  if (mode === 4 && !isGrindAvailable) {
+    return {
+      title: 'Grind',
+      subtitle: 'Grind not available',
+    };
+  }
+
+  return {
+    title: MODE_LABELS[mode] || 'Standby',
+    subtitle: MODE_SUBTITLES[mode] || 'Ready',
+  };
+}
+
+function MiniActionButton({ disabled = false, icon, label, onClick, tone = 'default' }) {
+  const toneClass =
+    tone === 'primary'
+      ? 'border-primary/45 bg-primary/14 text-primary hover:border-primary hover:bg-primary/22'
+      : 'border-base-300/50 bg-base-100/70 text-base-content/72 hover:border-base-content/15 hover:bg-base-content/6';
 
   return (
-    <div className='flex flex-col items-center gap-4'>
-      <Tooltip content={buttonConfig.label}>
-        <button className='btn btn-circle btn-lg border-2 border-primary bg-primary/10 hover:bg-primary/20 hover:border-primary text-primary' onClick={handleClick}>
-          <FontAwesomeIcon icon={buttonConfig.icon} className='text-2xl' />
-        </button>
-      </Tooltip>
-
-      {brew && !active && !finished && <FlushButton onFlush={onFlush} />}
-    </div>
+    <Tooltip content={label}>
+      <button
+        type='button'
+        aria-label={label}
+        disabled={disabled}
+        onClick={onClick}
+        className={`home-mini-action ${toneClass}`}
+      >
+        <FontAwesomeIcon icon={icon} />
+      </button>
+    </Tooltip>
   );
-});
+}
 
-ActionButtons.displayName = 'ActionButtons';
-
-ActionButtons.propTypes = {
-  brew: PropTypes.bool.isRequired,
-  active: PropTypes.bool.isRequired,
-  finished: PropTypes.bool.isRequired,
-  isFlushing: PropTypes.bool.isRequired,
-  onActivate: PropTypes.func.isRequired,
-  onDeactivate: PropTypes.func.isRequired,
-  onClear: PropTypes.func.isRequired,
-  onFlush: PropTypes.func.isRequired,
+MiniActionButton.propTypes = {
+  disabled: PropTypes.bool,
+  icon: PropTypes.object.isRequired,
+  label: PropTypes.string.isRequired,
+  onClick: PropTypes.func,
+  tone: PropTypes.oneOf(['default', 'primary']),
 };
 
-const ProcessControls = ({ brew, mode }) => {
+function MetricPair({ label, toneClass = 'text-base-content', value }) {
+  return (
+    <div className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-sm'>
+      <span className='text-base-content/58'>{label}</span>
+      <span className={`text-right font-medium ${toneClass}`}>{value}</span>
+    </div>
+  );
+}
+
+MetricPair.propTypes = {
+  label: PropTypes.string.isRequired,
+  toneClass: PropTypes.string,
+  value: PropTypes.string.isRequired,
+};
+
+export default function ProcessControls({ brew, mode }) {
   const api = useContext(ApiServiceContext);
   const processInfo = status.value.process;
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
   const grind = mode === 4;
-  const [isFlushing, setIsFlushing] = useState(false);
+  const [, setIsFlushing] = useState(false);
   const {
-    grindTarget,
-    grindTargetVolume,
-    grindTargetDuration,
-    volumetricAvailable,
+    currentFlow,
+    currentPressure,
     currentTemperature,
-    targetTemperature,
+    currentWeight,
+    grindTarget,
+    grindTargetDuration,
+    grindTargetVolume,
     selectedProfileId,
+    targetPressure,
+    targetTemperature,
+    volumetricAvailable,
   } = status.value;
 
-  // Use custom hooks for settings and profile data
   const { isGrindAvailable } = useGrindSettings(mode);
-  const { profileData } = useProfileData(api, brew, selectedProfileId);
-  const shouldExpand = brew && (active || finished);
-  const tempReady = Math.abs(targetTemperature - currentTemperature) < TEMP_READY_THRESHOLD;
+  useProfileData(api, brew, selectedProfileId);
 
-  // Get visibility flags for control elements
   const visibility = useControlsVisibility(
     mode,
     active,
@@ -228,118 +150,177 @@ const ProcessControls = ({ brew, mode }) => {
     isGrindAvailable,
     volumetricAvailable
   );
-
-  // Get action handlers
   const actions = useProcessActions(api, grind, setIsFlushing);
 
+  const progressPercent = getProgressPercent(processInfo);
+  const ringProgress = active ? progressPercent : finished ? 100 : mode === 1 ? 18 : 8;
+  const displayState = getDisplayState({
+    mode,
+    active,
+    finished,
+    processInfo,
+    currentTemperature,
+    targetTemperature,
+    isGrindAvailable,
+  });
+
+  const primaryButton = useMemo(() => {
+    if (active) {
+      return {
+        icon: faPause,
+        label: 'Pause process',
+        onClick: actions.deactivate,
+      };
+    }
+
+    if (finished) {
+      return {
+        icon: faCheck,
+        label: 'Clear process',
+        onClick: actions.clear,
+      };
+    }
+
+    if (visibility.showActionButtons) {
+      return {
+        icon: faPlay,
+        label: grind ? 'Start grind' : 'Start process',
+        onClick: actions.activate,
+      };
+    }
+
+    return {
+      icon: faPlay,
+      label: 'No action available',
+      onClick: undefined,
+    };
+  }, [active, finished, actions, visibility.showActionButtons, grind]);
+
+  const infoRows = useMemo(() => {
+    if (grind) {
+      return [
+        {
+          label: 'Current Grind',
+          value: `${formatNumber(currentWeight)}g`,
+          toneClass: 'text-lime-400',
+        },
+        {
+          label: 'Target Grind',
+          value: formatTarget(grindTarget, grindTargetVolume, grindTargetDuration),
+          toneClass: 'text-orange-300',
+        },
+      ];
+    }
+
+    return [
+      {
+        label: 'Live Data',
+        value: `${formatNumber(currentTemperature)} °C / ${formatNumber(currentFlow)} g/s`,
+        toneClass: 'text-sky-400',
+      },
+      {
+        label: 'Current Pressure',
+        value: `${formatNumber(currentPressure)} bar`,
+        toneClass: 'text-lime-400',
+      },
+      {
+        label: 'Current Flow',
+        value: `${formatNumber(currentFlow)} g/s`,
+        toneClass: 'text-lime-400',
+      },
+    ];
+  }, [
+    grind,
+    currentFlow,
+    currentPressure,
+    currentTemperature,
+    currentWeight,
+    grindTarget,
+    grindTargetDuration,
+    grindTargetVolume,
+    targetPressure,
+    targetTemperature,
+  ]);
+
   return (
-    <div className='flex min-h-[250px] flex-col justify-between lg:min-h-[350px]'>
-      <div className='mb-3'>
-        <QuickStatusStrip
-          mode={mode}
-          active={active}
-          finished={finished}
-          targetTemperature={targetTemperature}
-          grindTarget={grindTarget}
-          grindTargetVolume={grindTargetVolume}
-          grindTargetDuration={grindTargetDuration}
-        />
-      </div>
-      {shouldExpand && (
-        <ProcessDisplay
-          brew={brew}
-          grind={grind}
-          active={active}
-          finished={finished}
-          processInfo={processInfo}
-          profileData={profileData}
-          status={{
-            mode,
-            currentTemperature,
-            targetTemperature,
-            isGrindAvailable,
-            volumetricAvailable,
-            grindTarget,
-            grindTargetVolume,
-            grindTargetDuration,
-          }}
-        />
-      )}
+    <div className='home-process-panel flex min-h-[27rem] flex-col gap-4'>
+      <div className='flex flex-1 flex-col justify-between gap-6'>
+        <div className='flex flex-1 flex-col items-center justify-center gap-5'>
+          <div
+            className='home-process-ring'
+            style={{
+              '--ring-progress': `${ringProgress}%`,
+            }}
+          >
+            <div className='home-process-ring-inner'>
+              <div className='text-3xl font-semibold tracking-tight text-base-content sm:text-4xl'>
+                {displayState.title}
+              </div>
+              <div className='mt-2 text-sm text-base-content/48'>{displayState.subtitle}</div>
+              {(active || finished) && (
+                <div className='mt-4 text-xs uppercase tracking-[0.22em] text-base-content/34'>
+                  {Math.round(progressPercent)}% complete
+                </div>
+              )}
+            </div>
+            <div className='home-process-ring-scale'>
+              <span>0</span>
+              <span>100%</span>
+            </div>
+          </div>
 
-      {!shouldExpand && (
-        <div className='flex flex-1 flex-col items-center justify-center gap-4 px-2'>
-          {brew && profileData ? (
-            <ProcessProfileChart
-              data={profileData}
-              processInfo={null}
-              className='max-h-72 w-full sm:max-h-96'
+          <div className='flex items-center justify-center gap-3'>
+            <MiniActionButton
+              disabled={!visibility.showGrindTargetControls}
+              icon={faMinus}
+              label='Lower target'
+              onClick={visibility.showGrindTargetControls ? actions.lowerTarget : undefined}
             />
-          ) : (
-            <ModeIdleDisplay
-              mode={mode}
-              tempReady={tempReady}
-              isGrindAvailable={isGrindAvailable}
+            <MiniActionButton
+              disabled={!primaryButton.onClick}
+              icon={primaryButton.icon}
+              label={primaryButton.label}
+              onClick={primaryButton.onClick}
+              tone='primary'
             />
-          )}
+            <MiniActionButton
+              disabled={!(brew && !active && !finished) && !visibility.showGrindTargetControls}
+              icon={brew && !active && !finished ? faTint : faPlus}
+              label={brew && !active && !finished ? 'Flush water' : 'Raise target'}
+              onClick={
+                brew && !active && !finished
+                  ? actions.startFlush
+                  : visibility.showGrindTargetControls
+                    ? actions.raiseTarget
+                    : undefined
+              }
+            />
+          </div>
         </div>
-      )}
 
-      <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
-        {/* Grind target time/weight selector */}
-        {visibility.showGrindTargetBar && (
-          <GrindTargetBar
-            grindTarget={grindTarget}
-            grindTargetVolume={grindTargetVolume}
-            grindTargetDuration={grindTargetDuration}
-            volumetricAvailable={volumetricAvailable}
-            onChangeTarget={actions.changeTarget}
-          />
-        )}
+        <div className='space-y-4 border-t border-base-300/45 pt-4'>
+          {infoRows.map(row => (
+            <MetricPair key={row.label} label={row.label} value={row.value} toneClass={row.toneClass} />
+          ))}
+        </div>
 
-        {/* Temperature controls for Steam / Water modes */}
-        {visibility.showTemperatureControls && (
-          <TemperatureControls
-            targetTemperature={targetTemperature}
-            onLower={actions.lowerTemp}
-            onRaise={actions.raiseTemp}
-          />
-        )}
-
-        {/* Grind target adjustment */}
-        {visibility.showGrindTargetControls && (
-          <GrindTargetControls
-            grindTarget={grindTarget}
-            grindTargetVolume={grindTargetVolume}
-            grindTargetDuration={grindTargetDuration}
-            onLowerTarget={actions.lowerTarget}
-            onRaiseTarget={actions.raiseTarget}
-          />
-        )}
-
-        {/* Play/Pause/Finish button */}
-        {visibility.showActionButtons && (
-          <div className='flex flex-col items-center gap-2'>
-            <StateIndicator active={active} finished={finished} />
-            <ActionButtons
-              brew={brew}
-              active={active}
-              finished={finished}
-              isFlushing={isFlushing}
-              onActivate={actions.activate}
-              onDeactivate={actions.deactivate}
-              onClear={actions.clear}
-              onFlush={actions.startFlush}
+        {mode === 4 && visibility.showGrindTargetBar && (
+          <div className='border-t border-base-300/45 pt-4'>
+            <GrindTargetBar
+              grindTarget={grindTarget}
+              grindTargetVolume={grindTargetVolume}
+              grindTargetDuration={grindTargetDuration}
+              volumetricAvailable={volumetricAvailable}
+              onChangeTarget={actions.changeTarget}
             />
           </div>
         )}
       </div>
     </div>
   );
-};
+}
 
 ProcessControls.propTypes = {
   brew: PropTypes.bool.isRequired,
   mode: PropTypes.oneOf([0, 1, 2, 3, 4]).isRequired,
 };
-
-export default ProcessControls;

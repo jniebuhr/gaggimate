@@ -30,7 +30,7 @@ function formatReading(value, suffix) {
   return `${Number.isFinite(value) ? value.toFixed(1) : '0.0'}${suffix}`;
 }
 
-function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
+export function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
   const toneClasses = {
     neutral: 'border-base-300/60 bg-base-100/90 text-base-content',
     accent: 'border-primary/25 bg-primary/12 text-primary',
@@ -55,7 +55,7 @@ function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
         </span>
         <span>{label}</span>
       </div>
-      <div className='mt-1 text-[clamp(0.6rem,1.2vw,1rem)] font-semibold leading-tight text-wrap balance truncate'>{value}</div>
+      <div className='mt-1 h-8 flex items-center text-[clamp(0.6rem,1.2vw,1rem)] font-semibold leading-tight text-wrap balance truncate'>{value}</div>
     </div>
   );
 }
@@ -78,17 +78,17 @@ function HeaderItem(props) {
   );
 }
 
-const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error }) => (
+export const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
-      <span className='flex size-8 items-center justify-center rounded-xl border border-secondary/20 bg-secondary/10'>
-        <FontAwesomeIcon icon={faBookmark} className='text-sm text-secondary' />
+      <span className='flex size-8 items-center justify-center rounded-xl border border-[#FF6C99]/20 bg-[#FF6C99]/10'>
+        <FontAwesomeIcon icon={faBookmark} className='text-sm text-[#FF6C99]' />
       </span>
       <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Profile</span>
     </div>
     {loading ? (
       <div className='flex items-center justify-center py-8'>
-        <span className='loading loading-spinner loading-md text-secondary' />
+        <span className='loading loading-spinner loading-md text-[#FF6C99]' />
       </div>
     ) : error ? (
       <div className='py-4 text-center text-sm text-error'>{error}</div>
@@ -100,7 +100,7 @@ const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error 
             onClick={() => onSelect(profile.id)}
             className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
               profile.id === selectedProfileId
-                ? 'bg-secondary/15 text-secondary border border-secondary/30 shadow-sm'
+                ? 'bg-[#FF6C99]/15 text-[#FF6C99] border border-[#FF6C99]/30 shadow-sm'
                 : 'hover:bg-base-content/5 text-base-content/80 border border-transparent hover:border-base-300/30'
             }`}
           >
@@ -115,7 +115,7 @@ const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error 
   </div>
 );
 
-const BeanPopover = ({ beans, activeBean, onSelect, loading, error }) => (
+export const BeanPopover = ({ beans, activeBean, onSelect, loading, error }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10'>
@@ -152,7 +152,7 @@ const BeanPopover = ({ beans, activeBean, onSelect, loading, error }) => (
   </div>
 );
 
-const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
+export const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-56 rounded-2xl border border-base-300/60 bg-base-100/95 p-5 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-5 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-error/20 bg-error/10'>
@@ -197,7 +197,7 @@ const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
   </div>
 );
 
-const ModePopover = ({ currentMode, onSelect }) => (
+export const ModePopover = ({ currentMode, onSelect }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-48 rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-primary/20 bg-primary/10'>
@@ -227,6 +227,7 @@ const ModePopover = ({ currentMode, onSelect }) => (
 );
 
 export function Header() {
+  const { path } = useLocation();
   const [open, setOpen] = useState(false);
   const [activeBean, setActiveBean] = useState(() => getCurrentBeanSelection());
   const apiService = useContext(ApiServiceContext);
@@ -236,6 +237,7 @@ export function Header() {
   const profileLabel = machine.value.status.selectedProfile || 'Default';
   const temp = formatReading(machine.value.status.currentTemperature, '\u00B0C');
   const pressure = formatReading(machine.value.status.currentPressure, ' bar');
+  const isHomeRoute = path === '/';
 
   const [activePopover, setActivePopover] = useState(null); // 'profile' | 'bean' | 'temp' | 'mode' | null
   const [profileOptions, setProfileOptions] = useState([]);
@@ -383,7 +385,7 @@ export function Header() {
     } catch (err) {
       console.error('Failed to select bean:', err);
     }
-  }, [apiService, beanOptions, machine]);
+  }, [apiService, beanOptions]);
 
   const handleTempChange = useCallback((delta) => {
     try {
@@ -402,12 +404,62 @@ export function Header() {
     }
   }, [apiService]);
 
+  const statusPills = (
+    <>
+      <StatPill label='Connection' value={connected ? 'Online' : 'Offline'} tone={connected ? 'success' : 'warning'} icon={faPlugCircleBolt} />
+
+      <div className='relative'>
+        <StatPill label='Mode' value={currentMode} tone='orange' icon={faSliders} onClick={handleModeClick} />
+        {activePopover === 'mode' && (
+          <ModePopover currentMode={mode} onSelect={handleModeSelect} />
+        )}
+      </div>
+
+      <div className='relative'>
+        <StatPill label='Profile' value={profileLabel} tone='secondary' icon={faBookmark} onClick={handleProfileClick} />
+        {activePopover === 'profile' && (
+          <ProfilePopover
+            profiles={profileOptions}
+            selectedProfileId={machine.value.status.selectedProfileId}
+            onSelect={handleProfileSelect}
+            loading={loadingProfiles}
+            error={profileError}
+          />
+        )}
+      </div>
+
+      <div className='relative'>
+        <StatPill label='Active Bean' value={activeBean?.beanName || 'Not selected'} tone='purple' icon={faLeaf} onClick={handleBeanClick} />
+        {activePopover === 'bean' && (
+          <BeanPopover
+            beans={beanOptions}
+            activeBean={activeBean}
+            onSelect={handleBeanSelect}
+            loading={loadingBeans}
+            error={beanError}
+          />
+        )}
+      </div>
+
+      <div className='relative'>
+        <StatPill label='Temp / Pressure' value={`${temp} / ${pressure}`} tone='error' icon={faTemperatureHigh} onClick={handleTempClick} />
+        {activePopover === 'temp' && (
+          <TempPopover
+            currentTemp={machine.value.status.currentTemperature}
+            targetTemp={machine.value.status.targetTemperature}
+            onChange={handleTempChange}
+          />
+        )}
+      </div>
+    </>
+  );
+
   return (
     <header id='page-header' className='sticky top-0 z-50'>
       <div className='mx-auto px-4 pt-3 lg:px-8 xl:container'>
-        <div className='rounded-2xl border border-base-300/65 bg-base-100/90 px-4 py-3 shadow-[0_26px_60px_-42px_rgba(0,0,0,0.9)] backdrop-blur-xl lg:px-6'>
+        <div className={`rounded-2xl border border-base-300/65 bg-base-100/90 px-4 py-3 shadow-[0_26px_60px_-42px_rgba(0,0,0,0.9)] backdrop-blur-xl lg:px-6 ${isHomeRoute ? 'home-header-shell' : ''}`}>
           <div className='flex items-center justify-between gap-4'>
-            <a href='/' className='inline-flex items-center gap-3' onClick={() => openCb(false)}>
+            <a href='/' className='inline-flex items-center gap-3' onClick={e => { e.preventDefault(); openCb(true); }}>
               <span className='grid size-10 place-items-center rounded-2xl bg-primary text-primary-content shadow-sm'>
                 <span className='font-logo text-xl font-semibold'>G</span>
               </span>
@@ -421,7 +473,7 @@ export function Header() {
               </span>
             </a>
 
-            <div className='hidden min-w-0 items-center gap-2 lg:flex'>
+            {!isHomeRoute && <div className='hidden min-w-0 items-center gap-2 lg:flex'>
               {/* Connection - not clickable */}
               <StatPill label='Connection' value={connected ? 'Online' : 'Offline'} tone={connected ? 'success' : 'warning'} icon={faPlugCircleBolt} />
 
@@ -463,7 +515,7 @@ export function Header() {
 
               {/* Temp - clickable */}
               <div className='relative'>
-                <StatPill label='Temp / Pressure' value={`${temp} · ${pressure}`} tone='error' icon={faTemperatureHigh} onClick={handleTempClick} />
+                <StatPill label='Temp / Pressure' value={`${temp} / ${pressure}`} tone='error' icon={faTemperatureHigh} onClick={handleTempClick} />
                 {activePopover === 'temp' && (
                   <TempPopover
                     currentTemp={machine.value.status.currentTemperature}
@@ -472,7 +524,7 @@ export function Header() {
                   />
                 )}
               </div>
-            </div>
+            </div>}
 
             <div className='flex items-center gap-1 lg:gap-5'>
               <a

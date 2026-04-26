@@ -42,8 +42,8 @@ export function App() {
             <main id='main-content' className='flex-1'>
               <div className='mx-auto w-full px-4 py-4 lg:px-8 lg:py-6 xl:container'>
                 <div
-                  className={`grid transition-[grid-template-columns] duration-300 ease-in-out ${
-                    navCollapsed ? 'grid-cols-[3.5rem_1fr]' : 'grid-cols-[14rem_1fr]'
+                  className={`grid grid-cols-1 transition-[grid-template-columns] duration-300 ease-in-out ${
+                    navCollapsed ? 'lg:grid-cols-[3.5rem_1fr]' : 'lg:grid-cols-[14rem_1fr]'
                   }`}
                 >
                   <Navigation onCollapsedChange={setNavCollapsed} />
