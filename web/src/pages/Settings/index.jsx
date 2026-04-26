@@ -985,12 +985,12 @@ export function Settings() {
             <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
           </div>
           <div className='flex flex-col gap-2 pt-4 sm:flex-row'>
-            <a href='/' className='btn btn-outline flex-1 sm:flex-none'>
+            <a href='/' className='btn btn-outline'>
               Back
             </a>
             <button
               type='submit'
-              className='btn btn-primary flex-1 sm:flex-none'
+              className='btn btn-primary'
               disabled={submitting}
             >
               {submitting && <Spinner size={4} />} Save
@@ -998,7 +998,7 @@ export function Settings() {
             <button
               type='submit'
               name='restart'
-              className='btn btn-secondary flex-1 sm:flex-none'
+              className='btn btn-secondary'
               disabled={submitting}
               onClick={e => onSubmit(e, true)}
             >
