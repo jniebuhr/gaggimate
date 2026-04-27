@@ -105,7 +105,7 @@ function buildRingBackground(fillStops) {
 }
 
 function buildSolidRingBackground(progressPercent, fillColorVar) {
-  const progress = clampPercent(progressPercent);
+  const progress = clampPercent(progressPercent) * (300 / 360);
   return buildRingBackground(
     `${fillColorVar} 0%, ${fillColorVar} ${progress}%, var(--home-ring-track) ${progress}%, var(--home-ring-track) 100%`
   );
@@ -113,10 +113,11 @@ function buildSolidRingBackground(progressPercent, fillColorVar) {
 
 function buildSegmentedRingBackground(phaseSegments, activeIndex, inPhaseProgress, fillColorVar) {
   const stops = [];
+  const ARC_SCALE = 300 / 360;
 
   phaseSegments.forEach((segment, index) => {
-    const startPercent = segment.start * 100;
-    const endPercent = segment.end * 100;
+    const startPercent = segment.start * 100 * ARC_SCALE;
+    const endPercent = segment.end * 100 * ARC_SCALE;
     const spanPercent = endPercent - startPercent;
     const segmentProgress =
       index < activeIndex ? 1 : index === activeIndex ? Math.max(0, Math.min(1, inPhaseProgress)) : 0;
@@ -209,6 +210,14 @@ function getRingVisual({
     const progress = getTemperatureProgress(currentTemperature, targetTemperature);
     return {
       background: buildSolidRingBackground(progress, 'var(--home-ring-water)'),
+      progress,
+    };
+  }
+
+  if (!active && mode === 0) {
+    const progress = getTemperatureProgress(currentTemperature, 93);
+    return {
+      background: buildSolidRingBackground(progress, 'var(--home-ring-standby-temp)'),
       progress,
     };
   }

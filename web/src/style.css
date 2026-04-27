@@ -1187,6 +1187,7 @@ body.nav-drawer-open {
       color-mix(in srgb, var(--color-base-100) 98%, transparent)
     );
   --home-ring-idle: color-mix(in srgb, var(--color-base-content) 28%, transparent);
+  --home-ring-standby-temp: #b84a32;
   --home-ring-brew-heat: #f0561d;
   --home-ring-brew-active: #3fa7ff;
   --home-ring-steam: #f5c44a;
@@ -1212,6 +1213,7 @@ html[data-theme='dark'] {
   --home-ring-track: rgba(255, 255, 255, 0.08);
   --home-ring-inner: linear-gradient(180deg, rgba(10, 12, 16, 0.98), rgba(4, 5, 8, 0.96));
   --home-ring-idle: rgba(160, 171, 192, 0.48);
+  --home-ring-standby-temp: #b84a32;
   --home-overlay-glow:
     radial-gradient(circle at top left, rgba(234, 122, 47, 0.1), transparent 28%),
     radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 28%);
@@ -1229,6 +1231,7 @@ html[data-theme='coffee'] {
   --home-ring-track: rgba(216, 187, 146, 0.1);
   --home-ring-inner: linear-gradient(180deg, rgba(25, 18, 16, 0.98), rgba(16, 11, 10, 0.96));
   --home-ring-idle: rgba(216, 187, 146, 0.38);
+  --home-ring-standby-temp: #b84a32;
   --home-overlay-glow:
     radial-gradient(circle at top left, rgba(234, 122, 47, 0.12), transparent 28%),
     radial-gradient(circle at top right, rgba(120, 154, 184, 0.08), transparent 30%);
@@ -1246,6 +1249,7 @@ html[data-theme='nord'] {
   --home-ring-track: rgba(59, 82, 107, 0.1);
   --home-ring-inner: linear-gradient(180deg, rgba(238, 243, 248, 0.98), rgba(230, 236, 242, 0.96));
   --home-ring-idle: rgba(59, 82, 107, 0.32);
+  --home-ring-standby-temp: #b84a32;
   --home-shadow-strong: rgba(59, 82, 107, 0.14);
 }
 
@@ -1269,6 +1273,7 @@ html[data-theme='amoled'] {
   --home-ring-track: rgba(255, 255, 255, 0.08);
   --home-ring-inner: linear-gradient(180deg, rgba(2, 2, 2, 0.99), rgba(0, 0, 0, 0.99));
   --home-ring-idle: rgba(255, 255, 255, 0.22);
+  --home-ring-standby-temp: #b84a32;
   --home-overlay-glow:
     radial-gradient(circle at top left, rgba(255, 132, 64, 0.06), transparent 24%),
     radial-gradient(circle at top right, rgba(63, 173, 255, 0.04), transparent 24%);
@@ -1286,6 +1291,7 @@ html[data-theme='stealth'] {
   --home-ring-track: rgba(255, 255, 255, 0.08);
   --home-ring-inner: linear-gradient(180deg, rgba(6, 8, 13, 0.98), rgba(3, 5, 9, 0.96));
   --home-ring-idle: rgba(148, 163, 184, 0.34);
+  --home-ring-standby-temp: #b84a32;
   --home-shadow-strong: rgba(0, 0, 0, 0.42);
 }
 
@@ -1300,6 +1306,7 @@ html[data-theme='crisp'] {
   --home-ring-track: rgba(42, 56, 79, 0.1);
   --home-ring-inner: linear-gradient(180deg, rgba(247, 250, 253, 0.99), rgba(238, 244, 250, 0.97));
   --home-ring-idle: rgba(42, 56, 79, 0.28);
+  --home-ring-standby-temp: #b84a32;
   --home-shadow-strong: rgba(15, 23, 42, 0.12);
 }
 
