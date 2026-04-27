@@ -3,11 +3,12 @@
 #include <string>
 
 struct Capabilities {
-    bool dimming;
-    bool pressure;
-    bool ssrPump;
-    bool ledControls;
-    bool tof;
+    bool dimming = false;
+    bool pressure = false;
+    bool ssrPump = false;
+    bool ledControls = false;
+    bool tof = false;
+    bool dualBoiler = false;
 };
 
 struct ControllerConfig {
@@ -18,27 +19,37 @@ struct ControllerConfig {
     uint16_t autodetectValue;
 
     uint8_t heaterPin;
+    uint8_t altPin;
+    uint8_t altOn;
+
     uint8_t pumpPin;
     uint8_t pumpSensePin = 0;
     uint8_t pumpOn;
     uint8_t valvePin;
     uint8_t valveOn;
-    uint8_t altPin;
-    uint8_t altOn;
+    // Refill relay for solenoid / pump
+    uint8_t refillPin = 0;
+    // Auxiliary relay for solenoid / pump
+    uint8_t auxPin = 0;
+
+    uint8_t waterSensePin = 0;
+    uint8_t tankLevelPin = 0;
+    uint8_t ledPin = 0;
 
     uint8_t pressureScl = 0;
     uint8_t pressureSda = 0;
 
-    uint8_t maxSckPin;
-    uint8_t maxCsPin;
-    uint8_t maxMisoPin;
+    uint8_t maxSckPin = 0;
+    uint8_t maxCsPin = 0;
+    uint8_t maxMisoPin = 0;
 
     uint8_t brewButtonPin;
     uint8_t steamButtonPin;
+    uint8_t waterButtonPin = 0;
 
-    uint8_t scaleSclPin;
-    uint8_t scaleSdaPin;
-    uint8_t scaleSda1Pin;
+    uint8_t scaleClkPin;
+    uint8_t scaleDat0Pin;
+    uint8_t scaleDat1Pin;
 
     uint8_t sunriseSclPin;
     uint8_t sunriseSdaPin;
@@ -66,20 +77,15 @@ const ControllerConfig GM_STANDARD_REV_1X = {.name = "GaggiMate Standard Rev 1.x
                                              .maxMisoPin = 4,
                                              .brewButtonPin = 38,
                                              .steamButtonPin = 48,
-                                             .scaleSclPin = 17,
-                                             .scaleSdaPin = 18,
-                                             .scaleSda1Pin = 39,
+                                             .scaleClkPin = 17,
+                                             .scaleDat0Pin = 18,
+                                             .scaleDat1Pin = 39,
                                              .ext1Pin = 1,
                                              .ext2Pin = 2,
                                              .ext3Pin = 8,
                                              .ext4Pin = 12,
                                              .ext5Pin = 13,
                                              .capabilites = {
-                                                 .dimming = false,
-                                                 .pressure = false,
-                                                 .ssrPump = false,
-                                                 .ledControls = false,
-                                                 .tof = false,
                                              }};
 
 const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x",
@@ -96,9 +102,9 @@ const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x
                                              .maxMisoPin = 4,
                                              .brewButtonPin = 38,
                                              .steamButtonPin = 48,
-                                             .scaleSclPin = 17,
-                                             .scaleSdaPin = 18,
-                                             .scaleSda1Pin = 39,
+                                             .scaleClkPin = 17,
+                                             .scaleDat0Pin = 18,
+                                             .scaleDat1Pin = 39,
                                              .sunriseSclPin = 44,
                                              .sunriseSdaPin = 43,
                                              .ext1Pin = 1,
@@ -107,11 +113,7 @@ const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x
                                              .ext4Pin = 12,
                                              .ext5Pin = 13,
                                              .capabilites = {
-                                                 .dimming = false,
-                                                 .pressure = false,
                                                  .ssrPump = true,
-                                                 .ledControls = false,
-                                                 .tof = false,
                                              }};
 
 const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.0",
@@ -131,9 +133,9 @@ const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.0",
                                         .maxMisoPin = 4,
                                         .brewButtonPin = 38,
                                         .steamButtonPin = 48,
-                                        .scaleSclPin = 17,
-                                        .scaleSdaPin = 18,
-                                        .scaleSda1Pin = 39,
+                                        .scaleClkPin = 17,
+                                        .scaleDat0Pin = 18,
+                                        .scaleDat1Pin = 39,
                                         .sunriseSclPin = 44,
                                         .sunriseSdaPin = 43,
                                         .ext1Pin = 1,
@@ -144,9 +146,6 @@ const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.0",
                                         .capabilites = {
                                             .dimming = true,
                                             .pressure = true,
-                                            .ssrPump = false,
-                                            .ledControls = false,
-                                            .tof = false,
                                         }};
 
 const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
@@ -166,9 +165,9 @@ const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
                                       .maxMisoPin = 4,
                                       .brewButtonPin = 38,
                                       .steamButtonPin = 48,
-                                      .scaleSclPin = 17,
-                                      .scaleSdaPin = 18,
-                                      .scaleSda1Pin = 39,
+                                      .scaleClkPin = 17,
+                                      .scaleDat0Pin = 18,
+                                      .scaleDat1Pin = 39,
                                       .sunriseSclPin = 44,
                                       .sunriseSdaPin = 43,
                                       .ext1Pin = 1,
@@ -179,9 +178,6 @@ const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
                                       .capabilites = {
                                           .dimming = true,
                                           .pressure = true,
-                                          .ssrPump = false,
-                                          .ledControls = false,
-                                          .tof = false,
                                       }};
 
 const ControllerConfig GM_PRO_REV_11 = {.name = "GaggiMate Pro Rev 1.1",
@@ -201,9 +197,9 @@ const ControllerConfig GM_PRO_REV_11 = {.name = "GaggiMate Pro Rev 1.1",
                                         .maxMisoPin = 4,
                                         .brewButtonPin = 38,
                                         .steamButtonPin = 48,
-                                        .scaleSclPin = 17,
-                                        .scaleSdaPin = 18,
-                                        .scaleSda1Pin = 39,
+                                        .scaleClkPin = 17,
+                                        .scaleDat0Pin = 18,
+                                        .scaleDat1Pin = 39,
                                         .sunriseSclPin = 44,
                                         .sunriseSdaPin = 43,
                                         .ext1Pin = 1,
@@ -214,9 +210,6 @@ const ControllerConfig GM_PRO_REV_11 = {.name = "GaggiMate Pro Rev 1.1",
                                         .capabilites = {
                                             .dimming = true,
                                             .pressure = true,
-                                            .ssrPump = false,
-                                            .ledControls = false,
-                                            .tof = false,
                                         }};
 
 const ControllerConfig GM_STANDARD_REV_3X = {.name = "GaggiMate Standard Rev 3.x",
@@ -233,9 +226,9 @@ const ControllerConfig GM_STANDARD_REV_3X = {.name = "GaggiMate Standard Rev 3.x
                                              .maxMisoPin = 4,
                                              .brewButtonPin = 38,
                                              .steamButtonPin = 48,
-                                             .scaleSclPin = 17,
-                                             .scaleSdaPin = 18,
-                                             .scaleSda1Pin = 39,
+                                             .scaleClkPin = 17,
+                                             .scaleDat0Pin = 18,
+                                             .scaleDat1Pin = 39,
                                              .sunriseSclPin = 44,
                                              .sunriseSdaPin = 43,
                                              .ext1Pin = 1,
@@ -244,11 +237,43 @@ const ControllerConfig GM_STANDARD_REV_3X = {.name = "GaggiMate Standard Rev 3.x
                                              .ext4Pin = 12,
                                              .ext5Pin = 13,
                                              .capabilites = {
-                                                 .dimming = false,
-                                                 .pressure = false,
                                                  .ssrPump = true,
-                                                 .ledControls = false,
-                                                 .tof = false,
                                              }};
+
+const ControllerConfig GM_MAX_REV10 = {.name = "GaggiMate Max Rev 1.x",
+                                            .autodetectValue = 5,
+                                            .heaterPin = 12,
+                                            .pumpPin = 41,
+                                            .pumpSensePin = 42,
+                                            .pumpOn = 1,
+                                            .valvePin = 13,
+                                            .valveOn = 1,
+                                            .altPin = 10,
+                                            .altOn = 1,
+                                            .refillPin = 21,
+                                            .auxPin = 14,
+                                            .pressureScl = 47,
+                                            .pressureSda = 48,
+                                            .brewButtonPin = 6,
+                                            .steamButtonPin = 4,
+                                            .waterButtonPin = 5,
+                                            .scaleClkPin = 7,
+                                            .scaleDat0Pin = 15,
+                                            .scaleDat1Pin = 16,
+                                            .sunriseSclPin = 8,
+                                            .sunriseSdaPin = 18,
+                                            .tankLevelPin = 3,
+                                            .waterSensePin = 38,
+                                            .ledPin = 9,
+                                            .ext1Pin = 2,
+                                            .ext2Pin = 47,
+                                            .ext3Pin = 48,
+                                            .ext4Pin = 43,
+                                            .ext5Pin = 44,
+                                            .capabilites = {
+                                                .dimming = true,
+                                                .pressure = true,
+                                                .dualBoiler = true,
+                                            }};
 
 #endif // CONTROLLERCONFIG_H
