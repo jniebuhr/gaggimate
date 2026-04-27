@@ -23,8 +23,6 @@ export function Home() {
 
   return (
     <div className='home-dashboard flex flex-col gap-5 lg:gap-6'>
-      <HomeStatusStrip />
-
       <div className='grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.02fr)_minmax(22rem,0.98fr)] xl:items-stretch'>
         <Card title='Process Controls' className='home-dashboard-card home-dashboard-card-process'>
           <ProcessControls brew={mode === 1} mode={mode} />

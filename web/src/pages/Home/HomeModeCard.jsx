@@ -262,7 +262,7 @@ export default function HomeModeCard({ mode }) {
         </div>
       </div>
 
-      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+      <div className='grid grid-cols-2 gap-3'>
         <div className='relative'>
           <div
             className='stat-pill status-indicator-card flex-1 min-w-0 rounded-2xl border px-4 py-3 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)] backdrop-blur border-[#FF6C99]/25 bg-[#FF6C99]/12 text-[#FF6C99] cursor-pointer transition-all duration-200 hover:border-primary/50 hover:bg-primary/5'
