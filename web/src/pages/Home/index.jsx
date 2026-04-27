@@ -14,8 +14,6 @@ import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import ProcessControls from './ProcessControls.jsx';
 import HomeModeCard from './HomeModeCard.jsx';
-import HomeStatusStrip from './HomeStatusStrip.jsx';
-
 Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
 export function Home() {
@@ -23,7 +21,7 @@ export function Home() {
 
   return (
     <div className='home-dashboard flex flex-col gap-5 lg:gap-6'>
-      <div className='grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.02fr)_minmax(22rem,0.98fr)] xl:items-stretch'>
+      <div className='grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.02fr)_minmax(22rem,0.98fr)] lg:items-stretch'>
         <Card title='Process Controls' className='home-dashboard-card home-dashboard-card-process'>
           <ProcessControls brew={mode === 1} mode={mode} />
         </Card>
