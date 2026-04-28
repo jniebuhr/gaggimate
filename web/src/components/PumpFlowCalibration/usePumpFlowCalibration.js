@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
-import { ApiServiceContext } from '../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { analyze, parseCoeffs } from '../../utils/pumpFlowCalibration.js';
 import { fetchAndParseShot, fetchShotIndex, postCoefficients } from './api.js';
 import {
@@ -99,6 +99,13 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
     setSaved(false);
     setPhase(PHASE.RUNNING);
 
+    // Snapshot the profile that was active before we hijack it for calibration,
+    // so we can restore it in the `finally` block. Skip if the user was already
+    // sitting on the calibration profile (interrupted previous run).
+    const previousProfileId = machine.value.status.selectedProfileId;
+    const profileToRestore =
+      previousProfileId && previousProfileId !== CALIBRATION_PROFILE_ID ? previousProfileId : null;
+
     try {
       // Validate the existing coefficients first so a malformed value can't
       // waste a full calibration shot (water + scale + portafilter).
@@ -151,6 +158,24 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
       detachStatusListener();
       pushLog(`Error: ${err.message}`, 'err');
       setPhase(PHASE.ERROR);
+    } finally {
+      // Best-effort cleanup: put the user back on their previous profile and
+      // remove the calibration profile from the machine. Failures here are
+      // surfaced as warnings — they don't undo a successful calibration.
+      if (profileToRestore) {
+        try {
+          pushLog('Restoring previous profile...');
+          await apiService.request({ tp: 'req:profiles:select', id: profileToRestore });
+        } catch (e) {
+          pushLog(`Could not restore previous profile: ${e.message}`, 'warn');
+        }
+      }
+      try {
+        pushLog('Removing calibration profile...');
+        await apiService.request({ tp: 'req:profiles:delete', id: CALIBRATION_PROFILE_ID });
+      } catch (e) {
+        pushLog(`Could not delete calibration profile: ${e.message}`, 'warn');
+      }
     }
   }, [apiService, currentCoeffs, detachStatusListener, pushLog, waitForShotEnd]);
 
