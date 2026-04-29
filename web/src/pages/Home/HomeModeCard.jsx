@@ -95,7 +95,7 @@ function ProfilePopover({ profiles, selectedProfileId, onSelect, onClose, loadin
               }`}
               onClick={() => onSelect(profile.id)}
             >
-              {profile.name}
+              {profile.label}
             </button>
           ))}
         </div>
