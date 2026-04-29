@@ -10,7 +10,7 @@ import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faPause, faCheck, faPlus, faMinus, faTint } from '@fortawesome/free-solid-svg-icons';
-import { MODE_LABELS, MODE_SUBTITLES, formatNumber } from '../../utils/homeConstants.js';
+import { MODE_LABELS, MODE_SUBTITLES, formatNumber, StatRow } from '../../utils/homeConstants.jsx';
 
 const status = computed(() => machine.value.status);
 
@@ -248,25 +248,6 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
   };
 }
 
-function StatRow({ label, value, highlight }) {
-  return (
-    <div className='flex items-center justify-between border-b border-[var(--home-border,#222)] py-3'>
-      <span className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
-        {label}
-      </span>
-      <span className={`font-nd-mono text-[13px] font-700 ${highlight ? 'text-[var(--text-primary,#e8e8e8)]' : 'text-[var(--text-secondary,#999)]'}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-StatRow.propTypes = {
-  label: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  highlight: PropTypes.bool,
-};
-
 // Mini action button component
 function MiniActionButton({ icon, label, onClick, disabled, tone }) {
   const toneClass = tone === 'primary' ? 'nd-action-btn--primary' : '';
@@ -434,7 +415,7 @@ export default function ProcessControls({ brew, mode }) {
           <div className='nd-card p-4'>
             <div className='space-y-0'>
               {infoRows.map(row => (
-                <StatRow key={row.label} label={row.label} value={row.value} highlight={row.highlight} />
+                <StatRow key={row.label} label={row.label} value={row.value} valueColor={row.highlight} />
               ))}
             </div>
           </div>

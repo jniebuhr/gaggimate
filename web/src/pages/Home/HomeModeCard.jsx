@@ -10,29 +10,9 @@ import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
 import { faLeaf } from '@fortawesome/free-solid-svg-icons/faLeaf';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { listBeans, recordBeanSelection } from '../../utils/beanManager.js';
-import { MODE_LABELS, formatNumber } from '../../utils/homeConstants.js';
+import { MODE_LABELS, formatNumber, StatRow } from '../../utils/homeConstants.jsx';
 
 const status = computed(() => machine.value.status);
-
-// Minimal stat row — Space Mono label left, value right
-function StatRow({ label, value, valueColor }) {
-  return (
-    <div className='flex items-center justify-between border-b border-[var(--home-border,#222)] py-3 last:border-b-0'>
-      <span className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
-        {label}
-      </span>
-      <span className={`font-nd-mono text-[13px] font-700 ${valueColor || 'text-[var(--text-primary,#e8e8e8)]'}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-StatRow.propTypes = {
-  label: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  valueColor: PropTypes.string,
-};
 
 // Temperature stepper popover
 function TempPopover({ currentTemp, targetTemp, onChange, onClose }) {
