@@ -1,0 +1,3 @@
+[     380ms] [LOG] Established websocket connection @ http://localhost:4173/assets/index-C_SNFRwM.js:558
+[     571ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:4173/:0
+[    3448ms] [LOG] WebSocket connected successfully @ http://localhost:4173/assets/index-C_SNFRwM.js:558

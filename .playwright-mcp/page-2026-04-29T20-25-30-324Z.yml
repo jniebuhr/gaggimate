@@ -1,0 +1,163 @@
+- generic [ref=e4]:
+  - link "Skip to main content" [ref=e5] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e6]:
+    - generic [ref=e9]:
+      - button "Open navigation menu" [ref=e10]:
+        - generic [ref=e12]: G
+        - generic [ref=e13]:
+          - generic [ref=e14]: GAGGIMATE
+          - generic [ref=e15]: Live espresso control
+      - generic [ref=e16]:
+        - link "github" [ref=e17] [cursor=pointer]:
+          - /url: https://github.com/jniebuhr/gaggimate
+          - img [ref=e18]
+        - link "discord" [ref=e20] [cursor=pointer]:
+          - /url: https://discord.gaggimate.eu/
+          - img [ref=e21]
+        - button "Open navigation menu" [ref=e23] [cursor=pointer]:
+          - img [ref=e24]
+  - button
+  - complementary:
+    - generic:
+      - generic:
+        - generic:
+          - generic: GAGGIMATE
+          - generic: Navigation
+        - button:
+          - generic: ×
+      - generic:
+        - generic:
+          - generic:
+            - link:
+              - /url: /
+              - img
+              - generic:
+                - generic: Dashboard
+            - link:
+              - /url: /pidtune
+              - img
+              - generic:
+                - generic: PID Autotune
+            - link:
+              - /url: /scales
+              - img
+              - generic:
+                - generic: Bluetooth Devices
+            - link:
+              - /url: /settings
+              - img
+              - generic:
+                - generic: Settings
+        - generic:
+          - generic:
+            - link:
+              - /url: /profiles
+              - img
+              - generic:
+                - generic: Profiles
+            - link:
+              - /url: /beans
+              - img
+              - generic:
+                - generic: Beans
+            - link:
+              - /url: /history
+              - img
+              - generic:
+                - generic: Shot History
+            - link:
+              - /url: /analyzer
+              - img
+              - generic:
+                - generic: Shot Analyzer
+                - generic: NEW
+            - link:
+              - /url: /statistics
+              - img
+              - generic:
+                - generic: Statistics
+                - generic: NEW
+            - link:
+              - /url: /ota
+              - img
+              - generic:
+                - generic: System & Updates
+  - main [ref=e26]:
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - heading "Process" [level=2] [ref=e34]
+          - generic [ref=e36]:
+            - generic [ref=e37]:
+              - button "STANDBY" [ref=e38] [cursor=pointer]
+              - button "BREW" [ref=e39] [cursor=pointer]
+              - button "STEAM" [ref=e40] [cursor=pointer]
+              - button "WATER" [ref=e41] [cursor=pointer]
+              - button "GRIND" [ref=e42] [cursor=pointer]
+            - generic [ref=e43]:
+              - generic [ref=e45]:
+                - generic [ref=e46]: "0.0"
+                - generic [ref=e47]: °C
+                - generic [ref=e48]: / 0.0° target
+                - generic [ref=e49]: STANDBY
+              - generic [ref=e52]:
+                - generic [ref=e53]:
+                  - generic [ref=e54]: Temperature
+                  - generic [ref=e55]: 0.0 °C
+                - generic [ref=e56]:
+                  - generic [ref=e57]: Pressure
+                  - generic [ref=e58]: 0.0 bar
+                - generic [ref=e59]:
+                  - generic [ref=e60]: Flow
+                  - generic [ref=e61]: 0.0 g/s
+                - generic [ref=e62]:
+                  - generic [ref=e63]: Weight
+                  - generic [ref=e64]: 0.0 g
+        - generic [ref=e65]:
+          - heading "Status" [level=2] [ref=e67]
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - generic [ref=e71]:
+                - generic [ref=e72]: Connection
+                - generic [ref=e74]: Offline
+              - generic [ref=e75] [cursor=pointer]:
+                - generic [ref=e76]: Temperature
+                - generic [ref=e77]:
+                  - text: 0.0°C
+                  - generic [ref=e78]: / 0.0°
+            - generic [ref=e79]:
+              - generic [ref=e80] [cursor=pointer]:
+                - generic [ref=e81]: Profile
+                - generic [ref=e82]: Default
+              - generic [ref=e83] [cursor=pointer]:
+                - generic [ref=e84]: Bean
+                - generic [ref=e85]: Not selected
+            - heading "Shortcuts" [level=3] [ref=e87]
+            - generic [ref=e88]:
+              - generic [ref=e89] [cursor=pointer]:
+                - generic [ref=e90]: Scales
+                - link "[Scales]" [ref=e91]:
+                  - /url: /scales
+              - generic [ref=e92] [cursor=pointer]:
+                - generic [ref=e93]: History
+                - link "[History]" [ref=e94]:
+                  - /url: /history
+            - generic [ref=e95]:
+              - generic [ref=e96] [cursor=pointer]:
+                - generic [ref=e97]: Analyzer
+                - link "[Analyzer]" [ref=e98]:
+                  - /url: /analyzer
+              - generic [ref=e99] [cursor=pointer]:
+                - generic [ref=e100]: Settings
+                - link "[Settings]" [ref=e101]:
+                  - /url: /settings
+      - heading "Temperature & Pressure" [level=2] [ref=e104]
+  - contentinfo [ref=e108]:
+    - generic [ref=e110]:
+      - generic [ref=e111]:
+        - generic [ref=e112]: Crafted with
+        - img [ref=e114]
+        - generic [ref=e116]: in Italy by
+      - link "Caffinnova S.r.l." [ref=e117] [cursor=pointer]:
+        - /url: https://gaggimate.eu

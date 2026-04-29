@@ -1,0 +1,9 @@
+[     108ms] [LOG] Established websocket connection @ http://localhost:4173/assets/index-C_SNFRwM.js:558
+[     178ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:4173/settings:0
+[     229ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:4173/settings:0
+[    3097ms] [LOG] WebSocket connected successfully @ http://localhost:4173/assets/index-C_SNFRwM.js:558
+[    3440ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://localhost:4173/settings:0
+[  187950ms] [LOG] Established websocket connection @ http://localhost:4173/assets/index-Dd3D7eCJ.js:558
+[  188077ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:4173/:0
+[  191211ms] [LOG] WebSocket connected successfully @ http://localhost:4173/assets/index-Dd3D7eCJ.js:558
+[  193907ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://localhost:4173/settings:0
