@@ -10,21 +10,9 @@ import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faPause, faCheck, faPlus, faMinus, faTint } from '@fortawesome/free-solid-svg-icons';
+import { MODE_LABELS, MODE_SUBTITLES, formatNumber } from '../../utils/homeConstants.js';
 
 const status = computed(() => machine.value.status);
-
-const MODE_LABELS = ['STANDBY', 'BREW', 'STEAM', 'WATER', 'GRIND'];
-const MODE_SUBTITLES = {
-  0: 'System idle',
-  1: 'Ready to extract',
-  2: 'Steam staging',
-  3: 'Water ready',
-  4: 'Grind staging',
-};
-
-function formatNumber(value, digits = 1) {
-  return Number.isFinite(value) ? value.toFixed(digits) : '0.0';
-}
 
 function formatTarget(grindTarget, grindTargetVolume, grindTargetDuration) {
   return grindTarget === 1 ? `${formatNumber(grindTargetVolume)}g` : `${Math.round(grindTargetDuration / 1000)}s`;
@@ -385,9 +373,7 @@ export default function ProcessControls({ brew, mode }) {
     <div className='flex flex-col gap-5'>
       {/* Mode selector */}
       <div className='nd-segmented'>
-        {MODE_LABELS.map((label, idx) => {
-          const subtitles = ['', 'Ready', 'Heat', 'Water', 'Grind'];
-          return (
+        {MODE_LABELS.map((label, idx) => (
             <button
               key={label}
               type='button'
@@ -399,12 +385,11 @@ export default function ProcessControls({ brew, mode }) {
                   console.error('Failed to change mode:', err);
                 }
               }}
-              title={subtitles[idx]}
+              title={MODE_SUBTITLES[idx]}
             >
               {label}
             </button>
-          );
-        })}
+          ))}
       </div>
 
       {/* Main ring + data row */}

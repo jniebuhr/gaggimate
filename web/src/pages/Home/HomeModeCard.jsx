@@ -1,6 +1,5 @@
 import { useCallback, useContext, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
-import { useLocation } from 'preact-iso';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTemperatureHigh } from '@fortawesome/free-solid-svg-icons/faTemperatureHigh';
@@ -11,14 +10,9 @@ import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
 import { faLeaf } from '@fortawesome/free-solid-svg-icons/faLeaf';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { listBeans, recordBeanSelection } from '../../utils/beanManager.js';
+import { MODE_LABELS, formatNumber } from '../../utils/homeConstants.js';
 
 const status = computed(() => machine.value.status);
-
-const MODE_LABELS = ['STANDBY', 'BREW', 'STEAM', 'WATER', 'GRIND'];
-
-function formatNumber(value, digits = 1) {
-  return Number.isFinite(value) ? value.toFixed(digits) : '0.0';
-}
 
 // Minimal stat row — Space Mono label left, value right
 function StatRow({ label, value, valueColor }) {
