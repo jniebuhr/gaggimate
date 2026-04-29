@@ -1,6 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useContext, useMemo, useState } from 'preact/hooks';
+import { useContext, useEffect, useMemo, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
 import { GrindTargetBar } from '../../components/GrindTargetBar.jsx';
 import { useProfileData } from '../../hooks/useProfileData.js';
@@ -280,6 +280,17 @@ export default function ProcessControls({ brew, mode }) {
   const grind = mode === 4;
   const [isFlushing, setIsFlushing] = useState(false);
   const { autoSteamEnabled, toggleAutoSteam } = useAutoSteam();
+
+  // Auto-steam: transition to steam mode when brew finishes with auto-steam enabled
+  useEffect(() => {
+    if (finished && brew && autoSteamEnabled && mode === 1) {
+      try {
+        api.send({ tp: 'req:change-mode', mode: 2 });
+      } catch (err) {
+        console.error('Failed to change to steam mode:', err);
+      }
+    }
+  }, [finished, brew, autoSteamEnabled, mode, api]);
   const {
     currentFlow,
     currentPressure,
