@@ -1735,3 +1735,30 @@ html[data-theme='nothing'] .chartjs-tooltip {
   border-radius: 8px !important;
 }
 
+/* Input styles */
+.nd-input {
+  width: 100%;
+  background: var(--home-surface-muted, rgba(5, 5, 5, 0.95));
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 13px;
+  color: var(--text-primary, #e8e8e8);
+  transition: border-color 150ms ease;
+}
+
+.nd-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #d71921);
+}
+
+.nd-input::placeholder {
+  color: var(--text-disabled, #666);
+}
+
+.nd-input--lg {
+  padding: 14px 16px;
+  font-size: 16px;
+}
+
