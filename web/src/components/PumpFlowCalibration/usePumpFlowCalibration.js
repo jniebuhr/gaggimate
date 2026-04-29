@@ -43,6 +43,12 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
   const [saved, setSaved] = useState(false);
 
   const statusListenerRef = useRef(null);
+  // Prevents start() from running concurrently with itself: the Retry button
+  // on the ERROR screen (or any other re-entry path) must not be allowed to
+  // kick off a second run while the previous one's `finally` cleanup is still
+  // awaiting profile-restore / profile-delete requests, since the second run
+  // would clobber statusListenerRef and interleave WS calls.
+  const inFlightRef = useRef(false);
 
   const detachStatusListener = useCallback(() => {
     if (statusListenerRef.current !== null) {
@@ -89,11 +95,13 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
   );
 
   const start = useCallback(async () => {
+    if (inFlightRef.current) return;
     if (!apiService) {
       pushLog('Internal error: ApiService unavailable.', 'err');
       setPhase(PHASE.ERROR);
       return;
     }
+    inFlightRef.current = true;
     setLogs([]);
     setResults(null);
     setSaved(false);
@@ -176,6 +184,7 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
       } catch (e) {
         pushLog(`Could not delete calibration profile: ${e.message}`, 'warn');
       }
+      inFlightRef.current = false;
     }
   }, [apiService, currentCoeffs, detachStatusListener, pushLog, waitForShotEnd]);
 
