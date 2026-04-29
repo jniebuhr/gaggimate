@@ -169,7 +169,6 @@ BeanPopover.propTypes = {
 
 export default function HomeModeCard({ mode }) {
   const api = useContext(ApiServiceContext);
-  const { path } = useLocation();
   const {
     currentTemperature,
     selectedBean,
