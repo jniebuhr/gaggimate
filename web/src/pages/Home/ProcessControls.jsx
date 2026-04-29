@@ -471,17 +471,12 @@ export default function ProcessControls({ brew, mode }) {
             />
           )}
           {brew && !active && !finished && (
-            <button
-              type='button'
-              className={`nd-action-btn ${autoSteamEnabled ? 'nd-action-btn--primary' : ''}`}
+            <MiniActionButton
+              icon={faTint}
+              label='Toggle auto steam'
               onClick={toggleAutoSteam}
-              title='Auto steam after brew'
-              aria-label='Toggle auto steam'
-              aria-pressed={autoSteamEnabled}
-            >
-              <FontAwesomeIcon icon={faTint} />
-              <span className='ml-1 text-xs'>AUTO</span>
-            </button>
+              tone={autoSteamEnabled ? 'primary' : undefined}
+            />
           )}
         </div>
       )}
