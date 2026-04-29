@@ -2,7 +2,6 @@ import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useContext, useMemo, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
-import { Tooltip } from '../../components/Tooltip.jsx';
 import { GrindTargetBar } from '../../components/GrindTargetBar.jsx';
 import { useProfileData } from '../../hooks/useProfileData.js';
 import { useGrindSettings } from '../../hooks/useGrindSettings.js';
