@@ -7,6 +7,7 @@ import { useProfileData } from '../../hooks/useProfileData.js';
 import { useGrindSettings } from '../../hooks/useGrindSettings.js';
 import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
+import { useAutoSteam } from '../../hooks/useAutoSteam.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faPause, faCheck, faPlus, faMinus, faTint } from '@fortawesome/free-solid-svg-icons';
 import { MODE_LABELS, MODE_SUBTITLES, formatNumber, StatRow } from '../../utils/homeConstants.jsx';
@@ -278,6 +279,7 @@ export default function ProcessControls({ brew, mode }) {
   const finished = !!processInfo?.e && !active;
   const grind = mode === 4;
   const [isFlushing, setIsFlushing] = useState(false);
+  const { autoSteamEnabled, toggleAutoSteam } = useAutoSteam();
   const {
     currentFlow,
     currentPressure,
@@ -467,6 +469,19 @@ export default function ProcessControls({ brew, mode }) {
                     : undefined
               }
             />
+          )}
+          {brew && !active && !finished && (
+            <button
+              type='button'
+              className={`nd-action-btn ${autoSteamEnabled ? 'nd-action-btn--primary' : ''}`}
+              onClick={toggleAutoSteam}
+              title='Auto steam after brew'
+              aria-label='Toggle auto steam'
+              aria-pressed={autoSteamEnabled}
+            >
+              <FontAwesomeIcon icon={faTint} />
+              <span className='ml-1 text-xs'>AUTO</span>
+            </button>
           )}
         </div>
       )}
