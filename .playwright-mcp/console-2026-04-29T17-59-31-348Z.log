@@ -1,3 +1,0 @@
-[    1525ms] [LOG] Established websocket connection @ http://localhost:5178/src/services/ApiService.js:21
-[    1954ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:5178/:0
-[    5164ms] [LOG] WebSocket connected successfully @ http://localhost:5178/src/services/ApiService.js:52

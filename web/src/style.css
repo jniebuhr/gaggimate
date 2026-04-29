@@ -740,8 +740,8 @@ html[data-theme='nothing'] {
 
   /* Fonts */
   --font-display: 'Doto', 'Space Grotesk', sans-serif;
-  --font-heading: 'Space Grotesk', sans-serif;
-  --font-body: 'Space Grotesk', sans-serif;
+  --font-heading: 'Doto', 'Space Grotesk', sans-serif;
+  --font-body: 'Doto', 'Space Grotesk', sans-serif;
   --font-nd-mono: 'Space Mono', monospace;
 }
 
