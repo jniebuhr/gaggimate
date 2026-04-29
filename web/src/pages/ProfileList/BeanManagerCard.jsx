@@ -4,6 +4,8 @@ import { faArchive } from '@fortawesome/free-solid-svg-icons/faArchive';
 import { faLeaf } from '@fortawesome/free-solid-svg-icons/faLeaf';
 import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faX } from '@fortawesome/free-solid-svg-icons/faX';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 
 export function BeanManagerCard({
   beans,
@@ -18,210 +20,234 @@ export function BeanManagerCard({
   busy,
 }) {
   return (
-    <Card sm={12} lg={5} title='Beans'>
-      <div className='space-y-4'>
-        <div className='grid gap-3 sm:grid-cols-2'>
-          <label className='form-control'>
-            <span className='mb-1 text-xs font-semibold uppercase tracking-[0.2em] opacity-55'>
+    <div className='flex flex-col gap-5'>
+      {/* Bean form */}
+      <div className='nd-card p-4'>
+        <div className='mb-4 font-nd-mono text-[13px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+          {editing ? 'Edit Bean' : 'Add New Bean'}
+        </div>
+        <div className='grid gap-4 sm:grid-cols-2'>
+          <div className='flex flex-col gap-2'>
+            <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
               Coffee Name
-            </span>
+            </label>
             <input
               type='text'
               value={draft.name}
               onInput={e => onDraftChange('name', e.target.value)}
-              className='input input-bordered w-full'
+              className='nd-input'
               placeholder='Colombia Pink Bourbon'
             />
-          </label>
-          <label className='form-control'>
-            <span className='mb-1 text-xs font-semibold uppercase tracking-[0.2em] opacity-55'>
+          </div>
+          <div className='flex flex-col gap-2'>
+            <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
               Roaster
-            </span>
+            </label>
             <input
               type='text'
               value={draft.roaster}
               onInput={e => onDraftChange('roaster', e.target.value)}
-              className='input input-bordered w-full'
+              className='nd-input'
               placeholder='Dak, Sey, Onyx...'
             />
-          </label>
-          <label className='form-control'>
-            <span className='mb-1 text-xs font-semibold uppercase tracking-[0.2em] opacity-55'>
+          </div>
+          <div className='flex flex-col gap-2'>
+            <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
               Roast Level
-            </span>
+            </label>
             <input
               type='text'
               value={draft.roastLevel}
               onInput={e => onDraftChange('roastLevel', e.target.value)}
-              className='input input-bordered w-full'
+              className='nd-input'
               placeholder='Light, Medium...'
             />
-          </label>
-          <label className='form-control'>
-            <span className='mb-1 text-xs font-semibold uppercase tracking-[0.2em] opacity-55'>
+          </div>
+          <div className='flex flex-col gap-2'>
+            <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
               Roast Date
-            </span>
+            </label>
             <input
               type='date'
               value={draft.roastDate || ''}
               onInput={e => onDraftChange('roastDate', e.target.value)}
-              className='input input-bordered w-full'
+              className='nd-input'
             />
-          </label>
-          <label className='form-control'>
-            <span className='mb-1 text-xs font-semibold uppercase tracking-[0.2em] opacity-55'>
+          </div>
+          <div className='flex flex-col gap-2'>
+            <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
               Origin
-            </span>
+            </label>
             <input
               type='text'
               value={draft.origin || ''}
               onInput={e => onDraftChange('origin', e.target.value)}
-              className='input input-bordered w-full'
+              className='nd-input'
               placeholder='Colombia, Ethiopia, Brazil...'
             />
-          </label>
-          <label className='form-control'>
-            <span className='mb-1 text-xs font-semibold uppercase tracking-[0.2em] opacity-55'>
+          </div>
+          <div className='flex flex-col gap-2'>
+            <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
               Process
-            </span>
+            </label>
             <input
               type='text'
               value={draft.process || ''}
               onInput={e => onDraftChange('process', e.target.value)}
-              className='input input-bordered w-full'
+              className='nd-input'
               placeholder='Washed, Natural, Honey...'
             />
-          </label>
-          <label className='form-control'>
-            <span className='mb-1 text-xs font-semibold uppercase tracking-[0.2em] opacity-55'>
+          </div>
+          <div className='flex flex-col gap-2'>
+            <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
               Quantity (g)
-            </span>
+            </label>
             <input
               type='number'
               min='0'
               step='0.1'
               value={draft.quantity ?? ''}
               onInput={e => onDraftChange('quantity', e.target.value)}
-              className='input input-bordered w-full'
+              className='nd-input'
               placeholder='250'
             />
-          </label>
-          <label className='form-control sm:col-span-2'>
-            <span className='mb-1 text-xs font-semibold uppercase tracking-[0.2em] opacity-55'>
+          </div>
+          <div className='flex flex-col gap-2 sm:col-span-2'>
+            <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
               Notes
-            </span>
+            </label>
             <textarea
               value={draft.notes}
               onInput={e => onDraftChange('notes', e.target.value)}
-              className='textarea textarea-bordered min-h-24 w-full'
+              className='nd-input'
+              style={{ minHeight: '80px', resize: 'vertical' }}
               placeholder='Tasting notes, brew notes, reminders...'
             />
-          </label>
+          </div>
         </div>
 
-        <div className='flex flex-wrap items-center justify-between gap-2'>
-          <p className='text-sm opacity-65'>
+        <div className='mt-4 flex items-center justify-between gap-4'>
+          <p className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)]'>
             Save beans here so profile selection can ask which coffee you are using.
           </p>
           <div className='flex gap-2'>
             {editing && (
-              <button type='button' onClick={onCancel} className='btn btn-ghost btn-sm'>
+              <button type='button' onClick={onCancel} className='nd-action-btn nd-action-btn--text'>
+                <FontAwesomeIcon icon={faX} />
                 Cancel
               </button>
             )}
-            <button type='button' onClick={onSubmit} className='btn btn-primary btn-sm' disabled={busy}>
+            <button
+              type='button'
+              onClick={onSubmit}
+              className='nd-action-btn nd-action-btn--primary nd-action-btn--text'
+              disabled={busy}
+            >
+              <FontAwesomeIcon icon={faCheck} />
               {editing ? 'Update Bean' : 'Save Bean'}
             </button>
           </div>
         </div>
+      </div>
 
-        <div className='space-y-2'>
-          {beans.length === 0 ? (
-            <div className='rounded-2xl border border-dashed border-base-content/10 bg-base-100/35 px-4 py-5 text-sm opacity-65'>
-              No beans saved yet.
+      {/* Bean list */}
+      <div className='flex flex-col gap-3'>
+        {beans.length === 0 ? (
+          <div className='nd-card p-6 text-center'>
+            <div className='mb-3 text-4xl text-[var(--text-disabled,#666)]'>
+              <FontAwesomeIcon icon={faLeaf} />
             </div>
-          ) : (
-            beans.map(bean => (
-              <div
-                key={bean.id}
-                className='flex flex-col gap-3 rounded-2xl border border-base-content/10 bg-base-100/45 px-4 py-4 shadow-sm'
-              >
-                <div className='flex items-start justify-between gap-3'>
-                  <div className='min-w-0'>
-                    <div className='flex items-center gap-2'>
-                      <span className='inline-flex size-8 items-center justify-center rounded-xl border border-secondary/15 bg-secondary/10 text-secondary'>
-                        <FontAwesomeIcon icon={faLeaf} className='text-sm' />
-                      </span>
-                      <div className='min-w-0'>
-                        <div className='truncate text-sm font-semibold'>{bean.name}</div>
-                        <div className='truncate text-xs opacity-60'>
-                          {[bean.roaster, bean.roastLevel].filter(Boolean).join(' \u2022 ') ||
-                            'Bean details'}
-                        </div>
-                        <div className='mt-1 flex flex-wrap gap-1.5 text-[0.65rem] font-medium text-base-content/55'>
-                          {bean.roastDate && (
-                            <span className='rounded-full border border-base-content/10 px-2 py-1'>
-                              Roast {bean.roastDate}
-                            </span>
-                          )}
-                          {bean.origin && (
-                            <span className='rounded-full border border-base-content/10 px-2 py-1'>
-                              {bean.origin}
-                            </span>
-                          )}
-                          {bean.process && (
-                            <span className='rounded-full border border-base-content/10 px-2 py-1'>
-                              {bean.process}
-                            </span>
-                          )}
-                          {bean.quantity !== null && bean.quantity !== undefined && bean.quantity !== '' && (
-                            <span className='rounded-full border border-base-content/10 px-2 py-1'>
-                              {bean.quantity}g left
-                            </span>
-                          )}
-                          {bean.archived && (
-                            <span className='rounded-full border border-base-content/10 px-2 py-1 text-warning'>
-                              Archived
-                            </span>
-                          )}
-                        </div>
-                      </div>
+            <div className='font-nd-mono text-[14px] text-[var(--text-primary,#e8e8e8)]'>
+              No beans saved yet
+            </div>
+            <div className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-1'>
+              Add your first bean above
+            </div>
+          </div>
+        ) : (
+          beans.map(bean => (
+            <div key={bean.id} className='nd-card p-4'>
+              <div className='flex items-start justify-between gap-4'>
+                <div className='flex items-start gap-3'>
+                  <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--home-surface-muted,rgba(5,5,5,0.95))] text-[var(--text-secondary,#999)]'>
+                    <FontAwesomeIcon icon={faLeaf} />
+                  </div>
+                  <div>
+                    <div className='font-nd-mono text-[14px] text-[var(--text-primary,#e8e8e8)]'>
+                      {bean.name}
+                    </div>
+                    <div className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-1'>
+                      {[bean.roaster, bean.roastLevel].filter(Boolean).join(' • ') || 'Bean details'}
+                    </div>
+                    <div className='mt-2 flex flex-wrap gap-2'>
+                      {bean.roastDate && (
+                        <span className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)]'>
+                          Roast {bean.roastDate}
+                        </span>
+                      )}
+                      {bean.origin && (
+                        <span className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)]'>
+                          {bean.origin}
+                        </span>
+                      )}
+                      {bean.process && (
+                        <span className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)]'>
+                          {bean.process}
+                        </span>
+                      )}
+                      {bean.quantity !== null && bean.quantity !== undefined && bean.quantity !== '' && (
+                        <span className='font-nd-mono text-[11px] text-[var(--color-warning,#d4a843)]'>
+                          {bean.quantity}g left
+                        </span>
+                      )}
+                      {bean.archived && (
+                        <span className='font-nd-mono text-[11px] text-[var(--color-warning,#d4a843)]'>
+                          Archived
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className='flex items-center gap-1'>
-                    <button
-                      type='button'
-                      onClick={() => onArchiveToggle(bean)}
-                      className='btn btn-ghost btn-sm btn-square'
-                      title={bean.archived ? 'Restore bean' : 'Archive bean'}
-                      disabled={busy}
-                    >
-                      <FontAwesomeIcon icon={faArchive} />
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => onEdit(bean)}
-                      className='btn btn-ghost btn-sm btn-square'
-                      disabled={busy}
-                    >
-                      <FontAwesomeIcon icon={faPen} />
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => onDelete(bean.id)}
-                      className='btn btn-ghost btn-sm btn-square text-error'
-                      disabled={busy}
-                    >
-                      <FontAwesomeIcon icon={faTrashCan} />
-                    </button>
-                  </div>
                 </div>
-                {bean.notes && <p className='text-sm leading-relaxed opacity-70'>{bean.notes}</p>}
+                <div className='flex items-center gap-2'>
+                  <button
+                    type='button'
+                    onClick={() => onArchiveToggle(bean)}
+                    className='nd-action-btn'
+                    style={{ width: '36px', height: '36px' }}
+                    title={bean.archived ? 'Restore bean' : 'Archive bean'}
+                    disabled={busy}
+                  >
+                    <FontAwesomeIcon icon={faArchive} />
+                  </button>
+                  <button
+                    type='button'
+                    onClick={() => onEdit(bean)}
+                    className='nd-action-btn'
+                    style={{ width: '36px', height: '36px' }}
+                    disabled={busy}
+                  >
+                    <FontAwesomeIcon icon={faPen} />
+                  </button>
+                  <button
+                    type='button'
+                    onClick={() => onDelete(bean.id)}
+                    className='nd-action-btn'
+                    style={{ width: '36px', height: '36px' }}
+                    disabled={busy}
+                  >
+                    <FontAwesomeIcon icon={faTrashCan} />
+                  </button>
+                </div>
               </div>
-            ))
-          )}
-        </div>
+              {bean.notes && (
+                <p className='mt-3 font-nd-mono text-[13px] text-[var(--text-disabled,#666)] border-t border-[var(--home-border,#222)] pt-3'>
+                  {bean.notes}
+                </p>
+              )}
+            </div>
+          ))
+        )}
       </div>
-    </Card>
+    </div>
   );
 }

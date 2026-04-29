@@ -24,6 +24,7 @@ import { useCallback, useEffect, useRef, useState, useContext, useMemo } from 'p
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import HistoryCard from './HistoryCard.jsx';
+import Card from '../../components/Card.jsx';
 import { parseBinaryShot } from './parseBinaryShot.js';
 import { parseBinaryIndex, indexToShotList } from './parseBinaryIndex.js';
 import { indexedDBService } from '../ShotAnalyzer/services/IndexedDBService.js';
@@ -36,6 +37,8 @@ import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { inferBeanForShot } from '../../utils/beanManager.js';
 
 const connected = computed(() => machine.value.connected);
@@ -393,171 +396,180 @@ export function ShotHistory() {
   }
 
   return (
-    <div className='relative isolate min-w-0'>
-      <div className='mb-6 min-w-0'>
-        <div className='mb-4 flex flex-col gap-3 md:flex-row md:items-center md:gap-2'>
-          <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
-          <span className='text-base-content/70 text-sm'>
-            {totalFilteredItems} of {history.length} shots{' '}
-            {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
-          </span>
-          <div className='flex flex-wrap gap-2'>
-            <button
-              className='btn btn-sm btn-outline'
-              onClick={handleExportAll}
-              disabled={archiveBusy || history.length === 0}
-            >
-              <FontAwesomeIcon icon={faFileExport} />
-              Export History
-            </button>
-            <button
-              className='btn btn-sm btn-outline'
-              onClick={() => importInputRef.current?.click()}
-              disabled={archiveBusy}
-            >
-              <FontAwesomeIcon icon={faFileImport} />
-              Import History
-            </button>
-            <input
-              ref={importInputRef}
-              type='file'
-              accept='.json,application/json'
-              className='hidden'
-              onChange={handleImportFile}
-            />
-          </div>
+    <div className='flex flex-col gap-6'>
+      {/* Header */}
+      <div className='flex items-center justify-between gap-4'>
+        <div>
+          <h1 className='font-nd-mono text-[20px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+            Shot History
+          </h1>
+          <p className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-2'>
+            {totalFilteredItems} of {history.length} shots
+            {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
+          </p>
         </div>
+        <div className='flex items-center gap-2'>
+          <button
+            onClick={handleExportAll}
+            className='nd-action-btn'
+            disabled={archiveBusy || history.length === 0}
+            title='Export History'
+          >
+            <FontAwesomeIcon icon={faFileExport} />
+          </button>
+          <button
+            onClick={() => importInputRef.current?.click()}
+            className='nd-action-btn'
+            disabled={archiveBusy}
+            title='Import History'
+          >
+            <FontAwesomeIcon icon={faFileImport} />
+          </button>
+          <input
+            ref={importInputRef}
+            type='file'
+            accept='.json,application/json'
+            className='hidden'
+            onChange={handleImportFile}
+          />
+        </div>
+      </div>
 
-        <div className='flex flex-col gap-3 xl:flex-row xl:items-center'>
-          <div className='relative max-w-md flex-grow'>
-            <FontAwesomeIcon
-              icon={faSearch}
-              className='text-base-content/50 absolute top-1/2 left-3 -translate-y-1/2 transform text-sm'
-            />
+      {/* Filters */}
+      <Card sm={12} title='Shots'>
+        <div className='flex flex-col gap-4'>
+          {/* Search */}
+          <div className='flex'>
             <input
               type='text'
-              placeholder='Search...'
+              placeholder='Search shots...'
               value={searchTerm}
               onChange={e => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className='input input-bordered w-full pr-4 pl-10 text-sm'
+              className='nd-input flex-1 rounded-r-none border-r-0'
             />
+            <span className='nd-input-unit'>
+              <FontAwesomeIcon icon={faSearch} className='text-[var(--text-disabled,#666)]' />
+            </span>
           </div>
 
-          <div className='flex flex-wrap items-center gap-2'>
-            <FontAwesomeIcon icon={faSort} className='text-base-content/50' />
-            <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={e => {
-                const [newSortBy, newSortOrder] = e.target.value.split('-');
-                setSortBy(newSortBy);
-                setSortOrder(newSortOrder);
-                setCurrentPage(1);
-              }}
-              className='select select-bordered text-sm'
-            >
-              <option value='date-desc'>Newest First</option>
-              <option value='date-asc'>Oldest First</option>
-              <option value='rating-desc'>Highest Rated</option>
-              <option value='rating-asc'>Lowest Rated</option>
-              <option value='profile-asc'>Profile A-Z</option>
-              <option value='profile-desc'>Profile Z-A</option>
-              <option value='bean-asc'>Bean A-Z</option>
-              <option value='bean-desc'>Bean Z-A</option>
-              <option value='duration-desc'>Longest Duration</option>
-              <option value='duration-asc'>Shortest Duration</option>
-              <option value='volume-desc'>Highest Volume</option>
-              <option value='volume-asc'>Lowest Volume</option>
-            </select>
-          </div>
-
-          <div className='flex flex-wrap items-center gap-2'>
-            <FontAwesomeIcon icon={faFilter} className='text-base-content/50' />
-            <select
-              value={filterBy}
-              onChange={e => {
-                setFilterBy(e.target.value);
-                setCurrentPage(1);
-              }}
-              className='select select-bordered text-sm'
-            >
-              <option value='all'>All Shots</option>
-              <option value='device'>Device Only</option>
-              <option value='imported'>Imported Only</option>
-              <option value='rated'>Rated Only</option>
-              <option value='unrated'>Unrated Only</option>
-            </select>
+          {/* Sort + Filter row */}
+          <div className='flex flex-wrap items-center gap-4'>
+            <div className='flex items-center gap-2'>
+              <FontAwesomeIcon icon={faSort} className='text-[var(--text-disabled,#666)]' />
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={e => {
+                  const [newSortBy, newSortOrder] = e.target.value.split('-');
+                  setSortBy(newSortBy);
+                  setSortOrder(newSortOrder);
+                  setCurrentPage(1);
+                }}
+                className='nd-input py-1 pr-8'
+              >
+                <option value='date-desc'>Newest First</option>
+                <option value='date-asc'>Oldest First</option>
+                <option value='rating-desc'>Highest Rated</option>
+                <option value='rating-asc'>Lowest Rated</option>
+                <option value='profile-asc'>Profile A-Z</option>
+                <option value='profile-desc'>Profile Z-A</option>
+                <option value='bean-asc'>Bean A-Z</option>
+                <option value='bean-desc'>Bean Z-A</option>
+                <option value='duration-desc'>Longest Duration</option>
+                <option value='duration-asc'>Shortest Duration</option>
+                <option value='volume-desc'>Highest Volume</option>
+                <option value='volume-asc'>Lowest Volume</option>
+              </select>
+            </div>
+            <div className='flex items-center gap-2'>
+              <FontAwesomeIcon icon={faFilter} className='text-[var(--text-disabled,#666)]' />
+              <select
+                value={filterBy}
+                onChange={e => {
+                  setFilterBy(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className='nd-input py-1 pr-8'
+              >
+                <option value='all'>All Shots</option>
+                <option value='device'>Device Only</option>
+                <option value='imported'>Imported Only</option>
+                <option value='rated'>Rated Only</option>
+                <option value='unrated'>Unrated Only</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
-        {paginatedHistory.map(item => (
-          <HistoryCard
-            key={getHistoryKey(item)}
-            shot={item}
-            onDelete={() => onDelete(item)}
-            onNotesChanged={onNotesChanged}
-            onLoad={() => loadShotDetails(item)}
-          />
-        ))}
-        {totalFilteredItems === 0 && !loading && (
-          <div className='flex flex-row items-center justify-center py-20 lg:col-span-12'>
-            {history.length === 0 ? (
-              <span>No shots available</span>
-            ) : (
-              <span>No shots match your search and filter criteria</span>
-            )}
+        {/* Shot list */}
+        <div className='mt-5 flex flex-col gap-3'>
+          {paginatedHistory.map(item => (
+            <HistoryCard
+              key={getHistoryKey(item)}
+              shot={item}
+              onDelete={() => onDelete(item)}
+              onNotesChanged={onNotesChanged}
+              onLoad={() => loadShotDetails(item)}
+            />
+          ))}
+          {totalFilteredItems === 0 && !loading && (
+            <div className='py-20 text-center'>
+              <span className='font-nd-mono text-[14px] text-[var(--text-disabled,#666)]'>
+                {history.length === 0 ? 'No shots available' : 'No shots match your search and filter criteria'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className='mt-6 flex items-center justify-center gap-2'>
+            <button
+              className='nd-action-btn'
+              style={{ width: '36px', height: '36px' }}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+            >
+              <FontAwesomeIcon icon={faChevronLeft} />
+            </button>
+            <div className='flex items-center gap-1'>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNum}
+                    className={`nd-action-btn nd-action-btn--text ${currentPage === pageNum ? '' : ''}`}
+                    style={{ width: '36px', height: '36px', minWidth: 'unset' }}
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              className='nd-action-btn'
+              style={{ width: '36px', height: '36px' }}
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+            >
+              <FontAwesomeIcon icon={faChevronRight} />
+            </button>
           </div>
         )}
-      </div>
-
-      {totalPages > 1 && (
-        <div className='mt-6 flex items-center justify-center gap-2'>
-          <button
-            className='btn btn-sm btn-outline'
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
-          >
-            Previous
-          </button>
-
-          <div className='flex items-center gap-1'>
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-
-              return (
-                <button
-                  key={pageNum}
-                  className={`btn btn-sm ${currentPage === pageNum ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setCurrentPage(pageNum)}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            className='btn btn-sm btn-outline'
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
-          >
-            Next
-          </button>
-        </div>
-      )}
+      </Card>
     </div>
   );
 }

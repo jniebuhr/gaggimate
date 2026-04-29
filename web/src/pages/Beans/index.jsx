@@ -14,6 +14,8 @@ import {
   saveBean,
 } from '../../utils/beanManager.js';
 import { BeanManagerCard } from '../ProfileList/BeanManagerCard.jsx';
+import Card from '../../components/Card.jsx';
+import { Spinner } from '../../components/Spinner.jsx';
 
 const EMPTY_BEAN_DRAFT = {
   name: '',
@@ -193,32 +195,43 @@ export function BeansPage() {
     [apiService, loadBeans],
   );
 
+  if (busy && beans.length === 0) {
+    return (
+      <div className='flex w-full flex-row items-center justify-center py-16'>
+        <Spinner size={8} />
+      </div>
+    );
+  }
+
   return (
-    <>
-      <div className='mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+    <div className='flex flex-col gap-6'>
+      {/* Header */}
+      <div className='flex items-center justify-between gap-4'>
         <div>
-          <div className='mb-2 inline-flex items-center gap-2 rounded-full border border-secondary/15 bg-secondary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-secondary'>
-            <FontAwesomeIcon icon={faLeaf} />
+          <h1 className='font-nd-mono text-[20px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
             Bean Library
-          </div>
-          <h1 className='text-2xl font-bold sm:text-3xl'>Beans</h1>
-          <p className='mt-2 max-w-2xl text-sm leading-relaxed text-base-content/70'>
-            Beans are now stored on the machine, so the same library is available from any device
-            that opens GaggiMate. Track remaining quantity, archive finished bags, and export a
-            backup when you want a copy offline.
+          </h1>
+          <p className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-2 max-w-xl'>
+            Beans are stored on the machine, so the same library is available from any device.
+            Track remaining quantity, archive finished bags, and export a backup.
           </p>
         </div>
-        <div className='flex flex-wrap items-center justify-end gap-2'>
-          <div className='rounded-full border border-base-content/10 bg-base-100/45 px-4 py-2 text-sm font-medium text-base-content/70'>
-            {totalBeansLabel}
-          </div>
-          <button className='btn btn-sm btn-outline' onClick={onExport} disabled={busy || beans.length === 0}>
+        <div className='flex items-center gap-2'>
+          <button
+            className='nd-action-btn'
+            onClick={onExport}
+            disabled={busy || beans.length === 0}
+            title='Export Beans'
+          >
             <FontAwesomeIcon icon={faFileExport} />
-            Export Beans
           </button>
-          <button className='btn btn-sm btn-outline' onClick={() => importInputRef.current?.click()} disabled={busy}>
+          <button
+            className='nd-action-btn'
+            onClick={() => importInputRef.current?.click()}
+            disabled={busy}
+            title='Import Beans'
+          >
             <FontAwesomeIcon icon={faFileImport} />
-            Import Beans
           </button>
           <input
             ref={importInputRef}
@@ -230,39 +243,43 @@ export function BeansPage() {
         </div>
       </div>
 
-      <div className='mb-4 flex flex-wrap items-center gap-2'>
-        <button
-          type='button'
-          className={`btn btn-sm ${showArchived ? 'btn-outline' : 'btn-primary'}`}
-          onClick={() => setShowArchived(false)}
-        >
-          Active Beans
-        </button>
-        <button
-          type='button'
-          className={`btn btn-sm ${showArchived ? 'btn-primary' : 'btn-outline'}`}
-          onClick={() => setShowArchived(true)}
-        >
-          All Beans
-        </button>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
-        <div className='lg:col-span-12'>
-          <BeanManagerCard
-            beans={visibleBeans}
-            draft={beanDraft}
-            editing={!!editingBeanId}
-            onDraftChange={onBeanDraftChange}
-            onSubmit={onBeanSubmit}
-            onEdit={onBeanEdit}
-            onDelete={onBeanDelete}
-            onArchiveToggle={onBeanArchiveToggle}
-            onCancel={resetBeanDraft}
-            busy={busy}
-          />
+      {/* Tabs + count */}
+      <Card sm={12} title='Beans'>
+        <div className='flex items-center justify-between gap-4 mb-5'>
+          <div className='flex gap-2'>
+            <button
+              type='button'
+              className={`nd-segmented-btn ${!showArchived ? 'nd-segmented-btn--active' : ''}`}
+              onClick={() => setShowArchived(false)}
+            >
+              Active
+            </button>
+            <button
+              type='button'
+              className={`nd-segmented-btn ${showArchived ? 'nd-segmented-btn--active' : ''}`}
+              onClick={() => setShowArchived(true)}
+            >
+              All
+            </button>
+          </div>
+          <span className='font-nd-mono text-[14px] text-[var(--text-disabled,#666)]'>
+            {totalBeansLabel}
+          </span>
         </div>
-      </div>
-    </>
+
+        <BeanManagerCard
+          beans={visibleBeans}
+          draft={beanDraft}
+          editing={!!editingBeanId}
+          onDraftChange={onBeanDraftChange}
+          onSubmit={onBeanSubmit}
+          onEdit={onBeanEdit}
+          onDelete={onBeanDelete}
+          onArchiveToggle={onBeanArchiveToggle}
+          onCancel={resetBeanDraft}
+          busy={busy}
+        />
+      </Card>
+    </div>
   );
 }

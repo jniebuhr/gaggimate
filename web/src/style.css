@@ -1715,6 +1715,15 @@ html[data-theme='crisp'] {
   border-color: #c4161e;
 }
 
+.nd-action-btn--text {
+  width: auto;
+  height: auto;
+  border-radius: 6px;
+  padding: 10px 16px;
+  min-width: unset;
+  min-height: unset;
+}
+
 /* Nothing theme chart overrides - only active when nothing theme is selected */
 html[data-theme='nothing'] canvas {
   filter: saturate(0.85);
@@ -1762,3 +1771,101 @@ html[data-theme='nothing'] .chartjs-tooltip {
   font-size: 16px;
 }
 
+/* Input unit suffix */
+.nd-input-unit {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  background: var(--home-surface-strong, rgba(0, 0, 0, 0.99));
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.08));
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 13px;
+  color: var(--text-secondary, #999);
+  white-space: nowrap;
+}
+
+.nd-input-unit--btn {
+  cursor: pointer;
+  background: var(--home-surface-muted, rgba(5, 5, 5, 0.95));
+  transition: all 150ms ease;
+}
+
+.nd-input-unit--btn:hover {
+  color: var(--text-primary, #e8e8e8);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Toggle switch */
+.nd-toggle {
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--home-surface-muted, rgba(5, 5, 5, 0.95));
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.08));
+  cursor: pointer;
+  position: relative;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+.nd-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.nd-toggle--active {
+  background: var(--color-primary, #d71921);
+  border-color: var(--color-primary, #d71921);
+}
+
+.nd-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-secondary, #999);
+  transition: all 150ms ease;
+}
+
+.nd-toggle--active .nd-toggle-thumb {
+  left: 23px;
+  background: white;
+}
+
+/* Day of week buttons */
+.nd-day-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--home-surface-muted, rgba(5, 5, 5, 0.95));
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.08));
+  color: var(--text-secondary, #999);
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.nd-day-btn:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--text-primary, #e8e8e8);
+}
+
+.nd-day-btn--active {
+  background: var(--color-primary, #d71921);
+  border-color: var(--color-primary, #d71921);
+  color: white;
+}
+
+.nd-day-btn--active:hover {
+  background: #c4161e;
+  border-color: #c4161e;
+}
+
+.nd-day-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

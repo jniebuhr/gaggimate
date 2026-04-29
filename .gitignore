@@ -13,3 +13,6 @@ src/version.h
 src/display/ui/default/lvgl/project.info
 bean-whisperer/
 .worktrees/
+.playwright-mcp
+playwright/
+output/

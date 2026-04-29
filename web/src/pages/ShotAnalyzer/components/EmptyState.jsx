@@ -40,15 +40,17 @@ export function EmptyState({ loading }) {
     <div className='flex min-h-[60vh] items-start justify-center pb-8'>
       <div className='w-full space-y-6 text-center'>
         {/* Info Box */}
-        <div className='bg-base-200/60 border-base-content/5 w-full space-y-6 rounded-xl border p-8 text-left shadow-sm'>
-          <div className='border-base-content/10 space-y-2 border-b pb-4 text-center'>
-            <h2 className='text-base-content text-2xl font-bold'>No Shot Loaded</h2>
-            <p className='text-base-content text-sm opacity-70'>
+        <div className='nd-card w-full space-y-6 text-left'>
+          <div className='border-b border-[var(--home-border,#222)] pb-4 text-center'>
+            <h2 className='font-nd-mono text-[18px] text-[var(--text-primary,#e8e8e8)]'>
+              No Shot Loaded
+            </h2>
+            <p className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-2'>
               Import a shot file or select one from your library to start analyzing.
             </p>
           </div>
 
-          <p className='text-base-content border-base-content/10 mb-4 border-b pb-2 text-sm font-bold tracking-wide uppercase'>
+          <p className='font-nd-mono text-[12px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)] border-b border-[var(--home-border,#222)] pb-2'>
             Supported Sources
           </p>
 
@@ -59,34 +61,37 @@ export function EmptyState({ loading }) {
             </div>
 
             <div className='flex-1'>
-              {/* REMOVED HOVER EFFECT */}
-              <h3 className='text-base-content mb-1 text-sm font-bold'>GaggiMate (GM)</h3>
-              <p className='text-base-content text-xs leading-relaxed'>
+              <h3 className='font-nd-mono text-[13px] text-[var(--text-primary,#e8e8e8)] mb-1'>
+                GaggiMate (GM)
+              </h3>
+              <p className='font-nd-mono text-[12px] text-[var(--text-disabled,#666)] leading-relaxed'>
                 Your saved shots and profiles directly from the GaggiMate internal storage.
               </p>
             </div>
           </div>
 
-          {/* Divider - Subtle */}
-          <div className='bg-base-content/5 h-px w-full'></div>
+          {/* Divider */}
+          <div className='h-px w-full bg-[var(--home-border,#222)]' />
 
           {/* VIEW Section */}
           <div className='flex items-start gap-4'>
-            <div className='text-base-content/45 flex h-8 w-10 flex-shrink-0 items-center justify-center'>
+            <div className='text-[var(--text-disabled,#666)] flex h-8 w-10 flex-shrink-0 items-center justify-center'>
               <FontAwesomeIcon icon={faEye} className='text-lg' />
             </div>
 
             <div className='flex-1'>
-              <h3 className='text-base-content mb-1 text-sm font-bold'>Temporary View (VIEW)</h3>
-              <p className='text-base-content text-xs leading-relaxed'>
+              <h3 className='font-nd-mono text-[13px] text-[var(--text-primary,#e8e8e8)] mb-1'>
+                Temporary View (VIEW)
+              </h3>
+              <p className='font-nd-mono text-[12px] text-[var(--text-disabled,#666)] leading-relaxed'>
                 Opens imported external shots and profiles temporarily without saving them to the
                 browser library.
               </p>
             </div>
           </div>
 
-          {/* Divider - Subtle */}
-          <div className='bg-base-content/5 h-px w-full'></div>
+          {/* Divider */}
+          <div className='h-px w-full bg-[var(--home-border,#222)]' />
 
           {/* WEB Section */}
           <div className='flex items-start gap-4'>
@@ -95,35 +100,32 @@ export function EmptyState({ loading }) {
             </div>
 
             <div className='flex-1'>
-              {/* REMOVED HOVER EFFECT */}
-              <h3 className='text-base-content mb-1 text-sm font-bold'>
+              <h3 className='font-nd-mono text-[13px] text-[var(--text-primary,#e8e8e8)] mb-1'>
                 Local Browser Storage (WEB)
               </h3>
-              <div className='text-base-content text-xs leading-relaxed'>
+              <div className='font-nd-mono text-[12px] text-[var(--text-disabled,#666)] leading-relaxed'>
                 Stores imported external shots and profiles locally in this browser on this device.
                 They are not automatically available in other browsers or on other devices.
               </div>
             </div>
           </div>
 
-          {/* Divider - Subtle */}
-          <div className='bg-base-content/5 h-px w-full'></div>
+          {/* Divider */}
+          <div className='h-px w-full bg-[var(--home-border,#222)]' />
 
-          <p className='text-base-content border-base-content/10 mb-4 border-b pb-2 text-sm font-bold tracking-wide uppercase'>
+          <p className='font-nd-mono text-[12px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)] border-b border-[var(--home-border,#222)] pb-2'>
             Import Guidance
           </p>
 
-          <div className='text-base-content text-xs leading-relaxed'>
+          <div className='font-nd-mono text-[12px] text-[var(--text-disabled,#666)] leading-relaxed'>
             <span className='block'>
               Drag and drop files onto the status bar or use the import icons in the shot and
               profile badges.
             </span>
             <span className='mt-1 block'>
               Use the status bar toggle to switch between{' '}
-              <span className='text-base-content font-bold'>View temporarily</span> and{' '}
-              <span className='font-bold' style={{ color: analyzerUiColors.sourceBadgeWebText }}>
-                Save to Browser
-              </span>{' '}
+              <span className='font-nd-mono text-[var(--text-primary,#e8e8e8)]'>View temporarily</span> and{' '}
+              <span className='text-[var(--color-warning,#d4a843)]'>Save to Browser</span>{' '}
               before importing.
             </span>
             <span className='mt-1 block'>Bulk upload and download are supported.</span>
