@@ -742,7 +742,7 @@ html[data-theme='nothing'] {
   --font-display: 'Doto', 'Space Grotesk', sans-serif;
   --font-heading: 'Doto', 'Space Grotesk', sans-serif;
   --font-body: 'Doto', 'Space Grotesk', sans-serif;
-  --font-nd-mono: 'Space Mono', monospace;
+  --font-nd-mono: 'Doto', monospace;
 }
 
 html[data-theme='crisp'] {
