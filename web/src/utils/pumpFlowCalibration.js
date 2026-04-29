@@ -26,12 +26,29 @@ export function analyze(samples, targetPressure) {
   }
   const actualFlow = volume / time;
   const estimatedFlow = pumped / time;
-  if (!Number.isFinite(actualFlow) || !(estimatedFlow > 0)) {
+  // Reject zero/negative actualFlow too — without a paired Bluetooth scale every
+  // sample's `v` decodes to 0, which would silently produce factor=0 and write
+  // "0.000,0.000" back to the machine.
+  if (
+    !Number.isFinite(actualFlow) ||
+    actualFlow <= 0 ||
+    !Number.isFinite(estimatedFlow) ||
+    estimatedFlow <= 0
+  ) {
     throw new Error(
-      `Invalid flow data for tp=${targetPressure} bar (estimatedFlow=${estimatedFlow}, actualFlow=${actualFlow}). The shot may not have produced any measurable output.`,
+      `Invalid flow data for tp=${targetPressure} bar (estimatedFlow=${estimatedFlow}, actualFlow=${actualFlow}). Did the scale see any weight increase during the shot?`,
     );
   }
-  return { volume, time, actualFlow, estimatedFlow, factor: actualFlow / estimatedFlow };
+  const factor = actualFlow / estimatedFlow;
+  // Plausibility bound: a real model mismatch sits close to 1; anything outside
+  // [0.5, 2.0] usually means the user couldn't hold the target pressure during
+  // the Measure phase (valve too open / not open enough).
+  if (factor < 0.5 || factor > 2.0) {
+    throw new Error(
+      `Calibration factor for tp=${targetPressure} bar is out of plausible range (${factor.toFixed(3)}). Did pressure actually reach ${targetPressure} bar during the Measure phase?`,
+    );
+  }
+  return { volume, time, actualFlow, estimatedFlow, factor };
 }
 
 export function parseCoeffs(raw) {

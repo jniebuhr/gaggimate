@@ -49,11 +49,26 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
   // awaiting profile-restore / profile-delete requests, since the second run
   // would clobber statusListenerRef and interleave WS calls.
   const inFlightRef = useRef(false);
+  // Tracks the safety setTimeout and the pending Promise reject inside
+  // waitForShotEnd so detachStatusListener can clear the timer and unblock an
+  // awaiting start() instead of leaking a stale 5-min reject that fires into a
+  // future run's state.
+  const safetyIdRef = useRef(null);
+  const waitRejectRef = useRef(null);
 
   const detachStatusListener = useCallback(() => {
     if (statusListenerRef.current !== null) {
       apiService.off('evt:status', statusListenerRef.current);
       statusListenerRef.current = null;
+    }
+    if (safetyIdRef.current !== null) {
+      clearTimeout(safetyIdRef.current);
+      safetyIdRef.current = null;
+    }
+    if (waitRejectRef.current !== null) {
+      const reject = waitRejectRef.current;
+      waitRejectRef.current = null;
+      reject(new Error('Calibration cancelled.'));
     }
   }, [apiService]);
 
@@ -77,7 +92,14 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
     () =>
       new Promise((resolve, reject) => {
         let sawActive = false;
-        const safetyId = setTimeout(() => {
+        // The refs let detachStatusListener cancel cleanly: it clears the
+        // safety timer and rejects this promise so an awaiting start()
+        // unblocks instead of hanging until the 5-min timeout.
+        waitRejectRef.current = reject;
+        safetyIdRef.current = setTimeout(() => {
+          // Mark as settled before detaching so detach doesn't double-reject.
+          safetyIdRef.current = null;
+          waitRejectRef.current = null;
           detachStatusListener();
           reject(new Error('Timeout waiting for shot to finish (5min).'));
         }, SHOT_END_TIMEOUT_MS);
@@ -85,7 +107,13 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
           const active = m.process?.a === 1;
           if (active) sawActive = true;
           if (sawActive && !active) {
-            clearTimeout(safetyId);
+            // Mark as settled before detaching so detach doesn't reject our
+            // already-resolved promise.
+            if (safetyIdRef.current !== null) {
+              clearTimeout(safetyIdRef.current);
+              safetyIdRef.current = null;
+            }
+            waitRejectRef.current = null;
             detachStatusListener();
             resolve();
           }

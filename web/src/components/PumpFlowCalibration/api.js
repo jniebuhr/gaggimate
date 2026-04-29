@@ -6,7 +6,19 @@ import { parseBinaryShot } from '../../pages/ShotHistory/parseBinaryShot.js';
 import { SLOG_FETCH_DELAY_MS, SLOG_FETCH_RETRIES } from './constants.js';
 
 const SHOT_FLAG_DELETED = 0x02;
-const SLOG_HEADER_MIN = 128; // v4 header size; firmware writes header on flush.
+const SLOG_HEADER_V4 = 128;
+const SLOG_HEADER_V5 = 512;
+
+// A `.slog` is ready once the firmware has flushed both the header AND at
+// least one sample byte past it. The header size depends on the version byte
+// (offset 4): v≤4 = 128 B, v≥5 = 512 B. The previous fixed 128 B check would
+// have accepted an empty (header-only) v5 file and parsed it as 0 samples.
+function isSlogReady(buf) {
+  if (buf.byteLength < 16) return false;
+  const version = new DataView(buf).getUint8(4);
+  const headerSize = version <= 4 ? SLOG_HEADER_V4 : SLOG_HEADER_V5;
+  return buf.byteLength > headerSize;
+}
 
 export async function fetchShotIndex() {
   const r = await fetch('/api/history/index.bin', { cache: 'no-store' });
@@ -25,7 +37,7 @@ async function fetchShotReady(id, onWait) {
     const r = await fetch(`/api/history/${padded}.slog`, { cache: 'no-store' });
     if (r.ok) {
       const buf = await r.arrayBuffer();
-      if (buf.byteLength >= SLOG_HEADER_MIN) return buf;
+      if (isSlogReady(buf)) return buf;
     } else if (r.status !== 404) {
       throw new Error(`GET slog ${r.status}`);
     }
