@@ -309,7 +309,7 @@ export default function ProcessControls({ brew, mode }) {
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
   const grind = mode === 4;
-  const [, setIsFlushing] = useState(false);
+  const [isFlushing, setIsFlushing] = useState(false);
   const {
     currentFlow,
     currentPressure,
@@ -395,8 +395,8 @@ export default function ProcessControls({ brew, mode }) {
               onClick={() => {
                 try {
                   api.send({ tp: 'req:change-mode', mode: idx });
-                } catch (e) {
-                  // ignore
+                } catch (err) {
+                  console.error('Failed to change mode:', err);
                 }
               }}
               title={subtitles[idx]}

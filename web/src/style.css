@@ -1442,6 +1442,15 @@ html[data-theme='nothing'] .nd-card {
   border-radius: 12px;
 }
 
+html[data-theme='nothing'] .nd-card-header {
+  border-bottom: 1px solid var(--home-border, rgba(255, 255, 255, 0.06));
+  padding: 1rem 1.25rem;
+}
+
+html[data-theme='nothing'] .nd-card-body {
+  padding: 1.25rem 1.5rem;
+}
+
 html[data-theme='nothing'] .nd-stat {
   background: var(--home-surface-strong, rgba(0, 0, 0, 0.99));
   border: 1px solid var(--home-border, rgba(255, 255, 255, 0.06));
@@ -1468,6 +1477,10 @@ html[data-theme='nothing'] .nd-stat-value {
   font-size: 14px;
   font-weight: 700;
   color: var(--text-primary, #e8e8e8);
+}
+
+html[data-theme='nothing'] .nd-stat-value--accent {
+  color: var(--color-primary, #d71921);
 }
 
 /* Ring gauge component */
