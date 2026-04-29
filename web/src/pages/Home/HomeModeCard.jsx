@@ -85,7 +85,7 @@ function ProfilePopover({ profiles, selectedProfileId, onSelect, onClose, loadin
           [{error.toUpperCase()}]
         </div>
       ) : (
-        <div className='space-y-1'>
+        <div className='space-y-1 overflow-y-auto' style={{ maxHeight: '240px' }}>
           {profiles.map(profile => (
             <button
               key={profile.id}
@@ -139,7 +139,7 @@ function BeanPopover({ beans, activeBean, onSelect, onClose, loading, error }) {
           [{error.toUpperCase()}]
         </div>
       ) : (
-        <div className='space-y-1'>
+        <div className='space-y-1 overflow-y-auto' style={{ maxHeight: '240px' }}>
           {beans.map(bean => (
             <button
               key={bean.name}
