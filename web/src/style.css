@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;700&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
 @import 'tailwindcss';
 @plugin 'daisyui';
 
@@ -682,6 +683,66 @@ html[data-theme='stealth'] {
   );
   --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 14%, transparent);
   --statistics-summary-shadow: rgba(0, 0, 0, 0.22);
+}
+
+html[data-theme='nothing'] {
+  /* Base surfaces - OLED black to #111 */
+  --color-base-100: #000000;
+  --color-base-200: #030303;
+  --color-base-300: #070707;
+  --color-base-content: #e8e8e8;
+
+  /* Brand red accent - Nothing's signature color */
+  --color-primary: #d71921;
+  --color-primary-content: #ffffff;
+  --color-accent: #d71921;
+  --color-accent-content: #ffffff;
+
+  /* Semantic */
+  --color-secondary: #333333;
+  --color-secondary-content: #e8e8e8;
+  --color-neutral: #1a1a1a;
+  --color-neutral-content: #999999;
+  --color-info: #6699cc;
+  --color-info-content: #ffffff;
+  --color-success: #7cb876;
+  --color-success-content: #ffffff;
+  --color-warning: #d4a843;
+  --color-warning-content: #000000;
+  --color-error: #d71921;
+  --color-error-content: #ffffff;
+
+  /* Typography */
+  --text-display: #ffffff;
+  --text-primary: #e8e8e8;
+  --text-secondary: #999999;
+  --text-disabled: #666666;
+
+  /* Custom properties for home page rings */
+  --home-ring-brew: #d71921;
+  --home-ring-standby: #333333;
+  --home-ring-steam: #d4a843;
+  --home-ring-water: #6699cc;
+  --home-ring-grind: #7cb876;
+  --home-ring-idle: rgba(255, 255, 255, 0.12);
+  --home-ring-track: rgba(255, 255, 255, 0.06);
+
+  /* Custom properties for spacing system */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Fonts */
+  --font-display: 'Doto', 'Space Grotesk', sans-serif;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Space Grotesk', sans-serif;
+  --font-nd-mono: 'Space Mono', monospace;
 }
 
 html[data-theme='crisp'] {
@@ -1371,5 +1432,292 @@ html[data-theme='crisp'] {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: oklch(var(--color-base-200));
+}
+
+/* === NOTHING-DESIGN COMPONENT CLASSES === */
+
+html[data-theme='nothing'] .nd-card {
+  background: var(--home-surface, linear-gradient(180deg, rgba(0, 0, 0, 0.98), rgba(2, 2, 2, 0.98)));
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.06));
+  border-radius: 12px;
+}
+
+html[data-theme='nothing'] .nd-stat {
+  background: var(--home-surface-strong, rgba(0, 0, 0, 0.99));
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.06));
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  transition: border-color 150ms ease;
+}
+
+html[data-theme='nothing'] .nd-stat:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+html[data-theme='nothing'] .nd-stat-label {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary, #999);
+  margin-bottom: 4px;
+}
+
+html[data-theme='nothing'] .nd-stat-value {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #e8e8e8);
+}
+
+/* Ring gauge component */
+html[data-theme='nothing'] .nd-ring {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--ring-background, var(--home-ring-track, rgba(255, 255, 255, 0.06)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-theme='nothing'] .nd-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 210deg,
+    var(--color-primary, #d71921) 0%,
+    var(--color-primary, #d71921) calc(var(--ring-progress, 0%) * 1deg),
+    transparent calc(var(--ring-progress, 0%) * 1deg)
+  );
+  mask: radial-gradient(circle at 50% 50%, transparent 58%, black 59%, black 60%, transparent 61%);
+  -webkit-mask: radial-gradient(circle at 50% 50%, transparent 58%, black 59%, black 60%, transparent 61%);
+}
+
+html[data-theme='nothing'] .nd-ring-inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+}
+
+html[data-theme='nothing'] .nd-ring-temp {
+  font-family: var(--font-display, 'Doto', sans-serif);
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--text-display, #ffffff);
+  line-height: 1;
+}
+
+html[data-theme='nothing'] .nd-ring-temp-unit {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 12px;
+  color: var(--text-secondary, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+
+html[data-theme='nothing'] .nd-ring-target {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 11px;
+  color: var(--text-disabled, #666);
+  margin-top: 4px;
+}
+
+/* Segmented control */
+html[data-theme='nothing'] .nd-segmented {
+  display: flex;
+  gap: 2px;
+  background: var(--home-surface-muted, rgba(5, 5, 5, 0.95));
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.06));
+  border-radius: 8px;
+  padding: 3px;
+}
+
+html[data-theme='nothing'] .nd-segmented-btn {
+  flex: 1;
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary, #999);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+html[data-theme='nothing'] .nd-segmented-btn:hover {
+  color: var(--text-primary, #e8e8e8);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme='nothing'] .nd-segmented-btn--active {
+  color: var(--text-display, #ffffff);
+  background: var(--color-primary, #d71921);
+}
+
+html[data-theme='nothing'] .nd-segmented-btn--active:hover {
+  background: #c4161e;
+}
+
+/* Status dot */
+html[data-theme='nothing'] .nd-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-disabled, #666);
+}
+
+html[data-theme='nothing'] .nd-status-dot--online {
+  background: var(--color-success, #7cb876);
+  box-shadow: 0 0 6px var(--color-success, #7cb876);
+}
+
+/* Popover */
+html[data-theme='nothing'] .nd-popover-btn {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 11px;
+  color: var(--text-secondary, #999);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+html[data-theme='nothing'] .nd-popover-btn:hover {
+  color: var(--text-primary, #e8e8e8);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme='nothing'] .nd-popover-btn--active {
+  color: var(--text-display, #ffffff);
+  background: rgba(215, 25, 33, 0.15);
+  border-color: var(--color-primary, #d71921);
+}
+
+html[data-theme='nothing'] .nd-popover-close {
+  color: var(--text-disabled, #666);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 150ms ease;
+}
+
+html[data-theme='nothing'] .nd-popover-close:hover {
+  color: var(--text-primary, #e8e8e8);
+}
+
+/* Stepper */
+html[data-theme='nothing'] .nd-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+html[data-theme='nothing'] .nd-stepper-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--home-surface-muted, rgba(5, 5, 5, 0.95));
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #e8e8e8);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+html[data-theme='nothing'] .nd-stepper-btn:hover {
+  border-color: var(--color-primary, #d71921);
+  color: var(--color-primary, #d71921);
+}
+
+html[data-theme='nothing'] .nd-stepper-value {
+  font-family: var(--font-display, 'Doto', sans-serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-display, #ffffff);
+  min-width: 100px;
+  text-align: center;
+}
+
+/* Shortcut link */
+html[data-theme='nothing'] .nd-shortcut {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 11px;
+  color: var(--text-secondary, #999);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+html[data-theme='nothing'] .nd-shortcut:hover {
+  color: var(--color-primary, #d71921);
+}
+
+/* Action buttons */
+html[data-theme='nothing'] .nd-action-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--home-surface-muted, rgba(5, 5, 5, 0.95));
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #e8e8e8);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+}
+
+html[data-theme='nothing'] .nd-action-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme='nothing'] .nd-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+html[data-theme='nothing'] .nd-action-btn--primary {
+  background: var(--color-primary, #d71921);
+  border-color: var(--color-primary, #d71921);
+  color: white;
+}
+
+html[data-theme='nothing'] .nd-action-btn--primary:hover:not(:disabled) {
+  background: #c4161e;
+  border-color: #c4161e;
+}
+
+/* Nothing theme chart overrides */
+html[data-theme='nothing'] canvas {
+  filter: saturate(0.85);
+}
+
+html[data-theme='nothing'] .chartjs-legend {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace) !important;
+}
+
+html[data-theme='nothing'] .chartjs-legend li {
+  color: var(--text-secondary, #999) !important;
+}
+
+html[data-theme='nothing'] .chartjs-tooltip {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace) !important;
+  background: var(--home-surface-strong, rgba(0, 0, 0, 0.99)) !important;
+  border: 1px solid var(--home-border, rgba(255, 255, 255, 0.08)) !important;
+  border-radius: 8px !important;
 }
 

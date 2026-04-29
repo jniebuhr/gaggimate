@@ -2,23 +2,18 @@ import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useContext, useMemo, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
-import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
-import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
-import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { GrindTargetBar } from '../../components/GrindTargetBar.jsx';
 import { useProfileData } from '../../hooks/useProfileData.js';
 import { useGrindSettings } from '../../hooks/useGrindSettings.js';
 import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlay, faPause, faCheck, faPlus, faMinus, faTint } from '@fortawesome/free-solid-svg-icons';
 
 const status = computed(() => machine.value.status);
 
-const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
+const MODE_LABELS = ['STANDBY', 'BREW', 'STEAM', 'WATER', 'GRIND'];
 const MODE_SUBTITLES = {
   0: 'System idle',
   1: 'Ready to extract',
@@ -97,18 +92,12 @@ function resolveActivePhaseIndex(processInfo, phaseSegments) {
   return ratioIndex >= 0 ? ratioIndex : 0;
 }
 
-function buildRingBackground(fillStops) {
-  return [
-    'radial-gradient(circle at 50% 50%, transparent 58%, rgba(255, 255, 255, 0.05) 58%, rgba(255, 255, 255, 0.05) 59%, transparent 60%)',
-    `conic-gradient(from 210deg, ${fillStops})`,
-  ].join(', ');
-}
-
 function buildSolidRingBackground(progressPercent, fillColorVar) {
   const progress = clampPercent(progressPercent) * (300 / 360);
-  return buildRingBackground(
-    `${fillColorVar} 0%, ${fillColorVar} ${progress}%, var(--home-ring-track) ${progress}%, var(--home-ring-track) 100%`
-  );
+  return [
+    'radial-gradient(circle at 50% 50%, transparent 58%, rgba(255,255,255,0.03) 58%, rgba(255,255,255,0.03) 59%, transparent 60%)',
+    `conic-gradient(from 210deg, ${fillColorVar} 0%, ${fillColorVar} ${progress}%, var(--home-ring-track, #222) ${progress}%, var(--home-ring-track, #222) 100%)`,
+  ].join(', ');
 }
 
 function buildSegmentedRingBackground(phaseSegments, activeIndex, inPhaseProgress, fillColorVar) {
@@ -123,20 +112,23 @@ function buildSegmentedRingBackground(phaseSegments, activeIndex, inPhaseProgres
       index < activeIndex ? 1 : index === activeIndex ? Math.max(0, Math.min(1, inPhaseProgress)) : 0;
     const fillEnd = startPercent + spanPercent * segmentProgress;
 
-    stops.push(`var(--home-ring-track) ${startPercent}%`);
+    stops.push(`var(--home-ring-track, #222) ${startPercent}%`);
     if (segmentProgress > 0) {
       stops.push(`${fillColorVar} ${startPercent}%`);
       stops.push(`${fillColorVar} ${fillEnd}%`);
     }
-    stops.push(`var(--home-ring-track) ${fillEnd}%`);
-    stops.push(`var(--home-ring-track) ${endPercent}%`);
+    stops.push(`var(--home-ring-track, #222) ${fillEnd}%`);
+    stops.push(`var(--home-ring-track, #222) ${endPercent}%`);
   });
 
   if (!stops.length) {
-    stops.push('var(--home-ring-track) 0%', 'var(--home-ring-track) 100%');
+    stops.push('var(--home-ring-track, #222) 0%', 'var(--home-ring-track, #222) 100%');
   }
 
-  return buildRingBackground(stops.join(', '));
+  return [
+    'radial-gradient(circle at 50% 50%, transparent 58%, rgba(255,255,255,0.03) 58%, rgba(255,255,255,0.03) 59%, transparent 60%)',
+    `conic-gradient(from 210deg, ${stops.join(', ')})`,
+  ].join(', ');
 }
 
 function getRingVisual({
@@ -151,7 +143,7 @@ function getRingVisual({
 }) {
   if (finished) {
     return {
-      background: buildSolidRingBackground(100, 'var(--home-ring-brew-active)'),
+      background: buildSolidRingBackground(100, 'var(--text-display, #fff)'),
       progress: 100,
     };
   }
@@ -177,7 +169,7 @@ function getRingVisual({
           phaseSegments,
           activeIndex,
           inPhaseProgress,
-          'var(--home-ring-brew-active)'
+          'var(--text-display, #fff)'
         ),
         progress,
       };
@@ -185,7 +177,7 @@ function getRingVisual({
 
     const progress = getProgressPercent(processInfo);
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-brew-active)'),
+      background: buildSolidRingBackground(progress, 'var(--text-display, #fff)'),
       progress,
     };
   }
@@ -193,23 +185,7 @@ function getRingVisual({
   if (!active && mode === 1) {
     const progress = getTemperatureProgress(currentTemperature, targetTemperature);
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-brew-heat)'),
-      progress,
-    };
-  }
-
-  if (!active && mode === 2) {
-    const progress = getTemperatureProgress(currentTemperature, targetTemperature);
-    return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-steam)'),
-      progress,
-    };
-  }
-
-  if (!active && mode === 3) {
-    const progress = getTemperatureProgress(currentTemperature, targetTemperature);
-    return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-water)'),
+      background: buildSolidRingBackground(progress, 'var(--home-ring-brew, #d71921)'),
       progress,
     };
   }
@@ -217,14 +193,35 @@ function getRingVisual({
   if (!active && mode === 0) {
     const progress = getTemperatureProgress(currentTemperature, 93);
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-standby-temp)'),
+      background: buildSolidRingBackground(progress, 'var(--home-ring-standby, #333)'),
       progress,
     };
   }
 
+  // STEAM mode — show preheat progress toward steam target (~150°C)
+  if (!active && mode === 2) {
+    const steamTarget = targetTemperature > 120 ? targetTemperature : 150;
+    const progress = getTemperatureProgress(currentTemperature, steamTarget);
+    return {
+      background: buildSolidRingBackground(progress, 'var(--home-ring-steam, #d4a843)'),
+      progress,
+    };
+  }
+
+  // WATER mode — show progress toward water target (~80°C)
+  if (!active && mode === 3) {
+    const waterTarget = targetTemperature > 0 ? targetTemperature : 80;
+    const progress = getTemperatureProgress(currentTemperature, waterTarget);
+    return {
+      background: buildSolidRingBackground(progress, 'var(--home-ring-water, #d71921)'),
+      progress,
+    };
+  }
+
+  // GRIND idle
   return {
-    background: buildSolidRingBackground(mode === 1 ? 18 : 8, 'var(--home-ring-idle)'),
-    progress: mode === 1 ? 18 : 8,
+    background: buildSolidRingBackground(8, 'var(--home-ring-standby, #333)'),
+    progress: 8,
   };
 }
 
@@ -245,66 +242,65 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
 
   if (mode === 2) {
     return {
-      title: 'Steam',
-      subtitle: Math.abs(targetTemperature - currentTemperature) < 5 ? 'Steam is ready' : 'Preheating',
+      title: 'STEAM',
+      subtitle: Math.abs(targetTemperature - currentTemperature) < 5 ? 'Ready' : 'Preheating',
     };
   }
 
   if (mode === 4 && !isGrindAvailable) {
     return {
-      title: 'Grind',
-      subtitle: 'Grind not available',
+      title: 'GRIND',
+      subtitle: 'Not available',
     };
   }
 
   return {
-    title: MODE_LABELS[mode] || 'Standby',
+    title: MODE_LABELS[mode] || 'STANDBY',
     subtitle: MODE_SUBTITLES[mode] || 'Ready',
   };
 }
 
-function MiniActionButton({ disabled = false, icon, label, onClick, tone = 'default' }) {
-  const toneClass =
-    tone === 'primary'
-      ? 'border-primary/45 bg-primary/14 text-primary hover:border-primary hover:bg-primary/22'
-      : 'border-base-300/50 bg-base-100/70 text-base-content/72 hover:border-base-content/15 hover:bg-base-content/6';
-
+function StatRow({ label, value, highlight }) {
   return (
-    <Tooltip content={label}>
-      <button
-        type='button'
-        aria-label={label}
-        disabled={disabled}
-        onClick={onClick}
-        className={`home-mini-action ${toneClass}`}
-      >
-        <FontAwesomeIcon icon={icon} />
-      </button>
-    </Tooltip>
-  );
-}
-
-MiniActionButton.propTypes = {
-  disabled: PropTypes.bool,
-  icon: PropTypes.object.isRequired,
-  label: PropTypes.string.isRequired,
-  onClick: PropTypes.func,
-  tone: PropTypes.oneOf(['default', 'primary']),
-};
-
-function MetricPair({ label, toneClass = 'text-base-content', value }) {
-  return (
-    <div className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-sm'>
-      <span className='text-base-content/58'>{label}</span>
-      <span className={`text-right font-medium ${toneClass}`}>{value}</span>
+    <div className='flex items-center justify-between border-b border-[var(--home-border,#222)] py-3'>
+      <span className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+        {label}
+      </span>
+      <span className={`font-nd-mono text-[13px] font-700 ${highlight ? 'text-[var(--text-primary,#e8e8e8)]' : 'text-[var(--text-secondary,#999)]'}`}>
+        {value}
+      </span>
     </div>
   );
 }
 
-MetricPair.propTypes = {
+StatRow.propTypes = {
   label: PropTypes.string.isRequired,
-  toneClass: PropTypes.string,
   value: PropTypes.string.isRequired,
+  highlight: PropTypes.bool,
+};
+
+// Mini action button component
+function MiniActionButton({ icon, label, onClick, disabled, tone }) {
+  const toneClass = tone === 'primary' ? 'nd-action-btn--primary' : '';
+  return (
+    <button
+      type='button'
+      disabled={disabled}
+      className={`nd-action-btn ${toneClass}`}
+      onClick={onClick}
+      aria-label={label}
+    >
+      <FontAwesomeIcon icon={icon} />
+    </button>
+  );
+}
+
+MiniActionButton.propTypes = {
+  icon: PropTypes.object.isRequired,
+  label: PropTypes.string.isRequired,
+  onClick: PropTypes.func,
+  disabled: PropTypes.bool,
+  tone: PropTypes.string,
 };
 
 export default function ProcessControls({ brew, mode }) {
@@ -360,75 +356,19 @@ export default function ProcessControls({ brew, mode }) {
     isGrindAvailable,
   });
 
-  const primaryButton = useMemo(() => {
-    if (active) {
-      return {
-        icon: faPause,
-        label: 'Pause process',
-        onClick: actions.deactivate,
-      };
-    }
-
-    if (finished) {
-      return {
-        icon: faCheck,
-        label: 'Clear process',
-        onClick: actions.clear,
-      };
-    }
-
-    if (visibility.showActionButtons) {
-      return {
-        icon: faPlay,
-        label: grind ? 'Start grind' : 'Start process',
-        onClick: actions.activate,
-      };
-    }
-
-    return {
-      icon: faPlay,
-      label: 'No action available',
-      onClick: undefined,
-    };
-  }, [active, finished, actions, visibility.showActionButtons, grind]);
-
   const infoRows = useMemo(() => {
     if (grind) {
       return [
-        {
-          label: 'Current Grind',
-          value: `${formatNumber(currentWeight)}g`,
-          toneClass: 'text-lime-400',
-        },
-        {
-          label: 'Target Grind',
-          value: formatTarget(grindTarget, grindTargetVolume, grindTargetDuration),
-          toneClass: 'text-orange-300',
-        },
+        { label: 'Current Grind', value: `${formatNumber(currentWeight)}g`, highlight: false },
+        { label: 'Target Grind', value: formatTarget(grindTarget, grindTargetVolume, grindTargetDuration), highlight: false },
       ];
     }
 
     return [
-      {
-        label: 'Live Data',
-        value: `${formatNumber(currentTemperature)} °C / ${formatNumber(currentFlow)} g/s`,
-        toneClass: 'text-sky-400',
-      },
-      {
-        label: 'Current Pressure',
-        value: `${formatNumber(currentPressure)} bar`,
-        toneClass: 'text-lime-400',
-      },
-      {
-        label: 'Current Flow',
-        value: `${formatNumber(currentFlow)} g/s`,
-        toneClass: 'text-lime-400',
-      },
-      {
-        label: 'Current Weight',
-        value: `${formatNumber(currentWeight)} g`,
-        toneClass: 'text-lime-400',
-      },
+      { label: 'Temperature', value: `${formatNumber(currentTemperature)} °C`, highlight: true },
+      { label: 'Pressure', value: `${formatNumber(currentPressure)} bar`, highlight: false },
+      { label: 'Flow', value: `${formatNumber(currentFlow)} g/s`, highlight: false },
+      { label: 'Weight', value: `${formatNumber(currentWeight)} g`, highlight: false },
     ];
   }, [
     grind,
@@ -442,47 +382,114 @@ export default function ProcessControls({ brew, mode }) {
   ]);
 
   return (
-    <div className='home-process-panel flex min-h-[27rem] flex-col gap-4'>
-      <div className='flex flex-1 flex-col justify-between gap-6'>
-        <div className='flex flex-1 flex-col items-center justify-center gap-5'>
-          <div
-            className='home-process-ring'
-            style={{
-              '--ring-progress': `${ringVisual.progress}%`,
-              '--ring-background': ringVisual.background,
-            }}
-          >
-            <div className='home-process-ring-inner'>
-              <div className='text-3xl font-semibold tracking-tight text-base-content sm:text-4xl'>
-                {displayState.title}
-              </div>
-              <div className='mt-2 text-sm text-base-content/48'>{displayState.subtitle}</div>
-              {(active || finished) && (
-                <div className='mt-4 text-xs uppercase tracking-[0.22em] text-base-content/34'>
-                  {Math.round(active ? ringVisual.progress : progressPercent)}% complete
+    <div className='flex flex-col gap-5'>
+      {/* Mode selector */}
+      <div className='nd-segmented'>
+        {MODE_LABELS.map((label, idx) => {
+          const subtitles = ['', 'Ready', 'Heat', 'Water', 'Grind'];
+          return (
+            <button
+              key={label}
+              type='button'
+              className={`nd-segmented-btn${mode === idx ? ' nd-segmented-btn--active' : ''}`}
+              onClick={() => {
+                try {
+                  api.send({ tp: 'req:change-mode', mode: idx });
+                } catch (e) {
+                  // ignore
+                }
+              }}
+              title={subtitles[idx]}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Main ring + data row */}
+      <div className='flex flex-col gap-5 sm:flex-row sm:items-center'>
+        {/* Ring gauge — hero element */}
+        <div
+          className='nd-ring mx-auto sm:mx-0'
+          style={{
+            '--ring-progress': `${ringVisual.progress}%`,
+            '--ring-background': ringVisual.background,
+            width: 'min(18rem, 60vw)',
+          }}
+        >
+          <div className='nd-ring-inner'>
+            {active || finished ? (
+              <>
+                <div className='nd-ring-temp'>
+                  {Math.round(active ? ringVisual.progress : progressPercent)}%
                 </div>
-              )}
-            </div>
-            <div className='home-process-ring-scale'>
-              <span>0</span>
-              <span>100%</span>
+                <div className='nd-ring-temp-unit'>complete</div>
+                <div className='mt-3 font-nd-mono text-[10px] uppercase tracking-[0.1em] text-[var(--text-secondary,#999)]'>
+                  {displayState.title}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className='nd-ring-temp'>{formatNumber(currentTemperature)}</div>
+                <div className='nd-ring-temp-unit'>°C</div>
+                <div className='nd-ring-target'>
+                  / {formatNumber(targetTemperature)}° target
+                </div>
+                <div className='mt-2 font-nd-mono text-[10px] uppercase tracking-[0.1em] text-[var(--text-disabled,#666)]'>
+                  {displayState.title}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Stats panel */}
+        <div className='min-w-0 flex-1'>
+          <div className='nd-card p-4'>
+            <div className='space-y-0'>
+              {infoRows.map(row => (
+                <StatRow key={row.label} label={row.label} value={row.value} highlight={row.highlight} />
+              ))}
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className='flex items-center justify-center gap-3'>
+      {/* Action buttons row */}
+      {visibility.showActionButtons && (
+        <div className='flex items-center justify-center gap-3'>
+          {!active && !finished && (
             <MiniActionButton
               disabled={!visibility.showGrindTargetControls}
               icon={faMinus}
               label='Lower target'
               onClick={visibility.showGrindTargetControls ? actions.lowerTarget : undefined}
             />
+          )}
+          {active ? (
             <MiniActionButton
-              disabled={!primaryButton.onClick}
-              icon={primaryButton.icon}
-              label={primaryButton.label}
-              onClick={primaryButton.onClick}
+              icon={faPause}
+              label='Pause process'
+              onClick={actions.deactivate}
               tone='primary'
             />
+          ) : finished ? (
+            <MiniActionButton
+              icon={faCheck}
+              label='Clear process'
+              onClick={actions.clear}
+              tone='primary'
+            />
+          ) : (
+            <MiniActionButton
+              icon={faPlay}
+              label={grind ? 'Start grind' : 'Start brew'}
+              onClick={actions.activate}
+              tone='primary'
+            />
+          )}
+          {!active && !finished && (
             <MiniActionButton
               disabled={!(brew && !active && !finished) && !visibility.showGrindTargetControls}
               icon={brew && !active && !finished ? faTint : faPlus}
@@ -495,27 +502,22 @@ export default function ProcessControls({ brew, mode }) {
                     : undefined
               }
             />
-          </div>
+          )}
         </div>
+      )}
 
-        <div className='space-y-4 border-t border-base-300/45 pt-4'>
-          {infoRows.map(row => (
-            <MetricPair key={row.label} label={row.label} value={row.value} toneClass={row.toneClass} />
-          ))}
+      {/* Grind target bar */}
+      {mode === 4 && visibility.showGrindTargetBar && (
+        <div className='pt-2'>
+          <GrindTargetBar
+            grindTarget={grindTarget}
+            grindTargetVolume={grindTargetVolume}
+            grindTargetDuration={grindTargetDuration}
+            volumetricAvailable={volumetricAvailable}
+            onChangeTarget={actions.changeTarget}
+          />
         </div>
-
-        {mode === 4 && visibility.showGrindTargetBar && (
-          <div className='border-t border-base-300/45 pt-4'>
-            <GrindTargetBar
-              grindTarget={grindTarget}
-              grindTargetVolume={grindTargetVolume}
-              grindTargetDuration={grindTargetDuration}
-              volumetricAvailable={volumetricAvailable}
-              onChangeTarget={actions.changeTarget}
-            />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

@@ -504,6 +504,7 @@ export function Settings() {
                 <option value='amoled'>AMOLED</option>
                 <option value='stealth'>Stealth</option>
                 <option value='crisp'>Crisp</option>
+                <option value='nothing'>Nothing</option>
               </select>
             </div>
             <div className='form-control'>
