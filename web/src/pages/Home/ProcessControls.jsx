@@ -157,7 +157,7 @@ function getRingVisual({
           phaseSegments,
           activeIndex,
           inPhaseProgress,
-          'var(--text-display, #fff)'
+          'var(--home-ring-brew-active, #3fa7ff)'
         ),
         progress,
       };
@@ -165,7 +165,7 @@ function getRingVisual({
 
     const progress = getProgressPercent(processInfo);
     return {
-      background: buildSolidRingBackground(progress, 'var(--text-display, #fff)'),
+      background: buildSolidRingBackground(progress, 'var(--home-ring-brew-active, #3fa7ff)'),
       progress,
     };
   }
