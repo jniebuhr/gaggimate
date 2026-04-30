@@ -1557,7 +1557,7 @@ html[data-theme='crisp'] {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary, #999);
+  color: var(--text-display, #fff);
   background: transparent;
   border: none;
   border-radius: 6px;
