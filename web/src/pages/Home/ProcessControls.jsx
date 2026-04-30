@@ -131,7 +131,7 @@ function getRingVisual({
 }) {
   if (finished) {
     return {
-      background: buildSolidRingBackground(100, 'var(--text-display, #fff)'),
+      background: buildSolidRingBackground(100, 'rgba(10, 80, 40, 0.75)'),
       progress: 100,
     };
   }
@@ -157,7 +157,7 @@ function getRingVisual({
           phaseSegments,
           activeIndex,
           inPhaseProgress,
-          'var(--home-ring-brew-active, #3fa7ff)'
+          'rgba(10, 80, 40, 0.75)'
         ),
         progress,
       };
@@ -165,7 +165,7 @@ function getRingVisual({
 
     const progress = getProgressPercent(processInfo);
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-brew-active, #3fa7ff)'),
+      background: buildSolidRingBackground(progress, 'rgba(10, 80, 40, 0.75)'),
       progress,
     };
   }
