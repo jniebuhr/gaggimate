@@ -9,7 +9,7 @@ import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
 import { useAutoSteam } from '../../hooks/useAutoSteam.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay, faPause, faCheck, faPlus, faMinus, faTint } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faPause, faCheck, faPlus, faMinus, faTint, faWind } from '@fortawesome/free-solid-svg-icons';
 import { MODE_LABELS, MODE_SUBTITLES, formatNumber, StatRow } from '../../utils/homeConstants.jsx';
 
 const status = computed(() => machine.value.status);
@@ -483,7 +483,7 @@ export default function ProcessControls({ brew, mode }) {
           )}
           {brew && !active && !finished && (
             <MiniActionButton
-              icon={faTint}
+              icon={faWind}
               label='Toggle auto steam'
               onClick={toggleAutoSteam}
               tone={autoSteamEnabled ? 'primary' : undefined}
