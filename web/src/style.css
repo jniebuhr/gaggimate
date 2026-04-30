@@ -1669,7 +1669,7 @@ html[data-theme='crisp'] {
 .nd-shortcut {
   font-family: var(--font-nd-mono, 'Space Mono', monospace);
   font-size: 11px;
-  color: var(--text-secondary, #999);
+  color: var(--text-display, #fff);
   text-decoration: none;
   transition: color 150ms ease;
 }
