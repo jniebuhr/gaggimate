@@ -1,4 +1,5 @@
 const THEME_STORAGE_KEY = 'gaggimate-daisyui-theme';
+const NOTHING_THEME_VARIANT_KEY = 'gaggimate-nothing-theme';
 const AVAILABLE_THEMES = ['light', 'dark', 'coffee', 'nord', 'amoled', 'stealth', 'crisp', 'nothing'];
 
 export function getStoredTheme() {
@@ -47,6 +48,10 @@ export function getAvailableThemes() {
 export function initializeTheme() {
   const theme = getStoredTheme();
   applyTheme(theme);
+  // If nothing theme is selected, also apply the variant (dark/light)
+  if (theme === 'nothing') {
+    applyNothingThemeVariant();
+  }
   // Also check the stored theme's radio on load
   const radio = document.querySelector(`input.theme-controller[value="${theme}"]`);
   if (radio) {
@@ -54,8 +59,38 @@ export function initializeTheme() {
   }
 }
 
+// Nothing theme variant (dark = 'nothing', light = 'nothing-light')
+export function getNothingThemeVariant() {
+  try {
+    const stored = localStorage.getItem(NOTHING_THEME_VARIANT_KEY);
+    return stored === 'nothing-light' ? 'nothing-light' : 'nothing';
+  } catch {
+    return 'nothing';
+  }
+}
+
+export function setNothingThemeVariant(variant) {
+  try {
+    localStorage.setItem(NOTHING_THEME_VARIANT_KEY, variant === 'nothing-light' ? 'nothing-light' : 'nothing');
+  } catch (error) {
+    console.warn('Failed to set nothing theme variant:', error);
+  }
+}
+
+export function applyNothingThemeVariant() {
+  const theme = getStoredTheme();
+  if (theme === 'nothing') {
+    const variant = getNothingThemeVariant();
+    document.documentElement.setAttribute('data-theme', variant);
+  }
+}
+
 // Simple function to handle theme change from select element
 export function handleThemeChange(event) {
   const theme = event.target.value;
   setStoredTheme(theme);
+  // If switching to nothing, also apply the stored variant
+  if (theme === 'nothing') {
+    applyNothingThemeVariant();
+  }
 }

@@ -7,7 +7,10 @@ const MODE_CONFIG = {
     title: 'Steam',
     subtitle: (tempReady) => (tempReady ? 'Steam is ready' : 'Preheating'),
   },
-  3: { title: 'Water', subtitle: 'Start and open steam valve to pull water' },
+  3: {
+    title: 'Water',
+    subtitle: (tempReady) => (tempReady ? 'Water is ready' : 'Preheating'),
+  },
   4: {
     title: 'Grind',
     subtitle: (isAvailable) => (isAvailable ? 'Select grind target to start' : 'Grind function not available'),
@@ -26,7 +29,7 @@ export const ModeIdleDisplay = ({ mode, tempReady, isGrindAvailable }) => {
   // Compute subtitle - can be static string or function
   const subtitle =
     typeof config.subtitle === 'function'
-      ? config.subtitle(mode === 2 ? tempReady : isGrindAvailable)
+      ? config.subtitle(mode === 2 || mode === 3 ? tempReady : isGrindAvailable)
       : config.subtitle;
 
   return (

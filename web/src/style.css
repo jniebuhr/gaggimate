@@ -277,6 +277,42 @@
   --noise: 0;
 }
 
+/* Nothing White — inverted light counterpart to the OLED-black Nothing theme */
+@plugin "daisyui/theme" {
+  name: 'nothing-light';
+  default: false;
+  prefersdark: false;
+  color-scheme: 'light';
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(99% 0 0);
+  --color-base-300: oklch(97% 0 0);
+  --color-base-content: oklch(15% 0 0);
+  --color-primary: oklch(52% 0.2 15);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(88% 0.02 0);
+  --color-secondary-content: oklch(15% 0 0);
+  --color-accent: oklch(52% 0.2 15);
+  --color-accent-content: oklch(100% 0 0);
+  --color-neutral: oklch(92% 0 0);
+  --color-neutral-content: oklch(40% 0 0);
+  --color-info: oklch(60% 0.12 230);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(58% 0.15 140);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(75% 0.15 85);
+  --color-warning-content: oklch(15% 0 0);
+  --color-error: oklch(52% 0.2 15);
+  --color-error-content: oklch(100% 0 0);
+  --radius-selector: 1rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
 /* Analyzer color mapping (columns + analysis table + shared statistics visuals incl. trends/summary cards):
    - default/nord: light theme
    - dark/coffee/amoled/stealth: dark theme
@@ -726,6 +762,67 @@ html[data-theme='nothing'] {
   --home-ring-grind: #7cb876;
   --home-ring-idle: rgba(255, 255, 255, 0.12);
   --home-ring-track: rgba(255, 255, 255, 0.06);
+
+  /* Custom properties for spacing system */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Fonts */
+  --font-display: 'Doto', 'Space Grotesk', sans-serif;
+  --font-heading: 'Doto', 'Space Grotesk', sans-serif;
+  --font-body: 'Doto', 'Space Grotesk', sans-serif;
+  --font-nd-mono: 'Doto', monospace;
+}
+
+/* Nothing White — inverted light counterpart to the OLED-black Nothing theme */
+html[data-theme='nothing-light'] {
+  /* Base surfaces - pure white */
+  --color-base-100: #ffffff;
+  --color-base-200: #fafafa;
+  --color-base-300: #f5f5f5;
+  --color-base-content: #000000;
+
+  /* Brand red accent - Nothing's signature color (same as dark theme) */
+  --color-primary: #d71921;
+  --color-primary-content: #ffffff;
+  --color-accent: #d71921;
+  --color-accent-content: #ffffff;
+
+  /* Semantic */
+  --color-secondary: #e0e0e0;
+  --color-secondary-content: #1a1a1a;
+  --color-neutral: #f0f0f0;
+  --color-neutral-content: #666666;
+  --color-info: #6699cc;
+  --color-info-content: #ffffff;
+  --color-success: #7cb876;
+  --color-success-content: #ffffff;
+  --color-warning: #d4a843;
+  --color-warning-content: #1a1a1a;
+  --color-error: #d71921;
+  --color-error-content: #ffffff;
+
+  /* Typography — real black for maximum contrast on white */
+  --text-display: #000000;
+  --text-primary: #000000;
+  --text-secondary: #1a1a1a;
+  --text-disabled: #666666;
+
+  /* Custom properties for home page rings */
+  --home-ring-brew: #d71921;
+  --home-ring-standby: #cccccc;
+  --home-ring-steam: #d4a843;
+  --home-ring-water: #6699cc;
+  --home-ring-grind: #7cb876;
+  --home-ring-idle: rgba(0, 0, 0, 0.12);
+  --home-ring-track: rgba(0, 0, 0, 0.06);
 
   /* Custom properties for spacing system */
   --space-1: 0.25rem;
@@ -1371,6 +1468,327 @@ html[data-theme='crisp'] {
   --home-shadow-strong: rgba(15, 23, 42, 0.12);
 }
 
+/* Nothing White — inverted home surfaces for light background */
+html[data-theme='nothing-light'] {
+  --home-surface:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 250, 0.98));
+  --home-surface-strong: rgba(255, 255, 255, 0.98);
+  --home-surface-muted: rgba(250, 250, 250, 0.96);
+  --home-border: rgba(0, 0, 0, 0.1);
+  --home-header-surface:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(252, 252, 252, 0.98));
+  --home-ring-track: rgba(0, 0, 0, 0.08);
+  --home-ring-inner: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(248, 248, 248, 0.97));
+  --home-ring-idle: rgba(0, 0, 0, 0.18);
+  --home-ring-standby-temp: #d4846a;
+  --home-overlay-glow:
+    radial-gradient(circle at top left, rgba(215, 25, 33, 0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(102, 153, 204, 0.06), transparent 30%);
+  --home-shadow-strong: rgba(0, 0, 0, 0.1);
+}
+
+/* Nothing-light — nd-* component inversions for white backgrounds */
+html[data-theme='nothing-light'] .nd-card {
+  background: var(--home-surface-strong, rgba(255, 255, 255, 0.98));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-card-header {
+  border-bottom-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-stat {
+  background: var(--home-surface-strong, rgba(255, 255, 255, 0.98));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-stat:hover {
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme='nothing-light'] .nd-stat-label {
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-stat-value {
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-ring {
+  background: var(--home-ring-track, rgba(0, 0, 0, 0.08));
+}
+
+html[data-theme='nothing-light'] .nd-ring-temp {
+  color: var(--text-display, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-ring-temp-unit {
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-ring-target {
+  color: #000000;
+}
+
+html[data-theme='nothing-light'] .nd-segmented {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-segmented-btn {
+  color: #000000;
+}
+
+html[data-theme='nothing-light'] .nd-segmented-btn:hover {
+  color: #000000;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme='nothing-light'] .nd-segmented-btn--active {
+  color: #000000;
+}
+
+html[data-theme='nothing-light'] .nd-status-dot {
+  background: var(--text-disabled, #999);
+}
+
+html[data-theme='nothing-light'] .nd-status-dot--online {
+  box-shadow: 0 0 6px var(--color-success, #7cb876);
+}
+
+html[data-theme='nothing-light'] .nd-popover-btn {
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-popover-btn:hover {
+  color: var(--text-primary, #1a1a1a);
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme='nothing-light'] .nd-popover-btn--active {
+  color: var(--text-display, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-popover-close {
+  color: var(--text-disabled, #999);
+}
+
+html[data-theme='nothing-light'] .nd-popover-close:hover {
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-stepper-btn {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-stepper-btn:hover {
+  border-color: var(--color-primary, #d71921);
+  color: var(--color-primary, #d71921);
+}
+
+html[data-theme='nothing-light'] .nd-stepper-value {
+  color: var(--text-display, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-shortcut {
+  color: #000000;
+}
+
+html[data-theme='nothing-light'] .nd-action-btn {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-action-btn:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html[data-theme='nothing-light'] .nd-action-btn--primary {
+  color: white;
+}
+
+html[data-theme='nothing-light'] .nd-input {
+  background: var(--home-surface-muted, rgba(255, 255, 255, 0.98));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.12));
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-input::placeholder {
+  color: var(--text-disabled, #999);
+}
+
+html[data-theme='nothing-light'] .nd-input-unit {
+  background: var(--home-surface-strong, rgba(255, 255, 255, 0.99));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.12));
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-input-unit--btn {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-input-unit--btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme='nothing-light'] .nd-toggle {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-toggle:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme='nothing-light'] .nd-toggle-thumb {
+  background: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-day-btn {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-day-btn:hover {
+  border-color: rgba(0, 0, 0, 0.18);
+  color: var(--text-primary, #1a1a1a);
+}
+
+/* Home page surfaces for nothing-light */
+html[data-theme='nothing-light'] .home-dashboard-card {
+  background: var(--home-surface);
+  border-color: var(--home-border);
+}
+
+html[data-theme='nothing-light'] .home-dashboard-card-process {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-base-content) 4%, transparent),
+    0 30px 70px -48px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-dashboard-card-options {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-base-content) 3%, transparent),
+    0 28px 68px -48px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-dashboard-card-chart {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-base-content) 3%, transparent),
+    0 34px 80px -52px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-header-shell {
+  border-color: var(--home-border);
+  background: var(--home-header-surface);
+}
+
+html[data-theme='nothing-light'] .home-header-shell .status-indicator-card {
+  background: var(--home-surface-muted);
+  border-color: var(--home-border);
+}
+
+html[data-theme='nothing-light'] .home-mobile-pill {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+  box-shadow: 0 18px 40px -32px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-info-pill {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+  box-shadow: 0 18px 40px -32px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-process-ring {
+  --ring-background: radial-gradient(circle at 50% 50%, transparent 58%, rgba(0, 0, 0, 0.05) 58%, rgba(0, 0, 0, 0.05) 59%, transparent 60%),
+    conic-gradient(
+      from 210deg,
+      var(--home-ring-idle) 0%,
+      var(--home-ring-idle) var(--ring-progress),
+      var(--home-ring-track) var(--ring-progress),
+      var(--home-ring-track) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-base-content) 4%, transparent),
+    0 24px 54px -30px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-process-ring::before {
+  background:
+    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-base-content) 8%, transparent), transparent 52%),
+    var(--home-ring-inner);
+  border-color: var(--home-border);
+}
+
+html[data-theme='nothing-light'] .home-mini-action {
+  border-color: transparent;
+}
+
+html[data-theme='nothing-light'] .home-mini-action:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+html[data-theme='nothing-light'] .home-mode-chip {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+  color: color-mix(in srgb, var(--color-base-content) 72%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-mode-chip-active {
+  border-color: rgba(215, 25, 33, 0.42);
+  background: color-mix(in srgb, rgba(215, 25, 33, 0.1) 16%, var(--home-surface-strong));
+  color: color-mix(in srgb, var(--color-base-content) 96%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-stepper-button,
+html[data-theme='nothing-light'] .home-pressure-readout {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+  color: color-mix(in srgb, var(--color-base-content) 72%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-stepper-button:hover:not(:disabled) {
+  border-color: rgba(215, 25, 33, 0.4);
+}
+
+html[data-theme='nothing-light'] .home-control-block {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+}
+
+html[data-theme='nothing-light'] .home-control-block-title {
+  background: color-mix(in srgb, var(--home-surface-strong) 90%, var(--color-base-content) 5%);
+  color: color-mix(in srgb, var(--color-base-content) 76%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-process-panel {
+  color: color-mix(in srgb, var(--color-base-content) 96%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-control-block .home-section-label {
+  color: color-mix(in srgb, var(--color-base-content) 44%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-process-ring-scale {
+  color: color-mix(in srgb, var(--color-base-content) 40%, transparent);
+}
+
+html[data-theme='nothing-light'] .nav-drawer-backdrop {
+  background: rgba(255, 255, 255, 0.56);
+}
+
+html[data-theme='nothing-light'] .nd-ring-title--flashing {
+  color: #1a1a1a !important;
+}
+
 .skip-link {
   position: absolute;
   left: 1rem;
@@ -1742,6 +2160,34 @@ html[data-theme='nothing'] .chartjs-tooltip {
   background: var(--home-surface-strong, rgba(0, 0, 0, 0.99)) !important;
   border: 1px solid var(--home-border, rgba(255, 255, 255, 0.08)) !important;
   border-radius: 8px !important;
+}
+
+/* Nothing-light theme chart overrides — light background, dark text, white tooltips */
+html[data-theme='nothing-light'] canvas {
+  filter: saturate(1.05);
+}
+
+html[data-theme='nothing-light'] .chartjs-legend {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace) !important;
+}
+
+html[data-theme='nothing-light'] .chartjs-legend li {
+  color: var(--text-secondary, #666) !important;
+}
+
+html[data-theme='nothing-light'] .chartjs-tooltip {
+  font-family: var(--font-nd-mono, 'Space Mono', monospace) !important;
+  background: var(--home-surface-strong, rgba(255, 255, 255, 0.99)) !important;
+  border: 1px solid var(--home-border, rgba(0, 0, 0, 0.12)) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary, #1a1a1a) !important;
+}
+
+/* Shot History chart phase labels — dark text on light background */
+html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
+  color: var(--analyzer-temp-text, #1a1a1a) !important;
+  backgroundColor: var(--home-surface-muted, rgba(250, 250, 250, 0.96)) !important;
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1)) !important;
 }
 
 /* Input styles */

@@ -31,7 +31,7 @@ function ModeMessage({ mode, tempReady }) {
   const messages = {
     0: { title: 'Standby Mode', subtitle: 'Machine is ready' },
     2: { title: 'Steam Mode', subtitle: tempReady ? 'Steam is ready' : 'Preheating' },
-    3: { title: 'Water Mode', subtitle: 'Start and open steam valve to pull water' },
+    3: { title: 'Water Mode', subtitle: tempReady ? 'Water is ready' : 'Preheating' },
   };
 
   const msg = messages[mode] || { title: 'Unknown', subtitle: '' };
