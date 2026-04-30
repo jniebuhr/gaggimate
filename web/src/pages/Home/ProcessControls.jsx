@@ -81,7 +81,7 @@ function resolveActivePhaseIndex(processInfo, phaseSegments) {
 }
 
 function buildSolidRingBackground(progressPercent, fillColorVar) {
-  const progress = clampPercent(progressPercent) * (300 / 360);
+  const progress = clampPercent(progressPercent);
   return [
     'radial-gradient(circle at 50% 50%, transparent 58%, rgba(255,255,255,0.03) 58%, rgba(255,255,255,0.03) 59%, transparent 60%)',
     `conic-gradient(from 210deg, ${fillColorVar} 0%, ${fillColorVar} ${progress}%, var(--home-ring-track, #222) ${progress}%, var(--home-ring-track, #222) 100%)`,
@@ -90,7 +90,7 @@ function buildSolidRingBackground(progressPercent, fillColorVar) {
 
 function buildSegmentedRingBackground(phaseSegments, activeIndex, inPhaseProgress, fillColorVar) {
   const stops = [];
-  const ARC_SCALE = 300 / 360;
+  const ARC_SCALE = 1;
 
   phaseSegments.forEach((segment, index) => {
     const startPercent = segment.start * 100 * ARC_SCALE;
