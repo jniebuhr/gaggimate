@@ -465,7 +465,7 @@ export default function ProcessControls({ brew, mode }) {
       {/* Action buttons row */}
       {visibility.showActionButtons && (
         <div className='flex items-center justify-center gap-3'>
-          {!active && !finished && (
+          {!active && !finished && visibility.showGrindTargetControls && (
             <MiniActionButton
               disabled={!visibility.showGrindTargetControls}
               icon={faMinus}
