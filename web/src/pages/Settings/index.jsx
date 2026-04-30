@@ -530,7 +530,9 @@ export function Settings() {
                   <option value='nothing'>Nothing</option>
                 </select>
               </div>
-              <div className='flex items-center justify-between'>
+              {currentTheme === 'nothing' && (
+                <>
+                  <div className='flex items-center justify-between'>
                     <div className='flex flex-col gap-1'>
                       <span className='font-nd-mono text-[14px] text-[var(--text-primary,#e8e8e8)]'>
                         Nothing Theme Variant
@@ -557,6 +559,8 @@ export function Settings() {
                   <div className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)] text-right'>
                     {nothingThemeVariant === 'nothing' ? 'Dark' : 'Light'}
                   </div>
+                </>
+              )}
             </div>
           </Card>
 

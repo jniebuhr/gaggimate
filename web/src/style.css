@@ -787,7 +787,7 @@ html[data-theme='nothing-light'] {
   --color-base-100: #ffffff;
   --color-base-200: #fafafa;
   --color-base-300: #f5f5f5;
-  --color-base-content: #1a1a1a;
+  --color-base-content: #000000;
 
   /* Brand red accent - Nothing's signature color (same as dark theme) */
   --color-primary: #d71921;
@@ -809,11 +809,11 @@ html[data-theme='nothing-light'] {
   --color-error: #d71921;
   --color-error-content: #ffffff;
 
-  /* Typography */
-  --text-display: #1a1a1a;
-  --text-primary: #1a1a1a;
-  --text-secondary: #666666;
-  --text-disabled: #999999;
+  /* Typography — real black for maximum contrast on white */
+  --text-display: #000000;
+  --text-primary: #000000;
+  --text-secondary: #1a1a1a;
+  --text-disabled: #666666;
 
   /* Custom properties for home page rings */
   --home-ring-brew: #d71921;
@@ -1527,7 +1527,7 @@ html[data-theme='nothing-light'] .nd-ring-temp-unit {
 }
 
 html[data-theme='nothing-light'] .nd-ring-target {
-  color: var(--text-display, #1a1a1a);
+  color: #000000;
 }
 
 html[data-theme='nothing-light'] .nd-segmented {
@@ -1536,12 +1536,16 @@ html[data-theme='nothing-light'] .nd-segmented {
 }
 
 html[data-theme='nothing-light'] .nd-segmented-btn {
-  color: var(--text-display, #1a1a1a);
+  color: #000000;
 }
 
 html[data-theme='nothing-light'] .nd-segmented-btn:hover {
-  color: var(--text-primary, #1a1a1a);
+  color: #000000;
   background: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme='nothing-light'] .nd-segmented-btn--active {
+  color: #000000;
 }
 
 html[data-theme='nothing-light'] .nd-status-dot {
@@ -1590,7 +1594,7 @@ html[data-theme='nothing-light'] .nd-stepper-value {
 }
 
 html[data-theme='nothing-light'] .nd-shortcut {
-  color: var(--text-display, #1a1a1a);
+  color: #000000;
 }
 
 html[data-theme='nothing-light'] .nd-action-btn {
