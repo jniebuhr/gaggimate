@@ -3,6 +3,11 @@ import { ApiServiceContext } from '../../services/ApiService.js';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
 
 export function Autotune() {
   const apiService = useContext(ApiServiceContext);
@@ -31,122 +36,132 @@ export function Autotune() {
   }, [apiService]);
 
   return (
-    <>
-      <div className='mb-4 flex flex-row items-center gap-2'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>PID Autotune</h1>
+    <div className='flex flex-col gap-6'>
+      {/* Header */}
+      <div className='flex items-center gap-3'>
+        <h1 className='font-nd-mono text-[20px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+          PID Autotune
+        </h1>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
-        <Card sm={12} title='PID Autotune Settings'>
-          {active && (
-            <div className='space-y-4'>
-              <div className='w-full'>
-                <OverviewChart />
+      {/* Main card */}
+      <Card sm={12} title='Settings'>
+        {active && (
+          <div className='flex flex-col gap-5'>
+            <div className='h-[200px] lg:h-[350px]'>
+              <OverviewChart />
+            </div>
+            <div className='flex flex-col items-center gap-4 py-6'>
+              <div className='flex items-center gap-3'>
+                <Spinner size={8} />
+                <span className='font-nd-mono text-[18px] text-[var(--text-primary,#e8e8e8)]'>
+                  Autotune in Progress
+                </span>
               </div>
-              <div className='flex flex-col items-center justify-center space-y-4 py-4'>
-                <div className='flex items-center space-x-3'>
-                  <Spinner size={8} />
-                  <span className='text-lg font-medium'>Autotune in Progress</span>
+              <div className='border-l-2 border-[var(--color-warning,#d4a843)] pl-4'>
+                <span className='font-nd-mono text-[14px] text-[var(--text-disabled,#666)]'>
+                  Please wait while the system optimizes your PID settings. This may take up to 30 seconds.
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {result && (
+          <div className='flex flex-col gap-5 text-center'>
+            <div className='flex items-center justify-center gap-3 border-l-2 border-[var(--color-success,#7cb876)] pl-4'>
+              <FontAwesomeIcon icon={faCheck} className='text-[var(--color-success,#7cb876)] text-xl' />
+              <div className='text-left'>
+                <div className='font-nd-mono text-[18px] text-[var(--text-primary,#e8e8e8)]'>
+                  Autotune Complete
                 </div>
-                <div className='alert alert-warning max-w-md'>
-                  <span>
-                    Please wait while the system optimizes your PID settings. This may take up to 30
-                    seconds.
-                  </span>
+                <div className='font-nd-mono text-[14px] text-[var(--text-disabled,#666)]'>
+                  Your new PID values have been saved successfully.
                 </div>
               </div>
             </div>
-          )}
-
-          {result && (
-            <div className='space-y-4 text-center'>
-              <div className='alert alert-success mx-auto max-w-md'>
-                <div>
-                  <h3 className='font-bold'>Autotune Complete!</h3>
-                  <div className='text-sm'>Your new PID values have been saved successfully.</div>
-                </div>
-              </div>
-              <div className='mockup-code bg-base-200 mx-auto max-w-md'>
-                <pre data-prefix='$'>
-                  <code>{result}</code>
-                </pre>
-              </div>
+            <div className='rounded-[8px] border border-[var(--home-border,#222)] bg-[var(--home-surface,#111)] p-4'>
+              <pre className='font-nd-mono text-[12px] text-[var(--text-primary,#e8e8e8)]'>
+                <code>{result}</code>
+              </pre>
             </div>
-          )}
+          </div>
+        )}
 
-          {!active && !result && (
-            <div className='space-y-4'>
-              <div className='alert alert-warning'>
-                <span>
-                  Please ensure the boiler temperature is below 50°C before starting the autotune
-                  process.
+        {!active && !result && (
+          <div className='flex flex-col gap-5'>
+            <div className='flex items-start gap-3 border-l-2 border-[var(--color-warning,#d4a843)] pl-4'>
+              <FontAwesomeIcon icon={faTriangleExclamation} className='mt-0.5 text-[var(--color-warning,#d4a843)] text-xl' />
+              <span className='font-nd-mono text-[14px] text-[var(--text-disabled,#666)]'>
+                Ensure the boiler temperature is below 50 C before starting the autotune process.
+              </span>
+            </div>
+
+            <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
+              <div className='flex flex-col gap-2'>
+                <label
+                  htmlFor='tuningGoal'
+                  className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
+                >
+                  Tuning Goal
+                </label>
+                <input
+                  id='tuningGoal'
+                  type='number'
+                  min='0'
+                  max='100'
+                  className='nd-input nd-input--lg'
+                  value={time}
+                  onChange={e => setTime(parseInt(e.target.value, 10) || 0)}
+                />
+                <span className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)]'>
+                  0 = Conservative, 100 = Aggressive. Higher values result in faster response but may cause overshoot.
                 </span>
               </div>
 
-              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                <div className='form-control'>
-                  <label htmlFor='tuningGoal' className='mb-2 block text-sm font-medium'>
-                    Tuning Goal
-                  </label>
-                  <input
-                    id='tuningGoal'
-                    type='number'
-                    min='0'
-                    max='100'
-                    className='input input-bordered w-full'
-                    value={time}
-                    onChange={e => setTime(parseInt(e.target.value, 10) || 0)}
-                    placeholder='60'
-                  />
-                  <div className='mb-2 text-xs opacity-70'>
-                    0 = Conservative, 100 = Aggressive. Higher values result in faster response but
-                    may cause overshoot.
-                  </div>
-                </div>
-
-                <div className='form-control'>
-                  <label htmlFor='windowSize' className='mb-2 block text-sm font-medium'>
-                    Window Size
-                  </label>
-                  <input
-                    id='windowSize'
-                    type='number'
-                    min='1'
-                    max='10'
-                    className='input input-bordered w-full'
-                    value={samples}
-                    onChange={e => setSamples(parseInt(e.target.value, 10) || 1)}
-                    placeholder='4'
-                  />
-                  <div className='mb-2 text-xs opacity-70'>
-                    Number of samples. More samples provide better accuracy but take longer.
-                  </div>
-                </div>
+              <div className='flex flex-col gap-2'>
+                <label
+                  htmlFor='windowSize'
+                  className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
+                >
+                  Window Size
+                </label>
+                <input
+                  id='windowSize'
+                  type='number'
+                  min='1'
+                  max='10'
+                  className='nd-input nd-input--lg'
+                  value={samples}
+                  onChange={e => setSamples(parseInt(e.target.value, 10) || 1)}
+                />
+                <span className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)]'>
+                  Number of samples. More samples provide better accuracy but take longer.
+                </span>
               </div>
             </div>
-          )}
-        </Card>
-      </div>
+          </div>
+        )}
+      </Card>
 
-      <div className='pt-4 lg:col-span-12'>
-        <div className='flex flex-col gap-2 sm:flex-row'>
-          {!active && !result && (
-            <button
-              className='btn btn-primary'
-              onClick={onStart}
-              disabled={time < 0 || time > 100 || samples < 1 || samples > 10}
-            >
-              Start Autotune
-            </button>
-          )}
+      {/* Action buttons */}
+      <div className='flex gap-3'>
+        {!active && !result && (
+          <button
+            className='nd-action-btn nd-action-btn--primary'
+            onClick={onStart}
+            disabled={time < 0 || time > 100 || samples < 1 || samples > 10}
+          >
+            <FontAwesomeIcon icon={faPlay} />
+          </button>
+        )}
 
-          {result && (
-            <button className='btn btn-outline' onClick={() => setResult(null)}>
-              Back to Settings
-            </button>
-          )}
-        </div>
+        {result && (
+          <button className='nd-action-btn' onClick={() => setResult(null)}>
+            <FontAwesomeIcon icon={faArrowLeft} />
+          </button>
+        )}
       </div>
-    </>
+    </div>
   );
 }

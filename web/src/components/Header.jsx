@@ -1,18 +1,9 @@
 import { useCallback, useEffect, useState, useRef, useContext } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faLeaf } from '@fortawesome/free-solid-svg-icons/faLeaf';
-import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
-import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
-import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
-import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
-import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
-import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
-import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
-import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faPlugCircleBolt } from '@fortawesome/free-solid-svg-icons/faPlugCircleBolt';
 import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
@@ -30,7 +21,7 @@ function formatReading(value, suffix) {
   return `${Number.isFinite(value) ? value.toFixed(1) : '0.0'}${suffix}`;
 }
 
-function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
+export function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
   const toneClasses = {
     neutral: 'border-base-300/60 bg-base-100/90 text-base-content',
     accent: 'border-primary/25 bg-primary/12 text-primary',
@@ -55,40 +46,22 @@ function StatPill({ label, value, tone = 'neutral', icon, onClick }) {
         </span>
         <span>{label}</span>
       </div>
-      <div className='mt-1 text-[clamp(0.6rem,1.2vw,1rem)] font-semibold leading-tight text-wrap balance truncate'>{value}</div>
+      <div className='mt-1 h-8 flex items-center text-[clamp(0.6rem,1.2vw,1rem)] font-semibold leading-tight text-wrap balance truncate'>{value}</div>
     </div>
   );
 }
 
-function HeaderItem(props) {
-  const { path } = useLocation();
-  let className =
-    'btn btn-sm h-10 justify-start gap-3 w-full rounded-xl border border-transparent bg-transparent px-3 text-base-content/80 hover:border-base-content/10 hover:bg-base-content/5 hover:text-base-content focus-visible:border-primary/30 focus-visible:bg-primary/10 focus-visible:text-base-content focus-visible:outline-none';
-
-  if (path === props.link) {
-    className =
-      'btn btn-sm h-10 justify-start gap-3 w-full rounded-xl border border-primary/20 bg-primary px-3 text-primary-content hover:bg-primary hover:text-primary-content shadow-[0_12px_24px_-16px_rgba(0,0,0,0.9)] focus-visible:outline-none';
-  }
-
-  return (
-    <a href={props.link} onClick={props.onClick} className={className}>
-      <FontAwesomeIcon icon={props.icon} />
-      <span>{props.label}</span>
-    </a>
-  );
-}
-
-const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error }) => (
+export const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
-      <span className='flex size-8 items-center justify-center rounded-xl border border-secondary/20 bg-secondary/10'>
-        <FontAwesomeIcon icon={faBookmark} className='text-sm text-secondary' />
+      <span className='flex size-8 items-center justify-center rounded-xl border border-[#FF6C99]/20 bg-[#FF6C99]/10'>
+        <FontAwesomeIcon icon={faBookmark} className='text-sm text-[#FF6C99]' />
       </span>
       <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Profile</span>
     </div>
     {loading ? (
       <div className='flex items-center justify-center py-8'>
-        <span className='loading loading-spinner loading-md text-secondary' />
+        <span className='loading loading-spinner loading-md text-[#FF6C99]' />
       </div>
     ) : error ? (
       <div className='py-4 text-center text-sm text-error'>{error}</div>
@@ -100,7 +73,7 @@ const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error 
             onClick={() => onSelect(profile.id)}
             className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
               profile.id === selectedProfileId
-                ? 'bg-secondary/15 text-secondary border border-secondary/30 shadow-sm'
+                ? 'bg-[#FF6C99]/15 text-[#FF6C99] border border-[#FF6C99]/30 shadow-sm'
                 : 'hover:bg-base-content/5 text-base-content/80 border border-transparent hover:border-base-300/30'
             }`}
           >
@@ -115,7 +88,7 @@ const ProfilePopover = ({ profiles, selectedProfileId, onSelect, loading, error 
   </div>
 );
 
-const BeanPopover = ({ beans, activeBean, onSelect, loading, error }) => (
+export const BeanPopover = ({ beans, activeBean, onSelect, loading, error }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 min-w-[220px] rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10'>
@@ -152,7 +125,7 @@ const BeanPopover = ({ beans, activeBean, onSelect, loading, error }) => (
   </div>
 );
 
-const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
+export const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-56 rounded-2xl border border-base-300/60 bg-base-100/95 p-5 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-5 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-error/20 bg-error/10'>
@@ -197,7 +170,7 @@ const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
   </div>
 );
 
-const ModePopover = ({ currentMode, onSelect }) => (
+export const ModePopover = ({ currentMode, onSelect }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-48 rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-primary/20 bg-primary/10'>
@@ -226,8 +199,8 @@ const ModePopover = ({ currentMode, onSelect }) => (
   </div>
 );
 
-export function Header() {
-  const [open, setOpen] = useState(false);
+export function Header({ navOpen = false, onNavToggle }) {
+  const { path } = useLocation();
   const [activeBean, setActiveBean] = useState(() => getCurrentBeanSelection());
   const apiService = useContext(ApiServiceContext);
   const connected = machine.value.connected;
@@ -236,6 +209,7 @@ export function Header() {
   const profileLabel = machine.value.status.selectedProfile || 'Default';
   const temp = formatReading(machine.value.status.currentTemperature, '\u00B0C');
   const pressure = formatReading(machine.value.status.currentPressure, ' bar');
+  const isHomeRoute = path === '/';
 
   const [activePopover, setActivePopover] = useState(null); // 'profile' | 'bean' | 'temp' | 'mode' | null
   const [profileOptions, setProfileOptions] = useState([]);
@@ -287,13 +261,6 @@ export function Header() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [activePopover]);
-
-  const openCb = useCallback(
-    newState => {
-      setOpen(newState);
-    },
-    [setOpen],
-  );
 
   // Load profile options when profile popover opens
   const loadProfileOptions = useCallback(async () => {
@@ -383,7 +350,7 @@ export function Header() {
     } catch (err) {
       console.error('Failed to select bean:', err);
     }
-  }, [apiService, beanOptions, machine]);
+  }, [apiService, beanOptions]);
 
   const handleTempChange = useCallback((delta) => {
     try {
@@ -405,9 +372,16 @@ export function Header() {
   return (
     <header id='page-header' className='sticky top-0 z-50'>
       <div className='mx-auto px-4 pt-3 lg:px-8 xl:container'>
-        <div className='rounded-2xl border border-base-300/65 bg-base-100/90 px-4 py-3 shadow-[0_26px_60px_-42px_rgba(0,0,0,0.9)] backdrop-blur-xl lg:px-6'>
+        <div className={`rounded-2xl border border-base-300/65 bg-base-100/90 px-4 py-3 shadow-[0_26px_60px_-42px_rgba(0,0,0,0.9)] backdrop-blur-xl lg:px-6 ${isHomeRoute ? 'home-header-shell' : ''}`}>
           <div className='flex items-center justify-between gap-4'>
-            <a href='/' className='inline-flex items-center gap-3' onClick={() => openCb(false)}>
+            <button
+              type='button'
+              className='inline-flex items-center gap-3 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45'
+              aria-expanded={navOpen}
+              aria-controls='app-navigation-drawer'
+              aria-label={navOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              onClick={onNavToggle}
+            >
               <span className='grid size-10 place-items-center rounded-2xl bg-primary text-primary-content shadow-sm'>
                 <span className='font-logo text-xl font-semibold'>G</span>
               </span>
@@ -419,9 +393,9 @@ export function Header() {
                   Live espresso control
                 </span>
               </span>
-            </a>
+            </button>
 
-            <div className='hidden min-w-0 items-center gap-2 lg:flex'>
+            {!isHomeRoute && <div className='hidden min-w-0 items-center gap-2'>
               {/* Connection - not clickable */}
               <StatPill label='Connection' value={connected ? 'Online' : 'Offline'} tone={connected ? 'success' : 'warning'} icon={faPlugCircleBolt} />
 
@@ -463,7 +437,7 @@ export function Header() {
 
               {/* Temp - clickable */}
               <div className='relative'>
-                <StatPill label='Temp / Pressure' value={`${temp} · ${pressure}`} tone='error' icon={faTemperatureHigh} onClick={handleTempClick} />
+                <StatPill label='Temp / Pressure' value={`${temp} / ${pressure}`} tone='error' icon={faTemperatureHigh} onClick={handleTempClick} />
                 {activePopover === 'temp' && (
                   <TempPopover
                     currentTemp={machine.value.status.currentTemperature}
@@ -472,7 +446,7 @@ export function Header() {
                   />
                 )}
               </div>
-            </div>
+            </div>}
 
             <div className='flex items-center gap-1 lg:gap-5'>
               <a
@@ -497,10 +471,10 @@ export function Header() {
 
               <button
                 type='button'
-                onClick={() => openCb(!open)}
-                aria-expanded={open}
-                aria-controls='mobile-navigation'
-                aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
+                onClick={onNavToggle}
+                aria-expanded={navOpen}
+                aria-controls='app-navigation-drawer'
+                aria-label={navOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 className='btn btn-sm btn-circle border-none bg-transparent text-base-content hover:bg-base-content/10 hover:text-base-content focus-visible:bg-base-content/10 focus-visible:outline-none lg:hidden'
               >
                 <svg
@@ -518,72 +492,6 @@ export function Header() {
               </button>
             </div>
           </div>
-
-          <nav
-            id='mobile-navigation'
-            className={`${open ? 'grid' : 'hidden'} mt-4 max-h-[calc(100vh-8.5rem)] gap-3 overflow-y-auto pb-1 lg:hidden`}
-          >
-            <div className='space-y-2 rounded-2xl border border-base-300/65 bg-base-100/95 p-3'>
-              <div className='px-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-base-content/45'>
-                Control
-              </div>
-              <HeaderItem label='Dashboard' link='/' icon={faHome} onClick={() => openCb(false)} />
-              <HeaderItem
-                label='PID Autotune'
-                link='/pidtune'
-                icon={faTemperatureHalf}
-                onClick={() => openCb(false)}
-              />
-              <HeaderItem
-                label='Bluetooth Devices'
-                link='/scales'
-                icon={faBluetoothB}
-                onClick={() => openCb(false)}
-              />
-              <HeaderItem
-                label='Settings'
-                link='/settings'
-                icon={faCog}
-                onClick={() => openCb(false)}
-              />
-            </div>
-            <div className='space-y-2 rounded-2xl border border-base-300/65 bg-base-100/95 p-3'>
-              <div className='px-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-base-content/45'>
-                Review
-              </div>
-              <HeaderItem
-                label='Profiles'
-                link='/profiles'
-                icon={faList}
-                onClick={() => openCb(false)}
-              />
-              <HeaderItem label='Beans' link='/beans' icon={faLeaf} onClick={() => openCb(false)} />
-              <HeaderItem
-                label='Shot History'
-                link='/history'
-                icon={faTimeline}
-                onClick={() => openCb(false)}
-              />
-              <HeaderItem
-                label='Shot Analyzer'
-                link='/analyzer'
-                icon={faMagnifyingGlassChart}
-                onClick={() => openCb(false)}
-              />
-              <HeaderItem
-                label='Statistics'
-                link='/statistics'
-                icon={faChartSimple}
-                onClick={() => openCb(false)}
-              />
-              <HeaderItem
-                label='System & Updates'
-                link='/ota'
-                icon={faRotate}
-                onClick={() => openCb(false)}
-              />
-            </div>
-          </nav>
         </div>
       </div>
     </header>

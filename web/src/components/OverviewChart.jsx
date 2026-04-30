@@ -36,6 +36,32 @@ function getChartData(data, brewState) {
     };
   }
 
+  // Check if nothing theme is active for chart colors
+  const isNothingTheme = document.documentElement.getAttribute('data-theme') === 'nothing';
+
+  // Nothing theme chart colors - more muted, fitting monochrome aesthetic
+  const chartColors = isNothingTheme
+    ? {
+        temp: '#ff8c66',
+        tempTarget: '#cc4400',
+        pressure: '#6699cc',
+        pressureTarget: '#334466',
+        flow: '#7cb876',
+        weight: '#a78bfa',
+        weightTarget: '#6b4fa0',
+        phaseLine: '#ff6644',
+      }
+    : {
+        temp: '#F0561D',
+        tempTarget: '#731F00',
+        pressure: '#0066CC',
+        pressureTarget: '#003366',
+        flow: '#63993D',
+        weight: '#8B5CF6',
+        weightTarget: '#4C1D95',
+        phaseLine: '#06B6D4',
+      };
+
   // Stabilize the end time by clearing milliseconds to prevent jiggling
   let end = new Date();
   end.setMilliseconds(0); // Clear milliseconds for stability
@@ -162,7 +188,7 @@ function getChartData(data, brewState) {
         type: 'line',
         xMin: transition.timestamp.toISOString(),
         xMax: transition.timestamp.toISOString(),
-        borderColor: '#06B6D4', // Cyan accent for phase transitions
+        borderColor: chartColors.phaseLine, // Cyan accent for phase transitions
         borderWidth: 2,
         label: {
           display: true,
@@ -224,7 +250,7 @@ function getChartData(data, brewState) {
   const datasets = [
     {
       label: 'Current Temperature',
-      borderColor: '#F0561D',
+      borderColor: chartColors.temp,
       borderWidth: 3,
       tension: 0.3,
       pointStyle: false,
@@ -233,7 +259,7 @@ function getChartData(data, brewState) {
     {
       label: 'Target Temperature',
       fill: true,
-      borderColor: '#731F00',
+      borderColor: chartColors.tempTarget,
       borderDash: [6, 6],
       borderWidth: 3,
       tension: 0.3,
@@ -242,7 +268,7 @@ function getChartData(data, brewState) {
     },
     {
       label: 'Current Pressure',
-      borderColor: '#0066CC',
+      borderColor: chartColors.pressure,
       borderWidth: 3,
       tension: 0.3,
       pointStyle: false,
@@ -252,7 +278,7 @@ function getChartData(data, brewState) {
     {
       label: 'Target Pressure',
       fill: true,
-      borderColor: '#003366',
+      borderColor: chartColors.pressureTarget,
       borderDash: [6, 6],
       borderWidth: 3,
       tension: 0.3,
@@ -262,7 +288,7 @@ function getChartData(data, brewState) {
     },
     {
       label: 'Current Flow',
-      borderColor: '#63993D',
+      borderColor: chartColors.flow,
       borderWidth: 3,
       tension: 0.3,
       pointStyle: false,
@@ -273,7 +299,7 @@ function getChartData(data, brewState) {
   if (showWeights) {
     datasets.push({
       label: 'Current Weight',
-      borderColor: '#8B5CF6',
+      borderColor: chartColors.weight,
       borderWidth: 3,
       tension: 0.3,
       pointStyle: false,
@@ -283,7 +309,7 @@ function getChartData(data, brewState) {
     datasets.push({
       label: 'Target Weight',
       fill: true,
-      borderColor: '#4C1D95',
+      borderColor: chartColors.weightTarget,
       borderDash: [6, 6],
       borderWidth: 3,
       tension: 0.3,
@@ -358,7 +384,7 @@ function getChartData(data, brewState) {
             minRotation: 0,
           },
           grid: {
-            color: 'rgba(128, 128, 128, 0.15)',
+            color: isNothingTheme ? 'rgba(255, 255, 255, 0.06)' : 'rgba(128, 128, 128, 0.15)',
           },
         },
         y1: {

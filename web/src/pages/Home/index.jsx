@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'preact/hooks';
 import { machine } from '../../services/ApiService.js';
 import {
   Chart,
@@ -14,49 +13,24 @@ import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import ProcessControls from './ProcessControls.jsx';
-import { getDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
-
+import HomeModeCard from './HomeModeCard.jsx';
 Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
 export function Home() {
-  const [dashboardLayout, setDashboardLayout] = useState(DASHBOARD_LAYOUTS.ORDER_FIRST);
-
-  useEffect(() => {
-    setDashboardLayout(getDashboardLayout());
-
-    const handleStorageChange = e => {
-      if (e.key === 'dashboardLayout') {
-        setDashboardLayout(e.newValue || DASHBOARD_LAYOUTS.ORDER_FIRST);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  const mode = machine.value.status.mode;
-
   return (
-    <div className='grid grid-cols-1 gap-5 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
-      <Card
-        sm={10}
-        lg={4}
-        className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
-        title='Process Controls'
-      >
-        <ProcessControls brew={mode === 1} mode={mode} />
-      </Card>
+    <div className='flex flex-col gap-6'>
+      {/* Top row: Process controls + status */}
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px] lg:items-start'>
+        <Card title='Process' className='home-dashboard-card home-dashboard-card-process'>
+          <ProcessControls brew={machine.value.status.mode === 1} mode={machine.value.status.mode} />
+        </Card>
+        <Card title='Status' className='home-dashboard-card home-dashboard-card-options'>
+          <HomeModeCard mode={machine.value.status.mode} />
+        </Card>
+      </div>
 
-      <Card
-        sm={10}
-        lg={6}
-        className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
-        title='Temperature & Pressure Chart'
-        fullHeight={true}
-      >
+      {/* Temperature / Pressure chart */}
+      <Card title='Temperature & Pressure' fullHeight={true} className='home-dashboard-card home-dashboard-card-chart'>
         <OverviewChart />
       </Card>
     </div>

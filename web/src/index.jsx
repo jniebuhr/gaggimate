@@ -3,7 +3,7 @@ if (import.meta.env.DEV) {
   await import('preact/debug');
 }
 import './style.css';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { initializeTheme } from './utils/themeManager.js';
 import { render } from 'preact';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
@@ -27,7 +27,14 @@ import { StatisticsPage } from './pages/Statistics/index.jsx';
 const apiService = new ApiService();
 
 export function App() {
-  const [navCollapsed, setNavCollapsed] = useState(true);
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.toggle('nav-drawer-open', navOpen);
+    return () => {
+      document.body.classList.remove('nav-drawer-open');
+    };
+  }, [navOpen]);
 
   return (
     <LocationProvider>
@@ -38,40 +45,34 @@ export function App() {
             <a href='#main-content' className='skip-link'>
               Skip to main content
             </a>
-            <Header />
+            <Header navOpen={navOpen} onNavToggle={() => setNavOpen(open => !open)} />
+            <Navigation open={navOpen} onClose={() => setNavOpen(false)} />
             <main id='main-content' className='flex-1'>
               <div className='mx-auto w-full px-4 py-4 lg:px-8 lg:py-6 xl:container'>
-                <div
-                  className={`grid transition-[grid-template-columns] duration-300 ease-in-out ${
-                    navCollapsed ? 'grid-cols-[3.5rem_1fr]' : 'grid-cols-[14rem_1fr]'
-                  }`}
-                >
-                  <Navigation onCollapsedChange={setNavCollapsed} />
-                  <div className='min-w-0'>
-                    <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
-                      <ErrorBoundary>
-                        <Router>
-                          <Route path='/' component={Home} />
-                          <Route path='/profiles' component={ProfileList} />
-                          <Route path='/profiles/:id' component={ProfileEdit} />
-                          <Route path='/beans' component={BeansPage} />
-                          <Route path='/settings' component={Settings} />
-                          <Route path='/ota' component={OTA} />
-                          <Route path='/scales' component={Scales} />
-                          <Route path='/pidtune' component={Autotune} />
-                          <Route path='/history' component={ShotHistory} />
-                          <Route path='/analyzer' component={ShotAnalyzer} />
-                          <Route path='/statistics' component={StatisticsPage} />
-                          <Route
-                            path='/statistics/:sourceAlias/:profileName'
-                            component={StatisticsPage}
-                          />
-                          <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
-                          {/*deep-link route (sorce & ID)*/}
-                          <Route default component={NotFound} />
-                        </Router>
-                      </ErrorBoundary>
-                    </div>
+                <div className='min-w-0'>
+                  <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                    <ErrorBoundary>
+                      <Router>
+                        <Route path='/' component={Home} />
+                        <Route path='/profiles' component={ProfileList} />
+                        <Route path='/profiles/:id' component={ProfileEdit} />
+                        <Route path='/beans' component={BeansPage} />
+                        <Route path='/settings' component={Settings} />
+                        <Route path='/ota' component={OTA} />
+                        <Route path='/scales' component={Scales} />
+                        <Route path='/pidtune' component={Autotune} />
+                        <Route path='/history' component={ShotHistory} />
+                        <Route path='/analyzer' component={ShotAnalyzer} />
+                        <Route path='/statistics' component={StatisticsPage} />
+                        <Route
+                          path='/statistics/:sourceAlias/:profileName'
+                          component={StatisticsPage}
+                        />
+                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
+                        {/*deep-link route (sorce & ID)*/}
+                        <Route default component={NotFound} />
+                      </Router>
+                    </ErrorBoundary>
                   </div>
                 </div>
               </div>

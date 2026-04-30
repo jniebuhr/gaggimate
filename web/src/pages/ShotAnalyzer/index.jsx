@@ -355,15 +355,20 @@ export function ShotAnalyzer() {
   });
 
   return (
-    <div className='pb-20'>
+    <div className='flex flex-col gap-6 pb-20'>
       {/* Header */}
-      <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Deep Dive Shot Analyzer</h2>
+      <div>
+        <h1 className='font-nd-mono text-[20px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+          Deep Dive Shot Analyzer
+        </h1>
+        <p className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-2 max-w-xl'>
+          Load shots from the library to analyze pressure, flow, and temperature profiles against reference curves.
+        </p>
       </div>
 
       <div className='w-full'>
-        {/* Library Panel (Always visible) */}
-        <div className='mt-4'>
+        {/* Library Panel */}
+        <div>
           <LibraryPanel
             currentShot={currentShot}
             currentProfile={currentProfile}
@@ -399,17 +404,14 @@ export function ShotAnalyzer() {
               }
             }}
             isMatchingProfile={isMatchingProfile}
-            isSearchingProfile={isSearchingProfile} // <- pass prop
+            isSearchingProfile={isSearchingProfile}
           />
         </div>
 
         {currentShot ? (
-          // --- Active Analysis View ---
-          <div ref={analysisSectionRef} className='animate-fade-in mt-8'>
-            <div className='bg-base-100 border-base-content/10 rounded-lg border p-5 shadow-sm'>
-              <div>
-                <ShotChart shotData={currentShot} results={analysisResults} />
-              </div>
+          <div ref={analysisSectionRef} className='mt-8'>
+            <div className='nd-card p-5'>
+              <ShotChart shotData={currentShot} results={analysisResults} />
             </div>
 
             {analysisResults && (

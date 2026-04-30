@@ -232,6 +232,7 @@ export default class ApiService {
       targetTemperature: message.tt,
       currentPressure: message.pr,
       targetPressure: message.pt,
+      targetFlow: message.tf ?? null,
       targetWeight: message.tw || 0,
       activeTargetWeight: (message?.process?.a && message.tw) || 0,
       currentFlow: message.fl,

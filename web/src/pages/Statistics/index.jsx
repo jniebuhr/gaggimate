@@ -24,9 +24,14 @@ export function StatisticsPage() {
   const initialContext = routeInitialContext || sessionInitialContext || { source: 'gaggimate' };
 
   return (
-    <div className='pb-20'>
-      <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Statistics</h2>
+    <div className='flex flex-col gap-6 pb-20'>
+      <div>
+        <h1 className='font-nd-mono text-[20px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+          Statistics
+        </h1>
+        <p className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-2 max-w-xl'>
+          Analyze shot performance metrics, trends, and per-profile/per-phase statistics.
+        </p>
       </div>
 
       <div className='w-full'>

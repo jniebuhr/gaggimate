@@ -9,6 +9,8 @@ import {
   setStoredGoogleDriveClientId,
   uploadGoogleDriveBackup,
 } from '../../utils/googleDriveBackup.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCloudArrowUp, faRotate, faCheck } from '@fortawesome/free-solid-svg-icons';
 
 export function GoogleDriveBackupCard({ apiService, onRestoreComplete }) {
   const [clientId, setClientId] = useState(() => getStoredGoogleDriveClientId());
@@ -107,25 +109,28 @@ export function GoogleDriveBackupCard({ apiService, onRestoreComplete }) {
 
   return (
     <Card sm={10} lg={5} title='Google Drive Backup'>
-      <div className='space-y-4'>
-        <div className='text-sm leading-relaxed text-base-content/70'>
+      <div className='flex flex-col gap-5'>
+        <div className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)]'>
           Save and restore settings, profiles, beans, and shot history backups using a private file
           in your Google Drive app storage.
         </div>
 
-        <div className='form-control'>
-          <label htmlFor='googleDriveClientId' className='mb-2 block text-sm font-medium'>
+        <div className='flex flex-col gap-2'>
+          <label
+            htmlFor='googleDriveClientId'
+            className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
+          >
             Google OAuth Client ID
           </label>
           <input
             id='googleDriveClientId'
             type='text'
-            className='input input-bordered w-full'
+            className='nd-input nd-input--lg'
             placeholder='1234567890-abc123.apps.googleusercontent.com'
             value={clientId}
             onChange={e => setClientId(e.target.value)}
           />
-          <div className='mt-2 text-xs text-base-content/60'>
+          <div className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)] mt-1'>
             Stored in this browser only. Use a Web application OAuth client with the Google Drive
             API enabled.
           </div>
@@ -134,43 +139,49 @@ export function GoogleDriveBackupCard({ apiService, onRestoreComplete }) {
         <div className='flex flex-wrap gap-2'>
           <button
             type='button'
-            className='btn btn-outline btn-sm'
+            className='nd-action-btn'
             onClick={saveClientId}
             disabled={isBusy}
           >
-            Save Client ID
+            <FontAwesomeIcon icon={faCheck} />
           </button>
           <button
             type='button'
-            className='btn btn-primary btn-sm'
+            className='nd-action-btn nd-action-btn--primary'
             onClick={handleBackup}
             disabled={!hasClientId || isBusy}
           >
-            {busyAction === 'backup' ? <Spinner size={4} /> : null}
-            Backup Now
+            {busyAction === 'backup' ? <Spinner size={4} /> : <FontAwesomeIcon icon={faCloudArrowUp} />}
           </button>
           <button
             type='button'
-            className='btn btn-secondary btn-sm'
+            className='nd-action-btn'
             onClick={handleRestore}
             disabled={!hasClientId || isBusy}
           >
-            {busyAction === 'restore' ? <Spinner size={4} /> : null}
-            Restore Latest
+            {busyAction === 'restore' ? <Spinner size={4} /> : <FontAwesomeIcon icon={faRotate} />}
           </button>
         </div>
 
-        <div className='rounded-xl border border-base-content/10 bg-base-100/60 px-4 py-3 text-sm'>
-          <div className='font-medium'>Latest Drive backup</div>
-          <div className='mt-1 text-base-content/70'>{latestBackupLabel}</div>
+        <div className='nd-card p-4'>
+          <div className='font-nd-mono text-[14px] text-[var(--text-primary,#e8e8e8)]'>
+            Latest Drive backup
+          </div>
+          <div className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-1'>
+            {latestBackupLabel}
+          </div>
           {latestBackup?.size ? (
-            <div className='mt-1 text-xs text-base-content/60'>{Number(latestBackup.size)} bytes</div>
+            <div className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)] mt-1'>
+              {Number(latestBackup.size)} bytes
+            </div>
           ) : null}
         </div>
 
         {status ? (
-          <div className='rounded-xl border border-base-content/10 bg-base-100/60 px-4 py-3 text-sm'>
-            {status}
+          <div className='border-l-2 border-[var(--color-warning,#d4a843)] pl-4'>
+            <span className='font-nd-mono text-[14px] text-[var(--text-primary,#e8e8e8)]'>
+              {status}
+            </span>
           </div>
         ) : null}
       </div>

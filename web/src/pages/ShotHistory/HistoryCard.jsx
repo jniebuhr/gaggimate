@@ -149,11 +149,12 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
   const canUpload = visualizerService.validateShot(shot);
 
   return (
-    <Card sm={12} lg={12} className='min-w-0 [&>.card-body]:p-3 sm:[&>.card-body]:p-4'>
+    <Card sm={12} className='min-w-0'>
       <div className='flex flex-col gap-2'>
-        <div className='flex min-w-0 flex-row items-start gap-2'>
+        <div className='flex min-w-0 flex-row items-start gap-3'>
           <button
-            className='border-base-content/20 text-base-content/60 hover:text-base-content hover:bg-base-content/10 hover:border-base-content/40 cursor-pointer rounded-md border p-2 transition-all duration-200'
+            className='nd-action-btn nd-action-btn--text shrink-0'
+            style={{ width: '36px', height: '36px', minWidth: 'unset', padding: '8px' }}
             onClick={() => {
               const next = !expanded;
               setExpanded(next);
@@ -161,147 +162,130 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
             }}
             aria-label={expanded ? 'Collapse shot details' : 'Expand shot details'}
           >
-            <FontAwesomeIcon icon={expanded ? faMinus : faPlus} className='h-3 w-3' />
+            <FontAwesomeIcon icon={expanded ? faMinus : faPlus} className='text-[12px]' />
           </button>
 
           <div className='min-w-0 flex-grow overflow-hidden'>
             {/* Header Row */}
-            <div className='mb-1 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between'>
+            <div className='flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between'>
               <div className='min-w-0 flex-grow'>
-                <h3 className='text-base-content truncate text-base font-semibold'>
+                <h3 className='font-nd-mono text-[14px] text-[var(--text-primary,#e8e8e8)] truncate'>
                   {profileTitle}
                 </h3>
-                <p className='text-base-content/70 text-sm'>
-                  #{shot.id} {'\u2022'} {formattedDate}
+                <p className='font-nd-mono text-[12px] text-[var(--text-secondary,#999)] mt-1'>
+                  #{shot.id} \u2022 {formattedDate}
                 </p>
                 {expanded &&
                   shot.loaded &&
                   shot.samples &&
                   shot.samples.length > 0 &&
                   shot.samples[0].systemInfo && (
-                    <p className='text-base-content/60 text-xs italic'>
-                      Brewed by{' '}
-                      {shot.samples[0].systemInfo.shotStartedVolumetric ? 'Weight' : 'Time'}
+                    <p className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)] mt-1 italic'>
+                      Brewed by {shot.samples[0].systemInfo.shotStartedVolumetric ? 'Weight' : 'Time'}
                     </p>
                   )}
               </div>
 
               <div className='flex shrink-0 flex-wrap items-center gap-2 xl:justify-end'>
                 <span
-                  className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${
+                  className={`font-nd-mono text-[10px] uppercase tracking-[0.08em] px-2 py-1 ${
                     shot.source === 'browser'
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'bg-blue-100 text-blue-700'
+                      ? 'bg-[rgba(139,92,246,0.15)] text-[#8b5cf6]'
+                      : 'bg-[rgba(59,130,246,0.15)] text-[#3b82f6]'
                   }`}
                 >
                   {shot.source === 'browser' ? 'Imported' : 'Device'}
                 </span>
                 {shot.incomplete && (
-                  <span className='inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800'>
-                    INCOMPLETE
+                  <span className='font-nd-mono text-[10px] uppercase tracking-[0.08em] px-2 py-1 bg-[rgba(234,179,8,0.15)] text-[var(--color-warning,#d4a843)]'>
+                    Incomplete
                   </span>
                 )}
 
                 <div className='flex flex-wrap gap-1'>
-                  <Tooltip content={isExporting ? 'Exporting...' : 'Export'}>
-                    <button
-                      disabled={isExporting}
-                      onClick={onExport}
-                      className='text-base-content/50 hover:text-info hover:bg-info/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
-                      aria-label='Export shot data'
-                    >
-                      <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
-                    </button>
-                  </Tooltip>
-
-                  {/* Analyzer Button */}
-                  <Tooltip content='Open in Analyzer'>
-                    <a
-                      href={`/analyzer/internal/${shot.id}`}
-                      className='text-base-content/50 hover:text-primary hover:bg-primary/10 flex items-center justify-center rounded-md p-2 transition-colors'
-                      aria-label='Open in Analyzer'
-                    >
-                      <FontAwesomeIcon icon={faMagnifyingGlassChart} className='h-4 w-4' />
-                    </a>
-                  </Tooltip>
-
-                  <Tooltip
-                    content={
-                      canUpload
-                        ? 'Upload to Visualizer.coffee'
-                        : 'Load shot data first by expanding the shot'
-                    }
+                  <button
+                    disabled={isExporting}
+                    onClick={onExport}
+                    className='nd-action-btn'
+                    style={{ width: '32px', height: '32px' }}
+                    aria-label='Export shot data'
                   >
-                    <button
-                      onClick={() => setShowUploadModal(true)}
-                      disabled={!canUpload}
-                      className={`group inline-block cursor-pointer items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold ${
-                        canUpload
-                          ? 'text-success hover:bg-success/10 active:border-success/20'
-                          : 'cursor-not-allowed text-gray-400'
-                      }`}
-                      aria-label='Upload to visualizer.coffee'
-                    >
-                      <FontAwesomeIcon icon={faUpload} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content={confirmDelete ? 'Click to confirm delete' : 'Delete'}>
-                    <button
-                      onClick={() => {
-                        confirmOrDelete(() => onDelete(shot.id));
-                      }}
-                      className={`cursor-pointer rounded-md p-2 transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
-                      aria-label={confirmDelete ? 'Confirm deletion of shot' : 'Delete shot'}
-                    >
-                      <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
-                      {confirmDelete && <span className='ml-2 hidden sm:inline'>Confirm</span>}
-                    </button>
-                  </Tooltip>
+                    <FontAwesomeIcon icon={faFileExport} className='text-[12px]' />
+                  </button>
+
+                  <a
+                    href={`/analyzer/internal/${shot.id}`}
+                    className='nd-action-btn'
+                    style={{ width: '32px', height: '32px' }}
+                    aria-label='Open in Analyzer'
+                  >
+                    <FontAwesomeIcon icon={faMagnifyingGlassChart} className='text-[12px]' />
+                  </a>
+
+                  <button
+                    onClick={() => setShowUploadModal(true)}
+                    disabled={!canUpload}
+                    className={`nd-action-btn ${canUpload ? '' : 'opacity-40 cursor-not-allowed'}`}
+                    style={{ width: '32px', height: '32px' }}
+                    aria-label='Upload to visualizer.coffee'
+                  >
+                    <FontAwesomeIcon icon={faUpload} className='text-[12px]' />
+                  </button>
+                  <button
+                    onClick={() => {
+                      confirmOrDelete(() => onDelete(shot.id));
+                    }}
+                    className='nd-action-btn'
+                    style={{ width: '32px', height: '32px' }}
+                    aria-label={confirmDelete ? 'Confirm deletion of shot' : 'Delete shot'}
+                  >
+                    <FontAwesomeIcon
+                      icon={faTrashCan}
+                      className={`text-[12px] ${confirmDelete ? 'text-[var(--color-error,#d71921)]' : ''}`}
+                    />
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Stats Row */}
-            <div className='text-base-content/80 mb-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm'>
+            <div className='mt-3 flex flex-wrap items-center gap-x-4 gap-y-2'>
               <div className='flex items-center gap-1'>
-                <FontAwesomeIcon icon={faClock} className='h-4 w-4' />
-                <span>{(shot.duration / 1000).toFixed(1)}s</span>
+                <FontAwesomeIcon icon={faClock} className='text-[var(--text-disabled,#666)] text-[10px]' />
+                <span className='font-nd-mono text-[12px] text-[var(--text-secondary,#999)]'>
+                  {(shot.duration / 1000).toFixed(1)}s
+                </span>
               </div>
 
               {shot.volume && shot.volume > 0 && (
                 <div className='flex items-center gap-1'>
-                  <FontAwesomeIcon icon={faWeightScale} className='h-4 w-4' />
-                  <span>{round2(shot.volume)}g</span>
+                  <FontAwesomeIcon icon={faWeightScale} className='text-[var(--text-disabled,#666)] text-[10px]' />
+                  <span className='font-nd-mono text-[12px] text-[var(--text-secondary,#999)]'>
+                    {round2(shot.volume)}g
+                  </span>
                 </div>
               )}
 
               {effectiveRating && effectiveRating > 0 ? (
                 <div className='flex items-center gap-1'>
-                  <FontAwesomeIcon icon={faStar} className='h-4 w-4 text-yellow-500' />
-                  <div className='relative inline-flex text-sm leading-none'>
-                    <div className='text-gray-300'>{'\u2605\u2605\u2605\u2605\u2605'}</div>
-                    <div
-                      className='absolute inset-y-0 left-0 overflow-hidden whitespace-nowrap text-yellow-400'
-                      style={{ width: getRatingFillPercent(effectiveRating) }}
-                    >
-                      {'\u2605\u2605\u2605\u2605\u2605'}
-                    </div>
-                  </div>
-                  <span className='font-medium'>{formatTenPointRating(effectiveRating)}</span>
+                  <FontAwesomeIcon icon={faStar} className='text-[var(--color-warning,#d4a843)] text-[10px]' />
+                  <span className='font-nd-mono text-[12px] text-[var(--text-secondary,#999)]'>
+                    {formatTenPointRating(effectiveRating)}
+                  </span>
                 </div>
               ) : (
-                <div className='text-base-content/50 flex items-center gap-1'>
-                  <FontAwesomeIcon icon={faStar} className='h-4 w-4' />
-                  <span>Not rated</span>
+                <div className='flex items-center gap-1'>
+                  <FontAwesomeIcon icon={faStar} className='text-[var(--text-disabled,#666)] text-[10px]' />
+                  <span className='font-nd-mono text-[12px] text-[var(--text-disabled,#666)]'>Unrated</span>
                 </div>
               )}
             </div>
 
             {expanded && (
-              <div className='border-base-content/20 mt-4 border-t pt-4'>
+              <div className='mt-4 border-t border-[var(--home-border,#222)] pt-4'>
                 {!shot.loaded && (
                   <div className='flex items-center justify-center py-8'>
-                    <span className='text-base-content/70 text-sm'>Loading shot data...</span>
+                    <span className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)]'>Loading shot data...</span>
                   </div>
                 )}
                 {shot.loaded && hasSamples && <HistoryChart shot={shot} />}
@@ -313,7 +297,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                   />
                 )}
                 {shot.loaded && !hasSamples && (
-                  <div className='text-base-content/60 mt-4 text-sm'>
+                  <div className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-4'>
                     This backup contains shot details and notes, but not the full sample trace.
                   </div>
                 )}

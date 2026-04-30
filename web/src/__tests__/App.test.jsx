@@ -1,14 +1,10 @@
-import { render } from '@testing-library/preact';
+import { render, screen } from '@testing-library/preact';
 import { App } from '../index.jsx';
 
 describe('App', () => {
-  it('reads collapsed state from localStorage', () => {
-    // Mock localStorage
-    const mockStorage = { getItem: jest.fn(() => 'true'), setItem: jest.fn() };
-    globalThis.window = { localStorage: mockStorage };
-
+  it('renders the navigation entry point in the header', () => {
     render(<App />);
 
-    expect(mockStorage.getItem).toHaveBeenCalledWith('gaggimate.desktopNavCollapsed');
+    expect(screen.getByRole('button', { name: /open navigation menu/i })).toBeTruthy();
   });
 });

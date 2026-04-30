@@ -45,13 +45,18 @@ const formatStorage = (value, unit) => {
 };
 
 const StorageDisplay = ({ label, used, total, usedPct }) => (
-  <div className='flex flex-col space-y-2'>
-    <label className='mb-2 block text-sm font-medium'>{label}</label>
+  <div className='flex flex-col gap-2'>
+    <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+      {label}
+    </label>
     <div className='flex flex-col gap-1'>
-      <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
-        <div className='bg-primary h-full transition-all' style={{ width: `${usedPct || 0}%` }} />
+      <div className='h-3 w-full overflow-hidden rounded bg-[var(--home-surface-muted,rgba(5,5,5,0.95))]'>
+        <div
+          className='h-full transition-all'
+          style={{ width: `${usedPct || 0}%`, backgroundColor: 'var(--color-warning,#d4a843)' }}
+        />
       </div>
-      <div className='text-xs opacity-75'>
+      <div className='font-nd-mono text-[12px] text-[var(--text-disabled,#666)]'>
         {used} / {total} ({usedPct}%)
       </div>
     </div>
@@ -66,16 +71,18 @@ const getSignalStrengthClass = rssi => {
 
 const UpdateBadge = ({ available, version }) =>
   available ? (
-    <span className='text-primary font-bold break-all'>
+    <span className='font-nd-mono text-[13px] text-[var(--color-warning,#d4a843)] break-all'>
       (Update available: {version})
     </span>
   ) : null;
 
 const VersionDisplay = ({ label, version, updateAvailable, latestVersion }) => (
-  <div className='flex flex-col space-y-4'>
-    <label className='mb-2 block text-sm font-medium'>{label}</label>
-    <div className='flex flex-row gap-2 font-light'>
-      <span className='break-all'>{version}</span>
+  <div className='flex flex-col gap-2'>
+    <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+      {label}
+    </label>
+    <div className='flex flex-row gap-2'>
+      <span className='font-nd-mono text-[13px] text-[var(--text-primary,#e8e8e8)] break-all'>{version}</span>
       <UpdateBadge available={updateAvailable} version={latestVersion} />
     </div>
   </div>
@@ -84,7 +91,7 @@ const VersionDisplay = ({ label, version, updateAvailable, latestVersion }) => (
 const UpdateProgressView = ({ phase, progress }) => (
   <div className='flex flex-col items-center gap-4 p-16'>
     <Spinner size={8} />
-    <span className='text-xl font-medium'>
+    <span className='font-nd-mono text-[18px] text-[var(--text-primary,#e8e8e8)]'>
       {phase === 1
         ? 'Updating Display firmware'
         : phase === 2
@@ -93,9 +100,9 @@ const UpdateProgressView = ({ phase, progress }) => (
             ? 'Updating controller firmware'
             : 'Finished'}
     </span>
-    <span className='text-lg font-medium'>{phase === 4 ? 100 : progress}%</span>
+    <span className='font-nd-mono text-[16px] text-[var(--text-secondary,#999)]'>{phase === 4 ? 100 : progress}%</span>
     {phase === 4 && (
-      <a href='/' className='btn btn-primary'>
+      <a href='/' className='nd-action-btn nd-action-btn--primary nd-action-btn--text'>
         Back
       </a>
     )}
@@ -141,65 +148,71 @@ const SystemInfoCard = ({ formData }) => {
 
   return (
     <Card sm={12} title='System Information'>
-      <div className='flex flex-col space-y-4'>
-        <label htmlFor='channel' className='mb-2 block text-sm font-medium'>
-          Update Channel
-        </label>
-        <select id='channel' name='channel' className='select select-bordered w-full' value={channel}>
-          <option value='latest'>Stable</option>
-          <option value='nightly'>Nightly</option>
-        </select>
-      </div>
+      <div className='flex flex-col gap-4'>
+        <div className='flex flex-col gap-2'>
+          <label htmlFor='channel' className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+            Update Channel
+          </label>
+          <select id='channel' name='channel' className='nd-input' value={channel}>
+            <option value='latest'>Stable</option>
+            <option value='nightly'>Nightly</option>
+          </select>
+        </div>
 
-      <div className='flex flex-col space-y-4'>
-        <label className='mb-2 block text-sm font-medium'>Hardware</label>
-        <span className='font-light'>{hardware}</span>
-      </div>
+        <div className='flex flex-col gap-2'>
+          <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+            Hardware
+          </label>
+          <span className='font-nd-mono text-[13px] text-[var(--text-primary,#e8e8e8)]'>{hardware}</span>
+        </div>
 
-      <VersionDisplay
-        label='Controller Version'
-        version={controllerVersion}
-        updateAvailable={controllerUpdateAvailable}
-        latestVersion={latestVersion}
-      />
-
-      <VersionDisplay
-        label='Display Version'
-        version={displayVersion}
-        updateAvailable={displayUpdateAvailable}
-        latestVersion={latestVersion}
-      />
-
-      <div className='flex flex-col space-y-4'>
-        <label className='mb-2 block text-sm font-medium'>Controller Signal Strength</label>
-        <span className='font-light'>
-          {rssi}dB{' '}
-          <span className={`indicator-item status ml-2 ${getSignalStrengthClass(rssi)}`} />
-        </span>
-      </div>
-
-      {spiffsTotal !== undefined && (
-        <StorageDisplay
-          label='Storage (SPIFFS)'
-          used={spiffsStorage.used}
-          total={spiffsStorage.total}
-          usedPct={spiffsStorage.usedPct}
+        <VersionDisplay
+          label='Controller Version'
+          version={controllerVersion}
+          updateAvailable={controllerUpdateAvailable}
+          latestVersion={latestVersion}
         />
-      )}
 
-      {sdTotal !== undefined && (
-        <StorageDisplay
-          label='Storage (SD-Card)'
-          used={sdStorage.used}
-          total={sdStorage.total}
-          usedPct={sdStorage.usedPct}
+        <VersionDisplay
+          label='Display Version'
+          version={displayVersion}
+          updateAvailable={displayUpdateAvailable}
+          latestVersion={latestVersion}
         />
-      )}
 
-      <div className='alert alert-warning'>
-        <span>
-          Make sure to backup your profiles from the profile screen before updating the display.
-        </span>
+        <div className='flex flex-col gap-2'>
+          <label className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+            Controller Signal Strength
+          </label>
+          <span className='font-nd-mono text-[13px] text-[var(--text-primary,#e8e8e8)]'>
+            {rssi}dB{' '}
+            <span className={`ml-2 inline-block h-2 w-2 rounded-full ${getSignalStrengthClass(rssi) === 'status-error' ? 'bg-[var(--color-error,#d71921)]' : getSignalStrengthClass(rssi) === 'status-warning' ? 'bg-[var(--color-warning,#d4a843)]' : 'bg-green-500'}`} />
+          </span>
+        </div>
+
+        {spiffsTotal !== undefined && (
+          <StorageDisplay
+            label='Storage (SPIFFS)'
+            used={spiffsStorage.used}
+            total={spiffsStorage.total}
+            usedPct={spiffsStorage.usedPct}
+          />
+        )}
+
+        {sdTotal !== undefined && (
+          <StorageDisplay
+            label='Storage (SD-Card)'
+            used={sdStorage.used}
+            total={sdStorage.total}
+            usedPct={sdStorage.usedPct}
+          />
+        )}
+
+        <div className='mt-2 border-l-2 border-[var(--color-warning,#d4a843)] pl-4'>
+          <span className='font-nd-mono text-[12px] text-[var(--text-disabled,#666)]'>
+            Make sure to backup your profiles from the profile screen before updating the display.
+          </span>
+        </div>
       </div>
     </Card>
   );
@@ -219,7 +232,7 @@ const getProgressStatusText = (current, total, status) =>
 
 // Reusable ActionButton component
 const ActionButton = ({ type = 'button', variant = 'primary', disabled, onClick, children }) => (
-  <button type={type} className={`btn btn-${variant}`} disabled={disabled} onClick={onClick}>
+  <button type={type} className={`nd-action-btn nd-action-btn--text ${variant === 'secondary' ? '' : variant === 'primary' ? 'nd-action-btn--primary' : ''}`} disabled={disabled} onClick={onClick}>
     {children}
   </button>
 );
@@ -229,7 +242,7 @@ const RebuildButtonStatus = ({ progress }) => (
   <>
     <Spinner size={4} className='ml-2' />
     {progress.total > 0 && (
-      <span className='ml-2 text-xs'>
+      <span className='ml-2 font-nd-mono text-[11px] text-[var(--text-disabled,#666)]'>
         {progress.current}/{progress.total}
       </span>
     )}
@@ -238,7 +251,7 @@ const RebuildButtonStatus = ({ progress }) => (
 
 // Rebuild success icon
 const RebuildSuccessIcon = () => (
-  <span className='text-success ml-2'>
+  <span className='ml-2 text-[var(--color-success,#22c55e)]'>
     <FontAwesomeIcon icon={faCheck} />
   </span>
 );
@@ -261,13 +274,11 @@ const RebuildProgressBar = ({ rebuildProgress }) => {
 
   return (
     <div className='mt-3'>
-      <div className='text-base-content/70 mb-1 text-sm'>{statusText}</div>
-      <div className='bg-base-300 h-2 w-full overflow-hidden rounded'>
+      <div className='font-nd-mono text-[12px] text-[var(--text-disabled,#666)] mb-1'>{statusText}</div>
+      <div className='h-2 w-full overflow-hidden rounded bg-[var(--home-surface-muted,rgba(5,5,5,0.95))]'>
         <div
-          className={`h-full transition-all duration-300 ${
-            isIndeterminate ? 'bg-primary animate-pulse' : 'bg-primary'
-          }`}
-          style={{ width: progressWidth }}
+          className={`h-full transition-all duration-300 ${isIndeterminate ? 'animate-pulse' : ''}`}
+          style={{ width: progressWidth, backgroundColor: 'var(--color-warning,#d4a843)' }}
         />
       </div>
     </div>
@@ -286,7 +297,7 @@ const ActionButtonsSection = memo(
     rebuilt,
     rebuildProgress,
   }) => (
-    <div className='pt-4 lg:col-span-12'>
+    <div className='pt-4'>
       <div className='flex flex-col flex-wrap gap-2 sm:flex-row'>
         <ActionButton type='submit' variant='primary' disabled={submitting}>
           Save & Refresh
@@ -449,13 +460,18 @@ export function OTA() {
   }
 
   return (
-    <>
-      <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>System & Updates</h2>
+    <div className='flex flex-col gap-6'>
+      <div>
+        <h1 className='font-nd-mono text-[20px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+          System & Updates
+        </h1>
+        <p className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)] mt-2 max-w-xl'>
+          Manage firmware updates, view system information, and rebuild shot history.
+        </p>
       </div>
 
       <form key='ota' method='post' action='/api/ota' ref={formRef} onSubmit={onSubmit}>
-        <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
+        <div className='flex flex-col gap-4'>
           <SystemInfoCard formData={formData} />
         </div>
 
@@ -470,6 +486,6 @@ export function OTA() {
           rebuildProgress={rebuildProgress}
         />
       </form>
-    </>
+    </div>
   );
 }

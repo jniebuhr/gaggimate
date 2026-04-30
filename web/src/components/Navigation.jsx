@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
@@ -11,18 +11,6 @@ import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
-
-const STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
-
-const readCollapsed = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    // Default to true (collapsed) if nothing stored yet
-    return stored === null ? true : stored === 'true';
-  } catch {
-    return true;
-  }
-};
 
 const NAVIGATION_SECTIONS = [
   {
@@ -48,15 +36,14 @@ const NAVIGATION_SECTIONS = [
   },
 ];
 
-function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
+function MenuItem({ icon, isNew = false, label, link, onNavigate }) {
   const { path } = useLocation();
   const isActive = path === link;
   const sharedClassName =
-    'btn btn-sm relative h-10 w-full rounded-xl border transition-[gap,padding] duration-300 ease-in-out lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-3';
+    'btn btn-sm relative h-11 w-full justify-start gap-3 rounded-xl border px-3';
   const baseClassName = `${sharedClassName} border-transparent bg-transparent text-base-content/78 hover:border-base-content/12 hover:bg-base-content/6 hover:text-base-content focus-visible:border-primary/30 focus-visible:bg-primary/10 focus-visible:text-base-content focus-visible:outline-none`;
   const activeClassName = `${sharedClassName} border border-primary/20 bg-primary/88 text-primary-content shadow-[0_12px_24px_-16px_rgba(0,0,0,0.9)] hover:bg-primary hover:text-primary-content focus-visible:outline-none`;
   const className = isActive ? activeClassName : baseClassName;
-  const iconSize = collapsed ? 'lg' : undefined;
 
   return (
     <a
@@ -64,9 +51,10 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
       className={className}
       aria-current={isActive ? 'page' : undefined}
       title={label}
+      onClick={onNavigate}
     >
-      <FontAwesomeIcon icon={icon} size={iconSize} />
-      <span className='nav-text flex max-w-0 items-center gap-2 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 ease-in-out lg:group-hover:max-w-[10rem] lg:group-hover:opacity-100'>
+      <FontAwesomeIcon icon={icon} />
+      <span className='flex items-center gap-2 overflow-hidden whitespace-nowrap'>
         <span className='truncate'>{label}</span>
         {isNew && <span className='text-success text-[0.65rem] font-bold shrink-0'>NEW</span>}
       </span>
@@ -74,36 +62,69 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
   );
 }
 
-export function Navigation({ onCollapsedChange } = {}) {
-  const [collapsed, setCollapsed] = useState(readCollapsed);
+export function Navigation({ open = false, onClose } = {}) {
+  const { path } = useLocation();
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, String(collapsed));
-    } catch {}
-    onCollapsedChange?.(collapsed);
-  }, [collapsed]);
+    if (!open) return;
+
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') {
+        onClose?.();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, onClose]);
 
   return (
-    <nav
-      className='nav-sidebar hidden lg:block lg:sticky lg:top-28 group'
-      onMouseEnter={() => setCollapsed(false)}
-      onMouseLeave={() => setCollapsed(true)}
-    >
-      <div className={`transition-[width] duration-300 ease-in-out ${collapsed ? 'w-14' : 'w-[14rem]'}`}>
-        <div className='max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-base-300/65 bg-base-100/90 p-4 shadow-[0_26px_60px_-44px_rgba(0,0,0,0.9)] backdrop-blur-xl'>
+    <>
+      <button
+        type='button'
+        className={`nav-drawer-backdrop ${open ? 'is-open' : ''}`}
+        aria-hidden={!open}
+        tabIndex={open ? 0 : -1}
+        onClick={onClose}
+      />
+      <aside
+        id='app-navigation-drawer'
+        className={`nav-drawer ${open ? 'is-open' : ''}`}
+        aria-hidden={!open}
+      >
+        <div className='flex h-full max-h-screen flex-col overflow-hidden rounded-r-[1.75rem] border-r border-base-300/65 bg-base-100/96 p-4 shadow-[0_26px_60px_-24px_rgba(0,0,0,0.92)] backdrop-blur-xl sm:w-[19rem]'>
+          <div className='mb-4 flex items-center justify-between gap-3 px-2 pt-1'>
+            <div>
+              <div className='font-logo text-lg tracking-[0.18em] text-base-content'>GAGGIMATE</div>
+              <div className='text-[0.65rem] uppercase tracking-[0.24em] text-base-content/46'>
+                Navigation
+              </div>
+            </div>
+            <button
+              type='button'
+              aria-label='Close navigation menu'
+              className='btn btn-sm btn-circle border-none bg-transparent text-base-content hover:bg-base-content/10 hover:text-base-content focus-visible:bg-base-content/10 focus-visible:outline-none'
+              onClick={onClose}
+            >
+              <span className='text-lg leading-none'>×</span>
+            </button>
+          </div>
+          <div className='custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1'>
           {NAVIGATION_SECTIONS.map(section => (
             <div key={section.id}>
               {section.showDivider && <div className='h-3' />}
               <div className='space-y-2'>
                 {section.items.map(item => (
-                  <MenuItem key={item.link} collapsed={collapsed} {...item} />
+                  <MenuItem key={item.link} {...item} onNavigate={onClose} />
                 ))}
               </div>
             </div>
           ))}
+          </div>
         </div>
-      </div>
-    </nav>
+      </aside>
+    </>
   );
 }
