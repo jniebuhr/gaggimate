@@ -217,7 +217,7 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
   if (active) {
     return {
       title: processInfo?.l || 'Running',
-      subtitle: heatingLabel || (processInfo?.s === 'brew' ? 'Extraction in progress' : 'Process in progress'),
+      subtitle: processInfo?.s === 'brew' ? 'Extraction in progress' : 'Process in progress',
     };
   }
 
@@ -235,8 +235,8 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
 
   if (heatingLabel) {
     return {
-      title: MODE_LABELS[mode] || 'STANDBY',
-      subtitle: heatingLabel,
+      title: heatingLabel,
+      subtitle: MODE_SUBTITLES[mode] || 'Ready',
     };
   }
 
@@ -248,8 +248,8 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
 
 function getHeatingLabel(mode, currentTemperature, targetTemperature) {
   if (currentTemperature >= targetTemperature) return null;
-  if (mode === 1) return 'Heating';
-  if (mode === 2) return 'Preheating';
+  if (mode === 1) return 'HEATING';
+  if (mode === 2) return 'PREHEATING';
   return null;
 }
 
