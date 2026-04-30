@@ -283,14 +283,14 @@ export default function ProcessControls({ brew, mode }) {
 
   // Auto-steam: transition to steam mode when brew finishes with auto-steam enabled
   useEffect(() => {
-    if (finished && brew && autoSteamEnabled && mode === 1 && mode !== 2) {
+    if (finished && brew && autoSteamEnabled && mode === 1 && mode !== 2 && processInfo?.s === 'brew') {
       try {
         api.send({ tp: 'req:change-mode', mode: 2 });
       } catch (err) {
         console.error('Failed to change to steam mode:', err);
       }
     }
-  }, [finished, brew, autoSteamEnabled, mode, api]);
+  }, [finished, brew, autoSteamEnabled, mode, processInfo, api]);
   const {
     currentFlow,
     currentPressure,
