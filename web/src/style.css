@@ -1869,3 +1869,19 @@ html[data-theme='nothing'] .chartjs-tooltip {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Flashing animation for heating title */
+.nd-ring-title--flashing {
+  animation: nd-ring-flash 1.2s ease-in-out infinite;
+  color: var(--home-ring-brew, #d71921) !important;
+}
+
+@keyframes nd-ring-flash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}

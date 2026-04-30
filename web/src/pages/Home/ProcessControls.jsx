@@ -453,7 +453,7 @@ export default function ProcessControls({ brew, mode }) {
                 <div className='nd-ring-target'>
                   / {formatNumber(targetTemperature)}° target
                 </div>
-                <div className={`mt-2 font-nd-mono text-[10px] uppercase tracking-[0.1em]${heatingLabel ? ' text-[var(--home-ring-brew,#d71921)]' : ' text-[var(--text-disabled,#666)]'}`}>
+                <div className={`mt-2 font-nd-mono text-[10px] uppercase tracking-[0.1em]${heatingLabel ? ' text-[var(--home-ring-brew,#d71921)] nd-ring-title--flashing' : ' text-[var(--text-disabled,#666)]'}`}>
                   {displayState.title}
                 </div>
               </>
