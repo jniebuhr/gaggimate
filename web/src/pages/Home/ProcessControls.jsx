@@ -213,11 +213,11 @@ function getRingVisual({
   };
 }
 
-function getDisplayState({ mode, active, finished, processInfo, currentTemperature, targetTemperature, isGrindAvailable }) {
+function getDisplayState({ mode, active, finished, processInfo, currentTemperature, targetTemperature, isGrindAvailable, isTemperatureStable, heatingLabel }) {
   if (active) {
     return {
       title: processInfo?.l || 'Running',
-      subtitle: processInfo?.s === 'brew' ? 'Extraction in progress' : 'Process in progress',
+      subtitle: heatingLabel || (processInfo?.s === 'brew' ? 'Extraction in progress' : 'Process in progress'),
     };
   }
 
@@ -228,17 +228,15 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
     };
   }
 
-  if (mode === 2) {
-    return {
-      title: 'STEAM',
-      subtitle: Math.abs(targetTemperature - currentTemperature) < 5 ? 'Ready' : 'Preheating',
-    };
+  // Grind not available takes priority over heating label
+  if (mode === 4 && !isGrindAvailable) {
+    return { title: 'GRIND', subtitle: 'Not available' };
   }
 
-  if (mode === 4 && !isGrindAvailable) {
+  if (heatingLabel) {
     return {
-      title: 'GRIND',
-      subtitle: 'Not available',
+      title: MODE_LABELS[mode] || 'STANDBY',
+      subtitle: heatingLabel,
     };
   }
 
@@ -246,6 +244,13 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
     title: MODE_LABELS[mode] || 'STANDBY',
     subtitle: MODE_SUBTITLES[mode] || 'Ready',
   };
+}
+
+function getHeatingLabel(mode, currentTemperature, targetTemperature) {
+  if (currentTemperature >= targetTemperature) return null;
+  if (mode === 1) return 'Heating';
+  if (mode === 2) return 'Preheating';
+  return null;
 }
 
 // Mini action button component
@@ -355,6 +360,10 @@ export default function ProcessControls({ brew, mode }) {
     profileData,
     targetTemperature,
   });
+  const isTemperatureStable = currentTemperature >= targetTemperature;
+  const heatingLabel = !isTemperatureStable
+    ? getHeatingLabel(mode, currentTemperature, targetTemperature)
+    : null;
   const displayState = getDisplayState({
     mode,
     active,
@@ -363,6 +372,8 @@ export default function ProcessControls({ brew, mode }) {
     currentTemperature,
     targetTemperature,
     isGrindAvailable,
+    isTemperatureStable,
+    heatingLabel,
   });
 
   const infoRows = useMemo(() => {
@@ -442,7 +453,7 @@ export default function ProcessControls({ brew, mode }) {
                 <div className='nd-ring-target'>
                   / {formatNumber(targetTemperature)}° target
                 </div>
-                <div className='mt-2 font-nd-mono text-[10px] uppercase tracking-[0.1em] text-[var(--text-disabled,#666)]'>
+                <div className={`mt-2 font-nd-mono text-[10px] uppercase tracking-[0.1em]${heatingLabel ? ' text-[var(--home-ring-brew,#d71921)]' : ' text-[var(--text-disabled,#666)]'}`}>
                   {displayState.title}
                 </div>
               </>
