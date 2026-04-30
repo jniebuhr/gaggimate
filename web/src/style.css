@@ -1487,6 +1487,304 @@ html[data-theme='nothing-light'] {
   --home-shadow-strong: rgba(0, 0, 0, 0.1);
 }
 
+/* Nothing-light — nd-* component inversions for white backgrounds */
+html[data-theme='nothing-light'] .nd-card {
+  background: var(--home-surface-strong, rgba(255, 255, 255, 0.98));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-card-header {
+  border-bottom-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-stat {
+  background: var(--home-surface-strong, rgba(255, 255, 255, 0.98));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-stat:hover {
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme='nothing-light'] .nd-stat-label {
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-stat-value {
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-ring {
+  background: var(--home-ring-track, rgba(0, 0, 0, 0.08));
+}
+
+html[data-theme='nothing-light'] .nd-ring-temp {
+  color: var(--text-display, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-ring-temp-unit {
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-ring-target {
+  color: var(--text-display, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-segmented {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-segmented-btn {
+  color: var(--text-display, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-segmented-btn:hover {
+  color: var(--text-primary, #1a1a1a);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme='nothing-light'] .nd-status-dot {
+  background: var(--text-disabled, #999);
+}
+
+html[data-theme='nothing-light'] .nd-status-dot--online {
+  box-shadow: 0 0 6px var(--color-success, #7cb876);
+}
+
+html[data-theme='nothing-light'] .nd-popover-btn {
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-popover-btn:hover {
+  color: var(--text-primary, #1a1a1a);
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme='nothing-light'] .nd-popover-btn--active {
+  color: var(--text-display, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-popover-close {
+  color: var(--text-disabled, #999);
+}
+
+html[data-theme='nothing-light'] .nd-popover-close:hover {
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-stepper-btn {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-stepper-btn:hover {
+  border-color: var(--color-primary, #d71921);
+  color: var(--color-primary, #d71921);
+}
+
+html[data-theme='nothing-light'] .nd-stepper-value {
+  color: var(--text-display, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-shortcut {
+  color: var(--text-display, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-action-btn {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-action-btn:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html[data-theme='nothing-light'] .nd-action-btn--primary {
+  color: white;
+}
+
+html[data-theme='nothing-light'] .nd-input {
+  background: var(--home-surface-muted, rgba(255, 255, 255, 0.98));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.12));
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-input::placeholder {
+  color: var(--text-disabled, #999);
+}
+
+html[data-theme='nothing-light'] .nd-input-unit {
+  background: var(--home-surface-strong, rgba(255, 255, 255, 0.99));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.12));
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-input-unit--btn {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  color: var(--text-primary, #1a1a1a);
+}
+
+html[data-theme='nothing-light'] .nd-input-unit--btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme='nothing-light'] .nd-toggle {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme='nothing-light'] .nd-toggle:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme='nothing-light'] .nd-toggle-thumb {
+  background: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-day-btn {
+  background: var(--home-surface-muted, rgba(250, 250, 250, 0.96));
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1));
+  color: var(--text-secondary, #666);
+}
+
+html[data-theme='nothing-light'] .nd-day-btn:hover {
+  border-color: rgba(0, 0, 0, 0.18);
+  color: var(--text-primary, #1a1a1a);
+}
+
+/* Home page surfaces for nothing-light */
+html[data-theme='nothing-light'] .home-dashboard-card {
+  background: var(--home-surface);
+  border-color: var(--home-border);
+}
+
+html[data-theme='nothing-light'] .home-dashboard-card-process {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-base-content) 4%, transparent),
+    0 30px 70px -48px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-dashboard-card-options {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-base-content) 3%, transparent),
+    0 28px 68px -48px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-dashboard-card-chart {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-base-content) 3%, transparent),
+    0 34px 80px -52px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-header-shell {
+  border-color: var(--home-border);
+  background: var(--home-header-surface);
+}
+
+html[data-theme='nothing-light'] .home-header-shell .status-indicator-card {
+  background: var(--home-surface-muted);
+  border-color: var(--home-border);
+}
+
+html[data-theme='nothing-light'] .home-mobile-pill {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+  box-shadow: 0 18px 40px -32px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-info-pill {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+  box-shadow: 0 18px 40px -32px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-process-ring {
+  --ring-background: radial-gradient(circle at 50% 50%, transparent 58%, rgba(0, 0, 0, 0.05) 58%, rgba(0, 0, 0, 0.05) 59%, transparent 60%),
+    conic-gradient(
+      from 210deg,
+      var(--home-ring-idle) 0%,
+      var(--home-ring-idle) var(--ring-progress),
+      var(--home-ring-track) var(--ring-progress),
+      var(--home-ring-track) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-base-content) 4%, transparent),
+    0 24px 54px -30px var(--home-shadow-strong);
+}
+
+html[data-theme='nothing-light'] .home-process-ring::before {
+  background:
+    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-base-content) 8%, transparent), transparent 52%),
+    var(--home-ring-inner);
+  border-color: var(--home-border);
+}
+
+html[data-theme='nothing-light'] .home-mini-action {
+  border-color: transparent;
+}
+
+html[data-theme='nothing-light'] .home-mini-action:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+html[data-theme='nothing-light'] .home-mode-chip {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+  color: color-mix(in srgb, var(--color-base-content) 72%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-mode-chip-active {
+  border-color: rgba(215, 25, 33, 0.42);
+  background: color-mix(in srgb, rgba(215, 25, 33, 0.1) 16%, var(--home-surface-strong));
+  color: color-mix(in srgb, var(--color-base-content) 96%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-stepper-button,
+html[data-theme='nothing-light'] .home-pressure-readout {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+  color: color-mix(in srgb, var(--color-base-content) 72%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-stepper-button:hover:not(:disabled) {
+  border-color: rgba(215, 25, 33, 0.4);
+}
+
+html[data-theme='nothing-light'] .home-control-block {
+  border-color: var(--home-border);
+  background: var(--home-surface-muted);
+}
+
+html[data-theme='nothing-light'] .home-control-block-title {
+  background: color-mix(in srgb, var(--home-surface-strong) 90%, var(--color-base-content) 5%);
+  color: color-mix(in srgb, var(--color-base-content) 76%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-process-panel {
+  color: color-mix(in srgb, var(--color-base-content) 96%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-control-block .home-section-label {
+  color: color-mix(in srgb, var(--color-base-content) 44%, transparent);
+}
+
+html[data-theme='nothing-light'] .home-process-ring-scale {
+  color: color-mix(in srgb, var(--color-base-content) 40%, transparent);
+}
+
+html[data-theme='nothing-light'] .nav-drawer-backdrop {
+  background: rgba(255, 255, 255, 0.56);
+}
+
+html[data-theme='nothing-light'] .nd-ring-title--flashing {
+  color: #1a1a1a !important;
+}
+
 .skip-link {
   position: absolute;
   left: 1rem;
