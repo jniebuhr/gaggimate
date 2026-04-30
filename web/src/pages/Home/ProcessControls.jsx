@@ -280,17 +280,28 @@ export default function ProcessControls({ brew, mode }) {
   const grind = mode === 4;
   const [isFlushing, setIsFlushing] = useState(false);
   const { autoSteamEnabled, toggleAutoSteam } = useAutoSteam();
+  const lastProcessTypeRef = useRef(null);
+
+  // Capture the process type when a process finishes
+  useEffect(() => {
+    if (finished && lastProcessTypeRef.current === null) {
+      lastProcessTypeRef.current = processInfo?.s ?? null;
+    }
+    if (!finished) {
+      lastProcessTypeRef.current = null;
+    }
+  }, [finished, processInfo?.s]);
 
   // Auto-steam: transition to steam mode when brew finishes with auto-steam enabled
   useEffect(() => {
-    if (finished && brew && autoSteamEnabled && mode === 1 && mode !== 2 && processInfo?.s === 'brew') {
+    if (finished && brew && autoSteamEnabled && mode === 1 && mode !== 2 && lastProcessTypeRef.current === 'brew') {
       try {
         api.send({ tp: 'req:change-mode', mode: 2 });
       } catch (err) {
         console.error('Failed to change to steam mode:', err);
       }
     }
-  }, [finished, brew, autoSteamEnabled, mode, processInfo, api]);
+  }, [finished, brew, autoSteamEnabled, mode, api]);
   const {
     currentFlow,
     currentPressure,
