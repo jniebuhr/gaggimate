@@ -1,6 +1,6 @@
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useContext, useEffect, useMemo, useState } from 'preact/hooks';
+import { useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
 import { GrindTargetBar } from '../../components/GrindTargetBar.jsx';
 import { useProfileData } from '../../hooks/useProfileData.js';
