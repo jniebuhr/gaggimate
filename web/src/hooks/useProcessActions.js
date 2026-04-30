@@ -2,13 +2,14 @@ import { useMemo } from 'preact/hooks';
 
 /**
  * Custom hook to create memoized action handlers for process control
- * 
+ *
  * @param {Object} api - ApiService instance
  * @param {boolean} grind - Whether in grind mode
  * @param {Function} setIsFlushing - State setter for flush status
+ * @param {Object} lastProcessTypeRef - Optional ref to track 'brew' or 'flush'
  * @returns {Object} Action handler functions
  */
-export function useProcessActions(api, grind, setIsFlushing) {
+export function useProcessActions(api, grind, setIsFlushing, lastProcessTypeRef) {
   return useMemo(
     () => ({
       changeTarget: (target) => {
@@ -16,6 +17,7 @@ export function useProcessActions(api, grind, setIsFlushing) {
         api.send({ tp, target });
       },
       activate: () => {
+        if (lastProcessTypeRef) lastProcessTypeRef.current = 'brew';
         api.send({ tp: grind ? 'req:grind:activate' : 'req:process:activate' });
       },
       deactivate: () => {
@@ -37,6 +39,7 @@ export function useProcessActions(api, grind, setIsFlushing) {
         api.send({ tp: grind ? 'req:lower-grind-target' : 'req:lower-brew-target' });
       },
       startFlush: () => {
+        if (lastProcessTypeRef) lastProcessTypeRef.current = 'flush';
         setIsFlushing(true);
         api.request({ tp: 'req:flush:start' }).catch(error => {
           console.error('Flush request failed:', error);
@@ -44,7 +47,7 @@ export function useProcessActions(api, grind, setIsFlushing) {
         });
       },
     }),
-    [api, grind, setIsFlushing]
+    [api, grind, setIsFlushing, lastProcessTypeRef]
   );
 }
 

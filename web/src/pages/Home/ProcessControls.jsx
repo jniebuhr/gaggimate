@@ -280,21 +280,19 @@ export default function ProcessControls({ brew, mode }) {
   const grind = mode === 4;
   const [isFlushing, setIsFlushing] = useState(false);
   const { autoSteamEnabled, toggleAutoSteam } = useAutoSteam();
-  const lastProcessTypeRef = useRef(null);
+  // Tracks whether the last explicitly started process was 'brew' or 'flush'
+  const lastStartedActionRef = useRef(null);
 
-  // Capture the process type when a process finishes
+  // Reset the ref when no process is running
   useEffect(() => {
-    if (finished && lastProcessTypeRef.current === null) {
-      lastProcessTypeRef.current = processInfo?.s ?? null;
-    }
     if (!finished) {
-      lastProcessTypeRef.current = null;
+      lastStartedActionRef.current = null;
     }
-  }, [finished, processInfo?.s]);
+  }, [finished]);
 
-  // Auto-steam: transition to steam mode when brew finishes with auto-steam enabled
+  // Auto-steam: transition to steam mode when brew (not flush) finishes with auto-steam enabled
   useEffect(() => {
-    if (finished && brew && autoSteamEnabled && mode === 1 && mode !== 2 && lastProcessTypeRef.current === 'brew') {
+    if (finished && brew && autoSteamEnabled && mode === 1 && lastStartedActionRef.current === 'brew') {
       try {
         api.send({ tp: 'req:change-mode', mode: 2 });
       } catch (err) {
@@ -325,7 +323,7 @@ export default function ProcessControls({ brew, mode }) {
     isGrindAvailable,
     volumetricAvailable
   );
-  const actions = useProcessActions(api, grind, setIsFlushing);
+  const actions = useProcessActions(api, grind, setIsFlushing, lastStartedActionRef);
 
   const progressPercent = getProgressPercent(processInfo);
   const ringVisual = getRingVisual({
