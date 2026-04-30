@@ -283,14 +283,33 @@ export default function ProcessControls({ brew, mode }) {
   // Tracks whether the last explicitly started process was 'brew' or 'flush'
   const lastStartedActionRef = useRef(null);
 
-  // Reset the ref when no process is running
+  // Track when active goes from true to false (user stopped/paused, not natural finish)
+  const wasActiveRef = useRef(false);
+  useEffect(() => {
+    if (active) {
+      wasActiveRef.current = true;
+    }
+    if (!active && wasActiveRef.current && !finished && brew && autoSteamEnabled && mode === 1 && lastStartedActionRef.current === 'brew') {
+      wasActiveRef.current = false;
+      try {
+        api.send({ tp: 'req:change-mode', mode: 2 });
+      } catch (err) {
+        console.error('Failed to change to steam mode:', err);
+      }
+    }
+    if (!active) {
+      wasActiveRef.current = false;
+    }
+  }, [active, finished, brew, autoSteamEnabled, mode, api]);
+
+  // Reset the ref when no process is running (natural finish)
   useEffect(() => {
     if (!finished) {
       lastStartedActionRef.current = null;
     }
   }, [finished]);
 
-  // Auto-steam: transition to steam mode when brew (not flush) finishes with auto-steam enabled
+  // Auto-steam: transition to steam mode when brew (not flush) finishes naturally with auto-steam enabled
   useEffect(() => {
     if (finished && brew && autoSteamEnabled && mode === 1 && lastStartedActionRef.current === 'brew') {
       try {
