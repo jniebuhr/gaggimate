@@ -2179,6 +2179,13 @@ html[data-theme='nothing-light'] .chartjs-tooltip {
   color: var(--text-primary, #1a1a1a) !important;
 }
 
+/* Shot History chart phase labels — dark text on light background */
+html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
+  color: var(--analyzer-temp-text, #1a1a1a) !important;
+  backgroundColor: var(--home-surface-muted, rgba(250, 250, 250, 0.96)) !important;
+  border-color: var(--home-border, rgba(0, 0, 0, 0.1)) !important;
+}
+
 /* Input styles */
 .nd-input {
   width: 100%;
