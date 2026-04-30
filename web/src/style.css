@@ -1537,7 +1537,7 @@ html[data-theme='crisp'] {
 .nd-ring-target {
   font-family: var(--font-nd-mono, 'Space Mono', monospace);
   font-size: 11px;
-  color: var(--text-disabled, #666);
+  color: var(--text-display, #fff);
   margin-top: 4px;
 }
 
