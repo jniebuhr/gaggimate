@@ -668,7 +668,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
             if (request->hasArg("altRelayFunction"))
                 settings->setAltRelayFunction(request->arg("altRelayFunction").toInt());
-            settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
+            settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled") && request->arg("autowakeupEnabled").length() > 0);
             if (request->hasArg("autowakeupSchedules")) {
                 // Handle schedule format with days
                 String schedulesStr = request->arg("autowakeupSchedules");
