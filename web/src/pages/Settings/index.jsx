@@ -177,6 +177,8 @@ export function Settings() {
           formDataToSubmit.set('pid', combinedPid);
         }
 
+        formDataToSubmit.set('autowakeupEnabled', formData.autowakeupEnabled ? '1' : '');
+
         const schedulesStr = autowakeupSchedules
           .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
           .join(';');
