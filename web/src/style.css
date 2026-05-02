@@ -2331,3 +2331,57 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
     opacity: 0.3;
   }
 }
+
+/* Resize handle styles */
+.resize-handle {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  color: var(--text-disabled, #666);
+  opacity: 0;
+  transition: opacity 150ms ease;
+  z-index: 10;
+}
+
+.nd-card:hover .resize-handle,
+.nd-card.resizing .resize-handle {
+  opacity: 0.6;
+}
+
+.resize-handle:hover {
+  opacity: 1 !important;
+}
+
+/* Sortable card styles */
+.sortable-card {
+  cursor: grab;
+}
+
+.sortable-card.is-dragging {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transform: scale(1.02);
+  cursor: grabbing;
+}
+
+/* Dashboard grid styles */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: minmax(120px, auto);
+  gap: 1rem;
+}
+
+.sortable-card.col-span-2 {
+  grid-column: span 2;
+}
+
+.sortable-card.row-span-2 {
+  grid-row: span 2;
+}
+
+.sortable-card.row-span-3 {
+  grid-row: span 3;
+}
