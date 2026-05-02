@@ -28,11 +28,13 @@ export default function SortableCard({
     zIndex: isDragging ? 100 : 'auto',
   };
 
+  // Build className including col-span-2 when card spans full width
+  const cardClassName = `${cols >= 2 ? 'col-span-2' : ''} ${className || ''}`.trim();
+
   // Forward resize start with card ID and coordinates - not the event
   const handleResizePointerDown = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    // Don't call onResizeStart here - let the handle direct to document listeners
     if (onResizeStart) {
       onResizeStart(id, e.clientX, e.clientY);
     }
@@ -42,11 +44,15 @@ export default function SortableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`sortable-card ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''} ${className || ''}`}
+      className={`sortable-card ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''} ${cardClassName}`}
       {...attributes}
       {...listeners}
     >
-      <Card onResize={handleResizePointerDown}>
+      <Card
+        cols={cols}
+        rows={rows}
+        onResize={handleResizePointerDown}
+      >
         {children}
       </Card>
     </div>
