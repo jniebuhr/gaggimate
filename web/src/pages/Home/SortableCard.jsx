@@ -10,7 +10,6 @@ export default function SortableCard({
   cols,
   rows,
   onResizeStart,
-  isResizing,
   isDragOver,
 }) {
   const {
@@ -29,11 +28,14 @@ export default function SortableCard({
     zIndex: isDragging ? 100 : 'auto',
   };
 
-  // Separate resize handler to avoid conflict with dnd-kit listeners
+  // Forward resize start with card ID and coordinates - not the event
   const handleResizePointerDown = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    onResizeStart && onResizeStart(e);
+    // Don't call onResizeStart here - let the handle direct to document listeners
+    if (onResizeStart) {
+      onResizeStart(id, e.clientX, e.clientY);
+    }
   };
 
   return (
@@ -44,10 +46,7 @@ export default function SortableCard({
       {...attributes}
       {...listeners}
     >
-      <Card
-        resizing={isResizing}
-        onResize={handleResizePointerDown}
-      >
+      <Card onResize={handleResizePointerDown}>
         {children}
       </Card>
     </div>
@@ -61,6 +60,5 @@ SortableCard.propTypes = {
   cols: PropTypes.number,
   rows: PropTypes.number,
   onResizeStart: PropTypes.func,
-  isResizing: PropTypes.bool,
   isDragOver: PropTypes.bool,
 };
