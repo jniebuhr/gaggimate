@@ -34,12 +34,16 @@ export default function Card({
 
   const gridClasses = getGridClasses();
 
+  // Apply cols/rows as grid span classes
+  const spanClasses = [
+    cols && cols >= 1 ? `col-span-${cols}` : '',
+    rows && rows >= 1 ? `row-span-${rows}` : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <div
-      className={`nd-card overflow-hidden relative ${gridClasses} ${fullHeight ? 'h-full' : ''} ${resizing ? 'resizing' : ''} ${className}`}
+      className={`nd-card overflow-hidden relative ${gridClasses} ${spanClasses} ${fullHeight ? 'h-full' : ''} ${resizing ? 'resizing' : ''} ${className}`}
       role={role}
-      data-cols={cols}
-      data-rows={rows}
     >
       {title && (
         <div className='nd-card-header border-b border-[var(--home-border,#222)] px-5 py-4'>
@@ -51,7 +55,7 @@ export default function Card({
       <div className={`nd-card-body flex flex-col gap-3 p-5 sm:p-6 ${fullHeight ? 'flex-1' : ''}`}>
         {children}
       </div>
-      {onResize && <ResizeHandle onResizeStart={(clientX, clientY) => onResize(clientX, clientY)} />}
+      {onResize && <ResizeHandle onResizeStart={e => onResize(e)} />}
     </div>
   );
 }
