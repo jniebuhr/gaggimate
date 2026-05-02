@@ -3,7 +3,16 @@ import { CSS } from '@dnd-kit/utilities';
 import PropTypes from 'prop-types';
 import Card from '../../components/Card.jsx';
 
-export default function SortableCard({ id, children, className, onResize }) {
+export default function SortableCard({
+  id,
+  children,
+  className,
+  cols,
+  rows,
+  onResizeStart,
+  isResizing,
+  isDragOver,
+}) {
   const {
     attributes,
     listeners,
@@ -15,26 +24,29 @@ export default function SortableCard({ id, children, className, onResize }) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 100 : 'auto',
+  };
+
+  // Separate resize handler to avoid conflict with dnd-kit listeners
+  const handleResizePointerDown = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onResizeStart && onResizeStart(e);
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`sortable-card ${isDragging ? 'is-dragging' : ''} ${className || ''}`}
+      className={`sortable-card ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''} ${className || ''}`}
       {...attributes}
       {...listeners}
     >
       <Card
-        resizing={false}
-        onResize={e => {
-          // Prevent drag initiation when starting resize
-          e.preventDefault();
-          onResize && onResize(id, e);
-        }}
+        resizing={isResizing}
+        onResize={handleResizePointerDown}
       >
         {children}
       </Card>
@@ -46,5 +58,9 @@ SortableCard.propTypes = {
   id: PropTypes.string.isRequired,
   children: PropTypes.node,
   className: PropTypes.string,
-  onResize: PropTypes.func,
+  cols: PropTypes.number,
+  rows: PropTypes.number,
+  onResizeStart: PropTypes.func,
+  isResizing: PropTypes.bool,
+  isDragOver: PropTypes.bool,
 };

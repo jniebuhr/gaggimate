@@ -2368,20 +2368,25 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
 
 /* Dashboard grid styles */
 .dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: minmax(120px, auto);
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
+  align-items: flex-start;
+}
+
+.sortable-card {
+  flex: 0 0 calc(50% - 0.5rem);
+  position: relative;
 }
 
 .sortable-card.col-span-2 {
-  grid-column: span 2;
+  flex: 0 0 calc(100% - 0.5rem);
 }
 
 .sortable-card.row-span-2 {
-  grid-row: span 2;
+  min-height: 280px;
 }
 
 .sortable-card.row-span-3 {
-  grid-row: span 3;
+  min-height: 420px;
 }
