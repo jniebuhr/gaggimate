@@ -1,13 +1,21 @@
 import PropTypes from 'prop-types';
 
 export default function ResizeHandle({ onResizeStart, className = '' }) {
+  const handlePointerDown = (e) => {
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    onResizeStart && onResizeStart(e);
+  };
+
+  const handlePointerUp = (e) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
   return (
     <div
       className={`resize-handle ${className}`}
-      onPointerDown={e => {
-        e.stopPropagation();
-        onResizeStart && onResizeStart(e);
-      }}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
       aria-label="Resize card"
       role="button"
     >
