@@ -180,6 +180,7 @@ export function Settings() {
         }
 
         formDataToSubmit.set('autowakeupEnabled', formData.autowakeupEnabled ? '1' : '');
+        formDataToSubmit.set('homekit', formData.homekit ? '1' : '');
 
         const schedulesStr = autowakeupSchedules
           .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
