@@ -18,6 +18,31 @@ import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 
+/**
+ * Split a PID CSV string into the form's two-input shape.
+ *
+ * The firmware stores PID as a single CSV `Kp,Ki,Kd,Kff` string, but the
+ * form edits Kp/Ki/Kd as one input and Kff as another. This converts the
+ * on-wire shape into `{ pid, kf }` for the form. Used both on initial
+ * fetch and after every Save — without re-splitting on the post-save
+ * response, a fourth field leaks into the `pid` input and the next Save
+ * sends a 5-field CSV.
+ *
+ * @param {string|undefined} pidString - CSV `Kp,Ki,Kd,Kff` string from the
+ *   firmware, or empty/undefined if no PID has been saved yet.
+ * @returns {{ pid: string, kf: string }} - `pid` is the first three CSV
+ *   fields joined by commas; `kf` is the fourth field, or `'0.000'` if
+ *   absent.
+ */
+function splitPidString(pidString) {
+  if (!pidString) return { pid: pidString, kf: '0.000' };
+  const parts = pidString.split(',');
+  if (parts.length >= 4) {
+    return { pid: parts.slice(0, 3).join(','), kf: parts[3] };
+  }
+  return { pid: pidString, kf: '0.000' };
+}
+
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
   const [gen] = useState(0);
@@ -48,17 +73,13 @@ export function Settings() {
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
 
-      // Extract Kf from PID string and separate them
+      // Extract Kf from PID string and separate them. Mirrors the same
+      // split applied in `onSubmit` after every save — keep these two in
+      // sync via `splitPidString`.
       if (fetchedSettings.pid) {
-        const pidParts = fetchedSettings.pid.split(',');
-        if (pidParts.length >= 4) {
-          // PID string has Kf as 4th parameter
-          settingsWithToggle.pid = pidParts.slice(0, 3).join(','); // First 3 params
-          settingsWithToggle.kf = pidParts[3]; // 4th parameter
-        } else {
-          // No Kf in PID string, use default
-          settingsWithToggle.kf = '0.000';
-        }
+        const split = splitPidString(fetchedSettings.pid);
+        settingsWithToggle.pid = split.pid;
+        settingsWithToggle.kf = split.kf;
       }
 
       // Initialize auto-wakeup schedules
@@ -220,10 +241,18 @@ export function Settings() {
       });
       const data = await response.json();
 
+      // Re-split `pid` the same way the initial load does. The server
+      // returns the full `Kp,Ki,Kd,Kff` CSV; without splitting it here,
+      // the next Save would combine `formData.pid` (already 4 fields)
+      // with `formData.kf`, producing a 5-field CSV that grows on every
+      // round-trip.
+      const splitPid = data.pid ? splitPidString(data.pid) : null;
+
       // Only preserve standbyDisplayEnabled if brightness is greater than 0
       // If brightness is 0, let the useEffect recalculate it based on the saved value
       const updatedData = {
         ...data,
+        ...(splitPid !== null ? { pid: splitPid.pid, kf: splitPid.kf } : {}),
         standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
       };
 
