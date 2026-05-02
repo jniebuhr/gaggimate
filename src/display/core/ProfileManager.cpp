@@ -157,7 +157,11 @@ bool ProfileManager::deleteProfile(const String &uuid) {
     if (_settings.getStartupProfile() == uuid) {
         _settings.setStartupProfile("");
     }
-    return _fs->remove(profilePath(uuid));
+    bool ok = _fs->remove(profilePath(uuid));
+    if (ok) {
+        _plugin_manager->trigger("profiles:profile:delete", "id", uuid);
+    }
+    return ok;
 }
 
 bool ProfileManager::profileExists(const String &uuid) { return _fs->exists(profilePath(uuid)); }

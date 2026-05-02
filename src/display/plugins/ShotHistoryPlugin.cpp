@@ -248,6 +248,7 @@ void ShotHistoryPlugin::record() {
             if (!appendToIndex(indexEntry)) {
                 ESP_LOGE("ShotHistoryPlugin", "CRITICAL: Failed to add completed shot %u to index", indexEntry.id);
             }
+            pluginManager->trigger("history:shot:save", "id", currentId);
         }
     }
 }
@@ -480,10 +481,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         response["error"] = "use HTTP /api/history?id=<id>";
     } else if (type == "req:history:delete") {
         auto id = request["id"].as<String>();
-        String paddedId = id;
-        while (paddedId.length() < 6) {
-            paddedId = "0" + paddedId;
-        }
+        String paddedId = padId(id);
         fs->remove("/h/" + paddedId + ".slog");
         fs->remove("/h/" + paddedId + ".json");
 
@@ -491,6 +489,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         markIndexDeleted(id.toInt());
 
         response["msg"] = "Ok";
+        pluginManager->trigger("history:shot:delete", "id", paddedId);
     } else if (type == "req:history:notes:get") {
         auto id = request["id"].as<String>();
         JsonDocument notes;
@@ -517,6 +516,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         updateIndexMetadata(id.toInt(), rating, volume);
 
         response["msg"] = "Ok";
+        pluginManager->trigger("history:shot:notes:save", "id", padId(id));
     } else if (type == "req:history:rebuild") {
         // Rebuild is now handled asynchronously by WebUIPlugin
         // This path shouldn't be reached, but handle it just in case
