@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'preact/hooks';
+import { useCallback, useRef, useState } from 'preact/hooks';
 import {
   DndContext,
   closestCenter,
@@ -6,24 +6,49 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  DragOverlay as DndDragOverlay,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  rectSortingStrategy,
-} from '@dnd-kit/sortable';
+import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { signal } from '@preact/signals';
 import PropTypes from 'prop-types';
 import SortableCard from './SortableCard.jsx';
 import { getDashboardLayout, setDashboardLayout } from '../../utils/dashboardManager.js';
 
-// Dashboard layout signal
 export const dashboardLayout = signal(getDashboardLayout());
+
+const CARD_META = {
+  process: {
+    title: 'Process',
+    className: 'home-dashboard-card home-dashboard-card-process',
+  },
+  status: {
+    title: 'Status',
+    className: 'home-dashboard-card home-dashboard-card-options',
+  },
+  chart: {
+    title: 'Temperature & Pressure',
+    className: 'home-dashboard-card home-dashboard-card-chart',
+    fullHeight: true,
+  },
+};
+
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+function reorderCards(cards, activeId, overId) {
+  const oldIndex = cards.findIndex(card => card.id === activeId);
+  const newIndex = cards.findIndex(card => card.id === overId);
+
+  if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+    return cards;
+  }
+
+  return arrayMove(cards, oldIndex, newIndex);
+}
 
 export default function DashboardGrid({ process, status, chart }) {
   const [activeId, setActiveId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizingId, setResizingId] = useState(null);
+  const gridRef = useRef(null);
   const resizeRef = useRef(null);
 
   const sensors = useSensors(
@@ -31,94 +56,100 @@ export default function DashboardGrid({ process, status, chart }) {
       activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 300, tolerance: 5 },
-    })
+      activationConstraint: { delay: 3000, tolerance: 5 },
+    }),
   );
 
-  const handleDragStart = useCallback((event) => {
+  const handleDragStart = useCallback(event => {
     setActiveId(event.active.id);
   }, []);
 
-  const handleDragOver = useCallback((event) => {
-    if (event.over) {
-      setDragOverId(event.over.id);
-    }
-    if (event.delta) {
-      setDragOffset({ x: event.delta.x, y: event.delta.y });
-    }
+  const handleDragOver = useCallback(event => {
+    setDragOverId(event.over?.id || null);
   }, []);
 
-  const handleDragEnd = useCallback((event) => {
+  const handleDragEnd = useCallback(event => {
     const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const cards = reorderCards(dashboardLayout.value.cards, active.id, over.id);
+      dashboardLayout.value = { cards };
+    }
+
     setActiveId(null);
     setDragOverId(null);
-    setDragOffset({ x: 0, y: 0 });
-
-    if (!over || active.id === over.id) return;
-
-    const cards = [...dashboardLayout.value.cards];
-    const oldIndex = cards.findIndex(c => c.id === active.id);
-    const newIndex = cards.findIndex(c => c.id === over.id);
-
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const [moved] = cards.splice(oldIndex, 1);
-    cards.splice(newIndex, 0, moved);
-
-    dashboardLayout.value = { cards };
     setDashboardLayout(dashboardLayout.value);
   }, []);
 
-  // Direct resize handler - attaches to document for reliable tracking
-  const startResize = useCallback((cardId, clientX, clientY) => {
-    if (resizeRef.current) return; // Already resizing
-
-    const startCard = dashboardLayout.value.cards.find(c => c.id === cardId);
-    if (!startCard) return;
-
-    resizeRef.current = {
-      cardId,
-      startX: clientX,
-      startY: clientY,
-      startCols: startCard.cols || 1,
-      startRows: startCard.rows || 1,
-    };
-
-    const onMove = (e) => {
-      if (!resizeRef.current) return;
-      const deltaX = e.clientX - resizeRef.current.startX;
-      const deltaY = e.clientY - resizeRef.current.startY;
-      const threshold = 40;
-
-      const newCols = Math.max(1, Math.min(2, resizeRef.current.startCols + Math.round(deltaX / threshold)));
-      const newRows = Math.max(1, Math.min(3, resizeRef.current.startRows + Math.round(deltaY / threshold)));
-
-      const cards = dashboardLayout.value.cards.map(card =>
-        card.id === resizeRef.current.cardId
-          ? { ...card, cols: newCols, rows: newRows }
-          : card
-      );
-      dashboardLayout.value = { cards };
-    };
-
-    const onUp = () => {
-      resizeRef.current = null;
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-    };
-
-    document.addEventListener('pointermove', onMove);
-    document.addEventListener('pointerup', onUp);
-
-    return () => {
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-    };
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null);
+    setDragOverId(null);
   }, []);
 
+  const startResize = useCallback(
+    (cardId, event) => {
+      if (resizeRef.current) return;
+
+      const startCard = dashboardLayout.value.cards.find(card => card.id === cardId);
+      if (!startCard) return;
+
+      const grid = gridRef.current;
+      const gridRect = grid?.getBoundingClientRect();
+      const gridStyles = grid ? window.getComputedStyle(grid) : null;
+      const gap = gridStyles ? parseFloat(gridStyles.columnGap || gridStyles.gap || '16') : 16;
+      const columnWidth = gridRect ? (gridRect.width - gap) / 2 : 160;
+      const rowHeight = 120 + gap;
+
+      resizeRef.current = {
+        cardId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startCols: startCard.cols || 1,
+        startRows: startCard.rows || 1,
+        columnWidth,
+        rowHeight,
+      };
+      setResizingId(cardId);
+
+      const onMove = moveEvent => {
+        if (!resizeRef.current) return;
+
+        moveEvent.preventDefault();
+
+        const resize = resizeRef.current;
+        const deltaCols = Math.round((moveEvent.clientX - resize.startX) / resize.columnWidth);
+        const deltaRows = Math.round((moveEvent.clientY - resize.startY) / resize.rowHeight);
+        const nextCols = clamp(resize.startCols + deltaCols, 1, 2);
+        const nextRows = clamp(resize.startRows + deltaRows, 1, 3);
+
+        const cards = dashboardLayout.value.cards.map(card =>
+          card.id === resize.cardId ? { ...card, cols: nextCols, rows: nextRows } : card,
+        );
+
+        dashboardLayout.value = { cards };
+      };
+
+      const onUp = () => {
+        if (resizeRef.current) {
+          setDashboardLayout(dashboardLayout.value);
+        }
+
+        resizeRef.current = null;
+        setResizingId(null);
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    },
+    [],
+  );
+
   const cardContentMap = { process, status, chart };
-  const cardIds = dashboardLayout.value.cards.map(c => c.id);
-  const activeCard = activeId ? dashboardLayout.value.cards.find(c => c.id === activeId) : null;
+  const cardIds = dashboardLayout.value.cards.map(card => card.id);
 
   return (
     <DndContext
@@ -127,41 +158,32 @@ export default function DashboardGrid({ process, status, chart }) {
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <SortableContext items={cardIds} strategy={rectSortingStrategy}>
-        <div className='dashboard-grid'>
-          {dashboardLayout.value.cards.map(cardConfig => (
-            <SortableCard
-              key={cardConfig.id}
-              id={cardConfig.id}
-              cols={cardConfig.cols || 1}
-              rows={cardConfig.rows || 1}
-              onResizeStart={(cardId, clientX, clientY) => startResize(cardId, clientX, clientY)}
-              isDragOver={dragOverId === cardConfig.id}
-            >
-              {cardContentMap[cardConfig.id]}
-            </SortableCard>
-          ))}
+        <div ref={gridRef} className='dashboard-grid'>
+          {dashboardLayout.value.cards.map(cardConfig => {
+            const meta = CARD_META[cardConfig.id];
+
+            return (
+              <SortableCard
+                key={cardConfig.id}
+                id={cardConfig.id}
+                title={meta.title}
+                cols={cardConfig.cols || 1}
+                rows={cardConfig.rows || 1}
+                className={meta.className}
+                fullHeight={meta.fullHeight}
+                onResizeStart={startResize}
+                isDragOver={Boolean(activeId && dragOverId === cardConfig.id)}
+                isResizing={resizingId === cardConfig.id}
+              >
+                {cardContentMap[cardConfig.id]}
+              </SortableCard>
+            );
+          })}
         </div>
       </SortableContext>
-      <DndDragOverlay>
-        {activeCard ? (
-          <div
-            className={`sortable-card col-span-${activeCard.cols || 1} row-span-${activeCard.rows || 1}`}
-            style={{
-              opacity: 0.9,
-              transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0)`,
-              position: 'fixed',
-              pointerEvents: 'none',
-              zIndex: 9999,
-              width: 'calc(50% - 0.5rem)',
-              height: 'var(--drag-overlay-height, 120px)',
-            }}
-          >
-            <Card>{cardContentMap[activeCard.id]}</Card>
-          </div>
-        ) : null}
-      </DndDragOverlay>
     </DndContext>
   );
 }

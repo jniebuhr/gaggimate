@@ -2186,7 +2186,7 @@ html[data-theme='nothing-light'] .chartjs-tooltip {
 /* Shot History chart phase labels — dark text on light background */
 html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
   color: var(--analyzer-temp-text, #1a1a1a) !important;
-  backgroundColor: var(--home-surface-muted, rgba(250, 250, 250, 0.96)) !important;
+  background-color: var(--home-surface-muted, rgba(250, 250, 250, 0.96)) !important;
   border-color: var(--home-border, rgba(0, 0, 0, 0.1)) !important;
 }
 
@@ -2344,6 +2344,7 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
   opacity: 0;
   transition: opacity 150ms ease;
   z-index: 10;
+  touch-action: none;
 }
 
 .nd-card:hover .resize-handle,
@@ -2362,10 +2363,18 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
   min-height: 120px;
 }
 
+.sortable-card > .nd-card {
+  height: 100%;
+}
+
 .sortable-card.is-dragging {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  transform: scale(1.02);
   cursor: grabbing;
+}
+
+.sortable-card.drag-over > .nd-card {
+  outline: 1px dashed color-mix(in srgb, var(--color-primary, #d71921) 60%, transparent);
+  outline-offset: 4px;
 }
 
 /* Dashboard grid styles */
@@ -2374,16 +2383,4 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
   grid-template-columns: repeat(2, 1fr);
   grid-auto-rows: minmax(120px, auto);
   gap: 1rem;
-}
-
-.sortable-card.col-span-2 {
-  grid-column: span 2;
-}
-
-.sortable-card.row-span-2 {
-  grid-row: span 2;
-}
-
-.sortable-card.row-span-3 {
-  grid-row: span 3;
 }

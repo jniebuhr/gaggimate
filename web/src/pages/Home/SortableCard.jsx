@@ -5,12 +5,15 @@ import Card from '../../components/Card.jsx';
 
 export default function SortableCard({
   id,
+  title,
   children,
   className,
   cols,
   rows,
   onResizeStart,
   isDragOver,
+  isResizing,
+  fullHeight = false,
 }) {
   const {
     attributes,
@@ -26,23 +29,26 @@ export default function SortableCard({
     transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 100 : 'auto',
+    gridColumn: `span ${cols || 1}`,
+    gridRow: `span ${rows || 1}`,
   };
-
-  // Build className including col-span-2 when card spans full width
-  const cardClassName = `${cols >= 2 ? 'col-span-2' : ''} ${className || ''}`.trim();
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`sortable-card ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''} ${cardClassName}`}
+      className={`sortable-card ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
       {...attributes}
       {...listeners}
     >
       <Card
+        title={title}
         cols={cols}
         rows={rows}
-        onResize={(clientX, clientY) => onResizeStart(id, clientX, clientY)}
+        className={className}
+        fullHeight={fullHeight}
+        resizing={isResizing}
+        onResize={onResizeStart ? (clientX, clientY) => onResizeStart(id, clientX, clientY) : undefined}
       >
         {children}
       </Card>
@@ -52,10 +58,13 @@ export default function SortableCard({
 
 SortableCard.propTypes = {
   id: PropTypes.string.isRequired,
+  title: PropTypes.string,
   children: PropTypes.node,
   className: PropTypes.string,
   cols: PropTypes.number,
   rows: PropTypes.number,
   onResizeStart: PropTypes.func,
   isDragOver: PropTypes.bool,
+  isResizing: PropTypes.bool,
+  fullHeight: PropTypes.bool,
 };

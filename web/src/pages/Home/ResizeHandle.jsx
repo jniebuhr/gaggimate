@@ -7,11 +7,11 @@ export default function ResizeHandle({ onResizeStart, className = '' }) {
       onPointerDown={e => {
         e.stopPropagation();
         e.preventDefault();
-        // Pass coordinates only, not the event
-        onResizeStart && onResizeStart(e.clientX, e.clientY);
+        onResizeStart && onResizeStart(e);
       }}
       aria-label="Resize card"
       role="button"
+      tabIndex={0}
     >
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path
