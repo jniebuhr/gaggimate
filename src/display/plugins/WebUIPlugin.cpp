@@ -458,6 +458,27 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
     ws.text(clientId, buffer);
 }
 
+/**
+ * Handle the `/api/settings` HTTP endpoint (GET and POST).
+ *
+ * On `GET`, serializes the current `Settings` object to JSON and writes it
+ * to the response. The serialized payload includes auto-wakeup schedules
+ * encoded as the `"time1|days1;time2|days2"` string the web UI expects.
+ *
+ * On `POST`, applies any provided form arguments to `Settings` via a
+ * single `batchUpdate` call (so partial writes don't see intermediate
+ * state), then echoes the updated settings back as JSON.
+ *
+ * On `POST` with the `restart` argument present, the handler explicitly
+ * flushes any pending writes to NVS (`Settings::save(true)`) before
+ * calling `ESP.restart()`. Without the explicit flush, settings written
+ * inside `batchUpdate` may still be queued behind the debounced write
+ * timer when `ESP.restart()` fires, and the device boots with stale
+ * values.
+ *
+ * @param request The incoming HTTP request. Method must be GET or POST.
+ *   Arguments accepted are documented inline in the `batchUpdate` body.
+ */
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     if (request->method() == HTTP_POST) {
         controller->getSettings().batchUpdate([request](Settings *settings) {
@@ -659,8 +680,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     serializeJson(doc, *response);
     request->send(response);
 
-    if (request->method() == HTTP_POST && request->hasArg("restart"))
+    if (request->method() == HTTP_POST && request->hasArg("restart")) {
+        controller->getSettings().save(true);
         ESP.restart();
+    }
 }
 
 void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
