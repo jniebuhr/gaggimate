@@ -11,7 +11,11 @@ import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortab
 import { signal } from '@preact/signals';
 import PropTypes from 'prop-types';
 import SortableCard from './SortableCard.jsx';
-import { getDashboardLayout, setDashboardLayout } from '../../utils/dashboardManager.js';
+import {
+  getDashboardLayout,
+  normalizeDashboardLayout,
+  setDashboardLayout,
+} from '../../utils/dashboardManager.js';
 
 export const dashboardLayout = signal(getDashboardLayout());
 
@@ -72,8 +76,19 @@ export default function DashboardGrid({ process, status, chart }) {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const cards = reorderCards(dashboardLayout.value.cards, active.id, over.id);
-      dashboardLayout.value = { cards };
+      const currentCards = dashboardLayout.value.cards;
+      const activeIndex = currentCards.findIndex(card => card.id === active.id);
+      const overIndex = currentCards.findIndex(card => card.id === over.id);
+      const cards = reorderCards(currentCards, active.id, over.id).map((card, index) => {
+        if (activeIndex === 2 || overIndex === 2) {
+          if (index === 0 || index === 1) return { ...card, cols: 6 };
+          return { ...card, cols: 12 };
+        }
+
+        return card;
+      });
+
+      dashboardLayout.value = normalizeDashboardLayout({ cards });
     }
 
     setActiveId(null);
@@ -97,11 +112,13 @@ export default function DashboardGrid({ process, status, chart }) {
       const gridRect = grid?.getBoundingClientRect();
       const gridStyles = grid ? window.getComputedStyle(grid) : null;
       const gap = gridStyles ? parseFloat(gridStyles.columnGap || gridStyles.gap || '16') : 16;
-      const columnWidth = gridRect ? (gridRect.width - gap) / 2 : 160;
+      const columnWidth = gridRect ? (gridRect.width - gap) / 12 : 80;
       const rowHeight = 120 + gap;
+      const startIndex = dashboardLayout.value.cards.findIndex(card => card.id === cardId);
 
       resizeRef.current = {
         cardId,
+        startIndex,
         startX: event.clientX,
         startY: event.clientY,
         startCols: startCard.cols || 1,
@@ -117,16 +134,40 @@ export default function DashboardGrid({ process, status, chart }) {
         moveEvent.preventDefault();
 
         const resize = resizeRef.current;
-        const deltaCols = Math.round((moveEvent.clientX - resize.startX) / resize.columnWidth);
-        const deltaRows = Math.round((moveEvent.clientY - resize.startY) / resize.rowHeight);
-        const nextCols = clamp(resize.startCols + deltaCols, 1, 2);
+        const deltaCols = Math.round(
+          (moveEvent.clientX - resize.startX) / Math.max(1, resize.columnWidth),
+        );
+        const deltaRows = Math.round(
+          (moveEvent.clientY - resize.startY) / Math.max(1, resize.rowHeight / 2),
+        );
+        const nextCols = clamp(resize.startCols + deltaCols, 3, 9);
         const nextRows = clamp(resize.startRows + deltaRows, 1, 3);
 
-        const cards = dashboardLayout.value.cards.map(card =>
-          card.id === resize.cardId ? { ...card, cols: nextCols, rows: nextRows } : card,
-        );
+        const cards = dashboardLayout.value.cards.map((card, index) => {
+          if (resize.startIndex === 2) {
+            return index === 2 ? { ...card, cols: 12, rows: nextRows } : card;
+          }
 
-        dashboardLayout.value = { cards };
+          if (index === 0) {
+            return {
+              ...card,
+              cols: resize.startIndex === 0 ? nextCols : 12 - nextCols,
+              rows: card.id === resize.cardId ? nextRows : card.rows,
+            };
+          }
+
+          if (index === 1) {
+            return {
+              ...card,
+              cols: resize.startIndex === 1 ? nextCols : 12 - nextCols,
+              rows: card.id === resize.cardId ? nextRows : card.rows,
+            };
+          }
+
+          return { ...card, cols: 12 };
+        });
+
+        dashboardLayout.value = normalizeDashboardLayout({ cards });
       };
 
       const onUp = () => {
@@ -162,15 +203,16 @@ export default function DashboardGrid({ process, status, chart }) {
     >
       <SortableContext items={cardIds} strategy={rectSortingStrategy}>
         <div ref={gridRef} className='dashboard-grid'>
-          {dashboardLayout.value.cards.map(cardConfig => {
+          {dashboardLayout.value.cards.map((cardConfig, index) => {
             const meta = CARD_META[cardConfig.id];
+            const cols = index === 2 ? 12 : cardConfig.cols || 6;
 
             return (
               <SortableCard
                 key={cardConfig.id}
                 id={cardConfig.id}
                 title={meta.title}
-                cols={cardConfig.cols || 1}
+                cols={cols}
                 rows={cardConfig.rows || 1}
                 className={meta.className}
                 fullHeight={meta.fullHeight}

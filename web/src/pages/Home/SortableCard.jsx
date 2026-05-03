@@ -30,7 +30,7 @@ export default function SortableCard({
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 100 : 'auto',
     gridColumn: `span ${cols || 1}`,
-    gridRow: `span ${rows || 1}`,
+    minHeight: `${Math.max(1, rows || 1) * 120}px`,
   };
 
   return (
@@ -48,7 +48,7 @@ export default function SortableCard({
         className={className}
         fullHeight={fullHeight}
         resizing={isResizing}
-        onResize={onResizeStart ? (clientX, clientY) => onResizeStart(id, clientX, clientY) : undefined}
+        onResize={event => onResizeStart && onResizeStart(id, event)}
       >
         {children}
       </Card>

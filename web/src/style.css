@@ -2380,7 +2380,7 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
 /* Dashboard grid styles */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   grid-auto-rows: minmax(120px, auto);
   gap: 1rem;
 }
