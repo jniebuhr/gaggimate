@@ -60,7 +60,7 @@ export default function DashboardGrid({ process, status, chart }) {
       activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 3000, tolerance: 5 },
+      activationConstraint: { delay: 300, tolerance: 5 },
     }),
   );
 
