@@ -15,7 +15,6 @@ import {
 import { signal } from '@preact/signals';
 import PropTypes from 'prop-types';
 import SortableCard from './SortableCard.jsx';
-import Card from '../../components/Card.jsx';
 import { getDashboardLayout, setDashboardLayout } from '../../utils/dashboardManager.js';
 
 // Dashboard layout signal
@@ -110,6 +109,11 @@ export default function DashboardGrid({ process, status, chart }) {
 
     document.addEventListener('pointermove', onMove);
     document.addEventListener('pointerup', onUp);
+
+    return () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+    };
   }, []);
 
   const cardContentMap = { process, status, chart };
@@ -151,6 +155,7 @@ export default function DashboardGrid({ process, status, chart }) {
               pointerEvents: 'none',
               zIndex: 9999,
               width: 'calc(50% - 0.5rem)',
+              height: 'var(--drag-overlay-height, 120px)',
             }}
           >
             <Card>{cardContentMap[activeCard.id]}</Card>
