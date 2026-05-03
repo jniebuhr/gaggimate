@@ -31,15 +31,6 @@ export default function SortableCard({
   // Build className including col-span-2 when card spans full width
   const cardClassName = `${cols >= 2 ? 'col-span-2' : ''} ${className || ''}`.trim();
 
-  // Forward resize start with card ID and coordinates - not the event
-  const handleResizePointerDown = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (onResizeStart) {
-      onResizeStart(id, e.clientX, e.clientY);
-    }
-  };
-
   return (
     <div
       ref={setNodeRef}
@@ -51,7 +42,7 @@ export default function SortableCard({
       <Card
         cols={cols}
         rows={rows}
-        onResize={handleResizePointerDown}
+        onResize={(clientX, clientY) => onResizeStart(id, clientX, clientY)}
       >
         {children}
       </Card>

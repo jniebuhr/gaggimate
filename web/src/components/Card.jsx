@@ -55,7 +55,7 @@ export default function Card({
       <div className={`nd-card-body flex flex-col gap-3 p-5 sm:p-6 ${fullHeight ? 'flex-1' : ''}`}>
         {children}
       </div>
-      {onResize && <ResizeHandle onResizeStart={e => onResize(e)} />}
+      {onResize && <ResizeHandle onResizeStart={(clientX, clientY) => onResize(clientX, clientY)} />}
     </div>
   );
 }
