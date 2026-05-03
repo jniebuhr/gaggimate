@@ -96,13 +96,24 @@ struct DisplayPalette {
     lv_color_t surfaceStrong;
     lv_color_t surfaceElevated;
     lv_color_t surfaceOutline;
+    lv_color_t ringTrack;
+    lv_color_t standby;
     lv_color_t accent;
     lv_color_t accentCool;
+    lv_color_t water;
+    lv_color_t grind;
     lv_color_t success;
     lv_color_t warning;
     lv_color_t danger;
     lv_color_t textPrimary;
     lv_color_t textMuted;
+    lv_color_t textDisabled;
+};
+
+struct RingVisual {
+    int value;
+    lv_color_t tone;
+    const char *title;
 };
 
 int resolveDisplayThemeMode(const int requestedThemeMode, const bool amoledPanel) {
@@ -119,32 +130,117 @@ DisplayPalette makeDisplayPalette(const int themeMode, const bool amoledPanel) {
     if (resolvedThemeMode == UI_THEME_DEFAULT) {
         return {
             lv_color_hex(0x050505),
-            lv_color_hex(0x161211),
-            lv_color_hex(0x241A17),
-            lv_color_hex(0x8F6B54),
-            lv_color_hex(0xFF9A56),
-            lv_color_hex(0x8CDDF3),
-            lv_color_hex(0x44D17A),
-            lv_color_hex(0xF3C045),
-            lv_color_hex(0xFF5F56),
-            lv_color_hex(0xF7F2EC),
-            lv_color_hex(0xA89A8F),
+            lv_color_hex(0x0B0B0B),
+            lv_color_hex(0x111111),
+            lv_color_hex(0x2A2A2A),
+            lv_color_hex(0x1E1E1E),
+            lv_color_hex(0x333333),
+            lv_color_hex(0xD71921),
+            lv_color_hex(0xD4A843),
+            lv_color_hex(0x6699CC),
+            lv_color_hex(0x7CB876),
+            lv_color_hex(0x7CB876),
+            lv_color_hex(0xD4A843),
+            lv_color_hex(0xD71921),
+            lv_color_hex(0xFFFFFF),
+            lv_color_hex(0x999999),
+            lv_color_hex(0x666666),
         };
     }
 
     return {
         lv_color_hex(0xFFFFFF),
-        lv_color_hex(0xF3F4F6),
-        lv_color_hex(0xF8EEDF),
-        lv_color_hex(0xD2B79F),
-        lv_color_hex(0xFF9A56),
-        lv_color_hex(0x3B82F6),
-        lv_color_hex(0x16A34A),
-        lv_color_hex(0xD97706),
-        lv_color_hex(0xDC2626),
-        lv_color_hex(0x111827),
-        lv_color_hex(0x6B7280),
+        lv_color_hex(0xFAFAFA),
+        lv_color_hex(0xF5F5F5),
+        lv_color_hex(0xDADADA),
+        lv_color_hex(0xEDEDED),
+        lv_color_hex(0xCCCCCC),
+        lv_color_hex(0xD71921),
+        lv_color_hex(0xD4A843),
+        lv_color_hex(0x6699CC),
+        lv_color_hex(0x7CB876),
+        lv_color_hex(0x7CB876),
+        lv_color_hex(0xD4A843),
+        lv_color_hex(0xD71921),
+        lv_color_hex(0x000000),
+        lv_color_hex(0x1A1A1A),
+        lv_color_hex(0x666666),
     };
+}
+
+int clampPercent(const double value) {
+    if (value < 0.0)
+        return 0;
+    if (value > 100.0)
+        return 100;
+    return static_cast<int>(round(value));
+}
+
+int temperatureProgress(const int currentTemperature, const int targetTemperature) {
+    if (targetTemperature <= 0)
+        return 0;
+    return clampPercent(static_cast<double>(currentTemperature) / static_cast<double>(targetTemperature) * 100.0);
+}
+
+lv_color_t modeTone(const DisplayPalette &palette, const int mode) {
+    switch (mode) {
+    case MODE_BREW:
+        return palette.accent;
+    case MODE_STEAM:
+        return palette.accentCool;
+    case MODE_WATER:
+        return palette.water;
+    case MODE_GRIND:
+        return palette.grind;
+    case MODE_STANDBY:
+    default:
+        return palette.standby;
+    }
+}
+
+RingVisual buildRingVisual(const DisplayPalette &palette, const int mode, const int currentTemperature,
+                           const int targetTemperature, const bool active, const bool grindActive, Controller *controller) {
+    if (mode == MODE_BREW) {
+        ProcessSnapshot proc = controller->getProcessSnapshot();
+        if (proc.exists && proc.isBrew) {
+            if (proc.isActive) {
+                int progress = 0;
+                if (proc.target == ProcessTarget::VOLUMETRIC && proc.hasVolumetricTarget && proc.volumetricTargetValue > 0.0f) {
+                    progress = clampPercent((proc.currentVolume / proc.volumetricTargetValue) * 100.0);
+                } else if (proc.phaseDuration > 0 && proc.currentPhaseStarted > 0) {
+                    progress = clampPercent((static_cast<double>(millis() - proc.currentPhaseStarted) /
+                                             static_cast<double>(proc.phaseDuration)) *
+                                            100.0);
+                }
+                return {progress, palette.success, "BREWING"};
+            }
+            if (proc.finished > 0) {
+                return {100, palette.success, "FINISHED"};
+            }
+        }
+    }
+
+    if (active) {
+        return {100, modeTone(palette, mode), "ACTIVE"};
+    }
+
+    switch (mode) {
+    case MODE_BREW:
+        return {temperatureProgress(currentTemperature, targetTemperature), palette.accent,
+                currentTemperature < targetTemperature ? "HEATING" : "BREW"};
+    case MODE_STEAM: {
+        const int steamTarget = targetTemperature > 120 ? targetTemperature : 150;
+        return {temperatureProgress(currentTemperature, steamTarget), palette.accentCool,
+                currentTemperature < steamTarget ? "PREHEATING" : "STEAM"};
+    }
+    case MODE_WATER:
+        return {temperatureProgress(currentTemperature, targetTemperature > 0 ? targetTemperature : 80), palette.water, "WATER"};
+    case MODE_GRIND:
+        return {grindActive ? 100 : 8, palette.grind, grindActive ? "GRINDING" : "GRIND"};
+    case MODE_STANDBY:
+    default:
+        return {temperatureProgress(currentTemperature, 93), palette.standby, "STANDBY"};
+    }
 }
 
 void stylePanel(lv_obj_t *obj, const DisplayPalette &palette, const lv_opa_t opa = LV_OPA_80, const lv_coord_t radius = 28) {
@@ -153,14 +249,13 @@ void stylePanel(lv_obj_t *obj, const DisplayPalette &palette, const lv_opa_t opa
     lv_obj_set_style_radius(obj, radius, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(obj, palette.surfaceStrong, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_grad_color(obj, palette.surfaceElevated, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_dir(obj, LV_GRAD_DIR_VER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(obj, LV_GRAD_DIR_NONE, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(obj, opa, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(obj, palette.surfaceOutline, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_opa(obj, LV_OPA_40, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_opa(obj, LV_OPA_60, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_color(obj, palette.accent, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_opa(obj, LV_OPA_10, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_width(obj, 18, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_opa(obj, LV_OPA_0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_spread(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_ofs_x(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_ofs_y(obj, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -180,7 +275,7 @@ void styleChip(lv_obj_t *obj, const DisplayPalette &palette, const lv_color_t to
     lv_obj_set_style_pad_right(obj, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(obj, 7, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(obj, 7, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(obj, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(obj, &ndot_18, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_letter_space(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
@@ -190,6 +285,7 @@ void styleHeadline(lv_obj_t *obj, const DisplayPalette &palette, const bool emph
     lv_obj_set_style_text_color(obj, palette.textPrimary, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(obj, emphasis ? LV_OPA_COVER : LV_OPA_90, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_letter_space(obj, emphasis ? 1 : 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(obj, emphasis ? &ndot_24 : &ndot_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
 void styleSecondary(lv_obj_t *obj, const DisplayPalette &palette) {
@@ -198,7 +294,7 @@ void styleSecondary(lv_obj_t *obj, const DisplayPalette &palette) {
     lv_obj_set_style_text_color(obj, palette.textMuted, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(obj, LV_OPA_80, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_letter_space(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(obj, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(obj, &ndot_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
 void styleMetricValue(lv_obj_t *obj, const DisplayPalette &palette, const lv_font_t *font = &lv_font_montserrat_24) {
@@ -216,14 +312,14 @@ void styleGlassButton(lv_obj_t *obj, const DisplayPalette &palette, const lv_col
     lv_obj_set_style_radius(obj, radius, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(obj, palette.surfaceStrong, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_grad_color(obj, palette.surfaceElevated, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_dir(obj, LV_GRAD_DIR_VER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(obj, LV_GRAD_DIR_NONE, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(obj, bgOpa, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(obj, tone, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(obj, LV_OPA_80, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(obj, borderWidth, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_color(obj, tone, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_opa(obj, LV_OPA_20, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_width(obj, 22, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_opa(obj, LV_OPA_0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_ofs_x(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_ofs_y(obj, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
@@ -239,8 +335,8 @@ void styleIconButton(lv_obj_t *obj, const DisplayPalette &palette, const lv_colo
     lv_obj_set_style_img_recolor(obj, tone, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_img_recolor_opa(obj, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_color(obj, palette.accent, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_opa(obj, LV_OPA_10, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_width(obj, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_opa(obj, LV_OPA_0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_shadow_ofs_y(obj, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
@@ -256,9 +352,8 @@ void styleScreenBase(lv_obj_t *screen, const DisplayPalette &palette, const bool
     if (screen == nullptr || !lv_obj_is_valid(screen))
         return;
     lv_obj_set_style_bg_color(screen, palette.surface, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_color(screen, roundDisplay ? palette.surfaceStrong : palette.surfaceElevated,
-                                   LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_dir(screen, LV_GRAD_DIR_VER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_color(screen, palette.surface, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(screen, LV_GRAD_DIR_NONE, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_main_stop(screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_grad_stop(screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(screen, palette.surfaceOutline, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -271,7 +366,7 @@ void setButtonLabel(lv_obj_t *button, lv_obj_t *label, const char *text, const l
         return;
     lv_label_set_text(label, text);
     lv_obj_set_style_text_color(label, tone, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(label, &ndot_18, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_letter_space(label, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(label, LV_OPA_0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -287,10 +382,20 @@ void styleDialRing(lv_obj_t *arc, const DisplayPalette &palette, const lv_color_
     lv_obj_set_style_arc_width(arc, roundDisplay ? 18 : 24, LV_PART_INDICATOR | LV_STATE_DEFAULT);
     lv_obj_set_style_arc_rounded(arc, true, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_arc_rounded(arc, true, LV_PART_INDICATOR | LV_STATE_DEFAULT);
-    lv_obj_set_style_arc_color(arc, ambient ? palette.surfaceOutline : palette.surfaceElevated, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_arc_opa(arc, ambient ? LV_OPA_30 : LV_OPA_50, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_color(arc, ambient ? palette.surfaceOutline : palette.ringTrack, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_opa(arc, ambient ? LV_OPA_30 : LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_arc_color(arc, tone, LV_PART_INDICATOR | LV_STATE_DEFAULT);
     lv_obj_set_style_arc_opa(arc, LV_OPA_COVER, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+}
+
+void applyProcessRing(lv_obj_t *arc, const DisplayPalette &palette, const RingVisual &visual, const bool roundDisplay) {
+    if (arc == nullptr || !lv_obj_is_valid(arc))
+        return;
+    styleDialRing(arc, palette, visual.tone, roundDisplay, false);
+    lv_arc_set_mode(arc, LV_ARC_MODE_NORMAL);
+    lv_arc_set_range(arc, 0, 100);
+    lv_arc_set_bg_angles(arc, 210, 150);
+    lv_arc_set_value(arc, visual.value);
 }
 
 String buildContextLine(const String &profile, const String &bean) {
@@ -620,41 +725,35 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() { adjustHeatingIndicator(ui_StatusScreen_dials); }, &isTemperatureStable, &heatingFlash);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, mode == MODE_STEAM ? "Steam" : "Water"); },
+                          [=]() { lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, mode == MODE_STEAM ? "STEAM" : "WATER"); },
                           &mode);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_MenuScreen_dials_tempGauge, currentTemp);
                               lv_label_set_text_fmt(uic_MenuScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_StatusScreen_dials_tempGauge, currentTemp);
                               lv_label_set_text_fmt(uic_StatusScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_BrewScreen_dials_tempGauge, currentTemp);
                               lv_label_set_text_fmt(uic_BrewScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_GrindScreen_dials_tempGauge, currentTemp);
                               lv_label_set_text_fmt(uic_GrindScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_SimpleProcessScreen_dials_tempGauge, currentTemp);
                               lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, currentTemp);
                               lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%d°C", currentTemp);
                           },
                           &currentTemp);
@@ -1061,6 +1160,8 @@ void DefaultUI::applyScreenVisualLanguage() {
     const DisplayPalette palette = makeDisplayPalette(resolvedThemeMode, amoledPanel);
     lv_obj_t *activeScreen = lv_scr_act();
     const bool roundDisplay = isRoundDisplay();
+    const RingVisual ringVisual =
+        buildRingVisual(palette, mode, currentTemp, targetTemp, active, grindActive, controller);
 
     styleScreenBase(activeScreen, palette, roundDisplay);
 
@@ -1074,10 +1175,11 @@ void DefaultUI::applyScreenVisualLanguage() {
         styleHeadline(ui_BrewScreen_mainLabel3, palette, true);
         styleSecondary(ui_BrewScreen_Label1, palette);
         styleHeadline(ui_BrewScreen_profileName, palette, true);
-        styleMetricValue(ui_BrewScreen_profileName, palette, &lv_font_montserrat_24);
-        styleMetricValue(ui_BrewScreen_weightLabel, palette, &lv_font_montserrat_24);
-        styleMetricValue(ui_BrewScreen_targetTemp, palette, &lv_font_montserrat_24);
-        styleMetricValue(ui_BrewScreen_targetDuration, palette, &lv_font_montserrat_24);
+        applyProcessRing(uic_BrewScreen_dials_tempGauge, palette, ringVisual, roundDisplay);
+        styleMetricValue(ui_BrewScreen_profileName, palette, &ndot_24);
+        styleMetricValue(ui_BrewScreen_weightLabel, palette, &ndot_24);
+        styleMetricValue(ui_BrewScreen_targetTemp, palette, &ndot_24);
+        styleMetricValue(ui_BrewScreen_targetDuration, palette, &ndot_24);
         styleIconButton(ui_BrewScreen_ImgButton5, palette, palette.textPrimary);
         styleIconButton(ui_BrewScreen_startButton, palette, palette.accent);
         styleIconButton(ui_BrewScreen_profileSelectBtn, palette, palette.accent);
@@ -1098,9 +1200,9 @@ void DefaultUI::applyScreenVisualLanguage() {
             lv_obj_set_style_img_recolor_opa(ui_BrewScreen_Image4, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         if (lv_obj_is_valid(ui_BrewScreen_mainLabel3)) {
-            lv_label_set_text(ui_BrewScreen_mainLabel3, active ? "TEMPERATURE" : "BREW");
-            lv_obj_set_style_text_font(ui_BrewScreen_mainLabel3, roundDisplay ? &lv_font_montserrat_18 : &lv_font_montserrat_24,
-                                       LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text(ui_BrewScreen_mainLabel3, ringVisual.title);
+            lv_obj_set_style_text_color(ui_BrewScreen_mainLabel3, ringVisual.tone, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(ui_BrewScreen_mainLabel3, &ndot_24, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         if (brewContextLabel != nullptr && lv_obj_is_valid(brewContextLabel)) {
             const String brewContext = selectedBean.isEmpty() ? "Ready to brew" : String("Bean | ") + selectedBean;
@@ -1143,8 +1245,9 @@ void DefaultUI::applyScreenVisualLanguage() {
         styleSecondary(ui_StatusScreen_targetDuration, palette);
         styleSecondary(ui_StatusScreen_brewLabel, palette);
         styleSecondary(ui_StatusScreen_targetTemp, palette);
-        styleMetricValue(ui_StatusScreen_currentDuration, palette, &lv_font_montserrat_34);
-        styleMetricValue(ui_StatusScreen_brewVolume, palette, &lv_font_montserrat_24);
+        applyProcessRing(uic_StatusScreen_dials_tempGauge, palette, ringVisual, roundDisplay);
+        styleMetricValue(ui_StatusScreen_currentDuration, palette, &ndot_34);
+        styleMetricValue(ui_StatusScreen_brewVolume, palette, &ndot_24);
         styleIconButton(ui_StatusScreen_ImgButton8, palette, palette.textPrimary);
         styleIconButton(ui_StatusScreen_pauseButton, palette, active ? palette.danger : palette.success);
         if (lv_obj_is_valid(ui_StatusScreen_barContainer)) {
@@ -1175,7 +1278,7 @@ void DefaultUI::applyScreenVisualLanguage() {
                 lv_obj_align_to(statusBeanLabel, ui_StatusScreen_phaseLabel, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
             }
             lv_obj_align(ui_StatusScreen_currentDuration, LV_ALIGN_CENTER, 0, 42);
-            lv_obj_set_style_text_font(ui_StatusScreen_currentDuration, &lv_font_montserrat_34, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(ui_StatusScreen_currentDuration, &ndot_34, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_align(ui_StatusScreen_barContainer, LV_ALIGN_BOTTOM_MID, 0, -72);
             lv_obj_set_size(ui_StatusScreen_barContainer, 240, 22);
             lv_obj_align(ui_StatusScreen_labelContainer, LV_ALIGN_BOTTOM_MID, 0, -42);
@@ -1195,9 +1298,10 @@ void DefaultUI::applyScreenVisualLanguage() {
         styleIconButton(ui_ProfileScreen_previousProfileBtn, palette, palette.textMuted);
         styleIconButton(ui_ProfileScreen_nextProfileBtn, palette, palette.accent);
         styleIconButton(ui_ProfileScreen_chooseButton, palette, palette.success);
-        styleMetricValue(ui_ProfileScreen_profileName, palette, &lv_font_montserrat_24);
-        styleMetricValue(ui_ProfileScreen_targetTemp2, palette, &lv_font_montserrat_24);
-        styleMetricValue(ui_ProfileScreen_targetDuration2, palette, &lv_font_montserrat_24);
+        applyProcessRing(uic_ProfileScreen_dials_tempGauge, palette, ringVisual, roundDisplay);
+        styleMetricValue(ui_ProfileScreen_profileName, palette, &ndot_24);
+        styleMetricValue(ui_ProfileScreen_targetTemp2, palette, &ndot_24);
+        styleMetricValue(ui_ProfileScreen_targetDuration2, palette, &ndot_24);
         if (lv_obj_is_valid(ui_ProfileScreen_Chart1)) {
             stylePanel(ui_ProfileScreen_Chart1, palette, OPA_190, 20);
         }
@@ -1213,7 +1317,8 @@ void DefaultUI::applyScreenVisualLanguage() {
         stylePanel(ui_GrindScreen_contentPanel7, palette, OPA_55, 44);
         styleHeadline(ui_GrindScreen_mainLabel7, palette, true);
         styleSecondary(ui_GrindScreen_targetDuration, palette);
-        styleMetricValue(ui_GrindScreen_targetDuration, palette, &lv_font_montserrat_24);
+        applyProcessRing(uic_GrindScreen_dials_tempGauge, palette, ringVisual, roundDisplay);
+        styleMetricValue(ui_GrindScreen_targetDuration, palette, &ndot_24);
         styleIconButton(ui_GrindScreen_ImgButton2, palette, palette.textPrimary);
         styleIconButton(ui_GrindScreen_startButton, palette, palette.accent);
         styleIconButton(ui_GrindScreen_downDurationButton, palette, palette.textMuted);
@@ -1223,7 +1328,9 @@ void DefaultUI::applyScreenVisualLanguage() {
             styleChip(grindBeanLabel, palette, palette.accent, true);
         }
         if (lv_obj_is_valid(ui_GrindScreen_mainLabel7)) {
-            lv_label_set_text(ui_GrindScreen_mainLabel7, grindActive ? "Grind In Progress" : "Grind Setup");
+            lv_label_set_text(ui_GrindScreen_mainLabel7, grindActive ? "GRINDING" : "GRIND");
+            lv_obj_set_style_text_font(ui_GrindScreen_mainLabel7, &ndot_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(ui_GrindScreen_mainLabel7, palette.grind, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     } else if (activeScreen == ui_MenuScreen) {
         ensureMenuActionLabels();
@@ -1231,8 +1338,8 @@ void DefaultUI::applyScreenVisualLanguage() {
         styleIconButton(ui_MenuScreen_standbyButton, palette, palette.textPrimary);
         styleMenuTile(ui_MenuScreen_btnBrew, palette, palette.accent);
         styleMenuTile(ui_MenuScreen_btnSteam, palette, palette.accentCool);
-        styleMenuTile(ui_MenuScreen_waterBtn, palette, palette.textPrimary);
-        styleMenuTile(ui_MenuScreen_grindBtn, palette, palette.warning);
+        styleMenuTile(ui_MenuScreen_waterBtn, palette, palette.water);
+        styleMenuTile(ui_MenuScreen_grindBtn, palette, palette.grind);
         if (menuBrewLabel != nullptr) {
             setButtonLabel(ui_MenuScreen_btnBrew, menuBrewLabel, "BREW", palette.accent);
         }
@@ -1240,10 +1347,10 @@ void DefaultUI::applyScreenVisualLanguage() {
             setButtonLabel(ui_MenuScreen_btnSteam, menuSteamLabel, "STEAM", palette.accentCool);
         }
         if (menuWaterLabel != nullptr) {
-            setButtonLabel(ui_MenuScreen_waterBtn, menuWaterLabel, "WATER", palette.textPrimary);
+            setButtonLabel(ui_MenuScreen_waterBtn, menuWaterLabel, "WATER", palette.water);
         }
         if (menuGrindLabel != nullptr) {
-            setButtonLabel(ui_MenuScreen_grindBtn, menuGrindLabel, "GRIND", palette.warning);
+            setButtonLabel(ui_MenuScreen_grindBtn, menuGrindLabel, "GRIND", palette.grind);
         }
         if (roundDisplay) {
             lv_obj_set_size(ui_MenuScreen_contentPanel1, 366, 366);
@@ -1267,15 +1374,21 @@ void DefaultUI::applyScreenVisualLanguage() {
     } else if (activeScreen == ui_SimpleProcessScreen) {
         stylePanel(ui_SimpleProcessScreen_contentPanel5, palette, roundDisplay ? OPA_45 : OPA_55, roundDisplay ? 180 : 44);
         styleHeadline(ui_SimpleProcessScreen_mainLabel5, palette, true);
-        styleMetricValue(ui_SimpleProcessScreen_targetTemp, palette, roundDisplay ? &lv_font_montserrat_34 : &lv_font_montserrat_24);
+        applyProcessRing(uic_SimpleProcessScreen_dials_tempGauge, palette, ringVisual, roundDisplay);
+        styleMetricValue(ui_SimpleProcessScreen_targetTemp, palette, roundDisplay ? &ndot_34 : &ndot_24);
         styleIconButton(ui_SimpleProcessScreen_ImgButton6, palette, palette.textPrimary);
         styleIconButton(ui_SimpleProcessScreen_downTempButton, palette, palette.textMuted);
         styleIconButton(ui_SimpleProcessScreen_upTempButton, palette, palette.accent);
-        styleIconButton(ui_SimpleProcessScreen_goButton, palette, mode == MODE_STEAM ? palette.accentCool : palette.textPrimary);
+        styleIconButton(ui_SimpleProcessScreen_goButton, palette, mode == MODE_STEAM ? palette.accentCool : palette.water);
         if (lv_obj_is_valid(ui_SimpleProcessScreen_Image9)) {
-            lv_obj_set_style_img_recolor(ui_SimpleProcessScreen_Image9, mode == MODE_STEAM ? palette.accentCool : palette.accent,
+            lv_obj_set_style_img_recolor(ui_SimpleProcessScreen_Image9, mode == MODE_STEAM ? palette.accentCool : palette.water,
                                          LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_img_recolor_opa(ui_SimpleProcessScreen_Image9, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        if (lv_obj_is_valid(ui_SimpleProcessScreen_mainLabel5)) {
+            lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, ringVisual.title);
+            lv_obj_set_style_text_color(ui_SimpleProcessScreen_mainLabel5, ringVisual.tone, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(ui_SimpleProcessScreen_mainLabel5, &ndot_24, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         if (roundDisplay) {
             lv_obj_set_size(ui_SimpleProcessScreen_contentPanel5, 372, 372);
@@ -1289,13 +1402,13 @@ void DefaultUI::applyScreenVisualLanguage() {
             lv_obj_align(ui_SimpleProcessScreen_upTempButton, LV_ALIGN_CENTER, 92, 18);
             lv_obj_align(ui_SimpleProcessScreen_goButton, LV_ALIGN_BOTTOM_MID, 0, -18);
             lv_obj_set_size(ui_SimpleProcessScreen_goButton, 72, 72);
-            styleGlassButton(ui_SimpleProcessScreen_goButton, palette, mode == MODE_STEAM ? palette.accentCool : palette.textPrimary,
+            styleGlassButton(ui_SimpleProcessScreen_goButton, palette, mode == MODE_STEAM ? palette.accentCool : palette.water,
                              999, 2, OPA_200);
         }
     } else if (activeScreen == ui_StandbyScreen) {
         ensureStandbyContextLabel();
         if (lv_obj_is_valid(ui_StandbyScreen_time)) {
-            styleMetricValue(ui_StandbyScreen_time, palette, &lv_font_montserrat_34);
+            styleMetricValue(ui_StandbyScreen_time, palette, &ndot_34);
             lv_obj_set_style_text_letter_space(ui_StandbyScreen_time, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         if (lv_obj_is_valid(ui_StandbyScreen_statusContainer)) {
@@ -1481,6 +1594,8 @@ void DefaultUI::updateStatusScreen() const {
 void DefaultUI::adjustDials(lv_obj_t *dials) {
     const DisplayPalette palette = makeDisplayPalette(controller->getSettings().getThemeMode(), AmoledDisplayDriver::getInstance() == panelDriver);
     const bool roundDisplay = isRoundDisplay();
+    const RingVisual ringVisual =
+        buildRingVisual(palette, mode, currentTemp, targetTemp, active, grindActive, controller);
     lv_obj_t *tempGauge = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPGAUGE);
     lv_obj_t *tempText = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTEXT);
     lv_obj_t *tempTarget = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTARGET);
@@ -1495,23 +1610,22 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
     _ui_flag_modify(pressureSymbol, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
     lv_obj_set_x(tempText, pressureAvailable ? -50 : 0);
     lv_obj_set_y(tempText, pressureAvailable ? -205 : -180);
-    lv_arc_set_bg_angles(tempGauge, 118, pressureAvailable ? 242 : 62);
     lv_arc_set_range(pressureGauge, 0, pressureScaling * 10);
+    applyProcessRing(tempGauge, palette, ringVisual, roundDisplay);
 
     if (roundDisplay) {
         lv_obj_set_size(dials, 466, 466);
         lv_obj_align(dials, LV_ALIGN_CENTER, 0, 0);
 
-        styleDialRing(tempGauge, palette, palette.accent, true, false);
         styleDialRing(pressureGauge, palette, palette.accentCool, true, true);
-        lv_arc_set_bg_angles(tempGauge, pressureAvailable ? 118 : 135, pressureAvailable ? 242 : 405);
+        applyProcessRing(tempGauge, palette, ringVisual, true);
         lv_arc_set_bg_angles(pressureGauge, 300, 60);
 
         lv_obj_set_style_text_color(tempText, palette.textPrimary, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(tempText, &lv_font_montserrat_34, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(tempText, &ndot_34, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(tempText, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(pressureText, pressureAvailable ? palette.accent : palette.textMuted, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(pressureText, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(pressureText, &ndot_24, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(pressureText, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_align(tempText, LV_ALIGN_TOP_MID, 0, 92);
