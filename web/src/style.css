@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;700&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;700&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
 @import 'tailwindcss';
 @plugin 'daisyui';
 
@@ -2358,6 +2358,8 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
 /* Sortable card styles */
 .sortable-card {
   cursor: grab;
+  position: relative;
+  min-height: 120px;
 }
 
 .sortable-card.is-dragging {
@@ -2372,11 +2374,6 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
   grid-template-columns: repeat(2, 1fr);
   grid-auto-rows: minmax(120px, auto);
   gap: 1rem;
-}
-
-.sortable-card {
-  position: relative;
-  min-height: 120px;
 }
 
 .sortable-card.col-span-2 {
