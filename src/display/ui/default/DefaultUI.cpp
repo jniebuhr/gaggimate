@@ -340,6 +340,56 @@ void styleIconButton(lv_obj_t *obj, const DisplayPalette &palette, const lv_colo
     lv_obj_set_style_shadow_ofs_y(obj, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+void styleRoundIconButton(lv_obj_t *obj, const DisplayPalette &palette, const lv_color_t tone, const lv_coord_t size,
+                          const bool prominent = false) {
+    if (obj == nullptr || !lv_obj_is_valid(obj))
+        return;
+    lv_obj_set_size(obj, size, size);
+    styleGlassButton(obj, palette, tone, 999, prominent ? 2 : 1, prominent ? OPA_200 : OPA_210);
+    const lv_coord_t pad = size >= 72 ? 16 : 12;
+    lv_obj_set_style_pad_all(obj, pad, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_img_recolor(obj, tone, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_img_recolor_opa(obj, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+void alignTopBackButton(lv_obj_t *obj, const DisplayPalette &palette, const lv_color_t tone) {
+    styleRoundIconButton(obj, palette, tone, 52);
+    lv_obj_align(obj, LV_ALIGN_TOP_LEFT, 28, 28);
+}
+
+void alignFooterAction(lv_obj_t *obj, const DisplayPalette &palette, const lv_color_t tone, const lv_coord_t y = -18,
+                       const lv_coord_t size = 72) {
+    styleRoundIconButton(obj, palette, tone, size, true);
+    lv_obj_align(obj, LV_ALIGN_BOTTOM_MID, 0, y);
+}
+
+void styleMetricIcon(lv_obj_t *obj, const lv_color_t tone, const lv_coord_t zoom = 150) {
+    if (obj == nullptr || !lv_obj_is_valid(obj))
+        return;
+    lv_obj_set_size(obj, 34, 34);
+    lv_img_set_zoom(obj, zoom);
+    lv_obj_set_style_img_recolor(obj, tone, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_img_recolor_opa(obj, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+void styleFixedLabel(lv_obj_t *obj, const lv_coord_t width, const lv_coord_t height, const lv_font_t *font,
+                     const lv_color_t color) {
+    if (obj == nullptr || !lv_obj_is_valid(obj))
+        return;
+    lv_obj_set_size(obj, width, height);
+    lv_obj_set_style_text_font(obj, font, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(obj, color, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+void alignMetricPair(lv_obj_t *icon, lv_obj_t *label, const lv_coord_t centerX, const lv_coord_t centerY, const lv_color_t tone,
+                     const DisplayPalette &palette) {
+    styleMetricIcon(icon, tone);
+    styleFixedLabel(label, 82, 28, &ndot_24, palette.textPrimary);
+    lv_obj_align(icon, LV_ALIGN_CENTER, centerX - 38, centerY);
+    lv_obj_align(label, LV_ALIGN_CENTER, centerX + 18, centerY);
+}
+
 void styleMenuTile(lv_obj_t *obj, const DisplayPalette &palette, const lv_color_t tone) {
     if (obj == nullptr || !lv_obj_is_valid(obj))
         return;
@@ -370,7 +420,8 @@ void setButtonLabel(lv_obj_t *button, lv_obj_t *label, const char *text, const l
     lv_obj_set_style_text_letter_space(label, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(label, LV_OPA_0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_align(label, LV_ALIGN_BOTTOM_MID, 0, -12);
+    lv_obj_set_size(label, 92, 22);
+    lv_obj_align(label, LV_ALIGN_BOTTOM_MID, 0, -14);
     lv_obj_move_foreground(label);
 }
 
@@ -1188,6 +1239,7 @@ void DefaultUI::applyScreenVisualLanguage() {
         styleIconButton(ui_BrewScreen_upTempButton, palette, palette.accent);
         styleIconButton(ui_BrewScreen_downDurationButton, palette, palette.textMuted);
         styleIconButton(ui_BrewScreen_upDurationButton, palette, palette.accent);
+        styleIconButton(ui_BrewScreen_byTimeButton, palette, palette.accent);
         styleIconButton(ui_BrewScreen_saveButton, palette, palette.textMuted);
         styleIconButton(ui_BrewScreen_acceptButton, palette, palette.success);
         styleIconButton(ui_BrewScreen_saveAsNewButton, palette, palette.warning);
@@ -1212,29 +1264,52 @@ void DefaultUI::applyScreenVisualLanguage() {
         if (roundDisplay) {
             lv_obj_set_size(ui_BrewScreen_contentPanel4, 372, 372);
             lv_obj_align(ui_BrewScreen_contentPanel4, LV_ALIGN_CENTER, 0, 4);
-            lv_obj_set_size(ui_BrewScreen_profileInfo, 276, 98);
-            lv_obj_align(ui_BrewScreen_profileInfo, LV_ALIGN_TOP_MID, 0, 102);
+            lv_obj_set_size(ui_BrewScreen_profileInfo, 292, 112);
+            lv_obj_align(ui_BrewScreen_profileInfo, LV_ALIGN_TOP_MID, 0, 96);
+            lv_obj_set_size(ui_BrewScreen_Container3, 252, 42);
+            lv_obj_set_style_pad_column(ui_BrewScreen_Container3, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_width(ui_BrewScreen_Label1, 252);
+            lv_obj_set_width(ui_BrewScreen_profileName, 160);
             lv_obj_set_size(ui_BrewScreen_modeSwitch, 180, 52);
-            lv_obj_align(ui_BrewScreen_modeSwitch, LV_ALIGN_TOP_MID, 0, 64);
+            lv_obj_align(ui_BrewScreen_modeSwitch, LV_ALIGN_TOP_MID, 0, 68);
             lv_obj_align(ui_BrewScreen_mainLabel3, LV_ALIGN_TOP_MID, 0, 34);
-            lv_obj_align(ui_BrewScreen_startButton, LV_ALIGN_BOTTOM_MID, 0, -18);
-            lv_obj_set_size(ui_BrewScreen_startButton, 74, 74);
-            styleGlassButton(ui_BrewScreen_startButton, palette, palette.accent, 999, 2, OPA_200);
-            lv_obj_align(ui_BrewScreen_controlContainer, LV_ALIGN_CENTER, 0, 8);
-            lv_obj_set_size(ui_BrewScreen_controlContainer, 300, 190);
-            lv_obj_set_style_pad_row(ui_BrewScreen_controlContainer, 14, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_size(ui_BrewScreen_tempContainer, 132, 62);
-            lv_obj_set_size(ui_BrewScreen_targetContainer, 132, 62);
-            lv_obj_set_style_pad_all(ui_BrewScreen_tempContainer, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_all(ui_BrewScreen_targetContainer, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_row(ui_BrewScreen_adjustments, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_column(ui_BrewScreen_adjustments, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_align(ui_BrewScreen_ImgButton5, LV_ALIGN_TOP_LEFT, 28, 28);
-            lv_obj_set_size(ui_BrewScreen_ImgButton5, 52, 52);
+            alignFooterAction(ui_BrewScreen_startButton, palette, palette.accent, -18, 74);
+            lv_obj_align(ui_BrewScreen_controlContainer, LV_ALIGN_CENTER, 0, 18);
+            lv_obj_set_size(ui_BrewScreen_controlContainer, 300, 214);
+            lv_obj_set_style_pad_row(ui_BrewScreen_controlContainer, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_size(ui_BrewScreen_adjustments, 300, 122);
+            lv_obj_set_style_pad_row(ui_BrewScreen_adjustments, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_column(ui_BrewScreen_adjustments, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_size(ui_BrewScreen_tempContainer, 254, 54);
+            lv_obj_set_size(ui_BrewScreen_targetContainer, 254, 54);
+            lv_obj_set_style_pad_all(ui_BrewScreen_tempContainer, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_all(ui_BrewScreen_targetContainer, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+            alignTopBackButton(ui_BrewScreen_ImgButton5, palette, palette.textPrimary);
             lv_obj_align(ui_BrewScreen_profileSelectBtn, LV_ALIGN_LEFT_MID, 18, 0);
             lv_obj_align(ui_BrewScreen_settingsButton, LV_ALIGN_RIGHT_MID, -18, 0);
+            styleRoundIconButton(ui_BrewScreen_profileSelectBtn, palette, palette.accent, 42);
+            styleRoundIconButton(ui_BrewScreen_settingsButton, palette, palette.textMuted, 42);
+            styleRoundIconButton(ui_BrewScreen_downTempButton, palette, palette.textMuted, 48);
+            styleRoundIconButton(ui_BrewScreen_upTempButton, palette, palette.accent, 48);
+            styleRoundIconButton(ui_BrewScreen_downDurationButton, palette, palette.textMuted, 48);
+            styleRoundIconButton(ui_BrewScreen_upDurationButton, palette, palette.accent, 48);
+            styleRoundIconButton(ui_BrewScreen_byTimeButton, palette, palette.accent, 48);
+            alignMetricPair(ui_BrewScreen_Image5, ui_BrewScreen_targetTemp, -10, 0, palette.warning, palette);
+            alignMetricPair(ui_BrewScreen_Image4, ui_BrewScreen_targetDuration, -10, 0, palette.accent, palette);
+            lv_obj_align(ui_BrewScreen_downTempButton, LV_ALIGN_CENTER, -104, 0);
+            lv_obj_align(ui_BrewScreen_upTempButton, LV_ALIGN_CENTER, 104, 0);
+            lv_obj_align(ui_BrewScreen_downDurationButton, LV_ALIGN_CENTER, -104, 0);
+            lv_obj_align(ui_BrewScreen_upDurationButton, LV_ALIGN_CENTER, 104, 0);
+            lv_obj_align(ui_BrewScreen_byTimeButton, LV_ALIGN_CENTER, 104, 0);
+            lv_obj_align(ui_BrewScreen_saveButton, LV_ALIGN_BOTTOM_MID, -78, -32);
+            lv_obj_align(ui_BrewScreen_acceptButton, LV_ALIGN_BOTTOM_MID, 0, -18);
+            lv_obj_align(ui_BrewScreen_saveAsNewButton, LV_ALIGN_BOTTOM_MID, 78, -32);
+            styleRoundIconButton(ui_BrewScreen_saveButton, palette, palette.textMuted, 52);
+            styleRoundIconButton(ui_BrewScreen_acceptButton, palette, palette.success, 64, true);
+            styleRoundIconButton(ui_BrewScreen_saveAsNewButton, palette, palette.warning, 52);
             if (brewContextLabel != nullptr) {
-                lv_obj_align_to(brewContextLabel, ui_BrewScreen_profileName, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
+                lv_obj_set_width(brewContextLabel, 238);
+                lv_obj_align_to(brewContextLabel, ui_BrewScreen_Container3, LV_ALIGN_OUT_BOTTOM_MID, 0, 6);
             }
         }
     } else if (activeScreen == ui_StatusScreen) {
@@ -1250,6 +1325,8 @@ void DefaultUI::applyScreenVisualLanguage() {
         styleMetricValue(ui_StatusScreen_brewVolume, palette, &ndot_24);
         styleIconButton(ui_StatusScreen_ImgButton8, palette, palette.textPrimary);
         styleIconButton(ui_StatusScreen_pauseButton, palette, active ? palette.danger : palette.success);
+        styleMetricIcon(ui_StatusScreen_Image7, palette.warning);
+        styleMetricIcon(ui_StatusScreen_Image8, palette.accent);
         if (lv_obj_is_valid(ui_StatusScreen_barContainer)) {
             stylePanel(ui_StatusScreen_barContainer, palette, OPA_200, 999);
             lv_obj_set_style_pad_left(ui_StatusScreen_barContainer, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1268,25 +1345,25 @@ void DefaultUI::applyScreenVisualLanguage() {
         if (roundDisplay) {
             lv_obj_set_size(ui_StatusScreen_contentPanel2, 372, 372);
             lv_obj_align(ui_StatusScreen_contentPanel2, LV_ALIGN_CENTER, 0, 4);
-            lv_obj_align(ui_StatusScreen_ImgButton8, LV_ALIGN_TOP_LEFT, 28, 28);
-            lv_obj_set_size(ui_StatusScreen_ImgButton8, 52, 52);
-            lv_obj_align(ui_StatusScreen_targetTemp, LV_ALIGN_TOP_MID, -56, 38);
-            lv_obj_align(ui_StatusScreen_targetDuration, LV_ALIGN_TOP_MID, 62, 38);
+            alignTopBackButton(ui_StatusScreen_ImgButton8, palette, palette.textPrimary);
+            alignMetricPair(ui_StatusScreen_Image7, ui_StatusScreen_targetTemp, -58, -132, palette.warning, palette);
+            alignMetricPair(ui_StatusScreen_Image8, ui_StatusScreen_targetDuration, 64, -132, palette.accent, palette);
+            styleFixedLabel(ui_StatusScreen_stepLabel, 178, 34, &ndot_18, active ? palette.success : palette.warning);
+            styleFixedLabel(ui_StatusScreen_phaseLabel, 254, 32, &ndot_24, palette.textPrimary);
             lv_obj_align(ui_StatusScreen_stepLabel, LV_ALIGN_TOP_MID, 0, 84);
             lv_obj_align(ui_StatusScreen_phaseLabel, LV_ALIGN_TOP_MID, 0, 124);
             if (statusBeanLabel != nullptr) {
-                lv_obj_align_to(statusBeanLabel, ui_StatusScreen_phaseLabel, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+                lv_obj_set_size(statusBeanLabel, 236, 34);
+                lv_obj_align_to(statusBeanLabel, ui_StatusScreen_phaseLabel, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
             }
-            lv_obj_align(ui_StatusScreen_currentDuration, LV_ALIGN_CENTER, 0, 42);
+            lv_obj_align(ui_StatusScreen_currentDuration, LV_ALIGN_CENTER, 0, 44);
             lv_obj_set_style_text_font(ui_StatusScreen_currentDuration, &ndot_34, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_align(ui_StatusScreen_barContainer, LV_ALIGN_BOTTOM_MID, 0, -72);
             lv_obj_set_size(ui_StatusScreen_barContainer, 240, 22);
             lv_obj_align(ui_StatusScreen_labelContainer, LV_ALIGN_BOTTOM_MID, 0, -42);
             lv_obj_set_size(ui_StatusScreen_labelContainer, 240, 18);
             lv_obj_align(ui_StatusScreen_brewVolume, LV_ALIGN_BOTTOM_MID, 0, -104);
-            lv_obj_align(ui_StatusScreen_pauseButton, LV_ALIGN_BOTTOM_MID, 0, -18);
-            lv_obj_set_size(ui_StatusScreen_pauseButton, 72, 72);
-            styleGlassButton(ui_StatusScreen_pauseButton, palette, active ? palette.danger : palette.success, 999, 2, OPA_200);
+            alignFooterAction(ui_StatusScreen_pauseButton, palette, active ? palette.danger : palette.success);
         }
     } else if (activeScreen == ui_ProfileScreen) {
         stylePanel(ui_ProfileScreen_contentPanel, palette, OPA_55, 44);
@@ -1313,6 +1390,34 @@ void DefaultUI::applyScreenVisualLanguage() {
             lv_label_set_text(ui_ProfileScreen_mainLabel, "Profile Preview");
             lv_obj_set_style_text_font(ui_ProfileScreen_mainLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
+        if (roundDisplay) {
+            lv_obj_set_size(ui_ProfileScreen_contentPanel, 372, 372);
+            lv_obj_align(ui_ProfileScreen_contentPanel, LV_ALIGN_CENTER, 0, 4);
+            alignTopBackButton(ui_ProfileScreen_ImgButton1, palette, palette.textPrimary);
+            lv_obj_set_size(ui_ProfileScreen_profileDetails, 318, 300);
+            lv_obj_align(ui_ProfileScreen_profileDetails, LV_ALIGN_CENTER, 0, 8);
+            styleFixedLabel(ui_ProfileScreen_mainLabel, 244, 24, &lv_font_montserrat_18, palette.textMuted);
+            lv_obj_align(ui_ProfileScreen_mainLabel, LV_ALIGN_TOP_MID, 0, 20);
+            styleFixedLabel(ui_ProfileScreen_profileName, 244, 34, &ndot_24, palette.textPrimary);
+            lv_obj_align(ui_ProfileScreen_profileName, LV_ALIGN_TOP_MID, 0, 54);
+            if (profileBeanLabel != nullptr) {
+                lv_obj_set_size(profileBeanLabel, 232, 34);
+                lv_obj_align_to(profileBeanLabel, ui_ProfileScreen_profileName, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
+            }
+            alignMetricPair(ui_ProfileScreen_tempIcon, ui_ProfileScreen_targetTemp2, -58, -42, palette.warning, palette);
+            alignMetricPair(ui_ProfileScreen_targetIcon, ui_ProfileScreen_targetDuration2, 64, -42, palette.accent, palette);
+            lv_obj_set_size(ui_ProfileScreen_simpleContent, 232, 92);
+            lv_obj_align(ui_ProfileScreen_simpleContent, LV_ALIGN_CENTER, 0, 56);
+            lv_obj_set_size(ui_ProfileScreen_extendedContent, 250, 116);
+            lv_obj_align(ui_ProfileScreen_extendedContent, LV_ALIGN_CENTER, 0, 56);
+            lv_obj_set_size(ui_ProfileScreen_Chart1, 232, 104);
+            lv_obj_align(ui_ProfileScreen_Chart1, LV_ALIGN_CENTER, 0, 0);
+            lv_obj_align(ui_ProfileScreen_previousProfileBtn, LV_ALIGN_LEFT_MID, 20, 6);
+            lv_obj_align(ui_ProfileScreen_nextProfileBtn, LV_ALIGN_RIGHT_MID, -20, 6);
+            styleRoundIconButton(ui_ProfileScreen_previousProfileBtn, palette, palette.textMuted, 56);
+            styleRoundIconButton(ui_ProfileScreen_nextProfileBtn, palette, palette.accent, 56);
+            alignFooterAction(ui_ProfileScreen_chooseButton, palette, palette.success);
+        }
     } else if (activeScreen == ui_GrindScreen) {
         stylePanel(ui_GrindScreen_contentPanel7, palette, OPA_55, 44);
         styleHeadline(ui_GrindScreen_mainLabel7, palette, true);
@@ -1323,6 +1428,9 @@ void DefaultUI::applyScreenVisualLanguage() {
         styleIconButton(ui_GrindScreen_startButton, palette, palette.accent);
         styleIconButton(ui_GrindScreen_downDurationButton, palette, palette.textMuted);
         styleIconButton(ui_GrindScreen_upDurationButton, palette, palette.accent);
+        stylePanel(ui_GrindScreen_targetContainer, palette, OPA_210, 22);
+        stylePanel(ui_GrindScreen_modeSwitch, palette, OPA_220, 22);
+        styleMetricIcon(ui_GrindScreen_targetSymbol, palette.accent);
         ensureGrindBeanLabel();
         if (grindBeanLabel != nullptr && lv_obj_is_valid(grindBeanLabel)) {
             styleChip(grindBeanLabel, palette, palette.accent, true);
@@ -1331,6 +1439,30 @@ void DefaultUI::applyScreenVisualLanguage() {
             lv_label_set_text(ui_GrindScreen_mainLabel7, grindActive ? "GRINDING" : "GRIND");
             lv_obj_set_style_text_font(ui_GrindScreen_mainLabel7, &ndot_24, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(ui_GrindScreen_mainLabel7, palette.grind, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        if (roundDisplay) {
+            lv_obj_set_size(ui_GrindScreen_contentPanel7, 372, 372);
+            lv_obj_align(ui_GrindScreen_contentPanel7, LV_ALIGN_CENTER, 0, 4);
+            alignTopBackButton(ui_GrindScreen_ImgButton2, palette, palette.textPrimary);
+            styleFixedLabel(ui_GrindScreen_mainLabel7, 220, 32, &ndot_24, palette.grind);
+            lv_obj_align(ui_GrindScreen_mainLabel7, LV_ALIGN_TOP_MID, 0, 42);
+            if (grindBeanLabel != nullptr) {
+                lv_obj_set_size(grindBeanLabel, 226, 34);
+                lv_obj_align_to(grindBeanLabel, ui_GrindScreen_mainLabel7, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
+            }
+            lv_obj_set_size(ui_GrindScreen_modeSwitch, 176, 52);
+            lv_obj_align(ui_GrindScreen_modeSwitch, LV_ALIGN_TOP_MID, 0, 104);
+            lv_obj_set_size(ui_GrindScreen_weightLabel, 104, 28);
+            lv_obj_set_style_text_font(ui_GrindScreen_weightLabel, &ndot_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_size(ui_GrindScreen_targetContainer, 254, 54);
+            lv_obj_align(ui_GrindScreen_targetContainer, LV_ALIGN_CENTER, 0, 32);
+            lv_obj_set_style_pad_all(ui_GrindScreen_targetContainer, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+            alignMetricPair(ui_GrindScreen_targetSymbol, ui_GrindScreen_targetDuration, -10, 0, palette.accent, palette);
+            styleRoundIconButton(ui_GrindScreen_downDurationButton, palette, palette.textMuted, 48);
+            styleRoundIconButton(ui_GrindScreen_upDurationButton, palette, palette.accent, 48);
+            lv_obj_align(ui_GrindScreen_downDurationButton, LV_ALIGN_CENTER, -104, 0);
+            lv_obj_align(ui_GrindScreen_upDurationButton, LV_ALIGN_CENTER, 104, 0);
+            alignFooterAction(ui_GrindScreen_startButton, palette, palette.accent);
         }
     } else if (activeScreen == ui_MenuScreen) {
         ensureMenuActionLabels();
@@ -1354,21 +1486,21 @@ void DefaultUI::applyScreenVisualLanguage() {
         }
         if (roundDisplay) {
             lv_obj_set_size(ui_MenuScreen_contentPanel1, 366, 366);
+            lv_obj_set_layout(ui_MenuScreen_contentPanel1, 0);
             lv_obj_set_style_pad_all(ui_MenuScreen_contentPanel1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_row(ui_MenuScreen_contentPanel1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_column(ui_MenuScreen_contentPanel1, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_align(ui_MenuScreen_contentPanel1, LV_ALIGN_CENTER, 0, 2);
-            lv_obj_set_size(ui_MenuScreen_btnBrew, 118, 118);
-            lv_obj_set_size(ui_MenuScreen_btnSteam, 118, 118);
-            lv_obj_set_size(ui_MenuScreen_waterBtn, 112, 112);
-            lv_obj_set_size(ui_MenuScreen_grindBtn, 112, 112);
-            lv_obj_align(ui_MenuScreen_btnBrew, LV_ALIGN_LEFT_MID, 18, 18);
-            lv_obj_align(ui_MenuScreen_btnSteam, LV_ALIGN_CENTER, 0, 26);
-            lv_obj_align(ui_MenuScreen_waterBtn, LV_ALIGN_RIGHT_MID, -18, 18);
-            lv_obj_align(ui_MenuScreen_grindBtn, LV_ALIGN_BOTTOM_MID, 0, -18);
+            lv_obj_set_size(ui_MenuScreen_btnBrew, 106, 106);
+            lv_obj_set_size(ui_MenuScreen_btnSteam, 106, 106);
+            lv_obj_set_size(ui_MenuScreen_waterBtn, 106, 106);
+            lv_obj_set_size(ui_MenuScreen_grindBtn, 106, 106);
+            lv_obj_align(ui_MenuScreen_btnBrew, LV_ALIGN_CENTER, -62, -58);
+            lv_obj_align(ui_MenuScreen_btnSteam, LV_ALIGN_CENTER, 62, -58);
+            lv_obj_align(ui_MenuScreen_waterBtn, LV_ALIGN_CENTER, -62, 66);
+            lv_obj_align(ui_MenuScreen_grindBtn, LV_ALIGN_CENTER, 62, 66);
             lv_obj_align(ui_MenuScreen_standbyButton, LV_ALIGN_BOTTOM_MID, 0, -22);
-            lv_obj_set_size(ui_MenuScreen_standbyButton, 84, 84);
-            styleGlassButton(ui_MenuScreen_standbyButton, palette, palette.textPrimary, 999, 2, OPA_200);
+            styleRoundIconButton(ui_MenuScreen_standbyButton, palette, palette.textPrimary, 76, true);
             lv_obj_move_foreground(ui_MenuScreen_standbyButton);
         }
     } else if (activeScreen == ui_SimpleProcessScreen) {
@@ -1393,17 +1525,16 @@ void DefaultUI::applyScreenVisualLanguage() {
         if (roundDisplay) {
             lv_obj_set_size(ui_SimpleProcessScreen_contentPanel5, 372, 372);
             lv_obj_align(ui_SimpleProcessScreen_contentPanel5, LV_ALIGN_CENTER, 0, 4);
-            lv_obj_align(ui_SimpleProcessScreen_ImgButton6, LV_ALIGN_TOP_LEFT, 28, 28);
-            lv_obj_set_size(ui_SimpleProcessScreen_ImgButton6, 52, 52);
-            lv_obj_align(ui_SimpleProcessScreen_mainLabel5, LV_ALIGN_TOP_MID, 0, 40);
-            lv_obj_align(ui_SimpleProcessScreen_Image9, LV_ALIGN_TOP_MID, 0, 90);
-            lv_obj_align(ui_SimpleProcessScreen_targetTemp, LV_ALIGN_CENTER, 0, 20);
-            lv_obj_align(ui_SimpleProcessScreen_downTempButton, LV_ALIGN_CENTER, -92, 18);
-            lv_obj_align(ui_SimpleProcessScreen_upTempButton, LV_ALIGN_CENTER, 92, 18);
-            lv_obj_align(ui_SimpleProcessScreen_goButton, LV_ALIGN_BOTTOM_MID, 0, -18);
-            lv_obj_set_size(ui_SimpleProcessScreen_goButton, 72, 72);
-            styleGlassButton(ui_SimpleProcessScreen_goButton, palette, mode == MODE_STEAM ? palette.accentCool : palette.water,
-                             999, 2, OPA_200);
+            alignTopBackButton(ui_SimpleProcessScreen_ImgButton6, palette, palette.textPrimary);
+            styleFixedLabel(ui_SimpleProcessScreen_mainLabel5, 220, 32, &ndot_24, ringVisual.tone);
+            lv_obj_align(ui_SimpleProcessScreen_mainLabel5, LV_ALIGN_TOP_MID, 0, 42);
+            alignMetricPair(ui_SimpleProcessScreen_Image9, ui_SimpleProcessScreen_targetTemp, -10, 18,
+                            mode == MODE_STEAM ? palette.accentCool : palette.water, palette);
+            styleRoundIconButton(ui_SimpleProcessScreen_downTempButton, palette, palette.textMuted, 54);
+            styleRoundIconButton(ui_SimpleProcessScreen_upTempButton, palette, palette.accent, 54);
+            lv_obj_align(ui_SimpleProcessScreen_downTempButton, LV_ALIGN_CENTER, -108, 18);
+            lv_obj_align(ui_SimpleProcessScreen_upTempButton, LV_ALIGN_CENTER, 108, 18);
+            alignFooterAction(ui_SimpleProcessScreen_goButton, palette, mode == MODE_STEAM ? palette.accentCool : palette.water);
         }
     } else if (activeScreen == ui_StandbyScreen) {
         ensureStandbyContextLabel();
