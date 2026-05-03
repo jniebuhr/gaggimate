@@ -38,7 +38,7 @@ jobs:
           mkdir -p upload/display
           mkdir -p upload/headless
           mkdir -p upload/controller
-          git tag -d nightly
+          git tag -d nightly 2>/dev/null || true
           git describe --tags --dirty > out/version.txt
       - name: Build Web
         run: ./scripts/build_spiffs.sh
