@@ -14,6 +14,8 @@
 #include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
 
+#include <cmath>
+
 #include "esp_sntp.h"
 
 static EffectManager effect_mgr;
@@ -116,6 +118,20 @@ struct RingVisual {
     const char *title;
 };
 
+struct RingVisualContext {
+    int mode;
+    int currentTemperature;
+    int targetTemperature;
+    bool active;
+    bool grindActive;
+    Controller *controller;
+};
+
+constexpr int MIN_STEAM_TARGET_C = 120;
+constexpr int DEFAULT_STEAM_TARGET_C = 150;
+constexpr int DEFAULT_WATER_TARGET_C = 80;
+constexpr int STANDBY_REFERENCE_TARGET_C = 93;
+
 int resolveDisplayThemeMode(const int requestedThemeMode, const bool amoledPanel) {
     if (amoledPanel) {
         return UI_THEME_DEFAULT;
@@ -169,6 +185,8 @@ DisplayPalette makeDisplayPalette(const int themeMode, const bool amoledPanel) {
 }
 
 int clampPercent(const double value) {
+    if (!std::isfinite(value))
+        return 0;
     if (value < 0.0)
         return 0;
     if (value > 100.0)
@@ -198,10 +216,9 @@ lv_color_t modeTone(const DisplayPalette &palette, const int mode) {
     }
 }
 
-RingVisual buildRingVisual(const DisplayPalette &palette, const int mode, const int currentTemperature,
-                           const int targetTemperature, const bool active, const bool grindActive, Controller *controller) {
-    if (mode == MODE_BREW) {
-        ProcessSnapshot proc = controller->getProcessSnapshot();
+RingVisual buildRingVisual(const DisplayPalette &palette, const RingVisualContext &context) {
+    if (context.mode == MODE_BREW) {
+        ProcessSnapshot proc = context.controller->getProcessSnapshot();
         if (proc.exists && proc.isBrew) {
             if (proc.isActive) {
                 int progress = 0;
@@ -220,26 +237,29 @@ RingVisual buildRingVisual(const DisplayPalette &palette, const int mode, const 
         }
     }
 
-    if (active) {
-        return {100, modeTone(palette, mode), "ACTIVE"};
+    if (context.active) {
+        return {100, modeTone(palette, context.mode), "ACTIVE"};
     }
 
-    switch (mode) {
+    switch (context.mode) {
     case MODE_BREW:
-        return {temperatureProgress(currentTemperature, targetTemperature), palette.accent,
-                currentTemperature < targetTemperature ? "HEATING" : "BREW"};
+        return {temperatureProgress(context.currentTemperature, context.targetTemperature), palette.accent,
+                context.currentTemperature < context.targetTemperature ? "HEATING" : "BREW"};
     case MODE_STEAM: {
-        const int steamTarget = targetTemperature > 120 ? targetTemperature : 150;
-        return {temperatureProgress(currentTemperature, steamTarget), palette.accentCool,
-                currentTemperature < steamTarget ? "PREHEATING" : "STEAM"};
+        const int steamTarget =
+            context.targetTemperature > MIN_STEAM_TARGET_C ? context.targetTemperature : DEFAULT_STEAM_TARGET_C;
+        return {temperatureProgress(context.currentTemperature, steamTarget), palette.accentCool,
+                context.currentTemperature < steamTarget ? "PREHEATING" : "STEAM"};
     }
     case MODE_WATER:
-        return {temperatureProgress(currentTemperature, targetTemperature > 0 ? targetTemperature : 80), palette.water, "WATER"};
+        return {temperatureProgress(context.currentTemperature,
+                                    context.targetTemperature > 0 ? context.targetTemperature : DEFAULT_WATER_TARGET_C),
+                palette.water, "WATER"};
     case MODE_GRIND:
-        return {grindActive ? 100 : 8, palette.grind, grindActive ? "GRINDING" : "GRIND"};
+        return {context.grindActive ? 100 : 8, palette.grind, context.grindActive ? "GRINDING" : "GRIND"};
     case MODE_STANDBY:
     default:
-        return {temperatureProgress(currentTemperature, 93), palette.standby, "STANDBY"};
+        return {temperatureProgress(context.currentTemperature, STANDBY_REFERENCE_TARGET_C), palette.standby, "STANDBY"};
     }
 }
 
@@ -1211,8 +1231,8 @@ void DefaultUI::applyScreenVisualLanguage() {
     const DisplayPalette palette = makeDisplayPalette(resolvedThemeMode, amoledPanel);
     lv_obj_t *activeScreen = lv_scr_act();
     const bool roundDisplay = isRoundDisplay();
-    const RingVisual ringVisual =
-        buildRingVisual(palette, mode, currentTemp, targetTemp, active, grindActive, controller);
+    const RingVisualContext ringContext{mode, currentTemp, targetTemp, active != 0, grindActive != 0, controller};
+    const RingVisual ringVisual = buildRingVisual(palette, ringContext);
 
     styleScreenBase(activeScreen, palette, roundDisplay);
 
@@ -1622,8 +1642,8 @@ void DefaultUI::updateStandbyScreen() {
     }
 }
 
-void DefaultUI::updateStatusScreen() const {
-    const_cast<DefaultUI *>(this)->ensureStatusBeanLabel();
+void DefaultUI::updateStatusScreen() {
+    ensureStatusBeanLabel();
     
     // Use thread-safe snapshot to avoid use-after-free race conditions
     ProcessSnapshot proc = controller->getProcessSnapshot();
@@ -1725,8 +1745,8 @@ void DefaultUI::updateStatusScreen() const {
 void DefaultUI::adjustDials(lv_obj_t *dials) {
     const DisplayPalette palette = makeDisplayPalette(controller->getSettings().getThemeMode(), AmoledDisplayDriver::getInstance() == panelDriver);
     const bool roundDisplay = isRoundDisplay();
-    const RingVisual ringVisual =
-        buildRingVisual(palette, mode, currentTemp, targetTemp, active, grindActive, controller);
+    const RingVisualContext ringContext{mode, currentTemp, targetTemp, active != 0, grindActive != 0, controller};
+    const RingVisual ringVisual = buildRingVisual(palette, ringContext);
     lv_obj_t *tempGauge = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPGAUGE);
     lv_obj_t *tempText = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTEXT);
     lv_obj_t *tempTarget = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTARGET);

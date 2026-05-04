@@ -86,9 +86,12 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
 void WebUIPlugin::loop() {
     if (updating) {
         pluginManager->trigger("ota:update:start");
-        ota->update(updateComponent != "display", updateComponent != "controller");
+        const bool updateSucceeded = ota->update(updateComponent != "display", updateComponent != "controller");
         pluginManager->trigger("ota:update:end");
         updating = false;
+        if (!updateSucceeded) {
+            updateOTAStatus("Update failed");
+        }
     }
     if (!serverRunning) {
         return;
@@ -853,6 +856,7 @@ void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
 void WebUIPlugin::updateOTAStatus(const String &version) {
     Settings const &settings = controller->getSettings();
     JsonDocument doc;
+    doc["status"] = version;
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["tp"] = "res:ota-settings";
     doc["displayUpdateAvailable"] = ota->isUpdateAvailable(false);

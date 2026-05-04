@@ -78,7 +78,7 @@ bool GitHubOTA::isUpdateAvailable(bool controller) const {
     return update_required(_latest_version, _version);
 }
 
-void GitHubOTA::update(bool controller, bool display) {
+bool GitHubOTA::update(bool controller, bool display) {
     const char *TAG = "update";
 
     bool updateExecuted = false;
@@ -87,7 +87,10 @@ void GitHubOTA::update(bool controller, bool display) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
         this->phase = PHASE_CONTROLLER_FW;
         this->_phase_callback(PHASE_CONTROLLER_FW);
-        _controller_ota.update(_wifi_client, _latest_url + _controller_firmware_name);
+        if (!_controller_ota.update(_wifi_client, _latest_url + _controller_firmware_name)) {
+            ESP_LOGE(TAG, "Controller update failed.");
+            return false;
+        }
         ESP_LOGI(TAG, "Controller update successful. Restarting...\n");
         updateExecuted = true;
     }
@@ -99,8 +102,8 @@ void GitHubOTA::update(bool controller, bool display) {
         auto result = update_firmware(_latest_url + _firmware_name);
 
         if (result != HTTP_UPDATE_OK) {
-            ESP_LOGI(TAG, "Update failed: %s\n", Updater.getLastErrorString().c_str());
-            return;
+            ESP_LOGE(TAG, "Update failed: %s\n", Updater.getLastErrorString().c_str());
+            return false;
         }
 
         this->phase = PHASE_DISPLAY_FS;
@@ -108,8 +111,8 @@ void GitHubOTA::update(bool controller, bool display) {
         result = update_filesystem(_latest_url + _filesystem_name);
 
         if (result != HTTP_UPDATE_OK) {
-            ESP_LOGI(TAG, "Filesystem Update failed: %s\n", Updater.getLastErrorString().c_str());
-            return;
+            ESP_LOGE(TAG, "Filesystem Update failed: %s\n", Updater.getLastErrorString().c_str());
+            return false;
         }
 
         ESP_LOGI(TAG, "Update successful. Restarting...\n");
@@ -126,6 +129,7 @@ void GitHubOTA::update(bool controller, bool display) {
     }
 
     ESP_LOGI(TAG, "No updates found\n");
+    return true;
 }
 
 void GitHubOTA::setReleaseUrl(const String &release_url) { this->_release_url = release_url; }

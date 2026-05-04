@@ -20,14 +20,14 @@ class ControllerOTA {
     ~ControllerOTA() = default;
     void init(NimBLEClient *client, const ctr_progress_callback_t &progress_callback);
 
-    void update(WiFiClientSecure &wifi_client, const String &release_url);
+    bool update(WiFiClientSecure &wifi_client, const String &release_url);
 
   private:
     bool downloadFile(WiFiClientSecure &wifi_client, const String &release_url);
-    void runUpdate(Stream &in, uint32_t size);
-    void sendPart(Stream &in, uint32_t totalSize) const;
-    void sendData(uint8_t *data, uint16_t len) const;
-    void fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const;
+    bool runUpdate(Stream &in, uint32_t size);
+    bool sendPart(Stream &in, uint32_t totalSize) const;
+    bool sendData(uint8_t *data, uint16_t len) const;
+    bool fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const;
     void notifyUpdate() const;
     void onReceive(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify);
 
