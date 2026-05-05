@@ -191,11 +191,8 @@ function getRingVisual({
   if (!active && mode === 2) {
     const steamTarget = targetTemperature > 120 ? targetTemperature : 150;
     const progress = getTemperatureProgress(currentTemperature, steamTarget);
-    const fillColor = isTemperatureStable
-      ? 'var(--home-ring-steam-ready, #7cb876)'
-      : 'var(--home-ring-steam, #d4a843)';
     return {
-      background: buildSolidRingBackground(progress, fillColor),
+      background: buildSolidRingBackground(progress, 'rgba(10, 80, 40, 0.75)'),
       progress,
     };
   }
@@ -204,11 +201,8 @@ function getRingVisual({
   if (!active && mode === 3) {
     const waterTarget = targetTemperature > 0 ? targetTemperature : 80;
     const progress = getTemperatureProgress(currentTemperature, waterTarget);
-    const fillColor = isTemperatureStable
-      ? 'var(--home-ring-water-ready, #7cb876)'
-      : 'var(--home-ring-water, #6699cc)';
     return {
-      background: buildSolidRingBackground(progress, fillColor),
+      background: buildSolidRingBackground(progress, 'rgba(10, 80, 40, 0.75)'),
       progress,
     };
   }
@@ -267,6 +261,7 @@ function getHeatingLabel(mode, currentTemperature, targetTemperature) {
   if (currentTemperature >= targetTemperature) return null;
   if (mode === 1) return 'HEATING';
   if (mode === 2) return 'PREHEATING';
+  if (mode === 3) return 'HEATING';
   return null;
 }
 
