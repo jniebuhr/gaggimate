@@ -240,6 +240,16 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
     };
   }
 
+  // Steam ready state
+  if (mode === 2 && isTemperatureStable) {
+    return { title: 'READY TO STEAM', subtitle: MODE_SUBTITLES[mode] };
+  }
+
+  // Water ready state
+  if (mode === 3 && isTemperatureStable) {
+    return { title: 'WATER READY', subtitle: MODE_SUBTITLES[mode] };
+  }
+
   return {
     title: MODE_LABELS[mode] || 'STANDBY',
     subtitle: MODE_SUBTITLES[mode] || 'Ready',
