@@ -367,6 +367,7 @@ export default function ProcessControls({ brew, mode }) {
   const actions = useProcessActions(api, grind, setIsFlushing, lastStartedActionRef);
 
   const progressPercent = getProgressPercent(processInfo);
+  const isTemperatureStable = targetTemperature > 0 && currentTemperature >= targetTemperature;
   const ringVisual = getRingVisual({
     active,
     brew,
@@ -378,7 +379,6 @@ export default function ProcessControls({ brew, mode }) {
     targetTemperature,
     isTemperatureStable,
   });
-  const isTemperatureStable = targetTemperature > 0 && currentTemperature >= targetTemperature;
   const heatingLabel = !isTemperatureStable
     ? getHeatingLabel(mode, currentTemperature, targetTemperature)
     : null;
