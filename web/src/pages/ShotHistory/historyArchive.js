@@ -77,8 +77,19 @@ export async function importShotHistoryArchive(payload) {
       continue;
     }
 
-    const shotId = String(rawShot.id || rawShot.timestamp || Date.now());
-    const storageKey = `history-${shotId}.json`;
+    // Generate unique ID: prefer timestamp, fallback to id or Date.now()
+    let shotId = String(rawShot.timestamp || rawShot.id || Date.now());
+    let storageKey = `history-${shotId}.json`;
+
+    // Check for collision and generate new ID if needed
+    const existingShot = await indexedDBService.getShot(storageKey);
+    if (existingShot) {
+      // Shot with this ID already exists — generate new timestamp-based ID
+      const timestamp = Date.now();
+      shotId = String(timestamp);
+      storageKey = `history-${shotId}.json`;
+    }
+
     const normalizedNotes = normalizeNotes(rawShot.notes, storageKey);
 
     const browserShot = {
