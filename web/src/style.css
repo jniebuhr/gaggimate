@@ -759,6 +759,8 @@ html[data-theme='nothing'] {
   --home-ring-standby: #333333;
   --home-ring-steam: #d4a843;
   --home-ring-water: #6699cc;
+  --home-ring-steam-ready: #7cb876;
+  --home-ring-water-ready: #7cb876;
   --home-ring-grind: #7cb876;
   --home-ring-idle: rgba(255, 255, 255, 0.12);
   --home-ring-track: rgba(255, 255, 255, 0.06);
