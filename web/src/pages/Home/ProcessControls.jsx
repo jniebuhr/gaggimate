@@ -128,6 +128,7 @@ function getRingVisual({
   processInfo,
   profileData,
   targetTemperature,
+  isTemperatureStable,
 }) {
   if (finished) {
     return {
@@ -375,8 +376,9 @@ export default function ProcessControls({ brew, mode }) {
     processInfo,
     profileData,
     targetTemperature,
+    isTemperatureStable,
   });
-  const isTemperatureStable = currentTemperature >= targetTemperature;
+  const isTemperatureStable = targetTemperature > 0 && currentTemperature >= targetTemperature;
   const heatingLabel = !isTemperatureStable
     ? getHeatingLabel(mode, currentTemperature, targetTemperature)
     : null;
