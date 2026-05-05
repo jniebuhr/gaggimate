@@ -53,22 +53,18 @@ export function ProfileMainInformation(props) {
         </div>
       </div>
       <div className='form-control'>
-        <label className='mb-2 block text-sm font-medium'>
-          Type
-        </label>
-        <input
-          id='utility'
-          name='utility'
-          type='checkbox'
-          className='toggle border-primary checked:border-primary text-primary checked:text-primary'
-          checked={!!props.data?.utility}
-          onChange={props.onChangeUtility}
-        />
-        <label htmlFor='utility' className='ml-2'>
-          {props.data?.utility ? 'Utility' : 'Extraction'}
-        </label>
+        <label htmlFor='utility' className='mb-2 block text-sm font-medium'>Utility</label>
+        <div className='form-control mt-2'>
+          <input
+            id='utility'
+            name='utility'
+            type='checkbox'
+            className='toggle  checked:border-primary checked:text-primary'
+            checked={!!props.data?.utility}
+            onChange={props.onChangeUtility}
+          />
+        </div>
       </div>
     </Card>
   );
 }
-
