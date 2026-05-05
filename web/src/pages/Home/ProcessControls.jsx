@@ -190,8 +190,11 @@ function getRingVisual({
   if (!active && mode === 2) {
     const steamTarget = targetTemperature > 120 ? targetTemperature : 150;
     const progress = getTemperatureProgress(currentTemperature, steamTarget);
+    const fillColor = isTemperatureStable
+      ? 'var(--home-ring-steam-ready, #7cb876)'
+      : 'var(--home-ring-steam, #d4a843)';
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-steam, #d4a843)'),
+      background: buildSolidRingBackground(progress, fillColor),
       progress,
     };
   }
