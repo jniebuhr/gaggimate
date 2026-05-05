@@ -203,8 +203,11 @@ function getRingVisual({
   if (!active && mode === 3) {
     const waterTarget = targetTemperature > 0 ? targetTemperature : 80;
     const progress = getTemperatureProgress(currentTemperature, waterTarget);
+    const fillColor = isTemperatureStable
+      ? 'var(--home-ring-water-ready, #7cb876)'
+      : 'var(--home-ring-water, #6699cc)';
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-water, #d71921)'),
+      background: buildSolidRingBackground(progress, fillColor),
       progress,
     };
   }
