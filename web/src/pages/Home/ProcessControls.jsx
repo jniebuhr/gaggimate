@@ -128,6 +128,7 @@ function getRingVisual({
   processInfo,
   profileData,
   targetTemperature,
+  isTemperatureStable,
 }) {
   if (finished) {
     return {
@@ -190,8 +191,11 @@ function getRingVisual({
   if (!active && mode === 2) {
     const steamTarget = targetTemperature > 120 ? targetTemperature : 150;
     const progress = getTemperatureProgress(currentTemperature, steamTarget);
+    const fillColor = isTemperatureStable
+      ? 'var(--home-ring-steam-ready, #7cb876)'
+      : 'var(--home-ring-steam, #d4a843)';
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-steam, #d4a843)'),
+      background: buildSolidRingBackground(progress, fillColor),
       progress,
     };
   }
@@ -200,8 +204,11 @@ function getRingVisual({
   if (!active && mode === 3) {
     const waterTarget = targetTemperature > 0 ? targetTemperature : 80;
     const progress = getTemperatureProgress(currentTemperature, waterTarget);
+    const fillColor = isTemperatureStable
+      ? 'var(--home-ring-water-ready, #7cb876)'
+      : 'var(--home-ring-water, #6699cc)';
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-water, #d71921)'),
+      background: buildSolidRingBackground(progress, fillColor),
       progress,
     };
   }
@@ -238,6 +245,16 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
       title: heatingLabel,
       subtitle: MODE_SUBTITLES[mode] || 'Ready',
     };
+  }
+
+  // Steam ready state
+  if (mode === 2 && isTemperatureStable) {
+    return { title: 'READY TO STEAM', subtitle: MODE_SUBTITLES[mode] };
+  }
+
+  // Water ready state
+  if (mode === 3 && isTemperatureStable) {
+    return { title: 'WATER READY', subtitle: MODE_SUBTITLES[mode] };
   }
 
   return {
@@ -359,8 +376,9 @@ export default function ProcessControls({ brew, mode }) {
     processInfo,
     profileData,
     targetTemperature,
+    isTemperatureStable,
   });
-  const isTemperatureStable = currentTemperature >= targetTemperature;
+  const isTemperatureStable = targetTemperature > 0 && currentTemperature >= targetTemperature;
   const heatingLabel = !isTemperatureStable
     ? getHeatingLabel(mode, currentTemperature, targetTemperature)
     : null;
@@ -453,7 +471,7 @@ export default function ProcessControls({ brew, mode }) {
                 <div className='nd-ring-target'>
                   / {formatNumber(targetTemperature)}° target
                 </div>
-                <div className={`mt-2 font-nd-mono text-[10px] uppercase tracking-[0.1em]${heatingLabel ? ' text-white nd-ring-title--flashing' : ' text-[var(--text-disabled,#666)]'}`}>
+                <div className={`mt-2 font-nd-mono text-[10px] uppercase tracking-[0.1em]${heatingLabel ? ' text-white nd-ring-title--flashing' : ' text-white'}`}>
                   {displayState.title}
                 </div>
               </>
