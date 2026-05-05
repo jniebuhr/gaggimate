@@ -52,6 +52,10 @@ class DefaultUI {
 
     void applyTheme();
 
+    bool isTaskHealthy() const {
+        return is_task_healthy(eTaskGetState(taskHandle)) && is_task_healthy(eTaskGetState(profileTaskHandle));
+    }
+
   private:
     void setupPanel();
     void setupState();

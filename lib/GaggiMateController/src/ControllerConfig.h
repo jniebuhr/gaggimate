@@ -83,7 +83,7 @@ const ControllerConfig GM_STANDARD_REV_1X = {.name = "GaggiMate Standard Rev 1.x
                                              }};
 
 const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x",
-                                             .autodetectValue = 1, // Voltage divider was missing in Rev 1.0 so it's 0
+                                             .autodetectValue = 1,
                                              .heaterPin = 14,
                                              .pumpPin = 9,
                                              .pumpOn = 1,
@@ -115,7 +115,7 @@ const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x
                                              }};
 
 const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.0",
-                                        .autodetectValue = 2, // Voltage divider was missing in Rev 1.0 so it's 0
+                                        .autodetectValue = 2,
                                         .heaterPin = 14,
                                         .pumpPin = 9,
                                         .pumpSensePin = 21,
@@ -220,7 +220,7 @@ const ControllerConfig GM_PRO_REV_11 = {.name = "GaggiMate Pro Rev 1.1",
                                         }};
 
 const ControllerConfig GM_STANDARD_REV_3X = {.name = "GaggiMate Standard Rev 3.x",
-                                             .autodetectValue = 1, // Voltage divider was missing in Rev 1.0 so it's 0
+                                             .autodetectValue = 6,
                                              .heaterPin = 14,
                                              .pumpPin = 9,
                                              .pumpOn = 1,
