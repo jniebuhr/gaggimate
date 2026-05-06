@@ -11,7 +11,7 @@ import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/d
  * @param {preact.ComponentChildren} props.children - Trigger element
  * @param {'top'|'bottom'|'left'|'right'} [props.placement='top'] - Preferred placement
  */
-export function Tooltip({ content, children, placement = 'top' }) {
+export function Tooltip({ content, children, placement = 'top', disabled = false }) {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [actualPlacement, setActualPlacement] = useState(placement);
@@ -19,7 +19,13 @@ export function Tooltip({ content, children, placement = 'top' }) {
   const tooltipRef = useRef(null);
 
   useEffect(() => {
-    if (!isVisible || !triggerRef.current || !tooltipRef.current) return;
+    if (disabled && isVisible) {
+      setIsVisible(false);
+    }
+  }, [disabled, isVisible]);
+
+  useEffect(() => {
+    if (!isVisible || !triggerRef.current || !tooltipRef.current || disabled) return;
 
     const cleanup = autoUpdate(triggerRef.current, tooltipRef.current, () => {
       computePosition(triggerRef.current, tooltipRef.current, {
@@ -41,9 +47,9 @@ export function Tooltip({ content, children, placement = 'top' }) {
     });
 
     return cleanup;
-  }, [isVisible, placement]);
+  }, [disabled, isVisible, placement]);
 
-  const show = useCallback(() => setIsVisible(true), []);
+  const show = useCallback(() => {if (!disabled) setIsVisible(true);}, [disabled]);
   const hide = useCallback(() => setIsVisible(false), []);
 
   const tooltip =

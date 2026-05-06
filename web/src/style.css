@@ -443,3 +443,12 @@ html[data-theme='coffee'] {
     transform: translateY(0);
   }
 }
+
+@layer utilities {
+  .profile-list-drag-selected-item {
+    @apply ring-2 ring-primary/50 bg-primary/10 shadow-md;
+  }
+  .profile-card-container.drop-highlight{
+    @apply bg-primary/10;
+  }
+}

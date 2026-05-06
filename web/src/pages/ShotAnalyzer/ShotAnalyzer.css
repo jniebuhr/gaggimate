@@ -1,0 +1,46 @@
+.shot-analyzer-page button:not(:disabled),
+.shot-analyzer-page a[href],
+.shot-analyzer-page select:not(:disabled),
+.shot-analyzer-page [role='button']:not([aria-disabled='true']) {
+  cursor: pointer;
+}
+
+.shot-analyzer-page button:not(:focus-visible),
+.shot-analyzer-page [role='button']:not([aria-disabled='true']):not(:focus-visible),
+.shot-analyzer-page a[href]:not(:focus-visible),
+.shot-analyzer-page select:not(:focus-visible) {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.shot-analyzer-page button:focus-visible,
+.shot-analyzer-page [role='button']:not([aria-disabled='true']):focus-visible,
+.shot-analyzer-page a[href]:focus-visible,
+.shot-analyzer-page select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 72%, white 28%);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.shot-analyzer-page .shot-analyzer-notes-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
+  scrollbar-gutter: stable both-edges;
+}
+
+.shot-analyzer-page .shot-analyzer-notes-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.shot-analyzer-page .shot-analyzer-notes-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shot-analyzer-page .shot-analyzer-notes-scroll::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(100, 116, 139, 0.45);
+}
+
+.shot-analyzer-page .shot-analyzer-notes-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}

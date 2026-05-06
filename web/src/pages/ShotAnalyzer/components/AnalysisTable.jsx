@@ -9,6 +9,7 @@
  * - Integrated Zoom Controls (Font Size scaling)
  */
 
+import { Fragment } from 'preact';
 import { useState, useRef, useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -26,7 +27,7 @@ import {
   faTimes,
   faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons';
-import { columnConfig, utilityColors } from '../utils/analyzerUtils';
+import { cleanName, columnConfig, utilityColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
 import { getAnalyzerColumnVisual } from './analyzerGroupVisuals';
 import {
@@ -41,6 +42,58 @@ const NEUTRAL_STATUS_BADGE_CLASS = 'bg-base-content/10 text-base-content/80 bord
 
 function getBrewModeLabel(isBrewByWeight) {
   return isBrewByWeight ? 'Brew by Weight' : 'Brew by Time';
+}
+
+function getHighScaleDelayTitle(results) {
+  return results?.highScaleDelayMs
+    ? `Estimated scale delay exceeds 2000 ms (${results.highScaleDelayMs} ms), or the shot may have been manually stopped near the target. Please review scale-delay settings.`
+    : 'Estimated scale delay exceeds 2000 ms, or the shot may have been manually stopped near the target. Please review scale-delay settings.';
+}
+
+function getDelayReviewLabel(results) {
+  return results?.delayReviewPhaseNumber
+    ? `REVIEW PHASE ${results.delayReviewPhaseNumber}`
+    : 'PHASE REVIEW ADVISED';
+}
+
+function buildAnalysisWarningBadges(results) {
+  const badges = [];
+
+  if (results?.globalScaleLost) {
+    badges.push({
+      key: 'scale-lost',
+      label: 'SCALE LOST',
+      colorClass: 'text-white shadow-sm',
+      style: {
+        backgroundColor: utilityColors.warningOrange,
+        borderColor: utilityColors.warningOrange,
+      },
+    });
+  }
+
+  if (results?.highScaleDelay) {
+    badges.push({
+      key: 'high-scale-delay',
+      label: 'HIGH SCALE DELAY',
+      colorClass: 'text-white shadow-sm',
+      title: getHighScaleDelayTitle(results),
+      style: {
+        backgroundColor: utilityColors.warningOrange,
+        borderColor: utilityColors.warningOrange,
+      },
+    });
+  }
+
+  if (results?.delayReviewHint) {
+    badges.push({
+      key: 'delay-review',
+      label: getDelayReviewLabel(results),
+      colorClass: NEUTRAL_STATUS_BADGE_CLASS,
+      title: results.delayReviewMessage || 'Unusually high inferred delay detected.',
+    });
+  }
+
+  return badges;
 }
 
 function StopCalculationHelpPopover() {
@@ -249,13 +302,16 @@ function StopCalculationHelpPopover() {
  */
 export function AnalysisTable({
   results,
+  compareEntries = [],
+  isCompareActive = false,
   activeColumns,
   onColumnsChange,
   settings,
   onSettingsChange,
   onAnalyze,
 }) {
-  if (!results || !results.phases) return null;
+  const compareMode = isCompareActive && Array.isArray(compareEntries) && compareEntries.length > 1;
+  if (!results?.phases && !compareMode) return null;
 
   // State for Table Zoom (Font Size) - Default 11px
   const [tableFontSize, setTableFontSize] = useState(11);
@@ -264,6 +320,9 @@ export function AnalysisTable({
   const tableContainerRef = useRef(null);
   const safeSettings = settings || { scaleDelay: 1000, sensorDelay: 200, autoDelay: true };
   const visibleColumns = columnConfig.filter(col => activeColumns.has(col.id));
+  const maxComparePhaseCount = compareMode
+    ? Math.max(...compareEntries.map(entry => entry?.results?.phases?.length || 0), 0)
+    : 0;
 
   // --- Helper Functions ---
   const handleNonNegativeDelayInput = (key, rawValue) => {
@@ -375,6 +434,7 @@ export function AnalysisTable({
   const strongDividerClass = 'border-base-content/12 border-r-2';
   const primaryTableTextClass = 'text-base-content/90 font-semibold';
   const secondaryTableTextClass = 'text-base-content/65 font-medium';
+  const analysisWarningBadges = buildAnalysisWarningBadges(results);
 
   return (
     <div className='flex w-full flex-col'>
@@ -385,42 +445,15 @@ export function AnalysisTable({
 
       {/* Keep the top strip focused on global warnings and phase-review hints only. */}
       <div className='mb-2 flex flex-wrap gap-2 px-1'>
-        {results.globalScaleLost && (
+        {analysisWarningBadges.map(badge => (
           <StatusBadge
-            label='SCALE LOST'
-            style={{
-              backgroundColor: utilityColors.warningOrange,
-              borderColor: utilityColors.warningOrange,
-            }}
-            colorClass='text-white shadow-sm'
+            key={badge.key}
+            label={badge.label}
+            style={badge.style}
+            colorClass={badge.colorClass}
+            title={badge.title}
           />
-        )}
-        {results.highScaleDelay && (
-          <StatusBadge
-            label='HIGH SCALE DELAY'
-            style={{
-              backgroundColor: utilityColors.warningOrange,
-              borderColor: utilityColors.warningOrange,
-            }}
-            colorClass='text-white shadow-sm'
-            title={
-              results.highScaleDelayMs
-                ? `Estimated scale delay exceeds 2000 ms (${results.highScaleDelayMs} ms), or the shot may have been manually stopped near the target. Please review scale-delay settings.`
-                : 'Estimated scale delay exceeds 2000 ms, or the shot may have been manually stopped near the target. Please review scale-delay settings.'
-            }
-          />
-        )}
-        {results.delayReviewHint && (
-          <StatusBadge
-            label={
-              results.delayReviewPhaseNumber
-                ? `REVIEW PHASE ${results.delayReviewPhaseNumber}`
-                : 'PHASE REVIEW ADVISED'
-            }
-            colorClass={NEUTRAL_STATUS_BADGE_CLASS}
-            title={results.delayReviewMessage || 'Unusually high inferred delay detected.'}
-          />
-        )}
+        ))}
       </div>
 
       {/* 2. MAIN CARD WRAPPER */}
@@ -497,6 +530,13 @@ export function AnalysisTable({
                 >
                   #
                 </th>
+                {compareMode && (
+                  <th
+                    className={`min-w-[140px] px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass} ${primaryTableTextClass}`}
+                  >
+                    Shot
+                  </th>
+                )}
                 <th
                   className={`min-w-[120px] px-2 py-2 text-left whitespace-nowrap ${strongDividerClass} ${primaryTableTextClass}`}
                 >
@@ -525,69 +565,162 @@ export function AnalysisTable({
               </tr>
             </thead>
 
-            <tbody>
-              {results.phases.map((phase, idx) => (
-                <tr
-                  key={idx}
-                  className='border-base-content/5 hover:bg-base-content/5 group border-b align-top transition-colors'
-                >
-                  <td
-                    className={`border-r pt-2.5 text-center font-bold select-none ${subtleDividerClass} text-base-content/85`}
-                  >
-                    {idx + 1}
-                  </td>
-                  <td className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass}`}>
-                    {/* Keep phase naming prominent and attach brew mode only to the last row. */}
-                    <div className='text-base-content mb-0.5 leading-none font-semibold'>
-                      {phase.displayName}
-                    </div>
-                    {phase.exit?.reason && (
-                      <div
-                        className='font-semibold tracking-tight uppercase'
-                        style={{ fontSize: '0.8em', color: utilityColors.stopRed }}
+            {compareMode ? (
+              <tbody>
+                {Array.from({ length: maxComparePhaseCount }, (_, phaseIndex) => (
+                  <Fragment key={`phase-group-${phaseIndex}`}>
+                    <tr className='bg-base-200/55'>
+                      <td
+                        colSpan={visibleColumns.length + 3}
+                        className='border-base-content/10 px-3 py-2 text-left text-[10px] font-bold tracking-wide uppercase'
                       >
-                        via {phase.exit.reason}
-                      </div>
-                    )}
-                    {idx === results.phases.length - 1 && (
-                      <div
-                        className='text-base-content/55 leading-tight font-medium'
-                        style={{ fontSize: '0.8em' }}
-                      >
-                        {getBrewModeLabel(results.isBrewByWeight)}
-                      </div>
-                    )}
-                  </td>
-                  {visibleColumns.map(col => (
-                    <td
-                      key={col.id}
-                      className={`border-l px-3 py-2 text-right font-mono whitespace-nowrap tabular-nums ${subtleDividerClass}`}
-                    >
-                      <CellContent phase={phase} col={col} results={results} />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+                        Phase {phaseIndex + 1}
+                      </td>
+                    </tr>
+                    {compareEntries.map(entry => {
+                      const phase = entry?.results?.phases?.[phaseIndex] || null;
 
-            <tfoot className='border-base-content/10 text-base-content border-t-2'>
-              <tr>
-                <td className={`border-r ${subtleDividerClass}`}></td>
-                <td
-                  className={`px-2 py-2 text-left ${strongDividerClass} ${primaryTableTextClass}`}
-                >
-                  Total
-                </td>
-                {visibleColumns.map(col => (
-                  <td
-                    key={col.id}
-                    className={`border-l px-3 py-2 text-right font-mono tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
-                  >
-                    <CellContent phase={null} col={col} results={results} isTotal={true} />
-                  </td>
+                      return (
+                        <tr
+                          key={`${entry.key}-phase-${phaseIndex}`}
+                          className='border-base-content/5 hover:bg-base-content/5 group border-b align-top transition-colors'
+                        >
+                          <td
+                            className={`border-r pt-2.5 text-center font-bold select-none ${subtleDividerClass} text-base-content/85`}
+                          >
+                            {phaseIndex + 1}
+                          </td>
+                          <td
+                            className={`px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass}`}
+                          >
+                            <div
+                              className={`leading-tight font-semibold ${entry.isReference ? 'text-primary' : 'text-base-content/90'}`}
+                            >
+                              {entry.label}
+                            </div>
+                            {entry.profileName && entry.profileName !== 'No Profile Loaded' ? (
+                              <div className='text-base-content/50 text-[10px] leading-tight'>
+                                {cleanName(entry.profileName)}
+                              </div>
+                            ) : null}
+                          </td>
+                          <td
+                            className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass}`}
+                          >
+                            <ComparePhaseLabel
+                              phase={phase}
+                              phaseIndex={phaseIndex}
+                              results={entry.results}
+                            />
+                          </td>
+                          {visibleColumns.map(col => (
+                            <td
+                              key={`${entry.key}-${phaseIndex}-${col.id}`}
+                              className={`border-l px-3 py-2 text-right font-mono whitespace-nowrap tabular-nums ${subtleDividerClass}`}
+                            >
+                              <CellContent phase={phase} col={col} results={entry.results} />
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
                 ))}
-              </tr>
-            </tfoot>
+
+                <tr className='bg-base-200/75'>
+                  <td
+                    colSpan={visibleColumns.length + 3}
+                    className='border-base-content/10 border-t-2 px-3 py-2 text-left text-[10px] font-bold tracking-wide uppercase'
+                  >
+                    Totals
+                  </td>
+                </tr>
+                {compareEntries.map(entry => (
+                  <tr
+                    key={`${entry.key}-total`}
+                    className='border-base-content/5 hover:bg-base-content/5 group border-b align-top transition-colors'
+                  >
+                    <td
+                      className={`border-r py-2 text-center font-bold select-none ${subtleDividerClass} text-base-content/75`}
+                    >
+                      T
+                    </td>
+                    <td className={`px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass}`}>
+                      <div
+                        className={`leading-tight font-semibold ${entry.isReference ? 'text-primary' : 'text-base-content/90'}`}
+                      >
+                        {entry.label}
+                      </div>
+                    </td>
+                    <td
+                      className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass} ${primaryTableTextClass}`}
+                    >
+                      Total
+                    </td>
+                    {visibleColumns.map(col => (
+                      <td
+                        key={`${entry.key}-total-${col.id}`}
+                        className={`border-l px-3 py-2 text-right font-mono tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
+                      >
+                        <CellContent
+                          phase={null}
+                          col={col}
+                          results={entry.results}
+                          isTotal={true}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            ) : (
+              <>
+                <tbody>
+                  {results.phases.map((phase, idx) => (
+                    <tr
+                      key={idx}
+                      className='border-base-content/5 hover:bg-base-content/5 group border-b align-top transition-colors'
+                    >
+                      <td
+                        className={`border-r pt-2.5 text-center font-bold select-none ${subtleDividerClass} text-base-content/85`}
+                      >
+                        {idx + 1}
+                      </td>
+                      <td className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass}`}>
+                        <ComparePhaseLabel phase={phase} phaseIndex={idx} results={results} />
+                      </td>
+                      {visibleColumns.map(col => (
+                        <td
+                          key={col.id}
+                          className={`border-l px-3 py-2 text-right font-mono whitespace-nowrap tabular-nums ${subtleDividerClass}`}
+                        >
+                          <CellContent phase={phase} col={col} results={results} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+
+                <tfoot className='border-base-content/10 text-base-content border-t-2'>
+                  <tr>
+                    <td className={`border-r ${subtleDividerClass}`}></td>
+                    <td
+                      className={`px-2 py-2 text-left ${strongDividerClass} ${primaryTableTextClass}`}
+                    >
+                      Total
+                    </td>
+                    {visibleColumns.map(col => (
+                      <td
+                        key={col.id}
+                        className={`border-l px-3 py-2 text-right font-mono tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
+                      >
+                        <CellContent phase={null} col={col} results={results} isTotal={true} />
+                      </td>
+                    ))}
+                  </tr>
+                </tfoot>
+              </>
+            )}
           </table>
         </div>
 
@@ -673,13 +806,41 @@ export function AnalysisTable({
   );
 }
 
+function ComparePhaseLabel({ phase, phaseIndex, results }) {
+  if (!phase) {
+    return <div className='text-base-content/45 leading-tight font-medium'>-</div>;
+  }
+
+  return (
+    <>
+      <div className='text-base-content mb-0.5 leading-none font-semibold'>{phase.displayName}</div>
+      {phase.exit?.reason && (
+        <div
+          className='font-semibold tracking-tight uppercase'
+          style={{ fontSize: '0.8em', color: utilityColors.stopRed }}
+        >
+          via {phase.exit.reason}
+        </div>
+      )}
+      {phaseIndex === (results?.phases?.length || 0) - 1 && (
+        <div
+          className='text-base-content/55 leading-tight font-medium'
+          style={{ fontSize: '0.8em' }}
+        >
+          {getBrewModeLabel(results.isBrewByWeight)}
+        </div>
+      )}
+    </>
+  );
+}
+
 /**
  * Sub-Component: Cell Content
  * Uses relative sizing (em) or inherited font size for consistency
  */
 function CellContent({ phase, col, results, isTotal = false }) {
-  const data = isTotal ? results.total : phase;
-  const stats = isTotal ? results.total : phase.stats;
+  const data = isTotal ? results?.total : phase;
+  const stats = isTotal ? results?.total : phase?.stats;
 
   if (!data) return <span>-</span>;
 

@@ -97,12 +97,12 @@ Settings::Settings() {
 
     // Sunrise settings
     sunriseR = preferences.getInt("sr_r", 0);
-    sunriseG = preferences.getInt("sr_g", 0);
-    sunriseB = preferences.getInt("sr_b", 255);
-    sunriseW = preferences.getInt("sr_w", 50);
-    sunriseExtBrightness = preferences.getInt("sr_exb", 255);
-    emptyTankDistance = preferences.getInt("sr_ed", 200);
-    fullTankDistance = preferences.getInt("sr_fd", 50);
+    sunriseG = preferences.getInt("sr_g", 250);
+    sunriseB = preferences.getInt("sr_b", 150);
+    sunriseW = preferences.getInt("sr_w", 255);
+    sunriseExtBrightness = preferences.getInt("sr_exb", 75);
+    emptyTankDistance = preferences.getInt("sr_ed", 210);
+    fullTankDistance = preferences.getInt("sr_fd", 30);
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
 
     preferences.end();

@@ -3,7 +3,8 @@
 // - free-text clauses combine with AND
 // - repeated field clauses combine with OR (except date clauses, which combine with AND)
 // - date expressions are evaluated in local/browser time
-const SUPPORTED_FIELDS = new Set(['name', 'profile', 'id', 'source', 'date']);
+const SUPPORTED_FIELDS = new Set(['name', 'profile', 'id', 'source', 'date', 'pinned']);
+const SUPPORTED_FIELD_LIST = Array.from(SUPPORTED_FIELDS).join(', ');
 const SOURCE_ALIASES = {
   gm: 'gaggimate',
   gaggimate: 'gaggimate',
@@ -72,6 +73,13 @@ function parseQuotedOrPlainValue(rawValue) {
   return { value: trimmed, exact: false };
 }
 
+function parsePinnedBooleanValue(rawValue) {
+  const value = normalizeText(rawValue);
+  if (['true', 'yes', '1'].includes(value)) return { value: true, error: null };
+  if (['false', 'no', '0'].includes(value)) return { value: false, error: null };
+  return { value: null, error: 'pinned: use true or false.' };
+}
+
 export function parseStatisticsQuery(queryString) {
   const clauses = [];
   const errors = [];
@@ -110,7 +118,7 @@ export function parseStatisticsQuery(queryString) {
     if (!SUPPORTED_FIELDS.has(field)) {
       warnings.push({
         code: 'unknown_field',
-        message: `Unknown field "${fieldRaw}". Supported: name, profile, id, source, date.`,
+        message: `Unknown field "${fieldRaw}". Supported: ${SUPPORTED_FIELD_LIST}.`,
         raw: trimmed,
       });
       return;
@@ -387,6 +395,13 @@ function matchClauseAgainstShotMeta(shotMeta, clause, ctx) {
     return ctx.dateMatchers.every(matcher => matcher(shotMeta));
   }
 
+  if (clause.field === 'pinned') {
+    // The predicate callback is allowed to fold together direct shot pins and
+    // profile-derived pins so the DSL does not need to know where the pin came from.
+    const isPinned = !!ctx.matchesPinnedShot?.(shotMeta);
+    return clause.pinnedValue ? isPinned : !isPinned;
+  }
+
   if (clause.field === 'source') {
     return matchesSourceClause(shotMeta, clause);
   }
@@ -395,13 +410,7 @@ function matchClauseAgainstShotMeta(shotMeta, clause, ctx) {
   return matchesTextClause(values, clause);
 }
 
-export function buildShotCandidatePredicate(parsedQuery, options = {}) {
-  const now = options.now instanceof Date ? options.now : new Date();
-  const dateBasisMode = options.dateBasisMode || 'auto';
-  const errors = [...(parsedQuery?.errors || [])];
-  const warnings = [...(parsedQuery?.warnings || [])];
-  const clauses = Array.isArray(parsedQuery?.clauses) ? parsedQuery.clauses : [];
-
+function groupShotCandidateClauses({ clauses, now, dateBasisMode, errors }) {
   const freeClauses = [];
   const fieldClauseGroups = new Map();
   const dateMatchers = [];
@@ -424,11 +433,53 @@ export function buildShotCandidatePredicate(parsedQuery, options = {}) {
       continue;
     }
 
-    // Group same-field clauses so the predicate can apply OR within each field.
-    const arr = fieldClauseGroups.get(clause.field) || [];
-    arr.push(clause);
-    fieldClauseGroups.set(clause.field, arr);
+    const groupedClause =
+      clause.field === 'pinned'
+        ? (() => {
+            const parsedPinned = parsePinnedBooleanValue(clause.value);
+            if (parsedPinned.error) {
+              errors.push({
+                code: 'pinned_value_invalid',
+                message: `Invalid pinned expression in "${clause.raw}": ${parsedPinned.error}`,
+                raw: clause.raw,
+              });
+              return null;
+            }
+
+            return { ...clause, pinnedValue: parsedPinned.value };
+          })()
+        : clause;
+
+    if (!groupedClause) continue;
+
+    const groupedClauses = fieldClauseGroups.get(clause.field) || [];
+    groupedClauses.push(groupedClause);
+    fieldClauseGroups.set(clause.field, groupedClauses);
   }
+
+  return {
+    freeClauses,
+    fieldClauseGroups,
+    dateMatchers,
+  };
+}
+
+export function buildShotCandidatePredicate(parsedQuery, options = {}) {
+  const now = options.now instanceof Date ? options.now : new Date();
+  const dateBasisMode = options.dateBasisMode || 'auto';
+  // Callers own the cross-feature pin semantics. Statistics passes a matcher
+  // that treats "pinned" as either a directly pinned shot or a shot whose
+  // profile is pinned.
+  const matchesPinnedShot = options.matchesPinnedShot || (() => false);
+  const errors = [...(parsedQuery?.errors || [])];
+  const warnings = [...(parsedQuery?.warnings || [])];
+  const clauses = Array.isArray(parsedQuery?.clauses) ? parsedQuery.clauses : [];
+  const { freeClauses, fieldClauseGroups, dateMatchers } = groupShotCandidateClauses({
+    clauses,
+    now,
+    dateBasisMode,
+    errors,
+  });
 
   const predicate = shotMeta => {
     if (!shotMeta) return false;
@@ -444,7 +495,7 @@ export function buildShotCandidatePredicate(parsedQuery, options = {}) {
     for (const [, groupClauses] of fieldClauseGroups.entries()) {
       let matched = false;
       for (const clause of groupClauses) {
-        if (matchClauseAgainstShotMeta(shotMeta, clause, { dateMatchers })) {
+        if (matchClauseAgainstShotMeta(shotMeta, clause, { dateMatchers, matchesPinnedShot })) {
           matched = true;
           break;
         }

@@ -110,7 +110,10 @@ void WebUIPlugin::loop() {
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
         doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["gact"] = controller->isGrindActive() ? 1 : 0;
+        doc["wl"] = controller->getWaterLevel();
+        doc["tof"] = controller->getTofDistance();
         doc["rssi"] = 0;
+
         if (controller->getClientController()->getClient()->isConnected()) {
             doc["rssi"] = controller->getClientController()->getClient()->getRssi();
         }
