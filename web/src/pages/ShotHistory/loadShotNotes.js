@@ -10,9 +10,10 @@
  *
  * @param {any} apiService - Api service from context
  * @param {{id: string|number, volume?: number}} shotLike - Object containing at least id, may include volume
+ * @param {AbortSignal} [signal] - Optional abort signal
  * @returns {Promise<object>} notes object
  */
-export async function loadShotNotes(apiService, shotLike) {
+export async function loadShotNotes(apiService, shotLike, signal) {
   const shotId = shotLike.id;
   const volume = shotLike.volume;
 
@@ -30,7 +31,7 @@ export async function loadShotNotes(apiService, shotLike) {
   };
 
   try {
-    const response = await apiService.request({ tp: 'req:history:notes:get', id: shotId });
+    const response = await apiService.request({ tp: 'req:history:notes:get', id: shotId }, signal);
 
     let loaded = { ...base };
 

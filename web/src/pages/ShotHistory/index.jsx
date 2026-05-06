@@ -50,6 +50,7 @@ export function ShotHistory() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportingHistoryPercentage, setExportingHistoryPercentage] = useState(0);
   const loadHistoryAbortRef = useRef(null);
+  const exportAbortRef = useRef(null);
   const loadHistory = async () => {
     // Abort any in-flight fetch to prevent request pileup on the ESP32.
     loadHistoryAbortRef.current?.abort();
@@ -104,7 +105,10 @@ export function ShotHistory() {
     if (connected.value) {
       loadHistory();
     }
-    return () => loadHistoryAbortRef.current?.abort();
+    return () => {
+      loadHistoryAbortRef.current?.abort();
+      exportAbortRef.current?.abort();
+    };
   }, [connected.value]);
 
   const onDelete = useCallback(
@@ -123,66 +127,90 @@ export function ShotHistory() {
   }, []);
 
   // Reusable loader for a single shot's detailed data (from .slog file)
-  const fetchShotData = useCallback(async id => {
+  const fetchShotData = useCallback(async (id, signal) => {
     try {
       const strId = String(id);
       const paddedId = strId.padStart(6, '0');
-      const resp = await fetch(`/api/history/${paddedId}.slog`);
+      const resp = await fetch(`/api/history/${paddedId}.slog`, { signal });
 
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const buf = await resp.arrayBuffer();
 
       return parseBinaryShot(buf, strId);
     } catch (e) {
+      if (e.name === 'AbortError') throw e;
       console.error('Failed loading shot', e);
       return null;
     }
   }, []);
 
   const onExport = useCallback(async () => {
-    if(history.length > 0 && !isExporting) {
+    if (history.length > 0 && !isExporting) {
       setIsExporting(true);
       setExportingHistoryPercentage(0);
-      const totalShots = history.length;
-      let completed = 0;
-      const exportedHistory = await Promise.all(
-        history.map(async p => {
-          try {
-            const shotData = await fetchShotData(p.id);
-            if (!shotData) return null;
-            // Load notes for this shot
-            const loadedNotes = await loadShotNotes(apiService, {
-              id: p.id,
-              volume: p.volume ?? shotData.volume,
-            });
+      const controller = new AbortController();
+      exportAbortRef.current = controller;
 
-            return {
-              ...shotData,
-              rating: p.rating,
-              // Use the freshly loaded notes to ensure completeness
-              notes: loadedNotes,
-              // Preserve index metadata over shot file data
-              volume: p.volume ?? shotData.volume,
-              incomplete: p.incomplete ?? shotData.incomplete,
-            };
+      try {
+        const totalShots = history.length;
+        let completed = 0;
+        const exportedHistory = [];
+
+        for (const p of history) {
+          try {
+            // fetchShotData will throw immediately if aborted.
+            const shotData = await fetchShotData(p.id, controller.signal);
+
+            if (shotData) {
+              const loadedNotes = await loadShotNotes(
+                apiService,
+                {
+                  id: p.id,
+                  volume: p.volume ?? shotData.volume,
+                },
+                controller.signal,
+              );
+
+              // Since loadShotNotes doesn't throw error, we check the signal here to avoid
+              // pushing a "fallback/incomplete" result to the export.
+              if (controller.signal.aborted) break;
+
+              exportedHistory.push({
+                ...shotData,
+                rating: p.rating,
+                notes: loadedNotes,
+                volume: p.volume ?? shotData.volume,
+                incomplete: p.incomplete ?? shotData.incomplete,
+              });
+            }
           } catch (_e) {
-            return null;
+            if (_e.name === 'AbortError') break;
+            console.error(`Failed to export shot ${p.id}`, _e);
           } finally {
             completed++;
             setExportingHistoryPercentage(Math.round((completed / totalShots) * 100));
           }
-        }),
-      );
-      // Remove any falsy entries (failed loads)
-      const cleanedHistory = exportedHistory.filter(Boolean);
-      if (cleanedHistory.length > 0) {
-        downloadJson(cleanedHistory, 'history.json');
-      } else {
-        console.warn('Shots could not be exported');
+        }
+
+        if (!controller.signal.aborted) {
+          if (exportedHistory.length > 0) {
+            downloadJson(exportedHistory, 'history.json');
+          } else {
+            console.warn('Shots could not be exported');
+          }
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.error('Export failed', e);
+        }
+      } finally {
+        setIsExporting(false);
+        setExportingHistoryPercentage(0);
+        if (exportAbortRef.current === controller) {
+          exportAbortRef.current = null;
+        }
       }
-      setIsExporting(false);
-    }
-    else {
+    } else {
       console.log('Already exporting or No shots to export');
     }
   }, [history, isExporting, fetchShotData, apiService]);
