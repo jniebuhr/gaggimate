@@ -602,6 +602,40 @@ export function ProfileList() {
     [persistProfileOrder],
   );
 
+  const moveProfileToTop = useCallback(
+    id => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.id === id);
+        if (idx > 0) {
+          const next = [...prev];
+          const [item] = next.splice(idx, 1);
+          next.unshift(item);
+          persistProfileOrder(next);
+          return next;
+        }
+        return prev;
+      });
+    },
+    [persistProfileOrder],
+  );
+
+  const moveProfileToBottom = useCallback(
+    id => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.id === id);
+        if (idx !== -1 && idx < prev.length - 1) {
+          const next = [...prev];
+          const [item] = next.splice(idx, 1);
+          next.push(item);
+          persistProfileOrder(next);
+          return next;
+        }
+        return prev;
+      });
+    },
+    [persistProfileOrder],
+  );
+
   useEffect(() => {
     const loadData = async () => {
       if (connected.value) {
