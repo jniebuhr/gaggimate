@@ -23,6 +23,8 @@ import { downloadJson, prepareDownload } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
+import { faAnglesUp } from '@fortawesome/free-solid-svg-icons/faAnglesUp';
+import { faAnglesDown } from '@fortawesome/free-solid-svg-icons/faAnglesDown';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
@@ -77,6 +79,8 @@ function ProfileCard({
   unfavoriteDisabled,
   onMoveUp,
   onMoveDown,
+  onMoveToTop,
+  onMoveToBottom,
   isFirst,
   isLast,
 }) {
@@ -415,11 +419,30 @@ function ProfileCard({
           <div className='flex items-center gap-2 mt-3 pt-3 border-t border-[var(--home-border,#222)]'>
             <div className='flex flex-col gap-1'>
               <button
+                onClick={() => onMoveToTop(data.id)}
+                disabled={isFirst}
+                className='nd-action-btn'
+                style={{ width: '28px', height: '28px' }}
+                aria-label={`Move ${data.label} to top`}
+              >
+                <FontAwesomeIcon icon={faAnglesUp} className='text-[10px]' />
+              </button>
+              <button
+                onClick={() => onMoveToBottom(data.id)}
+                disabled={isLast}
+                className='nd-action-btn'
+                style={{ width: '28px', height: '28px' }}
+                aria-label={`Move ${data.label} to bottom`}
+              >
+                <FontAwesomeIcon icon={faAnglesDown} className='text-[10px]' />
+              </button>
+              <div className='h-2' />
+              <button
                 onClick={() => onMoveUp(data.id)}
                 disabled={isFirst}
                 className='nd-action-btn'
                 style={{ width: '28px', height: '28px' }}
-                aria-label={`Move ${data.label} up`}
+                aria-label={`Move ${data.label} up one position`}
               >
                 <FontAwesomeIcon icon={faArrowUp} className='text-[10px]' />
               </button>
@@ -428,7 +451,7 @@ function ProfileCard({
                 disabled={isLast}
                 className='nd-action-btn'
                 style={{ width: '28px', height: '28px' }}
-                aria-label={`Move ${data.label} down`}
+                aria-label={`Move ${data.label} down one position`}
               >
                 <FontAwesomeIcon icon={faArrowDown} className='text-[10px]' />
               </button>
@@ -903,6 +926,8 @@ export function ProfileList() {
                 onDuplicate={onDuplicate}
                 onMoveUp={moveProfileUp}
                 onMoveDown={moveProfileDown}
+                onMoveToTop={moveProfileToTop}
+                onMoveToBottom={moveProfileToBottom}
                 isFirst={idx === 0}
                 isLast={idx === filtered.length - 1}
               />
