@@ -308,6 +308,26 @@ function ProfileCard({
                     </li>
                     <li>
                       <button
+                        onClick={() => { onMoveToTop(data.id); closeMenu(); }}
+                        disabled={isFirst}
+                        className={`w-full text-left font-nd-mono text-[13px] px-3 py-2 rounded flex items-center gap-2 ${isFirst ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[rgba(255,255,255,0.04)]'}`}
+                      >
+                        <FontAwesomeIcon icon={faAnglesUp} />
+                        Move to Top
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { onMoveToBottom(data.id); closeMenu(); }}
+                        disabled={isLast}
+                        className={`w-full text-left font-nd-mono text-[13px] px-3 py-2 rounded flex items-center gap-2 ${isLast ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[rgba(255,255,255,0.04)]'}`}
+                      >
+                        <FontAwesomeIcon icon={faAnglesDown} />
+                        Move to Bottom
+                      </button>
+                    </li>
+                    <li>
+                      <button
                         onClick={() => { onDuplicate(data.id); closeMenu(); }}
                         className='w-full text-left font-nd-mono text-[13px] px-3 py-2 rounded hover:bg-[rgba(255,255,255,0.04)]'
                       >
