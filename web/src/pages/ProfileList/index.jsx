@@ -123,79 +123,31 @@ function ProfileCard({
   const popoverRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const positionPopover = useCallback(() => {
-    const btn = kebabRef.current;
-    const pop = popoverRef.current;
-    if (!btn || !pop) return;
-    const rect = btn.getBoundingClientRect();
-    if (!pop.matches(':popover-open')) {
-      try { pop.showPopover(); } catch (_) {}
-    }
-    const w = pop.offsetWidth || 224;
-    const h = pop.offsetHeight || 0;
-    const gap = 6;
-    let top = rect.bottom + gap;
-    let left = rect.right - w;
-    const margin = 8;
-    if (left < margin) left = margin;
-    const maxLeft = window.innerWidth - w - margin;
-    if (left > maxLeft) left = maxLeft;
-    const maxTop = window.innerHeight - h - margin;
-    if (top > maxTop) top = Math.max(margin, rect.top - h - gap);
-
-    pop.style.position = 'fixed';
-    pop.style.inset = 'auto auto auto auto';
-    pop.style.left = `${left}px`;
-    pop.style.top = `${top}px`;
-  }, []);
-
-  const closeMenu = useCallback(() => {
-    const pop = popoverRef.current;
-    if (pop && pop.matches(':popover-open')) {
-      try { pop.hidePopover(); } catch (_) {}
-    }
-    setMenuOpen(false);
-  }, []);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   const toggleMenu = useCallback(
     e => {
       e?.preventDefault?.();
-      const pop = popoverRef.current;
-      if (!pop) return;
-      if (pop.matches(':popover-open')) {
-        closeMenu();
-      } else {
-        positionPopover();
-        try { pop.showPopover(); setMenuOpen(true); } catch (_) {}
-      }
+      setMenuOpen(v => !v);
     },
-    [closeMenu, positionPopover],
+    [],
   );
 
   useEffect(() => {
-    const pop = popoverRef.current;
-    if (!pop) return;
-
-    const onToggle = () => {
-      const isOpen = pop.matches(':popover-open');
-      setMenuOpen(isOpen);
-      if (isOpen) positionPopover();
+    if (!menuOpen) return;
+    const handleClickOutside = e => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target) && !kebabRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
     };
-
-    const onResize = () => {
-      if (pop.matches(':popover-open')) positionPopover();
-    };
-
-    pop.addEventListener('toggle', onToggle);
-    window.addEventListener('resize', onResize);
-    window.addEventListener('scroll', onResize, true);
-
+    const handleKeyDown = e => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      pop.removeEventListener('toggle', onToggle);
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('scroll', onResize, true);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [positionPopover]);
+  }, [menuOpen]);
 
   return (
     <Card sm={12} role='listitem'>
@@ -244,7 +196,7 @@ function ProfileCard({
             {/* Actions */}
             <div className='flex items-center gap-2'>
               {/* Mobile: Popover */}
-              <div className='sm:hidden'>
+              <div className='sm:hidden relative'>
                 <button
                   ref={kebabRef}
                   onClick={toggleMenu}
@@ -260,10 +212,8 @@ function ProfileCard({
                 <div
                   id={`profile-${data.id}-menu`}
                   ref={popoverRef}
-                  popover='auto'
                   role='menu'
-                  className='bg-[var(--home-surface,#111)] rounded-lg z-50 w-56 p-2 border border-[var(--home-border,#222)]'
-                  onKeyDown={e => { if (e.key === 'Escape') closeMenu(); }}
+                  className={`nd-card absolute left-0 top-full z-50 mt-2 w-56 p-2 ${menuOpen ? 'block' : 'hidden'}`}
                 >
                   <ul className='space-y-1'>
                     <li>
