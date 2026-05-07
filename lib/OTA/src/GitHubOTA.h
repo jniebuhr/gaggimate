@@ -26,6 +26,7 @@ class GitHubOTA {
               const String &controller_firmware_name = "controller.bin");
 
     void init(NimBLEClient *client);
+    ~GitHubOTA();
     void checkForUpdates();
     bool isUpdateAvailable(bool controller = false) const;
     String getCurrentVersion() const;
@@ -44,6 +45,7 @@ class GitHubOTA {
     semver_t _controller_version;
     String _latest_version_string;
     semver_t _latest_version = {0, 0, 0, nullptr, nullptr};
+    bool _update_check_failed = false;
     String _release_url;
     String _latest_url;
     String _firmware_name;
