@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { machine } from '../services/ApiService.js';
 import { notesService } from '../pages/ShotAnalyzer/services/NotesService';
+import { syncBeanUsageFromNotes } from '../utils/beanManager.js';
 
 const DOSE_STORAGE_KEY = 'gaggimate-dose-grams';
 
@@ -41,8 +42,11 @@ export function useShotDoseRecorder(api, onDoseAttached) {
 
       // Attach dose to shot notes via NotesService
       notesService.setApiService(api);
-      notesService.saveNotes(shotId, 'gaggimate', { doseIn: dose }).then(() => {
+      notesService.saveNotes(shotId, 'gaggimate', { doseIn: dose }).then(async () => {
         localStorage.removeItem(DOSE_STORAGE_KEY);
+        // Subtract dose from bean quantity
+        const nextNotes = { doseIn: dose, beanType: status.value.selectedBean };
+        await syncBeanUsageFromNotes(api, {}, nextNotes);
         if (mountedRef.current) {
           onDoseAttached?.(dose);
         }
