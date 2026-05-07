@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -173,6 +173,7 @@ BeanPopover.propTypes = {
 function DoseInput({ value, onAdjust, onInputChange }) {
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef(null);
 
   const handleNumberClick = () => {
     setInputValue(String(value));
@@ -189,14 +190,52 @@ function DoseInput({ value, onAdjust, onInputChange }) {
 
   const handleInputKeyDown = (e) => {
     if (e.key === 'Enter') e.target.blur();
-    if (e.key === 'Escape') setEditing(false);
+    if (e.key === 'Escape') {
+      setInputValue(String(value));
+      setEditing(false);
+    }
   };
 
+  const handleBlurWithDocumentClick = useCallback((e) => {
+    if (editing && inputRef.current && !inputRef.current.contains(e.target)) {
+      handleInputBlur();
+    }
+  }, [editing, inputValue, value, onInputChange]);
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleBlurWithDocumentClick);
+    return () => document.removeEventListener('mousedown', handleBlurWithDocumentClick);
+  }, [handleBlurWithDocumentClick]);
+
   return (
-    <div className='dose-input-row'>
-      <span className='dose-label'>Dose</span>
-      {editing ? (
+    <div className='nd-stat flex-1'>
+      <div className='nd-stat-label'>Dose</div>
+      <div className='flex items-center gap-2'>
+        <span className='nd-stat-value' onClick={handleNumberClick} style={{ cursor: 'text' }}>
+          {value.toFixed(1)}g
+        </span>
+        <div className='dose-stepper'>
+          <button
+            type='button'
+            className='dose-stepper-btn'
+            onClick={(e) => { e.stopPropagation(); onAdjust(-0.1); }}
+            aria-label='Decrease dose'
+          >
+            −
+          </button>
+          <button
+            type='button'
+            className='dose-stepper-btn'
+            onClick={(e) => { e.stopPropagation(); onAdjust(0.1); }}
+            aria-label='Increase dose'
+          >
+            +
+          </button>
+        </div>
+      </div>
+      {editing && (
         <input
+          ref={inputRef}
           type='text'
           className='dose-value-input'
           value={inputValue}
@@ -204,30 +243,16 @@ function DoseInput({ value, onAdjust, onInputChange }) {
           onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
           onChange={e => setInputValue(e.target.value)}
+          onClick={e => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: '100%',
+            zIndex: 10,
+            marginTop: '4px',
+          }}
         />
-      ) : (
-        <span className='dose-value' onClick={handleNumberClick}>
-          {value.toFixed(1)}g
-        </span>
       )}
-      <div className='dose-stepper'>
-        <button
-          type='button'
-          className='dose-stepper-btn'
-          onClick={() => onAdjust(-0.1)}
-          aria-label='Decrease dose'
-        >
-          −
-        </button>
-        <button
-          type='button'
-          className='dose-stepper-btn'
-          onClick={() => onAdjust(0.1)}
-          aria-label='Increase dose'
-        >
-          +
-        </button>
-      </div>
     </div>
   );
 }
@@ -236,6 +261,86 @@ DoseInput.propTypes = {
   value: PropTypes.number.isRequired,
   onAdjust: PropTypes.func.isRequired,
   onInputChange: PropTypes.func.isRequired,
+};
+
+function WeightInput({ value, onAdjust }) {
+  const [editing, setEditing] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef(null);
+
+  const handleNumberClick = () => {
+    setInputValue(String(value));
+    setEditing(true);
+  };
+
+  const handleInputBlur = () => {
+    const parsed = parseQuantity(inputValue);
+    if (parsed !== null && parsed > 0) {
+      onAdjust(parsed - value);
+    }
+    setEditing(false);
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'Enter') e.target.blur();
+    if (e.key === 'Escape') {
+      setEditing(false);
+    }
+  };
+
+  return (
+    <div className='nd-stat flex-1'>
+      <div className='nd-stat-label'>Weight</div>
+      <div className='flex items-center gap-2'>
+        <span className='nd-stat-value' onClick={handleNumberClick} style={{ cursor: 'text' }}>
+          {value.toFixed(1)}g
+        </span>
+        <div className='dose-stepper'>
+          <button
+            type='button'
+            className='dose-stepper-btn'
+            onClick={(e) => { e.stopPropagation(); onAdjust(-0.5); }}
+            aria-label='Decrease weight'
+          >
+            −
+          </button>
+          <button
+            type='button'
+            className='dose-stepper-btn'
+            onClick={(e) => { e.stopPropagation(); onAdjust(0.5); }}
+            aria-label='Increase weight'
+          >
+            +
+          </button>
+        </div>
+      </div>
+      {editing && (
+        <input
+          ref={inputRef}
+          type='text'
+          className='dose-value-input'
+          value={inputValue}
+          autoFocus
+          onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
+          onChange={e => setInputValue(e.target.value)}
+          onClick={e => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: '100%',
+            zIndex: 10,
+            marginTop: '4px',
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+WeightInput.propTypes = {
+  value: PropTypes.number.isRequired,
+  onAdjust: PropTypes.func.isRequired,
 };
 
 export default function HomeModeCard({ mode }) {
@@ -247,6 +352,7 @@ export default function HomeModeCard({ mode }) {
     selectedProfileId,
     targetPressure,
     targetTemperature,
+    brewTargetVolume,
   } = status.value;
   const connected = machine.value.connected;
 
@@ -261,6 +367,11 @@ export default function HomeModeCard({ mode }) {
   const [doseGrams, setDoseGrams] = useState(() => {
     const stored = localStorage.getItem(DOSE_STORAGE_KEY);
     return parseQuantity(stored) ?? DEFAULT_DOSE;
+  });
+
+  const [targetWeight, setTargetWeight] = useState(() => {
+    const stored = localStorage.getItem('gaggimate-target-weight');
+    return parseQuantity(stored) ?? brewTargetVolume || 36.0;
   });
 
   const loadProfileOptions = useCallback(async () => {
@@ -368,6 +479,20 @@ export default function HomeModeCard({ mode }) {
     }
   }, []);
 
+  const adjustWeight = useCallback((delta) => {
+    setTargetWeight(prev => {
+      const next = Math.round((prev + delta + Number.EPSILON) * 10) / 10;
+      const clamped = Math.max(0.5, next);
+      localStorage.setItem('gaggimate-target-weight', String(clamped));
+      return clamped;
+    });
+    try {
+      api.send({ tp: 'req:change-brew-target', target: brewTargetVolume + delta });
+    } catch (error) {
+      console.error('Failed to change weight target:', error);
+    }
+  }, [api, brewTargetVolume]);
+
   const handlePressureChange = useCallback(
     delta => {
       try {
@@ -416,28 +541,38 @@ export default function HomeModeCard({ mode }) {
 
       {/* Profile / Bean row */}
       <div className='flex gap-3'>
-        <div
-          className='nd-stat flex-1 cursor-pointer relative'
-          onClick={handleProfileClick}
-        >
-          <div className='nd-stat-label'>Profile</div>
-          <div className='nd-stat-value'>{selectedProfile || 'Default'}</div>
-          {activePopover === 'profile' && (
-            <ProfilePopover
-              profiles={profileOptions}
-              selectedProfileId={selectedProfileId}
-              onSelect={handleProfileSelect}
-              onClose={() => setActivePopover(null)}
-              loading={loadingProfiles}
-              error={profileError}
+        {/* Left: Profile stacked above Weight */}
+        <div className='flex flex-col flex-1 flex-shrink-0 gap-0 min-w-0'>
+          <div
+            className='nd-stat flex-1 cursor-pointer relative'
+            onClick={handleProfileClick}
+          >
+            <div className='nd-stat-label'>Profile</div>
+            <div className='nd-stat-value'>{selectedProfile || 'Default'}</div>
+            {activePopover === 'profile' && (
+              <ProfilePopover
+                profiles={profileOptions}
+                selectedProfileId={selectedProfileId}
+                onSelect={handleProfileSelect}
+                onClose={() => setActivePopover(null)}
+                loading={loadingProfiles}
+                error={profileError}
+              />
+            )}
+          </div>
+          <div className='dose-card'>
+            <WeightInput
+              value={targetWeight}
+              onAdjust={adjustWeight}
             />
-          )}
+          </div>
         </div>
 
+        {/* Right: Bean stacked above Dose */}
         <div
-          className='flex flex-col flex-1 gap-0'
+          className='flex flex-col flex-1 flex-shrink-0 gap-0 min-w-0'
         >
-          <div className='nd-stat cursor-pointer relative' onClick={handleBeanClick}>
+          <div className='nd-stat flex-1 cursor-pointer relative' onClick={handleBeanClick}>
             <div className='nd-stat-label'>Bean</div>
             <div className='nd-stat-value'>{selectedBean || 'Not selected'}</div>
             {activePopover === 'bean' && (
