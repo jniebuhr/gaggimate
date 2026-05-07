@@ -17,6 +17,7 @@ export function useShotDoseRecorder(api, onDoseAttached) {
   useEffect(() => {
     return () => {
       mountedRef.current = false;
+      wasFinishedRef.current = false;
     };
   }, []);
 
