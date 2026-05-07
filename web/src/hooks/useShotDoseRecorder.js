@@ -44,9 +44,15 @@ export function useShotDoseRecorder(api, onDoseAttached) {
       notesService.setApiService(api);
       notesService.saveNotes(shotId, 'gaggimate', { doseIn: dose }).then(async () => {
         localStorage.removeItem(DOSE_STORAGE_KEY);
-        // Subtract dose from bean quantity
         const nextNotes = { doseIn: dose, beanType: status.value.selectedBean };
-        await syncBeanUsageFromNotes(api, {}, nextNotes);
+        try {
+          const updatedBean = await syncBeanUsageFromNotes(api, {}, nextNotes);
+          if (!updatedBean) {
+            console.warn(`No matching bean found for '${nextNotes.beanType}' — bean quantity not updated`);
+          }
+        } catch (syncErr) {
+          console.error('Failed to sync bean usage:', syncErr);
+        }
         if (mountedRef.current) {
           onDoseAttached?.(dose);
         }
