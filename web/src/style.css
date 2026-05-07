@@ -2389,3 +2389,14 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
   gap: 1rem;
 }
 
+/* Mobile: one card per row */
+@media (max-width: 639px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sortable-card {
+    grid-column: span 1 !important;
+  }
+}
+
