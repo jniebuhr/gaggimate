@@ -144,7 +144,7 @@ bool GitHubOTA::update(bool controller, bool display) {
     }
 
     ESP_LOGI(TAG, "No updates found\n");
-    return false;
+    return updateExecuted;
 }
 
 void GitHubOTA::setReleaseUrl(const String &release_url) { this->_release_url = release_url; }
