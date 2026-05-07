@@ -2401,27 +2401,6 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
 }
 
 /* Dose input styles */
-.dose-input-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-}
-
-.dose-label {
-  font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]
-}
-
-.dose-value {
-  font-nd-mono text-[13px] font-500 cursor-text flex-1
-  color-[var(--text-primary,#fff)]
-}
-
-.dose-value-input {
-  font-nd-mono text-[13px] font-500 w-16 bg-[var(--input-bg,#1a1a1a)]
-  border border-[var(--border,#333)] rounded px-1 py-0.5 text-center
-}
-
 .dose-stepper {
   display: flex;
   gap: 4px;
@@ -2431,24 +2410,40 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  font-size: 14px;
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 12px;
   line-height: 1;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-[var(--btn-secondary,#2a2a2a)];
-  color-[var(--text-primary,#fff)];
-  border none cursor-pointer
+  background: var(--btn-secondary, #2a2a2a);
+  color: var(--text-primary, #fff);
+  border: none;
+  cursor: pointer;
 }
 
 .dose-stepper-btn:hover {
-  background-[var(--btn-hover,#3a3a3a)]
+  background: var(--btn-hover, #3a3a3a);
+}
+
+.dose-stepper-btn:active {
+  background: var(--btn-active, #4a4a4a);
+}
+
+.dose-value-input {
+  width: 64px;
+  background: var(--input-bg, #1a1a1a);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 2px 4px;
+  text-align: center;
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 13px;
+  color: var(--text-primary, #fff);
 }
 
 .dose-card {
   margin-top: 4px;
-  background-[var(--home-card,#1a1a1a)]
-  border-radius 6px
 }
 

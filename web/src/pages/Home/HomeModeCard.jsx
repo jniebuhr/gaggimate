@@ -371,7 +371,7 @@ export default function HomeModeCard({ mode }) {
 
   const [targetWeight, setTargetWeight] = useState(() => {
     const stored = localStorage.getItem('gaggimate-target-weight');
-    return parseQuantity(stored) ?? brewTargetVolume || 36.0;
+    return parseQuantity(stored) ?? (brewTargetVolume || 36.0);
   });
 
   const loadProfileOptions = useCallback(async () => {
