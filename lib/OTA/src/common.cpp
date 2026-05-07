@@ -81,7 +81,7 @@ String get_updated_version_via_txt_file(WiFiClientSecure &wifi_client, String &_
     return version;
 }
 
-void print_update_result(Updater updater, HTTPUpdateResult result, const char *TAG) {
+void print_update_result(Updater &updater, HTTPUpdateResult result, const char *TAG) {
     switch (result) {
     case HTTP_UPDATE_FAILED:
         ESP_LOGE(TAG, "HTTP_UPDATE_FAILED Error (%d): %s\n", updater.getLastError(), updater.getLastErrorString().c_str());
