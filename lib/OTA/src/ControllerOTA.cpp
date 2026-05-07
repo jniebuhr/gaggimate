@@ -2,6 +2,8 @@
 #include <HTTPClient.h>
 #include <SPIFFS.h>
 
+static constexpr uint8_t FIRMWARE_MAGIC_HEADER = 0xE9;
+
 void ControllerOTA::init(NimBLEClient *client, const ctr_progress_callback_t &progress_callback) {
     this->client = client;
     progressCallback = progress_callback;
@@ -71,7 +73,7 @@ bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &re
     WiFiClient *tcp = http.getStreamPtr();
     delay(100);
 
-    if (tcp->peek() != 0xE9) {
+    if (tcp->peek() != FIRMWARE_MAGIC_HEADER) {
         ESP_LOGE("ControllerOTA", "Magic header does not start with 0xE9");
         http.end();
         return false;
@@ -201,7 +203,9 @@ bool ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const 
                     ESP_LOGE("ControllerOTA", "Failed to read data from stream");
                     return false;
                 }
-                ESP_LOGW("ControllerOTA", "Failed to read data from stream. Request %d bytes", bytesToRead);
+                if (timeout_failures % 100 == 1) {
+                    ESP_LOGW("ControllerOTA", "Still waiting for data... (%lu retries)", (unsigned long)timeout_failures);
+                }
                 delay(100);
             }
         }

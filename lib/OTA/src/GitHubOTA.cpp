@@ -28,6 +28,9 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     Updater.onStart(update_started);
     Updater.onEnd(update_finished);
     Updater.onProgress([progress_callback, this](int bytesReceived, int totalBytes) {
+        if (totalBytes <= 0) {
+            return;
+        }
         int percentage = 100.0 * bytesReceived / totalBytes;
         progress_callback(phase, percentage);
         ESP_LOGV("update_progress", "Data received, Progress: %d %%\r", percentage);
@@ -36,12 +39,20 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     Updater.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
 }
 
+GitHubOTA::~GitHubOTA() {
+    semver_free(&_version);
+    semver_free(&_controller_version);
+    semver_free(&_latest_version);
+}
+
 void GitHubOTA::init(NimBLEClient *client) {
     _controller_ota.init(client, [this](int progress) { _progress_callback(PHASE_CONTROLLER_FW, progress); });
 }
 
 void GitHubOTA::checkForUpdates() {
     const char *TAG = "checkForUpdates";
+
+    _update_check_failed = false;
 
     _latest_url = get_updated_base_url_via_redirect(_wifi_client, _release_url);
     if (_latest_url != "") {
@@ -60,6 +71,7 @@ void GitHubOTA::checkForUpdates() {
 
         if (version.length() == 0) {
             ESP_LOGW(TAG, "version.txt did not return a valid version string");
+            _update_check_failed = true;
             return;
         }
 
@@ -72,6 +84,9 @@ void GitHubOTA::checkForUpdates() {
 String GitHubOTA::getCurrentVersion() const { return _latest_version_string; }
 
 bool GitHubOTA::isUpdateAvailable(bool controller) const {
+    if (_update_check_failed) {
+        return false;
+    }
     if (controller) {
         return update_required(_latest_version, _controller_version);
     }
@@ -129,7 +144,7 @@ bool GitHubOTA::update(bool controller, bool display) {
     }
 
     ESP_LOGI(TAG, "No updates found\n");
-    return true;
+    return false;
 }
 
 void GitHubOTA::setReleaseUrl(const String &release_url) { this->_release_url = release_url; }

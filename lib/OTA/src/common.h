@@ -13,7 +13,7 @@ String get_updated_base_url_via_redirect(WiFiClientSecure &wifi_client, String &
 String get_redirect_location(WiFiClientSecure &wifi_client, String &initial_url);
 String get_updated_version_via_txt_file(WiFiClientSecure &wifi_client, String &_release_url);
 
-void print_update_result(Updater updater, HTTPUpdateResult result, const char *TAG);
+void print_update_result(Updater &updater, HTTPUpdateResult result, const char *TAG);
 
 bool update_required(semver_t _new_version, semver_t _current_version);
 
