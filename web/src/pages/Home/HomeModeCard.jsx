@@ -288,6 +288,17 @@ function WeightInput({ value, onAdjust }) {
     }
   };
 
+  const handleBlurWithDocumentClick = useCallback((e) => {
+    if (editing && inputRef.current && !inputRef.current.contains(e.target)) {
+      handleInputBlur();
+    }
+  }, [editing, inputValue, value, onAdjust]);
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleBlurWithDocumentClick);
+    return () => document.removeEventListener('mousedown', handleBlurWithDocumentClick);
+  }, [handleBlurWithDocumentClick]);
+
   return (
     <div className='nd-stat flex-1'>
       <div className='nd-stat-label'>Weight</div>

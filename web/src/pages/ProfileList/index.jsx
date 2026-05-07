@@ -487,7 +487,7 @@ export function ProfileList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('extraction');
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
-  const unfavoriteDisabled = favoriteCount <= 0;
+  const unfavoriteDisabled = favoriteCount <= 1;
   const favoriteDisabled = favoriteCount >= 10;
   const hasUtilityProfiles = useMemo(() => profiles.some(p => p.utility), [profiles]);
 
