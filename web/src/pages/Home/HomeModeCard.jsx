@@ -4,8 +4,11 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { listBeans, recordBeanSelection } from '../../utils/beanManager.js';
+import { listBeans, recordBeanSelection, parseQuantity } from '../../utils/beanManager.js';
 import { MODE_LABELS, formatNumber, StatRow } from '../../utils/homeConstants.jsx';
+
+const DOSE_STORAGE_KEY = 'gaggimate-dose-grams';
+const DEFAULT_DOSE = 18.0;
 
 const status = computed(() => machine.value.status);
 
@@ -167,6 +170,74 @@ BeanPopover.propTypes = {
   error: PropTypes.string,
 };
 
+function DoseInput({ value, onAdjust, onInputChange }) {
+  const [editing, setEditing] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+
+  const handleNumberClick = () => {
+    setInputValue(String(value));
+    setEditing(true);
+  };
+
+  const handleInputBlur = () => {
+    const parsed = parseQuantity(inputValue);
+    if (parsed !== null) {
+      onInputChange({ target: { value: String(parsed) } });
+    }
+    setEditing(false);
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'Enter') e.target.blur();
+    if (e.key === 'Escape') setEditing(false);
+  };
+
+  return (
+    <div className='dose-input-row'>
+      <span className='dose-label'>Dose</span>
+      {editing ? (
+        <input
+          type='text'
+          className='dose-value-input'
+          value={inputValue}
+          autoFocus
+          onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
+          onChange={e => setInputValue(e.target.value)}
+        />
+      ) : (
+        <span className='dose-value' onClick={handleNumberClick}>
+          {value.toFixed(1)}g
+        </span>
+      )}
+      <div className='dose-stepper'>
+        <button
+          type='button'
+          className='dose-stepper-btn'
+          onClick={() => onAdjust(-0.1)}
+          aria-label='Decrease dose'
+        >
+          −
+        </button>
+        <button
+          type='button'
+          className='dose-stepper-btn'
+          onClick={() => onAdjust(0.1)}
+          aria-label='Increase dose'
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
+DoseInput.propTypes = {
+  value: PropTypes.number.isRequired,
+  onAdjust: PropTypes.func.isRequired,
+  onInputChange: PropTypes.func.isRequired,
+};
+
 export default function HomeModeCard({ mode }) {
   const api = useContext(ApiServiceContext);
   const {
@@ -186,6 +257,11 @@ export default function HomeModeCard({ mode }) {
   const [loadingBeans, setLoadingBeans] = useState(false);
   const [profileError, setProfileError] = useState(null);
   const [beanError, setBeanError] = useState(null);
+
+  const [doseGrams, setDoseGrams] = useState(() => {
+    const stored = localStorage.getItem(DOSE_STORAGE_KEY);
+    return parseQuantity(stored) ?? DEFAULT_DOSE;
+  });
 
   const loadProfileOptions = useCallback(async () => {
     if (profileOptions.length > 0) return;
@@ -274,6 +350,24 @@ export default function HomeModeCard({ mode }) {
     [api]
   );
 
+  const adjustDose = useCallback((delta) => {
+    setDoseGrams(prev => {
+      const next = Math.round((prev + delta + Number.EPSILON) * 100) / 100;
+      const clamped = Math.max(0, next);
+      localStorage.setItem(DOSE_STORAGE_KEY, String(clamped));
+      return clamped;
+    });
+  }, []);
+
+  const handleDoseInputChange = useCallback((e) => {
+    const raw = e.target.value.replace(/g$/, '').trim();
+    const parsed = parseQuantity(raw);
+    if (parsed !== null) {
+      setDoseGrams(parsed);
+      localStorage.setItem(DOSE_STORAGE_KEY, String(parsed));
+    }
+  }, []);
+
   const handlePressureChange = useCallback(
     delta => {
       try {
@@ -341,21 +435,29 @@ export default function HomeModeCard({ mode }) {
         </div>
 
         <div
-          className='nd-stat flex-1 cursor-pointer relative'
-          onClick={handleBeanClick}
+          className='flex flex-col flex-1 gap-0'
         >
-          <div className='nd-stat-label'>Bean</div>
-          <div className='nd-stat-value'>{selectedBean || 'Not selected'}</div>
-          {activePopover === 'bean' && (
-            <BeanPopover
-              beans={beanOptions}
-              activeBean={selectedBean}
-              onSelect={handleBeanSelect}
-              onClose={() => setActivePopover(null)}
-              loading={loadingBeans}
-              error={beanError}
+          <div className='nd-stat cursor-pointer relative' onClick={handleBeanClick}>
+            <div className='nd-stat-label'>Bean</div>
+            <div className='nd-stat-value'>{selectedBean || 'Not selected'}</div>
+            {activePopover === 'bean' && (
+              <BeanPopover
+                beans={beanOptions}
+                activeBean={selectedBean}
+                onSelect={handleBeanSelect}
+                onClose={() => setActivePopover(null)}
+                loading={loadingBeans}
+                error={beanError}
+              />
+            )}
+          </div>
+          <div className='dose-card'>
+            <DoseInput
+              value={doseGrams}
+              onAdjust={adjustDose}
+              onInputChange={handleDoseInputChange}
             />
-          )}
+          </div>
         </div>
       </div>
 
