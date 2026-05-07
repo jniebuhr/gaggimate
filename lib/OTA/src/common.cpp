@@ -81,10 +81,10 @@ String get_updated_version_via_txt_file(WiFiClientSecure &wifi_client, String &_
     return version;
 }
 
-void print_update_result(Updater updater, HTTPUpdateResult result, const char *TAG) {
+void print_update_result(Updater &updater, HTTPUpdateResult result, const char *TAG) {
     switch (result) {
     case HTTP_UPDATE_FAILED:
-        ESP_LOGI(TAG, "HTTP_UPDATE_FAILED Error (%d): %s\n", updater.getLastError(), updater.getLastErrorString().c_str());
+        ESP_LOGE(TAG, "HTTP_UPDATE_FAILED Error (%d): %s\n", updater.getLastError(), updater.getLastErrorString().c_str());
         break;
     case HTTP_UPDATE_NO_UPDATES:
         ESP_LOGI(TAG, "HTTP_UPDATE_NO_UPDATES\n");
@@ -105,4 +105,4 @@ void update_started() { ESP_LOGI("update_started", "HTTP update process started\
 
 void update_finished() { ESP_LOGI("update_finished", "HTTP update process finished\n"); }
 
-void update_error(int err) { ESP_LOGI("update_error", "HTTP update fatal error code %d\n", err); }
+void update_error(int err) { ESP_LOGE("update_error", "HTTP update fatal error code %d\n", err); }

@@ -8,6 +8,7 @@ import { useGrindSettings } from '../../hooks/useGrindSettings.js';
 import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
 import { useAutoSteam } from '../../hooks/useAutoSteam.js';
+import { useShotDoseRecorder } from '../../hooks/useShotDoseRecorder.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faPause, faCheck, faPlus, faMinus, faTint, faWind } from '@fortawesome/free-solid-svg-icons';
 import { MODE_LABELS, MODE_SUBTITLES, formatNumber, StatRow } from '../../utils/homeConstants.jsx';
@@ -128,6 +129,7 @@ function getRingVisual({
   processInfo,
   profileData,
   targetTemperature,
+  isTemperatureStable,
 }) {
   if (finished) {
     return {
@@ -190,8 +192,11 @@ function getRingVisual({
   if (!active && mode === 2) {
     const steamTarget = targetTemperature > 120 ? targetTemperature : 150;
     const progress = getTemperatureProgress(currentTemperature, steamTarget);
+    const fillColor = isTemperatureStable
+      ? 'rgba(10, 80, 40, 0.75)'
+      : 'var(--home-ring-steam, #d4a843)';
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-steam, #d4a843)'),
+      background: buildSolidRingBackground(progress, fillColor),
       progress,
     };
   }
@@ -200,8 +205,11 @@ function getRingVisual({
   if (!active && mode === 3) {
     const waterTarget = targetTemperature > 0 ? targetTemperature : 80;
     const progress = getTemperatureProgress(currentTemperature, waterTarget);
+    const fillColor = isTemperatureStable
+      ? 'rgba(10, 80, 40, 0.75)'
+      : 'var(--home-ring-water, #6699cc)';
     return {
-      background: buildSolidRingBackground(progress, 'var(--home-ring-water, #d71921)'),
+      background: buildSolidRingBackground(progress, fillColor),
       progress,
     };
   }
@@ -240,6 +248,16 @@ function getDisplayState({ mode, active, finished, processInfo, currentTemperatu
     };
   }
 
+  // Steam ready state
+  if (mode === 2 && isTemperatureStable) {
+    return { title: 'READY TO STEAM', subtitle: MODE_SUBTITLES[mode] };
+  }
+
+  // Water ready state
+  if (mode === 3 && isTemperatureStable) {
+    return { title: 'WATER READY', subtitle: MODE_SUBTITLES[mode] };
+  }
+
   return {
     title: MODE_LABELS[mode] || 'STANDBY',
     subtitle: MODE_SUBTITLES[mode] || 'Ready',
@@ -250,6 +268,7 @@ function getHeatingLabel(mode, currentTemperature, targetTemperature) {
   if (currentTemperature >= targetTemperature) return null;
   if (mode === 1) return 'HEATING';
   if (mode === 2) return 'PREHEATING';
+  if (mode === 3) return 'HEATING';
   return null;
 }
 
@@ -284,6 +303,9 @@ export default function ProcessControls({ brew, mode }) {
   const finished = !!processInfo?.e && !active;
   const grind = mode === 4;
   const [isFlushing, setIsFlushing] = useState(false);
+  useShotDoseRecorder(api, (dose) => {
+    console.log(`Dose ${dose}g attached to shot`);
+  });
   const { autoSteamEnabled, toggleAutoSteam } = useAutoSteam();
   // Tracks whether the last explicitly started process was 'brew' or 'flush'
   const lastStartedActionRef = useRef(null);
@@ -350,6 +372,7 @@ export default function ProcessControls({ brew, mode }) {
   const actions = useProcessActions(api, grind, setIsFlushing, lastStartedActionRef);
 
   const progressPercent = getProgressPercent(processInfo);
+  const isTemperatureStable = targetTemperature > 0 && currentTemperature >= targetTemperature;
   const ringVisual = getRingVisual({
     active,
     brew,
@@ -359,8 +382,8 @@ export default function ProcessControls({ brew, mode }) {
     processInfo,
     profileData,
     targetTemperature,
+    isTemperatureStable,
   });
-  const isTemperatureStable = currentTemperature >= targetTemperature;
   const heatingLabel = !isTemperatureStable
     ? getHeatingLabel(mode, currentTemperature, targetTemperature)
     : null;
@@ -453,7 +476,7 @@ export default function ProcessControls({ brew, mode }) {
                 <div className='nd-ring-target'>
                   / {formatNumber(targetTemperature)}° target
                 </div>
-                <div className={`mt-2 font-nd-mono text-[10px] uppercase tracking-[0.1em]${heatingLabel ? ' text-white nd-ring-title--flashing' : ' text-[var(--text-disabled,#666)]'}`}>
+                <div className={`mt-2 font-nd-mono text-[10px] uppercase tracking-[0.1em]${heatingLabel ? ' text-white nd-ring-title--flashing' : ' text-white'}`}>
                   {displayState.title}
                 </div>
               </>

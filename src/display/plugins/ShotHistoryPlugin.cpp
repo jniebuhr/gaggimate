@@ -63,10 +63,14 @@ int16_t encodeSigned(float value, float scale, int16_t minValue, int16_t maxValu
     return static_cast<int16_t>(fixed);
 }
 
-String padId(String id, int length = SHOT_ID_LENGTH) {
-    char buffer[SHOT_ID_LENGTH + 1];
-    snprintf(buffer, sizeof(buffer), "%0*d", length, id.toInt());
+String padId(uint32_t id, int length = 10) {
+    char buffer[16];
+    snprintf(buffer, sizeof(buffer), "%0*lu", length, (unsigned long)id);
     return String(buffer);
+}
+
+String padId(const String& id, int length = 10) {
+    return padId((uint32_t)id.toInt(), length);
 }
 } // namespace
 
@@ -440,7 +444,7 @@ void ShotHistoryPlugin::startRecording() {
         xSemaphoreGive(stateMutex);
         return;
     }
-    currentId = padId(String(controller->getSettings().getHistoryIndex()));
+    currentId = padId((uint32_t)getTime());
     shotStart = millis();
     lastWeightChangeTime = 0;
     extendedRecordingStart = 0;

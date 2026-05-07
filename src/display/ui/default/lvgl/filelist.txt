@@ -13,6 +13,9 @@ ui.c
 components/ui_comp_hook.c
 ui_helpers.c
 ui_events.cpp
+fonts/ndot_18.c
+fonts/ndot_24.c
+fonts/ndot_34.c
 images/ui_img_logo_png.c
 images/ui_img_364513079.c
 images/ui_img_1091371356.c

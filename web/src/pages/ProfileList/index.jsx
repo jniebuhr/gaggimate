@@ -23,6 +23,8 @@ import { downloadJson, prepareDownload } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
+import { faAnglesUp } from '@fortawesome/free-solid-svg-icons/faAnglesUp';
+import { faAnglesDown } from '@fortawesome/free-solid-svg-icons/faAnglesDown';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
@@ -77,6 +79,8 @@ function ProfileCard({
   unfavoriteDisabled,
   onMoveUp,
   onMoveDown,
+  onMoveToTop,
+  onMoveToBottom,
   isFirst,
   isLast,
 }) {
@@ -119,79 +123,31 @@ function ProfileCard({
   const popoverRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const positionPopover = useCallback(() => {
-    const btn = kebabRef.current;
-    const pop = popoverRef.current;
-    if (!btn || !pop) return;
-    const rect = btn.getBoundingClientRect();
-    if (!pop.matches(':popover-open')) {
-      try { pop.showPopover(); } catch (_) {}
-    }
-    const w = pop.offsetWidth || 224;
-    const h = pop.offsetHeight || 0;
-    const gap = 6;
-    let top = rect.bottom + gap;
-    let left = rect.right - w;
-    const margin = 8;
-    if (left < margin) left = margin;
-    const maxLeft = window.innerWidth - w - margin;
-    if (left > maxLeft) left = maxLeft;
-    const maxTop = window.innerHeight - h - margin;
-    if (top > maxTop) top = Math.max(margin, rect.top - h - gap);
-
-    pop.style.position = 'fixed';
-    pop.style.inset = 'auto auto auto auto';
-    pop.style.left = `${left}px`;
-    pop.style.top = `${top}px`;
-  }, []);
-
-  const closeMenu = useCallback(() => {
-    const pop = popoverRef.current;
-    if (pop && pop.matches(':popover-open')) {
-      try { pop.hidePopover(); } catch (_) {}
-    }
-    setMenuOpen(false);
-  }, []);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   const toggleMenu = useCallback(
     e => {
       e?.preventDefault?.();
-      const pop = popoverRef.current;
-      if (!pop) return;
-      if (pop.matches(':popover-open')) {
-        closeMenu();
-      } else {
-        positionPopover();
-        try { pop.showPopover(); setMenuOpen(true); } catch (_) {}
-      }
+      setMenuOpen(v => !v);
     },
-    [closeMenu, positionPopover],
+    [],
   );
 
   useEffect(() => {
-    const pop = popoverRef.current;
-    if (!pop) return;
-
-    const onToggle = () => {
-      const isOpen = pop.matches(':popover-open');
-      setMenuOpen(isOpen);
-      if (isOpen) positionPopover();
+    if (!menuOpen) return;
+    const handleClickOutside = e => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target) && !kebabRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
     };
-
-    const onResize = () => {
-      if (pop.matches(':popover-open')) positionPopover();
-    };
-
-    pop.addEventListener('toggle', onToggle);
-    window.addEventListener('resize', onResize);
-    window.addEventListener('scroll', onResize, true);
-
+    const handleKeyDown = e => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      pop.removeEventListener('toggle', onToggle);
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('scroll', onResize, true);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [positionPopover]);
+  }, [menuOpen]);
 
   return (
     <Card sm={12} role='listitem'>
@@ -240,7 +196,7 @@ function ProfileCard({
             {/* Actions */}
             <div className='flex items-center gap-2'>
               {/* Mobile: Popover */}
-              <div className='sm:hidden'>
+              <div className='sm:hidden relative'>
                 <button
                   ref={kebabRef}
                   onClick={toggleMenu}
@@ -256,10 +212,8 @@ function ProfileCard({
                 <div
                   id={`profile-${data.id}-menu`}
                   ref={popoverRef}
-                  popover='auto'
                   role='menu'
-                  className='bg-[var(--home-surface,#111)] rounded-lg z-50 w-56 p-2 border border-[var(--home-border,#222)]'
-                  onKeyDown={e => { if (e.key === 'Escape') closeMenu(); }}
+                  className={`nd-card absolute left-0 top-full z-50 mt-2 w-56 p-2 ${menuOpen ? 'block' : 'hidden'}`}
                 >
                   <ul className='space-y-1'>
                     <li>
@@ -300,6 +254,26 @@ function ProfileCard({
                       >
                         <FontAwesomeIcon icon={faFileExport} className='mr-2' />
                         Export
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { onMoveToTop(data.id); closeMenu(); }}
+                        disabled={isFirst}
+                        className={`w-full text-left font-nd-mono text-[13px] px-3 py-2 rounded flex items-center gap-2 ${isFirst ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[rgba(255,255,255,0.04)]'}`}
+                      >
+                        <FontAwesomeIcon icon={faAnglesUp} />
+                        Move to Top
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { onMoveToBottom(data.id); closeMenu(); }}
+                        disabled={isLast}
+                        className={`w-full text-left font-nd-mono text-[13px] px-3 py-2 rounded flex items-center gap-2 ${isLast ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[rgba(255,255,255,0.04)]'}`}
+                      >
+                        <FontAwesomeIcon icon={faAnglesDown} />
+                        Move to Bottom
                       </button>
                     </li>
                     <li>
@@ -415,11 +389,30 @@ function ProfileCard({
           <div className='flex items-center gap-2 mt-3 pt-3 border-t border-[var(--home-border,#222)]'>
             <div className='flex flex-col gap-1'>
               <button
+                onClick={() => onMoveToTop(data.id)}
+                disabled={isFirst}
+                className='nd-action-btn'
+                style={{ width: '28px', height: '28px' }}
+                aria-label={`Move ${data.label} to top`}
+              >
+                <FontAwesomeIcon icon={faAnglesUp} className='text-[10px]' />
+              </button>
+              <button
+                onClick={() => onMoveToBottom(data.id)}
+                disabled={isLast}
+                className='nd-action-btn'
+                style={{ width: '28px', height: '28px' }}
+                aria-label={`Move ${data.label} to bottom`}
+              >
+                <FontAwesomeIcon icon={faAnglesDown} className='text-[10px]' />
+              </button>
+              <div className='h-2' />
+              <button
                 onClick={() => onMoveUp(data.id)}
                 disabled={isFirst}
                 className='nd-action-btn'
                 style={{ width: '28px', height: '28px' }}
-                aria-label={`Move ${data.label} up`}
+                aria-label={`Move ${data.label} up one position`}
               >
                 <FontAwesomeIcon icon={faArrowUp} className='text-[10px]' />
               </button>
@@ -428,7 +421,7 @@ function ProfileCard({
                 disabled={isLast}
                 className='nd-action-btn'
                 style={{ width: '28px', height: '28px' }}
-                aria-label={`Move ${data.label} down`}
+                aria-label={`Move ${data.label} down one position`}
               >
                 <FontAwesomeIcon icon={faArrowDown} className='text-[10px]' />
               </button>
@@ -593,6 +586,40 @@ export function ProfileList() {
         if (idx !== -1 && idx < prev.length - 1) {
           const next = [...prev];
           [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+          persistProfileOrder(next);
+          return next;
+        }
+        return prev;
+      });
+    },
+    [persistProfileOrder],
+  );
+
+  const moveProfileToTop = useCallback(
+    id => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.id === id);
+        if (idx > 0) {
+          const next = [...prev];
+          const [item] = next.splice(idx, 1);
+          next.unshift(item);
+          persistProfileOrder(next);
+          return next;
+        }
+        return prev;
+      });
+    },
+    [persistProfileOrder],
+  );
+
+  const moveProfileToBottom = useCallback(
+    id => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.id === id);
+        if (idx !== -1 && idx < prev.length - 1) {
+          const next = [...prev];
+          const [item] = next.splice(idx, 1);
+          next.push(item);
           persistProfileOrder(next);
           return next;
         }
@@ -869,6 +896,8 @@ export function ProfileList() {
                 onDuplicate={onDuplicate}
                 onMoveUp={moveProfileUp}
                 onMoveDown={moveProfileDown}
+                onMoveToTop={moveProfileToTop}
+                onMoveToBottom={moveProfileToBottom}
                 isFirst={idx === 0}
                 isLast={idx === filtered.length - 1}
               />

@@ -759,6 +759,8 @@ html[data-theme='nothing'] {
   --home-ring-standby: #333333;
   --home-ring-steam: #d4a843;
   --home-ring-water: #6699cc;
+  --home-ring-steam-ready: #7cb876;
+  --home-ring-water-ready: #7cb876;
   --home-ring-grind: #7cb876;
   --home-ring-idle: rgba(255, 255, 255, 0.12);
   --home-ring-track: rgba(255, 255, 255, 0.06);
@@ -820,6 +822,8 @@ html[data-theme='nothing-light'] {
   --home-ring-standby: #cccccc;
   --home-ring-steam: #d4a843;
   --home-ring-water: #6699cc;
+  --home-ring-steam-ready: #7cb876;
+  --home-ring-water-ready: #7cb876;
   --home-ring-grind: #7cb876;
   --home-ring-idle: rgba(0, 0, 0, 0.12);
   --home-ring-track: rgba(0, 0, 0, 0.06);
@@ -2384,3 +2388,62 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
   grid-auto-rows: minmax(120px, auto);
   gap: 1rem;
 }
+
+/* Mobile: one card per row */
+@media (max-width: 639px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sortable-card {
+    grid-column: span 1 !important;
+  }
+}
+
+/* Dose input styles */
+.dose-stepper {
+  display: flex;
+  gap: 4px;
+}
+
+.dose-stepper-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--btn-secondary, #2a2a2a);
+  color: var(--text-primary, #fff);
+  border: none;
+  cursor: pointer;
+}
+
+.dose-stepper-btn:hover {
+  background: var(--btn-hover, #3a3a3a);
+}
+
+.dose-stepper-btn:active {
+  background: var(--btn-active, #4a4a4a);
+}
+
+.dose-value-input {
+  width: 64px;
+  background: var(--input-bg, #1a1a1a);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 2px 4px;
+  text-align: center;
+  font-family: var(--font-nd-mono, 'Space Mono', monospace);
+  font-size: 13px;
+  color: var(--text-primary, #fff);
+}
+
+.dose-card {
+  margin-top: 4px;
+}
+

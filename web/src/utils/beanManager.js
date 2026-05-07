@@ -36,7 +36,7 @@ function dispatchBeansChanged(detail = null) {
   }
 }
 
-function parseQuantity(value) {
+export function parseQuantity(value) {
   if (value === '' || value === null || value === undefined) return null;
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric < 0) return null;

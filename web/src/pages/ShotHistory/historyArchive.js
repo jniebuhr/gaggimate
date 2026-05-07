@@ -55,13 +55,14 @@ export function buildShotHistoryArchive(shots) {
 }
 
 export async function importShotHistoryArchive(payload) {
-  const rawShots = Array.isArray(payload)
-    ? payload
-    : Array.isArray(payload?.shots)
-      ? payload.shots
-      : payload?.samples
-        ? [payload]
-        : [];
+  let rawShots = [];
+  if (Array.isArray(payload)) {
+    rawShots = payload;
+  } else if (Array.isArray(payload?.shots)) {
+    rawShots = payload.shots;
+  } else if (payload?.samples) {
+    rawShots = [payload];
+  }
 
   if (rawShots.length === 0) {
     throw new Error('No shots found in the selected file.');
@@ -77,8 +78,24 @@ export async function importShotHistoryArchive(payload) {
       continue;
     }
 
-    const shotId = String(rawShot.id || rawShot.timestamp || Date.now());
-    const storageKey = `history-${shotId}.json`;
+    // Generate unique ID: prefer id (original), then timestamp, then Date.now() fallback
+    let shotId = String(rawShot.id || rawShot.timestamp || Date.now());
+    let storageKey = `history-${shotId}.json`;
+
+    // Check for collision and generate new ID if needed
+    try {
+      const existingShot = await indexedDBService.getShot(storageKey);
+      if (existingShot) {
+        // Shot with this ID already exists — generate new timestamp-based ID
+        const timestamp = Date.now();
+        shotId = String(timestamp);
+        storageKey = `history-${shotId}.json`;
+      }
+    } catch (e) {
+      // getShot threw a real DB error (not "not found") — proceed without collision check
+      // A true collision will be handled by IndexedDB's natural overwrite behavior
+    }
+
     const normalizedNotes = normalizeNotes(rawShot.notes, storageKey);
 
     const browserShot = {

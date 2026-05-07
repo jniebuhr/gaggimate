@@ -61,7 +61,7 @@ class DefaultUI {
     void handleScreenChange();
 
     void updateStandbyScreen();
-    void updateStatusScreen() const;
+    void updateStatusScreen();
     void applyScreenVisualLanguage();
     void resetCustomScreenHandles();
     void ensureStandbyContextLabel();
