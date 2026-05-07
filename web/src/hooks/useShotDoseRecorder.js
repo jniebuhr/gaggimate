@@ -12,6 +12,13 @@ const DOSE_STORAGE_KEY = 'gaggimate-dose-grams';
 export function useShotDoseRecorder(api, onDoseAttached) {
   const status = computed(() => machine.value.status);
   const wasFinishedRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const processInfo = status.value.process;
@@ -28,15 +35,19 @@ export function useShotDoseRecorder(api, onDoseAttached) {
       if (!Number.isFinite(dose) || dose <= 0) return;
 
       // Get the most recently completed shot ID from machine status
-      const shotId = status.value.lastShotId || status.value.process?.id;
+      const shotId = status.value.process?.id;
       if (!shotId) return;
 
       // Attach dose to shot notes via NotesService
-      notesService.saveNotes(shotId, 'auto', { doseIn: dose }).then(() => {
+      notesService.setApiService(api);
+      notesService.saveNotes(shotId, 'gaggimate', { doseIn: dose }).then(() => {
         localStorage.removeItem(DOSE_STORAGE_KEY);
-        onDoseAttached?.(dose);
+        if (mountedRef.current) {
+          onDoseAttached?.(dose);
+        }
       }).catch(err => {
         console.error('Failed to attach dose to shot notes:', err);
+        localStorage.removeItem(DOSE_STORAGE_KEY);
       });
     }
 
