@@ -92,10 +92,25 @@ class NotesService {
 
     if (source === 'gaggimate') {
       if (!this.apiService) throw new Error('ApiService not available');
+
+      // Fetch existing notes so we don't clobber them
+      let existing = {};
+      try {
+        const res = await this.apiService.request({
+          tp: 'req:history:notes:get',
+          id: shotId,
+        });
+        existing = res?.notes || {};
+      } catch {
+        // No existing notes, fine to continue with empty object
+      }
+
+      const merged = { ...existing, ...notesWithId };
+
       await this.apiService.request({
         tp: 'req:history:notes:save',
         id: shotId,
-        notes: notesWithId,
+        notes: merged,
       });
       return;
     }
