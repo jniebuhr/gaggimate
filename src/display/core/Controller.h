@@ -37,8 +37,10 @@ class Controller {
     int getMode() const;
 
     float getTargetTemp() const;
+    float getTargetSteamTemp() const;
     int getTargetGrindDuration() const;
     virtual float getCurrentTemp() const { return currentTemp; }
+    virtual float getCurrentSteamTemp() const { return currentSteamTemp; }
     bool isActive() const;
     bool isGrindActive() const;
     bool isUpdating() const;
@@ -140,7 +142,8 @@ class Controller {
     ProfileManager *profileManager{};
 
     int mode = MODE_BREW;
-    float currentTemp = 0;
+    float currentTemp = 0.0f;
+    float currentSteamTemp = 0.0f;
     float pressure = 0.0f;
     float targetPressure = 0.0f;
     float currentPuckFlow = 0.0f;
@@ -169,6 +172,7 @@ class Controller {
     bool processCompleted = false;
     bool steamReady = false;
     bool sdcard = false;
+    bool steamBoilerLow = false;
     int error = 0;
 
     // Bluetooth scale connection monitoring

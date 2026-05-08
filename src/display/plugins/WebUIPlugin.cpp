@@ -9,7 +9,6 @@
 #include <esp_core_dump.h>
 #include <esp_err.h>
 #include <esp_partition.h>
-#include <esp_system.h>
 
 #include <SD_MMC.h>
 #include <algorithm>
@@ -91,7 +90,10 @@ void WebUIPlugin::loop() {
         JsonDocument doc;
         doc["tp"] = "evt:status";
         doc["ct"] = controller->getCurrentTemp();
+        doc["cst"] = controller->getCurrentSteamTemp();
         doc["tt"] = controller->getTargetTemp();
+        doc["tst"] = controller->getTargetSteamTemp();
+        doc["db"] = controller->getSystemInfo().capabilities.dualBoiler;
         doc["pr"] = controller->getCurrentPressure();
         doc["fl"] = controller->getCurrentPumpFlow();
         doc["pt"] = controller->getTargetPressure();

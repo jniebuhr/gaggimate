@@ -446,9 +446,9 @@ html[data-theme='coffee'] {
 
 @layer utilities {
   .profile-list-drag-selected-item {
-    @apply ring-2 ring-primary/50 bg-primary/10 shadow-md;
+    @apply ring-primary/50 bg-primary/10 shadow-md ring-2;
   }
-  .profile-card-container.drop-highlight{
+  .profile-card-container.drop-highlight {
     @apply bg-primary/10;
   }
 }

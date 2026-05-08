@@ -3,10 +3,9 @@
 #include <SPI.h>
 #include <freertos/FreeRTOS.h>
 
-NtcThermistor::NtcThermistor(ADSAdc *adc, uint8_t channel, const temperature_error_callback_t &error_callback)
-    : taskHandle(nullptr), _adc(adc), _channel(channel) {
-    this->error_callback = error_callback;
-}
+NtcThermistor::NtcThermistor(ADSAdc *adc, uint8_t channel, const temperature_error_callback_t &error_callback, float ro, float Rs,
+                             float Vs, float Beta)
+    : taskHandle(nullptr), _adc(adc), _channel(channel), _ro(ro), _rs(Rs), _vs(Vs), _beta(Beta), error_callback(error_callback) {}
 
 float NtcThermistor::read() { return isErrorState() ? 0.0f : temperature; }
 
@@ -18,7 +17,7 @@ void NtcThermistor::setup() {
 
 void NtcThermistor::loop() {
     if (errorCount >= NTC_MAX_ERRORS || temperature > MAX_SAFE_TEMP) {
-        ESP_LOGE(LOG_TAG, "NTCThermistor failure! Error Count: %d, Temperature: %.2f\n", errorCount, temperature);
+        ESP_LOGV(LOG_TAG, "NTCThermistor failure! Error Count: %d, Temperature: %.2f\n", errorCount, temperature);
         error_callback();
         return;
     }
@@ -31,11 +30,11 @@ void NtcThermistor::loop() {
 
     int reading = _adc->getValue(_channel);
     float Va = reading * ADC_STEP;
-    float Rt = Rs * Va / (Vs - Va);
-    float T = 1 / (1 / To + log(Rt / Ro) / Beta);
+    float Rt = _rs * Va / (_vs - Va);
+    float T = 1 / (1 / To + log(Rt / _ro) / _beta);
     float temp = T - 273.15;
 
-    ESP_LOGI(LOG_TAG, "NTCThermistor: reading: %d, Va: %.2f, Rt: %.2f, T: %.2f", reading, Va, Rt, T);
+    ESP_LOGV(LOG_TAG, "NTCThermistor: reading: %d, Va: %.2f, Rt: %.2f, T: %.2f, temp: %.2f", reading, Va, Rt, T, temp);
 
     if (temp <= 0.0f) {
         ESP_LOGE(LOG_TAG, "Temperature reported below 0°C: %.2f\n", temp);
@@ -48,7 +47,7 @@ void NtcThermistor::loop() {
     if (temp <= 0.0f)
         return;
     temperature = 0.2f * temp + 0.8f * temperature;
-    ESP_LOGI(LOG_TAG, "Updated temperature: %2f\n", temperature);
+    ESP_LOGV(LOG_TAG, "Updated temperature: %2f\n", temperature);
 }
 
 [[noreturn]] void NtcThermistor::monitorTask(void *arg) {

@@ -17,8 +17,11 @@ import { ProcessProfileChart } from '../../components/ProcessProfileChart.jsx';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { Tooltip } from '../../components/Tooltip.jsx';
+import { faSteam } from '@fortawesome/free-brands-svg-icons/faSteam';
+import { faWind } from '@fortawesome/free-solid-svg-icons/faWind';
 
 const status = computed(() => machine.value.status);
+const dualBoiler = computed(() => machine.value.capabilities.dualBoiler);
 
 const zeroPad = (num, places) => String(num).padStart(places, '0');
 
@@ -303,8 +306,12 @@ const ProcessControls = props => {
           {[
             { id: 0, label: 'Standby' },
             { id: 1, label: 'Brew' },
-            { id: 2, label: 'Steam' },
-            { id: 3, label: 'Water' },
+            ...(!dualBoiler.value
+              ? [
+                  { id: 2, label: 'Steam' },
+                  { id: 3, label: 'Water' },
+                ]
+              : []),
             ...(showGrindTab ? [{ id: 4, label: 'Grind' }] : []),
           ].map(tab => (
             <button
@@ -323,15 +330,27 @@ const ProcessControls = props => {
       </div>
 
       <div className='mt-1 mb-2 flex flex-col items-center justify-between space-y-2 sm:flex-row sm:space-y-0'>
-        <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
-          <FontAwesomeIcon icon={faThermometerHalf} className='text-base-content/60' />
-          <span className='text-base-content'>
-            {status.value.currentTemperature.toFixed(1) || 0}
-          </span>
-          <span className='text-success font-semibold'>
-            {' '}
-            / {status.value.targetTemperature || 0}°C
-          </span>
+        <div className='flex flex-col'>
+          <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
+            <FontAwesomeIcon icon={faThermometerHalf} className='text-base-content/60' />
+            <span className='text-base-content'>
+              {status.value.currentTemperature.toFixed(1) || 0}
+            </span>
+            <span className='text-success font-semibold'>
+              {' '}
+              / {status.value.targetTemperature || 0}°C
+            </span>
+          </div>
+          <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>
+            <FontAwesomeIcon icon={faWind} className='text-base-content/60 fa-rotate-90' />
+            <span className='text-base-content'>
+              {status.value.currentSteamTemperature.toFixed(1) || 0}
+            </span>
+            <span className='text-success font-semibold'>
+              {' '}
+              / {status.value.targetSteamTemperature || 0}°C
+            </span>
+          </div>
         </div>
         {status.value.volumetricAvailable && mode !== 0 && (
           <div className='flex flex-row items-center gap-2 text-center text-base sm:text-left sm:text-lg'>

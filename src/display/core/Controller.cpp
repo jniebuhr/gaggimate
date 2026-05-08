@@ -142,19 +142,35 @@ void Controller::setupBluetooth() {
             setMode(MODE_STANDBY);
         }
     });
-    clientController.registerSensorCallback(
-        [this](const float temp, const float pressure, const float puckFlow, const float pumpFlow, const float puckResistance) {
-            onTempRead(temp);
-            this->pressure = pressure;
-            this->currentPuckFlow = puckFlow;
-            this->currentPumpFlow = pumpFlow;
-            pluginManager->trigger("boiler:pressure:change", "value", pressure);
-            pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
-            pluginManager->trigger("pump:flow:change", "value", pumpFlow);
-            pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
-        });
-    clientController.registerBrewBtnCallback([this](const int brewButtonStatus) { handleBrewButton(brewButtonStatus); });
-    clientController.registerSteamBtnCallback([this](const int steamButtonStatus) { handleSteamButton(steamButtonStatus); });
+    clientController.registerSensorCallback([this](const float temp, const float pressure, const float puckFlow,
+                                                   const float pumpFlow, const float puckResistance, const float temp2) {
+        onTempRead(temp);
+        this->pressure = pressure;
+        this->currentPuckFlow = puckFlow;
+        this->currentPumpFlow = pumpFlow;
+        this->currentSteamTemp = temp2;
+        pluginManager->trigger("boiler:pressure:change", "value", pressure);
+        pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
+        pluginManager->trigger("pump:flow:change", "value", pumpFlow);
+        pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
+    });
+    clientController.registerBtnCallback([this](const int index, const int status) {
+        ESP_LOGI("Controller", "Button %d changed to %d", index, status);
+        switch (index) {
+        case 0:
+            handleBrewButton(status);
+            break;
+        case 1:
+            handleSteamButton(status);
+            break;
+        default:
+            break;
+        }
+    });
+    clientController.registerLevelCallback([this](const int level) {
+        ESP_LOGI("Controller", "Boiler water level changed: %d", level);
+        steamBoilerLow = level;
+    });
     clientController.registerRemoteErrorCallback([this](const int error) {
         if (error != ERROR_CODE_TIMEOUT && error != this->error) {
             this->error = error;
@@ -200,6 +216,7 @@ void Controller::setupInfos() {
                                     .pressure = doc["cp"]["ps"].as<bool>(),
                                     .ledControl = doc["cp"]["led"].as<bool>(),
                                     .tof = doc["cp"]["tof"].as<bool>(),
+                                    .dualBoiler = doc["cp"]["db"].as<bool>(),
                                 }};
     }
 }
@@ -396,20 +413,35 @@ void Controller::startProcess(Process *process) {
 
 float Controller::getTargetTemp() const {
     Process *proc = currentProcess;
+    float brewTemp = 0.0f;
+    if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
+        auto brewProcess = static_cast<BrewProcess *>(proc);
+        brewTemp = brewProcess->getTemperature();
+    } else {
+        brewTemp = profileManager->getSelectedProfile().temperature;
+    }
     switch (mode) {
     case MODE_BREW:
     case MODE_GRIND:
-        if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
-            auto brewProcess = static_cast<BrewProcess *>(proc);
-            return brewProcess->getTemperature();
-        }
-        return profileManager->getSelectedProfile().temperature;
+        return brewTemp;
     case MODE_STEAM:
-        return settings.getTargetSteamTemp();
+        if (systemInfo.capabilities.dualBoiler) {
+            return brewTemp;
+        } else {
+            return settings.getTargetSteamTemp();
+        }
     case MODE_WATER:
         return settings.getTargetWaterTemp();
     default:
         return 0;
+    }
+}
+
+float Controller::getTargetSteamTemp() const {
+    if (mode != MODE_STANDBY) {
+        return settings.getTargetSteamTemp();
+    } else {
+        return 0.0f;
     }
 }
 
@@ -528,6 +560,7 @@ void Controller::updateControl() {
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
+    float targetSteamTemp = getTargetSteamTemp();
 
     bool altRelayActive = false;
     if (active && proc->isAltRelayActive()) {
@@ -541,15 +574,16 @@ void Controller::updateControl() {
         if (proc->getType() == MODE_STEAM) {
             targetPressure = settings.getSteamPumpCutoff();
             targetFlow = proc->getPumpValue() * 0.1f;
-            clientController.sendAdvancedOutputControl(false, targetTemp, false, targetPressure, targetFlow);
+            clientController.sendAdvancedOutputControl(false, targetTemp, false, targetPressure, targetFlow, false,
+                                                       targetSteamTemp);
             return;
         }
         if (proc->getType() == MODE_BREW) {
             auto *brewProcess = static_cast<BrewProcess *>(proc);
             if (brewProcess->isAdvancedPump()) {
-                clientController.sendAdvancedOutputControl(brewProcess->isRelayActive(), targetTemp,
-                                                           brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
-                                                           brewProcess->getPumpPressure(), brewProcess->getPumpFlow());
+                clientController.sendAdvancedOutputControl(
+                    brewProcess->isRelayActive(), targetTemp, brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE,
+                    brewProcess->getPumpPressure(), brewProcess->getPumpFlow(), false, targetSteamTemp);
                 targetPressure = brewProcess->getPumpPressure();
                 targetFlow = brewProcess->getPumpFlow();
                 return;
@@ -558,7 +592,12 @@ void Controller::updateControl() {
     }
     targetPressure = 0.0f;
     targetFlow = 0.0f;
-    clientController.sendOutputControl(active && proc->isRelayActive(), active ? proc->getPumpValue() : 0, targetTemp);
+    if (systemInfo.capabilities.dualBoiler && steamBoilerLow) {
+        clientController.sendOutputControl(false, 100.0f, targetTemp, true, targetSteamTemp);
+        return;
+    }
+    clientController.sendOutputControl(active && proc->isRelayActive(), active ? proc->getPumpValue() : 0, targetTemp, false,
+                                       targetSteamTemp);
 }
 
 void Controller::activate() {
@@ -741,7 +780,6 @@ void Controller::onVolumetricDelete() {
 }
 
 void Controller::handleBrewButton(int brewButtonStatus) {
-    printf("current screen %d, brew button %d\n", getMode(), brewButtonStatus);
     if (brewButtonStatus) {
         switch (getMode()) {
         case MODE_STANDBY:
@@ -781,7 +819,6 @@ void Controller::handleBrewButton(int brewButtonStatus) {
 }
 
 void Controller::handleSteamButton(int steamButtonStatus) {
-    printf("current screen %d, steam button %d\n", getMode(), steamButtonStatus);
     if (steamButtonStatus) {
         switch (getMode()) {
         case MODE_STANDBY:

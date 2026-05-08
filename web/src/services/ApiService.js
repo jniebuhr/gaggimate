@@ -165,6 +165,8 @@ export default class ApiService {
     const newStatus = {
       currentTemperature: message.ct,
       targetTemperature: message.tt,
+      currentSteamTemperature: message.cst,
+      targetSteamTemperature: message.tst,
       currentPressure: message.pr,
       targetPressure: message.pt,
       targetWeight: message.tw || 0,
@@ -201,6 +203,7 @@ export default class ApiService {
         dimming: message.cd,
         pressure: message.cp,
         ledControl: message.led,
+        dualBoiler: message.db,
       },
       history: [...machine.value.history, historyEntry],
     };
@@ -216,6 +219,8 @@ export const machine = signal({
   status: {
     currentTemperature: 0,
     targetTemperature: 0,
+    currentSteamTemperature: 0,
+    targetSteamTemperature: 0,
     mode: 0,
     selectedProfile: '',
     selectedProfileId: null,
@@ -230,6 +235,7 @@ export const machine = signal({
   capabilities: {
     pressure: false,
     dimming: false,
+    dualBoiler: false,
   },
   history: [],
 });

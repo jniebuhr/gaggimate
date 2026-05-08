@@ -39,13 +39,19 @@ class GaggiMateController {
     ControllerConfig _config = ControllerConfig{};
     NimBLEServerController _ble;
 
-    Max31855Thermocouple *thermocouple = nullptr;
+    TemperatureSensor *brewTemperature = nullptr;
+    TemperatureSensor *steamTemperature = nullptr;
     Heater *heater = nullptr;
+    Heater *heater2 = nullptr;
+    Pump *pump = nullptr;
     SimpleRelay *valve = nullptr;
     SimpleRelay *alt = nullptr;
-    Pump *pump = nullptr;
+    SimpleRelay *refill = nullptr;
+    SimpleRelay *aux = nullptr;
     DigitalInput *brewBtn = nullptr;
     DigitalInput *steamBtn = nullptr;
+    DigitalInput *waterBtn = nullptr;
+    DigitalInput *waterSense = nullptr;
     PressureSensor *pressureSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
