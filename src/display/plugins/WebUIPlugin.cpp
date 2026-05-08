@@ -145,7 +145,11 @@ void WebUIPlugin::loop() {
         if (proc.exists) {
             auto pObj = doc["process"].to<JsonObject>();
             // Add current shot ID so frontend can attach dose data to shot notes
-            pObj["id"] = ShotHistory.getCurrentShotId();
+            // Only send when recording to avoid empty IDs when no shot is active
+            String shotId = ShotHistory.getCurrentShotId();
+            if (ShotHistory.isRecording() && !shotId.isEmpty()) {
+                pObj["id"] = shotId;
+            }
             // Use snapshot state only to avoid TOCTOU race condition
             pObj["a"] = proc.isActive ? 1 : 0;
             if (proc.isBrew) {
