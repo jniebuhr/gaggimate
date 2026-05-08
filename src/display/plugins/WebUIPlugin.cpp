@@ -123,6 +123,7 @@ void WebUIPlugin::loop() {
         doc["bt"] =
             controller->isVolumetricAvailable() && controller->getProfileManager()->getSelectedProfile().isVolumetric() ? 1 : 0;
         doc["btd"] = profileManager->getSelectedProfile().getTotalDuration();
+        doc["btv"] = profileManager->getSelectedProfile().getTotalVolume(); // raw volumetric target for frontend Weight card
         doc["led"] = controller->getSystemInfo().capabilities.ledControl;
         doc["gtd"] = controller->getTargetGrindDuration();
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
@@ -143,6 +144,12 @@ void WebUIPlugin::loop() {
         ProcessSnapshot proc = controller->getProcessSnapshot();
         if (proc.exists) {
             auto pObj = doc["process"].to<JsonObject>();
+            // Add current shot ID so frontend can attach dose data to shot notes
+            // Only send when recording to avoid empty IDs when no shot is active
+            String shotId = ShotHistory.getCurrentShotId();
+            if (ShotHistory.isRecording() && !shotId.isEmpty()) {
+                pObj["id"] = shotId;
+            }
             // Use snapshot state only to avoid TOCTOU race condition
             pObj["a"] = proc.isActive ? 1 : 0;
             if (proc.isBrew) {

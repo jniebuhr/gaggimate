@@ -491,18 +491,16 @@ export default function HomeModeCard({ mode }) {
   }, []);
 
   const adjustWeight = useCallback((delta) => {
-    setTargetWeight(prev => {
-      const next = Math.round((prev + delta + Number.EPSILON) * 10) / 10;
-      const clamped = Math.max(0.5, next);
-      localStorage.setItem('gaggimate-target-weight', String(clamped));
-      return clamped;
-    });
+    const newWeight = Math.round((targetWeight + delta + Number.EPSILON) * 10) / 10;
+    const clamped = Math.max(0.5, newWeight);
+    localStorage.setItem('gaggimate-target-weight', String(clamped));
+    setTargetWeight(clamped);
     try {
-      api.send({ tp: 'req:change-brew-target', target: brewTargetVolume + delta });
+      api.send({ tp: 'req:change-brew-target', target: clamped });
     } catch (error) {
       console.error('Failed to change weight target:', error);
     }
-  }, [api, brewTargetVolume]);
+  }, [api, targetWeight]);
 
   const handlePressureChange = useCallback(
     delta => {
