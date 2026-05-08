@@ -14,6 +14,7 @@ export function useShotDoseRecorder(api, onDoseAttached) {
   const status = computed(() => machine.value.status);
   const wasFinishedRef = useRef(false);
   const mountedRef = useRef(true);
+  const activeShotIdRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -26,6 +27,11 @@ export function useShotDoseRecorder(api, onDoseAttached) {
     const processInfo = status.value.process;
     const finished = !!processInfo?.e && !processInfo?.a;
 
+    // Cache the shot ID while the shot is actively recording
+    if (processInfo?.id) {
+      activeShotIdRef.current = processInfo.id;
+    }
+
     // Detect transition to finished state
     if (finished && !wasFinishedRef.current) {
       wasFinishedRef.current = true;
@@ -36,14 +42,13 @@ export function useShotDoseRecorder(api, onDoseAttached) {
       const dose = parseFloat(doseStr);
       if (!Number.isFinite(dose) || dose <= 0) return;
 
-      // Get the most recently completed shot ID from machine status
-      const shotId = status.value.process?.id;
+      const shotId = activeShotIdRef.current;
       if (!shotId) return;
 
-      // Attach dose to shot notes via NotesService
       notesService.setApiService(api);
       notesService.saveNotes(shotId, 'gaggimate', { doseIn: dose }).then(async () => {
         localStorage.removeItem(DOSE_STORAGE_KEY);
+        activeShotIdRef.current = null;
         const nextNotes = { doseIn: dose, beanType: status.value.selectedBean };
         try {
           const updatedBean = await syncBeanUsageFromNotes(api, {}, nextNotes);
@@ -59,6 +64,7 @@ export function useShotDoseRecorder(api, onDoseAttached) {
       }).catch(err => {
         console.error('Failed to attach dose to shot notes:', err);
         localStorage.removeItem(DOSE_STORAGE_KEY);
+        activeShotIdRef.current = null;
       });
     }
 
