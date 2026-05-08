@@ -36,6 +36,9 @@ class ShotHistoryPlugin : public Plugin {
     void startAsyncRebuild();
     bool ensureIndexExists();
 
+    // Get current shot ID for WebUIPlugin status updates
+    String getCurrentShotId() const { return currentId; }
+
   private:
     // Index helper functions
     bool readIndexHeader(File &indexFile, ShotIndexHeader &header);

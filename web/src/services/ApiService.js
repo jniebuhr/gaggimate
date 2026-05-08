@@ -242,6 +242,7 @@ export default class ApiService {
       selectedBean: message.bn || '',
       brewTarget: !!message.bt,
       brewTargetDuration: message.btd || 0,
+      brewTargetVolume: message.btv || 0,
       volumetricAvailable: message.bta || false,
       grindTargetDuration: message.gtd || 0,
       grindTargetVolume: message.gtv || 0,
