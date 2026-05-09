@@ -49,7 +49,7 @@ export function PageShell({ children, navOpen, onNavToggle }) {
           onClick={onNavToggle}
           aria-expanded={navOpen}
           aria-controls='app-navigation-drawer'
-          aria-label='Open navigation menu'
+          aria-label={navOpen ? 'Close navigation menu' : 'Open navigation menu'}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
         >
           <span style={{ display: 'grid', placeItems: 'center', width: 32, height: 32, borderRadius: 10, background: 'var(--dm-accent)', color: '#fff', flexShrink: 0 }}>
@@ -77,7 +77,7 @@ export function PageShell({ children, navOpen, onNavToggle }) {
             onClick={onNavToggle}
             aria-expanded={navOpen}
             aria-controls='app-navigation-drawer'
-            aria-label='Open navigation menu'
+            aria-label={navOpen ? 'Close navigation menu' : 'Open navigation menu'}
             style={hamburgerStyle}
           >
             <svg fill='currentColor' viewBox='0 0 20 20' style={{ width: 18, height: 18 }}>

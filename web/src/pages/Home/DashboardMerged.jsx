@@ -25,6 +25,7 @@ const TEMP_MIN = 0;
 const TEMP_MAX = 105;
 const RING_TOTAL_ARC = 300;
 const RING_START_ANGLE = 210;
+const YIELD_SEGMENTS = Array.from({ length: 40 }, (_, i) => i);
 
 const status = computed(() => machine.value.status);
 
@@ -87,8 +88,8 @@ function ModeRail({ active, onSelect }) {
             fontSize: 9,
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
-            border: `1px solid ${idx === active ? 'rgba(215,25,33,0.6)' : 'var(--dm-line)'}`,
-            background: idx === active ? 'rgba(215,25,33,0.12)' : 'transparent',
+            border: `1px solid ${idx === active ? 'color-mix(in srgb, var(--dm-accent) 60%, transparent)' : 'var(--dm-line)'}`,
+            background: idx === active ? 'color-mix(in srgb, var(--dm-accent) 12%, transparent)' : 'transparent',
             color: idx === active ? 'var(--dm-accent)' : 'var(--dm-fg-dim)',
           }}
         >
@@ -141,8 +142,8 @@ function PhaseChip({ label, isActive, isDone }) {
         letterSpacing: '0.18em',
         padding: '4px 8px',
         borderRadius: 4,
-        border: `1px solid ${isActive ? 'rgba(215,25,33,0.5)' : 'var(--dm-line)'}`,
-        background: isActive ? 'rgba(215,25,33,0.10)' : 'transparent',
+        border: `1px solid ${isActive ? 'color-mix(in srgb, var(--dm-accent) 50%, transparent)' : 'var(--dm-line)'}`,
+        background: isActive ? 'color-mix(in srgb, var(--dm-accent) 10%, transparent)' : 'transparent',
         color: isActive ? 'var(--dm-accent)' : isDone ? 'var(--dm-fg-dim)' : 'var(--dm-fg-faint)',
         whiteSpace: 'nowrap',
       }}
@@ -508,7 +509,7 @@ function SelectDropdown({ label, options, activeId, activeLabel, onSelect, loadi
                   width: '100%',
                   padding: '9px 12px',
                   textAlign: 'left',
-                  background: isActive ? 'rgba(215,25,33,0.12)' : 'transparent',
+                  background: isActive ? 'color-mix(in srgb, var(--dm-accent) 12%, transparent)' : 'transparent',
                   border: 'none',
                   borderBottom: '1px solid var(--dm-line)',
                   fontFamily: 'var(--dm-font-mono)',
@@ -645,16 +646,32 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const isGrind = s.mode === 4;
   const brew = s.mode === 1;
 
-  const { autoSteamEnabled, toggleAutoSteam } = useAutoSteam();
-  const wasActiveRef = useRef(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   useEffect(() => {
-    if (active) { wasActiveRef.current = true; return; }
+    const mq = window.matchMedia('(max-width: 639px)');
+    const handler = e => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  const { autoSteamEnabled, toggleAutoSteam } = useAutoSteam();
+  // Track whether the *last* shot was started in brew mode, captured while active.
+  // We cannot rely on `brew` being true when `active` flips false because the
+  // controller transitions mode to STANDBY before the WebSocket delivers active=false.
+  const wasActiveRef = useRef(false);
+  const lastActiveWasBrewRef = useRef(false);
+  useEffect(() => {
+    if (active) {
+      wasActiveRef.current = true;
+      lastActiveWasBrewRef.current = lastProcessTypeRef.current === 'brew';
+      return;
+    }
     if (!wasActiveRef.current) return;
     wasActiveRef.current = false;
-    if (brew && autoSteamEnabled && lastProcessTypeRef.current === 'brew') {
+    if (lastActiveWasBrewRef.current && autoSteamEnabled) {
       try { api.send({ tp: 'req:change-mode', mode: 2 }); } catch {}
     }
-  }, [active, brew, autoSteamEnabled, api]);
+  }, [active, autoSteamEnabled, api]);
 
   const actions = useProcessActions(api, isGrind, setIsFlushing, lastProcessTypeRef);
 
@@ -699,23 +716,28 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const [loadingBeans, setLoadingBeans] = useState(false);
   const [profileError, setProfileError] = useState(null);
   const [beanError, setBeanError] = useState(null);
+  const profilesLoadedRef = useRef(false);
+  const beansLoadedRef = useRef(false);
 
   const loadProfiles = useCallback(async () => {
-    if (profileOptions.length > 0) return;
+    if (profilesLoadedRef.current) return;
+    profilesLoadedRef.current = true;
     setLoadingProfiles(true); setProfileError(null);
     try {
       const res = await api.request({ tp: 'req:profiles:list' });
       setProfileOptions((res?.profiles || []).filter(p => !p.archived));
-    } catch { setProfileError('Failed to load'); }
+    } catch { setProfileError('Failed to load'); profilesLoadedRef.current = false; }
     finally { setLoadingProfiles(false); }
-  }, [api, profileOptions.length]);
+  }, [api]);
 
   const loadBeans = useCallback(async () => {
+    if (beansLoadedRef.current) return;
+    beansLoadedRef.current = true;
     setLoadingBeans(true); setBeanError(null);
     try {
       const beans = await listBeans(api);
       setBeanOptions((beans || []).filter(b => !b.archived));
-    } catch { setBeanError('Failed to load'); }
+    } catch { setBeanError('Failed to load'); beansLoadedRef.current = false; }
     finally { setLoadingBeans(false); }
   }, [api]);
 
@@ -816,7 +838,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   );
 
   // Ring geometry
-  const RING_SIZE = 300;
+  const RING_SIZE = isMobile ? 200 : 300;
   const cx = RING_SIZE / 2;
   const cy = RING_SIZE / 2;
   const stroke = 16;
@@ -878,7 +900,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           onClick={onNavToggle}
           aria-expanded={navOpen}
           aria-controls='app-navigation-drawer'
-          aria-label='Open navigation menu'
+          aria-label={navOpen ? 'Close navigation menu' : 'Open navigation menu'}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
         >
           <span style={{ display: 'grid', placeItems: 'center', width: 32, height: 32, borderRadius: 10, background: 'var(--dm-accent)', color: '#fff', flexShrink: 0 }}>
@@ -917,7 +939,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
             onClick={onNavToggle}
             aria-expanded={navOpen}
             aria-controls='app-navigation-drawer'
-            aria-label='Open navigation menu'
+            aria-label={navOpen ? 'Close navigation menu' : 'Open navigation menu'}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, background: 'transparent', color: 'var(--dm-fg-dim)', border: 'none', cursor: 'pointer' }}
           >
             <svg fill='currentColor' viewBox='0 0 20 20' style={{ width: 18, height: 18 }}>
@@ -957,6 +979,27 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           <span
             style={{ width: 1, height: 14, background: 'var(--dm-line)', display: 'inline-block' }}
           />
+          {brew && !active && !finished && (
+            <button
+              type='button'
+              onClick={actions.startFlush}
+              title='Run a timed water flush'
+              style={{
+                background: 'transparent',
+                color: 'var(--dm-fg-faint)',
+                border: '1px solid var(--dm-line)',
+                fontFamily: 'var(--dm-font-mono)',
+                fontSize: 9,
+                letterSpacing: '0.18em',
+                padding: '4px 8px',
+                borderRadius: 6,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              ~ FLUSH
+            </button>
+          )}
           {brew && (
             <button
               type='button'
@@ -1003,19 +1046,20 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `${RING_SIZE + 48}px 1fr`,
+          gridTemplateColumns: isMobile ? '1fr' : `${RING_SIZE + 48}px 1fr`,
           borderBottom: '1px solid var(--dm-line)',
         }}
       >
         {/* Ring panel */}
         <div
           style={{
-            padding: '16px 14px',
+            padding: isMobile ? '12px 10px' : '16px 14px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRight: '1px solid var(--dm-line)',
+            borderRight: isMobile ? 'none' : '1px solid var(--dm-line)',
+            borderBottom: isMobile ? '1px solid var(--dm-line)' : 'none',
             background: 'var(--dm-bg-0)',
           }}
         >
@@ -1388,7 +1432,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 2, height: 10 }}>
-                {Array.from({ length: 40 }).map((_, i) => (
+                {YIELD_SEGMENTS.map((i) => (
                   <span
                     key={i}
                     style={{
@@ -1412,10 +1456,10 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
                   ? 'var(--dm-accent)'
                   : finished
                     ? 'var(--dm-good)'
-                    : 'rgba(215,25,33,0.14)',
+                    : 'color-mix(in srgb, var(--dm-accent) 14%, transparent)',
                 color: active || finished ? '#fff' : 'var(--dm-accent)',
                 border:
-                  active || finished ? 'none' : '1px solid rgba(215,25,33,0.4)',
+                  active || finished ? 'none' : '1px solid color-mix(in srgb, var(--dm-accent) 40%, transparent)',
                 fontFamily: 'var(--dm-font-display)',
                 fontSize: 13,
                 letterSpacing: '0.18em',
@@ -1423,7 +1467,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
                 borderRadius: 8,
                 cursor: 'pointer',
                 fontWeight: 700,
-                boxShadow: active ? '0 6px 18px rgba(215,25,33,0.22)' : 'none',
+                boxShadow: active ? '0 6px 18px color-mix(in srgb, var(--dm-accent) 22%, transparent)' : 'none',
                 transition: 'background 0.15s, box-shadow 0.15s',
               }}
             >
@@ -1442,7 +1486,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           gap: 8,
           background: 'var(--dm-bg-0)',
           flex: 1,
-          minHeight: 140,
+          minHeight: isMobile ? 100 : 140,
         }}
       >
         <div
@@ -1522,8 +1566,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
                   x={GW - GP_R + 5}
                   y={parseFloat(y) + 3}
                   fontSize='9'
-                  fill='rgba(215,25,33,0.55)'
-                  fontFamily='var(--dm-font-mono)'
+                  style={{ fill: 'color-mix(in srgb, var(--dm-accent) 55%, transparent)', fontFamily: 'var(--dm-font-mono)' }}
                   textAnchor='start'
                 >
                   {t}°

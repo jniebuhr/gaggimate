@@ -1123,8 +1123,18 @@ void DefaultUI::setupReactive() {
 }
 
 void DefaultUI::handleScreenChange() {
-    if (beanSelectActive)
-        return;
+    // While bean overlay is open, suppress only redundant no-op checks.
+    // A real transition (targetScreen changed) must go through — close the overlay first.
+    if (beanSelectActive) {
+        if (lv_scr_act() == *targetScreen)
+            return;
+        // A screen change was requested while overlay was open — close it cleanly.
+        beanSelectActive = false;
+        if (beanSelectScreen != nullptr) {
+            lv_obj_del(beanSelectScreen);
+            beanSelectScreen = nullptr;
+        }
+    }
     lv_obj_t *current = lv_scr_act();
 
     if (current != *targetScreen) {
@@ -1152,8 +1162,6 @@ void DefaultUI::resetCustomScreenHandles() {
     menuWaterLabel = nullptr;
     menuGrindLabel = nullptr;
     brewContextLabel = nullptr;
-    beanSelectBtn = nullptr;
-    autoSteamBtn = nullptr;
 }
 
 bool DefaultUI::isRoundDisplay() const {
@@ -1257,8 +1265,6 @@ void DefaultUI::applyScreenVisualLanguage() {
 
     if (activeScreen == ui_BrewScreen) {
         ensureBrewContextLabel();
-        ensureBeanSelectButton();
-        ensureAutoSteamButton();
         stylePanel(ui_BrewScreen_contentPanel4, palette, roundDisplay ? OPA_45 : OPA_55, roundDisplay ? 180 : 44);
         stylePanel(ui_BrewScreen_profileInfo, palette, OPA_200, 28);
         stylePanel(ui_BrewScreen_modeSwitch, palette, OPA_220, 22);
@@ -1884,6 +1890,8 @@ void DefaultUI::ensureAutoSteamButton() {
 
     if (autoSteamBtn == nullptr) {
         autoSteamBtn = lv_btn_create(ui_BrewScreen);
+        if (autoSteamBtn == nullptr)
+            return;
         lv_obj_set_size(autoSteamBtn, 88, 36);
         lv_obj_align(autoSteamBtn, LV_ALIGN_TOP_RIGHT, -14, 56);
         lv_obj_set_style_radius(autoSteamBtn, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1929,6 +1937,8 @@ void DefaultUI::ensureBeanSelectButton() {
     const DisplayPalette palette = makeDisplayPalette(controller->getSettings().getThemeMode(), amoledPanel);
 
     beanSelectBtn = lv_btn_create(ui_BrewScreen);
+    if (beanSelectBtn == nullptr)
+        return;
     lv_obj_set_size(beanSelectBtn, 88, 36);
     lv_obj_align(beanSelectBtn, LV_ALIGN_TOP_RIGHT, -14, 14);
     lv_obj_set_style_bg_color(beanSelectBtn, palette.surfaceElevated, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1965,6 +1975,11 @@ void DefaultUI::showBeanSelectScreen() {
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 22);
 
     lv_obj_t *backBtn = lv_btn_create(beanSelectScreen);
+    if (backBtn == nullptr) {
+        lv_obj_del(beanSelectScreen);
+        beanSelectScreen = nullptr;
+        return;
+    }
     lv_obj_set_size(backBtn, 52, 52);
     lv_obj_align(backBtn, LV_ALIGN_TOP_LEFT, 14, 10);
     lv_obj_set_style_bg_color(backBtn, lv_color_hex(0x1A1A1A), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2070,4 +2085,5 @@ void DefaultUI::beanBackCb(lv_event_t *e) {
     ui->beanSelectScreen = nullptr;
     lv_scr_load(*ui->targetScreen);
     lv_obj_del(screen);
+    ui->rerender = true;
 }
