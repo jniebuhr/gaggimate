@@ -129,7 +129,7 @@ void WebUIPlugin::loop() {
                 toSend.swap(relayOutBuffer);
                 xSemaphoreGive(relayMutex);
             }
-            for (const auto &msg : toSend) {
+            for (auto msg : toSend) {
                 relayWs.sendTXT(msg);
             }
         }
@@ -673,7 +673,7 @@ void WebUIPlugin::handleBeanRequest(uint32_t clientId, JsonDocument &request) {
     sendResponse(clientId, response);
 }
 
-void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
+void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
     if (request->method() == HTTP_POST) {
         controller->getSettings().batchUpdate([request](Settings *settings) {
             if (request->hasArg("startupMode"))
