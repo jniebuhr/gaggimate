@@ -6,6 +6,7 @@ import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
 import { useProfileData } from '../../hooks/useProfileData.js';
+import { useAutoSteam } from '../../hooks/useAutoSteam.js';
 import { listBeans, recordBeanSelection, parseQuantity } from '../../utils/beanManager.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
@@ -642,6 +643,18 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const [isFlushing, setIsFlushing] = useState(false);
   const lastProcessTypeRef = useRef(null);
   const isGrind = s.mode === 4;
+  const brew = s.mode === 1;
+
+  const { autoSteamEnabled, toggleAutoSteam } = useAutoSteam();
+  const wasActiveRef = useRef(false);
+  useEffect(() => {
+    if (active) { wasActiveRef.current = true; return; }
+    if (!wasActiveRef.current) return;
+    wasActiveRef.current = false;
+    if (brew && autoSteamEnabled && lastProcessTypeRef.current === 'brew') {
+      try { api.send({ tp: 'req:change-mode', mode: 2 }); } catch {}
+    }
+  }, [active, brew, autoSteamEnabled, api]);
 
   const actions = useProcessActions(api, isGrind, setIsFlushing, lastProcessTypeRef);
 
@@ -1366,31 +1379,56 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               </div>
             </div>
 
-            <button
-              type='button'
-              onClick={active ? actions.deactivate : finished ? actions.clear : actions.activate}
-              style={{
-                background: active
-                  ? 'var(--dm-accent)'
-                  : finished
-                    ? 'var(--dm-good)'
-                    : 'rgba(215,25,33,0.14)',
-                color: active || finished ? '#fff' : 'var(--dm-accent)',
-                border:
-                  active || finished ? 'none' : '1px solid rgba(215,25,33,0.4)',
-                fontFamily: 'var(--dm-font-display)',
-                fontSize: 13,
-                letterSpacing: '0.18em',
-                padding: '10px 8px',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontWeight: 700,
-                boxShadow: active ? '0 6px 18px rgba(215,25,33,0.22)' : 'none',
-                transition: 'background 0.15s, box-shadow 0.15s',
-              }}
-            >
-              {active ? 'STOP SHOT' : finished ? 'CLEAR' : 'START SHOT'}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <button
+                type='button'
+                onClick={active ? actions.deactivate : finished ? actions.clear : actions.activate}
+                style={{
+                  background: active
+                    ? 'var(--dm-accent)'
+                    : finished
+                      ? 'var(--dm-good)'
+                      : 'rgba(215,25,33,0.14)',
+                  color: active || finished ? '#fff' : 'var(--dm-accent)',
+                  border:
+                    active || finished ? 'none' : '1px solid rgba(215,25,33,0.4)',
+                  fontFamily: 'var(--dm-font-display)',
+                  fontSize: 13,
+                  letterSpacing: '0.18em',
+                  padding: '10px 8px',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  boxShadow: active ? '0 6px 18px rgba(215,25,33,0.22)' : 'none',
+                  transition: 'background 0.15s, box-shadow 0.15s',
+                  flex: 1,
+                }}
+              >
+                {active ? 'STOP SHOT' : finished ? 'CLEAR' : 'START SHOT'}
+              </button>
+              {brew && !finished && (
+                <button
+                  type='button'
+                  onClick={toggleAutoSteam}
+                  title='Auto-switch to steam mode when brew ends'
+                  style={{
+                    background: autoSteamEnabled ? 'rgba(77,143,209,0.18)' : 'transparent',
+                    color: autoSteamEnabled ? 'var(--dm-info)' : 'var(--dm-fg-faint)',
+                    border: `1px solid ${autoSteamEnabled ? 'rgba(77,143,209,0.5)' : 'var(--dm-line)'}`,
+                    fontFamily: 'var(--dm-font-mono)',
+                    fontSize: 9,
+                    letterSpacing: '0.18em',
+                    padding: '5px 8px',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {autoSteamEnabled ? '~ AUTO STEAM ON' : '~ AUTO STEAM'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

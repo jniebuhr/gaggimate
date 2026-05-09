@@ -152,6 +152,13 @@ class DefaultUI {
     static void beanItemCb(lv_event_t *e);
     static void beanBackCb(lv_event_t *e);
 
+    // Auto-steam
+    bool autoSteamEnabled = false;
+    bool pendingAutoSteam = false;
+    lv_obj_t *autoSteamBtn = nullptr;
+    void ensureAutoSteamButton();
+    static void autoSteamBtnCb(lv_event_t *e);
+
     // Screen change
     lv_obj_t **targetScreen = &ui_StandbyScreen;
     lv_obj_t *currentScreen = ui_StandbyScreen;

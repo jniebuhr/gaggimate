@@ -551,6 +551,12 @@ void DefaultUI::init() {
             changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
         }
     });
+    pluginManager->on("controller:brew:end", [this](Event const &) {
+        if (autoSteamEnabled) {
+            pendingAutoSteam = true;
+            rerender = true;
+        }
+    });
     pluginManager->on("controller:bluetooth:waiting", [this](Event const &) {
         waitingForController = true;
         rerender = true;
@@ -633,6 +639,12 @@ void DefaultUI::init() {
 void DefaultUI::loop() {
     const unsigned long now = millis();
     const unsigned long diff = now - lastRender;
+
+    if (pendingAutoSteam) {
+        pendingAutoSteam = false;
+        controller->clear();
+        controller->setMode(MODE_STEAM);
+    }
 
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
         updateTempHistory();
@@ -1141,6 +1153,7 @@ void DefaultUI::resetCustomScreenHandles() {
     menuGrindLabel = nullptr;
     brewContextLabel = nullptr;
     beanSelectBtn = nullptr;
+    autoSteamBtn = nullptr;
 }
 
 bool DefaultUI::isRoundDisplay() const {
@@ -1245,6 +1258,7 @@ void DefaultUI::applyScreenVisualLanguage() {
     if (activeScreen == ui_BrewScreen) {
         ensureBrewContextLabel();
         ensureBeanSelectButton();
+        ensureAutoSteamButton();
         stylePanel(ui_BrewScreen_contentPanel4, palette, roundDisplay ? OPA_45 : OPA_55, roundDisplay ? 180 : 44);
         stylePanel(ui_BrewScreen_profileInfo, palette, OPA_200, 28);
         stylePanel(ui_BrewScreen_modeSwitch, palette, OPA_220, 22);
@@ -1857,6 +1871,52 @@ void DefaultUI::profileLoopTask(void *arg) {
         ui->loopProfiles();
         vTaskDelay(25 / portTICK_PERIOD_MS);
     }
+}
+
+// ── Auto-steam toggle ─────────────────────────────────────────────────────
+
+void DefaultUI::ensureAutoSteamButton() {
+    if (lv_scr_act() != ui_BrewScreen || !lv_obj_is_valid(ui_BrewScreen))
+        return;
+
+    const bool amoledPanel = AmoledDisplayDriver::getInstance() == panelDriver;
+    const DisplayPalette palette = makeDisplayPalette(controller->getSettings().getThemeMode(), amoledPanel);
+
+    if (autoSteamBtn == nullptr) {
+        autoSteamBtn = lv_btn_create(ui_BrewScreen);
+        lv_obj_set_size(autoSteamBtn, 88, 36);
+        lv_obj_align(autoSteamBtn, LV_ALIGN_TOP_RIGHT, -14, 56);
+        lv_obj_set_style_radius(autoSteamBtn, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_all(autoSteamBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+        lv_obj_t *label = lv_label_create(autoSteamBtn);
+        lv_label_set_text(label, "AutoSteam");
+        lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+        lv_obj_set_width(label, 76);
+        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_center(label);
+
+        lv_obj_add_event_cb(autoSteamBtn, autoSteamBtnCb, LV_EVENT_CLICKED, this);
+    }
+
+    // Update colors to reflect current state
+    const lv_color_t activeBg = autoSteamEnabled ? palette.accentCool : palette.surfaceElevated;
+    const lv_color_t activeBorder = autoSteamEnabled ? palette.accentCool : palette.surfaceOutline;
+    const lv_color_t activeText = autoSteamEnabled ? palette.surface : palette.textMuted;
+    lv_obj_set_style_bg_color(autoSteamBtn, activeBg, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(autoSteamBtn, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(autoSteamBtn, activeBorder, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(autoSteamBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_t *label = lv_obj_get_child(autoSteamBtn, 0);
+    if (label != nullptr && lv_obj_is_valid(label)) {
+        lv_obj_set_style_text_color(label, activeText, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+}
+
+void DefaultUI::autoSteamBtnCb(lv_event_t *e) {
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    ui->autoSteamEnabled = !ui->autoSteamEnabled;
+    ui->ensureAutoSteamButton();
 }
 
 // ── Bean select overlay ────────────────────────────────────────────────────
