@@ -2447,3 +2447,160 @@ html[data-theme='nothing-light'] .chartjs-plugin-annotation .annotation-label {
   margin-top: 4px;
 }
 
+/* ── Dashboard Merged (D · Merged design) ─────────────────────────────────── */
+.dm-shell {
+  /* dm design tokens */
+  --dm-bg-0: #000000;
+  --dm-bg-1: #0a0a0a;
+  --dm-bg-2: #121212;
+  --dm-bg-3: #1a1a1a;
+  --dm-line: rgba(255, 255, 255, 0.07);
+  --dm-line-strong: rgba(255, 255, 255, 0.14);
+  --dm-fg: #e8e8e8;
+  --dm-fg-dim: rgba(232, 232, 232, 0.62);
+  --dm-fg-faint: rgba(232, 232, 232, 0.32);
+  --dm-accent: #d71921;
+  --dm-warn: #d4a843;
+  --dm-good: #7cb876;
+  --dm-info: #4d8fd1;
+  --dm-font-display: 'Doto', 'Space Mono', monospace;
+  --dm-font-mono: 'Space Mono', ui-monospace, monospace;
+
+  /* DaisyUI v5 color overrides → forces all DaisyUI components dark */
+  --color-base-100: oklch(7% 0 0);
+  --color-base-200: oklch(4% 0 0);
+  --color-base-300: oklch(11% 0 0);
+  --color-base-content: oklch(91% 0 0);
+  --color-primary: oklch(45.5% 0.213 23.4);
+  --color-primary-content: oklch(95% 0 0);
+  --color-secondary: oklch(55% 0.08 240);
+  --color-secondary-content: oklch(95% 0 0);
+  --color-accent: oklch(72% 0.10 145);
+  --color-accent-content: oklch(10% 0 0);
+  --color-neutral: oklch(15% 0 0);
+  --color-neutral-content: oklch(85% 0 0);
+  --color-info: oklch(61% 0.11 240);
+  --color-info-content: oklch(95% 0 0);
+  --color-success: oklch(72% 0.11 145);
+  --color-success-content: oklch(10% 0 0);
+  --color-warning: oklch(74% 0.12 84);
+  --color-warning-content: oklch(10% 0 0);
+  --color-error: oklch(45.5% 0.213 23.4);
+  --color-error-content: oklch(95% 0 0);
+
+  /* nd-card surface variables */
+  --home-surface: var(--dm-bg-1);
+  --home-surface-strong: var(--dm-bg-0);
+  --home-surface-muted: var(--dm-bg-2);
+  --home-border: var(--dm-line);
+
+  /* Custom text variables used across all pages */
+  --text-display: var(--dm-fg);
+  --text-primary: var(--dm-fg);
+  --text-secondary: var(--dm-fg-dim);
+  --text-disabled: var(--dm-fg-faint);
+
+  /* Shell glow — overridden per theme variant below */
+  --app-shell-glow: radial-gradient(circle at top center, rgba(215, 25, 33, 0.10), transparent 40%);
+
+  background: var(--dm-bg-0);
+  color: var(--dm-fg);
+  font-family: var(--dm-font-mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+.dm-led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.dm-led--ok   { background: #7cb876; box-shadow: 0 0 6px rgba(124, 184, 118, 0.65); }
+.dm-led--warm { background: #d4a843; box-shadow: 0 0 6px rgba(212, 168, 67, 0.65); }
+.dm-led--live { background: #d71921; box-shadow: 0 0 8px rgba(215, 25, 33, 0.85); }
+
+@keyframes dm-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+.dm-pulse { animation: dm-pulse 1.6s ease-in-out infinite; }
+
+.dm-scan { position: relative; }
+.dm-scan::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.018) 0px,
+    rgba(255, 255, 255, 0.018) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── dm-shell theme variants ──────────────────────────────────────────────── */
+
+/* midnight: pure black + crimson */
+html[data-theme='midnight'] .dm-shell {
+  --dm-bg-0: #000000;
+  --dm-bg-1: #0a0a0a;
+  --dm-bg-2: #121212;
+  --dm-bg-3: #1a1a1a;
+  --dm-accent: #d71921;
+  --dm-good:   #7cb876;
+  --dm-warn:   #d4a843;
+  --dm-info:   #4d8fd1;
+  --app-shell-glow: radial-gradient(circle at top center, rgba(215, 25, 33, 0.10), transparent 40%);
+  --color-primary:       oklch(45.5% 0.213 23.4);
+  --color-error:         oklch(45.5% 0.213 23.4);
+}
+
+/* espresso: warm dark roast + amber glow */
+html[data-theme='espresso'] .dm-shell {
+  --dm-bg-0: #0d0905;
+  --dm-bg-1: #130d07;
+  --dm-bg-2: #1b1209;
+  --dm-bg-3: #24180c;
+  --dm-accent: #c07839;
+  --dm-good:   #8fbf6a;
+  --dm-warn:   #d4a843;
+  --dm-info:   #5a9fd4;
+  --app-shell-glow: radial-gradient(circle at top center, rgba(192, 120, 57, 0.12), transparent 40%);
+  --color-primary:       oklch(57% 0.14 54);
+  --color-error:         oklch(57% 0.14 54);
+}
+
+/* matcha: deep forest green tint + green accent */
+html[data-theme='matcha'] .dm-shell {
+  --dm-bg-0: #040e07;
+  --dm-bg-1: #08120a;
+  --dm-bg-2: #0d180f;
+  --dm-bg-3: #131f15;
+  --dm-accent: #5aaa52;
+  --dm-good:   #7cb876;
+  --dm-warn:   #c8a84b;
+  --dm-info:   #4d8fd1;
+  --app-shell-glow: radial-gradient(circle at top center, rgba(90, 170, 82, 0.10), transparent 40%);
+  --color-primary:       oklch(60% 0.14 145);
+  --color-error:         oklch(60% 0.14 145);
+}
+
+/* blueprint: dark navy tint + electric blue accent */
+html[data-theme='blueprint'] .dm-shell {
+  --dm-bg-0: #04080f;
+  --dm-bg-1: #080e17;
+  --dm-bg-2: #0d1420;
+  --dm-bg-3: #121b2b;
+  --dm-accent: #4d8fd1;
+  --dm-good:   #7cb876;
+  --dm-warn:   #d4a843;
+  --dm-info:   #4d8fd1;
+  --app-shell-glow: radial-gradient(circle at top center, rgba(77, 143, 209, 0.12), transparent 40%);
+  --color-primary:       oklch(56% 0.13 240);
+  --color-error:         oklch(56% 0.13 240);
+}
+

@@ -3,12 +3,11 @@ if (import.meta.env.DEV) {
   await import('preact/debug');
 }
 import './style.css';
-import { useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { initializeTheme } from './utils/themeManager.js';
 import { render } from 'preact';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
-import { Header } from './components/Header.jsx';
-import { Footer } from './components/Footer.jsx';
+import { PageShell } from './components/PageShell.jsx';
 import { Home } from './pages/Home/index.jsx';
 import { NotFound } from './pages/_404.jsx';
 import { Settings } from './pages/Settings/index.jsx';
@@ -26,8 +25,9 @@ import { StatisticsPage } from './pages/Statistics/index.jsx';
 
 const apiService = new ApiService();
 
-export function App() {
+function AppContent() {
   const [navOpen, setNavOpen] = useState(false);
+  const onNavToggle = useCallback(() => setNavOpen(o => !o), []);
 
   useEffect(() => {
     document.body.classList.toggle('nav-drawer-open', navOpen);
@@ -37,49 +37,131 @@ export function App() {
   }, [navOpen]);
 
   return (
+    <div className='dm-shell relative min-h-screen overflow-hidden' style={{ background: 'var(--dm-bg-0)' }}>
+      <div className='app-shell-glow pointer-events-none absolute inset-0' />
+      <div className='relative flex min-h-screen flex-col'>
+        <a href='#main-content' className='skip-link'>
+          Skip to main content
+        </a>
+        <Navigation open={navOpen} onClose={() => setNavOpen(false)} />
+        <main id='main-content' className='flex-1'>
+          <div className='mx-auto w-full px-4 py-4 lg:px-8 lg:py-6 xl:container'>
+            <div className='min-w-0'>
+              <ErrorBoundary>
+                <Router>
+                  <Route path='/' component={() => <Home navOpen={navOpen} onNavToggle={onNavToggle} />} />
+                  <Route
+                    path='/profiles'
+                    component={() => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <ProfileList />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/profiles/:id'
+                    component={props => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <ProfileEdit {...props} />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/beans'
+                    component={() => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <BeansPage />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/settings'
+                    component={() => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <Settings />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/ota'
+                    component={() => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <OTA />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/scales'
+                    component={() => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <Scales />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/pidtune'
+                    component={() => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <Autotune />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/history'
+                    component={() => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <ShotHistory />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/analyzer'
+                    component={() => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <ShotAnalyzer />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/statistics'
+                    component={() => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <StatisticsPage />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/statistics/:sourceAlias/:profileName'
+                    component={props => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <StatisticsPage {...props} />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/analyzer/:source/:id'
+                    component={props => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <ShotAnalyzer {...props} />
+                      </PageShell>
+                    )}
+                  />
+                  <Route default component={NotFound} />
+                </Router>
+              </ErrorBoundary>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export function App() {
+  return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div className='relative min-h-screen overflow-hidden bg-base-300 text-base-content'>
-          <div className='app-shell-glow pointer-events-none absolute inset-0' />
-          <div className='relative flex min-h-screen flex-col'>
-            <a href='#main-content' className='skip-link'>
-              Skip to main content
-            </a>
-            <Header navOpen={navOpen} onNavToggle={() => setNavOpen(open => !open)} />
-            <Navigation open={navOpen} onClose={() => setNavOpen(false)} />
-            <main id='main-content' className='flex-1'>
-              <div className='mx-auto w-full px-4 py-4 lg:px-8 lg:py-6 xl:container'>
-                <div className='min-w-0'>
-                  <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
-                    <ErrorBoundary>
-                      <Router>
-                        <Route path='/' component={Home} />
-                        <Route path='/profiles' component={ProfileList} />
-                        <Route path='/profiles/:id' component={ProfileEdit} />
-                        <Route path='/beans' component={BeansPage} />
-                        <Route path='/settings' component={Settings} />
-                        <Route path='/ota' component={OTA} />
-                        <Route path='/scales' component={Scales} />
-                        <Route path='/pidtune' component={Autotune} />
-                        <Route path='/history' component={ShotHistory} />
-                        <Route path='/analyzer' component={ShotAnalyzer} />
-                        <Route path='/statistics' component={StatisticsPage} />
-                        <Route
-                          path='/statistics/:sourceAlias/:profileName'
-                          component={StatisticsPage}
-                        />
-                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
-                        {/*deep-link route (sorce & ID)*/}
-                        <Route default component={NotFound} />
-                      </Router>
-                    </ErrorBoundary>
-                  </div>
-                </div>
-              </div>
-            </main>
-            <Footer />
-          </div>
-        </div>
+        <AppContent />
       </ApiServiceContext.Provider>
     </LocationProvider>
   );

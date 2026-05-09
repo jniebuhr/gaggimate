@@ -9,7 +9,7 @@ import { timezones } from '../../config/zones.js';
 import { machine, ApiServiceContext } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
 import { downloadJson, prepareDownload } from '../../utils/download.js';
-import { getStoredTheme, handleThemeChange, getNothingThemeVariant, setNothingThemeVariant } from '../../utils/themeManager.js';
+import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
 import { faEye, faEyeSlash, faArrowLeft, faSave } from '@fortawesome/free-solid-svg-icons';
 import { GoogleDriveBackupCard } from './GoogleDriveBackupCard.jsx';
@@ -22,8 +22,7 @@ export function Settings() {
   const [submitting, setSubmitting] = useState(false);
   const [gen, setGen] = useState(0);
   const [formData, setFormData] = useState({});
-  const [currentTheme, setCurrentTheme] = useState('light');
-  const [nothingThemeVariant, setNothingThemeVariantState] = useState('nothing');
+  const [currentTheme, setCurrentTheme] = useState('midnight');
   const [showWifiPassword, setShowWifiPassword] = useState(false);
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] },
@@ -91,7 +90,6 @@ export function Settings() {
 
   useEffect(() => {
     setCurrentTheme(getStoredTheme());
-    setNothingThemeVariantState(getNothingThemeVariant());
   }, []);
 
   const onChange = key => {
@@ -520,47 +518,12 @@ export function Settings() {
                     handleThemeChange(e);
                   }}
                 >
-                  <option value='light'>Light</option>
-                  <option value='dark'>Dark</option>
-                  <option value='coffee'>Coffee</option>
-                  <option value='nord'>Nord</option>
-                  <option value='amoled'>AMOLED</option>
-                  <option value='stealth'>Stealth</option>
-                  <option value='crisp'>Crisp</option>
-                  <option value='nothing'>Nothing</option>
+                  <option value='midnight'>Midnight</option>
+                  <option value='espresso'>Espresso</option>
+                  <option value='matcha'>Matcha</option>
+                  <option value='blueprint'>Blueprint</option>
                 </select>
               </div>
-              {currentTheme === 'nothing' && (
-                <>
-                  <div className='flex items-center justify-between'>
-                    <div className='flex flex-col gap-1'>
-                      <span className='font-nd-mono text-[14px] text-[var(--text-primary,#e8e8e8)]'>
-                        Nothing Theme Variant
-                      </span>
-                      <span className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)]'>
-                        Switch between dark and light Nothing styles
-                      </span>
-                    </div>
-                    <button
-                      type='button'
-                      className={`nd-toggle ${nothingThemeVariant === 'nothing-light' ? 'nd-toggle--active' : ''}`}
-                      onClick={() => {
-                        const newVariant = nothingThemeVariant === 'nothing' ? 'nothing-light' : 'nothing';
-                        setNothingThemeVariant(newVariant);
-                        setNothingThemeVariantState(newVariant);
-                        document.documentElement.setAttribute('data-theme', newVariant);
-                      }}
-                      role='switch'
-                      aria-checked={nothingThemeVariant === 'nothing-light'}
-                    >
-                      <span className='nd-toggle-thumb' />
-                    </button>
-                  </div>
-                  <div className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)] text-right'>
-                    {nothingThemeVariant === 'nothing' ? 'Dark' : 'Light'}
-                  </div>
-                </>
-              )}
             </div>
           </Card>
 
