@@ -5,19 +5,19 @@
 
 #include "ui.h"
 
-const ui_theme_variable_t _ui_theme_color_NiceWhite[2] = {0xF6E8D5, 0x231814};
+const ui_theme_variable_t _ui_theme_color_NiceWhite[2] = {0xE8E8E8, 0x1A1A1A};
 const ui_theme_variable_t _ui_theme_alpha_NiceWhite[2] = {255, 255};
 
-const ui_theme_variable_t _ui_theme_color_Dark[2] = {0x140E0C, 0xF7EFE7};
+const ui_theme_variable_t _ui_theme_color_Dark[2] = {0x0A0A0A, 0xF0F0F0};
 const ui_theme_variable_t _ui_theme_alpha_Dark[2] = {255, 255};
 
-const ui_theme_variable_t _ui_theme_color_SemiDark[2] = {0xA88F7B, 0x6F5B50};
-const ui_theme_variable_t _ui_theme_alpha_SemiDark[2] = {408, 255};
+const ui_theme_variable_t _ui_theme_color_SemiDark[2] = {0x555555, 0x888888};
+const ui_theme_variable_t _ui_theme_alpha_SemiDark[2] = {255, 255};
 
-const ui_theme_variable_t _ui_theme_color_Progress[2] = {0xD2A56D, 0xB78347};
+const ui_theme_variable_t _ui_theme_color_Progress[2] = {0x7CB876, 0x5A9E52};
 const ui_theme_variable_t _ui_theme_alpha_Progress[2] = {255, 255};
 
-const ui_theme_variable_t _ui_theme_color_Heating[2] = {0xE97A33, 0xB95B24};
+const ui_theme_variable_t _ui_theme_color_Heating[2] = {0xD71921, 0xB91921};
 const ui_theme_variable_t _ui_theme_alpha_Heating[2] = {255, 255};
 uint8_t ui_theme_idx = UI_THEME_DEFAULT;
 

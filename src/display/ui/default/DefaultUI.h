@@ -1,6 +1,7 @@
 #ifndef DEFAULTUI_H
 #define DEFAULTUI_H
 
+#include <display/core/BeanManager.h>
 #include <display/core/PluginManager.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/constants.h>
@@ -139,6 +140,17 @@ class DefaultUI {
     std::vector<String> favoritedProfileIds;
     std::vector<Profile> favoritedProfiles;
     int currentThemeMode = -1; // Force applyTheme on first loop
+
+    // Bean select overlay
+    bool beanSelectActive = false;
+    lv_obj_t *beanSelectScreen = nullptr;
+    lv_obj_t *beanSelectBtn = nullptr;
+    std::vector<BeanEntry> cachedBeans;
+    void ensureBeanSelectButton();
+    void showBeanSelectScreen();
+    static void beanSelectBtnCb(lv_event_t *e);
+    static void beanItemCb(lv_event_t *e);
+    static void beanBackCb(lv_event_t *e);
 
     // Screen change
     lv_obj_t **targetScreen = &ui_StandbyScreen;

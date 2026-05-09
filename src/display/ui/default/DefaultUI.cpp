@@ -449,6 +449,9 @@ void styleDialRing(lv_obj_t *arc, const DisplayPalette &palette, const lv_color_
                    const bool ambient) {
     if (arc == nullptr || !lv_obj_is_valid(arc))
         return;
+    // Clear any image source so solid arc_color takes effect
+    lv_obj_set_style_arc_img_src(arc, NULL, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_img_src(arc, NULL, LV_PART_INDICATOR | LV_STATE_DEFAULT);
     lv_obj_set_style_arc_width(arc, roundDisplay ? 16 : 22, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_arc_width(arc, roundDisplay ? 18 : 24, LV_PART_INDICATOR | LV_STATE_DEFAULT);
     lv_obj_set_style_arc_rounded(arc, true, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1108,6 +1111,8 @@ void DefaultUI::setupReactive() {
 }
 
 void DefaultUI::handleScreenChange() {
+    if (beanSelectActive)
+        return;
     lv_obj_t *current = lv_scr_act();
 
     if (current != *targetScreen) {
@@ -1135,6 +1140,7 @@ void DefaultUI::resetCustomScreenHandles() {
     menuWaterLabel = nullptr;
     menuGrindLabel = nullptr;
     brewContextLabel = nullptr;
+    beanSelectBtn = nullptr;
 }
 
 bool DefaultUI::isRoundDisplay() const {
@@ -1238,6 +1244,7 @@ void DefaultUI::applyScreenVisualLanguage() {
 
     if (activeScreen == ui_BrewScreen) {
         ensureBrewContextLabel();
+        ensureBeanSelectButton();
         stylePanel(ui_BrewScreen_contentPanel4, palette, roundDisplay ? OPA_45 : OPA_55, roundDisplay ? 180 : 44);
         stylePanel(ui_BrewScreen_profileInfo, palette, OPA_200, 28);
         stylePanel(ui_BrewScreen_modeSwitch, palette, OPA_220, 22);
@@ -1768,7 +1775,7 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
         lv_obj_set_size(dials, 466, 466);
         lv_obj_align(dials, LV_ALIGN_CENTER, 0, 0);
 
-        styleDialRing(pressureGauge, palette, palette.accentCool, true, true);
+        styleDialRing(pressureGauge, palette, palette.grind, true, true);
         applyProcessRing(tempGauge, palette, ringVisual, true);
         lv_arc_set_bg_angles(pressureGauge, 300, 60);
 
@@ -1798,7 +1805,7 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
             lv_obj_set_style_img_recolor_opa(tempTarget, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         if (pressureTarget != nullptr && lv_obj_is_valid(pressureTarget)) {
-            lv_obj_set_style_img_recolor(pressureTarget, palette.accentCool, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_img_recolor(pressureTarget, palette.grind, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_img_recolor_opa(pressureTarget, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
@@ -1850,4 +1857,157 @@ void DefaultUI::profileLoopTask(void *arg) {
         ui->loopProfiles();
         vTaskDelay(25 / portTICK_PERIOD_MS);
     }
+}
+
+// ── Bean select overlay ────────────────────────────────────────────────────
+
+void DefaultUI::ensureBeanSelectButton() {
+    if (lv_scr_act() != ui_BrewScreen || !lv_obj_is_valid(ui_BrewScreen) || beanSelectBtn != nullptr)
+        return;
+
+    const bool amoledPanel = AmoledDisplayDriver::getInstance() == panelDriver;
+    const DisplayPalette palette = makeDisplayPalette(controller->getSettings().getThemeMode(), amoledPanel);
+
+    beanSelectBtn = lv_btn_create(ui_BrewScreen);
+    lv_obj_set_size(beanSelectBtn, 88, 36);
+    lv_obj_align(beanSelectBtn, LV_ALIGN_TOP_RIGHT, -14, 14);
+    lv_obj_set_style_bg_color(beanSelectBtn, palette.surfaceElevated, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(beanSelectBtn, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(beanSelectBtn, palette.surfaceOutline, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(beanSelectBtn, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(beanSelectBtn, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(beanSelectBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *label = lv_label_create(beanSelectBtn);
+    lv_label_set_text(label, selectedBean.isEmpty() ? "Bean" : selectedBean.c_str());
+    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+    lv_obj_set_width(label, 76);
+    lv_obj_set_style_text_color(label, palette.textPrimary, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_center(label);
+
+    lv_obj_add_event_cb(beanSelectBtn, beanSelectBtnCb, LV_EVENT_CLICKED, this);
+}
+
+void DefaultUI::showBeanSelectScreen() {
+    cachedBeans = controller->getBeanManager()->listBeans();
+
+    beanSelectScreen = lv_obj_create(NULL);
+    lv_obj_set_style_bg_color(beanSelectScreen, lv_color_hex(0x0A0A0A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(beanSelectScreen, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(beanSelectScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(beanSelectScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *title = lv_label_create(beanSelectScreen);
+    lv_label_set_text(title, "Select Bean");
+    lv_obj_set_style_text_color(title, lv_color_hex(0xE8E8E8), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(title, &ndot_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 22);
+
+    lv_obj_t *backBtn = lv_btn_create(beanSelectScreen);
+    lv_obj_set_size(backBtn, 52, 52);
+    lv_obj_align(backBtn, LV_ALIGN_TOP_LEFT, 14, 10);
+    lv_obj_set_style_bg_color(backBtn, lv_color_hex(0x1A1A1A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(backBtn, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(backBtn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(backBtn, 999, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_t *backLabel = lv_label_create(backBtn);
+    lv_label_set_text(backLabel, LV_SYMBOL_LEFT);
+    lv_obj_set_style_text_color(backLabel, lv_color_hex(0xE8E8E8), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_center(backLabel);
+    lv_obj_add_event_cb(backBtn, beanBackCb, LV_EVENT_CLICKED, this);
+
+    lv_obj_t *list = lv_obj_create(beanSelectScreen);
+    lv_disp_t *disp = lv_disp_get_default();
+    const lv_coord_t dispH = lv_disp_get_ver_res(disp);
+    lv_obj_set_size(list, lv_disp_get_hor_res(disp), dispH - 72);
+    lv_obj_align(list, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(list, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(list, lv_color_hex(0x0A0A0A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(list, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(list, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(list, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // "No bean" row — user_data index = -1 encoded as uintptr_t
+    {
+        lv_obj_t *item = lv_btn_create(list);
+        lv_obj_set_width(item, lv_pct(100));
+        lv_obj_set_height(item, 54);
+        lv_obj_set_style_bg_color(item, lv_color_hex(0x161616), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_opa(item, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(item, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_radius(item, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_all(item, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_t *lbl = lv_label_create(item);
+        lv_label_set_text(lbl, "— No bean —");
+        lv_obj_set_style_text_color(lbl, lv_color_hex(0x777777), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(lbl, &ndot_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 16, 0);
+        lv_obj_set_user_data(item, (void *)(uintptr_t)(UINT32_MAX)); // sentinel for "no bean"
+        lv_obj_add_event_cb(item, beanItemCb, LV_EVENT_CLICKED, this);
+    }
+
+    uintptr_t idx = 0;
+    for (const auto &bean : cachedBeans) {
+        if (bean.archived) {
+            idx++;
+            continue;
+        }
+        lv_obj_t *item = lv_btn_create(list);
+        lv_obj_set_width(item, lv_pct(100));
+        lv_obj_set_height(item, 54);
+        lv_obj_set_style_bg_color(item, lv_color_hex(0x161616), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_opa(item, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(item, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_radius(item, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_all(item, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_t *lbl = lv_label_create(item);
+        lv_label_set_text(lbl, bean.name.c_str());
+        lv_label_set_long_mode(lbl, LV_LABEL_LONG_DOT);
+        lv_obj_set_width(lbl, lv_pct(90));
+        lv_obj_set_style_text_color(lbl, lv_color_hex(0xE8E8E8), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(lbl, &ndot_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 16, 0);
+        lv_obj_set_user_data(item, (void *)idx);
+        lv_obj_add_event_cb(item, beanItemCb, LV_EVENT_CLICKED, this);
+        idx++;
+    }
+
+    beanSelectActive = true;
+    lv_scr_load(beanSelectScreen);
+}
+
+void DefaultUI::beanSelectBtnCb(lv_event_t *e) {
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    ui->showBeanSelectScreen();
+}
+
+void DefaultUI::beanItemCb(lv_event_t *e) {
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    lv_obj_t *target = lv_event_get_target(e);
+    uintptr_t idx = (uintptr_t)lv_obj_get_user_data(target);
+
+    if (idx != (uintptr_t)(UINT32_MAX) && idx < ui->cachedBeans.size()) {
+        ui->pluginManager->trigger("beans:selected", "name", ui->cachedBeans[idx].name);
+    } else {
+        ui->pluginManager->trigger("beans:selected", "name", String(""));
+    }
+
+    ui->beanSelectActive = false;
+    lv_obj_t *screen = ui->beanSelectScreen;
+    ui->beanSelectScreen = nullptr;
+    lv_scr_load(*ui->targetScreen);
+    lv_obj_del(screen);
+    ui->rerender = true;
+}
+
+void DefaultUI::beanBackCb(lv_event_t *e) {
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    ui->beanSelectActive = false;
+    lv_obj_t *screen = ui->beanSelectScreen;
+    ui->beanSelectScreen = nullptr;
+    lv_scr_load(*ui->targetScreen);
+    lv_obj_del(screen);
 }
