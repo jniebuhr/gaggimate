@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
@@ -7,17 +7,14 @@ Chart.register(annotationPlugin);
 export function ChartComponent({ data, className, chartClassName }) {
   const [chart, setChart] = useState(null);
   const ref = useRef();
-
-  // Memoize data hash to prevent unnecessary updates
-  const dataHash = useMemo(() => {
-    return JSON.stringify(data);
-  }, [data]);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   // Create chart on mount
   useEffect(() => {
     if (!ref.current) return;
 
-    const newChart = new Chart(ref.current, data);
+    const newChart = new Chart(ref.current, dataRef.current);
     setChart(newChart);
 
     // Cleanup function to destroy chart on unmount
@@ -28,7 +25,7 @@ export function ChartComponent({ data, className, chartClassName }) {
     };
   }, []); // Empty dependency array - only run on mount
 
-  // Update chart data when history changes
+  // Update chart data when data changes (reference comparison)
   useEffect(() => {
     if (!chart) return;
 
@@ -49,7 +46,7 @@ export function ChartComponent({ data, className, chartClassName }) {
 
     // Use 'none' mode for better performance (no animations)
     chart.update('none');
-  }, [dataHash, chart]);
+  }, [data, chart]);
 
   // Add resize event listener to update chart options dynamically
   useEffect(() => {
@@ -69,34 +66,39 @@ export function ChartComponent({ data, className, chartClassName }) {
       return target;
     };
 
+    let resizeTimer = null;
     const handleResize = () => {
-      const isSmallScreen = window.innerWidth < 640;
+      // Debounce resize to avoid redundant chart updates
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const isSmallScreen = window.innerWidth < 640;
 
-      // Update font size while preserving weight (use explicit check to preserve falsy values like 0)
-      const legendFont = ensureFont(['plugins', 'legend', 'labels']);
-      const originalWeight = legendFont.font.weight;
-      legendFont.font.size = isSmallScreen ? 10 : 12;
-      if (originalWeight !== undefined && originalWeight !== null) {
-        legendFont.font.weight = originalWeight;
-      }
+        // Update font size while preserving weight (use explicit check to preserve falsy values like 0)
+        const legendFont = ensureFont(['plugins', 'legend', 'labels']);
+        const originalWeight = legendFont.font.weight;
+        legendFont.font.size = isSmallScreen ? 10 : 12;
+        if (originalWeight !== undefined && originalWeight !== null) {
+          legendFont.font.weight = originalWeight;
+        }
 
-      // Update title font size
-      ensureFont(['plugins', 'title']).font.size = isSmallScreen ? 14 : 16;
+        // Update title font size
+        ensureFont(['plugins', 'title']).font.size = isSmallScreen ? 14 : 16;
 
-      // Update axis font sizes
-      ensureFont(['scales', 'y', 'ticks']).font.size = isSmallScreen ? 10 : 12;
-      ensureFont(['scales', 'y1', 'ticks']).font.size = isSmallScreen ? 10 : 12;
-      ensureFont(['scales', 'x', 'ticks']).font.size = isSmallScreen ? 10 : 12;
+        // Update axis font sizes
+        ensureFont(['scales', 'y', 'ticks']).font.size = isSmallScreen ? 10 : 12;
+        ensureFont(['scales', 'y1', 'ticks']).font.size = isSmallScreen ? 10 : 12;
+        ensureFont(['scales', 'x', 'ticks']).font.size = isSmallScreen ? 10 : 12;
 
-      // Update maxTicksLimit for x-axis
-      const xTicks = ensureFont(['scales', 'x', 'ticks']);
-      xTicks.maxTicksLimit = isSmallScreen ? 5 : 10;
+        // Update maxTicksLimit for x-axis
+        const xTicks = ensureFont(['scales', 'x', 'ticks']);
+        xTicks.maxTicksLimit = isSmallScreen ? 5 : 10;
 
-      // Force chart to resize and recalculate dimensions
-      chart.resize();
+        // Force chart to resize and recalculate dimensions
+        chart.resize();
 
-      // Update the chart to apply changes
-      chart.update('none'); // Use 'none' mode for better performance
+        // Update the chart to apply changes
+        chart.update('none');
+      }, 150);
     };
 
     // Add event listeners for different orientation change scenarios
@@ -119,6 +121,7 @@ export function ChartComponent({ data, className, chartClassName }) {
 
     // Cleanup
     return () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleOrientationChange);
       if (window.visualViewport) {

@@ -15,7 +15,7 @@ export const DEFAULT_LAYOUT = {
 
 const CARD_IDS = DEFAULT_LAYOUT.cards.map(card => card.id);
 
-const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || min));
+export const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || min));
 
 const normalizeTopRowWidths = cards => {
   const normalizedCards = cards.map(card => ({ ...card }));

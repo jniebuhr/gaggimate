@@ -5,8 +5,7 @@ import { ChartComponent } from './Chart.jsx';
 const BREW_WINDOW_INITIAL = 30000; // First 30 seconds: 30s window
 const BREW_WINDOW_GROWING = 45000; // 30-45 seconds: 45s window
 const BREW_WINDOW_MAX = 60000; // After 45 seconds: 60s window
-const BREW_WINDOW_RECENT = 60000; // Recently finished brewing: 1 minute
-const NORMAL_WINDOW = 60000; // Normal mode: 1 minute
+const DEFAULT_WINDOW = 60000; // Default / recently finished / normal: 1 minute
 
 // Brew phase tracking state - stored in refs to persist across renders
 const brewStateRef = {
@@ -96,14 +95,10 @@ function getChartData(data, brewState) {
     }
 
     maxTicksLimit = 8; // More ticks for better resolution
-  } else if (brewState.phaseTransitions.length > 0) {
-    // Recently finished brewing: show a bit more context
-    timeWindowMs = BREW_WINDOW_RECENT;
-    maxTicksLimit = 6;
   } else {
-    // Normal mode: show 1 minute
-    timeWindowMs = NORMAL_WINDOW;
-    maxTicksLimit = 5;
+    // Normal / recently finished: show 1 minute
+    timeWindowMs = DEFAULT_WINDOW;
+    maxTicksLimit = brewState.phaseTransitions.length > 0 ? 6 : 5;
   }
 
   let start = new Date(end.getTime() - timeWindowMs);
@@ -113,21 +108,27 @@ function getChartData(data, brewState) {
   // Filter data to the current time window for auto-scaling
   const filteredData = data.filter(item => item.timestamp >= start && item.timestamp <= end);
 
-  // Calculate auto-scale ranges from visible data
-  let tempValues = filteredData.map(i => i.currentTemperature);
-  tempValues = tempValues.concat(filteredData.map(i => i.targetTemperature));
+  // Calculate auto-scale ranges from visible data using a single pass
+  let tMin = Infinity, tMax = -Infinity;
+  let pfMax = -Infinity;
 
-  let pressureFlowValues = filteredData.map(i => i.currentPressure);
-  pressureFlowValues = pressureFlowValues.concat(filteredData.map(i => i.targetPressure));
-  pressureFlowValues = pressureFlowValues.concat(filteredData.map(i => i.currentFlow));
+  for (let i = 0; i < filteredData.length; i++) {
+    const d = filteredData[i];
+    if (d.currentTemperature < tMin) tMin = d.currentTemperature;
+    if (d.currentTemperature > tMax) tMax = d.currentTemperature;
+    if (d.targetTemperature < tMin) tMin = d.targetTemperature;
+    if (d.targetTemperature > tMax) tMax = d.targetTemperature;
+    if (d.currentPressure > pfMax) pfMax = d.currentPressure;
+    if (d.targetPressure > pfMax) pfMax = d.targetPressure;
+    if (d.currentFlow > pfMax) pfMax = d.currentFlow;
+  }
 
-  // Calculate ranges with some padding and round to integers for clean scales
-  const tempMin = tempValues.length > 0 ? Math.max(0, Math.floor(Math.min(...tempValues) - 5)) : 0;
-  const tempMax = tempValues.length > 0 ? Math.ceil(Math.max(...tempValues) + 10) : 160;
+  const hasData = filteredData.length > 0;
+  const tempMin = hasData ? Math.max(0, Math.floor(tMin - 5)) : 0;
+  const tempMax = hasData ? Math.ceil(tMax + 10) : 160;
 
   const pressureFlowMin = 0; // Always start at 0 for pressure/flow
-  const pressureFlowMax =
-    pressureFlowValues.length > 0 ? Math.ceil(Math.max(...pressureFlowValues) + 2) : 16;
+  const pressureFlowMax = hasData ? Math.ceil(pfMax + 2) : 16;
 
   // Create a state key to detect when a new brew starts
   const processState = currentProcess

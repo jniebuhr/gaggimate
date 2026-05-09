@@ -12,6 +12,7 @@ import { signal } from '@preact/signals';
 import PropTypes from 'prop-types';
 import SortableCard from './SortableCard.jsx';
 import {
+  clamp,
   getDashboardLayout,
   normalizeDashboardLayout,
   setDashboardLayout,
@@ -34,8 +35,6 @@ const CARD_META = {
     fullHeight: true,
   },
 };
-
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 function reorderCards(cards, activeId, overId) {
   const oldIndex = cards.findIndex(card => card.id === activeId);
