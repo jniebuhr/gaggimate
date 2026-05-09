@@ -6,9 +6,8 @@ import './style.css';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { initializeTheme } from './utils/themeManager.js';
 import { render } from 'preact';
-import { LocationProvider, Router, Route, ErrorBoundary, useLocation } from 'preact-iso';
-import { Header } from './components/Header.jsx';
-import { Footer } from './components/Footer.jsx';
+import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
+import { PageShell } from './components/PageShell.jsx';
 import { Home } from './pages/Home/index.jsx';
 import { NotFound } from './pages/_404.jsx';
 import { Settings } from './pages/Settings/index.jsx';
@@ -28,8 +27,6 @@ const apiService = new ApiService();
 
 function AppContent() {
   const [navOpen, setNavOpen] = useState(false);
-  const { path } = useLocation();
-  const isHome = path === '/';
   const onNavToggle = useCallback(() => setNavOpen(o => !o), []);
 
   useEffect(() => {
@@ -40,13 +37,12 @@ function AppContent() {
   }, [navOpen]);
 
   return (
-    <div className='relative min-h-screen overflow-hidden bg-base-300 text-base-content'>
+    <div className='dm-shell relative min-h-screen overflow-hidden' style={{ background: 'var(--dm-bg-0)' }}>
       <div className='app-shell-glow pointer-events-none absolute inset-0' />
       <div className='relative flex min-h-screen flex-col'>
         <a href='#main-content' className='skip-link'>
           Skip to main content
         </a>
-        {!isHome && <Header navOpen={navOpen} onNavToggle={onNavToggle} />}
         <Navigation open={navOpen} onClose={() => setNavOpen(false)} />
         <main id='main-content' className='flex-1'>
           <div className='mx-auto w-full px-4 py-4 lg:px-8 lg:py-6 xl:container'>
@@ -57,97 +53,97 @@ function AppContent() {
                   <Route
                     path='/profiles'
                     component={() => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <ProfileList />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/profiles/:id'
                     component={props => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <ProfileEdit {...props} />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/beans'
                     component={() => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <BeansPage />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/settings'
                     component={() => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <Settings />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/ota'
                     component={() => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <OTA />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/scales'
                     component={() => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <Scales />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/pidtune'
                     component={() => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <Autotune />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/history'
                     component={() => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <ShotHistory />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/analyzer'
                     component={() => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <ShotAnalyzer />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/statistics'
                     component={() => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <StatisticsPage />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/statistics/:sourceAlias/:profileName'
                     component={props => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <StatisticsPage {...props} />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route
                     path='/analyzer/:source/:id'
                     component={props => (
-                      <div className='rounded-3xl border border-base-300/60 bg-base-100/70 p-4 shadow-[0_36px_80px_-48px_rgba(0,0,0,0.92)] backdrop-blur-xl lg:p-6'>
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <ShotAnalyzer {...props} />
-                      </div>
+                      </PageShell>
                     )}
                   />
                   <Route default component={NotFound} />
@@ -156,7 +152,6 @@ function AppContent() {
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     </div>
   );

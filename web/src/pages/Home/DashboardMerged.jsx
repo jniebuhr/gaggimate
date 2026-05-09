@@ -1439,7 +1439,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
             position: 'relative',
             border: '1px solid var(--dm-line)',
             borderRadius: 8,
-            background: 'var(--dm-bg-1)',
+            background: 'var(--dm-bg-0)',
             overflow: 'hidden',
           }}
         >
