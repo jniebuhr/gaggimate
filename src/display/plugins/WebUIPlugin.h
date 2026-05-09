@@ -59,7 +59,7 @@ class WebUIPlugin : public Plugin {
     void handleFlushStart(uint32_t clientId, JsonDocument &request);
 
     // HTTP handlers
-    void handleSettings(AsyncWebServerRequest *request) const;
+    void handleSettings(AsyncWebServerRequest *request);
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
     void handleBLEScaleConnect(AsyncWebServerRequest *request);
