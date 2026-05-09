@@ -957,6 +957,31 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           <span
             style={{ width: 1, height: 14, background: 'var(--dm-line)', display: 'inline-block' }}
           />
+          {brew && (
+            <button
+              type='button'
+              onClick={toggleAutoSteam}
+              title='Auto-switch to steam mode when brew ends'
+              style={{
+                background: autoSteamEnabled ? 'rgba(77,143,209,0.18)' : 'transparent',
+                color: autoSteamEnabled ? 'var(--dm-info)' : 'var(--dm-fg-faint)',
+                border: `1px solid ${autoSteamEnabled ? 'rgba(77,143,209,0.5)' : 'var(--dm-line)'}`,
+                fontFamily: 'var(--dm-font-mono)',
+                fontSize: 9,
+                letterSpacing: '0.18em',
+                padding: '4px 8px',
+                borderRadius: 6,
+                cursor: 'pointer',
+                transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {autoSteamEnabled ? '~ AUTO STEAM ON' : '~ AUTO STEAM'}
+            </button>
+          )}
+          <span
+            style={{ width: 1, height: 14, background: 'var(--dm-line)', display: 'inline-block' }}
+          />
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {showFallbackChip ? (
               <PhaseChip key='__fallback' label={currentPhaseLabel} isActive isDone={false} />
@@ -1379,56 +1404,31 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <button
-                type='button'
-                onClick={active ? actions.deactivate : finished ? actions.clear : actions.activate}
-                style={{
-                  background: active
-                    ? 'var(--dm-accent)'
-                    : finished
-                      ? 'var(--dm-good)'
-                      : 'rgba(215,25,33,0.14)',
-                  color: active || finished ? '#fff' : 'var(--dm-accent)',
-                  border:
-                    active || finished ? 'none' : '1px solid rgba(215,25,33,0.4)',
-                  fontFamily: 'var(--dm-font-display)',
-                  fontSize: 13,
-                  letterSpacing: '0.18em',
-                  padding: '10px 8px',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  boxShadow: active ? '0 6px 18px rgba(215,25,33,0.22)' : 'none',
-                  transition: 'background 0.15s, box-shadow 0.15s',
-                  flex: 1,
-                }}
-              >
-                {active ? 'STOP SHOT' : finished ? 'CLEAR' : 'START SHOT'}
-              </button>
-              {brew && !finished && (
-                <button
-                  type='button'
-                  onClick={toggleAutoSteam}
-                  title='Auto-switch to steam mode when brew ends'
-                  style={{
-                    background: autoSteamEnabled ? 'rgba(77,143,209,0.18)' : 'transparent',
-                    color: autoSteamEnabled ? 'var(--dm-info)' : 'var(--dm-fg-faint)',
-                    border: `1px solid ${autoSteamEnabled ? 'rgba(77,143,209,0.5)' : 'var(--dm-line)'}`,
-                    fontFamily: 'var(--dm-font-mono)',
-                    fontSize: 9,
-                    letterSpacing: '0.18em',
-                    padding: '5px 8px',
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    transition: 'background 0.15s, border-color 0.15s, color 0.15s',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {autoSteamEnabled ? '~ AUTO STEAM ON' : '~ AUTO STEAM'}
-                </button>
-              )}
-            </div>
+            <button
+              type='button'
+              onClick={active ? actions.deactivate : finished ? actions.clear : actions.activate}
+              style={{
+                background: active
+                  ? 'var(--dm-accent)'
+                  : finished
+                    ? 'var(--dm-good)'
+                    : 'rgba(215,25,33,0.14)',
+                color: active || finished ? '#fff' : 'var(--dm-accent)',
+                border:
+                  active || finished ? 'none' : '1px solid rgba(215,25,33,0.4)',
+                fontFamily: 'var(--dm-font-display)',
+                fontSize: 13,
+                letterSpacing: '0.18em',
+                padding: '10px 8px',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontWeight: 700,
+                boxShadow: active ? '0 6px 18px rgba(215,25,33,0.22)' : 'none',
+                transition: 'background 0.15s, box-shadow 0.15s',
+              }}
+            >
+              {active ? 'STOP SHOT' : finished ? 'CLEAR' : 'START SHOT'}
+            </button>
           </div>
         </div>
       </div>
