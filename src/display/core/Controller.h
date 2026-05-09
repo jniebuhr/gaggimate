@@ -52,6 +52,8 @@ class Controller {
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
 
+    bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(taskHandle)); }
+
     void autotune(int testTime, int samples);
     void startProcess(Process *process);
     Process *getProcess() const { return currentProcess; }
@@ -95,6 +97,9 @@ class Controller {
         return static_cast<int>((reversedLevel - settings.getFullTankDistance()) /
                                 static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance()) * 100.0f);
     };
+    int getTofDistance() const { return tofDistance; }
+
+    void onVolumetricDelete();
     bool isLowWaterLevel() const { return getWaterLevel() < 20; };
 
     SystemInfo getSystemInfo() const { return systemInfo; }
@@ -158,6 +163,8 @@ class Controller {
     bool isApConnection = false;
     bool initialized = false;
     bool screenReady = false;
+    bool waitingForController = false;
+    unsigned long connectStartTime = 0;
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
@@ -168,6 +175,7 @@ class Controller {
     VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
     unsigned long lastBluetoothMeasurement = 0;
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
+    static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
     xTaskHandle taskHandle;
 

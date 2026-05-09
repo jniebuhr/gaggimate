@@ -6,9 +6,13 @@ void ControllerOTA::init(NimBLEClient *client, const ctr_progress_callback_t &pr
     this->client = client;
     progressCallback = progress_callback;
     NimBLERemoteService *pRemoteService = client->getService(NimBLEUUID(SERVICE_OTA_BLE_UUID));
+    if (pRemoteService == nullptr) {
+        ESP_LOGE("ControllerOTA", "OTA BLE service not found");
+        return;
+    }
     rxChar = pRemoteService->getCharacteristic(NimBLEUUID(CHARACTERISTIC_OTA_BL_UUID_RX));
     txChar = pRemoteService->getCharacteristic(NimBLEUUID(CHARACTERISTIC_OTA_BL_UUID_TX));
-    if (txChar->canNotify()) {
+    if (txChar != nullptr && txChar->canNotify()) {
         txChar->subscribe(true, std::bind(&ControllerOTA::onReceive, this, std::placeholders::_1, std::placeholders::_2,
                                           std::placeholders::_3, std::placeholders::_4));
     }
@@ -35,7 +39,8 @@ bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &re
     }
 
     http.useHTTP10(true);
-    http.setTimeout(1800);
+    http.setTimeout(300000);
+    http.setConnectTimeout(10000);
     http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     http.setUserAgent("ESP32-http-Update");
     http.addHeader("Cache-Control", "no-cache");

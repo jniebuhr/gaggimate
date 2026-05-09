@@ -1,3 +1,10 @@
+import Sortable, {MultiDrag} from 'sortablejs';
+try {
+Sortable?.mount(new MultiDrag())
+} catch (error) {
+  // to avoid error when vite is reloading the page in dev mode
+}
+
 import {
   CategoryScale,
   Chart,
@@ -21,8 +28,6 @@ import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
 import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
@@ -31,12 +36,19 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
+import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { ConfirmButton } from '../../components/ConfirmButton.jsx';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import {
+  faAnglesDown,
+  faAnglesUp,
+  faGripVertical,
+} from '@fortawesome/free-solid-svg-icons';
+import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 
 Chart.register(
   LineController,
@@ -65,12 +77,28 @@ function ProfileCard({
   onDuplicate,
   favoriteDisabled,
   unfavoriteDisabled,
-  onMoveUp,
-  onMoveDown,
+  disabledDrag,
+  isDragging,
+  onMoveTop,
+  onMoveBottom,
   isFirst,
   isLast,
 }) {
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
+  const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
+
+  const handleMoveTop = useCallback(() => {
+    setTooltipsDisabled(true);
+    onMoveTop(data.id);
+    setTimeout(() => setTooltipsDisabled(false), 500);
+  }, [onMoveTop, data.id]);
+
+  const handleMoveBottom = useCallback(() => {
+    setTooltipsDisabled(true);
+    onMoveBottom(data.id);
+    setTimeout(() => setTooltipsDisabled(false), 500);
+  }, [onMoveBottom, data.id]);
+
   const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
@@ -92,6 +120,7 @@ function ProfileCard({
 
     downloadJson(download, `profile-${data.id}.json`);
   }, [data]);
+  const statsHref = buildStatisticsProfileHref({ source: 'gaggimate', profileName: data.label });
 
   // Toggle profile details
   const [detailsCollapsed, setDetailsCollapsed] = useState(true);
@@ -195,7 +224,7 @@ function ProfileCard({
   }, [positionPopover]);
 
   return (
-    <Card sm={12} role='listitem'>
+    <Card sm={12} role='listitem' className='profile-card-container'>
       <div
         className='flex flex-row items-center'
         role='group'
@@ -306,6 +335,18 @@ function ProfileCard({
                         </a>
                       </li>
                       <li role='none'>
+                        <a
+                          role='menuitem'
+                          href={statsHref}
+                          onClick={closeMenu}
+                          className='text-success justify-start'
+                          aria-label={`View statistics for ${data.label} profile`}
+                        >
+                          <FontAwesomeIcon icon={faChartSimple} />
+                          <span>Statistics</span>
+                        </a>
+                      </li>
+                      <li role='none'>
                         <button
                           role='menuitem'
                           onClick={() => {
@@ -388,6 +429,15 @@ function ProfileCard({
                       <FontAwesomeIcon icon={faPen} />
                     </a>
                   </Tooltip>
+                  <Tooltip content='View statistics for this profile'>
+                    <a
+                      href={statsHref}
+                      className='btn btn-sm btn-ghost text-success'
+                      aria-label={`View statistics for ${data.label} profile`}
+                    >
+                      <FontAwesomeIcon icon={faChartSimple} />
+                    </a>
+                  </Tooltip>
                   <Tooltip content='Export profile'>
                     <button
                       onClick={onDownload}
@@ -426,67 +476,79 @@ function ProfileCard({
               </div>
             </div>
           </div>
-          {!detailsCollapsed && (
-            <div id={detailsSectionId} className='mx-2 mt-2 flex flex-col items-start gap-2'>
-              <span className='text-base-content/60 text-xs md:text-sm'>{data.description}</span>
-              <div className='flex flex-row gap-2'>
-                <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                  <FontAwesomeIcon icon={faTemperatureFull} />
-                  {data.temperature}°C
-                </span>
-                <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                  <FontAwesomeIcon icon={faClock} />
-                  {totalDurationSeconds}s
-                </span>
-                {data.phases.length > 0 &&
-                  data.phases.at(-1)?.targets?.at(0)?.type === 'volumetric' && (
+          <div className={`${isDragging ? 'hidden' : ''}`}>
+            {!detailsCollapsed && (
+              <div id={detailsSectionId} className='mx-2 mt-2 flex flex-col items-start gap-2'>
+                <span className='text-base-content/60 text-xs md:text-sm'>{data.description}</span>
+                <div className='flex flex-row gap-2'>
+                  <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
+                    <FontAwesomeIcon icon={faTemperatureFull} />
+                    {data.temperature}°C
+                  </span>
+                  <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
+                    <FontAwesomeIcon icon={faClock} />
+                    {totalDurationSeconds}s
+                  </span>
+                  {data.phases.length > 0 &&
+                    data.phases.at(-1)?.targets?.some(target => target.type === 'volumetric') && (
+                      <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
+                        <FontAwesomeIcon icon={faScaleBalanced} />
+                        {`${data.phases.at(-1).targets.find(target => target.type === 'volumetric').value}g`}
+                      </span>
+                    )}
+                  {data.phases.length > 0 && (
                     <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                      <FontAwesomeIcon icon={faScaleBalanced} />
-                      {`${data.phases.at(-1).targets.at(0).value}g`}
+                      {data.phases.length} phase{data.phases.length === 1 ? '' : 's'}
                     </span>
                   )}
-                {data.phases.length > 0 && (
-                  <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                    {data.phases.length} phase{data.phases.length === 1 ? '' : 's'}
-                  </span>
+                </div>
+              </div>
+            )}
+            <div
+              className='flex flex-row gap-2 py-2'
+              aria-label={`Profile details for ${data.label}`}
+            >
+              <div className='flex flex-col justify-evenly pr-1'>
+                <Tooltip content='Move to top' disabled={isDragging || tooltipsDisabled}>
+                  <button
+                    onClick={handleMoveTop}
+                    disabled={isFirst}
+                    className='drag-to-top btn btn-sm btn-ghost'
+                    aria-label={`Move ${data.label} to top`}
+                    aria-disabled={isFirst}
+                  >
+                    <FontAwesomeIcon icon={faAnglesUp} />
+                  </button>
+                </Tooltip>
+                <Tooltip
+                  content={`${disabledDrag ? 'Drag disabled on search result' : 'Drag to reorder'}`}
+                  disabled={isDragging}
+                >
+                  <div
+                    className={`drag-handle btn btn-sm btn-ghost ${disabledDrag ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
+                  >
+                    <FontAwesomeIcon icon={faGripVertical} />
+                  </div>
+                </Tooltip>
+                <Tooltip content='Move to bottom' disabled={isDragging || tooltipsDisabled}>
+                  <button
+                    onClick={handleMoveBottom}
+                    disabled={isLast}
+                    className='drag-to-bottom btn btn-sm btn-ghost'
+                    aria-label={`Move ${data.label} to bottom`}
+                    aria-disabled={isLast}
+                  >
+                    <FontAwesomeIcon icon={faAnglesDown} />
+                  </button>
+                </Tooltip>
+              </div>
+              <div className='flex-grow overflow-x-auto'>
+                {data.type === 'pro' ? (
+                  <ExtendedProfileChart data={data} className='max-h-36' />
+                ) : (
+                  <SimpleContent data={data} />
                 )}
               </div>
-            </div>
-          )}
-          <div
-            className='flex flex-row gap-2 py-2'
-            aria-label={`Profile details for ${data.label}`}
-          >
-            <div className='flex flex-col justify-evenly'>
-              <Tooltip content='Move up'>
-                <button
-                  onClick={() => onMoveUp(data.id)}
-                  disabled={isFirst}
-                  className='btn btn-xs btn-ghost'
-                  aria-label={`Move ${data.label} up`}
-                  aria-disabled={isFirst}
-                >
-                  <FontAwesomeIcon icon={faArrowUp} />
-                </button>
-              </Tooltip>
-              <Tooltip content='Move down'>
-                <button
-                  onClick={() => onMoveDown(data.id)}
-                  disabled={isLast}
-                  className='btn btn-xs btn-ghost'
-                  aria-label={`Move ${data.label} down`}
-                  aria-disabled={isLast}
-                >
-                  <FontAwesomeIcon icon={faArrowDown} />
-                </button>
-              </Tooltip>
-            </div>
-            <div className='flex-grow overflow-x-auto'>
-              {data.type === 'pro' ? (
-                <ExtendedProfileChart data={data} className='max-h-36' />
-              ) : (
-                <SimpleContent data={data} />
-              )}
             </div>
           </div>
         </div>
@@ -545,6 +607,8 @@ export function ProfileList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('extraction');
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef(null);
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
   const favoriteDisabled = favoriteCount >= 10;
@@ -600,37 +664,169 @@ export function ProfileList() {
     };
   }, [apiService]);
 
-  const moveProfileUp = useCallback(
+
+  // Filtered profiles
+  const profilesToShow = useMemo(() => {
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim();
+      return profiles.filter(
+        profile =>
+          profile.label?.toLowerCase().includes(search) ||
+          profile.description?.toLowerCase().includes(search),
+      );
+    }
+    return profiles;
+  }, [profiles, searchTerm]);
+
+  const clearDropHighlights = useCallback(() => {
+    if (!containerRef.current) return;
+    const highlighted = containerRef.current.querySelectorAll('.drop-highlight');
+    highlighted.forEach(el => {
+      el.classList.remove('drop-highlight');
+    });
+  }, []);
+
+  const moveProfileTop = useCallback(
     id => {
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.id === id);
-        if (idx > 0) {
-          const next = [...prev];
-          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-          persistProfileOrder(next);
-          return next;
-        }
-        return prev;
+        if (idx <= 0) return prev;
+
+        const item = prev[idx];
+        const reordered = [item, ...prev.slice(0, idx), ...prev.slice(idx + 1)];
+
+        const normalized = [
+          ...reordered.filter(p => !p.utility),
+          ...reordered.filter(p => p.utility),
+        ];
+
+        persistProfileOrder(normalized);
+        return normalized;
       });
     },
     [persistProfileOrder],
   );
 
-  const moveProfileDown = useCallback(
+
+  const moveProfileBottom = useCallback(
     id => {
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.id === id);
-        if (idx !== -1 && idx < prev.length - 1) {
-          const next = [...prev];
-          [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-          persistProfileOrder(next);
-          return next;
+        if (idx === -1 || idx === prev.length - 1 ) {
+          return prev;
         }
-        return prev;
+
+        const item = prev[idx];
+        const reordered = [...prev.slice(0, idx), ...prev.slice(idx + 1), item];
+
+        const normalized = [
+          ...reordered.filter(p => !p.utility),
+          ...reordered.filter(p => p.utility),
+        ];
+
+        persistProfileOrder(normalized);
+        return normalized;
+
       });
     },
     [persistProfileOrder],
   );
+
+  const onDragStart = useCallback(() => {
+    setIsDragging(true);
+    if (!containerRef.current) return;
+
+    // Clear any previous drop highlights
+    clearDropHighlights();
+  }, [clearDropHighlights]);
+
+  const onDragChange = useCallback(
+    evt => {
+      const { newIndex, oldIndex } = evt;
+      if (newIndex == null || oldIndex == null) return;
+      const container = containerRef.current;
+      if (!container) return;
+
+      // Clear previous highlights
+      clearDropHighlights();
+
+      // Resolve the card element at newIndex among visible items
+      const cards = container.querySelectorAll('.profile-card-container');
+      const targetElement = cards && cards[newIndex];
+      if (!targetElement) return;
+      // highlight the element's new position in the list
+      targetElement.classList.add('drop-highlight');
+    },
+    [clearDropHighlights],
+  );
+
+  const onDragEnd = useCallback(
+    evt => {
+      setIsDragging(false);
+
+      // Clear any drop highlights
+      clearDropHighlights();
+
+      const { oldIndex, newIndex, oldIndicies } = evt;
+      if (oldIndex === newIndex) return;
+
+      setProfiles(prev => {
+        const displayedProfiles = prev.filter(p =>
+          activeTab === 'utility' ? p.utility : !p.utility,
+        );
+
+        const movedItems = (
+          oldIndicies && oldIndicies.length > 0 ? oldIndicies : [{ index: oldIndex }]
+        )
+          .map(({ index }) => displayedProfiles[index])
+          .filter(Boolean); // filter all falsey
+
+        if (movedItems.length === 0) return prev;
+
+        const movedIds = new Set(movedItems.map(p => p.id));
+        const remainingVisible = displayedProfiles.filter(p => !movedIds.has(p.id));
+
+        const insertAt = Math.min(newIndex, remainingVisible.length);
+        const reorderedVisible = [
+          ...remainingVisible.slice(0, insertAt),
+          ...movedItems,
+          ...remainingVisible.slice(insertAt),
+        ];
+
+        const next =
+          activeTab === 'utility'
+            ? [...prev.filter(p => !p.utility), ...reorderedVisible]
+            : [...reorderedVisible, ...prev.filter(p => p.utility)];
+
+        persistProfileOrder(next);
+        return next;
+      });
+    },
+    [activeTab, clearDropHighlights, persistProfileOrder],
+  );
+
+  // Sorting via SortableJS
+  useEffect(() => {
+    if (loading || !containerRef.current) return;
+
+    const isFiltered = !!searchTerm.trim();
+
+    const sortable = Sortable.create(containerRef.current, {
+      multiDrag: true,
+      selectedClass: 'profile-list-drag-selected-item',
+      animation: 150,
+      handle: '.drag-handle',
+      disabled: isFiltered,
+      onStart: onDragStart,
+      onChange: onDragChange,
+      onEnd: onDragEnd,
+    });
+
+    return () => {
+      sortable.destroy();
+    };
+  }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -721,9 +917,14 @@ export function ProfileList() {
       reader.onload = async e => {
         const result = e.target.result;
         if (typeof result === 'string') {
-          const profiles = parseProfile(result);
-          for (const p of profiles) {
-            await apiService.request({ tp: 'req:profiles:save', profile: p });
+          setLoading(true);
+          try {
+            const profiles = parseProfile(result);
+            for (const p of profiles) {
+              await apiService.request({ tp: 'req:profiles:save', profile: p });
+            }
+          } catch {
+            // Individual save errors are surfaced by WS timeout; continue to reload list.
           }
           await loadProfiles();
         }
@@ -733,27 +934,14 @@ export function ProfileList() {
   };
 
   const onClear = useCallback(async () => {
+    setLoading(true);
     for (const p of profiles) {
       if (!p.selected) {
         await apiService.request({ tp: 'req:profiles:delete', id: p.id });
       }
-      await loadProfiles();
     }
+    await loadProfiles();
   }, [profiles, apiService]);
-
-  // Filtered profiles
-  const profilesToShow = useMemo(() => {
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase().trim();
-      return profiles.filter(
-        profile =>
-          profile.label?.toLowerCase().includes(search) ||
-          profile.description?.toLowerCase().includes(search),
-      );
-    }
-    return profiles;
-  }, [profiles, searchTerm]);
 
   if (loading) {
     return (
@@ -794,6 +982,7 @@ export function ProfileList() {
         <div className='flex flex-grow items-center justify-end gap-2'>
           <Tooltip content='Export all profiles'>
             <button
+              id='export-profiles'
               onClick={onExport}
               className='btn btn-ghost btn-sm'
               aria-label='Export all profiles'
@@ -849,7 +1038,12 @@ export function ProfileList() {
           </button>
         </div>
       )}
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label='Profile list'>
+      <div
+        className='grid grid-cols-1 gap-4 lg:grid-cols-12'
+        role='list'
+        aria-label='Profile list'
+        ref={containerRef}
+      >
         {profilesToShow
           .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
           .map((data, idx, filtered) => (
@@ -863,8 +1057,10 @@ export function ProfileList() {
               onUnfavorite={onUnfavorite}
               onFavorite={onFavorite}
               onDuplicate={onDuplicate}
-              onMoveUp={moveProfileUp}
-              onMoveDown={moveProfileDown}
+              disabledDrag={!!searchTerm.trim()}
+              isDragging={isDragging}
+              onMoveTop={moveProfileTop}
+              onMoveBottom={moveProfileBottom}
               isFirst={idx === 0}
               isLast={idx === filtered.length - 1}
             />

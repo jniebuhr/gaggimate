@@ -1,512 +1,523 @@
 /**
  * ShotChart.jsx
- * Chart.js visualization component for shot data.
- * Displays pressure, flow, puck flow, temperature, and weight over time.
+ *
+ * Orchestrates Chart.js lifecycle for the Shot Analyzer charts. Heavy logic is
+ * delegated to focused builders and hooks so this component mainly wires refs,
+ * layout, and render output together.
  */
 
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { ShotChartControls, getNextChartHeight } from './shotChart/ShotChartControls';
+import {
+  areTooltipLayoutsEqual,
+  areTooltipStatesEqual,
+  buildExternalTooltipState,
+  createHiddenExternalTooltipLayout,
+  createHiddenExternalTooltipState,
+  getExternalTooltipLayout,
+  ShotChartExternalTooltip,
+} from './shotChart/ShotChartExternalTooltip';
+import {
+  BREW_BY_TIME_LABEL,
+  BREW_BY_WEIGHT_LABEL,
+  INITIAL_VISIBILITY,
+  MAIN_CHART_HEIGHT_DEFAULT,
+  REPLAY_FRAME_INTERVAL_MS,
+  TEMP_CHART_HEIGHT_RATIO,
+  VISIBILITY_KEY_BY_LABEL,
+} from './shotChart/constants';
+import {
+  buildShotChartReplayModel,
+  createStripedFillPattern,
+  getLegendColorByLabel,
+  getShotChartColors,
+  getTooltipColorByLabel,
+  readCssColorVar,
+} from './shotChart/helpers';
+import { useShotChartFullDisplay } from './shotChart/useShotChartFullDisplay';
+import { useShotChartReplayExport } from './shotChart/useShotChartReplayExport';
+import { buildShotChartModel } from './shotChart/buildShotChartModel';
+import { createShotChartConfigs } from './shotChart/createShotChartConfigs';
+import { attachShotChartHoverSync, attachTempChartLayoutSync } from './shotChart/hoverSync';
+import { CompareShotCharts } from './shotChart/CompareShotCharts';
+import './ShotChart.css';
 
-// Register the annotation plugin for Phase Lines
 Chart.register(annotationPlugin);
 
-// --- Helper Functions ---
+const EMPTY_SHOT_SAMPLES = Object.freeze([]);
 
-/**
- * Retrieves the phase name for a specific phase number.
- * @param {Object} shot - The shot data object.
- * @param {number} phaseNumber - The index of the phase.
- * @returns {string} The name of the phase or a fallback name.
- */
-function getPhaseName(shot, phaseNumber) {
-  // 1. Try to find the name in the logged phase transitions
-  if (shot.phaseTransitions && shot.phaseTransitions.length > 0) {
-    const transition = shot.phaseTransitions.find(t => t.phaseNumber === phaseNumber);
-    if (transition && transition.phaseName) {
-      return transition.phaseName;
-    }
+function SingleShotChart({ shotData, results }) {
+  // These refs point to the mounted DOM and Chart.js instances. They stay local
+  // to the component because only the top-level orchestrator owns mounting and teardown.
+  const hoverAreaRef = useRef(null);
+  const mainChartContainerRef = useRef(null);
+  const mainChartRef = useRef(null);
+  const tempChartRef = useRef(null);
+  const exportMenuRef = useRef(null);
+  const externalTooltipRef = useRef(null);
+  const mainChartInstance = useRef(null);
+  const tempChartInstance = useRef(null);
+  const chartColorsRef = useRef(null);
+
+  const [visibility, setVisibility] = useState(INITIAL_VISIBILITY);
+  const [mainChartHeight, setMainChartHeight] = useState(MAIN_CHART_HEIGHT_DEFAULT);
+  const [externalTooltipState, setExternalTooltipState] = useState(
+    createHiddenExternalTooltipState,
+  );
+  const [externalTooltipLayout, setExternalTooltipLayout] = useState(
+    createHiddenExternalTooltipLayout,
+  );
+
+  // Cache theme-derived chart colors so legend/UI helpers can read them before the
+  // next chart build runs. The effect below refreshes the cache whenever charts rebuild.
+  if (!chartColorsRef.current) {
+    chartColorsRef.current = getShotChartColors();
   }
 
-  // 2. Fallback: Try to get it from the original profile definition if embedded
-  if (shot.profile && shot.profile.phases && shot.profile.phases[phaseNumber]) {
-    return shot.profile.phases[phaseNumber].name;
-  }
+  const shotSamples = Array.isArray(shotData?.samples) ? shotData.samples : EMPTY_SHOT_SAMPLES;
 
-  // 3. Fallback to guarantee a label is rendered
-  return phaseNumber === 0 ? 'Start' : `P${phaseNumber + 1}`;
-}
+  const hasWeightData = Boolean(
+    shotSamples.some(sample => {
+      const rawWeight = sample?.v ?? sample?.w ?? sample?.weight ?? sample?.m;
+      const numericWeight = Number(rawWeight);
+      return Number.isFinite(numericWeight) && numericWeight > 0;
+    }),
+  );
+  const hasWeightFlowData = Boolean(
+    shotSamples.some(sample => {
+      const value = Number(sample?.vf ?? sample?.weight_flow);
+      return Number.isFinite(value) && value > 0;
+    }),
+  );
 
-/**
- * ShotChart Component
- * Renders a line chart using Chart.js.
- */
-export function ShotChart({ shotData, results }) {
-  const chartRef = useRef(null);
-  const chartInstance = useRef(null);
+  const legendColorByLabel = getLegendColorByLabel(chartColorsRef.current);
+  const hideExternalTooltip = useCallback(() => {
+    setExternalTooltipState(prev => {
+      const hiddenState = createHiddenExternalTooltipState();
+      return areTooltipStatesEqual(prev, hiddenState) ? prev : hiddenState;
+    });
+  }, []);
 
-  // --- State for Annotation Visibility ---
-  const [showPhases, setShowPhases] = useState(true);
-  const [showStops, setShowStops] = useState(true);
+  const {
+    replayRuntimeRef,
+    clearAllHoverRef,
+    isReplayingRef,
+    isExportingRef,
+    isReplaying,
+    isReplayPaused,
+    exportMenuState,
+    isReplayExporting,
+    replayExportStatus,
+    videoExportCapabilities,
+    hasVideoExportSupport,
+    isVideoExportActive,
+    isControlsLocked,
+    shouldShowReplayFocusHint,
+    shouldForceWebmExport,
+    replayExportStatusLabel,
+    replayExportStatusHint,
+    closeExportMenu,
+    toggleExportMenu,
+    handleExportTypeChange,
+    handleExportFormatChange,
+    handleIncludeLegendChange,
+    handleExportFormatInfoToggle,
+    handleReplayClick,
+    stopReplayAndRestoreChart,
+    handleExportAction,
+    stopReplayAnimation,
+    abortActiveExport,
+  } = useShotChartReplayExport({
+    shotData,
+    exportMenuRef,
+    chartRefs: { mainChartInstance, tempChartInstance, hoverAreaRef },
+    legendColorByLabel,
+    visibility,
+    hasWeightData,
+    hasWeightFlowData,
+  });
 
-  useEffect(() => {
-    // Validation: Ensure data exists before rendering
-    if (!shotData || !shotData.samples || shotData.samples.length === 0) {
+  const chartLifecycleRef = useRef({
+    replayRuntimeRef,
+    clearAllHoverRef,
+    isReplayingRef,
+    isExportingRef,
+    stopReplayAnimation,
+    abortActiveExport,
+  });
+  chartLifecycleRef.current.replayRuntimeRef = replayRuntimeRef;
+  chartLifecycleRef.current.clearAllHoverRef = clearAllHoverRef;
+  chartLifecycleRef.current.isReplayingRef = isReplayingRef;
+  chartLifecycleRef.current.isExportingRef = isExportingRef;
+  chartLifecycleRef.current.stopReplayAnimation = stopReplayAnimation;
+  chartLifecycleRef.current.abortActiveExport = abortActiveExport;
+
+  // Full-display stays as a separate behavioral hook so the chart component only
+  // decides where to render, not how the overlay manages viewport and scroll state.
+  const { isFullDisplay, toggleFullDisplay, effectiveMainChartHeight, effectiveTempChartHeight } =
+    useShotChartFullDisplay({
+      isControlsLocked,
+      clearAllHoverRef,
+      onBeforeToggle: closeExportMenu,
+      mainChartHeight,
+      tempChartHeightRatio: TEMP_CHART_HEIGHT_RATIO,
+    });
+
+  useLayoutEffect(() => {
+    // Tooltip size depends on the rendered content, so measure after paint and
+    // clamp it into the current chart bounds before applying coordinates.
+    if (!externalTooltipState.visible) {
+      setExternalTooltipLayout(prev => {
+        const hiddenLayout = createHiddenExternalTooltipLayout();
+        return areTooltipLayoutsEqual(prev, hiddenLayout) ? prev : hiddenLayout;
+      });
       return;
     }
 
-    // Cleanup: Destroy existing chart instance to prevent memory leaks/visual glitches
-    if (chartInstance.current) {
-      chartInstance.current.destroy();
-    }
+    const tooltipElement = externalTooltipRef.current;
+    const containerElement = mainChartContainerRef.current;
+    if (!tooltipElement || !containerElement) return;
 
-    // Responsive check for font sizing
-    const isSmall = window.innerWidth < 640;
+    const chartWidth = externalTooltipState.chartWidth || containerElement.clientWidth || 0;
+    const chartHeight = externalTooltipState.chartHeight || containerElement.clientHeight || 0;
+    const tooltipWidth = tooltipElement.offsetWidth || 0;
+    const tooltipHeight = tooltipElement.offsetHeight || 0;
 
-    // GaggiMate Color Scheme Definition
-    const COLORS = {
-      temp: '#F0561D',
-      tempTarget: '#731F00',
-      pressure: '#0066CC',
-      flow: '#63993D',
-      puckFlow: '#059669',
-      weight: '#8B5CF6',
-      phaseLine: 'rgba(107, 114, 128, 0.5)',
-      stopLabel: 'rgba(220, 38, 38, 0.85)'
-    };
-
-    const samples = shotData.samples;
-
-    // Calculate the exact end time of the shot to prevent empty chart space
-    const maxTime = samples.length > 0 ? (samples[samples.length - 1].t || 0) / 1000 : 0;
-
-    // Helper to safely extract values from sample objects
-    const getVal = (item, keys) => {
-      for (let k of keys) {
-        if (item[k] !== undefined) return item[k];
-      }
-      return null;
-    };
-
-    // Initialize data series arrays
-    const series = {
-      pressure: [],
-      flow: [],
-      puckFlow: [],
-      temp: [],
-      weight: [],
-      targetPressure: [],
-      targetFlow: [],
-      targetTemp: [],
-    };
-
-    // Parse samples into series
-    samples.forEach(d => {
-      const t = (d.t || 0) / 1000;
-
-      // Extract raw values
-      const press = getVal(d, ['cp', 'p', 'pressure']);
-      const flow = getVal(d, ['fl', 'f', 'flow']);
-      const pFlow = getVal(d, ['pf', 'puck_flow']);
-      const temp = getVal(d, ['ct', 't', 'temperature']);
-      const weight = getVal(d, ['v', 'w', 'weight', 'm']);
-
-      // Extract target values
-      const tPress = getVal(d, ['tp', 'target_pressure']);
-      const tFlow = getVal(d, ['tf', 'target_flow']);
-      const tTemp = getVal(d, ['tt', 'tr', 'target_temperature']);
-
-      // Populate series
-      if (press !== null) series.pressure.push({ x: t, y: press });
-      if (flow !== null) series.flow.push({ x: t, y: flow });
-      if (pFlow !== null) series.puckFlow.push({ x: t, y: pFlow });
-      if (temp !== null) series.temp.push({ x: t, y: temp });
-      if (weight !== null) series.weight.push({ x: t, y: weight });
-
-      if (tPress !== null) series.targetPressure.push({ x: t, y: tPress });
-      if (tFlow !== null) series.targetFlow.push({ x: t, y: tFlow });
-      if (tTemp !== null) series.targetTemp.push({ x: t, y: tTemp });
+    const nextLayout = getExternalTooltipLayout({
+      tooltipState: externalTooltipState,
+      tooltipWidth,
+      tooltipHeight,
+      fallbackWidth: chartWidth,
+      fallbackHeight: chartHeight,
     });
 
-    // Check if weight data exists to determine if secondary axis is needed
-    const hasWeight = series.weight.some(pt => pt.y > 0);
+    setExternalTooltipLayout(prev =>
+      areTooltipLayoutsEqual(prev, nextLayout) ? prev : nextLayout,
+    );
+  }, [externalTooltipState]);
 
-    // --- Phase Annotation Logic ---
-    const phaseAnnotations = {};
-    if (shotData.phaseTransitions && shotData.phaseTransitions.length > 0) {
-      // 1. Mark the absolute start of the shot
-      if (samples.length > 0) {
-        const shotStartTime = (samples[0].t || 0) / 1000;
-        phaseAnnotations['shot_start'] = {
-          type: 'line',
-          scaleID: 'x',
-          value: shotStartTime,
-          borderColor: COLORS.phaseLine,
-          borderWidth: 1,
-          label: {
-            display: showPhases,
-            content: getPhaseName(shotData, 0),
-            rotation: -90,
-            position: 'start',
-            yAdjust: 0,
-            xAdjust: 12, // Shift to the right side of the line
-            color: 'rgba(255, 255, 255, 0.95)',
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            borderRadius: 3,
-            padding: 4,
-            font: { size: 9 },
-          },
-        };
+  useEffect(() => {
+    const mainChart = mainChartInstance.current;
+    const tempChart = tempChartInstance.current;
+    if (!mainChart || !tempChart || typeof window === 'undefined') return undefined;
+
+    // Full-display mode changes the available canvas box without changing the
+    // chart data, so Chart.js needs an explicit resize tick after layout settles.
+    const frameId = window.requestAnimationFrame(() => {
+      mainChart.resize();
+      tempChart.resize();
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [effectiveMainChartHeight, isFullDisplay]);
+
+  const handleLegendToggle = label => {
+    if (isExportingRef.current) return;
+    const key = VISIBILITY_KEY_BY_LABEL[label];
+    if (!key) return;
+    if (label === 'Weight' && !hasWeightData) return;
+    if (label === 'Weight Flow' && !hasWeightFlowData) return;
+    setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  useEffect(() => {
+    const chartLifecycle = chartLifecycleRef.current;
+    const destroyCharts = () => {
+      if (mainChartInstance.current) {
+        mainChartInstance.current.destroy();
+        mainChartInstance.current = null;
       }
+      if (tempChartInstance.current) {
+        tempChartInstance.current.destroy();
+        tempChartInstance.current = null;
+      }
+    };
 
-      // 2. Mark subsequent phase transitions & Exit Reasons
-      shotData.phaseTransitions.forEach((transition, index) => {
-        let timeInSeconds = 0;
-        if (transition.sampleIndex !== undefined && samples[transition.sampleIndex]) {
-          timeInSeconds = (samples[transition.sampleIndex].t || 0) / 1000;
-        } else if (transition.sampleIndex !== undefined) {
-          timeInSeconds = (transition.sampleIndex * (shotData.sampleInterval || 250)) / 1000;
+    chartLifecycle.stopReplayAnimation(true);
+    chartLifecycle.replayRuntimeRef.current = null;
+    hideExternalTooltip();
+
+    // Chart.js must be recreated when the data, visible datasets, or render host changes.
+    // In full-display mode the canvases move into a portal, so rebuilding is intentional.
+    // Replay/export helpers are intentionally excluded from the rebuild triggers because
+    // their identity changes during hover/replay state updates and would tear charts down
+    // mid-interaction, which breaks the single-chart tooltip and replay lifecycle.
+    if (shotSamples.length === 0) {
+      destroyCharts();
+      return undefined;
+    }
+
+    destroyCharts();
+    if (!mainChartRef.current || !tempChartRef.current) return undefined;
+
+    const colors = getShotChartColors();
+    chartColorsRef.current = colors;
+
+    const mainCanvasCtx = mainChartRef.current.getContext('2d');
+    const tempCanvasCtx = tempChartRef.current.getContext('2d');
+    if (!mainCanvasCtx || !tempCanvasCtx) return undefined;
+
+    const targetPressureFill = createStripedFillPattern(mainCanvasCtx, colors.pressure, {
+      baseAlpha: 0.018,
+      stripeAlpha: 0.065,
+      size: 18,
+      lineWidth: 2,
+    });
+    const targetFlowFill = createStripedFillPattern(mainCanvasCtx, colors.flow, {
+      baseAlpha: 0.018,
+      stripeAlpha: 0.065,
+      size: 18,
+      lineWidth: 2,
+    });
+    const tempToTargetFill = createStripedFillPattern(tempCanvasCtx, colors.temp, {
+      baseAlpha: 0.018,
+      stripeAlpha: 0.09,
+      size: 9,
+      lineWidth: 1,
+    });
+
+    const brewModeMeta = results?.isBrewByWeight
+      ? {
+          label: BREW_BY_WEIGHT_LABEL,
+          backgroundColor: readCssColorVar('--analyzer-brew-by-weight-label-bg', colors.weight),
+          textColor: readCssColorVar('--analyzer-brew-by-weight-label-text', '#ffffff'),
+          borderColor: readCssColorVar('--analyzer-brew-by-weight-label-border', colors.weight),
         }
-
-        if (timeInSeconds <= 0.1 && index === 0) return;
-
-        // A. The standard Phase Name Label (Right side of the line)
-        phaseAnnotations[`phase_line_${index}`] = {
-          type: 'line',
-          scaleID: 'x',
-          value: timeInSeconds,
-          borderColor: COLORS.phaseLine,
-          borderWidth: 1,
-          label: {
-            display: showPhases,
-            content: transition.phaseName || `P${transition.phaseNumber + 1}`,
-            rotation: -90,
-            position: 'start',
-            yAdjust: 0,
-            xAdjust: 12, // Shift to the right side of the line
-            color: 'rgba(255, 255, 255, 0.95)',
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            borderRadius: 3,
-            padding: 4,
-            font: { size: 9 },
-          },
+      : {
+          label: BREW_BY_TIME_LABEL,
+          backgroundColor: readCssColorVar('--analyzer-brew-by-time-label-bg', '#475569'),
+          textColor: readCssColorVar('--analyzer-brew-by-time-label-text', '#ffffff'),
+          borderColor: readCssColorVar('--analyzer-brew-by-time-label-border', '#334155'),
         };
 
-        // B. The Exit Reason Label for the PREVIOUS phase (Left side of the line)
-        if (results && results.phases && index > 0) {
-          const prevPhaseNum = shotData.phaseTransitions[index - 1].phaseNumber;
-          const endedPhase = results.phases.find(p => String(p.number) === String(prevPhaseNum));
-          
-          if (endedPhase && endedPhase.exit && endedPhase.exit.reason) {
-            phaseAnnotations[`phase_exit_${index}`] = {
-              type: 'line',
-              scaleID: 'x',
-              value: timeInSeconds,
-              borderColor: 'transparent',
-              borderWidth: 0,
-              label: {
-                display: showStops,
-                content: endedPhase.exit.reason.toUpperCase(),
-                rotation: -90,
-                position: 'start',
-                yAdjust: 0,
-                xAdjust: -12,
-                color: 'rgba(255, 255, 255, 0.95)',
-                backgroundColor: COLORS.stopLabel,
-                borderRadius: 3,
-                padding: 4,
-                font: { size: 8, weight: 'bold' },
-              },
-            };
-          }
-        }
+    const model = buildShotChartModel({
+      shotData,
+      results,
+      visibility,
+      colors,
+      brewModeMeta,
+    });
+    const tooltipColorByLabel = getTooltipColorByLabel(colors);
+    const updateExternalTooltip = ({ chart, tooltip }) => {
+      const nextState = buildExternalTooltipState({
+        chart,
+        tooltip,
+        getHoverWaterValuesAtX: model.getHoverWaterValuesAtX,
+        tooltipColorByLabel,
       });
-      
-      // 3. Mark the final exit reason at the very end of the shot
-      if (results && results.phases && results.phases.length > 0 && maxTime > 0) {
-        const lastPhase = results.phases[results.phases.length - 1];
-        if (lastPhase.exit && lastPhase.exit.reason) {
-          phaseAnnotations['shot_end'] = {
-            type: 'line',
-            scaleID: 'x',
-            value: maxTime,
-            borderColor: COLORS.phaseLine,
-            borderWidth: 1, // End line
-            borderDash: [4, 4],
-            label: {
-              display: showStops,
-              content: lastPhase.exit.reason.toUpperCase(),
-              rotation: -90,
-              position: 'start',
-              yAdjust: 0,
-              xAdjust: -12,
-              color: 'rgba(255, 255, 255, 0.95)',
-              backgroundColor: COLORS.stopLabel,
-              borderRadius: 3,
-              padding: 4,
-              font: { size: 8, weight: 'bold' },
-            },
-          };
-        }
+
+      if (!nextState.visible) {
+        hideExternalTooltip();
+        return;
       }
-    }
 
-    // --- Dataset Configuration ---
-    const datasets = [
-      // Toggle Legend Item: Phases
-      {
-        label: 'Phase Names',
-        data: [],
-        borderColor: COLORS.phaseLine,
-        backgroundColor: COLORS.phaseLine,
-        hidden: !showPhases,
-      },
-      // Toggle Legend Item: Stops
-      {
-        label: 'Stops',
-        data: [],
-        borderColor: COLORS.stopLabel,
-        backgroundColor: COLORS.stopLabel,
-        hidden: !showStops,
-      },
-      // Standard Metrics
-      {
-        label: 'Temp (°C)',
-        data: series.temp,
-        borderColor: COLORS.temp,
-        backgroundColor: COLORS.temp,
-        yAxisID: 'y',
-        pointRadius: 0,
-        borderWidth: 1,
-        tension: 0.2,
-      },
-      {
-        label: 'Pressure (bar)',
-        data: series.pressure,
-        borderColor: COLORS.pressure,
-        backgroundColor: COLORS.pressure,
-        yAxisID: 'y1',
-        pointRadius: 0,
-        borderWidth: 2,
-        tension: 0.2,
-      },
-      {
-        label: 'Flow (ml/s)',
-        data: series.flow,
-        borderColor: COLORS.flow,
-        backgroundColor: COLORS.flow,
-        yAxisID: 'y1',
-        pointRadius: 0,
-        borderWidth: 2,
-        tension: 0.2,
-      },
-      {
-        label: 'Puck Flow',
-        data: series.puckFlow,
-        borderColor: COLORS.puckFlow,
-        backgroundColor: COLORS.puckFlow,
-        yAxisID: 'y1',
-        pointRadius: 0,
-        borderWidth: 1.5,
-        tension: 0.2,
-      },
-      {
-        label: 'Weight (g)',
-        data: series.weight,
-        borderColor: COLORS.weight,
-        backgroundColor: COLORS.weight,
-        yAxisID: 'y2',
-        pointRadius: 0,
-        borderWidth: 1,
-        tension: 0.2,
-        hidden: !hasWeight,
-      },
-      // Target Lines
-      {
-        label: 'Target P',
-        data: series.targetPressure,
-        borderColor: COLORS.pressure,
-        borderDash: [4, 4],
-        yAxisID: 'y1',
-        pointRadius: 0,
-        borderWidth: 1,
-        tension: 0,
-      },
-      {
-        label: 'Target F',
-        data: series.targetFlow,
-        borderColor: COLORS.flow,
-        borderDash: [4, 4],
-        yAxisID: 'y1',
-        pointRadius: 0,
-        borderWidth: 1,
-        tension: 0,
-      },
-      {
-        label: 'Target T',
-        data: series.targetTemp,
-        borderColor: COLORS.tempTarget,
-        borderDash: [4, 4],
-        yAxisID: 'y',
-        pointRadius: 0,
-        borderWidth: 1,
-        tension: 0,
-      },
-    ];
+      setExternalTooltipState(prev => (areTooltipStatesEqual(prev, nextState) ? prev : nextState));
+    };
 
-    // --- Chart Configuration ---
-    chartInstance.current = new Chart(chartRef.current, {
-      type: 'line',
-      data: { datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-        plugins: {
-          legend: {
-            position: 'top',
-            onClick: (e, legendItem, legend) => {
-              const label = legendItem.text;
-              // Intercept click on the toggle-only labels
-              if (label === 'Phase Names') {
-                setShowPhases(!showPhases);
-              } else if (label === 'Stops') {
-                setShowStops(!showStops);
-              } else {
-                // Default behavior for other labels
-                Chart.defaults.plugins.legend.onClick(e, legendItem, legend);
-              }
-            },
-            labels: {
-              usePointStyle: true,
-              pointStyle: 'line',
-              pointStyleWidth: 20,
-              padding: 8,
-              font: { size: 10 },
-              generateLabels: function (chart) {
-                const original = Chart.defaults.plugins.legend.labels.generateLabels;
-                const labels = original.call(this, chart);
-
-                labels.forEach((label, index) => {
-                  const dataset = chart.data.datasets[index];
-                  
-                  // Style Toggle Labels differently
-                  if (label.text === 'Phase Names' || label.text === 'Stops') {
-                    label.pointStyle = 'rectRounded';
-                    label.lineWidth = 0;
-                  } else {
-                    label.lineWidth = 3;
-                    if (dataset.borderDash && dataset.borderDash.length > 0) {
-                      label.lineDash = dataset.borderDash;
-                    }
-                  }
-                });
-
-                return labels;
-              },
-            },
-          },
-          tooltip: {
-            enabled: true,
-            backgroundColor: 'rgba(20, 20, 20, 0.9)',
-            titleFont: { size: 11 },
-            bodyFont: { size: 10 },
-            padding: 8,
-            cornerRadius: 4,
-            callbacks: {
-              label: function (context) {
-                // Do not show tooltips for dummy datasets
-                if (context.dataset.label === 'Phase Names' || context.dataset.label === 'Stops') {
-                  return null;
-                }
-                let label = context.dataset.label || '';
-                if (label) label += ': ';
-                if (context.parsed.y !== null) {
-                  label += context.parsed.y.toFixed(1);
-                }
-                return label;
-              },
-            },
-          },
-          annotation: {
-            annotations: phaseAnnotations,
-          },
-        },
-        // --- Scale Configuration ---
-        scales: {
-          x: {
-            type: 'linear',
-            position: 'bottom',
-            max: maxTime, // Forces the axis to stop exactly at the last sample
-            ticks: {
-              font: { size: 10 },
-              color: '#888',
-            },
-            grid: {
-              color: 'rgba(200, 200, 200, 0.1)',
-            },
-          },
-          // Left Axis: Temperature
-          y: {
-            type: 'linear',
-            position: 'left',
-            ticks: {
-              font: { size: 10 },
-              color: COLORS.temp,
-            },
-            grid: {
-              color: 'rgba(200, 200, 200, 0.1)',
-            },
-          },
-          // Right Axis 1: Pressure & Flow & Puck Flow
-          y1: {
-            type: 'linear',
-            position: 'right',
-            min: 0,
-            max: 14,
-            ticks: {
-              font: { size: 10 },
-              color: COLORS.pressure,
-            },
-            grid: { display: false },
-          },
-          // Right Axis 2: Weight
-          y2: {
-            type: 'linear',
-            display: hasWeight ? 'auto' : false,
-            position: 'right',
-            grid: { display: false },
-            min: 0,
-            ticks: {
-              font: { size: 10 },
-              color: COLORS.weight,
-            },
-          },
-        },
-      },
+    // Build configs from the normalized model instead of constructing Chart.js objects inline.
+    // Keeping that mapping in one place makes visibility and axis changes easier to reason about.
+    const { mainConfig, tempConfig } = createShotChartConfigs({
+      model,
+      colors,
+      visibility,
+      hasWeightData,
+      hasWeightFlowData,
+      targetPressureFill,
+      targetFlowFill,
+      tempToTargetFill,
+      updateExternalTooltip,
     });
 
-    // Cleanup function on unmount
-    return () => {
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-      }
-    };
-  }, [shotData, results, showPhases, showStops]);
+    try {
+      mainChartInstance.current = new Chart(mainChartRef.current, mainConfig);
+      tempChartInstance.current = new Chart(tempChartRef.current, tempConfig);
+    } catch (error) {
+      console.error('Shot chart creation failed:', error);
+      destroyCharts();
+      return undefined;
+    }
 
-  // Render nothing if no data
-  if (!shotData || !shotData.samples || shotData.samples.length === 0) {
+    const mainChart = mainChartInstance.current;
+    const tempChart = tempChartInstance.current;
+    if (!mainChart || !tempChart) {
+      destroyCharts();
+      return undefined;
+    }
+
+    const detachTempChartLayoutSync = attachTempChartLayoutSync({
+      mainChart,
+      tempChart,
+    });
+
+    // Build the transformed replay model once per chart build so playback only
+    // appends precomputed frame chunks instead of reparsing sample data live.
+    chartLifecycle.replayRuntimeRef.current = {
+      sampleTimesSec: [...model.sampleTimesSec],
+      shotStartSec: model.shotStartSec,
+      maxTime: model.maxTime,
+      ...buildShotChartReplayModel({
+        mainDatasets: mainConfig.data.datasets,
+        tempDatasets: tempConfig.data.datasets,
+        mainAnnotations: model.phaseAnnotations,
+        tempAnnotations: model.tempPhaseAnnotations,
+        shotStartSec: model.shotStartSec,
+        maxTime: model.maxTime,
+        frameDurationSec: REPLAY_FRAME_INTERVAL_MS / 1000,
+      }),
+    };
+
+    const detachHoverSync = attachShotChartHoverSync({
+      hoverArea: hoverAreaRef.current,
+      mainChart,
+      tempChart,
+      hideExternalTooltip,
+      clearAllHoverRef: chartLifecycle.clearAllHoverRef,
+      isReplayingRef: chartLifecycle.isReplayingRef,
+      isExportingRef: chartLifecycle.isExportingRef,
+    });
+
+    return () => {
+      // Abort any running export before destroying the charts so recorder callbacks
+      // never try to touch a Chart.js instance that has already been torn down.
+      chartLifecycle.abortActiveExport();
+      chartLifecycle.stopReplayAnimation(true);
+      chartLifecycle.replayRuntimeRef.current = null;
+      chartLifecycle.clearAllHoverRef.current = () => {};
+      detachHoverSync();
+      detachTempChartLayoutSync();
+      destroyCharts();
+    };
+  }, [
+    shotData,
+    results,
+    visibility,
+    isFullDisplay,
+    shotSamples,
+    hasWeightData,
+    hasWeightFlowData,
+    hideExternalTooltip,
+  ]);
+
+  if (shotSamples.length === 0) {
     return null;
   }
 
-  // Container: 320px height, 100% width
-  return (
-    <div className='relative h-[320px] w-full select-none'>
-      <canvas ref={chartRef} />
+  const controls = (
+    <ShotChartControls
+      exportMenuRef={exportMenuRef}
+      exportMenuState={exportMenuState}
+      hasWeightData={hasWeightData}
+      hasWeightFlowData={hasWeightFlowData}
+      hasVideoExportSupport={hasVideoExportSupport}
+      isControlsLocked={isControlsLocked}
+      isFullDisplay={isFullDisplay}
+      isReplayPaused={isReplayPaused}
+      isReplaying={isReplaying}
+      isReplayExporting={isReplayExporting}
+      isVideoExportActive={isVideoExportActive}
+      legendColorByLabel={legendColorByLabel}
+      mainChartHeight={mainChartHeight}
+      onChartHeightToggle={() => setMainChartHeight(current => getNextChartHeight(current))}
+      onCloseExportMenu={closeExportMenu}
+      onExportAction={handleExportAction}
+      onExportMenuToggle={toggleExportMenu}
+      onExportTypeChange={handleExportTypeChange}
+      onExportFormatChange={handleExportFormatChange}
+      onExportFormatInfoToggle={handleExportFormatInfoToggle}
+      onFullDisplayToggle={toggleFullDisplay}
+      onIncludeLegendChange={handleIncludeLegendChange}
+      onLegendToggle={handleLegendToggle}
+      onReplayToggle={handleReplayClick}
+      onStop={stopReplayAndRestoreChart}
+      replayExportStatus={replayExportStatus}
+      replayExportStatusHint={replayExportStatusHint}
+      replayExportStatusLabel={replayExportStatusLabel}
+      shouldShowReplayFocusHint={shouldShowReplayFocusHint}
+      shouldLockWebmToggle={shouldForceWebmExport}
+      shouldShowWebmToggle={!videoExportCapabilities.shouldHideWebmOption}
+      visibility={visibility}
+    />
+  );
+
+  const charts = (
+    <div
+      ref={hoverAreaRef}
+      className={isFullDisplay ? 'shot-chart-full-display__charts' : 'w-full'}
+    >
+      {/* The shared hover area wraps both canvases so one pointer move can drive
+          the aligned guide line, tooltip, and active points across both charts. */}
+      <div
+        ref={mainChartContainerRef}
+        className='relative w-full'
+        style={{ height: `${effectiveMainChartHeight}px` }}
+      >
+        <canvas ref={mainChartRef} />
+        <ShotChartExternalTooltip
+          tooltipRef={externalTooltipRef}
+          state={externalTooltipState}
+          layout={externalTooltipLayout}
+          isFullDisplay={isFullDisplay}
+        />
+      </div>
+      <div className='relative mt-0 w-full' style={{ height: `${effectiveTempChartHeight}px` }}>
+        <canvas ref={tempChartRef} />
+      </div>
     </div>
   );
+
+  if (isFullDisplay && typeof document !== 'undefined') {
+    // The portal detaches the chart from analyzer layout containers so parent
+    // overflow, transforms, and stacking contexts cannot turn full display into
+    // a constrained in-page viewer.
+    return createPortal(
+      <div className='shot-chart-full-display select-none'>
+        <button
+          type='button'
+          className='shot-chart-full-display__backdrop'
+          onClick={() => {
+            if (!isControlsLocked) toggleFullDisplay();
+          }}
+          aria-label='Close full display'
+        />
+        <div className='shot-chart-full-display__panel'>
+          {controls}
+          {charts}
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
+  return (
+    <div className='w-full select-none'>
+      {controls}
+      {charts}
+    </div>
+  );
+}
+
+export function ShotChart({
+  shotData,
+  results,
+  compareEntries = [],
+  isCompareActive = false,
+  compareTargetDisplayMode,
+  onCompareTargetDisplayModeChange,
+}) {
+  if (isCompareActive && Array.isArray(compareEntries) && compareEntries.length > 1) {
+    return (
+      <CompareShotCharts
+        compareEntries={compareEntries}
+        compareTargetDisplayMode={compareTargetDisplayMode}
+        onCompareTargetDisplayModeChange={onCompareTargetDisplayModeChange}
+        showMainChartTitle={false}
+        detailChartTitleVariant='legend'
+      />
+    );
+  }
+
+  return <SingleShotChart shotData={shotData} results={results} />;
 }

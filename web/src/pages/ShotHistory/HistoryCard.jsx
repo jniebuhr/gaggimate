@@ -11,7 +11,7 @@ import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
-import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine';
+import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import ShotNotesCard from './ShotNotesCard.jsx';
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 
@@ -75,10 +75,13 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
     [onNotesChanged],
   );
   const profileTitle = shot.profile || 'Unknown Profile';
-  const formattedDate =
-    date.toLocaleDateString() +
-    ' ' +
-    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  let formattedDate = 'No timestamp available';
+  if (date.getFullYear() > 1970) {
+    formattedDate =
+      date.toLocaleDateString() +
+      ' ' +
+      date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
 
   const handleUpload = useCallback(
     async (username, password, rememberCredentials) => {
@@ -193,7 +196,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                       className='text-base-content/50 hover:text-primary hover:bg-primary/10 flex items-center justify-center rounded-md p-2 transition-colors'
                       aria-label='Open in Analyzer'
                     >
-                      <FontAwesomeIcon icon={faChartLine} className='h-4 w-4' />
+                      <FontAwesomeIcon icon={faMagnifyingGlassChart} className='h-4 w-4' />
                     </a>
                   </Tooltip>
 

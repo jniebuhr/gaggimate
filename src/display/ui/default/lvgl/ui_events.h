@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-void onLoadStarted(lv_event_t *e);
+void onWakeup(lv_event_t *e);
 void onMenuClick(lv_event_t *e);
 void onNextProfile(lv_event_t *e);
 void onPreviousProfile(lv_event_t *e);
@@ -27,16 +27,16 @@ void onBrewStart(lv_event_t *e);
 void onFlush(lv_event_t *e);
 void onVolumetricClick(lv_event_t *e);
 void onVolumetricHold(lv_event_t *e);
-void onProfileSettings(lv_event_t *e);
 void onProfileSelect(lv_event_t *e);
+void onProfileSettings(lv_event_t *e);
 void onBrewTempLower(lv_event_t *e);
 void onBrewTempRaise(lv_event_t *e);
 void onBrewTimeRaise(lv_event_t *e);
 void onBrewTimeLower(lv_event_t *e);
+void onVolumetricDelete(lv_event_t *e);
 void onProfileSave(lv_event_t *e);
 void onProfileAccept(lv_event_t *e);
 void onProfileSaveAsNew(lv_event_t *e);
-void onWakeup(lv_event_t *e);
 void onSimpleProcessScreenLoad(lv_event_t *e);
 void onSimpleProcessToggle(lv_event_t *e);
 void onSteamTempLower(lv_event_t *e);

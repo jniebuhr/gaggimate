@@ -9,6 +9,141 @@
 import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex';
 import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot';
 import { indexedDBService } from './IndexedDBService';
+import { notesService } from './NotesService';
+import { getProfileDisplayLabel } from '../utils/analyzerUtils';
+
+const HISTORY_NOTES_DEFAULTS = {
+  id: '',
+  rating: 0,
+  beanType: '',
+  doseIn: '',
+  doseOut: '',
+  ratio: '',
+  grindSetting: '',
+  balanceTaste: 'balanced',
+  notes: '',
+};
+
+function round2(v) {
+  if (v == null || Number.isNaN(v)) return v;
+  return Math.round((v + Number.EPSILON) * 100) / 100;
+}
+
+function normalizeShotSampleForHistoryExport(sample = {}) {
+  return {
+    t: sample.t,
+    tt: round2(sample.tt),
+    ct: round2(sample.ct),
+    tp: round2(sample.tp),
+    cp: round2(sample.cp),
+    fl: round2(sample.fl),
+    tf: round2(sample.tf),
+    pf: round2(sample.pf),
+    vf: round2(sample.vf),
+    v: round2(sample.v),
+    ev: round2(sample.ev),
+    pr: round2(sample.pr),
+    systemInfo: sample.systemInfo,
+    phaseNumber: sample.phaseNumber,
+    phaseDisplayNumber: sample.phaseDisplayNumber,
+  };
+}
+
+function normalizeNotesForHistoryExport(notes, shotId) {
+  const merged = {
+    ...HISTORY_NOTES_DEFAULTS,
+    ...(notes || {}),
+    id: String(shotId ?? notes?.id ?? ''),
+  };
+
+  return {
+    id: merged.id,
+    rating: merged.rating ?? 0,
+    beanType: merged.beanType ?? '',
+    doseIn: merged.doseIn ?? '',
+    doseOut: merged.doseOut ?? '',
+    ratio: merged.ratio ?? '',
+    grindSetting: merged.grindSetting ?? '',
+    balanceTaste: merged.balanceTaste ?? 'balanced',
+    notes: merged.notes ?? '',
+  };
+}
+
+function buildHistoryLikeShotExport(rawShot, listItem, notes) {
+  const shotId = rawShot?.id ?? listItem?.id ?? listItem?.name ?? '';
+
+  const base = {
+    id: String(shotId),
+    profile: rawShot?.profile || listItem?.profile || '',
+    profileId: rawShot?.profileId || listItem?.profileId || '',
+    timestamp: rawShot?.timestamp,
+    duration: rawShot?.duration,
+    samples: Array.isArray(rawShot?.samples)
+      ? rawShot.samples.map(normalizeShotSampleForHistoryExport)
+      : [],
+    volume: listItem?.volume ?? rawShot?.volume ?? null,
+    rating: listItem?.rating ?? null,
+    incomplete: listItem?.incomplete ?? rawShot?.incomplete ?? false,
+    notes: normalizeNotesForHistoryExport(notes, shotId),
+    loaded: true,
+    data: null,
+  };
+
+  return {
+    ...base,
+    ...rawShot,
+    samples: base.samples,
+    volume: round2(base.volume),
+    rating: base.rating,
+    incomplete: base.incomplete,
+    notes: base.notes,
+    loaded: true,
+    data: null,
+  };
+}
+
+const PROFILE_EXPORT_METADATA_FIELDS = [
+  'id',
+  'selected',
+  'favorite',
+  'name',
+  'source',
+  'uploadedAt',
+  'exportName',
+  'fileName',
+  'profileId',
+  'storageKey',
+  'data',
+];
+
+function ensureJsonFilename(filename) {
+  const resolvedFilename = String(filename || 'export.json');
+  if (
+    resolvedFilename.toLowerCase().endsWith('.json') ||
+    resolvedFilename.toLowerCase().endsWith('.slog')
+  ) {
+    return resolvedFilename;
+  }
+  return `${resolvedFilename}.json`;
+}
+
+function getProfileExportFilename(profile, fallback = 'profile') {
+  const label = getProfileDisplayLabel(profile, fallback);
+  return ensureJsonFilename(label || fallback || 'profile');
+}
+
+function cleanProfileForExport(profile, fallbackProfile = null) {
+  const clean = { ...(profile || {}) };
+  if (!clean.label && fallbackProfile) {
+    clean.label = getProfileDisplayLabel(fallbackProfile, '');
+  }
+
+  PROFILE_EXPORT_METADATA_FIELDS.forEach(field => {
+    delete clean[field];
+  });
+
+  return clean;
+}
 
 class LibraryService {
   constructor() {
@@ -25,7 +160,7 @@ class LibraryService {
 
   /**
    * Get shots from GaggiMate controller
-   * @returns {Array} List of GaggiMate shots with source tag
+   * @returns {Promise<Object[]>} List of GaggiMate shots with source tag
    */
   async getGaggiMateShots() {
     try {
@@ -59,11 +194,15 @@ class LibraryService {
 
   /**
    * Get shots from browser uploads
-   * @returns {Array} List of browser shots with source tag
+   * @returns {Promise<Object[]>} List of browser shots with source tag
    */
   async getBrowserShots() {
     try {
-      return await indexedDBService.getAllShots();
+      const shots = await indexedDBService.getAllShots();
+      return shots.map(shot => ({
+        ...shot,
+        storageKey: shot.storageKey || shot.name || String(shot.id || ''),
+      }));
     } catch (error) {
       console.error('Failed to load browser shots:', error);
       return [];
@@ -73,7 +212,7 @@ class LibraryService {
   /**
    * Get merged shot list from all sources
    * @param {string} sourceFilter - 'both', 'gaggimate', or 'browser'
-   * @returns {Array} Filtered and merged shot list
+   * @returns {Promise<Object[]>} Filtered and merged shot list
    */
   async getAllShots(sourceFilter = 'both') {
     const promises = [];
@@ -95,7 +234,7 @@ class LibraryService {
 
   /**
    * Get profiles from GaggiMate controller
-   * @returns {Array} List of GaggiMate profiles with source tag
+   * @returns {Promise<Object[]>} List of GaggiMate profiles with source tag
    */
   async getGaggiMateProfiles() {
     if (
@@ -116,11 +255,10 @@ class LibraryService {
         return [];
       }
 
-      // Add source tag and normalize name property
+      // Add source tag and preserve the API id for req:profiles:load.
       return response.profiles.map(profile => ({
         ...profile,
-        name: profile.label || profile.name || 'Unknown', // Display name
-        exportName: `${profile.label || profile.name}.json`, // Filename
+        exportName: getProfileExportFilename(profile),
         profileId: profile.id, // Keep real API id for req:profiles:load
         label: profile.label,
         source: 'gaggimate',
@@ -133,7 +271,7 @@ class LibraryService {
 
   /**
    * Get profiles from browser uploads
-   * @returns {Array} List of browser profiles with source tag
+   * @returns {Promise<Object[]>} List of browser profiles with source tag
    */
   async getBrowserProfiles() {
     try {
@@ -147,7 +285,7 @@ class LibraryService {
   /**
    * Get merged profile list from all sources
    * @param {string} sourceFilter - 'both', 'gaggimate', or 'browser'
-   * @returns {Array} Filtered and merged profile list
+   * @returns {Promise<Object[]>} Filtered and merged profile list
    */
   async getAllProfiles(sourceFilter = 'both') {
     const promises = [];
@@ -162,14 +300,16 @@ class LibraryService {
     const results = await Promise.all(promises);
     const merged = results.flat();
 
-    return merged.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    return merged.sort((a, b) =>
+      getProfileDisplayLabel(a, '').localeCompare(getProfileDisplayLabel(b, '')),
+    );
   }
 
   /**
    * Load full shot data
    * @param {string} id - Shot ID
    * @param {string} source - 'gaggimate' or 'browser'
-   * @returns {Object} Full shot data with samples
+   * @returns {Promise<Object>} Full shot data with samples
    */
   async loadShot(id, source) {
     const idStr = String(id);
@@ -183,12 +323,16 @@ class LibraryService {
       }
 
       const arrayBuffer = await response.arrayBuffer();
-      return parseBinaryShot(arrayBuffer, idStr);
+      const shot = parseBinaryShot(arrayBuffer, idStr);
+      shot.source = 'gaggimate';
+      return shot;
     }
     const shot = await indexedDBService.getShot(idStr);
     if (!shot) {
       throw new Error(`Shot ${idStr} not found in browser storage`);
     }
+    shot.storageKey = shot.storageKey || shot.name || idStr;
+    shot.source = shot.source || 'browser';
     return shot;
   }
 
@@ -196,7 +340,7 @@ class LibraryService {
    * Load full profile data
    * @param {string} nameOrId - Profile name/ID (for GM: use label)
    * @param {string} source - 'gaggimate' or 'browser'
-   * @returns {Object} Full profile data
+   * @returns {Promise<Object>} Full profile data
    */
   async loadProfile(nameOrId, source) {
     if (source === 'gaggimate') {
@@ -219,7 +363,6 @@ class LibraryService {
 
       return {
         ...response.profile,
-        name: response.profile.label || response.profile.name || nameOrId,
         source: 'gaggimate',
       };
     }
@@ -235,7 +378,7 @@ class LibraryService {
    * Fetches the original data and cleans it for export.
    * @param {Object} item - The library item (shot or profile)
    * @param {boolean} isShot - True if item is a shot
-   * @returns {Object} { exportData, filename }
+   * @returns {Promise<{ exportData: Object, filename: string }>} Export payload and filename
    */
   async exportItem(item, isShot) {
     console.log('Service Exporting:', item);
@@ -245,9 +388,7 @@ class LibraryService {
     let filename = item.exportName || item.name || item.id || 'export.json';
 
     // Ensure extension .json (or .slog if preferred)
-    if (!filename.toLowerCase().endsWith('.json') && !filename.toLowerCase().endsWith('.slog')) {
-      filename += '.json';
-    }
+    filename = ensureJsonFilename(filename);
 
     if (item.source === 'gaggimate') {
       if (isShot) {
@@ -258,7 +399,10 @@ class LibraryService {
         if (!loadId) throw new Error('Shot ID missing for export');
 
         const fullShot = await this.loadShot(loadId, 'gaggimate');
-        exportData = fullShot;
+        delete fullShot.source;
+
+        const notes = await notesService.loadNotes(loadId, 'gaggimate');
+        exportData = buildHistoryLikeShotExport(fullShot, item, notes);
       } else {
         // PROFILE EXPORT (GM):
         // Load fresh from controller using the hidden profileId
@@ -266,21 +410,29 @@ class LibraryService {
         if (!loadId) throw new Error('Profile ID missing for export');
 
         const raw = await this.loadProfile(loadId, 'gaggimate');
-        const clean = { ...raw };
-
-        // Cleanup internal metadata before export
-        delete clean.source;
-        // delete clean.name; // Use caution removing name, usually needed inside the file
-        delete clean.id; // Remove internal ID (e.g. "QtQdQjBeav")
-        exportData = clean;
+        filename = getProfileExportFilename(
+          raw,
+          item.label || item.name || item.fileName || item.exportName || item.id || 'profile',
+        );
+        exportData = cleanProfileForExport(raw, item);
       }
-    } else {
+    } else if (isShot) {
       // BROWSER EXPORT:
       // Just clean up our internal tags
-      exportData = { ...(item.data || item) };
-      delete exportData.source;
-      delete exportData.uploadedAt;
-      // For browser shots, exportData already contains full samples if they were uploaded
+      const exportShot = { ...(item.data || item) };
+      delete exportShot.source;
+      delete exportShot.uploadedAt;
+
+      const shotNotesKey = item.storageKey || item.name || item.id;
+      const notes = await notesService.loadNotes(shotNotesKey, 'browser');
+      exportData = buildHistoryLikeShotExport(exportShot, item, notes);
+    } else {
+      const rawProfile = item.data || item;
+      filename = getProfileExportFilename(
+        rawProfile,
+        item.label || item.name || item.fileName || item.exportName || item.id || 'profile',
+      );
+      exportData = cleanProfileForExport(rawProfile, item);
     }
 
     // Return raw object
@@ -299,26 +451,27 @@ class LibraryService {
       await this.apiService.request({ tp: 'req:history:delete', id });
     } else {
       await indexedDBService.deleteShot(id);
+      await indexedDBService.deleteNotes(String(id));
     }
   }
 
   /**
    * Delete a profile
-   * @param {string} name - Profile name/ID
+   * @param {string} id - Profile ID (gaggimate: internal API id, browser: name)
    * @param {string} source - 'gaggimate' or 'browser'
    */
-  async deleteProfile(name, source) {
+  async deleteProfile(id, source) {
     if (source === 'gaggimate') {
       if (!this.apiService) throw new Error('ApiService not set');
-      await this.apiService.request({ tp: 'req:profiles:delete', id: name });
+      await this.apiService.request({ tp: 'req:profiles:delete', id });
     } else {
-      await indexedDBService.deleteProfile(name);
+      await indexedDBService.deleteProfile(id);
     }
   }
 
   /**
    * Get storage statistics
-   * @returns {Object} Stats from all sources
+   * @returns {Promise<Object>} Stats from all sources
    */
   async getStats() {
     const [gmShots, browserShots, gmProfiles, browserProfiles] = await Promise.all([

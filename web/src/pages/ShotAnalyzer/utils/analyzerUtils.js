@@ -1,23 +1,31 @@
 /**
  * analyzerUtils.js
- * * Configuration and utility functions for Shot Analyzer
- * * Contains:
- * - Column definitions for analysis table
- * - Group labels for UI organization
- * - Storage keys for localStorage
- * - Helper functions for data formatting
+ * Shared Shot Analyzer constants, storage keys, and formatting helpers.
  */
-
-import DeepDiveLogoOutline from '../assets/deepdive.svg';
-
 /**
- * LocalStorage Keys for Analyzer Data
+ * LocalStorage keys used by Analyzer and Statistics shared state.
  */
 export const ANALYZER_DB_KEYS = {
   SHOTS: 'gaggimate_shots',
   PROFILES: 'gaggimate_profiles',
   PRESETS: 'gaggimate_column_presets',
   USER_STANDARD: 'gaggimate_user_standard_cols',
+  COMPARE_TARGET_DISPLAY_MODE: 'gaggimate_compare_target_display_mode',
+  COMPARE_ANNOTATIONS_ENABLED: 'gaggimate_compare_annotations_enabled',
+  LIBRARY_SHOTS_SOURCE_FILTER: 'gaggimate_library_shots_source_filter',
+  LIBRARY_PROFILES_SOURCE_FILTER: 'gaggimate_library_profiles_source_filter',
+  PINNED_PROFILES: 'gaggimate_pinned_profiles',
+  PINNED_SHOTS_BY_PROFILE: 'gaggimate_pinned_shots_by_profile',
+};
+
+export const MAX_PINNED_PROFILES = 10;
+export const MAX_PINNED_SHOTS_PER_PROFILE = 3;
+export const PINNED_NO_PROFILE_BUCKET = '__no_profile__';
+
+export const COMPARE_TARGET_DISPLAY_MODES = {
+  NONE: 'none',
+  PER_SHOT: 'perShot',
+  MAIN_SHOT_ONLY: 'mainShotOnly',
 };
 
 /**
@@ -57,6 +65,50 @@ export const columnConfig = [
     default: true,
     targetType: 'weight',
   },
+  {
+    id: 'w_se',
+    label: 'Weight (g)',
+    type: 'se',
+    group: 'weight',
+    default: false,
+  },
+  {
+    id: 'w_mm',
+    label: 'Weight (g)',
+    type: 'mm',
+    group: 'weight',
+    default: false,
+  },
+  {
+    id: 'w_avg',
+    label: 'Weight (g)',
+    type: 'avg',
+    group: 'weight',
+    default: false,
+  },
+
+  // --- WEIGHT FLOW ---
+  {
+    id: 'wf_se',
+    label: 'Weight Flow (g/s)',
+    type: 'se',
+    group: 'weightflow',
+    default: false,
+  },
+  {
+    id: 'wf_mm',
+    label: 'Weight Flow (g/s)',
+    type: 'mm',
+    group: 'weightflow',
+    default: false,
+  },
+  {
+    id: 'wf_avg',
+    label: 'Weight Flow (g/s)',
+    type: 'avg',
+    group: 'weightflow',
+    default: false,
+  },
 
   // --- PRESSURE ---
   {
@@ -85,21 +137,21 @@ export const columnConfig = [
   // --- TARGET PRESSURE ---
   {
     id: 'tp_se',
-    label: 'Target Pressure',
+    label: 'Target Pressure (bar)',
     type: 'se',
     group: 'target_pressure',
     default: false,
   },
   {
     id: 'tp_mm',
-    label: 'Target Pressure',
+    label: 'Target Pressure (bar)',
     type: 'mm',
     group: 'target_pressure',
     default: false,
   },
   {
     id: 'tp_avg',
-    label: 'Target Pressure',
+    label: 'Target Pressure (bar)',
     type: 'avg',
     group: 'target_pressure',
     default: false,
@@ -132,21 +184,21 @@ export const columnConfig = [
   // --- TARGET FLOW ---
   {
     id: 'tf_se',
-    label: 'Target Flow',
+    label: 'Target Flow (ml/s)',
     type: 'se',
     group: 'target_flow',
     default: false,
   },
   {
     id: 'tf_mm',
-    label: 'Target Flow',
+    label: 'Target Flow (ml/s)',
     type: 'mm',
     group: 'target_flow',
     default: false,
   },
   {
     id: 'tf_avg',
-    label: 'Target Flow',
+    label: 'Target Flow (ml/s)',
     type: 'avg',
     group: 'target_flow',
     default: false,
@@ -201,46 +253,23 @@ export const columnConfig = [
   // --- TARGET TEMPERATURE ---
   {
     id: 'tt_se',
-    label: 'Target Temp',
+    label: 'Target Temp (℃)',
     type: 'se',
     group: 'target_temp',
     default: false,
   },
   {
     id: 'tt_mm',
-    label: 'Target Temp',
+    label: 'Target Temp (℃)',
     type: 'mm',
     group: 'target_temp',
     default: false,
   },
   {
     id: 'tt_avg',
-    label: 'Target Temp',
+    label: 'Target Temp (℃)',
     type: 'avg',
     group: 'target_temp',
-    default: false,
-  },
-
-  // --- WEIGHT DETAILS ---
-  {
-    id: 'w_se',
-    label: 'Weight Details (g)',
-    type: 'se',
-    group: 'weight_det',
-    default: false,
-  },
-  {
-    id: 'w_mm',
-    label: 'Weight Details (g)',
-    type: 'mm',
-    group: 'weight_det',
-    default: false,
-  },
-  {
-    id: 'w_avg',
-    label: 'Weight Details (g)',
-    type: 'avg',
-    group: 'weight_det',
     default: false,
   },
 
@@ -303,14 +332,59 @@ export const groups = {
   temp: 'Temperature (℃)',
   target_temp: 'Target Temp (℃)',
   weight: 'Weight (g)',
-  weight_det: 'Weight Details (g)',
+  weightflow: 'Weight Flow (g/s)',
   system: 'System Info',
 };
 
 export const utilityColors = {
-  stopRed: '#DC2626',
-  warningOrange: 'var(--color-orange-600)',
+  stopRed: 'var(--analyzer-pred-stop-red)',
+  warningOrange: 'var(--analyzer-warning-orange)',
+  predictionStopRed: 'var(--analyzer-pred-stop-red)',
+  predictionInfoBlue: 'var(--analyzer-pred-info-blue)',
 };
+
+export const analyzerUiColors = {
+  warningOrange: 'var(--analyzer-warning-orange)',
+  warningOrangeStrong: 'var(--analyzer-warning-orange-strong)',
+  warningOrangeShadow: 'var(--analyzer-warning-orange-shadow)',
+  sourceBadgeGmBg: 'var(--analyzer-source-gm-badge-bg)',
+  sourceBadgeGmBorder: 'var(--analyzer-source-gm-badge-border)',
+  sourceBadgeGmText: 'var(--analyzer-source-gm-badge-text)',
+  sourceBadgeWebBg: 'var(--analyzer-source-web-badge-bg)',
+  sourceBadgeWebBorder: 'var(--analyzer-source-web-badge-border)',
+  sourceBadgeWebText: 'var(--analyzer-source-web-badge-text)',
+  brewByTimeLabelBg: 'var(--analyzer-brew-by-time-label-bg)',
+  brewByTimeLabelBorder: 'var(--analyzer-brew-by-time-label-border)',
+  brewByTimeLabelText: 'var(--analyzer-brew-by-time-label-text)',
+  brewByWeightLabelBg: 'var(--analyzer-brew-by-weight-label-bg)',
+  brewByWeightLabelBorder: 'var(--analyzer-brew-by-weight-label-border)',
+  brewByWeightLabelText: 'var(--analyzer-brew-by-weight-label-text)',
+  notesTasteBitter: 'var(--analyzer-notes-taste-bitter)',
+  notesTasteBalanced: 'var(--analyzer-notes-taste-balanced)',
+  notesTasteSour: 'var(--analyzer-notes-taste-sour)',
+  phaseLine: 'var(--analyzer-phase-line)',
+  stopLabel: 'var(--analyzer-stop-label)',
+};
+
+export const notesTasteStyles = {
+  bitter: {
+    color: analyzerUiColors.notesTasteBitter,
+    borderColor: analyzerUiColors.notesTasteBitter,
+    selectedBackground: 'color-mix(in srgb, var(--analyzer-notes-taste-bitter) 12%, transparent)',
+  },
+  balanced: {
+    color: analyzerUiColors.notesTasteBalanced,
+    borderColor: analyzerUiColors.notesTasteBalanced,
+    selectedBackground: 'color-mix(in srgb, var(--analyzer-notes-taste-balanced) 12%, transparent)',
+  },
+  sour: {
+    color: analyzerUiColors.notesTasteSour,
+    borderColor: analyzerUiColors.notesTasteSour,
+    selectedBackground: 'color-mix(in srgb, var(--analyzer-notes-taste-sour) 12%, transparent)',
+  },
+};
+
+export const getNotesTasteStyle = taste => notesTasteStyles[taste] || null;
 
 /**
  * Tailwind Color Classes for Groups
@@ -318,53 +392,53 @@ export const utilityColors = {
 export const groupColors = {
   basics: {
     bg: 'bg-base-content/5',
-    text: 'text-base-content', 
-    anchor: '#64748b', 
+    text: 'text-base-content',
+    anchor: '#64748b',
   },
   pressure: {
     bg: 'bg-blue-500/5',
-    text: 'text-[#0066CC] dark:text-[#58A6FF]',
-    anchor: '#0066CC',
+    text: 'text-[var(--analyzer-pressure-text)]',
+    anchor: 'var(--analyzer-pressure-anchor)',
   },
-  target_pressure: { 
-    bg: 'bg-blue-500/5', 
-    text: 'text-[#0066CC] dark:text-[#58A6FF]', 
-    anchor: '#0066CC' 
+  target_pressure: {
+    bg: 'bg-blue-500/5',
+    text: 'text-[var(--analyzer-target-pressure-text)]',
+    anchor: 'var(--analyzer-target-pressure-anchor)',
   },
   flow: {
     bg: 'bg-green-500/5',
-    text: 'text-[#63993D] dark:text-[#82C952]',
-    anchor: '#63993D',
+    text: 'text-[var(--analyzer-flow-text)]',
+    anchor: 'var(--analyzer-flow-anchor)',
   },
-  target_flow: { 
-    bg: 'bg-green-500/5', 
-    text: 'text-[#63993D] dark:text-[#82C952]', 
-    anchor: '#63993D' 
+  target_flow: {
+    bg: 'bg-green-500/5',
+    text: 'text-[var(--analyzer-target-flow-text)]',
+    anchor: 'var(--analyzer-target-flow-anchor)',
   },
-  puckflow: { 
-    bg: 'bg-emerald-500/5', 
-    text: 'text-[#059669] dark:text-[#10B981]', 
-    anchor: '#059669' 
+  puckflow: {
+    bg: 'bg-emerald-500/5',
+    text: 'text-[var(--analyzer-puckflow-text)]',
+    anchor: 'var(--analyzer-puckflow-anchor)',
   },
   temp: {
     bg: 'bg-orange-500/5',
-    text: 'text-[#F0561D] dark:text-[#FF7A45]',
-    anchor: '#F0561D',
+    text: 'text-[var(--analyzer-temp-text)]',
+    anchor: 'var(--analyzer-temp-anchor)',
   },
-  target_temp: { 
-    bg: 'bg-orange-500/5', 
-    text: 'text-[#731F00] dark:text-[#BC2D00]', 
-    anchor: '#731F00' 
+  target_temp: {
+    bg: 'bg-orange-500/5',
+    text: 'text-[var(--analyzer-target-temp-text)]',
+    anchor: 'var(--analyzer-target-temp-anchor)',
   },
   weight: {
     bg: 'bg-violet-500/5',
-    text: 'text-[#8B5CF6] dark:text-[#A78BFA]',
-    anchor: '#8B5CF6',
+    text: 'text-[var(--analyzer-weight-text)]',
+    anchor: 'var(--analyzer-weight-anchor)',
   },
-  weight_det: { 
-    bg: 'bg-violet-500/5', 
-    text: 'text-[#8B5CF6] dark:text-[#A78BFA]', 
-    anchor: '#8B5CF6' 
+  weightflow: {
+    bg: 'bg-violet-500/5',
+    text: 'text-[var(--analyzer-weightflow-text)]',
+    anchor: 'var(--analyzer-weightflow-anchor)',
   },
   system: {
     bg: 'bg-base-content/5',
@@ -389,6 +463,20 @@ export const getAllColumns = () => {
 };
 
 /**
+ * Get all column IDs for one logical group.
+ * Used by built-in presets such as "System Info".
+ * @param {string} groupKey - Column group ID
+ * @returns {Set<string>}
+ */
+export const getColumnsByGroup = groupKey => {
+  const columns = new Set();
+  columnConfig.forEach(col => {
+    if (col.group === groupKey) columns.add(col.id);
+  });
+  return columns;
+};
+
+/**
  * Remove .json extension from filename
  * @param {string} name - Filename
  * @returns {string} Clean name
@@ -396,6 +484,214 @@ export const getAllColumns = () => {
 export const cleanName = name => {
   if (!name) return '';
   return name.replace(/\.json$/i, '');
+};
+
+export const getProfileDisplayLabel = (profile, fallback = 'Unknown') => {
+  if (typeof profile === 'string') {
+    return cleanName(profile).trim() || fallback;
+  }
+
+  const rawLabel =
+    profile?.label ||
+    profile?.data?.label ||
+    profile?.name ||
+    profile?.data?.name ||
+    profile?.fileName ||
+    profile?.data?.fileName ||
+    profile?.exportName ||
+    profile?.data?.exportName ||
+    fallback;
+  return cleanName(String(rawLabel || '')).trim() || fallback;
+};
+
+export const normalizeCompareTargetDisplayMode = value => {
+  if (value === COMPARE_TARGET_DISPLAY_MODES.NONE) return value;
+  if (value === COMPARE_TARGET_DISPLAY_MODES.MAIN_SHOT_ONLY) return value;
+  if (value === COMPARE_TARGET_DISPLAY_MODES.PER_SHOT) return value;
+  return COMPARE_TARGET_DISPLAY_MODES.NONE;
+};
+
+export const getShotIdentityKey = shot => {
+  if (!shot) return '';
+
+  const source = shot.source || 'temp';
+  if (source === 'gaggimate') {
+    return `gaggimate:${String(shot.id || '')}`;
+  }
+  if (source === 'temp') {
+    return `temp:${String(shot.storageKey || shot.name || shot.id || '')}`;
+  }
+
+  return `browser:${String(shot.storageKey || shot.name || shot.id || '')}`;
+};
+
+export const getProfilePinKey = profile => {
+  let rawValue = '';
+  if (!profile) return '';
+
+  if (typeof profile === 'string') {
+    rawValue = profile;
+  } else {
+    rawValue =
+      profile.canonicalProfileName ||
+      profile.profileName ||
+      profile.profile ||
+      profile.label ||
+      profile.data?.label ||
+      profile.name ||
+      profile.data?.name ||
+      profile.fileName ||
+      profile.data?.fileName ||
+      profile.exportName ||
+      profile.data?.exportName ||
+      '';
+  }
+
+  const normalized = cleanName(rawValue).trim().toLowerCase();
+  return normalized === 'no profile loaded' ? '' : normalized;
+};
+
+export const getShotPinBucketKey = shot => {
+  const profileKey = getProfilePinKey(shot);
+  return profileKey || PINNED_NO_PROFILE_BUCKET;
+};
+
+function normalizePinnedProfiles(rawValue) {
+  if (!Array.isArray(rawValue)) return [];
+
+  const seen = new Set();
+  const normalized = [];
+  for (const entry of rawValue) {
+    // Persist only canonical profile keys so Analyzer and Statistics can share
+    // the same pin state even when the backing source differs.
+    const key = getProfilePinKey(entry);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(key);
+  }
+  return normalized;
+}
+
+function normalizePinnedShotsByProfile(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return {};
+
+  const normalized = {};
+
+  Object.entries(rawValue).forEach(([bucketKey, shotKeys]) => {
+    // Each bucket represents one profile context (or the explicit no-profile
+    // bucket), so duplicates need to be removed per bucket instead of globally.
+    const resolvedBucketKey = String(bucketKey || '').trim() || PINNED_NO_PROFILE_BUCKET;
+    if (!Array.isArray(shotKeys)) return;
+
+    const seen = new Set();
+    const normalizedShotKeys = [];
+    shotKeys.forEach(shotKey => {
+      const nextShotKey = String(shotKey || '').trim();
+      if (!nextShotKey || seen.has(nextShotKey)) return;
+      seen.add(nextShotKey);
+      normalizedShotKeys.push(nextShotKey);
+    });
+
+    if (normalizedShotKeys.length > 0) {
+      normalized[resolvedBucketKey] = normalizedShotKeys;
+    }
+  });
+
+  return normalized;
+}
+
+export const getPinnedProfiles = () =>
+  normalizePinnedProfiles(loadFromStorage(ANALYZER_DB_KEYS.PINNED_PROFILES, []));
+
+export const getPinnedShotsByProfile = () =>
+  normalizePinnedShotsByProfile(loadFromStorage(ANALYZER_DB_KEYS.PINNED_SHOTS_BY_PROFILE, {}));
+
+export const isProfilePinned = (profile, pinnedProfiles = getPinnedProfiles()) =>
+  pinnedProfiles.includes(getProfilePinKey(profile));
+
+export const isShotPinned = (
+  shot,
+  bucketKey = getShotPinBucketKey(shot),
+  pinnedShotsByProfile = getPinnedShotsByProfile(),
+) => {
+  const shotKey = typeof shot === 'string' ? shot : getShotIdentityKey(shot);
+  if (!shotKey) return false;
+  return (pinnedShotsByProfile[bucketKey] || []).includes(shotKey);
+};
+
+export const isShotPinnedAnywhere = (shot, pinnedShotsByProfile = getPinnedShotsByProfile()) => {
+  const shotKey = typeof shot === 'string' ? shot : getShotIdentityKey(shot);
+  if (!shotKey) return false;
+  return Object.values(pinnedShotsByProfile).some(bucket => bucket.includes(shotKey));
+};
+
+export const toggleProfilePin = profile => {
+  const profileKey = getProfilePinKey(profile);
+  const pinnedProfiles = getPinnedProfiles();
+  if (!profileKey) {
+    return { changed: false, reason: 'invalid-profile', pinnedProfiles };
+  }
+
+  const isPinned = pinnedProfiles.includes(profileKey);
+  if (!isPinned && pinnedProfiles.length >= MAX_PINNED_PROFILES) {
+    return { changed: false, reason: 'profile-limit', pinnedProfiles };
+  }
+
+  const nextPinnedProfiles = isPinned
+    ? pinnedProfiles.filter(entry => entry !== profileKey)
+    : [...pinnedProfiles, profileKey];
+
+  saveToStorage(ANALYZER_DB_KEYS.PINNED_PROFILES, nextPinnedProfiles);
+  return { changed: true, reason: null, pinnedProfiles: nextPinnedProfiles, profileKey };
+};
+
+export const toggleShotPin = (shot, explicitBucketKey = '') => {
+  const shotKey = typeof shot === 'string' ? shot : getShotIdentityKey(shot);
+  const bucketKey = explicitBucketKey || getShotPinBucketKey(shot);
+  const pinnedShotsByProfile = getPinnedShotsByProfile();
+
+  if (!shotKey) {
+    return { changed: false, reason: 'invalid-shot', pinnedShotsByProfile, bucketKey };
+  }
+
+  // Shot pins are scoped to the active profile bucket so the same shot can be
+  // promoted differently depending on which profile context is currently active.
+  const currentBucket = [...(pinnedShotsByProfile[bucketKey] || [])];
+  const isPinned = currentBucket.includes(shotKey);
+
+  if (!isPinned && currentBucket.length >= MAX_PINNED_SHOTS_PER_PROFILE) {
+    return { changed: false, reason: 'shot-limit', pinnedShotsByProfile, bucketKey };
+  }
+
+  const nextBucket = isPinned
+    ? currentBucket.filter(entry => entry !== shotKey)
+    : [...currentBucket, shotKey];
+
+  const nextPinnedShotsByProfile = { ...pinnedShotsByProfile };
+  if (nextBucket.length > 0) {
+    nextPinnedShotsByProfile[bucketKey] = nextBucket;
+  } else {
+    delete nextPinnedShotsByProfile[bucketKey];
+  }
+
+  saveToStorage(ANALYZER_DB_KEYS.PINNED_SHOTS_BY_PROFILE, nextPinnedShotsByProfile);
+  return {
+    changed: true,
+    reason: null,
+    pinnedShotsByProfile: nextPinnedShotsByProfile,
+    bucketKey,
+    shotKey,
+  };
+};
+
+export const getShotDisplayName = shot => {
+  if (!shot) return 'Unknown';
+
+  if (shot.source === 'gaggimate') {
+    return `#${shot.id || shot.name || 'Unknown'}`;
+  }
+
+  return cleanName(shot.name || shot.storageKey || shot.id || 'Unknown');
 };
 
 /**
@@ -432,46 +728,192 @@ export const formatDuration = samples => {
 
 /**
  * Auto-detect dose in from profile name (e.g., "18g Turbo")
- * Scans all 'g' occurrences from right-to-left to handle cases like "My Great 18g Profile"
+ * Accepts only one standalone gram value in the 0-30g range and ignores
+ * ranges or ambiguous patterns such as "10-20g" or "10 to 20 g".
  * @param {string} profileName - Profile name
  * @returns {number|null} Detected dose or null
  */
-export const detectDoseFromProfileName = profileName => {
-  if (!profileName) return null;
+const MAX_AUTO_DETECTED_DOSE_GRAMS = 30;
+const RANGE_SEPARATOR_CHARS = new Set(['-', '–', '—', '−']);
 
-  // Find dose patterns like "18g", "20.5g" without regex (avoids ReDoS, SonarQube S5852)
-  const lower = profileName.toLowerCase();
-  let searchPos = lower.length;
-  let gIndex;
+function isDigitChar(char) {
+  return char >= '0' && char <= '9';
+}
 
-  // Scan all 'g' occurrences from right-to-left
-  while ((gIndex = lower.lastIndexOf('g', searchPos - 1)) !== -1) {
-    if (gIndex < 1) {
-      searchPos = gIndex;
+function isAsciiLetterChar(char) {
+  return char >= 'a' && char <= 'z';
+}
+
+function isWhitespaceChar(char) {
+  return char === ' ' || char === '\n' || char === '\r' || char === '\t';
+}
+
+function skipWhitespaceForward(text, index) {
+  let cursor = index;
+  while (cursor < text.length && isWhitespaceChar(text[cursor])) {
+    cursor += 1;
+  }
+  return cursor;
+}
+
+function skipWhitespaceBackward(text, index) {
+  let cursor = index;
+  while (cursor >= 0 && isWhitespaceChar(text[cursor])) {
+    cursor -= 1;
+  }
+  return cursor;
+}
+
+function readAsciiWordForward(text, index) {
+  let cursor = index;
+  while (cursor < text.length && isAsciiLetterChar(text[cursor])) {
+    cursor += 1;
+  }
+  return text.slice(index, cursor);
+}
+
+function readAsciiWordBackward(text, index) {
+  let cursor = index;
+  while (cursor >= 0 && isAsciiLetterChar(text[cursor])) {
+    cursor -= 1;
+  }
+  return text.slice(cursor + 1, index + 1);
+}
+
+function readDoseNumberToken(text, index) {
+  let cursor = index;
+  let seenDecimalSeparator = false;
+
+  while (cursor < text.length) {
+    const char = text[cursor];
+    if (isDigitChar(char)) {
+      cursor += 1;
       continue;
     }
 
-    // Walk backwards from 'g' to collect the number
-    let start = gIndex;
-    while (
-      start > 0 &&
-      ((lower[start - 1] >= '0' && lower[start - 1] <= '9') || lower[start - 1] === '.')
+    const nextChar = text[cursor + 1];
+    const previousChar = text[cursor - 1];
+    if (
+      char === '.' &&
+      !seenDecimalSeparator &&
+      isDigitChar(previousChar) &&
+      isDigitChar(nextChar)
     ) {
-      start--;
+      seenDecimalSeparator = true;
+      cursor += 1;
+      continue;
     }
 
-    if (start < gIndex) {
-      const candidate = lower.slice(start, gIndex);
-      const value = parseFloat(candidate);
-      if (!isNaN(value) && value > 0) {
-        return value;
-      }
-    }
-
-    searchPos = gIndex;
+    break;
   }
 
-  return null;
+  if (cursor === index) return null;
+
+  return {
+    raw: text.slice(index, cursor),
+    end: cursor,
+  };
+}
+
+function isRangeValueBefore(text, numberStart) {
+  const previousTokenIndex = skipWhitespaceBackward(text, numberStart - 1);
+  if (previousTokenIndex < 0) return false;
+
+  const previousChar = text[previousTokenIndex];
+  if (RANGE_SEPARATOR_CHARS.has(previousChar)) {
+    const beforeSeparatorIndex = skipWhitespaceBackward(text, previousTokenIndex - 1);
+    return (
+      beforeSeparatorIndex >= 0 &&
+      (isDigitChar(text[beforeSeparatorIndex]) || text[beforeSeparatorIndex] === 'g')
+    );
+  }
+
+  if (!isAsciiLetterChar(previousChar)) return false;
+
+  const previousWord = readAsciiWordBackward(text, previousTokenIndex);
+  if (previousWord !== 'to') return false;
+
+  const beforeWordIndex = skipWhitespaceBackward(text, previousTokenIndex - previousWord.length);
+  return beforeWordIndex >= 0 && isDigitChar(text[beforeWordIndex]);
+}
+
+function isRangeValueAfter(text, unitIndex) {
+  const nextTokenIndex = skipWhitespaceForward(text, unitIndex + 1);
+  if (nextTokenIndex >= text.length) return false;
+
+  const nextChar = text[nextTokenIndex];
+  if (RANGE_SEPARATOR_CHARS.has(nextChar)) {
+    const afterSeparatorIndex = skipWhitespaceForward(text, nextTokenIndex + 1);
+    return afterSeparatorIndex < text.length && isDigitChar(text[afterSeparatorIndex]);
+  }
+
+  if (!isAsciiLetterChar(nextChar)) return false;
+
+  const nextWord = readAsciiWordForward(text, nextTokenIndex);
+  if (nextWord !== 'to') return false;
+
+  const afterWordIndex = skipWhitespaceForward(text, nextTokenIndex + nextWord.length);
+  return afterWordIndex < text.length && isDigitChar(text[afterWordIndex]);
+}
+
+function readDoseCandidate(text, startIndex) {
+  const numberToken = readDoseNumberToken(text, startIndex);
+  if (!numberToken) {
+    return { nextIndex: startIndex + 1, value: null };
+  }
+
+  const unitIndex = skipWhitespaceForward(text, numberToken.end);
+  if (unitIndex >= text.length || text[unitIndex] !== 'g') {
+    return {
+      nextIndex: Math.max(startIndex + 1, numberToken.end),
+      value: null,
+    };
+  }
+
+  const charAfterUnit = text[unitIndex + 1];
+  if (charAfterUnit && (isAsciiLetterChar(charAfterUnit) || isDigitChar(charAfterUnit))) {
+    return {
+      nextIndex: unitIndex + 1,
+      value: null,
+    };
+  }
+
+  if (isRangeValueBefore(text, startIndex) || isRangeValueAfter(text, unitIndex)) {
+    return {
+      nextIndex: unitIndex + 1,
+      value: null,
+    };
+  }
+
+  const value = Number.parseFloat(numberToken.raw);
+  return {
+    nextIndex: unitIndex + 1,
+    value:
+      Number.isFinite(value) && value > 0 && value <= MAX_AUTO_DETECTED_DOSE_GRAMS ? value : null,
+  };
+}
+
+export const detectDoseFromProfileName = profileName => {
+  if (!profileName) return null;
+
+  const lower = profileName.toLowerCase();
+  const candidates = [];
+
+  let cursor = 0;
+  while (cursor < lower.length) {
+    if (!isDigitChar(lower[cursor])) {
+      cursor += 1;
+      continue;
+    }
+
+    const candidate = readDoseCandidate(lower, cursor);
+    if (candidate.value !== null) {
+      candidates.push(candidate.value);
+    }
+    cursor = candidate.nextIndex;
+  }
+
+  return candidates.length === 1 ? candidates[0] : null;
 };
 
 /**
@@ -647,13 +1089,3 @@ export const clearLibrary = collection => {
 };
 
 // Helper style for CSS Masking
-export const maskStyle = {
-  maskImage: `url(${DeepDiveLogoOutline})`,
-  WebkitMaskImage: `url(${DeepDiveLogoOutline})`,
-  maskSize: 'contain',
-  WebkitMaskSize: 'contain',
-  maskRepeat: 'no-repeat',
-  WebkitMaskRepeat: 'no-repeat',
-  maskPosition: 'center',
-  WebkitMaskPosition: 'center',
-};

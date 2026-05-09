@@ -1,10 +1,12 @@
 import { faEye, faEyeSlash, faFileExport, faFileImport } from '@fortawesome/free-solid-svg-icons';
+import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
+import { Tooltip } from '../../components/Tooltip.jsx';
 import { timezones } from '../../config/zones.js';
 import { machine } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
@@ -55,6 +57,9 @@ const ledControl = computed(() => machine.value?.capabilities?.ledControl ?? fal
 // Pressure sensor availability affects whether we show steam pump assist as a flow rate or percentage
 const pressureAvailable = computed(() => machine.value?.capabilities?.pressure ?? false);
 
+// Live ToF distance reading from the machine, used to populate tank distance fields
+const tofDistance = computed(() => machine.value?.status?.tofDistance);
+
 /** REUSABLE FORM COMPONENTS */
 
 // Wrapper for form fields to provide consistent spacing, labels, and help text
@@ -70,14 +75,14 @@ const Field = ({ label, id, children, helpText, className = 'mb-4' }) => (
   </div>
 );
 
-// Input component that can optionally display a unit next to the input field, with proper accessibility attributes for the unit
-const Input = ({ id, unit, unitLabel, className = '', ...props }) => (
+// Optionally display a unit next to the input field.
+const Input = ({ id, name, unit, unitLabel, className = '', ...props }) => (
   <div className='input-group'>
     <label
       htmlFor={id}
       className={`input input-bordered flex w-full items-center gap-2 ${className}`}
     >
-      <input id={id} className='grow' {...props} />
+      <input id={id} name={name || id} className='grow' {...props} />
       {unit && (
         <span
           className='text-sm whitespace-nowrap opacity-50'
@@ -90,13 +95,14 @@ const Input = ({ id, unit, unitLabel, className = '', ...props }) => (
   </div>
 );
 
-// Toggle component styled as a switch, with proper label association and accessibility attributes
+// Switch-styled toggle components for boolean settings.
 const Toggle = ({ label, id, checked, onChange }) => (
   <div className='form-control mb-4'>
     <label className='label cursor-pointer p-0'>
       <span className='label-text text-sm font-medium'>{label}</span>
       <input
         id={id}
+        name={id}
         type='checkbox'
         className='toggle toggle-primary'
         checked={!!checked}
@@ -106,10 +112,10 @@ const Toggle = ({ label, id, checked, onChange }) => (
   </div>
 );
 
-// Select component wrapped in a Field for consistent styling, with proper label association and accessibility attributes
+// Select component wrapped in a Field.
 const Select = ({ label, id, children, ...props }) => (
   <Field label={label} id={id}>
-    <select id={id} className='select select-bordered w-full' {...props}>
+    <select id={id} name={id} className='select select-bordered w-full' {...props}>
       {children}
     </select>
   </Field>
@@ -148,9 +154,7 @@ const normalizeSettings = data => {
   return transformed;
 };
 
-/** REUSABLE FORM COMPONENTS */
-
-// Function to parse the autowakeupSchedules string from the settings into an array of schedule objects with time and days,
+// Parse the autowakeupSchedules string from the settings into an array of schedule objects with time and days,
 // including validation and fallback to a default schedule if parsing fails
 const parseSchedules = scheduleStr => {
   if (typeof scheduleStr !== 'string' || !scheduleStr.trim()) {
@@ -162,7 +166,7 @@ const parseSchedules = scheduleStr => {
       const [time, daysStr] = str.split('|');
       if (time && daysStr?.length === 7) {
         return {
-          id: crypto.randomUUID(), // Generate a unique ID for each schedule for stable React rendering
+          id: crypto.randomUUID(),
           time,
           days: daysStr.split('').map(d => d === '1'),
         };
@@ -173,8 +177,7 @@ const parseSchedules = scheduleStr => {
   return parsed.length > 0 ? parsed : [{ ...DEFAULT_WAKEUP_SCHEDULE, id: crypto.randomUUID() }];
 };
 
-// Reducer function to manage the state of automatic wakeup schedules,
-// handling initialization, addition, removal, and updates to time and days based on dispatched actions
+// Function to manage the state of automatic wakeup schedules, handling initialization, addition, removal, and updates to time and days based on dispatched actions
 function autoWakeupReducer(state, action) {
   switch (action.type) {
     case 'INIT':
@@ -182,7 +185,6 @@ function autoWakeupReducer(state, action) {
         ? action.payload
         : [{ ...DEFAULT_WAKEUP_SCHEDULE, id: crypto.randomUUID() }];
     case 'ADD':
-      // Deep copy days array to avoid shared references
       return [
         ...state,
         {
@@ -192,7 +194,6 @@ function autoWakeupReducer(state, action) {
         },
       ];
     case 'REMOVE':
-      // Filter by ID for stability, but prevent removing the last schedule to ensure there's always at least one
       return state.length > 1 ? state.filter(s => s.id !== action.id) : state;
     case 'UPDATE_TIME':
       return state.map(s => (s.id === action.id ? { ...s, time: action.time } : s));
@@ -210,16 +211,14 @@ function autoWakeupReducer(state, action) {
   }
 }
 
-// Special handlers for fields that require more complex state updates or side effects when changed,
-// such as updating the dashboard layout immediately upon change
+//Handlers for fields that require more complex state updates or side effects when changed
 const SPECIAL_HANDLERS = {
   dashboardLayout: (setFormData, value, newState) => {
     setDashboardLayout(value);
   },
 };
 
-// Main Settings component that manages the overall state of the settings form, handles fetching and saving settings,
-// and renders the form with all the different sections and fields, including the PluginCard for plugin integrations
+// Main Settings component
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({});
@@ -231,37 +230,27 @@ export function Settings() {
   const removeAutoWakeupSchedule = id => dispatchAutoWakeup({ type: 'REMOVE', id });
   const updateAutoWakeupTime = (id, time) => dispatchAutoWakeup({ type: 'UPDATE_TIME', id, time });
   const updateAutoWakeupDay = (id, dayIndex, enabled) =>
-    dispatchAutoWakeup({
-      type: 'UPDATE_DAY',
-      id,
-      dayIndex,
-      enabled,
-    });
+    dispatchAutoWakeup({ type: 'UPDATE_DAY', id, dayIndex, enabled });
   const saveMessageTimeoutRef = useRef(null);
   const formRef = useRef();
 
-  // Fetch settings from the API when the component mounts, and handle loading state and errors
   const { isLoading, data: fetchedSettings } = useQuery('settings', async () => {
     const response = await fetch('/api/settings');
     if (!response.ok) throw new Error('Failed to fetch');
     return await response.json();
   });
 
-  // When fetched settings change, normalize them and update the form state, and also parse the autowakeup schedules and initialize the reducer state
   useEffect(() => {
     if (fetchedSettings) {
       setFormData(normalizeSettings(fetchedSettings));
       const schedules = parseSchedules(fetchedSettings.autowakeupSchedules);
       dispatchAutoWakeup({ type: 'INIT', payload: schedules });
     } else {
-      // If no settings are fetched, reset to defaults
       setFormData({});
       dispatchAutoWakeup({ type: 'INIT' });
     }
   }, [fetchedSettings]);
 
-  // Initialize the current theme from localStorage when the component mounts,
-  // and set up a cleanup function to clear any pending save message timeouts when the component unmounts
   useEffect(() => {
     setCurrentTheme(getStoredTheme());
     return () => {
@@ -269,8 +258,6 @@ export function Settings() {
     };
   }, []);
 
-  // onChange handler for form fields that updates the formData state, with special handling for certain fields like PID and steam pump percentage,
-  // and also invokes any special handlers defined for specific fields to handle side effects or additional state updates
   const onChange = key => e => {
     const target = e.currentTarget;
     const value = target.type === 'checkbox' ? target.checked : target.value;
@@ -290,7 +277,11 @@ export function Settings() {
         }
       }
 
-      // Special handling for steamPumpPercentage to convert from percentage to raw value for firmware compatibility when the field changes in the form
+      // When standby display is toggled off, zero out the brightness value
+      if (key === 'standbyDisplayEnabled' && !value) {
+        newState.standbyBrightness = '0';
+      }
+
       if (SPECIAL_HANDLERS[key]) {
         SPECIAL_HANDLERS[key](setFormData, value, newState);
       }
@@ -299,8 +290,6 @@ export function Settings() {
     });
   };
 
-  // onSubmit handler for the form that prepares the payload for saving settings,
-  // including handling of special fields and conversion to the format expected by the firmware
   const onSubmit = useCallback(
     async (e, restart = false) => {
       if (e) e.preventDefault();
@@ -313,33 +302,28 @@ export function Settings() {
       try {
         const payload = new FormData();
 
-        // Prepare complex fields that require combining multiple form values into the format expected by the firmware
         const pidString = `${formData.pid || '0,0,0'},${formData.kf || '0.000'}`;
         const scheduleString = autowakeupSchedules
           .map(s => `${s.time}|${s.days.map(d => (d ? '1' : '0')).join('')}`)
           .join(';');
 
-        // Define keys to skip during the generic payload construction, as they are handled separately or require special formatting
         const SKIPPED_KEYS = [...EXCLUDED_FIELDS, 'pid', 'kf'];
 
         Object.entries(formData).forEach(([key, value]) => {
           if (SKIPPED_KEYS.includes(key) || value === undefined || value === null) return;
 
-          // Special handling for steamPumpPercentage to convert from percentage to raw value for firmware compatibility when preparing the payload for saving
           if (key === 'steamPumpPercentage') {
             const rawNum = parseFloat(value);
             payload.append(key, isNaN(rawNum) ? 0 : Math.round(rawNum * 10));
             return;
           }
 
-          // Convert numeric fields to actual numbers for firmware compatibility when preparing the payload for saving
           if (NUMERIC_FIELDS.includes(key)) {
             const numValue = parseFloat(value);
             payload.append(key, isNaN(numValue) ? 0 : numValue);
             return;
           }
 
-          // Convert boolean values to '1' or '0' strings for firmware compatibility when preparing the payload for saving
           if (typeof value === 'boolean') {
             payload.append(key, value ? '1' : '0');
             return;
@@ -348,7 +332,6 @@ export function Settings() {
           payload.append(key, value);
         });
 
-        // Append the combined PID string and the schedule string to the payload, as they require special formatting for the firmware
         payload.append('pid', pidString);
         payload.append('autowakeupSchedules', scheduleString);
 
@@ -374,28 +357,22 @@ export function Settings() {
     [formData, autowakeupSchedules, submitting],
   );
 
-  // Handler for exporting settings to a JSON file, which prepares the data in the correct format expected by the firmware
   const onExport = useCallback(() => {
-    // Prepare the autowakeupSchedules in the format expected by the firmware for export
     const scheduleString = autowakeupSchedules
       .map(s => `${s.time}|${s.days.map(d => (d ? '1' : '0')).join('')}`)
       .join(';');
 
-    // Extract the PID and Kf values from formData to merge them back into the firmware format for export, while keeping the rest of the data intact
     const { kf, ...baseData } = formData;
 
-    // Merge the PID and Kf values back into the firmware format for export, and include the autowakeupSchedules in the correct format as well
     const finalExport = {
       ...baseData,
-      pid: `${formData.pid},${kf || '0.000'}`, // Merge them back into the firmware format
+      pid: `${formData.pid},${kf || '0.000'}`,
       autowakeupSchedules: scheduleString,
     };
 
-    // Use the utility function to trigger a download of the settings as a JSON file, with the filename 'settings.json'
     downloadJson(finalExport, 'settings.json');
   }, [formData, autowakeupSchedules]);
 
-  // Handler for importing settings from a JSON file, which reads the file, parses the JSON, normalizes it for the form, and updates the state accordingly
   const onUpload = function (evt) {
     if (evt.target.files.length) {
       const file = evt.target.files[0];
@@ -422,9 +399,16 @@ export function Settings() {
     evt.target.value = '';
   };
 
+  if (isLoading) {
+    return (
+      <div className='flex w-full flex-row items-center justify-center py-16'>
+        <Spinner size={8} />
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* Header with title and import/export buttons, including proper labels and accessibility */}
       <div className='mb-4 flex flex-row items-center gap-2'>
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Settings</h2>
         <button
@@ -458,7 +442,6 @@ export function Settings() {
         />
       </div>
 
-      {/* Display a success or error message after saving settings, with appropriate styling based on the message type */}
       {saveMessage && (
         <div
           className={`alert mb-4 ${saveMessage.type === 'success' ? 'alert-success' : 'alert-error'}`}
@@ -589,6 +572,7 @@ export function Settings() {
             <Field label='Wi-Fi SSID' id='wifiSsid'>
               <input
                 id='wifiSsid'
+                name='wifiSsid'
                 type='text'
                 className='input input-bordered w-full'
                 placeholder='SSID'
@@ -600,6 +584,7 @@ export function Settings() {
               <div className='relative flex items-center'>
                 <input
                   id='wifiPassword'
+                  name='wifiPassword'
                   type={showPassword ? 'text' : 'password'}
                   className='input input-bordered w-full pr-12'
                   placeholder='Password'
@@ -620,6 +605,7 @@ export function Settings() {
             <Field label='Hostname' id='mdnsName'>
               <input
                 id='mdnsName'
+                name='mdnsName'
                 type='text'
                 className='input input-bordered w-full'
                 value={formData.mdnsName || ''}
@@ -688,6 +674,7 @@ export function Settings() {
             >
               <input
                 id='pumpModelCoeffs'
+                name='pumpModelCoeffs'
                 type='text'
                 className='input input-bordered w-full'
                 placeholder='10.205,5.521'
@@ -700,7 +687,7 @@ export function Settings() {
                 id='temperatureOffset'
                 type='number'
                 step='1'
-                inputmode='decimal'
+                inputMode='decimal'
                 unit='°C'
                 value={formData.temperatureOffset || ''}
                 onChange={onChange('temperatureOffset')}
@@ -735,7 +722,7 @@ export function Settings() {
                 id='steamPumpPercentage'
                 type='number'
                 step='0.1'
-                inputmode='decimal'
+                inputMode='decimal'
                 unit={pressureAvailable.value ? 'ml/s' : '%'}
                 value={formData.steamPumpPercentage || ''}
                 onChange={onChange('steamPumpPercentage')}
@@ -776,6 +763,7 @@ export function Settings() {
             <Field label='Main Brightness (1-16)' id='mainBrightness'>
               <input
                 id='mainBrightness'
+                name='mainBrightness'
                 type='number'
                 min='1'
                 max='16'
@@ -796,6 +784,7 @@ export function Settings() {
             <Field label='Standby Brightness (0-16)' id='standbyBrightness'>
               <input
                 id='standbyBrightness'
+                name='standbyBrightness'
                 type='number'
                 min='0'
                 max='16'
@@ -826,7 +815,7 @@ export function Settings() {
             </Select>
           </Card>
 
-          {/* Sunrise LED Settings - only show if the machine has LED control capability */}
+          {/* Sunrise LED Settings - only shown if the machine has LED control capability */}
           {ledControl.value && (
             <Card sm={10} lg={5} title='Sunrise Settings'>
               <p className='mb-4 text-sm opacity-70'>Color settings for idle LEDs.</p>
@@ -834,6 +823,7 @@ export function Settings() {
                 <Field label='Red' id='sunriseR'>
                   <input
                     id='sunriseR'
+                    name='sunriseR'
                     type='number'
                     className='input input-bordered w-full'
                     value={formData.sunriseR || ''}
@@ -843,6 +833,7 @@ export function Settings() {
                 <Field label='Green' id='sunriseG'>
                   <input
                     id='sunriseG'
+                    name='sunriseG'
                     type='number'
                     className='input input-bordered w-full'
                     value={formData.sunriseG || ''}
@@ -852,6 +843,7 @@ export function Settings() {
                 <Field label='Blue' id='sunriseB'>
                   <input
                     id='sunriseB'
+                    name='sunriseB'
                     type='number'
                     className='input input-bordered w-full'
                     value={formData.sunriseB || ''}
@@ -861,6 +853,7 @@ export function Settings() {
                 <Field label='White' id='sunriseW'>
                   <input
                     id='sunriseW'
+                    name='sunriseW'
                     type='number'
                     className='input input-bordered w-full'
                     value={formData.sunriseW || ''}
@@ -868,9 +861,10 @@ export function Settings() {
                   />
                 </Field>
               </div>
-              <Field label='External LED (0 - 255)' id='sunriseExtBrightness'>
+              <Field label='External LED (0-255)' id='sunriseExtBrightness'>
                 <input
                   id='sunriseExtBrightness'
+                  name='sunriseExtBrightness'
                   type='number'
                   min='0'
                   max='255'
@@ -879,23 +873,59 @@ export function Settings() {
                   onChange={onChange('sunriseExtBrightness')}
                 />
               </Field>
-              <Field label='Distance to bottom (mm)' id='emptyTankDistance'>
-                <Input
-                  id='emptyTankDistance'
-                  type='number'
-                  unit='mm'
-                  value={formData.emptyTankDistance || ''}
-                  onChange={onChange('emptyTankDistance')}
-                />
+              <Field label='Distance to bottom of tank' id='emptyTankDistance'>
+                <div className='flex flex-row gap-2'>
+                  <div className='flex-grow'>
+                    <Input
+                      id='emptyTankDistance'
+                      type='number'
+                      unit='mm'
+                      value={formData.emptyTankDistance || ''}
+                      onChange={onChange('emptyTankDistance')}
+                    />
+                  </div>
+                  <Tooltip content={`Set to current measurement: ${tofDistance.value}mm`}>
+                    <button
+                      type='button'
+                      className='btn btn-ghost'
+                      onClick={() =>
+                        setFormData(prev => ({
+                          ...prev,
+                          emptyTankDistance: String(tofDistance.value),
+                        }))
+                      }
+                    >
+                      <FontAwesomeIcon icon={faCrosshairs} />
+                    </button>
+                  </Tooltip>
+                </div>
               </Field>
-              <Field label='Distance to fill line (mm)' id='fullTankDistance'>
-                <Input
-                  id='fullTankDistance'
-                  type='number'
-                  unit='mm'
-                  value={formData.fullTankDistance || ''}
-                  onChange={onChange('fullTankDistance')}
-                />
+              <Field label='Distance to fill line' id='fullTankDistance'>
+                <div className='flex flex-row gap-2'>
+                  <div className='flex-grow'>
+                    <Input
+                      id='fullTankDistance'
+                      type='number'
+                      unit='mm'
+                      value={formData.fullTankDistance || ''}
+                      onChange={onChange('fullTankDistance')}
+                    />
+                  </div>
+                  <Tooltip content={`Set to current measurement: ${tofDistance.value}mm`}>
+                    <button
+                      type='button'
+                      className='btn btn-ghost'
+                      onClick={() =>
+                        setFormData(prev => ({
+                          ...prev,
+                          fullTankDistance: String(tofDistance.value),
+                        }))
+                      }
+                    >
+                      <FontAwesomeIcon icon={faCrosshairs} />
+                    </button>
+                  </Tooltip>
+                </div>
               </Field>
             </Card>
           )}
@@ -913,8 +943,6 @@ export function Settings() {
           </Card>
         </div>
 
-        {/* Action buttons for saving settings, with options to save normally or save and restart the machine,
-        and a warning about certain settings requiring a restart, all styled appropriately and with proper disabled states during submission */}
         <div className='pt-4 lg:col-span-10'>
           <div className='alert alert-warning mb-4 shadow-sm'>
             <span>Some options like Wi-Fi and NTP require a restart.</span>

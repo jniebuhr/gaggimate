@@ -9,9 +9,9 @@ ProfileManager::ProfileManager(fs::FS *fs, String dir, Settings &settings, Plugi
 void ProfileManager::setup() {
     ensureDirectory();
     auto profiles = listProfiles();
-    if (!_settings.isProfilesMigrated() || profiles.empty() || !loadSelectedProfile(selectedProfile)) {
+    if (getFavoritedProfiles().empty() || profiles.empty() || _settings.getSelectedProfile() == "" ||
+        !loadSelectedProfile(selectedProfile)) {
         migrate();
-        _settings.setProfilesMigrated(true);
         loadSelectedProfile(selectedProfile);
     }
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));
@@ -30,65 +30,27 @@ void ProfileManager::migrate() {
     Profile profile{};
     profile.id = generateShortID();
     profile.label = "Default";
-    profile.description = "Default profile generated from previous settings";
-    profile.temperature = _settings.getTargetBrewTemp();
+    profile.description = "Default profile";
+    profile.temperature = 93;
     profile.type = "standard";
-    if (_settings.getPressurizeTime() > 0) {
-        Phase pressurizePhase1{};
-        pressurizePhase1.name = "Pressurize";
-        pressurizePhase1.phase = PhaseType::PHASE_TYPE_PREINFUSION;
-        pressurizePhase1.valve = 0;
-        pressurizePhase1.duration = _settings.getPressurizeTime() / 1000;
-        pressurizePhase1.pumpIsSimple = true;
-        pressurizePhase1.pumpSimple = 100;
-        profile.phases.push_back(pressurizePhase1);
-    }
-    if (_settings.getInfusePumpTime() > 0) {
-        Phase infusePumpPhase{};
-        infusePumpPhase.name = "Bloom";
-        infusePumpPhase.phase = PhaseType::PHASE_TYPE_BREW;
-        infusePumpPhase.valve = 1;
-        infusePumpPhase.duration = _settings.getInfusePumpTime() / 1000;
-        infusePumpPhase.pumpIsSimple = true;
-        infusePumpPhase.pumpSimple = 100;
-        profile.phases.push_back(infusePumpPhase);
-    }
-    if (_settings.getInfuseBloomTime() > 0) {
-        Phase infuseBloomPhase1{};
-        infuseBloomPhase1.name = "Bloom";
-        infuseBloomPhase1.phase = PhaseType::PHASE_TYPE_BREW;
-        infuseBloomPhase1.valve = 1;
-        infuseBloomPhase1.duration = _settings.getInfuseBloomTime() / 1000;
-        infuseBloomPhase1.pumpIsSimple = true;
-        infuseBloomPhase1.pumpSimple = 0;
-        profile.phases.push_back(infuseBloomPhase1);
-    }
-    if (_settings.getPressurizeTime() > 0) {
-        Phase pressurizePhase1{};
-        pressurizePhase1.name = "Pressurize";
-        pressurizePhase1.phase = PhaseType::PHASE_TYPE_BREW;
-        pressurizePhase1.valve = 0;
-        pressurizePhase1.duration = _settings.getPressurizeTime() / 1000;
-        pressurizePhase1.pumpIsSimple = true;
-        pressurizePhase1.pumpSimple = 100;
-        profile.phases.push_back(pressurizePhase1);
-    }
     Phase brewPhase{};
     brewPhase.name = "Brew";
     brewPhase.phase = PhaseType::PHASE_TYPE_BREW;
     brewPhase.valve = 1;
-    brewPhase.duration = _settings.getTargetDuration() / 1000;
+    brewPhase.duration = 28;
     brewPhase.pumpIsSimple = true;
     brewPhase.pumpSimple = 100;
     Target target{};
     target.type = TargetType::TARGET_TYPE_VOLUMETRIC;
     target.operator_ = TargetOperator::GTE;
-    target.value = _settings.getTargetVolume();
+    target.value = 36;
     brewPhase.targets.push_back(target);
     profile.phases.push_back(brewPhase);
     saveProfile(profile);
     _settings.setSelectedProfile(profile.id);
-    _settings.addFavoritedProfile(profile.id);
+    for (String id : listProfiles()) {
+        addFavoritedProfile(id);
+    }
 }
 
 std::vector<String> ProfileManager::listProfiles() {
@@ -139,7 +101,7 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
         return false;
     }
     outProfile.selected = outProfile.id == _settings.getSelectedProfile();
-    std::vector<String> favoritedProfiles = _settings.getFavoritedProfiles();
+    const auto &favoritedProfiles = _settings.getFavoritedProfiles();
     outProfile.favorite = std::find(favoritedProfiles.begin(), favoritedProfiles.end(), outProfile.id) != favoritedProfiles.end();
     return true;
 }
@@ -173,13 +135,13 @@ bool ProfileManager::saveProfile(Profile &profile) {
     selectProfile(_settings.getSelectedProfile());
     _plugin_manager->trigger("profiles:profile:save", "id", profile.id);
     if (isNew) {
-        _settings.addFavoritedProfile(profile.id);
+        addFavoritedProfile(profile.id);
     }
     return ok;
 }
 
 bool ProfileManager::deleteProfile(const String &uuid) {
-    _settings.removeFavoritedProfile(uuid);
+    removeFavoritedProfile(uuid);
     return _fs->remove(profilePath(uuid));
 }
 
@@ -199,7 +161,7 @@ bool ProfileManager::loadSelectedProfile(Profile &outProfile) { return loadProfi
 
 std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
 
-    auto rawFavorites = _settings.getFavoritedProfiles();
+    const auto &rawFavorites = _settings.getFavoritedProfiles();
     std::vector<String> result;
 
     auto storedProfileOrder = _settings.getProfileOrder();
@@ -229,4 +191,14 @@ std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
         }
     }
     return result;
+}
+
+void ProfileManager::removeFavoritedProfile(String id) {
+    _settings.removeFavoritedProfile(id);
+    _plugin_manager->trigger("profiles:profile:unfavorite", "id", id);
+}
+
+void ProfileManager::addFavoritedProfile(String id) {
+    _settings.addFavoritedProfile(id);
+    _plugin_manager->trigger("profiles:profile:favorite", "id", id);
 }
