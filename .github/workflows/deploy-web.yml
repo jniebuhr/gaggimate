@@ -39,6 +39,9 @@ jobs:
           GITHUB_PAGES: '1'
         run: npm run build
 
+      - name: Copy index.html to 404.html for SPA routing
+        run: cp web/dist/index.html web/dist/404.html
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist

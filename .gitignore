@@ -16,3 +16,4 @@ bean-whisperer/
 .playwright-mcp
 playwright/
 output/
+.claude/settings.local.json

@@ -1154,8 +1154,9 @@ function RemoteAccessCard({ formData, onChange }) {
   const relayToken = formData.cloudRelayToken || '';
   const hasRelay = relayUrl && relayToken;
 
+  const pagesOrigin = 'https://carloshrdezc.github.io/gaggimate';
   const remoteLink = hasRelay
-    ? `${window.location.origin}?relay=${encodeURIComponent(relayUrl)}&token=${encodeURIComponent(relayToken)}`
+    ? `${pagesOrigin}?relay=${encodeURIComponent(relayUrl)}&token=${encodeURIComponent(relayToken)}`
     : null;
 
   function copyLink() {

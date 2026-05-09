@@ -366,11 +366,9 @@ void WebUIPlugin::startRelay() {
         relayMutex = xSemaphoreCreateMutex();
     }
 
-    String path = basePath;
-    if (!path.endsWith("/")) path += "/";
-    // Trim trailing slash if basePath already has one
-    if (basePath == "/") path = "/connect?token=" + relayToken + "&role=device";
-    else path = basePath + "/connect?token=" + relayToken + "&role=device";
+    String path = (basePath.isEmpty() || basePath == "/")
+        ? "/connect?token=" + relayToken + "&role=device"
+        : basePath + "/connect?token=" + relayToken + "&role=device";
 
     relayWs.onEvent([this](WStype_t type, uint8_t *payload, size_t length) {
         switch (type) {
@@ -395,7 +393,6 @@ void WebUIPlugin::startRelay() {
     relayWs.setReconnectInterval(5000);
     if (useSSL) {
         relayWs.beginSSL(host.c_str(), port, path.c_str());
-        relayWs.setInsecure(); // Skip CA validation for self-hosted relays
     } else {
         relayWs.begin(host.c_str(), port, path.c_str());
     }
@@ -419,7 +416,11 @@ void WebUIPlugin::broadcastAll(const String &msg) {
 void WebUIPlugin::broadcastRelayMsg(const String &msg) {
     if (!relayEnabled || relayMutex == nullptr) return;
     if (xSemaphoreTake(relayMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-        relayOutBuffer.push_back(msg);
+        if (relayOutBuffer.size() < 64) {
+            relayOutBuffer.push_back(msg);
+        } else {
+            ESP_LOGW("WebUIPlugin", "Relay out buffer full, dropping message");
+        }
         xSemaphoreGive(relayMutex);
     }
 }
