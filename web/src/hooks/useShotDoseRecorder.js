@@ -6,70 +6,59 @@ import { syncBeanUsageFromNotes } from '../utils/beanManager.js';
 
 const DOSE_STORAGE_KEY = 'gaggimate-dose-grams';
 
-/**
- * Watches for shot completion and automatically attaches the stored dose
- * as doseIn to the shot's notes, then subtracts from the selected bean's quantity.
- */
 export function useShotDoseRecorder(api, onDoseAttached) {
   const status = computed(() => machine.value.status);
-  const wasFinishedRef = useRef(false);
   const mountedRef = useRef(true);
-  const activeShotIdRef = useRef(null);
+  const savedForShotRef = useRef(null);
 
   useEffect(() => {
     return () => {
       mountedRef.current = false;
-      wasFinishedRef.current = false;
     };
   }, []);
 
   useEffect(() => {
     const processInfo = status.value.process;
-    const finished = !!processInfo?.e && !processInfo?.a;
+    const shotId = processInfo?.id;
+    const isActive = !!processInfo?.a;
 
-    // Cache the shot ID while the shot is actively recording
-    if (processInfo?.id) {
-      activeShotIdRef.current = processInfo.id;
+    // Reset when no shot is running
+    if (!shotId) {
+      savedForShotRef.current = null;
+      return;
     }
 
-    // Detect transition to finished state
-    if (finished && !wasFinishedRef.current) {
-      wasFinishedRef.current = true;
+    // Save once per shot, as soon as the shot ID appears while active
+    if (!isActive || savedForShotRef.current === shotId) return;
+    savedForShotRef.current = shotId;
 
-      const doseStr = localStorage.getItem(DOSE_STORAGE_KEY);
-      if (!doseStr) return;
+    const doseStr = localStorage.getItem(DOSE_STORAGE_KEY);
+    const dose = doseStr ? parseFloat(doseStr) : NaN;
+    const hasDose = Number.isFinite(dose) && dose > 0;
+    const beanType = status.value.selectedBean || '';
 
-      const dose = parseFloat(doseStr);
-      if (!Number.isFinite(dose) || dose <= 0) return;
+    if (!hasDose && !beanType) return;
 
-      const shotId = activeShotIdRef.current;
-      if (!shotId) return;
+    const notesToSave = {};
+    if (hasDose) notesToSave.doseIn = dose;
+    if (beanType) notesToSave.beanType = beanType;
 
-      notesService.setApiService(api);
-      notesService.saveNotes(shotId, 'gaggimate', { doseIn: dose }).then(async () => {
-        localStorage.removeItem(DOSE_STORAGE_KEY);
-        activeShotIdRef.current = null;
-        const nextNotes = { doseIn: dose, beanType: status.value.selectedBean };
+    notesService.setApiService(api);
+    notesService.saveNotes(shotId, 'gaggimate', notesToSave)
+      .then(async () => {
+        if (hasDose) localStorage.removeItem(DOSE_STORAGE_KEY);
         try {
-          const updatedBean = await syncBeanUsageFromNotes(api, {}, nextNotes);
-          if (!updatedBean) {
-            console.warn(`No matching bean found for '${nextNotes.beanType}' — bean quantity not updated`);
+          const updatedBean = await syncBeanUsageFromNotes(api, {}, notesToSave);
+          if (beanType && !updatedBean) {
+            console.warn(`No matching bean found for '${beanType}' — bean quantity not updated`);
           }
         } catch (syncErr) {
           console.error('Failed to sync bean usage:', syncErr);
         }
         if (mountedRef.current) {
-          onDoseAttached?.(dose);
+          onDoseAttached?.(hasDose ? dose : null);
         }
-      }).catch(err => {
-        console.error('Failed to attach dose to shot notes:', err);
-        localStorage.removeItem(DOSE_STORAGE_KEY);
-        activeShotIdRef.current = null;
-      });
-    }
-
-    if (!finished) {
-      wasFinishedRef.current = false;
-    }
+      })
+      .catch(err => console.error('Failed to attach notes to shot:', err));
   }, [status.value.process, api]);
 }
