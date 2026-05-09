@@ -352,14 +352,11 @@ export function Settings() {
                   id='startup-mode'
                   name='startupMode'
                   className='nd-input nd-input--lg'
+                  value={formData.startupMode || 'standby'}
                   onChange={onChange('startupMode')}
                 >
-                  <option value='standby' selected={formData.startupMode === 'standby'}>
-                    Standby
-                  </option>
-                  <option value='brew' selected={formData.startupMode === 'brew'}>
-                    Brew
-                  </option>
+                  <option value='standby'>Standby</option>
+                  <option value='brew'>Brew</option>
                 </select>
               </div>
               <div className='flex flex-col gap-2'>
@@ -646,10 +643,11 @@ export function Settings() {
                   id='timezone'
                   name='timezone'
                   className='nd-input nd-input--lg'
+                  value={formData.timezone || ''}
                   onChange={onChange('timezone')}
                 >
                   {timezones.map(tz => (
-                    <option key={tz} value={tz} selected={formData.timezone === tz}>
+                    <option key={tz} value={tz}>
                       {tz}
                     </option>
                   ))}

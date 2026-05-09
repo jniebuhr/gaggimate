@@ -221,6 +221,13 @@ export function Header({ navOpen = false, onNavToggle }) {
   const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const syncBean = event => {
       if (event?.detail !== undefined) {
         setActiveBean(event.detail);
@@ -354,7 +361,11 @@ export function Header({ navOpen = false, onNavToggle }) {
 
   const handleTempChange = useCallback((delta) => {
     try {
-      apiService.send({ tp: delta > 0 ? 'req:raise-temp' : 'req:lower-temp' });
+      const tp = delta > 0 ? 'req:raise-temp' : 'req:lower-temp';
+      const count = Math.abs(delta);
+      for (let i = 0; i < count; i++) {
+        apiService.send({ tp });
+      }
     } catch (err) {
       console.error('Failed to change temperature:', err);
     }

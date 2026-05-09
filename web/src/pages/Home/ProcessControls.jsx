@@ -310,42 +310,32 @@ export default function ProcessControls({ brew, mode }) {
   // Tracks whether the last explicitly started process was 'brew' or 'flush'
   const lastStartedActionRef = useRef(null);
 
-  // Track when active goes from true to false (user stopped/paused, not natural finish)
+  // Auto-steam: switch to steam mode when a brew process ends (natural or manual)
   const wasActiveRef = useRef(false);
   useEffect(() => {
     if (active) {
       wasActiveRef.current = true;
+      return;
     }
-    if (!active && wasActiveRef.current && !finished && brew && autoSteamEnabled && mode === 1 && lastStartedActionRef.current === 'brew') {
-      wasActiveRef.current = false;
+    // Only act on the transition from active → inactive
+    if (!wasActiveRef.current) return;
+    wasActiveRef.current = false;
+
+    if (brew && autoSteamEnabled && mode === 1 && lastStartedActionRef.current === 'brew') {
       try {
         api.send({ tp: 'req:change-mode', mode: 2 });
       } catch (err) {
         console.error('Failed to change to steam mode:', err);
       }
     }
-    if (!active) {
-      wasActiveRef.current = false;
-    }
-  }, [active, finished, brew, autoSteamEnabled, mode, api]);
+  }, [active, brew, autoSteamEnabled, mode, api]);
 
-  // Reset the ref when no process is running (natural finish)
+  // Reset the last-started action when the process is cleared
   useEffect(() => {
     if (!finished) {
       lastStartedActionRef.current = null;
     }
   }, [finished]);
-
-  // Auto-steam: transition to steam mode when brew (not flush) finishes naturally with auto-steam enabled
-  useEffect(() => {
-    if (finished && brew && autoSteamEnabled && mode === 1 && lastStartedActionRef.current === 'brew') {
-      try {
-        api.send({ tp: 'req:change-mode', mode: 2 });
-      } catch (err) {
-        console.error('Failed to change to steam mode:', err);
-      }
-    }
-  }, [finished, brew, autoSteamEnabled, mode, api]);
   const {
     currentFlow,
     currentPressure,

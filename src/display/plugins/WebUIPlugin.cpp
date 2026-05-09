@@ -136,8 +136,7 @@ void WebUIPlugin::loop() {
 
         bool bleConnected = BLEScales.isConnected();
         // Add Bluetooth scale weight information
-        doc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
-        doc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
+        doc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
         doc["bc"] = bleConnected;                                    // bluetooth scale connected status
 
         // Use thread-safe snapshot to avoid use-after-free race conditions
@@ -199,10 +198,6 @@ void WebUIPlugin::loop() {
 }
 
 void WebUIPlugin::setupServer() {
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    DefaultHeaders::Instance().addHeader("Access-Control-Max-Age", "86400");
     server.on("^\\/api\\/.*$", HTTP_OPTIONS, [this](AsyncWebServerRequest *request) { handleOptions(request); });
     server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
         request->redirect("http://logout.net");
@@ -806,7 +801,6 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
 void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
     JsonDocument doc;
     JsonArray scalesArray = doc.to<JsonArray>();
-    std::vector<DiscoveredDevice> devices = BLEScales.getDiscoveredScales();
     for (const DiscoveredDevice &device : BLEScales.getDiscoveredScales()) {
         JsonDocument scale;
         scale["uuid"] = device.getAddress().toString();
@@ -864,14 +858,13 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     Settings const &settings = controller->getSettings();
     JsonDocument doc;
     doc["status"] = version;
-    doc["latestVersion"] = ota->getCurrentVersion();
     doc["tp"] = "res:ota-settings";
+    doc["latestVersion"] = ota->getCurrentVersion();
     doc["displayUpdateAvailable"] = ota->isUpdateAvailable(false);
     doc["controllerUpdateAvailable"] = ota->isUpdateAvailable(true);
     doc["displayVersion"] = BUILD_GIT_VERSION;
     doc["controllerVersion"] = controller->getSystemInfo().version;
     doc["hardware"] = controller->getSystemInfo().hardware;
-    doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;
     // SPIFFS usage metrics

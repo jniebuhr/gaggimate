@@ -208,22 +208,21 @@ export default class ApiService {
 
   /**
    * Adds an entry to history with a fixed maximum size.
-   * Note: Array.shift() is O(n) as it must shift all elements, but this is
-   * acceptable given the relatively small HISTORY_MAX_SIZE (600 entries).
+   * Uses slice instead of shift to avoid O(n) re-indexing on every status update.
    * @param {Array} history - The current history array
    * @param {Object} entry - The new entry to add
    * @returns {Array} The updated history array
    */
   _addToHistory(history, entry) {
-    // Create a shallow copy to maintain immutability for signal reactivity
-    const newHistory = [...history];
-    
-    if (newHistory.length >= ApiService.HISTORY_MAX_SIZE) {
-      newHistory.shift(); // Remove oldest entry - O(n) operation
+    if (history.length >= ApiService.HISTORY_MAX_SIZE) {
+      // Trim the oldest 10% in one slice to amortize the copy cost
+      const trimCount = Math.max(1, Math.floor(ApiService.HISTORY_MAX_SIZE * 0.1));
+      const trimmed = history.slice(trimCount);
+      trimmed.push(entry);
+      return trimmed;
     }
-    newHistory.push(entry); // Add new entry - O(1)
-    
-    return newHistory;
+    // Under the limit: append without copying the full array
+    return [...history, entry];
   }
 
   _onStatus(message) {
