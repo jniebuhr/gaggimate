@@ -17,3 +17,9 @@ bean-whisperer/
 playwright/
 output/
 .claude/settings.local.json
+*.png
+!docs/**/*.png
+!ui/**/*.png
+!icons/**/*.png
+!web/public/**/*.png
+!web/src/**/*.png
