@@ -100,7 +100,11 @@ class NotesService {
           tp: 'req:history:notes:get',
           id: shotId,
         });
-        existing = res?.notes || {};
+        let raw = res?.notes || {};
+        if (typeof raw === 'string') {
+          try { raw = JSON.parse(raw); } catch { raw = {}; }
+        }
+        existing = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
       } catch {
         // No existing notes, fine to continue with empty object
       }

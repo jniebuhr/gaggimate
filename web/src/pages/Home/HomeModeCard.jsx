@@ -377,7 +377,9 @@ export default function HomeModeCard({ mode }) {
 
   const [doseGrams, setDoseGrams] = useState(() => {
     const stored = localStorage.getItem(DOSE_STORAGE_KEY);
-    return parseQuantity(stored) ?? DEFAULT_DOSE;
+    const value = parseQuantity(stored) ?? DEFAULT_DOSE;
+    if (!stored) localStorage.setItem(DOSE_STORAGE_KEY, String(value));
+    return value;
   });
 
   const [targetWeight, setTargetWeight] = useState(() => {
