@@ -112,7 +112,11 @@ class Settings {
     bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
     int getFlushDuration() const { return flushDuration; }
+    String getCloudRelayUrl() const { return cloudRelayUrl; }
+    String getCloudRelayToken() const { return cloudRelayToken; }
     void setFlushDuration(int flush_duration);
+    void setCloudRelayUrl(const String &url);
+    void setCloudRelayToken(const String &token);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
@@ -240,6 +244,8 @@ class Settings {
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
+    String cloudRelayUrl = "";
+    String cloudRelayToken = "";
 
     void doSave();
     xTaskHandle taskHandle;

@@ -31,6 +31,31 @@ export default class ApiService {
     this.connect();
   }
 
+  _resolveWsUrl() {
+    // Check URL params for relay configuration (one-time setup link)
+    const params = new URLSearchParams(window.location.search);
+    const relayParam = params.get('relay');
+    const tokenParam = params.get('token');
+    if (relayParam && tokenParam) {
+      localStorage.setItem('gaggimate_relay_url', relayParam);
+      localStorage.setItem('gaggimate_relay_token', tokenParam);
+      // Clean params from URL without reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('relay');
+      url.searchParams.delete('token');
+      history.replaceState(null, '', url.toString());
+    }
+
+    const relayUrl = localStorage.getItem('gaggimate_relay_url');
+    const relayToken = localStorage.getItem('gaggimate_relay_token');
+    if (relayUrl && relayToken) {
+      return `${relayUrl}/connect?token=${encodeURIComponent(relayToken)}&role=browser`;
+    }
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    return `${wsProtocol}${window.location.host}/ws`;
+  }
+
   async connect() {
     if (this.isConnecting) return;
     this.isConnecting = true;
@@ -45,9 +70,7 @@ export default class ApiService {
         this.socket.close();
       }
 
-      const apiHost = window.location.host;
-      const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-      this.socket = new WebSocket(`${wsProtocol}${apiHost}/ws`);
+      this.socket = new WebSocket(this._resolveWsUrl());
 
       // Use bound references to enable proper cleanup
       this.socket.addEventListener('message', this._boundOnMessage);
@@ -126,6 +149,9 @@ export default class ApiService {
     const listeners = Object.values(this.listeners[message.tp] || {});
     if (message.tp === 'evt:status') {
       this._onStatus(message);
+    } else if (message.tp === 'evt:relay-status') {
+      machine.value = { ...machine.value, deviceConnected: message.deviceConnected ?? true };
+      return;
     }
     for (const listener of listeners) {
       try {

@@ -106,6 +106,8 @@ Settings::Settings() {
     emptyTankDistance = preferences.getInt("sr_ed", 200);
     fullTankDistance = preferences.getInt("sr_fd", 50);
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
+    cloudRelayUrl = preferences.getString("cr_url", "");
+    cloudRelayToken = preferences.getString("cr_token", "");
 
     preferences.end();
 
@@ -386,6 +388,16 @@ void Settings::setFlushDuration(int flush_duration) {
     save();
 }
 
+void Settings::setCloudRelayUrl(const String &url) {
+    cloudRelayUrl = url;
+    save();
+}
+
+void Settings::setCloudRelayToken(const String &token) {
+    cloudRelayToken = token;
+    save();
+}
+
 void Settings::setSunriseR(int sunrise_r) {
     sunriseR = sunrise_r;
     save();
@@ -516,6 +528,8 @@ void Settings::doSave() {
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);
     preferences.putInt("alt_relay", altRelayFunction);
+    preferences.putString("cr_url", cloudRelayUrl);
+    preferences.putString("cr_token", cloudRelayToken);
 
     preferences.end();
 }

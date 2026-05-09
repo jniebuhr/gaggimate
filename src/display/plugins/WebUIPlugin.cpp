@@ -25,6 +25,33 @@ static WebUIPlugin *g_webUIPlugin = nullptr;
 
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") { g_webUIPlugin = this; }
 
+// Parse wss://host[:port][/path] or ws://host[:port][/path]
+static bool parseRelayUrl(const String &url, bool &useSSL, String &host, uint16_t &port, String &basePath) {
+    if (url.startsWith("wss://")) {
+        useSSL = true;
+        String rest = url.substring(6);
+        int slashIdx = rest.indexOf('/');
+        String hostPort = (slashIdx < 0) ? rest : rest.substring(0, slashIdx);
+        basePath = (slashIdx < 0) ? String("/") : rest.substring(slashIdx);
+        int colonIdx = hostPort.indexOf(':');
+        if (colonIdx < 0) { host = hostPort; port = 443; }
+        else { host = hostPort.substring(0, colonIdx); port = (uint16_t)hostPort.substring(colonIdx + 1).toInt(); }
+        return true;
+    }
+    if (url.startsWith("ws://")) {
+        useSSL = false;
+        String rest = url.substring(5);
+        int slashIdx = rest.indexOf('/');
+        String hostPort = (slashIdx < 0) ? rest : rest.substring(0, slashIdx);
+        basePath = (slashIdx < 0) ? String("/") : rest.substring(slashIdx);
+        int colonIdx = hostPort.indexOf(':');
+        if (colonIdx < 0) { host = hostPort; port = 80; }
+        else { host = hostPort.substring(0, colonIdx); port = (uint16_t)hostPort.substring(colonIdx + 1).toInt(); }
+        return true;
+    }
+    return false;
+}
+
 void WebUIPlugin::addCorsHeaders(AsyncWebServerResponse *response) const {
     response->addHeader("Access-Control-Allow-Origin", "*");
     response->addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -73,7 +100,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         doc["total"] = event.getInt("total");
         doc["current"] = event.getInt("current");
         doc["status"] = event.getString("status");
-        ws.textAll(doc.as<String>());
+        broadcastAll(doc.as<String>());
     });
 
     // Subscribe to Bluetooth scale weight updates
@@ -93,6 +120,22 @@ void WebUIPlugin::loop() {
             updateOTAStatus("Update failed");
         }
     }
+
+    // Drain outgoing relay queue then process incoming relay events
+    if (relayEnabled) {
+        if (relayConnected && relayMutex != nullptr) {
+            std::vector<String> toSend;
+            if (xSemaphoreTake(relayMutex, 0) == pdTRUE) {
+                toSend.swap(relayOutBuffer);
+                xSemaphoreGive(relayMutex);
+            }
+            for (const auto &msg : toSend) {
+                relayWs.sendTXT(msg);
+            }
+        }
+        relayWs.loop();
+    }
+
     if (!serverRunning) {
         return;
     }
@@ -185,7 +228,7 @@ void WebUIPlugin::loop() {
             }
         }
 
-        ws.textAll(doc.as<String>());
+        broadcastAll(doc.as<String>());
     }
     if (now > lastCleanup + CLEANUP_PERIOD) {
         lastCleanup = now;
@@ -285,9 +328,11 @@ void WebUIPlugin::start() {
     }
     lastUpdateCheck = millis();
     serverRunning = true;
+    startRelay();
 }
 
 void WebUIPlugin::stop() {
+    stopRelay();
     if (!serverRunning)
         return;
     server.end();
@@ -302,6 +347,169 @@ void WebUIPlugin::stop() {
         ota = nullptr;
     }
     serverRunning = false;
+}
+
+void WebUIPlugin::startRelay() {
+    const String &relayUrl = controller->getSettings().getCloudRelayUrl();
+    const String &relayToken = controller->getSettings().getCloudRelayToken();
+    if (relayUrl.isEmpty() || relayToken.isEmpty()) return;
+
+    bool useSSL;
+    String host, basePath;
+    uint16_t port;
+    if (!parseRelayUrl(relayUrl, useSSL, host, port, basePath)) {
+        ESP_LOGW("WebUIPlugin", "Invalid relay URL: %s", relayUrl.c_str());
+        return;
+    }
+
+    if (relayMutex == nullptr) {
+        relayMutex = xSemaphoreCreateMutex();
+    }
+
+    String path = basePath;
+    if (!path.endsWith("/")) path += "/";
+    // Trim trailing slash if basePath already has one
+    if (basePath == "/") path = "/connect?token=" + relayToken + "&role=device";
+    else path = basePath + "/connect?token=" + relayToken + "&role=device";
+
+    relayWs.onEvent([this](WStype_t type, uint8_t *payload, size_t length) {
+        switch (type) {
+            case WStype_CONNECTED:
+                relayConnected = true;
+                ESP_LOGI("WebUIPlugin", "Connected to cloud relay");
+                break;
+            case WStype_DISCONNECTED:
+                relayConnected = false;
+                ESP_LOGI("WebUIPlugin", "Disconnected from cloud relay");
+                break;
+            case WStype_TEXT: {
+                String msg = String((char *)payload, length);
+                processWebSocketMessage(RELAY_CLIENT_ID, msg);
+                break;
+            }
+            default:
+                break;
+        }
+    });
+
+    relayWs.setReconnectInterval(5000);
+    if (useSSL) {
+        relayWs.beginSSL(host.c_str(), port, path.c_str());
+        relayWs.setInsecure(); // Skip CA validation for self-hosted relays
+    } else {
+        relayWs.begin(host.c_str(), port, path.c_str());
+    }
+
+    relayEnabled = true;
+    ESP_LOGI("WebUIPlugin", "Relay client started → %s:%d%s", host.c_str(), port, path.c_str());
+}
+
+void WebUIPlugin::stopRelay() {
+    if (!relayEnabled) return;
+    relayEnabled = false;
+    relayConnected = false;
+    relayWs.disconnect();
+}
+
+void WebUIPlugin::broadcastAll(const String &msg) {
+    ws.textAll(msg);
+    broadcastRelayMsg(msg);
+}
+
+void WebUIPlugin::broadcastRelayMsg(const String &msg) {
+    if (!relayEnabled || relayMutex == nullptr) return;
+    if (xSemaphoreTake(relayMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        relayOutBuffer.push_back(msg);
+        xSemaphoreGive(relayMutex);
+    }
+}
+
+void WebUIPlugin::sendResponse(uint32_t clientId, JsonDocument &response) {
+    String responseStr;
+    serializeJson(response, responseStr);
+
+    if (clientId != RELAY_CLIENT_ID) {
+        size_t bufferSize = measureJson(response);
+        auto *buffer = ws.makeBuffer(bufferSize);
+        if (buffer) {
+            serializeJson(response, buffer->get(), bufferSize);
+            ws.text(clientId, buffer);
+        }
+    }
+    // Always forward responses to relay so remote browsers receive them
+    broadcastRelayMsg(responseStr);
+}
+
+void WebUIPlugin::processWebSocketMessage(uint32_t clientId, const String &msg) {
+    ESP_LOGV("WebUIPlugin", "Processing message from %s: %.*s",
+             clientId == RELAY_CLIENT_ID ? "relay" : "local",
+             (int)msg.length(), msg.c_str());
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, msg.c_str());
+    if (err) return;
+
+    String msgType = doc["tp"].as<String>();
+    if (msgType.startsWith("req:profiles:")) {
+        handleProfileRequest(clientId, doc);
+    } else if (msgType.startsWith("req:beans:") && msgType != "req:beans:select") {
+        handleBeanRequest(clientId, doc);
+    } else if (msgType == "req:ota-settings") {
+        handleOTASettings(clientId, doc);
+    } else if (msgType == "req:ota-start") {
+        handleOTAStart(clientId, doc);
+    } else if (msgType == "req:autotune-start") {
+        handleAutotuneStart(clientId, doc);
+    } else if (msgType == "req:process:activate") {
+        controller->activate();
+    } else if (msgType == "req:process:deactivate") {
+        controller->deactivate();
+        controller->clear();
+    } else if (msgType == "req:process:clear") {
+        controller->clear();
+    } else if (msgType == "req:grind:activate") {
+        controller->activateGrind();
+    } else if (msgType == "req:grind:deactivate") {
+        controller->deactivateGrind();
+    } else if (msgType == "req:change-grind-target") {
+        if (doc["target"].is<uint8_t>()) {
+            controller->getSettings().setVolumetricTarget(doc["target"].as<uint8_t>());
+        }
+    } else if (msgType == "req:raise-temp") {
+        controller->raiseTemp();
+    } else if (msgType == "req:lower-temp") {
+        controller->lowerTemp();
+    } else if (msgType == "req:raise-grind-target") {
+        controller->raiseGrindTarget();
+    } else if (msgType == "req:lower-grind-target") {
+        controller->lowerGrindTarget();
+    } else if (msgType == "req:change-mode") {
+        if (doc["mode"].is<uint8_t>()) {
+            controller->deactivate();
+            controller->clear();
+            controller->setMode(doc["mode"].as<uint8_t>());
+        }
+    } else if (msgType == "req:change-brew-target") {
+        if (doc["target"].is<uint8_t>()) {
+            controller->getSettings().setVolumetricTarget(doc["target"].as<uint8_t>());
+        }
+    } else if (msgType == "req:beans:select") {
+        String beanName = doc["name"].is<String>() ? doc["name"].as<String>() : String("");
+        controller->getSettings().setSelectedBean(beanName);
+        pluginManager->trigger("beans:selected", "name", beanName);
+    } else if (msgType == "req:history:rebuild") {
+        JsonDocument resp;
+        resp["tp"] = "res:history:rebuild";
+        if (doc["rid"].is<const char *>()) resp["rid"] = doc["rid"];
+        resp["msg"] = "Rebuild started";
+        sendResponse(clientId, resp);
+        ShotHistory.startAsyncRebuild();
+    } else if (msgType.startsWith("req:history")) {
+        JsonDocument resp;
+        ShotHistory.handleRequest(doc, resp);
+        sendResponse(clientId, resp);
+    } else if (msgType == "req:flush:start") {
+        handleFlushStart(clientId, doc);
+    }
 }
 
 void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg,
@@ -322,103 +530,10 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
     buf.append(reinterpret_cast<const char *>(data), len);
     const bool isFinal = info->final && (info->index + len) == info->len;
 
-    // If this is the final frame of the message, process and clear
     if (isFinal) {
         if (info->opcode == WS_TEXT) {
-            ESP_LOGV("WebUIPlugin", "Received request: %.*s", (int)buf.size(), buf.c_str());
-            JsonDocument doc;
-            DeserializationError err = deserializeJson(doc, buf.c_str());
-            if (!err) {
-                String msgType = doc["tp"].as<String>();
-                if (msgType.startsWith("req:profiles:")) {
-                    handleProfileRequest(client->id(), doc);
-                } else if (msgType.startsWith("req:beans:") && msgType != "req:beans:select") {
-                    handleBeanRequest(client->id(), doc);
-                } else if (msgType == "req:ota-settings") {
-                    handleOTASettings(client->id(), doc);
-                } else if (msgType == "req:ota-start") {
-                    handleOTAStart(client->id(), doc);
-                } else if (msgType == "req:autotune-start") {
-                    handleAutotuneStart(client->id(), doc);
-                } else if (msgType == "req:process:activate") {
-                    controller->activate();
-                } else if (msgType == "req:process:deactivate") {
-                    controller->deactivate();
-                    controller->clear();
-                } else if (msgType == "req:process:clear") {
-                    controller->clear();
-                } else if (msgType == "req:grind:activate") {
-                    controller->activateGrind();
-                } else if (msgType == "req:grind:deactivate") {
-                    controller->deactivateGrind();
-                } else if (msgType == "req:change-grind-target") {
-                    if (doc["target"].is<uint8_t>()) {
-                        auto target = doc["target"].as<uint8_t>();
-                        controller->getSettings().setVolumetricTarget(target);
-                    }
-                } else if (msgType == "req:raise-temp") {
-                    controller->raiseTemp();
-                } else if (msgType == "req:lower-temp") {
-                    controller->lowerTemp();
-                } else if (msgType == "req:raise-grind-target") {
-                    controller->raiseGrindTarget();
-                } else if (msgType == "req:lower-grind-target") {
-                    controller->lowerGrindTarget();
-                } else if (msgType == "req:change-mode") {
-                    if (doc["mode"].is<uint8_t>()) {
-                        auto mode = doc["mode"].as<uint8_t>();
-                        controller->deactivate();
-                        controller->clear();
-                        controller->setMode(mode);
-                    }
-                } else if (msgType == "req:change-brew-target") {
-                    if (doc["target"].is<uint8_t>()) {
-                        auto target = doc["target"].as<uint8_t>();
-                        controller->getSettings().setVolumetricTarget(target);
-                    }
-                } else if (msgType == "req:beans:select") {
-                    String beanName = "";
-                    if (doc["name"].is<String>()) {
-                        beanName = doc["name"].as<String>();
-                    }
-                    controller->getSettings().setSelectedBean(beanName);
-                    pluginManager->trigger("beans:selected", "name", beanName);
-                } else if (msgType == "req:history:rebuild") {
-                    // Handle rebuild asynchronously - send immediate ack, progress comes via events
-                    JsonDocument resp;
-                    resp["tp"] = "res:history:rebuild";
-                    if (doc["rid"].is<const char *>()) {
-                        resp["rid"] = doc["rid"];
-                    }
-                    resp["msg"] = "Rebuild started";
-                    size_t bufferSize = measureJson(resp);
-                    auto *buffer = ws.makeBuffer(bufferSize);
-                    if (!buffer) {
-                        ESP_LOGE("WebUIPlugin", "Failed to allocate WebSocket buffer");
-                        client->text("{\"tp\":\"res:history:rebuild\",\"msg\":\"Buffer allocation failed\"}");
-                        return;
-                    }
-                    serializeJson(resp, buffer->get(), bufferSize);
-                    client->text(buffer);
-                    ShotHistory.startAsyncRebuild();
-                } else if (msgType.startsWith("req:history")) {
-                    JsonDocument resp;
-                    ShotHistory.handleRequest(doc, resp);
-                    size_t bufferSize = measureJson(resp);
-                    auto *buffer = ws.makeBuffer(bufferSize);
-                    if (!buffer) {
-                        ESP_LOGE("WebUIPlugin", "Failed to allocate WebSocket buffer");
-                        client->text("{\"tp\":\"res:history\",\"msg\":\"Buffer allocation failed\"}");
-                        return;
-                    }
-                    serializeJson(resp, buffer->get(), bufferSize);
-                    client->text(buffer);
-                } else if (msgType == "req:flush:start") {
-                    handleFlushStart(client->id(), doc);
-                }
-            }
+            processWebSocketMessage(cid, String(buf.c_str(), buf.size()));
         }
-        // Done with this message
         rxBuffers.erase(cid);
     }
 }
@@ -512,23 +627,7 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
         }
     }
 
-    size_t bufferSize = measureJson(response);
-    auto *buffer = ws.makeBuffer(bufferSize);
-    if (!buffer) {
-        ESP_LOGE("WebUIPlugin", "Failed to allocate WebSocket buffer");
-        JsonDocument errResp;
-        errResp["tp"] = String("res:") + type.substring(4);
-        errResp["rid"] = request["rid"];
-        errResp["error"] = F("Server error: buffer allocation failed");
-        auto *errBuf = ws.makeBuffer(measureJson(errResp));
-        if (errBuf) {
-            serializeJson(errResp, errBuf->get(), measureJson(errResp));
-            ws.text(clientId, errBuf);
-        }
-        return;
-    }
-    serializeJson(response, buffer->get(), bufferSize);
-    ws.text(clientId, buffer);
+    sendResponse(clientId, response);
 }
 
 void WebUIPlugin::handleBeanRequest(uint32_t clientId, JsonDocument &request) {
@@ -570,23 +669,7 @@ void WebUIPlugin::handleBeanRequest(uint32_t clientId, JsonDocument &request) {
         }
     }
 
-    size_t bufferSize = measureJson(response);
-    auto *buffer = ws.makeBuffer(bufferSize);
-    if (!buffer) {
-        ESP_LOGE("WebUIPlugin", "Failed to allocate WebSocket buffer");
-        JsonDocument errResp;
-        errResp["tp"] = String("res:") + type.substring(4);
-        errResp["rid"] = request["rid"];
-        errResp["error"] = F("Server error: buffer allocation failed");
-        auto *errBuf = ws.makeBuffer(measureJson(errResp));
-        if (errBuf) {
-            serializeJson(errResp, errBuf->get(), measureJson(errResp));
-            ws.text(clientId, errBuf);
-        }
-        return;
-    }
-    serializeJson(response, buffer->get(), bufferSize);
-    ws.text(clientId, buffer);
+    sendResponse(clientId, response);
 }
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
@@ -718,11 +801,19 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             }
             if (request->hasArg("flushDuration"))
                 settings->setFlushDuration(request->arg("flushDuration").toInt() * 1000);
+            if (request->hasArg("cloudRelayUrl"))
+                settings->setCloudRelayUrl(request->arg("cloudRelayUrl"));
+            if (request->hasArg("cloudRelayToken"))
+                settings->setCloudRelayToken(request->arg("cloudRelayToken"));
             settings->save(true);
         });
         pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
+        if (request->hasArg("cloudRelayUrl") || request->hasArg("cloudRelayToken")) {
+            stopRelay();
+            startRelay();
+        }
     }
 
     AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -776,6 +867,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     // Add auto-wakeup settings to response
     doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
     doc["flushDuration"] = settings.getFlushDuration() / 1000;
+    doc["cloudRelayUrl"] = settings.getCloudRelayUrl();
+    doc["cloudRelayToken"] = settings.getCloudRelayToken();
 
     // Add schedule format with days
     std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();
@@ -892,7 +985,7 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
             doc["sdUsedPct"] = static_cast<uint8_t>((used * 100) / total);
         }
     }
-    ws.textAll(doc.as<String>());
+    broadcastAll(doc.as<String>());
 }
 
 void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
@@ -900,16 +993,14 @@ void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
     doc["tp"] = "evt:ota-progress";
     doc["phase"] = phase;
     doc["progress"] = progress;
-    String message = doc.as<String>();
-    ws.textAll(message);
+    broadcastAll(doc.as<String>());
 }
 
 void WebUIPlugin::sendAutotuneResult() {
     JsonDocument doc;
     doc["tp"] = "evt:autotune-result";
     doc["pid"] = controller->getSettings().getPid();
-    String message = doc.as<String>();
-    ws.textAll(message);
+    broadcastAll(doc.as<String>());
 }
 
 void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
@@ -920,9 +1011,7 @@ void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
     response["rid"] = request["rid"];
     response["success"] = true;
 
-    String msg;
-    serializeJson(response, msg);
-    ws.text(clientId, msg);
+    sendResponse(clientId, response);
 }
 
 void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {

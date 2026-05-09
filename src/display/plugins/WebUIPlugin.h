@@ -4,11 +4,17 @@
 #define ELEGANTOTA_USE_ASYNC_WEBSERVER 1
 
 #include <DNSServer.h>
+#include <WebSocketsClient.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 #include "GitHubOTA.h"
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 #include <display/core/Plugin.h>
+#include <vector>
+
+constexpr uint32_t RELAY_CLIENT_ID = 0xFFFFFFFE;
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 5 * 1000;
@@ -33,6 +39,14 @@ class WebUIPlugin : public Plugin {
     void stop();
     void addCorsHeaders(AsyncWebServerResponse *response) const;
     void handleOptions(AsyncWebServerRequest *request) const;
+
+    // Cloud relay
+    void startRelay();
+    void stopRelay();
+    void broadcastAll(const String &msg);
+    void broadcastRelayMsg(const String &msg); // thread-safe relay-only send
+    void sendResponse(uint32_t clientId, JsonDocument &response);
+    void processWebSocketMessage(uint32_t clientId, const String &msg);
 
     // Websocket handlers
     void handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
@@ -60,11 +74,18 @@ class WebUIPlugin : public Plugin {
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
     AsyncWebSocket ws;
+    WebSocketsClient relayWs;
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
     DNSServer *dnsServer = nullptr;
     BeanManager *beanManager = nullptr;
     ProfileManager *profileManager = nullptr;
+
+    // Relay state
+    SemaphoreHandle_t relayMutex = nullptr;
+    std::vector<String> relayOutBuffer;
+    bool relayEnabled = false;
+    bool relayConnected = false;
 
     long lastUpdateCheck = 0;
     long lastStatus = 0;
