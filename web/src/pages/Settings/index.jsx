@@ -203,6 +203,15 @@ export function Settings() {
 
         const data = await response.json();
 
+        // Sync relay config to localStorage so browser uses relay on next connection
+        if (data.cloudRelayUrl && data.cloudRelayToken) {
+          localStorage.setItem('gaggimate_relay_url', data.cloudRelayUrl);
+          localStorage.setItem('gaggimate_relay_token', data.cloudRelayToken);
+        } else {
+          localStorage.removeItem('gaggimate_relay_url');
+          localStorage.removeItem('gaggimate_relay_token');
+        }
+
         const updatedData = {
           ...data,
           standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
@@ -1094,6 +1103,9 @@ export function Settings() {
           </Card>
         </div>
 
+        {/* Remote Access */}
+        <RemoteAccessCard formData={formData} onChange={onChange} />
+
         {/* Warning + Action buttons */}
         <div className='col-span-10 pt-6'>
           <div className='border-l-2 border-[var(--color-warning,#d4a843)] pl-4 mb-4'>
@@ -1132,5 +1144,90 @@ export function Settings() {
         </div>
       </form>
     </div>
+  );
+}
+
+function RemoteAccessCard({ formData, onChange }) {
+  const [copied, setCopied] = useState(false);
+
+  const relayUrl = formData.cloudRelayUrl || '';
+  const relayToken = formData.cloudRelayToken || '';
+  const hasRelay = relayUrl && relayToken;
+
+  const pagesOrigin = 'https://carloshrdezc.github.io/gaggimate';
+  const remoteLink = hasRelay
+    ? `${pagesOrigin}?relay=${encodeURIComponent(relayUrl)}&token=${encodeURIComponent(relayToken)}`
+    : null;
+
+  function copyLink() {
+    if (!remoteLink) return;
+    navigator.clipboard.writeText(remoteLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <Card sm={10} lg={10} title='Remote Access'>
+      <div className='flex flex-col gap-5'>
+        <p className='text-[14px] text-[var(--text-disabled,#666)]'>
+          Deploy the relay server and enter its URL below to access your machine from anywhere.
+        </p>
+        <div className='flex flex-col gap-2'>
+          <label
+            htmlFor='cloudRelayUrl'
+            className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
+          >
+            Relay Server URL
+          </label>
+          <input
+            id='cloudRelayUrl'
+            name='cloudRelayUrl'
+            type='url'
+            className='nd-input nd-input--lg'
+            placeholder='wss://my-relay.fly.dev'
+            value={relayUrl}
+            onChange={onChange('cloudRelayUrl')}
+          />
+        </div>
+        <div className='flex flex-col gap-2'>
+          <label
+            htmlFor='cloudRelayToken'
+            className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
+          >
+            Relay Token
+          </label>
+          <input
+            id='cloudRelayToken'
+            name='cloudRelayToken'
+            type='password'
+            className='nd-input nd-input--lg'
+            placeholder='secret token'
+            value={relayToken}
+            onChange={onChange('cloudRelayToken')}
+          />
+        </div>
+        {hasRelay && (
+          <div className='flex flex-col gap-2'>
+            <span className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
+              Remote Access Link
+            </span>
+            <div className='flex items-center gap-2'>
+              <input
+                readOnly
+                className='nd-input nd-input--lg flex-1 font-mono text-xs'
+                value={remoteLink}
+              />
+              <button type='button' onClick={copyLink} className='nd-action-btn nd-action-btn--text px-3'>
+                {copied ? <FontAwesomeIcon icon={faCheck} /> : 'Copy'}
+              </button>
+            </div>
+            <p className='text-[12px] text-[var(--text-disabled,#666)]'>
+              Bookmark this link to access your machine remotely. Save settings first to activate the relay.
+            </p>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
