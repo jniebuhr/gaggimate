@@ -1187,7 +1187,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           </svg>
 
           <div style={{ marginTop: 10, display: 'flex', gap: 18 }}>
-            <RingLegend color='var(--dm-good)'   label='PRESS' value={`${fmt(pressure)} bar`} />
+            <RingLegend color='var(--dm-good)'   label='PRESSURE' value={`${fmt(pressure)} bar`} />
             <RingLegend color='var(--dm-warn)'   label='FLOW'  value={`${fmt(flowVal)} g/s`} />
             <RingLegend color='var(--dm-accent)' label='TEMP'  value={`${fmt(tempVal)}°`} />
           </div>
