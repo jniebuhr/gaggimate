@@ -48,7 +48,7 @@ class ShotHistoryPlugin : public Plugin {
     bool readEntryAtPosition(File &indexFile, size_t position, ShotIndexEntry &entry);
     bool writeEntryAtPosition(File &indexFile, size_t position, const ShotIndexEntry &entry);
     bool createEarlyIndexEntry();
-    void saveNotes(const String &id, const JsonDocument &notes);
+    bool saveNotes(const String &id, const JsonDocument &notes);
     void loadNotes(const String &id, JsonDocument &notes);
     void startRecording();
 
@@ -66,7 +66,7 @@ class ShotHistoryPlugin : public Plugin {
     bool isShotTooShort() const;
     void handleFailedShot();
     void handleCompletedShot();
-    void appendCompletedShotToIndex();
+    void appendCompletedShotToIndex(bool hasNotes = false);
 
     unsigned long getTime();
 
@@ -103,6 +103,7 @@ class ShotHistoryPlugin : public Plugin {
     float currentEstimatedWeight = 0.0f;
     float currentPuckResistance = 0.0f;
     String currentProfileName;
+    String currentBeanName;
 
     // Phase transition tracking (v5+)
     uint8_t lastRecordedPhase = 0xFF; // Invalid initial value to detect first phase

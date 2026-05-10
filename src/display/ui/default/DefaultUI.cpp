@@ -237,7 +237,7 @@ RingVisual buildRingVisual(const DisplayPalette &palette, const RingVisualContex
         }
     }
 
-    if (context.active) {
+    if (context.active && context.mode != MODE_STEAM) {
         return {100, modeTone(palette, context.mode), "ACTIVE"};
     }
 
@@ -642,8 +642,14 @@ void DefaultUI::loop() {
 
     if (pendingAutoSteam) {
         pendingAutoSteam = false;
-        controller->clear();
-        controller->setMode(MODE_STEAM);
+        // Controller::deactivate() triggers brew:end without changing mode, so
+        // the mode stays MODE_BREW after a normal shot ends. The guard only
+        // fires false if the user explicitly navigated away (e.g. to standby)
+        // between brew:end and this loop tick, in which case discarding is correct.
+        if (controller->getMode() == MODE_BREW) {
+            controller->clear();
+            controller->setMode(MODE_STEAM);
+        }
     }
 
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {

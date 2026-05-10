@@ -110,6 +110,26 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     setupServer();
 }
 
+void WebUIPlugin::relayLoopTask(void *arg) {
+    auto *plugin = static_cast<WebUIPlugin *>(arg);
+    while (true) {
+        if (plugin->relayEnabled && plugin->relayMutex != nullptr) {
+            if (plugin->relayConnected) {
+                std::vector<String> toSend;
+                if (xSemaphoreTake(plugin->relayMutex, 0) == pdTRUE) {
+                    toSend.swap(plugin->relayOutBuffer);
+                    xSemaphoreGive(plugin->relayMutex);
+                }
+                for (auto &msg : toSend) {
+                    plugin->relayWs.sendTXT(msg);
+                }
+            }
+            plugin->relayWs.loop();
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
 void WebUIPlugin::loop() {
     if (updating) {
         pluginManager->trigger("ota:update:start");
@@ -119,21 +139,6 @@ void WebUIPlugin::loop() {
         if (!updateSucceeded) {
             updateOTAStatus("Update failed");
         }
-    }
-
-    // Drain outgoing relay queue then process incoming relay events
-    if (relayEnabled) {
-        if (relayConnected && relayMutex != nullptr) {
-            std::vector<String> toSend;
-            if (xSemaphoreTake(relayMutex, 0) == pdTRUE) {
-                toSend.swap(relayOutBuffer);
-                xSemaphoreGive(relayMutex);
-            }
-            for (auto msg : toSend) {
-                relayWs.sendTXT(msg);
-            }
-        }
-        relayWs.loop();
     }
 
     if (!serverRunning) {
@@ -397,14 +402,31 @@ void WebUIPlugin::startRelay() {
         relayWs.begin(host.c_str(), port, path.c_str());
     }
 
+    if (relayTaskHandle == nullptr) {
+        BaseType_t created = xTaskCreatePinnedToCore(relayLoopTask, "WebUIRelay", 8192, this, 1, &relayTaskHandle, 0);
+        if (created != pdPASS) {
+            ESP_LOGE("WebUIPlugin", "Failed to create relay task (OOM)");
+            relayWs.disconnect();
+            return;
+        }
+    }
+
     relayEnabled = true;
     ESP_LOGI("WebUIPlugin", "Relay client started → %s:%d%s", host.c_str(), port, path.c_str());
 }
 
 void WebUIPlugin::stopRelay() {
     if (!relayEnabled) return;
+    // Signal the task to exit its loop body before tearing down the socket.
+    // vTaskDelete on a remote handle is non-blocking, so we must ensure the
+    // task is not mid-execution in relayWs.loop() when we call disconnect().
     relayEnabled = false;
     relayConnected = false;
+    if (relayTaskHandle != nullptr) {
+        vTaskDelay(pdMS_TO_TICKS(20)); // one task loop cycle is 10 ms; 20 ms is a safe margin
+        vTaskDelete(relayTaskHandle);
+        relayTaskHandle = nullptr;
+    }
     relayWs.disconnect();
 }
 

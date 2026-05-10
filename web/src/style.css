@@ -2137,6 +2137,24 @@ html[data-theme='nothing-light'] .nd-ring-title--flashing {
   border-color: #c4161e;
 }
 
+.nd-action-btn--danger {
+  background: #d71921;
+  border-color: #d71921;
+  color: #fff; /* hardcoded: danger bg is always GaggiMate red regardless of theme */
+}
+
+.nd-action-btn--danger:hover:not(:disabled) {
+  background: #c4161e;
+  border-color: #c4161e;
+}
+
+/* Text chip variant used for the auto-steam toggle in DashboardMerged */
+.nd-chip-danger-active {
+  background: rgba(215, 25, 33, 0.18);
+  color: #d71921;
+  border-color: rgba(215, 25, 33, 0.5);
+}
+
 .nd-action-btn--text {
   width: auto;
   height: auto;
