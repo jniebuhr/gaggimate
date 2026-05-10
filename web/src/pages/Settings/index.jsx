@@ -113,6 +113,8 @@ export function Settings() {
         setFormData(prev => ({ ...prev, clock24hFormat: !prev.clock24hFormat }));
       } else if (key === 'autowakeupEnabled') {
         setFormData(prev => ({ ...prev, autowakeupEnabled: !prev.autowakeupEnabled }));
+      } else if (key === 'cloudRelayEnabled') {
+        setFormData(prev => ({ ...prev, cloudRelayEnabled: !prev.cloudRelayEnabled }));
       } else if (key === 'standbyDisplayEnabled') {
         setFormData(prev => {
           const newFormData = { ...prev, standbyDisplayEnabled: !prev.standbyDisplayEnabled };
@@ -179,6 +181,7 @@ export function Settings() {
 
         formDataToSubmit.set('autowakeupEnabled', formData.autowakeupEnabled ? '1' : '');
         formDataToSubmit.set('homekit', formData.homekit ? '1' : '');
+        formDataToSubmit.set('cloudRelayEnabled', formData.cloudRelayEnabled ? '1' : '0');
 
         const schedulesStr = autowakeupSchedules
           .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
@@ -1184,7 +1187,7 @@ function RemoteAccessCard({ formData, onChange }) {
             className={`nd-toggle ${relayEnabled ? 'nd-toggle--active' : ''}`}
             role='switch'
             aria-checked={relayEnabled}
-            onClick={() => onChange('cloudRelayEnabled')({ target: { value: relayEnabled ? 0 : 1 } })}
+            onClick={onChange('cloudRelayEnabled')}
           >
             <span className='nd-toggle-thumb' />
           </button>
