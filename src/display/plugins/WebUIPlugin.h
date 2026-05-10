@@ -86,6 +86,8 @@ class WebUIPlugin : public Plugin {
     std::vector<String> relayOutBuffer;
     bool relayEnabled = false;
     bool relayConnected = false;
+    TaskHandle_t relayTaskHandle = nullptr;
+    static void relayLoopTask(void *arg);
 
     long lastUpdateCheck = 0;
     long lastStatus = 0;

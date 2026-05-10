@@ -103,6 +103,7 @@ class ShotHistoryPlugin : public Plugin {
     float currentEstimatedWeight = 0.0f;
     float currentPuckResistance = 0.0f;
     String currentProfileName;
+    String currentBeanName;
 
     // Phase transition tracking (v5+)
     uint8_t lastRecordedPhase = 0xFF; // Invalid initial value to detect first phase

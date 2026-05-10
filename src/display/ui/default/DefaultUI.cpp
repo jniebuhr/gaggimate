@@ -237,7 +237,7 @@ RingVisual buildRingVisual(const DisplayPalette &palette, const RingVisualContex
         }
     }
 
-    if (context.active) {
+    if (context.active && context.mode != MODE_STEAM) {
         return {100, modeTone(palette, context.mode), "ACTIVE"};
     }
 
@@ -642,8 +642,10 @@ void DefaultUI::loop() {
 
     if (pendingAutoSteam) {
         pendingAutoSteam = false;
-        controller->clear();
-        controller->setMode(MODE_STEAM);
+        if (controller->getMode() == MODE_BREW) {
+            controller->clear();
+            controller->setMode(MODE_STEAM);
+        }
     }
 
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
