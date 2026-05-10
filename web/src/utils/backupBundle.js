@@ -1,4 +1,5 @@
 import { parseBinaryIndex, indexToShotList } from '../pages/ShotHistory/parseBinaryIndex.js';
+import { parseBinaryShot } from '../pages/ShotHistory/parseBinaryShot.js';
 import {
   buildShotHistoryArchive,
   importShotHistoryArchive,
@@ -73,6 +74,18 @@ async function fetchProfilesSnapshot(apiService) {
   return response.profiles.map(sanitizeProfile);
 }
 
+async function loadDeviceShotSamples(shot) {
+  const paddedId = String(shot.id).padStart(6, '0');
+  try {
+    const resp = await fetch(`/api/history/${paddedId}.slog`);
+    if (!resp.ok) return shot;
+    const parsed = parseBinaryShot(await resp.arrayBuffer(), shot.id);
+    return { ...shot, samples: parsed.samples, loaded: true };
+  } catch {
+    return shot;
+  }
+}
+
 async function fetchShotHistorySnapshot(apiService) {
   notesService.setApiService(apiService);
   const shots = [];
@@ -93,17 +106,15 @@ async function fetchShotHistorySnapshot(apiService) {
   const indexResponse = await fetch('/api/history/index.bin');
   if (indexResponse.ok) {
     const indexData = parseBinaryIndex(await indexResponse.arrayBuffer());
-    const deviceShots = indexToShotList(indexData);
-    for (const shot of deviceShots) {
-      const notes = await notesService.loadNotes(String(shot.id), 'gaggimate');
-      shots.push({
-        ...shot,
-        id: String(shot.id),
-        source: 'gaggimate',
-        notes,
-        loaded: false,
-      });
-    }
+    const deviceShotsMeta = indexToShotList(indexData);
+    const deviceShots = await Promise.all(
+      deviceShotsMeta.map(async shot => {
+        const notes = await notesService.loadNotes(String(shot.id), 'gaggimate');
+        const withNotes = { ...shot, id: String(shot.id), source: 'gaggimate', notes };
+        return loadDeviceShotSamples(withNotes);
+      }),
+    );
+    shots.push(...deviceShots);
   } else if (indexResponse.status !== 404) {
     throw new Error(`Failed to load shot history index (HTTP ${indexResponse.status}).`);
   }
