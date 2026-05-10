@@ -3,7 +3,8 @@ if (import.meta.env.DEV) {
   await import('preact/debug');
 }
 import './style.css';
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'preact/hooks';
+import { h } from 'preact';
 import { initializeTheme } from './utils/themeManager.js';
 import { render } from 'preact';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
@@ -157,12 +158,29 @@ function AppContent() {
   );
 }
 
+// preact-iso has no built-in base support; strip the deploy base from path so
+// routes like path='/' match when the app lives at /gaggimate/.
+const _BASE = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? '';
+
+function BasePathProvider({ children }) {
+  const ctx = useContext(LocationProvider.ctx);
+  const value = useMemo(() => {
+    const path = _BASE && ctx.path.startsWith(_BASE)
+      ? ctx.path.slice(_BASE.length) || '/'
+      : ctx.path;
+    return { ...ctx, path };
+  }, [ctx]);
+  return h(LocationProvider.ctx.Provider, { value }, children);
+}
+
 export function App() {
   return (
-    <LocationProvider base={import.meta.env.BASE_URL}>
-      <ApiServiceContext.Provider value={apiService}>
-        <AppContent />
-      </ApiServiceContext.Provider>
+    <LocationProvider>
+      <BasePathProvider>
+        <ApiServiceContext.Provider value={apiService}>
+          <AppContent />
+        </ApiServiceContext.Provider>
+      </BasePathProvider>
     </LocationProvider>
   );
 }

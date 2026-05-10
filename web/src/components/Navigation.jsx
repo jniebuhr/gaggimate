@@ -36,6 +36,8 @@ const NAVIGATION_SECTIONS = [
   },
 ];
 
+const _NAV_BASE = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? '';
+
 function MenuItem({ icon, isNew = false, label, link, onNavigate }) {
   const { path } = useLocation();
   const isActive = path === link;
@@ -47,7 +49,7 @@ function MenuItem({ icon, isNew = false, label, link, onNavigate }) {
 
   return (
     <a
-      href={link}
+      href={_NAV_BASE + link}
       className={className}
       aria-current={isActive ? 'page' : undefined}
       title={label}
