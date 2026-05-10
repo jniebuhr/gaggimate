@@ -402,12 +402,17 @@ void WebUIPlugin::startRelay() {
         relayWs.begin(host.c_str(), port, path.c_str());
     }
 
+    if (relayTaskHandle == nullptr) {
+        BaseType_t created = xTaskCreatePinnedToCore(relayLoopTask, "WebUIRelay", 8192, this, 1, &relayTaskHandle, 0);
+        if (created != pdPASS) {
+            ESP_LOGE("WebUIPlugin", "Failed to create relay task (OOM)");
+            relayWs.disconnect();
+            return;
+        }
+    }
+
     relayEnabled = true;
     ESP_LOGI("WebUIPlugin", "Relay client started → %s:%d%s", host.c_str(), port, path.c_str());
-
-    if (relayTaskHandle == nullptr) {
-        xTaskCreatePinnedToCore(relayLoopTask, "WebUIRelay", 8192, this, 1, &relayTaskHandle, 0);
-    }
 }
 
 void WebUIPlugin::stopRelay() {

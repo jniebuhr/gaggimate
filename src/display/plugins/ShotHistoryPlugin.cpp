@@ -319,6 +319,9 @@ void ShotHistoryPlugin::handleCompletedShot() {
         } else {
             hasNotes = true; // WebUI already wrote notes that include beanType
         }
+    } else {
+        // No bean selected — WebUI may still have written dose-only notes.
+        hasNotes = fs->exists("/h/" + currentId + ".json");
     }
 
     cleanupHistory();
