@@ -20,7 +20,7 @@ let accessTokenExpiryMs = 0;
  * state is unaffected -- the next requestAccessToken call will detect
  * the empty token and trigger a fresh OAuth flow.
  */
-function invalidateToken() {
+export function invalidateToken() {
   accessToken = '';
   accessTokenExpiryMs = 0;
 }

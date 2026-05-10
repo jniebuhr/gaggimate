@@ -1,28 +1,52 @@
-import { useCallback, useMemo, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { createBackupBundle, restoreBackupBundle } from '../../utils/backupBundle.js';
 import {
   downloadGoogleDriveBackup,
   getStoredGoogleDriveClientId,
+  invalidateToken,
   listGoogleDriveBackups,
   setStoredGoogleDriveClientId,
   uploadGoogleDriveBackup,
 } from '../../utils/googleDriveBackup.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCloudArrowUp, faRotate, faCheck } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCloudArrowUp,
+  faRotate,
+  faCheck,
+  faFileArrowDown,
+  faXmark,
+} from '@fortawesome/free-solid-svg-icons';
+
+function formatBytes(bytes) {
+  const n = Number(bytes);
+  if (!n) return '';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const STATUS_BORDER = {
+  success: 'border-[var(--color-success,#4caf50)]',
+  error: 'border-[var(--color-error,#e05252)]',
+  info: 'border-[var(--color-warning,#d4a843)]',
+};
 
 export function GoogleDriveBackupCard({ apiService, onRestoreComplete }) {
   const [clientId, setClientId] = useState(() => getStoredGoogleDriveClientId());
   const [busyAction, setBusyAction] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState({ text: '', type: 'info' });
   const [latestBackup, setLatestBackup] = useState(null);
+  const [pendingRestore, setPendingRestore] = useState(null);
 
   const hasClientId = clientId.trim().length > 0;
   const isBusy = busyAction.length > 0;
 
+  const setMsg = useCallback((text, type = 'info') => setStatus({ text, type }), []);
+
   const latestBackupLabel = useMemo(() => {
-    if (!latestBackup?.modifiedTime) return 'No backup checked yet';
+    if (!latestBackup?.modifiedTime) return 'No backup found';
     return new Date(latestBackup.modifiedTime).toLocaleString();
   }, [latestBackup]);
 
@@ -34,85 +58,119 @@ export function GoogleDriveBackupCard({ apiService, onRestoreComplete }) {
     return latest;
   }, [clientId]);
 
+  useEffect(() => {
+    refreshLatestBackup().catch(() => {});
+  }, [refreshLatestBackup]);
+
   const saveClientId = useCallback(() => {
     if (!clientId.trim()) {
-      setStatus('Enter a Google OAuth client ID first.');
+      setMsg('Enter a Google OAuth client ID first.', 'error');
       return;
     }
     setStoredGoogleDriveClientId(clientId.trim());
-    setStatus('Google Drive client ID saved in this browser.');
-  }, [clientId]);
+    setMsg('Client ID saved in this browser.', 'success');
+  }, [clientId, setMsg]);
+
+  const handleDisconnect = useCallback(() => {
+    invalidateToken();
+    setStoredGoogleDriveClientId('');
+    setClientId('');
+    setLatestBackup(null);
+    setMsg('Disconnected from Google Drive.', 'info');
+  }, [setMsg]);
 
   const handleBackup = useCallback(async () => {
-    if (!apiService) {
-      setStatus('WebSocket is not connected yet.');
-      return;
-    }
-
+    if (!apiService) { setMsg('WebSocket is not connected yet.', 'error'); return; }
     setBusyAction('backup');
-    setStatus('Building backup bundle...');
+    setMsg('Building backup bundle...');
     try {
       setStoredGoogleDriveClientId(clientId.trim());
       const bundle = await createBackupBundle(apiService);
-      setStatus('Uploading backup to Google Drive...');
+      setMsg('Uploading to Google Drive...');
       await uploadGoogleDriveBackup(clientId.trim(), bundle);
       const latest = await refreshLatestBackup();
-      setStatus(
+      setMsg(
         latest
-          ? `Backup saved to Google Drive at ${new Date(latest.modifiedTime).toLocaleString()}.`
+          ? `Backup saved at ${new Date(latest.modifiedTime).toLocaleString()}.`
           : 'Backup saved to Google Drive.',
+        'success',
       );
     } catch (error) {
       console.error('Google Drive backup failed:', error);
-      setStatus(`Backup failed: ${error.message}`);
+      setMsg(`Backup failed: ${error.message}`, 'error');
     } finally {
       setBusyAction('');
     }
-  }, [apiService, clientId, refreshLatestBackup]);
+  }, [apiService, clientId, refreshLatestBackup, setMsg]);
 
-  const handleRestore = useCallback(async () => {
-    if (!apiService) {
-      setStatus('WebSocket is not connected yet.');
-      return;
-    }
-
-    setBusyAction('restore');
-    setStatus('Looking for the latest Google Drive backup...');
+  const handleRestoreClick = useCallback(async () => {
+    if (!apiService) { setMsg('WebSocket is not connected yet.', 'error'); return; }
+    setBusyAction('restore-check');
+    setMsg('Looking for the latest backup...');
     try {
       setStoredGoogleDriveClientId(clientId.trim());
       const latest = (await refreshLatestBackup()) || null;
       if (!latest?.id) {
-        throw new Error('No backup file was found in Google Drive app storage.');
+        throw new Error('No backup file found in Google Drive app storage.');
       }
-
-      const confirmed = confirm(
-        `Restore the latest Google Drive backup from ${new Date(latest.modifiedTime).toLocaleString()}?`,
-      );
-      if (!confirmed) {
-        setStatus('Restore cancelled.');
-        return;
-      }
-
-      setStatus('Downloading backup from Google Drive...');
-      const bundle = await downloadGoogleDriveBackup(clientId.trim(), latest.id);
-      setStatus('Restoring backup data...');
-      await restoreBackupBundle(apiService, bundle);
-      setStatus('Restore completed. Reloading current settings...');
-      onRestoreComplete?.();
+      setPendingRestore(latest);
+      setMsg('');
     } catch (error) {
-      console.error('Google Drive restore failed:', error);
-      setStatus(`Restore failed: ${error.message}`);
+      console.error('Restore check failed:', error);
+      setMsg(`Restore failed: ${error.message}`, 'error');
     } finally {
       setBusyAction('');
     }
-  }, [apiService, clientId, onRestoreComplete, refreshLatestBackup]);
+  }, [apiService, clientId, refreshLatestBackup, setMsg]);
+
+  const handleRestoreConfirm = useCallback(async () => {
+    if (!pendingRestore) return;
+    const target = pendingRestore;
+    setPendingRestore(null);
+    setBusyAction('restore');
+    setMsg('Downloading backup from Google Drive...');
+    try {
+      const bundle = await downloadGoogleDriveBackup(clientId.trim(), target.id);
+      setMsg('Restoring backup data...');
+      await restoreBackupBundle(apiService, bundle);
+      setMsg('Restore complete.', 'success');
+      onRestoreComplete?.();
+    } catch (error) {
+      console.error('Google Drive restore failed:', error);
+      setMsg(`Restore failed: ${error.message}`, 'error');
+    } finally {
+      setBusyAction('');
+    }
+  }, [apiService, clientId, onRestoreComplete, pendingRestore, setMsg]);
+
+  const handleExportLocal = useCallback(async () => {
+    if (!apiService) { setMsg('WebSocket is not connected yet.', 'error'); return; }
+    setBusyAction('export');
+    setMsg('Building backup bundle...');
+    try {
+      const bundle = await createBackupBundle(apiService);
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gaggimate-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMsg('Backup downloaded.', 'success');
+    } catch (error) {
+      console.error('Local export failed:', error);
+      setMsg(`Export failed: ${error.message}`, 'error');
+    } finally {
+      setBusyAction('');
+    }
+  }, [apiService, setMsg]);
 
   return (
     <Card sm={10} lg={5} title='Google Drive Backup'>
       <div className='flex flex-col gap-5'>
         <div className='font-nd-mono text-[13px] text-[var(--text-disabled,#666)]'>
-          Save and restore settings, profiles, beans, and shot history backups using a private file
-          in your Google Drive app storage.
+          Save and restore settings, profiles, beans, and shot history using a private file in your
+          Google Drive app storage.
         </div>
 
         <div className='flex flex-col gap-2'>
@@ -140,6 +198,7 @@ export function GoogleDriveBackupCard({ apiService, onRestoreComplete }) {
           <button
             type='button'
             className='nd-action-btn'
+            title='Save client ID'
             onClick={saveClientId}
             disabled={isBusy}
           >
@@ -148,6 +207,7 @@ export function GoogleDriveBackupCard({ apiService, onRestoreComplete }) {
           <button
             type='button'
             className='nd-action-btn nd-action-btn--primary'
+            title='Back up to Google Drive'
             onClick={handleBackup}
             disabled={!hasClientId || isBusy}
           >
@@ -156,12 +216,64 @@ export function GoogleDriveBackupCard({ apiService, onRestoreComplete }) {
           <button
             type='button'
             className='nd-action-btn'
-            onClick={handleRestore}
+            title='Restore from Google Drive'
+            onClick={handleRestoreClick}
             disabled={!hasClientId || isBusy}
           >
-            {busyAction === 'restore' ? <Spinner size={4} /> : <FontAwesomeIcon icon={faRotate} />}
+            {busyAction === 'restore' || busyAction === 'restore-check' ? (
+              <Spinner size={4} />
+            ) : (
+              <FontAwesomeIcon icon={faRotate} />
+            )}
           </button>
+          <button
+            type='button'
+            className='nd-action-btn'
+            title='Download backup as local JSON file'
+            onClick={handleExportLocal}
+            disabled={!apiService || isBusy}
+          >
+            {busyAction === 'export' ? <Spinner size={4} /> : <FontAwesomeIcon icon={faFileArrowDown} />}
+          </button>
+          {hasClientId && (
+            <button
+              type='button'
+              className='nd-action-btn'
+              title='Disconnect Google Drive'
+              onClick={handleDisconnect}
+              disabled={isBusy}
+            >
+              <FontAwesomeIcon icon={faXmark} />
+            </button>
+          )}
         </div>
+
+        {pendingRestore && (
+          <div className='nd-card p-4 flex flex-col gap-3'>
+            <div className='font-nd-mono text-[13px] text-[var(--text-primary,#e8e8e8)]'>
+              Restore backup from {new Date(pendingRestore.modifiedTime).toLocaleString()}
+              {pendingRestore.size ? ` (${formatBytes(pendingRestore.size)})` : ''}?
+            </div>
+            <div className='flex gap-2'>
+              <button
+                type='button'
+                className='nd-action-btn nd-action-btn--primary'
+                onClick={handleRestoreConfirm}
+                disabled={isBusy}
+              >
+                Restore
+              </button>
+              <button
+                type='button'
+                className='nd-action-btn'
+                onClick={() => { setPendingRestore(null); setMsg(''); }}
+                disabled={isBusy}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className='nd-card p-4'>
           <div className='font-nd-mono text-[14px] text-[var(--text-primary,#e8e8e8)]'>
@@ -172,15 +284,15 @@ export function GoogleDriveBackupCard({ apiService, onRestoreComplete }) {
           </div>
           {latestBackup?.size ? (
             <div className='font-nd-mono text-[11px] text-[var(--text-disabled,#666)] mt-1'>
-              {Number(latestBackup.size)} bytes
+              {formatBytes(latestBackup.size)}
             </div>
           ) : null}
         </div>
 
-        {status ? (
-          <div className='border-l-2 border-[var(--color-warning,#d4a843)] pl-4'>
+        {status.text ? (
+          <div className={`border-l-2 ${STATUS_BORDER[status.type] ?? STATUS_BORDER.info} pl-4`}>
             <span className='font-nd-mono text-[14px] text-[var(--text-primary,#e8e8e8)]'>
-              {status}
+              {status.text}
             </span>
           </div>
         ) : null}
