@@ -84,8 +84,8 @@ class WebUIPlugin : public Plugin {
     // Relay state
     SemaphoreHandle_t relayMutex = nullptr;
     std::vector<String> relayOutBuffer;
-    bool relayEnabled = false;
-    bool relayConnected = false;
+    volatile bool relayEnabled = false;
+    volatile bool relayConnected = false;
     TaskHandle_t relayTaskHandle = nullptr;
     static void relayLoopTask(void *arg);
 

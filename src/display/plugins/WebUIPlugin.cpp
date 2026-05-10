@@ -412,9 +412,13 @@ void WebUIPlugin::startRelay() {
 
 void WebUIPlugin::stopRelay() {
     if (!relayEnabled) return;
+    // Signal the task to exit its loop body before tearing down the socket.
+    // vTaskDelete on a remote handle is non-blocking, so we must ensure the
+    // task is not mid-execution in relayWs.loop() when we call disconnect().
     relayEnabled = false;
     relayConnected = false;
     if (relayTaskHandle != nullptr) {
+        vTaskDelay(pdMS_TO_TICKS(20)); // one task loop cycle is 10 ms; 20 ms is a safe margin
         vTaskDelete(relayTaskHandle);
         relayTaskHandle = nullptr;
     }

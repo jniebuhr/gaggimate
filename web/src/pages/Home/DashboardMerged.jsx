@@ -1005,10 +1005,13 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               type='button'
               onClick={toggleAutoSteam}
               title='Auto-switch to steam mode when brew ends'
+              className={autoSteamEnabled ? 'nd-chip-danger-active' : ''}
               style={{
-                background: autoSteamEnabled ? 'rgba(215,25,33,0.18)' : 'transparent',
-                color: autoSteamEnabled ? '#d71921' : 'var(--dm-fg-faint)',
-                border: `1px solid ${autoSteamEnabled ? 'rgba(215,25,33,0.5)' : 'var(--dm-line)'}`,
+                ...(autoSteamEnabled ? {} : {
+                  background: 'transparent',
+                  color: 'var(--dm-fg-faint)',
+                  border: '1px solid var(--dm-line)',
+                }),
                 fontFamily: 'var(--dm-font-mono)',
                 fontSize: 9,
                 letterSpacing: '0.18em',

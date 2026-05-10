@@ -642,6 +642,10 @@ void DefaultUI::loop() {
 
     if (pendingAutoSteam) {
         pendingAutoSteam = false;
+        // Controller::deactivate() triggers brew:end without changing mode, so
+        // the mode stays MODE_BREW after a normal shot ends. The guard only
+        // fires false if the user explicitly navigated away (e.g. to standby)
+        // between brew:end and this loop tick, in which case discarding is correct.
         if (controller->getMode() == MODE_BREW) {
             controller->clear();
             controller->setMode(MODE_STEAM);

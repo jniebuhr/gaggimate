@@ -306,21 +306,26 @@ void ShotHistoryPlugin::handleCompletedShot() {
 
     controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
 
-    // Auto-save bean name to notes, merging with any dose/notes the WebUI may have already written
+    // Auto-save bean name to notes, merging with any dose/notes the WebUI may have already written.
+    // Track whether a notes file exists so appendCompletedShotToIndex can set SHOT_FLAG_HAS_NOTES
+    // without an extra fs->exists() stat call.
+    bool hasNotes = false;
     if (!currentBeanName.isEmpty()) {
         JsonDocument autoNotes;
         loadNotes(currentId, autoNotes);
         if (autoNotes["beanType"].isNull() || autoNotes["beanType"].as<String>().isEmpty()) {
             autoNotes["beanType"] = currentBeanName;
-            saveNotes(currentId, autoNotes);
+            hasNotes = saveNotes(currentId, autoNotes);
+        } else {
+            hasNotes = true; // WebUI already wrote notes that include beanType
         }
     }
 
     cleanupHistory();
-    appendCompletedShotToIndex();
+    appendCompletedShotToIndex(hasNotes);
 }
 
-void ShotHistoryPlugin::appendCompletedShotToIndex() {
+void ShotHistoryPlugin::appendCompletedShotToIndex(bool hasNotes) {
     ShotIndexEntry indexEntry{};
     indexEntry.id = currentId.toInt();
     indexEntry.timestamp = header.startEpoch;
@@ -328,7 +333,7 @@ void ShotHistoryPlugin::appendCompletedShotToIndex() {
     indexEntry.volume = header.finalWeight;
     indexEntry.rating = 0;
     indexEntry.flags = SHOT_FLAG_COMPLETED;
-    if (fs->exists("/h/" + currentId + ".json")) {
+    if (hasNotes) {
         indexEntry.flags |= SHOT_FLAG_HAS_NOTES;
     }
     strncpy(indexEntry.profileId, header.profileId, sizeof(indexEntry.profileId) - 1);
@@ -763,14 +768,16 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
     }
 }
 
-void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
+bool ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
     File file = fs->open("/h/" + id + ".json", FILE_WRITE);
-    if (file) {
-        String notesStr;
-        serializeJson(notes, notesStr);
-        file.print(notesStr);
-        file.close();
+    if (!file) {
+        return false;
     }
+    String notesStr;
+    serializeJson(notes, notesStr);
+    file.print(notesStr);
+    file.close();
+    return true;
 }
 
 void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
