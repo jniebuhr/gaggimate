@@ -274,7 +274,7 @@ function getHeatingLabel(mode, currentTemperature, targetTemperature) {
 
 // Mini action button component
 function MiniActionButton({ icon, label, onClick, disabled, tone }) {
-  const toneClass = tone === 'primary' ? 'nd-action-btn--primary' : '';
+  const toneClass = tone === 'primary' ? 'nd-action-btn--primary' : tone === 'danger' ? 'nd-action-btn--danger' : '';
   return (
     <button
       type='button'
@@ -537,7 +537,7 @@ export default function ProcessControls({ brew, mode }) {
               icon={faWind}
               label='Toggle auto steam'
               onClick={toggleAutoSteam}
-              tone={autoSteamEnabled ? 'primary' : undefined}
+              tone={autoSteamEnabled ? 'danger' : undefined}
             />
           )}
         </div>

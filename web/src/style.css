@@ -2137,6 +2137,17 @@ html[data-theme='nothing-light'] .nd-ring-title--flashing {
   border-color: #c4161e;
 }
 
+.nd-action-btn--danger {
+  background: #d71921;
+  border-color: #d71921;
+  color: white;
+}
+
+.nd-action-btn--danger:hover:not(:disabled) {
+  background: #c4161e;
+  border-color: #c4161e;
+}
+
 .nd-action-btn--text {
   width: auto;
   height: auto;
