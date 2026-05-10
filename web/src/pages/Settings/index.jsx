@@ -204,7 +204,7 @@ export function Settings() {
         const data = await response.json();
 
         // Sync relay config to localStorage so browser uses relay on next connection
-        if (data.cloudRelayUrl && data.cloudRelayToken) {
+        if (data.cloudRelayUrl && data.cloudRelayToken && data.cloudRelayEnabled) {
           localStorage.setItem('gaggimate_relay_url', data.cloudRelayUrl);
           localStorage.setItem('gaggimate_relay_token', data.cloudRelayToken);
         } else {
@@ -1152,6 +1152,7 @@ function RemoteAccessCard({ formData, onChange }) {
 
   const relayUrl = formData.cloudRelayUrl || '';
   const relayToken = formData.cloudRelayToken || '';
+  const relayEnabled = !!formData.cloudRelayEnabled;
   const hasRelay = relayUrl && relayToken;
 
   const pagesOrigin = 'https://carloshrdezc.github.io/gaggimate';
@@ -1173,6 +1174,21 @@ function RemoteAccessCard({ formData, onChange }) {
         <p className='text-[14px] text-[var(--text-disabled,#666)]'>
           Deploy the relay server and enter its URL below to access your machine from anywhere.
         </p>
+        <div className='flex items-center justify-between gap-4'>
+          <div>
+            <div className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>Enable Relay</div>
+            <div className='text-[12px] text-[var(--text-disabled,#666)]'>Turn off when not in use to keep the device stable</div>
+          </div>
+          <button
+            type='button'
+            className={`nd-toggle ${relayEnabled ? 'nd-toggle--active' : ''}`}
+            role='switch'
+            aria-checked={relayEnabled}
+            onClick={() => onChange('cloudRelayEnabled')({ target: { value: relayEnabled ? 0 : 1 } })}
+          >
+            <span className='nd-toggle-thumb' />
+          </button>
+        </div>
         <div className='flex flex-col gap-2'>
           <label
             htmlFor='cloudRelayUrl'

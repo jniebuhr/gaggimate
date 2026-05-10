@@ -108,6 +108,7 @@ Settings::Settings() {
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
     cloudRelayUrl = preferences.getString("cr_url", "");
     cloudRelayToken = preferences.getString("cr_token", "");
+    cloudRelayEnabled = preferences.getBool("cr_enabled", false);
 
     preferences.end();
 
@@ -398,6 +399,11 @@ void Settings::setCloudRelayToken(const String &token) {
     save();
 }
 
+void Settings::setCloudRelayEnabled(bool enabled) {
+    cloudRelayEnabled = enabled;
+    save();
+}
+
 void Settings::setSunriseR(int sunrise_r) {
     sunriseR = sunrise_r;
     save();
@@ -530,6 +536,7 @@ void Settings::doSave() {
     preferences.putInt("alt_relay", altRelayFunction);
     preferences.putString("cr_url", cloudRelayUrl);
     preferences.putString("cr_token", cloudRelayToken);
+    preferences.putBool("cr_enabled", cloudRelayEnabled);
 
     preferences.end();
 }
