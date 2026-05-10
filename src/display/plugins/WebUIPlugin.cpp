@@ -151,7 +151,7 @@ void WebUIPlugin::loop() {
         lastUpdateCheck = now;
         updateOTAStatus(ota->getCurrentVersion());
     }
-    if (now > lastStatus + STATUS_PERIOD && !ws.getClients().empty()) {
+    if (now > lastStatus + STATUS_PERIOD && (!ws.getClients().empty() || relayConnected)) {
         lastStatus = now;
         JsonDocument doc;
         doc["tp"] = "evt:status";
@@ -357,7 +357,7 @@ void WebUIPlugin::stop() {
 void WebUIPlugin::startRelay() {
     const String &relayUrl = controller->getSettings().getCloudRelayUrl();
     const String &relayToken = controller->getSettings().getCloudRelayToken();
-    if (relayUrl.isEmpty() || relayToken.isEmpty()) return;
+    if (relayUrl.isEmpty() || relayToken.isEmpty() || !controller->getSettings().isCloudRelayEnabled()) return;
 
     bool useSSL;
     String host, basePath;
@@ -395,6 +395,12 @@ void WebUIPlugin::startRelay() {
         }
     });
 
+    // SSL heap usage can reach 50 KB; bail early rather than destabilize the device.
+    if (useSSL && esp_get_free_heap_size() < 60000) {
+        ESP_LOGW("WebUIPlugin", "Insufficient heap (%lu B) for SSL relay — skipping", esp_get_free_heap_size());
+        return;
+    }
+
     relayWs.setReconnectInterval(5000);
     if (useSSL) {
         relayWs.beginSSL(host.c_str(), port, path.c_str());
@@ -403,7 +409,7 @@ void WebUIPlugin::startRelay() {
     }
 
     if (relayTaskHandle == nullptr) {
-        BaseType_t created = xTaskCreatePinnedToCore(relayLoopTask, "WebUIRelay", 8192, this, 1, &relayTaskHandle, 0);
+        BaseType_t created = xTaskCreatePinnedToCore(relayLoopTask, "WebUIRelay", 16384, this, 1, &relayTaskHandle, 0);
         if (created != pdPASS) {
             ESP_LOGE("WebUIPlugin", "Failed to create relay task (OOM)");
             relayWs.disconnect();
@@ -412,7 +418,7 @@ void WebUIPlugin::startRelay() {
     }
 
     relayEnabled = true;
-    ESP_LOGI("WebUIPlugin", "Relay client started → %s:%d%s", host.c_str(), port, path.c_str());
+    ESP_LOGI("WebUIPlugin", "Relay client started → %s:%d%s (free heap: %lu B)", host.c_str(), port, path.c_str(), esp_get_free_heap_size());
 }
 
 void WebUIPlugin::stopRelay() {
@@ -828,12 +834,14 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
                 settings->setCloudRelayUrl(request->arg("cloudRelayUrl"));
             if (request->hasArg("cloudRelayToken"))
                 settings->setCloudRelayToken(request->arg("cloudRelayToken"));
+            if (request->hasArg("cloudRelayEnabled"))
+                settings->setCloudRelayEnabled(request->arg("cloudRelayEnabled") == "1");
             settings->save(true);
         });
         pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
-        if (request->hasArg("cloudRelayUrl") || request->hasArg("cloudRelayToken")) {
+        if (request->hasArg("cloudRelayUrl") || request->hasArg("cloudRelayToken") || request->hasArg("cloudRelayEnabled")) {
             stopRelay();
             startRelay();
         }
@@ -892,6 +900,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
     doc["flushDuration"] = settings.getFlushDuration() / 1000;
     doc["cloudRelayUrl"] = settings.getCloudRelayUrl();
     doc["cloudRelayToken"] = settings.getCloudRelayToken();
+    doc["cloudRelayEnabled"] = settings.isCloudRelayEnabled();
 
     // Add schedule format with days
     std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();

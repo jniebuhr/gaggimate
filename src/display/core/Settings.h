@@ -114,9 +114,11 @@ class Settings {
     int getFlushDuration() const { return flushDuration; }
     String getCloudRelayUrl() const { return cloudRelayUrl; }
     String getCloudRelayToken() const { return cloudRelayToken; }
+    bool isCloudRelayEnabled() const { return cloudRelayEnabled; }
     void setFlushDuration(int flush_duration);
     void setCloudRelayUrl(const String &url);
     void setCloudRelayToken(const String &token);
+    void setCloudRelayEnabled(bool enabled);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
@@ -246,6 +248,7 @@ class Settings {
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
     String cloudRelayUrl = "";
     String cloudRelayToken = "";
+    bool cloudRelayEnabled = false;
 
     void doSave();
     xTaskHandle taskHandle;
