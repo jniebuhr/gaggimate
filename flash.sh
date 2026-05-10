@@ -32,15 +32,17 @@ gzip -f data/w/assets/*.css
 gzip -f data/w/*.html
 
 echo "=== Step 3: Build firmware ==="
-pio run -e display
+# Resolve pio: prefer PATH, fall back to the default PlatformIO install location on Windows
+PIO=$(command -v pio 2>/dev/null || echo "$HOME/.platformio/penv/Scripts/pio.exe")
+"$PIO" run -e display
 
 echo "=== Step 4: Upload firmware ==="
-pio run -e display -t upload --upload-port $PORT
+"$PIO" run -e display -t upload --upload-port $PORT
 
 echo "=== Step 5: Build SPIFFS ==="
-pio run -e display -t buildfs
+"$PIO" run -e display -t buildfs
 
 echo "=== Step 6: Upload SPIFFS ==="
-pio run -e display -t uploadfs --upload-port $PORT
+"$PIO" run -e display -t uploadfs --upload-port $PORT
 
 echo "=== Done! ==="
