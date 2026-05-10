@@ -159,7 +159,7 @@ function AppContent() {
 
 export function App() {
   return (
-    <LocationProvider>
+    <LocationProvider base={import.meta.env.BASE_URL}>
       <ApiServiceContext.Provider value={apiService}>
         <AppContent />
       </ApiServiceContext.Provider>
