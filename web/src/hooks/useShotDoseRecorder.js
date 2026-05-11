@@ -41,10 +41,17 @@ export function useShotDoseRecorder(api, dose, onDoseAttached) {
     if (beanType) notesToSave.beanType = beanType;
 
     notesService.setApiService(api);
-    notesService.saveNotes(shotId, 'gaggimate', notesToSave)
-      .then(async () => {
+    (async () => {
+      try {
+        // Load existing notes first so the bean-quantity delta is idempotent:
+        // if the recorder fires twice for the same shot (e.g. a transient status
+        // update resets savedForShotRef), the second call sees previousDose==nextDose
+        // and produces a delta of 0 instead of subtracting the full dose again.
+        const previousNotes = await notesService.loadNotes(shotId, 'gaggimate');
+        await notesService.saveNotes(shotId, 'gaggimate', notesToSave);
+        const nextNotes = { ...previousNotes, ...notesToSave };
         try {
-          const updatedBean = await syncBeanUsageFromNotes(api, {}, notesToSave);
+          const updatedBean = await syncBeanUsageFromNotes(api, previousNotes, nextNotes);
           if (beanType && !updatedBean) {
             console.warn(`No matching bean found for '${beanType}' — bean quantity not updated`);
           }
@@ -54,7 +61,9 @@ export function useShotDoseRecorder(api, dose, onDoseAttached) {
         if (mountedRef.current) {
           onDoseAttached?.(hasDose ? dose : null);
         }
-      })
-      .catch(err => console.error('Failed to attach notes to shot:', err));
+      } catch (err) {
+        console.error('Failed to attach notes to shot:', err);
+      }
+    })();
   }, [status.value.process, api, dose]);
 }
