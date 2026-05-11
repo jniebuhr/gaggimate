@@ -7,6 +7,7 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
 import { useProfileData } from '../../hooks/useProfileData.js';
 import { useAutoSteam } from '../../hooks/useAutoSteam.js';
+import { useShotDoseRecorder } from '../../hooks/useShotDoseRecorder.js';
 import { listBeans, recordBeanSelection, parseQuantity } from '../../utils/beanManager.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
@@ -696,6 +697,9 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
     setDoseState(v);
     try { localStorage.setItem(DOSE_KEY, String(v)); } catch {}
   }, []);
+
+  // Auto-attach dose and bean to shot notes as soon as the shot becomes active
+  useShotDoseRecorder(api, dose);
 
   // Target yield — localStorage-backed + API
   const [yieldTarget, setYieldState] = useState(() => {

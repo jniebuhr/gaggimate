@@ -4,9 +4,8 @@ import { machine } from '../services/ApiService.js';
 import { notesService } from '../pages/ShotAnalyzer/services/NotesService';
 import { syncBeanUsageFromNotes } from '../utils/beanManager.js';
 
-const DOSE_STORAGE_KEY = 'gaggimate-dose-grams';
-
-export function useShotDoseRecorder(api, onDoseAttached) {
+// dose: numeric grams value from the caller's state (not localStorage, so it persists across shots)
+export function useShotDoseRecorder(api, dose, onDoseAttached) {
   const status = computed(() => machine.value.status);
   const mountedRef = useRef(true);
   const savedForShotRef = useRef(null);
@@ -32,8 +31,6 @@ export function useShotDoseRecorder(api, onDoseAttached) {
     if (!isActive || savedForShotRef.current === shotId) return;
     savedForShotRef.current = shotId;
 
-    const doseStr = localStorage.getItem(DOSE_STORAGE_KEY);
-    const dose = doseStr ? parseFloat(doseStr) : NaN;
     const hasDose = Number.isFinite(dose) && dose > 0;
     const beanType = status.value.selectedBean || '';
 
@@ -46,7 +43,6 @@ export function useShotDoseRecorder(api, onDoseAttached) {
     notesService.setApiService(api);
     notesService.saveNotes(shotId, 'gaggimate', notesToSave)
       .then(async () => {
-        if (hasDose) localStorage.removeItem(DOSE_STORAGE_KEY);
         try {
           const updatedBean = await syncBeanUsageFromNotes(api, {}, notesToSave);
           if (beanType && !updatedBean) {
@@ -60,5 +56,5 @@ export function useShotDoseRecorder(api, onDoseAttached) {
         }
       })
       .catch(err => console.error('Failed to attach notes to shot:', err));
-  }, [status.value.process, api]);
+  }, [status.value.process, api, dose]);
 }
