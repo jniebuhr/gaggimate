@@ -26,13 +26,12 @@ int16_t calculate_angle(int set_temp, int range, int offset) {
 
 void DefaultUI::updateTempHistory() {
     if (currentTemp > 0) {
+        if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
+            tempHistoryIndex = 0;
+            isTempHistoryInitialized = true;
+        }
         tempHistory[tempHistoryIndex] = currentTemp;
         tempHistoryIndex += 1;
-    }
-
-    if (tempHistoryIndex > TEMP_HISTORY_LENGTH) {
-        tempHistoryIndex = 0;
-        isTempHistoryInitialized = true;
     }
 
     if (tempHistoryIndex % 4 == 0) {

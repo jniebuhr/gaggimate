@@ -156,7 +156,16 @@ void GaggiMateController::loop() {
         handlePingTimeout();
     }
     sendSensorData();
+    if (errorState != ERROR_CODE_NONE) {
+        ESP_LOGW("GaggiMateController", "Error state: %d", errorState);
+    }
     delay(250);
+    if (Serial.available()) {
+        while (Serial.available()) {
+            char c = Serial.read();
+            handleSerialCommand(c);
+        }
+    }
 }
 
 void GaggiMateController::registerBoardConfig(ControllerConfig config) { configs.push_back(config); }
@@ -231,5 +240,48 @@ void GaggiMateController::sendSensorData() {
         }
     } else {
         _ble.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
+    }
+}
+
+void GaggiMateController::handleSerialCommand(char c) {
+    if (c == 'S') {
+        ESP_LOGI("Controller", "");
+        ESP_LOGI("Controller", "╔════════════════╗");
+        ESP_LOGI("Controller", "║ Status Summary ║");
+        ESP_LOGI("Controller", "╠════════════════╝");
+        ESP_LOGI("Controller", "║");
+        ESP_LOGI("Controller", "╠═ Error codes");
+        ESP_LOGI("Controller", "║  ├─ Controller Error: %d", errorState);
+        ESP_LOGI("Controller", "║  └─ Thermocouple Error: %d", thermocouple->isErrorState());
+        ESP_LOGI("Controller", "║");
+        ESP_LOGI("Controller", "╠═ Readings");
+        if (_config.capabilites.pressure) {
+            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            ESP_LOGI("Controller", "║  ├─ Pressure: %.2f", pressureSensor->getPressure());
+            ESP_LOGI("Controller", "║  ├─ Flow: %.2f", dimmedPump->getPumpFlow());
+            ESP_LOGI("Controller", "║  ├─ Pump Power: %.2f", dimmedPump->getPowerTarget());
+        }
+        ESP_LOGI("Controller", "║  └─ Temperature: %.2f", thermocouple->read());
+        ESP_LOGI("Controller", "║");
+        ESP_LOGI("Controller", "╠═ Control");
+        if (_config.capabilites.pressure) {
+            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            ESP_LOGI("Controller", "║  ├─ Pressure: %.2f", dimmedPump->getPressureTarget());
+            ESP_LOGI("Controller", "║  ├─ Flow: %.2f", dimmedPump->getFlowTarget());
+            ESP_LOGI("Controller", "║  ├─ Pump Power: %.2f", dimmedPump->getPowerTarget());
+        }
+        ESP_LOGI("Controller", "║  └─ Temperature: %.2f", heater->getSetpoint());
+        ESP_LOGI("Controller", "║");
+
+        size_t free = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+        size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+        size_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+        float fragmentation = 100 - (largest * 100) / free;
+        ESP_LOGI("Controller", "╠═ Memory");
+        ESP_LOGI("Controller", "║  ├─ Heap: %d / %d (%.2f%%)", (total - free), total, (100.0f * (total - free)) / total);
+        ESP_LOGI("Controller", "║  └─ Fragmentation: %.2f%%", fragmentation);
+        ESP_LOGI("Controller", "");
+    } else {
+        ESP_LOGI("Controller", "Unrecognized Input! Available commands: S (Status)");
     }
 }

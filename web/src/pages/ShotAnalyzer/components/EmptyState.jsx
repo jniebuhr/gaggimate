@@ -48,10 +48,6 @@ export function EmptyState({ loading }) {
             </p>
           </div>
 
-          <p className='text-base-content border-base-content/10 mb-4 border-b pb-2 text-sm font-bold tracking-wide uppercase'>
-            Supported Sources
-          </p>
-
           {/* GM Section */}
           <div className='flex items-start gap-4'>
             <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center'>
@@ -106,13 +102,6 @@ export function EmptyState({ loading }) {
             </div>
           </div>
 
-          {/* Divider - Subtle */}
-          <div className='bg-base-content/5 h-px w-full'></div>
-
-          <p className='text-base-content border-base-content/10 mb-4 border-b pb-2 text-sm font-bold tracking-wide uppercase'>
-            Import Guidance
-          </p>
-
           <div className='text-base-content text-xs leading-relaxed'>
             <span className='block'>
               Drag and drop files onto the status bar or use the import icons in the shot and
@@ -127,6 +116,29 @@ export function EmptyState({ loading }) {
               before importing.
             </span>
             <span className='mt-1 block'>Bulk upload and download are supported.</span>
+          </div>
+
+          <div className='bg-base-content/5 h-px w-full'></div>
+
+          <div className='grid gap-2 text-xs leading-relaxed sm:grid-cols-3'>
+            <div className='text-base-content'>
+              <span className='bg-base-content/8 border-base-content/10 mr-2 inline-flex min-w-6 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
+                X
+              </span>{' '}
+              Open or close the library.
+            </div>
+            <div className='text-base-content'>
+              <span className='bg-base-content/8 border-base-content/10 mr-2 inline-flex min-w-6 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
+                C
+              </span>{' '}
+              Start or end compare mode.
+            </div>
+            <div className='text-base-content'>
+              <span className='bg-base-content/8 border-base-content/10 mr-2 inline-flex min-w-12 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
+                ← →
+              </span>{' '}
+              Switch between shots.
+            </div>
           </div>
         </div>
         <div className='mx-auto max-w-2xl'>

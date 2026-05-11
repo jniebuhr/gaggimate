@@ -112,7 +112,7 @@ bool NimBLEClientController::connectToServer() {
     // Obtain the remote notify characteristic and subscribe to it
 
     errorChar = pRemoteService->getCharacteristic(NimBLEUUID(ERROR_CHAR_UUID));
-    if (errorChar->canNotify()) {
+    if (errorChar != nullptr && errorChar->canNotify()) {
         errorChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }

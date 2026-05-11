@@ -52,6 +52,8 @@ class Controller {
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
 
+    bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(taskHandle)); }
+
     void autotune(int testTime, int samples);
     void startProcess(Process *process);
     Process *getProcess() const { return currentProcess; }
@@ -95,6 +97,7 @@ class Controller {
         return static_cast<int>((reversedLevel - settings.getFullTankDistance()) /
                                 static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance()) * 100.0f);
     };
+    int getTofDistance() const { return tofDistance; }
 
     void onVolumetricDelete();
     bool isLowWaterLevel() const { return getWaterLevel() < 20; };

@@ -23,8 +23,8 @@ import {
 import { getAnalyzerGroupCardVisuals } from './analyzerGroupVisuals';
 import {
   ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS,
+  ANALYZER_COMPACT_GROUP_CLASSES,
   ANALYZER_COMPACT_ICON_BUTTON_CLASS,
-  ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES,
   getAnalyzerIconButtonClasses,
   getAnalyzerSurfaceTriggerClasses,
   getAnalyzerTextButtonClasses,
@@ -145,7 +145,7 @@ export function ColumnControls({
         <div className='flex min-w-0 flex-1 items-center gap-2 sm:gap-4'>
           {/* Header Actions & Preset Selector */}
           <div className='flex items-center gap-2'>
-            <div className={ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES}>
+            <div className={ANALYZER_COMPACT_GROUP_CLASSES}>
               <button
                 type='button'
                 onClick={e => {
@@ -153,7 +153,7 @@ export function ColumnControls({
                   setExpanded(prev => !prev);
                 }}
                 className={getAnalyzerIconButtonClasses({
-                  className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_ICON_BUTTON_CLASS} px-0 text-xs`,
+                  className: `${ANALYZER_COMPACT_ICON_BUTTON_CLASS} px-0 text-xs`,
                 })}
                 title={expanded ? 'Collapse column settings' : 'Expand column settings'}
                 aria-label={expanded ? 'Collapse column settings' : 'Expand column settings'}
@@ -164,7 +164,7 @@ export function ColumnControls({
               <button
                 onClick={applyStandard}
                 className={getAnalyzerTextButtonClasses({
-                  className: `btn btn-ghost btn-xs hidden ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} rounded-none px-3 text-[10px] font-bold tracking-normal normal-case sm:inline-flex`,
+                  className: `hidden ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} px-3 text-[10px] font-bold tracking-normal normal-case sm:inline-flex`,
                 })}
               >
                 Standard
@@ -191,7 +191,7 @@ export function ColumnControls({
                   }}
                   onClick={e => e.stopPropagation()}
                   className={getAnalyzerSurfaceTriggerClasses({
-                    className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} w-[6rem] max-w-[6rem] appearance-none rounded-none border-0 bg-transparent px-3 pr-6 text-[10px] font-bold tracking-normal normal-case shadow-none outline-none`,
+                    className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} w-[6rem] max-w-[6rem] appearance-none border-0 bg-transparent px-3 pr-6 text-[10px] font-bold tracking-normal normal-case shadow-none outline-none`,
                   })}
                 >
                   <option value='' disabled>
@@ -217,7 +217,7 @@ export function ColumnControls({
                     onClick={deletePreset}
                     className={getAnalyzerIconButtonClasses({
                       tone: 'error',
-                      className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_ICON_BUTTON_CLASS} px-0`,
+                      className: `${ANALYZER_COMPACT_ICON_BUTTON_CLASS} px-0`,
                     })}
                     title='Delete preset'
                     aria-label='Delete preset'
@@ -324,7 +324,7 @@ export function ColumnControls({
                 onClickCapture={e => e.stopPropagation()}
                 className={getAnalyzerTextButtonClasses({
                   tone: 'error',
-                  className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} gap-1 px-3 text-[10px] font-bold tracking-normal normal-case`,
+                  className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} gap-1 px-3 text-[10px] font-bold tracking-normal normal-case`,
                 })}
               >
                 <FontAwesomeIcon icon={faUndo} /> Reset Defaults
@@ -343,7 +343,7 @@ export function ColumnControls({
                 onClick={saveAsStandard}
                 onClickCapture={e => e.stopPropagation()}
                 className={getAnalyzerTextButtonClasses({
-                  className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} px-3 text-[10px] font-bold tracking-normal normal-case`,
+                  className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} px-3 text-[10px] font-bold tracking-normal normal-case`,
                 })}
               >
                 Save as Standard
@@ -353,7 +353,7 @@ export function ColumnControls({
                 onClick={saveAsPreset}
                 onClickCapture={e => e.stopPropagation()}
                 className={getAnalyzerTextButtonClasses({
-                  className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} border-base-content/10 bg-transparent px-3 text-[10px] font-bold tracking-normal normal-case shadow-none`,
+                  className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} border-base-content/10 bg-transparent px-3 text-[10px] font-bold tracking-normal normal-case shadow-none`,
                 })}
               >
                 Save as New Preset
