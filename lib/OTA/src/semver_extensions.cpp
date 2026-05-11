@@ -24,7 +24,12 @@ semver_t from_string(const string &version) {
     if (version.empty()) {
         return {0, 0, 0, nullptr, nullptr};
     }
-    auto numbers = split(version, '.');
+    // Strip optional leading 'v' so tags like "2.0.0" and "v2.0.0" both parse correctly
+    const string ver = (version[0] == 'v' || version[0] == 'V') ? version.substr(1) : version;
+    auto numbers = split(ver, '.');
+    if (numbers.size() < 3) {
+        return {0, 0, 0, nullptr, nullptr};
+    }
     auto major = atoi(numbers.at(0).c_str());
     auto minor = atoi(numbers.at(1).c_str());
     int patch;
