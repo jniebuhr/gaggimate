@@ -155,17 +155,23 @@ void Controller::setupBluetooth() {
         pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
     });
     clientController.registerBtnCallback([this](const int index, const int status) {
-        ESP_LOGI("Controller", "Button %d changed to %d", index, status);
-        switch (index) {
-        case 0:
-            handleBrewButton(status);
-            break;
-        case 1:
-            handleSteamButton(status);
-            break;
-        default:
-            break;
+        String behavior = settings.getButtonBehavior(index);
+        ESP_LOGV("Controller", "Button %d changed to %d, behavior: %s", index, status, behavior);
+        if (behavior == "" || behavior == "none") {
+            return;
         }
+        if (behavior == "brew") {
+            handleBrewButton(status);
+            return;
+        }
+        if (behavior == "steam") {
+            handleSteamButton(status);
+            return;
+        }
+        if (behavior == "water") {
+            return;
+        }
+        handleProfileButton(status, behavior);
     });
     clientController.registerLevelCallback([this](const int level) {
         ESP_LOGI("Controller", "Boiler water level changed: %d", level);
@@ -833,6 +839,32 @@ void Controller::handleSteamButton(int steamButtonStatus) {
     } else if (!settings.isMomentaryButtons() && getMode() == MODE_STEAM) {
         deactivate();
         setMode(MODE_BREW);
+    }
+}
+
+void Controller::handleProfileButton(int buttonStatus, String id) {
+    if (buttonStatus && getMode() == MODE_STANDBY) {
+        deactivateStandby();
+        return;
+    }
+    if (!buttonStatus && !settings.isMomentaryButtons()) {
+        deactivate();
+        clear();
+    }
+    if (buttonStatus) {
+        if (getMode() != MODE_BREW) {
+            setMode(MODE_BREW);
+        }
+        if (isActive()) {
+            deactivate();
+            clear();
+            return;
+        }
+        std::vector<String> profileIds = profileManager->listProfiles();
+        if (std::find(profileIds.begin(), profileIds.end(), id) != profileIds.end()) {
+            profileManager->selectProfile(id);
+            activate();
+        }
     }
 }
 
