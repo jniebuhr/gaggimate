@@ -237,7 +237,10 @@ RingVisual buildRingVisual(const DisplayPalette &palette, const RingVisualContex
         }
     }
 
-    if (context.active && context.mode != MODE_STEAM) {
+    if (context.active) {
+        if (context.mode == MODE_STEAM) {
+            return {100, palette.accentCool, "STEAM"};
+        }
         return {100, modeTone(palette, context.mode), "ACTIVE"};
     }
 
@@ -1894,7 +1897,7 @@ void DefaultUI::ensureAutoSteamButton() {
     const bool amoledPanel = AmoledDisplayDriver::getInstance() == panelDriver;
     const DisplayPalette palette = makeDisplayPalette(controller->getSettings().getThemeMode(), amoledPanel);
 
-    if (autoSteamBtn == nullptr) {
+    if (autoSteamBtn == nullptr || !lv_obj_is_valid(autoSteamBtn)) {
         autoSteamBtn = lv_btn_create(ui_BrewScreen);
         if (autoSteamBtn == nullptr)
             return;
