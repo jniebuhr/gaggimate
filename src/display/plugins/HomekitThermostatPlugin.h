@@ -1,5 +1,6 @@
-#ifndef HOMEKITPLUGIN_H
-#define HOMEKITPLUGIN_H
+#pragma once
+#ifndef HOMEKITTHERMOSTATPLUGIN_H
+#define HOMEKITTHERMOSTATPLUGIN_H
 #include "../core/Plugin.h"
 #include "HomeSpan.h"
 
@@ -26,9 +27,9 @@ class HomekitAccessory : public Service::Thermostat {
     SpanCharacteristic *displayUnits;
 };
 
-class HomekitPlugin : public Plugin {
+class HomekitThermostatPlugin : public Plugin {
   public:
-    HomekitPlugin(String wifiSsid, String wifiPassword);
+    HomekitThermostatPlugin(String wifiSsid, String wifiPassword);
     void setup(Controller *controller, PluginManager *pluginManager) override;
     void loop() override;
 
@@ -46,4 +47,4 @@ class HomekitPlugin : public Plugin {
     Controller *controller;
 };
 
-#endif // HOMEKITPLUGIN_H
+#endif // HOMEKITTHERMOSTATPLUGIN_H

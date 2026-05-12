@@ -10,6 +10,12 @@
 
 #define PREFERENCES_KEY "controller"
 
+enum HomeKitMode {
+    HOMEKIT_MODE_DISABLED = 0,    // Default, HomeKit disabled
+    HOMEKIT_MODE_THERMOSTAT = 1,  // Thermostat
+    HOMEKIT_MODE_BRIDGE = 2       // Bridge
+};
+
 struct AutoWakeupSchedule {
     String time;    // HH:MM format
     bool days[7]{}; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
@@ -70,7 +76,11 @@ class Settings {
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
     String getMdnsName() const { return mdnsName; }
-    bool isHomekit() const { return homekit; }
+    // HomeKit Settings
+    int getHomekitMode() const { return homekitMode; }
+    bool isHkPowerEnabled() const { return hkPowerEnabled; }
+    bool isHkSteamEnabled() const { return hkSteamEnabled; }
+    bool isHkSensorEnabled() const { return hkSensorEnabled; }
     bool isVolumetricTarget() const { return volumetricTarget; }
     String getOTAChannel() const { return otaChannel; }
     String getSavedScale() const { return savedScale; }
@@ -126,7 +136,12 @@ class Settings {
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
     void setMdnsName(const String &mdnsName);
-    void setHomekit(bool homekit);
+    // HomeKit Setters
+    void setHomekitMode(int homekitMode);
+    void setHkPowerEnabled(bool enabled);
+    void setHkSteamEnabled(bool enabled);
+    void setHkSensorEnabled(bool enabled);
+    bool isHomekitEnabled() const { return homekitMode != HOMEKIT_MODE_DISABLED; }
     void setVolumetricTarget(bool volumetric_target);
     void setOTAChannel(const String &otaChannel);
     void setSavedScale(const String &savedScale);
@@ -193,7 +208,11 @@ class Settings {
     String wifiPassword = "";
     String mdnsName = DEFAULT_MDNS_NAME;
     String savedScale = "";
-    bool homekit = false;
+    // HomeKit Variables
+    int homekitMode = HOMEKIT_MODE_DISABLED;
+    bool hkPowerEnabled = true;
+    bool hkSteamEnabled = true;
+    bool hkSensorEnabled = true;
     bool volumetricTarget = false;
     bool boilerFillActive = false;
     int startupFillTime = 0;
