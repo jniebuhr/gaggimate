@@ -238,9 +238,6 @@ RingVisual buildRingVisual(const DisplayPalette &palette, const RingVisualContex
     }
 
     if (context.active) {
-        if (context.mode == MODE_STEAM) {
-            return {100, palette.accentCool, "STEAM"};
-        }
         return {100, modeTone(palette, context.mode), "ACTIVE"};
     }
 
