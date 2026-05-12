@@ -1,0 +1,12 @@
+name = "gaggimate-relay"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[durable_objects.bindings]]
+name = "RELAY"
+class_name = "RelaySession"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RelaySession"]

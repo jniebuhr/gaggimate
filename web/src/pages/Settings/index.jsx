@@ -1192,40 +1192,44 @@ function RemoteAccessCard({ formData, onChange }) {
             <span className='nd-toggle-thumb' />
           </button>
         </div>
-        <div className='flex flex-col gap-2'>
-          <label
-            htmlFor='cloudRelayUrl'
-            className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
-          >
-            Relay Server URL
-          </label>
-          <input
-            id='cloudRelayUrl'
-            name='cloudRelayUrl'
-            type='url'
-            className='nd-input nd-input--lg'
-            placeholder='wss://my-relay.fly.dev'
-            value={relayUrl}
-            onChange={onChange('cloudRelayUrl')}
-          />
-        </div>
-        <div className='flex flex-col gap-2'>
-          <label
-            htmlFor='cloudRelayToken'
-            className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
-          >
-            Relay Token
-          </label>
-          <input
-            id='cloudRelayToken'
-            name='cloudRelayToken'
-            type='password'
-            className='nd-input nd-input--lg'
-            placeholder='secret token'
-            value={relayToken}
-            onChange={onChange('cloudRelayToken')}
-          />
-        </div>
+        {relayEnabled && (
+          <div className='flex flex-col gap-2'>
+            <label
+              htmlFor='cloudRelayUrl'
+              className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
+            >
+              Relay Server URL
+            </label>
+            <input
+              id='cloudRelayUrl'
+              name='cloudRelayUrl'
+              type='url'
+              className='nd-input nd-input--lg'
+              placeholder='wss://my-relay.fly.dev'
+              value={relayUrl}
+              onChange={onChange('cloudRelayUrl')}
+            />
+          </div>
+        )}
+        {relayEnabled && (
+          <div className='flex flex-col gap-2'>
+            <label
+              htmlFor='cloudRelayToken'
+              className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
+            >
+              Relay Token
+            </label>
+            <input
+              id='cloudRelayToken'
+              name='cloudRelayToken'
+              type='password'
+              className='nd-input nd-input--lg'
+              placeholder='secret token'
+              value={relayToken}
+              onChange={onChange('cloudRelayToken')}
+            />
+          </div>
+        )}
         {hasRelay && (
           <div className='flex flex-col gap-2'>
             <span className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
