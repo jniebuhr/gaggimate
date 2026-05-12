@@ -25,6 +25,7 @@ class Controller {
     void setup();
     void connect();
     void loop();
+    void loopLogic();
     void loopControl();
 
     void setMode(int newMode);
@@ -178,8 +179,10 @@ class Controller {
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
     xTaskHandle taskHandle;
+    xTaskHandle logicTaskHandle;
 
     static void loopTask(void *arg);
+    static void loopLogicTask(void *arg);
 };
 
 #endif // CONTROLLER_H

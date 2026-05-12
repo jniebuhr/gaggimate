@@ -91,7 +91,8 @@ void Controller::setup() {
     this->onScreenReady();
 
     updateLastAction();
-    xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 0);
+    xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 2, &taskHandle, 0);
+    xTaskCreatePinnedToCore(loopLogicTask, "Controller::loopLogic", configMINIMAL_STACK_SIZE * 6, this, 3, &logicTaskHandle, 0);
 }
 
 void Controller::onScreenReady() { screenReady = true; }
@@ -293,57 +294,59 @@ void Controller::loop() {
         pluginManager->trigger("controller:bluetooth:connect");
     }
 
+}
+
+void Controller::loopLogic() {
     if (isErrorState()) {
         return;
     }
 
-    if (now - lastProgress > PROGRESS_INTERVAL) {
-        // Check if steam is ready
-        if (mode == MODE_STEAM && !steamReady && currentTemp + 5.f > getTargetTemp()) {
-            activate();
-            steamReady = true;
-        }
-
-        // Handle current process
-        if (currentProcess != nullptr) {
-            updateLastAction();
-            if (currentProcess->getType() == MODE_BREW) {
-                auto brewProcess = static_cast<BrewProcess *>(currentProcess);
-                brewProcess->updatePressure(pressure);
-                brewProcess->updateFlow(currentPumpFlow);
-            }
-            currentProcess->progress();
-            if (!isActive()) {
-                deactivate();
-            }
-        }
-
-        // Handle last process - Calculate auto delay
-        if (lastProcess != nullptr && !lastProcess->isComplete()) {
-            lastProcess->progress();
-        }
-        if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
-            processCompleted = true;
-            if (lastProcess->getType() == MODE_BREW) {
-                if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
-                    brewProcess->target == ProcessTarget::VOLUMETRIC) {
-                    double newDelay = brewProcess->getNewDelayTime();
-                    if (newDelay >= 0) {
-                        settings.setBrewDelay(newDelay);
-                    }
-                }
-            } else if (lastProcess->getType() == MODE_GRIND) {
-                if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
-                    grindProcess->target == ProcessTarget::VOLUMETRIC) {
-                    double newDelay = grindProcess->getNewDelayTime();
-                    if (newDelay >= 0) {
-                        settings.setGrindDelay(newDelay);
-                    }
-                }
-            }
-        }
-        lastProgress = now;
+    // Check if steam is ready
+    if (mode == MODE_STEAM && !steamReady && currentTemp + 5.f > getTargetTemp()) {
+        activate();
+        steamReady = true;
     }
+
+    // Handle current process
+    if (currentProcess != nullptr) {
+        updateLastAction();
+        if (currentProcess->getType() == MODE_BREW) {
+            auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+            brewProcess->updatePressure(pressure);
+            brewProcess->updateFlow(currentPumpFlow);
+        }
+        currentProcess->progress();
+        if (!isActive()) {
+            deactivate();
+        }
+    }
+
+    // Handle last process - Calculate auto delay
+    if (lastProcess != nullptr && !lastProcess->isComplete()) {
+        lastProcess->progress();
+    }
+    if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
+        processCompleted = true;
+        if (lastProcess->getType() == MODE_BREW) {
+            if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
+                brewProcess->target == ProcessTarget::VOLUMETRIC) {
+                double newDelay = brewProcess->getNewDelayTime();
+                if (newDelay >= 0) {
+                    settings.setBrewDelay(newDelay);
+                }
+            }
+        } else if (lastProcess->getType() == MODE_GRIND) {
+            if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
+                grindProcess->target == ProcessTarget::VOLUMETRIC) {
+                double newDelay = grindProcess->getNewDelayTime();
+                if (newDelay >= 0) {
+                    settings.setGrindDelay(newDelay);
+                }
+            }
+        }
+    }
+
+    unsigned long now = millis();
 
     if (grindActiveUntil != 0 && now > grindActiveUntil)
         deactivateGrind();
@@ -810,6 +813,15 @@ void Controller::loopTask(void *arg) {
     auto *controller = static_cast<Controller *>(arg);
     while (true) {
         controller->loopControl();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : 100));
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : PROGRESS_INTERVAL));
+    }
+}
+
+void Controller::loopLogicTask(void *arg) {
+    TickType_t lastWake = xTaskGetTickCount();
+    auto *controller = static_cast<Controller *>(arg);
+    while (true) {
+        controller->loopLogic();
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : PROGRESS_INTERVAL));
     }
 }
