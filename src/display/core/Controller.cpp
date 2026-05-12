@@ -102,8 +102,6 @@ void Controller::onTargetToggle() { settings.setVolumetricTarget(!settings.isVol
 void Controller::onTargetChange(ProcessTarget target) { settings.setVolumetricTarget(target == ProcessTarget::VOLUMETRIC); }
 
 void Controller::connect() {
-    if (initialized)
-        return;
     lastPing = millis();
     connectStartTime = millis();
     pluginManager->trigger("controller:startup");
@@ -263,7 +261,7 @@ void Controller::setupWifi() {
 void Controller::loop() {
     pluginManager->loop();
 
-    if (screenReady) {
+    if (screenReady && !initialized) {
         connect();
     }
 
