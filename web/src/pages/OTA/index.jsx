@@ -6,6 +6,7 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { updateOtaChannel } from './otaLogic.js';
 
 // Constants
 const REBUILD_STATUS = {
@@ -109,7 +110,7 @@ const UpdateProgressView = ({ phase, progress }) => (
   </div>
 );
 
-const SystemInfoCard = ({ formData }) => {
+const SystemInfoCard = ({ formData, onChannelChange }) => {
   const {
     channel = 'latest',
     hardware,
@@ -153,7 +154,7 @@ const SystemInfoCard = ({ formData }) => {
           <label htmlFor='channel' className='font-nd-mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
             Update Channel
           </label>
-          <select id='channel' name='channel' className='nd-input' value={channel}>
+          <select id='channel' name='channel' className='nd-input' value={channel} onChange={onChannelChange}>
             <option value='latest'>Stable</option>
             <option value='nightly'>Nightly</option>
           </select>
@@ -419,6 +420,11 @@ export function OTA() {
 
   const formRef = useRef();
 
+  const onChannelChange = useCallback(e => {
+    const channel = e.currentTarget.value;
+    setFormData(currentFormData => updateOtaChannel(currentFormData, channel));
+  }, []);
+
   const onSubmit = useCallback(
     async e => {
       e.preventDefault();
@@ -472,7 +478,7 @@ export function OTA() {
 
       <form key='ota' method='post' action='/api/ota' ref={formRef} onSubmit={onSubmit}>
         <div className='flex flex-col gap-4'>
-          <SystemInfoCard formData={formData} />
+          <SystemInfoCard formData={formData} onChannelChange={onChannelChange} />
         </div>
 
         <ActionButtonsSection
