@@ -49,6 +49,7 @@ void GaggiMateController::setup() {
         refill = new SimpleRelay(_config.refillPin, _config.valveOn);
         aux = new SimpleRelay(_config.auxPin, _config.valveOn);
         waterSense = new DigitalInput(_config.waterSensePin, [this](const bool state) { _ble.sendLevelState(state); }, 25);
+        lights = new SimpleRelay(_config.ledPin, HIGH);
     } else {
         alt = new SimpleRelay(_config.altPin, _config.altOn);
     }
@@ -107,6 +108,7 @@ void GaggiMateController::setup() {
         refill->setup();
         aux->setup();
         waterSense->setup();
+        lights->setup();
     } else {
         alt->setup();
     }
@@ -134,6 +136,7 @@ void GaggiMateController::setup() {
             if (_config.capabilites.dualBoiler) {
                 this->refill->set(refill);
                 this->heater2->setSetpoint(heater2Setpoint);
+                this->lights->set(heaterSetpoint != 0.0f);
             }
             if (!_config.capabilites.dimming) {
                 return;
@@ -152,6 +155,7 @@ void GaggiMateController::setup() {
         if (_config.capabilites.dualBoiler) {
             this->refill->set(refill);
             this->heater2->setSetpoint(heater2Setpoint);
+            this->lights->set(heaterSetpoint != 0.0f);
         }
         if (!_config.capabilites.dimming) {
             return;

@@ -48,6 +48,7 @@ class GaggiMateController {
     SimpleRelay *alt = nullptr;
     SimpleRelay *refill = nullptr;
     SimpleRelay *aux = nullptr;
+    SimpleRelay *lights = nullptr;
     DigitalInput *brewBtn = nullptr;
     DigitalInput *steamBtn = nullptr;
     DigitalInput *waterBtn = nullptr;
