@@ -13,9 +13,15 @@ import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { ApiServiceContext, machine } from '../services/ApiService.js';
 import { getCurrentBeanSelection, listBeans, recordBeanSelection } from '../utils/beanManager.js';
+import { useGrindSettings } from '../hooks/useGrindSettings.js';
 
-const MODE_LABELS = ['Standby', 'Brew', 'Steam', 'Water', 'Grind'];
-const MODE_DOT_COLORS = ['bg-base-content/30', 'bg-primary', 'bg-warning', 'bg-error', 'bg-secondary'];
+const MODE_OPTIONS = [
+  { id: 0, label: 'Standby', dotColor: 'bg-base-content/30' },
+  { id: 1, label: 'Brew', dotColor: 'bg-primary' },
+  { id: 2, label: 'Steam', dotColor: 'bg-warning' },
+  { id: 3, label: 'Water', dotColor: 'bg-error' },
+  { id: 4, label: 'Grind', dotColor: 'bg-secondary' },
+];
 
 function formatReading(value, suffix) {
   return `${Number.isFinite(value) ? value.toFixed(1) : '0.0'}${suffix}`;
@@ -170,7 +176,7 @@ export const TempPopover = ({ currentTemp, targetTemp, onChange }) => (
   </div>
 );
 
-export const ModePopover = ({ currentMode, onSelect }) => (
+export const ModePopover = ({ currentMode, modes, onSelect }) => (
   <div className='stat-pill-popover absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-48 rounded-2xl border border-base-300/60 bg-base-100/95 p-4 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.95)] backdrop-blur-xl'>
     <div className='mb-4 flex items-center gap-2 border-b border-base-300/40 pb-3'>
       <span className='flex size-8 items-center justify-center rounded-xl border border-primary/20 bg-primary/10'>
@@ -179,18 +185,18 @@ export const ModePopover = ({ currentMode, onSelect }) => (
       <span className='text-sm font-semibold uppercase tracking-wider text-base-content/70'>Select Mode</span>
     </div>
     <div className='space-y-1'>
-      {MODE_LABELS.map((label, index) => (
+      {modes.map(({ id, label, dotColor }) => (
         <button
-          key={index}
-          onClick={() => onSelect(index)}
+          key={id}
+          onClick={() => onSelect(id)}
           className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
-            index === currentMode
+            id === currentMode
               ? 'bg-primary/15 text-primary border border-primary/30 shadow-sm'
               : 'hover:bg-base-content/5 text-base-content/80 border border-transparent hover:border-base-300/30'
           }`}
         >
           <span className='flex items-center gap-2'>
-            <span className={`size-2 rounded-full ${MODE_DOT_COLORS[index]}`} />
+            <span className={`size-2 rounded-full ${dotColor}`} />
             {label}
           </span>
         </button>
@@ -205,7 +211,9 @@ export function Header({ navOpen = false, onNavToggle }) {
   const apiService = useContext(ApiServiceContext);
   const connected = machine.value.connected;
   const mode = machine.value.status.mode;
-  const currentMode = MODE_LABELS[mode] || 'Unknown';
+  const { isGrindAvailable } = useGrindSettings();
+  const availableModes = MODE_OPTIONS.filter(option => option.id !== 4 || isGrindAvailable);
+  const currentMode = MODE_OPTIONS.find(option => option.id === mode)?.label || 'Unknown';
   const profileLabel = machine.value.status.selectedProfile || 'Default';
   const temp = formatReading(machine.value.status.currentTemperature, '\u00B0C');
   const pressure = formatReading(machine.value.status.currentPressure, ' bar');
@@ -414,7 +422,7 @@ export function Header({ navOpen = false, onNavToggle }) {
               <div className='relative'>
                 <StatPill label='Mode' value={currentMode} tone='orange' icon={faSliders} onClick={handleModeClick} />
                 {activePopover === 'mode' && (
-                  <ModePopover currentMode={mode} onSelect={handleModeSelect} />
+                  <ModePopover currentMode={mode} modes={availableModes} onSelect={handleModeSelect} />
                 )}
               </div>
 

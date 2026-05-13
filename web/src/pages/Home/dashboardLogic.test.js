@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  MODE_GRIND,
   MODE_STEAM,
+  getAvailableModeOptions,
   getPrimaryActionState,
   getProcessKindForMode,
   getTemperatureRingMetrics,
@@ -33,6 +35,32 @@ test('start steam is tracked as steam, not brew', () => {
 
 test('water mode is not tracked as brew for auto-steam', () => {
   assert.equal(getProcessKindForMode(3), 'water');
+});
+
+test('grind mode is not selectable when grind is unavailable', () => {
+  assert.equal(getProcessKindForMode(MODE_GRIND, false), null);
+});
+
+test('available mode options omit grind when grind is unavailable', () => {
+  const options = getAvailableModeOptions(false);
+
+  assert.deepEqual(
+    options.map(option => option.name),
+    ['STANDBY', 'BREW', 'STEAM', 'WATER'],
+  );
+});
+
+test('primary action for unavailable grind mode does not start a process', () => {
+  const state = getPrimaryActionState({
+    active: false,
+    finished: false,
+    mode: MODE_GRIND,
+    isGrindAvailable: false,
+  });
+
+  assert.equal(state.label, 'GRIND UNAVAILABLE');
+  assert.equal(state.action, 'noop');
+  assert.equal(state.processKind, null);
 });
 
 test('stop steam changes mode to standby and clears process tracking', () => {

@@ -6,6 +6,14 @@ export const MODE_GRIND = 4;
 export const TEMP_MIN = 0;
 export const TEMP_MAX = 105;
 
+export const MODE_OPTIONS = [
+  { id: MODE_STANDBY, name: 'STANDBY' },
+  { id: MODE_BREW, name: 'BREW' },
+  { id: MODE_STEAM, name: 'STEAM' },
+  { id: MODE_WATER, name: 'WATER' },
+  { id: MODE_GRIND, name: 'GRIND' },
+];
+
 const MIN_STEAM_TARGET = 120;
 const DEFAULT_STEAM_TARGET = 150;
 
@@ -35,16 +43,29 @@ export function getTemperatureRingMetrics({ mode, tempVal, targetTemp }) {
   };
 }
 
-export function getProcessKindForMode(mode) {
+export function getAvailableModeOptions(isGrindAvailable = true) {
+  return MODE_OPTIONS.filter(option => option.id !== MODE_GRIND || isGrindAvailable);
+}
+
+export function getProcessKindForMode(mode, isGrindAvailable = true) {
   if (mode === MODE_BREW) return 'brew';
   if (mode === MODE_STEAM) return 'steam';
   if (mode === MODE_WATER) return 'water';
-  if (mode === MODE_GRIND) return 'grind';
+  if (mode === MODE_GRIND && isGrindAvailable) return 'grind';
   return null;
 }
 
-export function getPrimaryActionState({ active, finished, mode }) {
+export function getPrimaryActionState({ active, finished, mode, isGrindAvailable = true }) {
   const isSteamMode = mode === MODE_STEAM;
+
+  if (mode === MODE_GRIND && !isGrindAvailable) {
+    return {
+      label: 'GRIND UNAVAILABLE',
+      accent: 'var(--dm-fg-dim)',
+      action: 'noop',
+      processKind: null,
+    };
+  }
 
   if (active && isSteamMode) {
     return {
@@ -76,6 +97,6 @@ export function getPrimaryActionState({ active, finished, mode }) {
     label: isSteamMode ? 'START STEAM' : 'START SHOT',
     accent: isSteamMode ? 'var(--dm-warn)' : 'var(--dm-accent)',
     action: 'start-process',
-    processKind: getProcessKindForMode(mode),
+    processKind: getProcessKindForMode(mode, isGrindAvailable),
   };
 }

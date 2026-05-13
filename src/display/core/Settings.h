@@ -246,6 +246,7 @@ class Settings {
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
     int altRelayFunction = ALT_RELAY_NONE; // Disabled unless explicitly configured
+    bool altRelayConfigured = false;
     String cloudRelayUrl = "";
     String cloudRelayToken = "";
     bool cloudRelayEnabled = false;
