@@ -80,6 +80,7 @@ class Controller {
     bool isActive() const;
     bool isActiveSafe() const;
     bool isGrindActive() const;
+    bool isGrindAvailable() const;
     bool isUpdating() const;
     bool isAutotuning() const;
     bool isReady() const;

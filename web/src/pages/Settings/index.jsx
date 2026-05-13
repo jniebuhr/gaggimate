@@ -172,7 +172,7 @@ export function Settings() {
         formDataToSubmit.set('steamPumpPercentage', formData.steamPumpPercentage);
         formDataToSubmit.set(
           'altRelayFunction',
-          formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
+          formData.altRelayFunction !== undefined ? formData.altRelayFunction : 0,
         );
 
         if (formData.pid && formData.kf !== undefined) {
@@ -840,7 +840,7 @@ export function Settings() {
                   id='altRelayFunction'
                   name='altRelayFunction'
                   className='nd-input nd-input--lg'
-                  value={formData.altRelayFunction ?? 1}
+                  value={formData.altRelayFunction ?? 0}
                   onChange={onChange('altRelayFunction')}
                 >
                   <option value={0}>None</option>

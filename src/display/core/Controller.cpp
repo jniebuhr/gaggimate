@@ -442,7 +442,6 @@ float Controller::getTargetTemp() const {
         // If we can't get mutex, return safe default based on mode
         switch (mode) {
         case MODE_BREW:
-        case MODE_GRIND:
             return profileManager->getSelectedProfile().temperature;
         case MODE_STEAM:
             return settings.getTargetSteamTemp();
@@ -458,7 +457,6 @@ float Controller::getTargetTemp() const {
     
     switch (mode) {
     case MODE_BREW:
-    case MODE_GRIND:
         if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
             auto brewProcess = static_cast<BrewProcess *>(proc);
             result = brewProcess->getTemperature();
@@ -485,7 +483,6 @@ void Controller::setTargetTemp(float temperature) {
     pluginManager->trigger("boiler:targetTemperature:change", "value", temperature);
     switch (mode) {
     case MODE_BREW:
-    case MODE_GRIND:
         profileManager->getSelectedProfile().temperature = temperature;
         break;
     case MODE_STEAM:
@@ -631,7 +628,6 @@ void Controller::updateControl() {
     if (targetTemp == 0.0f) {
         switch (mode) {
         case MODE_BREW:
-        case MODE_GRIND:
             targetTemp = profileManager->getSelectedProfile().temperature;
             break;
         case MODE_STEAM:
@@ -777,6 +773,8 @@ void Controller::clear() {
 }
 
 void Controller::activateGrind() {
+    if (!isGrindAvailable())
+        return;
     pluginManager->trigger("controller:grind:start");
     if (isGrindActive())
         return;
@@ -834,6 +832,10 @@ bool Controller::isActiveSafe() const {
     
     xSemaphoreGive(processMutex);
     return result;
+}
+
+bool Controller::isGrindAvailable() const {
+    return settings.isSmartGrindActive() || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
 }
 
 bool Controller::isGrindActive() const {
