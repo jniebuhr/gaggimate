@@ -75,7 +75,7 @@ const TargetToggle = ({ value, onChange }) => {
   const pill = on =>
     `flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full px-2 py-1 text-xs transition-all duration-200 ${on ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`;
   return (
-    <div className='bg-base-200/70 flex w-full max-w-[16rem] min-w-0 rounded-full p-1'>
+    <div className='bg-base-200/70 flex w-full min-w-0 rounded-full p-1'>
       <button className={pill(value === 0)} onClick={() => onChange(0)}>
         <FontAwesomeIcon icon={faClock} className='text-[0.65rem]' /> <span>Time</span>
       </button>
@@ -186,11 +186,7 @@ const BrewIdleView = ({ s, brewTarget, sendTarget }) => (
         </span>
       </span>
     </a>
-    {s.volumetricAvailable && (
-      <div className='flex justify-center'>
-        <TargetToggle value={brewTarget ? 1 : 0} onChange={sendTarget} />
-      </div>
-    )}
+    {s.volumetricAvailable && <TargetToggle value={brewTarget ? 1 : 0} onChange={sendTarget} />}
   </div>
 );
 
@@ -327,7 +323,7 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
         />
       </div>
 
-      <div className='flex min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center overflow-x-hidden overflow-y-auto px-2 py-1'>
+      <div className='flex min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center overflow-x-hidden overflow-y-auto'>
         {renderContent()}
       </div>
 
