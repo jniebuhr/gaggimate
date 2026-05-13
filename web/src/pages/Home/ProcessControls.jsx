@@ -8,7 +8,6 @@ import { useGrindSettings } from '../../hooks/useGrindSettings.js';
 import { useControlsVisibility } from '../../hooks/useControlsVisibility.js';
 import { useProcessActions } from '../../hooks/useProcessActions.js';
 import { useAutoSteam } from '../../hooks/useAutoSteam.js';
-import { useShotDoseRecorder } from '../../hooks/useShotDoseRecorder.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faPause, faCheck, faPlus, faMinus, faTint, faWind } from '@fortawesome/free-solid-svg-icons';
 import { MODE_LABELS, MODE_SUBTITLES, formatNumber, StatRow } from '../../utils/homeConstants.jsx';
@@ -221,7 +220,7 @@ function getRingVisual({
   };
 }
 
-function getDisplayState({ mode, active, finished, processInfo, currentTemperature, targetTemperature, isGrindAvailable, isTemperatureStable, heatingLabel }) {
+function getDisplayState({ mode, active, finished, processInfo, isGrindAvailable, isTemperatureStable, heatingLabel }) {
   if (active) {
     return {
       title: processInfo?.l || 'Running',
@@ -302,10 +301,7 @@ export default function ProcessControls({ brew, mode }) {
   const active = !!processInfo?.a;
   const finished = !!processInfo?.e && !active;
   const grind = mode === 4;
-  const [isFlushing, setIsFlushing] = useState(false);
-  useShotDoseRecorder(api, (dose) => {
-    console.log(`Dose ${dose}g attached to shot`);
-  });
+  const [, setIsFlushing] = useState(false);
   const { autoSteamEnabled, toggleAutoSteam } = useAutoSteam();
   // Tracks whether the last explicitly started process was 'brew' or 'flush'
   const lastStartedActionRef = useRef(null);
@@ -382,8 +378,6 @@ export default function ProcessControls({ brew, mode }) {
     active,
     finished,
     processInfo,
-    currentTemperature,
-    targetTemperature,
     isGrindAvailable,
     isTemperatureStable,
     heatingLabel,

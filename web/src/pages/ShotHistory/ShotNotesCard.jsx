@@ -1,11 +1,11 @@
-import { useState, useEffect, useContext, useCallback, useRef } from 'preact/hooks';
+import { useState, useEffect, useContext, useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import { Spinner } from '../../components/Spinner.jsx';
 import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit';
 import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { notesService } from '../ShotAnalyzer/services/NotesService.js';
-import { listBeans, syncBeanUsageFromNotes } from '../../utils/beanManager.js';
+import { listBeans } from '../../utils/beanManager.js';
 import {
   formatTenPointRating,
   getRatingFillPercent,
@@ -35,7 +35,6 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
   const [isEditing, setIsEditing] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
   const [availableBeans, setAvailableBeans] = useState([]);
-  const savedNotesRef = useRef(null);
   const beanFieldListId = `bean-options-${notesKey}`;
 
   // Calculate ratio function
@@ -80,7 +79,6 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
         }
 
         setNotes(loadedNotes);
-        savedNotesRef.current = loadedNotes;
         setInitialLoaded(true);
         // Pass loaded notes to parent
         if (onNotesLoaded) {
@@ -105,7 +103,6 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
         };
 
         setNotes(defaultNotes);
-        savedNotesRef.current = defaultNotes;
         setInitialLoaded(true);
         if (onNotesLoaded) {
           onNotesLoaded(defaultNotes);
@@ -121,7 +118,6 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
     if (notes.id !== notesKey) {
       setInitialLoaded(false);
       setIsEditing(false);
-      savedNotesRef.current = null;
     }
   }, [notes.id, notesKey]);
 
@@ -175,8 +171,6 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
     setLoading(true);
     try {
       await notesService.saveNotes(notesKey, shot.source || 'gaggimate', notes);
-      await syncBeanUsageFromNotes(apiService, savedNotesRef.current, notes);
-      savedNotesRef.current = notes;
       setIsEditing(false);
       if (onNotesUpdate) {
         onNotesUpdate(notes);
