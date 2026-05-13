@@ -75,12 +75,9 @@ export function Settings() {
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
-        hkPowerEnabled:
-          fetchedSettings.hkPowerEnabled !== undefined ? fetchedSettings.hkPowerEnabled : true,
-        hkSteamEnabled:
-          fetchedSettings.hkSteamEnabled !== undefined ? fetchedSettings.hkSteamEnabled : true,
-        hkSensorEnabled:
-          fetchedSettings.hkSensorEnabled !== undefined ? fetchedSettings.hkSensorEnabled : true,
+        hkPowerEnabled: fetchedSettings.hkPowerEnabled ?? true,
+        hkSteamEnabled: fetchedSettings.hkSteamEnabled ?? true,
+        hkSensorEnabled: fetchedSettings.hkSensorEnabled ?? true,
       };
 
       // Extract Kf from PID string and separate them. Mirrors the same
@@ -145,7 +142,7 @@ export function Settings() {
         value = !formData.smartGrindToggle;
       }
       if (key === 'homekitMode') {
-        value = parseInt(value, 10);
+        value = Number.parseInt(value, 10);
       }
       if (['hkPowerEnabled', 'hkSteamEnabled', 'hkSensorEnabled'].includes(key)) {
         value = !formData[key];
@@ -201,7 +198,7 @@ export function Settings() {
   const updateHomekitMode = mode => {
     setFormData({
       ...formData,
-      homekitMode: parseInt(mode, 10),
+      homekitMode: Number.parseInt(mode, 10),
     });
   };
 
@@ -253,15 +250,12 @@ export function Settings() {
         formDataToSubmit.set('standbyBrightness', '0');
       }
 
-      formDataToSubmit.set(
-        'homekitMode',
-        formData.homekitMode !== undefined ? formData.homekitMode : 0,
-      );
+      formDataToSubmit.set('homekitMode', formData.homekitMode ?? 0);
       ['hkPowerEnabled', 'hkSteamEnabled', 'hkSensorEnabled'].forEach(key => {
-        if (formData[key] !== false) {
-          formDataToSubmit.set(key, 'on');
-        } else {
+        if (formData[key] === false) {
           formDataToSubmit.delete(key);
+        } else {
+          formDataToSubmit.set(key, 'on');
         }
       });
 

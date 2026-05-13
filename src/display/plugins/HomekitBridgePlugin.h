@@ -5,13 +5,14 @@
 #include "../core/Plugin.h"
 #include "HomeSpan.h"
 #include <functional>
+#include <memory>
 #include <utility>
 #include <atomic>
 
 #include "../core/Event.h"
 
-#define HOMESPAN_PORT 8080
-#define DEVICE_NAME "GaggiMate"
+static constexpr uint16_t HOMEKIT_BRIDGE_HOMESPAN_PORT = 8080;
+static constexpr const char *HOMEKIT_BRIDGE_DEVICE_NAME = "GaggiMate";
 
 enum class HomekitAction {
     NONE,
@@ -20,14 +21,14 @@ enum class HomekitAction {
 };
 
 // Callback type
-typedef std::function<void(HomekitAction, bool)> bridge_callback_t;
+using bridge_callback_t = std::function<void(HomekitAction, bool)>;
 
 // Accessories
 
 // Switch 1: Power
 class GaggiMatePowerSwitch : public Service::Switch {
   public:
-    GaggiMatePowerSwitch(bridge_callback_t callback);
+    explicit GaggiMatePowerSwitch(bridge_callback_t callback);
     boolean update() override;
     void setState(bool active);
 
@@ -39,7 +40,7 @@ class GaggiMatePowerSwitch : public Service::Switch {
 // Switch 2: Steam
 class GaggiMateSteamSwitch : public Service::Switch {
   public:
-    GaggiMateSteamSwitch(bridge_callback_t callback);
+    explicit GaggiMateSteamSwitch(bridge_callback_t callback);
     boolean update() override;
     void setState(bool active);
 
@@ -63,7 +64,7 @@ class GaggiMateHeatingSensor : public Service::ContactSensor {
 class HomekitBridgePlugin : public Plugin {
   public:
     HomekitBridgePlugin(String wifiSsid, String wifiPassword);
-    void setup(Controller *controller, PluginManager *pluginManager) override;
+    void setup(Controller *pluginController, PluginManager *pluginManager) override;
     void loop() override;
 
     // Helper
@@ -72,15 +73,21 @@ class HomekitBridgePlugin : public Plugin {
     const char *getName() const { return "HomekitBridgePlugin"; }
 
   private:
+    void startHomekitBridge(bool enablePower, bool enableSteam, bool enableSensor, const bridge_callback_t &callback);
+    void createBridgeAccessory();
+    void createPowerAccessory(const bridge_callback_t &callback);
+    void createSteamAccessory(const bridge_callback_t &callback);
+    void createHeatingSensorAccessory();
+
     Controller *controller = nullptr;
     String wifiSsid;
     String wifiPassword;
     bool homekitStarted = false;
 
     // Bridged accessories
-    GaggiMatePowerSwitch *powerSwitch = nullptr;
-    GaggiMateSteamSwitch *steamSwitch = nullptr;
-    GaggiMateHeatingSensor *heatingSensor = nullptr;
+    std::unique_ptr<GaggiMatePowerSwitch> powerSwitch = nullptr;
+    std::unique_ptr<GaggiMateSteamSwitch> steamSwitch = nullptr;
+    std::unique_ptr<GaggiMateHeatingSensor> heatingSensor = nullptr;
 
     // Thread-safe variables
 

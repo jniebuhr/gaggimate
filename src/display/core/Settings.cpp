@@ -5,26 +5,7 @@
 #include <esp32-hal-log.h>
 
 Settings::Settings() {
-    // Migrate the legacy HomeKit boolean before opening settings read-only.
-    preferences.begin(PREFERENCES_KEY, false);
-
-    if (preferences.isKey("hk")) {
-        ESP_LOGW("Settings", "Migrating old HomeKit bool setting 'hk' to new int setting 'hkm'.");
-        bool oldHomekitBool = preferences.getBool("hk", false);
-
-        if (oldHomekitBool) {
-            homekitMode = HOMEKIT_MODE_THERMOSTAT;
-        } else {
-            homekitMode = HOMEKIT_MODE_DISABLED;
-        }
-
-        preferences.putInt("hkm", homekitMode);
-        preferences.remove("hk");
-        ESP_LOGI("Settings", "HomeKit migration complete. New mode: %d", homekitMode);
-    } else {
-        homekitMode = preferences.getInt("hkm", HOMEKIT_MODE_DISABLED);
-    }
-    preferences.end();
+    migrateHomekitSettings();
 
     preferences.begin(PREFERENCES_KEY, true);
     startupMode = preferences.getInt("sm", MODE_STANDBY);
@@ -228,7 +209,7 @@ void Settings::setMdnsName(const String &mdnsName) {
 }
 
 void Settings::setHomekitMode(const int mode) {
-    int clampedMode = std::clamp(mode, (int)HOMEKIT_MODE_DISABLED, (int)HOMEKIT_MODE_BRIDGE);
+    HomeKitMode clampedMode = parseHomekitMode(mode);
     if (this->homekitMode != clampedMode) {
         this->homekitMode = clampedMode;
         save();
@@ -485,7 +466,7 @@ void Settings::doSave() {
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
     preferences.putString("mn", mdnsName);
-    preferences.putInt("hkm", homekitMode);
+    preferences.putInt("hkm", static_cast<int>(homekitMode));
     preferences.putBool("hk_pe", hkPowerEnabled);
     preferences.putBool("hk_se", hkSteamEnabled);
     preferences.putBool("hk_he", hkSensorEnabled);
@@ -550,6 +531,29 @@ void Settings::doSave() {
     preferences.putInt("alt_relay", altRelayFunction);
 
     preferences.end();
+}
+
+void Settings::migrateHomekitSettings() {
+    preferences.begin(PREFERENCES_KEY, false);
+
+    if (preferences.isKey("hk")) {
+        ESP_LOGW("Settings", "Migrating old HomeKit bool setting 'hk' to new int setting 'hkm'.");
+        bool oldHomekitBool = preferences.getBool("hk", false);
+        homekitMode = oldHomekitBool ? HomeKitMode::Thermostat : HomeKitMode::Disabled;
+
+        preferences.putInt("hkm", static_cast<int>(homekitMode));
+        preferences.remove("hk");
+        ESP_LOGI("Settings", "HomeKit migration complete. New mode: %d", static_cast<int>(homekitMode));
+    } else {
+        homekitMode = parseHomekitMode(preferences.getInt("hkm", static_cast<int>(HomeKitMode::Disabled)));
+    }
+
+    preferences.end();
+}
+
+HomeKitMode Settings::parseHomekitMode(int mode) {
+    int clampedMode = std::clamp(mode, static_cast<int>(HomeKitMode::Disabled), static_cast<int>(HomeKitMode::Bridge));
+    return static_cast<HomeKitMode>(clampedMode);
 }
 
 [[noreturn]] void Settings::loopTask(void *arg) {

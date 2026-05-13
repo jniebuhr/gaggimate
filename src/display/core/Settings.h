@@ -10,10 +10,10 @@
 
 #define PREFERENCES_KEY "controller"
 
-enum HomeKitMode {
-    HOMEKIT_MODE_DISABLED = 0,    // Default, HomeKit disabled
-    HOMEKIT_MODE_THERMOSTAT = 1,  // Thermostat
-    HOMEKIT_MODE_BRIDGE = 2       // Bridge
+enum class HomeKitMode : int {
+    Disabled = 0,
+    Thermostat = 1,
+    Bridge = 2
 };
 
 struct AutoWakeupSchedule {
@@ -76,7 +76,7 @@ class Settings {
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
     String getMdnsName() const { return mdnsName; }
-    int getHomekitMode() const { return homekitMode; }
+    HomeKitMode getHomekitMode() const { return homekitMode; }
     bool isHkPowerEnabled() const { return hkPowerEnabled; }
     bool isHkSteamEnabled() const { return hkSteamEnabled; }
     bool isHkSensorEnabled() const { return hkSensorEnabled; }
@@ -139,7 +139,7 @@ class Settings {
     void setHkPowerEnabled(bool enabled);
     void setHkSteamEnabled(bool enabled);
     void setHkSensorEnabled(bool enabled);
-    bool isHomekitEnabled() const { return homekitMode != HOMEKIT_MODE_DISABLED; }
+    bool isHomekitEnabled() const { return homekitMode != HomeKitMode::Disabled; }
     void setVolumetricTarget(bool volumetric_target);
     void setOTAChannel(const String &otaChannel);
     void setSavedScale(const String &savedScale);
@@ -206,7 +206,7 @@ class Settings {
     String wifiPassword = "";
     String mdnsName = DEFAULT_MDNS_NAME;
     String savedScale = "";
-    int homekitMode = HOMEKIT_MODE_DISABLED;
+    HomeKitMode homekitMode = HomeKitMode::Disabled;
     bool hkPowerEnabled = true;
     bool hkSteamEnabled = true;
     bool hkSensorEnabled = true;
@@ -252,6 +252,8 @@ class Settings {
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
 
     void doSave();
+    void migrateHomekitSettings();
+    static HomeKitMode parseHomekitMode(int mode);
     xTaskHandle taskHandle;
     static void loopTask(void *arg);
 };

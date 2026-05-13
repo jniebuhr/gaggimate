@@ -80,13 +80,12 @@ HomekitBridgePlugin::HomekitBridgePlugin(String wifiSsid, String wifiPassword)
     isHeatingStable.store(false);
 }
 
-void HomekitBridgePlugin::setup(Controller *controller, PluginManager *pluginManager) {
-    this->controller = controller;
+void HomekitBridgePlugin::setup(Controller *pluginController, PluginManager *pluginManager) {
+    this->controller = pluginController;
 
-    // Load configuration from Settings
-    bool enablePower = controller->getSettings().isHkPowerEnabled();
-    bool enableSteam = controller->getSettings().isHkSteamEnabled();
-    bool enableSensor = controller->getSettings().isHkSensorEnabled();
+    bool enablePower = pluginController->getSettings().isHkPowerEnabled();
+    bool enableSteam = pluginController->getSettings().isHkSteamEnabled();
+    bool enableSensor = pluginController->getSettings().isHkSensorEnabled();
 
     // Callback HomeKit -> Controller
     auto callback = [this](HomekitAction action, bool state) {
@@ -101,47 +100,12 @@ void HomekitBridgePlugin::setup(Controller *controller, PluginManager *pluginMan
 
     if (pluginManager == nullptr) return;
 
-    pluginManager->on("controller:wifi:connect", [this, enablePower, enableSteam, enableSensor, callback](Event &event) {
+    pluginManager->on("controller:wifi:connect", [this, enablePower, enableSteam, enableSensor, callback](Event const &event) {
         int apMode = event.getInt("AP");
         if (apMode) return;
         if (homekitStarted) return;
 
-        homekitStarted = true;
-        homeSpan.setHostNameSuffix("");
-        homeSpan.setPortNum(HOMESPAN_PORT);
-
-        homeSpan.begin(Category::Bridges, DEVICE_NAME, this->controller->getSettings().getMdnsName().c_str());
-        homeSpan.setWifiCredentials(wifiSsid.c_str(), wifiPassword.c_str());
-
-        new SpanAccessory(1);
-        new Service::AccessoryInformation();
-        new Characteristic::Identify();
-
-        if (enablePower) {
-            new SpanAccessory(2);
-            new Service::AccessoryInformation();
-            new Characteristic::Identify();
-            new Characteristic::Name("GaggiMate Power");
-            powerSwitch = new GaggiMatePowerSwitch(callback);
-        }
-
-        if (enableSteam) {
-            new SpanAccessory(3);
-            new Service::AccessoryInformation();
-            new Characteristic::Identify();
-            new Characteristic::Name("GaggiMate Steam");
-            steamSwitch = new GaggiMateSteamSwitch(callback);
-        }
-
-        if (enableSensor) {
-            new SpanAccessory(4);
-            new Service::AccessoryInformation();
-            new Characteristic::Identify();
-            new Characteristic::Name("GaggiMate Heating Status");
-            this->heatingSensor = new GaggiMateHeatingSensor();
-        }
-
-        homeSpan.autoPoll();
+        startHomekitBridge(enablePower, enableSteam, enableSensor, callback);
     });
 
     pluginManager->on("controller:mode:change", [this](Event const &e) {
@@ -149,10 +113,63 @@ void HomekitBridgePlugin::setup(Controller *controller, PluginManager *pluginMan
         this->statusUpdateRequired.store(true);
     });
 
-    pluginManager->on("boiler:heating:stable", [this](Event &e) {
+    pluginManager->on("boiler:heating:stable", [this](Event const &e) {
         this->isHeatingStable.store(e.getInt("isStable") == 1);
         this->heatingUpdateRequired.store(true);
     });
+}
+
+void HomekitBridgePlugin::startHomekitBridge(bool enablePower, bool enableSteam, bool enableSensor,
+                                             const bridge_callback_t &callback) {
+    homekitStarted = true;
+    homeSpan.setHostNameSuffix("");
+    homeSpan.setPortNum(HOMEKIT_BRIDGE_HOMESPAN_PORT);
+
+    homeSpan.begin(Category::Bridges, HOMEKIT_BRIDGE_DEVICE_NAME, this->controller->getSettings().getMdnsName().c_str());
+    homeSpan.setWifiCredentials(wifiSsid.c_str(), wifiPassword.c_str());
+
+    createBridgeAccessory();
+    if (enablePower) {
+        createPowerAccessory(callback);
+    }
+    if (enableSteam) {
+        createSteamAccessory(callback);
+    }
+    if (enableSensor) {
+        createHeatingSensorAccessory();
+    }
+
+    homeSpan.autoPoll();
+}
+
+void HomekitBridgePlugin::createBridgeAccessory() {
+    new SpanAccessory(1);
+    new Service::AccessoryInformation();
+    new Characteristic::Identify();
+}
+
+void HomekitBridgePlugin::createPowerAccessory(const bridge_callback_t &callback) {
+    new SpanAccessory(2);
+    new Service::AccessoryInformation();
+    new Characteristic::Identify();
+    new Characteristic::Name("GaggiMate Power");
+    powerSwitch = std::make_unique<GaggiMatePowerSwitch>(callback);
+}
+
+void HomekitBridgePlugin::createSteamAccessory(const bridge_callback_t &callback) {
+    new SpanAccessory(3);
+    new Service::AccessoryInformation();
+    new Characteristic::Identify();
+    new Characteristic::Name("GaggiMate Steam");
+    steamSwitch = std::make_unique<GaggiMateSteamSwitch>(callback);
+}
+
+void HomekitBridgePlugin::createHeatingSensorAccessory() {
+    new SpanAccessory(4);
+    new Service::AccessoryInformation();
+    new Characteristic::Identify();
+    new Characteristic::Name("GaggiMate Heating Status");
+    this->heatingSensor = std::make_unique<GaggiMateHeatingSensor>();
 }
 
 void HomekitBridgePlugin::loop() {

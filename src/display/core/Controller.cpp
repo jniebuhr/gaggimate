@@ -57,9 +57,9 @@ void Controller::setup() {
     }
     profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
-    if (settings.getHomekitMode() == HOMEKIT_MODE_THERMOSTAT) {
+    if (settings.getHomekitMode() == HomeKitMode::Thermostat) {
         pluginManager->registerPlugin(new HomekitThermostatPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
-    } else if (settings.getHomekitMode() == HOMEKIT_MODE_BRIDGE) {
+    } else if (settings.getHomekitMode() == HomeKitMode::Bridge) {
         pluginManager->registerPlugin(new HomekitBridgePlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     }
     pluginManager->registerPlugin(new mDNSPlugin());

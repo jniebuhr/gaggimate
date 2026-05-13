@@ -607,7 +607,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["startupMode"] = settings.getStartupMode() == MODE_BREW ? "brew" : "standby";
     doc["targetSteamTemp"] = settings.getTargetSteamTemp();
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
-    doc["homekitMode"] = settings.getHomekitMode();
+    doc["homekitMode"] = static_cast<int>(settings.getHomekitMode());
     doc["hkPowerEnabled"] = settings.isHkPowerEnabled();
     doc["hkSteamEnabled"] = settings.isHkSteamEnabled();
     doc["hkSensorEnabled"] = settings.isHkSensorEnabled();

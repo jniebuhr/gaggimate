@@ -15,7 +15,7 @@ export function PluginCard({
   updateAutoWakeupTime,
   updateAutoWakeupDay,
 }) {
-  const homekitMode = parseInt(formData.homekitMode, 10) || 0;
+  const homekitMode = Number.parseInt(formData.homekitMode, 10) || 0;
   const homekitEnabled = homekitMode > 0;
   const [troubleshootingExpanded, setTroubleshootingExpanded] = useState(false);
 
@@ -149,8 +149,10 @@ export function PluginCard({
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
             <p className='text-sm opacity-70'>Control GaggiMate from the Apple Home app.</p>
 
-            <div className='form-control'>
-              <label className='mb-2 block text-sm font-medium opacity-70'>Integration mode</label>
+            <div className='form-control' role='group' aria-labelledby='homekit-mode-label'>
+              <span id='homekit-mode-label' className='mb-2 block text-sm font-medium opacity-70'>
+                Integration mode
+              </span>
               <div className='grid grid-cols-2 gap-2'>
                 <button
                   type='button'
@@ -187,7 +189,7 @@ export function PluginCard({
 
                     <div className='space-y-4'>
                       <div className='form-control'>
-                        <label className='label cursor-pointer items-start justify-start gap-4'>
+                        <div className='label cursor-pointer items-start justify-start gap-4'>
                           <input
                             id='hkPowerEnabled'
                             name='hkPowerEnabled'
@@ -195,18 +197,25 @@ export function PluginCard({
                             className='toggle toggle-primary toggle-sm mt-1'
                             checked={formData.hkPowerEnabled !== false}
                             onChange={onChange('hkPowerEnabled')}
+                            aria-labelledby='hk-power-enabled-label'
+                            aria-describedby='hk-power-enabled-description'
                           />
                           <div className='flex min-w-0 flex-1 flex-col'>
-                            <span className='label-text font-medium'>Power Switch</span>
-                            <span className='block text-xs whitespace-normal opacity-70'>
+                            <span id='hk-power-enabled-label' className='label-text font-medium'>
+                              Power Switch
+                            </span>
+                            <span
+                              id='hk-power-enabled-description'
+                              className='block text-xs whitespace-normal opacity-70'
+                            >
                               Controls the main machine state (Standby / Brew).
                             </span>
                           </div>
-                        </label>
+                        </div>
                       </div>
 
                       <div className='form-control'>
-                        <label className='label cursor-pointer items-start justify-start gap-4'>
+                        <div className='label cursor-pointer items-start justify-start gap-4'>
                           <input
                             id='hkSteamEnabled'
                             name='hkSteamEnabled'
@@ -214,18 +223,25 @@ export function PluginCard({
                             className='toggle toggle-primary toggle-sm mt-1'
                             checked={formData.hkSteamEnabled !== false}
                             onChange={onChange('hkSteamEnabled')}
+                            aria-labelledby='hk-steam-enabled-label'
+                            aria-describedby='hk-steam-enabled-description'
                           />
                           <div className='flex min-w-0 flex-1 flex-col'>
-                            <span className='label-text font-medium'>Steam Switch</span>
-                            <span className='block text-xs whitespace-normal opacity-70'>
+                            <span id='hk-steam-enabled-label' className='label-text font-medium'>
+                              Steam Switch
+                            </span>
+                            <span
+                              id='hk-steam-enabled-description'
+                              className='block text-xs whitespace-normal opacity-70'
+                            >
                               Toggles the Steam Mode.
                             </span>
                           </div>
-                        </label>
+                        </div>
                       </div>
 
                       <div className='form-control'>
-                        <label className='label cursor-pointer items-start justify-start gap-4'>
+                        <div className='label cursor-pointer items-start justify-start gap-4'>
                           <input
                             id='hkSensorEnabled'
                             name='hkSensorEnabled'
@@ -233,15 +249,22 @@ export function PluginCard({
                             className='toggle toggle-primary toggle-sm mt-1'
                             checked={formData.hkSensorEnabled !== false}
                             onChange={onChange('hkSensorEnabled')}
+                            aria-labelledby='hk-sensor-enabled-label'
+                            aria-describedby='hk-sensor-enabled-description'
                           />
                           <div className='flex min-w-0 flex-1 flex-col'>
-                            <span className='label-text font-medium'>Heating Sensor</span>
-                            <span className='block text-xs whitespace-normal opacity-70'>
+                            <span id='hk-sensor-enabled-label' className='label-text font-medium'>
+                              Heating Sensor
+                            </span>
+                            <span
+                              id='hk-sensor-enabled-description'
+                              className='block text-xs whitespace-normal opacity-70'
+                            >
                               A contact sensor indicating boiler stability (Closed = Heating, Open =
                               Ready).
                             </span>
                           </div>
-                        </label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -322,9 +345,9 @@ export function PluginCard({
                           <li>Re-add GaggiMate in the Home app using the setup code.</li>
                         </ol>
                         <div className='mt-1 ml-2 opacity-90'>
-                          If <code>H</code> is not available, check the console help (<code>?</code>
-                          ). If this does not resolve your issue, you may need to do a full reset
-                          with <code>E</code>.
+                          If <code>H</code> is not available, send <code>?</code> again and check
+                          the console help. If this does not resolve your issue, you may need to do
+                          a full reset with <code>E</code>.
                         </div>
                       </li>
                       <li className='text-error mt-2 font-bold'>
