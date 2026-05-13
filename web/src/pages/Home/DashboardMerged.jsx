@@ -265,7 +265,6 @@ RingLegend.propTypes = { color: PropTypes.string, label: PropTypes.string, value
 // Editable NumBlock: big display number + ± stepper buttons, click-to-type
 function EditableNumBlock({ label, value, unit, hint, accent, step, min, max, onCommit }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
 
   const commit = useCallback(
@@ -332,7 +331,7 @@ function EditableNumBlock({ label, value, unit, hint, accent, step, min, max, on
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span
-            onClick={() => { setDraft(String(value)); setEditing(true); }}
+            onClick={() => { setEditing(true); }}
             style={{
               fontFamily: 'var(--dm-font-display)',
               fontSize: 28,
@@ -642,7 +641,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const history = machine.value.history;
   const connected = machine.value.connected;
 
-  const [isFlushing, setIsFlushing] = useState(false);
+  const [, setIsFlushing] = useState(false);
   const lastProcessTypeRef = useRef(null);
   const isGrind = s.mode === 4;
   const brew = s.mode === 1;
@@ -801,6 +800,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const targetTemp = s.targetTemperature || 93;
   const currentWeight = s.currentWeight || 0;
   const mode = s.mode ?? 0;
+  const isSteamMode = mode === 2;
 
   // Target yield/time
   const targetWeight = yieldTarget;
@@ -865,16 +865,28 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const graphPaths = useMemo(() => buildGraphPaths(graphHistory), [graphHistory]);
 
   // Boiler pill: green if stable, amber if heating
-  const boilerStable = targetTemp > 0 && tempVal >= targetTemp;
   // Heating: only flash in BREW (1), STEAM (2), WATER (3) — not STANDBY or GRIND
   const isHeating =
     (mode === 1 || mode === 2 || mode === 3) &&
-    !active &&
-    !finished &&
+    (!active || isSteamMode) &&
+    (!finished || isSteamMode) &&
     targetTemp > 0 &&
     tempVal < targetTemp;
   // STEAM flashes yellow; BREW and WATER flash red
   const heatingColor = mode === 2 ? 'var(--dm-warn)' : 'var(--dm-accent)';
+  const showProcessTimer = (active || finished) && !isSteamMode;
+  const tempRingColor = isSteamMode ? 'var(--dm-warn)' : 'var(--dm-accent)';
+  const steamStatusLabel = targetTemp > 0 && tempVal < targetTemp
+    ? `PREHEATING · TGT ${fmt(targetTemp)}°`
+    : `STEAM · TGT ${fmt(targetTemp)}°`;
+  const primaryActionLabel = active
+    ? isSteamMode ? 'STOP STEAM' : 'STOP SHOT'
+    : finished
+      ? 'CLEAR'
+      : isSteamMode
+        ? 'START STEAM'
+        : 'START SHOT';
+  const primaryActionAccent = isSteamMode ? 'var(--dm-warn)' : 'var(--dm-accent)';
 
   return (
     <div
@@ -1129,11 +1141,11 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               strokeWidth='2'
             />
 
-            {/* Temp ring (inner, red) */}
+            {/* Temp ring (inner) */}
             <path
               d={arcPath(cx, cy, rInner, (tempVal - TEMP_MIN) / (TEMP_MAX - TEMP_MIN))}
               fill='none'
-              stroke='var(--dm-accent)'
+              stroke={tempRingColor}
               strokeWidth={stroke}
               strokeLinecap='round'
             />
@@ -1153,12 +1165,12 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               textAnchor='middle'
               letterSpacing='3'
             >
-              {active || finished ? 'SHOT TIME' : 'TEMPERATURE'}
+              {showProcessTimer ? 'SHOT TIME' : 'TEMPERATURE'}
             </text>
             <text
               x={cx}
               y={cy + 16}
-              fontSize={active || finished ? 52 : 40}
+              fontSize={showProcessTimer ? 52 : 40}
               fill={isHeating ? heatingColor : 'var(--dm-fg)'}
               fontFamily='var(--dm-font-display)'
               textAnchor='middle'
@@ -1166,25 +1178,27 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               fontWeight='700'
               style={isHeating ? { animation: 'dm-pulse 1.2s ease-in-out infinite' } : undefined}
             >
-              {active || finished ? fmtTimer(elapsedSecs) : fmt(tempVal, 1)}
+              {showProcessTimer ? fmtTimer(elapsedSecs) : fmt(tempVal, 1)}
             </text>
             <text
               x={cx}
               y={cy + 40}
               fontSize='9'
-              fill={active ? 'var(--dm-good)' : isHeating ? heatingColor : 'rgba(232,232,232,0.45)'}
+              fill={showProcessTimer ? 'var(--dm-good)' : isHeating ? heatingColor : 'rgba(232,232,232,0.45)'}
               fontFamily='var(--dm-font-mono)'
               textAnchor='middle'
               letterSpacing='2'
               style={isHeating ? { animation: 'dm-pulse 1.2s ease-in-out infinite' } : undefined}
             >
-              {active
+              {showProcessTimer
                 ? currentPhaseLabel
                   ? `${currentPhaseLabel} · ${Math.max(0, targetShotSecs - elapsedSecs)}s LEFT`
                   : `${Math.max(0, targetShotSecs - elapsedSecs)}s LEFT`
-                : finished
+                : finished && !isSteamMode
                   ? 'FINISHED'
-                  : isHeating
+                  : isSteamMode
+                    ? steamStatusLabel
+                    : isHeating
                     ? `HEATING · TGT ${fmt(targetTemp)}°`
                     : `TGT ${fmt(targetTemp)}°`}
             </text>
@@ -1193,7 +1207,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           <div style={{ marginTop: 10, display: 'flex', gap: 18 }}>
             <RingLegend color='var(--dm-good)'   label='PRESSURE' value={`${fmt(pressure)} bar`} />
             <RingLegend color='var(--dm-warn)'   label='FLOW'  value={`${fmt(flowVal)} g/s`} />
-            <RingLegend color='var(--dm-accent)' label='TEMP'  value={`${fmt(tempVal)}°`} />
+            <RingLegend color={tempRingColor} label='TEMP'  value={`${fmt(tempVal)}°`} />
           </div>
         </div>
 
@@ -1460,13 +1474,13 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               onClick={active ? actions.deactivate : finished ? actions.clear : actions.activate}
               style={{
                 background: active
-                  ? 'var(--dm-accent)'
+                  ? primaryActionAccent
                   : finished
                     ? 'var(--dm-good)'
-                    : 'color-mix(in srgb, var(--dm-accent) 14%, transparent)',
-                color: active || finished ? '#fff' : 'var(--dm-accent)',
+                    : `color-mix(in srgb, ${primaryActionAccent} 14%, transparent)`,
+                color: active || finished ? '#fff' : primaryActionAccent,
                 border:
-                  active || finished ? 'none' : '1px solid color-mix(in srgb, var(--dm-accent) 40%, transparent)',
+                  active || finished ? 'none' : `1px solid color-mix(in srgb, ${primaryActionAccent} 40%, transparent)`,
                 fontFamily: 'var(--dm-font-display)',
                 fontSize: 13,
                 letterSpacing: '0.18em',
@@ -1474,11 +1488,11 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
                 borderRadius: 8,
                 cursor: 'pointer',
                 fontWeight: 700,
-                boxShadow: active ? '0 6px 18px color-mix(in srgb, var(--dm-accent) 22%, transparent)' : 'none',
+                boxShadow: active ? `0 6px 18px color-mix(in srgb, ${primaryActionAccent} 22%, transparent)` : 'none',
                 transition: 'background 0.15s, box-shadow 0.15s',
               }}
             >
-              {active ? 'STOP SHOT' : finished ? 'CLEAR' : 'START SHOT'}
+              {primaryActionLabel}
             </button>
           </div>
         </div>

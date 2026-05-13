@@ -306,10 +306,16 @@ void Controller::loop() {
     }
 
     if (now - lastProgress > PROGRESS_INTERVAL) {
-        // Check if steam is ready
-        if (mode == MODE_STEAM && !steamReady && currentTemp + 5.f > getTargetTemp()) {
-            activate();
-            steamReady = true;
+        // Check if steam is ready. Steam should only become ready at the
+        // actual target temperature, and should require reheating after a drop.
+        if (mode == MODE_STEAM) {
+            const float targetTemp = getTargetTemp();
+            if (targetTemp > 0.0f && currentTemp < targetTemp) {
+                steamReady = false;
+            } else if (!steamReady && targetTemp > 0.0f && currentTemp >= targetTemp) {
+                activate();
+                steamReady = true;
+            }
         }
 
         // Handle current process with mutex protection
