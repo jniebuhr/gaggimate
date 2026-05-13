@@ -106,7 +106,14 @@ Settings::Settings() {
     emptyTankDistance = preferences.getInt("sr_ed", 200);
     fullTankDistance = preferences.getInt("sr_fd", 50);
     altRelayConfigured = preferences.getBool("alt_set", false);
-    altRelayFunction = altRelayConfigured ? preferences.getInt("alt_relay", ALT_RELAY_NONE) : ALT_RELAY_NONE;
+    const bool hasAltRelaySetting = preferences.isKey("alt_relay");
+    const int storedAltRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_NONE);
+    if (altRelayConfigured || (hasAltRelaySetting && storedAltRelayFunction != ALT_RELAY_GRIND)) {
+        altRelayFunction = storedAltRelayFunction;
+        altRelayConfigured = true;
+    } else {
+        altRelayFunction = ALT_RELAY_NONE;
+    }
     cloudRelayUrl = preferences.getString("cr_url", "");
     cloudRelayToken = preferences.getString("cr_token", "");
     cloudRelayEnabled = preferences.getBool("cr_enabled", false);
