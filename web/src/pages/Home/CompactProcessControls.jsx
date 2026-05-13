@@ -4,7 +4,7 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
-import { faGear } from '@fortawesome/free-solid-svg-icons/faGear';
+import { faMortarPestle } from '@fortawesome/free-solid-svg-icons/faMortarPestle';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faMugHot } from '@fortawesome/free-solid-svg-icons/faMugHot';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
@@ -28,7 +28,7 @@ const MODES = [
   { id: 1, icon: faMugHot, label: 'Brew' },
   { id: 2, icon: faWind, label: 'Steam' },
   { id: 3, icon: faDroplet, label: 'Water' },
-  { id: 4, icon: faGear, label: 'Grind' },
+  { id: 4, icon: faMortarPestle, label: 'Grind' },
 ];
 
 const fmtElapsed = (ms = 0) => {
@@ -75,7 +75,7 @@ const TargetToggle = ({ value, onChange }) => {
   const pill = on =>
     `flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full px-2 py-1 text-xs transition-all duration-200 ${on ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`;
   return (
-    <div className='bg-base-300 flex w-full max-w-[16rem] min-w-0 rounded-full p-1'>
+    <div className='bg-base-200/70 flex w-full max-w-[16rem] min-w-0 rounded-full p-1'>
       <button className={pill(value === 0)} onClick={() => onChange(0)}>
         <FontAwesomeIcon icon={faClock} className='text-[0.65rem]' /> <span>Time</span>
       </button>
@@ -293,7 +293,7 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
 
   return (
     <div className='flex h-full min-h-0 w-full min-w-0 flex-col gap-2 overflow-hidden'>
-      <div className='bg-base-200/40 flex h-9 w-full shrink-0 gap-0.5 rounded-full p-0.5'>
+      <div className='bg-base-200/70 flex h-9 w-full shrink-0 gap-0.5 rounded-full p-0.5'>
         {MODES.filter(m => m.id !== 4 || showGrindTab).map(m => (
           <ModeTab
             key={m.id}
@@ -304,7 +304,7 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
         ))}
       </div>
 
-      <div className='flex shrink-0 items-center justify-between gap-3 text-sm'>
+      <div className='flex shrink-0 items-center justify-between gap-3 text-[0.65rem]'>
         <Metric
           icon={faThermometerHalf}
           current={(s.currentTemperature ?? 0).toFixed(1)}
