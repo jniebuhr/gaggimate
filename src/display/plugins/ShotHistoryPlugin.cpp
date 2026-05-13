@@ -2,6 +2,7 @@
 
 #include <SD_MMC.h>
 #include <SPIFFS.h>
+#include <algorithm>
 #include <cmath>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
@@ -71,6 +72,55 @@ String padId(uint32_t id, int length = 10) {
 
 String padId(const String& id, int length = 10) {
     return padId((uint32_t)id.toInt(), length);
+}
+
+String normalizeBeanName(String value) {
+    value.trim();
+    value.toLowerCase();
+    return value;
+}
+
+float parseDoseValue(JsonVariantConst value) {
+    if (value.isNull()) {
+        return 0.0f;
+    }
+
+    float parsed = 0.0f;
+    if (value.is<float>() || value.is<double>() || value.is<int>()) {
+        parsed = value.as<float>();
+    } else {
+        parsed = value.as<String>().toFloat();
+    }
+
+    return std::isfinite(parsed) && parsed > 0.0f ? parsed : 0.0f;
+}
+
+int findBeanIndexForNotes(JsonVariantConst notes, const std::vector<BeanEntry> &beans) {
+    const String beanId = notes["beanId"].as<String>();
+    if (!beanId.isEmpty()) {
+        for (size_t i = 0; i < beans.size(); ++i) {
+            if (beans[i].id == beanId) {
+                return static_cast<int>(i);
+            }
+        }
+    }
+
+    const String beanType = normalizeBeanName(notes["beanType"].as<String>());
+    if (beanType.isEmpty()) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < beans.size(); ++i) {
+        if (normalizeBeanName(beans[i].name) == beanType) {
+            return static_cast<int>(i);
+        }
+    }
+
+    return -1;
+}
+
+float roundBeanQuantity(float value) {
+    return roundf((value + 0.0001f) * 100.0f) / 100.0f;
 }
 } // namespace
 
@@ -311,11 +361,16 @@ void ShotHistoryPlugin::handleCompletedShot() {
     // without an extra fs->exists() stat call.
     bool hasNotes = false;
     if (!currentBeanName.isEmpty()) {
+        JsonDocument previousNotes;
         JsonDocument autoNotes;
+        loadNotes(currentId, previousNotes);
         loadNotes(currentId, autoNotes);
         if (autoNotes["beanType"].isNull() || autoNotes["beanType"].as<String>().isEmpty()) {
             autoNotes["beanType"] = currentBeanName;
             hasNotes = saveNotes(currentId, autoNotes);
+            if (hasNotes) {
+                applyBeanUsageDelta(previousNotes, autoNotes);
+            }
         } else {
             hasNotes = true; // WebUI already wrote notes that include beanType
         }
@@ -746,7 +801,14 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
     } else if (type == "req:history:notes:save") {
         auto id = request["id"].as<String>();
         auto notes = request["notes"];
-        saveNotes(id, notes);
+        JsonDocument previousNotes;
+        loadNotes(id, previousNotes);
+        const bool notesSaved = saveNotes(id, notes);
+        if (!notesSaved) {
+            response["error"] = "Save failed";
+        } else {
+            applyBeanUsageDelta(previousNotes, notes);
+        }
 
         // Update rating and volume in index
         uint8_t rating = notes["rating"].as<uint8_t>();
@@ -763,7 +825,9 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         // Always use updateIndexMetadata - it handles both rating and optional volume
         updateIndexMetadata(id.toInt(), rating, volume);
 
-        response["msg"] = "Ok";
+        if (notesSaved) {
+            response["msg"] = "Ok";
+        }
     } else if (type == "req:history:rebuild") {
         // Rebuild is now handled asynchronously by WebUIPlugin
         // This path shouldn't be reached, but handle it just in case
@@ -790,6 +854,41 @@ void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
         file.close();
         deserializeJson(notes, notesStr);
     }
+}
+
+void ShotHistoryPlugin::applyBeanUsageDelta(JsonVariantConst previousNotes, JsonVariantConst nextNotes) {
+    if (!controller || !controller->getBeanManager()) {
+        return;
+    }
+
+    BeanManager *manager = controller->getBeanManager();
+    std::vector<BeanEntry> beans = manager->listBeans();
+    const float previousDose = parseDoseValue(previousNotes["doseIn"]);
+    const float nextDose = parseDoseValue(nextNotes["doseIn"]);
+    const int previousBeanIndex = findBeanIndexForNotes(previousNotes, beans);
+    const int nextBeanIndex = findBeanIndexForNotes(nextNotes, beans);
+
+    auto adjustBean = [&](int beanIndex, float delta) {
+        if (beanIndex < 0 || beanIndex >= static_cast<int>(beans.size()) || !std::isfinite(delta) || delta == 0.0f) {
+            return;
+        }
+
+        BeanEntry bean = beans[beanIndex];
+        if (bean.quantity < 0.0f) {
+            return;
+        }
+
+        bean.quantity = std::max(0.0f, roundBeanQuantity(bean.quantity + delta));
+        manager->saveBean(bean);
+    };
+
+    if (previousBeanIndex >= 0 && nextBeanIndex >= 0 && beans[previousBeanIndex].id == beans[nextBeanIndex].id) {
+        adjustBean(nextBeanIndex, previousDose - nextDose);
+        return;
+    }
+
+    adjustBean(previousBeanIndex, previousDose);
+    adjustBean(nextBeanIndex, -nextDose);
 }
 
 void ShotHistoryPlugin::loopTask(void *arg) {

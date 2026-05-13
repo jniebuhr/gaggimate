@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { machine } from '../services/ApiService.js';
 import { notesService } from '../pages/ShotAnalyzer/services/NotesService';
-import { syncBeanUsageFromNotes } from '../utils/beanManager.js';
 
 // dose: numeric grams value from the caller's state (not localStorage, so it persists across shots)
 export function useShotDoseRecorder(api, dose, onDoseAttached) {
@@ -43,21 +42,9 @@ export function useShotDoseRecorder(api, dose, onDoseAttached) {
     notesService.setApiService(api);
     (async () => {
       try {
-        // Load existing notes first so the bean-quantity delta is idempotent:
-        // if the recorder fires twice for the same shot (e.g. a transient status
-        // update resets savedForShotRef), the second call sees previousDose==nextDose
-        // and produces a delta of 0 instead of subtracting the full dose again.
-        const previousNotes = await notesService.loadNotes(shotId, 'gaggimate');
+        // The device applies the bean-quantity delta while saving notes, using
+        // the already-persisted notes as the idempotency source of truth.
         await notesService.saveNotes(shotId, 'gaggimate', notesToSave);
-        const nextNotes = { ...previousNotes, ...notesToSave };
-        try {
-          const updatedBean = await syncBeanUsageFromNotes(api, previousNotes, nextNotes);
-          if (beanType && !updatedBean) {
-            console.warn(`No matching bean found for '${beanType}' — bean quantity not updated`);
-          }
-        } catch (syncErr) {
-          console.error('Failed to sync bean usage:', syncErr);
-        }
         if (mountedRef.current) {
           onDoseAttached?.(hasDose ? dose : null);
         }
