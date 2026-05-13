@@ -245,7 +245,7 @@ class Settings {
     int sunriseExtBrightness = 255;
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
-    int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
+    int altRelayFunction = ALT_RELAY_NONE; // Disabled unless explicitly configured
     String cloudRelayUrl = "";
     String cloudRelayToken = "";
     bool cloudRelayEnabled = false;

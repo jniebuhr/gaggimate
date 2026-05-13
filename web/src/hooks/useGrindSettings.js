@@ -4,10 +4,9 @@ import { useQuery } from 'preact-fetching';
 /**
  * Custom hook to fetch and compute grind-related settings
  * 
- * @param {number} mode - Current machine mode
  * @returns {Object} { isSmartGrindEnabled, altRelayFunction, isGrindAvailable, showGrindTab, settings }
  */
-export function useGrindSettings(mode) {
+export function useGrindSettings() {
   const { data: settings } = useQuery(
     'settings-cache',
     async () => {
@@ -19,9 +18,9 @@ export function useGrindSettings(mode) {
 
   return useMemo(() => {
     const isSmartGrindEnabled = settings?.smartGrindActive || false;
-    const altRelayFunction = settings?.altRelayFunction !== undefined ? settings.altRelayFunction : 1;
+    const altRelayFunction = settings?.altRelayFunction !== undefined ? settings.altRelayFunction : 0;
     const isGrindAvailable = isSmartGrindEnabled || altRelayFunction === 1;
-    const showGrindTab = isGrindAvailable || mode === 4;
+    const showGrindTab = isGrindAvailable;
 
     return {
       isSmartGrindEnabled,
@@ -30,7 +29,7 @@ export function useGrindSettings(mode) {
       showGrindTab,
       settings,
     };
-  }, [settings, mode]);
+  }, [settings]);
 }
 
 // Made with Bob

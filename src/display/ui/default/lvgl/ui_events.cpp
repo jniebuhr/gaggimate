@@ -74,7 +74,11 @@ void onLoadStarted(lv_event_t *e) {}
 
 void onStandby(lv_event_t *e) { controller.activateStandby(); }
 
-void onGrindToggle(lv_event_t *e) { controller.isGrindActive() ? controller.deactivateGrind() : controller.activateGrind(); }
+void onGrindToggle(lv_event_t *e) {
+    if (!controller.isGrindAvailable())
+        return;
+    controller.isGrindActive() ? controller.deactivateGrind() : controller.activateGrind();
+}
 
 void onGrindTimeLower(lv_event_t *e) { controller.lowerGrindTarget(); }
 
@@ -87,6 +91,8 @@ void onMenuClick(lv_event_t *e) {
 }
 
 void onGrindScreen(lv_event_t *e) {
+    if (!controller.isGrindAvailable())
+        return;
     controller.getUI()->changeScreen(&ui_GrindScreen, &ui_GrindScreen_screen_init);
     controller.setMode(MODE_GRIND);
 }

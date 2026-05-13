@@ -105,7 +105,7 @@ Settings::Settings() {
     sunriseExtBrightness = preferences.getInt("sr_exb", 255);
     emptyTankDistance = preferences.getInt("sr_ed", 200);
     fullTankDistance = preferences.getInt("sr_fd", 50);
-    altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
+    altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_NONE);
     cloudRelayUrl = preferences.getString("cr_url", "");
     cloudRelayToken = preferences.getString("cr_token", "");
     cloudRelayEnabled = preferences.getBool("cr_enabled", false);
