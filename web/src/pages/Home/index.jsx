@@ -56,11 +56,11 @@ export function Home() {
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10 landscape:max-lg:min-h-0 landscape:max-lg:flex-1'>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:max-lg:min-h-0 landscape:max-lg:flex-1 landscape:sm:grid-cols-10'>
         <Card
           sm={10}
           lg={4}
-          className={`landscape:sm:col-span-5 landscape:max-lg:min-h-0 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
+          className={`landscape:max-lg:min-h-0 landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
           title='Process Controls'
         >
           <div className='contents lg:hidden'>
@@ -74,7 +74,7 @@ export function Home() {
         <Card
           sm={10}
           lg={6}
-          className={`landscape:sm:col-span-5 landscape:max-lg:min-h-0 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
+          className={`landscape:max-lg:min-h-0 landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
           title='Temperature & Pressure Chart'
           fullHeight={true}
         >

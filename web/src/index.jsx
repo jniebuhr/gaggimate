@@ -33,10 +33,10 @@ export function App() {
             <Header />
 
             <main className='flex min-h-0 flex-1 flex-col overflow-auto'>
-              <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container flex min-h-0 flex-1 flex-col'>
-                <div className='grid grid-cols-1 gap-6 lg:grid-cols-12 min-h-0 flex-1'>
+              <div className='mx-auto flex min-h-0 w-full flex-1 flex-col px-4 py-2 lg:p-8 xl:container'>
+                <div className='grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-12'>
                   <Navigation />
-                  <div className='lg:col-span-10 min-h-0'>
+                  <div className='min-h-0 lg:col-span-10'>
                     <ErrorBoundary>
                       <Router>
                         <Route path='/' component={Home} />
@@ -61,7 +61,7 @@ export function App() {
                   </div>
                 </div>
               </div>
-            <Footer />
+              <Footer />
             </main>
           </div>
         </div>

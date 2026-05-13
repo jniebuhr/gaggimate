@@ -131,7 +131,7 @@ const ActiveView = ({ p, grind }) => {
   const phase = getPhaseLabel(p, grind);
   const target = fmtPhaseTarget(p, grind);
   return (
-    <div className='flex w-full min-w-0 max-w-sm flex-col gap-1.5 px-2'>
+    <div className='flex w-full max-w-sm min-w-0 flex-col gap-1.5 px-2'>
       <div className='flex min-w-0 items-baseline justify-between gap-2'>
         <div className='flex min-w-0 items-baseline gap-1.5'>
           <span className='text-base-content/60 shrink-0 text-[0.6rem] font-semibold tracking-[0.16em] uppercase'>
@@ -168,7 +168,7 @@ const InfoView = ({ title, hint }) => (
 );
 
 const BrewIdleView = ({ s, brewTarget, sendTarget }) => (
-  <div className='flex w-full min-w-0 max-w-sm flex-col items-stretch gap-3'>
+  <div className='flex w-full max-w-sm min-w-0 flex-col items-stretch gap-3'>
     <a
       href='/profiles'
       title='Change profile'
@@ -263,11 +263,14 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
         send('req:process:clear');
         setIsFlushing(false);
       }
-    } else if (finished) send('req:process:clear');
-    else send(grind ? 'req:grind:activate' : 'req:process:activate');
+    } else if (finished) {
+      send('req:process:clear');
+      setIsFlushing(false);
+    } else send(grind ? 'req:grind:activate' : 'req:process:activate');
   };
 
   const startFlush = () => {
+    if (isFlushing) return;
     setIsFlushing(true);
     apiService.request({ tp: 'req:flush:start' }).catch(err => {
       console.error('Flush start failed:', err);
@@ -291,12 +294,7 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
     <div className='flex h-full min-h-0 w-full min-w-0 flex-col gap-2 overflow-hidden'>
       <div className='bg-base-200/70 flex h-9 w-full shrink-0 gap-0.5 rounded-full p-0.5'>
         {MODES.filter(m => m.id !== 4 || showGrindTab).map(m => (
-          <ModeTab
-            key={m.id}
-            mode={m}
-            active={mode === m.id}
-            onClick={() => changeMode(m.id)}
-          />
+          <ModeTab key={m.id} mode={m} active={mode === m.id} onClick={() => changeMode(m.id)} />
         ))}
       </div>
 
@@ -333,6 +331,7 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
             <button
               className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-xs'
               onClick={startFlush}
+              disabled={isFlushing}
               aria-label='Flush water'
             >
               <FontAwesomeIcon icon={faTint} /> Flush
