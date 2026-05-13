@@ -52,8 +52,8 @@ bool HomekitThermostatPlugin::hasAction() const { return actionRequired; }
 
 void HomekitThermostatPlugin::clearAction() { actionRequired = false; }
 
-void HomekitThermostatPlugin::setup(Controller *controller, PluginManager *pluginManager) {
-    this->controller = controller;
+void HomekitThermostatPlugin::setup(Controller *pluginController, PluginManager *pluginManager) {
+    this->controller = pluginController;
 
     pluginManager->on("controller:wifi:connect", [this](Event &event) {
         int apMode = event.getInt("AP");

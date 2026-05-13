@@ -149,10 +149,10 @@ export function PluginCard({
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
             <p className='text-sm opacity-70'>Control GaggiMate from the Apple Home app.</p>
 
-            <div className='form-control' role='group' aria-labelledby='homekit-mode-label'>
-              <span id='homekit-mode-label' className='mb-2 block text-sm font-medium opacity-70'>
+            <fieldset className='form-control'>
+              <legend className='mb-2 block text-sm font-medium opacity-70'>
                 Integration mode
-              </span>
+              </legend>
               <div className='grid grid-cols-2 gap-2'>
                 <button
                   type='button'
@@ -171,7 +171,7 @@ export function PluginCard({
                   Bridge
                 </button>
               </div>
-            </div>
+            </fieldset>
 
             <div className='bg-base-100 border-base-300 rounded-md border p-4 text-sm'>
               {homekitMode === 1 && (
