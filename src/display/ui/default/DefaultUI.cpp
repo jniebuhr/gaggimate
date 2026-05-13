@@ -237,10 +237,14 @@ RingVisual buildRingVisual(const DisplayPalette &palette, const RingVisualContex
         }
     }
 
+    if (context.mode == MODE_STEAM) {
+        const int steamTarget =
+            context.targetTemperature > MIN_STEAM_TARGET_C ? context.targetTemperature : DEFAULT_STEAM_TARGET_C;
+        return {temperatureProgress(context.currentTemperature, steamTarget), palette.accentCool,
+                context.currentTemperature < steamTarget ? "PREHEATING" : "STEAM"};
+    }
+
     if (context.active) {
-        if (context.mode == MODE_STEAM) {
-            return {100, palette.accentCool, "STEAM"};
-        }
         return {100, modeTone(palette, context.mode), "ACTIVE"};
     }
 

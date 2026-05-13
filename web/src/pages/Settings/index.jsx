@@ -13,6 +13,7 @@ import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
 import { faEye, faEyeSlash, faArrowLeft, faSave } from '@fortawesome/free-solid-svg-icons';
 import { GoogleDriveBackupCard } from './GoogleDriveBackupCard.jsx';
+import { buildRemoteAccessLink, DEFAULT_REMOTE_PAGES_ORIGIN } from './remoteAccessLogic.js';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -1156,12 +1157,13 @@ function RemoteAccessCard({ formData, onChange }) {
   const relayUrl = formData.cloudRelayUrl || '';
   const relayToken = formData.cloudRelayToken || '';
   const relayEnabled = !!formData.cloudRelayEnabled;
-  const hasRelay = relayUrl && relayToken;
-
-  const pagesOrigin = 'https://carloshrdezc.github.io/gaggimate';
-  const remoteLink = hasRelay
-    ? `${pagesOrigin}?relay=${encodeURIComponent(relayUrl)}&token=${encodeURIComponent(relayToken)}`
-    : null;
+  const remoteLink = buildRemoteAccessLink({
+    relayEnabled,
+    relayUrl,
+    relayToken,
+    pagesOrigin: DEFAULT_REMOTE_PAGES_ORIGIN,
+  });
+  const hasRelay = !!remoteLink;
 
   function copyLink() {
     if (!remoteLink) return;
@@ -1192,40 +1194,44 @@ function RemoteAccessCard({ formData, onChange }) {
             <span className='nd-toggle-thumb' />
           </button>
         </div>
-        <div className='flex flex-col gap-2'>
-          <label
-            htmlFor='cloudRelayUrl'
-            className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
-          >
-            Relay Server URL
-          </label>
-          <input
-            id='cloudRelayUrl'
-            name='cloudRelayUrl'
-            type='url'
-            className='nd-input nd-input--lg'
-            placeholder='wss://my-relay.fly.dev'
-            value={relayUrl}
-            onChange={onChange('cloudRelayUrl')}
-          />
-        </div>
-        <div className='flex flex-col gap-2'>
-          <label
-            htmlFor='cloudRelayToken'
-            className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
-          >
-            Relay Token
-          </label>
-          <input
-            id='cloudRelayToken'
-            name='cloudRelayToken'
-            type='password'
-            className='nd-input nd-input--lg'
-            placeholder='secret token'
-            value={relayToken}
-            onChange={onChange('cloudRelayToken')}
-          />
-        </div>
+        {relayEnabled && (
+          <div className='flex flex-col gap-2'>
+            <label
+              htmlFor='cloudRelayUrl'
+              className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
+            >
+              Relay Server URL
+            </label>
+            <input
+              id='cloudRelayUrl'
+              name='cloudRelayUrl'
+              type='url'
+              className='nd-input nd-input--lg'
+              placeholder='wss://my-relay.fly.dev'
+              value={relayUrl}
+              onChange={onChange('cloudRelayUrl')}
+            />
+          </div>
+        )}
+        {relayEnabled && (
+          <div className='flex flex-col gap-2'>
+            <label
+              htmlFor='cloudRelayToken'
+              className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'
+            >
+              Relay Token
+            </label>
+            <input
+              id='cloudRelayToken'
+              name='cloudRelayToken'
+              type='password'
+              className='nd-input nd-input--lg'
+              placeholder='secret token'
+              value={relayToken}
+              onChange={onChange('cloudRelayToken')}
+            />
+          </div>
+        )}
         {hasRelay && (
           <div className='flex flex-col gap-2'>
             <span className='font-nd-mono text-[14px] uppercase tracking-[0.08em] text-[var(--text-secondary,#999)]'>
