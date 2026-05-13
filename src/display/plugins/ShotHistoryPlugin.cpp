@@ -120,7 +120,10 @@ int findBeanIndexForNotes(JsonVariantConst notes, const std::vector<BeanEntry> &
 }
 
 float roundBeanQuantity(float value) {
-    return roundf((value + 0.0001f) * 100.0f) / 100.0f;
+    if (!std::isfinite(value)) {
+        return 0.0f;
+    }
+    return roundf(value * 100.0f) / 100.0f;
 }
 } // namespace
 
@@ -368,8 +371,8 @@ void ShotHistoryPlugin::handleCompletedShot() {
         if (autoNotes["beanType"].isNull() || autoNotes["beanType"].as<String>().isEmpty()) {
             autoNotes["beanType"] = currentBeanName;
             hasNotes = saveNotes(currentId, autoNotes);
-            if (hasNotes) {
-                applyBeanUsageDelta(previousNotes, autoNotes);
+            if (hasNotes && !applyBeanUsageDelta(previousNotes, autoNotes)) {
+                ESP_LOGW("ShotHistoryPlugin", "Failed to update bean usage for completed shot %s", currentId.c_str());
             }
         } else {
             hasNotes = true; // WebUI already wrote notes that include beanType
@@ -804,28 +807,33 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         JsonDocument previousNotes;
         loadNotes(id, previousNotes);
         const bool notesSaved = saveNotes(id, notes);
+        bool beanUsageSaved = false;
         if (!notesSaved) {
             response["error"] = "Save failed";
         } else {
-            applyBeanUsageDelta(previousNotes, notes);
+            beanUsageSaved = applyBeanUsageDelta(previousNotes, notes);
         }
 
-        // Update rating and volume in index
-        uint8_t rating = notes["rating"].as<uint8_t>();
+        if (notesSaved && !beanUsageSaved) {
+            response["error"] = "Bean usage update failed";
+        }
 
-        // Check if user provided a doseOut value to override volume
-        uint16_t volume = 0;
-        if (notes["doseOut"].is<String>() && !notes["doseOut"].as<String>().isEmpty()) {
-            float doseOut = notes["doseOut"].as<String>().toFloat();
-            if (doseOut > 0.0f) {
-                volume = encodeUnsigned(doseOut, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+        if (notesSaved && beanUsageSaved) {
+            // Update rating and volume in index
+            uint8_t rating = notes["rating"].as<uint8_t>();
+
+            // Check if user provided a doseOut value to override volume
+            uint16_t volume = 0;
+            if (notes["doseOut"].is<String>() && !notes["doseOut"].as<String>().isEmpty()) {
+                float doseOut = notes["doseOut"].as<String>().toFloat();
+                if (doseOut > 0.0f) {
+                    volume = encodeUnsigned(doseOut, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+                }
             }
-        }
 
-        // Always use updateIndexMetadata - it handles both rating and optional volume
-        updateIndexMetadata(id.toInt(), rating, volume);
+            // Always use updateIndexMetadata - it handles both rating and optional volume
+            updateIndexMetadata(id.toInt(), rating, volume);
 
-        if (notesSaved) {
             response["msg"] = "Ok";
         }
     } else if (type == "req:history:rebuild") {
@@ -856,9 +864,9 @@ void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
     }
 }
 
-void ShotHistoryPlugin::applyBeanUsageDelta(JsonVariantConst previousNotes, JsonVariantConst nextNotes) {
+bool ShotHistoryPlugin::applyBeanUsageDelta(JsonVariantConst previousNotes, JsonVariantConst nextNotes) {
     if (!controller || !controller->getBeanManager()) {
-        return;
+        return true;
     }
 
     BeanManager *manager = controller->getBeanManager();
@@ -868,27 +876,48 @@ void ShotHistoryPlugin::applyBeanUsageDelta(JsonVariantConst previousNotes, Json
     const int previousBeanIndex = findBeanIndexForNotes(previousNotes, beans);
     const int nextBeanIndex = findBeanIndexForNotes(nextNotes, beans);
 
-    auto adjustBean = [&](int beanIndex, float delta) {
+    auto adjustBean = [&](int beanIndex, float delta, BeanEntry *originalBean) -> bool {
         if (beanIndex < 0 || beanIndex >= static_cast<int>(beans.size()) || !std::isfinite(delta) || delta == 0.0f) {
-            return;
+            return true;
         }
 
         BeanEntry bean = beans[beanIndex];
         if (bean.quantity < 0.0f) {
-            return;
+            return true;
+        }
+        if (originalBean) {
+            *originalBean = bean;
         }
 
         bean.quantity = std::max(0.0f, roundBeanQuantity(bean.quantity + delta));
-        manager->saveBean(bean);
+        return manager->saveBean(bean);
+    };
+
+    auto restoreBean = [&](const BeanEntry &bean) -> bool {
+        BeanEntry restored = bean;
+        return manager->saveBean(restored);
     };
 
     if (previousBeanIndex >= 0 && nextBeanIndex >= 0 && beans[previousBeanIndex].id == beans[nextBeanIndex].id) {
-        adjustBean(nextBeanIndex, previousDose - nextDose);
-        return;
+        return adjustBean(nextBeanIndex, previousDose - nextDose, nullptr);
     }
 
-    adjustBean(previousBeanIndex, previousDose);
-    adjustBean(nextBeanIndex, -nextDose);
+    BeanEntry previousOriginal;
+    const bool previousChanged = previousBeanIndex >= 0 && previousBeanIndex < static_cast<int>(beans.size()) &&
+                                 std::isfinite(previousDose) && previousDose != 0.0f &&
+                                 beans[previousBeanIndex].quantity >= 0.0f;
+    if (!adjustBean(previousBeanIndex, previousDose, previousChanged ? &previousOriginal : nullptr)) {
+        return false;
+    }
+
+    if (!adjustBean(nextBeanIndex, -nextDose, nullptr)) {
+        if (previousChanged && !restoreBean(previousOriginal)) {
+            ESP_LOGE("ShotHistoryPlugin", "Failed to roll back bean quantity update for bean %s", previousOriginal.id.c_str());
+        }
+        return false;
+    }
+
+    return true;
 }
 
 void ShotHistoryPlugin::loopTask(void *arg) {
