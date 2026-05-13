@@ -6,18 +6,25 @@ import { useMemo } from 'preact/hooks';
  * @param {Object} api - ApiService instance
  * @param {boolean} grind - Whether in grind mode
  * @param {Function} setIsFlushing - State setter for flush status
- * @param {Object} lastProcessTypeRef - Optional ref to track 'brew' or 'flush'
+ * @param {Object} lastProcessTypeRef - Optional ref to track 'brew', 'steam', or 'flush'
+ * @param {string} processKind - Process kind to record when activating
  * @returns {Object} Action handler functions
  */
-export function useProcessActions(api, grind, setIsFlushing, lastProcessTypeRef) {
+export function useProcessActions(
+  api,
+  grind,
+  setIsFlushing,
+  lastProcessTypeRef,
+  processKind = grind ? 'grind' : 'brew',
+) {
   return useMemo(
     () => ({
-      changeTarget: (target) => {
+      changeTarget: target => {
         const tp = grind ? 'req:change-grind-target' : 'req:change-brew-target';
         api.send({ tp, target });
       },
       activate: () => {
-        if (lastProcessTypeRef) lastProcessTypeRef.current = 'brew';
+        if (lastProcessTypeRef) lastProcessTypeRef.current = processKind;
         api.send({ tp: grind ? 'req:grind:activate' : 'req:process:activate' });
       },
       deactivate: () => {
@@ -47,7 +54,7 @@ export function useProcessActions(api, grind, setIsFlushing, lastProcessTypeRef)
         });
       },
     }),
-    [api, grind, setIsFlushing, lastProcessTypeRef]
+    [api, grind, setIsFlushing, lastProcessTypeRef, processKind],
   );
 }
 

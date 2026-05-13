@@ -13,6 +13,7 @@ import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
 import { faEye, faEyeSlash, faArrowLeft, faSave } from '@fortawesome/free-solid-svg-icons';
 import { GoogleDriveBackupCard } from './GoogleDriveBackupCard.jsx';
+import { buildRemoteAccessLink, DEFAULT_REMOTE_PAGES_ORIGIN } from './remoteAccessLogic.js';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -1156,12 +1157,13 @@ function RemoteAccessCard({ formData, onChange }) {
   const relayUrl = formData.cloudRelayUrl || '';
   const relayToken = formData.cloudRelayToken || '';
   const relayEnabled = !!formData.cloudRelayEnabled;
-  const hasRelay = relayUrl && relayToken;
-
-  const pagesOrigin = 'https://carloshrdezc.github.io/gaggimate';
-  const remoteLink = hasRelay
-    ? `${pagesOrigin}?relay=${encodeURIComponent(relayUrl)}&token=${encodeURIComponent(relayToken)}`
-    : null;
+  const remoteLink = buildRemoteAccessLink({
+    relayEnabled,
+    relayUrl,
+    relayToken,
+    pagesOrigin: DEFAULT_REMOTE_PAGES_ORIGIN,
+  });
+  const hasRelay = !!remoteLink;
 
   function copyLink() {
     if (!remoteLink) return;

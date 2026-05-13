@@ -13,6 +13,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 import PropTypes from 'prop-types';
+import {
+  MODE_STEAM,
+  getProcessKindForMode,
+  getPrimaryActionState,
+  getTemperatureRingMetrics,
+} from './dashboardLogic.js';
 
 const DOSE_KEY = 'gaggimate-dose-grams';
 const YIELD_KEY = 'gaggimate-target-weight';
@@ -22,8 +28,6 @@ const MODE_NAMES = ['STANDBY', 'BREW', 'STEAM', 'WATER', 'GRIND'];
 
 const PRESSURE_MAX = 12;
 const FLOW_MAX = 6;
-const TEMP_MIN = 0;
-const TEMP_MAX = 105;
 const RING_TOTAL_ARC = 300;
 const RING_START_ANGLE = 210;
 const YIELD_SEGMENTS = Array.from({ length: 40 }, (_, i) => i);
@@ -645,6 +649,9 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const lastProcessTypeRef = useRef(null);
   const isGrind = s.mode === 4;
   const brew = s.mode === 1;
+  const mode = s.mode ?? 0;
+  const isSteamMode = mode === MODE_STEAM;
+  const processKind = getProcessKindForMode(mode);
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   useEffect(() => {
@@ -673,7 +680,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
     }
   }, [active, autoSteamEnabled, api]);
 
-  const actions = useProcessActions(api, isGrind, setIsFlushing, lastProcessTypeRef);
+  const actions = useProcessActions(api, isGrind, setIsFlushing, lastProcessTypeRef, processKind);
 
   const { profileData } = useProfileData(api, s.mode === 1, s.selectedProfileId);
 
@@ -799,8 +806,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const tempVal = s.currentTemperature || 0;
   const targetTemp = s.targetTemperature || 93;
   const currentWeight = s.currentWeight || 0;
-  const mode = s.mode ?? 0;
-  const isSteamMode = mode === 2;
+  const temperatureRing = getTemperatureRingMetrics({ mode, tempVal, targetTemp });
 
   // Target yield/time
   const targetWeight = yieldTarget;
@@ -875,21 +881,27 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   // STEAM flashes yellow; BREW and WATER flash red
   const heatingColor = mode === 2 ? 'var(--dm-warn)' : 'var(--dm-accent)';
   const showProcessTimer = (active || finished) && !isSteamMode;
-  const tempRingColor = isSteamMode ? 'var(--dm-warn)' : 'var(--dm-accent)';
+  const tempRingColor = temperatureRing.color;
   const steamStatusLabel = targetTemp > 0 && tempVal < targetTemp
     ? `PREHEATING · TGT ${fmt(targetTemp)}°`
     : `STEAM · TGT ${fmt(targetTemp)}°`;
-  const primaryActionLabel = active
-    ? isSteamMode ? 'STOP STEAM' : 'STOP SHOT'
-    : finished
-      ? 'CLEAR'
-      : isSteamMode
-        ? 'START STEAM'
-        : 'START SHOT';
-  const primaryActionAccent = isSteamMode ? 'var(--dm-warn)' : 'var(--dm-accent)';
-  const primaryAction = active && isSteamMode
-    ? () => api.send({ tp: 'req:change-mode', mode: 0 })
-    : active ? actions.deactivate : finished ? actions.clear : actions.activate;
+  const primaryActionState = getPrimaryActionState({ active, finished, mode });
+  const primaryActionLabel = primaryActionState.label;
+  const primaryActionAccent = primaryActionState.accent;
+  const primaryAction = () => {
+    if (Object.prototype.hasOwnProperty.call(primaryActionState, 'processKind')) {
+      lastProcessTypeRef.current = primaryActionState.processKind;
+    }
+    if (primaryActionState.action === 'change-mode') {
+      api.send({ tp: 'req:change-mode', mode: primaryActionState.mode });
+    } else if (primaryActionState.action === 'deactivate') {
+      actions.deactivate();
+    } else if (primaryActionState.action === 'clear') {
+      actions.clear();
+    } else {
+      actions.activate();
+    }
+  };
 
   return (
     <div
@@ -1146,14 +1158,14 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
 
             {/* Temp ring (inner) */}
             <path
-              d={arcPath(cx, cy, rInner, (tempVal - TEMP_MIN) / (TEMP_MAX - TEMP_MIN))}
+              d={arcPath(cx, cy, rInner, temperatureRing.progressFraction)}
               fill='none'
               stroke={tempRingColor}
               strokeWidth={stroke}
               strokeLinecap='round'
             />
             <path
-              d={tickPath(cx, cy, rInner, (targetTemp - TEMP_MIN) / (TEMP_MAX - TEMP_MIN))}
+              d={tickPath(cx, cy, rInner, temperatureRing.targetFraction)}
               stroke='rgba(232,232,232,0.55)'
               strokeWidth='2'
             />
@@ -1405,8 +1417,8 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               cur={fmt(tempVal)}
               tgt={fmt(targetTemp)}
               unit='°C'
-              frac={(tempVal - TEMP_MIN) / (TEMP_MAX - TEMP_MIN)}
-              tgtFrac={(targetTemp - TEMP_MIN) / (TEMP_MAX - TEMP_MIN)}
+              frac={temperatureRing.progressFraction}
+              tgtFrac={temperatureRing.targetFraction}
             />
           </div>
 
