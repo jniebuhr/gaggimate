@@ -41,7 +41,7 @@ void DefaultUI::updateTempHistory() {
 }
 
 void DefaultUI::updateTempStableFlag() {
-    int oldIsStable = isTemperatureStable; // Saves state before calculation
+    int oldIsStable = isTemperatureStable;
 
     if (isTempHistoryInitialized) {
         float totalError = 0.0f;
@@ -65,7 +65,6 @@ void DefaultUI::updateTempStableFlag() {
 
     prevTargetTemp = targetTemp;
 
-    // Event Broadcasting: only send event if stability status has changed
     if (isTemperatureStable != oldIsStable) {
         pluginManager->trigger("boiler:heating:stable", "isStable", isTemperatureStable);
     }

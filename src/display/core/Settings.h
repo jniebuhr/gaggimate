@@ -76,7 +76,6 @@ class Settings {
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
     String getMdnsName() const { return mdnsName; }
-    // HomeKit Settings
     int getHomekitMode() const { return homekitMode; }
     bool isHkPowerEnabled() const { return hkPowerEnabled; }
     bool isHkSteamEnabled() const { return hkSteamEnabled; }
@@ -136,7 +135,6 @@ class Settings {
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
     void setMdnsName(const String &mdnsName);
-    // HomeKit Setters
     void setHomekitMode(int homekitMode);
     void setHkPowerEnabled(bool enabled);
     void setHkSteamEnabled(bool enabled);
@@ -208,7 +206,6 @@ class Settings {
     String wifiPassword = "";
     String mdnsName = DEFAULT_MDNS_NAME;
     String savedScale = "";
-    // HomeKit Variables
     int homekitMode = HOMEKIT_MODE_DISABLED;
     bool hkPowerEnabled = true;
     bool hkSteamEnabled = true;

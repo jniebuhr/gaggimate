@@ -1,7 +1,9 @@
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import homekitImage from '../../assets/homekit.png';
-import { useState, useEffect } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 export function PluginCard({
   formData,
@@ -13,27 +15,12 @@ export function PluginCard({
   updateAutoWakeupTime,
   updateAutoWakeupDay,
 }) {
-
- const homekitMode = parseInt(formData.homekitMode, 10) || 0;
-
-  // state exposing
-  const [isHomekitOpen, setIsHomekitOpen] = useState(homekitMode > 0);
-
-  // sync
-  useEffect(() => {
-    if (homekitMode > 0) {
-      setIsHomekitOpen(true);
-    }
-  }, [homekitMode]);
+  const homekitMode = parseInt(formData.homekitMode, 10) || 0;
+  const homekitEnabled = homekitMode > 0;
+  const [troubleshootingExpanded, setTroubleshootingExpanded] = useState(false);
 
   const handleHomekitToggle = () => {
-    const nextState = !isHomekitOpen;
-    setIsHomekitOpen(nextState);
-    if (!nextState) {
-      updateHomekitMode(0);
-    } else if (homekitMode === 0) {
-      updateHomekitMode(1);
-    }
+    updateHomekitMode(homekitEnabled ? 0 : 1);
   };
 
   return (
@@ -146,32 +133,30 @@ export function PluginCard({
         )}
       </div>
 
-      {/*homekit*/}
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>
           <span className='text-xl font-medium'>HomeKit Integration</span>
           <input
             type='checkbox'
             className='toggle toggle-primary'
-            checked={isHomekitOpen}
+            checked={homekitEnabled}
             onChange={handleHomekitToggle}
+            aria-label='Enable HomeKit'
           />
         </div>
 
-        {isHomekitOpen && (
+        {homekitEnabled && (
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
-
-            <p className='text-sm opacity-70'>
-              Control your machine via Apple Home.
-            </p>
+            <p className='text-sm opacity-70'>Control GaggiMate from the Apple Home app.</p>
 
             <div className='form-control'>
-              <label className='mb-2 block text-sm font-medium opacity-70'>Select Integration Mode</label>
+              <label className='mb-2 block text-sm font-medium opacity-70'>Integration mode</label>
               <div className='grid grid-cols-2 gap-2'>
                 <button
                   type='button'
                   className={`btn btn-sm ${homekitMode === 1 ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => updateHomekitMode(1)}
+                  aria-pressed={homekitMode === 1}
                 >
                   Thermostat
                 </button>
@@ -179,160 +164,179 @@ export function PluginCard({
                   type='button'
                   className={`btn btn-sm ${homekitMode === 2 ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => updateHomekitMode(2)}
+                  aria-pressed={homekitMode === 2}
                 >
                   Bridge
                 </button>
               </div>
             </div>
 
-            {/* Descriptions & Device Selection */}
-            <div className='text-sm bg-base-100 p-4 rounded-md shadow-sm border border-base-300'>
+            <div className='bg-base-100 border-base-300 rounded-md border p-4 text-sm'>
               {homekitMode === 1 && (
-                <p><strong>Thermostat Mode:</strong> Emulates a thermostat for direct temperature control (as before).</p>
+                <p>
+                  <strong>Thermostat mode:</strong> Emulates a thermostat for direct temperature
+                  control.
+                </p>
               )}
               {homekitMode === 2 && (
                 <div>
-                  <strong>Bridge Mode:</strong> Exposes the machine capabilities as separate HomeKit accessories.
+                  <strong>Bridge mode:</strong> Exposes the machine capabilities as separate HomeKit
+                  accessories.
+                  <div className='border-base-300 mt-4 border-t pt-4'>
+                    <p className='mb-3 text-sm font-medium opacity-70'>Enabled Accessories</p>
 
-                  {/* Accessory Toggles */}
-                  <div className="mt-4 pt-4 border-t border-base-300">
-                    <p className="text-sm font-medium opacity-70 mb-3">Enabled Accessories</p>
-
-                    <div className="space-y-4">
-                      {/* Power Switch */}
+                    <div className='space-y-4'>
                       <div className='form-control'>
-                        <label className='label cursor-pointer justify-start gap-4 items-start'>
+                        <label className='label cursor-pointer items-start justify-start gap-4'>
                           <input
                             id='hkPowerEnabled'
                             name='hkPowerEnabled'
-                            type="checkbox"
-                            className="toggle toggle-sm toggle-primary mt-1"
+                            type='checkbox'
+                            className='toggle toggle-primary toggle-sm mt-1'
                             checked={formData.hkPowerEnabled !== false}
                             onChange={onChange('hkPowerEnabled')}
                           />
-                          <div className='flex flex-col flex-1 min-w-0'>
+                          <div className='flex min-w-0 flex-1 flex-col'>
                             <span className='label-text font-medium'>Power Switch</span>
-                            <span className='text-xs opacity-70 block whitespace-normal'>
+                            <span className='block text-xs whitespace-normal opacity-70'>
                               Controls the main machine state (Standby / Brew).
                             </span>
                           </div>
                         </label>
                       </div>
 
-                      {/* Steam Switch */}
                       <div className='form-control'>
-                        <label className='label cursor-pointer justify-start gap-4 items-start'>
+                        <label className='label cursor-pointer items-start justify-start gap-4'>
                           <input
                             id='hkSteamEnabled'
                             name='hkSteamEnabled'
-                            type="checkbox"
-                            className="toggle toggle-sm toggle-primary mt-1"
+                            type='checkbox'
+                            className='toggle toggle-primary toggle-sm mt-1'
                             checked={formData.hkSteamEnabled !== false}
                             onChange={onChange('hkSteamEnabled')}
                           />
-                          <div className='flex flex-col flex-1 min-w-0'>
-                             <span className='label-text font-medium'>Steam Switch</span>
-                             <span className='text-xs opacity-70 block whitespace-normal'>
-                               Toggles the Steam Mode.
-                             </span>
+                          <div className='flex min-w-0 flex-1 flex-col'>
+                            <span className='label-text font-medium'>Steam Switch</span>
+                            <span className='block text-xs whitespace-normal opacity-70'>
+                              Toggles the Steam Mode.
+                            </span>
                           </div>
                         </label>
                       </div>
 
-                      {/* Heating Sensor */}
                       <div className='form-control'>
-                        <label className='label cursor-pointer justify-start gap-4 items-start'>
+                        <label className='label cursor-pointer items-start justify-start gap-4'>
                           <input
                             id='hkSensorEnabled'
                             name='hkSensorEnabled'
-                            type="checkbox"
-                            className="toggle toggle-sm toggle-primary mt-1"
+                            type='checkbox'
+                            className='toggle toggle-primary toggle-sm mt-1'
                             checked={formData.hkSensorEnabled !== false}
                             onChange={onChange('hkSensorEnabled')}
                           />
-                           <div className='flex flex-col flex-1 min-w-0'>
+                          <div className='flex min-w-0 flex-1 flex-col'>
                             <span className='label-text font-medium'>Heating Sensor</span>
-                            <span className='text-xs opacity-70 block whitespace-normal'>
-                              A contact sensor indicating boiler stability (Closed = Heating, Open = Ready).
+                            <span className='block text-xs whitespace-normal opacity-70'>
+                              A contact sensor indicating boiler stability (Closed = Heating, Open =
+                              Ready).
                             </span>
                           </div>
                         </label>
                       </div>
                     </div>
                   </div>
-
                 </div>
               )}
             </div>
 
-            {/* Pairing Code */}
-            <div className='flex flex-col items-center justify-center gap-4 pt-4 border-t border-base-300'>
+            <div className='border-base-300 flex flex-col items-center justify-center gap-4 border-t pt-4'>
               <img
                 src={homekitImage}
-                alt='Homekit Setup Code'
-                className='h-auto w-auto max-w-full object-contain'
-                style={{ maxHeight: '150px' }}
+                alt='HomeKit Setup Code'
+                className='h-auto max-h-[150px] w-auto max-w-full object-contain'
               />
 
-              <div className='text-center space-y-2 max-w-md'>
-                 <p className='text-sm font-medium'>
+              <div className='max-w-md space-y-2 text-center'>
+                <p className='text-sm font-medium'>
                   Open the Home app, select Add Accessory, and scan the code above.
                 </p>
               </div>
             </div>
 
-            {/* 3. COLLAPSIBLE TROUBLESHOOTING */}
-            <details className="collapse collapse-arrow bg-base-100 border border-base-300 rounded-box">
-                <summary className="collapse-title text-sm font-medium">
-                    Troubleshooting
-                </summary>
-                <div className="collapse-content text-xs text-base-content/70 space-y-3 pt-2">
+            <div className='bg-base-100 border-base-300 rounded-box border'>
+              <button
+                type='button'
+                className='flex w-full items-center gap-3 p-4 text-left text-sm font-medium'
+                onClick={() => setTroubleshootingExpanded(expanded => !expanded)}
+                aria-expanded={troubleshootingExpanded}
+                aria-controls='homekit-troubleshooting'
+              >
+                <span className='border-base-content/20 text-base-content/60 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border'>
+                  <FontAwesomeIcon
+                    icon={troubleshootingExpanded ? faMinus : faPlus}
+                    className='h-3 w-3'
+                  />
+                </span>
+                <span>Troubleshooting</span>
+              </button>
+              {troubleshootingExpanded && (
+                <div
+                  id='homekit-troubleshooting'
+                  className='text-base-content/70 space-y-3 px-4 pb-4 text-xs'
+                >
+                  <div>
+                    <p className='mb-1 font-bold'>Devices do not update or connect:</p>
+                    <ul className='ml-1 list-inside list-disc space-y-1'>
+                      <li>
+                        <b>Cycle the modes:</b> Switch mode &rarr; Save & Restart &rarr; Wait for
+                        the Home app to refresh the GaggiMate devices &rarr; Switch back &rarr; Save
+                        & Restart.
+                      </li>
+                    </ul>
+                  </div>
 
-                    {/* No Connection / Update */}
-                    <div>
-                        <p className="font-bold mb-1">Devices not updating, connecting or other problems:</p>
-                        <ul className="list-disc list-inside ml-1 space-y-1">
-                            <li>
-                                <b>Cycle the modes:</b> Switch mode &rarr; Save & Restart &rarr; Wait for Apple Home to update GaggiMate devices
-                                (speed it up by tapping on one of the devices in the Home App and give it some time)
-                                &rarr; Switch back &rarr; Save & Restart.
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Pairing Issues */}
-                    <div>
-                        <p className="font-bold mb-1">GaggiMate does not appear for pairing:</p>
-                        <ul className="list-disc list-inside ml-1 space-y-1">
-                            <li>
-                                Ensure no stale GaggiMate accessories remain in the Home App (check <i>Home Settings &rarr; Home Hubs & Bridges</i>).
-                                If unsure, try cycling the modes as described above.
-                            </li>
-
-                            {/* Console Reset Instructions */}
-                            <li className="mt-2 mb-1">
-                                <span className="font-semibold">Reset the HomeKit plugin via the console:</span>
-                                <ol className="list-decimal list-inside ml-2 mt-1 space-y-1">
-                                    <li>Connect your GaggiMate to the flashing web interface and open <b>Logs & Console</b>.</li>
-                                    <li>In the console, send <code>?</code> to list available HomeKit commands.</li>
-                                    <li>Send <code>H</code> to perform a HomeKit reset (this clears pairing info and restarts the accessory).</li>
-                                    <li>Re-add GaggiMate in the Home app using the setup code.</li>
-                                </ol>
-                                <div className="mt-1 ml-2 opacity-90">
-                                    If <code>H</code> is not available, check the console help (<code>?</code>). If this doesn’t resolve your issue, you may need to do a full reset with <code>E</code>.
-                                </div>
-                            </li>
-
-                            <li className="text-error font-bold mt-2">
-                                If GaggiMate still does not appear, you must reset the display.
-                                To do this, re-flash the display via USB (just like the initial installation).
-                                Don't forget to backup your profiles and settings first!
-                            </li>
-                        </ul>
-                    </div>
-
+                  <div>
+                    <p className='mb-1 font-bold'>GaggiMate does not appear for pairing:</p>
+                    <ul className='ml-1 list-inside list-disc space-y-1'>
+                      <li>
+                        Ensure no stale GaggiMate accessories remain in the Home app (check{' '}
+                        <i>Home Settings &rarr; Home Hubs & Bridges</i>). If unsure, try cycling the
+                        modes as described above.
+                      </li>
+                      <li className='mt-2 mb-1'>
+                        <span className='font-semibold'>
+                          Reset the HomeKit plugin via the console:
+                        </span>
+                        <ol className='mt-1 ml-2 list-inside list-decimal space-y-1'>
+                          <li>
+                            Connect your GaggiMate to the flashing web interface and open{' '}
+                            <b>Logs & Console</b>.
+                          </li>
+                          <li>
+                            In the console, send <code>?</code> to list available HomeKit commands.
+                          </li>
+                          <li>
+                            Send <code>H</code> to perform a HomeKit reset (this clears pairing info
+                            and restarts the accessory).
+                          </li>
+                          <li>Re-add GaggiMate in the Home app using the setup code.</li>
+                        </ol>
+                        <div className='mt-1 ml-2 opacity-90'>
+                          If <code>H</code> is not available, check the console help (<code>?</code>
+                          ). If this does not resolve your issue, you may need to do a full reset
+                          with <code>E</code>.
+                        </div>
+                      </li>
+                      <li className='text-error mt-2 font-bold'>
+                        If GaggiMate still does not appear, perform a full display reset by
+                        re-flashing the display via USB, as you would during the initial
+                        installation. Back up your profiles and settings before continuing.
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-            </details>
+              )}
+            </div>
           </div>
         )}
       </div>

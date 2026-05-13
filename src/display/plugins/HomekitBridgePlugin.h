@@ -19,10 +19,10 @@ enum class HomekitAction {
     SWITCH_2_TOGGLE,
 };
 
-// Callback-Type def
+// Callback type
 typedef std::function<void(HomekitAction, bool)> bridge_callback_t;
 
-// Accessoires:
+// Accessories
 
 // Switch 1: Power
 class GaggiMatePowerSwitch : public Service::Switch {
@@ -53,7 +53,6 @@ class GaggiMateSteamSwitch : public Service::Switch {
 class GaggiMateHeatingSensor : public Service::ContactSensor {
   public:
     GaggiMateHeatingSensor();
-    // true = Ready, false = Heating
     void setStability(bool isStable);
   private:
     SpanCharacteristic *contactState;
@@ -76,25 +75,26 @@ class HomekitBridgePlugin : public Plugin {
     Controller *controller = nullptr;
     String wifiSsid;
     String wifiPassword;
+    bool homekitStarted = false;
 
-    // Bridged Accessoires
+    // Bridged accessories
     GaggiMatePowerSwitch *powerSwitch = nullptr;
     GaggiMateSteamSwitch *steamSwitch = nullptr;
     GaggiMateHeatingSensor *heatingSensor = nullptr;
 
-    // Thread-Safe variables (Atomic), fixing race condition
+    // Thread-safe variables
 
-    // HomeKit -> Maschine
+    // HomeKit -> machine
     std::atomic<HomekitAction> lastAction{HomekitAction::NONE};
     std::atomic<bool> actionSwitch1State{false};
     std::atomic<bool> actionSwitch2State{false};
     std::atomic<bool> actionRequired{false};
 
-    // Maschine -> HomeKit (Mode)
+    // Machine -> HomeKit (mode)
     std::atomic<bool> statusUpdateRequired{false};
     std::atomic<int> currentMachineMode{0}; // 0 = Standby default
 
-    // Maschine -> HomeKit (Heating) - DIESE HABEN GEFEHLT
+    // Machine -> HomeKit (heating)
     std::atomic<bool> heatingUpdateRequired{false};
     std::atomic<bool> isHeatingStable{false};
 };

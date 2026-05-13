@@ -59,13 +59,10 @@ void Controller::setup() {
     profileManager->setup();
     if (settings.getHomekitMode() == HOMEKIT_MODE_THERMOSTAT) {
         pluginManager->registerPlugin(new HomekitThermostatPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
-        pluginManager->registerPlugin(new mDNSPlugin());
     } else if (settings.getHomekitMode() == HOMEKIT_MODE_BRIDGE) {
         pluginManager->registerPlugin(new HomekitBridgePlugin(settings.getWifiSsid(), settings.getWifiPassword()));
-        pluginManager->registerPlugin(new mDNSPlugin());
-    } else {
-        pluginManager->registerPlugin(new mDNSPlugin());
     }
+    pluginManager->registerPlugin(new mDNSPlugin());
     if (settings.isBoilerFillActive()) {
         pluginManager->registerPlugin(new BoilerFillPlugin());
     }

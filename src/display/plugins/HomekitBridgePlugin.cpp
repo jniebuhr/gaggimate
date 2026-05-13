@@ -53,7 +53,7 @@ GaggiMateHeatingSensor::GaggiMateHeatingSensor() : Service::ContactSensor() {
 }
 
 void GaggiMateHeatingSensor::setStability(bool isStable) {
-    int targetVal = isStable ? 1 : 0; // 0 = Contact Detected (Closed/Ready), 1 = Open
+    int targetVal = isStable ? 1 : 0; // 0 = contact detected/heating, 1 = open/ready
 
     if (contactState && contactState->getVal() != targetVal) {
         contactState->setVal(targetVal, true);
@@ -99,73 +99,66 @@ void HomekitBridgePlugin::setup(Controller *controller, PluginManager *pluginMan
         this->actionRequired.store(true);
     };
 
-    homeSpan.setHostNameSuffix("");
-    homeSpan.setPortNum(HOMESPAN_PORT);
+    if (pluginManager == nullptr) return;
 
-    homeSpan.begin(Category::Bridges, DEVICE_NAME, this->controller->getSettings().getMdnsName().c_str());
-    homeSpan.setWifiCredentials(wifiSsid.c_str(), wifiPassword.c_str());
+    pluginManager->on("controller:wifi:connect", [this, enablePower, enableSteam, enableSensor, callback](Event &event) {
+        int apMode = event.getInt("AP");
+        if (apMode) return;
+        if (homekitStarted) return;
 
-    // ---------------------------------------------------------
-    // 1. The Bridge Accessory (ID = 1)
-    // ---------------------------------------------------------
-    new SpanAccessory(1); // Explicitly set ID 1
-    new Service::AccessoryInformation();
-    new Characteristic::Identify();
+        homekitStarted = true;
+        homeSpan.setHostNameSuffix("");
+        homeSpan.setPortNum(HOMESPAN_PORT);
 
-    // ---------------------------------------------------------
-    // 2. Power Accessory (ID = 2)
-    // ---------------------------------------------------------
-    if (enablePower) {
-        new SpanAccessory(2); // Explicitly set ID 2
+        homeSpan.begin(Category::Bridges, DEVICE_NAME, this->controller->getSettings().getMdnsName().c_str());
+        homeSpan.setWifiCredentials(wifiSsid.c_str(), wifiPassword.c_str());
+
+        new SpanAccessory(1);
         new Service::AccessoryInformation();
         new Characteristic::Identify();
-        new Characteristic::Name("GaggiMate Power");
-        powerSwitch = new GaggiMatePowerSwitch(callback);
-    }
 
-    // ---------------------------------------------------------
-    // 3. Steam Accessory (ID = 3)
-    // ---------------------------------------------------------
-    if (enableSteam) {
-        new SpanAccessory(3); // Explicitly set ID 3
-        new Service::AccessoryInformation();
-        new Characteristic::Identify();
-        new Characteristic::Name("GaggiMate Steam");
-        steamSwitch = new GaggiMateSteamSwitch(callback);
-    }
+        if (enablePower) {
+            new SpanAccessory(2);
+            new Service::AccessoryInformation();
+            new Characteristic::Identify();
+            new Characteristic::Name("GaggiMate Power");
+            powerSwitch = new GaggiMatePowerSwitch(callback);
+        }
 
-    // ---------------------------------------------------------
-    // 4. Sensor Accessory (ID = 4)
-    // ---------------------------------------------------------
-    if (enableSensor) {
-        new SpanAccessory(4); // Explicitly set ID 4
-        new Service::AccessoryInformation();
-        new Characteristic::Identify();
-        new Characteristic::Name("GaggiMate Heating Status");
-        this->heatingSensor = new GaggiMateHeatingSensor();
-    }
+        if (enableSteam) {
+            new SpanAccessory(3);
+            new Service::AccessoryInformation();
+            new Characteristic::Identify();
+            new Characteristic::Name("GaggiMate Steam");
+            steamSwitch = new GaggiMateSteamSwitch(callback);
+        }
 
-    if (pluginManager != nullptr) {
-        // Thread-safe: Mode changes (Machine -> HomeKit)
-        pluginManager->on("controller:mode:change", [this](Event const &e) {
-            this->currentMachineMode.store(e.getInt("value"));
-            this->statusUpdateRequired.store(true);
-        });
+        if (enableSensor) {
+            new SpanAccessory(4);
+            new Service::AccessoryInformation();
+            new Characteristic::Identify();
+            new Characteristic::Name("GaggiMate Heating Status");
+            this->heatingSensor = new GaggiMateHeatingSensor();
+        }
 
-        // Thread-safe: Heating Status (Machine -> HomeKit)
-        pluginManager->on("boiler:heating:stable", [this](Event &e) {
-             this->isHeatingStable.store(e.getInt("isStable") == 1);
-             this->heatingUpdateRequired.store(true);
-        });
-    }
+        homeSpan.autoPoll();
+    });
 
-    homeSpan.autoPoll();
+    pluginManager->on("controller:mode:change", [this](Event const &e) {
+        this->currentMachineMode.store(e.getInt("value"));
+        this->statusUpdateRequired.store(true);
+    });
+
+    pluginManager->on("boiler:heating:stable", [this](Event &e) {
+        this->isHeatingStable.store(e.getInt("isStable") == 1);
+        this->heatingUpdateRequired.store(true);
+    });
 }
 
 void HomekitBridgePlugin::loop() {
     if (controller == nullptr) return;
 
-    // Thread-Safe Sync: Machine -> HomeKit
+    // Thread-safe sync: Machine -> HomeKit
 
     // A) Update Power / Steam Switches
     if (statusUpdateRequired.exchange(false)) {

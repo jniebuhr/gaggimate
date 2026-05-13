@@ -75,10 +75,12 @@ export function Settings() {
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
-        // Initialize HomeKit toggles (Default to true if undefined/new)
-        hkPowerEnabled: fetchedSettings.hkPowerEnabled !== undefined ? fetchedSettings.hkPowerEnabled : true,
-        hkSteamEnabled: fetchedSettings.hkSteamEnabled !== undefined ? fetchedSettings.hkSteamEnabled : true,
-        hkSensorEnabled: fetchedSettings.hkSensorEnabled !== undefined ? fetchedSettings.hkSensorEnabled : true,
+        hkPowerEnabled:
+          fetchedSettings.hkPowerEnabled !== undefined ? fetchedSettings.hkPowerEnabled : true,
+        hkSteamEnabled:
+          fetchedSettings.hkSteamEnabled !== undefined ? fetchedSettings.hkSteamEnabled : true,
+        hkSensorEnabled:
+          fetchedSettings.hkSensorEnabled !== undefined ? fetchedSettings.hkSensorEnabled : true,
       };
 
       // Extract Kf from PID string and separate them. Mirrors the same
@@ -196,7 +198,7 @@ export function Settings() {
     ]);
   };
 
-  const updateHomekitMode = (mode) => {
+  const updateHomekitMode = mode => {
     setFormData({
       ...formData,
       homekitMode: parseInt(mode, 10),
@@ -251,7 +253,17 @@ export function Settings() {
         formDataToSubmit.set('standbyBrightness', '0');
       }
 
-      formDataToSubmit.set('homekitMode', formData.homekitMode !== undefined ? formData.homekitMode : 0);
+      formDataToSubmit.set(
+        'homekitMode',
+        formData.homekitMode !== undefined ? formData.homekitMode : 0,
+      );
+      ['hkPowerEnabled', 'hkSteamEnabled', 'hkSensorEnabled'].forEach(key => {
+        if (formData[key] !== false) {
+          formDataToSubmit.set(key, 'on');
+        } else {
+          formDataToSubmit.delete(key);
+        }
+      });
 
       if (restart) {
         formDataToSubmit.append('restart', '1');
