@@ -887,6 +887,9 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
         ? 'START STEAM'
         : 'START SHOT';
   const primaryActionAccent = isSteamMode ? 'var(--dm-warn)' : 'var(--dm-accent)';
+  const primaryAction = active && isSteamMode
+    ? () => api.send({ tp: 'req:change-mode', mode: 0 })
+    : active ? actions.deactivate : finished ? actions.clear : actions.activate;
 
   return (
     <div
@@ -1471,7 +1474,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
 
             <button
               type='button'
-              onClick={active ? actions.deactivate : finished ? actions.clear : actions.activate}
+              onClick={primaryAction}
               style={{
                 background: active
                   ? primaryActionAccent

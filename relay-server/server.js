@@ -35,11 +35,18 @@ function connect() {
   const token = document.getElementById('token').value.trim();
   const uiUrl = document.getElementById('uiUrl').value.trim();
   if (!token) { alert('Enter a token'); return; }
+  if (!uiUrl) { alert('Enter the Web UI URL'); return; }
   const wsBase = window.location.origin.replace(/^http/, 'ws');
-  localStorage.setItem('gaggimate_relay_url', wsBase);
-  localStorage.setItem('gaggimate_relay_token', token);
-  const dest = uiUrl || (window.location.origin + '?relay=' + encodeURIComponent(wsBase) + '&token=' + encodeURIComponent(token));
-  window.location.href = dest;
+  let dest;
+  try {
+    dest = new URL(uiUrl);
+  } catch {
+    alert('Enter a valid Web UI URL');
+    return;
+  }
+  dest.searchParams.set('relay', wsBase);
+  dest.searchParams.set('token', token);
+  window.location.href = dest.toString();
 }
 </script>
 </body></html>`);
