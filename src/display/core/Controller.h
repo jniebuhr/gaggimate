@@ -41,6 +41,13 @@ struct ProcessSnapshot {
     bool isGrind = false;
     float grindVolume = 0.0f;
     unsigned long grindTime = 0;
+
+    // Manual-specific fields
+    bool isManual = false;
+    int manualTargetType = DEFAULT_MANUAL_TARGET_TYPE;
+    float manualPressure = 0.0f;
+    float manualFlow = 0.0f;
+    int manualTemperature = DEFAULT_MANUAL_TEMPERATURE;
 };
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/Driver.h>
@@ -71,16 +78,22 @@ class Controller {
     void setPumpModelCoeffs();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
+    void updateManualTargets(int targetType, float pressure, float flow, int temperature);
 
     int getMode() const;
 
     float getTargetTemp() const;
     int getTargetGrindDuration() const;
+    int getManualTargetType() const { return settings.getManualTargetType(); }
+    float getManualPressure() const { return settings.getManualPressure(); }
+    float getManualFlow() const { return settings.getManualFlow(); }
+    int getManualTemperature() const { return settings.getManualTemperature(); }
     virtual float getCurrentTemp() const { return currentTemp; }
     bool isActive() const;
     bool isActiveSafe() const;
     bool isGrindActive() const;
     bool isGrindAvailable() const;
+    bool isManualAvailable() const;
     bool isUpdating() const;
     bool isAutotuning() const;
     bool isReady() const;

@@ -177,6 +177,10 @@ void WebUIPlugin::loop() {
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
         doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["gact"] = controller->isGrindActive() ? 1 : 0;
+        doc["mtp"] = controller->getManualTargetType() == MANUAL_TARGET_FLOW ? "flow" : "pressure";
+        doc["mp"] = controller->getManualPressure();
+        doc["mf"] = controller->getManualFlow();
+        doc["mt"] = controller->getManualTemperature();
         doc["rssi"] = -127;
         if (controller->getClientController()->getClient()->isConnected()) {
             doc["rssi"] = controller->getClientController()->getClient()->getRssi();
@@ -230,6 +234,15 @@ void WebUIPlugin::loop() {
                     pObj["pt"] = proc.grindTime;
                     pObj["pp"] = ts - proc.started;
                 }
+            } else if (proc.isManual) {
+                unsigned long ts = proc.isActive ? millis() : proc.finished;
+                pObj["s"] = "manual";
+                pObj["l"] = proc.isActive ? "Manual" : "Finished";
+                pObj["e"] = ts - proc.started;
+                pObj["tt"] = proc.manualTargetType == MANUAL_TARGET_FLOW ? "flow" : "pressure";
+                pObj["pt"] = proc.manualTargetType == MANUAL_TARGET_FLOW ? proc.manualFlow : proc.manualPressure;
+                pObj["pp"] = proc.manualTargetType == MANUAL_TARGET_FLOW ? controller->getCurrentPumpFlow()
+                                                                          : controller->getCurrentPressure();
             }
         }
 
@@ -511,10 +524,24 @@ void WebUIPlugin::processWebSocketMessage(uint32_t clientId, const String &msg) 
         controller->raiseGrindTarget();
     } else if (msgType == "req:lower-grind-target") {
         controller->lowerGrindTarget();
+    } else if (msgType == "req:manual:update") {
+        if (controller->getMode() != MODE_MANUAL || !controller->isManualAvailable())
+            return;
+        int targetType = controller->getManualTargetType();
+        if (doc["targetType"].is<const char *>()) {
+            String requestedType = doc["targetType"].as<const char *>();
+            targetType = requestedType == "flow" ? MANUAL_TARGET_FLOW : MANUAL_TARGET_PRESSURE;
+        }
+        float pressure = doc["pressure"].is<float>() ? doc["pressure"].as<float>() : controller->getManualPressure();
+        float flow = doc["flow"].is<float>() ? doc["flow"].as<float>() : controller->getManualFlow();
+        int temperature = doc["temperature"].is<int>() ? doc["temperature"].as<int>() : controller->getManualTemperature();
+        controller->updateManualTargets(targetType, pressure, flow, temperature);
     } else if (msgType == "req:change-mode") {
         if (doc["mode"].is<uint8_t>()) {
             uint8_t newMode = doc["mode"].as<uint8_t>();
             if (newMode == MODE_GRIND && !controller->isGrindAvailable())
+                return;
+            if (newMode == MODE_MANUAL && !controller->isManualAvailable())
                 return;
             controller->deactivate();
             controller->clear();

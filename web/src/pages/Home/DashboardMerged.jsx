@@ -15,11 +15,27 @@ import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 import PropTypes from 'prop-types';
 import {
+  MANUAL_FLOW_MAX,
+  MANUAL_FLOW_MIN,
+  MANUAL_PRESSURE_MAX,
+  MANUAL_PRESSURE_MIN,
+  MANUAL_TARGET_FLOW,
+  MANUAL_TARGET_PRESSURE,
+  MANUAL_TEMP_MAX,
+  MANUAL_TEMP_MIN,
+  MODE_MANUAL,
   MODE_STEAM,
+  clampManualFlow,
+  clampManualPressure,
+  clampManualTemperature,
   getAvailableModeOptions,
+  getBoilerHeatingState,
+  getManualControlLabels,
   getProcessKindForMode,
   getPrimaryActionState,
   getTemperatureRingMetrics,
+  shouldKeepManualDraftDirty,
+  shouldSendManualUpdate,
 } from './dashboardLogic.js';
 
 const DOSE_KEY = 'gaggimate-dose-grams';
@@ -32,6 +48,10 @@ const FLOW_MAX = 6;
 const RING_TOTAL_ARC = 300;
 const RING_START_ANGLE = 210;
 const YIELD_SEGMENTS = Array.from({ length: 40 }, (_, i) => i);
+const MANUAL_TARGET_OPTIONS = [
+  { id: MANUAL_TARGET_PRESSURE, label: 'PRESSURE' },
+  { id: MANUAL_TARGET_FLOW, label: 'FLOW' },
+];
 
 const status = computed(() => machine.value.status);
 
@@ -74,6 +94,40 @@ function fmtTimer(totalSecs) {
   const s = Math.max(0, Math.round(totalSecs));
   const m = Math.floor(s / 60);
   return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function normalizeManualTargetType(value) {
+  return MANUAL_TARGET_OPTIONS.some(option => option.id === value) ? value : MANUAL_TARGET_PRESSURE;
+}
+
+function manualDraftFromStatus(s) {
+  return {
+    targetType: normalizeManualTargetType(s.manualTargetType),
+    pressure: clampManualPressure(s.manualPressure ?? s.targetPressure ?? 9),
+    flow: clampManualFlow(s.manualFlow ?? s.targetFlow ?? 2),
+    temperature: clampManualTemperature(s.manualTemperature ?? s.targetTemperature ?? 93),
+  };
+}
+
+function getPrimaryActionButtonStyle({ active, finished, accent }) {
+  return {
+    background: active
+      ? accent
+      : finished
+        ? 'var(--dm-good)'
+        : `color-mix(in srgb, ${accent} 14%, transparent)`,
+    color: active || finished ? '#fff' : accent,
+    border: active || finished ? 'none' : `1px solid color-mix(in srgb, ${accent} 40%, transparent)`,
+    fontFamily: 'var(--dm-font-display)',
+    fontSize: 13,
+    letterSpacing: '0.18em',
+    padding: '10px 8px',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: 700,
+    boxShadow: active ? `0 6px 18px color-mix(in srgb, ${accent} 22%, transparent)` : 'none',
+    transition: 'background 0.15s, box-shadow 0.15s',
+  };
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────────
@@ -224,6 +278,267 @@ TargetBar.propTypes = {
   unit: PropTypes.string,
   frac: PropTypes.number,
   tgtFrac: PropTypes.number,
+};
+
+function ManualSlider({ label, value, actual, unit, min, max, step, color, onChange, onEditingChange }) {
+  const handleInput = useCallback(
+    e => {
+      onEditingChange(true);
+      onChange(Number(e.currentTarget.value));
+    },
+    [onChange, onEditingChange]
+  );
+  const stopEditing = useCallback(() => onEditingChange(false), [onEditingChange]);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+        <span
+          style={{
+            fontFamily: 'var(--dm-font-mono)',
+            fontSize: 9,
+            letterSpacing: '0.18em',
+            color,
+          }}
+        >
+          {label}
+        </span>
+        <span style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 10, color: 'var(--dm-fg-dim)' }}>
+          LIVE <span style={{ color: 'var(--dm-fg)' }}>{fmt(actual)}</span> / SET{' '}
+          <span style={{ color: 'var(--dm-fg)' }}>{fmt(value)}</span> {unit}
+        </span>
+      </div>
+      <input
+        type='range'
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onInput={handleInput}
+        onChange={handleInput}
+        onPointerUp={stopEditing}
+        onTouchEnd={stopEditing}
+        onKeyUp={stopEditing}
+        onBlur={stopEditing}
+        style={{
+          width: '100%',
+          accentColor: color,
+          cursor: 'pointer',
+        }}
+      />
+    </div>
+  );
+}
+
+ManualSlider.propTypes = {
+  label: PropTypes.string,
+  value: PropTypes.number,
+  actual: PropTypes.number,
+  unit: PropTypes.string,
+  min: PropTypes.number,
+  max: PropTypes.number,
+  step: PropTypes.number,
+  color: PropTypes.string,
+  onChange: PropTypes.func,
+  onEditingChange: PropTypes.func,
+};
+
+function ManualConsole({
+  active,
+  finished,
+  draft,
+  pressure,
+  flow,
+  temperature,
+  controlLabels,
+  primaryAction,
+  primaryActionAccent,
+  primaryActionLabel,
+  onEditingChange,
+  onManualUpdate,
+}) {
+  const liveStatus = active ? 'LIVE CONTROL' : 'TEMP LIVE · PUMP STAGED';
+
+  return (
+    <>
+      <div>
+        <div
+          style={{
+            fontFamily: 'var(--dm-font-mono)',
+            fontSize: 9,
+            letterSpacing: '0.18em',
+            color: 'var(--dm-fg-dim)',
+            marginBottom: 8,
+          }}
+        >
+          MANUAL CONSOLE
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {MANUAL_TARGET_OPTIONS.map(option => {
+            const selected = draft.targetType === option.id;
+            return (
+              <button
+                key={option.id}
+                type='button'
+                onClick={() => onManualUpdate({ targetType: option.id })}
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--dm-font-mono)',
+                  fontSize: 9,
+                  letterSpacing: '0.18em',
+                  border: `1px solid ${selected ? 'color-mix(in srgb, var(--dm-accent) 60%, transparent)' : 'var(--dm-line)'}`,
+                  background: selected ? 'color-mix(in srgb, var(--dm-accent) 12%, transparent)' : 'transparent',
+                  color: selected ? 'var(--dm-accent)' : 'var(--dm-fg-dim)',
+                }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: 12,
+          padding: '12px 0',
+          borderTop: '1px solid var(--dm-line)',
+          borderBottom: '1px solid var(--dm-line)',
+        }}
+      >
+        {[
+          { label: 'PRESSURE', value: pressure, staged: draft.pressure, unit: 'bar', color: 'var(--dm-good)' },
+          { label: 'FLOW', value: flow, staged: draft.flow, unit: 'g/s', color: 'var(--dm-warn)' },
+          { label: 'TEMP', value: temperature, staged: draft.temperature, unit: 'C', color: 'var(--dm-accent)' },
+        ].map(readout => (
+          <div key={readout.label} style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: 'var(--dm-font-mono)',
+                fontSize: 9,
+                letterSpacing: '0.18em',
+                color: readout.color,
+                marginBottom: 4,
+              }}
+            >
+              {readout.label}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+              <span
+                style={{
+                  fontFamily: 'var(--dm-font-display)',
+                  fontSize: 30,
+                  color: 'var(--dm-fg)',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {fmt(readout.value)}
+              </span>
+              <span style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 10, color: 'var(--dm-fg-dim)' }}>
+                {readout.unit}
+              </span>
+            </div>
+            <div style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 9, color: 'var(--dm-fg-faint)', marginTop: 3 }}>
+              SET {fmt(readout.staged)} {readout.unit}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+        <ManualSlider
+          label={controlLabels.pressure}
+          value={draft.pressure}
+          actual={pressure}
+          unit='bar'
+          min={MANUAL_PRESSURE_MIN}
+          max={MANUAL_PRESSURE_MAX}
+          step={0.1}
+          color='var(--dm-good)'
+          onChange={pressure => onManualUpdate({ pressure: clampManualPressure(pressure) })}
+          onEditingChange={onEditingChange}
+        />
+        <ManualSlider
+          label={controlLabels.flow}
+          value={draft.flow}
+          actual={flow}
+          unit='g/s'
+          min={MANUAL_FLOW_MIN}
+          max={MANUAL_FLOW_MAX}
+          step={0.1}
+          color='var(--dm-warn)'
+          onChange={flow => onManualUpdate({ flow: clampManualFlow(flow) })}
+          onEditingChange={onEditingChange}
+        />
+        <ManualSlider
+          label='TEMPERATURE SETPOINT'
+          value={draft.temperature}
+          actual={temperature}
+          unit='C'
+          min={MANUAL_TEMP_MIN}
+          max={MANUAL_TEMP_MAX}
+          step={1}
+          color='var(--dm-accent)'
+          onChange={temperature => onManualUpdate({ temperature: clampManualTemperature(temperature) })}
+          onEditingChange={onEditingChange}
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 160px',
+          gap: 14,
+          alignItems: 'stretch',
+          marginTop: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4 }}>
+          <span
+            style={{
+              fontFamily: 'var(--dm-font-mono)',
+              fontSize: 9,
+              letterSpacing: '0.18em',
+              color: active ? 'var(--dm-good)' : 'var(--dm-fg-faint)',
+            }}
+          >
+            {liveStatus}
+          </span>
+          <span style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 10, color: 'var(--dm-fg-dim)' }}>
+            {active ? 'SLIDERS SEND LIVE UPDATES' : 'PRESSURE/FLOW APPLY ON START'}
+          </span>
+        </div>
+        <button
+          type='button'
+          onClick={primaryAction}
+          style={getPrimaryActionButtonStyle({ active, finished, accent: primaryActionAccent })}
+        >
+          {primaryActionLabel}
+        </button>
+      </div>
+    </>
+  );
+}
+
+ManualConsole.propTypes = {
+  active: PropTypes.bool,
+  finished: PropTypes.bool,
+  draft: PropTypes.object,
+  pressure: PropTypes.number,
+  flow: PropTypes.number,
+  temperature: PropTypes.number,
+  controlLabels: PropTypes.object,
+  primaryAction: PropTypes.func,
+  primaryActionAccent: PropTypes.string,
+  primaryActionLabel: PropTypes.string,
+  onEditingChange: PropTypes.func,
+  onManualUpdate: PropTypes.func,
 };
 
 function RingLegend({ color, label, value }) {
@@ -652,9 +967,14 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const brew = s.mode === 1;
   const mode = s.mode ?? 0;
   const { isGrindAvailable } = useGrindSettings();
+  const isManualAvailable = machine.value.capabilities.pressure === true;
   const isSteamMode = mode === MODE_STEAM;
-  const processKind = getProcessKindForMode(mode, isGrindAvailable);
-  const availableModes = useMemo(() => getAvailableModeOptions(isGrindAvailable), [isGrindAvailable]);
+  const isManualMode = mode === MODE_MANUAL;
+  const processKind = getProcessKindForMode(mode, isGrindAvailable, isManualAvailable);
+  const availableModes = useMemo(
+    () => getAvailableModeOptions(isGrindAvailable, isManualAvailable),
+    [isGrindAvailable, isManualAvailable]
+  );
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   useEffect(() => {
@@ -684,6 +1004,79 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   }, [active, autoSteamEnabled, api]);
 
   const actions = useProcessActions(api, isGrind, setIsFlushing, lastProcessTypeRef, processKind);
+  const [manualDraft, setManualDraft] = useState(() => manualDraftFromStatus(s));
+  const [isManualEditing, setIsManualEditing] = useState(false);
+  const [manualDraftDirty, setManualDraftDirty] = useState(false);
+  const wasManualModeRef = useRef(false);
+
+  useEffect(() => {
+    if (!isManualMode) {
+      setManualDraftDirty(false);
+    }
+  }, [isManualMode]);
+
+  useEffect(() => {
+    if (isManualEditing || manualDraftDirty) return;
+    setManualDraft(manualDraftFromStatus(s));
+  }, [
+    isManualEditing,
+    manualDraftDirty,
+    s.manualTargetType,
+    s.manualPressure,
+    s.manualFlow,
+    s.manualTemperature,
+    s.targetPressure,
+    s.targetFlow,
+    s.targetTemperature,
+  ]);
+
+  const sendManualPayload = useCallback(
+    (draft, { temperatureOnly = false } = {}) => {
+      const payload = {
+        tp: 'req:manual:update',
+        temperature: Math.round(draft.temperature),
+      };
+      if (!temperatureOnly) {
+        payload.targetType = draft.targetType;
+        payload.pressure = draft.pressure;
+        payload.flow = draft.flow;
+      }
+      api.send(payload);
+    },
+    [api]
+  );
+
+  const sendManualUpdate = useCallback(
+    partial => {
+      setManualDraft(current => {
+        const next = {
+          targetType: normalizeManualTargetType(partial.targetType ?? current.targetType),
+          pressure: clampManualPressure(partial.pressure ?? current.pressure),
+          flow: clampManualFlow(partial.flow ?? current.flow),
+          temperature: clampManualTemperature(partial.temperature ?? current.temperature),
+        };
+        const shouldSend = shouldSendManualUpdate({ active, isManualMode, partial });
+        const temperatureOnly = !active && Object.prototype.hasOwnProperty.call(partial ?? {}, 'temperature');
+        setManualDraftDirty(currentDirty => currentDirty || shouldKeepManualDraftDirty({ active, partial }));
+        if (shouldSend) {
+          try { sendManualPayload(next, { temperatureOnly }); } catch {}
+        }
+        return next;
+      });
+    },
+    [active, isManualMode, sendManualPayload]
+  );
+
+  useEffect(() => {
+    if (!isManualMode || !isManualAvailable) {
+      wasManualModeRef.current = false;
+      return;
+    }
+    if (!wasManualModeRef.current) {
+      try { sendManualPayload(manualDraft, { temperatureOnly: true }); } catch {}
+    }
+    wasManualModeRef.current = true;
+  }, [isManualAvailable, isManualMode, manualDraft, sendManualPayload]);
 
   const { profileData } = useProfileData(api, s.mode === 1, s.selectedProfileId);
 
@@ -803,13 +1196,14 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
 
   // Sensor values with safe fallbacks
   const pressure = s.currentPressure || 0;
-  const targetPressure = s.targetPressure || 9;
   const flowVal = s.currentFlow || 0;
-  const targetFlow = s.targetFlow || 2;
   const tempVal = s.currentTemperature || 0;
-  const targetTemp = s.targetTemperature || 93;
+  const targetPressure = isManualMode ? manualDraft.pressure : s.targetPressure || 9;
+  const targetFlow = isManualMode ? manualDraft.flow : s.targetFlow || 2;
+  const targetTemp = isManualMode ? manualDraft.temperature : s.targetTemperature || 93;
   const currentWeight = s.currentWeight || 0;
   const temperatureRing = getTemperatureRingMetrics({ mode, tempVal, targetTemp });
+  const manualControlLabels = getManualControlLabels(manualDraft.targetType);
 
   // Target yield/time
   const targetWeight = yieldTarget;
@@ -873,14 +1267,8 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
 
   const graphPaths = useMemo(() => buildGraphPaths(graphHistory), [graphHistory]);
 
-  // Boiler pill: green if stable, amber if heating
-  // Heating: only flash in BREW (1), STEAM (2), WATER (3) — not STANDBY or GRIND
-  const isHeating =
-    (mode === 1 || mode === 2 || mode === 3) &&
-    (!active || isSteamMode) &&
-    (!finished || isSteamMode) &&
-    targetTemp > 0 &&
-    tempVal < targetTemp;
+  // Boiler pill: green if stable, amber if heating.
+  const isHeating = getBoilerHeatingState({ mode, active, finished, targetTemp, tempVal });
   // STEAM flashes yellow; BREW and WATER flash red
   const heatingColor = mode === 2 ? 'var(--dm-warn)' : 'var(--dm-accent)';
   const showProcessTimer = (active || finished) && !isSteamMode;
@@ -888,7 +1276,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const steamStatusLabel = targetTemp > 0 && tempVal < targetTemp
     ? `PREHEATING · TGT ${fmt(targetTemp)}°`
     : `STEAM · TGT ${fmt(targetTemp)}°`;
-  const primaryActionState = getPrimaryActionState({ active, finished, mode, isGrindAvailable });
+  const primaryActionState = getPrimaryActionState({ active, finished, mode, isGrindAvailable, isManualAvailable });
   const primaryActionLabel = primaryActionState.label;
   const primaryActionAccent = primaryActionState.accent;
   const primaryAction = () => {
@@ -902,6 +1290,12 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
     } else if (primaryActionState.action === 'clear') {
       actions.clear();
     } else if (primaryActionState.action === 'start-process') {
+      if (isManualMode) {
+        try {
+          sendManualPayload(manualDraft);
+          setManualDraftDirty(false);
+        } catch {}
+      }
       actions.activate();
     }
   };
@@ -1240,6 +1634,23 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
             background: 'var(--dm-bg-0)',
           }}
         >
+          {isManualMode ? (
+            <ManualConsole
+              active={active}
+              finished={finished}
+              draft={manualDraft}
+              pressure={pressure}
+              flow={flowVal}
+              temperature={tempVal}
+              controlLabels={manualControlLabels}
+              primaryAction={primaryAction}
+              primaryActionAccent={primaryActionAccent}
+              primaryActionLabel={primaryActionLabel}
+              onEditingChange={setIsManualEditing}
+              onManualUpdate={sendManualUpdate}
+            />
+          ) : (
+            <>
           {/* Bean + profile — clickable to swap */}
           <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
             <div
@@ -1336,7 +1747,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
             )}
           </div>
 
-          {/* Dose → Yield → Scales */}
+          {/* Bean → Dose → Scales */}
           <div
             style={{
               display: 'grid',
@@ -1348,6 +1759,46 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               borderBottom: '1px solid var(--dm-line)',
             }}
           >
+            <div style={{ position: 'relative', minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 9, letterSpacing: '0.18em', color: 'var(--dm-fg-dim)', marginBottom: 3 }}>
+                BEAN
+              </div>
+              <button
+                type='button'
+                onClick={e => {
+                  e.stopPropagation();
+                  openBeanDropdown();
+                }}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <span
+                  style={{
+                    display: 'block',
+                    fontFamily: 'var(--dm-font-display)',
+                    fontSize: 20,
+                    color: s.selectedBean ? 'var(--dm-fg)' : 'var(--dm-fg-faint)',
+                    fontWeight: 700,
+                    fontVariantNumeric: 'tabular-nums',
+                    lineHeight: 1.05,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    borderBottom: `1px dashed ${activeDropdown === 'bean' ? 'var(--dm-accent)' : 'rgba(232,232,232,0.2)'}`,
+                  }}
+                >
+                  {s.selectedBean || 'No bean selected'}
+                </span>
+              </button>
+            </div>
+            <span style={{ fontFamily: 'var(--dm-font-display)', fontSize: 20, color: 'var(--dm-fg-faint)' }}>›</span>
             <EditableNumBlock
               label='DOSE'
               value={dose}
@@ -1356,17 +1807,6 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               min={1}
               max={50}
               onCommit={setDose}
-            />
-            <span style={{ fontFamily: 'var(--dm-font-display)', fontSize: 20, color: 'var(--dm-fg-faint)' }}>›</span>
-            <EditableNumBlock
-              label='YIELD'
-              value={targetWeight}
-              unit='g'
-              hint={`1 : ${(targetWeight / Math.max(dose, 1)).toFixed(2)}`}
-              step={0.5}
-              min={5}
-              max={120}
-              onCommit={setYield}
             />
             <span style={{ fontFamily: 'var(--dm-font-display)', fontSize: 20, color: 'var(--dm-fg-faint)' }}>›</span>
             <div>
@@ -1490,29 +1930,13 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
             <button
               type='button'
               onClick={primaryAction}
-              style={{
-                background: active
-                  ? primaryActionAccent
-                  : finished
-                    ? 'var(--dm-good)'
-                    : `color-mix(in srgb, ${primaryActionAccent} 14%, transparent)`,
-                color: active || finished ? '#fff' : primaryActionAccent,
-                border:
-                  active || finished ? 'none' : `1px solid color-mix(in srgb, ${primaryActionAccent} 40%, transparent)`,
-                fontFamily: 'var(--dm-font-display)',
-                fontSize: 13,
-                letterSpacing: '0.18em',
-                padding: '10px 8px',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontWeight: 700,
-                boxShadow: active ? `0 6px 18px color-mix(in srgb, ${primaryActionAccent} 22%, transparent)` : 'none',
-                transition: 'background 0.15s, box-shadow 0.15s',
-              }}
+              style={getPrimaryActionButtonStyle({ active, finished, accent: primaryActionAccent })}
             >
               {primaryActionLabel}
             </button>
           </div>
+            </>
+          )}
         </div>
       </div>
 

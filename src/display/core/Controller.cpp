@@ -8,6 +8,7 @@
 #include <display/core/constants.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
+#include <display/core/process/ManualProcess.h>
 #include <display/core/process/PumpProcess.h>
 #include <display/core/process/SteamProcess.h>
 #include <display/core/static_profiles.h>
@@ -447,6 +448,8 @@ float Controller::getTargetTemp() const {
             return settings.getTargetSteamTemp();
         case MODE_WATER:
             return settings.getTargetWaterTemp();
+        case MODE_MANUAL:
+            return settings.getManualTemperature();
         default:
             return 0;
         }
@@ -470,6 +473,9 @@ float Controller::getTargetTemp() const {
     case MODE_WATER:
         result = settings.getTargetWaterTemp();
         break;
+    case MODE_MANUAL:
+        result = settings.getManualTemperature();
+        break;
     default:
         result = 0;
         break;
@@ -490,6 +496,9 @@ void Controller::setTargetTemp(float temperature) {
         break;
     case MODE_WATER:
         settings.setTargetWaterTemp(static_cast<int>(temperature));
+        break;
+    case MODE_MANUAL:
+        settings.setManualTemperature(static_cast<int>(temperature));
         break;
     default:;
     }
@@ -519,6 +528,28 @@ void Controller::setTargetGrindDuration(int duration) {
 void Controller::setTargetGrindVolume(double volume) {
     Event event = pluginManager->trigger("controller:grindVolume:change", "value", static_cast<float>(volume));
     settings.setTargetGrindVolume(event.getFloat("value"));
+    updateLastAction();
+}
+
+void Controller::updateManualTargets(int targetType, float pressure, float flow, int temperature) {
+    settings.setManualTargetType(targetType);
+    settings.setManualPressure(pressure);
+    settings.setManualFlow(flow);
+    settings.setManualTemperature(temperature);
+    setTargetTemp(settings.getManualTemperature());
+
+    if (xSemaphoreTake(processMutex, pdMS_TO_TICKS(UI_MUTEX_TIMEOUT_MS)) != pdTRUE) {
+        ESP_LOGW(LOG_TAG, "Mutex timeout in updateManualTargets");
+        return;
+    }
+
+    if (currentProcess != nullptr && currentProcess->getType() == MODE_MANUAL) {
+        auto *manual = static_cast<ManualProcess *>(currentProcess);
+        manual->updateTargets(settings.getManualTargetType(), settings.getManualPressure(), settings.getManualFlow(),
+                              settings.getManualTemperature());
+    }
+
+    xSemaphoreGive(processMutex);
     updateLastAction();
 }
 
@@ -603,6 +634,9 @@ void Controller::updateControl() {
     bool brewPumpTargetIsPressure = false;
     float brewPumpPressure = 0.0f;
     float brewPumpFlow = 0.0f;
+    bool manualTargetIsPressure = true;
+    float manualPumpPressure = 0.0f;
+    float manualPumpFlow = 0.0f;
     float targetTemp = 0.0f;
     
     if (active) {
@@ -620,6 +654,12 @@ void Controller::updateControl() {
                 brewPumpFlow = brewProcess->getPumpFlow();
             }
             targetTemp = brewProcess->getTemperature();
+        } else if (procType == MODE_MANUAL) {
+            auto *manualProcess = static_cast<ManualProcess *>(proc);
+            manualTargetIsPressure = manualProcess->isPressureTarget();
+            manualPumpPressure = manualProcess->getPumpPressure();
+            manualPumpFlow = manualProcess->getPumpFlow();
+            targetTemp = manualProcess->getTemperature();
         }
     }
     
@@ -635,6 +675,9 @@ void Controller::updateControl() {
             break;
         case MODE_WATER:
             targetTemp = settings.getTargetWaterTemp();
+            break;
+        case MODE_MANUAL:
+            targetTemp = settings.getManualTemperature();
             break;
         default:
             targetTemp = 0;
@@ -674,6 +717,13 @@ void Controller::updateControl() {
                 return;
             }
         }
+        if (procType == MODE_MANUAL) {
+            targetPressure = manualPumpPressure;
+            targetFlow = manualPumpFlow;
+            clientController.sendAdvancedOutputControl(relayActive, targetTemp, manualTargetIsPressure, manualPumpPressure,
+                                                       manualPumpFlow);
+            return;
+        }
     }
     targetPressure = 0.0f;
     targetFlow = 0.0f;
@@ -710,6 +760,12 @@ void Controller::activate() {
         break;
     case MODE_WATER:
         startProcess(new PumpProcess());
+        break;
+    case MODE_MANUAL:
+        if (!isManualAvailable())
+            return;
+        startProcess(new ManualProcess(settings.getManualTargetType(), settings.getManualPressure(), settings.getManualFlow(),
+                                       settings.getManualTemperature()));
         break;
     default:;
     }
@@ -748,7 +804,7 @@ void Controller::deactivate() {
     } else if (endedProcessType == MODE_GRIND) {
         pluginManager->trigger("controller:grind:end");
     }
-    pluginManager->trigger("controller:process:end");
+    pluginManager->trigger("controller:process:end", "processType", endedProcessType);
     updateLastAction();
 }
 
@@ -837,6 +893,8 @@ bool Controller::isActiveSafe() const {
 bool Controller::isGrindAvailable() const {
     return settings.isSmartGrindActive() || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
 }
+
+bool Controller::isManualAvailable() const { return systemInfo.capabilities.pressure; }
 
 bool Controller::isGrindActive() const {
     // Use consistent timeout to prevent deadlocks in UI/event loops
@@ -940,6 +998,10 @@ ProcessSnapshot Controller::getProcessSnapshot() const {
             auto *brew = static_cast<BrewProcess *>(proc);
             snapshot.started = brew->processStarted;
             snapshot.finished = brew->finished;
+        } else if (proc->getType() == MODE_MANUAL) {
+            auto *manual = static_cast<ManualProcess *>(proc);
+            snapshot.started = manual->started;
+            snapshot.finished = manual->finished;
         } else {
             snapshot.started = 0;
             snapshot.finished = 0;
@@ -976,6 +1038,15 @@ ProcessSnapshot Controller::getProcessSnapshot() const {
             snapshot.grindVolume = grind->grindVolume;
             snapshot.grindTime = grind->time;
             snapshot.currentVolume = grind->currentVolume;
+        } else if (proc->getType() == MODE_MANUAL) {
+            auto *manual = static_cast<ManualProcess *>(proc);
+            snapshot.isManual = true;
+            snapshot.started = manual->started;
+            snapshot.finished = manual->finished;
+            snapshot.manualTargetType = manual->targetType;
+            snapshot.manualPressure = manual->pressure;
+            snapshot.manualFlow = manual->flow;
+            snapshot.manualTemperature = manual->temperature;
         }
     }
     
@@ -987,6 +1058,8 @@ int Controller::getMode() const { return mode; }
 
 void Controller::setMode(int newMode) {
     if (newMode == MODE_GRIND && !isGrindAvailable())
+        return;
+    if (newMode == MODE_MANUAL && !isManualAvailable())
         return;
     Event modeEvent = pluginManager->trigger("controller:mode:change", "value", newMode);
     mode = modeEvent.getInt("value");

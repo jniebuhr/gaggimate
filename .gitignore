@@ -14,6 +14,7 @@ src/display/ui/default/lvgl/project.info
 bean-whisperer/
 .worktrees/
 .playwright-mcp
+.superpowers/
 playwright/
 output/
 .claude/settings.local.json

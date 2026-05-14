@@ -1,11 +1,12 @@
 // Shared constants for Home page components
-export const MODE_LABELS = ['STANDBY', 'BREW', 'STEAM', 'WATER', 'GRIND'];
+export const MODE_LABELS = ['STANDBY', 'BREW', 'STEAM', 'WATER', 'GRIND', 'MANUAL'];
 export const MODE_SUBTITLES = {
   0: 'System idle',
   1: 'Ready to extract',
   2: 'Steam staging',
   3: 'Water ready',
   4: 'Grind staging',
+  5: 'Manual control',
 };
 
 // Format number with optional decimal places

@@ -71,7 +71,7 @@ class ShotHistoryPlugin : public Plugin {
 
     unsigned long getTime();
 
-    void endRecording();
+    void endRecording(bool allowExtendedRecording = true);
     void endExtendedRecording();
     void cleanupHistory();
     size_t getFreeSpace();
