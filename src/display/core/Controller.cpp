@@ -550,6 +550,7 @@ void Controller::updateManualTargets(int targetType, float pressure, float flow,
     }
 
     xSemaphoreGive(processMutex);
+    updateControl();
     updateLastAction();
 }
 
@@ -1067,6 +1068,9 @@ void Controller::setMode(int newMode) {
 
     updateLastAction();
     setTargetTemp(getTargetTemp());
+    if (mode == MODE_MANUAL) {
+        updateControl();
+    }
 }
 
 void Controller::onTempRead(float temperature) {
