@@ -105,7 +105,15 @@ Settings::Settings() {
     sunriseExtBrightness = preferences.getInt("sr_exb", 255);
     emptyTankDistance = preferences.getInt("sr_ed", 200);
     fullTankDistance = preferences.getInt("sr_fd", 50);
-    altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_NONE);
+    altRelayConfigured = preferences.getBool("alt_set", false);
+    const bool hasAltRelaySetting = preferences.isKey("alt_relay");
+    const int storedAltRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_NONE);
+    if (altRelayConfigured || (hasAltRelaySetting && storedAltRelayFunction != ALT_RELAY_GRIND)) {
+        altRelayFunction = storedAltRelayFunction;
+        altRelayConfigured = true;
+    } else {
+        altRelayFunction = ALT_RELAY_NONE;
+    }
     cloudRelayUrl = preferences.getString("cr_url", "");
     cloudRelayToken = preferences.getString("cr_token", "");
     cloudRelayEnabled = preferences.getBool("cr_enabled", false);
@@ -439,7 +447,10 @@ void Settings::setFullTankDistance(int full_tank_distance) {
     save();
 }
 
-void Settings::setAltRelayFunction(int alt_relay_function) { altRelayFunction = alt_relay_function; }
+void Settings::setAltRelayFunction(int alt_relay_function) {
+    altRelayFunction = alt_relay_function;
+    altRelayConfigured = true;
+}
 
 void Settings::setAutoWakeupEnabled(bool enabled) {
     autowakeupEnabled = enabled;
@@ -534,6 +545,7 @@ void Settings::doSave() {
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);
     preferences.putInt("alt_relay", altRelayFunction);
+    preferences.putBool("alt_set", altRelayConfigured);
     preferences.putString("cr_url", cloudRelayUrl);
     preferences.putString("cr_token", cloudRelayToken);
     preferences.putBool("cr_enabled", cloudRelayEnabled);

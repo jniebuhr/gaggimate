@@ -513,9 +513,12 @@ void WebUIPlugin::processWebSocketMessage(uint32_t clientId, const String &msg) 
         controller->lowerGrindTarget();
     } else if (msgType == "req:change-mode") {
         if (doc["mode"].is<uint8_t>()) {
+            uint8_t newMode = doc["mode"].as<uint8_t>();
+            if (newMode == MODE_GRIND && !controller->isGrindAvailable())
+                return;
             controller->deactivate();
             controller->clear();
-            controller->setMode(doc["mode"].as<uint8_t>());
+            controller->setMode(newMode);
         }
     } else if (msgType == "req:change-brew-target") {
         if (doc["target"].is<uint8_t>()) {

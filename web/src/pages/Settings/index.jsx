@@ -1,4 +1,4 @@
-import { faFileExport, faFileImport, faWarning, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faFileExport, faFileImport, faCheck, faEye, faEyeSlash, faArrowLeft, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
@@ -10,8 +10,8 @@ import { machine, ApiServiceContext } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
 import { downloadJson, prepareDownload } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
+import { setGrindSettings } from '../../hooks/useGrindSettings.js';
 import { PluginCard } from './PluginCard.jsx';
-import { faEye, faEyeSlash, faArrowLeft, faSave } from '@fortawesome/free-solid-svg-icons';
 import { GoogleDriveBackupCard } from './GoogleDriveBackupCard.jsx';
 import { buildRemoteAccessLink, DEFAULT_REMOTE_PAGES_ORIGIN } from './remoteAccessLogic.js';
 
@@ -221,6 +221,7 @@ export function Settings() {
           standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
         };
 
+        setGrindSettings(updatedData);
         setFormData(updatedData);
       } catch (error) {
         console.error('Failed to save settings:', error);
@@ -486,7 +487,7 @@ export function Settings() {
                     value={formData.flushDuration}
                     onChange={onChange('flushDuration')}
                     onBlur={e => {
-                      const val = parseInt(e.target.value) || 5;
+                      const val = parseInt(e.target.value, 10) || 5;
                       const clamped = Math.min(60, Math.max(1, val));
                       setFormData(prev => ({ ...prev, flushDuration: clamped }));
                     }}

@@ -8,6 +8,7 @@ import { useProcessActions } from '../../hooks/useProcessActions.js';
 import { useProfileData } from '../../hooks/useProfileData.js';
 import { useAutoSteam } from '../../hooks/useAutoSteam.js';
 import { useShotDoseRecorder } from '../../hooks/useShotDoseRecorder.js';
+import { useGrindSettings } from '../../hooks/useGrindSettings.js';
 import { listBeans, recordBeanSelection, parseQuantity } from '../../utils/beanManager.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
@@ -15,6 +16,7 @@ import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 import PropTypes from 'prop-types';
 import {
   MODE_STEAM,
+  getAvailableModeOptions,
   getProcessKindForMode,
   getPrimaryActionState,
   getTemperatureRingMetrics,
@@ -24,7 +26,6 @@ const DOSE_KEY = 'gaggimate-dose-grams';
 const YIELD_KEY = 'gaggimate-target-weight';
 const DEFAULT_DOSE = 18.0;
 const DEFAULT_YIELD = 36.0;
-const MODE_NAMES = ['STANDBY', 'BREW', 'STEAM', 'WATER', 'GRIND'];
 
 const PRESSURE_MAX = 12;
 const FLOW_MAX = 6;
@@ -77,14 +78,14 @@ function fmtTimer(totalSecs) {
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
-function ModeRail({ active, onSelect }) {
+function ModeRail({ active, modes, onSelect }) {
   return (
     <div style={{ display: 'flex', gap: 5 }}>
-      {MODE_NAMES.map((name, idx) => (
+      {modes.map(({ id, name }) => (
         <button
           key={name}
           type='button'
-          onClick={() => onSelect(idx)}
+          onClick={() => onSelect(id)}
           style={{
             padding: '5px 9px',
             borderRadius: 6,
@@ -93,9 +94,9 @@ function ModeRail({ active, onSelect }) {
             fontSize: 9,
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
-            border: `1px solid ${idx === active ? 'color-mix(in srgb, var(--dm-accent) 60%, transparent)' : 'var(--dm-line)'}`,
-            background: idx === active ? 'color-mix(in srgb, var(--dm-accent) 12%, transparent)' : 'transparent',
-            color: idx === active ? 'var(--dm-accent)' : 'var(--dm-fg-dim)',
+            border: `1px solid ${id === active ? 'color-mix(in srgb, var(--dm-accent) 60%, transparent)' : 'var(--dm-line)'}`,
+            background: id === active ? 'color-mix(in srgb, var(--dm-accent) 12%, transparent)' : 'transparent',
+            color: id === active ? 'var(--dm-accent)' : 'var(--dm-fg-dim)',
           }}
         >
           {name}
@@ -105,7 +106,7 @@ function ModeRail({ active, onSelect }) {
   );
 }
 
-ModeRail.propTypes = { active: PropTypes.number, onSelect: PropTypes.func };
+ModeRail.propTypes = { active: PropTypes.number, modes: PropTypes.arrayOf(PropTypes.object), onSelect: PropTypes.func };
 
 function StatusPill({ ledClass, label, value }) {
   return (
@@ -650,8 +651,10 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const isGrind = s.mode === 4;
   const brew = s.mode === 1;
   const mode = s.mode ?? 0;
+  const { isGrindAvailable } = useGrindSettings();
   const isSteamMode = mode === MODE_STEAM;
-  const processKind = getProcessKindForMode(mode);
+  const processKind = getProcessKindForMode(mode, isGrindAvailable);
+  const availableModes = useMemo(() => getAvailableModeOptions(isGrindAvailable), [isGrindAvailable]);
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   useEffect(() => {
@@ -885,7 +888,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const steamStatusLabel = targetTemp > 0 && tempVal < targetTemp
     ? `PREHEATING · TGT ${fmt(targetTemp)}°`
     : `STEAM · TGT ${fmt(targetTemp)}°`;
-  const primaryActionState = getPrimaryActionState({ active, finished, mode });
+  const primaryActionState = getPrimaryActionState({ active, finished, mode, isGrindAvailable });
   const primaryActionLabel = primaryActionState.label;
   const primaryActionAccent = primaryActionState.accent;
   const primaryAction = () => {
@@ -898,7 +901,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
       actions.deactivate();
     } else if (primaryActionState.action === 'clear') {
       actions.clear();
-    } else {
+    } else if (primaryActionState.action === 'start-process') {
       actions.activate();
     }
   };
@@ -993,7 +996,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           background: 'var(--dm-bg-1)',
         }}
       >
-        <ModeRail active={mode} onSelect={onModeSelect} />
+        <ModeRail active={mode} modes={availableModes} onSelect={onModeSelect} />
         <div
           style={{
             display: 'flex',

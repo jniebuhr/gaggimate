@@ -986,6 +986,8 @@ ProcessSnapshot Controller::getProcessSnapshot() const {
 int Controller::getMode() const { return mode; }
 
 void Controller::setMode(int newMode) {
+    if (newMode == MODE_GRIND && !isGrindAvailable())
+        return;
     Event modeEvent = pluginManager->trigger("controller:mode:change", "value", newMode);
     mode = modeEvent.getInt("value");
     steamReady = false;
