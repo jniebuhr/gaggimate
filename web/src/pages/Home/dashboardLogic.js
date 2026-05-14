@@ -77,6 +77,23 @@ export function getTemperatureRingMetrics({ mode, tempVal, targetTemp }) {
   };
 }
 
+export function getBoilerHeatingState({ mode, active, finished, targetTemp, tempVal }) {
+  const isSteamMode = mode === MODE_STEAM;
+  return (
+    (mode === MODE_BREW || mode === MODE_STEAM || mode === MODE_WATER || mode === MODE_MANUAL) &&
+    (!active || isSteamMode) &&
+    (!finished || isSteamMode) &&
+    targetTemp > 0 &&
+    tempVal < targetTemp
+  );
+}
+
+export function shouldSendManualUpdate({ active, isManualMode, partial }) {
+  if (!isManualMode) return false;
+  if (active) return true;
+  return Object.prototype.hasOwnProperty.call(partial ?? {}, 'temperature');
+}
+
 export function getAvailableModeOptions(isGrindAvailable = true, isManualAvailable = true) {
   return MODE_OPTIONS.filter(option => {
     if (option.id === MODE_GRIND) return isGrindAvailable;

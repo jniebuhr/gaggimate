@@ -9,10 +9,12 @@ import {
   clampManualPressure,
   clampManualTemperature,
   getAvailableModeOptions,
+  getBoilerHeatingState,
   getManualControlLabels,
   getPrimaryActionState,
   getProcessKindForMode,
   getTemperatureRingMetrics,
+  shouldSendManualUpdate,
 } from './dashboardLogic.js';
 
 test('steam temperature ring scales progress against the steam target', () => {
@@ -145,6 +147,41 @@ test('manual target values are clamped to first-version bounds', () => {
   assert.equal(clampManualPressure(15), 12);
   assert.equal(clampManualFlow(-1), 0);
   assert.equal(clampManualFlow(7), 6);
+});
+
+test('manual temperature updates send before start while pump controls stay staged', () => {
+  assert.equal(shouldSendManualUpdate({
+    active: false,
+    isManualMode: true,
+    partial: { temperature: 94 },
+  }), true);
+  assert.equal(shouldSendManualUpdate({
+    active: false,
+    isManualMode: true,
+    partial: { pressure: 8 },
+  }), false);
+  assert.equal(shouldSendManualUpdate({
+    active: true,
+    isManualMode: true,
+    partial: { pressure: 8 },
+  }), true);
+});
+
+test('manual mode heats like brew before the process starts', () => {
+  assert.equal(getBoilerHeatingState({
+    mode: MODE_MANUAL,
+    active: false,
+    finished: false,
+    targetTemp: 94,
+    tempVal: 88,
+  }), true);
+  assert.equal(getBoilerHeatingState({
+    mode: MODE_MANUAL,
+    active: true,
+    finished: false,
+    targetTemp: 94,
+    tempVal: 88,
+  }), false);
 });
 
 test('primary action for unavailable grind mode does not start a process', () => {

@@ -29,10 +29,12 @@ import {
   clampManualPressure,
   clampManualTemperature,
   getAvailableModeOptions,
+  getBoilerHeatingState,
   getManualControlLabels,
   getProcessKindForMode,
   getPrimaryActionState,
   getTemperatureRingMetrics,
+  shouldSendManualUpdate,
 } from './dashboardLogic.js';
 
 const DOSE_KEY = 'gaggimate-dose-grams';
@@ -354,7 +356,7 @@ function ManualConsole({
   onEditingChange,
   onManualUpdate,
 }) {
-  const liveStatus = active ? 'LIVE CONTROL' : 'STAGED UNTIL START';
+  const liveStatus = active ? 'LIVE CONTROL' : 'TEMP LIVE · PUMP STAGED';
 
   return (
     <>
@@ -508,7 +510,7 @@ function ManualConsole({
             {liveStatus}
           </span>
           <span style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 10, color: 'var(--dm-fg-dim)' }}>
-            {active ? 'SLIDERS SEND LIVE UPDATES' : 'SLIDERS UPDATE THE NEXT MANUAL START'}
+            {active ? 'SLIDERS SEND LIVE UPDATES' : 'PRESSURE/FLOW APPLY ON START'}
           </span>
         </div>
         <button
@@ -1027,21 +1029,23 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   ]);
 
   const sendManualPayload = useCallback(
-    draft => {
-      api.send({
+    (draft, { temperatureOnly = false } = {}) => {
+      const payload = {
         tp: 'req:manual:update',
-        targetType: draft.targetType,
-        pressure: draft.pressure,
-        flow: draft.flow,
         temperature: Math.round(draft.temperature),
-      });
+      };
+      if (!temperatureOnly) {
+        payload.targetType = draft.targetType;
+        payload.pressure = draft.pressure;
+        payload.flow = draft.flow;
+      }
+      api.send(payload);
     },
     [api]
   );
 
   const sendManualUpdate = useCallback(
     partial => {
-      setManualDraftDirty(!active);
       setManualDraft(current => {
         const next = {
           targetType: normalizeManualTargetType(partial.targetType ?? current.targetType),
@@ -1049,8 +1053,11 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           flow: clampManualFlow(partial.flow ?? current.flow),
           temperature: clampManualTemperature(partial.temperature ?? current.temperature),
         };
-        if (isManualMode && active) {
-          try { sendManualPayload(next); } catch {}
+        const shouldSend = shouldSendManualUpdate({ active, isManualMode, partial });
+        const temperatureOnly = !active && Object.prototype.hasOwnProperty.call(partial ?? {}, 'temperature');
+        setManualDraftDirty(currentDirty => currentDirty || (!active && !shouldSend));
+        if (shouldSend) {
+          try { sendManualPayload(next, { temperatureOnly }); } catch {}
         }
         return next;
       });
@@ -1247,14 +1254,8 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
 
   const graphPaths = useMemo(() => buildGraphPaths(graphHistory), [graphHistory]);
 
-  // Boiler pill: green if stable, amber if heating
-  // Heating: only flash in BREW (1), STEAM (2), WATER (3) — not STANDBY or GRIND
-  const isHeating =
-    (mode === 1 || mode === 2 || mode === 3) &&
-    (!active || isSteamMode) &&
-    (!finished || isSteamMode) &&
-    targetTemp > 0 &&
-    tempVal < targetTemp;
+  // Boiler pill: green if stable, amber if heating.
+  const isHeating = getBoilerHeatingState({ mode, active, finished, targetTemp, tempVal });
   // STEAM flashes yellow; BREW and WATER flash red
   const heatingColor = mode === 2 ? 'var(--dm-warn)' : 'var(--dm-accent)';
   const showProcessTimer = (active || finished) && !isSteamMode;
