@@ -344,7 +344,7 @@ void WebUIPlugin::start() {
         dnsServer->start(53, "*", WIFI_AP_IP);
         ESP_LOGI("WebUIPlugin", "Started catchall DNS for captive portal");
     }
-    lastUpdateCheck = millis();
+    lastUpdateCheck = 0;
     serverRunning = true;
     startRelay();
 }
@@ -603,11 +603,11 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
 }
 
 void WebUIPlugin::handleOTASettings(uint32_t clientId, JsonDocument &request) {
+    lastUpdateCheck = 0;
     if (request["update"].as<bool>()) {
         if (!request["channel"].isNull()) {
             controller->getSettings().setOTAChannel(request["channel"].as<String>() == "latest" ? "latest" : "nightly");
             ota->setReleaseUrl(RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"));
-            lastUpdateCheck = 0;
         }
     }
     updateOTAStatus("Checking...");
