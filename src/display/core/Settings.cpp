@@ -49,6 +49,15 @@ Settings::Settings() {
     steamPumpCutoff = preferences.getFloat("spc", DEFAULT_STEAM_PUMP_CUTOFF);
     historyIndex = preferences.getInt("hi", 0);
     flushDuration = preferences.getInt("fd", 5000);
+    manualTargetType = preferences.getInt("mtt", DEFAULT_MANUAL_TARGET_TYPE);
+    manualPressure = preferences.getFloat("mp", DEFAULT_MANUAL_PRESSURE);
+    manualFlow = preferences.getFloat("mf", DEFAULT_MANUAL_FLOW);
+    manualTemperature = preferences.getInt("mt", DEFAULT_MANUAL_TEMPERATURE);
+    setManualTargetType(manualTargetType);
+    setManualPressure(manualPressure);
+    setManualFlow(manualFlow);
+    setManualTemperature(manualTemperature);
+    dirty = false;
     autowakeupEnabled = preferences.getBool("ab_en", false);
 
     // Load schedule format: "time1|days1;time2|days2" where days is 7-bit string (e.g., "1111100" for weekdays only)
@@ -412,6 +421,26 @@ void Settings::setCloudRelayEnabled(bool enabled) {
     save();
 }
 
+void Settings::setManualTargetType(int target_type) {
+    manualTargetType = target_type == MANUAL_TARGET_FLOW ? MANUAL_TARGET_FLOW : MANUAL_TARGET_PRESSURE;
+    save();
+}
+
+void Settings::setManualPressure(float pressure) {
+    manualPressure = std::clamp(pressure, MIN_MANUAL_PRESSURE, MAX_MANUAL_PRESSURE);
+    save();
+}
+
+void Settings::setManualFlow(float flow) {
+    manualFlow = std::clamp(flow, MIN_MANUAL_FLOW, MAX_MANUAL_FLOW);
+    save();
+}
+
+void Settings::setManualTemperature(int temperature) {
+    manualTemperature = std::clamp(temperature, MIN_MANUAL_TEMPERATURE, MAX_MANUAL_TEMPERATURE);
+    save();
+}
+
 void Settings::setSunriseR(int sunrise_r) {
     sunriseR = sunrise_r;
     save();
@@ -513,6 +542,10 @@ void Settings::doSave() {
     preferences.putFloat("spc", steamPumpCutoff);
     preferences.putInt("hi", historyIndex);
     preferences.putInt("fd", flushDuration);
+    preferences.putInt("mtt", manualTargetType);
+    preferences.putFloat("mp", manualPressure);
+    preferences.putFloat("mf", manualFlow);
+    preferences.putInt("mt", manualTemperature);
     preferences.putBool("ab_en", autowakeupEnabled);
 
     // Save schedule format

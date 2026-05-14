@@ -115,10 +115,18 @@ class Settings {
     String getCloudRelayUrl() const { return cloudRelayUrl; }
     String getCloudRelayToken() const { return cloudRelayToken; }
     bool isCloudRelayEnabled() const { return cloudRelayEnabled; }
+    int getManualTargetType() const { return manualTargetType; }
+    float getManualPressure() const { return manualPressure; }
+    float getManualFlow() const { return manualFlow; }
+    int getManualTemperature() const { return manualTemperature; }
     void setFlushDuration(int flush_duration);
     void setCloudRelayUrl(const String &url);
     void setCloudRelayToken(const String &token);
     void setCloudRelayEnabled(bool enabled);
+    void setManualTargetType(int target_type);
+    void setManualPressure(float pressure);
+    void setManualFlow(float flow);
+    void setManualTemperature(int temperature);
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
@@ -229,6 +237,10 @@ class Settings {
     float steamPumpCutoff = DEFAULT_STEAM_PUMP_CUTOFF;
     int historyIndex = 0;
     int flushDuration = 5000;
+    int manualTargetType = DEFAULT_MANUAL_TARGET_TYPE;
+    float manualPressure = DEFAULT_MANUAL_PRESSURE;
+    float manualFlow = DEFAULT_MANUAL_FLOW;
+    int manualTemperature = DEFAULT_MANUAL_TEMPERATURE;
 
     // Display settings
     int mainBrightness = 16;

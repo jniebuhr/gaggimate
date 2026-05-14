@@ -147,6 +147,16 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("controller:brew:start", [this](Event const &) { startRecording(); });
     pm->on("controller:brew:end", [this](Event const &) { endRecording(); });
     pm->on("controller:brew:clear", [this](Event const &) { endExtendedRecording(); });
+    pm->on("controller:process:start", [this](Event const &) {
+        if (controller != nullptr && controller->getProcessType() == MODE_MANUAL) {
+            startRecording();
+        }
+    });
+    pm->on("controller:process:end", [this](Event const &) {
+        if (controller != nullptr && controller->getMode() == MODE_MANUAL) {
+            endRecording();
+        }
+    });
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) {
                if (xSemaphoreTake(stateMutex, pdMS_TO_TICKS(STATE_MUTEX_TIMEOUT_MS)) == pdTRUE) {
@@ -232,6 +242,14 @@ void ShotHistoryPlugin::initializeHeader() {
 
     if (!controller) {
         ESP_LOGE("ShotHistoryPlugin", "Controller is null in initializeHeader");
+        return;
+    }
+
+    if (controller->getMode() == MODE_MANUAL || controller->getProcessType() == MODE_MANUAL) {
+        strncpy(header.profileId, "manual", sizeof(header.profileId) - 1);
+        header.profileId[sizeof(header.profileId) - 1] = '\0';
+        strncpy(header.profileName, "Manual", sizeof(header.profileName) - 1);
+        header.profileName[sizeof(header.profileName) - 1] = '\0';
         return;
     }
 
@@ -427,7 +445,7 @@ void ShotHistoryPlugin::record() {
     }
 
     // Only record during brew mode or extended recording
-    if (!controller || (controller->getMode() != MODE_BREW && !extendedRecording)) {
+    if (!controller || ((controller->getMode() != MODE_BREW && controller->getMode() != MODE_MANUAL) && !extendedRecording)) {
         xSemaphoreGive(stateMutex);
         return;
     }
@@ -532,7 +550,8 @@ void ShotHistoryPlugin::startRecording() {
     lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
-    currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
+    currentProfileName = controller->getProcessType() == MODE_MANUAL ? "Manual"
+                                                                     : controller->getProfileManager()->getSelectedProfile().label;
     currentBeanName = controller->getSettings().getSelectedBean();
     recording = true;
     extendedRecording = false;
@@ -1356,8 +1375,6 @@ bool ShotHistoryPlugin::writeEntryAtPosition(File &indexFile, size_t position, c
 }
 
 bool ShotHistoryPlugin::createEarlyIndexEntry() {
-    Profile profile = controller->getProfileManager()->getSelectedProfile();
-
     ShotIndexEntry indexEntry{};
     indexEntry.id = currentId.toInt();
     indexEntry.timestamp = header.startEpoch;
@@ -1365,10 +1382,18 @@ bool ShotHistoryPlugin::createEarlyIndexEntry() {
     indexEntry.volume = 0;   // Will be overwritten on completion
     indexEntry.rating = 0;
     indexEntry.flags = 0; // No SHOT_FLAG_COMPLETED - indicates in-progress shot
-    strncpy(indexEntry.profileId, profile.id.c_str(), sizeof(indexEntry.profileId) - 1);
-    indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
-    strncpy(indexEntry.profileName, profile.label.c_str(), sizeof(indexEntry.profileName) - 1);
-    indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
+    if (controller->getMode() == MODE_MANUAL || controller->getProcessType() == MODE_MANUAL) {
+        strncpy(indexEntry.profileId, "manual", sizeof(indexEntry.profileId) - 1);
+        indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
+        strncpy(indexEntry.profileName, "Manual", sizeof(indexEntry.profileName) - 1);
+        indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
+    } else {
+        Profile profile = controller->getProfileManager()->getSelectedProfile();
+        strncpy(indexEntry.profileId, profile.id.c_str(), sizeof(indexEntry.profileId) - 1);
+        indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
+        strncpy(indexEntry.profileName, profile.label.c_str(), sizeof(indexEntry.profileName) - 1);
+        indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
+    }
 
     bool success = appendToIndex(indexEntry);
     if (success) {
