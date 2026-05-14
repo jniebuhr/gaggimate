@@ -152,8 +152,8 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
             startRecording();
         }
     });
-    pm->on("controller:process:end", [this](Event const &) {
-        if (controller != nullptr && controller->getMode() == MODE_MANUAL) {
+    pm->on("controller:process:end", [this](Event const &event) {
+        if (event.getInt("processType") == MODE_MANUAL) {
             endRecording();
         }
     });

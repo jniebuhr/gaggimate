@@ -804,7 +804,7 @@ void Controller::deactivate() {
     } else if (endedProcessType == MODE_GRIND) {
         pluginManager->trigger("controller:grind:end");
     }
-    pluginManager->trigger("controller:process:end");
+    pluginManager->trigger("controller:process:end", "processType", endedProcessType);
     updateLastAction();
 }
 

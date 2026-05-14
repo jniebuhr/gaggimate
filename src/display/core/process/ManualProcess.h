@@ -20,16 +20,16 @@ class ManualProcess : public Process {
         started = millis();
     }
 
-    bool isRelayActive() override { return isActive(); }
+    bool isRelayActive() override { return active(); }
     bool isAltRelayActive() override { return false; }
-    float getPumpValue() override { return isActive() ? 100.0f : 0.0f; }
+    float getPumpValue() override { return active() ? 100.0f : 0.0f; }
     void progress() override {
         if (processPhase == ProcessPhase::RUNNING && millis() - started > BREW_SAFETY_DURATION_MS) {
             processPhase = ProcessPhase::FINISHED;
             finished = millis();
         }
     }
-    bool isActive() override { return processPhase == ProcessPhase::RUNNING; }
+    bool isActive() override { return active(); }
     bool isComplete() override { return processPhase == ProcessPhase::FINISHED; }
     int getType() override { return MODE_MANUAL; }
     void updateVolume(double volume) override {}
@@ -38,8 +38,8 @@ class ManualProcess : public Process {
     PumpTarget getPumpTarget() const {
         return isPressureTarget() ? PumpTarget::PUMP_TARGET_PRESSURE : PumpTarget::PUMP_TARGET_FLOW;
     }
-    float getPumpPressure() const { return isActive() ? pressure : 0.0f; }
-    float getPumpFlow() const { return isActive() ? flow : 0.0f; }
+    float getPumpPressure() const { return active() ? pressure : 0.0f; }
+    float getPumpFlow() const { return active() ? flow : 0.0f; }
     int getTemperature() const { return temperature; }
 
     void updateTargets(int nextTargetType, float nextPressure, float nextFlow, int nextTemperature) {
@@ -48,6 +48,9 @@ class ManualProcess : public Process {
         flow = nextFlow;
         temperature = nextTemperature;
     }
+
+  private:
+    bool active() const { return processPhase == ProcessPhase::RUNNING; }
 };
 
 #endif // MANUALPROCESS_H
