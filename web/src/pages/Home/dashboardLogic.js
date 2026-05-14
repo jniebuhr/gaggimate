@@ -3,14 +3,24 @@ export const MODE_BREW = 1;
 export const MODE_STEAM = 2;
 export const MODE_WATER = 3;
 export const MODE_GRIND = 4;
+export const MODE_MANUAL = 5;
 export const TEMP_MIN = 0;
 export const TEMP_MAX = 105;
+export const MANUAL_TARGET_PRESSURE = 'pressure';
+export const MANUAL_TARGET_FLOW = 'flow';
+export const MANUAL_TEMP_MIN = 80;
+export const MANUAL_TEMP_MAX = 105;
+export const MANUAL_PRESSURE_MIN = 0;
+export const MANUAL_PRESSURE_MAX = 12;
+export const MANUAL_FLOW_MIN = 0;
+export const MANUAL_FLOW_MAX = 6;
 
 export const MODE_OPTIONS = [
   { id: MODE_STANDBY, name: 'STANDBY' },
   { id: MODE_BREW, name: 'BREW' },
   { id: MODE_STEAM, name: 'STEAM' },
   { id: MODE_WATER, name: 'WATER' },
+  { id: MODE_MANUAL, name: 'MANUAL' },
   { id: MODE_GRIND, name: 'GRIND' },
 ];
 
@@ -24,6 +34,30 @@ function finiteOrZero(value) {
 function fractionBetween(value, min, max) {
   if (!Number.isFinite(max) || max <= min) return 0;
   return (finiteOrZero(value) - min) / (max - min);
+}
+
+function clampNumber(value, min, max) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return min;
+  return Math.min(max, Math.max(min, numeric));
+}
+
+export function clampManualTemperature(value) {
+  return clampNumber(value, MANUAL_TEMP_MIN, MANUAL_TEMP_MAX);
+}
+
+export function clampManualPressure(value) {
+  return clampNumber(value, MANUAL_PRESSURE_MIN, MANUAL_PRESSURE_MAX);
+}
+
+export function clampManualFlow(value) {
+  return clampNumber(value, MANUAL_FLOW_MIN, MANUAL_FLOW_MAX);
+}
+
+export function getManualControlLabels(targetType) {
+  return targetType === MANUAL_TARGET_FLOW
+    ? { pressure: 'PRESSURE LIMIT', flow: 'FLOW TARGET' }
+    : { pressure: 'PRESSURE TARGET', flow: 'FLOW LIMIT' };
 }
 
 export function getSteamTarget(targetTemp) {
@@ -51,18 +85,29 @@ export function getProcessKindForMode(mode, isGrindAvailable = true) {
   if (mode === MODE_BREW) return 'brew';
   if (mode === MODE_STEAM) return 'steam';
   if (mode === MODE_WATER) return 'water';
+  if (mode === MODE_MANUAL) return 'manual';
   if (mode === MODE_GRIND && isGrindAvailable) return 'grind';
   return null;
 }
 
 export function getPrimaryActionState({ active, finished, mode, isGrindAvailable = true }) {
   const isSteamMode = mode === MODE_STEAM;
+  const isManualMode = mode === MODE_MANUAL;
 
   if (mode === MODE_GRIND && !isGrindAvailable) {
     return {
       label: 'GRIND UNAVAILABLE',
       accent: 'var(--dm-fg-dim)',
       action: 'noop',
+      processKind: null,
+    };
+  }
+
+  if (active && isManualMode) {
+    return {
+      label: 'STOP MANUAL',
+      accent: 'var(--dm-accent)',
+      action: 'deactivate',
       processKind: null,
     };
   }
@@ -94,7 +139,7 @@ export function getPrimaryActionState({ active, finished, mode, isGrindAvailable
   }
 
   return {
-    label: isSteamMode ? 'START STEAM' : 'START SHOT',
+    label: isManualMode ? 'START MANUAL' : isSteamMode ? 'START STEAM' : 'START SHOT',
     accent: isSteamMode ? 'var(--dm-warn)' : 'var(--dm-accent)',
     action: 'start-process',
     processKind: getProcessKindForMode(mode, isGrindAvailable),

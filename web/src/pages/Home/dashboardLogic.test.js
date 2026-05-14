@@ -3,8 +3,13 @@ import test from 'node:test';
 
 import {
   MODE_GRIND,
+  MODE_MANUAL,
   MODE_STEAM,
+  clampManualFlow,
+  clampManualPressure,
+  clampManualTemperature,
   getAvailableModeOptions,
+  getManualControlLabels,
   getPrimaryActionState,
   getProcessKindForMode,
   getTemperatureRingMetrics,
@@ -46,8 +51,85 @@ test('available mode options omit grind when grind is unavailable', () => {
 
   assert.deepEqual(
     options.map(option => option.name),
-    ['STANDBY', 'BREW', 'STEAM', 'WATER'],
+    ['STANDBY', 'BREW', 'STEAM', 'WATER', 'MANUAL'],
   );
+});
+
+test('available mode options include manual before grind when grind is available', () => {
+  const options = getAvailableModeOptions(true);
+
+  assert.deepEqual(
+    options.map(option => option.name),
+    ['STANDBY', 'BREW', 'STEAM', 'WATER', 'MANUAL', 'GRIND'],
+  );
+});
+
+test('available mode options include manual when grind is unavailable', () => {
+  const options = getAvailableModeOptions(false);
+
+  assert.deepEqual(
+    options.map(option => option.name),
+    ['STANDBY', 'BREW', 'STEAM', 'WATER', 'MANUAL'],
+  );
+});
+
+test('manual mode process kind is manual', () => {
+  assert.equal(getProcessKindForMode(MODE_MANUAL), 'manual');
+});
+
+test('manual primary action starts manual when armed', () => {
+  const state = getPrimaryActionState({
+    active: false,
+    finished: false,
+    mode: MODE_MANUAL,
+  });
+
+  assert.equal(state.label, 'START MANUAL');
+  assert.equal(state.action, 'start-process');
+  assert.equal(state.processKind, 'manual');
+});
+
+test('manual primary action stops manual when running', () => {
+  const state = getPrimaryActionState({
+    active: true,
+    finished: false,
+    mode: MODE_MANUAL,
+  });
+
+  assert.equal(state.label, 'STOP MANUAL');
+  assert.equal(state.action, 'deactivate');
+  assert.equal(state.processKind, null);
+});
+
+test('manual primary action clears manual when finished', () => {
+  const state = getPrimaryActionState({
+    active: false,
+    finished: true,
+    mode: MODE_MANUAL,
+  });
+
+  assert.equal(state.label, 'CLEAR');
+  assert.equal(state.action, 'clear');
+});
+
+test('manual target labels change with target type', () => {
+  assert.deepEqual(getManualControlLabels('pressure'), {
+    pressure: 'PRESSURE TARGET',
+    flow: 'FLOW LIMIT',
+  });
+  assert.deepEqual(getManualControlLabels('flow'), {
+    pressure: 'PRESSURE LIMIT',
+    flow: 'FLOW TARGET',
+  });
+});
+
+test('manual target values are clamped to first-version bounds', () => {
+  assert.equal(clampManualTemperature(70), 80);
+  assert.equal(clampManualTemperature(110), 105);
+  assert.equal(clampManualPressure(-1), 0);
+  assert.equal(clampManualPressure(15), 12);
+  assert.equal(clampManualFlow(-1), 0);
+  assert.equal(clampManualFlow(7), 6);
 });
 
 test('primary action for unavailable grind mode does not start a process', () => {
