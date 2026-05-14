@@ -46,17 +46,17 @@ test('grind mode is not selectable when grind is unavailable', () => {
   assert.equal(getProcessKindForMode(MODE_GRIND, false), null);
 });
 
-test('available mode options omit grind when grind is unavailable', () => {
-  const options = getAvailableModeOptions(false);
+test('available mode options omit unavailable optional modes', () => {
+  const options = getAvailableModeOptions(false, false);
 
   assert.deepEqual(
     options.map(option => option.name),
-    ['STANDBY', 'BREW', 'STEAM', 'WATER', 'MANUAL'],
+    ['STANDBY', 'BREW', 'STEAM', 'WATER'],
   );
 });
 
 test('available mode options include manual before grind when grind is available', () => {
-  const options = getAvailableModeOptions(true);
+  const options = getAvailableModeOptions(true, true);
 
   assert.deepEqual(
     options.map(option => option.name),
@@ -64,8 +64,8 @@ test('available mode options include manual before grind when grind is available
   );
 });
 
-test('available mode options include manual when grind is unavailable', () => {
-  const options = getAvailableModeOptions(false);
+test('available mode options include manual when only grind is unavailable', () => {
+  const options = getAvailableModeOptions(false, true);
 
   assert.deepEqual(
     options.map(option => option.name),
@@ -75,6 +75,21 @@ test('available mode options include manual when grind is unavailable', () => {
 
 test('manual mode process kind is manual', () => {
   assert.equal(getProcessKindForMode(MODE_MANUAL), 'manual');
+});
+
+test('manual mode is unavailable without pressure capability', () => {
+  assert.equal(getProcessKindForMode(MODE_MANUAL, true, false), null);
+
+  const state = getPrimaryActionState({
+    active: false,
+    finished: false,
+    mode: MODE_MANUAL,
+    isManualAvailable: false,
+  });
+
+  assert.equal(state.label, 'MANUAL UNAVAILABLE');
+  assert.equal(state.action, 'noop');
+  assert.equal(state.processKind, null);
 });
 
 test('manual primary action starts manual when armed', () => {

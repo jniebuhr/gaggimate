@@ -77,26 +77,39 @@ export function getTemperatureRingMetrics({ mode, tempVal, targetTemp }) {
   };
 }
 
-export function getAvailableModeOptions(isGrindAvailable = true) {
-  return MODE_OPTIONS.filter(option => option.id !== MODE_GRIND || isGrindAvailable);
+export function getAvailableModeOptions(isGrindAvailable = true, isManualAvailable = true) {
+  return MODE_OPTIONS.filter(option => {
+    if (option.id === MODE_GRIND) return isGrindAvailable;
+    if (option.id === MODE_MANUAL) return isManualAvailable;
+    return true;
+  });
 }
 
-export function getProcessKindForMode(mode, isGrindAvailable = true) {
+export function getProcessKindForMode(mode, isGrindAvailable = true, isManualAvailable = true) {
   if (mode === MODE_BREW) return 'brew';
   if (mode === MODE_STEAM) return 'steam';
   if (mode === MODE_WATER) return 'water';
-  if (mode === MODE_MANUAL) return 'manual';
+  if (mode === MODE_MANUAL && isManualAvailable) return 'manual';
   if (mode === MODE_GRIND && isGrindAvailable) return 'grind';
   return null;
 }
 
-export function getPrimaryActionState({ active, finished, mode, isGrindAvailable = true }) {
+export function getPrimaryActionState({ active, finished, mode, isGrindAvailable = true, isManualAvailable = true }) {
   const isSteamMode = mode === MODE_STEAM;
   const isManualMode = mode === MODE_MANUAL;
 
   if (mode === MODE_GRIND && !isGrindAvailable) {
     return {
       label: 'GRIND UNAVAILABLE',
+      accent: 'var(--dm-fg-dim)',
+      action: 'noop',
+      processKind: null,
+    };
+  }
+
+  if (isManualMode && !isManualAvailable) {
+    return {
+      label: 'MANUAL UNAVAILABLE',
       accent: 'var(--dm-fg-dim)',
       action: 'noop',
       processKind: null,
@@ -142,6 +155,6 @@ export function getPrimaryActionState({ active, finished, mode, isGrindAvailable
     label: isManualMode ? 'START MANUAL' : isSteamMode ? 'START STEAM' : 'START SHOT',
     accent: isSteamMode ? 'var(--dm-warn)' : 'var(--dm-accent)',
     action: 'start-process',
-    processKind: getProcessKindForMode(mode, isGrindAvailable),
+    processKind: getProcessKindForMode(mode, isGrindAvailable, isManualAvailable),
   };
 }

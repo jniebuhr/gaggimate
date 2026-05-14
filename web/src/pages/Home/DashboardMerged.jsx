@@ -964,10 +964,14 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const brew = s.mode === 1;
   const mode = s.mode ?? 0;
   const { isGrindAvailable } = useGrindSettings();
+  const isManualAvailable = machine.value.capabilities.pressure === true;
   const isSteamMode = mode === MODE_STEAM;
   const isManualMode = mode === MODE_MANUAL;
-  const processKind = getProcessKindForMode(mode, isGrindAvailable);
-  const availableModes = useMemo(() => getAvailableModeOptions(isGrindAvailable), [isGrindAvailable]);
+  const processKind = getProcessKindForMode(mode, isGrindAvailable, isManualAvailable);
+  const availableModes = useMemo(
+    () => getAvailableModeOptions(isGrindAvailable, isManualAvailable),
+    [isGrindAvailable, isManualAvailable]
+  );
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   useEffect(() => {
@@ -1258,7 +1262,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const steamStatusLabel = targetTemp > 0 && tempVal < targetTemp
     ? `PREHEATING · TGT ${fmt(targetTemp)}°`
     : `STEAM · TGT ${fmt(targetTemp)}°`;
-  const primaryActionState = getPrimaryActionState({ active, finished, mode, isGrindAvailable });
+  const primaryActionState = getPrimaryActionState({ active, finished, mode, isGrindAvailable, isManualAvailable });
   const primaryActionLabel = primaryActionState.label;
   const primaryActionAccent = primaryActionState.accent;
   const primaryAction = () => {
