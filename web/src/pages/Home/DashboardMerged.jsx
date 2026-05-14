@@ -347,13 +347,26 @@ function ManualConsole({
   active,
   finished,
   draft,
+  selectedBean,
+  dose,
+  currentWeight,
+  bluetoothConnected,
+  scaleName,
   pressure,
   flow,
   temperature,
   controlLabels,
+  isBeanDropdownOpen,
+  beanOptions,
+  loadingBeans,
+  beanError,
   primaryAction,
   primaryActionAccent,
   primaryActionLabel,
+  onBeanClick,
+  onBeanSelect,
+  onBeanDropdownClose,
+  onDoseCommit,
   onEditingChange,
   onManualUpdate,
 }) {
@@ -403,52 +416,98 @@ function ManualConsole({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-          gap: 12,
+          gridTemplateColumns: '1fr auto 1fr auto 1fr',
+          gap: 10,
+          alignItems: 'center',
           padding: '12px 0',
           borderTop: '1px solid var(--dm-line)',
           borderBottom: '1px solid var(--dm-line)',
         }}
       >
-        {[
-          { label: 'PRESSURE', value: pressure, staged: draft.pressure, unit: 'bar', color: 'var(--dm-good)' },
-          { label: 'FLOW', value: flow, staged: draft.flow, unit: 'g/s', color: 'var(--dm-warn)' },
-          { label: 'TEMP', value: temperature, staged: draft.temperature, unit: 'C', color: 'var(--dm-accent)' },
-        ].map(readout => (
-          <div key={readout.label} style={{ minWidth: 0 }}>
-            <div
+        <div style={{ position: 'relative', minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 9, letterSpacing: '0.18em', color: 'var(--dm-fg-dim)', marginBottom: 3 }}>
+            BEAN
+          </div>
+          <button
+            type='button'
+            onClick={e => {
+              e.stopPropagation();
+              onBeanClick();
+            }}
+            style={{
+              display: 'block',
+              width: '100%',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <span
               style={{
-                fontFamily: 'var(--dm-font-mono)',
-                fontSize: 9,
-                letterSpacing: '0.18em',
-                color: readout.color,
-                marginBottom: 4,
+                display: 'block',
+                fontFamily: 'var(--dm-font-display)',
+                fontSize: 20,
+                color: selectedBean ? 'var(--dm-fg)' : 'var(--dm-fg-faint)',
+                fontWeight: 700,
+                fontVariantNumeric: 'tabular-nums',
+                lineHeight: 1.05,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                borderBottom: `1px dashed ${isBeanDropdownOpen ? 'var(--dm-accent)' : 'rgba(232,232,232,0.2)'}`,
               }}
             >
-              {readout.label}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-              <span
-                style={{
-                  fontFamily: 'var(--dm-font-display)',
-                  fontSize: 30,
-                  color: 'var(--dm-fg)',
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {fmt(readout.value)}
-              </span>
-              <span style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 10, color: 'var(--dm-fg-dim)' }}>
-                {readout.unit}
-              </span>
-            </div>
-            <div style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 9, color: 'var(--dm-fg-faint)', marginTop: 3 }}>
-              SET {fmt(readout.staged)} {readout.unit}
-            </div>
+              {selectedBean || 'No bean selected'}
+            </span>
+          </button>
+          {isBeanDropdownOpen && (
+            <SelectDropdown
+              label='SELECT BEAN'
+              options={beanOptions}
+              activeLabel={selectedBean}
+              onSelect={onBeanSelect}
+              loading={loadingBeans}
+              error={beanError}
+              onClose={onBeanDropdownClose}
+            />
+          )}
+        </div>
+        <span style={{ fontFamily: 'var(--dm-font-display)', fontSize: 20, color: 'var(--dm-fg-faint)' }}>{'>'}</span>
+        <EditableNumBlock
+          label='DOSE'
+          value={dose}
+          unit='g'
+          step={0.1}
+          min={1}
+          max={50}
+          onCommit={onDoseCommit}
+        />
+        <span style={{ fontFamily: 'var(--dm-font-display)', fontSize: 20, color: 'var(--dm-fg-faint)' }}>{'>'}</span>
+        <div>
+          <div style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 9, letterSpacing: '0.18em', color: 'var(--dm-fg-dim)', marginBottom: 3 }}>
+            SCALES
           </div>
-        ))}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+            <span
+              style={{
+                fontFamily: 'var(--dm-font-display)',
+                fontSize: 28,
+                color: bluetoothConnected ? 'var(--dm-good)' : 'var(--dm-fg-faint)',
+                fontWeight: 700,
+                fontVariantNumeric: 'tabular-nums',
+                lineHeight: 1,
+              }}
+            >
+              {bluetoothConnected ? fmt(currentWeight) : fmt(Number.NaN)}
+            </span>
+            <span style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 10, color: 'var(--dm-fg-dim)' }}>g</span>
+          </div>
+          <div style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 9, color: 'var(--dm-fg-faint)', marginTop: 2 }}>
+            {bluetoothConnected ? (scaleName || 'CONNECTED') : 'NOT CONNECTED'}
+          </div>
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
@@ -530,13 +589,26 @@ ManualConsole.propTypes = {
   active: PropTypes.bool,
   finished: PropTypes.bool,
   draft: PropTypes.object,
+  selectedBean: PropTypes.string,
+  dose: PropTypes.number,
+  currentWeight: PropTypes.number,
+  bluetoothConnected: PropTypes.bool,
+  scaleName: PropTypes.string,
   pressure: PropTypes.number,
   flow: PropTypes.number,
   temperature: PropTypes.number,
   controlLabels: PropTypes.object,
+  isBeanDropdownOpen: PropTypes.bool,
+  beanOptions: PropTypes.array,
+  loadingBeans: PropTypes.bool,
+  beanError: PropTypes.string,
   primaryAction: PropTypes.func,
   primaryActionAccent: PropTypes.string,
   primaryActionLabel: PropTypes.string,
+  onBeanClick: PropTypes.func,
+  onBeanSelect: PropTypes.func,
+  onBeanDropdownClose: PropTypes.func,
+  onDoseCommit: PropTypes.func,
   onEditingChange: PropTypes.func,
   onManualUpdate: PropTypes.func,
 };
@@ -1104,16 +1176,9 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   useShotDoseRecorder(api, dose);
 
   // Target yield — localStorage-backed + API
-  const [yieldTarget, setYieldState] = useState(() => {
+  const [yieldTarget] = useState(() => {
     try { return parseQuantity(localStorage.getItem(YIELD_KEY)) ?? (s.brewTargetVolume || DEFAULT_YIELD); } catch { return DEFAULT_YIELD; }
   });
-  const setYield = useCallback(val => {
-    const v = Math.max(5, Math.min(120, val));
-    setYieldState(v);
-    try { localStorage.setItem(YIELD_KEY, String(v)); } catch {}
-    try { api.send({ tp: 'req:change-brew-target', target: v }); } catch {}
-  }, [api]);
-
   // Profile dropdown
   const [activeDropdown, setActiveDropdown] = useState(null); // 'profile' | 'bean' | null
   const [profileOptions, setProfileOptions] = useState([]);
@@ -1639,13 +1704,26 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               active={active}
               finished={finished}
               draft={manualDraft}
+              selectedBean={s.selectedBean}
+              dose={dose}
+              currentWeight={currentWeight}
+              bluetoothConnected={s.bluetoothConnected}
+              scaleName={scaleName}
               pressure={pressure}
               flow={flowVal}
               temperature={tempVal}
               controlLabels={manualControlLabels}
+              isBeanDropdownOpen={activeDropdown === 'bean'}
+              beanOptions={beanOptions}
+              loadingBeans={loadingBeans}
+              beanError={beanError}
               primaryAction={primaryAction}
               primaryActionAccent={primaryActionAccent}
               primaryActionLabel={primaryActionLabel}
+              onBeanClick={openBeanDropdown}
+              onBeanSelect={handleBeanSelect}
+              onBeanDropdownClose={() => setActiveDropdown(null)}
+              onDoseCommit={setDose}
               onEditingChange={setIsManualEditing}
               onManualUpdate={sendManualUpdate}
             />

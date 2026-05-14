@@ -532,9 +532,14 @@ void WebUIPlugin::processWebSocketMessage(uint32_t clientId, const String &msg) 
             String requestedType = doc["targetType"].as<const char *>();
             targetType = requestedType == "flow" ? MANUAL_TARGET_FLOW : MANUAL_TARGET_PRESSURE;
         }
-        float pressure = doc["pressure"].is<float>() ? doc["pressure"].as<float>() : controller->getManualPressure();
-        float flow = doc["flow"].is<float>() ? doc["flow"].as<float>() : controller->getManualFlow();
-        int temperature = doc["temperature"].is<int>() ? doc["temperature"].as<int>() : controller->getManualTemperature();
+        JsonVariantConst pressureValue = doc["pressure"];
+        JsonVariantConst flowValue = doc["flow"];
+        JsonVariantConst temperatureValue = doc["temperature"];
+        float pressure = pressureValue.is<float>() || pressureValue.is<int>() ? pressureValue.as<float>()
+                                                                              : controller->getManualPressure();
+        float flow = flowValue.is<float>() || flowValue.is<int>() ? flowValue.as<float>() : controller->getManualFlow();
+        int temperature = temperatureValue.is<int>() || temperatureValue.is<float>() ? temperatureValue.as<int>()
+                                                                                    : controller->getManualTemperature();
         controller->updateManualTargets(targetType, pressure, flow, temperature);
     } else if (msgType == "req:change-mode") {
         if (doc["mode"].is<uint8_t>()) {
