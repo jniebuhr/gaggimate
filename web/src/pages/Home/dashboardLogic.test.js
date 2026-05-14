@@ -5,7 +5,6 @@ import {
   MODE_GRIND,
   MODE_MANUAL,
   MODE_STEAM,
-  MANUAL_TARGET_TEMPERATURE,
   clampManualFlow,
   clampManualPressure,
   clampManualTemperature,
@@ -121,10 +120,6 @@ test('manual target labels change with target type', () => {
   assert.deepEqual(getManualControlLabels('flow'), {
     pressure: 'PRESSURE LIMIT',
     flow: 'FLOW TARGET',
-  });
-  assert.deepEqual(getManualControlLabels(MANUAL_TARGET_TEMPERATURE), {
-    pressure: 'PRESSURE LIMIT',
-    flow: 'FLOW LIMIT',
   });
 });
 

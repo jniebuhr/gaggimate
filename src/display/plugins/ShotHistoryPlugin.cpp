@@ -154,7 +154,7 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     });
     pm->on("controller:process:end", [this](Event const &event) {
         if (event.getInt("processType") == MODE_MANUAL) {
-            endRecording();
+            endRecording(false);
         }
     });
     pm->on("controller:volumetric-measurement:estimation:change",
@@ -574,15 +574,15 @@ unsigned long ShotHistoryPlugin::getTime() {
     return now;
 }
 
-void ShotHistoryPlugin::endRecording() {
+void ShotHistoryPlugin::endRecording(bool allowExtendedRecording) {
     // Acquire mutex to protect shared state
     if (stateMutex == nullptr || xSemaphoreTake(stateMutex, pdMS_TO_TICKS(STATE_MUTEX_TIMEOUT_MS)) != pdTRUE) {
         ESP_LOGW("ShotHistoryPlugin", "Failed to acquire mutex for endRecording");
         return;
     }
     
-    if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
-        // Start extended recording for any shot with active weight data
+    if (recording && allowExtendedRecording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
+        // Brew keeps recording briefly so Bluetooth-scale weight can settle.
         extendedRecording = true;
         extendedRecordingStart = millis();
         lastStableWeight = currentBluetoothWeight;

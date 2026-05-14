@@ -21,7 +21,6 @@ import {
   MANUAL_PRESSURE_MIN,
   MANUAL_TARGET_FLOW,
   MANUAL_TARGET_PRESSURE,
-  MANUAL_TARGET_TEMPERATURE,
   MANUAL_TEMP_MAX,
   MANUAL_TEMP_MIN,
   MODE_MANUAL,
@@ -49,7 +48,6 @@ const YIELD_SEGMENTS = Array.from({ length: 40 }, (_, i) => i);
 const MANUAL_TARGET_OPTIONS = [
   { id: MANUAL_TARGET_PRESSURE, label: 'PRESSURE' },
   { id: MANUAL_TARGET_FLOW, label: 'FLOW' },
-  { id: MANUAL_TARGET_TEMPERATURE, label: 'TEMPERATURE' },
 ];
 
 const status = computed(() => machine.value.status);
@@ -476,7 +474,7 @@ function ManualConsole({
           onEditingChange={onEditingChange}
         />
         <ManualSlider
-          label='TEMPERATURE TARGET'
+          label='TEMPERATURE SETPOINT'
           value={draft.temperature}
           actual={temperature}
           unit='C'

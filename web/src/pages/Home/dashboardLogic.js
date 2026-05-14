@@ -8,7 +8,6 @@ export const TEMP_MIN = 0;
 export const TEMP_MAX = 105;
 export const MANUAL_TARGET_PRESSURE = 'pressure';
 export const MANUAL_TARGET_FLOW = 'flow';
-export const MANUAL_TARGET_TEMPERATURE = 'temperature';
 export const MANUAL_TEMP_MIN = 80;
 export const MANUAL_TEMP_MAX = 105;
 export const MANUAL_PRESSURE_MIN = 0;
@@ -56,9 +55,6 @@ export function clampManualFlow(value) {
 }
 
 export function getManualControlLabels(targetType) {
-  if (targetType === MANUAL_TARGET_TEMPERATURE) {
-    return { pressure: 'PRESSURE LIMIT', flow: 'FLOW LIMIT' };
-  }
   return targetType === MANUAL_TARGET_FLOW
     ? { pressure: 'PRESSURE LIMIT', flow: 'FLOW TARGET' }
     : { pressure: 'PRESSURE TARGET', flow: 'FLOW LIMIT' };
