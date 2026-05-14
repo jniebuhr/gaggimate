@@ -94,6 +94,10 @@ export function shouldSendManualUpdate({ active, isManualMode, partial }) {
   return Object.prototype.hasOwnProperty.call(partial ?? {}, 'temperature');
 }
 
+export function shouldKeepManualDraftDirty({ active, partial }) {
+  return !active && Object.keys(partial ?? {}).length > 0;
+}
+
 export function getAvailableModeOptions(isGrindAvailable = true, isManualAvailable = true) {
   return MODE_OPTIONS.filter(option => {
     if (option.id === MODE_GRIND) return isGrindAvailable;

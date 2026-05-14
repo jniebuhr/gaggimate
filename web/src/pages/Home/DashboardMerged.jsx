@@ -34,6 +34,7 @@ import {
   getProcessKindForMode,
   getPrimaryActionState,
   getTemperatureRingMetrics,
+  shouldKeepManualDraftDirty,
   shouldSendManualUpdate,
 } from './dashboardLogic.js';
 
@@ -1006,6 +1007,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const [manualDraft, setManualDraft] = useState(() => manualDraftFromStatus(s));
   const [isManualEditing, setIsManualEditing] = useState(false);
   const [manualDraftDirty, setManualDraftDirty] = useState(false);
+  const wasManualModeRef = useRef(false);
 
   useEffect(() => {
     if (!isManualMode) {
@@ -1055,7 +1057,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
         };
         const shouldSend = shouldSendManualUpdate({ active, isManualMode, partial });
         const temperatureOnly = !active && Object.prototype.hasOwnProperty.call(partial ?? {}, 'temperature');
-        setManualDraftDirty(currentDirty => currentDirty || (!active && !shouldSend));
+        setManualDraftDirty(currentDirty => currentDirty || shouldKeepManualDraftDirty({ active, partial }));
         if (shouldSend) {
           try { sendManualPayload(next, { temperatureOnly }); } catch {}
         }
@@ -1064,6 +1066,17 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
     },
     [active, isManualMode, sendManualPayload]
   );
+
+  useEffect(() => {
+    if (!isManualMode || !isManualAvailable) {
+      wasManualModeRef.current = false;
+      return;
+    }
+    if (!wasManualModeRef.current) {
+      try { sendManualPayload(manualDraft, { temperatureOnly: true }); } catch {}
+    }
+    wasManualModeRef.current = true;
+  }, [isManualAvailable, isManualMode, manualDraft, sendManualPayload]);
 
   const { profileData } = useProfileData(api, s.mode === 1, s.selectedProfileId);
 

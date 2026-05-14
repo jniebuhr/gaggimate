@@ -14,6 +14,7 @@ import {
   getPrimaryActionState,
   getProcessKindForMode,
   getTemperatureRingMetrics,
+  shouldKeepManualDraftDirty,
   shouldSendManualUpdate,
 } from './dashboardLogic.js';
 
@@ -165,6 +166,21 @@ test('manual temperature updates send before start while pump controls stay stag
     isManualMode: true,
     partial: { pressure: 8 },
   }), true);
+});
+
+test('manual pre-start edits keep the local draft stable until start', () => {
+  assert.equal(shouldKeepManualDraftDirty({
+    active: false,
+    partial: { temperature: 94 },
+  }), true);
+  assert.equal(shouldKeepManualDraftDirty({
+    active: false,
+    partial: { pressure: 8 },
+  }), true);
+  assert.equal(shouldKeepManualDraftDirty({
+    active: true,
+    partial: { temperature: 94 },
+  }), false);
 });
 
 test('manual mode heats like brew before the process starts', () => {
