@@ -1033,7 +1033,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const history = machine.value.history;
   const connected = machine.value.connected;
 
-  const [, setIsFlushing] = useState(false);
+  const [isFlushing, setIsFlushing] = useState(false);
   const lastProcessTypeRef = useRef(null);
   const isGrind = s.mode === 4;
   const brew = s.mode === 1;
@@ -1128,7 +1128,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           flow: clampManualFlow(partial.flow ?? current.flow),
           temperature: clampManualTemperature(partial.temperature ?? current.temperature),
         };
-        const shouldSend = shouldSendManualUpdate({ active, isManualMode, partial });
+        const shouldSend = !isFlushing && shouldSendManualUpdate({ active, isManualMode, partial });
         const temperatureOnly = !active && Object.prototype.hasOwnProperty.call(partial ?? {}, 'temperature');
         setManualDraftDirty(currentDirty => currentDirty || shouldKeepManualDraftDirty({ active, partial }));
         if (shouldSend) {
@@ -1137,7 +1137,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
         return next;
       });
     },
-    [active, isManualMode, sendManualPayload]
+    [active, isFlushing, isManualMode, sendManualPayload]
   );
 
   useEffect(() => {
@@ -1708,7 +1708,11 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
             background: 'var(--dm-bg-0)',
           }}
         >
-          {isManualMode ? (
+          {isManualMode && isFlushing ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--dm-fg-dim)', fontFamily: 'var(--dm-font-mono)', fontSize: 11, letterSpacing: '0.18em' }}>
+              FLUSHING…
+            </div>
+          ) : isManualMode ? (
             <ManualConsole
               active={active}
               finished={finished}
