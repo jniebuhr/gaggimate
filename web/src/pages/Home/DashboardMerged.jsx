@@ -1071,10 +1071,11 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
     }
     if (!wasActiveRef.current) return;
     wasActiveRef.current = false;
+    setIsFlushing(false);
     if (lastActiveWasBrewRef.current && autoSteamEnabled) {
       try { api.send({ tp: 'req:change-mode', mode: 2 }); } catch {}
     }
-  }, [active, autoSteamEnabled, api]);
+  }, [active, autoSteamEnabled, api, setIsFlushing]);
 
   const actions = useProcessActions(api, isGrind, setIsFlushing, lastProcessTypeRef, processKind);
   const [manualDraft, setManualDraft] = useState(() => manualDraftFromStatus(s));
