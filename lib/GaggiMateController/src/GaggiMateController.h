@@ -44,8 +44,7 @@ class GaggiMateController {
     SimpleRelay *valve = nullptr;
     SimpleRelay *alt = nullptr;
     Pump *pump = nullptr;
-    DigitalInput *brewBtn = nullptr;
-    DigitalInput *steamBtn = nullptr;
+    DigitalInput *buttonsInput = nullptr;
     PressureSensor *pressureSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
