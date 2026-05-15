@@ -1033,7 +1033,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   const history = machine.value.history;
   const connected = machine.value.connected;
 
-  const [, setIsFlushing] = useState(false);
+  const [isFlushing, setIsFlushing] = useState(false);
   const lastProcessTypeRef = useRef(null);
   const isGrind = s.mode === 4;
   const brew = s.mode === 1;
@@ -1065,15 +1065,17 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   useEffect(() => {
     if (active) {
       wasActiveRef.current = true;
-      lastActiveWasBrewRef.current = lastProcessTypeRef.current === 'brew';
+      lastActiveWasBrewRef.current =
+        lastProcessTypeRef.current === 'brew' || lastProcessTypeRef.current === 'manual';
       return;
     }
     if (!wasActiveRef.current) return;
     wasActiveRef.current = false;
+    setIsFlushing(false);
     if (lastActiveWasBrewRef.current && autoSteamEnabled) {
       try { api.send({ tp: 'req:change-mode', mode: 2 }); } catch {}
     }
-  }, [active, autoSteamEnabled, api]);
+  }, [active, autoSteamEnabled, api, setIsFlushing]);
 
   const actions = useProcessActions(api, isGrind, setIsFlushing, lastProcessTypeRef, processKind);
   const [manualDraft, setManualDraft] = useState(() => manualDraftFromStatus(s));
@@ -1127,7 +1129,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           flow: clampManualFlow(partial.flow ?? current.flow),
           temperature: clampManualTemperature(partial.temperature ?? current.temperature),
         };
-        const shouldSend = shouldSendManualUpdate({ active, isManualMode, partial });
+        const shouldSend = !isFlushing && shouldSendManualUpdate({ active, isManualMode, partial });
         const temperatureOnly = !active && Object.prototype.hasOwnProperty.call(partial ?? {}, 'temperature');
         setManualDraftDirty(currentDirty => currentDirty || shouldKeepManualDraftDirty({ active, partial }));
         if (shouldSend) {
@@ -1136,7 +1138,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
         return next;
       });
     },
-    [active, isManualMode, sendManualPayload]
+    [active, isFlushing, isManualMode, sendManualPayload]
   );
 
   useEffect(() => {
@@ -1461,24 +1463,9 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           background: 'var(--dm-bg-1)',
         }}
       >
-        <ModeRail active={mode} modes={availableModes} onSelect={onModeSelect} />
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            flexWrap: 'wrap',
-          }}
-        >
-          <StatusPill
-            ledClass={connected ? 'dm-led--ok' : 'dm-led--warm'}
-            label='ONLINE'
-            value={connected ? 'WIFI' : 'OFFLINE'}
-          />
-          <span
-            style={{ width: 1, height: 14, background: 'var(--dm-line)', display: 'inline-block' }}
-          />
-          {brew && !active && !finished && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <ModeRail active={mode} modes={availableModes} onSelect={onModeSelect} />
+          {(brew || isManualMode) && !active && !finished && (
             <button
               type='button'
               onClick={actions.startFlush}
@@ -1499,7 +1486,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               ~ FLUSH
             </button>
           )}
-          {brew && (
+          {(brew || isManualMode) && (
             <button
               type='button'
               onClick={toggleAutoSteam}
@@ -1524,6 +1511,23 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               {autoSteamEnabled ? '~ AUTO STEAM ON' : '~ AUTO STEAM'}
             </button>
           )}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            flexWrap: 'wrap',
+          }}
+        >
+          <StatusPill
+            ledClass={connected ? 'dm-led--ok' : 'dm-led--warm'}
+            label='ONLINE'
+            value={connected ? 'WIFI' : 'OFFLINE'}
+          />
+          <span
+            style={{ width: 1, height: 14, background: 'var(--dm-line)', display: 'inline-block' }}
+          />
           <span
             style={{ width: 1, height: 14, background: 'var(--dm-line)', display: 'inline-block' }}
           />
@@ -1705,7 +1709,11 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
             background: 'var(--dm-bg-0)',
           }}
         >
-          {isManualMode ? (
+          {isManualMode && isFlushing ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--dm-fg-dim)', fontFamily: 'var(--dm-font-mono)', fontSize: 11, letterSpacing: '0.18em' }}>
+              FLUSHING…
+            </div>
+          ) : isManualMode ? (
             <ManualConsole
               active={active}
               finished={finished}
