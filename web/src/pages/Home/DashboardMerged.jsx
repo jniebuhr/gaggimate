@@ -1176,9 +1176,15 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   useShotDoseRecorder(api, dose);
 
   // Target yield — localStorage-backed + API
-  const [yieldTarget] = useState(() => {
+  const [yieldTarget, setYieldTargetState] = useState(() => {
     try { return parseQuantity(localStorage.getItem(YIELD_KEY)) ?? (s.brewTargetVolume || DEFAULT_YIELD); } catch { return DEFAULT_YIELD; }
   });
+  const setYield = useCallback(val => {
+    const v = Math.max(5, Math.min(120, val));
+    setYieldTargetState(v);
+    try { localStorage.setItem(YIELD_KEY, String(v)); } catch {}
+    try { api.send({ tp: 'req:change-brew-target', target: v }); } catch {}
+  }, [api]);
   // Profile dropdown
   const [activeDropdown, setActiveDropdown] = useState(null); // 'profile' | 'bean' | null
   const [profileOptions, setProfileOptions] = useState([]);
