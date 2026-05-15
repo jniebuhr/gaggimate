@@ -1461,24 +1461,9 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
           background: 'var(--dm-bg-1)',
         }}
       >
-        <ModeRail active={mode} modes={availableModes} onSelect={onModeSelect} />
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            flexWrap: 'wrap',
-          }}
-        >
-          <StatusPill
-            ledClass={connected ? 'dm-led--ok' : 'dm-led--warm'}
-            label='ONLINE'
-            value={connected ? 'WIFI' : 'OFFLINE'}
-          />
-          <span
-            style={{ width: 1, height: 14, background: 'var(--dm-line)', display: 'inline-block' }}
-          />
-          {brew && !active && !finished && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <ModeRail active={mode} modes={availableModes} onSelect={onModeSelect} />
+          {(brew || isManualMode) && !active && !finished && (
             <button
               type='button'
               onClick={actions.startFlush}
@@ -1499,7 +1484,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               ~ FLUSH
             </button>
           )}
-          {brew && (
+          {(brew || isManualMode) && (
             <button
               type='button'
               onClick={toggleAutoSteam}
@@ -1524,6 +1509,23 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               {autoSteamEnabled ? '~ AUTO STEAM ON' : '~ AUTO STEAM'}
             </button>
           )}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            flexWrap: 'wrap',
+          }}
+        >
+          <StatusPill
+            ledClass={connected ? 'dm-led--ok' : 'dm-led--warm'}
+            label='ONLINE'
+            value={connected ? 'WIFI' : 'OFFLINE'}
+          />
+          <span
+            style={{ width: 1, height: 14, background: 'var(--dm-line)', display: 'inline-block' }}
+          />
           <span
             style={{ width: 1, height: 14, background: 'var(--dm-line)', display: 'inline-block' }}
           />
