@@ -1825,7 +1825,7 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
             )}
           </div>
 
-          {/* Bean → Dose → Scales */}
+          {/* Dose → Yield → Scales */}
           <div
             style={{
               display: 'grid',
@@ -1837,46 +1837,6 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               borderBottom: '1px solid var(--dm-line)',
             }}
           >
-            <div style={{ position: 'relative', minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--dm-font-mono)', fontSize: 9, letterSpacing: '0.18em', color: 'var(--dm-fg-dim)', marginBottom: 3 }}>
-                BEAN
-              </div>
-              <button
-                type='button'
-                onClick={e => {
-                  e.stopPropagation();
-                  openBeanDropdown();
-                }}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <span
-                  style={{
-                    display: 'block',
-                    fontFamily: 'var(--dm-font-display)',
-                    fontSize: 20,
-                    color: s.selectedBean ? 'var(--dm-fg)' : 'var(--dm-fg-faint)',
-                    fontWeight: 700,
-                    fontVariantNumeric: 'tabular-nums',
-                    lineHeight: 1.05,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    borderBottom: `1px dashed ${activeDropdown === 'bean' ? 'var(--dm-accent)' : 'rgba(232,232,232,0.2)'}`,
-                  }}
-                >
-                  {s.selectedBean || 'No bean selected'}
-                </span>
-              </button>
-            </div>
-            <span style={{ fontFamily: 'var(--dm-font-display)', fontSize: 20, color: 'var(--dm-fg-faint)' }}>›</span>
             <EditableNumBlock
               label='DOSE'
               value={dose}
@@ -1885,6 +1845,17 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
               min={1}
               max={50}
               onCommit={setDose}
+            />
+            <span style={{ fontFamily: 'var(--dm-font-display)', fontSize: 20, color: 'var(--dm-fg-faint)' }}>›</span>
+            <EditableNumBlock
+              label='YIELD'
+              value={targetWeight}
+              unit='g'
+              hint={`1 : ${(targetWeight / Math.max(dose, 1)).toFixed(2)}`}
+              step={0.5}
+              min={5}
+              max={120}
+              onCommit={setYield}
             />
             <span style={{ fontFamily: 'var(--dm-font-display)', fontSize: 20, color: 'var(--dm-fg-faint)' }}>›</span>
             <div>
