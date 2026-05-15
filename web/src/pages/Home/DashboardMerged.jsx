@@ -1065,7 +1065,8 @@ export default function DashboardMerged({ navOpen = false, onNavToggle }) {
   useEffect(() => {
     if (active) {
       wasActiveRef.current = true;
-      lastActiveWasBrewRef.current = lastProcessTypeRef.current === 'brew';
+      lastActiveWasBrewRef.current =
+        lastProcessTypeRef.current === 'brew' || lastProcessTypeRef.current === 'manual';
       return;
     }
     if (!wasActiveRef.current) return;
