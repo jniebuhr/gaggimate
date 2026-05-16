@@ -7,6 +7,7 @@ import {
   moveKeyframeTime,
   removeKeyframeAtIndex,
   updateKeyframeSegment,
+  updateKeyframeValue,
 } from './keyframeProfileLogic.js';
 import { useState } from 'preact/hooks';
 import { ExtendedPhase } from './ExtendedPhase.jsx';
@@ -108,6 +109,8 @@ export function ExtendedProfileForm(props) {
   const onMarkerMove = (markerIndex, time) => applyKeyframeResult(moveKeyframeTime(data, markerIndex, time));
   const onSegmentSelect = segmentIndex =>
     setCurrentPhaseIndex(segmentIndex + (hasInitialSetupPhase(data.phases) ? 1 : 0));
+  const onMarkerValueUpdate = (markerIndex, patch) =>
+    applyKeyframeResult(updateKeyframeValue(data, markerIndex, patch));
 
   const currentPhase = data.phases[currentPhaseIndex];
 
@@ -176,6 +179,7 @@ export function ExtendedProfileForm(props) {
             selectedSegmentIndex={Math.max(0, currentPhaseIndex - 1)}
             onAddMarker={onMarkerAdd}
             onMoveMarker={onMarkerMove}
+            onUpdateMarkerValue={onMarkerValueUpdate}
             onSelectSegment={onSegmentSelect}
             className='max-h-72 w-full'
           />
