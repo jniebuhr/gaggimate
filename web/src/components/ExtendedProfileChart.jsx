@@ -7,11 +7,11 @@ const POINT_INTERVAL = 0.1; // s
 const skipped = (ctx, value) => (!ctx.p0.raw.target ? value : undefined);
 const pressureDatasetDefaults = {
   label: 'Pressure',
-  borderColor: 'rgb(75, 192, 192)',
+  borderColor: '#0066CC',
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
   segment: {
-    borderColor: ctx => skipped(ctx, 'rgba(75, 192, 192, 0.6)'),
+    borderColor: ctx => skipped(ctx, 'rgba(0, 102, 204, 0.6)'),
     borderDash: ctx => skipped(ctx, [6, 6]),
   },
   spanGaps: true,
@@ -19,11 +19,11 @@ const pressureDatasetDefaults = {
 
 const flowDatasetDefaults = {
   label: 'Flow',
-  borderColor: 'rgb(255, 192, 192)',
+  borderColor: '#63993D',
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
   segment: {
-    borderColor: ctx => skipped(ctx, 'rgba(255, 192, 192, 0.6)'),
+    borderColor: ctx => skipped(ctx, 'rgba(99, 153, 61, 0.6)'),
     borderDash: ctx => skipped(ctx, [6, 6]),
   },
   spanGaps: true,
@@ -130,7 +130,7 @@ function prepareTemperatureData(phases, profileTemperature = 93) {
 
 const temperatureDatasetDefaults = {
   label: 'Temperature',
-  borderColor: 'rgb(255, 206, 86)',
+  borderColor: '#F0561D',
   tension: 0.25,
   cubicInterpolationMode: 'monotone',
   spanGaps: true,
