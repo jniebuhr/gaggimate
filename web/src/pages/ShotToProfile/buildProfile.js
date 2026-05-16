@@ -37,8 +37,8 @@ export function buildProfile(profileName, segments) {
       temperature: Math.round(seg.temperature),
       pump: {
         target: seg.targetType,
-        pressure: seg.targetType === 'pressure' ? seg.targetValue : -1,
-        flow: seg.targetType === 'flow' ? seg.targetValue : -1,
+        pressure: seg.targetType === 'pressure' ? seg.targetValue : 0,
+        flow: seg.targetType === 'flow' ? seg.targetValue : 0,
       },
       transition: {
         type: 'instant',
