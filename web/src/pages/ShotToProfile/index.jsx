@@ -15,24 +15,20 @@ function avg(samples, field) {
   return samples.reduce((s, x) => s + (x[field] ?? 0), 0) / samples.length;
 }
 
-function sdev(samples, field) {
-  if (!samples.length) return 0;
-  const mean = avg(samples, field);
-  return Math.sqrt(samples.reduce((s, x) => s + ((x[field] ?? 0) - mean) ** 2, 0) / samples.length);
-}
-
 function isFlowTargetedShot(samples) {
   if (!samples.length) return false;
   const meanTf = avg(samples, 'tf');
   if (meanTf <= 0) return false;
   const meanTp = avg(samples, 'tp');
   if (meanTp <= 0) return true;
-  // The actively controlled variable is held tighter relative to its setpoint.
-  // Normalising by the target makes the comparison scale-independent (bar vs ml/s)
-  // and avoids false positives when fl happens to equal the flow limit on average.
-  const relStdFl = sdev(samples, 'fl') / meanTf;
-  const relStdCp = sdev(samples, 'cp') / meanTp;
-  return relStdFl < relStdCp;
+  // Compare normalised tracking error: the controlled variable's average reading
+  // stays proportionally closer to its setpoint than the free variable does.
+  // Scale-independent (bar vs ml/s). Variance-only checks fail when fl is
+  // unusually flat on a pressure shot; explicit mode storage in the shot binary
+  // would be the definitive fix for genuinely ambiguous cases.
+  const relErrFl = Math.abs(avg(samples, 'fl') / meanTf - 1);
+  const relErrCp = Math.abs(avg(samples, 'cp') / meanTp - 1);
+  return relErrFl < relErrCp;
 }
 
 function boundariesToSegments(boundaries, samples) {
