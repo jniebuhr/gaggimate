@@ -44,8 +44,8 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
   const targets = phase?.targets || [];
 
   const pumpPower = isNumber(phase.pump) ? phase.pump : 100;
-  const pressure = !isNumber(phase.pump) ? phase.pump.pressure : 0;
-  const flow = !isNumber(phase.pump) ? phase.pump.flow : 0;
+  const currentPressure = !isNumber(phase.pump) ? phase.pump.pressure : 0;
+  const currentFlow = !isNumber(phase.pump) ? phase.pump.flow : 0;
   let mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
   if (mode === 'pressure' && phase.pump.pressure === -1) mode = 'hold-pressure';
   if (mode === 'flow' && phase.pump.flow === -1) mode = 'hold-flow';
@@ -195,8 +195,8 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     mode !== 'pressure' &&
                     onFieldChange('pump', {
                       target: 'pressure',
-                      pressure: Math.max(phase.pump.pressure || 0, 0),
-                      flow: Math.max(phase.pump?.flow || 0, 0),
+                      pressure: Math.max(currentPressure || 0, 0),
+                      flow: Math.max(currentFlow || 0, 0),
                     })
                   }
                   aria-pressed={mode === 'pressure'}
@@ -211,8 +211,8 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     mode !== 'flow' &&
                     onFieldChange('pump', {
                       target: 'flow',
-                      pressure: Math.max(phase.pump.pressure || 0, 0),
-                      flow: Math.max(phase.pump?.flow || 0, 0),
+                      pressure: Math.max(currentPressure || 0, 0),
+                      flow: Math.max(currentFlow || 0, 0),
                     })
                   }
                   aria-pressed={mode === 'flow'}
@@ -228,7 +228,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     onFieldChange('pump', {
                       target: 'pressure',
                       pressure: -1,
-                      flow: Math.max(phase.pump?.flow || 0, 0),
+                      flow: Math.max(currentFlow || 0, 0),
                     })
                   }
                   aria-pressed={mode === 'hold-pressure'}
@@ -243,7 +243,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     mode !== 'hold-flow' &&
                     onFieldChange('pump', {
                       target: 'flow',
-                      pressure: Math.max(phase.pump.pressure || 0, 0),
+                      pressure: Math.max(currentPressure || 0, 0),
                       flow: -1,
                     })
                   }
@@ -301,7 +301,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     type='number'
                     step='0.01'
                     min={mode === 'pressure' ? '0.1' : '0'}
-                    value={pressure.toString()}
+                    value={currentPressure.toString()}
                     onChange={e =>
                       onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
                     }
@@ -325,7 +325,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     className='grow'
                     type='number'
                     step='0.01'
-                    value={flow.toString()}
+                    value={currentFlow.toString()}
                     onChange={e =>
                       onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
                     }

@@ -22,6 +22,7 @@ import { BeansPage } from './pages/Beans/index.jsx';
 import { Autotune } from './pages/Autotune/index.jsx';
 import { ShotHistory } from './pages/ShotHistory/index.jsx';
 import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
+import { ShotToProfile } from './pages/ShotToProfile/index.jsx';
 import { StatisticsPage } from './pages/Statistics/index.jsx';
 
 const apiService = new ApiService();
@@ -144,6 +145,14 @@ function AppContent() {
                     component={props => (
                       <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
                         <ShotAnalyzer {...props} />
+                      </PageShell>
+                    )}
+                  />
+                  <Route
+                    path='/shots/:id/to-profile'
+                    component={props => (
+                      <PageShell navOpen={navOpen} onNavToggle={onNavToggle}>
+                        <ShotToProfile {...props} />
                       </PageShell>
                     )}
                   />

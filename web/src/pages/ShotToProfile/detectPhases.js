@@ -1,0 +1,70 @@
+const SMOOTH_WINDOW = 8;   // ~2 s rolling average at 250 ms/sample
+const MIN_GAP = 20;        // ~5 s minimum between boundaries
+const SUSTAIN = 3;         // derivative sign must hold for this many samples
+const MAX_BOUNDARIES = 5;  // allow up to 6 phases (5 split points)
+
+/**
+ * @param {Array} samples - parsed ShotLogSample array (fields: cp, fl, t)
+ * @param {boolean} isFlowTargeted - true when the shot used a flow target
+ * @returns {number[]} sorted sample indices where phase boundaries are placed
+ */
+export function detectPhases(samples, isFlowTargeted = false) {
+  if (samples.length < SMOOTH_WINDOW * 2) return [];
+
+  const raw = samples.map(s => (isFlowTargeted ? s.fl : s.cp));
+
+  // Rolling average smoothing
+  const smoothed = raw.map((_, i) => {
+    const lo = Math.max(0, i - SMOOTH_WINDOW);
+    const hi = Math.min(raw.length, i + SMOOTH_WINDOW + 1);
+    const slice = raw.slice(lo, hi);
+    return slice.reduce((a, b) => a + b, 0) / slice.length;
+  });
+
+  // First-order derivative
+  const deriv = smoothed.map((v, i) => (i === 0 ? 0 : v - smoothed[i - 1]));
+
+  // Detect sustained sign changes
+  const candidates = [];
+  let prevSign = Math.sign(deriv[1]) || 1;
+  let run = 0;
+  let runStart = 1;
+
+  for (let i = 1; i < deriv.length; i++) {
+    const s = Math.sign(deriv[i]);
+    if (s !== 0 && s === prevSign) {
+      run++;
+    } else {
+      if (s !== 0 && s !== prevSign && run >= SUSTAIN) {
+        candidates.push({ index: runStart, magnitude: Math.abs(deriv[runStart]) });
+      }
+      if (s !== 0) {
+        prevSign = s;
+        runStart = i;
+        run = 1;
+      }
+    }
+  }
+
+  // Capture final sustained run if it met the threshold
+  if (run >= SUSTAIN) {
+    candidates.push({ index: runStart, magnitude: Math.abs(deriv[runStart]) });
+  }
+
+  // Merge boundaries closer than MIN_GAP (keep larger magnitude)
+  const merged = [];
+  for (const c of candidates) {
+    if (merged.length === 0 || c.index - merged[merged.length - 1].index >= MIN_GAP) {
+      merged.push({ ...c });
+    } else if (c.magnitude > merged[merged.length - 1].magnitude) {
+      merged[merged.length - 1] = { ...c };
+    }
+  }
+
+  // Keep at most MAX_BOUNDARIES by magnitude, then re-sort by position
+  return merged
+    .sort((a, b) => b.magnitude - a.magnitude)
+    .slice(0, MAX_BOUNDARIES)
+    .sort((a, b) => a.index - b.index)
+    .map(c => c.index);
+}
