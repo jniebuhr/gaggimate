@@ -252,3 +252,56 @@ test('standalone keyframe round trip preserves adaptive false transitions', () =
   assert.equal(roundTrip.phases[1].transition.type, 'linear');
   assert.equal(roundTrip.phases[1].transition.adaptive, false);
 });
+
+test('adding a marker to a legacy profile keeps synthesized metadata aligned', () => {
+  const legacy = {
+    ...baseProfile,
+    phases: [
+      {
+        ...baseProfile.phases[1],
+        name: 'Legacy A',
+        valve: 2,
+        duration: 8,
+        targets: [{ curve: 'legacy-a' }],
+        transition: { type: 'linear', duration: 8, adaptive: false },
+      },
+      {
+        ...baseProfile.phases[1],
+        name: 'Legacy B',
+        valve: 3,
+        duration: 12,
+        targets: [{ curve: 'legacy-b' }],
+        transition: { type: 'ease-in', duration: 12, adaptive: true },
+      },
+    ],
+  };
+
+  const result = addKeyframeAtTime(legacy, 3);
+
+  assert.deepEqual(result.profile.phases.map(phase => phase.duration), [0, 3, 5, 12]);
+  assert.deepEqual(result.profile.phases.map(phase => phase.valve), [2, 2, 2, 3]);
+  assert.deepEqual(result.profile.phases.map(phase => phase.targets[0]?.curve), [
+    'legacy-a',
+    'legacy-a',
+    'legacy-a',
+    'legacy-b',
+  ]);
+  assert.deepEqual(result.profile.phases.map(phase => phase.transition.adaptive), [
+    false,
+    false,
+    false,
+    true,
+  ]);
+});
+
+test('updating a segment applies metadata field patches to the runnable phase', () => {
+  const result = updateKeyframeSegment(baseProfile, 0, {
+    phase: 'water',
+    valve: 0,
+    targets: [{ curve: 'edited' }],
+  });
+
+  assert.equal(result.profile.phases[1].phase, 'water');
+  assert.equal(result.profile.phases[1].valve, 0);
+  assert.deepEqual(result.profile.phases[1].targets, [{ curve: 'edited' }]);
+});

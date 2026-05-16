@@ -49,6 +49,37 @@ function cloneTargets(targets) {
   return Array.isArray(targets) ? [...targets] : [];
 }
 
+function hasInitialSetupPhase(phases) {
+  return toNumber(phases[0]?.duration, MIN_PHASE_DURATION) === 0;
+}
+
+function getMarkerAlignedMetadata(profile) {
+  const phases = Array.isArray(profile?.phases) ? profile.phases : [];
+  if (phases.length === 0) {
+    return [];
+  }
+
+  return hasInitialSetupPhase(phases) ? [...phases] : [phases[0], ...phases];
+}
+
+function applyMetadataPatch(metadata, patch) {
+  const next = { ...metadata };
+
+  if (patch.phase !== undefined) {
+    next.phase = patch.phase;
+  }
+
+  if (patch.valve !== undefined) {
+    next.valve = patch.valve;
+  }
+
+  if (patch.targets !== undefined) {
+    next.targets = cloneTargets(patch.targets);
+  }
+
+  return next;
+}
+
 function phaseToMarker(phase, time, fallback = DEFAULT_MARKER, index = 0) {
   const pump = readPump(phase?.pump, fallback);
 
@@ -78,11 +109,11 @@ export function profileToKeyframes(profile) {
     ];
   }
 
-  const hasInitialSetupPhase = toNumber(phases[0]?.duration, MIN_PHASE_DURATION) === 0;
+  const hasSetupPhase = hasInitialSetupPhase(phases);
   const markers = [];
   let time = 0;
 
-  if (hasInitialSetupPhase) {
+  if (hasSetupPhase) {
     markers.push(phaseToMarker(phases[0], 0, DEFAULT_MARKER, 0));
     for (let index = 1; index < phases.length; index++) {
       time += Math.max(MIN_PHASE_DURATION, toNumber(phases[index].duration, MIN_PHASE_DURATION));
@@ -181,8 +212,9 @@ export function addKeyframeAtTime(profile, time) {
     { ...source, time: clampedTime, name: `Phase ${markers.length}`, __insertionToken: insertionToken },
   ]);
   const insertedIndex = nextMarkers.findIndex(marker => marker.__insertionToken === insertionToken);
-  const sourceMetadataIndex = Math.min(insertAfter + 1, (profile?.phases?.length ?? 0) - 1);
-  const nextMetadata = Array.isArray(profile?.phases) ? [...profile.phases] : [];
+  const alignedMetadata = getMarkerAlignedMetadata(profile);
+  const sourceMetadataIndex = Math.min(insertAfter + 1, alignedMetadata.length - 1);
+  const nextMetadata = [...alignedMetadata];
 
   if (insertedIndex >= 0 && nextMetadata.length > 0) {
     nextMetadata.splice(
@@ -214,7 +246,7 @@ export function moveKeyframeTime(profile, markerIndex, time) {
   );
 
   return {
-    profile: keyframesToProfile(profile, nextMarkers, profile?.phases),
+    profile: keyframesToProfile(profile, nextMarkers, getMarkerAlignedMetadata(profile)),
     selectedSegmentIndex: markerIndex - 1,
   };
 }
@@ -227,9 +259,7 @@ export function removeKeyframeAtIndex(profile, markerIndex) {
   }
 
   const nextMarkers = markers.filter((_, index) => index !== markerIndex);
-  const nextMetadata = Array.isArray(profile?.phases)
-    ? profile.phases.filter((_, index) => index !== markerIndex)
-    : [];
+  const nextMetadata = getMarkerAlignedMetadata(profile).filter((_, index) => index !== markerIndex);
 
   return {
     profile: keyframesToProfile(profile, nextMarkers, nextMetadata),
@@ -243,9 +273,14 @@ export function updateKeyframeSegment(profile, segmentIndex, patch) {
   const nextMarkers = markers.map((marker, index) =>
     index === markerIndex ? { ...marker, ...compactPatch(patch) } : marker,
   );
+  const nextMetadata = getMarkerAlignedMetadata(profile);
+
+  if (nextMetadata[markerIndex]) {
+    nextMetadata[markerIndex] = applyMetadataPatch(nextMetadata[markerIndex], patch);
+  }
 
   return {
-    profile: keyframesToProfile(profile, nextMarkers, profile?.phases),
+    profile: keyframesToProfile(profile, nextMarkers, nextMetadata),
     selectedSegmentIndex: segmentIndex,
   };
 }
