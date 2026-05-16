@@ -12,6 +12,7 @@ import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons/faCodeBranch';
 import ShotNotesCard from './ShotNotesCard.jsx';
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 
@@ -20,6 +21,7 @@ import { visualizerService } from '../../services/VisualizerService.js';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { formatTenPointRating, getRatingFillPercent } from '../../utils/ratings.js';
+import { useLocation } from 'preact-iso';
 
 function round2(v) {
   if (v == null || Number.isNaN(v)) return v;
@@ -28,6 +30,8 @@ function round2(v) {
 
 export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) {
   const apiService = useContext(ApiServiceContext);
+  const location = useLocation();
+  const isManualShot = !shot.profileId || shot.profileId.trim() === '';
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
   const [expanded, setExpanded] = useState(false);
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
@@ -231,6 +235,17 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                   >
                     <FontAwesomeIcon icon={faUpload} className='text-[12px]' />
                   </button>
+                  {isManualShot && (
+                    <button
+                      onClick={() => location.route(`/shots/${shot.id}/to-profile`)}
+                      className='nd-action-btn'
+                      style={{ width: '32px', height: '32px' }}
+                      aria-label='Save as profile'
+                      title='Save as profile'
+                    >
+                      <FontAwesomeIcon icon={faCodeBranch} className='text-[12px]' />
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       confirmOrDelete(() => onDelete(shot.id));
