@@ -17,6 +17,7 @@
  * @returns {Object}  profile object ready to pass to ProfileEdit
  */
 export function buildProfile(profileName, segments) {
+  if (!segments?.length) throw new Error('buildProfile requires at least one segment');
   const firstTemp = segments[0]?.temperature ?? 93;
 
   return {
