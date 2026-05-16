@@ -1,7 +1,7 @@
 const SMOOTH_WINDOW = 8;   // ~2 s rolling average at 250 ms/sample
 const MIN_GAP = 20;        // ~5 s minimum between boundaries
 const SUSTAIN = 3;         // derivative sign must hold for this many samples
-const MAX_BOUNDARIES = 5;  // cap phases at 6
+const MAX_BOUNDARIES = 5;  // allow up to 6 phases (5 split points)
 
 /**
  * @param {Array} samples - parsed ShotLogSample array (fields: cp, fl, t)
@@ -44,6 +44,11 @@ export function detectPhases(samples, isFlowTargeted = false) {
         run = 1;
       }
     }
+  }
+
+  // Capture final sustained run if it met the threshold
+  if (run >= SUSTAIN) {
+    candidates.push({ index: runStart, magnitude: Math.abs(deriv[runStart]) });
   }
 
   // Merge boundaries closer than MIN_GAP (keep larger magnitude)
