@@ -16,7 +16,7 @@ function avg(samples, field) {
 }
 
 function isFlowTargetedShot(samples) {
-  return avg(samples, 'tf') > 0 && avg(samples, 'tp') === 0;
+  return avg(samples, 'tf') > 0 && avg(samples, 'tp') < 0.1;
 }
 
 function boundariesToSegments(boundaries, samples) {

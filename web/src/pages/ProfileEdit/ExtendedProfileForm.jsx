@@ -106,7 +106,8 @@ export function ExtendedProfileForm(props) {
 
   const onMarkerAdd = time => applyKeyframeResult(addKeyframeAtTime(data, time));
   const onMarkerMove = (markerIndex, time) => applyKeyframeResult(moveKeyframeTime(data, markerIndex, time));
-  const onSegmentSelect = segmentIndex => setCurrentPhaseIndex(segmentIndex + 1);
+  const onSegmentSelect = segmentIndex =>
+    setCurrentPhaseIndex(segmentIndex + (hasInitialSetupPhase(data.phases) ? 1 : 0));
 
   const currentPhase = data.phases[currentPhaseIndex];
 

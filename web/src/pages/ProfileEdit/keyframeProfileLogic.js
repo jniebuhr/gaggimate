@@ -149,9 +149,9 @@ export function profileToKeyframes(profile) {
 export function keyframesToProfile(profile, markers, segmentMetadata = []) {
   const sorted = normalizeKeyframes(markers);
   const phases = sorted.map((marker, index) => {
-    const nextTime = sorted[index]?.time ?? 0;
+    const currentTime = sorted[index]?.time ?? 0;
     const prevTime = index === 0 ? 0 : sorted[index - 1].time;
-    const duration = index === 0 ? 0 : Math.max(MIN_PHASE_DURATION, nextTime - prevTime);
+    const duration = index === 0 ? 0 : Math.max(MIN_PHASE_DURATION, currentTime - prevTime);
     const metadata = segmentMetadata[index] || {};
     const rampType = index === 0 ? 'instant' : marker.rampType || 'instant';
     const storedRampDuration = toNumber(marker.rampDuration, 0);

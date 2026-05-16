@@ -22,8 +22,13 @@ function fractionToSample(frac, total) {
 export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
   const containerRef = useRef(null);
   const dragListenersRef = useRef(null);
-  const [dragging, setDragging] = useState(null); // { markerIdx, startX, origBoundary }
+  // Keep a ref to the latest boundaries so drag handlers never close over a stale snapshot.
+  const boundariesRef = useRef(boundaries);
   const [, setResizeTick] = useState(0);
+
+  useEffect(() => {
+    boundariesRef.current = boundaries;
+  }, [boundaries]);
 
   const total = shot.samples?.length ?? 1;
 
@@ -61,30 +66,34 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
     e => {
       // Clicking the overlay (not a marker) adds a new boundary
       if (e.target !== e.currentTarget) return;
-      if (boundaries.length >= 5) return; // cap at MAX_BOUNDARIES
+      if (boundariesRef.current.length >= 5) return; // cap at MAX_BOUNDARIES
       const newIdx = pixelToSample(e.clientX);
-      if (boundaries.includes(newIdx)) return;
-      const next = [...boundaries, newIdx].sort((a, b) => a - b);
+      if (boundariesRef.current.includes(newIdx)) return;
+      const next = [...boundariesRef.current, newIdx].sort((a, b) => a - b);
       onBoundariesChange(next);
     },
-    [boundaries, onBoundariesChange, pixelToSample],
+    [onBoundariesChange, pixelToSample],
   );
 
   const onMarkerMouseDown = useCallback(
     (e, markerIdx) => {
       e.stopPropagation();
       e.preventDefault();
-      setDragging({ markerIdx, origBoundary: boundaries[markerIdx] });
 
       function onMove(ev) {
-        const newSample = pixelToSample(ev.clientX);
-        const next = boundaries.map((b, i) => (i === markerIdx ? newSample : b));
-        onBoundariesChange(next.sort((a, b) => a - b));
+        const current = boundariesRef.current;
+        const rawSample = pixelToSample(ev.clientX);
+        // Clamp to the gap between neighbouring markers so the order never changes,
+        // keeping markerIdx stable for the entire drag.
+        const minSample = markerIdx > 0 ? current[markerIdx - 1] + 1 : 0;
+        const maxSample = markerIdx < current.length - 1 ? current[markerIdx + 1] - 1 : total - 1;
+        const clamped = Math.max(minSample, Math.min(maxSample, rawSample));
+        const next = current.map((b, i) => (i === markerIdx ? clamped : b));
+        onBoundariesChange(next);
       }
 
       function onUp() {
         dragListenersRef.current = null;
-        setDragging(null);
         window.removeEventListener('mousemove', onMove);
         window.removeEventListener('mouseup', onUp);
       }
@@ -93,20 +102,17 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
       window.addEventListener('mousemove', onMove);
       window.addEventListener('mouseup', onUp);
     },
-    [boundaries, onBoundariesChange, pixelToSample],
+    [onBoundariesChange, pixelToSample, total],
   );
 
   const onMarkerRemove = useCallback(
     (e, markerIdx) => {
       e.stopPropagation();
       e.preventDefault();
-      onBoundariesChange(boundaries.filter((_, i) => i !== markerIdx));
+      onBoundariesChange(boundariesRef.current.filter((_, i) => i !== markerIdx));
     },
-    [boundaries, onBoundariesChange],
+    [onBoundariesChange],
   );
-
-  // Suppress unused variable warning — dragging is used to track drag state
-  void dragging;
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
