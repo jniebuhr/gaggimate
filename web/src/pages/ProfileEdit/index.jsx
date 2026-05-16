@@ -21,54 +21,55 @@ export function ProfileEdit() {
   const { params } = useRoute();
   const [data, setData] = useState(null);
   useEffect(() => {
-    async function fetchData() {
-      if (params.id === 'new') {
-        const pending = consumePendingProfile();
-        setData(
-          pending ?? {
-            label: 'New Profile',
-            description: '',
-            temperature: 93,
-            phases: [
-              {
-                name: 'Pump',
-                phase: 'preinfusion',
-                valve: 1,
-                pump: 100,
-                duration: 3,
-                transition: { type: 'instant', duration: 0, adaptive: true },
-                targets: [],
-              },
-              {
-                name: 'Bloom',
-                phase: 'preinfusion',
-                valve: 1,
-                pump: 0,
-                duration: 5,
-                transition: { type: 'instant', duration: 0, adaptive: true },
-                targets: [],
-              },
-              {
-                name: 'Pump',
-                phase: 'brew',
-                valve: 1,
-                pump: 100,
-                duration: 20,
-                targets: [{ type: 'volumetric', value: 36 }],
-                transition: { type: 'instant', duration: 0, adaptive: true },
-              },
-            ],
+    if (params.id !== 'new') return;
+    const pending = consumePendingProfile();
+    setData(
+      pending ?? {
+        label: 'New Profile',
+        description: '',
+        temperature: 93,
+        phases: [
+          {
+            name: 'Pump',
+            phase: 'preinfusion',
+            valve: 1,
+            pump: 100,
+            duration: 3,
+            transition: { type: 'instant', duration: 0, adaptive: true },
+            targets: [],
           },
-        );
-        setLoading(false);
-      } else if (connected.value) {
-        const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
-        setData(response.profile);
-        setLoading(false);
-      }
+          {
+            name: 'Bloom',
+            phase: 'preinfusion',
+            valve: 1,
+            pump: 0,
+            duration: 5,
+            transition: { type: 'instant', duration: 0, adaptive: true },
+            targets: [],
+          },
+          {
+            name: 'Pump',
+            phase: 'brew',
+            valve: 1,
+            pump: 100,
+            duration: 20,
+            targets: [{ type: 'volumetric', value: 36 }],
+            transition: { type: 'instant', duration: 0, adaptive: true },
+          },
+        ],
+      },
+    );
+    setLoading(false);
+  }, [params.id]);
+  useEffect(() => {
+    if (params.id === 'new' || !connected.value) return;
+    async function fetchData() {
+      const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
+      setData(response.profile);
+      setLoading(false);
     }
     fetchData();
-  }, [params.id, setData, connected.value, apiService]);
+  }, [params.id, connected.value, apiService]);
   const onSave = useCallback(
     async data => {
       setSaving(true);

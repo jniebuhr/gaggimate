@@ -1,4 +1,4 @@
-// web/src/pages/ShotToProfile/buildProfile.js
+import uuidv4 from '../../utils/uuid.js';
 
 /**
  * @typedef {Object} Segment
@@ -21,7 +21,7 @@ export function buildProfile(profileName, segments) {
   const firstTemp = segments[0]?.temperature ?? 93;
 
   return {
-    id: crypto.randomUUID(),
+    id: uuidv4(),
     label: profileName,
     description: '',
     type: 'pro',
