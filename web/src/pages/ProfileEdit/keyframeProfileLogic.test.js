@@ -320,3 +320,38 @@ test('updates selected segment values through next marker semantics', () => {
   assert.equal(result.profile.phases[1].pump.flow, 3);
   assert.equal(result.profile.phases[1].transition.type, 'ease-in-out');
 });
+
+test('duration patch on setup-phase profile moves the correct marker', () => {
+  const profile = {
+    ...baseProfile,
+    phases: [
+      { ...baseProfile.phases[0], duration: 0 },
+      { ...baseProfile.phases[1], duration: 5 },
+      { ...baseProfile.phases[1], name: 'Phase 2', duration: 20 },
+    ],
+  };
+
+  const result = updateKeyframeSegment(profile, 0, { duration: 7 });
+
+  // Moving marker 1 from t=5 to t=7 sets phase 1 to 7s; phase 2 shrinks to 25-7=18s
+  assert.deepEqual(result.profile.phases.map(p => p.duration), [0, 7, 18]);
+});
+
+test('duration patch on non-setup profile moves the correct marker via segmentIndex=index', () => {
+  // Simulates what onPhaseChange does for a no-setup profile at form index 1:
+  // hasInitialSetupPhase is false, so segmentIndex = index = 1
+  const noSetupProfile = {
+    ...baseProfile,
+    phases: [
+      { ...baseProfile.phases[1], name: 'Phase A', duration: 3 },
+      { ...baseProfile.phases[1], name: 'Phase B', duration: 5 },
+      { ...baseProfile.phases[1], name: 'Phase C', duration: 20 },
+    ],
+  };
+
+  // segmentIndex = 1 (form index 1 for no-setup profile)
+  const result = updateKeyframeSegment(noSetupProfile, 1, { duration: 7 });
+
+  // Marker 2 moves from t=8 to t=10; Phase B becomes 7s, Phase C shrinks to 28-10=18s
+  assert.deepEqual(result.profile.phases.map(p => p.duration), [0, 3, 7, 18]);
+});

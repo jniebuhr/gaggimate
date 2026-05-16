@@ -49,7 +49,7 @@ function cloneTargets(targets) {
   return Array.isArray(targets) ? [...targets] : [];
 }
 
-function hasInitialSetupPhase(phases) {
+export function hasInitialSetupPhase(phases) {
   return toNumber(phases[0]?.duration, MIN_PHASE_DURATION) === 0;
 }
 

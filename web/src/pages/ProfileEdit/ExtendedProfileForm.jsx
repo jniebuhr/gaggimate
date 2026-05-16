@@ -3,6 +3,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { ProfileKeyframeChart } from './ProfileKeyframeChart.jsx';
 import {
   addKeyframeAtTime,
+  hasInitialSetupPhase,
   moveKeyframeTime,
   removeKeyframeAtIndex,
   updateKeyframeSegment,
@@ -28,6 +29,10 @@ export function ExtendedProfileForm(props) {
 
   const onPhaseChange = (index, value) => {
     if (index > 0) {
+      // For profiles without a zero-duration setup phase, profileToKeyframes synthesizes a
+      // leading marker, shifting the marker index by 1 relative to the phase array. Use
+      // `index` directly in that case so the right marker is targeted.
+      const segmentIndex = hasInitialSetupPhase(data.phases) ? index - 1 : index;
       const pumpPatch = value.pump && typeof value.pump === 'object'
         ? {
             pressure: value.pump.pressure,
@@ -35,7 +40,7 @@ export function ExtendedProfileForm(props) {
             targetMode: value.pump.target,
           }
         : {};
-      const result = updateKeyframeSegment(data, index - 1, {
+      const result = updateKeyframeSegment(data, segmentIndex, {
         name: value.name,
         phase: value.phase,
         valve: value.valve,
@@ -48,6 +53,7 @@ export function ExtendedProfileForm(props) {
         targets: value.targets,
       });
       onChange(result.profile);
+      setCurrentPhaseIndex(result.selectedSegmentIndex + 1);
       return;
     }
 
