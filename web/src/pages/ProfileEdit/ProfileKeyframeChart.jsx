@@ -23,11 +23,14 @@ function eventToTime(chart, event) {
   return xScale.getValueForPixel(x);
 }
 
+function getValueScale(chart, marker) {
+  return marker.targetMode === 'flow' ? chart?.scales?.y1 : chart?.scales?.y;
+}
+
 function markerToValueTop(chart, marker) {
-  const isFlow = marker.targetMode === 'flow';
-  const scale = isFlow ? chart?.scales?.y1 : chart?.scales?.y;
+  const scale = getValueScale(chart, marker);
   if (!scale) return null;
-  return scale.getPixelForValue(isFlow ? marker.flow : marker.pressure);
+  return scale.getPixelForValue(marker.targetMode === 'flow' ? marker.flow : marker.pressure);
 }
 
 function markerToTempTop(chart, marker) {
@@ -37,8 +40,7 @@ function markerToTempTop(chart, marker) {
 }
 
 function eventToValue(chart, event, marker) {
-  const isFlow = marker.targetMode === 'flow';
-  const scale = isFlow ? chart?.scales?.y1 : chart?.scales?.y;
+  const scale = getValueScale(chart, marker);
   if (!scale) return null;
   const rect = chart.canvas.getBoundingClientRect();
   const y = event.clientY - rect.top;
@@ -129,6 +131,7 @@ export function ProfileKeyframeChart({
         const isFlow = marker.targetMode === 'flow';
         onUpdateMarkerValue(markerIndex, isFlow ? { flow: value } : { pressure: value });
       } else if (type === 'temperature') {
+        if (!markers[markerIndex]) return;
         const temp = eventToTemperature(chart, event);
         if (temp === null) return;
         onUpdateMarkerValue(markerIndex, { temperature: temp });
