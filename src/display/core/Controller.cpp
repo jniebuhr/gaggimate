@@ -408,6 +408,8 @@ float Controller::getTargetTemp() const {
         return settings.getTargetSteamTemp();
     case MODE_WATER:
         return settings.getTargetWaterTemp();
+    case MODE_STANDBY:
+        return settings.getStandbyTemperature();
     default:
         return 0;
     }

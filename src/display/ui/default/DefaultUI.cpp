@@ -502,6 +502,14 @@ void DefaultUI::setupReactive() {
                           &updateAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
                           [=]() {
+                              bool heating = targetTemp > 0;
+                              ui_object_set_themeable_style_property(
+                                  ui_StandbyScreen_touchIcon, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
+                                  heating && heatingFlash ? _ui_theme_color_Heating : _ui_theme_color_NiceWhite);
+                          },
+                          &targetTemp, &heatingFlash);
+    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
+                          [=]() {
                               bool deactivated = true;
                               if (updateActive) {
                                   lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Updating...");
