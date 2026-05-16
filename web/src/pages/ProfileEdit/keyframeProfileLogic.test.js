@@ -5,6 +5,7 @@ import {
   addKeyframeAtTime,
   keyframesToProfile,
   moveKeyframeTime,
+  normalizeKeyframes,
   profileToKeyframes,
   removeKeyframeAtIndex,
   updateKeyframeSegment,
@@ -107,4 +108,91 @@ test('editing segment target mode preserves the other value as a limit', () => {
   assert.equal(phase.pump.flow, 3.2);
   assert.equal(phase.transition.type, 'ease-out');
   assert.equal(phase.transition.duration, 10);
+});
+
+test('adding a marker duplicates matching segment metadata without shifting later phases', () => {
+  const profile = {
+    ...baseProfile,
+    phases: [
+      {
+        ...baseProfile.phases[0],
+        valve: 1,
+        targets: [{ curve: 'setup' }],
+        transition: { type: 'instant', duration: 0, adaptive: true },
+      },
+      {
+        ...baseProfile.phases[1],
+        name: 'First Runnable',
+        valve: 2,
+        duration: 8,
+        targets: [{ curve: 'first' }],
+        transition: { type: 'linear', duration: 8, adaptive: false },
+      },
+      {
+        ...baseProfile.phases[1],
+        name: 'Second Runnable',
+        valve: 3,
+        duration: 12,
+        targets: [{ curve: 'second' }],
+        transition: { type: 'ease-in', duration: 12, adaptive: true },
+      },
+    ],
+  };
+
+  const result = addKeyframeAtTime(profile, 3);
+
+  assert.deepEqual(result.profile.phases.map(phase => phase.duration), [0, 3, 5, 12]);
+  assert.deepEqual(result.profile.phases.map(phase => phase.valve), [1, 2, 2, 3]);
+  assert.deepEqual(result.profile.phases.map(phase => phase.targets[0]?.curve), [
+    'setup',
+    'first',
+    'first',
+    'second',
+  ]);
+  assert.deepEqual(result.profile.phases.map(phase => phase.transition.adaptive), [
+    true,
+    false,
+    false,
+    true,
+  ]);
+});
+
+test('normalizing duplicate marker times accumulates minimum spacing', () => {
+  const markers = normalizeKeyframes([{ time: 0 }, { time: 0 }, { time: 0 }]);
+
+  assert.deepEqual(markers.map(marker => marker.time), [0, 0.1, 0.2]);
+});
+
+test('numeric pump phases migrate to explicit pressure flow keyframes after edit', () => {
+  const profile = {
+    ...baseProfile,
+    phases: [
+      { ...baseProfile.phases[0], pump: 7 },
+      { ...baseProfile.phases[1], pump: 6 },
+    ],
+  };
+
+  const markers = profileToKeyframes(profile);
+  const result = updateKeyframeSegment(profile, 0, { pressure: 8, flow: 3.5 });
+
+  assert.equal(markers[0].pressure, 9);
+  assert.equal(markers[0].flow, 4);
+  assert.equal(markers[1].pressure, 9);
+  assert.equal(markers[1].flow, 4);
+  assert.deepEqual(result.profile.phases.map(phase => phase.pump), [
+    { target: 'pressure', pressure: 9, flow: 4 },
+    { target: 'pressure', pressure: 8, flow: 3.5 },
+  ]);
+});
+
+test('keyframesToProfile clones metadata target arrays', () => {
+  const markers = profileToKeyframes(baseProfile);
+  const metadataTargets = [{ curve: 'shared' }];
+  const profile = keyframesToProfile(baseProfile, markers, [
+    baseProfile.phases[0],
+    { ...baseProfile.phases[1], targets: metadataTargets },
+  ]);
+
+  assert.deepEqual(profile.phases[1].targets, metadataTargets);
+  assert.notEqual(profile.phases[1].targets, metadataTargets);
 });

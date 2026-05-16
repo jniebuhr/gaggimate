@@ -45,6 +45,10 @@ function compactPatch(patch) {
   return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
 }
 
+function cloneTargets(targets) {
+  return Array.isArray(targets) ? [...targets] : [];
+}
+
 function phaseToMarker(phase, time, fallback = DEFAULT_MARKER, index = 0) {
   const pump = readPump(phase?.pump, fallback);
 
@@ -59,7 +63,7 @@ function phaseToMarker(phase, time, fallback = DEFAULT_MARKER, index = 0) {
     rampDuration: toNumber(phase?.transition?.duration, 0),
     phase: phase?.phase || 'brew',
     valve: phase?.valve ?? 1,
-    targets: Array.isArray(phase?.targets) ? [...phase.targets] : [],
+    targets: cloneTargets(phase?.targets),
   };
 }
 
@@ -127,9 +131,9 @@ export function keyframesToProfile(profile, markers, segmentMetadata = []) {
         adaptive: metadata.transition?.adaptive ?? true,
       },
       targets: Array.isArray(metadata.targets)
-        ? metadata.targets
+        ? cloneTargets(metadata.targets)
         : Array.isArray(marker.targets)
-          ? marker.targets
+          ? cloneTargets(marker.targets)
           : [],
       temperature: toNumber(marker.temperature, 0),
     };
@@ -144,17 +148,20 @@ export function keyframesToProfile(profile, markers, segmentMetadata = []) {
 
 export function normalizeKeyframes(markers) {
   const sorted = [...markers].sort((a, b) => toNumber(a.time, 0) - toNumber(b.time, 0));
+  const normalized = [];
 
-  return sorted.map((marker, index) => {
-    const previousTime = index === 0 ? 0 : toNumber(sorted[index - 1].time, 0);
+  for (const [index, marker] of sorted.entries()) {
+    const previousTime = index === 0 ? 0 : normalized[index - 1].time;
     const minTime = index === 0 ? 0 : previousTime + MIN_PHASE_DURATION;
 
-    return {
+    normalized.push({
       ...DEFAULT_MARKER,
       ...marker,
       time: index === 0 ? 0 : Math.max(minTime, toNumber(marker.time, minTime)),
-    };
-  });
+    });
+  }
+
+  return normalized;
 }
 
 export function addKeyframeAtTime(profile, time) {
@@ -167,14 +174,26 @@ export function addKeyframeAtTime(profile, time) {
   }
 
   const source = markers[Math.min(insertAfter + 1, markers.length - 1)] || markers[markers.length - 1];
+  const insertionToken = {};
   const nextMarkers = normalizeKeyframes([
     ...markers,
-    { ...source, time: clampedTime, name: `Phase ${markers.length}` },
+    { ...source, time: clampedTime, name: `Phase ${markers.length}`, __insertionToken: insertionToken },
   ]);
+  const insertedIndex = nextMarkers.findIndex(marker => marker.__insertionToken === insertionToken);
+  const sourceMetadataIndex = Math.min(insertAfter + 1, (profile?.phases?.length ?? 0) - 1);
+  const nextMetadata = Array.isArray(profile?.phases) ? [...profile.phases] : [];
+
+  if (insertedIndex >= 0 && nextMetadata.length > 0) {
+    nextMetadata.splice(
+      insertedIndex,
+      0,
+      nextMetadata[sourceMetadataIndex] || nextMetadata[nextMetadata.length - 1],
+    );
+  }
 
   return {
-    profile: keyframesToProfile(profile, nextMarkers, profile?.phases),
-    selectedSegmentIndex: Math.max(0, nextMarkers.findIndex(marker => marker.time === clampedTime)),
+    profile: keyframesToProfile(profile, nextMarkers, nextMetadata),
+    selectedSegmentIndex: Math.max(0, insertedIndex),
   };
 }
 
