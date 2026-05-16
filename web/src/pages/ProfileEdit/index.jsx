@@ -23,6 +23,8 @@ export function ProfileEdit() {
   useEffect(() => {
     if (params.id !== 'new') return;
     const pending = consumePendingProfile();
+    // If pending is non-null it always has type:'pro' (set by buildProfile), which causes
+    // ProfileTypeSelection to be skipped below. This is load-bearing: do not omit type.
     setData(
       pending ?? {
         label: 'New Profile',

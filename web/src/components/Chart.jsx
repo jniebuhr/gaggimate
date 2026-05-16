@@ -4,11 +4,13 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 Chart.register(annotationPlugin);
 
-export function ChartComponent({ data, className, chartClassName }) {
+export function ChartComponent({ data, className, chartClassName, onChartReady }) {
   const [chart, setChart] = useState(null);
   const ref = useRef();
   const dataRef = useRef(data);
   dataRef.current = data;
+  const onChartReadyRef = useRef(onChartReady);
+  onChartReadyRef.current = onChartReady;
 
   // Create chart on mount
   useEffect(() => {
@@ -16,6 +18,7 @@ export function ChartComponent({ data, className, chartClassName }) {
 
     const newChart = new Chart(ref.current, dataRef.current);
     setChart(newChart);
+    onChartReadyRef.current?.(newChart);
 
     // Cleanup function to destroy chart on unmount
     return () => {

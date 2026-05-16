@@ -37,7 +37,8 @@ export function detectPhases(samples, isFlowTargeted = false) {
       run++;
     } else {
       if (s !== 0 && s !== prevSign && run >= SUSTAIN) {
-        candidates.push({ index: runStart, magnitude: Math.abs(deriv[runStart]) });
+        // Use i (start of new direction) as the boundary, not runStart (start of old run)
+        candidates.push({ index: i, magnitude: Math.abs(deriv[i]) });
         hadSignChange = true;
       }
       if (s !== 0) {

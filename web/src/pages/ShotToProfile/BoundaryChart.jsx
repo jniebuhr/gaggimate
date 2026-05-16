@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { HistoryChart } from '../ShotHistory/HistoryChart.jsx';
 
-const CHART_LEFT_PAD = 60;  // approximate Chart.js y-axis width
-const CHART_RIGHT_PAD = 20; // approximate Chart.js right padding
+const CHART_LEFT_PAD = 60;  // fallback when chart instance is not yet available
+const CHART_RIGHT_PAD = 20; // fallback
 
 function sampleToFraction(idx, total) {
   return idx / Math.max(1, total - 1);
@@ -22,7 +22,12 @@ function fractionToSample(frac, total) {
 export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
   const containerRef = useRef(null);
   const dragListenersRef = useRef(null);
-  const [dragging, setDragging] = useState(null); // { markerIdx, startX, origBoundary }
+  // Tracks { currentValue: number } during a drag so onMove always sees the latest position.
+  const draggingRef = useRef(null);
+  // Always holds the latest boundaries array so pointer-event closures avoid stale captures.
+  const boundariesRef = useRef(boundaries);
+  boundariesRef.current = boundaries;
+  const chartInstanceRef = useRef(null);
   const [, setResizeTick] = useState(0);
 
   const total = shot.samples?.length ?? 1;
@@ -30,8 +35,8 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
   useEffect(() => {
     return () => {
       if (dragListenersRef.current) {
-        window.removeEventListener('mousemove', dragListenersRef.current.onMove);
-        window.removeEventListener('mouseup', dragListenersRef.current.onUp);
+        window.removeEventListener('pointermove', dragListenersRef.current.onMove);
+        window.removeEventListener('pointerup', dragListenersRef.current.onUp);
         dragListenersRef.current = null;
       }
     };
@@ -44,77 +49,89 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
     return () => ro.disconnect();
   }, []);
 
+  const handleChartReady = useCallback(chart => {
+    chartInstanceRef.current = chart;
+  }, []);
+
+  // Returns the pixel bounds of the Chart.js plot area within the container.
+  // Falls back to the hardcoded estimates when the chart hasn't rendered yet.
+  const getChartBounds = useCallback(() => {
+    const chartArea = chartInstanceRef.current?.chartArea;
+    const containerWidth = containerRef.current?.offsetWidth ?? 400;
+    const chartLeft = chartArea?.left ?? CHART_LEFT_PAD;
+    const chartRight = chartArea?.right ?? containerWidth - CHART_RIGHT_PAD;
+    return { chartLeft, chartWidth: Math.max(1, chartRight - chartLeft) };
+  }, []);
+
   const pixelToSample = useCallback(
     clientX => {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return 0;
-      const w = containerRef.current?.offsetWidth ?? 400;
-      const contentWidth = Math.max(1, w - CHART_LEFT_PAD - CHART_RIGHT_PAD);
-      const relX = clientX - rect.left - CHART_LEFT_PAD;
-      const frac = relX / contentWidth;
+      const { chartLeft, chartWidth } = getChartBounds();
+      const frac = (clientX - rect.left - chartLeft) / chartWidth;
       return fractionToSample(frac, total);
     },
-    [total],
+    [total, getChartBounds],
   );
 
-  const onOverlayMouseDown = useCallback(
+  const onOverlayPointerDown = useCallback(
     e => {
-      // Clicking the overlay (not a marker) adds a new boundary
       if (e.target !== e.currentTarget) return;
-      if (boundaries.length >= 5) return; // cap at MAX_BOUNDARIES
+      if (boundariesRef.current.length >= 5) return;
       const newIdx = pixelToSample(e.clientX);
-      if (boundaries.includes(newIdx)) return;
-      const next = [...boundaries, newIdx].sort((a, b) => a - b);
+      if (boundariesRef.current.includes(newIdx)) return;
+      const next = [...boundariesRef.current, newIdx].sort((a, b) => a - b);
       onBoundariesChange(next);
     },
-    [boundaries, onBoundariesChange, pixelToSample],
+    [onBoundariesChange, pixelToSample],
   );
 
-  const onMarkerMouseDown = useCallback(
-    (e, markerIdx) => {
+  // markerValue is the sample index of the marker at drag-start.
+  // We track by value (not array position) so cross-marker drags stay correct after re-sorts.
+  const onMarkerPointerDown = useCallback(
+    (e, markerValue) => {
       e.stopPropagation();
       e.preventDefault();
-      setDragging({ markerIdx, origBoundary: boundaries[markerIdx] });
+      draggingRef.current = { currentValue: markerValue };
 
       function onMove(ev) {
         const newSample = pixelToSample(ev.clientX);
-        const next = boundaries.map((b, i) => (i === markerIdx ? newSample : b));
+        const { currentValue } = draggingRef.current;
+        const next = boundariesRef.current.map(b => (b === currentValue ? newSample : b));
+        draggingRef.current.currentValue = newSample;
         onBoundariesChange(next.sort((a, b) => a - b));
       }
 
       function onUp() {
         dragListenersRef.current = null;
-        setDragging(null);
-        window.removeEventListener('mousemove', onMove);
-        window.removeEventListener('mouseup', onUp);
+        draggingRef.current = null;
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
       }
 
       dragListenersRef.current = { onMove, onUp };
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onUp);
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
     },
-    [boundaries, onBoundariesChange, pixelToSample],
+    [onBoundariesChange, pixelToSample],
   );
 
   const onMarkerRemove = useCallback(
-    (e, markerIdx) => {
+    (e, markerValue) => {
       e.stopPropagation();
       e.preventDefault();
-      onBoundariesChange(boundaries.filter((_, i) => i !== markerIdx));
+      onBoundariesChange(boundariesRef.current.filter(b => b !== markerValue));
     },
-    [boundaries, onBoundariesChange],
+    [onBoundariesChange],
   );
-
-  // Suppress unused variable warning — dragging is used to track drag state
-  void dragging;
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      <HistoryChart shot={shot} />
+      <HistoryChart shot={shot} onChartReady={handleChartReady} />
 
       {/* Transparent overlay for clicks and markers */}
       <div
-        onMouseDown={onOverlayMouseDown}
+        onPointerDown={onOverlayPointerDown}
         style={{
           position: 'absolute',
           inset: 0,
@@ -122,14 +139,13 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
         }}
       >
         {containerRef.current &&
-          boundaries.map((sampleIdx, i) => {
-            const w = containerRef.current.offsetWidth;
-            const cw = Math.max(1, w - CHART_LEFT_PAD - CHART_RIGHT_PAD);
+          boundaries.map(sampleIdx => {
+            const { chartLeft, chartWidth } = getChartBounds();
             const frac = sampleToFraction(sampleIdx, total);
-            const left = CHART_LEFT_PAD + frac * cw;
+            const left = chartLeft + frac * chartWidth;
             return (
               <div
-                key={i}
+                key={sampleIdx}
                 style={{
                   position: 'absolute',
                   top: 0,
@@ -139,12 +155,13 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
                   background: 'var(--color-primary, #d71921)',
                   cursor: 'ew-resize',
                   userSelect: 'none',
+                  touchAction: 'none',
                 }}
-                onMouseDown={e => onMarkerMouseDown(e, i)}
+                onPointerDown={e => onMarkerPointerDown(e, sampleIdx)}
               >
                 {/* Remove button */}
                 <button
-                  onMouseDown={e => onMarkerRemove(e, i)}
+                  onPointerDown={e => onMarkerRemove(e, sampleIdx)}
                   style={{
                     position: 'absolute',
                     top: '4px',
@@ -161,7 +178,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
                     cursor: 'pointer',
                     padding: 0,
                   }}
-                  aria-label={`Remove boundary ${i + 1}`}
+                  aria-label={`Remove boundary ${boundaries.indexOf(sampleIdx) + 1}`}
                 >
                   ×
                 </button>

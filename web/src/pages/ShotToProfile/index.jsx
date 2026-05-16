@@ -31,7 +31,7 @@ function isFlowTargetedShot(samples) {
   return relErrFl < relErrCp;
 }
 
-function boundariesToSegments(boundaries, samples) {
+function boundariesToSegments(boundaries, samples, isFlowTargeted) {
   const breakpoints = [0, ...boundaries, samples.length];
   return breakpoints.slice(0, -1).map((start, i) => {
     const end = breakpoints[i + 1];
@@ -40,8 +40,7 @@ function boundariesToSegments(boundaries, samples) {
       slice.length > 0 && end <= samples.length && start < samples.length
         ? (samples[end - 1].t - samples[start].t) / 1000
         : 0;
-    const isFlow = isFlowTargetedShot(slice);
-    const targetType = isFlow ? 'flow' : 'pressure';
+    const targetType = isFlowTargeted ? 'flow' : 'pressure';
     const targetValue = parseFloat(
       (targetType === 'pressure' ? avg(slice, 'tp') : avg(slice, 'tf')).toFixed(
         targetType === 'pressure' ? 1 : 2,
@@ -69,9 +68,14 @@ export function ShotToProfile() {
   const [boundaries, setBoundaries] = useState(null); // null = not yet computed
   const [segments, setSegments] = useState([]);
   const [profileName, setProfileName] = useState('');
+  const [isFlowTargeted, setIsFlowTargeted] = useState(false);
 
   // Fetch and parse the shot binary
   useEffect(() => {
+    if (!Number.isInteger(shotId) || shotId <= 0) {
+      setError('Invalid shot ID');
+      return;
+    }
     const controller = new AbortController();
     async function load() {
       try {
@@ -87,11 +91,12 @@ export function ShotToProfile() {
           `Manual ${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
         );
 
-        // Run phase detection
+        // Classify the whole shot once; pass result to both detectPhases and boundariesToSegments
         const isFlow = parsed.samples.length > 0 && isFlowTargetedShot(parsed.samples);
+        setIsFlowTargeted(isFlow);
         const detected = detectPhases(parsed.samples, isFlow);
         setBoundaries(detected);
-        setSegments(boundariesToSegments(detected, parsed.samples));
+        setSegments(boundariesToSegments(detected, parsed.samples, isFlow));
       } catch (e) {
         if (e.name !== 'AbortError') setError(e.message);
       }
@@ -104,9 +109,9 @@ export function ShotToProfile() {
   const handleBoundariesChange = useCallback(
     next => {
       setBoundaries(next);
-      if (shot) setSegments(boundariesToSegments(next, shot.samples));
+      if (shot) setSegments(boundariesToSegments(next, shot.samples, isFlowTargeted));
     },
-    [shot],
+    [shot, isFlowTargeted],
   );
 
   const handleSegmentChange = useCallback((idx, patch) => {
@@ -160,7 +165,7 @@ export function ShotToProfile() {
       <div className='flex flex-row gap-3 overflow-x-auto pb-2'>
         {segments.map((seg, i) => (
           <SegmentCard
-            key={i}
+            key={seg.startIdx}
             segment={seg}
             samples={shot.samples}
             onChange={patch => handleSegmentChange(i, patch)}
