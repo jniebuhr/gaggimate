@@ -34,10 +34,10 @@ function markerToValueTop(chart, marker) {
   return scale.getPixelForValue(marker.targetMode === 'flow' ? marker.flow : marker.pressure);
 }
 
-function markerToTempTop(chart, marker) {
+function markerToTempTop(chart, temperature) {
   const scale = chart?.scales?.y2;
   if (!scale) return null;
-  return scale.getPixelForValue(marker.temperature);
+  return scale.getPixelForValue(temperature);
 }
 
 function eventToValue(chart, event, marker) {
@@ -163,7 +163,9 @@ export function ProfileKeyframeChart({
           markers.map((marker, index) => {
             const left = markerToLeft(chart, marker);
             const valueTop = markerToValueTop(chart, marker);
-            const tempTop = markerToTempTop(chart, marker);
+            const profileTemp = Number.parseFloat(data?.temperature) || 93;
+            const effectiveTemp = marker.temperature > 0 ? marker.temperature : profileTemp;
+            const tempTop = markerToTempTop(chart, effectiveTemp);
             if (left === null) return null;
             const selected = Math.max(0, index - 1) === selectedSegmentIndex;
             return (
