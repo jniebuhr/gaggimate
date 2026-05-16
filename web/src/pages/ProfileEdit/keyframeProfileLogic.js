@@ -61,6 +61,7 @@ function phaseToMarker(phase, time, fallback = DEFAULT_MARKER, index = 0) {
     targetMode: pump.targetMode,
     rampType: phase?.transition?.type || 'instant',
     rampDuration: toNumber(phase?.transition?.duration, 0),
+    adaptive: phase?.transition?.adaptive ?? true,
     phase: phase?.phase || 'brew',
     valve: phase?.valve ?? 1,
     targets: cloneTargets(phase?.targets),
@@ -128,7 +129,7 @@ export function keyframesToProfile(profile, markers, segmentMetadata = []) {
       transition: {
         type: rampType,
         duration: rampType === 'instant' ? 0 : duration,
-        adaptive: metadata.transition?.adaptive ?? true,
+        adaptive: metadata.transition?.adaptive ?? marker.adaptive ?? true,
       },
       targets: Array.isArray(metadata.targets)
         ? cloneTargets(metadata.targets)
@@ -226,9 +227,12 @@ export function removeKeyframeAtIndex(profile, markerIndex) {
   }
 
   const nextMarkers = markers.filter((_, index) => index !== markerIndex);
+  const nextMetadata = Array.isArray(profile?.phases)
+    ? profile.phases.filter((_, index) => index !== markerIndex)
+    : [];
 
   return {
-    profile: keyframesToProfile(profile, nextMarkers, profile?.phases),
+    profile: keyframesToProfile(profile, nextMarkers, nextMetadata),
     selectedSegmentIndex: Math.max(0, markerIndex - 1),
   };
 }

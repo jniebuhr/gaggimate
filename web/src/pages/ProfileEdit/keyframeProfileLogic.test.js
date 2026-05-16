@@ -196,3 +196,59 @@ test('keyframesToProfile clones metadata target arrays', () => {
   assert.deepEqual(profile.phases[1].targets, metadataTargets);
   assert.notEqual(profile.phases[1].targets, metadataTargets);
 });
+
+test('removing a marker preserves metadata for surviving later segments', () => {
+  const profile = {
+    ...baseProfile,
+    phases: [
+      {
+        ...baseProfile.phases[0],
+        valve: 1,
+        targets: [{ curve: 'setup' }],
+        transition: { type: 'instant', duration: 0, adaptive: true },
+      },
+      {
+        ...baseProfile.phases[1],
+        name: 'A',
+        valve: 2,
+        duration: 4,
+        targets: [{ curve: 'a' }],
+        transition: { type: 'linear', duration: 4, adaptive: false },
+      },
+      {
+        ...baseProfile.phases[1],
+        name: 'B',
+        valve: 3,
+        duration: 6,
+        targets: [{ curve: 'b' }],
+        transition: { type: 'ease-out', duration: 6, adaptive: true },
+      },
+    ],
+  };
+
+  const result = removeKeyframeAtIndex(profile, 1);
+
+  assert.deepEqual(result.profile.phases.map(phase => phase.duration), [0, 10]);
+  assert.equal(result.profile.phases[1].name, 'B');
+  assert.equal(result.profile.phases[1].valve, 3);
+  assert.deepEqual(result.profile.phases[1].targets, [{ curve: 'b' }]);
+  assert.equal(result.profile.phases[1].transition.adaptive, true);
+});
+
+test('standalone keyframe round trip preserves adaptive false transitions', () => {
+  const profile = {
+    ...baseProfile,
+    phases: [
+      baseProfile.phases[0],
+      {
+        ...baseProfile.phases[1],
+        transition: { type: 'linear', duration: 10, adaptive: false },
+      },
+    ],
+  };
+
+  const roundTrip = keyframesToProfile(profile, profileToKeyframes(profile));
+
+  assert.equal(roundTrip.phases[1].transition.type, 'linear');
+  assert.equal(roundTrip.phases[1].transition.adaptive, false);
+});
