@@ -23,16 +23,50 @@ function eventToTime(chart, event) {
   return xScale.getValueForPixel(x);
 }
 
+function markerToValueTop(chart, marker) {
+  const isFlow = marker.targetMode === 'flow';
+  const scale = isFlow ? chart?.scales?.y1 : chart?.scales?.y;
+  if (!scale) return null;
+  return scale.getPixelForValue(isFlow ? marker.flow : marker.pressure);
+}
+
+function markerToTempTop(chart, marker) {
+  const scale = chart?.scales?.y2;
+  if (!scale) return null;
+  return scale.getPixelForValue(marker.temperature);
+}
+
+function eventToValue(chart, event, marker) {
+  const isFlow = marker.targetMode === 'flow';
+  const scale = isFlow ? chart?.scales?.y1 : chart?.scales?.y;
+  if (!scale) return null;
+  const rect = chart.canvas.getBoundingClientRect();
+  const y = event.clientY - rect.top;
+  const value = scale.getValueForPixel(y);
+  return Math.min(scale.max, Math.max(scale.min, value));
+}
+
+function eventToTemperature(chart, event) {
+  const scale = chart?.scales?.y2;
+  if (!scale) return null;
+  const rect = chart.canvas.getBoundingClientRect();
+  const y = event.clientY - rect.top;
+  const value = scale.getValueForPixel(y);
+  return Math.min(scale.max, Math.max(scale.min, value));
+}
+
 export function ProfileKeyframeChart({
   data,
   selectedSegmentIndex,
   onAddMarker,
   onMoveMarker,
+  onUpdateMarkerValue,
   onSelectSegment,
   className = 'max-h-72 w-full',
 }) {
   const [chart, setChart] = useState(null);
   const [dragging, setDragging] = useState(null);
+  // null | { markerIndex: number, type: 'time' | 'value' | 'temperature' }
   const overlayRef = useRef(null);
   const markers = useMemo(() => profileToKeyframes(data), [data]);
 
@@ -51,7 +85,29 @@ export function ProfileKeyframeChart({
       event.preventDefault();
       event.stopPropagation();
       onSelectSegment(Math.max(0, markerIndex - 1));
-      setDragging(markerIndex);
+      setDragging({ markerIndex, type: 'time' });
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    },
+    [onSelectSegment],
+  );
+
+  const handleValuePointerDown = useCallback(
+    (event, markerIndex) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onSelectSegment(Math.max(0, markerIndex - 1));
+      setDragging({ markerIndex, type: 'value' });
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    },
+    [onSelectSegment],
+  );
+
+  const handleTempPointerDown = useCallback(
+    (event, markerIndex) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onSelectSegment(Math.max(0, markerIndex - 1));
+      setDragging({ markerIndex, type: 'temperature' });
       event.currentTarget.setPointerCapture?.(event.pointerId);
     },
     [onSelectSegment],
@@ -60,11 +116,25 @@ export function ProfileKeyframeChart({
   const handleMarkerPointerMove = useCallback(
     event => {
       if (dragging === null) return;
-      const time = eventToTime(chart, event);
-      if (time === null) return;
-      onMoveMarker(dragging, time);
+      const { markerIndex, type } = dragging;
+      if (type === 'time') {
+        const time = eventToTime(chart, event);
+        if (time === null) return;
+        onMoveMarker(markerIndex, time);
+      } else if (type === 'value') {
+        const marker = markers[markerIndex];
+        if (!marker) return;
+        const value = eventToValue(chart, event, marker);
+        if (value === null) return;
+        const isFlow = marker.targetMode === 'flow';
+        onUpdateMarkerValue(markerIndex, isFlow ? { flow: value } : { pressure: value });
+      } else if (type === 'temperature') {
+        const temp = eventToTemperature(chart, event);
+        if (temp === null) return;
+        onUpdateMarkerValue(markerIndex, { temperature: temp });
+      }
     },
-    [chart, dragging, onMoveMarker],
+    [chart, dragging, markers, onMoveMarker, onUpdateMarkerValue],
   );
 
   const stopDragging = useCallback(() => setDragging(null), []);
