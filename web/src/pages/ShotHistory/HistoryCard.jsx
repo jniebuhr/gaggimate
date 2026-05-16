@@ -235,7 +235,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                   >
                     <FontAwesomeIcon icon={faUpload} className='text-[12px]' />
                   </button>
-                  {isManualShot && (
+                  {isManualShot && shot.source !== 'browser' && (
                     <button
                       onClick={() => location.route(`/shots/${shot.id}/to-profile`)}
                       className='nd-action-btn'

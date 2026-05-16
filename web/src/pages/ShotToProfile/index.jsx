@@ -16,7 +16,19 @@ function avg(samples, field) {
 }
 
 function isFlowTargetedShot(samples) {
-  return avg(samples, 'tf') > 0 && avg(samples, 'tp') === 0;
+  if (!samples.length) return false;
+  const meanTf = avg(samples, 'tf');
+  if (meanTf <= 0) return false;
+  const meanTp = avg(samples, 'tp');
+  if (meanTp <= 0) return true;
+  // Compare normalised tracking error: the controlled variable's average reading
+  // stays proportionally closer to its setpoint than the free variable does.
+  // Scale-independent (bar vs ml/s). Variance-only checks fail when fl is
+  // unusually flat on a pressure shot; explicit mode storage in the shot binary
+  // would be the definitive fix for genuinely ambiguous cases.
+  const relErrFl = Math.abs(avg(samples, 'fl') / meanTf - 1);
+  const relErrCp = Math.abs(avg(samples, 'cp') / meanTp - 1);
+  return relErrFl < relErrCp;
 }
 
 function boundariesToSegments(boundaries, samples) {
