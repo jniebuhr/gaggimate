@@ -8,6 +8,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { consumePendingProfile } from '../../state/pendingProfile.js';
 
 const connected = computed(() => machine.value.connected);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -22,57 +23,43 @@ export function ProfileEdit() {
   useEffect(() => {
     async function fetchData() {
       if (params.id === 'new') {
-        setData({
-          label: 'New Profile',
-          description: '',
-          temperature: 93,
-          phases: [
-            {
-              name: 'Pump',
-              phase: 'preinfusion',
-              valve: 1,
-              pump: 100,
-              duration: 3,
-              transition: {
-                type: 'instant',
-                duration: 0,
-                adaptive: true,
+        const pending = consumePendingProfile();
+        setData(
+          pending ?? {
+            label: 'New Profile',
+            description: '',
+            temperature: 93,
+            phases: [
+              {
+                name: 'Pump',
+                phase: 'preinfusion',
+                valve: 1,
+                pump: 100,
+                duration: 3,
+                transition: { type: 'instant', duration: 0, adaptive: true },
+                targets: [],
               },
-              targets: [],
-            },
-            {
-              name: 'Bloom',
-              phase: 'preinfusion',
-              valve: 1,
-              pump: 0,
-              duration: 5,
-              transition: {
-                type: 'instant',
-                duration: 0,
-                adaptive: true,
+              {
+                name: 'Bloom',
+                phase: 'preinfusion',
+                valve: 1,
+                pump: 0,
+                duration: 5,
+                transition: { type: 'instant', duration: 0, adaptive: true },
+                targets: [],
               },
-              targets: [],
-            },
-            {
-              name: 'Pump',
-              phase: 'brew',
-              valve: 1,
-              pump: 100,
-              duration: 20,
-              targets: [
-                {
-                  type: 'volumetric',
-                  value: 36,
-                },
-              ],
-              transition: {
-                type: 'instant',
-                duration: 0,
-                adaptive: true,
+              {
+                name: 'Pump',
+                phase: 'brew',
+                valve: 1,
+                pump: 100,
+                duration: 20,
+                targets: [{ type: 'volumetric', value: 36 }],
+                transition: { type: 'instant', duration: 0, adaptive: true },
               },
-            },
-          ],
-        });
+            ],
+          },
+        );
         setLoading(false);
       } else if (connected.value) {
         const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
