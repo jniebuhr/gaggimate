@@ -1,5 +1,5 @@
 import { useLocation, useRoute } from 'preact-iso';
-import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState, useContext } from 'preact/hooks';
 import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';
 import { StandardProfileForm } from './StandardProfileForm.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
@@ -20,10 +20,13 @@ export function ProfileEdit() {
   const [saving, setSaving] = useState(false);
   const { params } = useRoute();
   const [data, setData] = useState(null);
+  const initializedId = useRef(null);
   useEffect(() => {
+    if (initializedId.current === params.id) return;
     async function fetchData() {
       if (params.id === 'new') {
         const pending = consumePendingProfile();
+        initializedId.current = params.id;
         setData(
           pending ?? {
             label: 'New Profile',
@@ -63,6 +66,7 @@ export function ProfileEdit() {
         setLoading(false);
       } else if (connected.value) {
         const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
+        initializedId.current = params.id;
         setData(response.profile);
         setLoading(false);
       }
