@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { HistoryChart } from '../ShotHistory/HistoryChart.jsx';
 
 const CHART_LEFT_PAD = 60;  // approximate Chart.js y-axis width
@@ -21,33 +21,44 @@ function fractionToSample(frac, total) {
  */
 export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
   const containerRef = useRef(null);
+  const dragListenersRef = useRef(null);
   const [dragging, setDragging] = useState(null); // { markerIdx, startX, origBoundary }
 
   const total = shot.samples?.length ?? 1;
 
-  function getContentWidth() {
-    const w = containerRef.current?.offsetWidth ?? 400;
-    return Math.max(1, w - CHART_LEFT_PAD - CHART_RIGHT_PAD);
-  }
+  useEffect(() => {
+    return () => {
+      if (dragListenersRef.current) {
+        window.removeEventListener('mousemove', dragListenersRef.current.onMove);
+        window.removeEventListener('mouseup', dragListenersRef.current.onUp);
+        dragListenersRef.current = null;
+      }
+    };
+  }, []);
 
-  function pixelToSample(clientX) {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return 0;
-    const relX = clientX - rect.left - CHART_LEFT_PAD;
-    const frac = relX / getContentWidth();
-    return fractionToSample(frac, total);
-  }
+  const pixelToSample = useCallback(
+    clientX => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return 0;
+      const w = containerRef.current?.offsetWidth ?? 400;
+      const contentWidth = Math.max(1, w - CHART_LEFT_PAD - CHART_RIGHT_PAD);
+      const relX = clientX - rect.left - CHART_LEFT_PAD;
+      const frac = relX / contentWidth;
+      return fractionToSample(frac, total);
+    },
+    [total],
+  );
 
   const onOverlayMouseDown = useCallback(
     e => {
       // Clicking the overlay (not a marker) adds a new boundary
       if (e.target !== e.currentTarget) return;
-      const newIdx = pixelToSample(e.clientX); // eslint-disable-line react-hooks/exhaustive-deps
+      const newIdx = pixelToSample(e.clientX);
       if (boundaries.includes(newIdx)) return;
       const next = [...boundaries, newIdx].sort((a, b) => a - b);
       onBoundariesChange(next);
     },
-    [boundaries, onBoundariesChange, total], // eslint-disable-line react-hooks/exhaustive-deps
+    [boundaries, onBoundariesChange, pixelToSample],
   );
 
   const onMarkerMouseDown = useCallback(
@@ -57,21 +68,23 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
       setDragging({ markerIdx, origBoundary: boundaries[markerIdx] });
 
       function onMove(ev) {
-        const newSample = pixelToSample(ev.clientX); // eslint-disable-line react-hooks/exhaustive-deps
+        const newSample = pixelToSample(ev.clientX);
         const next = boundaries.map((b, i) => (i === markerIdx ? newSample : b));
         onBoundariesChange(next.sort((a, b) => a - b));
       }
 
       function onUp() {
+        dragListenersRef.current = null;
         setDragging(null);
         window.removeEventListener('mousemove', onMove);
         window.removeEventListener('mouseup', onUp);
       }
 
+      dragListenersRef.current = { onMove, onUp };
       window.addEventListener('mousemove', onMove);
       window.addEventListener('mouseup', onUp);
     },
-    [boundaries, onBoundariesChange, total], // eslint-disable-line react-hooks/exhaustive-deps
+    [boundaries, onBoundariesChange, pixelToSample],
   );
 
   const onMarkerRemove = useCallback(
@@ -82,8 +95,6 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
     },
     [boundaries, onBoundariesChange],
   );
-
-  const contentWidth = containerRef.current ? getContentWidth() : 0;
 
   // Suppress unused variable warning — dragging is used to track drag state
   void dragging;
@@ -103,8 +114,10 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
       >
         {containerRef.current &&
           boundaries.map((sampleIdx, i) => {
+            const w = containerRef.current.offsetWidth;
+            const cw = Math.max(1, w - CHART_LEFT_PAD - CHART_RIGHT_PAD);
             const frac = sampleToFraction(sampleIdx, total);
-            const left = CHART_LEFT_PAD + frac * contentWidth;
+            const left = CHART_LEFT_PAD + frac * cw;
             return (
               <div
                 key={i}
