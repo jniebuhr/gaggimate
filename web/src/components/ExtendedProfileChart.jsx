@@ -61,7 +61,7 @@ function applyEasing(t, type) {
   }
 }
 
-function prepareData(phases, target) {
+export function prepareData(phases, target) {
   if (!phases || phases.length === 0) {
     return [];
   }
@@ -115,7 +115,29 @@ function prepareData(phases, target) {
   return data;
 }
 
-function makeChartData(data, selectedPhase, isDarkMode = false) {
+function prepareTemperatureData(phases, profileTemperature = 93) {
+  let time = 0;
+  const data = [{ x: 0, y: profileTemperature }];
+  for (const phase of phases || []) {
+    const duration = Number.parseFloat(phase.duration) || 0;
+    const temperature = Number.parseFloat(phase.temperature) || profileTemperature;
+    data.push({ x: time, y: temperature });
+    time += duration;
+    data.push({ x: time, y: temperature });
+  }
+  return data;
+}
+
+const temperatureDatasetDefaults = {
+  label: 'Temperature',
+  borderColor: 'rgb(255, 206, 86)',
+  tension: 0.25,
+  cubicInterpolationMode: 'monotone',
+  spanGaps: true,
+  yAxisID: 'y2',
+};
+
+export function makeChartData(data, selectedPhase, isDarkMode = false) {
   let duration = 0;
   for (const phase of data.phases) {
     duration += parseFloat(phase.duration);
@@ -131,6 +153,10 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
         {
           ...flowDatasetDefaults,
           data: prepareData(data.phases, 'flow'),
+        },
+        {
+          ...temperatureDatasetDefaults,
+          data: prepareTemperatureData(data.phases, Number.parseFloat(data.temperature) || 93),
         },
       ],
     },
@@ -227,6 +253,25 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
             },
           },
         },
+        y2: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: {
+            display: true,
+            text: 'Temp (C)',
+          },
+          min: 80,
+          max: 105,
+          grid: {
+            drawOnChartArea: false,
+          },
+          ticks: {
+            font: {
+              size: window.innerWidth < 640 ? 10 : 12,
+            },
+          },
+        },
       },
     },
   };
@@ -299,6 +344,7 @@ export function ExtendedProfileChart({
   data,
   className = 'max-h-36 w-full',
   selectedPhase = null,
+  onChartReady,
 }) {
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -321,6 +367,7 @@ export function ExtendedProfileChart({
       className='max-w-full flex-shrink flex-grow'
       chartClassName={className}
       data={config}
+      onChartReady={onChartReady}
     />
   );
 }

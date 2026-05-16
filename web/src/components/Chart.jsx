@@ -4,7 +4,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 Chart.register(annotationPlugin);
 
-export function ChartComponent({ data, className, chartClassName }) {
+export function ChartComponent({ data, className, chartClassName, onChartReady }) {
   const [chart, setChart] = useState(null);
   const ref = useRef();
   const dataRef = useRef(data);
@@ -16,14 +16,16 @@ export function ChartComponent({ data, className, chartClassName }) {
 
     const newChart = new Chart(ref.current, dataRef.current);
     setChart(newChart);
+    onChartReady?.(newChart);
 
     // Cleanup function to destroy chart on unmount
     return () => {
       if (newChart) {
+        onChartReady?.(null);
         newChart.destroy();
       }
     };
-  }, []); // Empty dependency array - only run on mount
+  }, [onChartReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update chart data when data changes (reference comparison)
   useEffect(() => {
