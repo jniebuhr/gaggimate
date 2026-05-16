@@ -304,3 +304,18 @@ export function updateKeyframeSegment(profile, segmentIndex, patch) {
     selectedSegmentIndex: segmentIndex,
   };
 }
+
+export function updateKeyframeValue(profile, markerIndex, patch) {
+  const markers = profileToKeyframes(profile);
+
+  if (markerIndex < 0 || markerIndex >= markers.length) {
+    return { profile, selectedSegmentIndex: 0 };
+  }
+
+  const nextMarkers = markers.map((m, i) => (i === markerIndex ? { ...m, ...patch } : m));
+
+  return {
+    profile: keyframesToProfile(profile, nextMarkers, getMarkerAlignedMetadata(profile)),
+    selectedSegmentIndex: Math.max(0, markerIndex - 1),
+  };
+}

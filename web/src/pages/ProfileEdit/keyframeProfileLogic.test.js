@@ -9,6 +9,7 @@ import {
   profileToKeyframes,
   removeKeyframeAtIndex,
   updateKeyframeSegment,
+  updateKeyframeValue,
 } from './keyframeProfileLogic.js';
 
 const baseProfile = {
@@ -354,4 +355,38 @@ test('duration patch on non-setup profile moves the correct marker via segmentIn
 
   // Marker 2 moves from t=8 to t=10; Phase B becomes 7s, Phase C shrinks to 28-10=18s
   assert.deepEqual(result.profile.phases.map(p => p.duration), [0, 3, 7, 18]);
+});
+
+test('updateKeyframeValue patches pressure on marker 1', () => {
+  const result = updateKeyframeValue(baseProfile, 1, { pressure: 9.5 });
+  assert.equal(result.profile.phases[1].pump.pressure, 9.5);
+  assert.equal(result.selectedSegmentIndex, 0);
+});
+
+test('updateKeyframeValue patches flow on marker 1', () => {
+  const result = updateKeyframeValue(baseProfile, 1, { flow: 7 });
+  assert.equal(result.profile.phases[1].pump.flow, 7);
+});
+
+test('updateKeyframeValue patches temperature on marker 1', () => {
+  const result = updateKeyframeValue(baseProfile, 1, { temperature: 96 });
+  assert.equal(result.profile.phases[1].temperature, 96);
+});
+
+test('updateKeyframeValue preserves other marker values when patching only pressure', () => {
+  const result = updateKeyframeValue(baseProfile, 1, { pressure: 9.5 });
+  assert.equal(result.profile.phases[1].pump.flow, 4);
+  assert.equal(result.profile.phases[1].temperature, 90);
+});
+
+test('updateKeyframeValue returns original profile for out-of-range markerIndex', () => {
+  const result = updateKeyframeValue(baseProfile, 99, { pressure: 9.5 });
+  assert.equal(result.profile, baseProfile);
+  assert.equal(result.selectedSegmentIndex, 0);
+});
+
+test('updateKeyframeValue on marker 0 updates start phase and returns selectedSegmentIndex 0', () => {
+  const result = updateKeyframeValue(baseProfile, 0, { pressure: 5 });
+  assert.equal(result.profile.phases[0].pump.pressure, 5);
+  assert.equal(result.selectedSegmentIndex, 0);
 });
