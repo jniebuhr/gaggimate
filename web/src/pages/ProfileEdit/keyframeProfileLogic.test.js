@@ -305,3 +305,18 @@ test('updating a segment applies metadata field patches to the runnable phase', 
   assert.equal(result.profile.phases[1].valve, 0);
   assert.deepEqual(result.profile.phases[1].targets, [{ curve: 'edited' }]);
 });
+
+test('updates selected segment values through next marker semantics', () => {
+  const result = updateKeyframeSegment(baseProfile, 0, {
+    temperature: 91,
+    pressure: 5.5,
+    flow: 3,
+    targetMode: 'pressure',
+    rampType: 'ease-in-out',
+  });
+
+  assert.equal(result.profile.phases[1].temperature, 91);
+  assert.equal(result.profile.phases[1].pump.pressure, 5.5);
+  assert.equal(result.profile.phases[1].pump.flow, 3);
+  assert.equal(result.profile.phases[1].transition.type, 'ease-in-out');
+});

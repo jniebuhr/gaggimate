@@ -5,6 +5,7 @@ import {
   addKeyframeAtTime,
   moveKeyframeTime,
   removeKeyframeAtIndex,
+  updateKeyframeSegment,
 } from './keyframeProfileLogic.js';
 import { useState } from 'preact/hooks';
 import { ExtendedPhase } from './ExtendedPhase.jsx';
@@ -26,9 +27,28 @@ export function ExtendedProfileForm(props) {
   };
 
   const onPhaseChange = (index, value) => {
-    const newData = {
-      ...data,
-    };
+    if (index > 0) {
+      const pumpPatch = value.pump && typeof value.pump === 'object'
+        ? {
+            pressure: value.pump.pressure,
+            flow: value.pump.flow,
+            targetMode: value.pump.target,
+          }
+        : {};
+      const result = updateKeyframeSegment(data, index - 1, {
+        name: value.name,
+        phase: value.phase,
+        valve: value.valve,
+        temperature: value.temperature,
+        ...pumpPatch,
+        rampType: value.transition?.type,
+        targets: value.targets,
+      });
+      onChange(result.profile);
+      return;
+    }
+
+    const newData = { ...data, phases: [...data.phases] };
     newData.phases[index] = value;
     onChange(newData);
   };
@@ -152,9 +172,9 @@ export function ExtendedProfileForm(props) {
         </Card>
         <Card sm={10}>
           <div className='card-header flex items-center gap-4'>
-            <h2 className='card-title flex-grow text-lg sm:text-xl'>Phases</h2>
+            <h2 className='card-title flex-grow text-lg sm:text-xl'>Selected Segment</h2>
             <h5 className='card-subtitle text-sm sm:text-base'>
-              {currentPhaseIndex + 1} / {data.phases.length}
+              {Math.max(1, currentPhaseIndex)} / {Math.max(1, data.phases.length - 1)}
             </h5>
             <div>
               <div className='join' role='group' aria-label='Phase navigation'>
