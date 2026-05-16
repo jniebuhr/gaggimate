@@ -40,8 +40,11 @@ export function ExtendedProfileForm(props) {
         phase: value.phase,
         valve: value.valve,
         temperature: value.temperature,
+        duration: value.duration,
         ...pumpPatch,
         rampType: value.transition?.type,
+        rampDuration: value.transition?.duration,
+        adaptive: value.transition?.adaptive,
         targets: value.targets,
       });
       onChange(result.profile);

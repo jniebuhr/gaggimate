@@ -77,6 +77,10 @@ function applyMetadataPatch(metadata, patch) {
     next.targets = cloneTargets(patch.targets);
   }
 
+  if (patch.adaptive !== undefined) {
+    next.transition = { ...(next.transition || {}), adaptive: patch.adaptive };
+  }
+
   return next;
 }
 
@@ -150,6 +154,9 @@ export function keyframesToProfile(profile, markers, segmentMetadata = []) {
     const duration = index === 0 ? 0 : Math.max(MIN_PHASE_DURATION, nextTime - prevTime);
     const metadata = segmentMetadata[index] || {};
     const rampType = index === 0 ? 'instant' : marker.rampType || 'instant';
+    const storedRampDuration = toNumber(marker.rampDuration, 0);
+    const transitionDuration =
+      rampType === 'instant' ? 0 : storedRampDuration > 0 ? Math.min(storedRampDuration, duration) : duration;
 
     return {
       name: marker.name || (index === 0 ? 'Start' : `Phase ${index}`),
@@ -159,7 +166,7 @@ export function keyframesToProfile(profile, markers, segmentMetadata = []) {
       duration,
       transition: {
         type: rampType,
-        duration: rampType === 'instant' ? 0 : duration,
+        duration: transitionDuration,
         adaptive: metadata.transition?.adaptive ?? marker.adaptive ?? true,
       },
       targets: Array.isArray(metadata.targets)
@@ -270,9 +277,22 @@ export function removeKeyframeAtIndex(profile, markerIndex) {
 export function updateKeyframeSegment(profile, segmentIndex, patch) {
   const markers = profileToKeyframes(profile);
   const markerIndex = Math.min(markers.length - 1, Math.max(1, segmentIndex + 1));
-  const nextMarkers = markers.map((marker, index) =>
+  let nextMarkers = markers.map((marker, index) =>
     index === markerIndex ? { ...marker, ...compactPatch(patch) } : marker,
   );
+
+  if (patch.duration !== undefined) {
+    const prevTime = nextMarkers[markerIndex - 1]?.time ?? 0;
+    const requestedDuration = Math.max(MIN_PHASE_DURATION, toNumber(patch.duration, MIN_PHASE_DURATION));
+    const rawTime = prevTime + requestedDuration;
+    const nextMarkerTime = nextMarkers[markerIndex + 1]?.time;
+    const maxTime = typeof nextMarkerTime === 'number' ? nextMarkerTime - MIN_PHASE_DURATION : rawTime;
+    const newTime = Math.min(maxTime, rawTime);
+    nextMarkers = nextMarkers.map((marker, idx) =>
+      idx === markerIndex ? { ...marker, time: newTime } : marker,
+    );
+  }
+
   const nextMetadata = getMarkerAlignedMetadata(profile);
 
   if (nextMetadata[markerIndex]) {
