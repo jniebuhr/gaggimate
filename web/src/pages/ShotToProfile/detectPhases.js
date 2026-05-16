@@ -29,6 +29,7 @@ export function detectPhases(samples, isFlowTargeted = false) {
   let prevSign = Math.sign(deriv[1]) || 1;
   let run = 0;
   let runStart = 1;
+  let hadSignChange = false;
 
   for (let i = 1; i < deriv.length; i++) {
     const s = Math.sign(deriv[i]);
@@ -37,6 +38,7 @@ export function detectPhases(samples, isFlowTargeted = false) {
     } else {
       if (s !== 0 && s !== prevSign && run >= SUSTAIN) {
         candidates.push({ index: runStart, magnitude: Math.abs(deriv[runStart]) });
+        hadSignChange = true;
       }
       if (s !== 0) {
         prevSign = s;
@@ -46,8 +48,8 @@ export function detectPhases(samples, isFlowTargeted = false) {
     }
   }
 
-  // Capture final sustained run if it met the threshold
-  if (run >= SUSTAIN) {
+  // Capture final sustained run only when a prior sign change confirmed it
+  if (hadSignChange && run >= SUSTAIN) {
     candidates.push({ index: runStart, magnitude: Math.abs(deriv[runStart]) });
   }
 
