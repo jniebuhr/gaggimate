@@ -55,6 +55,7 @@ export function SegmentCard({ segment, samples, onChange }) {
         type='text'
         value={segment.name}
         onInput={handleNameChange}
+        aria-label='Phase name'
         className='font-nd-mono bg-transparent text-[13px] font-bold text-[var(--text-primary,#e8e8e8)] outline-none border-b border-[var(--home-border,#333)] pb-1'
       />
 
@@ -72,6 +73,7 @@ export function SegmentCard({ segment, samples, onChange }) {
         <select
           value={segment.targetType}
           onChange={handleTargetTypeChange}
+          aria-label='Target type'
           className='font-nd-mono text-[12px] bg-[var(--dm-bg-0,#0a0a0a)] text-[var(--text-primary,#e8e8e8)] border border-[var(--home-border,#333)] rounded px-2 py-1'
         >
           <option value='pressure'>Pressure (bar)</option>
@@ -84,6 +86,7 @@ export function SegmentCard({ segment, samples, onChange }) {
           max={segment.targetType === 'pressure' ? 12 : 6}
           value={segment.targetValue}
           onInput={handleTargetValueChange}
+          aria-label={`Target value in ${segment.targetType === 'pressure' ? 'bar' : 'ml/s'}`}
           className='font-nd-mono text-[12px] bg-[var(--dm-bg-0,#0a0a0a)] text-[var(--text-primary,#e8e8e8)] border border-[var(--home-border,#333)] rounded px-2 py-1 w-full'
         />
       </div>
@@ -99,6 +102,7 @@ export function SegmentCard({ segment, samples, onChange }) {
           max={105}
           value={segment.temperature}
           onInput={handleTemperatureChange}
+          aria-label='Temperature in Celsius'
           className='font-nd-mono text-[12px] bg-[var(--dm-bg-0,#0a0a0a)] text-[var(--text-primary,#e8e8e8)] border border-[var(--home-border,#333)] rounded px-2 py-1 w-full'
         />
       </div>
