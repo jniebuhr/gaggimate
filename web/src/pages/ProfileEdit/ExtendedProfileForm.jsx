@@ -221,7 +221,14 @@ export function ExtendedProfileForm(props) {
               className={`join-item btn btn-outline text-error max-sm:btn-sm`}
               aria-label='Remove phase'
               disabled={data.phases.length <= 2 || currentPhaseIndex === 0}
-              onClick={() => applyKeyframeResult(removeKeyframeAtIndex(data, currentPhaseIndex))}
+              onClick={() =>
+                applyKeyframeResult(
+                  removeKeyframeAtIndex(
+                    data,
+                    hasInitialSetupPhase(data.phases) ? currentPhaseIndex : currentPhaseIndex + 1,
+                  ),
+                )
+              }
             >
               <FontAwesomeIcon icon={faTrashCan} />
             </button>
