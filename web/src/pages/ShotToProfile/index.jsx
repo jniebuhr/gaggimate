@@ -15,15 +15,24 @@ function avg(samples, field) {
   return samples.reduce((s, x) => s + (x[field] ?? 0), 0) / samples.length;
 }
 
+function sdev(samples, field) {
+  if (!samples.length) return 0;
+  const mean = avg(samples, field);
+  return Math.sqrt(samples.reduce((s, x) => s + ((x[field] ?? 0) - mean) ** 2, 0) / samples.length);
+}
+
 function isFlowTargetedShot(samples) {
   if (!samples.length) return false;
   const meanTf = avg(samples, 'tf');
   if (meanTf <= 0) return false;
-  // In flow mode the pump holds fl near tf; in pressure mode cp tracks tp.
-  // Whichever controlled variable is closer to its target reveals the mode.
-  const flowErr = Math.abs(avg(samples, 'fl') - meanTf);
-  const pressureErr = Math.abs(avg(samples, 'cp') - avg(samples, 'tp'));
-  return flowErr < pressureErr;
+  const meanTp = avg(samples, 'tp');
+  if (meanTp <= 0) return true;
+  // The actively controlled variable is held tighter relative to its setpoint.
+  // Normalising by the target makes the comparison scale-independent (bar vs ml/s)
+  // and avoids false positives when fl happens to equal the flow limit on average.
+  const relStdFl = sdev(samples, 'fl') / meanTf;
+  const relStdCp = sdev(samples, 'cp') / meanTp;
+  return relStdFl < relStdCp;
 }
 
 function boundariesToSegments(boundaries, samples) {
