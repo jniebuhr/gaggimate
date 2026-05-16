@@ -20,9 +20,10 @@ function boundariesToSegments(boundaries, samples) {
   return breakpoints.slice(0, -1).map((start, i) => {
     const end = breakpoints[i + 1];
     const slice = samples.slice(start, end);
-    const durationSeconds = slice.length > 0
-      ? (samples[end - 1].t - samples[start].t) / 1000
-      : 0;
+    const durationSeconds =
+      slice.length > 0 && end <= samples.length && start < samples.length
+        ? (samples[end - 1].t - samples[start].t) / 1000
+        : 0;
     const isFlow = avg(slice, 'tf') > 0 && avg(slice, 'tp') === 0;
     const targetType = isFlow ? 'flow' : 'pressure';
     const targetValue = parseFloat(
@@ -55,10 +56,11 @@ export function ShotToProfile() {
 
   // Fetch and parse the shot binary
   useEffect(() => {
+    const controller = new AbortController();
     async function load() {
       try {
         const paddedId = String(shotId).padStart(6, '0');
-        const res = await fetch(`/api/history/${paddedId}.slog`);
+        const res = await fetch(`/api/history/${paddedId}.slog`, { signal: controller.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const buf = await res.arrayBuffer();
         const parsed = parseBinaryShot(buf, shotId);
@@ -78,10 +80,11 @@ export function ShotToProfile() {
         setBoundaries(detected);
         setSegments(boundariesToSegments(detected, parsed.samples));
       } catch (e) {
-        setError(e.message);
+        if (e.name !== 'AbortError') setError(e.message);
       }
     }
     load();
+    return () => controller.abort();
   }, [shotId]);
 
   // Recompute segments whenever boundaries change
