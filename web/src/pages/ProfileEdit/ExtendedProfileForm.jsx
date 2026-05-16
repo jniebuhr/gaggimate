@@ -1,6 +1,11 @@
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
-import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
+import { ProfileKeyframeChart } from './ProfileKeyframeChart.jsx';
+import {
+  addKeyframeAtTime,
+  moveKeyframeTime,
+  removeKeyframeAtIndex,
+} from './keyframeProfileLogic.js';
 import { useState } from 'preact/hooks';
 import { ExtendedPhase } from './ExtendedPhase.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -65,6 +70,15 @@ export function ExtendedProfileForm(props) {
     setCurrentPhaseIndex(0);
   };
 
+  const applyKeyframeResult = result => {
+    onChange(result.profile);
+    setCurrentPhaseIndex(result.selectedSegmentIndex + 1);
+  };
+
+  const onMarkerAdd = time => applyKeyframeResult(addKeyframeAtTime(data, time));
+  const onMarkerMove = (markerIndex, time) => applyKeyframeResult(moveKeyframeTime(data, markerIndex, time));
+  const onSegmentSelect = segmentIndex => setCurrentPhaseIndex(segmentIndex + 1);
+
   const currentPhase = data.phases[currentPhaseIndex];
 
   return (
@@ -127,9 +141,12 @@ export function ExtendedProfileForm(props) {
           </div>
         </Card>
         <Card sm={10}>
-          <ExtendedProfileChart
+          <ProfileKeyframeChart
             data={data}
-            selectedPhase={currentPhaseIndex}
+            selectedSegmentIndex={Math.max(0, currentPhaseIndex - 1)}
+            onAddMarker={onMarkerAdd}
+            onMoveMarker={onMarkerMove}
+            onSelectSegment={onSegmentSelect}
             className='max-h-72 w-full'
           />
         </Card>
@@ -173,7 +190,8 @@ export function ExtendedProfileForm(props) {
               type='button'
               className={`join-item btn btn-outline text-error max-sm:btn-sm`}
               aria-label='Remove phase'
-              onClick={() => onPhaseRemove(currentPhaseIndex)}
+              disabled={data.phases.length <= 2 || currentPhaseIndex === 0}
+              onClick={() => applyKeyframeResult(removeKeyframeAtIndex(data, currentPhaseIndex))}
             >
               <FontAwesomeIcon icon={faTrashCan} />
             </button>
