@@ -41,8 +41,8 @@ export function buildProfile(profileName, segments) {
         flow: seg.targetType === 'flow' ? seg.targetValue : -1,
       },
       transition: {
-        type: 'linear',
-        duration: 1.0,
+        type: 'instant',
+        duration: 0,
         adaptive: false,
       },
       targets: [],

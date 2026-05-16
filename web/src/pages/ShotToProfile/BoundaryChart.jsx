@@ -23,6 +23,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
   const containerRef = useRef(null);
   const dragListenersRef = useRef(null);
   const [dragging, setDragging] = useState(null); // { markerIdx, startX, origBoundary }
+  const [, setResizeTick] = useState(0);
 
   const total = shot.samples?.length ?? 1;
 
@@ -34,6 +35,13 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
         dragListenersRef.current = null;
       }
     };
+  }, []);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(() => setResizeTick(t => t + 1));
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
   }, []);
 
   const pixelToSample = useCallback(
@@ -53,6 +61,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
     e => {
       // Clicking the overlay (not a marker) adds a new boundary
       if (e.target !== e.currentTarget) return;
+      if (boundaries.length >= 5) return; // cap at MAX_BOUNDARIES
       const newIdx = pixelToSample(e.clientX);
       if (boundaries.includes(newIdx)) return;
       const next = [...boundaries, newIdx].sort((a, b) => a - b);

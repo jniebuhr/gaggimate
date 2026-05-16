@@ -15,6 +15,10 @@ function avg(samples, field) {
   return samples.reduce((s, x) => s + (x[field] ?? 0), 0) / samples.length;
 }
 
+function isFlowTargetedShot(samples) {
+  return avg(samples, 'tf') > 0 && avg(samples, 'tp') === 0;
+}
+
 function boundariesToSegments(boundaries, samples) {
   const breakpoints = [0, ...boundaries, samples.length];
   return breakpoints.slice(0, -1).map((start, i) => {
@@ -24,7 +28,7 @@ function boundariesToSegments(boundaries, samples) {
       slice.length > 0 && end <= samples.length && start < samples.length
         ? (samples[end - 1].t - samples[start].t) / 1000
         : 0;
-    const isFlow = avg(slice, 'tf') > 0 && avg(slice, 'tp') === 0;
+    const isFlow = isFlowTargetedShot(slice);
     const targetType = isFlow ? 'flow' : 'pressure';
     const targetValue = parseFloat(
       (targetType === 'pressure' ? avg(slice, 'tp') : avg(slice, 'tf')).toFixed(
@@ -72,10 +76,7 @@ export function ShotToProfile() {
         );
 
         // Run phase detection
-        const isFlow =
-          parsed.samples.length > 0 &&
-          avg(parsed.samples, 'tf') > 0 &&
-          avg(parsed.samples, 'tp') === 0;
+        const isFlow = parsed.samples.length > 0 && isFlowTargetedShot(parsed.samples);
         const detected = detectPhases(parsed.samples, isFlow);
         setBoundaries(detected);
         setSegments(boundariesToSegments(detected, parsed.samples));
@@ -148,7 +149,6 @@ export function ShotToProfile() {
         {segments.map((seg, i) => (
           <SegmentCard
             key={i}
-            index={i}
             segment={seg}
             samples={shot.samples}
             onChange={patch => handleSegmentChange(i, patch)}
