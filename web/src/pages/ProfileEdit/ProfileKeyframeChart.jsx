@@ -1,3 +1,4 @@
+import { Fragment } from 'preact';
 import { useCallback, useMemo, useRef, useState } from 'preact/hooks';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { profileToKeyframes } from './keyframeProfileLogic.js';
@@ -161,28 +162,45 @@ export function ProfileKeyframeChart({
         {chart &&
           markers.map((marker, index) => {
             const left = markerToLeft(chart, marker);
+            const valueTop = markerToValueTop(chart, marker);
+            const tempTop = markerToTempTop(chart, marker);
             if (left === null) return null;
             const selected = Math.max(0, index - 1) === selectedSegmentIndex;
             return (
-              <button
-                key={`${index}-${marker.time}`}
-                type='button'
-                className={`absolute top-8 bottom-8 w-4 -translate-x-1/2 border-0 bg-transparent p-0 ${index === 0 ? 'cursor-default' : 'cursor-ew-resize'}`}
-                style={{ left: `${left}px` }}
-                onPointerDown={event => index > 0 && handleMarkerPointerDown(event, index)}
-                onClick={event => {
-                  event.stopPropagation();
-                  onSelectSegment(Math.max(0, index - 1));
-                }}
-                aria-label={`Select marker ${index + 1}`}
-              >
-                <span
-                  className={`absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2 ${selected ? 'bg-primary' : 'bg-base-content/50'}`}
-                />
-                <span
-                  className={`absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border ${selected ? 'border-primary bg-primary' : 'border-base-content/70 bg-base-100'}`}
-                />
-              </button>
+              <Fragment key={`${index}-${marker.time}`}>
+                <button
+                  type='button'
+                  className={`absolute top-8 bottom-8 w-4 -translate-x-1/2 border-0 bg-transparent p-0 ${index === 0 ? 'cursor-default' : 'cursor-ew-resize'}`}
+                  style={{ left: `${left}px` }}
+                  onPointerDown={event => {
+                    event.stopPropagation();
+                    if (index > 0) handleMarkerPointerDown(event, index);
+                  }}
+                  onClick={event => {
+                    event.stopPropagation();
+                    onSelectSegment(Math.max(0, index - 1));
+                  }}
+                  aria-label={`Select marker ${index + 1}`}
+                >
+                  <span
+                    className={`absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2 ${selected ? 'bg-primary' : 'bg-base-content/50'}`}
+                  />
+                </button>
+                {valueTop !== null && (
+                  <span
+                    className={`absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-ns-resize rounded-full border ${selected ? 'border-primary bg-primary' : 'border-base-content/70 bg-base-100'}`}
+                    style={{ left: `${left}px`, top: `${valueTop}px` }}
+                    onPointerDown={event => handleValuePointerDown(event, index)}
+                  />
+                )}
+                {tempTop !== null && (
+                  <span
+                    className='absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 cursor-ns-resize rounded-full border border-amber-500 bg-amber-400'
+                    style={{ left: `${left}px`, top: `${tempTop}px` }}
+                    onPointerDown={event => handleTempPointerDown(event, index)}
+                  />
+                )}
+              </Fragment>
             );
           })}
       </div>
