@@ -44,7 +44,9 @@ Each marker represents a boundary setpoint:
 - `rampType`: transition shape for the segment from this marker to the next marker.
 - `rampDuration`: `0` for `instant`, otherwise normally the full segment duration.
 
-Each segment from marker `i` to marker `i + 1` becomes one phase:
+The first marker is persisted as an automatic initial setpoint phase with `duration: 0`. This preserves the exact first keyframe after save and reload instead of reconstructing it from editor defaults.
+
+Each segment from marker `i` to marker `i + 1` becomes one runnable phase after that initial setpoint phase:
 
 - Phase duration is `marker[i + 1].time - marker[i].time`.
 - Phase temperature comes from the next marker.
@@ -61,6 +63,8 @@ Example:
 ```
 
 This creates a 10 second phase that ramps toward 6 bar while keeping 4 g/s as the flow limit.
+
+The saved Pro profile contains an initial zero-second phase for the `0s` marker, followed by the 10 second ramp phase.
 
 ## UI Behavior
 
@@ -99,8 +103,10 @@ The graph should display:
 
 - Existing Pro profiles open as keyframes by deriving markers from cumulative phase durations and phase target values.
 - Saving writes the existing `phases` array; no backend or firmware schema change is required.
+- Keyframe-edited profiles include a zero-second initial setpoint phase so the first marker survives save and reload.
 - Marker times are sorted and clamped so phase durations stay positive.
 - A valid editable graph has at least two markers and one segment.
+- The initial setpoint phase is the only phase allowed to have zero duration.
 - `instant` uses `transition.duration = 0`.
 - Linear/eased ramps default to the full segment duration.
 - Stop conditions remain attached to the segment/phase they already belong to.
@@ -116,6 +122,7 @@ Add pure helpers near the ProfileEdit code or in a focused utility module:
 - Convert Pro profile phases to keyframe markers.
 - Convert keyframe markers plus existing per-segment phase metadata back to Pro profile phases.
 - Clamp and sort marker times.
+- Preserve the initial marker by writing and reading the zero-second initial setpoint phase.
 - Preserve existing phase metadata such as name, valve, targets, and stop conditions.
 
 ### Interactive Profile Chart
