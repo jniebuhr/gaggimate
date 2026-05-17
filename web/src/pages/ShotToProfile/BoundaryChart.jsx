@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { HistoryChart } from '../ShotHistory/HistoryChart.jsx';
+import { MAX_BOUNDARIES } from './detectPhases.js';
 
 const CHART_LEFT_PAD = 60;  // fallback when chart instance is not yet available
 const CHART_RIGHT_PAD = 20; // fallback
@@ -77,7 +78,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
   const onOverlayPointerDown = useCallback(
     e => {
       if (e.target !== e.currentTarget) return;
-      if (boundariesRef.current.length >= 5) return;
+      if (boundariesRef.current.length >= MAX_BOUNDARIES) return;
       const newIdx = pixelToSample(e.clientX);
       if (boundariesRef.current.includes(newIdx)) return;
       const next = [...boundariesRef.current, newIdx].sort((a, b) => a - b);
@@ -139,7 +140,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
         }}
       >
         {containerRef.current &&
-          boundaries.map(sampleIdx => {
+          boundaries.map((sampleIdx, markerIdx) => {
             const { chartLeft, chartWidth } = getChartBounds();
             const frac = sampleToFraction(sampleIdx, total);
             const left = chartLeft + frac * chartWidth;
@@ -178,7 +179,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
                     cursor: 'pointer',
                     padding: 0,
                   }}
-                  aria-label={`Remove boundary ${boundaries.indexOf(sampleIdx) + 1}`}
+                  aria-label={`Remove boundary ${markerIdx + 1}`}
                 >
                   ×
                 </button>

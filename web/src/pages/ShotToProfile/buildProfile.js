@@ -34,11 +34,12 @@ export function buildProfile(profileName, segments) {
       phase: 'brew',
       valve: 1,
       duration: seg.durationSeconds,
+      // per-phase temperature enables ramping in 'pro' profiles; top-level is the default/display value
       temperature: Math.round(seg.temperature),
       pump: {
         target: seg.targetType,
-        pressure: seg.targetType === 'pressure' ? seg.targetValue : -1,
-        flow: seg.targetType === 'flow' ? seg.targetValue : -1,
+        pressure: seg.targetType === 'pressure' ? seg.targetValue : 0,
+        flow: seg.targetType === 'flow' ? seg.targetValue : 0,
       },
       transition: {
         type: 'instant',

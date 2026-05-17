@@ -1,7 +1,7 @@
 const SMOOTH_WINDOW = 8;   // ~2 s rolling average at 250 ms/sample
 const MIN_GAP = 20;        // ~5 s minimum between boundaries
 const SUSTAIN = 3;         // derivative sign must hold for this many samples
-const MAX_BOUNDARIES = 5;  // allow up to 6 phases (5 split points)
+export const MAX_BOUNDARIES = 5;  // allow up to 6 phases (5 split points)
 
 /**
  * @param {Array} samples - parsed ShotLogSample array (fields: cp, fl, t)
@@ -29,29 +29,34 @@ export function detectPhases(samples, isFlowTargeted = false) {
   let prevSign = Math.sign(deriv[1]) || 1;
   let run = 0;
   let runStart = 1;
+  let runPeakMag = 0;
   let hadSignChange = false;
 
   for (let i = 1; i < deriv.length; i++) {
     const s = Math.sign(deriv[i]);
+    const mag = Math.abs(deriv[i]);
     if (s !== 0 && s === prevSign) {
       run++;
+      if (mag > runPeakMag) runPeakMag = mag;
     } else {
       if (s !== 0 && s !== prevSign && run >= SUSTAIN) {
         // Use i (start of new direction) as the boundary, not runStart (start of old run)
-        candidates.push({ index: i, magnitude: Math.abs(deriv[i]) });
+        candidates.push({ index: i, magnitude: mag });
         hadSignChange = true;
       }
       if (s !== 0) {
         prevSign = s;
         runStart = i;
         run = 1;
+        runPeakMag = mag;
       }
     }
   }
 
-  // Capture final sustained run only when a prior sign change confirmed it
+  // Capture final sustained run only when a prior sign change confirmed it.
+  // Use peak magnitude within the run — deriv[runStart] is near-zero at a sign flip.
   if (hadSignChange && run >= SUSTAIN) {
-    candidates.push({ index: runStart, magnitude: Math.abs(deriv[runStart]) });
+    candidates.push({ index: runStart, magnitude: runPeakMag });
   }
 
   // Merge boundaries closer than MIN_GAP (keep larger magnitude)

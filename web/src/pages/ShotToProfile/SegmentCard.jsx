@@ -1,9 +1,5 @@
 import { useCallback, useMemo } from 'preact/hooks';
-
-function avg(samples, field) {
-  if (!samples.length) return 0;
-  return samples.reduce((s, x) => s + (x[field] ?? 0), 0) / samples.length;
-}
+import { avg } from '../../utils/shotMath.js';
 
 function clamp(v, lo, hi) {
   return Math.min(hi, Math.max(lo, v));

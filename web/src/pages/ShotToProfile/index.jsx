@@ -7,20 +7,20 @@ import { BoundaryChart } from './BoundaryChart.jsx';
 import { SegmentCard } from './SegmentCard.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { parseBinaryShot } from '../ShotHistory/parseBinaryShot.js';
+import { avg } from '../../utils/shotMath.js';
 
 /** @typedef {{ name: string, startIdx: number, endIdx: number, durationSeconds: number, targetType: 'pressure'|'flow', targetValue: number, temperature: number }} Segment */
 
-function avg(samples, field) {
-  if (!samples.length) return 0;
-  return samples.reduce((s, x) => s + (x[field] ?? 0), 0) / samples.length;
-}
+// Minimum setpoint to treat as intentional — guards against near-zero sensor noise
+// causing division blow-up in the normalised tracking error.
+const MIN_SETPOINT = 0.05;
 
 function isFlowTargetedShot(samples) {
   if (!samples.length) return false;
   const meanTf = avg(samples, 'tf');
-  if (meanTf <= 0) return false;
+  if (meanTf < MIN_SETPOINT) return false;
   const meanTp = avg(samples, 'tp');
-  if (meanTp <= 0) return true;
+  if (meanTp < MIN_SETPOINT) return true;
   // Compare normalised tracking error: the controlled variable's average reading
   // stays proportionally closer to its setpoint than the free variable does.
   // Scale-independent (bar vs ml/s). Variance-only checks fail when fl is
