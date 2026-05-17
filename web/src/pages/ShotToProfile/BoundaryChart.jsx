@@ -23,7 +23,8 @@ function fractionToSample(frac, total) {
 export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
   const containerRef = useRef(null);
   const dragListenersRef = useRef(null);
-  // Tracks { currentValue: number } during a drag so onMove always sees the latest position.
+  // Tracks { dragIndex, prevSample } during a drag. Index-based (not value-based) so that
+  // dragging a marker onto another marker's exact sample position doesn't update both.
   const draggingRef = useRef(null);
   // Always holds the latest boundaries array so pointer-event closures avoid stale captures.
   const boundariesRef = useRef(boundaries);
@@ -87,20 +88,26 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
     [onBoundariesChange, pixelToSample],
   );
 
-  // markerValue is the sample index of the marker at drag-start.
-  // We track by value (not array position) so cross-marker drags stay correct after re-sorts.
+  // markerIndex is the array position of the marker at drag-start (from the .map() call).
+  // Index-based tracking means dragging onto another marker's exact position never updates both.
   const onMarkerPointerDown = useCallback(
-    (e, markerValue) => {
+    (e, markerIndex) => {
       e.stopPropagation();
       e.preventDefault();
-      draggingRef.current = { currentValue: markerValue };
+      draggingRef.current = { dragIndex: markerIndex, prevSample: boundariesRef.current[markerIndex] };
 
       function onMove(ev) {
         const newSample = pixelToSample(ev.clientX);
-        const { currentValue } = draggingRef.current;
-        const next = boundariesRef.current.map(b => (b === currentValue ? newSample : b));
-        draggingRef.current.currentValue = newSample;
-        onBoundariesChange(next.sort((a, b) => a - b));
+        const { dragIndex, prevSample } = draggingRef.current;
+        const arr = [...boundariesRef.current];
+        arr[dragIndex] = newSample;
+        const sorted = arr.sort((a, b) => a - b);
+        // When two markers share the same sample, pick the correct position based on drag direction:
+        // moving left → we're the leftmost duplicate (indexOf); moving right → rightmost (lastIndexOf).
+        const newDragIndex =
+          newSample <= prevSample ? sorted.indexOf(newSample) : sorted.lastIndexOf(newSample);
+        draggingRef.current = { dragIndex: newDragIndex, prevSample: newSample };
+        onBoundariesChange(sorted);
       }
 
       function onUp() {
@@ -118,10 +125,10 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
   );
 
   const onMarkerRemove = useCallback(
-    (e, markerValue) => {
+    (e, markerIndex) => {
       e.stopPropagation();
       e.preventDefault();
-      onBoundariesChange(boundariesRef.current.filter(b => b !== markerValue));
+      onBoundariesChange(boundariesRef.current.filter((_, i) => i !== markerIndex));
     },
     [onBoundariesChange],
   );
@@ -158,11 +165,11 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
                   userSelect: 'none',
                   touchAction: 'none',
                 }}
-                onPointerDown={e => onMarkerPointerDown(e, sampleIdx)}
+                onPointerDown={e => onMarkerPointerDown(e, markerIdx)}
               >
                 {/* Remove button */}
                 <button
-                  onPointerDown={e => onMarkerRemove(e, sampleIdx)}
+                  onPointerDown={e => onMarkerRemove(e, markerIdx)}
                   style={{
                     position: 'absolute',
                     top: '4px',
