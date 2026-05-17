@@ -14,9 +14,38 @@ import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
+import { Tooltip } from '../../components/Tooltip.jsx';
+import { faRefresh } from '@fortawesome/free-solid-svg-icons/faRefresh';
+import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
+const tofDistance = computed(() => machine.value.status.tofDistance);
+
+/**
+ * Split a PID CSV string into the form's two-input shape.
+ *
+ * The firmware stores PID as a single CSV `Kp,Ki,Kd,Kff` string, but the
+ * form edits Kp/Ki/Kd as one input and Kff as another. This converts the
+ * on-wire shape into `{ pid, kf }` for the form. Used both on initial
+ * fetch and after every Save — without re-splitting on the post-save
+ * response, a fourth field leaks into the `pid` input and the next Save
+ * sends a 5-field CSV.
+ *
+ * @param {string|undefined} pidString - CSV `Kp,Ki,Kd,Kff` string from the
+ *   firmware, or empty/undefined if no PID has been saved yet.
+ * @returns {{ pid: string, kf: string }} - `pid` is the first three CSV
+ *   fields joined by commas; `kf` is the fourth field, or `'0.000'` if
+ *   absent.
+ */
+function splitPidString(pidString) {
+  if (!pidString) return { pid: pidString, kf: '0.000' };
+  const parts = pidString.split(',');
+  if (parts.length >= 4) {
+    return { pid: parts.slice(0, 3).join(','), kf: parts[3] };
+  }
+  return { pid: pidString, kf: '0.000' };
+}
 
 export function Settings() {
   const [submitting, setSubmitting] = useState(false);
@@ -48,17 +77,13 @@ export function Settings() {
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
 
-      // Extract Kf from PID string and separate them
+      // Extract Kf from PID string and separate them. Mirrors the same
+      // split applied in `onSubmit` after every save — keep these two in
+      // sync via `splitPidString`.
       if (fetchedSettings.pid) {
-        const pidParts = fetchedSettings.pid.split(',');
-        if (pidParts.length >= 4) {
-          // PID string has Kf as 4th parameter
-          settingsWithToggle.pid = pidParts.slice(0, 3).join(','); // First 3 params
-          settingsWithToggle.kf = pidParts[3]; // 4th parameter
-        } else {
-          // No Kf in PID string, use default
-          settingsWithToggle.kf = '0.000';
-        }
+        const split = splitPidString(fetchedSettings.pid);
+        settingsWithToggle.pid = split.pid;
+        settingsWithToggle.kf = split.kf;
       }
 
       // Initialize auto-wakeup schedules
@@ -220,10 +245,18 @@ export function Settings() {
       });
       const data = await response.json();
 
+      // Re-split `pid` the same way the initial load does. The server
+      // returns the full `Kp,Ki,Kd,Kff` CSV; without splitting it here,
+      // the next Save would combine `formData.pid` (already 4 fields)
+      // with `formData.kf`, producing a 5-field CSV that grows on every
+      // round-trip.
+      const splitPid = data.pid ? splitPidString(data.pid) : null;
+
       // Only preserve standbyDisplayEnabled if brightness is greater than 0
       // If brightness is 0, let the useEffect recalculate it based on the saved value
       const updatedData = {
         ...data,
+        ...(splitPid !== null ? { pid: splitPid.pid, kf: splitPid.kf } : {}),
         standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
       };
 
@@ -926,42 +959,76 @@ export function Settings() {
                   onChange={onChange('sunriseExtBrightness')}
                 />
               </div>
-              <div className='form-control mb-4'>
+              <div className='form-control'>
                 <label htmlFor='emptyTankDistance' className='mb-2 block text-sm font-medium'>
-                  Distance from sensor to bottom of the tank
+                  Distance between ToF sensor and bottom of the tank
                 </label>
-                <div className='input-group'>
-                  <label htmlFor='emptyTankDistance' className='input w-full'>
-                    <input
-                      id='emptyTankDistance'
-                      name='emptyTankDistance'
-                      type='number'
-                      className='grow'
-                      placeholder='16'
-                      value={formData.emptyTankDistance}
-                      onChange={onChange('emptyTankDistance')}
-                    />
-                    <span aria-label='millimeter'>mm</span>
-                  </label>
+                <div className='flex flex-row gap-2'>
+                  <div className='input-group flex-grow'>
+                    <label htmlFor='emptyTankDistance' className='input w-full'>
+                      <input
+                        id='emptyTankDistance'
+                        name='emptyTankDistance'
+                        type='number'
+                        className='grow'
+                        placeholder='16'
+                        value={formData.emptyTankDistance}
+                        onChange={onChange('emptyTankDistance')}
+                      />
+                      <span aria-label='millimeter'>mm</span>
+                    </label>
+                  </div>
+                  <div>
+                    <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
+                      <button
+                        className='btn btn-ghost'
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            emptyTankDistance: tofDistance,
+                          })
+                        }
+                      >
+                        <FontAwesomeIcon icon={faCrosshairs} />
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
               <div className='form-control'>
                 <label htmlFor='fullTankDistance' className='mb-2 block text-sm font-medium'>
-                  Distance from sensor to the fill line
+                  Distance between ToF sensor and the max line of the tank
                 </label>
-                <div className='input-group'>
-                  <label htmlFor='fullTankDistance' className='input w-full'>
-                    <input
-                      id='fullTankDistance'
-                      name='fullTankDistance'
-                      type='number'
-                      className='grow'
-                      placeholder='16'
-                      value={formData.fullTankDistance}
-                      onChange={onChange('fullTankDistance')}
-                    />
-                    <span aria-label='millimeter'>mm</span>
-                  </label>
+                <div className='flex flex-row gap-2'>
+                  <div className='input-group flex-grow'>
+                    <label htmlFor='fullTankDistance' className='input w-full'>
+                      <input
+                        id='fullTankDistance'
+                        name='fullTankDistance'
+                        type='number'
+                        className='grow'
+                        placeholder='16'
+                        value={formData.fullTankDistance}
+                        onChange={onChange('fullTankDistance')}
+                      />
+                      <span aria-label='millimeter'>mm</span>
+                    </label>
+                  </div>
+                  <div>
+                    <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
+                      <button
+                        className='btn btn-ghost'
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            fullTankDistance: tofDistance,
+                          })
+                        }
+                      >
+                        <FontAwesomeIcon icon={faCrosshairs} />
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -985,20 +1052,16 @@ export function Settings() {
             <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
           </div>
           <div className='flex flex-col gap-2 pt-4 sm:flex-row'>
-            <a href='/' className='btn btn-outline flex-1 sm:flex-none'>
+            <a href='/' className='btn btn-outline'>
               Back
             </a>
-            <button
-              type='submit'
-              className='btn btn-primary flex-1 sm:flex-none'
-              disabled={submitting}
-            >
+            <button type='submit' className='btn btn-primary' disabled={submitting}>
               {submitting && <Spinner size={4} />} Save
             </button>
             <button
               type='submit'
               name='restart'
-              className='btn btn-secondary flex-1 sm:flex-none'
+              className='btn btn-secondary'
               disabled={submitting}
               onClick={e => onSubmit(e, true)}
             >

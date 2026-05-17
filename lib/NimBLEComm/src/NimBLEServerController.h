@@ -64,6 +64,13 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     float_callback_t pressureScaleCallback = nullptr;
     void_callback_t tareCallback = nullptr;
     led_control_callback_t ledControlCallback = nullptr;
+    char sensorDataBuffer[80]{};
+    char errorBuffer[12]{};
+    char brewBtnBuffer[4]{};
+    char steamBtnBuffer[4]{};
+    char autotuneResultBuffer[64]{};
+    char tofBuffer[16]{};
+    char volumetricBuffer[16]{};
 
     // BLEServerCallbacks overrides
     void onConnect(NimBLEServer *pServer) override;

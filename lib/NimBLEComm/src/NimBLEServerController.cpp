@@ -1,4 +1,5 @@
 #include "NimBLEServerController.h"
+#include <cstdio>
 
 NimBLEServerController::NimBLEServerController() {}
 
@@ -90,16 +91,17 @@ void NimBLEServerController::loop() {
 void NimBLEServerController::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow,
                                             float puckResistance) {
     if (deviceConnected && sensorChar != nullptr) {
-        std::string value = float_to_string(temperature) + "," + float_to_string(pressure) + "," + float_to_string(puckFlow) +
-                            "," + float_to_string(pumpFlow) + "," + float_to_string(puckResistance);
-        sensorChar->setValue(value);
+        snprintf(sensorDataBuffer, sizeof(sensorDataBuffer), "%.3f,%.3f,%.3f,%.3f,%.3f", temperature, pressure, puckFlow,
+                 pumpFlow, puckResistance);
+        sensorChar->setValue(sensorDataBuffer);
         sensorChar->notify();
     }
 }
 
 void NimBLEServerController::sendError(int errorCode) {
     if (deviceConnected) {
-        errorChar->setValue(std::to_string(errorCode));
+        snprintf(errorBuffer, sizeof(errorBuffer), "%d", errorCode);
+        errorChar->setValue(errorBuffer);
         errorChar->notify();
     }
 }
@@ -107,7 +109,8 @@ void NimBLEServerController::sendError(int errorCode) {
 void NimBLEServerController::sendBrewBtnState(bool brewButtonStatus) {
     if (deviceConnected) {
         // Send brew notification to the client
-        brewBtnChar->setValue(std::to_string(static_cast<int>(brewButtonStatus)));
+        snprintf(brewBtnBuffer, sizeof(brewBtnBuffer), "%d", static_cast<int>(brewButtonStatus));
+        brewBtnChar->setValue(brewBtnBuffer);
         brewBtnChar->notify();
     }
 }
@@ -115,7 +118,8 @@ void NimBLEServerController::sendBrewBtnState(bool brewButtonStatus) {
 void NimBLEServerController::sendSteamBtnState(bool steamButtonStatus) {
     if (deviceConnected) {
         // Send steam notification to the client
-        steamBtnChar->setValue(std::to_string(static_cast<int>(steamButtonStatus)));
+        snprintf(steamBtnBuffer, sizeof(steamBtnBuffer), "%d", static_cast<int>(steamButtonStatus));
+        steamBtnChar->setValue(steamBtnBuffer);
         steamBtnChar->notify();
     }
 }
@@ -123,22 +127,24 @@ void NimBLEServerController::sendSteamBtnState(bool steamButtonStatus) {
 void NimBLEServerController::sendAutotuneResult(float Kp, float Ki, float Kd) {
     if (deviceConnected) {
         // Send with default Kf=0.0 (disabled)
-        std::string value = float_to_string(Kp) + "," + float_to_string(Ki) + "," + float_to_string(Kd) + ",0.0";
-        autotuneResultChar->setValue(value);
+        snprintf(autotuneResultBuffer, sizeof(autotuneResultBuffer), "%.3f,%.3f,%.3f,0.0", Kp, Ki, Kd);
+        autotuneResultChar->setValue(autotuneResultBuffer);
         autotuneResultChar->notify();
     }
 }
 
 void NimBLEServerController::sendVolumetricMeasurement(float value) {
     if (deviceConnected) {
-        volumetricMeasurementChar->setValue(float_to_string(value));
+        snprintf(volumetricBuffer, sizeof(volumetricBuffer), "%.2f", value);
+        volumetricMeasurementChar->setValue(volumetricBuffer);
         volumetricMeasurementChar->notify();
     }
 }
 
 void NimBLEServerController::sendTofMeasurement(int value) {
     if (deviceConnected) {
-        tofMeasurementChar->setValue(std::to_string(value));
+        snprintf(tofBuffer, sizeof(tofBuffer), "%d", value);
+        tofMeasurementChar->setValue(tofBuffer);
         tofMeasurementChar->notify();
     }
 }

@@ -110,7 +110,10 @@ void WebUIPlugin::loop() {
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
         doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["gact"] = controller->isGrindActive() ? 1 : 0;
+        doc["wl"] = controller->getWaterLevel();
+        doc["tof"] = controller->getTofDistance();
         doc["rssi"] = 0;
+
         if (controller->getClientController()->getClient()->isConnected()) {
             doc["rssi"] = controller->getClientController()->getClient()->getRssi();
         }
@@ -746,13 +749,17 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     }
     // Memory usage metrics
     {
-        size_t free = heap_caps_get_free_size(MALLOC_CAP_DEFAULT|MALLOC_CAP_INTERNAL);
-        size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT|MALLOC_CAP_INTERNAL);
-        size_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT|MALLOC_CAP_INTERNAL);
+        size_t free = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+        size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+        size_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
         doc["heapFree"] = static_cast<uint32_t>(free);
         doc["heapLargest"] = static_cast<uint32_t>(largest);
         doc["heapTotal"] = static_cast<uint32_t>(total);
     }
+    doc["controllerTaskHealth"] = controller->isTaskHealthy();
+#ifndef GAGGIMATE_HEADLESS
+    doc["uiTaskHealth"] = controller->getUI()->isTaskHealthy();
+#endif
     if (controller->isSDCard()) {
         const uint64_t total = SD_MMC.cardSize();
         const uint64_t used = SD_MMC.usedBytes();

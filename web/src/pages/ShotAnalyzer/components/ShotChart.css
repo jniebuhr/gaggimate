@@ -83,6 +83,19 @@
   line-height: 1.3;
 }
 
+.shot-chart-tooltip--title-only {
+  display: inline-flex;
+  min-width: 4.9rem;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.shot-chart-tooltip--title-only .shot-chart-tooltip__title {
+  margin-bottom: 0;
+  width: 100%;
+}
+
 .shot-chart-tooltip__row {
   display: flex;
   align-items: flex-start;
@@ -112,6 +125,11 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.15rem;
+}
+
+.shot-chart-tooltip__shot {
+  font-weight: 700;
+  opacity: 0.78;
 }
 
 .shot-chart-tooltip__value {

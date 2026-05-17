@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import {
   aggregateTrendsByGranularity,
   formatTrendBucketTickLabel,
   formatTrendBucketTooltipTitle,
 } from '../utils/trendBuckets';
+import {
+  ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS,
+  getAnalyzerSurfaceTriggerClasses,
+} from '../../ShotAnalyzer/components/analyzerControlStyles';
 
 // Chart-level trend aggregation stays local to this component so users can switch
 // metric and bucket size without rerunning StatisticsService.
@@ -158,8 +164,7 @@ export function TrendChart({ trends }) {
               pointRadius: 3,
               pointHoverRadius: 5,
               borderWidth: 2,
-              tension: 0.18,
-              cubicInterpolationMode: 'monotone',
+              tension: 0,
             },
           ],
         },
@@ -205,6 +210,7 @@ export function TrendChart({ trends }) {
               grid: { color: gridColor },
             },
             y: {
+              min: metricDef.key === 'shotCount' ? 0 : undefined,
               ticks: {
                 font: { size: 10 },
                 color: metricColor,
@@ -231,34 +237,52 @@ export function TrendChart({ trends }) {
 
   return (
     <div>
-      <div className='mb-2 flex flex-wrap items-center justify-end gap-2'>
-        <div className='ml-auto flex flex-wrap items-center gap-2'>
-          <select
-            className='select select-xs select-bordered'
-            value={selectedMetric}
-            onChange={e => setSelectedMetric(e.target.value)}
+      <div className='mb-2 flex items-center justify-end px-1'>
+        <div className='ml-auto flex items-center gap-1.5'>
+          <div
+            className={`relative flex shrink-0 ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} items-center`}
           >
-            {TREND_METRICS.map(m => (
-              <option key={m.key} value={m.key}>
-                {m.key === 'shotCount'
-                  ? `Shots / ${getGranularityLabel(selectedGranularity)}`
-                  : m.label}
-              </option>
-            ))}
-          </select>
-          <select
-            className='select select-xs select-bordered'
-            value={selectedGranularity}
-            onChange={e => setSelectedGranularity(e.target.value)}
-            aria-label='Trend bucket size'
-            title='Trend bucket size'
+            <select
+              className={getAnalyzerSurfaceTriggerClasses({
+                className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} w-[8.75rem] max-w-[8.75rem] appearance-none rounded-md border-0 bg-transparent px-2.5 pr-6 text-[10px] font-semibold tracking-normal normal-case shadow-none outline-none`,
+              })}
+              value={selectedMetric}
+              onChange={e => setSelectedMetric(e.target.value)}
+              aria-label='Trend metric'
+              title='Trend metric'
+            >
+              {TREND_METRICS.map(m => (
+                <option key={m.key} value={m.key}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+            <span className='text-base-content/60 pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-[10px]'>
+              <FontAwesomeIcon icon={faChevronDown} />
+            </span>
+          </div>
+          <div
+            className={`relative flex shrink-0 ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} items-center`}
           >
-            {GRANULARITY_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            <select
+              className={getAnalyzerSurfaceTriggerClasses({
+                className: `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} w-[5rem] max-w-[5rem] appearance-none rounded-md border-0 bg-transparent px-2.5 pr-6 text-[10px] font-semibold tracking-normal normal-case shadow-none outline-none`,
+              })}
+              value={selectedGranularity}
+              onChange={e => setSelectedGranularity(e.target.value)}
+              aria-label='Trend bucket size'
+              title='Trend bucket size'
+            >
+              {GRANULARITY_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <span className='text-base-content/60 pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-[10px]'>
+              <FontAwesomeIcon icon={faChevronDown} />
+            </span>
+          </div>
         </div>
       </div>
       <div ref={containerRef} className='relative h-52 w-full'>

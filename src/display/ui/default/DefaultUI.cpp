@@ -13,6 +13,7 @@
 #include <display/ui/default/lvgl/ui_theme_manager.h>
 #include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
+#include <utility>
 
 #include "esp_sntp.h"
 
@@ -25,13 +26,12 @@ int16_t calculate_angle(int set_temp, int range, int offset) {
 
 void DefaultUI::updateTempHistory() {
     if (currentTemp > 0) {
+        if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
+            tempHistoryIndex = 0;
+            isTempHistoryInitialized = true;
+        }
         tempHistory[tempHistoryIndex] = currentTemp;
         tempHistoryIndex += 1;
-    }
-
-    if (tempHistoryIndex > TEMP_HISTORY_LENGTH) {
-        tempHistoryIndex = 0;
-        isTempHistoryInitialized = true;
     }
 
     if (tempHistoryIndex % 4 == 0) {
@@ -272,17 +272,20 @@ void DefaultUI::loop() {
 
 void DefaultUI::loopProfiles() {
     if (!profileLoaded) {
+        const auto favoritedIds = profileManager->getFavoritedProfiles();
         favoritedProfileIds.clear();
         favoritedProfiles.clear();
+        favoritedProfileIds.reserve(favoritedIds.size() + 1);
         favoritedProfileIds.emplace_back(controller->getSettings().getSelectedProfile());
-        for (auto &id : profileManager->getFavoritedProfiles()) {
+        for (const auto &id : favoritedIds) {
             if (std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id) == favoritedProfileIds.end())
                 favoritedProfileIds.emplace_back(id);
         }
+        favoritedProfiles.reserve(favoritedProfileIds.size());
         for (const auto &profileId : favoritedProfileIds) {
             Profile profile{};
             profileManager->loadProfile(profileId, profile);
-            favoritedProfiles.emplace_back(profile);
+            favoritedProfiles.emplace_back(std::move(profile));
         }
         profileLoaded = 1;
     }
@@ -683,9 +686,6 @@ void DefaultUI::setupReactive() {
                                                    profileDirty ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
         },
         &brewScreenState, &profileDirty);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
-                          [=]() { lv_img_set_src(ui_StandbyScreen_logo, christmasMode ? &ui_img_1510335 : &ui_img_logo_png); },
-                          &christmasMode);
 }
 
 void DefaultUI::handleScreenChange() {
