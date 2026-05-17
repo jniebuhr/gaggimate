@@ -185,13 +185,13 @@ export function ShotToProfile() {
           className='font-nd-mono flex-grow text-[13px] bg-[var(--dm-bg-0,#0a0a0a)] text-[var(--text-primary,#e8e8e8)] border border-[var(--home-border,#333)] rounded px-3 py-2 min-w-[200px]'
         />
         <button
-          className='nd-action-btn'
+          className='nd-action-btn nd-action-btn--text'
           onClick={() => location.route('/history')}
         >
           Cancel
         </button>
         <button
-          className='nd-action-btn nd-action-btn--primary'
+          className='nd-action-btn nd-action-btn--primary nd-action-btn--text'
           onClick={handleGenerate}
           disabled={!profileName.trim() || segments.length === 0}
         >
