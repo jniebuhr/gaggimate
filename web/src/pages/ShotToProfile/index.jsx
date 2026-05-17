@@ -107,19 +107,28 @@ export function ShotToProfile() {
     return () => controller.abort();
   }, [shotId]);
 
-  // Recompute segments whenever boundaries change, preserving user edits for unchanged segments.
+  // Recompute segments whenever boundaries change, preserving user edits.
+  // Strategy: if the segment count is unchanged (a boundary was moved, not added/removed),
+  // map edits by position index — the right-hand segment of a moved boundary gets a new
+  // startIdx so startIdx-keyed lookup would miss it. If the count changed (add/remove),
+  // map by startIdx so segments whose boundary didn't move keep their edits.
   const handleBoundariesChange = useCallback(
     next => {
       setBoundaries(next);
       if (shot) {
         setSegments(prev => {
           const recomputed = boundariesToSegments(next, shot.samples, isFlowTargeted);
+          const applyEdits = (seg, prior) =>
+            prior
+              ? { ...seg, name: prior.name, targetType: prior.targetType, targetValue: prior.targetValue, temperature: prior.temperature }
+              : seg;
+          if (recomputed.length === prev.length) {
+            // Boundary moved: same number of segments, preserve edits by position.
+            return recomputed.map((seg, i) => applyEdits(seg, prev[i]));
+          }
+          // Boundary added/removed: preserve edits for segments whose startIdx is unchanged.
           const editsByStart = new Map(prev.map(s => [s.startIdx, s]));
-          return recomputed.map(seg => {
-            const prior = editsByStart.get(seg.startIdx);
-            if (!prior) return seg;
-            return { ...seg, name: prior.name, targetType: prior.targetType, targetValue: prior.targetValue, temperature: prior.temperature };
-          });
+          return recomputed.map(seg => applyEdits(seg, editsByStart.get(seg.startIdx)));
         });
       }
     },
