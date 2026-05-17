@@ -99,16 +99,22 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
       draggingRef.current = { dragIndex: markerIndex, prevSample: boundariesRef.current[markerIndex] };
 
       function onMove(ev) {
-        const newSample = Math.max(1, Math.min(total - 2, pixelToSample(ev.clientX)));
+        const rawSample = Math.max(1, Math.min(total - 2, pixelToSample(ev.clientX)));
         const { dragIndex, prevSample } = draggingRef.current;
         const arr = [...boundariesRef.current];
-        arr[dragIndex] = newSample;
+        arr[dragIndex] = rawSample;
         const sorted = arr.sort((a, b) => a - b);
         // When two markers share the same sample, pick the correct position based on drag direction:
         // moving left → we're the leftmost duplicate (indexOf); moving right → rightmost (lastIndexOf).
         const newDragIndex =
-          newSample <= prevSample ? sorted.indexOf(newSample) : sorted.lastIndexOf(newSample);
-        draggingRef.current = { dragIndex: newDragIndex, prevSample: newSample };
+          rawSample <= prevSample ? sorted.indexOf(rawSample) : sorted.lastIndexOf(rawSample);
+        // Enforce a minimum 1-sample gap between neighboring markers so duplicate
+        // boundaries (and their resulting zero-duration segments) can never form.
+        const lo = newDragIndex > 0 ? sorted[newDragIndex - 1] + 1 : 1;
+        const hi = newDragIndex < sorted.length - 1 ? sorted[newDragIndex + 1] - 1 : total - 2;
+        const clamped = Math.max(lo, Math.min(hi, rawSample));
+        sorted[newDragIndex] = clamped;
+        draggingRef.current = { dragIndex: newDragIndex, prevSample: clamped };
         onBoundariesChange(sorted);
       }
 
