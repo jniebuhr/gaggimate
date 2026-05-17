@@ -23,10 +23,11 @@ export function ChartComponent({ data, className, chartClassName, onChartReady }
     // Cleanup function to destroy chart on unmount
     return () => {
       if (newChart) {
+        onChartReadyRef.current?.(null);
         newChart.destroy();
       }
     };
-  }, []); // Empty dependency array - only run on mount
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update chart data when data changes (reference comparison)
   useEffect(() => {

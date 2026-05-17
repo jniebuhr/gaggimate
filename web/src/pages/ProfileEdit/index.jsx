@@ -1,5 +1,5 @@
 import { useLocation, useRoute } from 'preact-iso';
-import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState, useContext } from 'preact/hooks';
 import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';
 import { StandardProfileForm } from './StandardProfileForm.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
@@ -20,55 +20,56 @@ export function ProfileEdit() {
   const [saving, setSaving] = useState(false);
   const { params } = useRoute();
   const [data, setData] = useState(null);
+  const initializedId = useRef(null);
   useEffect(() => {
-    if (params.id !== 'new') return;
-    const pending = consumePendingProfile();
-    // If pending is non-null it always has type:'pro' (set by buildProfile), which causes
-    // ProfileTypeSelection to be skipped below. This is load-bearing: do not omit type.
-    setData(
-      pending ?? {
-        label: 'New Profile',
-        description: '',
-        temperature: 93,
-        phases: [
-          {
-            name: 'Pump',
-            phase: 'preinfusion',
-            valve: 1,
-            pump: 100,
-            duration: 3,
-            transition: { type: 'instant', duration: 0, adaptive: true },
-            targets: [],
-          },
-          {
-            name: 'Bloom',
-            phase: 'preinfusion',
-            valve: 1,
-            pump: 0,
-            duration: 5,
-            transition: { type: 'instant', duration: 0, adaptive: true },
-            targets: [],
-          },
-          {
-            name: 'Pump',
-            phase: 'brew',
-            valve: 1,
-            pump: 100,
-            duration: 20,
-            targets: [{ type: 'volumetric', value: 36 }],
-            transition: { type: 'instant', duration: 0, adaptive: true },
-          },
-        ],
-      },
-    );
-    setLoading(false);
-  }, [params.id]);
-  useEffect(() => {
-    if (params.id === 'new' || !connected.value) return;
+    if (initializedId.current === params.id) return;
     async function fetchData() {
-      const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
-      setData(response.profile);
-      setLoading(false);
+      if (params.id === 'new') {
+        const pending = consumePendingProfile();
+        initializedId.current = params.id;
+        setData(
+          pending ?? {
+            label: 'New Profile',
+            description: '',
+            temperature: 93,
+            phases: [
+              {
+                name: 'Pump',
+                phase: 'preinfusion',
+                valve: 1,
+                pump: 100,
+                duration: 3,
+                transition: { type: 'instant', duration: 0, adaptive: true },
+                targets: [],
+              },
+              {
+                name: 'Bloom',
+                phase: 'preinfusion',
+                valve: 1,
+                pump: 0,
+                duration: 5,
+                transition: { type: 'instant', duration: 0, adaptive: true },
+                targets: [],
+              },
+              {
+                name: 'Pump',
+                phase: 'brew',
+                valve: 1,
+                pump: 100,
+                duration: 20,
+                targets: [{ type: 'volumetric', value: 36 }],
+                transition: { type: 'instant', duration: 0, adaptive: true },
+              },
+            ],
+          },
+        );
+        setLoading(false);
+      } else if (connected.value) {
+        const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
+        initializedId.current = params.id;
+        setData(response.profile);
+        setLoading(false);
+      }
     }
     fetchData();
   }, [params.id, connected.value, apiService]);

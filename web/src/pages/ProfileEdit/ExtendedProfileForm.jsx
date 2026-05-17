@@ -1,6 +1,14 @@
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
-import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
+import { ProfileKeyframeChart } from './ProfileKeyframeChart.jsx';
+import {
+  addKeyframeAtTime,
+  hasInitialSetupPhase,
+  moveKeyframeTime,
+  removeKeyframeAtIndex,
+  updateKeyframeSegment,
+  updateKeyframeValue,
+} from './keyframeProfileLogic.js';
 import { useState } from 'preact/hooks';
 import { ExtendedPhase } from './ExtendedPhase.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -21,9 +29,36 @@ export function ExtendedProfileForm(props) {
   };
 
   const onPhaseChange = (index, value) => {
-    const newData = {
-      ...data,
-    };
+    if (index > 0) {
+      // For profiles without a zero-duration setup phase, profileToKeyframes synthesizes a
+      // leading marker, shifting the marker index by 1 relative to the phase array. Use
+      // `index` directly in that case so the right marker is targeted.
+      const segmentIndex = hasInitialSetupPhase(data.phases) ? index - 1 : index;
+      const pumpPatch = value.pump && typeof value.pump === 'object'
+        ? {
+            pressure: value.pump.pressure,
+            flow: value.pump.flow,
+            targetMode: value.pump.target,
+          }
+        : {};
+      const result = updateKeyframeSegment(data, segmentIndex, {
+        name: value.name,
+        phase: value.phase,
+        valve: value.valve,
+        temperature: value.temperature,
+        duration: value.duration,
+        ...pumpPatch,
+        rampType: value.transition?.type,
+        rampDuration: value.transition?.duration,
+        adaptive: value.transition?.adaptive,
+        targets: value.targets,
+      });
+      onChange(result.profile);
+      setCurrentPhaseIndex(result.selectedSegmentIndex + 1);
+      return;
+    }
+
+    const newData = { ...data, phases: [...data.phases] };
     newData.phases[index] = value;
     onChange(newData);
   };
@@ -64,6 +99,19 @@ export function ExtendedProfileForm(props) {
     onChange(newData);
     setCurrentPhaseIndex(0);
   };
+
+  const applyKeyframeResult = result => {
+    onChange(result.profile);
+    const next = result.selectedSegmentIndex + 1;
+    setCurrentPhaseIndex(Math.min(next, result.profile.phases.length - 1));
+  };
+
+  const onMarkerAdd = time => applyKeyframeResult(addKeyframeAtTime(data, time));
+  const onMarkerMove = (markerIndex, time) => applyKeyframeResult(moveKeyframeTime(data, markerIndex, time));
+  const onSegmentSelect = segmentIndex =>
+    setCurrentPhaseIndex(segmentIndex + (hasInitialSetupPhase(data.phases) ? 1 : 0));
+  const onMarkerValueUpdate = (markerIndex, patch) =>
+    applyKeyframeResult(updateKeyframeValue(data, markerIndex, patch));
 
   const currentPhase = data.phases[currentPhaseIndex];
 
@@ -127,17 +175,21 @@ export function ExtendedProfileForm(props) {
           </div>
         </Card>
         <Card sm={10}>
-          <ExtendedProfileChart
+          <ProfileKeyframeChart
             data={data}
-            selectedPhase={currentPhaseIndex}
+            selectedSegmentIndex={Math.max(0, currentPhaseIndex - 1)}
+            onAddMarker={onMarkerAdd}
+            onMoveMarker={onMarkerMove}
+            onUpdateMarkerValue={onMarkerValueUpdate}
+            onSelectSegment={onSegmentSelect}
             className='max-h-72 w-full'
           />
         </Card>
         <Card sm={10}>
           <div className='card-header flex items-center gap-4'>
-            <h2 className='card-title flex-grow text-lg sm:text-xl'>Phases</h2>
+            <h2 className='card-title flex-grow text-lg sm:text-xl'>Selected Segment</h2>
             <h5 className='card-subtitle text-sm sm:text-base'>
-              {currentPhaseIndex + 1} / {data.phases.length}
+              {Math.max(1, currentPhaseIndex)} / {Math.max(1, data.phases.length - 1)}
             </h5>
             <div>
               <div className='join' role='group' aria-label='Phase navigation'>
@@ -173,7 +225,15 @@ export function ExtendedProfileForm(props) {
               type='button'
               className={`join-item btn btn-outline text-error max-sm:btn-sm`}
               aria-label='Remove phase'
-              onClick={() => onPhaseRemove(currentPhaseIndex)}
+              disabled={data.phases.length <= 2 || currentPhaseIndex === 0}
+              onClick={() =>
+                applyKeyframeResult(
+                  removeKeyframeAtIndex(
+                    data,
+                    hasInitialSetupPhase(data.phases) ? currentPhaseIndex : currentPhaseIndex + 1,
+                  ),
+                )
+              }
             >
               <FontAwesomeIcon icon={faTrashCan} />
             </button>

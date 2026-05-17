@@ -65,6 +65,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
     return { chartLeft, chartWidth: Math.max(1, chartRight - chartLeft) };
   }, []);
 
+
   const pixelToSample = useCallback(
     clientX => {
       const rect = containerRef.current?.getBoundingClientRect();
