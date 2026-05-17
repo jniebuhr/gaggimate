@@ -82,7 +82,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
       if (e.target !== e.currentTarget) return;
       if (boundariesRef.current.length >= MAX_BOUNDARIES) return;
       const newIdx = pixelToSample(e.clientX);
-      if (newIdx <= 0 || newIdx >= total - 1) return;
+      if (newIdx < 2 || newIdx > total - 2) return;
       if (boundariesRef.current.includes(newIdx)) return;
       const next = [...boundariesRef.current, newIdx].sort((a, b) => a - b);
       onBoundariesChange(next);
@@ -99,7 +99,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
       draggingRef.current = { dragIndex: markerIndex, prevSample: boundariesRef.current[markerIndex] };
 
       function onMove(ev) {
-        const rawSample = Math.max(1, Math.min(total - 2, pixelToSample(ev.clientX)));
+        const rawSample = Math.max(2, Math.min(total - 2, pixelToSample(ev.clientX)));
         const { dragIndex, prevSample } = draggingRef.current;
         const arr = [...boundariesRef.current];
         arr[dragIndex] = rawSample;
@@ -108,10 +108,11 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
         // moving left → we're the leftmost duplicate (indexOf); moving right → rightmost (lastIndexOf).
         const newDragIndex =
           rawSample <= prevSample ? sorted.indexOf(rawSample) : sorted.lastIndexOf(rawSample);
-        // Enforce a minimum 1-sample gap between neighboring markers so duplicate
-        // boundaries (and their resulting zero-duration segments) can never form.
-        const lo = newDragIndex > 0 ? sorted[newDragIndex - 1] + 1 : 1;
-        const hi = newDragIndex < sorted.length - 1 ? sorted[newDragIndex + 1] - 1 : total - 2;
+        // Enforce a minimum 2-sample gap between neighboring markers so every segment
+        // contains at least 2 samples and can never have zero duration.
+        const lo = newDragIndex > 0 ? sorted[newDragIndex - 1] + 2 : 2;
+        const hi = newDragIndex < sorted.length - 1 ? sorted[newDragIndex + 1] - 2 : total - 2;
+        if (lo > hi) return;
         const clamped = Math.max(lo, Math.min(hi, rawSample));
         sorted[newDragIndex] = clamped;
         draggingRef.current = { dragIndex: newDragIndex, prevSample: clamped };
