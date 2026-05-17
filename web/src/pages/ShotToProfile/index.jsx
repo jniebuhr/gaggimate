@@ -91,8 +91,12 @@ export function ShotToProfile() {
           `Manual ${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
         );
 
-        // Classify the whole shot once; pass result to both detectPhases and boundariesToSegments
-        const isFlow = parsed.samples.length > 0 && isFlowTargetedShot(parsed.samples);
+        // Manual shots on Gaggia are always pressure-controlled; skip the heuristic.
+        // For profiled shots, infer mode from the sample data.
+        const isFlow =
+          parsed.profileId !== 'manual' &&
+          parsed.samples.length > 0 &&
+          isFlowTargetedShot(parsed.samples);
         setIsFlowTargeted(isFlow);
         const detected = detectPhases(parsed.samples, isFlow);
         setBoundaries(detected);

@@ -61,6 +61,26 @@ describe('detectPhases', () => {
     }
   });
 
+  it('detects two boundaries for a rise-plateau-fall signal', () => {
+    // Three distinct phases with clear plateau in the middle
+    const values = [...ramp(0, 9, 25), ...Array(25).fill(9), ...ramp(9, 2, 25)];
+    const samples = makeSamples(values);
+    const result = detectPhases(samples);
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    expect(result.length).toBeLessThanOrEqual(2);
+    // All boundaries should be in the middle third of the signal
+    result.forEach(b => {
+      expect(b).toBeGreaterThan(5);
+      expect(b).toBeLessThan(samples.length - 5);
+    });
+  });
+
+  it('returns [] for a monotone rising ramp with no plateau (no spurious boundary)', () => {
+    // Strictly monotone — no plateau, no descent — should produce no boundary
+    const samples = makeSamples([...ramp(0, 10, 50)]);
+    expect(detectPhases(samples)).toEqual([]);
+  });
+
   it('merges boundaries closer than MIN_GAP (~5 s)', () => {
     // Two very close sign changes should merge into one boundary
     const values = [
