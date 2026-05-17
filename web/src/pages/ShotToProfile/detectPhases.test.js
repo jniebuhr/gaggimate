@@ -62,17 +62,19 @@ describe('detectPhases', () => {
   });
 
   it('detects two boundaries for a rise-plateau-fall signal', () => {
-    // Three distinct phases with clear plateau in the middle
-    const values = [...ramp(0, 9, 25), ...Array(25).fill(9), ...ramp(9, 2, 25)];
+    // Plateau must be wide enough (>= MIN_GAP + 2*SMOOTH_WINDOW ≈ 36 samples) so the
+    // ramp-to-hold boundary and the hold-to-fall boundary are far enough apart to survive
+    // the MIN_GAP merge step.
+    const values = [...ramp(0, 9, 25), ...Array(40).fill(9), ...ramp(9, 2, 25)];
     const samples = makeSamples(values);
     const result = detectPhases(samples);
-    expect(result.length).toBeGreaterThanOrEqual(1);
-    expect(result.length).toBeLessThanOrEqual(2);
-    // All boundaries should be in the middle third of the signal
-    result.forEach(b => {
-      expect(b).toBeGreaterThan(5);
-      expect(b).toBeLessThan(samples.length - 5);
-    });
+    expect(result.length).toBe(2);
+    // First boundary: plateau entry (in the first half of the signal)
+    expect(result[0]).toBeGreaterThan(5);
+    expect(result[0]).toBeLessThan(samples.length / 2);
+    // Second boundary: fall entry (in the second half)
+    expect(result[1]).toBeGreaterThan(samples.length / 2);
+    expect(result[1]).toBeLessThan(samples.length - 5);
   });
 
   it('returns [] for a monotone rising ramp with no plateau (no spurious boundary)', () => {

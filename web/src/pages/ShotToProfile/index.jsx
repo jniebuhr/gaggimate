@@ -52,8 +52,8 @@ function boundariesToSegments(boundaries, samples, isFlowTargeted) {
       endIdx: end,
       durationSeconds,
       targetType,
-      targetValue: targetValue || (targetType === 'pressure' ? 9 : 2),
-      temperature: Math.round(avg(slice, 'tt')) || 93,
+      targetValue: slice.length > 0 ? targetValue : (targetType === 'pressure' ? 9 : 2),
+      temperature: slice.length > 0 ? Math.round(avg(slice, 'tt')) : 93,
     };
   });
 }
@@ -107,11 +107,21 @@ export function ShotToProfile() {
     return () => controller.abort();
   }, [shotId]);
 
-  // Recompute segments whenever boundaries change
+  // Recompute segments whenever boundaries change, preserving user edits for unchanged segments.
   const handleBoundariesChange = useCallback(
     next => {
       setBoundaries(next);
-      if (shot) setSegments(boundariesToSegments(next, shot.samples, isFlowTargeted));
+      if (shot) {
+        setSegments(prev => {
+          const recomputed = boundariesToSegments(next, shot.samples, isFlowTargeted);
+          const editsByStart = new Map(prev.map(s => [s.startIdx, s]));
+          return recomputed.map(seg => {
+            const prior = editsByStart.get(seg.startIdx);
+            if (!prior) return seg;
+            return { ...seg, name: prior.name, targetType: prior.targetType, targetValue: prior.targetValue, temperature: prior.temperature };
+          });
+        });
+      }
     },
     [shot, isFlowTargeted],
   );

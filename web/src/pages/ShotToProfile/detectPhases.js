@@ -51,6 +51,12 @@ export function detectPhases(samples, isFlowTargeted = false) {
         plateauStart = i;
       }
       if (s !== 0) {
+        // Emit a pending plateau boundary before starting the new directional run.
+        // Without this, a rise-plateau-fall sequence loses the ramp-to-hold boundary
+        // because plateauStart is cleared by the time the fall is processed.
+        if (plateauStart !== -1) {
+          candidates.push({ index: plateauStart, magnitude: runPeakMag });
+        }
         prevSign = s;
         runStart = i;
         run = 1;

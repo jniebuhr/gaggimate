@@ -82,6 +82,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
       if (e.target !== e.currentTarget) return;
       if (boundariesRef.current.length >= MAX_BOUNDARIES) return;
       const newIdx = pixelToSample(e.clientX);
+      if (newIdx <= 0 || newIdx >= total - 1) return;
       if (boundariesRef.current.includes(newIdx)) return;
       const next = [...boundariesRef.current, newIdx].sort((a, b) => a - b);
       onBoundariesChange(next);
@@ -98,7 +99,7 @@ export function BoundaryChart({ shot, boundaries, onBoundariesChange }) {
       draggingRef.current = { dragIndex: markerIndex, prevSample: boundariesRef.current[markerIndex] };
 
       function onMove(ev) {
-        const newSample = pixelToSample(ev.clientX);
+        const newSample = Math.max(1, Math.min(total - 2, pixelToSample(ev.clientX)));
         const { dragIndex, prevSample } = draggingRef.current;
         const arr = [...boundariesRef.current];
         arr[dragIndex] = newSample;
