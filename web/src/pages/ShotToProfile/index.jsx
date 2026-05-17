@@ -7,19 +7,31 @@ import { BoundaryChart } from './BoundaryChart.jsx';
 import { SegmentCard } from './SegmentCard.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { parseBinaryShot } from '../ShotHistory/parseBinaryShot.js';
+import { avg } from '../../utils/shotMath.js';
 
 /** @typedef {{ name: string, startIdx: number, endIdx: number, durationSeconds: number, targetType: 'pressure'|'flow', targetValue: number, temperature: number }} Segment */
 
-function avg(samples, field) {
-  if (!samples.length) return 0;
-  return samples.reduce((s, x) => s + (x[field] ?? 0), 0) / samples.length;
-}
+// Minimum setpoint to treat as intentional — guards against near-zero sensor noise
+// causing division blow-up in the normalised tracking error.
+const MIN_SETPOINT = 0.05;
 
 function isFlowTargetedShot(samples) {
-  return avg(samples, 'tf') > 0 && avg(samples, 'tp') < 0.1;
+  if (!samples.length) return false;
+  const meanTf = avg(samples, 'tf');
+  if (meanTf < MIN_SETPOINT) return false;
+  const meanTp = avg(samples, 'tp');
+  if (meanTp < MIN_SETPOINT) return true;
+  // Compare normalised tracking error: the controlled variable's average reading
+  // stays proportionally closer to its setpoint than the free variable does.
+  // Scale-independent (bar vs ml/s). Variance-only checks fail when fl is
+  // unusually flat on a pressure shot; explicit mode storage in the shot binary
+  // would be the definitive fix for genuinely ambiguous cases.
+  const relErrFl = Math.abs(avg(samples, 'fl') / meanTf - 1);
+  const relErrCp = Math.abs(avg(samples, 'cp') / meanTp - 1);
+  return relErrFl < relErrCp;
 }
 
-function boundariesToSegments(boundaries, samples) {
+function boundariesToSegments(boundaries, samples, isFlowTargeted) {
   const breakpoints = [0, ...boundaries, samples.length];
   return breakpoints.slice(0, -1).map((start, i) => {
     const end = breakpoints[i + 1];
@@ -28,8 +40,7 @@ function boundariesToSegments(boundaries, samples) {
       slice.length > 0 && end <= samples.length && start < samples.length
         ? (samples[end - 1].t - samples[start].t) / 1000
         : 0;
-    const isFlow = isFlowTargetedShot(slice);
-    const targetType = isFlow ? 'flow' : 'pressure';
+    const targetType = isFlowTargeted ? 'flow' : 'pressure';
     const targetValue = parseFloat(
       (targetType === 'pressure' ? avg(slice, 'tp') : avg(slice, 'tf')).toFixed(
         targetType === 'pressure' ? 1 : 2,
@@ -41,8 +52,8 @@ function boundariesToSegments(boundaries, samples) {
       endIdx: end,
       durationSeconds,
       targetType,
-      targetValue: targetValue || (targetType === 'pressure' ? 9 : 2),
-      temperature: Math.round(avg(slice, 'tt')) || 93,
+      targetValue: slice.length > 0 ? targetValue : (targetType === 'pressure' ? 9 : 2),
+      temperature: slice.length > 0 ? Math.round(avg(slice, 'tt')) : 93,
     };
   });
 }
@@ -57,9 +68,14 @@ export function ShotToProfile() {
   const [boundaries, setBoundaries] = useState(null); // null = not yet computed
   const [segments, setSegments] = useState([]);
   const [profileName, setProfileName] = useState('');
+  const [isFlowTargeted, setIsFlowTargeted] = useState(false);
 
   // Fetch and parse the shot binary
   useEffect(() => {
+    if (!Number.isInteger(shotId) || shotId <= 0) {
+      setError('Invalid shot ID');
+      return;
+    }
     const controller = new AbortController();
     async function load() {
       try {
@@ -75,11 +91,14 @@ export function ShotToProfile() {
           `Manual ${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
         );
 
-        // Run phase detection
+        // Classify the whole shot once; pass result to both detectPhases and boundariesToSegments.
+        // The binary does not store which pump mode was active (manualTargetIsPressure is sent
+        // over BLE only), so we infer from the sample data for all shot types.
         const isFlow = parsed.samples.length > 0 && isFlowTargetedShot(parsed.samples);
+        setIsFlowTargeted(isFlow);
         const detected = detectPhases(parsed.samples, isFlow);
         setBoundaries(detected);
-        setSegments(boundariesToSegments(detected, parsed.samples));
+        setSegments(boundariesToSegments(detected, parsed.samples, isFlow));
       } catch (e) {
         if (e.name !== 'AbortError') setError(e.message);
       }
@@ -88,13 +107,32 @@ export function ShotToProfile() {
     return () => controller.abort();
   }, [shotId]);
 
-  // Recompute segments whenever boundaries change
+  // Recompute segments whenever boundaries change, preserving user edits.
+  // Strategy: if the segment count is unchanged (a boundary was moved, not added/removed),
+  // map edits by position index — the right-hand segment of a moved boundary gets a new
+  // startIdx so startIdx-keyed lookup would miss it. If the count changed (add/remove),
+  // map by startIdx so segments whose boundary didn't move keep their edits.
   const handleBoundariesChange = useCallback(
     next => {
       setBoundaries(next);
-      if (shot) setSegments(boundariesToSegments(next, shot.samples));
+      if (shot) {
+        setSegments(prev => {
+          const recomputed = boundariesToSegments(next, shot.samples, isFlowTargeted);
+          const applyEdits = (seg, prior) =>
+            prior
+              ? { ...seg, name: prior.name, targetType: prior.targetType, targetValue: prior.targetValue, temperature: prior.temperature }
+              : seg;
+          if (recomputed.length === prev.length) {
+            // Boundary moved: same number of segments, preserve edits by position.
+            return recomputed.map((seg, i) => applyEdits(seg, prev[i]));
+          }
+          // Boundary added/removed: preserve edits for segments whose startIdx is unchanged.
+          const editsByStart = new Map(prev.map(s => [s.startIdx, s]));
+          return recomputed.map(seg => applyEdits(seg, editsByStart.get(seg.startIdx)));
+        });
+      }
     },
-    [shot],
+    [shot, isFlowTargeted],
   );
 
   const handleSegmentChange = useCallback((idx, patch) => {
@@ -148,7 +186,7 @@ export function ShotToProfile() {
       <div className='flex flex-row gap-3 overflow-x-auto pb-2'>
         {segments.map((seg, i) => (
           <SegmentCard
-            key={i}
+            key={seg.startIdx}
             segment={seg}
             samples={shot.samples}
             onChange={patch => handleSegmentChange(i, patch)}
@@ -166,13 +204,13 @@ export function ShotToProfile() {
           className='font-nd-mono flex-grow text-[13px] bg-[var(--dm-bg-0,#0a0a0a)] text-[var(--text-primary,#e8e8e8)] border border-[var(--home-border,#333)] rounded px-3 py-2 min-w-[200px]'
         />
         <button
-          className='nd-action-btn'
+          className='nd-action-btn nd-action-btn--text'
           onClick={() => location.route('/history')}
         >
           Cancel
         </button>
         <button
-          className='nd-action-btn nd-action-btn--primary'
+          className='nd-action-btn nd-action-btn--primary nd-action-btn--text'
           onClick={handleGenerate}
           disabled={!profileName.trim() || segments.length === 0}
         >

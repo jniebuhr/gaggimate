@@ -72,7 +72,7 @@ export function ProfileEdit() {
       }
     }
     fetchData();
-  }, [params.id, setData, connected.value, apiService]);
+  }, [params.id, connected.value, apiService]);
   const onSave = useCallback(
     async data => {
       setSaving(true);

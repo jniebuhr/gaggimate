@@ -9,6 +9,8 @@ export function ChartComponent({ data, className, chartClassName, onChartReady }
   const ref = useRef();
   const dataRef = useRef(data);
   dataRef.current = data;
+  const onChartReadyRef = useRef(onChartReady);
+  onChartReadyRef.current = onChartReady;
 
   // Create chart on mount
   useEffect(() => {
@@ -16,16 +18,16 @@ export function ChartComponent({ data, className, chartClassName, onChartReady }
 
     const newChart = new Chart(ref.current, dataRef.current);
     setChart(newChart);
-    onChartReady?.(newChart);
+    onChartReadyRef.current?.(newChart);
 
     // Cleanup function to destroy chart on unmount
     return () => {
       if (newChart) {
-        onChartReady?.(null);
+        onChartReadyRef.current?.(null);
         newChart.destroy();
       }
     };
-  }, [onChartReady]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update chart data when data changes (reference comparison)
   useEffect(() => {

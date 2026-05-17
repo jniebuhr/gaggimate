@@ -1,7 +1,7 @@
 const SMOOTH_WINDOW = 8;   // ~2 s rolling average at 250 ms/sample
 const MIN_GAP = 20;        // ~5 s minimum between boundaries
 const SUSTAIN = 3;         // derivative sign must hold for this many samples
-const MAX_BOUNDARIES = 5;  // allow up to 6 phases (5 split points)
+export const MAX_BOUNDARIES = 5;  // allow up to 6 phases (5 split points)
 
 /**
  * @param {Array} samples - parsed ShotLogSample array (fields: cp, fl, t)
@@ -24,31 +24,56 @@ export function detectPhases(samples, isFlowTargeted = false) {
   // First-order derivative
   const deriv = smoothed.map((v, i) => (i === 0 ? 0 : v - smoothed[i - 1]));
 
-  // Detect sustained sign changes
+  // Detect sustained sign changes and ramp-to-plateau transitions
   const candidates = [];
   let prevSign = Math.sign(deriv[1]) || 1;
   let run = 0;
   let runStart = 1;
+  let runPeakMag = 0;
+  let hadSignChange = false;
+  // Index where current plateau began; -1 means not in a plateau.
+  let plateauStart = -1;
 
   for (let i = 1; i < deriv.length; i++) {
     const s = Math.sign(deriv[i]);
+    const mag = Math.abs(deriv[i]);
     if (s !== 0 && s === prevSign) {
       run++;
+      plateauStart = -1; // back in a directional run, clear any pending plateau
+      if (mag > runPeakMag) runPeakMag = mag;
     } else {
       if (s !== 0 && s !== prevSign && run >= SUSTAIN) {
-        candidates.push({ index: runStart, magnitude: Math.abs(deriv[runStart]) });
+        // True sign flip (positive ↔ negative) after a sustained run
+        candidates.push({ index: i, magnitude: mag });
+        hadSignChange = true;
+      } else if (s === 0 && plateauStart === -1 && run >= SUSTAIN) {
+        // Derivative dropped to zero after a sustained directional run — ramp-to-hold boundary
+        plateauStart = i;
       }
       if (s !== 0) {
+        // Emit a pending plateau boundary before starting the new directional run.
+        // Without this, a rise-plateau-fall sequence loses the ramp-to-hold boundary
+        // because plateauStart is cleared by the time the fall is processed.
+        if (plateauStart !== -1) {
+          candidates.push({ index: plateauStart, magnitude: runPeakMag });
+        }
         prevSign = s;
         runStart = i;
         run = 1;
+        runPeakMag = mag;
+        plateauStart = -1;
       }
     }
   }
 
-  // Capture final sustained run if it met the threshold
-  if (run >= SUSTAIN) {
-    candidates.push({ index: runStart, magnitude: Math.abs(deriv[runStart]) });
+  // Ramp ended in a plateau: boundary is at plateau entry, not at runStart
+  if (plateauStart !== -1) {
+    candidates.push({ index: plateauStart, magnitude: runPeakMag });
+  }
+  // Capture final sustained directional run only when a prior sign change confirmed it.
+  // Use peak magnitude within the run — deriv[runStart] is near-zero at a sign flip.
+  if (hadSignChange && run >= SUSTAIN) {
+    candidates.push({ index: runStart, magnitude: runPeakMag });
   }
 
   // Merge boundaries closer than MIN_GAP (keep larger magnitude)

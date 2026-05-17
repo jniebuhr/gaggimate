@@ -31,7 +31,7 @@ function round2(v) {
 export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) {
   const apiService = useContext(ApiServiceContext);
   const location = useLocation();
-  const isManualShot = !shot.profileId || shot.profileId.trim() === '';
+  const isManualShot = !shot.profileId || shot.profileId.trim() === '' || shot.profileId === 'manual';
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
   const [expanded, setExpanded] = useState(false);
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);

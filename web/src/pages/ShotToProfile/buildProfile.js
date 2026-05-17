@@ -1,4 +1,4 @@
-// web/src/pages/ShotToProfile/buildProfile.js
+import uuidv4 from '../../utils/uuid.js';
 
 /**
  * @typedef {Object} Segment
@@ -21,7 +21,7 @@ export function buildProfile(profileName, segments) {
   const firstTemp = segments[0]?.temperature ?? 93;
 
   return {
-    id: crypto.randomUUID(),
+    id: uuidv4(),
     label: profileName,
     description: '',
     type: 'pro',
@@ -34,6 +34,7 @@ export function buildProfile(profileName, segments) {
       phase: 'brew',
       valve: 1,
       duration: seg.durationSeconds,
+      // per-phase temperature enables ramping in 'pro' profiles; top-level is the default/display value
       temperature: Math.round(seg.temperature),
       pump: {
         target: seg.targetType,

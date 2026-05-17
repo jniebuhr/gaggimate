@@ -310,7 +310,7 @@ function getChartData(shot) {
   };
 }
 
-export function HistoryChart({ shot }) {
+export function HistoryChart({ shot, onChartReady }) {
   const chartData = getChartData(shot);
 
   return (
@@ -318,6 +318,7 @@ export function HistoryChart({ shot }) {
       className='min-h-[350px] flex-1'
       chartClassName='w-full min-h-[350px]'
       data={chartData}
+      onChartReady={onChartReady}
     />
   );
 }

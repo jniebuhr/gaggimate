@@ -1,9 +1,5 @@
-import { useCallback } from 'preact/hooks';
-
-function avg(samples, field) {
-  if (!samples.length) return 0;
-  return samples.reduce((s, x) => s + (x[field] ?? 0), 0) / samples.length;
-}
+import { useCallback, useMemo } from 'preact/hooks';
+import { avg } from '../../utils/shotMath.js';
 
 function clamp(v, lo, hi) {
   return Math.min(hi, Math.max(lo, v));
@@ -17,10 +13,13 @@ function clamp(v, lo, hi) {
  * }} props
  */
 export function SegmentCard({ segment, samples, onChange }) {
-  const sliceSamples = samples.slice(segment.startIdx, segment.endIdx);
-  const avgPressure = avg(sliceSamples, 'cp').toFixed(1);
-  const avgFlow = avg(sliceSamples, 'fl').toFixed(2);
-  const avgTemp = avg(sliceSamples, 'tt').toFixed(0);
+  const sliceSamples = useMemo(
+    () => samples.slice(segment.startIdx, segment.endIdx),
+    [samples, segment.startIdx, segment.endIdx],
+  );
+  const avgPressure = useMemo(() => avg(sliceSamples, 'cp').toFixed(1), [sliceSamples]);
+  const avgFlow = useMemo(() => avg(sliceSamples, 'fl').toFixed(2), [sliceSamples]);
+  const avgTemp = useMemo(() => avg(sliceSamples, 'tt').toFixed(0), [sliceSamples]);
 
   const handleTargetTypeChange = useCallback(
     e => {
