@@ -39,7 +39,7 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
-import { inferBeanForShot } from '../../utils/beanManager.js';
+import { inferBeanForShot, listBeans } from '../../utils/beanManager.js';
 
 const connected = computed(() => machine.value.connected);
 
@@ -68,6 +68,23 @@ export function ShotHistory() {
   const [filterBy, setFilterBy] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const [allBeans, setAllBeans] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      listBeans(apiService)
+        .then(beans => { if (!cancelled) setAllBeans(beans); })
+        .catch(() => {});
+    };
+    load();
+    window.addEventListener('beans-library-changed', load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('beans-library-changed', load);
+    };
+  }, [apiService, connected.value]);
 
   const enrichShotWithBean = useCallback(shot => ({ ...shot, beanName: inferBeanForShot(shot) }), []);
 
@@ -374,12 +391,20 @@ export function ShotHistory() {
     const startIndex = (safeCurrentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
+    const paginated = filtered.slice(startIndex, endIndex).map(shot => {
+      if (!shot.beanName || !allBeans.length) return shot;
+      const bean = allBeans.find(
+        b => b.name.trim().toLowerCase() === shot.beanName.trim().toLowerCase(),
+      );
+      return bean ? { ...shot, beanArchived: !!bean.archived } : shot;
+    });
+
     return {
-      paginatedHistory: filtered.slice(startIndex, endIndex),
+      paginatedHistory: paginated,
       totalPages: pages,
       totalFilteredItems: totalFiltered,
     };
-  }, [history, searchTerm, filterBy, sortBy, sortOrder, currentPage]);
+  }, [history, searchTerm, filterBy, sortBy, sortOrder, currentPage, allBeans]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
