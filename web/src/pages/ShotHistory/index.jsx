@@ -39,7 +39,7 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
-import { inferBeanForShot, listBeans } from '../../utils/beanManager.js';
+import { inferBeanForShot, inferBeanIdForShot, listBeans } from '../../utils/beanManager.js';
 
 const connected = computed(() => machine.value.connected);
 
@@ -86,7 +86,10 @@ export function ShotHistory() {
     };
   }, [apiService, connected.value]);
 
-  const enrichShotWithBean = useCallback(shot => ({ ...shot, beanName: inferBeanForShot(shot) }), []);
+  const enrichShotWithBean = useCallback(
+    shot => ({ ...shot, beanName: inferBeanForShot(shot), beanId: inferBeanIdForShot(shot) }),
+    [],
+  );
 
   useEffect(() => {
     notesService.setApiService(apiService);
@@ -393,9 +396,9 @@ export function ShotHistory() {
 
     const paginated = filtered.slice(startIndex, endIndex).map(shot => {
       if (!shot.beanName || !allBeans.length) return shot;
-      const bean = allBeans.find(
-        b => b.name.trim().toLowerCase() === shot.beanName.trim().toLowerCase(),
-      );
+      const bean = shot.beanId
+        ? allBeans.find(b => b.id === shot.beanId)
+        : allBeans.find(b => b.name.trim().toLowerCase() === shot.beanName.trim().toLowerCase());
       return bean ? { ...shot, beanArchived: !!bean.archived } : shot;
     });
 
