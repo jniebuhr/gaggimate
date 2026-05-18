@@ -23,9 +23,9 @@ void BeanconquerorPlugin::setup(Controller *ctrl, PluginManager *manager) {
 }
 
 void BeanconquerorPlugin::initBLEServer() {
-    // NimBLEDevice::init() was already called by NimBLEClientController.
-    // Calling it again with "GaggiMate" updates the device name only.
-    NimBLEDevice::init("ESPROFILE");
+    // NimBLE was already initialized by NimBLEClientController; set the GAP
+    // name explicitly so Beanconqueror's scanner finds "ESPROFILE".
+    NimBLEDevice::setDeviceName("ESPROFILE");
 
     server = NimBLEDevice::createServer();
 
