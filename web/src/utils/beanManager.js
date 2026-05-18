@@ -362,23 +362,32 @@ export function clearCurrentBeanSelection() {
   }
 }
 
-export function inferBeanForShot(shot) {
-  if (shot?.beanName) return shot.beanName;
-  if (shot?.beanType) return shot.beanType;
-  if (shot?.notes?.beanType) return shot.notes.beanType;
-
+function resolveSelectionEventForShot(shot) {
   const events = readJson(BEAN_SELECTION_EVENTS_KEY, []);
   const shotProfile = normalize(shot?.profile || shot?.profileName || '');
   const shotTimestampMs = Number(shot?.timestamp || 0) * 1000;
 
   if (!shotProfile || !Number.isFinite(shotTimestampMs) || shotTimestampMs <= 0) {
-    return '';
+    return null;
   }
 
-  const matchedEvent = events
-    .filter(event => normalize(event.profileLabel) === shotProfile)
-    .filter(event => Number(event.selectedAtMs || 0) <= shotTimestampMs)
-    .sort((a, b) => Number(b.selectedAtMs || 0) - Number(a.selectedAtMs || 0))[0];
+  return (
+    events
+      .filter(event => normalize(event.profileLabel) === shotProfile)
+      .filter(event => Number(event.selectedAtMs || 0) <= shotTimestampMs)
+      .sort((a, b) => Number(b.selectedAtMs || 0) - Number(a.selectedAtMs || 0))[0] || null
+  );
+}
 
-  return matchedEvent?.beanName || '';
+export function inferBeanForShot(shot) {
+  if (shot?.beanName) return shot.beanName;
+  if (shot?.beanType) return shot.beanType;
+  if (shot?.notes?.beanType) return shot.notes.beanType;
+  return resolveSelectionEventForShot(shot)?.beanName || '';
+}
+
+export function inferBeanIdForShot(shot) {
+  if (shot?.beanId) return shot.beanId;
+  if (shot?.notes?.beanId) return shot.notes.beanId;
+  return resolveSelectionEventForShot(shot)?.beanId || '';
 }

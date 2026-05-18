@@ -95,8 +95,11 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
     },
     [onNotesChanged, shot.id, shot.source],
   );
-  const profileTitle = shot.beanName
-    ? `${shot.profile || 'Unknown Profile'} \u2022 ${shot.beanName}`
+  const beanDisplay = shot.beanName
+    ? `${shot.beanName}${shot.beanArchived ? ' (archived)' : ''}`
+    : null;
+  const profileTitle = beanDisplay
+    ? `${shot.profile || 'Unknown Profile'} \u2022 ${beanDisplay}`
     : shot.profile || 'Unknown Profile';
   const formattedDate =
     date.toLocaleDateString() +
