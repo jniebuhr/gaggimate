@@ -4,8 +4,8 @@
 #include "../core/Plugin.h"
 #include <NimBLEDevice.h>
 
-#define BC_SERVICE_UUID        "4FAFC201-1FB5-459E-8FCC-C5C9C331914B"
-#define BC_SHOT_DATA_CHAR_UUID "BEB5483E-36E1-4688-B7F5-EA07361B26A8"
+#define BC_SERVICE_UUID        "777b5132-9f56-4850-a14b-34c8df44901a"
+#define BC_SHOT_DATA_CHAR_UUID "11282dae-6e9c-4223-b6d7-c67878832826"
 
 constexpr unsigned long BC_NOTIFY_INTERVAL_BREW_MS = 100;   // 10 Hz
 constexpr unsigned long BC_NOTIFY_INTERVAL_IDLE_MS = 1000;  // 1 Hz

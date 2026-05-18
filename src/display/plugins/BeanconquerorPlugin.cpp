@@ -1,5 +1,4 @@
 #include "BeanconquerorPlugin.h"
-#include "BLEScalePlugin.h"
 #include "../core/Controller.h"
 #include "../core/PluginManager.h"
 #include <NimBLEDevice.h>
@@ -26,7 +25,7 @@ void BeanconquerorPlugin::setup(Controller *ctrl, PluginManager *manager) {
 void BeanconquerorPlugin::initBLEServer() {
     // NimBLEDevice::init() was already called by NimBLEClientController.
     // Calling it again with "GaggiMate" updates the device name only.
-    NimBLEDevice::init("GaggiMate");
+    NimBLEDevice::init("ESPROFILE");
 
     server = NimBLEDevice::createServer();
 
@@ -53,7 +52,7 @@ void BeanconquerorPlugin::initBLEServer() {
     pAdvertising->start();
 
     bleReady = true;
-    ESP_LOGI("BeanconquerorPlugin", "BLE peripheral ready, advertising as GaggiMate");
+    ESP_LOGI("BeanconquerorPlugin", "BLE peripheral ready, advertising as ESPROFILE");
 }
 
 void BeanconquerorPlugin::loop() {
@@ -70,40 +69,30 @@ void BeanconquerorPlugin::loop() {
 }
 
 void BeanconquerorPlugin::buildAndNotify() {
-    // 28-byte payload (little-endian):
+    // 18-byte CoffeeSensor / ESPROFILE payload (little-endian):
     //  [0]  uint32 timestamp_ms
-    //  [4]  float  weight_g
-    //  [8]  float  pressure_bar
-    //  [12] float  temperature_c
-    //  [16] float  pump_flow_ml_s
-    //  [20] float  puck_flow_ml_s
-    //  [24] uint8  flags (bit 0 = scale connected, bit 1 = brewing)
-    //  [25-27] reserved
+    //  [4]  float  probe_temperature_c
+    //  [8]  float  pressure_bar_absolute  (gauge + 0.98 bar atmospheric)
+    //  [12] float  board_temperature_c
+    //  [16] uint8  battery_percent
+    //  [17] uint8  flags
 
-    uint8_t payload[28] = {};
+    uint8_t payload[18] = {};
 
     const uint32_t ts = static_cast<uint32_t>(millis());
     memcpy(payload + 0, &ts, 4);
 
-    const float weight = BLEScales.getLastWeight();
-    memcpy(payload + 4, &weight, 4);
-
-    const float pressure = controller->getCurrentPressure();
-    memcpy(payload + 8, &pressure, 4);
-
     const float temperature = controller->getCurrentTemp();
-    memcpy(payload + 12, &temperature, 4);
+    memcpy(payload + 4, &temperature, 4);
 
-    const float pumpFlow = controller->getCurrentPumpFlow();
-    memcpy(payload + 16, &pumpFlow, 4);
+    // Beanconqueror subtracts 0.98 bar atmospheric on its side, so send absolute pressure
+    const float pressureAbsolute = controller->getCurrentPressure() + 0.98f;
+    memcpy(payload + 8, &pressureAbsolute, 4);
 
-    const float puckFlow = controller->getCurrentPuckFlow();
-    memcpy(payload + 20, &puckFlow, 4);
+    memcpy(payload + 12, &temperature, 4);  // board temp = probe temp
 
-    uint8_t flags = 0;
-    if (BLEScales.isConnected()) flags |= 0x01;
-    if (brewing)                  flags |= 0x02;
-    payload[24] = flags;
+    payload[16] = 100;  // battery%: always full (mains-powered)
+    payload[17] = 0;
 
     shotDataChar->setValue(payload, sizeof(payload));
     shotDataChar->notify();
