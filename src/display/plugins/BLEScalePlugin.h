@@ -44,6 +44,7 @@ class BLEScalePlugin : public Plugin {
 
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
     void tare() const;
+    float getLastWeight() const { return lastWeight; }
 
   private:
     void update();
@@ -61,6 +62,7 @@ class BLEScalePlugin : public Plugin {
     // Rate limiting for callbacks
     mutable unsigned long lastMeasurementTime = 0;
     static constexpr unsigned long MIN_MEASUREMENT_INTERVAL_MS = 10; // Max 100 measurements per second
+    mutable float lastWeight = 0.0f;
 
     Controller *controller = nullptr;
     RemoteScalesPluginRegistry *pluginRegistry = nullptr;
