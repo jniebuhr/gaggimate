@@ -16,7 +16,8 @@ void BeanconquerorPlugin::setup(Controller *ctrl, PluginManager *manager) {
 
     manager->on("controller:brew:start", [this](Event const &) { brewing = true; });
     manager->on("controller:brew:prestart", [this](Event const &) { brewing = true; });
-    manager->on("controller:brew:stop", [this](Event const &) { brewing = false; });
+    manager->on("controller:brew:end",   [this](Event const &) { brewing = false; });
+    manager->on("controller:brew:clear", [this](Event const &) { brewing = false; });
     manager->on("controller:mode:change", [this](Event const &event) {
         if (event.getInt("value") == 0) brewing = false;
     });
