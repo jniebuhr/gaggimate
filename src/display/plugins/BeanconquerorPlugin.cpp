@@ -31,6 +31,10 @@ void BeanconquerorPlugin::initBLEServer() {
     server = NimBLEDevice::createServer();
 
     NimBLEService *pService = server->createService(BC_SERVICE_UUID);
+    if (!pService) {
+        ESP_LOGE("BeanconquerorPlugin", "Failed to create BLE service");
+        return;
+    }
 
     shotDataChar = pService->createCharacteristic(
         BC_SHOT_DATA_CHAR_UUID,
@@ -40,6 +44,10 @@ void BeanconquerorPlugin::initBLEServer() {
     pService->start();
 
     NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+    if (!pAdvertising) {
+        ESP_LOGE("BeanconquerorPlugin", "Failed to get BLE advertising handle");
+        return;
+    }
     pAdvertising->addServiceUUID(BC_SERVICE_UUID);
     pAdvertising->setScanResponse(true);
     pAdvertising->start();
