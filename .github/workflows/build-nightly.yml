@@ -123,13 +123,16 @@ jobs:
         with:
           name: gaggimate-firmware
           path: release
+      - name: Read version
+        id: version
+        run: echo "version=$(cat release/version.txt)" >> $GITHUB_OUTPUT
       - name: Update Nightly Release
         uses: andelf/nightly-release@c5ed4bdb7c1da04a4fa1e40bc5e67306f682563b
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: nightly
-          name: 'Nightly Release $$'
+          name: 'Nightly Release ${{ steps.version.outputs.version }}'
           prerelease: true
           body: 'Latest nightly release, use the nightly channel in the UI to download this firmware.'
           files: |
