@@ -46,7 +46,7 @@ export function Header() {
           <div className='flex items-center'>
             <a href='/' className='inline-flex' onClick={() => openCb(false)}>
               <span className='text-base-content font-logo text-3xl font-light'>
-                <span className='font-semibold'>GAGGI</span>MATE
+                <span className='font-semibold'>Gaggi</span>Go
               </span>
             </a>
           </div>
