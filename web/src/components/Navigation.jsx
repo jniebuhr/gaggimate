@@ -3,10 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
-import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
-import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
-import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 
@@ -44,13 +41,10 @@ export function Navigation(props) {
       </div>
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
-        <MenuItem label='PID Autotune' link='/pidtune' icon={faTemperatureHalf} />
-        <MenuItem label='Bluetooth Devices' link='/scales' icon={faBluetoothB} />
         <MenuItem label='Settings' link='/settings' icon={faCog} />
       </div>
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
-        <MenuItem label='System & Updates' link='/ota' icon={faRotate} />
       </div>
     </nav>
   );
