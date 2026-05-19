@@ -43,9 +43,6 @@ export function Navigation(props) {
       <div className='space-y-1.5'>
         <MenuItem label='Settings' link='/settings' icon={faCog} />
       </div>
-      <hr className='h-5 border-0' />
-      <div className='space-y-1.5'>
-      </div>
     </nav>
   );
 }
