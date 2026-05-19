@@ -98,4 +98,31 @@ All GaggiMate communication flows through:
 web/src/services/ApiService.js
 
 No UI component should directly send unsafe WebSocket commands.
-```
+
+## Current Important Repo Areas
+
+web/src/index.jsx
+web/src/components/
+web/src/pages/
+web/src/services/
+web/public/
+schema/
+
+## Permanent Non-Goals
+
+- Remote brewing
+- Cloud-first architecture
+- Live machine control
+- OTA management
+- Always-on bridge devices
+- Home Assistant dependency
+- Rewriting GaggiMate frontend from scratch
+
+## Known Good State
+
+- Repo clones correctly
+- npm install succeeds
+- npm run dev succeeds
+- Vite frontend reachable at localhost:5173
+- Branch gaggigo-mvp active
+- Git push/pull verified
