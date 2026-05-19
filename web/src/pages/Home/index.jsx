@@ -1,80 +1,53 @@
-import { useCallback, useContext, useState, useEffect } from 'preact/hooks';
-import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import {
-  Chart,
-  LineController,
-  TimeScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Legend,
-  Filler,
-} from 'chart.js';
-import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
-import { OverviewChart } from '../../components/OverviewChart.jsx';
-import Card from '../../components/Card.jsx';
-import ProcessControls from './ProcessControls.jsx';
-import { getDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
-
-Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
-
 export function Home() {
-  const [dashboardLayout, setDashboardLayout] = useState(DASHBOARD_LAYOUTS.ORDER_FIRST);
-  const apiService = useContext(ApiServiceContext);
-
-  useEffect(() => {
-    setDashboardLayout(getDashboardLayout());
-
-    const handleStorageChange = e => {
-      if (e.key === 'dashboardLayout') {
-        setDashboardLayout(e.newValue || DASHBOARD_LAYOUTS.ORDER_FIRST);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  const changeMode = useCallback(
-    mode => {
-      apiService.send({
-        tp: 'req:change-mode',
-        mode,
-      });
-    },
-    [apiService],
-  );
-  const mode = machine.value.status.mode;
-
   return (
-    <>
-      <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
+    <div className='grid grid-cols-1 gap-6 xl:grid-cols-12'>
+      <div className='card bg-base-100 shadow-xl xl:col-span-8'>
+        <div className='card-body flex min-h-[420px] items-center justify-center text-center'>
+          <div>
+            <div className='mb-6 text-6xl'>☕</div>
+
+            <h1 className='mb-3 text-4xl font-bold'>Welcome to GaggiGo</h1>
+
+            <p className='text-base-content/70 mb-2 text-lg'>
+              Offline-first companion for GaggiMate.
+            </p>
+
+            <p className='text-base-content/60 max-w-2xl'>
+              View profiles, analyse shot history, review settings, and safely sync data without
+              exposing dangerous machine controls.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:sm:grid-cols-10'>
-        <Card
-          sm={10}
-          lg={4}
-          className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
-          title='Process Controls'
-        >
-          <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
-        </Card>
+      <div className='card bg-base-100 shadow-xl xl:col-span-4'>
+        <div className='card-body'>
+          <h2 className='card-title'>System Status</h2>
 
-        <Card
-          sm={10}
-          lg={6}
-          className={`landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-last' : 'order-first'}`}
-          title='Temperature & Pressure Chart'
-          fullHeight={true}
-        >
-          <OverviewChart />
-        </Card>
+          <div className='mt-4 space-y-4'>
+            <div className='flex items-center justify-between'>
+              <span>Frontend</span>
+              <span className='badge badge-success'>ONLINE</span>
+            </div>
+
+            <div className='flex items-center justify-between'>
+              <span>Local Cache</span>
+              <span className='badge badge-info'>READY</span>
+            </div>
+
+            <div className='flex items-center justify-between'>
+              <span>Sync Layer</span>
+              <span className='badge badge-warning'>MVP</span>
+            </div>
+
+            <div className='divider'></div>
+
+            <p className='text-base-content/60 text-sm'>
+              GaggiGo never exposes brew, steam, grinder, water, or OTA controls.
+            </p>
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
