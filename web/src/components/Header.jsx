@@ -4,10 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
-import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
-import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
-import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
@@ -131,18 +128,6 @@ export function Header() {
           <hr className='h-5 border-0' />
           <div className='space-y-1.5'>
             <HeaderItem
-              label='PID Autotune'
-              link='/pidtune'
-              icon={faTemperatureHalf}
-              onClick={() => openCb(false)}
-            />
-            <HeaderItem
-              label='Bluetooth Devices'
-              link='/scales'
-              icon={faBluetoothB}
-              onClick={() => openCb(false)}
-            />
-            <HeaderItem
               label='Settings'
               link='/settings'
               icon={faCog}
@@ -151,12 +136,6 @@ export function Header() {
           </div>
           <hr className='h-5 border-0' />
           <div className='space-y-1.5'>
-            <HeaderItem
-              label='System & Updates'
-              link='/ota'
-              icon={faRotate}
-              onClick={() => openCb(false)}
-            />
           </div>
         </nav>
       </div>
