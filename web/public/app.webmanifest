@@ -5,8 +5,8 @@
   "display": "fullscreen",
   "dir": "auto",
   "lang": "en-US",
-  "name": "GaggiMate Web UI",
-  "short_name": "GaggiMate",
+  "name": "GaggiGo Web UI",
+  "short_name": "GaggiGo",
   "start_url": "/",
   "scope": "/"
 }
