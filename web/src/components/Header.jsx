@@ -134,9 +134,6 @@ export function Header() {
               onClick={() => openCb(false)}
             />
           </div>
-          <hr className='h-5 border-0' />
-          <div className='space-y-1.5'>
-          </div>
         </nav>
       </div>
     </header>
