@@ -11,9 +11,10 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     bool connectToServer();
     void loop();
 
-    void sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure, float flow);
+    void sendAdvancedOutputControl(bool valve, float heaterSetpoint, bool pressureTarget, float pressure, float flow, bool refill,
+                                   float heater2Setpoint);
 
-    void sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint);
+    void sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint, bool refill, float heater2Setpoint);
     void sendAltControl(bool pinState);
     void sendPing();
     void sendAutotune(int testTime, int samples);
@@ -27,6 +28,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void tare();
     void registerRemoteErrorCallback(const remote_err_callback_t &callback);
     void registerBtnCallback(const button_callback_t &callback);
+    void registerLevelCallback(const bool_callback_t &callback);
     void registerSensorCallback(const sensor_read_callback_t &callback);
     void registerAutotuneResultCallback(const pid_control_callback_t &callback);
     void registerVolumetricMeasurementCallback(const float_callback_t &callback);
@@ -51,6 +53,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *autotuneChar = nullptr;
     NimBLERemoteCharacteristic *autotuneResultChar = nullptr;
     NimBLERemoteCharacteristic *btnChar = nullptr;
+    NimBLERemoteCharacteristic *levelChar = nullptr;
     NimBLERemoteCharacteristic *infoChar = nullptr;
     NimBLERemoteCharacteristic *sensorChar = nullptr;
     NimBLERemoteCharacteristic *outputControlChar = nullptr;
@@ -65,6 +68,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
 
     remote_err_callback_t remoteErrorCallback = nullptr;
     button_callback_t btnCallback = nullptr;
+    bool_callback_t steamBtnCallback = nullptr;
+    bool_callback_t levelCallback = nullptr;
     pid_control_callback_t autotuneResultCallback = nullptr;
     sensor_read_callback_t sensorCallback = nullptr;
     float_callback_t volumetricMeasurementCallback = nullptr;
@@ -72,7 +77,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void_callback_t disconnectCallback = nullptr;
 
     String _lastOutputControl = "";
-    char advancedOutputBuffer[80]{};
+    char advancedOutputBuffer[90]{};
     char outputBuffer[64]{};
     char autotuneBuffer[24]{};
     char pressureScaleBuffer[10]{};
