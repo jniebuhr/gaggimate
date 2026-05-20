@@ -2,6 +2,7 @@
 #define BREWPROCESS_H
 
 #include <algorithm>
+#include <cmath>
 #include <display/core/constants.h>
 #include <display/core/predictive.h>
 #include <display/core/process/Process.h>
@@ -79,12 +80,43 @@ class BrewProcess : public Process {
         return brewVolume;
     }
 
+    // Adaptive damping state for auto-tune convergence. Persists across BrewProcess
+    // instances (reset only on firmware reboot) so the learned step size survives
+    // between shots. Sign-flip damping lets the tuner approximate bisection without
+    // tracking explicit brackets: each time the overshoot sign flips, we halve the
+    // step, which rapidly settles a non-monotonic optimum (see PR discussion).
+    static inline double s_stepDampFactor = 1.0;
+    static inline double s_lastOvershootSign = 0.0; // 0 = no prior data, +1 = overshoot, -1 = undershoot
+    static inline int s_stableStreak = 0;
+    static constexpr double BREW_DELAY_DEADBAND_G = 0.5;
+    static constexpr int STABLE_STREAK_RESET = 3;
+
     double getNewDelayTime() {
-        double newDelay = brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(getBrewVolume(), currentVolume);
-        if (newDelay <= 0.0 || newDelay >= PREDICTIVE_TIME) {
-            return -1;
+        const double target = getBrewVolume();
+        const double overshoot = currentVolume - target; // g; >0 = over, <0 = under
+
+        // Deadband: within noise of the scale / grind variation, don't adjust.
+        if (std::abs(overshoot) < BREW_DELAY_DEADBAND_G) {
+            if (++s_stableStreak >= STABLE_STREAK_RESET) {
+                // Sustained stability; reset damping so we can respond to real drift
+                // (e.g. bean change, grind change) after things have settled.
+                s_stepDampFactor = 1.0;
+                s_lastOvershootSign = 0.0;
+            }
+            return brewDelay; // no-op update
         }
-        return newDelay;
+        s_stableStreak = 0;
+
+        // Sign-flip damping: we just crossed the optimum -- step less next time.
+        const double currSign = (overshoot > 0) ? 1.0 : -1.0;
+        if (s_lastOvershootSign != 0.0 && currSign != s_lastOvershootSign) {
+            s_stepDampFactor *= 0.5;
+        }
+        s_lastOvershootSign = currSign;
+
+        const double rawAdjust = volumetricRateCalculator.getOvershootAdjustMillis(target, currentVolume);
+        // setBrewDelay clamps to [0, 4000ms]; always apply so partial progress lands.
+        return brewDelay + rawAdjust * s_stepDampFactor;
     }
 
     bool isRelayActive() override {
@@ -145,6 +177,10 @@ class BrewProcess : public Process {
                 phaseStartFlow = nextPhase.transition.adaptive ? currentFlow : getPumpFlow();
                 currentPhase = nextPhase;
                 currentPhaseStarted = millis();
+                // Drop stale samples so the linear-fit window does not average across
+                // the prior phase's flow regime (e.g. low-flow pre-infusion contaminating
+                // the rate read at end of the volumetric brew phase).
+                volumetricRateCalculator.clear();
                 computeEffectiveTargetsForCurrentPhase();
             } else {
                 processPhase = ProcessPhase::FINISHED;

@@ -12,6 +12,14 @@ class VolumetricRateCalculator {
         measurementTimes.emplace_back(millis());
     }
 
+    // Drop accumulated samples. Use when the upstream signal regime changes
+    // sharply (e.g. brew phase transition) so the linear-fit window does not
+    // average across regimes.
+    void clear() {
+        measurements.clear();
+        measurementTimes.clear();
+    }
+
     double getRate(double time = 0) const {
         if (time == 0) {
             time = millis();
