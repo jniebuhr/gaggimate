@@ -49,7 +49,9 @@ export function Tooltip({ content, children, placement = 'top', disabled = false
     return cleanup;
   }, [disabled, isVisible, placement]);
 
-  const show = useCallback(() => {if (!disabled) setIsVisible(true);}, [disabled]);
+  const show = useCallback(() => {
+    if (!disabled) setIsVisible(true);
+  }, [disabled]);
   const hide = useCallback(() => setIsVisible(false), []);
 
   const tooltip =
