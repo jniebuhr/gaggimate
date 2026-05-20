@@ -19,6 +19,7 @@ import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
+const connected = computed(() => machine.value.connected);
 const tofDistance = computed(() => machine.value.status.tofDistance);
 const connected = computed(() => machine.value.connected);
 
@@ -64,26 +65,27 @@ export function Settings() {
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
+  const [profiles, setProfiles] = useState([]);
+  const apiService = useContext(ApiServiceContext);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
     return data;
   });
 
-  const formRef = useRef();
-
-  const loadProfiles = async () => {
-    const response = await apiService.request({ tp: 'req:profiles:list' });
-    setProfiles(response.profiles);
-  };
+  // Fetch profiles via WebSocket (wait for connection)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const loadData = async () => {
+    const loadProfiles = async () => {
       if (connected.value) {
-        await loadProfiles();
+        const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
+        setProfiles(response.profiles);
       }
     };
-    loadData();
+    loadProfiles();
   }, [connected.value]);
+
+  const formRef = useRef();
 
   useEffect(() => {
     if (fetchedSettings) {
@@ -409,6 +411,25 @@ export function Settings() {
                 <option value='brew' selected={formData.startupMode === 'brew'}>
                   Brew
                 </option>
+              </select>
+            </div>
+            <div className='form-control mb-4'>
+              <label htmlFor='startup-profile' className='mb-2 block text-sm font-medium'>
+                Startup Profile
+              </label>
+              <select
+                id='startup-profile'
+                name='startupProfile'
+                className='select select-bordered w-full'
+                value={formData.startupProfile || ''}
+                onChange={onChange('startupProfile')}
+              >
+                <option value=''>Last used profile</option>
+                {profiles.map(profile => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div className='form-control mb-4'>
