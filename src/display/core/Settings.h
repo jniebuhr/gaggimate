@@ -111,6 +111,12 @@ class Settings {
     int getAltRelayFunction() const { return altRelayFunction; }
     bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
+    String getButtonBehavior(int index) const {
+        if (index >= 0 && index < buttonBehavior.size())
+            return buttonBehavior[index];
+        return "";
+    };
+    std::vector<String> getButtonBehaviorList() const { return buttonBehavior; }
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
@@ -170,6 +176,8 @@ class Settings {
     void setAltRelayFunction(int alt_relay_function);
     void setAutoWakeupEnabled(bool enabled);
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
+    void setButtonBehavior(int index, String behavior);
+    void setButtonBehaviorList(const std::vector<String> &behavior_list);
 
   private:
     Preferences preferences;
@@ -237,6 +245,7 @@ class Settings {
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
+    std::vector<String> buttonBehavior;
 
     void doSave();
     xTaskHandle taskHandle;

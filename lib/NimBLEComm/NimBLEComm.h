@@ -13,8 +13,11 @@
 #define AUTOTUNE_RESULT_UUID "7f61607a-2817-4354-9b94-d49c057fc879"
 #define PID_CONTROL_CHAR_UUID "d448c469-3e1d-4105-b5b8-75bf7d492fad"
 #define PUMP_MODEL_COEFFS_CHAR_UUID "e448c469-3e1d-4105-b5b8-75bf7d492fae"
-#define INFO_UUID "f8d7203b-e00c-48e2-83ba-37ff49cdba74"
+#define BREW_BTN_UUID "a29eb137-b33e-45a4-b1fc-15eb04e8ab39"
+#define STEAM_BTN_UUID "53750675-4839-421e-971e-cc6823507d8e"
 #define BTN_UUID "d38a5efc-189e-4199-8105-1d94b94253fc"
+#define WATER_LEVEL_UUID "1162dc1d-eaa9-482d-86db-4af342f0ff67"
+#define INFO_UUID "f8d7203b-e00c-48e2-83ba-37ff49cdba74"
 
 #define PRESSURE_SCALE_UUID "3aa65ab6-2dda-4c95-9cf3-58b2a0480623"
 #define SENSOR_DATA_UUID "62b69e72-ac19-4d4b-bd53-2edd65330c93"
@@ -37,17 +40,19 @@ using pump_model_coeffs_callback_t = std::function<void(float a, float b, float 
 using ping_callback_t = std::function<void()>;
 using remote_err_callback_t = std::function<void(int errorCode)>;
 using autotune_callback_t = std::function<void(int testTime, int samples)>;
-using void_callback_t = std::function<void()>;
 
 // New combined callbacks
+using void_callback_t = std::function<void()>;
 using float_callback_t = std::function<void(float val)>;
+using bool_callback_t = std::function<void(bool val)>;
 using int_callback_t = std::function<void(int val)>;
 using button_callback_t = std::function<void(uint8_t index, bool val)>;
-using simple_output_callback_t = std::function<void(bool valve, float pumpSetpoint, float boilerSetpoint)>;
-using advanced_output_callback_t =
-    std::function<void(bool valve, float boilerSetpoint, bool pressureTarget, float pumpPressure, float pumpFlow)>;
-using sensor_read_callback_t =
-    std::function<void(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance)>;
+using simple_output_callback_t =
+    std::function<void(bool valve, float pumpSetpoint, float heaterSetpoint, bool refill, float heater2Setpoint)>;
+using advanced_output_callback_t = std::function<void(bool valve, float heaterSetpoint, bool pressureTarget, float pumpPressure,
+                                                      float pumpFlow, bool refill, float heater2Setpoint)>;
+using sensor_read_callback_t = std::function<void(float temperature, float pressure, float puckFlow, float pumpFlow,
+                                                  float puckResistance, float heater2Temperature)>;
 using led_control_callback_t = std::function<void(uint8_t channel, uint8_t brightness)>;
 
 struct SystemCapabilities {
@@ -55,6 +60,7 @@ struct SystemCapabilities {
     bool pressure;
     bool ledControl;
     bool tof;
+    bool dualBoiler;
 };
 
 struct SystemInfo {

@@ -11,9 +11,11 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void initServer(String infoString);
     void loop();
 
-    void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance);
+    void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+                        float temperature2);
     void sendError(int errorCode);
     void sendBtnState(uint8_t index, bool status);
+    void sendLevelState(bool levelStatus);
     void sendAutotuneResult(float Kp, float Ki, float Kd);
     void sendVolumetricMeasurement(float value);
     void sendTofMeasurement(int value);
@@ -45,6 +47,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     NimBLECharacteristic *autotuneChar = nullptr;
     NimBLECharacteristic *autotuneResultChar = nullptr;
     NimBLECharacteristic *btnChar = nullptr;
+    NimBLECharacteristic *levelChar = nullptr;
     NimBLECharacteristic *infoChar = nullptr;
     NimBLECharacteristic *sensorChar = nullptr;
     NimBLECharacteristic *volumetricMeasurementChar = nullptr;
@@ -62,9 +65,10 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     float_callback_t pressureScaleCallback = nullptr;
     void_callback_t tareCallback = nullptr;
     led_control_callback_t ledControlCallback = nullptr;
-    char sensorDataBuffer[80]{};
+    char sensorDataBuffer[90]{};
     char errorBuffer[12]{};
     char btnBuffer[10]{};
+    char levelBuffer[4]{};
     char autotuneResultBuffer[64]{};
     char tofBuffer[16]{};
     char volumetricBuffer[16]{};

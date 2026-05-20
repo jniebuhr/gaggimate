@@ -106,6 +106,9 @@ Settings::Settings() {
     fullTankDistance = preferences.getInt("sr_fd", 30);
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
 
+    String buttonBehaviorStr = preferences.getString("btnb", "brew,steam,water");
+    buttonBehavior = explode(buttonBehaviorStr, ',');
+
     preferences.end();
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
@@ -427,6 +430,19 @@ void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &sch
     save();
 }
 
+void Settings::setButtonBehavior(int index, String behavior) {
+    if (index < 0 || index >= buttonBehavior.size()) {
+        return;
+    }
+    buttonBehavior[index] = std::move(behavior);
+    save();
+}
+
+void Settings::setButtonBehaviorList(const std::vector<String> &behavior_list) {
+    buttonBehavior = behavior_list;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -509,6 +525,7 @@ void Settings::doSave() {
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);
     preferences.putInt("alt_relay", altRelayFunction);
+    preferences.putString("btnb", implode(buttonBehavior, ","));
 
     preferences.end();
 }

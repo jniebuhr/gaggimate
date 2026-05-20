@@ -44,8 +44,11 @@ void NimBLEServerController::initServer(const String infoString) {
     autotuneChar->setCallbacks(this); // Use this class as the callback handler
     autotuneResultChar = pService->createCharacteristic(AUTOTUNE_RESULT_UUID, NIMBLE_PROPERTY::NOTIFY);
 
-    // Brew button Characteristic (Server notifies client of button changes)
+    // Brew button Characteristic (Server notifies client of brew button)
     btnChar = pService->createCharacteristic(BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
+
+    // Level Characteristic (Server notifies client of level)
+    levelChar = pService->createCharacteristic(WATER_LEVEL_UUID, NIMBLE_PROPERTY::NOTIFY);
 
     infoChar = pService->createCharacteristic(INFO_UUID, NIMBLE_PROPERTY::READ);
     setInfo(infoString);
@@ -86,10 +89,10 @@ void NimBLEServerController::loop() {
 }
 
 void NimBLEServerController::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow,
-                                            float puckResistance) {
+                                            float puckResistance, float temperature2) {
     if (deviceConnected && sensorChar != nullptr) {
-        snprintf(sensorDataBuffer, sizeof(sensorDataBuffer), "%.3f,%.3f,%.3f,%.3f,%.3f", temperature, pressure, puckFlow,
-                 pumpFlow, puckResistance);
+        snprintf(sensorDataBuffer, sizeof(sensorDataBuffer), "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", temperature, pressure, puckFlow,
+                 pumpFlow, puckResistance, temperature2);
         sensorChar->setValue(sensorDataBuffer);
         sensorChar->notify();
     }
@@ -109,6 +112,15 @@ void NimBLEServerController::sendBtnState(uint8_t index, bool status) {
         snprintf(btnBuffer, sizeof(btnBuffer), "%d,%d", static_cast<int>(index), static_cast<int>(status));
         btnChar->setValue(btnBuffer);
         btnChar->notify();
+    }
+}
+
+void NimBLEServerController::sendLevelState(bool levelStatus) {
+    if (deviceConnected) {
+        // Send steam notification to the client
+        snprintf(levelBuffer, sizeof(levelBuffer), "%d", static_cast<int>(levelStatus));
+        levelChar->setValue(levelBuffer);
+        levelChar->notify();
     }
 }
 
@@ -183,24 +195,32 @@ void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
 
     if (pCharacteristic->getUUID().equals(NimBLEUUID(OUTPUT_CONTROL_UUID))) {
         auto control = String(pCharacteristic->getValue().c_str());
+        ESP_LOGV(LOG_TAG, "Received control: %s", control.c_str());
         uint8_t type = get_token(control, 0, ',').toInt();
         uint8_t valve = get_token(control, 1, ',').toInt();
-        float boilerSetpoint = get_token(control, 3, ',').toFloat();
+        float heaterSetpoint = get_token(control, 3, ',').toFloat();
         if (type == 0) {
             float pumpSetpoint = get_token(control, 2, ',').toFloat();
-            ESP_LOGV(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, boiler=%.1f", type, valve, pumpSetpoint,
-                     boilerSetpoint);
+            bool refill = get_token(control, 4, ',').toInt() == 1;
+            float heater2Setpoint = get_token(control, 5, ',').toFloat();
+            ESP_LOGV(LOG_TAG, "Received output control: type=%d, valve=%d, pump=%.1f, heater=%.1f, refill=%d, heater2=%.1f", type,
+                     valve, pumpSetpoint, heaterSetpoint, refill, heater2Setpoint);
             if (outputControlCallback != nullptr) {
-                outputControlCallback(valve == 1, pumpSetpoint, boilerSetpoint);
+                outputControlCallback(valve == 1, pumpSetpoint, heaterSetpoint, refill, heater2Setpoint);
             }
         } else if (type == 1) {
             bool pressureTarget = get_token(control, 4, ',').toInt() == 1;
             float pumpPressure = get_token(control, 5, ',').toFloat();
             float pumpFlow = get_token(control, 6, ',').toFloat();
-            ESP_LOGV(LOG_TAG, "Received advanced output control: type=%d, valve=%d, pressure_target=%d, pressure=%.1f, flow=%.1f",
-                     type, valve, pressureTarget, pumpPressure, pumpFlow);
+            bool refill = get_token(control, 7, ',').toInt() == 1;
+            float heater2Setpoint = get_token(control, 8, ',').toFloat();
+            ESP_LOGV(LOG_TAG,
+                     "Received advanced output control: type=%d, valve=%d, pressure_target=%d, pressure=%.1f, flow=%.1f, "
+                     "refill=%d, heater2=%.3f",
+                     type, valve, pressureTarget, pumpPressure, pumpFlow, refill, heater2Setpoint);
             if (advancedControlCallback != nullptr) {
-                advancedControlCallback(valve == 1, boilerSetpoint, pressureTarget, pumpPressure, pumpFlow);
+                advancedControlCallback(valve == 1, heaterSetpoint, pressureTarget, pumpPressure, pumpFlow, refill,
+                                        heater2Setpoint);
             }
         }
     } else if (pCharacteristic->getUUID().equals(NimBLEUUID(ALT_CONTROL_CHAR_UUID))) {

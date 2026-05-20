@@ -46,6 +46,8 @@ void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callba
 
 void NimBLEClientController::registerBtnCallback(const button_callback_t &callback) { btnCallback = callback; }
 
+void NimBLEClientController::registerLevelCallback(const bool_callback_t &callback) { levelCallback = callback; }
+
 void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t &callback) { sensorCallback = callback; }
 
 void NimBLEClientController::registerAutotuneResultCallback(const pid_control_callback_t &callback) {
@@ -123,6 +125,12 @@ bool NimBLEClientController::connectToServer() {
                                            std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
+    levelChar = pRemoteService->getCharacteristic(NimBLEUUID(WATER_LEVEL_UUID));
+    if (levelChar != nullptr && levelChar->canNotify()) {
+        levelChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                             std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
     autotuneResultChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_RESULT_UUID));
     if (autotuneResultChar != nullptr && autotuneResultChar->canNotify()) {
         autotuneResultChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
@@ -161,19 +169,21 @@ void NimBLEClientController::loop() {
     }
 }
 
-void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure,
-                                                       float flow) {
+void NimBLEClientController::sendAdvancedOutputControl(bool valve, float heaterSetpoint, bool pressureTarget, float pressure,
+                                                       float flow, bool refill, float heater2Setpoint) {
     if (client->isConnected() && outputControlChar != nullptr) {
-        snprintf(advancedOutputBuffer, sizeof(advancedOutputBuffer), "1,%d,100.0,%.3f,%d,%.3f,%.3f", valve ? 1 : 0,
-                 boilerSetpoint, pressureTarget ? 1 : 0, pressure, flow);
+        snprintf(advancedOutputBuffer, sizeof(advancedOutputBuffer), "1,%d,100.0,%.3f,%d,%.3f,%.3f,%d,%.3f", valve ? 1 : 0,
+                 heaterSetpoint, pressureTarget ? 1 : 0, pressure, flow, refill ? 1 : 0, heater2Setpoint);
         _lastOutputControl = String(advancedOutputBuffer);
         outputControlChar->writeValue(_lastOutputControl, false);
     }
 }
 
-void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint) {
+void NimBLEClientController::sendOutputControl(bool valve, float pumpSetpoint, float heaterSetpoint, bool refill,
+                                               float heater2Setpoint) {
     if (client->isConnected() && outputControlChar != nullptr) {
-        snprintf(outputBuffer, sizeof(outputBuffer), "0,%d,%.3f,%.3f", valve ? 1 : 0, pumpSetpoint, boilerSetpoint);
+        snprintf(outputBuffer, sizeof(outputBuffer), "0,%d,%.3f,%.3f,%d,%.3f", valve ? 1 : 0, pumpSetpoint, heaterSetpoint,
+                 refill ? 1 : 0, heater2Setpoint);
         _lastOutputControl = String(outputBuffer);
         outputControlChar->writeValue(_lastOutputControl, false);
     }
@@ -299,24 +309,34 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             btnCallback(index, status);
         }
     }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(WATER_LEVEL_UUID))) {
+        int levelStatus = atoi(rawData);
+        ESP_LOGV(LOG_TAG, "Level: %d", levelStatus);
+        if (levelCallback != nullptr) {
+            levelCallback(levelStatus);
+        }
+    }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
         float temperature = 0.0f;
         float pressure = 0.0f;
         float puckFlow = 0.0f;
         float pumpFlow = 0.0f;
         float puckResistance = 0.0f;
+        float temperature2 = 0.0f;
 
-        int parsed = sscanf(rawData, "%f,%f,%f,%f,%f", &temperature, &pressure, &puckFlow, &pumpFlow, &puckResistance);
-        if (parsed < 5) {
+        int parsed =
+            sscanf(rawData, "%f,%f,%f,%f,%f,%f", &temperature, &pressure, &puckFlow, &pumpFlow, &puckResistance, &temperature2);
+        if (parsed < 6) {
             ESP_LOGW(LOG_TAG, "Malformed sensor data payload: %s", rawData);
             return;
         }
 
         ESP_LOGV(LOG_TAG,
-                 "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f",
-                 temperature, pressure, puckFlow, pumpFlow, puckResistance);
+                 "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f, "
+                 "temperature2=%.1f",
+                 temperature, pressure, puckFlow, pumpFlow, puckResistance, temperature2);
         if (sensorCallback != nullptr) {
-            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance);
+            sensorCallback(temperature, pressure, puckFlow, pumpFlow, puckResistance, temperature2);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {

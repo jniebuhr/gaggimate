@@ -121,11 +121,9 @@ class Controller {
     // Event handlers
     void onTempRead(float temperature);
 
-    // brew button
     void handleBrewButton(int brewButtonStatus);
-
-    // steam button
     void handleSteamButton(int steamButtonStatus);
+    void handleProfileButton(int buttonStatus, String id);
     void handleProfileUpdate();
 
     // Private Attributes
