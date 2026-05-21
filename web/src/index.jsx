@@ -11,13 +11,10 @@ import { Footer } from './components/Footer.jsx';
 import { Home } from './pages/Home/index.jsx';
 import { NotFound } from './pages/_404.jsx';
 import { Settings } from './pages/Settings/index.jsx';
-import { OTA } from './pages/OTA/index.jsx';
-import { Scales } from './pages/Scales/index.jsx';
 import ApiService, { ApiServiceContext } from './services/ApiService.js';
 import { Navigation } from './components/Navigation.jsx';
 import { ProfileList } from './pages/ProfileList/index.jsx';
 import { ProfileEdit } from './pages/ProfileEdit/index.jsx';
-import { Autotune } from './pages/Autotune/index.jsx';
 import { ShotHistory } from './pages/ShotHistory/index.jsx';
 import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
 import { StatisticsPage } from './pages/Statistics/index.jsx';
@@ -43,9 +40,6 @@ export function App() {
                         <Route path='/profiles' component={ProfileList} />
                         <Route path='/profiles/:id' component={ProfileEdit} />
                         <Route path='/settings' component={Settings} />
-                        <Route path='/ota' component={OTA} />
-                        <Route path='/scales' component={Scales} />
-                        <Route path='/pidtune' component={Autotune} />
                         <Route path='/history' component={ShotHistory} />
                         <Route path='/analyzer' component={ShotAnalyzer} />
                         <Route path='/statistics' component={StatisticsPage} />
