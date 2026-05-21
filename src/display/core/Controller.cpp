@@ -277,6 +277,8 @@ void Controller::setupWifi() {
 }
 
 void Controller::loop() {
+    // Drain BLE callback work before plugins/processes react to updated controller state.
+    clientController.dispatchPendingEvents();
     pluginManager->loop();
 
     if (screenReady) {

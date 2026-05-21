@@ -3,6 +3,8 @@
 
 #include "NimBLEComm.h"
 #include "cstring"
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 
 class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLEClientCallbacks {
   public:
@@ -10,6 +12,9 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void initClient();
     bool connectToServer();
     void loop();
+
+    // Drains BLE callback work from application context instead of the NimBLE task.
+    void dispatchPendingEvents();
 
     void sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure, float flow);
 
@@ -63,6 +68,34 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     bool readyForConnection = false;
     xTaskHandle taskHandle;
 
+    // One MTU-sized notification payload plus a null terminator for existing parsers.
+    static constexpr size_t PENDING_EVENT_PAYLOAD_SIZE = 129;
+
+    // Keep a short backlog without letting callback data grow unbounded.
+    static constexpr size_t PENDING_EVENT_QUEUE_LENGTH = 32;
+
+    // Bound dispatch work so Controller::loop() cannot spend a full pass draining BLE events.
+    static constexpr size_t MAX_PENDING_EVENTS_PER_DISPATCH = 8;
+
+    // Events copied out of NimBLE callbacks and replayed by dispatchPendingEvents().
+    enum class PendingEventType : uint8_t {
+        RemoteError,
+        Button,
+        SensorData,
+        AutotuneResult,
+        VolumetricMeasurement,
+        TofMeasurement,
+        Disconnect,
+        Unknown,
+    };
+
+    struct PendingEvent {
+        PendingEventType type = PendingEventType::Unknown;
+        char payload[PENDING_EVENT_PAYLOAD_SIZE]{};
+    };
+
+    QueueHandle_t pendingEventQueue = nullptr;
+
     remote_err_callback_t remoteErrorCallback = nullptr;
     button_callback_t btnCallback = nullptr;
     pid_control_callback_t autotuneResultCallback = nullptr;
@@ -84,7 +117,16 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void onDisconnect(NimBLEClient *pServer) override;
 
     // Notification callback
-    void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) const;
+    void notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify);
+
+    // Store a small enum in the queue instead of a NimBLE characteristic pointer.
+    PendingEventType getPendingEventType(NimBLERemoteCharacteristic *pRemoteCharacteristic) const;
+
+    // Must remain non-blocking and must not invoke application callbacks.
+    bool enqueuePendingEvent(PendingEventType type, const uint8_t *data = nullptr, size_t length = 0);
+
+    // Replays the original notification handling after leaving NimBLE callback context.
+    void dispatchPendingEvent(const PendingEvent &event);
 
     const char *LOG_TAG = "NimBLEClientController";
     static void loopTask(void *arg);
