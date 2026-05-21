@@ -1030,8 +1030,18 @@ export function ProfileList() {
           </button>
         </div>
       )}
-      <div
-        className='grid grid-cols-1 gap-4 lg:grid-cols-12'
+      {profilesToShow.length === 0 && (
+  <Card sm={12}>
+    <div className='flex flex-col items-center justify-center gap-3 py-10 text-center'>
+      <h2 className='text-xl font-semibold'>No profiles cached yet</h2>
+      <p className='text-base-content/70 max-w-xl text-sm'>
+        Connect to GaggiMate or import profiles to populate GaggiGo.
+      </p>
+    </div>
+  </Card>
+)}
+
+<div className='grid grid-cols-1 gap-4 lg:grid-cols-12'
         role='list'
         aria-label='Profile list'
         ref={containerRef}
