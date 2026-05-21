@@ -7,8 +7,6 @@ import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
 
-import { Header } from './components/Header.jsx';
-import { Footer } from './components/Footer.jsx';
 import { Home } from './pages/Home/index.jsx';
 import { NotFound } from './pages/_404.jsx';
 import { Settings } from './pages/Settings/index.jsx';
@@ -22,6 +20,8 @@ import { Autotune } from './pages/Autotune/index.jsx';
 import { ShotHistory } from './pages/ShotHistory/index.jsx';
 import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
 import { StatisticsPage } from './pages/Statistics/index.jsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
 
 const apiService = new ApiService();
 const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
@@ -38,26 +38,26 @@ function readInitialDesktopNavCollapsed() {
 }
 
 export function App() {
-  const [desktopNavCollapsed, setDesktopNavCollapsed] = useState(readInitialDesktopNavCollapsed);
+  const [navCollapsed, setNavCollapsed] = useState(readInitialDesktopNavCollapsed);
 
   useEffect(() => {
     const storage = globalThis.window?.localStorage;
     if (!storage) return;
 
     try {
-      storage.setItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY, String(desktopNavCollapsed));
+      storage.setItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY, String(navCollapsed));
     } catch {
       // Ignore storage write failures so the navigation still works in restricted browsers.
     }
-  }, [desktopNavCollapsed]);
+  }, [navCollapsed]);
 
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
         <div className='bg-base-300 flex h-screen overflow-hidden'>
           <Navigation
-            collapsed={desktopNavCollapsed}
-            onToggleCollapsed={() => setDesktopNavCollapsed(collapsed => !collapsed)}
+            collapsed={navCollapsed}
+            onToggleCollapsed={() => setNavCollapsed(collapsed => !collapsed)}
           />
           <div className='flex flex-1 flex-col overflow-x-hidden overflow-y-auto'>
             <div className='mx-auto flex min-h-0 w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4'>
@@ -88,6 +88,16 @@ export function App() {
               </div>
             </div>
           </div>
+          {navCollapsed && (
+            <div className='fab end-auto left-4'>
+              <button
+                className='btn btn-lg btn-circle btn-primary'
+                onClick={() => setNavCollapsed(false)}
+              >
+                <FontAwesomeIcon icon={faBars} />
+              </button>
+            </div>
+          )}
         </div>
       </ApiServiceContext.Provider>
     </LocationProvider>
