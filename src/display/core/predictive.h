@@ -14,8 +14,7 @@ class VolumetricRateCalculator {
         measurementTimes.emplace_back(now);
 
         // Unsigned subtraction is wrap-safe across the ~49d millis() rollover.
-        while (!measurementTimes.empty() &&
-               static_cast<double>(now - measurementTimes.front()) >= windowDuration) {
+        while (!measurementTimes.empty() && static_cast<double>(now - measurementTimes.front()) >= windowDuration) {
             measurements.pop_front();
             measurementTimes.pop_front();
         }

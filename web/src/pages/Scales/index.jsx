@@ -25,9 +25,9 @@ function batteryIcon(pct) {
 }
 
 function batteryColorClass(pct) {
-  if (pct <= 9) return 'text-error';       // critical — user must charge soon
-  if (pct <= 29) return 'text-warning';    // heads-up
-  return 'text-base-content/60';           // everyday — same tone as RSSI
+  if (pct <= 9) return 'text-error'; // critical — user must charge soon
+  if (pct <= 29) return 'text-warning'; // heads-up
+  return 'text-base-content/60'; // everyday — same tone as RSSI
 }
 
 export function Scales() {
