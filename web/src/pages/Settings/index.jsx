@@ -8,6 +8,7 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { libraryService } from '../ShotAnalyzer/services/LibraryService.js';
 
 const SETTINGS_SNAPSHOT_KEY = 'gaggigo.readonlySettingsSnapshot';
+const SETTINGS_HTTP_TIMEOUT_MS = 1800;
 
 const SETTINGS_GROUPS = [
   {
@@ -29,10 +30,6 @@ const SETTINGS_GROUPS = [
       'button1',
       'button2',
     ],
-  },
-  {
-    title: 'System Preferences',
-    keys: ['wifiSsid', 'wifiPassword', 'mdnsName', 'timezone', 'clock24hFormat'],
   },
   {
     title: 'Machine Settings',
@@ -167,6 +164,17 @@ function storeSettingsSnapshot(settings) {
   }
 }
 
+async function fetchSettingsWithTimeout() {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), SETTINGS_HTTP_TIMEOUT_MS);
+
+  try {
+    return await fetch('/api/settings', { signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 function SettingsRows({ settings, keys, revealSecrets }) {
   const visibleKeys = keys.filter(key => Object.hasOwn(settings, key));
 
@@ -195,17 +203,30 @@ export function Settings() {
   const [cachedAt, setCachedAt] = useState(null);
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [revealSecrets, setRevealSecrets] = useState(false);
 
-  const loadSettings = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const applyCachedSnapshot = useCallback(() => {
+    const snapshot = getStoredSettingsSnapshot();
+    if (!snapshot?.settings) return false;
+
+    setSettings(normalizeSettings(snapshot.settings));
+    setCachedAt(snapshot.cachedAt || null);
+    setLoading(false);
+    return true;
+  }, []);
+
+  const loadSettings = useCallback(async ({ manual = false } = {}) => {
+    const hasCache = applyCachedSnapshot();
+    setRefreshing(true);
+    setError(hasCache ? 'Showing cached settings while checking for live settings.' : null);
+    if (!hasCache) setLoading(true);
 
     try {
       libraryService.setApiService(apiService);
       const [settingsResponse, profileList] = await Promise.all([
-        fetch('/api/settings'),
+        fetchSettingsWithTimeout(),
         libraryService.getAllProfiles('both').catch(() => []),
       ]);
 
@@ -218,12 +239,11 @@ export function Settings() {
       setSettings(normalized);
       setProfiles(Array.isArray(profileList) ? profileList : []);
       setCachedAt(new Date().toISOString());
+      setError(null);
       storeSettingsSnapshot(normalized);
     } catch (loadError) {
-      const snapshot = getStoredSettingsSnapshot();
-      if (snapshot?.settings) {
-        setSettings(normalizeSettings(snapshot.settings));
-        setCachedAt(snapshot.cachedAt || null);
+      const snapshotLoaded = hasCache || applyCachedSnapshot();
+      if (snapshotLoaded) {
         setError('Live settings unavailable. Showing cached settings snapshot.');
       } else {
         setSettings({});
@@ -232,8 +252,9 @@ export function Settings() {
       }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [apiService]);
+  }, [apiService, applyCachedSnapshot]);
 
   useEffect(() => {
     loadSettings();
@@ -269,8 +290,13 @@ export function Settings() {
         <span className={`badge ${connected ? 'badge-success' : 'badge-warning'}`}>
           {connected ? 'Live' : 'Cached'}
         </span>
-        <button className='btn btn-sm btn-outline' type='button' onClick={loadSettings}>
-          Refresh
+        <button
+          className='btn btn-sm btn-outline'
+          type='button'
+          onClick={() => loadSettings({ manual: true })}
+          disabled={refreshing}
+        >
+          {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
         <button
           className='btn btn-sm btn-ghost'
