@@ -64,27 +64,6 @@ const SETTINGS_GROUPS = [
       'fullTankDistance',
     ],
   },
-  {
-    title: 'Plugin Settings',
-    keys: [
-      'autowakeupEnabled',
-      'autowakeupSchedules',
-      'homekit',
-      'boilerFillActive',
-      'startupFillTime',
-      'steamFillTime',
-      'smartGrindActive',
-      'smartGrindIp',
-      'smartGrindMode',
-      'smartGrindToggle',
-      'homeAssistant',
-      'haIP',
-      'haPort',
-      'haUser',
-      'haPassword',
-      'haTopic',
-    ],
-  },
 ];
 
 function humanizeKey(key) {
