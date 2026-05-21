@@ -21,7 +21,6 @@ const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 const connected = computed(() => machine.value.connected);
 const tofDistance = computed(() => machine.value.status.tofDistance);
-const connected = computed(() => machine.value.connected);
 
 /**
  * Split a PID CSV string into the form's two-input shape.
@@ -65,8 +64,6 @@ export function Settings() {
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
-  const [profiles, setProfiles] = useState([]);
-  const apiService = useContext(ApiServiceContext);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
