@@ -42,6 +42,7 @@ Settings::Settings() {
     timezone = preferences.getString("tz", DEFAULT_TIMEZONE);
     clock24hFormat = preferences.getBool("clk_24h", true);
     selectedProfile = preferences.getString("sp", "");
+    startupProfile = preferences.getString("sup", ""); // Empty = last used profile
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
     profileOrder = explode(preferences.getString("po", ""), ',');
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
@@ -97,13 +98,16 @@ Settings::Settings() {
 
     // Sunrise settings
     sunriseR = preferences.getInt("sr_r", 0);
-    sunriseG = preferences.getInt("sr_g", 0);
-    sunriseB = preferences.getInt("sr_b", 255);
-    sunriseW = preferences.getInt("sr_w", 50);
-    sunriseExtBrightness = preferences.getInt("sr_exb", 255);
-    emptyTankDistance = preferences.getInt("sr_ed", 200);
-    fullTankDistance = preferences.getInt("sr_fd", 50);
+    sunriseG = preferences.getInt("sr_g", 250);
+    sunriseB = preferences.getInt("sr_b", 150);
+    sunriseW = preferences.getInt("sr_w", 255);
+    sunriseExtBrightness = preferences.getInt("sr_exb", 75);
+    emptyTankDistance = preferences.getInt("sr_ed", 210);
+    fullTankDistance = preferences.getInt("sr_fd", 30);
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
+
+    String buttonBehaviorStr = preferences.getString("btnb", "brew,steam,water");
+    buttonBehavior = explode(buttonBehaviorStr, ',');
 
     preferences.end();
 
@@ -300,6 +304,11 @@ void Settings::setSelectedProfile(String selected_profile) {
     save();
 }
 
+void Settings::setStartupProfile(String startup_profile) {
+    this->startupProfile = std::move(startup_profile);
+    save();
+}
+
 void Settings::setFavoritedProfiles(std::vector<String> favorited_profiles) {
     favoritedProfiles = std::move(favorited_profiles);
     save();
@@ -421,6 +430,19 @@ void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &sch
     save();
 }
 
+void Settings::setButtonBehavior(int index, String behavior) {
+    if (index < 0 || index >= buttonBehavior.size()) {
+        return;
+    }
+    buttonBehavior[index] = std::move(behavior);
+    save();
+}
+
+void Settings::setButtonBehaviorList(const std::vector<String> &behavior_list) {
+    buttonBehavior = behavior_list;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -463,6 +485,7 @@ void Settings::doSave() {
     preferences.putString("tz", timezone);
     preferences.putBool("clk_24h", clock24hFormat);
     preferences.putString("sp", selectedProfile);
+    preferences.putString("sup", startupProfile);
     preferences.putInt("sbt", standbyTimeout);
     preferences.putBool("mb", momentaryButtons);
     preferences.putString("fp", implode(favoritedProfiles, ","));
@@ -502,6 +525,7 @@ void Settings::doSave() {
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);
     preferences.putInt("alt_relay", altRelayFunction);
+    preferences.putString("btnb", implode(buttonBehavior, ","));
 
     preferences.end();
 }

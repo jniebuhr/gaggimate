@@ -43,8 +43,8 @@ void NimBLEClientController::tare() {
 void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callback_t &callback) {
     remoteErrorCallback = callback;
 }
-void NimBLEClientController::registerBrewBtnCallback(const brew_callback_t &callback) { brewBtnCallback = callback; }
-void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &callback) { steamBtnCallback = callback; }
+
+void NimBLEClientController::registerBtnCallback(const button_callback_t &callback) { btnCallback = callback; }
 
 void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t &callback) { sensorCallback = callback; }
 
@@ -112,21 +112,15 @@ bool NimBLEClientController::connectToServer() {
     // Obtain the remote notify characteristic and subscribe to it
 
     errorChar = pRemoteService->getCharacteristic(NimBLEUUID(ERROR_CHAR_UUID));
-    if (errorChar->canNotify()) {
+    if (errorChar != nullptr && errorChar->canNotify()) {
         errorChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
                                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
-    brewBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(BREW_BTN_UUID));
-    if (brewBtnChar != nullptr && brewBtnChar->canNotify()) {
-        brewBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
-                                               std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-    }
-
-    steamBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(STEAM_BTN_UUID));
-    if (steamBtnChar != nullptr && steamBtnChar->canNotify()) {
-        steamBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
-                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    btnChar = pRemoteService->getCharacteristic(NimBLEUUID(BTN_UUID));
+    if (btnChar != nullptr && btnChar->canNotify()) {
+        btnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                           std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
     autotuneResultChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_RESULT_UUID));
@@ -170,8 +164,8 @@ void NimBLEClientController::loop() {
 void NimBLEClientController::sendAdvancedOutputControl(bool valve, float boilerSetpoint, bool pressureTarget, float pressure,
                                                        float flow) {
     if (client->isConnected() && outputControlChar != nullptr) {
-        snprintf(advancedOutputBuffer, sizeof(advancedOutputBuffer), "1,%d,100.0,%.3f,%d,%.3f,%.3f", valve ? 1 : 0, boilerSetpoint,
-                 pressureTarget ? 1 : 0, pressure, flow);
+        snprintf(advancedOutputBuffer, sizeof(advancedOutputBuffer), "1,%d,100.0,%.3f,%d,%.3f,%.3f", valve ? 1 : 0,
+                 boilerSetpoint, pressureTarget ? 1 : 0, pressure, flow);
         _lastOutputControl = String(advancedOutputBuffer);
         outputControlChar->writeValue(_lastOutputControl, false);
     }
@@ -262,8 +256,7 @@ void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
     errorChar = nullptr;
     autotuneChar = nullptr;
     autotuneResultChar = nullptr;
-    brewBtnChar = nullptr;
-    steamBtnChar = nullptr;
+    btnChar = nullptr;
     infoChar = nullptr;
     sensorChar = nullptr;
     outputControlChar = nullptr;
@@ -281,36 +274,43 @@ void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
 // Notification callback
 void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length,
                                             bool) const {
-    std::string rawData((char *)pData, length);
+    char rawData[129];
+    size_t copyLength = length < (sizeof(rawData) - 1) ? length : (sizeof(rawData) - 1);
+    memcpy(rawData, pData, copyLength);
+    rawData[copyLength] = '\0';
 
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(ERROR_CHAR_UUID))) {
-        int errorCode = atoi(rawData.c_str());
+        int errorCode = atoi(rawData);
         ESP_LOGV(LOG_TAG, "Error read: %d", errorCode);
         if (remoteErrorCallback != nullptr) {
             remoteErrorCallback(errorCode);
         }
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
-        int brewButtonStatus = atoi(rawData.c_str());
-        ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
-        if (brewBtnCallback != nullptr) {
-            brewBtnCallback(brewButtonStatus);
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BTN_UUID))) {
+        int index = 0;
+        int status = 0;
+
+        int parsed = sscanf(rawData, "%d,%d", &index, &status);
+        if (parsed < 2) {
+            ESP_LOGW(LOG_TAG, "Malformed button data payload: %s", rawData);
+            return;
         }
-    }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
-        int steamButtonStatus = atoi(rawData.c_str());
-        ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
-        if (steamBtnCallback != nullptr) {
-            steamBtnCallback(steamButtonStatus);
+        if (btnCallback != nullptr) {
+            btnCallback(index, status);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
-        String data = String(rawData.c_str());
-        float temperature = get_token(data, 0, ',').toFloat();
-        float pressure = get_token(data, 1, ',').toFloat();
-        float puckFlow = get_token(data, 2, ',').toFloat();
-        float pumpFlow = get_token(data, 3, ',').toFloat();
-        float puckResistance = get_token(data, 4, ',').toFloat();
+        float temperature = 0.0f;
+        float pressure = 0.0f;
+        float puckFlow = 0.0f;
+        float pumpFlow = 0.0f;
+        float puckResistance = 0.0f;
+
+        int parsed = sscanf(rawData, "%f,%f,%f,%f,%f", &temperature, &pressure, &puckFlow, &pumpFlow, &puckResistance);
+        if (parsed < 5) {
+            ESP_LOGW(LOG_TAG, "Malformed sensor data payload: %s", rawData);
+            return;
+        }
 
         ESP_LOGV(LOG_TAG,
                  "Received sensor data: temperature=%.1f, pressure=%.1f, puck_flow=%.1f, pump_flow=%.1f, puck_resistance=%.1f",
@@ -320,31 +320,30 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(AUTOTUNE_RESULT_UUID))) {
-        String settings = String(rawData.c_str());
-        ESP_LOGV(LOG_TAG, "autotune result: %s", settings.c_str());
+        ESP_LOGV(LOG_TAG, "autotune result: %s", rawData);
         if (autotuneResultCallback != nullptr) {
-            float Kp = get_token(settings, 0, ',').toFloat();
-            float Ki = get_token(settings, 1, ',').toFloat();
-            float Kd = get_token(settings, 2, ',').toFloat();
-
-            // Handle optional Kf parameter with default
-            float Kf = 0.0f; // Default combined Kff
-            String kfToken = get_token(settings, 3, ',');
-            if (kfToken.length() > 0)
-                Kf = kfToken.toFloat();
+            float Kp = 0.0f;
+            float Ki = 0.0f;
+            float Kd = 0.0f;
+            float Kf = 0.0f; // optional, defaults to zero
+            int parsed = sscanf(rawData, "%f,%f,%f,%f", &Kp, &Ki, &Kd, &Kf);
+            if (parsed < 3) {
+                ESP_LOGW(LOG_TAG, "Malformed autotune payload: %s", rawData);
+                return;
+            }
 
             autotuneResultCallback(Kp, Ki, Kd, Kf);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(VOLUMETRIC_MEASUREMENT_UUID))) {
-        float value = atof(rawData.c_str());
+        float value = atof(rawData);
         ESP_LOGV(LOG_TAG, "Volumetric measurement: %.2f", value);
         if (volumetricMeasurementCallback != nullptr) {
             volumetricMeasurementCallback(value);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(TOF_MEASUREMENT_UUID))) {
-        int value = atoi(rawData.c_str());
+        int value = atoi(rawData);
         ESP_LOGV(LOG_TAG, "ToF measurement: %d", value);
         if (tofMeasurementCallback != nullptr) {
             tofMeasurementCallback(value);

@@ -1,7 +1,6 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
-#include <utility>
 #include <display/core/Controller.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
@@ -14,6 +13,7 @@
 #include <display/ui/default/lvgl/ui_theme_manager.h>
 #include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
+#include <utility>
 
 #include "esp_sntp.h"
 
@@ -26,13 +26,12 @@ int16_t calculate_angle(int set_temp, int range, int offset) {
 
 void DefaultUI::updateTempHistory() {
     if (currentTemp > 0) {
+        if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
+            tempHistoryIndex = 0;
+            isTempHistoryInitialized = true;
+        }
         tempHistory[tempHistoryIndex] = currentTemp;
         tempHistoryIndex += 1;
-    }
-
-    if (tempHistoryIndex > TEMP_HISTORY_LENGTH) {
-        tempHistoryIndex = 0;
-        isTempHistoryInitialized = true;
     }
 
     if (tempHistoryIndex % 4 == 0) {
@@ -687,9 +686,6 @@ void DefaultUI::setupReactive() {
                                                    profileDirty ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
         },
         &brewScreenState, &profileDirty);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
-                          [=]() { lv_img_set_src(ui_StandbyScreen_logo, christmasMode ? &ui_img_1510335 : &ui_img_logo_png); },
-                          &christmasMode);
 }
 
 void DefaultUI::handleScreenChange() {

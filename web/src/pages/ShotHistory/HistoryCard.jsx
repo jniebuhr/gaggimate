@@ -75,10 +75,13 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
     [onNotesChanged],
   );
   const profileTitle = shot.profile || 'Unknown Profile';
-  const formattedDate =
-    date.toLocaleDateString() +
-    ' ' +
-    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  let formattedDate = 'No timestamp available';
+  if (date.getFullYear() > 1970) {
+    formattedDate =
+      date.toLocaleDateString() +
+      ' ' +
+      date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
 
   const handleUpload = useCallback(
     async (username, password, rememberCredentials) => {

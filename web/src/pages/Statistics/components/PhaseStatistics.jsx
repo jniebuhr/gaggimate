@@ -1,4 +1,7 @@
 import { useState } from 'preact/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { fmt } from '../utils/format';
 import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
@@ -51,7 +54,7 @@ function TargetDeltaCell({ entry, unit }) {
   );
 }
 
-function PhaseSection({ phase }) {
+function PhaseSection({ phase, hideExitReasons = false }) {
   const [open, setOpen] = useState(phase.isTotal || false);
   const td = phase.targetDeltas || {};
 
@@ -61,14 +64,16 @@ function PhaseSection({ phase }) {
     >
       <button
         type='button'
-        className='flex w-full items-center justify-between px-3 py-2 text-left'
+        className='flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left'
         onClick={() => setOpen(o => !o)}
       >
         <span className={`text-sm ${phase.isTotal ? 'font-bold' : 'font-semibold'}`}>
           {phase.phaseName}
           <span className='ml-2 text-xs opacity-50'>({phase.shotCount} entries)</span>
         </span>
-        <span className='text-xs opacity-40'>{open ? '\u25B2' : '\u25BC'}</span>
+        <span className='text-xs opacity-45' aria-hidden='true'>
+          <FontAwesomeIcon icon={open ? faMinus : faPlus} className='h-3 w-3' />
+        </span>
       </button>
 
       {open && (
@@ -137,29 +142,33 @@ function PhaseSection({ phase }) {
             </table>
           </div>
 
-          <div>
-            <div className='mb-1 text-[10px] font-semibold uppercase opacity-50'>Exit Reasons</div>
-            <div className='flex flex-wrap gap-1'>
-              {Object.entries(phase.exitReasonDistribution)
-                .sort((a, b) => b[1] - a[1])
-                .map(([reason, count]) => (
-                  <span
-                    key={reason}
-                    className='badge badge-sm border font-medium'
-                    style={getExitReasonBadgeStyle(reason)}
-                  >
-                    {reason}: {count}
-                  </span>
-                ))}
+          {!hideExitReasons && (
+            <div>
+              <div className='mb-1 text-[10px] font-semibold uppercase opacity-50'>
+                Exit Reasons
+              </div>
+              <div className='flex flex-wrap gap-1'>
+                {Object.entries(phase.exitReasonDistribution ?? {})
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([reason, count]) => (
+                    <span
+                      key={reason}
+                      className='badge badge-sm border font-medium'
+                      style={getExitReasonBadgeStyle(reason)}
+                    >
+                      {reason}: {count}
+                    </span>
+                  ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export function PhaseStatistics({ phaseStats, showTitle = true }) {
+export function PhaseStatistics({ phaseStats, showTitle = true, hideExitReasons = false }) {
   if (!phaseStats || phaseStats.length === 0) return null;
 
   // Separate regular phases from total row
@@ -173,9 +182,11 @@ export function PhaseStatistics({ phaseStats, showTitle = true }) {
       )}
       <div className='space-y-2'>
         {phases.map(phase => (
-          <PhaseSection key={phase.phaseName} phase={phase} />
+          <PhaseSection key={phase.phaseName} phase={phase} hideExitReasons={hideExitReasons} />
         ))}
-        {totalRow && <PhaseSection key='total' phase={totalRow} />}
+        {totalRow && (
+          <PhaseSection key='total' phase={totalRow} hideExitReasons={hideExitReasons} />
+        )}
       </div>
     </div>
   );

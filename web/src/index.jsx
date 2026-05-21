@@ -54,24 +54,22 @@ export function App() {
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div className='bg-base-300 min-h-screen'>
-          <div className='flex min-h-screen flex-col'>
+        <div className='bg-base-300 h-dvh'>
+          <div className='flex h-full flex-col'>
             <Header />
 
-            <main className='flex-1'>
-              <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
-                <div
-                  className={`grid grid-cols-1 ${
+            <main className='flex min-h-0 flex-1 flex-col overflow-auto'>
+              <div className='mx-auto flex min-h-0 w-full flex-1 flex-col px-4 py-2 lg:p-8 xl:container'>
+                <div className={`grid grid-cols-1 ${
                     desktopNavCollapsed
                       ? 'gap-3 lg:grid-cols-[2.75rem_minmax(0,1fr)]'
                       : 'gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]'
-                  }`}
-                >
+                  }`}>
                   <Navigation
                     collapsed={desktopNavCollapsed}
                     onToggleCollapsed={() => setDesktopNavCollapsed(collapsed => !collapsed)}
                   />
-                  <div className='min-w-0'>
+                  <div className='min-h-0 lg:col-span-10'>
                     <ErrorBoundary>
                       <Router>
                         <Route path='/' component={Home} />
@@ -96,8 +94,8 @@ export function App() {
                   </div>
                 </div>
               </div>
+              <Footer />
             </main>
-            <Footer />
           </div>
         </div>
       </ApiServiceContext.Provider>

@@ -1,22 +1,31 @@
 /**
  * analyzerUtils.js
- * * Configuration and utility functions for Shot Analyzer
- * * Contains:
- * - Column definitions for analysis table
- * - Group labels for UI organization
- * - Storage keys for localStorage
- * - Helper functions for data formatting
+ * Shared Shot Analyzer constants, storage keys, and formatting helpers.
  */
 /**
- * LocalStorage Keys for Analyzer Data
+ * LocalStorage keys used by Analyzer and Statistics shared state.
  */
 export const ANALYZER_DB_KEYS = {
   SHOTS: 'gaggimate_shots',
   PROFILES: 'gaggimate_profiles',
   PRESETS: 'gaggimate_column_presets',
   USER_STANDARD: 'gaggimate_user_standard_cols',
+  COMPARE_TARGET_DISPLAY_MODE: 'gaggimate_compare_target_display_mode',
+  COMPARE_ANNOTATIONS_ENABLED: 'gaggimate_compare_annotations_enabled',
   LIBRARY_SHOTS_SOURCE_FILTER: 'gaggimate_library_shots_source_filter',
   LIBRARY_PROFILES_SOURCE_FILTER: 'gaggimate_library_profiles_source_filter',
+  PINNED_PROFILES: 'gaggimate_pinned_profiles',
+  PINNED_SHOTS_BY_PROFILE: 'gaggimate_pinned_shots_by_profile',
+};
+
+export const MAX_PINNED_PROFILES = 10;
+export const MAX_PINNED_SHOTS_PER_PROFILE = 3;
+export const PINNED_NO_PROFILE_BUCKET = '__no_profile__';
+
+export const COMPARE_TARGET_DISPLAY_MODES = {
+  NONE: 'none',
+  PER_SHOT: 'perShot',
+  MAIN_SHOT_ONLY: 'mainShotOnly',
 };
 
 /**
@@ -477,6 +486,214 @@ export const cleanName = name => {
   return name.replace(/\.json$/i, '');
 };
 
+export const getProfileDisplayLabel = (profile, fallback = 'Unknown') => {
+  if (typeof profile === 'string') {
+    return cleanName(profile).trim() || fallback;
+  }
+
+  const rawLabel =
+    profile?.label ||
+    profile?.data?.label ||
+    profile?.name ||
+    profile?.data?.name ||
+    profile?.fileName ||
+    profile?.data?.fileName ||
+    profile?.exportName ||
+    profile?.data?.exportName ||
+    fallback;
+  return cleanName(String(rawLabel || '')).trim() || fallback;
+};
+
+export const normalizeCompareTargetDisplayMode = value => {
+  if (value === COMPARE_TARGET_DISPLAY_MODES.NONE) return value;
+  if (value === COMPARE_TARGET_DISPLAY_MODES.MAIN_SHOT_ONLY) return value;
+  if (value === COMPARE_TARGET_DISPLAY_MODES.PER_SHOT) return value;
+  return COMPARE_TARGET_DISPLAY_MODES.NONE;
+};
+
+export const getShotIdentityKey = shot => {
+  if (!shot) return '';
+
+  const source = shot.source || 'temp';
+  if (source === 'gaggimate') {
+    return `gaggimate:${String(shot.id || '')}`;
+  }
+  if (source === 'temp') {
+    return `temp:${String(shot.storageKey || shot.name || shot.id || '')}`;
+  }
+
+  return `browser:${String(shot.storageKey || shot.name || shot.id || '')}`;
+};
+
+export const getProfilePinKey = profile => {
+  let rawValue = '';
+  if (!profile) return '';
+
+  if (typeof profile === 'string') {
+    rawValue = profile;
+  } else {
+    rawValue =
+      profile.canonicalProfileName ||
+      profile.profileName ||
+      profile.profile ||
+      profile.label ||
+      profile.data?.label ||
+      profile.name ||
+      profile.data?.name ||
+      profile.fileName ||
+      profile.data?.fileName ||
+      profile.exportName ||
+      profile.data?.exportName ||
+      '';
+  }
+
+  const normalized = cleanName(rawValue).trim().toLowerCase();
+  return normalized === 'no profile loaded' ? '' : normalized;
+};
+
+export const getShotPinBucketKey = shot => {
+  const profileKey = getProfilePinKey(shot);
+  return profileKey || PINNED_NO_PROFILE_BUCKET;
+};
+
+function normalizePinnedProfiles(rawValue) {
+  if (!Array.isArray(rawValue)) return [];
+
+  const seen = new Set();
+  const normalized = [];
+  for (const entry of rawValue) {
+    // Persist only canonical profile keys so Analyzer and Statistics can share
+    // the same pin state even when the backing source differs.
+    const key = getProfilePinKey(entry);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(key);
+  }
+  return normalized;
+}
+
+function normalizePinnedShotsByProfile(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return {};
+
+  const normalized = {};
+
+  Object.entries(rawValue).forEach(([bucketKey, shotKeys]) => {
+    // Each bucket represents one profile context (or the explicit no-profile
+    // bucket), so duplicates need to be removed per bucket instead of globally.
+    const resolvedBucketKey = String(bucketKey || '').trim() || PINNED_NO_PROFILE_BUCKET;
+    if (!Array.isArray(shotKeys)) return;
+
+    const seen = new Set();
+    const normalizedShotKeys = [];
+    shotKeys.forEach(shotKey => {
+      const nextShotKey = String(shotKey || '').trim();
+      if (!nextShotKey || seen.has(nextShotKey)) return;
+      seen.add(nextShotKey);
+      normalizedShotKeys.push(nextShotKey);
+    });
+
+    if (normalizedShotKeys.length > 0) {
+      normalized[resolvedBucketKey] = normalizedShotKeys;
+    }
+  });
+
+  return normalized;
+}
+
+export const getPinnedProfiles = () =>
+  normalizePinnedProfiles(loadFromStorage(ANALYZER_DB_KEYS.PINNED_PROFILES, []));
+
+export const getPinnedShotsByProfile = () =>
+  normalizePinnedShotsByProfile(loadFromStorage(ANALYZER_DB_KEYS.PINNED_SHOTS_BY_PROFILE, {}));
+
+export const isProfilePinned = (profile, pinnedProfiles = getPinnedProfiles()) =>
+  pinnedProfiles.includes(getProfilePinKey(profile));
+
+export const isShotPinned = (
+  shot,
+  bucketKey = getShotPinBucketKey(shot),
+  pinnedShotsByProfile = getPinnedShotsByProfile(),
+) => {
+  const shotKey = typeof shot === 'string' ? shot : getShotIdentityKey(shot);
+  if (!shotKey) return false;
+  return (pinnedShotsByProfile[bucketKey] || []).includes(shotKey);
+};
+
+export const isShotPinnedAnywhere = (shot, pinnedShotsByProfile = getPinnedShotsByProfile()) => {
+  const shotKey = typeof shot === 'string' ? shot : getShotIdentityKey(shot);
+  if (!shotKey) return false;
+  return Object.values(pinnedShotsByProfile).some(bucket => bucket.includes(shotKey));
+};
+
+export const toggleProfilePin = profile => {
+  const profileKey = getProfilePinKey(profile);
+  const pinnedProfiles = getPinnedProfiles();
+  if (!profileKey) {
+    return { changed: false, reason: 'invalid-profile', pinnedProfiles };
+  }
+
+  const isPinned = pinnedProfiles.includes(profileKey);
+  if (!isPinned && pinnedProfiles.length >= MAX_PINNED_PROFILES) {
+    return { changed: false, reason: 'profile-limit', pinnedProfiles };
+  }
+
+  const nextPinnedProfiles = isPinned
+    ? pinnedProfiles.filter(entry => entry !== profileKey)
+    : [...pinnedProfiles, profileKey];
+
+  saveToStorage(ANALYZER_DB_KEYS.PINNED_PROFILES, nextPinnedProfiles);
+  return { changed: true, reason: null, pinnedProfiles: nextPinnedProfiles, profileKey };
+};
+
+export const toggleShotPin = (shot, explicitBucketKey = '') => {
+  const shotKey = typeof shot === 'string' ? shot : getShotIdentityKey(shot);
+  const bucketKey = explicitBucketKey || getShotPinBucketKey(shot);
+  const pinnedShotsByProfile = getPinnedShotsByProfile();
+
+  if (!shotKey) {
+    return { changed: false, reason: 'invalid-shot', pinnedShotsByProfile, bucketKey };
+  }
+
+  // Shot pins are scoped to the active profile bucket so the same shot can be
+  // promoted differently depending on which profile context is currently active.
+  const currentBucket = [...(pinnedShotsByProfile[bucketKey] || [])];
+  const isPinned = currentBucket.includes(shotKey);
+
+  if (!isPinned && currentBucket.length >= MAX_PINNED_SHOTS_PER_PROFILE) {
+    return { changed: false, reason: 'shot-limit', pinnedShotsByProfile, bucketKey };
+  }
+
+  const nextBucket = isPinned
+    ? currentBucket.filter(entry => entry !== shotKey)
+    : [...currentBucket, shotKey];
+
+  const nextPinnedShotsByProfile = { ...pinnedShotsByProfile };
+  if (nextBucket.length > 0) {
+    nextPinnedShotsByProfile[bucketKey] = nextBucket;
+  } else {
+    delete nextPinnedShotsByProfile[bucketKey];
+  }
+
+  saveToStorage(ANALYZER_DB_KEYS.PINNED_SHOTS_BY_PROFILE, nextPinnedShotsByProfile);
+  return {
+    changed: true,
+    reason: null,
+    pinnedShotsByProfile: nextPinnedShotsByProfile,
+    bucketKey,
+    shotKey,
+  };
+};
+
+export const getShotDisplayName = shot => {
+  if (!shot) return 'Unknown';
+
+  if (shot.source === 'gaggimate') {
+    return `#${shot.id || shot.name || 'Unknown'}`;
+  }
+
+  return cleanName(shot.name || shot.storageKey || shot.id || 'Unknown');
+};
+
 /**
  * Format timestamp to localized string
  * @param {number} timestamp - Unix timestamp (seconds or milliseconds)
@@ -511,46 +728,192 @@ export const formatDuration = samples => {
 
 /**
  * Auto-detect dose in from profile name (e.g., "18g Turbo")
- * Scans all 'g' occurrences from right-to-left to handle cases like "My Great 18g Profile"
+ * Accepts only one standalone gram value in the 0-30g range and ignores
+ * ranges or ambiguous patterns such as "10-20g" or "10 to 20 g".
  * @param {string} profileName - Profile name
  * @returns {number|null} Detected dose or null
  */
-export const detectDoseFromProfileName = profileName => {
-  if (!profileName) return null;
+const MAX_AUTO_DETECTED_DOSE_GRAMS = 30;
+const RANGE_SEPARATOR_CHARS = new Set(['-', '–', '—', '−']);
 
-  // Find dose patterns like "18g", "20.5g" without regex (avoids ReDoS, SonarQube S5852)
-  const lower = profileName.toLowerCase();
-  let searchPos = lower.length;
-  let gIndex;
+function isDigitChar(char) {
+  return char >= '0' && char <= '9';
+}
 
-  // Scan all 'g' occurrences from right-to-left
-  while ((gIndex = lower.lastIndexOf('g', searchPos - 1)) !== -1) {
-    if (gIndex < 1) {
-      searchPos = gIndex;
+function isAsciiLetterChar(char) {
+  return char >= 'a' && char <= 'z';
+}
+
+function isWhitespaceChar(char) {
+  return char === ' ' || char === '\n' || char === '\r' || char === '\t';
+}
+
+function skipWhitespaceForward(text, index) {
+  let cursor = index;
+  while (cursor < text.length && isWhitespaceChar(text[cursor])) {
+    cursor += 1;
+  }
+  return cursor;
+}
+
+function skipWhitespaceBackward(text, index) {
+  let cursor = index;
+  while (cursor >= 0 && isWhitespaceChar(text[cursor])) {
+    cursor -= 1;
+  }
+  return cursor;
+}
+
+function readAsciiWordForward(text, index) {
+  let cursor = index;
+  while (cursor < text.length && isAsciiLetterChar(text[cursor])) {
+    cursor += 1;
+  }
+  return text.slice(index, cursor);
+}
+
+function readAsciiWordBackward(text, index) {
+  let cursor = index;
+  while (cursor >= 0 && isAsciiLetterChar(text[cursor])) {
+    cursor -= 1;
+  }
+  return text.slice(cursor + 1, index + 1);
+}
+
+function readDoseNumberToken(text, index) {
+  let cursor = index;
+  let seenDecimalSeparator = false;
+
+  while (cursor < text.length) {
+    const char = text[cursor];
+    if (isDigitChar(char)) {
+      cursor += 1;
       continue;
     }
 
-    // Walk backwards from 'g' to collect the number
-    let start = gIndex;
-    while (
-      start > 0 &&
-      ((lower[start - 1] >= '0' && lower[start - 1] <= '9') || lower[start - 1] === '.')
+    const nextChar = text[cursor + 1];
+    const previousChar = text[cursor - 1];
+    if (
+      char === '.' &&
+      !seenDecimalSeparator &&
+      isDigitChar(previousChar) &&
+      isDigitChar(nextChar)
     ) {
-      start--;
+      seenDecimalSeparator = true;
+      cursor += 1;
+      continue;
     }
 
-    if (start < gIndex) {
-      const candidate = lower.slice(start, gIndex);
-      const value = parseFloat(candidate);
-      if (!isNaN(value) && value > 0) {
-        return value;
-      }
-    }
-
-    searchPos = gIndex;
+    break;
   }
 
-  return null;
+  if (cursor === index) return null;
+
+  return {
+    raw: text.slice(index, cursor),
+    end: cursor,
+  };
+}
+
+function isRangeValueBefore(text, numberStart) {
+  const previousTokenIndex = skipWhitespaceBackward(text, numberStart - 1);
+  if (previousTokenIndex < 0) return false;
+
+  const previousChar = text[previousTokenIndex];
+  if (RANGE_SEPARATOR_CHARS.has(previousChar)) {
+    const beforeSeparatorIndex = skipWhitespaceBackward(text, previousTokenIndex - 1);
+    return (
+      beforeSeparatorIndex >= 0 &&
+      (isDigitChar(text[beforeSeparatorIndex]) || text[beforeSeparatorIndex] === 'g')
+    );
+  }
+
+  if (!isAsciiLetterChar(previousChar)) return false;
+
+  const previousWord = readAsciiWordBackward(text, previousTokenIndex);
+  if (previousWord !== 'to') return false;
+
+  const beforeWordIndex = skipWhitespaceBackward(text, previousTokenIndex - previousWord.length);
+  return beforeWordIndex >= 0 && isDigitChar(text[beforeWordIndex]);
+}
+
+function isRangeValueAfter(text, unitIndex) {
+  const nextTokenIndex = skipWhitespaceForward(text, unitIndex + 1);
+  if (nextTokenIndex >= text.length) return false;
+
+  const nextChar = text[nextTokenIndex];
+  if (RANGE_SEPARATOR_CHARS.has(nextChar)) {
+    const afterSeparatorIndex = skipWhitespaceForward(text, nextTokenIndex + 1);
+    return afterSeparatorIndex < text.length && isDigitChar(text[afterSeparatorIndex]);
+  }
+
+  if (!isAsciiLetterChar(nextChar)) return false;
+
+  const nextWord = readAsciiWordForward(text, nextTokenIndex);
+  if (nextWord !== 'to') return false;
+
+  const afterWordIndex = skipWhitespaceForward(text, nextTokenIndex + nextWord.length);
+  return afterWordIndex < text.length && isDigitChar(text[afterWordIndex]);
+}
+
+function readDoseCandidate(text, startIndex) {
+  const numberToken = readDoseNumberToken(text, startIndex);
+  if (!numberToken) {
+    return { nextIndex: startIndex + 1, value: null };
+  }
+
+  const unitIndex = skipWhitespaceForward(text, numberToken.end);
+  if (unitIndex >= text.length || text[unitIndex] !== 'g') {
+    return {
+      nextIndex: Math.max(startIndex + 1, numberToken.end),
+      value: null,
+    };
+  }
+
+  const charAfterUnit = text[unitIndex + 1];
+  if (charAfterUnit && (isAsciiLetterChar(charAfterUnit) || isDigitChar(charAfterUnit))) {
+    return {
+      nextIndex: unitIndex + 1,
+      value: null,
+    };
+  }
+
+  if (isRangeValueBefore(text, startIndex) || isRangeValueAfter(text, unitIndex)) {
+    return {
+      nextIndex: unitIndex + 1,
+      value: null,
+    };
+  }
+
+  const value = Number.parseFloat(numberToken.raw);
+  return {
+    nextIndex: unitIndex + 1,
+    value:
+      Number.isFinite(value) && value > 0 && value <= MAX_AUTO_DETECTED_DOSE_GRAMS ? value : null,
+  };
+}
+
+export const detectDoseFromProfileName = profileName => {
+  if (!profileName) return null;
+
+  const lower = profileName.toLowerCase();
+  const candidates = [];
+
+  let cursor = 0;
+  while (cursor < lower.length) {
+    if (!isDigitChar(lower[cursor])) {
+      cursor += 1;
+      continue;
+    }
+
+    const candidate = readDoseCandidate(lower, cursor);
+    if (candidate.value !== null) {
+      candidates.push(candidate.value);
+    }
+    cursor = candidate.nextIndex;
+  }
+
+  return candidates.length === 1 ? candidates[0] : null;
 };
 
 /**
