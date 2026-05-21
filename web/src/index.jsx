@@ -89,7 +89,7 @@ export function App() {
             </div>
           </div>
           {navCollapsed && (
-            <div className='fab end-auto left-4'>
+            <div className='fab end-auto left-4 landscape:hidden md:hidden'>
               <button
                 className='btn btn-lg btn-circle btn-primary'
                 onClick={() => setNavCollapsed(false)}
