@@ -6,9 +6,9 @@ gaggigo-mvp
 
 ## Current Identity
 
-GaggiGo is now transitioning from an inherited GaggiMate frontend fork into an offline-first observer frontend.
+GaggiGo has transitioned from an inherited GaggiMate frontend fork into an offline-first observer frontend.
 
-Current direction:
+Primary direction:
 
 - profiles
 - shot history
@@ -29,7 +29,7 @@ GaggiGo is not machine control software.
 - responsive sidebar preserved
 - mobile dropdown preserved
 - stable layout retained
-- landing page replaced with safe informational dashboard
+- safe informational homepage retained
 
 ### Unsafe Surfaces Removed
 
@@ -45,6 +45,8 @@ Navigation removed:
 - Bluetooth Devices
 - System & Updates
 
+Settings cleanup completed.
+
 ### Live Integration Confirmed
 
 Confirmed working:
@@ -55,6 +57,8 @@ Confirmed working:
 - profile loading
 - shot history loading
 - analyzer routing
+- statistics generation
+- read-only settings loading
 
 ### Offline Persistence Layer
 
@@ -71,10 +75,14 @@ Completed:
 - IndexedDB persistence integrated
 - cached GaggiMate shot mirroring
 - cached GaggiMate profile mirroring
+- cached settings snapshot mirroring
 - offline history fallback
 - offline analyzer fallback
+- offline statistics fallback
+- offline settings fallback
 - expanded shot persistence
 - fast cached startup behaviour
+- cache-first rendering behaviour
 
 Current behaviour:
 
@@ -85,6 +93,8 @@ Connected + live data:
 Disconnected + cache exists:
 - show cached data
 - allow offline analysis
+- allow offline statistics
+- allow offline settings viewing
 
 Disconnected + no cache:
 - show empty-state behaviour
@@ -95,13 +105,14 @@ Disconnected + no cache:
 
 Current focus is now:
 
-1. Statistics integration
-2. Settings cleanup
-3. Offline-first startup hardening
-4. Background refresh behaviour
+1. Remaining live-only assumption cleanup
+2. Performance optimisation
+3. Empty-state refinement
+4. Cache status visibility
 5. Local-first editing model
 6. Manual sync workflow
 7. ApiService hardening
+8. Repository audit
 
 ---
 
