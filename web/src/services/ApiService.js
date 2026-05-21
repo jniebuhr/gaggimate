@@ -9,6 +9,31 @@ function randomId() {
     .substr(2, 10);
 }
 
+function getConfiguredGaggiMateHost() {
+  const configuredHost = import.meta.env.VITE_GAGGIMATE_HOST;
+  if (!configuredHost) return null;
+
+  try {
+    return new URL(configuredHost).host;
+  } catch {
+    return configuredHost.replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '').replace(/\/$/, '');
+  }
+}
+
+function getWebSocketUrl() {
+  const configuredHost = getConfiguredGaggiMateHost();
+
+  if (configuredHost) {
+    const isSecurePage = window.location.protocol === 'https:';
+    const wsProtocol = isSecurePage ? 'wss://' : 'ws://';
+    return `${wsProtocol}${configuredHost}/ws`;
+  }
+
+  const apiHost = window.location.host;
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  return `${wsProtocol}${apiHost}/ws`;
+}
+
 export default class ApiService {
   socket = null;
   listeners = {};
@@ -32,9 +57,8 @@ export default class ApiService {
         this.socket.close();
       }
 
-      const apiHost = window.location.host;
-      const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-      this.socket = new WebSocket(`${wsProtocol}${apiHost}/ws`);
+      const wsUrl = getWebSocketUrl();
+      this.socket = new WebSocket(wsUrl);
 
       this.socket.addEventListener('message', this._onMessage.bind(this));
       this.socket.addEventListener('close', this._onClose.bind(this));
