@@ -4,6 +4,7 @@ import './style.css';
 import { initializeTheme } from './utils/themeManager.js';
 
 import { render } from 'preact';
+import { useEffect, useState } from 'preact/hooks';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
@@ -23,20 +24,52 @@ import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
 import { StatisticsPage } from './pages/Statistics/index.jsx';
 
 const apiService = new ApiService();
+const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
+
+function readInitialDesktopNavCollapsed() {
+  const storage = globalThis.window?.localStorage;
+  if (!storage) return false;
+
+  try {
+    return storage.getItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
 
 export function App() {
+  const [desktopNavCollapsed, setDesktopNavCollapsed] = useState(readInitialDesktopNavCollapsed);
+
+  useEffect(() => {
+    const storage = globalThis.window?.localStorage;
+    if (!storage) return;
+
+    try {
+      storage.setItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY, String(desktopNavCollapsed));
+    } catch {
+      // Ignore storage write failures so the navigation still works in restricted browsers.
+    }
+  }, [desktopNavCollapsed]);
+
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div className='bg-base-300 min-h-screen'>
-          <div className='flex min-h-screen flex-col'>
+        <div className='bg-base-300 h-dvh'>
+          <div className='flex h-full flex-col'>
             <Header />
 
-            <main className='flex-1'>
-              <div className='mx-auto w-full px-4 py-2 lg:p-8 xl:container'>
-                <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
-                  <Navigation />
-                  <div className='lg:col-span-10'>
+            <main className='flex min-h-0 flex-1 flex-col overflow-auto'>
+              <div className='mx-auto flex min-h-0 w-full flex-1 flex-col px-4 py-2 lg:p-8 xl:container'>
+                <div className={`grid grid-cols-1 ${
+                    desktopNavCollapsed
+                      ? 'gap-3 lg:grid-cols-[2.75rem_minmax(0,1fr)]'
+                      : 'gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]'
+                  }`}>
+                  <Navigation
+                    collapsed={desktopNavCollapsed}
+                    onToggleCollapsed={() => setDesktopNavCollapsed(collapsed => !collapsed)}
+                  />
+                  <div className='min-h-0 lg:col-span-10'>
                     <ErrorBoundary>
                       <Router>
                         <Route path='/' component={Home} />
@@ -61,8 +94,8 @@ export function App() {
                   </div>
                 </div>
               </div>
+              <Footer />
             </main>
-            <Footer />
           </div>
         </div>
       </ApiServiceContext.Provider>
