@@ -68,7 +68,6 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
 
     remote_err_callback_t remoteErrorCallback = nullptr;
     button_callback_t btnCallback = nullptr;
-    bool_callback_t steamBtnCallback = nullptr;
     bool_callback_t levelCallback = nullptr;
     pid_control_callback_t autotuneResultCallback = nullptr;
     sensor_read_callback_t sensorCallback = nullptr;

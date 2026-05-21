@@ -25,23 +25,28 @@ BLEScalePlugin BLEScales;
 
 BLEScalePlugin::BLEScalePlugin() = default;
 
-BLEScalePlugin::~BLEScalePlugin() {
-    // Disable active flag first to stop processing
-    active = false;
+BLEScalePlugin::~BLEScalePlugin() noexcept {
+    try {
+        // Disable active flag first to stop processing
+        active = false;
 
-    // Give any running callbacks time to complete
-    delay(100);
+        // Give any running callbacks time to complete
+        delay(100);
 
-    // Ensure proper cleanup
-    disconnect();
+        // Ensure proper cleanup
+        disconnect();
 
-    if (scanner != nullptr) {
-        // Stop scanning first
-        scanner->stopAsyncScan();
-        // Give it time to actually stop
-        delay(50);
-        delete scanner;
-        scanner = nullptr;
+        if (scanner != nullptr) {
+            // Stop scanning first
+            scanner->stopAsyncScan();
+            // Give it time to actually stop
+            delay(50);
+            delete scanner;
+            scanner = nullptr;
+        }
+    } catch (...) {
+        // Swallow: destructors must not propagate exceptions.
+        // NimBLE + Arduino delay() calls don't throw in practice; belt-and-braces.
     }
 }
 
@@ -52,6 +57,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     }
 
     this->controller = controller;
+    this->pluginManager = manager;
     this->pluginRegistry = RemoteScalesPluginRegistry::getInstance();
 
     // Apply scale plugins with error checking
@@ -88,6 +94,11 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
         scanner->stopAsyncScan();
     });
     manager->on("controller:brew:prestart", [this](Event const &) { onProcessStart(); });
+    manager->on("controller:brew:end", [this](Event const &) {
+        if (scale != nullptr && scale->isConnected() && scale->hasTimerControl()) {
+            scale->stopTimer();
+        }
+    });
     manager->on("controller:grind:start", [this](Event const &) { onProcessStart(); });
     manager->on("controller:mode:change", [this](Event const &event) {
         if (event.getInt("value") != MODE_STANDBY) {
@@ -149,6 +160,10 @@ void BLEScalePlugin::update() {
                     scanner->initializeAsyncScan();
                 }
             }
+        } else {
+            // Poll slow-changing metadata (battery, unit). Flow rate is
+            // emitted inline with each weight measurement, not polled here.
+            pollScaleMetadata();
         }
     } else if (controller->getSettings().getSavedScale() != "" && scanner != nullptr) {
         // Protected scanner access with null checks
@@ -203,6 +218,11 @@ void BLEScalePlugin::disconnect() {
         uuid = "";
         doConnect = false;
         reconnectionTries = 0;
+        // Reset metadata caches so we re-emit change events when a new scale
+        // connects (possibly a different model with different capabilities).
+        lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
+        lastWeightUnit = ScaleWeightUnit::UNKNOWN;
+        warnedOunceMidBrew = false;
     }
 }
 
@@ -215,6 +235,23 @@ void BLEScalePlugin::onProcessStart() const {
         // Check if scale is still connected before second tare
         if (scale != nullptr && scale->isConnected()) {
             scale->tare();
+        }
+    }
+}
+
+void BLEScalePlugin::pollScaleMetadata() {
+    if (scale == nullptr || !scale->isConnected() || pluginManager == nullptr) {
+        return;
+    }
+    auto *pm = pluginManager;
+
+    // Battery % -- fire event only on change so consumers can subscribe without
+    // being hammered at 1 Hz with duplicate values.
+    if (scale->hasBatteryLevel()) {
+        const uint8_t pct = scale->getBatteryLevel();
+        if (pct != lastBatteryLevel && pct != REMOTE_SCALES_BATTERY_UNKNOWN) {
+            lastBatteryLevel = pct;
+            pm->trigger("scale:battery:change", "value", static_cast<int>(pct));
         }
     }
 }
@@ -319,6 +356,15 @@ void BLEScalePlugin::onMeasurement(float value) const {
 
     // Safe to call controller method
     controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::BLUETOOTH);
+
+    // If the scale driver also provides native flow rate (e.g. Bookoo), emit
+    // it on the same tick so consumers get it at the scale's native cadence
+    // (~10 Hz) without having to poll. Controller.onVolumetricMeasurement
+    // updates lastBluetoothMeasurement timestamps as a side effect; we reuse
+    // a lighter path here since flow is not gating shot state.
+    if (scale != nullptr && scale->hasFlowRate() && pluginManager != nullptr) {
+        pluginManager->trigger("controller:volumetric-measurement:scale-flow:change", "value", scale->getFlowRate());
+    }
 }
 
 std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const {

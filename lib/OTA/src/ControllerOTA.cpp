@@ -39,7 +39,7 @@ bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &re
     }
 
     http.useHTTP10(true);
-    http.setTimeout(300000);
+    http.setTimeout(60000);
     http.setConnectTimeout(10000);
     http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     http.setUserAgent("ESP32-http-Update");

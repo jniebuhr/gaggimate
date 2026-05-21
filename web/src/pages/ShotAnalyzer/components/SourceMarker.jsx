@@ -24,7 +24,7 @@ const SOURCE_MARKER_VARIANTS = {
   },
 };
 
-function GmLogoIcon({ width, height }) {
+export function GmLogoIcon({ width, height }) {
   const clipPathId = useId();
 
   // Keep the tricolor fill from the delivered asset, but bind the dark outline

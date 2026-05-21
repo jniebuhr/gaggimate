@@ -19,6 +19,7 @@ import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
+const connected = computed(() => machine.value.connected);
 const tofDistance = computed(() => machine.value.status.tofDistance);
 const connected = computed(() => machine.value.connected);
 
@@ -70,6 +71,18 @@ export function Settings() {
     return data;
   });
 
+  // Fetch profiles via WebSocket (wait for connection)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const loadProfiles = async () => {
+      if (connected.value) {
+        const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
+        setProfiles(response.profiles);
+      }
+    };
+    loadProfiles();
+  }, [connected.value]);
+
   const formRef = useRef();
 
 
@@ -90,7 +103,9 @@ export function Settings() {
     if (fetchedSettings) {
       // Initialize standbyDisplayEnabled based on standby brightness value
       // but preserve it if it already exists in the fetched data
-      const buttonFields = fetchedSettings.buttonBehavior ? splitButtons(fetchedSettings.buttonBehavior) : {};
+      const buttonFields = fetchedSettings.buttonBehavior
+        ? splitButtons(fetchedSettings.buttonBehavior)
+        : {};
       const settingsWithToggle = {
         ...fetchedSettings,
         ...buttonFields,
@@ -242,7 +257,10 @@ export function Settings() {
         'altRelayFunction',
         formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
       );
-      formDataToSubmit.set('buttonBehavior', `${formData.button0},${formData.button1},${formData.button2}`);
+      formDataToSubmit.set(
+        'buttonBehavior',
+        `${formData.button0},${formData.button1},${formData.button2}`,
+      );
 
       // Combine PID and Kf into single PID string
       if (formData.pid && formData.kf !== undefined) {
@@ -408,6 +426,25 @@ export function Settings() {
               </select>
             </div>
             <div className='form-control mb-4'>
+              <label htmlFor='startup-profile' className='mb-2 block text-sm font-medium'>
+                Startup Profile
+              </label>
+              <select
+                id='startup-profile'
+                name='startupProfile'
+                className='select select-bordered w-full'
+                value={formData.startupProfile || ''}
+                onChange={onChange('startupProfile')}
+              >
+                <option value=''>Last used profile</option>
+                {profiles.map(profile => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className='form-control mb-4'>
               <label htmlFor='standbyTimeout' className='mb-2 block text-sm font-medium'>
                 Standby Timeout
               </label>
@@ -513,15 +550,15 @@ export function Settings() {
                 value={formData.button0}
                 onChange={onChange('button0')}
               >
-                <option value="none">None</option>
-                <option value="brew">Brew button</option>
-                <option value="steam">Steam button</option>
-                <option value="water">Water button</option>
-                {
-                  profiles.map(p => (
-                    <option key={p.id} value={p.id}>Profile: {p.label}</option>
-                  ))
-                }
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -536,15 +573,15 @@ export function Settings() {
                 value={formData.button1}
                 onChange={onChange('button1')}
               >
-                <option value="none">None</option>
-                <option value="brew">Brew button</option>
-                <option value="steam">Steam button</option>
-                <option value="water">Water button</option>
-                {
-                  profiles.map(p => (
-                    <option key={p.id} value={p.id}>Profile: {p.label}</option>
-                  ))
-                }
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -559,18 +596,17 @@ export function Settings() {
                 value={formData.button2}
                 onChange={onChange('button2')}
               >
-                <option value="none">None</option>
-                <option value="brew">Brew button</option>
-                <option value="steam">Steam button</option>
-                <option value="water">Water button</option>
-                {
-                  profiles.map(p => (
-                    <option key={p.id} value={p.id}>Profile: {p.label}</option>
-                  ))
-                }
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
               </select>
             </div>
-
           </Card>
 
           {/* Web Settings */}
@@ -1144,7 +1180,7 @@ export function Settings() {
           </Card>
         </div>
 
-        <div className='pt-4 lg:col-span-10'>
+        <div className='pt-4 pb-4 lg:col-span-10'>
           <div className='alert alert-warning shadow-sm'>
             <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
           </div>
