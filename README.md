@@ -45,6 +45,11 @@ Working:
 - mobile dropdown navigation working
 - safe landing page active
 - unsafe routes removed
+- Settings page hardened
+- local cache foundation added
+- profile cache helper added
+- offline-aware profile loading added
+- blank-slate cache empty state added
 - git workflow verified
 
 Removed:
@@ -61,6 +66,28 @@ Removed navigation:
 
 ---
 
+# Current Offline-First Behaviour
+
+Profiles now support:
+
+- cache-aware loading
+- local fallback when offline
+- blank-slate empty-state messaging
+
+Current model:
+
+Connected + live data:
+- show live profiles
+- cache locally
+
+Disconnected + cache exists:
+- show cached profiles
+
+Disconnected + no cache:
+- show helpful empty-state message
+
+---
+
 # Architecture Direction
 
 Current upstream architecture:
@@ -74,6 +101,8 @@ Frontend
 GaggiGo direction:
 
 GaggiGo Frontend
+↓
+Local Cache Layer
 ↓
 Safe Adapter Layer
 ↓
@@ -94,6 +123,12 @@ App shell/router
 
 web/src/services/ApiService.js
 API/WebSocket boundary
+
+web/src/services/LocalCacheService.js
+Offline cache layer
+
+web/src/services/ProfileCacheService.js
+Profile cache/fallback handling
 
 web/src/pages/
 Frontend pages
@@ -122,6 +157,19 @@ Desktop:
 
 Mobile:
 - dropdown navigation
+
+---
+
+# Current Build Focus
+
+Current focus areas:
+
+1. Shot History caching
+2. Offline history viewing
+3. Analyzer integration with cached data
+4. Statistics integration with cached data
+5. Manual sync workflow
+6. ApiService allowlisting and hardening
 
 ---
 
