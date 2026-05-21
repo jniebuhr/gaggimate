@@ -45,6 +45,7 @@ import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanc
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { faAnglesDown, faAnglesUp, faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
+import { loadProfilesWithCache } from '../../services/ProfileCacheService.js';
 
 Chart.register(
   LineController,
@@ -617,8 +618,8 @@ export function ProfileList() {
   }, [hasUtilityProfiles]);
 
   const loadProfiles = async () => {
-    const response = await apiService.request({ tp: 'req:profiles:list' });
-    setProfiles(response.profiles);
+    const result = await loadProfilesWithCache(apiService, connected.value);
+    setProfiles(result.profiles);
     setLoading(false);
   };
 
@@ -824,9 +825,7 @@ export function ProfileList() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const loadData = async () => {
-      if (connected.value) {
-        await loadProfiles();
-      }
+      await loadProfiles();
     };
     loadData();
   }, [connected.value]);
