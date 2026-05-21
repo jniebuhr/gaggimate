@@ -25,6 +25,12 @@ function round2(v) {
   return Math.round((v + Number.EPSILON) * 100) / 100;
 }
 
+function getAnalyzerHref(shot) {
+  const source = shot?.source === 'gaggimate' ? 'internal' : 'external';
+  const id = shot?.source === 'gaggimate' ? shot.id : shot.storageKey || shot.name || shot.id;
+  return `/analyzer/${source}/${encodeURIComponent(String(id || ''))}`;
+}
+
 export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) {
   const apiService = useContext(ApiServiceContext);
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
@@ -192,7 +198,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                   {/* Analyzer Button */}
                   <Tooltip content='Open in Analyzer'>
                     <a
-                      href={`/analyzer/internal/${shot.id}`}
+                      href={getAnalyzerHref(shot)}
                       className='text-base-content/50 hover:text-primary hover:bg-primary/10 flex items-center justify-center rounded-md p-2 transition-colors'
                       aria-label='Open in Analyzer'
                     >
