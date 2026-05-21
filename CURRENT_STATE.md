@@ -45,48 +45,49 @@ Navigation removed:
 - Bluetooth Devices
 - System & Updates
 
-### Settings Hardened
+### Live Integration Confirmed
 
-Settings page converted into:
+Confirmed working:
 
-- safe/local preference focused
-- informational
-- non-machine-control UI
+- local Vite proxy
+- live GaggiMate API access
+- websocket integration
+- profile loading
+- shot history loading
+- analyzer routing
 
-### Cache Foundation Added
+### Offline Persistence Layer
 
-Added:
+Current architecture:
 
-- LocalCacheService.js
-- ProfileCacheService.js
+Browser
+↓
+LibraryService
+↓
+GaggiMate + IndexedDB
 
-Current cache areas:
+Completed:
 
-- profiles
-- drafts
-- shot history
-- statistics
-- sync queue
-
-### Profiles Page
-
-Profiles page now:
-
-- supports cache-aware loading
-- supports offline fallback
-- supports blank-slate empty state
+- IndexedDB persistence integrated
+- cached GaggiMate shot mirroring
+- cached GaggiMate profile mirroring
+- offline history fallback
+- offline analyzer fallback
+- expanded shot persistence
+- fast cached startup behaviour
 
 Current behaviour:
 
 Connected + live data:
-- show live profiles
-- cache locally
+- show live machine data
+- mirror locally
 
 Disconnected + cache exists:
-- show cached profiles
+- show cached data
+- allow offline analysis
 
 Disconnected + no cache:
-- show helpful empty-state message
+- show empty-state behaviour
 
 ---
 
@@ -94,13 +95,13 @@ Disconnected + no cache:
 
 Current focus is now:
 
-1. Shot History caching
-2. Offline history viewing
-3. Analyzer integration with cached history
-4. Statistics integration with cached history
-5. Local-first profile draft handling
+1. Statistics integration
+2. Settings cleanup
+3. Offline-first startup hardening
+4. Background refresh behaviour
+5. Local-first editing model
 6. Manual sync workflow
-7. ApiService allowlisting and hardening
+7. ApiService hardening
 
 ---
 
