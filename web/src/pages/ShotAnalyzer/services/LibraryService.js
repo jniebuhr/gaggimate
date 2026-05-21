@@ -24,6 +24,8 @@ const HISTORY_NOTES_DEFAULTS = {
   notes: '',
 };
 
+const GAGGIMATE_CACHE_SOURCE = 'gaggimate-cache';
+
 function round2(v) {
   if (v == null || Number.isNaN(v)) return v;
   return Math.round((v + Number.EPSILON) * 100) / 100;
@@ -114,6 +116,8 @@ const PROFILE_EXPORT_METADATA_FIELDS = [
   'profileId',
   'storageKey',
   'data',
+  'cachedAt',
+  'gaggimateId',
 ];
 
 function ensureJsonFilename(filename) {
@@ -179,13 +183,19 @@ class LibraryService {
       const indexData = parseBinaryIndex(arrayBuffer);
       const shotList = indexToShotList(indexData);
 
-      // Add source tag and ensure name property exists
-      return shotList.map(shot => ({
+      const normalizedShots = shotList.map(shot => ({
         ...shot,
-        name: shot.profile || shot.id || 'Unknown', // Display Name for UI (e.g. "Turbo Bloom")
-        exportName: `shot-${shot.id}.json`, // Real Filename for Export (e.g. "shot-1701234.json")
+        name: shot.profile || shot.id || 'Unknown',
+        exportName: `shot-${shot.id}.json`,
         source: 'gaggimate',
       }));
+
+      // Mirror into IndexedDB for offline use
+      await Promise.all(
+        normalizedShots.map(shot => indexedDBService.saveCachedGaggiMateShot(shot)),
+      );
+
+      return normalizedShots;
     } catch (error) {
       console.error('Failed to load GaggiMate shots:', error);
       return [];
@@ -193,7 +203,7 @@ class LibraryService {
   }
 
   /**
-   * Get shots from browser uploads
+   * Get shots from browser uploads and offline mirrors
    * @returns {Promise<Object[]>} List of browser shots with source tag
    */
   async getBrowserShots() {
@@ -228,8 +238,25 @@ class LibraryService {
     const results = await Promise.all(promises);
     const merged = results.flat();
 
+    // Deduplicate preferring live GaggiMate over offline cache
+    const deduped = new Map();
+
+    merged.forEach(shot => {
+      const key = String(shot.gaggimateId || shot.id || shot.storageKey || shot.name || '');
+      const existing = deduped.get(key);
+
+      if (!existing) {
+        deduped.set(key, shot);
+        return;
+      }
+
+      if (existing.source === GAGGIMATE_CACHE_SOURCE && shot.source === 'gaggimate') {
+        deduped.set(key, shot);
+      }
+    });
+
     // Sort by timestamp (newest first)
-    return merged.sort((a, b) => b.timestamp - a.timestamp);
+    return Array.from(deduped.values()).sort((a, b) => b.timestamp - a.timestamp);
   }
 
   /**
@@ -255,14 +282,22 @@ class LibraryService {
         return [];
       }
 
-      // Add source tag and preserve the API id for req:profiles:load.
-      return response.profiles.map(profile => ({
+      const normalizedProfiles = response.profiles.map(profile => ({
         ...profile,
         exportName: getProfileExportFilename(profile),
-        profileId: profile.id, // Keep real API id for req:profiles:load
+        profileId: profile.id,
         label: profile.label,
         source: 'gaggimate',
       }));
+
+      // Mirror into IndexedDB for offline use
+      await Promise.all(
+        normalizedProfiles.map(profile =>
+          indexedDBService.saveCachedGaggiMateProfile(profile),
+        ),
+      );
+
+      return normalizedProfiles;
     } catch (error) {
       console.error('Failed to load GaggiMate profiles:', error);
       return [];
@@ -270,7 +305,7 @@ class LibraryService {
   }
 
   /**
-   * Get profiles from browser uploads
+   * Get profiles from browser uploads and offline mirrors
    * @returns {Promise<Object[]>} List of browser profiles with source tag
    */
   async getBrowserProfiles() {
@@ -300,7 +335,24 @@ class LibraryService {
     const results = await Promise.all(promises);
     const merged = results.flat();
 
-    return merged.sort((a, b) =>
+    // Deduplicate preferring live GaggiMate over offline cache
+    const deduped = new Map();
+
+    merged.forEach(profile => {
+      const key = String(profile.profileId || profile.label || profile.id || '');
+      const existing = deduped.get(key);
+
+      if (!existing) {
+        deduped.set(key, profile);
+        return;
+      }
+
+      if (existing.source === GAGGIMATE_CACHE_SOURCE && profile.source === 'gaggimate') {
+        deduped.set(key, profile);
+      }
+    });
+
+    return Array.from(deduped.values()).sort((a, b) =>
       getProfileDisplayLabel(a, '').localeCompare(getProfileDisplayLabel(b, '')),
     );
   }
@@ -325,12 +377,21 @@ class LibraryService {
       const arrayBuffer = await response.arrayBuffer();
       const shot = parseBinaryShot(arrayBuffer, idStr);
       shot.source = 'gaggimate';
+
+      // Persist loaded detailed shot for offline use
+      await indexedDBService.saveCachedGaggiMateShot({
+        ...shot,
+        loaded: true,
+      });
+
       return shot;
     }
+
     const shot = await indexedDBService.getShot(idStr);
     if (!shot) {
       throw new Error(`Shot ${idStr} not found in browser storage`);
     }
+
     shot.storageKey = shot.storageKey || shot.name || idStr;
     shot.source = shot.source || 'browser';
     return shot;
@@ -361,15 +422,21 @@ class LibraryService {
         throw new Error(`Profile ${nameOrId} not found`);
       }
 
-      return {
+      const profile = {
         ...response.profile,
         source: 'gaggimate',
       };
+
+      await indexedDBService.saveCachedGaggiMateProfile(profile);
+
+      return profile;
     }
+
     const profile = await indexedDBService.getProfile(nameOrId);
     if (!profile) {
       throw new Error(`Profile ${nameOrId} not found in browser storage`);
     }
+
     return profile;
   }
 
@@ -392,9 +459,6 @@ class LibraryService {
 
     if (item.source === 'gaggimate') {
       if (isShot) {
-        // SHOT EXPORT (GM):
-        // We MUST load the full shot because the list item only has summary data.
-        // Use the 'id' (timestamp) to load, ignoring the 'name' (profile name).
         const loadId = item.id;
         if (!loadId) throw new Error('Shot ID missing for export');
 
@@ -404,8 +468,6 @@ class LibraryService {
         const notes = await notesService.loadNotes(loadId, 'gaggimate');
         exportData = buildHistoryLikeShotExport(fullShot, item, notes);
       } else {
-        // PROFILE EXPORT (GM):
-        // Load fresh from controller using the hidden profileId
         const loadId = item.profileId || item.id;
         if (!loadId) throw new Error('Profile ID missing for export');
 
@@ -417,11 +479,11 @@ class LibraryService {
         exportData = cleanProfileForExport(raw, item);
       }
     } else if (isShot) {
-      // BROWSER EXPORT:
-      // Just clean up our internal tags
       const exportShot = { ...(item.data || item) };
       delete exportShot.source;
       delete exportShot.uploadedAt;
+      delete exportShot.cachedAt;
+      delete exportShot.gaggimateId;
 
       const shotNotesKey = item.storageKey || item.name || item.id;
       const notes = await notesService.loadNotes(shotNotesKey, 'browser');
@@ -435,8 +497,6 @@ class LibraryService {
       exportData = cleanProfileForExport(rawProfile, item);
     }
 
-    // Return raw object
-    // The UI helper 'downloadJson' will handle stringify and blob creation.
     return { exportData, filename };
   }
 
