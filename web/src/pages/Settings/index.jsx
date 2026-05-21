@@ -1165,7 +1165,7 @@ export function Settings() {
           </Card>
         </div>
 
-        <div className='pt-4 lg:col-span-10'>
+        <div className='pt-4 pb-4 lg:col-span-10'>
           <div className='alert alert-warning shadow-sm'>
             <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
           </div>

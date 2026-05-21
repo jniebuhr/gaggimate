@@ -54,48 +54,39 @@ export function App() {
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div className='bg-base-300 h-dvh'>
-          <div className='flex h-full flex-col'>
-            <Header />
-
-            <main className='flex min-h-0 flex-1 flex-col overflow-auto'>
-              <div className='mx-auto flex min-h-0 w-full flex-1 flex-col px-4 py-2 lg:p-8 xl:container'>
-                <div className={`grid grid-cols-1 ${
-                    desktopNavCollapsed
-                      ? 'gap-3 lg:grid-cols-[2.75rem_minmax(0,1fr)]'
-                      : 'gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]'
-                  }`}>
-                  <Navigation
-                    collapsed={desktopNavCollapsed}
-                    onToggleCollapsed={() => setDesktopNavCollapsed(collapsed => !collapsed)}
-                  />
-                  <div className='min-h-0 lg:col-span-10'>
-                    <ErrorBoundary>
-                      <Router>
-                        <Route path='/' component={Home} />
-                        <Route path='/profiles' component={ProfileList} />
-                        <Route path='/profiles/:id' component={ProfileEdit} />
-                        <Route path='/settings' component={Settings} />
-                        <Route path='/ota' component={OTA} />
-                        <Route path='/scales' component={Scales} />
-                        <Route path='/pidtune' component={Autotune} />
-                        <Route path='/history' component={ShotHistory} />
-                        <Route path='/analyzer' component={ShotAnalyzer} />
-                        <Route path='/statistics' component={StatisticsPage} />
-                        <Route
-                          path='/statistics/:sourceAlias/:profileName'
-                          component={StatisticsPage}
-                        />
-                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
-                        {/*deep-link route (sorce & ID)*/}
-                        <Route default component={NotFound} />
-                      </Router>
-                    </ErrorBoundary>
-                  </div>
+        <div className='bg-base-300 flex h-screen overflow-hidden'>
+          <Navigation
+            collapsed={desktopNavCollapsed}
+            onToggleCollapsed={() => setDesktopNavCollapsed(collapsed => !collapsed)}
+          />
+          <div className='flex flex-1 flex-col overflow-x-hidden overflow-y-auto'>
+            <div className='mx-auto flex min-h-0 w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4'>
+              <div className='grid min-h-0 flex-1 grid-cols-1'>
+                <div className='min-h-0'>
+                  <ErrorBoundary>
+                    <Router>
+                      <Route path='/' component={Home} />
+                      <Route path='/profiles' component={ProfileList} />
+                      <Route path='/profiles/:id' component={ProfileEdit} />
+                      <Route path='/settings' component={Settings} />
+                      <Route path='/ota' component={OTA} />
+                      <Route path='/scales' component={Scales} />
+                      <Route path='/pidtune' component={Autotune} />
+                      <Route path='/history' component={ShotHistory} />
+                      <Route path='/analyzer' component={ShotAnalyzer} />
+                      <Route path='/statistics' component={StatisticsPage} />
+                      <Route
+                        path='/statistics/:sourceAlias/:profileName'
+                        component={StatisticsPage}
+                      />
+                      <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
+                      {/*deep-link route (sorce & ID)*/}
+                      <Route default component={NotFound} />
+                    </Router>
+                  </ErrorBoundary>
                 </div>
               </div>
-              <Footer />
-            </main>
+            </div>
           </div>
         </div>
       </ApiServiceContext.Provider>
