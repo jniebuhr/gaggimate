@@ -24,14 +24,33 @@ import { useCallback, useEffect, useRef, useState, useContext, useMemo } from 'p
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import HistoryCard from './HistoryCard.jsx';
-import { parseBinaryShot } from './parseBinaryShot.js';
-import { parseBinaryIndex, indexToShotList } from './parseBinaryIndex.js';
+import { libraryService } from '../ShotAnalyzer/services/LibraryService.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 
 const connected = computed(() => machine.value.connected);
+
+function getShotStorageId(shot) {
+  return String(shot?.storageKey || shot?.name || shot?.id || '');
+}
+
+function normalizeHistoryShot(shot) {
+  const id = String(shot?.id || shot?.storageKey || shot?.name || '');
+
+  return {
+    ...shot,
+    id,
+    source: shot?.source || 'gaggimate',
+    timestamp: shot?.timestamp || 0,
+    duration: shot?.duration || 0,
+    volume: shot?.volume ?? null,
+    rating: shot?.rating ?? 0,
+    loaded: Boolean(shot?.loaded || (Array.isArray(shot?.samples) && shot.samples.length > 0)),
+    samples: Array.isArray(shot?.samples) ? shot.samples : [],
+  };
+}
 
 export function ShotHistory() {
   const apiService = useContext(ApiServiceContext);
@@ -43,82 +62,72 @@ export function ShotHistory() {
   const [filterBy, setFilterBy] = useState('all'); // all, rated, unrated
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const loadHistoryAbortRef = useRef(null);
-  const loadHistory = async () => {
-    // Abort any in-flight fetch to prevent request pileup on the ESP32.
-    loadHistoryAbortRef.current?.abort();
-    const controller = new AbortController();
-    loadHistoryAbortRef.current = controller;
+  const loadHistoryRequestRef = useRef(0);
+
+  const loadHistory = useCallback(async () => {
+    const requestId = loadHistoryRequestRef.current + 1;
+    loadHistoryRequestRef.current = requestId;
 
     try {
-      // Fetch binary index instead of websocket request
-      const response = await fetch('/api/history/index.bin', { signal: controller.signal });
-      if (!response.ok) {
-        if (response.status === 404) {
-          // Index doesn't exist, show empty list with option to rebuild
-          console.log('Shot index not found. You may need to rebuild it if shots exist.');
-          setHistory([]);
-          setLoading(false);
-          return;
-        }
-        throw new Error(`HTTP ${response.status}`);
-      }
+      libraryService.setApiService(apiService);
+      const shotList = await libraryService.getAllShots('both');
+      if (loadHistoryRequestRef.current !== requestId) return;
 
-      const arrayBuffer = await response.arrayBuffer();
-      const indexData = parseBinaryIndex(arrayBuffer);
-      const shotList = indexToShotList(indexData);
-
-      // Preserve loaded state and data from existing shots
       setHistory(prev => {
-        const existingMap = new Map(prev.map(shot => [shot.id, shot]));
+        const existingMap = new Map(
+          prev.map(shot => [`${shot.source || 'gaggimate'}:${getShotStorageId(shot)}`, shot]),
+        );
+
         return shotList.map(newShot => {
-          const existing = existingMap.get(newShot.id);
+          const normalized = normalizeHistoryShot(newShot);
+          const existing = existingMap.get(`${normalized.source}:${getShotStorageId(normalized)}`);
+
           if (existing && existing.loaded) {
-            // Preserve loaded data but update metadata from index
             return {
               ...existing,
-              // Update metadata that might have changed (like rating and volume)
-              rating: newShot.rating,
-              volume: newShot.volume,
-              incomplete: newShot.incomplete,
+              ...normalized,
+              samples: existing.samples,
+              loaded: true,
+              volume: normalized.volume ?? existing.volume,
+              rating: normalized.rating ?? existing.rating,
+              incomplete: normalized.incomplete ?? existing.incomplete,
+              notes: normalized.notes ?? existing.notes,
             };
           }
-          return newShot;
+
+          return normalized;
         });
       });
       setLoading(false);
     } catch (error) {
-      if (error.name === 'AbortError') return; // Intentional abort, not an error.
+      if (loadHistoryRequestRef.current !== requestId) return;
       console.error('Failed to load shot history:', error);
       setHistory([]);
       setLoading(false);
     }
-  };
+  }, [apiService]);
+
   useEffect(() => {
-    if (connected.value) {
-      loadHistory();
-    }
-    return () => loadHistoryAbortRef.current?.abort();
-  }, [connected.value]);
+    loadHistory();
+  }, [loadHistory, connected.value]);
 
   const onDelete = useCallback(
-    async id => {
+    async shot => {
       setLoading(true);
-      await apiService.request({ tp: 'req:history:delete', id });
-      // Reload the index after deletion
+      libraryService.setApiService(apiService);
+      await libraryService.deleteShot(getShotStorageId(shot), shot.source || 'gaggimate');
       await loadHistory();
     },
-    [apiService],
+    [apiService, loadHistory],
   );
 
   const onNotesChanged = useCallback(async () => {
-    // Reload the index to get updated ratings
     await loadHistory();
-  }, []);
+  }, [loadHistory]);
 
   // Filtered and sorted history with pagination
   const { paginatedHistory, totalPages, totalFilteredItems } = useMemo(() => {
-    let filtered = history;
+    let filtered = [...history];
 
     // Apply search filter
     if (searchTerm.trim()) {
@@ -274,39 +283,40 @@ export function ShotHistory() {
       </div>
 
       <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
-        {paginatedHistory.map((item, idx) => (
+        {paginatedHistory.map(item => (
           <HistoryCard
-            key={item.id}
+            key={`${item.source || 'gaggimate'}-${getShotStorageId(item)}`}
             shot={item}
-            onDelete={id => onDelete(id)}
+            onDelete={() => onDelete(item)}
             onNotesChanged={onNotesChanged}
-            onLoad={async id => {
-              // Fetch binary only if not loaded
-              const target = history.find(h => h.id === id);
-              if (!target || target.loaded) return;
+            onLoad={async () => {
+              if (item.loaded) return;
+
               try {
-                // Pad ID to 6 digits with zeros to match backend filename format
-                const paddedId = id.padStart(6, '0');
-                const resp = await fetch(`/api/history/${paddedId}.slog`);
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const buf = await resp.arrayBuffer();
-                const parsed = parseBinaryShot(buf, id);
-                parsed.incomplete = (target?.incomplete ?? false) || parsed.incomplete;
-                if (target?.notes) parsed.notes = target.notes;
+                const storageId = getShotStorageId(item);
+                const parsed = await libraryService.loadShot(storageId, item.source || 'gaggimate');
+
                 setHistory(prev =>
-                  prev.map(h =>
-                    h.id === id
-                      ? {
-                          ...h,
-                          ...parsed,
-                          // Preserve index metadata over shot file data
-                          volume: h.volume ?? parsed.volume, // Use index volume if available, fallback to shot volume
-                          rating: h.rating ?? parsed.rating, // Use index rating if available
-                          incomplete: h.incomplete ?? parsed.incomplete,
-                          loaded: true,
-                        }
-                      : h,
-                  ),
+                  prev.map(h => {
+                    const sameShot =
+                      `${h.source || 'gaggimate'}:${getShotStorageId(h)}` ===
+                      `${item.source || 'gaggimate'}:${storageId}`;
+
+                    if (!sameShot) return h;
+
+                    return normalizeHistoryShot({
+                      ...h,
+                      ...parsed,
+                      id: h.id,
+                      storageKey: h.storageKey,
+                      source: h.source || parsed.source,
+                      volume: h.volume ?? parsed.volume,
+                      rating: h.rating ?? parsed.rating,
+                      incomplete: h.incomplete ?? parsed.incomplete,
+                      notes: h.notes ?? parsed.notes,
+                      loaded: true,
+                    });
+                  }),
                 );
               } catch (e) {
                 console.error('Failed loading shot', e);
