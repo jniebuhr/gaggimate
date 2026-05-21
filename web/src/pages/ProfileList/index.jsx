@@ -1,6 +1,6 @@
-import Sortable, {MultiDrag} from 'sortablejs';
+import Sortable, { MultiDrag } from 'sortablejs';
 try {
-Sortable?.mount(new MultiDrag())
+  Sortable?.mount(new MultiDrag());
 } catch (error) {
   // to avoid error when vite is reloading the page in dev mode
 }
@@ -43,11 +43,7 @@ import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
-import {
-  faAnglesDown,
-  faAnglesUp,
-  faGripVertical,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAnglesDown, faAnglesUp, faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 
 Chart.register(
@@ -664,7 +660,6 @@ export function ProfileList() {
     };
   }, [apiService]);
 
-
   // Filtered profiles
   const profilesToShow = useMemo(() => {
     // Apply search filter
@@ -708,12 +703,11 @@ export function ProfileList() {
     [persistProfileOrder],
   );
 
-
   const moveProfileBottom = useCallback(
     id => {
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.id === id);
-        if (idx === -1 || idx === prev.length - 1 ) {
+        if (idx === -1 || idx === prev.length - 1) {
           return prev;
         }
 
@@ -727,7 +721,6 @@ export function ProfileList() {
 
         persistProfileOrder(normalized);
         return normalized;
-
       });
     },
     [persistProfileOrder],
