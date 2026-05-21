@@ -1,35 +1,188 @@
-import { useContext, useEffect, useMemo, useState } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'preact/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 import Card from '../../components/Card.jsx';
+import { Spinner } from '../../components/Spinner.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { libraryService } from '../ShotAnalyzer/services/LibraryService.js';
-import { indexedDBService } from '../ShotAnalyzer/services/IndexedDBService.js';
 
-function formatValue(value, fallback = 'Not reported') {
-  if (value === null || value === undefined || value === '') return fallback;
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+const SETTINGS_SNAPSHOT_KEY = 'gaggigo.readonlySettingsSnapshot';
+
+const SETTINGS_GROUPS = [
+  {
+    title: 'Temperature Settings',
+    keys: ['targetSteamTemp', 'targetWaterTemp', 'temperatureOffset', 'pid', 'kf'],
+  },
+  {
+    title: 'User Preferences',
+    keys: [
+      'startupMode',
+      'startupProfile',
+      'standbyTimeout',
+      'delayAdjust',
+      'brewDelay',
+      'grindDelay',
+      'momentaryButtons',
+      'buttonBehavior',
+      'button0',
+      'button1',
+      'button2',
+    ],
+  },
+  {
+    title: 'System Preferences',
+    keys: ['wifiSsid', 'wifiPassword', 'mdnsName', 'timezone', 'clock24hFormat'],
+  },
+  {
+    title: 'Machine Settings',
+    keys: [
+      'pumpModelCoeffs',
+      'pressureScaling',
+      'steamPumpPercentage',
+      'steamPumpCutoff',
+      'altRelayFunction',
+    ],
+  },
+  {
+    title: 'Display Settings',
+    keys: [
+      'mainBrightness',
+      'standbyDisplayEnabled',
+      'standbyBrightness',
+      'standbyBrightnessTimeout',
+      'themeMode',
+      'dashboardLayout',
+    ],
+  },
+  {
+    title: 'Sunrise / LED Settings',
+    keys: [
+      'sunriseR',
+      'sunriseG',
+      'sunriseB',
+      'sunriseW',
+      'sunriseExtBrightness',
+      'emptyTankDistance',
+      'fullTankDistance',
+    ],
+  },
+  {
+    title: 'Plugin Settings',
+    keys: [
+      'autowakeupEnabled',
+      'autowakeupSchedules',
+      'homekit',
+      'boilerFillActive',
+      'startupFillTime',
+      'steamFillTime',
+      'smartGrindActive',
+      'smartGrindIp',
+      'smartGrindMode',
+      'smartGrindToggle',
+      'homeAssistant',
+      'haIP',
+      'haPort',
+      'haUser',
+      'haPassword',
+      'haTopic',
+    ],
+  },
+];
+
+function humanizeKey(key) {
+  return String(key || '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/^./, char => char.toUpperCase());
+}
+
+function isSecretKey(key) {
+  return /password|secret|token|key/i.test(String(key || ''));
+}
+
+function formatValue(value, { revealSecrets = false, key = '' } = {}) {
+  if (value === null || value === undefined || value === '') return 'Not set';
+  if (isSecretKey(key) && !revealSecrets) return value ? '••••••••' : 'Not set';
+  if (typeof value === 'boolean') return value ? 'Enabled' : 'Disabled';
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }
 
-function formatNumber(value, suffix = '', fallback = 'Not reported') {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return fallback;
-  return `${numeric.toFixed(1)}${suffix}`;
+function splitPidString(pidString) {
+  if (!pidString) return { pid: pidString, kf: '0.000' };
+  const parts = String(pidString).split(',');
+  if (parts.length >= 4) {
+    return { pid: parts.slice(0, 3).join(','), kf: parts[3] };
+  }
+  return { pid: pidString, kf: '0.000' };
 }
 
-function InfoRow({ label, value }) {
-  return (
-    <div className='border-base-content/10 flex items-start justify-between gap-4 border-b py-2 last:border-b-0'>
-      <span className='text-base-content/65 text-sm'>{label}</span>
-      <span className='text-base-content text-right text-sm font-medium'>{value}</span>
-    </div>
-  );
+function splitButtons(buttonBehavior) {
+  if (!buttonBehavior) return {};
+  const [button0, button1, button2] = String(buttonBehavior).split(',');
+  return { button0, button1, button2 };
 }
 
-function SectionList({ items }) {
+function normalizeSettings(settings) {
+  if (!settings || typeof settings !== 'object') return {};
+
+  const nextSettings = { ...settings };
+
+  if (nextSettings.pid) {
+    const split = splitPidString(nextSettings.pid);
+    nextSettings.pid = split.pid;
+    nextSettings.kf = split.kf;
+  }
+
+  if (nextSettings.buttonBehavior) {
+    Object.assign(nextSettings, splitButtons(nextSettings.buttonBehavior));
+  }
+
+  if (nextSettings.standbyDisplayEnabled === undefined && nextSettings.standbyBrightness !== undefined) {
+    nextSettings.standbyDisplayEnabled = Number(nextSettings.standbyBrightness) > 0;
+  }
+
+  return nextSettings;
+}
+
+function getStoredSettingsSnapshot() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_SNAPSHOT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeSettingsSnapshot(settings) {
+  try {
+    localStorage.setItem(
+      SETTINGS_SNAPSHOT_KEY,
+      JSON.stringify({ settings, cachedAt: new Date().toISOString() }),
+    );
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function SettingsRows({ settings, keys, revealSecrets }) {
+  const visibleKeys = keys.filter(key => Object.hasOwn(settings, key));
+
+  if (visibleKeys.length === 0) {
+    return <p className='text-base-content/50 text-sm'>No reported values in this section.</p>;
+  }
+
   return (
     <div className='divide-base-content/10 divide-y'>
-      {items.map(item => (
-        <InfoRow key={item.label} label={item.label} value={item.value} />
+      {visibleKeys.map(key => (
+        <div key={key} className='flex items-start justify-between gap-4 py-2'>
+          <span className='text-base-content/65 text-sm'>{humanizeKey(key)}</span>
+          <span className='text-base-content max-w-[60%] break-words text-right text-sm font-medium'>
+            {formatValue(settings[key], { revealSecrets, key })}
+          </span>
+        </div>
       ))}
     </div>
   );
@@ -37,126 +190,77 @@ function SectionList({ items }) {
 
 export function Settings() {
   const apiService = useContext(ApiServiceContext);
-  const [cacheStats, setCacheStats] = useState({ shots: 0, profiles: 0, total: 0 });
-  const [libraryStats, setLibraryStats] = useState({ shots: 0, profiles: 0 });
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const connected = Boolean(machine.value.connected);
+  const [settings, setSettings] = useState({});
+  const [cachedAt, setCachedAt] = useState(null);
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [revealSecrets, setRevealSecrets] = useState(false);
 
-  const snapshot = machine.value;
-  const status = snapshot.status || {};
-  const capabilities = snapshot.capabilities || {};
-  const connected = Boolean(snapshot.connected);
+  const loadSettings = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      libraryService.setApiService(apiService);
+      const [settingsResponse, profileList] = await Promise.all([
+        fetch('/api/settings'),
+        libraryService.getAllProfiles('both').catch(() => []),
+      ]);
+
+      if (!settingsResponse.ok) {
+        throw new Error(`Settings request failed: HTTP ${settingsResponse.status}`);
+      }
+
+      const rawSettings = await settingsResponse.json();
+      const normalized = normalizeSettings(rawSettings);
+      setSettings(normalized);
+      setProfiles(Array.isArray(profileList) ? profileList : []);
+      setCachedAt(new Date().toISOString());
+      storeSettingsSnapshot(normalized);
+    } catch (loadError) {
+      const snapshot = getStoredSettingsSnapshot();
+      if (snapshot?.settings) {
+        setSettings(normalizeSettings(snapshot.settings));
+        setCachedAt(snapshot.cachedAt || null);
+        setError('Live settings unavailable. Showing cached settings snapshot.');
+      } else {
+        setSettings({});
+        setCachedAt(null);
+        setError(loadError.message || 'Failed to load GaggiMate settings.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [apiService]);
 
   useEffect(() => {
-    let cancelled = false;
+    loadSettings();
+  }, [loadSettings, connected]);
 
-    async function loadReadOnlyStats() {
-      try {
-        libraryService.setApiService(apiService);
-        const [storedStats, shotList, profileList] = await Promise.all([
-          indexedDBService.getStats(),
-          libraryService.getAllShots('both'),
-          libraryService.getAllProfiles('both'),
-        ]);
+  const startupProfileLabel = useMemo(() => {
+    const profileId = String(settings.startupProfile || '');
+    if (!profileId) return null;
+    const match = profiles.find(profile => String(profile.profileId || profile.id || '') === profileId);
+    return match ? `${profileId} (${match.label || match.name || 'profile'})` : profileId;
+  }, [profiles, settings.startupProfile]);
 
-        if (cancelled) return;
-        setCacheStats(storedStats);
-        setLibraryStats({
-          shots: Array.isArray(shotList) ? shotList.length : 0,
-          profiles: Array.isArray(profileList) ? profileList.length : 0,
-        });
-        setLastUpdated(new Date());
-      } catch (error) {
-        if (cancelled) return;
-        console.warn('Failed to load read-only settings stats:', error);
-      }
-    }
-
-    loadReadOnlyStats();
-
-    return () => {
-      cancelled = true;
+  const displaySettings = useMemo(() => {
+    if (!startupProfileLabel) return settings;
+    return {
+      ...settings,
+      startupProfile: startupProfileLabel,
     };
-  }, [apiService, connected]);
+  }, [settings, startupProfileLabel]);
 
-  const machineRows = useMemo(
-    () => [
-      { label: 'Connection', value: connected ? 'Connected' : 'Offline / cached mode' },
-      { label: 'Mode', value: formatValue(status.mode) },
-      { label: 'Selected profile', value: formatValue(status.selectedProfile) },
-      { label: 'Selected profile ID', value: formatValue(status.selectedProfileId) },
-      { label: 'RSSI', value: formatValue(status.rssi) },
-      {
-        label: 'Last status update',
-        value: status.timestamp ? new Date(status.timestamp).toLocaleString() : 'Not reported',
-      },
-    ],
-    [connected, status],
-  );
-
-  const temperatureRows = useMemo(
-    () => [
-      { label: 'Current temperature', value: formatNumber(status.currentTemperature, '°C') },
-      { label: 'Target temperature', value: formatNumber(status.targetTemperature, '°C') },
-    ],
-    [status],
-  );
-
-  const pressureRows = useMemo(
-    () => [
-      { label: 'Current pressure', value: formatNumber(status.currentPressure, ' bar') },
-      { label: 'Target pressure', value: formatNumber(status.targetPressure, ' bar') },
-      { label: 'Pressure capability', value: formatValue(capabilities.pressure) },
-    ],
-    [capabilities, status],
-  );
-
-  const brewRows = useMemo(
-    () => [
-      { label: 'Brew target enabled', value: formatValue(status.brewTarget) },
-      { label: 'Brew target duration', value: formatNumber(status.brewTargetDuration, ' s') },
-      { label: 'Target weight', value: formatNumber(status.targetWeight, ' g') },
-      { label: 'Active target weight', value: formatNumber(status.activeTargetWeight, ' g') },
-      { label: 'Current weight', value: formatNumber(status.currentWeight, ' g') },
-      { label: 'Current flow', value: formatNumber(status.currentFlow, ' g/s') },
-      { label: 'Volumetric available', value: formatValue(status.volumetricAvailable) },
-    ],
-    [status],
-  );
-
-  const grinderRows = useMemo(
-    () => [
-      { label: 'Grind target', value: formatValue(status.grindTarget) },
-      { label: 'Grind active', value: formatValue(status.grindActive) },
-      { label: 'Grind target duration', value: formatNumber(status.grindTargetDuration, ' s') },
-      { label: 'Grind target volume', value: formatNumber(status.grindTargetVolume, ' ml') },
-    ],
-    [status],
-  );
-
-  const capabilityRows = useMemo(
-    () => [
-      { label: 'Bluetooth scale connected', value: formatValue(status.bluetoothConnected) },
-      { label: 'Display dimming capability', value: formatValue(capabilities.dimming) },
-      { label: 'LED control capability', value: formatValue(capabilities.ledControl) },
-      { label: 'ToF distance', value: formatNumber(status.tofDistance, ' mm') },
-    ],
-    [capabilities, status],
-  );
-
-  const cacheRows = useMemo(
-    () => [
-      { label: 'Library shots visible', value: formatValue(libraryStats.shots) },
-      { label: 'Library profiles visible', value: formatValue(libraryStats.profiles) },
-      { label: 'IndexedDB shots', value: formatValue(cacheStats.shots) },
-      { label: 'IndexedDB profiles', value: formatValue(cacheStats.profiles) },
-      { label: 'IndexedDB total records', value: formatValue(cacheStats.total) },
-      {
-        label: 'Local snapshot updated',
-        value: lastUpdated ? lastUpdated.toLocaleString() : 'Not loaded yet',
-      },
-    ],
-    [cacheStats, libraryStats, lastUpdated],
-  );
+  if (loading) {
+    return (
+      <div className='flex w-full flex-row items-center justify-center py-16'>
+        <Spinner size={8} />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -165,52 +269,48 @@ export function Settings() {
         <span className={`badge ${connected ? 'badge-success' : 'badge-warning'}`}>
           {connected ? 'Live' : 'Cached'}
         </span>
+        <button className='btn btn-sm btn-outline' type='button' onClick={loadSettings}>
+          Refresh
+        </button>
+        <button
+          className='btn btn-sm btn-ghost'
+          type='button'
+          onClick={() => setRevealSecrets(value => !value)}
+        >
+          <FontAwesomeIcon icon={revealSecrets ? faEyeSlash : faEye} />
+        </button>
       </div>
 
       <div className='mb-4 alert alert-info shadow-sm'>
         <span>
-          Read-only GaggiMate settings and machine status. GaggiGo does not change machine configuration.
+          Read-only GaggiMate settings viewer using /api/settings. Save/restart/import controls are intentionally disabled.
         </span>
       </div>
 
+      {error && (
+        <div className='alert alert-warning mb-4 shadow-sm'>
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div className='mb-4 text-sm opacity-60'>
+        Snapshot: {cachedAt ? new Date(cachedAt).toLocaleString() : 'No snapshot loaded'}
+      </div>
+
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
-        <Card sm={10} lg={5} title='Machine'>
-          <SectionList items={machineRows} />
-        </Card>
-
-        <Card sm={10} lg={5} title='Temperature'>
-          <SectionList items={temperatureRows} />
-        </Card>
-
-        <Card sm={10} lg={5} title='Pressure'>
-          <SectionList items={pressureRows} />
-        </Card>
-
-        <Card sm={10} lg={5} title='Brew / Weight'>
-          <SectionList items={brewRows} />
-        </Card>
-
-        <Card sm={10} lg={5} title='Grinder'>
-          <SectionList items={grinderRows} />
-        </Card>
-
-        <Card sm={10} lg={5} title='Capabilities'>
-          <SectionList items={capabilityRows} />
-        </Card>
-
-        <Card sm={10} title='Local Data Snapshot'>
-          <SectionList items={cacheRows} />
-        </Card>
+        {SETTINGS_GROUPS.map(group => (
+          <Card key={group.title} sm={10} lg={5} title={group.title}>
+            <SettingsRows
+              settings={displaySettings}
+              keys={group.keys}
+              revealSecrets={revealSecrets}
+            />
+          </Card>
+        ))}
 
         <Card sm={10} title='Boundary'>
-          <div className='space-y-3 text-sm leading-relaxed'>
-            <p>
-              This page is view-only. Machine writes, calibration, PID tuning, OTA, plugin management,
-              and restart controls remain outside GaggiGo scope.
-            </p>
-            <div className='alert alert-warning shadow-sm'>
-              <span>GaggiMate controls the machine. GaggiGo observes, stores, analyses, and syncs safe data.</span>
-            </div>
+          <div className='alert alert-warning shadow-sm'>
+            <span>GaggiMate controls the machine. GaggiGo displays settings only.</span>
           </div>
         </Card>
       </div>
