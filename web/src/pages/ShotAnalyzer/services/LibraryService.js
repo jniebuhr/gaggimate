@@ -25,10 +25,25 @@ const HISTORY_NOTES_DEFAULTS = {
 };
 
 const GAGGIMATE_CACHE_SOURCE = 'gaggimate-cache';
+const GAGGIMATE_HTTP_TIMEOUT_MS = 1800;
 
 function round2(v) {
   if (v == null || Number.isNaN(v)) return v;
   return Math.round((v + Number.EPSILON) * 100) / 100;
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = GAGGIMATE_HTTP_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 function normalizeShotSampleForHistoryExport(sample = {}) {
@@ -168,7 +183,7 @@ class LibraryService {
    */
   async getGaggiMateShots() {
     try {
-      const response = await fetch('/api/history/index.bin');
+      const response = await fetchWithTimeout('/api/history/index.bin');
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -190,9 +205,9 @@ class LibraryService {
         source: 'gaggimate',
       }));
 
-      // Mirror into IndexedDB for offline use
-      await Promise.all(
-        normalizedShots.map(shot => indexedDBService.saveCachedGaggiMateShot(shot)),
+      // Mirror into IndexedDB for offline use without blocking the live UI.
+      Promise.all(normalizedShots.map(shot => indexedDBService.saveCachedGaggiMateShot(shot))).catch(
+        error => console.warn('Failed to cache GaggiMate shots:', error),
       );
 
       return normalizedShots;
@@ -225,17 +240,18 @@ class LibraryService {
    * @returns {Promise<Object[]>} Filtered and merged shot list
    */
   async getAllShots(sourceFilter = 'both') {
-    const promises = [];
+    let results = [];
 
-    // Load from selected sources
-    if (sourceFilter === 'both' || sourceFilter === 'gaggimate') {
-      promises.push(this.getGaggiMateShots());
-    }
-    if (sourceFilter === 'both' || sourceFilter === 'browser') {
-      promises.push(this.getBrowserShots());
+    if (sourceFilter === 'browser') {
+      results = [await this.getBrowserShots()];
+    } else if (sourceFilter === 'gaggimate') {
+      results = [await this.getGaggiMateShots()];
+    } else {
+      const browserShots = await this.getBrowserShots();
+      const gaggimateShots = await this.getGaggiMateShots();
+      results = [browserShots, gaggimateShots];
     }
 
-    const results = await Promise.all(promises);
     const merged = results.flat();
 
     // Deduplicate preferring live GaggiMate over offline cache
@@ -290,12 +306,10 @@ class LibraryService {
         source: 'gaggimate',
       }));
 
-      // Mirror into IndexedDB for offline use
-      await Promise.all(
-        normalizedProfiles.map(profile =>
-          indexedDBService.saveCachedGaggiMateProfile(profile),
-        ),
-      );
+      // Mirror into IndexedDB for offline use without blocking the live UI.
+      Promise.all(
+        normalizedProfiles.map(profile => indexedDBService.saveCachedGaggiMateProfile(profile)),
+      ).catch(error => console.warn('Failed to cache GaggiMate profiles:', error));
 
       return normalizedProfiles;
     } catch (error) {
@@ -323,16 +337,18 @@ class LibraryService {
    * @returns {Promise<Object[]>} Filtered and merged profile list
    */
   async getAllProfiles(sourceFilter = 'both') {
-    const promises = [];
+    let results = [];
 
-    if (sourceFilter === 'both' || sourceFilter === 'gaggimate') {
-      promises.push(this.getGaggiMateProfiles());
-    }
-    if (sourceFilter === 'both' || sourceFilter === 'browser') {
-      promises.push(this.getBrowserProfiles());
+    if (sourceFilter === 'browser') {
+      results = [await this.getBrowserProfiles()];
+    } else if (sourceFilter === 'gaggimate') {
+      results = [await this.getGaggiMateProfiles()];
+    } else {
+      const browserProfiles = await this.getBrowserProfiles();
+      const gaggimateProfiles = await this.getGaggiMateProfiles();
+      results = [browserProfiles, gaggimateProfiles];
     }
 
-    const results = await Promise.all(promises);
     const merged = results.flat();
 
     // Deduplicate preferring live GaggiMate over offline cache
@@ -368,7 +384,7 @@ class LibraryService {
 
     if (source === 'gaggimate') {
       const paddedId = idStr.padStart(6, '0');
-      const response = await fetch(`/api/history/${paddedId}.slog`);
+      const response = await fetchWithTimeout(`/api/history/${paddedId}.slog`, {}, 2500);
 
       if (!response.ok) {
         throw new Error(`Failed to load shot ${idStr}: HTTP ${response.status}`);
@@ -378,11 +394,13 @@ class LibraryService {
       const shot = parseBinaryShot(arrayBuffer, idStr);
       shot.source = 'gaggimate';
 
-      // Persist loaded detailed shot for offline use
-      await indexedDBService.saveCachedGaggiMateShot({
-        ...shot,
-        loaded: true,
-      });
+      // Persist loaded detailed shot for offline use without blocking UI.
+      indexedDBService
+        .saveCachedGaggiMateShot({
+          ...shot,
+          loaded: true,
+        })
+        .catch(error => console.warn('Failed to cache loaded GaggiMate shot:', error));
 
       return shot;
     }
@@ -427,7 +445,9 @@ class LibraryService {
         source: 'gaggimate',
       };
 
-      await indexedDBService.saveCachedGaggiMateProfile(profile);
+      indexedDBService
+        .saveCachedGaggiMateProfile(profile)
+        .catch(error => console.warn('Failed to cache loaded GaggiMate profile:', error));
 
       return profile;
     }
