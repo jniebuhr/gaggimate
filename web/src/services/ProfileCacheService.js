@@ -1,37 +1,26 @@
-import LocalCacheService from './LocalCacheService.js';
+import { libraryService } from '../pages/ShotAnalyzer/services/LibraryService.js';
 
-const cache = new LocalCacheService();
+export async function loadProfilesWithCache(apiService) {
+  libraryService.setApiService(apiService);
 
-export async function loadProfilesWithCache(apiService, connected) {
-  if (connected) {
-    try {
-      const response = await apiService.request({ tp: 'req:profiles:list' });
-      const profiles = Array.isArray(response?.profiles) ? response.profiles : [];
-      cache.setProfiles(profiles, 'gaggimate');
-      return {
-        profiles,
-        source: 'gaggimate',
-        cachedAt: new Date().toISOString(),
-        offline: false,
-      };
-    } catch {
-      // Fall through to cached profiles.
-    }
-  }
+  const profiles = await libraryService.getAllProfiles('both');
 
-  const cached = cache.getProfiles();
   return {
-    profiles: Array.isArray(cached.items) ? cached.items : [],
-    source: cached.source || 'local-cache',
-    cachedAt: cached.updatedAt,
-    offline: true,
+    profiles: Array.isArray(profiles) ? profiles : [],
+    source: 'library-service',
+    cachedAt: null,
+    offline: false,
   };
 }
 
-export function cacheProfiles(profiles, source = 'gaggimate') {
-  return cache.setProfiles(profiles, source);
+export function cacheProfiles() {
+  return null;
 }
 
-export function getCachedProfiles() {
-  return cache.getProfiles();
+export async function getCachedProfiles() {
+  return {
+    updatedAt: null,
+    source: 'library-service',
+    items: await libraryService.getBrowserProfiles(),
+  };
 }
