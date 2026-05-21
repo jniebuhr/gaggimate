@@ -31,11 +31,11 @@ export function StatisticsPage() {
       ...sessionContext,
       shotSource: normalizeStatisticsSourceSelection(
         sessionContext.shotSource || legacySource,
-        'gaggimate',
+        'both',
       ),
       profileSource: normalizeStatisticsSourceSelection(
         sessionContext.profileSource || legacySource,
-        'gaggimate',
+        'both',
       ),
     };
     baseContext.source = baseContext.profileSource;
