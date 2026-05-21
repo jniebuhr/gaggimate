@@ -1,14 +1,21 @@
 /**
  * IndexedDBService.js
  *
- * Browser-side storage for uploaded shots and profiles
- * These are temporary uploads for analysis and NOT saved to GaggiMate controller
+ * Browser-side storage for uploaded shots and profiles.
+ * GaggiGo also uses this store to keep safe cached mirrors of GaggiMate data
+ * for offline viewing and analysis.
  */
 
 import { openDB } from 'idb';
 
 const DB_NAME = 'gaggimate-analyzer';
 const DB_VERSION = 3;
+const GAGGIMATE_CACHE_SOURCE = 'gaggimate-cache';
+
+function getGaggiMateShotStorageKey(shot) {
+  const id = String(shot?.id || shot?.gaggimateId || shot?.storageKey || shot?.name || Date.now());
+  return `gaggimate:${id}`;
+}
 
 function normalizeStoredProfile(profile = {}) {
   const label = String(
@@ -19,7 +26,7 @@ function normalizeStoredProfile(profile = {}) {
   const normalized = {
     ...profile,
     label,
-    source: 'browser',
+    source: profile.source || 'browser',
   };
   delete normalized.name;
   return normalized;
@@ -87,8 +94,8 @@ class IndexedDBService {
       ...shot,
       name: storageKey,
       storageKey,
-      source: 'browser',
-      uploadedAt: Date.now(),
+      source: shot.source || 'browser',
+      uploadedAt: shot.uploadedAt || Date.now(),
     };
 
     await db.put('shots', shotWithMeta);
@@ -96,7 +103,30 @@ class IndexedDBService {
   }
 
   /**
-   * Get all browser-uploaded shots
+   * Save a safe cached mirror of a GaggiMate shot summary or loaded shot.
+   * @param {Object} shot - GaggiMate shot data
+   */
+  async saveCachedGaggiMateShot(shot) {
+    const db = await this.init();
+    const gaggimateId = String(shot.id || shot.gaggimateId || shot.storageKey || shot.name || Date.now());
+    const storageKey = getGaggiMateShotStorageKey({ ...shot, id: gaggimateId });
+
+    const shotWithMeta = {
+      ...shot,
+      id: gaggimateId,
+      gaggimateId,
+      name: storageKey,
+      storageKey,
+      source: GAGGIMATE_CACHE_SOURCE,
+      cachedAt: Date.now(),
+    };
+
+    await db.put('shots', shotWithMeta);
+    return shotWithMeta;
+  }
+
+  /**
+   * Get all browser-uploaded and cached shots
    * @returns {Array} List of shots
    */
   async getAllShots() {
@@ -107,7 +137,7 @@ class IndexedDBService {
     return shots.map(shot => ({
       ...shot,
       storageKey: shot.storageKey || shot.name || String(shot.id || ''),
-      source: 'browser',
+      source: shot.source || 'browser',
     }));
   }
 
@@ -117,7 +147,11 @@ class IndexedDBService {
    */
   async getShot(name) {
     const db = await this.init();
-    return db.get('shots', name);
+    const shot = await db.get('shots', name);
+    if (shot) return shot;
+
+    const cacheKey = String(name).startsWith('gaggimate:') ? String(name) : `gaggimate:${name}`;
+    return db.get('shots', cacheKey);
   }
 
   /**
@@ -127,6 +161,10 @@ class IndexedDBService {
   async deleteShot(name) {
     const db = await this.init();
     await db.delete('shots', name);
+
+    if (!String(name).startsWith('gaggimate:')) {
+      await db.delete('shots', `gaggimate:${name}`);
+    }
   }
 
   /**
@@ -143,8 +181,8 @@ class IndexedDBService {
     // Add source tag and storage timestamp
     const profileWithMeta = {
       ...normalizedProfile,
-      source: 'browser',
-      uploadedAt: Date.now(),
+      source: normalizedProfile.source || 'browser',
+      uploadedAt: normalizedProfile.uploadedAt || Date.now(),
     };
 
     await db.put('profiles', profileWithMeta);
@@ -152,7 +190,25 @@ class IndexedDBService {
   }
 
   /**
-   * Get all browser-uploaded profiles
+   * Save a safe cached mirror of a GaggiMate profile summary.
+   * @param {Object} profile - GaggiMate profile data
+   */
+  async saveCachedGaggiMateProfile(profile) {
+    const normalizedProfile = normalizeStoredProfile({
+      ...profile,
+      source: GAGGIMATE_CACHE_SOURCE,
+      cachedAt: Date.now(),
+    });
+
+    if (!normalizedProfile) {
+      throw new Error('Profile label is required for GaggiMate cache storage');
+    }
+
+    return this.saveProfile(normalizedProfile);
+  }
+
+  /**
+   * Get all browser-uploaded and cached profiles
    * @returns {Array} List of profiles
    */
   async getAllProfiles() {
@@ -160,13 +216,7 @@ class IndexedDBService {
     const profiles = await db.getAll('profiles');
 
     // Ensure all have source tag
-    return profiles
-      .map(normalizeStoredProfile)
-      .filter(Boolean)
-      .map(profile => ({
-        ...profile,
-        source: 'browser',
-      }));
+    return profiles.map(normalizeStoredProfile).filter(Boolean);
   }
 
   /**
