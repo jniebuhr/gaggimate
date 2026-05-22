@@ -46,6 +46,7 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { faAnglesDown, faAnglesUp, faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 import { loadProfilesWithCache } from '../../services/ProfileCacheService.js';
+import { safeGaggiMateClient } from '../../services/SafeGaggiMateClient.js';
 
 Chart.register(
   LineController,
@@ -637,7 +638,8 @@ export function ProfileList() {
         const orderedIds = pendingOrderRef.current;
         if (!orderedIds) return;
         try {
-          await apiService.request({ tp: 'req:profiles:reorder', order: orderedIds });
+          safeGaggiMateClient.setApiService(apiService);
+          await safeGaggiMateClient.reorderProfiles(orderedIds);
         } catch (e) {
           // optional: log or surface error
         }
@@ -653,9 +655,8 @@ export function ProfileList() {
         clearTimeout(orderDebounceRef.current);
         if (pendingOrderRef.current) {
           // fire and forget; no await during unmount
-          apiService
-            .request({ tp: 'req:profiles:reorder', order: pendingOrderRef.current })
-            .catch(() => {});
+          safeGaggiMateClient.setApiService(apiService);
+          safeGaggiMateClient.reorderProfiles(pendingOrderRef.current).catch(() => {});
         }
       }
     };
@@ -834,7 +835,8 @@ export function ProfileList() {
   const onDelete = useCallback(
     async id => {
       setLoading(true);
-      await apiService.request({ tp: 'req:profiles:delete', id });
+      safeGaggiMateClient.setApiService(apiService);
+      await safeGaggiMateClient.deleteRemoteProfile(id);
       await loadProfiles();
     },
     [apiService, setLoading],
@@ -844,7 +846,8 @@ export function ProfileList() {
   const onSelect = useCallback(
     async id => {
       setLoading(true);
-      await apiService.request({ tp: 'req:profiles:select', id });
+      safeGaggiMateClient.setApiService(apiService);
+      await safeGaggiMateClient.selectProfile(id);
       await loadProfiles();
     },
     [apiService, setLoading],
@@ -854,7 +857,8 @@ export function ProfileList() {
   const onFavorite = useCallback(
     async id => {
       setLoading(true);
-      await apiService.request({ tp: 'req:profiles:favorite', id });
+      safeGaggiMateClient.setApiService(apiService);
+      await safeGaggiMateClient.favoriteProfile(id);
       await loadProfiles();
     },
     [apiService, setLoading],
@@ -864,7 +868,8 @@ export function ProfileList() {
   const onUnfavorite = useCallback(
     async id => {
       setLoading(true);
-      await apiService.request({ tp: 'req:profiles:unfavorite', id });
+      safeGaggiMateClient.setApiService(apiService);
+      await safeGaggiMateClient.unfavoriteProfile(id);
       await loadProfiles();
     },
     [apiService, setLoading],
@@ -881,7 +886,8 @@ export function ProfileList() {
         delete copy.selected;
         delete copy.favorite;
         copy.label = `${original.label} Copy`;
-        await apiService.request({ tp: 'req:profiles:save', profile: copy });
+        safeGaggiMateClient.setApiService(apiService);
+        await safeGaggiMateClient.saveProfile(copy);
       }
       await loadProfiles();
     },
@@ -913,7 +919,8 @@ export function ProfileList() {
           try {
             const profiles = parseProfile(result);
             for (const p of profiles) {
-              await apiService.request({ tp: 'req:profiles:save', profile: p });
+              safeGaggiMateClient.setApiService(apiService);
+              await safeGaggiMateClient.saveProfile(p);
             }
           } catch {
             // Individual save errors are surfaced by WS timeout; continue to reload list.
@@ -929,7 +936,8 @@ export function ProfileList() {
     setLoading(true);
     for (const p of profiles) {
       if (!p.selected) {
-        await apiService.request({ tp: 'req:profiles:delete', id: p.id });
+        safeGaggiMateClient.setApiService(apiService);
+        await safeGaggiMateClient.deleteRemoteProfile(p.id);
       }
     }
     await loadProfiles();
