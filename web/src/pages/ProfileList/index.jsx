@@ -220,7 +220,7 @@ function ProfileCard({
   }, [positionPopover]);
 
   return (
-    <Card sm={12} role='listitem' className='profile-card-container'>
+    <Card sm={12} role='listitem' className='profile-card-container mb-2'>
       <div
         className='flex flex-row items-center'
         role='group'

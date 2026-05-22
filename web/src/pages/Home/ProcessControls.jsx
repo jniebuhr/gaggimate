@@ -395,7 +395,7 @@ const ProcessControls = props => {
 
       {shouldExpand && (
         <>
-          <div className='flex flex-1 items-center justify-center'>
+          <div className='flex flex-1 items-center justify-center '>
             {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
             {(active || finished) && grind && showGrindTab && (
               <GrindProgress processInfo={processInfo} />
@@ -459,7 +459,7 @@ const ProcessControls = props => {
         </div>
       )}
 
-      <div className='flex flex-col items-center gap-4'>
+      <div className='flex flex-col items-center gap-4  py-1'>
         {grind &&
           showGrindTab &&
           !active &&
@@ -492,11 +492,6 @@ const ProcessControls = props => {
             </div>
           )}
         {/* Controls for different modes */}
-        {mode === 1 && (
-          <div className='flex flex-col items-center gap-4 space-y-4'>
-            {/* Brew mode has no additional controls beyond common ones */}
-          </div>
-        )}
         {mode === 2 && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
             {/* Temperature adjustment controls for steam mode */}
