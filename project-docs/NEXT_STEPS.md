@@ -6,27 +6,30 @@ Completed:
 
 1. Preserve stable responsive shell.
 2. Remove unsafe routes and navigation.
-3. Harden Settings into safe/local-view focused page.
-4. Add local cache foundation.
-5. Add profile cache helper.
-6. Wire Profiles page toward cached/offline behaviour.
-7. Add empty state for blank-slate profile cache.
+3. Harden Settings into safe read-only GaggiMate viewer.
+4. Reuse LibraryService + IndexedDBService architecture.
+5. Enable profile cache fallback.
+6. Enable shot history cache fallback.
+7. Enable offline analyzer routing.
+8. Enable offline statistics from cached data.
+9. Add cached settings snapshot fallback.
 
 ## Active Phase
 
-Phase 2: Offline data layer.
+Phase 2: Offline-first hardening before sync.
 
-## Next Build Priority
+## Current Build Priority
 
-1. Verify Profiles cache behaviour with imported/sample data.
-2. Add Shot History cache support.
-3. Add offline Shot History fallback.
-4. Wire Shot Analyzer to cached shot data.
-5. Wire Statistics to cached history/profile data.
-6. Add local draft/pending-change model for profile edits.
-7. Add manual sync queue UI.
-8. Define safe allowlisted adapter methods around ApiService.
-9. Later: investigate same-network auto-sync after manual sync is reliable.
+1. Polish offline empty states.
+2. Add clearer cache/source indicators.
+3. Reduce proxy timeout noise when GaggiMate is offline.
+4. Remove remaining live-only assumptions.
+5. Audit ApiService safe operations and websocket boundaries.
+6. Remove inherited dead services/code.
+7. Improve statistics indexing/performance.
+8. Prepare safe local notes/ratings sync model.
+9. Prepare manual sync queue workflow.
+10. Later: investigate PWA/install behaviour and end-to-end testing.
 
 ## Safety Boundary
 
@@ -43,4 +46,4 @@ Do not reintroduce:
 
 GaggiMate remains the machine authority.
 
-GaggiGo pulls safe data, caches it locally, enables offline viewing/analysis, and later syncs approved safe changes back through a manual sync flow.
+GaggiGo observes, caches, analyses, and later synchronises approved safe data only.
