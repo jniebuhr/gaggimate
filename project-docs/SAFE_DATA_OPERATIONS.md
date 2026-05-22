@@ -21,6 +21,40 @@ Block machine control and unrestricted administration.
 
 ---
 
+## Required Merge Goal
+
+GaggiGo must remain merge-directed.
+
+The offline-first/PWA work is not a permanent incompatible fork.
+
+The intended outcome is that useful GaggiGo frontend improvements can merge back into GaggiMate or remain cleanly upstream-compatible.
+
+Therefore every new change should be assessed against:
+
+```text
+Can this map back to GaggiMate data contracts, services, routes, or feature gates?
+```
+
+Prefer:
+
+- additive frontend improvements
+- feature gates / app modes
+- cache-first data loading
+- IndexedDB mirroring
+- safe adapter methods
+- existing GaggiMate API/WebSocket contracts
+- upstream-compatible file structure
+
+Avoid:
+
+- deleting upstream capability code
+- replacing GaggiMate data contracts
+- creating incompatible local-only schemas
+- building sync logic that cannot map to GaggiMate APIs
+- turning GaggiGo into a separate product architecture without need
+
+---
+
 ## System Model
 
 ```text
@@ -157,6 +191,8 @@ external integration management
 
 These remain outside GaggiGo scope.
 
+In merge-back terms, these should be mode-gated or hidden from GaggiGo mode, not treated as code that must vanish from GaggiMate.
+
 ---
 
 ## Safe Adapter Requirement
@@ -183,13 +219,14 @@ This keeps API compatibility while avoiding unrestricted websocket spread.
 
 ## Merge-Back Principle
 
-Because GaggiGo may eventually merge code with GaggiMate, prefer:
+Because GaggiGo must merge back or remain cleanly mergeable with GaggiMate, prefer:
 
 - upstream-compatible service structure
 - existing data contracts
 - thin adapter layers
 - `LibraryService` and `IndexedDBService` reuse
 - minimal fork-specific abstractions
+- feature gates over permanent removals
 
 Avoid:
 
@@ -197,6 +234,7 @@ Avoid:
 - inventing parallel cache architecture
 - deep UI rewrites
 - sync logic that cannot map back to GaggiMate APIs
+- permanent divergence where a feature gate would work
 
 ---
 
@@ -229,8 +267,10 @@ APIs are required.
 
 Safe data writes are allowed.
 
-Machine control is not allowed.
+Machine control is not allowed in GaggiGo mode.
 
 GaggiMate remains source authority.
 
 GaggiGo becomes the offline PWA mirror and safe sync client.
+
+Merge-back is a required architecture goal, not an optional future possibility.
