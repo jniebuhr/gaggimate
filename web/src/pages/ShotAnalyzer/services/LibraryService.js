@@ -33,6 +33,54 @@ function round2(v) {
   return Math.round((v + Number.EPSILON) * 100) / 100;
 }
 
+function hasShotSamples(shot) {
+  return Array.isArray(shot?.samples) && shot.samples.length > 0;
+}
+
+function mergeShotRecords(existing, incoming) {
+  const existingHasSamples = hasShotSamples(existing);
+  const incomingHasSamples = hasShotSamples(incoming);
+
+  if (existingHasSamples && !incomingHasSamples) {
+    return {
+      ...incoming,
+      ...existing,
+      source: existing.source || incoming.source,
+      timestamp: incoming.timestamp ?? existing.timestamp,
+      duration: incoming.duration ?? existing.duration,
+      volume: incoming.volume ?? existing.volume,
+      rating: incoming.rating ?? existing.rating,
+      incomplete: incoming.incomplete ?? existing.incomplete,
+      notes: incoming.notes ?? existing.notes,
+      loaded: true,
+      samples: existing.samples,
+    };
+  }
+
+  if (incomingHasSamples && !existingHasSamples) {
+    return {
+      ...existing,
+      ...incoming,
+      loaded: true,
+      samples: incoming.samples,
+    };
+  }
+
+  if (existing.source === GAGGIMATE_CACHE_SOURCE && incoming.source === 'gaggimate') {
+    return {
+      ...existing,
+      ...incoming,
+      samples: existing.samples,
+      loaded: existing.loaded,
+    };
+  }
+
+  return {
+    ...existing,
+    ...incoming,
+  };
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = GAGGIMATE_HTTP_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -256,7 +304,7 @@ class LibraryService {
 
     const merged = results.flat();
 
-    // Deduplicate preferring live GaggiMate over offline cache
+    // Deduplicate without losing full cached sample payloads to live index metadata.
     const deduped = new Map();
 
     merged.forEach(shot => {
@@ -268,9 +316,7 @@ class LibraryService {
         return;
       }
 
-      if (existing.source === GAGGIMATE_CACHE_SOURCE && shot.source === 'gaggimate') {
-        deduped.set(key, shot);
-      }
+      deduped.set(key, mergeShotRecords(existing, shot));
     });
 
     // Sort by timestamp (newest first)
