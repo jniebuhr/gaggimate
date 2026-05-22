@@ -12,7 +12,7 @@ Do not work from `master`.
 
 ## Current Identity
 
-GaggiGo is now a merge-directed offline-first frontend evolution layer for GaggiMate.
+GaggiGo is a merge-directed offline-first frontend evolution layer for GaggiMate.
 
 It is not a hostile fork and not a replacement architecture.
 
@@ -60,6 +60,39 @@ Rules:
 
 ---
 
+## Active Debug State
+
+Analyzer and Statistics are currently the active blocking issue.
+
+Observed current problem:
+
+- Shot Analyzer opens but graphs do not render for affected shots.
+- Statistics can report zeroes.
+- Statistics may batch many shots slowly and still produce little or no usable output.
+
+Do not treat analyzer/statistics cache fallback as fully complete until this is fixed and validated.
+
+Current likely cause, documented in `project-docs/ANALYZER_STATISTICS_DEBUG_HANDOVER.md`:
+
+```text
+UI still assumes two source types:
+- gaggimate
+- browser
+
+Data layer introduced a third source:
+- gaggimate-cache
+```
+
+This creates contract drift between Shot History, Shot Analyzer, Statistics, LibraryService, and IndexedDBService.
+
+Immediate rule:
+
+```text
+No sync design or new product features until Analyzer graphs and Statistics work correctly from cached full shot payloads.
+```
+
+---
+
 ## Completed
 
 ### Stable Shell
@@ -88,7 +121,7 @@ Merge-back note:
 
 ### Live Integration Confirmed Earlier
 
-Confirmed working during the MVP phase:
+Confirmed working earlier during the MVP phase:
 
 - local Vite proxy
 - live GaggiMate API access
@@ -99,39 +132,49 @@ Confirmed working during the MVP phase:
 - statistics generation
 - read-only settings loading
 
+Important:
+
+- current analyzer/statistics behaviour has regressed during offline/cache data-path work.
+- do not rely on older successful tests as proof that the current branch is healthy.
+
 ### Offline Persistence Layer
 
-Completed:
+Completed or partially integrated:
 
 - IndexedDB persistence integrated
-- cached GaggiMate shot mirroring
-- cached GaggiMate profile mirroring
-- cached settings snapshot mirroring
-- offline history fallback
-- offline analyzer fallback
-- offline statistics fallback
-- offline settings fallback
-- expanded shot persistence
-- fast cached startup behaviour
-- cache-first rendering behaviour
+- cached GaggiMate shot mirroring introduced
+- cached GaggiMate profile mirroring introduced
+- cached settings snapshot mirroring introduced
+- offline history fallback introduced
+- offline settings fallback introduced
+- expanded shot persistence introduced
+- fast cached startup behaviour introduced
+- cache-first rendering behaviour introduced
 
-Current behaviour:
+Not currently proven healthy:
+
+- offline analyzer graph rendering from cached full payloads
+- offline statistics from cached full payloads
+- metadata-only shot handling
+- `gaggimate-cache` source handling across all callers
+
+Current intended behaviour:
 
 Connected + live data:
 
-- show live data
-- mirror locally
+- live data can refresh the local mirror
+- UI should render through the local model where applicable
 
 Disconnected + cache exists:
 
 - show cached data
-- allow offline analysis
-- allow offline statistics
-- allow offline settings viewing
+- allow offline analysis only when full shot payloads exist
+- allow offline statistics only when full shot payloads exist
+- allow offline settings viewing from filtered cached snapshot
 
 Disconnected + no cache:
 
-- show empty-state behaviour
+- show clear empty-state behaviour
 
 ### Safe Data Boundary
 
@@ -142,11 +185,11 @@ Completed:
 - safe profile data writes wrapped.
 - `ProfileEdit` migrated to safe client.
 - `ProfileList` migrated to safe client.
-- `ApiService` now classifies known safe websocket data requests and warns for requests outside the documented set.
+- `ApiService` classifies known safe websocket data requests and warns for requests outside the documented set.
 
 ### Source / Cache Visibility
 
-Completed:
+Completed or introduced:
 
 - Shot History source badges added:
   - Live
@@ -154,6 +197,12 @@ Completed:
   - Browser
   - Local fallback
 - Settings displays Live/Cached snapshot status.
+
+Still needs validation:
+
+- source badges must remain presentation-only.
+- source badges must not create separate live/cache UI architectures.
+- cached GaggiMate shots must not be routed as browser uploads.
 
 ### Audits Completed
 
@@ -164,6 +213,7 @@ Completed docs:
 - `project-docs/NON_WEB_DIFF_AUDIT.md`
 - `project-docs/SANITY_VALIDATION.md`
 - `project-docs/PROFILELIST_MIGRATION_AUDIT.md`
+- `project-docs/ANALYZER_STATISTICS_DEBUG_HANDOVER.md`
 
 Non-web diffs are classified into separate merge-back buckets:
 
@@ -192,15 +242,29 @@ IndexedDB browser persistence
 
 ## Current Technical Focus
 
-The project is now at the pre-sync validation gate.
+The project is paused at an analyzer/statistics debug gate.
+
+Current focus:
+
+1. understand the current GitHub state
+2. read current project docs
+3. confirm branch `gaggigo-mvp`
+4. compare with `master` where needed
+5. fix Analyzer/Statistics source-contract drift with minimal targeted patches
+6. validate online and offline cached full-payload behaviour
+
+Only after this passes should the project return to pre-sync validation.
 
 Remaining before sync design:
 
-1. local runtime validation against real GaggiMate
-2. connected/offline/reconnect test
-3. confirm profile actions after safe-client migration
-4. confirm no unexpected ApiService warnings for documented safe operations
-5. then begin Safe Sync v1 design
+1. Analyzer graphs render from cached full shot payloads.
+2. Statistics runs from cached full shot payloads.
+3. metadata-only rows do not pretend to be loaded.
+4. `gaggimate-cache` handling is explicit and stable.
+5. local runtime validation against real GaggiMate.
+6. connected/offline/reconnect test.
+7. confirm profile actions after safe-client migration.
+8. confirm no unexpected ApiService warnings for documented safe operations.
 
 ---
 
@@ -212,6 +276,16 @@ Do not modify without reason:
 - `web/src/components/Navigation.jsx`
 - `web/src/components/Header.jsx`
 - `web/src/pages/Home/index.jsx`
+- `web/src/pages/Settings/index.jsx`
+
+Current analyzer/statistics suspect files:
+
+- `web/src/pages/ShotAnalyzer/services/LibraryService.js`
+- `web/src/pages/ShotAnalyzer/services/IndexedDBService.js`
+- `web/src/pages/ShotHistory/index.jsx`
+- `web/src/pages/ShotHistory/HistoryCard.jsx`
+- `web/src/pages/ShotAnalyzer/index.jsx`
+- `web/src/pages/Statistics/components/StatisticsView.jsx`
 
 Recently changed and must be locally validated:
 
@@ -229,3 +303,5 @@ GaggiMate remains the source authority.
 GaggiGo observes, stores, analyses, caches, and later synchronises safe data.
 
 Merge-back has to happen, so preserve GaggiMate compatibility at every step.
+
+Do not reintroduce machine controls, OTA, PID/autotune, Bluetooth management, raw websocket admin, or unrestricted settings writes.
