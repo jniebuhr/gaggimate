@@ -9,7 +9,7 @@ GaggiGo focuses on:
 - statistics
 - analysis
 - local-first workflows
-- safe synchronisation
+- safe synchronisation later
 - observability
 
 GaggiGo is intentionally not:
@@ -28,116 +28,161 @@ GaggiGo reuses parts of the existing GaggiMate frontend shell while removing uns
 
 The long-term goal is a stable offline-first PWA capable of:
 
-- caching profiles locally
+- mirroring safe GaggiMate data locally
 - viewing shot history offline
-- analysing historical brew data
-- synchronising approved safe data locally
+- analysing historical brew data offline
+- running statistics from local IndexedDB data
+- synchronising approved safe data later
 - preserving a familiar frontend experience
+
+---
+
+# Core Architecture
+
+```text
+GaggiMate
+= machine authority
+= runtime owner
+= source of truth for raw machine-produced data
+
+GaggiGo
+= observer frontend
+= offline-first analysis workspace
+= local IndexedDB mirror
+= safe sync client later
+```
+
+Correct workflow:
+
+```text
+GaggiMate API/WebSocket/files
+↓
+Safe hydration/import layer
+↓
+IndexedDB local mirror
+↓
+LibraryService
+↓
+History / Analyzer / Statistics / Profiles
+```
+
+Analyzer/statistics/history should run from local IndexedDB data.
+
+GaggiMate refreshes and hydrates the mirror.
+
+The UI should not repeatedly fetch live telemetry for graph rendering.
+
+---
+
+# Settings Exception
+
+Settings follow a different model.
+
+```text
+GaggiMate = settings read/write authority
+GaggiGo = read-only filtered settings viewer
+Offline = filtered cached snapshot only
+```
+
+Sensitive/admin/runtime values must not be exposed or cached raw.
+
+Examples:
+
+- WiFi credentials
+- HomeKit data
+- MQTT credentials
+- tokens/secrets
+- private runtime configuration
 
 ---
 
 # Current MVP Status
 
-Working:
+Working foundation:
 
 - frontend boots successfully
 - responsive navigation restored
 - mobile dropdown navigation working
 - safe landing page active
-- unsafe routes removed
-- Settings page hardened
-- local cache foundation added
-- profile cache helper added
-- offline-aware profile loading added
-- blank-slate cache empty state added
-- git workflow verified
+- unsafe routes removed from GaggiGo shell
+- safe observer-mode frontend direction established
+- IndexedDB persistence layer integrated
+- cached GaggiMate shot mirroring
+- cached GaggiMate profile mirroring
+- offline-first startup behaviour
+- source/cache visibility indicators
+- read-only settings snapshot fallback
+- SafeGaggiMateClient boundary layer
+- ApiService request classification/hardening
 
-Removed:
+Current active engineering focus:
 
-- /ota
-- /scales
-- /pidtune
-
-Removed navigation:
-
-- PID Autotune
-- Bluetooth Devices
-- System & Updates
-
----
-
-# Current Offline-First Behaviour
-
-Profiles now support:
-
-- cache-aware loading
-- local fallback when offline
-- blank-slate empty-state messaging
-
-Current model:
-
-Connected + live data:
-- show live profiles
-- cache locally
-
-Disconnected + cache exists:
-- show cached profiles
-
-Disconnected + no cache:
-- show helpful empty-state message
-
----
-
-# Architecture Direction
-
-Current upstream architecture:
-
-ESP32
+```text
+full shot payload hydration
 ↓
-WebSocket/API
+stable IndexedDB mirror
 ↓
-Frontend
+offline analyzer/statistics correctness
+```
 
-GaggiGo direction:
+Before sync work:
 
-GaggiGo Frontend
-↓
-Local Cache Layer
-↓
-Safe Adapter Layer
-↓
-Allowlisted Operations
-↓
-GaggiMate API/WebSocket
-
-Core rule:
-
-GaggiGo must never expose unrestricted machine control.
+- analyzer graphs must run from local samples
+- statistics must run from local samples
+- cached payloads must survive refreshes
+- live metadata must not overwrite hydrated payloads
 
 ---
 
 # Current Main Areas
 
-web/src/index.jsx
-App shell/router
+```text
+web/src/pages/ShotAnalyzer/services/LibraryService.js
+```
 
+Unified local read layer.
+
+```text
+web/src/pages/ShotAnalyzer/services/IndexedDBService.js
+```
+
+Primary persistent local mirror.
+
+```text
+web/src/services/SafeGaggiMateClient.js
+```
+
+Safe machine interaction boundary.
+
+```text
 web/src/services/ApiService.js
-API/WebSocket boundary
+```
 
-web/src/services/LocalCacheService.js
-Offline cache layer
+API/WebSocket classification and protection layer.
 
-web/src/services/ProfileCacheService.js
-Profile cache/fallback handling
-
-web/src/pages/
-Frontend pages
-
-web/src/components/
-Shared UI/navigation
-
+```text
 project-docs/
-Architecture + handover documentation
+```
+
+Architecture, audit, and workflow documentation.
+
+---
+
+# Deprecated Direction
+
+`LocalCacheService` is deprecated.
+
+Do not build new sync/cache architecture on it.
+
+Authoritative persistence path is:
+
+```text
+LibraryService
+↓
+IndexedDBService
+↓
+IndexedDB
+```
 
 ---
 
@@ -148,7 +193,9 @@ Architecture + handover documentation
 - preserve stable architecture
 - avoid uncontrolled rewrites
 - safety before polish
-- adapter-first design
+- no parallel cache architectures
+- cache-first local workflows
+- machine authority remains with GaggiMate
 
 Do not fight the original responsive shell architecture.
 
@@ -164,12 +211,13 @@ Mobile:
 
 Current focus areas:
 
-1. Shot History caching
-2. Offline history viewing
-3. Analyzer integration with cached data
-4. Statistics integration with cached data
-5. Manual sync workflow
-6. ApiService allowlisting and hardening
+1. Stable IndexedDB hydration
+2. Offline analyzer correctness
+3. Offline statistics correctness
+4. Cache/source unification
+5. ApiService safe-boundary mapping
+6. Dead-code cleanup
+7. Safe sync later
 
 ---
 
