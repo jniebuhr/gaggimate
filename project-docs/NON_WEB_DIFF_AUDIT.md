@@ -131,68 +131,132 @@ Merge-back note:
 
 ---
 
-## Still Needs Inspection
+### lib/GaggiMateController/src/GaggiMateController.cpp
+### lib/GaggiMateController/src/peripherals/DigitalInput.cpp
+### lib/GaggiMateController/src/peripherals/DigitalInput.h
 
-### GaggiMate Controller Library
-
-```text
-lib/GaggiMateController/src/GaggiMateController.cpp
-lib/GaggiMateController/src/peripherals/DigitalInput.cpp
-lib/GaggiMateController/src/peripherals/DigitalInput.h
-```
-
-Current classification:
+Classification:
 
 ```text
-E — unknown, inspect before merge
+B/C — hardware button runtime change, not frontend/PWA work
 ```
+
+Observed change:
+
+- reports indexed button state instead of separate brew/steam button state.
+- adds DigitalInput debounce/counting state.
+- exposes current input state.
+
+Why it matters:
+
+- part of the same configurable button behaviour feature family.
+- touches controller/runtime behaviour.
+- not required for GaggiGo cache/offline/sync work.
+
+Merge-back note:
+
+- should be separated from frontend/PWA merge.
+- review with the Settings/Controller button-behaviour runtime changes.
 
 ---
 
-### NimBLE Communication Library
+### lib/NimBLEComm/src/NimBLEClientController.cpp / .h
+### lib/NimBLEComm/src/NimBLEServerController.cpp / .h
+### lib/NimBLEComm/src/NimBLEComm.h
+
+Classification:
 
 ```text
-lib/NimBLEComm/src/NimBLEClientController.cpp
-lib/NimBLEComm/src/NimBLEClientController.h
-lib/NimBLEComm/src/NimBLEComm.h
-lib/NimBLEComm/src/NimBLEServerController.cpp
-lib/NimBLEComm/src/NimBLEServerController.h
+B/C — BLE protocol/runtime button abstraction change
 ```
 
-Current classification:
+Observed change:
 
-```text
-E — unknown, inspect before merge
-```
+- replaces separate button characteristics/callbacks with combined indexed button characteristic/callback.
+- supports the configurable button behaviour feature family.
+
+Why it matters:
+
+- changes BLE protocol shape around button events.
+- not frontend/PWA work.
+
+Merge-back note:
+
+- must be reviewed as runtime/protocol work.
+- should not be bundled into frontend/PWA merge without explicit rationale.
 
 ---
 
-### OTA Library
+### lib/OTA/src/ControllerOTA.cpp
+
+Classification:
 
 ```text
-lib/OTA/src/ControllerOTA.cpp
+C/D — unrelated OTA timeout change unless explicitly justified
 ```
 
-Current classification:
+Observed change:
 
-```text
-E — unknown, inspect before merge
-```
+- reduces HTTP timeout from 300000ms to 60000ms.
+
+Why it matters:
+
+- unrelated to GaggiGo frontend/PWA/offline work.
+- could affect firmware update reliability.
+
+Merge-back note:
+
+- separate or revert unless there is a known reason/test result.
 
 ---
 
-### Remaining Display/Core
+### src/display/core/ProfileManager.cpp
+
+Classification:
 
 ```text
-src/display/core/ProfileManager.cpp
-src/display/core/predictive.h
+B/C — startup profile runtime behaviour
 ```
 
-Current classification:
+Observed change:
+
+- applies configured startup profile at setup when valid.
+- clears startup profile if invalid.
+- clears startup profile when the linked profile is deleted.
+
+Why it matters:
+
+- part of runtime settings/profile behaviour.
+- not needed for GaggiGo frontend/offline/sync.
+
+Merge-back note:
+
+- review with startup profile settings work.
+
+---
+
+### src/display/core/predictive.h
+
+Classification:
 
 ```text
-E — unknown, inspect before merge
+B — runtime correctness/performance improvement
 ```
+
+Observed change:
+
+- changes measurement storage to a bounded deque.
+- trims old samples during measurement insert.
+- uses rollover-safe unsigned millis arithmetic.
+
+Why it matters:
+
+- likely improves volumetric prediction stability/memory behaviour.
+- not frontend/PWA work.
+
+Merge-back note:
+
+- reasonable standalone runtime improvement candidate.
 
 ---
 
@@ -209,8 +273,17 @@ Before a merge-back PR or upstream sync:
 
 ## Current Status
 
-Partially classified.
+Classification complete enough for the current phase.
 
-Known safe frontend/PWA work remains separate from runtime changes.
+No non-web changes are required to begin frontend safe-sync design.
 
-Do not start sync design until remaining unknown non-web files are either inspected or consciously deferred as a separate runtime review bucket.
+Runtime changes should be treated as separate merge-back buckets:
+
+```text
+1. Telemetry/scale metadata enhancements
+2. Configurable button behaviour / startup profile runtime work
+3. Predictive calculation improvement
+4. OTA timeout change, likely separate or revert
+```
+
+For GaggiGo frontend work, continue without depending on these runtime changes unless explicitly required.
