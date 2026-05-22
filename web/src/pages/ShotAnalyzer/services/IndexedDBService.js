@@ -12,6 +12,10 @@ const DB_NAME = 'gaggimate-analyzer';
 const DB_VERSION = 3;
 const GAGGIMATE_CACHE_SOURCE = 'gaggimate-cache';
 
+function hasSamples(shot) {
+  return Array.isArray(shot?.samples) && shot.samples.length > 0;
+}
+
 function getGaggiMateShotStorageKey(shot) {
   const id = String(shot?.id || shot?.gaggimateId || shot?.storageKey || shot?.name || Date.now());
   return `gaggimate:${id}`;
@@ -104,14 +108,20 @@ class IndexedDBService {
 
   /**
    * Save a safe cached mirror of a GaggiMate shot summary or loaded shot.
+   * Summary/index refreshes must not overwrite full cached telemetry payloads.
    * @param {Object} shot - GaggiMate shot data
    */
   async saveCachedGaggiMateShot(shot) {
     const db = await this.init();
     const gaggimateId = String(shot.id || shot.gaggimateId || shot.storageKey || shot.name || Date.now());
     const storageKey = getGaggiMateShotStorageKey({ ...shot, id: gaggimateId });
+    const existing = await db.get('shots', storageKey);
+
+    const incomingHasSamples = hasSamples(shot);
+    const existingHasSamples = hasSamples(existing);
 
     const shotWithMeta = {
+      ...(existingHasSamples && !incomingHasSamples ? existing : {}),
       ...shot,
       id: gaggimateId,
       gaggimateId,
@@ -119,6 +129,11 @@ class IndexedDBService {
       storageKey,
       source: GAGGIMATE_CACHE_SOURCE,
       cachedAt: Date.now(),
+      loaded: incomingHasSamples || existingHasSamples || shot.loaded || existing?.loaded || false,
+      samples:
+        incomingHasSamples || !existingHasSamples
+          ? shot.samples
+          : existing.samples,
     };
 
     await db.put('shots', shotWithMeta);
