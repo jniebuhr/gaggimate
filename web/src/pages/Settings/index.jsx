@@ -19,10 +19,13 @@ import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
+import { Tooltip } from '../../components/Tooltip.jsx';
+import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 const connected = computed(() => machine.value.connected);
+const tofDistance = computed(() => machine.value.status.tofDistance);
 
 function splitButtons(buttonBehavior) {
   if (!buttonBehavior) return {};
@@ -933,39 +936,76 @@ export function Settings() {
                   onChange={onChange('sunriseExtBrightness')}
                 />
               </SettingsFormField>
-              <InputGroupField
-                label='Distance from sensor to bottom of the tank'
-                htmlFor='emptyTankDistance'
-                unit='mm'
-                unitAriaLabel='millimeter'
-              >
-                <input
-                  id='emptyTankDistance'
-                  name='emptyTankDistance'
-                  type='number'
-                  className='grow'
-                  placeholder='16'
-                  value={formData.emptyTankDistance}
-                  onChange={onChange('emptyTankDistance')}
-                />
-              </InputGroupField>
-              <InputGroupField
-                label='Distance from sensor to the fill line'
-                htmlFor='fullTankDistance'
-                unit='mm'
-                unitAriaLabel='millimeter'
-                noMargin
-              >
-                <input
-                  id='fullTankDistance'
-                  name='fullTankDistance'
-                  type='number'
-                  className='grow'
-                  placeholder='16'
-                  value={formData.fullTankDistance}
-                  onChange={onChange('fullTankDistance')}
-                />
-              </InputGroupField>
+              <div className='form-control mb-4'>
+                <label htmlFor='emptyTankDistance' className='mb-2 block text-sm font-medium'>
+                  Distance from sensor to bottom of the tank
+                </label>
+                <div className='flex flex-row gap-2'>
+                  <div className='input-group flex-grow'>
+                    <label htmlFor='emptyTankDistance' className='input w-full'>
+                      <input
+                        id='emptyTankDistance'
+                        name='emptyTankDistance'
+                        type='number'
+                        className='grow'
+                        placeholder='16'
+                        value={formData.emptyTankDistance}
+                        onChange={onChange('emptyTankDistance')}
+                      />
+                      <span aria-label='millimeter'>mm</span>
+                    </label>
+                  </div>
+                  <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
+                    <button
+                      type='button'
+                      className='btn btn-ghost'
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          emptyTankDistance: tofDistance,
+                        })
+                      }
+                    >
+                      <FontAwesomeIcon icon={faCrosshairs} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+              <div className='form-control'>
+                <label htmlFor='fullTankDistance' className='mb-2 block text-sm font-medium'>
+                  Distance from sensor to the fill line
+                </label>
+                <div className='flex flex-row gap-2'>
+                  <div className='input-group flex-grow'>
+                    <label htmlFor='fullTankDistance' className='input w-full'>
+                      <input
+                        id='fullTankDistance'
+                        name='fullTankDistance'
+                        type='number'
+                        className='grow'
+                        placeholder='16'
+                        value={formData.fullTankDistance}
+                        onChange={onChange('fullTankDistance')}
+                      />
+                      <span aria-label='millimeter'>mm</span>
+                    </label>
+                  </div>
+                  <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
+                    <button
+                      type='button'
+                      className='btn btn-ghost'
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          fullTankDistance: tofDistance,
+                        })
+                      }
+                    >
+                      <FontAwesomeIcon icon={faCrosshairs} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
             </Card>
           )}
 
