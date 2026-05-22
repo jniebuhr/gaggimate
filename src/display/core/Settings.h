@@ -91,6 +91,7 @@ class Settings {
     String getTimezone() const { return timezone; }
     bool isClock24hFormat() const { return clock24hFormat; }
     String getSelectedProfile() const { return selectedProfile; }
+    String getStartupProfile() const { return startupProfile; }
     const std::vector<String> &getFavoritedProfiles() const { return favoritedProfiles; }
     std::vector<String> getProfileOrder() const { return profileOrder; }
     int getMainBrightness() const { return mainBrightness; }
@@ -111,6 +112,12 @@ class Settings {
     int getAltRelayFunction() const { return altRelayFunction; }
     bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
+    String getButtonBehavior(int index) const {
+        if (index >= 0 && index < buttonBehavior.size())
+            return buttonBehavior[index];
+        return "";
+    };
+    std::vector<String> getButtonBehaviorList() const { return buttonBehavior; }
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
@@ -148,6 +155,7 @@ class Settings {
     void setTimezone(String timezone);
     void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
+    void setStartupProfile(String startup_profile);
     void setFavoritedProfiles(std::vector<String> favorited_profiles);
     void addFavoritedProfile(String profile);
     void removeFavoritedProfile(String profile);
@@ -170,12 +178,15 @@ class Settings {
     void setAltRelayFunction(int alt_relay_function);
     void setAutoWakeupEnabled(bool enabled);
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
+    void setButtonBehavior(int index, String behavior);
+    void setButtonBehaviorList(const std::vector<String> &behavior_list);
 
   private:
     Preferences preferences;
     bool dirty = false;
 
     String selectedProfile;
+    String startupProfile; // Empty = last used profile, otherwise profile ID
     int targetSteamTemp = 155;
     int targetWaterTemp = 80;
     int temperatureOffset = DEFAULT_TEMPERATURE_OFFSET;
@@ -237,6 +248,7 @@ class Settings {
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
+    std::vector<String> buttonBehavior;
 
     void doSave();
     xTaskHandle taskHandle;

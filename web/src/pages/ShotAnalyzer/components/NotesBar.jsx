@@ -22,7 +22,7 @@ import { faGears } from '@fortawesome/free-solid-svg-icons/faGears';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faLaptopFile } from '@fortawesome/free-solid-svg-icons/faLaptopFile';
 import { notesService } from '../services/NotesService';
-import { cleanName, analyzerUiColors } from '../utils/analyzerUtils';
+import { cleanName, analyzerUiColors, detectDoseFromProfileName } from '../utils/analyzerUtils';
 import { NotesBarExpanded } from './NotesBarExpanded';
 import { SourceMarker } from './SourceMarker';
 import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
@@ -51,10 +51,18 @@ function formatNotesBarDateTime(timestamp) {
 }
 
 function getShotDuration(currentShot) {
-  if (!currentShot?.samples?.length) return '—';
-  const first = currentShot.samples[0].t;
-  const last = currentShot.samples[currentShot.samples.length - 1].t;
-  return `${Math.round((last - first) / 1000)}s`;
+  if (currentShot?.samples?.length) {
+    const first = currentShot.samples[0].t;
+    const last = currentShot.samples[currentShot.samples.length - 1].t;
+    return `${Math.round((last - first) / 1000)}s`;
+  }
+
+  const fallbackDuration = Number.parseFloat(currentShot?.duration);
+  if (Number.isFinite(fallbackDuration) && fallbackDuration > 0) {
+    return `${Math.round(fallbackDuration)}s`;
+  }
+
+  return '—';
 }
 
 function getShotDisplayName(currentShot, currentShotName) {
@@ -70,22 +78,70 @@ function getModeHintCopy(nextMode) {
     : 'View temporarily. Imported shots and profiles will now open temporarily in the analyzer.';
 }
 
+function getShotNotesKey(shot) {
+  if (!shot) return '';
+  if (shot.source === 'gaggimate') return String(shot.id || '');
+  return String(shot.storageKey || shot.name || shot.id || '');
+}
+
+function hydrateLoadedShotNotes({ loaded, currentShot, calculateRatio }) {
+  const nextNotes = { ...loaded };
+  let autoSave = false;
+
+  if (!nextNotes.doseIn && currentShot.profile) {
+    const extractedDose = detectDoseFromProfileName(currentShot.profile);
+    if (extractedDose !== null) {
+      nextNotes.doseIn = String(extractedDose);
+      autoSave = true;
+    }
+  }
+
+  if (!nextNotes.doseOut && currentShot.volume) {
+    nextNotes.doseOut = currentShot.volume.toFixed(1);
+    autoSave = true;
+  }
+
+  if (nextNotes.doseIn && nextNotes.doseOut) {
+    nextNotes.ratio = calculateRatio(nextNotes.doseIn, nextNotes.doseOut);
+  }
+
+  return { nextNotes, autoSave };
+}
+
+function getNotesBarNavigationState({ hasShot, shotList, activeShot, getShotNotesKey }) {
+  const currentIndex = hasShot
+    ? shotList.findIndex(
+        shot =>
+          getShotNotesKey(shot) === getShotNotesKey(activeShot) &&
+          shot.source === activeShot?.source,
+      )
+    : -1;
+
+  return {
+    currentIndex,
+    canGoPrev: hasShot && currentIndex > 0,
+    canGoNext: hasShot && currentIndex >= 0 && currentIndex < shotList.length - 1,
+  };
+}
+
 function LoadedShotSummary({
   chipGap,
   currentShot,
   currentShotName,
+  currentProfileName,
   fieldCls,
   getDurationLabel,
   notes,
   isEditing,
+  isSelectionPending,
   onToggleNotesExpanded,
 }) {
   return (
     <button
       type='button'
-      className='scrollbar-none block w-full min-w-0 cursor-pointer overflow-x-auto px-1 py-1.5 text-center'
-      onClick={() => !isEditing && onToggleNotesExpanded && onToggleNotesExpanded()}
-      title='Click to expand notes'
+      className='shot-analyzer-notes-scroll block w-full min-w-0 cursor-pointer overflow-x-auto overflow-y-hidden px-1 py-1.5 text-center'
+      onClick={() => !isEditing && !isSelectionPending && onToggleNotesExpanded?.()}
+      title={isSelectionPending ? 'Loading shot...' : 'Click to expand notes'}
     >
       <div
         className='mx-auto inline-flex min-w-max items-center justify-center'
@@ -104,7 +160,9 @@ function LoadedShotSummary({
           <SourceMarker source={currentShot?.source} variant='library' />
         )}
         <span className={fieldCls}>{getShotDisplayName(currentShot, currentShotName)}</span>
-        <span className={fieldCls}>{cleanName(currentShot.profile || '—')}</span>
+        <span className={fieldCls}>
+          {cleanName(currentProfileName || currentShot.profile || '—')}
+        </span>
         <span className={fieldCls}>{formatNotesBarDateTime(currentShot.timestamp)}</span>
         <span className={`${fieldCls} flex items-center gap-1`}>
           <FontAwesomeIcon icon={faClock} className='text-[10px] opacity-50' />
@@ -181,36 +239,7 @@ function ModeHintPortal({ modeHint, modeHintBadgeStyle, modeHintPosition, modeHi
   );
 }
 
-export function NotesBar({
-  currentShot,
-  currentShotName,
-  shotList = [],
-  onNavigate,
-  importMode = 'temp',
-  onImportModeChange,
-  isExpanded = false,
-  notesExpanded = false,
-  onToggleNotesExpanded,
-  onEditingChange,
-  onExpandedHeightChange,
-}) {
-  // Shared responsive spacing for nav arrows and center info chips.
-  // Keeps a visible minimum separation while adapting on wider layouts.
-  const chipGap = 'clamp(0.35rem, 0.9vw, 0.7rem)';
-
-  const getShotNotesKey = useCallback(shot => {
-    if (!shot) return '';
-    if (shot.source === 'gaggimate') return String(shot.id || '');
-    return String(shot.storageKey || shot.name || shot.id || '');
-  }, []);
-
-  const [notes, setNotes] = useState(notesService.getDefaults(null));
-  const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const hasShot = !!currentShot;
-  const showExpanded = hasShot && notesExpanded;
-  const expandedPanelRef = useRef(null);
+function useNotesBarModeHint({ importMode, onImportModeChange }) {
   const modeButtonRef = useRef(null);
   const modeHintTimerRef = useRef(null);
   const modeHintDismissArmTimerRef = useRef(null);
@@ -218,180 +247,6 @@ export function NotesBar({
   const [modeHint, setModeHint] = useState('');
   const [modeHintVariant, setModeHintVariant] = useState('temp');
   const [modeHintPosition, setModeHintPosition] = useState({ top: 0, left: 12 });
-
-  const calculateRatio = useCallback((doseIn, doseOut) => {
-    if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
-      return (parseFloat(doseOut) / parseFloat(doseIn)).toFixed(2);
-    }
-    return '';
-  }, []);
-
-  // Extract dose-in from profile name (e.g. "Direct Lever v2 [20g]" → "20", "Auto 16g" → "16")
-  const extractDoseFromProfile = useCallback(profileName => {
-    if (!profileName) return '';
-    const match = profileName.match(/\[?\b(\d+(?:\.\d+)?)\s*g\b\]?/i);
-    return match ? match[1] : '';
-  }, []);
-
-  // Load notes when shot changes
-  useEffect(() => {
-    if (!currentShot) return;
-    let cancelled = false;
-    const notesKey = getShotNotesKey(currentShot);
-    const inlineNotes =
-      currentShot.notes && typeof currentShot.notes === 'object'
-        ? { ...notesService.getDefaults(notesKey), ...currentShot.notes, id: notesKey }
-        : null;
-    setLoading(true);
-    setIsEditing(false);
-
-    // Show imported notes immediately (before async persistence load resolves).
-    if (inlineNotes) {
-      setNotes(inlineNotes);
-    }
-
-    notesService
-      .loadNotes(notesKey, currentShot.source)
-      .then(loaded => {
-        if (cancelled) return;
-        // Inline notes (from fresh import) should win over empty/default persistence results.
-        loaded = inlineNotes ? { ...loaded, ...inlineNotes, id: notesKey } : loaded;
-        let autoSave = false;
-
-        // Auto-populate doseIn from profile name if empty
-        if (!loaded.doseIn && currentShot.profile) {
-          const extracted = extractDoseFromProfile(currentShot.profile);
-          if (extracted) {
-            loaded.doseIn = extracted;
-            autoSave = true;
-          }
-        }
-
-        // Auto-populate doseOut from shot volume if empty
-        if (!loaded.doseOut && currentShot.volume) {
-          loaded.doseOut = currentShot.volume.toFixed(1);
-          autoSave = true;
-        }
-
-        if (loaded.doseIn && loaded.doseOut) {
-          loaded.ratio = calculateRatio(loaded.doseIn, loaded.doseOut);
-        }
-
-        setNotes(loaded);
-
-        // Auto-save if we populated new values
-        if (autoSave && currentShot.source !== 'temp') {
-          notesService.saveNotes(notesKey, currentShot.source, loaded);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    currentShot,
-    currentShot?.id,
-    currentShot?.name,
-    currentShot?.storageKey,
-    currentShot?.source,
-    calculateRatio,
-    extractDoseFromProfile,
-    getShotNotesKey,
-  ]);
-
-  const handleInputChange = (field, value) => {
-    setNotes(prev => {
-      const updated = { ...prev, [field]: value };
-      if (field === 'doseIn' || field === 'doseOut') {
-        const dIn = field === 'doseIn' ? value : prev.doseIn;
-        const dOut = field === 'doseOut' ? value : prev.doseOut;
-        updated.ratio = calculateRatio(dIn, dOut);
-      }
-      return updated;
-    });
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await notesService.saveNotes(getShotNotesKey(currentShot), currentShot.source, notes);
-      setIsEditing(false);
-    } catch (e) {
-      console.error('Failed to save notes:', e);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    notesService.loadNotes(getShotNotesKey(currentShot), currentShot.source).then(loaded => {
-      if (loaded.doseIn && loaded.doseOut) {
-        loaded.ratio = calculateRatio(loaded.doseIn, loaded.doseOut);
-      }
-      setNotes(loaded);
-    });
-  };
-
-  // Navigation
-  const currentIndex = hasShot
-    ? shotList.findIndex(
-        s =>
-          getShotNotesKey(s) === getShotNotesKey(currentShot) && s.source === currentShot?.source,
-      )
-    : -1;
-  const canGoPrev = hasShot && currentIndex > 0;
-  const canGoNext = hasShot && currentIndex >= 0 && currentIndex < shotList.length - 1;
-
-  // Keyboard navigation: ArrowLeft / ArrowRight
-  useEffect(() => {
-    if (!currentShot) return;
-
-    const handleKeyDown = e => {
-      if (e.defaultPrevented) return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (isTypingTarget(e.target)) return;
-
-      if (e.key === 'ArrowLeft' && canGoPrev) {
-        e.preventDefault();
-        onNavigate(shotList[currentIndex - 1]);
-      } else if (e.key === 'ArrowRight' && canGoNext) {
-        e.preventDefault();
-        onNavigate(shotList[currentIndex + 1]);
-      }
-    };
-
-    globalThis.addEventListener('keydown', handleKeyDown);
-    return () => globalThis.removeEventListener('keydown', handleKeyDown);
-  }, [currentShot, canGoPrev, canGoNext, currentIndex, shotList, onNavigate]);
-
-  useEffect(() => {
-    onEditingChange?.(isEditing);
-  }, [isEditing, onEditingChange]);
-
-  useEffect(() => {
-    if (!showExpanded) {
-      onExpandedHeightChange?.(0);
-      return;
-    }
-
-    const panelEl = expandedPanelRef.current;
-    if (!panelEl) {
-      onExpandedHeightChange?.(0);
-      return;
-    }
-
-    const reportHeight = () => onExpandedHeightChange?.(panelEl.offsetHeight || 0);
-    reportHeight();
-
-    if (typeof ResizeObserver === 'undefined') return;
-    const resizeObserver = new ResizeObserver(reportHeight);
-    resizeObserver.observe(panelEl);
-    return () => resizeObserver.disconnect();
-  }, [showExpanded, onExpandedHeightChange]);
 
   const clearModeHintTimers = useCallback(() => {
     if (modeHintTimerRef.current) {
@@ -476,6 +331,387 @@ export function NotesBar({
     };
   }, [modeHint]);
 
+  return {
+    modeButtonRef,
+    modeHint,
+    modeHintVariant,
+    modeHintPosition,
+    modeHintBadgeStyle:
+      modeHintVariant === 'browser'
+        ? {
+            backgroundColor: analyzerUiColors.sourceBadgeWebBg,
+            borderColor: analyzerUiColors.sourceBadgeWebBorder,
+            color: analyzerUiColors.sourceBadgeWebText,
+          }
+        : undefined,
+    handleModeToggle,
+  };
+}
+
+function getNotesBarDisplayState({
+  currentShot,
+  currentShotName,
+  selectedShot,
+  selectedShotName,
+  selectedProfileName,
+  notesExpanded,
+  isSelectionPending,
+}) {
+  const displayShot = selectedShot || currentShot;
+  return {
+    displayShot,
+    displayShotName: selectedShot ? selectedShotName : currentShotName,
+    displayProfileName: cleanName(
+      selectedProfileName || displayShot?.profile || 'No Profile Loaded',
+    ),
+    hasLoadedShot: Boolean(currentShot),
+    hasDisplayShot: Boolean(displayShot),
+    showExpanded: Boolean(currentShot) && notesExpanded && !isSelectionPending,
+  };
+}
+
+function getLoadIndicatorTargetProgress({ isSelectionPending, isProfilePending, loading }) {
+  if (isSelectionPending) return 0.36;
+  if (isProfilePending) return 0.78;
+  if (loading) return 0.92;
+  return 1;
+}
+
+function getLoadIndicatorWidth(loadIndicatorVisible, loadIndicatorProgress) {
+  if (!loadIndicatorVisible) return '0%';
+  return `${Math.min(100, Math.max(loadIndicatorProgress * 100, 8))}%`;
+}
+
+function getDisplayedNotes(notes, isSelectionPending) {
+  if (!isSelectionPending) return notes;
+  return {
+    ...notes,
+    ratio: '',
+    doseIn: '',
+    doseOut: '',
+    beanType: '',
+    grindSetting: '',
+    balanceTaste: '',
+    rating: 0,
+  };
+}
+
+function useNotesBarLoadIndicator({ isSelectionPending, isProfilePending, loading }) {
+  const loadIndicatorHideTimerRef = useRef(null);
+  const [loadIndicatorVisible, setLoadIndicatorVisible] = useState(false);
+  const [loadIndicatorProgress, setLoadIndicatorProgress] = useState(0);
+
+  const clearLoadIndicatorHideTimer = useCallback(() => {
+    if (loadIndicatorHideTimerRef.current) {
+      globalThis.clearTimeout(loadIndicatorHideTimerRef.current);
+      loadIndicatorHideTimerRef.current = null;
+    }
+  }, []);
+
+  const isCombinedLoadActive = isSelectionPending || isProfilePending || loading;
+  const loadIndicatorTargetProgress = getLoadIndicatorTargetProgress({
+    isSelectionPending,
+    isProfilePending,
+    loading,
+  });
+
+  useEffect(() => {
+    clearLoadIndicatorHideTimer();
+
+    if (isCombinedLoadActive) {
+      setLoadIndicatorVisible(true);
+      setLoadIndicatorProgress(loadIndicatorTargetProgress);
+      return undefined;
+    }
+
+    if (!loadIndicatorVisible) {
+      setLoadIndicatorProgress(0);
+      return undefined;
+    }
+
+    setLoadIndicatorProgress(1);
+    loadIndicatorHideTimerRef.current = globalThis.setTimeout(() => {
+      setLoadIndicatorVisible(false);
+      setLoadIndicatorProgress(0);
+      loadIndicatorHideTimerRef.current = null;
+    }, 220);
+
+    return clearLoadIndicatorHideTimer;
+  }, [
+    clearLoadIndicatorHideTimer,
+    isCombinedLoadActive,
+    loadIndicatorTargetProgress,
+    loadIndicatorVisible,
+  ]);
+
+  useEffect(() => clearLoadIndicatorHideTimer, [clearLoadIndicatorHideTimer]);
+
+  return {
+    loadIndicatorVisible,
+    loadIndicatorWidth: getLoadIndicatorWidth(loadIndicatorVisible, loadIndicatorProgress),
+  };
+}
+
+function useNotesBarNotesState({ currentShot, calculateRatio, isSelectionPending }) {
+  const [notes, setNotes] = useState(notesService.getDefaults(null));
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!currentShot) {
+      setLoading(false);
+      setIsEditing(false);
+      setNotes(notesService.getDefaults(null));
+      return;
+    }
+    let cancelled = false;
+    const notesKey = getShotNotesKey(currentShot);
+    const inlineNotes =
+      currentShot.notes && typeof currentShot.notes === 'object'
+        ? { ...notesService.getDefaults(notesKey), ...currentShot.notes, id: notesKey }
+        : null;
+    setLoading(true);
+    setIsEditing(false);
+
+    if (inlineNotes) {
+      setNotes(inlineNotes);
+    }
+
+    notesService
+      .loadNotes(notesKey, currentShot.source)
+      .then(loaded => {
+        if (cancelled) return;
+        const persistedNotes = inlineNotes ? { ...loaded, ...inlineNotes, id: notesKey } : loaded;
+        const { nextNotes, autoSave } = hydrateLoadedShotNotes({
+          loaded: persistedNotes,
+          currentShot,
+          calculateRatio,
+        });
+
+        setNotes(nextNotes);
+
+        if (autoSave && currentShot.source !== 'temp') {
+          notesService.saveNotes(notesKey, currentShot.source, nextNotes);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    calculateRatio,
+    currentShot,
+    currentShot?.id,
+    currentShot?.name,
+    currentShot?.source,
+    currentShot?.storageKey,
+  ]);
+
+  useEffect(() => {
+    if (!isSelectionPending) return;
+    setIsEditing(false);
+  }, [isSelectionPending]);
+
+  const handleInputChange = useCallback(
+    (field, value) => {
+      setNotes(prev => {
+        const updated = { ...prev, [field]: value };
+        if (field === 'doseIn' || field === 'doseOut') {
+          const dIn = field === 'doseIn' ? value : prev.doseIn;
+          const dOut = field === 'doseOut' ? value : prev.doseOut;
+          updated.ratio = calculateRatio(dIn, dOut);
+        }
+        return updated;
+      });
+    },
+    [calculateRatio],
+  );
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      await notesService.saveNotes(getShotNotesKey(currentShot), currentShot.source, notes);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to save notes:', error);
+    } finally {
+      setSaving(false);
+    }
+  }, [currentShot, notes]);
+
+  const handleCancel = useCallback(() => {
+    setIsEditing(false);
+    notesService.loadNotes(getShotNotesKey(currentShot), currentShot.source).then(loaded => {
+      if (loaded.doseIn && loaded.doseOut) {
+        loaded.ratio = calculateRatio(loaded.doseIn, loaded.doseOut);
+      }
+      setNotes(loaded);
+    });
+  }, [calculateRatio, currentShot]);
+
+  return {
+    notes,
+    isEditing,
+    saving,
+    loading,
+    setIsEditing,
+    handleInputChange,
+    handleSave,
+    handleCancel,
+  };
+}
+
+export function NotesBar({
+  currentShot,
+  currentShotName,
+  selectedShot = null,
+  selectedShotName = 'No Shot Loaded',
+  selectedProfileName = 'No Profile Loaded',
+  shotList = [],
+  onNavigate,
+  importMode = 'temp',
+  onImportModeChange,
+  isExpanded = false,
+  isSelectionPending = false,
+  isProfilePending = false,
+  notesExpanded = false,
+  onToggleNotesExpanded,
+  onEditingChange,
+  onExpandedHeightChange,
+  showImportModeToggle = true,
+  enableKeyboardNavigation = true,
+}) {
+  // Shared responsive spacing for nav arrows and center info chips.
+  // Keeps a visible minimum separation while adapting on wider layouts.
+  const chipGap = 'clamp(0.35rem, 0.9vw, 0.7rem)';
+  const expandedPanelRef = useRef(null);
+  const {
+    modeButtonRef,
+    modeHint,
+    modeHintVariant,
+    modeHintPosition,
+    modeHintBadgeStyle,
+    handleModeToggle,
+  } = useNotesBarModeHint({
+    importMode,
+    onImportModeChange,
+  });
+
+  const calculateRatio = useCallback((doseIn, doseOut) => {
+    if (doseIn && doseOut && parseFloat(doseIn) > 0 && parseFloat(doseOut) > 0) {
+      return (parseFloat(doseOut) / parseFloat(doseIn)).toFixed(2);
+    }
+    return '';
+  }, []);
+  const { displayShot, displayShotName, displayProfileName, hasDisplayShot, showExpanded } =
+    getNotesBarDisplayState({
+      currentShot,
+      currentShotName,
+      selectedShot,
+      selectedShotName,
+      selectedProfileName,
+      notesExpanded,
+      isSelectionPending,
+    });
+  const {
+    notes,
+    isEditing,
+    saving,
+    loading,
+    setIsEditing,
+    handleInputChange,
+    handleSave,
+    handleCancel,
+  } = useNotesBarNotesState({
+    currentShot,
+    calculateRatio,
+    isSelectionPending,
+  });
+  const { loadIndicatorVisible, loadIndicatorWidth } = useNotesBarLoadIndicator({
+    isSelectionPending,
+    isProfilePending,
+    loading,
+  });
+
+  const handleNavigateToIndex = useCallback(
+    (targetIndex, direction) => {
+      if (targetIndex < 0 || targetIndex >= shotList.length) return;
+      onNavigate?.({
+        item: shotList[targetIndex],
+        direction,
+        listSnapshot: shotList,
+        targetIndex,
+      });
+    },
+    [onNavigate, shotList],
+  );
+
+  // Navigation
+  const { currentIndex, canGoPrev, canGoNext } = getNotesBarNavigationState({
+    hasShot: hasDisplayShot,
+    shotList,
+    activeShot: displayShot,
+    getShotNotesKey,
+  });
+
+  // Keyboard navigation: ArrowLeft / ArrowRight
+  useEffect(() => {
+    if (!displayShot || !enableKeyboardNavigation) return;
+
+    const handleKeyDown = e => {
+      if (e.defaultPrevented) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isTypingTarget(e.target)) return;
+
+      if (e.key === 'ArrowLeft' && canGoPrev) {
+        e.preventDefault();
+        handleNavigateToIndex(currentIndex - 1, -1);
+      } else if (e.key === 'ArrowRight' && canGoNext) {
+        e.preventDefault();
+        handleNavigateToIndex(currentIndex + 1, 1);
+      }
+    };
+
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
+  }, [
+    displayShot,
+    canGoPrev,
+    canGoNext,
+    currentIndex,
+    handleNavigateToIndex,
+    enableKeyboardNavigation,
+  ]);
+
+  useEffect(() => {
+    onEditingChange?.(isEditing);
+  }, [isEditing, onEditingChange]);
+
+  useEffect(() => {
+    if (!showExpanded) {
+      onExpandedHeightChange?.(0);
+      return;
+    }
+
+    const panelEl = expandedPanelRef.current;
+    if (!panelEl) {
+      onExpandedHeightChange?.(0);
+      return;
+    }
+
+    const reportHeight = () => onExpandedHeightChange?.(panelEl.offsetHeight || 0);
+    reportHeight();
+
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(reportHeight);
+    resizeObserver.observe(panelEl);
+    return () => resizeObserver.disconnect();
+  }, [showExpanded, onExpandedHeightChange]);
+
   const borderClasses = 'border-base-content/5 border-t';
 
   const fieldCls =
@@ -487,32 +723,24 @@ export function NotesBar({
     tone: 'subtle',
     className: 'btn btn-xs btn-ghost h-6 w-6 flex-shrink-0 rounded-lg p-0 hover:opacity-100',
   });
-  const modeHintBadgeStyle =
-    modeHintVariant === 'browser'
-      ? {
-          backgroundColor: analyzerUiColors.sourceBadgeWebBg,
-          borderColor: analyzerUiColors.sourceBadgeWebBorder,
-          color: analyzerUiColors.sourceBadgeWebText,
-        }
-      : undefined;
 
   return (
     <div>
-      <div className={`transition-all duration-200 ${borderClasses}`}>
+      <div className={`overflow-hidden transition-all duration-200 ${borderClasses}`}>
         <div
           className='grid w-full items-center px-1.5 py-0.5 sm:px-2'
           style={{
             columnGap: chipGap,
-            gridTemplateColumns: hasShot
+            gridTemplateColumns: hasDisplayShot
               ? 'auto minmax(0, 1fr) auto auto'
               : 'auto minmax(0, 1fr) auto',
           }}
         >
-          {hasShot ? (
+          {hasDisplayShot ? (
             <button
               className={navButtonClasses}
               disabled={!canGoPrev}
-              onClick={() => canGoPrev && onNavigate(shotList[currentIndex - 1])}
+              onClick={() => canGoPrev && handleNavigateToIndex(currentIndex - 1, -1)}
               title='Previous shot'
             >
               <FontAwesomeIcon icon={faChevronLeft} />
@@ -521,62 +749,72 @@ export function NotesBar({
             <span aria-hidden='true' className='h-6 w-6 flex-shrink-0' />
           )}
 
-          {hasShot ? (
+          {hasDisplayShot ? (
             <LoadedShotSummary
               chipGap={chipGap}
-              currentShot={currentShot}
-              currentShotName={currentShotName}
+              currentShot={displayShot}
+              currentShotName={displayShotName}
+              currentProfileName={displayProfileName}
               fieldCls={fieldCls}
-              getDurationLabel={getShotDuration(currentShot)}
-              notes={notes}
+              getDurationLabel={getShotDuration(displayShot)}
+              notes={getDisplayedNotes(notes, isSelectionPending)}
               isEditing={isEditing}
+              isSelectionPending={isSelectionPending}
               onToggleNotesExpanded={onToggleNotesExpanded}
             />
           ) : (
             <PlaceholderShotSummary />
           )}
 
-          {hasShot && (
+          {hasDisplayShot && (
             <button
               className={navButtonClasses}
               disabled={!canGoNext}
-              onClick={() => canGoNext && onNavigate(shotList[currentIndex + 1])}
+              onClick={() => canGoNext && handleNavigateToIndex(currentIndex + 1, 1)}
               title='Next shot'
             >
               <FontAwesomeIcon icon={faChevronRight} />
             </button>
           )}
 
-          <button
-            ref={modeButtonRef}
-            type='button'
-            className={`${modeButtonClasses} ${importMode === 'browser' ? 'opacity-75' : 'opacity-60'}`}
-            style={
-              importMode === 'browser' ? { color: analyzerUiColors.sourceBadgeWebText } : undefined
-            }
-            onClick={handleModeToggle}
-            title={
-              importMode === 'browser'
-                ? 'Save to Browser. Click to switch imports to View temporarily.'
-                : 'View temporarily. Click to switch imports to Save to Browser.'
-            }
-            aria-label={
-              importMode === 'browser'
-                ? 'Switch import mode to View temporarily'
-                : 'Switch import mode to Save to Browser'
-            }
-          >
-            <FontAwesomeIcon
-              icon={importMode === 'browser' ? faLaptopFile : faEye}
-              className='text-xs'
-            />
-          </button>
+          {showImportModeToggle ? (
+            <button
+              ref={modeButtonRef}
+              type='button'
+              className={`${modeButtonClasses} ${importMode === 'browser' ? 'opacity-75' : 'opacity-60'}`}
+              style={
+                importMode === 'browser'
+                  ? { color: analyzerUiColors.sourceBadgeWebText }
+                  : undefined
+              }
+              onClick={handleModeToggle}
+              title={
+                importMode === 'browser'
+                  ? 'Save to Browser. Click to switch imports to View temporarily.'
+                  : 'View temporarily. Click to switch imports to Save to Browser.'
+              }
+              aria-label={
+                importMode === 'browser'
+                  ? 'Switch import mode to View temporarily'
+                  : 'Switch import mode to Save to Browser'
+              }
+            >
+              <FontAwesomeIcon
+                icon={importMode === 'browser' ? faLaptopFile : faEye}
+                className='text-xs'
+              />
+            </button>
+          ) : (
+            <span aria-hidden='true' className='h-6 w-6 flex-shrink-0' />
+          )}
         </div>
 
-        {/* Loading indicator */}
-        {loading && (
-          <div className='bg-primary/20 h-0.5 w-full'>
-            <div className='bg-primary h-full w-1/3 animate-pulse rounded-full' />
+        {loadIndicatorVisible && (
+          <div className='bg-primary/15 h-0.5 w-full overflow-hidden'>
+            <div
+              className='bg-primary h-full rounded-full transition-[width] duration-200 ease-out'
+              style={{ width: loadIndicatorWidth }}
+            />
           </div>
         )}
       </div>

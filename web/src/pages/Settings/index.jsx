@@ -3,22 +3,59 @@ import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState, useContext } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { timezones } from '../../config/zones.js';
-import { machine } from '../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
+import { Tooltip } from '../../components/Tooltip.jsx';
+import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
+const connected = computed(() => machine.value.connected);
+const tofDistance = computed(() => machine.value.status.tofDistance);
+
+/**
+ * Split a PID CSV string into the form's two-input shape.
+ *
+ * The firmware stores PID as a single CSV `Kp,Ki,Kd,Kff` string, but the
+ * form edits Kp/Ki/Kd as one input and Kff as another. This converts the
+ * on-wire shape into `{ pid, kf }` for the form. Used both on initial
+ * fetch and after every Save — without re-splitting on the post-save
+ * response, a fourth field leaks into the `pid` input and the next Save
+ * sends a 5-field CSV.
+ *
+ * @param {string|undefined} pidString - CSV `Kp,Ki,Kd,Kff` string from the
+ *   firmware, or empty/undefined if no PID has been saved yet.
+ * @returns {{ pid: string, kf: string }} - `pid` is the first three CSV
+ *   fields joined by commas; `kf` is the fourth field, or `'0.000'` if
+ *   absent.
+ */
+function splitPidString(pidString) {
+  if (!pidString) return { pid: pidString, kf: '0.000' };
+  const parts = pidString.split(',');
+  if (parts.length >= 4) {
+    return { pid: parts.slice(0, 3).join(','), kf: parts[3] };
+  }
+  return { pid: pidString, kf: '0.000' };
+}
+
+function splitButtons(buttonBehavior) {
+  if (!buttonBehavior) return {};
+  const [button0, button1, button2] = buttonBehavior.split(',');
+  return { button0, button1, button2 };
+}
 
 export function Settings() {
+  const apiService = useContext(ApiServiceContext);
+  const [profiles, setProfiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
@@ -33,14 +70,30 @@ export function Settings() {
     return data;
   });
 
+  // Fetch profiles via WebSocket (wait for connection)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const loadProfiles = async () => {
+      if (connected.value) {
+        const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
+        setProfiles(response.profiles);
+      }
+    };
+    loadProfiles();
+  }, [connected.value]);
+
   const formRef = useRef();
 
   useEffect(() => {
     if (fetchedSettings) {
       // Initialize standbyDisplayEnabled based on standby brightness value
       // but preserve it if it already exists in the fetched data
+      const buttonFields = fetchedSettings.buttonBehavior
+        ? splitButtons(fetchedSettings.buttonBehavior)
+        : {};
       const settingsWithToggle = {
         ...fetchedSettings,
+        ...buttonFields,
         standbyDisplayEnabled:
           fetchedSettings.standbyDisplayEnabled !== undefined
             ? fetchedSettings.standbyDisplayEnabled
@@ -48,17 +101,13 @@ export function Settings() {
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
 
-      // Extract Kf from PID string and separate them
+      // Extract Kf from PID string and separate them. Mirrors the same
+      // split applied in `onSubmit` after every save — keep these two in
+      // sync via `splitPidString`.
       if (fetchedSettings.pid) {
-        const pidParts = fetchedSettings.pid.split(',');
-        if (pidParts.length >= 4) {
-          // PID string has Kf as 4th parameter
-          settingsWithToggle.pid = pidParts.slice(0, 3).join(','); // First 3 params
-          settingsWithToggle.kf = pidParts[3]; // 4th parameter
-        } else {
-          // No Kf in PID string, use default
-          settingsWithToggle.kf = '0.000';
-        }
+        const split = splitPidString(fetchedSettings.pid);
+        settingsWithToggle.pid = split.pid;
+        settingsWithToggle.kf = split.kf;
       }
 
       // Initialize auto-wakeup schedules
@@ -193,6 +242,10 @@ export function Settings() {
         'altRelayFunction',
         formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
       );
+      formDataToSubmit.set(
+        'buttonBehavior',
+        `${formData.button0},${formData.button1},${formData.button2}`,
+      );
 
       // Combine PID and Kf into single PID string
       if (formData.pid && formData.kf !== undefined) {
@@ -220,10 +273,20 @@ export function Settings() {
       });
       const data = await response.json();
 
+      // Re-split `pid` the same way the initial load does. The server
+      // returns the full `Kp,Ki,Kd,Kff` CSV; without splitting it here,
+      // the next Save would combine `formData.pid` (already 4 fields)
+      // with `formData.kf`, producing a 5-field CSV that grows on every
+      // round-trip.
+      const splitPid = data.pid ? splitPidString(data.pid) : null;
+      const buttonFields = data.buttonBehavior ? splitButtons(data.buttonBehavior) : {};
+
       // Only preserve standbyDisplayEnabled if brightness is greater than 0
       // If brightness is 0, let the useEffect recalculate it based on the saved value
       const updatedData = {
         ...data,
+        ...(splitPid !== null ? { pid: splitPid.pid, kf: splitPid.kf } : {}),
+        ...buttonFields,
         standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
       };
 
@@ -348,6 +411,25 @@ export function Settings() {
               </select>
             </div>
             <div className='form-control mb-4'>
+              <label htmlFor='startup-profile' className='mb-2 block text-sm font-medium'>
+                Startup Profile
+              </label>
+              <select
+                id='startup-profile'
+                name='startupProfile'
+                className='select select-bordered w-full'
+                value={formData.startupProfile || ''}
+                onChange={onChange('startupProfile')}
+              >
+                <option value=''>Last used profile</option>
+                {profiles.map(profile => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className='form-control mb-4'>
               <label htmlFor='standbyTimeout' className='mb-2 block text-sm font-medium'>
                 Standby Timeout
               </label>
@@ -463,6 +545,75 @@ export function Settings() {
                   onChange={onChange('momentaryButtons')}
                 />
               </label>
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='button0' className='mb-2 block text-sm font-medium'>
+                Brew Button Behavior (Button 1)
+              </label>
+              <select
+                id='button0'
+                name='button0'
+                className='select select-bordered w-full'
+                value={formData.button0}
+                onChange={onChange('button0')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='button1' className='mb-2 block text-sm font-medium'>
+                Steam Button Behavior (Button 2)
+              </label>
+              <select
+                id='button1'
+                name='button1'
+                className='select select-bordered w-full'
+                value={formData.button1}
+                onChange={onChange('button1')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='button2' className='mb-2 block text-sm font-medium'>
+                Water Button Behavior (Button 3)
+              </label>
+              <select
+                id='button2'
+                name='button2'
+                className='select select-bordered w-full'
+                value={formData.button2}
+                onChange={onChange('button2')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </Card>
 
@@ -949,42 +1100,76 @@ export function Settings() {
                   onChange={onChange('sunriseExtBrightness')}
                 />
               </div>
-              <div className='form-control mb-4'>
+              <div className='form-control'>
                 <label htmlFor='emptyTankDistance' className='mb-2 block text-sm font-medium'>
-                  Distance from sensor to bottom of the tank
+                  Distance between ToF sensor and bottom of the tank
                 </label>
-                <div className='input-group'>
-                  <label htmlFor='emptyTankDistance' className='input w-full'>
-                    <input
-                      id='emptyTankDistance'
-                      name='emptyTankDistance'
-                      type='number'
-                      className='grow'
-                      placeholder='16'
-                      value={formData.emptyTankDistance}
-                      onChange={onChange('emptyTankDistance')}
-                    />
-                    <span aria-label='millimeter'>mm</span>
-                  </label>
+                <div className='flex flex-row gap-2'>
+                  <div className='input-group flex-grow'>
+                    <label htmlFor='emptyTankDistance' className='input w-full'>
+                      <input
+                        id='emptyTankDistance'
+                        name='emptyTankDistance'
+                        type='number'
+                        className='grow'
+                        placeholder='16'
+                        value={formData.emptyTankDistance}
+                        onChange={onChange('emptyTankDistance')}
+                      />
+                      <span aria-label='millimeter'>mm</span>
+                    </label>
+                  </div>
+                  <div>
+                    <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
+                      <button
+                        className='btn btn-ghost'
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            emptyTankDistance: tofDistance,
+                          })
+                        }
+                      >
+                        <FontAwesomeIcon icon={faCrosshairs} />
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
               <div className='form-control'>
                 <label htmlFor='fullTankDistance' className='mb-2 block text-sm font-medium'>
-                  Distance from sensor to the fill line
+                  Distance between ToF sensor and the max line of the tank
                 </label>
-                <div className='input-group'>
-                  <label htmlFor='fullTankDistance' className='input w-full'>
-                    <input
-                      id='fullTankDistance'
-                      name='fullTankDistance'
-                      type='number'
-                      className='grow'
-                      placeholder='16'
-                      value={formData.fullTankDistance}
-                      onChange={onChange('fullTankDistance')}
-                    />
-                    <span aria-label='millimeter'>mm</span>
-                  </label>
+                <div className='flex flex-row gap-2'>
+                  <div className='input-group flex-grow'>
+                    <label htmlFor='fullTankDistance' className='input w-full'>
+                      <input
+                        id='fullTankDistance'
+                        name='fullTankDistance'
+                        type='number'
+                        className='grow'
+                        placeholder='16'
+                        value={formData.fullTankDistance}
+                        onChange={onChange('fullTankDistance')}
+                      />
+                      <span aria-label='millimeter'>mm</span>
+                    </label>
+                  </div>
+                  <div>
+                    <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
+                      <button
+                        className='btn btn-ghost'
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            fullTankDistance: tofDistance,
+                          })
+                        }
+                      >
+                        <FontAwesomeIcon icon={faCrosshairs} />
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -1003,25 +1188,21 @@ export function Settings() {
           </Card>
         </div>
 
-        <div className='pt-4 lg:col-span-10'>
+        <div className='pt-4 pb-4 lg:col-span-10'>
           <div className='alert alert-warning shadow-sm'>
             <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
           </div>
           <div className='flex flex-col gap-2 pt-4 sm:flex-row'>
-            <a href='/' className='btn btn-outline flex-1 sm:flex-none'>
+            <a href='/' className='btn btn-outline'>
               Back
             </a>
-            <button
-              type='submit'
-              className='btn btn-primary flex-1 sm:flex-none'
-              disabled={submitting}
-            >
+            <button type='submit' className='btn btn-primary' disabled={submitting}>
               {submitting && <Spinner size={4} />} Save
             </button>
             <button
               type='submit'
               name='restart'
-              className='btn btn-secondary flex-1 sm:flex-none'
+              className='btn btn-secondary'
               disabled={submitting}
               onClick={e => onSubmit(e, true)}
             >
