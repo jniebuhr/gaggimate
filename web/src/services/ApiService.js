@@ -2,6 +2,20 @@ import { createContext } from 'preact';
 import { signal } from '@preact/signals';
 import uuidv4 from '../utils/uuid.js';
 
+const SAFE_DATA_REQUEST_TYPES = new Set([
+  'req:profiles:list',
+  'req:profiles:load',
+  'req:profiles:save',
+  'req:profiles:reorder',
+  'req:profiles:select',
+  'req:profiles:favorite',
+  'req:profiles:unfavorite',
+  'req:profiles:delete',
+  'req:history:delete',
+  'req:history:notes:get',
+  'req:history:notes:save',
+]);
+
 function randomId() {
   return Math.random()
     .toString(36)
@@ -143,6 +157,10 @@ export default class ApiService {
   async request(data = {}) {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       throw new Error('WebSocket is not connected');
+    }
+
+    if (data.tp && !SAFE_DATA_REQUEST_TYPES.has(data.tp)) {
+      console.warn(`[gaggigo] raw websocket request outside documented safe data set: ${data.tp}`);
     }
 
     const returnType = `res:${data.tp.substring(4)}`;
