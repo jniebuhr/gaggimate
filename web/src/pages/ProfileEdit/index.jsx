@@ -3,11 +3,10 @@ import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';
 import { StandardProfileForm } from './StandardProfileForm.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { safeGaggiMateClient } from '../../services/SafeGaggiMateClient.js';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 
 const connected = computed(() => machine.value.connected);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -75,7 +74,8 @@ export function ProfileEdit() {
         });
         setLoading(false);
       } else if (connected.value) {
-        const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
+        safeGaggiMateClient.setApiService(apiService);
+        const response = await safeGaggiMateClient.loadProfile(params.id);
         setData(response.profile);
         setLoading(false);
       }
@@ -85,7 +85,8 @@ export function ProfileEdit() {
   const onSave = useCallback(
     async data => {
       setSaving(true);
-      const response = await apiService.request({ tp: 'req:profiles:save', profile: data });
+      safeGaggiMateClient.setApiService(apiService);
+      const response = await safeGaggiMateClient.saveProfile(data);
       setData(response.profile);
       setSaving(false);
       location.route('/profiles');
