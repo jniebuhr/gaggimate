@@ -28,6 +28,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void registerRemoteErrorCallback(const remote_err_callback_t &callback);
     void registerBtnCallback(const button_callback_t &callback);
     void registerSensorCallback(const sensor_read_callback_t &callback);
+    void registerSensorCallback(const legacy_sensor_read_callback_t &callback);
     void registerAutotuneResultCallback(const pid_control_callback_t &callback);
     void registerVolumetricMeasurementCallback(const float_callback_t &callback);
     void registerTofMeasurementCallback(const int_callback_t &callback);

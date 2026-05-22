@@ -11,7 +11,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void initServer(String infoString);
     void loop();
 
-    void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance);
+    void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance, float heaterPower);
     void sendError(int errorCode);
     void sendBtnState(uint8_t index, bool status);
     void sendAutotuneResult(float Kp, float Ki, float Kd);
