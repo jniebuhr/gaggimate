@@ -31,6 +31,19 @@ function getAnalyzerHref(shot) {
   return `/analyzer/${source}/${encodeURIComponent(String(id || ''))}`;
 }
 
+function getSourceBadge(shot) {
+  switch (shot?.source) {
+    case 'gaggimate':
+      return { label: 'Live', className: 'badge-success' };
+    case 'gaggimate-cache':
+      return { label: 'Cached', className: 'badge-warning' };
+    case 'browser':
+      return { label: 'Browser', className: 'badge-info' };
+    default:
+      return { label: 'Local', className: 'badge-ghost' };
+  }
+}
+
 export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) {
   const apiService = useContext(ApiServiceContext);
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
@@ -40,6 +53,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
   const [isUploading, setIsUploading] = useState(false);
 
   const date = new Date(shot.timestamp * 1000);
+  const sourceBadge = getSourceBadge(shot);
 
   const onExport = useCallback(() => {
     if (!shot.loaded) return; // Only export loaded data
@@ -177,6 +191,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
               </div>
 
               <div className='flex shrink-0 flex-row items-center gap-2'>
+                <span className={`badge badge-sm ${sourceBadge.className}`}>{sourceBadge.label}</span>
                 {shot.incomplete && (
                   <span className='inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800'>
                     INCOMPLETE
