@@ -5,7 +5,7 @@
 Completed:
 
 1. Preserve stable responsive shell.
-2. Remove unsafe routes and navigation.
+2. Remove unsafe/admin-oriented surfaces from the active GaggiGo shell.
 3. Harden Settings into safe read-only GaggiMate viewer.
 4. Reuse LibraryService + IndexedDBService architecture.
 5. Enable profile cache fallback.
@@ -13,37 +13,83 @@ Completed:
 7. Enable offline analyzer routing.
 8. Enable offline statistics from cached data.
 9. Add cached settings snapshot fallback.
+10. Add cache/source visibility indicators.
+11. Add SafeGaggiMateClient data boundary.
+12. Migrate ProfileEdit safe operations.
+13. Migrate ProfileList safe operations.
+14. Add ApiService request classification.
+15. Audit runtime/non-web diffs.
+16. Complete pre-sync architecture audit.
 
-## Active Phase
+---
 
-Phase 2: Offline-first hardening before sync.
+## Current Phase
 
-## Current Build Priority
+Pre-sync validation gate.
 
-1. Polish offline empty states.
-2. Add clearer cache/source indicators.
-3. Reduce proxy timeout noise when GaggiMate is offline.
-4. Remove remaining live-only assumptions.
-5. Audit ApiService safe operations and websocket boundaries.
-6. Remove inherited dead services/code.
-7. Improve statistics indexing/performance.
-8. Prepare safe local notes/ratings sync model.
-9. Prepare manual sync queue workflow.
-10. Later: investigate PWA/install behaviour and end-to-end testing.
+The architecture phase is largely complete.
 
-## Safety Boundary
+Remaining work is now validation-oriented.
 
-Do not reintroduce:
+---
 
-- OTA controls
-- PID autotune
-- Bluetooth device management
-- direct brew/steam/water/grinder controls
-- raw WebSocket admin UI
-- unrestricted machine settings writes
+## Immediate Priority
+
+1. Local runtime validation.
+2. Connected/offline/reconnect verification.
+3. Confirm ProfileList operations after migration.
+4. Confirm no unexpected ApiService warnings for documented safe operations.
+5. Confirm empty states behave correctly.
+6. Then begin Safe Sync v1 design.
+
+---
+
+## Safe Sync v1 Direction
+
+Initial scope:
+
+- notes
+- ratings
+- safe metadata
+- profile drafts
+- manual sync workflow first
+
+Avoid initially:
+
+- automatic two-way sync
+- conflict-heavy sync
+- runtime/admin configuration sync
+
+---
+
+## Runtime Separation Rule
+
+Frontend/PWA work and runtime/controller work are now separated into different review buckets.
+
+Do not blindly merge runtime/controller diffs together with frontend observer work.
+
+Current runtime buckets:
+
+1. telemetry + scale metadata enhancements
+2. configurable button/runtime profile behaviour
+3. predictive runtime improvement
+4. OTA timeout adjustment
+
+---
 
 ## Working Model
 
-GaggiMate remains the machine authority.
+```text
+GaggiMate
+= runtime owner
+= telemetry source
+= source authority
 
-GaggiGo observes, caches, analyses, and later synchronises approved safe data only.
+GaggiGo
+= offline-first observer frontend
+= cache layer
+= analysis workspace
+= safe sync client later
+```
+
+Merge-back compatibility remains mandatory.
