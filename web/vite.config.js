@@ -16,6 +16,13 @@ function normalizeTarget(host, protocol) {
   return `${protocol}://${trimmedHost}`;
 }
 
+function logProxyUnavailable(scope) {
+  return error => {
+    const detail = error?.code || error?.message || 'unavailable';
+    console.warn(`[gaggigo] ${scope} proxy unavailable: ${detail}`);
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -31,11 +38,17 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: httpTarget,
           changeOrigin: true,
+          configure: proxy => {
+            proxy.on('error', logProxyUnavailable('api'));
+          },
         },
         '/ws': {
           target: wsTarget,
           ws: true,
           changeOrigin: true,
+          configure: proxy => {
+            proxy.on('error', logProxyUnavailable('websocket'));
+          },
         },
       },
       watch: {
