@@ -18,6 +18,7 @@ import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import VisualizerUploadModal from '../../components/VisualizerUploadModal.jsx';
 import { visualizerService } from '../../services/VisualizerService.js';
 import { ApiServiceContext } from '../../services/ApiService.js';
+import { safeGaggiMateClient } from '../../services/SafeGaggiMateClient.js';
 import { Tooltip } from '../../components/Tooltip.jsx';
 
 function round2(v) {
@@ -116,10 +117,8 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
         let profileData = null;
         if (shot.profileId && apiService) {
           try {
-            const profileResponse = await apiService.request({
-              tp: 'req:profiles:load',
-              id: shot.profileId,
-            });
+            safeGaggiMateClient.setApiService(apiService);
+            const profileResponse = await safeGaggiMateClient.loadProfile(shot.profileId);
             if (profileResponse.profile) {
               profileData = profileResponse.profile;
             }
