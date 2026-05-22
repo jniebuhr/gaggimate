@@ -2,8 +2,10 @@
  * LibraryService.js
  *
  * Unified service for loading shots and profiles from multiple sources:
- * - GaggiMate Controller (via API)
+ * - GaggiMate Controller (via safe hydration into IndexedDB)
  * - Browser Uploads (via IndexedDB)
+ *
+ * Rule: UI pages read the local mirror. Live GaggiMate calls hydrate the mirror.
  */
 
 import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex';
@@ -46,40 +48,71 @@ function getGaggiMateShotId(value) {
   return raw.startsWith('gaggimate:') ? raw.replace(/^gaggimate:/, '') : raw;
 }
 
+function getLocalShotLookupId(value) {
+  return String(value?.storageKey || value?.name || value?.gaggimateId || value?.id || value || '').trim();
+}
+
 function hasLoadedSamples(shot) {
   return Array.isArray(shot?.samples) && shot.samples.length > 0;
 }
 
+function normalizeLocalShot(shot = {}) {
+  const source = shot.source || 'browser';
+  const gaggimateId = isAnyGaggiMateSource(source) ? getGaggiMateShotId(shot) : '';
+  const storageKey =
+    shot.storageKey || shot.name || (gaggimateId ? `gaggimate:${gaggimateId}` : String(shot.id || ''));
+
+  return {
+    ...shot,
+    id: String(shot.id || gaggimateId || storageKey || ''),
+    gaggimateId: gaggimateId || shot.gaggimateId,
+    name: storageKey,
+    storageKey,
+    source,
+    loaded: hasLoadedSamples(shot) || Boolean(shot.loaded),
+  };
+}
+
 function mergeShotListEntry(existing, shot) {
-  if (!existing) return shot;
+  if (!existing) return normalizeLocalShot(shot);
 
   const existingHasSamples = hasLoadedSamples(existing);
   const nextHasSamples = hasLoadedSamples(shot);
 
-  // A live index row is useful metadata, but it must not replace a full cached
-  // payload. Analyzer/statistics need samples more than they need live row source.
   if (existingHasSamples && !nextHasSamples) {
-    return {
+    return normalizeLocalShot({
       ...shot,
       ...existing,
       source: existing.source,
       loaded: true,
-    };
+    });
   }
 
   if (!existingHasSamples && nextHasSamples) {
-    return {
+    return normalizeLocalShot({
       ...existing,
       ...shot,
       loaded: true,
-    };
+    });
   }
 
   if (existing.source === GAGGIMATE_CACHE_SOURCE && shot.source === 'gaggimate') {
-    return shot;
+    return normalizeLocalShot({ ...existing, ...shot, source: existing.source });
   }
 
-  return existing;
+  return normalizeLocalShot(existing);
+}
+
+function filterLocalShotsBySource(shots, sourceFilter = 'both') {
+  if (sourceFilter === 'gaggimate') {
+    return shots.filter(shot => isAnyGaggiMateSource(shot.source));
+  }
+
+  if (sourceFilter === 'browser') {
+    return shots.filter(shot => !isAnyGaggiMateSource(shot.source));
+  }
+
+  return shots;
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = GAGGIMATE_HTTP_TIMEOUT_MS) {
@@ -229,16 +262,16 @@ class LibraryService {
   }
 
   /**
-   * Get shots from GaggiMate controller
-   * @returns {Promise<Object[]>} List of GaggiMate shots with source tag
+   * Hydrate the local shot mirror from the GaggiMate history index.
+   * This is a live-to-local write path, not a render/read path.
+   * @returns {Promise<Object[]>} Hydrated local shot summaries
    */
-  async getGaggiMateShots() {
+  async hydrateGaggiMateShotIndex() {
     try {
       const response = await fetchWithTimeout('/api/history/index.bin');
 
       if (!response.ok) {
         if (response.status === 404) {
-          // No shots yet
           console.log('No shot index found on GM');
           return [];
         }
@@ -256,33 +289,47 @@ class LibraryService {
         source: 'gaggimate',
       }));
 
-      // Mirror into IndexedDB for offline use without blocking the live UI.
-      Promise.all(normalizedShots.map(shot => indexedDBService.saveCachedGaggiMateShot(shot))).catch(
-        error => console.warn('Failed to cache GaggiMate shots:', error),
+      const cachedShots = await Promise.all(
+        normalizedShots.map(shot => indexedDBService.saveCachedGaggiMateShot(shot)),
       );
 
-      return normalizedShots;
+      return cachedShots.map(normalizeLocalShot);
     } catch (error) {
-      console.error('Failed to load GaggiMate shots:', error);
+      console.error('Failed to hydrate GaggiMate shot index:', error);
       return [];
     }
   }
 
   /**
-   * Get shots from browser uploads and offline mirrors
-   * @returns {Promise<Object[]>} List of browser shots with source tag
+   * Backward-compatible hydration alias.
+   * UI code should prefer getAllShots/getLocalShots for reads.
    */
-  async getBrowserShots() {
+  async getGaggiMateShots() {
+    return this.hydrateGaggiMateShotIndex();
+  }
+
+  /**
+   * Get all shots from the local IndexedDB mirror.
+   * @returns {Promise<Object[]>} List of local shots with source tag
+   */
+  async getLocalShots(sourceFilter = 'both') {
     try {
       const shots = await indexedDBService.getAllShots();
-      return shots.map(shot => ({
-        ...shot,
-        storageKey: shot.storageKey || shot.name || String(shot.id || ''),
-      }));
+      const normalizedShots = shots.map(normalizeLocalShot);
+      return filterLocalShotsBySource(normalizedShots, sourceFilter);
     } catch (error) {
-      console.error('Failed to load browser shots:', error);
+      console.error('Failed to load local shots:', error);
       return [];
     }
+  }
+
+  /**
+   * Get shots from browser uploads and offline mirrors.
+   * Backward-compatible local read alias.
+   * @returns {Promise<Object[]>} List of local shots with source tag
+   */
+  async getBrowserShots() {
+    return this.getLocalShots('both');
   }
 
   /**
@@ -290,37 +337,20 @@ class LibraryService {
    * @returns {Promise<Object[]>} List of cached GaggiMate shots
    */
   async getCachedGaggiMateShots() {
-    const browserShots = await this.getBrowserShots();
-    return browserShots.filter(shot => isCachedGaggiMateSource(shot.source));
+    return this.getLocalShots('gaggimate');
   }
 
   /**
-   * Get merged shot list from all sources
+   * Get merged shot list from the local mirror only.
+   * Live GaggiMate access must hydrate IndexedDB before/around this call.
    * @param {string} sourceFilter - 'both', 'gaggimate', or 'browser'
-   * @returns {Promise<Object[]>} Filtered and merged shot list
+   * @returns {Promise<Object[]>} Filtered and merged local shot list
    */
   async getAllShots(sourceFilter = 'both') {
-    let results = [];
-
-    if (sourceFilter === 'browser') {
-      results = [await this.getBrowserShots()];
-    } else if (sourceFilter === 'gaggimate') {
-      const cachedGaggiMateShots = await this.getCachedGaggiMateShots();
-      const gaggimateShots = await this.getGaggiMateShots();
-      results = [cachedGaggiMateShots, gaggimateShots];
-    } else {
-      const browserShots = await this.getBrowserShots();
-      const gaggimateShots = await this.getGaggiMateShots();
-      results = [browserShots, gaggimateShots];
-    }
-
-    const merged = results.flat();
-
-    // Deduplicate by source identity. Prefer hydrated cached payloads over
-    // metadata-only live index rows so analyzer/statistics keep sample data.
+    const localShots = await this.getLocalShots(sourceFilter);
     const deduped = new Map();
 
-    merged.forEach(shot => {
+    localShots.forEach(shot => {
       const key = isAnyGaggiMateSource(shot.source)
         ? getGaggiMateShotId(shot)
         : String(shot.storageKey || shot.name || shot.id || '');
@@ -328,8 +358,7 @@ class LibraryService {
       deduped.set(key, mergeShotListEntry(existing, shot));
     });
 
-    // Sort by timestamp (newest first)
-    return Array.from(deduped.values()).sort((a, b) => b.timestamp - a.timestamp);
+    return Array.from(deduped.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   }
 
   /**
@@ -393,7 +422,9 @@ class LibraryService {
     if (sourceFilter === 'browser') {
       results = [await this.getBrowserProfiles()];
     } else if (sourceFilter === 'gaggimate') {
-      results = [await this.getGaggiMateProfiles()];
+      const browserProfiles = await this.getBrowserProfiles();
+      const gaggimateProfiles = await this.getGaggiMateProfiles();
+      results = [browserProfiles.filter(profile => isCachedGaggiMateSource(profile.source)), gaggimateProfiles];
     } else {
       const browserProfiles = await this.getBrowserProfiles();
       const gaggimateProfiles = await this.getGaggiMateProfiles();
@@ -425,65 +456,59 @@ class LibraryService {
   }
 
   /**
-   * Load full shot data
-   * @param {string} id - Shot ID
-   * @param {string} source - 'gaggimate', 'gaggimate-cache', or 'browser'
-   * @returns {Promise<Object>} Full shot data with samples
+   * Hydrate one full GaggiMate shot payload into IndexedDB.
+   * @param {string} id - GaggiMate shot ID
+   * @returns {Promise<Object>} Stored local shot payload
+   */
+  async hydrateGaggiMateShotPayload(id) {
+    const idStr = String(id);
+    const paddedId = idStr.padStart(6, '0');
+    const response = await fetchWithTimeout(`/api/history/${paddedId}.slog`, {}, 2500);
+
+    if (!response.ok) {
+      throw new Error(`Failed to hydrate shot ${idStr}: HTTP ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const shot = parseBinaryShot(arrayBuffer, idStr);
+    const cachedShot = await indexedDBService.saveCachedGaggiMateShot({
+      ...shot,
+      loaded: true,
+    });
+
+    return normalizeLocalShot(cachedShot);
+  }
+
+  /**
+   * Load full shot data from the local mirror. Connected GaggiMate may hydrate
+   * missing GaggiMate payloads, then the stored local payload is returned.
+   * @param {string} id - Shot ID or local storage key
+   * @param {string} source - 'gaggimate', 'gaggimate-cache', 'browser', or local source
+   * @returns {Promise<Object>} Full local shot data with samples when hydrated
    */
   async loadShot(id, source) {
     const idStr = String(id);
+    const localShot = await indexedDBService.getShot(idStr);
 
-    if (isCachedGaggiMateSource(source)) {
-      const shot = await indexedDBService.getShot(idStr);
-      if (!shot) {
-        throw new Error(`Cached GaggiMate shot ${idStr} not found in browser storage`);
+    if (localShot) {
+      const normalizedShot = normalizeLocalShot(localShot);
+      if (hasLoadedSamples(normalizedShot) || !isAnyGaggiMateSource(source || normalizedShot.source)) {
+        return normalizedShot;
       }
-
-      shot.storageKey = shot.storageKey || shot.name || `gaggimate:${getGaggiMateShotId(shot) || idStr}`;
-      shot.source = GAGGIMATE_CACHE_SOURCE;
-      return shot;
     }
 
-    if (source === 'gaggimate') {
-      const cachedShot = await indexedDBService.getShot(idStr);
-      if (hasLoadedSamples(cachedShot)) {
-        return {
-          ...cachedShot,
-          source: GAGGIMATE_CACHE_SOURCE,
-          storageKey: cachedShot.storageKey || cachedShot.name || `gaggimate:${idStr}`,
-        };
+    if (isAnyGaggiMateSource(source)) {
+      const shotId = getGaggiMateShotId(localShot || { id: idStr });
+      if (!shotId) {
+        throw new Error(`GaggiMate shot ${idStr} has no stable id for hydration`);
       }
 
-      const paddedId = idStr.padStart(6, '0');
-      const response = await fetchWithTimeout(`/api/history/${paddedId}.slog`, {}, 2500);
-
-      if (!response.ok) {
-        throw new Error(`Failed to load shot ${idStr}: HTTP ${response.status}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const shot = parseBinaryShot(arrayBuffer, idStr);
-      shot.source = 'gaggimate';
-
-      // Persist loaded detailed shot for offline use without blocking UI.
-      indexedDBService
-        .saveCachedGaggiMateShot({
-          ...shot,
-          loaded: true,
-        })
-        .catch(error => console.warn('Failed to cache loaded GaggiMate shot:', error));
-
-      return shot;
+      await this.hydrateGaggiMateShotPayload(shotId);
+      const hydratedShot = await indexedDBService.getShot(`gaggimate:${shotId}`);
+      if (hydratedShot) return normalizeLocalShot(hydratedShot);
     }
 
-    const shot = await indexedDBService.getShot(idStr);
-    if (!shot) {
-      throw new Error(`Shot ${idStr} not found in browser storage`);
-    }
-
-    shot.storageKey = shot.storageKey || shot.name || idStr;
-    shot.source = shot.source || 'browser';
-    return shot;
+    throw new Error(`Shot ${idStr} not found in local storage`);
   }
 
   /**
@@ -531,18 +556,16 @@ class LibraryService {
     console.log('Service Exporting:', item);
 
     let exportData = null;
-    // 1. Prefer specific exportName (e.g. shot-123.json), else item.name/id
     let filename = item.exportName || item.name || item.id || 'export.json';
 
-    // Ensure extension .json (or .slog if preferred)
     filename = ensureJsonFilename(filename);
 
-    if (item.source === 'gaggimate') {
+    if (isAnyGaggiMateSource(item.source)) {
       if (isShot) {
-        const loadId = item.id;
+        const loadId = item.gaggimateId || item.id;
         if (!loadId) throw new Error('Shot ID missing for export');
 
-        const fullShot = await this.loadShot(loadId, 'gaggimate');
+        const fullShot = await this.loadShot(loadId, item.source);
         delete fullShot.source;
 
         const notes = await notesService.loadNotes(loadId, 'gaggimate');
@@ -609,15 +632,17 @@ class LibraryService {
 
   /**
    * Get storage statistics
-   * @returns {Promise<Object>} Stats from all sources
+   * @returns {Promise<Object>} Stats from local mirror and hydration source
    */
   async getStats() {
-    const [gmShots, browserShots, gmProfiles, browserProfiles] = await Promise.all([
-      this.getGaggiMateShots(),
-      this.getBrowserShots(),
+    const [localShots, gmProfiles, browserProfiles] = await Promise.all([
+      this.getLocalShots('both'),
       this.getGaggiMateProfiles(),
       this.getBrowserProfiles(),
     ]);
+
+    const gmShots = localShots.filter(shot => isAnyGaggiMateSource(shot.source));
+    const browserShots = localShots.filter(shot => !isAnyGaggiMateSource(shot.source));
 
     return {
       gaggimate: {
@@ -629,7 +654,7 @@ class LibraryService {
         profiles: browserProfiles.length,
       },
       total: {
-        shots: gmShots.length + browserShots.length,
+        shots: localShots.length,
         profiles: gmProfiles.length + browserProfiles.length,
       },
     };
