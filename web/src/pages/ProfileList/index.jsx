@@ -47,6 +47,7 @@ import { faAnglesDown, faAnglesUp, faGripVertical } from '@fortawesome/free-soli
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 import { loadProfilesWithCache } from '../../services/ProfileCacheService.js';
 import { safeGaggiMateClient } from '../../services/SafeGaggiMateClient.js';
+import { refreshCoordinator } from '../../services/RefreshCoordinator.js';
 
 Chart.register(
   LineController,
