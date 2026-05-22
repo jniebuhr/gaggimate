@@ -2,7 +2,7 @@
 
 ## Current Status
 
-GaggiGo is now a working offline-first observer frontend for GaggiMate.
+GaggiGo is now a working offline-first observer frontend for GaggiMate with a documented merge-back direction.
 
 Confirmed working:
 
@@ -17,7 +17,13 @@ Confirmed working:
 - offline statistics from cached data
 - read-only GaggiMate settings viewer
 - cached settings snapshot fallback
-- unsafe machine/integration settings filtered from Settings
+- source/cache visibility indicators
+- safe data boundary wrapping
+- ProfileEdit safe-client migration
+- ProfileList safe-client migration
+- ApiService request classification
+- non-web diff audit
+- pre-sync validation audit
 
 ---
 
@@ -31,32 +37,24 @@ Completed:
 - desktop sidebar retained
 - mobile dropdown retained
 - safe informational homepage
-- unsafe routes removed
-- unsafe navigation removed
+- unsafe/admin-oriented routes removed from GaggiGo shell
+- unsafe/admin-oriented navigation removed from GaggiGo shell
 - live proxy integration
 - websocket integration
 - LibraryService abstraction reused
 - ShotHistory migrated onto unified data layer
 - Settings restored as read-only GaggiMate settings viewer
-- System Preferences and plugin/integration settings removed from Settings view
+- safe observer-mode frontend direction established
 
-GaggiGo remains observer-only.
+Merge-back direction:
 
-No:
-
-- brew control
-- grinder control
-- PID control
-- OTA
-- firmware management
-- machine admin
-- external integration management
+- long term this should become app mode / feature gating rather than permanent upstream deletion.
 
 ---
 
-## Phase 2 — Offline-First Behaviour
+## Phase 2 — Offline-First Behaviour + Hardening
 
-Status: mostly complete for read/view/analyse MVP.
+Status: functionally complete for MVP.
 
 Current architecture:
 
@@ -65,7 +63,7 @@ Browser
 ↓
 LibraryService
 ↓
-GaggiMate + IndexedDB
+SafeGaggiMateClient + IndexedDBService
 ```
 
 Completed:
@@ -78,26 +76,34 @@ Completed:
 - analyzer cache fallback
 - statistics cache fallback
 - settings snapshot fallback
+- cache-first rendering
+- source-aware loading
+- source badges
+- safe websocket request classification
+- safe profile operation wrapping
+- ApiService hardening pass
+- repository audit pass
+- runtime/non-web diff classification
 
-Remaining:
+Remaining before sync:
 
-- improve offline empty states
-- reduce remaining terminal proxy noise
-- add cache status indicators where useful
-- continue performance cleanup
+- final local runtime validation
+- connected/offline/reconnect verification
+- final profile operation verification after migration
 
 ---
 
 ## Phase 3 — Safe Sync
 
-Status: planned.
+Status: next planned phase.
 
-Potential sync targets:
+Initial sync scope:
 
 - notes
 - ratings
 - profile drafts
 - safe metadata
+- manual sync workflow first
 
 Planned behaviour:
 
@@ -106,42 +112,46 @@ Planned behaviour:
 - safe merge behaviour
 - export/import tooling
 
-Never sync machine-control actions.
+Do not start with:
+
+- automatic two-way profile sync
+- machine/runtime configuration sync
+- conflict-heavy sync behaviour
 
 ---
 
-## Phase 4 — Hardening
+## Phase 4 — Hardening / PWA / Packaging
 
 Status: planned.
 
 Planned:
 
-- search for and remove sensitive data
 - remove inherited dead services
-- unify source handling further
-- improve statistics indexing
+- further source unification
 - performance optimisation
-- PWA behaviour
+- statistics indexing improvements
+- installable PWA behaviour
 - packaging/distribution
 - runtime cleanup
 - end-to-end testing
+- feature-gating/app-mode architecture
 
 ---
 
 ## Architectural Direction
 
-GaggiMate:
+```text
+GaggiMate
+= runtime owner
+= telemetry source
+= source authority
 
-- machine runtime
-- control layer
-- telemetry source
-- source authority
+GaggiGo
+= observer frontend
+= analysis layer
+= historical viewer
+= offline-first workspace
+= safe sync client later
+```
 
-GaggiGo:
-
-- observer frontend
-- analysis layer
-- historical viewer
-- cache layer
-- offline-first workspace
-- safe sync client later
+Merge-back compatibility remains a hard requirement.
