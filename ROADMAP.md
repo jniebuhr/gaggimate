@@ -2,28 +2,31 @@
 
 ## Current Status
 
-GaggiGo is now a working offline-first observer frontend for GaggiMate with a documented merge-back direction.
+GaggiGo is an offline-first observer frontend for GaggiMate with a documented merge-back direction.
 
-Confirmed working:
+Core architecture direction remains valid.
 
-- live GaggiMate connection through local Vite proxy
-- profiles loading from GaggiMate
-- shot history loading from GaggiMate
-- IndexedDB persistence
-- cached profile mirror
-- cached shot mirror
-- offline history fallback
-- offline shot analyzer routing
-- offline statistics from cached data
-- read-only GaggiMate settings viewer
-- cached settings snapshot fallback
-- source/cache visibility indicators
-- safe data boundary wrapping
-- ProfileEdit safe-client migration
-- ProfileList safe-client migration
-- ApiService request classification
-- non-web diff audit
-- pre-sync validation audit
+However:
+
+```text
+Analyzer and Statistics are currently under active debug.
+```
+
+Current regression:
+
+- analyzer graphs can fail to render
+- statistics can return zeroes
+- statistics batching can become extremely slow
+- metadata-only shot rows can be treated as fully-loaded payloads
+- `gaggimate-cache` source handling is not yet fully unified
+
+Do not treat offline analyzer/statistics behaviour as complete until the active debug handover is resolved and validated.
+
+Reference:
+
+```text
+project-docs/ANALYZER_STATISTICS_DEBUG_HANDOVER.md
+```
 
 ---
 
@@ -54,7 +57,7 @@ Merge-back direction:
 
 ## Phase 2 — Offline-First Behaviour + Hardening
 
-Status: functionally complete for MVP.
+Status: partially complete.
 
 Current architecture:
 
@@ -66,38 +69,76 @@ LibraryService
 SafeGaggiMateClient + IndexedDBService
 ```
 
-Completed:
+Integrated:
 
 - cached startup behaviour
 - background live refresh attempts
 - fast offline UI boot
 - profile cache fallback
 - shot history cache fallback
-- analyzer cache fallback
-- statistics cache fallback
 - settings snapshot fallback
-- cache-first rendering
-- source-aware loading
-- source badges
+- cache-first rendering model
+- source/cache visibility indicators
 - safe websocket request classification
 - safe profile operation wrapping
 - ApiService hardening pass
 - repository audit pass
 - runtime/non-web diff classification
 
-Remaining before sync:
+Still actively being stabilised:
 
-- final local runtime validation
-- connected/offline/reconnect verification
-- final profile operation verification after migration
+- analyzer cache fallback
+- statistics cache fallback
+- full payload hydration rules
+- metadata-only shot handling
+- source contract unification
+- `gaggimate-cache` handling
+
+Current blocker:
+
+```text
+The UI originally assumed:
+- gaggimate
+- browser
+
+The data layer introduced:
+- gaggimate-cache
+
+without fully updating all callers.
+```
+
+Result:
+
+- cached GaggiMate rows may be routed as browser uploads
+- empty sample arrays may be treated as loaded payloads
+- analyzer graphs may receive empty data
+- statistics may skip shots or report zeroes
+
+Immediate priority:
+
+1. stabilize analyzer/statistics payload handling
+2. validate online behaviour
+3. validate offline cached full-payload behaviour
+4. confirm connected/offline/reconnect workflow
+5. confirm no unexpected ApiService warnings
+
+No new features before this is stable.
 
 ---
 
 ## Phase 3 — Safe Sync
 
-Status: next planned phase.
+Status: blocked behind analyzer/statistics validation.
 
-Initial sync scope:
+Sync work must not begin until:
+
+- analyzer graphs work correctly from cached full payloads
+- statistics works correctly from cached full payloads
+- metadata-only rows no longer pretend to be loaded
+- `gaggimate-cache` handling is explicit and stable
+- the cache-first workflow is validated against a real GaggiMate runtime
+
+Initial sync scope when unblocked:
 
 - notes
 - ratings
@@ -153,5 +194,23 @@ GaggiGo
 = offline-first workspace
 = safe sync client later
 ```
+
+Important implementation rule:
+
+```text
+GaggiMate controls the machine.
+GaggiGo observes, stores, analyses, and later syncs safe data.
+```
+
+Do not reintroduce:
+
+- brew control
+- grinder control
+- scales control
+- PID/autotune
+- OTA
+- Bluetooth device management
+- raw websocket admin
+- unrestricted settings writes
 
 Merge-back compatibility remains a hard requirement.
