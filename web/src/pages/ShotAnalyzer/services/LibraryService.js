@@ -50,6 +50,38 @@ function hasLoadedSamples(shot) {
   return Array.isArray(shot?.samples) && shot.samples.length > 0;
 }
 
+function mergeShotListEntry(existing, shot) {
+  if (!existing) return shot;
+
+  const existingHasSamples = hasLoadedSamples(existing);
+  const nextHasSamples = hasLoadedSamples(shot);
+
+  // A live index row is useful metadata, but it must not replace a full cached
+  // payload. Analyzer/statistics need samples more than they need live row source.
+  if (existingHasSamples && !nextHasSamples) {
+    return {
+      ...shot,
+      ...existing,
+      source: existing.source,
+      loaded: true,
+    };
+  }
+
+  if (!existingHasSamples && nextHasSamples) {
+    return {
+      ...existing,
+      ...shot,
+      loaded: true,
+    };
+  }
+
+  if (existing.source === GAGGIMATE_CACHE_SOURCE && shot.source === 'gaggimate') {
+    return shot;
+  }
+
+  return existing;
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = GAGGIMATE_HTTP_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -284,7 +316,8 @@ class LibraryService {
 
     const merged = results.flat();
 
-    // Deduplicate preferring live GaggiMate over offline cache
+    // Deduplicate by source identity. Prefer hydrated cached payloads over
+    // metadata-only live index rows so analyzer/statistics keep sample data.
     const deduped = new Map();
 
     merged.forEach(shot => {
@@ -292,15 +325,7 @@ class LibraryService {
         ? getGaggiMateShotId(shot)
         : String(shot.storageKey || shot.name || shot.id || '');
       const existing = deduped.get(key);
-
-      if (!existing) {
-        deduped.set(key, shot);
-        return;
-      }
-
-      if (existing.source === GAGGIMATE_CACHE_SOURCE && shot.source === 'gaggimate') {
-        deduped.set(key, shot);
-      }
+      deduped.set(key, mergeShotListEntry(existing, shot));
     });
 
     // Sort by timestamp (newest first)
