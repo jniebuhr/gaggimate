@@ -17,6 +17,10 @@ function getGaggiMateShotStorageKey(shot) {
   return `gaggimate:${id}`;
 }
 
+function hasSamples(shot) {
+  return Array.isArray(shot?.samples) && shot.samples.length > 0;
+}
+
 function normalizeStoredProfile(profile = {}) {
   const label = String(
     profile.label || profile.name || profile.fileName || profile.exportName || '',
@@ -104,20 +108,34 @@ class IndexedDBService {
 
   /**
    * Save a safe cached mirror of a GaggiMate shot summary or loaded shot.
+   * Metadata refreshes must not overwrite an already-hydrated sample payload.
    * @param {Object} shot - GaggiMate shot data
    */
   async saveCachedGaggiMateShot(shot) {
     const db = await this.init();
     const gaggimateId = String(shot.id || shot.gaggimateId || shot.storageKey || shot.name || Date.now());
     const storageKey = getGaggiMateShotStorageKey({ ...shot, id: gaggimateId });
+    const existingShot = await db.get('shots', storageKey);
+    const incomingHasSamples = hasSamples(shot);
+    const existingHasSamples = hasSamples(existingShot);
+    const preservedPayload = existingHasSamples && !incomingHasSamples
+      ? {
+          samples: existingShot.samples,
+          data: existingShot.data,
+          loaded: true,
+        }
+      : {};
 
     const shotWithMeta = {
+      ...existingShot,
       ...shot,
+      ...preservedPayload,
       id: gaggimateId,
       gaggimateId,
       name: storageKey,
       storageKey,
       source: GAGGIMATE_CACHE_SOURCE,
+      loaded: incomingHasSamples || existingHasSamples || Boolean(shot.loaded || existingShot?.loaded),
       cachedAt: Date.now(),
     };
 
