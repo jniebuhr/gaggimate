@@ -7,8 +7,8 @@ export function SettingsFormField({
   noMargin = false,
 }) {
   return (
-    <div className={`form-control ${noMargin ? '' : 'mb-4'} ${className}`}>
-      <label htmlFor={htmlFor} className='mb-2 block text-sm font-medium'>
+    <div className={`form-control ${noMargin ? '' : 'mb-3'} ${className}`}>
+      <label htmlFor={htmlFor} className='mb-1 block text-sm font-medium'>
         {label}
       </label>
       {children}
@@ -27,8 +27,8 @@ export function InputGroupField({
   noMargin = false,
 }) {
   return (
-    <div className={`form-control ${noMargin ? '' : 'mb-4'}`}>
-      <label htmlFor={htmlFor} className='mb-2 block text-sm font-medium'>
+    <div className={`form-control ${noMargin ? '' : 'mb-3'}`}>
+      <label htmlFor={htmlFor} className='mb-1 block text-sm font-medium'>
         {label}
       </label>
       <div className='input-group'>

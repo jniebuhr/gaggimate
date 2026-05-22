@@ -936,8 +936,8 @@ export function Settings() {
                   onChange={onChange('sunriseExtBrightness')}
                 />
               </SettingsFormField>
-              <div className='form-control mb-4'>
-                <label htmlFor='emptyTankDistance' className='mb-2 block text-sm font-medium'>
+              <div className='form-control mb-3'>
+                <label htmlFor='emptyTankDistance' className='mb-1 block text-sm font-medium'>
                   Distance from sensor to bottom of the tank
                 </label>
                 <div className='flex flex-row gap-2'>
@@ -972,7 +972,7 @@ export function Settings() {
                 </div>
               </div>
               <div className='form-control'>
-                <label htmlFor='fullTankDistance' className='mb-2 block text-sm font-medium'>
+                <label htmlFor='fullTankDistance' className='mb-1 block text-sm font-medium'>
                   Distance from sensor to the fill line
                 </label>
                 <div className='flex flex-row gap-2'>
