@@ -43,7 +43,7 @@ const PROFILE_AUTO_MATCH_MAX_ATTEMPTS = 4;
 const SHOT_SELECTION_DEBOUNCE_MS = 400;
 
 function hasLoadedShotPayload(item) {
-  return Boolean(item) && Array.isArray(item.samples);
+  return Boolean(item) && Array.isArray(item.samples) && item.samples.length > 0;
 }
 
 function getShotSelectionLoadKey(item) {
