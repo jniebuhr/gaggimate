@@ -39,8 +39,8 @@ function getShotStorageId(shot) {
 
 function normalizeHistoryShot(shot) {
   const id = String(shot?.id || shot?.storageKey || shot?.name || '');
-
-  return {
+  const hasSamples = Array.isArray(shot?.samples) && shot.samples.length > 0;
+  const normalized = {
     ...shot,
     id,
     source: shot?.source || 'gaggimate',
@@ -48,9 +48,16 @@ function normalizeHistoryShot(shot) {
     duration: shot?.duration || 0,
     volume: shot?.volume ?? null,
     rating: shot?.rating ?? 0,
-    loaded: Boolean(shot?.loaded || (Array.isArray(shot?.samples) && shot.samples.length > 0)),
-    samples: Array.isArray(shot?.samples) ? shot.samples : [],
+    loaded: hasSamples,
   };
+
+  if (hasSamples) {
+    normalized.samples = shot.samples;
+  } else {
+    delete normalized.samples;
+  }
+
+  return normalized;
 }
 
 export function ShotHistory() {
