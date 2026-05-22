@@ -46,7 +46,7 @@ export function ToggleField({ label, htmlFor, checked, onChange, helpText }) {
   return (
     <div className='form-control'>
       <label htmlFor={htmlFor} className='label cursor-pointer'>
-        <span className='label-text'>{label}</span>
+        <span className='label-text text-sm font-medium'>{label}</span>
         <input
           id={htmlFor}
           name={htmlFor}
