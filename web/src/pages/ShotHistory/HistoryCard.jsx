@@ -26,9 +26,16 @@ function round2(v) {
   return Math.round((v + Number.EPSILON) * 100) / 100;
 }
 
+function isGaggiMateOriginShot(shot) {
+  return shot?.source === 'gaggimate' || shot?.source === 'gaggimate-cache';
+}
+
 function getAnalyzerHref(shot) {
-  const source = shot?.source === 'gaggimate' ? 'internal' : 'external';
-  const id = shot?.source === 'gaggimate' ? shot.id : shot.storageKey || shot.name || shot.id;
+  const source = isGaggiMateOriginShot(shot) ? 'internal' : 'external';
+  const id = isGaggiMateOriginShot(shot)
+    ? shot.gaggimateId || shot.id
+    : shot.storageKey || shot.name || shot.id;
+
   return `/analyzer/${source}/${encodeURIComponent(String(id || ''))}`;
 }
 
@@ -168,7 +175,6 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
           </button>
 
           <div className='min-w-0 flex-grow'>
-            {/* Header Row */}
             <div className='mb-1 flex flex-row items-start justify-between gap-3'>
               <div className='min-w-0 flex-grow'>
                 <h3 className='text-base-content truncate text-base font-semibold'>
@@ -191,115 +197,8 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
 
               <div className='flex shrink-0 flex-row items-center gap-2'>
                 <span className={`badge badge-sm ${sourceBadge.className}`}>{sourceBadge.label}</span>
-                {shot.incomplete && (
-                  <span className='inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800'>
-                    INCOMPLETE
-                  </span>
-                )}
-
-                <div className='flex flex-row gap-1'>
-                  <Tooltip content={shot.loaded ? 'Export' : 'Load first'}>
-                    <button
-                      disabled={!shot.loaded}
-                      onClick={onExport}
-                      className='text-base-content/50 hover:text-info hover:bg-info/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
-                      aria-label='Export shot data'
-                    >
-                      <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
-                    </button>
-                  </Tooltip>
-
-                  {/* Analyzer Button */}
-                  <Tooltip content='Open in Analyzer'>
-                    <a
-                      href={getAnalyzerHref(shot)}
-                      className='text-base-content/50 hover:text-primary hover:bg-primary/10 flex items-center justify-center rounded-md p-2 transition-colors'
-                      aria-label='Open in Analyzer'
-                    >
-                      <FontAwesomeIcon icon={faMagnifyingGlassChart} className='h-4 w-4' />
-                    </a>
-                  </Tooltip>
-
-                  <Tooltip
-                    content={
-                      canUpload
-                        ? 'Upload to Visualizer.coffee'
-                        : 'Load shot data first by expanding the shot'
-                    }
-                  >
-                    <button
-                      onClick={() => setShowUploadModal(true)}
-                      disabled={!canUpload}
-                      className={`group inline-block cursor-pointer items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold ${
-                        canUpload
-                          ? 'text-success hover:bg-success/10 active:border-success/20'
-                          : 'cursor-not-allowed text-gray-400'
-                      }`}
-                      aria-label='Upload to visualizer.coffee'
-                    >
-                      <FontAwesomeIcon icon={faUpload} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content={confirmDelete ? 'Click to confirm delete' : 'Delete'}>
-                    <button
-                      onClick={() => {
-                        confirmOrDelete(() => onDelete(shot.id));
-                      }}
-                      className={`cursor-pointer rounded-md p-2 transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
-                      aria-label={confirmDelete ? 'Confirm deletion of shot' : 'Delete shot'}
-                    >
-                      <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
-                      {confirmDelete && <span className='ml-2 hidden sm:inline'>Confirm</span>}
-                    </button>
-                  </Tooltip>
-                </div>
               </div>
             </div>
-
-            {/* Stats Row */}
-            <div className='text-base-content/80 mb-1 flex flex-row items-center gap-4 text-sm'>
-              <div className='flex items-center gap-1'>
-                <FontAwesomeIcon icon={faClock} className='h-4 w-4' />
-                <span>{(shot.duration / 1000).toFixed(1)}s</span>
-              </div>
-
-              {shot.volume && shot.volume > 0 && (
-                <div className='flex items-center gap-1'>
-                  <FontAwesomeIcon icon={faWeightScale} className='h-4 w-4' />
-                  <span>{round2(shot.volume)}g</span>
-                </div>
-              )}
-
-              {shot.rating && shot.rating > 0 ? (
-                <div className='flex items-center gap-1'>
-                  <FontAwesomeIcon icon={faStar} className='h-4 w-4 text-yellow-500' />
-                  <span className='font-medium'>{shot.rating}/5</span>
-                </div>
-              ) : (
-                <div className='text-base-content/50 flex items-center gap-1'>
-                  <FontAwesomeIcon icon={faStar} className='h-4 w-4' />
-                  <span>Not rated</span>
-                </div>
-              )}
-            </div>
-
-            {expanded && (
-              <div className='border-base-content/20 mt-4 border-t pt-4'>
-                {!shot.loaded && (
-                  <div className='flex items-center justify-center py-8'>
-                    <span className='text-base-content/70 text-sm'>Loading shot data...</span>
-                  </div>
-                )}
-                {shot.loaded && <HistoryChart shot={shot} />}
-                {shot.loaded && (
-                  <ShotNotesCard
-                    shot={shot}
-                    onNotesLoaded={handleNotesLoaded}
-                    onNotesUpdate={handleNotesUpdate}
-                  />
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>
