@@ -84,7 +84,6 @@ export function Settings() {
 
   const formRef = useRef();
 
-
   const loadProfiles = async () => {
     const response = await apiService.request({ tp: 'req:profiles:list' });
     setProfiles(response.profiles);

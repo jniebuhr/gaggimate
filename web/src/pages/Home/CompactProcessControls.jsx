@@ -20,47 +20,19 @@ import { useContext, useState } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import PropTypes from 'prop-types';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { ModeTab } from './ModeTab.jsx';
+import {
+  fmtElapsed,
+  fmtPhaseTarget,
+  getPhaseLabel,
+  getPrimaryIcon,
+  getPrimaryLabel,
+  MODES,
+} from './utils.js';
 
 const status = computed(() => machine.value.status);
 
-const MODES = [
-  { id: 0, icon: faPowerOff, label: 'Standby' },
-  { id: 1, icon: faMugHot, label: 'Brew' },
-  { id: 2, icon: faWind, label: 'Steam' },
-  { id: 3, icon: faDroplet, label: 'Water' },
-  { id: 4, icon: faMortarPestle, label: 'Grind' },
-];
-
-const fmtElapsed = (ms = 0) => {
-  const secs = Math.floor(ms / 1000);
-  return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
-};
-
-const fmtPhaseTarget = (p, grind) => {
-  if (p?.tt === 'time') return `${(p.pt / 1000).toFixed(0)}s`;
-  if (p?.tt === 'volumetric') return `${p.pt.toFixed(grind ? 1 : 0)}g`;
-  return '';
-};
-
-const getPhaseLabel = (p, grind) => {
-  if (grind) return 'Grinding';
-  if (p?.s === 'brew') return 'Infusion';
-  return 'Preinfusion';
-};
-
-const getPrimaryIcon = (active, finished) => {
-  if (active) return faPause;
-  if (finished) return faCheck;
-  return faPlay;
-};
-
-const getPrimaryLabel = (active, finished) => {
-  if (active) return 'Pause';
-  if (finished) return 'Finish';
-  return 'Start';
-};
-
-const Metric = ({ icon, current, target, unit }) => (
+const Metric = ({ icon, current, target, unit, rotation }) => (
   <div className='flex items-center gap-1.5'>
     <FontAwesomeIcon icon={icon} className='text-base-content/60 text-xs' />
     <span className='text-base-content tabular-nums'>{current}</span>
@@ -85,19 +57,6 @@ const TargetToggle = ({ value, onChange }) => {
     </div>
   );
 };
-
-const ModeTab = ({ mode, active, onClick }) => (
-  <button
-    type='button'
-    title={mode.label}
-    aria-label={mode.label}
-    aria-pressed={active}
-    onClick={onClick}
-    className={`flex h-8 min-w-0 flex-1 items-center justify-center rounded-full transition-colors duration-150 ${active ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/50 hover:text-base-content'}`}
-  >
-    <FontAwesomeIcon icon={mode.icon} className='h-3.5 w-3.5' />
-  </button>
-);
 
 const Adjuster = ({ label, value, onDecrease, onIncrease }) => {
   const btn = 'btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0';
@@ -294,7 +253,13 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
     <div className='flex h-full min-h-0 w-full min-w-0 flex-col gap-2 overflow-hidden'>
       <div className='bg-base-200/70 flex h-9 w-full shrink-0 gap-0.5 rounded-full p-0.5'>
         {MODES.filter(m => m.id !== 4 || showGrindTab).map(m => (
-          <ModeTab key={m.id} mode={m} active={mode === m.id} onClick={() => changeMode(m.id)} />
+          <ModeTab
+            key={m.id}
+            mode={m}
+            active={mode === m.id}
+            onClick={() => changeMode(m.id)}
+            rotation={m.iconRotation}
+          />
         ))}
       </div>
 

@@ -63,10 +63,10 @@ export function Home() {
           className={`landscape:max-lg:min-h-0 landscape:sm:col-span-5 ${dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST ? 'order-first' : 'order-last'}`}
           title='Process Controls'
         >
-          <div className='contents md:hidden'>
+          <div className='landscape:hmd:hidden potrait:md:hidden contents'>
             <CompactProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
           </div>
-          <div className='hidden md:contents'>
+          <div className='landscape:hmd:contents potrait:md:contents hidden'>
             <ProcessControls brew={mode === 1} mode={mode} changeMode={changeMode} />
           </div>
         </Card>
