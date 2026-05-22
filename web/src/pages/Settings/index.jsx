@@ -3,7 +3,7 @@ import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import {
@@ -12,7 +12,7 @@ import {
   ToggleField,
 } from '../../components/SettingsFormField.jsx';
 import { timezones } from '../../config/zones.js';
-import { machine } from '../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
@@ -22,8 +22,17 @@ import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
+const connected = computed(() => machine.value.connected);
+
+function splitButtons(buttonBehavior) {
+  if (!buttonBehavior) return {};
+  const [button0, button1, button2] = buttonBehavior.split(',');
+  return { button0, button1, button2 };
+}
 
 export function Settings() {
+  const apiService = useContext(ApiServiceContext);
+  const [profiles, setProfiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
@@ -38,14 +47,30 @@ export function Settings() {
     return data;
   });
 
+  // Fetch profiles via WebSocket (wait for connection)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const loadProfiles = async () => {
+      if (connected.value) {
+        const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
+        setProfiles(response.profiles);
+      }
+    };
+    loadProfiles();
+  }, [connected.value]);
+
   const formRef = useRef();
 
   useEffect(() => {
     if (fetchedSettings) {
       // Initialize standbyDisplayEnabled based on standby brightness value
       // but preserve it if it already exists in the fetched data
+      const buttonFields = fetchedSettings.buttonBehavior
+        ? splitButtons(fetchedSettings.buttonBehavior)
+        : {};
       const settingsWithToggle = {
         ...fetchedSettings,
+        ...buttonFields,
         standbyDisplayEnabled:
           fetchedSettings.standbyDisplayEnabled !== undefined
             ? fetchedSettings.standbyDisplayEnabled
@@ -197,6 +222,10 @@ export function Settings() {
       formDataToSubmit.set(
         'altRelayFunction',
         formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
+      );
+      formDataToSubmit.set(
+        'buttonBehavior',
+        `${formData.button0},${formData.button1},${formData.button2}`,
       );
 
       // Combine PID and Kf into single PID string
@@ -517,6 +546,22 @@ export function Settings() {
                 </option>
               </select>
             </SettingsFormField>
+            <SettingsFormField label='Startup Profile' htmlFor='startup-profile'>
+              <select
+                id='startup-profile'
+                name='startupProfile'
+                className='select select-bordered w-full'
+                value={formData.startupProfile || ''}
+                onChange={onChange('startupProfile')}
+              >
+                <option value=''>Last used profile</option>
+                {profiles.map(profile => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.label}
+                  </option>
+                ))}
+              </select>
+            </SettingsFormField>
             <InputGroupField
               label='Standby Timeout'
               htmlFor='standbyTimeout'
@@ -588,6 +633,63 @@ export function Settings() {
               checked={!!formData.momentaryButtons}
               onChange={onChange('momentaryButtons')}
             />
+            <SettingsFormField label='Brew Button Behavior (Button 1)' htmlFor='button0'>
+              <select
+                id='button0'
+                name='button0'
+                className='select select-bordered w-full'
+                value={formData.button0}
+                onChange={onChange('button0')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </SettingsFormField>
+            <SettingsFormField label='Steam Button Behavior (Button 2)' htmlFor='button1'>
+              <select
+                id='button1'
+                name='button1'
+                className='select select-bordered w-full'
+                value={formData.button1}
+                onChange={onChange('button1')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </SettingsFormField>
+            <SettingsFormField label='Water Button Behavior (Button 3)' htmlFor='button2' noMargin>
+              <select
+                id='button2'
+                name='button2'
+                className='select select-bordered w-full'
+                value={formData.button2}
+                onChange={onChange('button2')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </SettingsFormField>
           </Card>
 
           {/* Machine Settings */}
