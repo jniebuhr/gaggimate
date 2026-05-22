@@ -11,6 +11,7 @@ import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot';
 import { indexedDBService } from './IndexedDBService';
 import { notesService } from './NotesService';
 import { getProfileDisplayLabel } from '../utils/analyzerUtils';
+import { safeGaggiMateClient } from '../../../services/SafeGaggiMateClient.js';
 
 const HISTORY_NOTES_DEFAULTS = {
   id: '',
@@ -175,6 +176,7 @@ class LibraryService {
    */
   setApiService(apiService) {
     this.apiService = apiService;
+    safeGaggiMateClient.setApiService(apiService);
   }
 
   /**
@@ -280,19 +282,13 @@ class LibraryService {
    * @returns {Promise<Object[]>} List of GaggiMate profiles with source tag
    */
   async getGaggiMateProfiles() {
-    if (
-      !this.apiService ||
-      !this.apiService.socket ||
-      this.apiService.socket.readyState !== WebSocket.OPEN
-    ) {
+    if (!safeGaggiMateClient.isConnected()) {
       console.log('WebSocket not ready, skipping GM profiles');
       return [];
     }
 
     try {
-      const response = await this.apiService.request({
-        tp: 'req:profiles:list',
-      });
+      const response = await safeGaggiMateClient.listProfiles();
 
       if (!response.profiles) {
         return [];
@@ -423,18 +419,7 @@ class LibraryService {
    */
   async loadProfile(nameOrId, source) {
     if (source === 'gaggimate') {
-      if (
-        !this.apiService ||
-        !this.apiService.socket ||
-        this.apiService.socket.readyState !== WebSocket.OPEN
-      ) {
-        throw new Error('WebSocket not connected');
-      }
-
-      const response = await this.apiService.request({
-        tp: 'req:profiles:load',
-        id: nameOrId,
-      });
+      const response = await safeGaggiMateClient.loadProfile(nameOrId);
 
       if (!response.profile) {
         throw new Error(`Profile ${nameOrId} not found`);
@@ -527,8 +512,7 @@ class LibraryService {
    */
   async deleteShot(id, source) {
     if (source === 'gaggimate') {
-      if (!this.apiService) throw new Error('ApiService not set');
-      await this.apiService.request({ tp: 'req:history:delete', id });
+      await safeGaggiMateClient.deleteRemoteShot(id);
     } else {
       await indexedDBService.deleteShot(id);
       await indexedDBService.deleteNotes(String(id));
@@ -542,8 +526,7 @@ class LibraryService {
    */
   async deleteProfile(id, source) {
     if (source === 'gaggimate') {
-      if (!this.apiService) throw new Error('ApiService not set');
-      await this.apiService.request({ tp: 'req:profiles:delete', id });
+      await safeGaggiMateClient.deleteRemoteProfile(id);
     } else {
       await indexedDBService.deleteProfile(id);
     }
