@@ -1,3 +1,32 @@
+/*
+ * DEPRECATED ARCHITECTURE NOTICE
+ *
+ * This service represents an earlier localStorage-based cache concept.
+ *
+ * Current authoritative frontend persistence architecture:
+ *
+ * LibraryService
+ * ↓
+ * IndexedDBService
+ * ↓
+ * IndexedDB browser persistence
+ *
+ * GaggiGo now uses IndexedDB-first offline mirroring for:
+ * - profiles
+ * - shots
+ * - notes
+ * - statistics inputs
+ * - offline analysis
+ *
+ * This file remains temporarily for compatibility/reference only.
+ *
+ * Do NOT build new sync features or offline systems on this service.
+ *
+ * Future direction:
+ * - migrate any remaining usage to IndexedDBService/LibraryService
+ * - remove once no active imports remain
+ */
+
 const CACHE_PREFIX = 'gaggigo';
 const CACHE_VERSION = 1;
 
@@ -81,72 +110,5 @@ export default class LocalCacheService {
     };
 
     return writeJson(LocalCacheKeys.profileDrafts, nextDrafts);
-  }
-
-  getShotHistory() {
-    return readJson(LocalCacheKeys.shotHistory, {
-      updatedAt: null,
-      source: null,
-      items: [],
-    });
-  }
-
-  setShotHistory(items, source = 'gaggimate') {
-    return writeJson(LocalCacheKeys.shotHistory, {
-      updatedAt: nowIso(),
-      source,
-      items: Array.isArray(items) ? items : [],
-    });
-  }
-
-  getStatistics() {
-    return readJson(LocalCacheKeys.statistics, {
-      updatedAt: null,
-      source: null,
-      data: null,
-    });
-  }
-
-  setStatistics(data, source = 'gaggimate') {
-    return writeJson(LocalCacheKeys.statistics, {
-      updatedAt: nowIso(),
-      source,
-      data,
-    });
-  }
-
-  getSyncQueue() {
-    return readJson(LocalCacheKeys.syncQueue, {
-      updatedAt: null,
-      items: [],
-    });
-  }
-
-  enqueueSyncItem(item) {
-    if (!item) return this.getSyncQueue();
-
-    const queue = this.getSyncQueue();
-    const nextQueue = {
-      updatedAt: nowIso(),
-      items: [
-        ...queue.items,
-        {
-          ...item,
-          id: item.id || `sync-${Date.now()}`,
-          queuedAt: nowIso(),
-          status: 'pending',
-        },
-      ],
-    };
-
-    return writeJson(LocalCacheKeys.syncQueue, nextQueue);
-  }
-
-  clear() {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-
-    Object.values(LocalCacheKeys).forEach(name => {
-      window.localStorage.removeItem(cacheKey(name));
-    });
   }
 }
