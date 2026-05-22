@@ -33,6 +33,23 @@ function round2(v) {
   return Math.round((v + Number.EPSILON) * 100) / 100;
 }
 
+function isCachedGaggiMateSource(source) {
+  return source === GAGGIMATE_CACHE_SOURCE;
+}
+
+function isAnyGaggiMateSource(source) {
+  return source === 'gaggimate' || isCachedGaggiMateSource(source);
+}
+
+function getGaggiMateShotId(value) {
+  const raw = String(value?.gaggimateId || value?.id || value?.storageKey || value?.name || '').trim();
+  return raw.startsWith('gaggimate:') ? raw.replace(/^gaggimate:/, '') : raw;
+}
+
+function hasLoadedSamples(shot) {
+  return Array.isArray(shot?.samples) && shot.samples.length > 0;
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = GAGGIMATE_HTTP_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -237,6 +254,15 @@ class LibraryService {
   }
 
   /**
+   * Get cached GaggiMate shot mirrors from IndexedDB.
+   * @returns {Promise<Object[]>} List of cached GaggiMate shots
+   */
+  async getCachedGaggiMateShots() {
+    const browserShots = await this.getBrowserShots();
+    return browserShots.filter(shot => isCachedGaggiMateSource(shot.source));
+  }
+
+  /**
    * Get merged shot list from all sources
    * @param {string} sourceFilter - 'both', 'gaggimate', or 'browser'
    * @returns {Promise<Object[]>} Filtered and merged shot list
@@ -247,7 +273,9 @@ class LibraryService {
     if (sourceFilter === 'browser') {
       results = [await this.getBrowserShots()];
     } else if (sourceFilter === 'gaggimate') {
-      results = [await this.getGaggiMateShots()];
+      const cachedGaggiMateShots = await this.getCachedGaggiMateShots();
+      const gaggimateShots = await this.getGaggiMateShots();
+      results = [cachedGaggiMateShots, gaggimateShots];
     } else {
       const browserShots = await this.getBrowserShots();
       const gaggimateShots = await this.getGaggiMateShots();
@@ -260,7 +288,9 @@ class LibraryService {
     const deduped = new Map();
 
     merged.forEach(shot => {
-      const key = String(shot.gaggimateId || shot.id || shot.storageKey || shot.name || '');
+      const key = isAnyGaggiMateSource(shot.source)
+        ? getGaggiMateShotId(shot)
+        : String(shot.storageKey || shot.name || shot.id || '');
       const existing = deduped.get(key);
 
       if (!existing) {
@@ -372,13 +402,33 @@ class LibraryService {
   /**
    * Load full shot data
    * @param {string} id - Shot ID
-   * @param {string} source - 'gaggimate' or 'browser'
+   * @param {string} source - 'gaggimate', 'gaggimate-cache', or 'browser'
    * @returns {Promise<Object>} Full shot data with samples
    */
   async loadShot(id, source) {
     const idStr = String(id);
 
+    if (isCachedGaggiMateSource(source)) {
+      const shot = await indexedDBService.getShot(idStr);
+      if (!shot) {
+        throw new Error(`Cached GaggiMate shot ${idStr} not found in browser storage`);
+      }
+
+      shot.storageKey = shot.storageKey || shot.name || `gaggimate:${getGaggiMateShotId(shot) || idStr}`;
+      shot.source = GAGGIMATE_CACHE_SOURCE;
+      return shot;
+    }
+
     if (source === 'gaggimate') {
+      const cachedShot = await indexedDBService.getShot(idStr);
+      if (hasLoadedSamples(cachedShot)) {
+        return {
+          ...cachedShot,
+          source: GAGGIMATE_CACHE_SOURCE,
+          storageKey: cachedShot.storageKey || cachedShot.name || `gaggimate:${idStr}`,
+        };
+      }
+
       const paddedId = idStr.padStart(6, '0');
       const response = await fetchWithTimeout(`/api/history/${paddedId}.slog`, {}, 2500);
 
