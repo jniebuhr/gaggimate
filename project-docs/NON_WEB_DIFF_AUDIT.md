@@ -18,7 +18,120 @@ These are not part of the core GaggiGo frontend MVP story and must not be blindl
 
 ---
 
-## Non-Web Changed Areas
+## Classification Buckets
+
+```text
+A. Required for GaggiGo frontend data bridge
+B. General GaggiMate improvement
+C. Local machine/depatch compatibility
+D. Unrelated drift, should revert or separate
+E. Unknown, inspect before merge
+```
+
+---
+
+## Inspected Classifications
+
+### src/display/plugins/WebUIPlugin.cpp
+
+Classification:
+
+```text
+A/B — telemetry bridge / general GaggiMate telemetry improvement
+```
+
+Observed change:
+
+- adds scale battery telemetry to the existing websocket status payload when the connected scale reports a valid battery level.
+
+Why it matters:
+
+- useful to frontend telemetry display
+- compatible with observer/PWA direction
+- not machine control
+
+Merge-back note:
+
+- reasonable merge-back candidate as a standalone telemetry enhancement.
+
+---
+
+### src/display/plugins/BLEScalePlugin.cpp / BLEScalePlugin.h
+
+Classification:
+
+```text
+B — BLE scale metadata runtime improvement
+```
+
+Observed change:
+
+- exposes optional scale metadata such as battery, unit, flow rate, and timer where supported by the scale driver.
+- caches metadata to avoid repeated unchanged events.
+- adds unit/battery awareness around scale behaviour.
+
+Why it matters:
+
+- supports richer telemetry display
+- partly supports GaggiGo visibility goals
+- still belongs to runtime/peripheral code, not frontend-only work
+
+Merge-back note:
+
+- should be reviewed as a separate BLE scale enhancement PR/bucket.
+
+---
+
+### src/display/core/Settings.h / Settings.cpp
+
+Classification:
+
+```text
+B/C — runtime setting expansion, not required for frontend MVP
+```
+
+Observed change:
+
+- adds startup profile support.
+- adds configurable button behaviour storage/accessors.
+
+Why it matters:
+
+- changes machine/runtime configuration surface.
+- not required for GaggiGo offline/cache/sync work.
+
+Merge-back note:
+
+- should be separated from frontend/PWA merge unless explicitly needed by a runtime feature.
+
+---
+
+### src/display/core/Controller.cpp / Controller.h
+
+Classification:
+
+```text
+B/C — runtime control behaviour change, not frontend/PWA work
+```
+
+Observed change:
+
+- replaces fixed remote button callbacks with indexed configurable button behaviour.
+- routes configured button behaviours into brew/steam/water/profile handling.
+
+Why it matters:
+
+- this touches machine/runtime behaviour.
+- not a GaggiGo frontend change.
+
+Merge-back note:
+
+- must be reviewed separately as runtime feature work.
+- do not bundle with frontend/PWA merge.
+
+---
+
+## Still Needs Inspection
 
 ### GaggiMate Controller Library
 
@@ -28,12 +141,11 @@ lib/GaggiMateController/src/peripherals/DigitalInput.cpp
 lib/GaggiMateController/src/peripherals/DigitalInput.h
 ```
 
-Needs classification:
+Current classification:
 
-- intentional runtime improvement
-- local machine compatibility change
-- upstream/depatch drift
-- accidental unrelated change
+```text
+E — unknown, inspect before merge
+```
 
 ---
 
@@ -47,12 +159,11 @@ lib/NimBLEComm/src/NimBLEServerController.cpp
 lib/NimBLEComm/src/NimBLEServerController.h
 ```
 
-Needs classification:
+Current classification:
 
-- intentional BLE/runtime improvement
-- compatibility patch
-- depatch residue
-- unrelated to GaggiGo frontend MVP
+```text
+E — unknown, inspect before merge
+```
 
 ---
 
@@ -62,48 +173,26 @@ Needs classification:
 lib/OTA/src/ControllerOTA.cpp
 ```
 
-Needs classification:
+Current classification:
 
-- upstream-compatible fix
-- local patch
-- unrelated change
+```text
+E — unknown, inspect before merge
+```
 
 ---
 
-### Display/Core Runtime
+### Remaining Display/Core
 
 ```text
-src/display/core/Controller.cpp
-src/display/core/Controller.h
 src/display/core/ProfileManager.cpp
-src/display/core/Settings.cpp
-src/display/core/Settings.h
 src/display/core/predictive.h
 ```
 
-Needs classification:
-
-- required to expose data for GaggiGo
-- runtime/API contract improvement
-- accidental fork drift
-- local GaggiMate patch
-
----
-
-### Display Plugins
+Current classification:
 
 ```text
-src/display/plugins/BLEScalePlugin.cpp
-src/display/plugins/BLEScalePlugin.h
-src/display/plugins/WebUIPlugin.cpp
+E — unknown, inspect before merge
 ```
-
-Needs classification:
-
-- data/API bridge support
-- BLE/scale runtime change
-- unrelated local runtime work
-- merge-back candidate
 
 ---
 
@@ -118,22 +207,10 @@ Before a merge-back PR or upstream sync:
 
 ---
 
-## Recommended Classification Buckets
-
-Use these labels when reviewing each file:
-
-```text
-A. Required for GaggiGo frontend data bridge
-B. General GaggiMate improvement
-C. Local machine/depatch compatibility
-D. Unrelated drift, should revert or separate
-E. Unknown, inspect before merge
-```
-
----
-
 ## Current Status
 
-Classification is not complete.
+Partially classified.
 
-Do not start sync design until these files are reviewed or consciously deferred as separate from the frontend merge path.
+Known safe frontend/PWA work remains separate from runtime changes.
+
+Do not start sync design until remaining unknown non-web files are either inspected or consciously deferred as a separate runtime review bucket.
