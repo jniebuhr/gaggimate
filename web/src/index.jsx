@@ -12,6 +12,7 @@ import { Home } from './pages/Home/index.jsx';
 import { NotFound } from './pages/_404.jsx';
 import { Settings } from './pages/Settings/index.jsx';
 import ApiService, { ApiServiceContext } from './services/ApiService.js';
+import { refreshCoordinator } from './services/RefreshCoordinator.js';
 import { Navigation } from './components/Navigation.jsx';
 import { ProfileList } from './pages/ProfileList/index.jsx';
 import { ProfileEdit } from './pages/ProfileEdit/index.jsx';
@@ -20,6 +21,7 @@ import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
 import { StatisticsPage } from './pages/Statistics/index.jsx';
 
 const apiService = new ApiService();
+refreshCoordinator.start(apiService);
 
 export function App() {
   return (
