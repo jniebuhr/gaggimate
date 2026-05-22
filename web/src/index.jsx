@@ -28,12 +28,12 @@ const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
 
 function readInitialDesktopNavCollapsed() {
   const storage = globalThis.window?.localStorage;
-  if (!storage) return false;
+  if (!storage) return true;
 
   try {
     return storage.getItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY) === 'true';
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -89,7 +89,7 @@ export function App() {
             </div>
           </div>
           {navCollapsed && (
-            <div className='fab end-auto left-4 landscape:hidden md:hidden'>
+            <div className='fab end-auto left-4 md:hidden landscape:hidden'>
               <button
                 className='btn btn-lg btn-circle btn-primary'
                 onClick={() => setNavCollapsed(false)}

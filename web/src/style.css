@@ -452,3 +452,9 @@ html[data-theme='coffee'] {
     @apply bg-primary/10;
   }
 }
+
+@custom-variant hmd {
+  @media (min-height: 429px) {
+    @slot;
+  }
+}

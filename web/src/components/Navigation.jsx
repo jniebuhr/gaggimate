@@ -14,6 +14,7 @@ import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircle
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
+import { useCallback, useEffect } from 'preact/hooks';
 
 // List of random icons to display - add your icons here (SVG strings, text, or emojis)
 const RANDOM_ICONS = [
@@ -106,106 +107,125 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
 
 export function Navigation({ collapsed = false, onToggleCollapsed }) {
   const randomIcon = getRandomIcon();
+  const mdDown = window.innerWidth < 768;
+  const loc = useLocation();
+
+  useEffect(() => {
+    if (!collapsed && mdDown) {
+      onToggleCollapsed();
+    }
+  }, [loc.path]);
+
   return (
-    <aside
-      className={`sidebar fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-y-auto border-r border-gray-200 bg-white p-5 md:static landscape:static dark:border-gray-800 dark:bg-black ${collapsed ? 'hidden md:flex md:w-[90px] landscape:flex landscape:w-[90px]' : 'w-[290px]'}`}
-    >
-      <div className='flex h-full flex-col'>
-        <div>
-          <div
-            className={`align-center flex h-12 flex-row items-center justify-center gap-2 ${collapsed ? 'w-12' : 'w-full'}`}
-          >
-            <GmLogoIcon width={30} height={30} />
-            {collapsed ? null : (
-              <span className='text-base-content font-logo text-3xl font-light'>
-                <span className='font-semibold'>GAGGI</span>MATE
-              </span>
-            )}
-          </div>
-        </div>
-        {NAVIGATION_SECTIONS.map(section => (
-          <div key={section.id}>
-            {section.showDivider ? <hr className='h-5 border-0' /> : null}
-            <div className='space-y-1.5'>
-              {section.items.map(item => (
-                <MenuItem key={item.link} collapsed={collapsed} {...item} />
-              ))}
+    <>
+      {!collapsed && (
+        <div
+          className='fixed end-0 top-0 bottom-0 left-0 z-9998 cursor-pointer backdrop-blur-sm backdrop-brightness-50 md:hidden'
+          onClick={onToggleCollapsed}
+        ></div>
+      )}
+      <aside
+        className={`sidebar fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-y-auto border-r border-gray-200 bg-white p-5 md:static landscape:static dark:border-gray-800 dark:bg-black ${
+          collapsed ? 'hidden md:flex md:w-[90px] landscape:flex landscape:w-[90px]' : 'w-[290px]'
+        }`}
+      >
+        <div className='flex h-full flex-col'>
+          <div>
+            <div
+              className={`align-center flex h-12 flex-row items-center justify-center gap-2 ${collapsed ? 'w-12' : 'w-full'}`}
+            >
+              <GmLogoIcon width={30} height={30} />
+              {collapsed ? null : (
+                <span className='text-base-content font-logo text-3xl font-light'>
+                  <span className='font-semibold'>GAGGI</span>MATE
+                </span>
+              )}
             </div>
           </div>
-        ))}
-
-        <div className='flex-grow'>&nbsp;</div>
-
-        {!collapsed && (
-          <>
-            <div className='flex flex-row items-center justify-center gap-2'>
-              <div className='relative inline-block'>
-                <a
-                  aria-label='github'
-                  rel='noopener noreferrer'
-                  href='https://github.com/jniebuhr/gaggimate'
-                  target='_blank'
-                  className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
-                >
-                  <FontAwesomeIcon icon={faGithub} className='text-lg' />
-                </a>
-              </div>
-
-              <div className='relative inline-block'>
-                <a
-                  aria-label='discord'
-                  rel='noopener noreferrer'
-                  href='https://discord.gaggimate.eu/'
-                  target='_blank'
-                  className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
-                >
-                  <FontAwesomeIcon icon={faDiscord} className='text-lg' />
-                </a>
+          {NAVIGATION_SECTIONS.map(section => (
+            <div key={section.id}>
+              {section.showDivider ? <hr className='h-5 border-0' /> : null}
+              <div className='space-y-1.5'>
+                {section.items.map(item => (
+                  <MenuItem key={item.link} collapsed={collapsed} {...item} />
+                ))}
               </div>
             </div>
-            <div className='my-5 text-center'>
-              <span>Crafted with</span>
-              <span className='mx-1'>{randomIcon}</span>
-              <span>
-                {' '}
-                in Italy by&nbsp;
-                <a
-                  className='text-primary hover:text-primary/80 font-medium transition'
-                  href='https://gaggimate.eu'
-                  target='_blank'
-                  rel='noreferrer'
-                >
-                  Caffinnova S.r.l.
-                </a>
-              </span>
-            </div>
-          </>
-        )}
+          ))}
 
-        <div>
-          <button
-            type='button'
-            onClick={onToggleCollapsed}
-            className={
-              collapsed
-                ? 'btn btn-square btn-md text-base-content hover:bg-base-content/10 hover:text-base-content h-12 min-h-0 w-12 min-w-0 rounded-xl border-none bg-transparent px-0'
-                : 'btn btn-md text-base-content hover:text-base-content hover:bg-base-content/10 h-12 w-full justify-start gap-3 border-none bg-transparent px-2'
-            }
-            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-            title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-          >
-            <FontAwesomeIcon
-              size='md'
-              icon={collapsed ? faCircleChevronRight : faCircleChevronLeft}
-            />
-            {!collapsed ? (
-              <div className='indicator'>
-                <span>Collapse</span>
+          <div className='flex-grow'>&nbsp;</div>
+
+          {!collapsed && (
+            <>
+              <div className='flex flex-row items-center justify-center gap-2'>
+                <div className='relative inline-block'>
+                  <a
+                    aria-label='github'
+                    rel='noopener noreferrer'
+                    href='https://github.com/jniebuhr/gaggimate'
+                    target='_blank'
+                    className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
+                  >
+                    <FontAwesomeIcon icon={faGithub} className='text-lg' />
+                  </a>
+                </div>
+
+                <div className='relative inline-block'>
+                  <a
+                    aria-label='discord'
+                    rel='noopener noreferrer'
+                    href='https://discord.gaggimate.eu/'
+                    target='_blank'
+                    className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
+                  >
+                    <FontAwesomeIcon icon={faDiscord} className='text-lg' />
+                  </a>
+                </div>
               </div>
-            ) : null}
-          </button>
+              <div className='my-5 text-center'>
+                <span>Crafted with</span>
+                <span className='mx-1'>{randomIcon}</span>
+                <span>
+                  {' '}
+                  in Italy by&nbsp;
+                  <a
+                    className='text-primary hover:text-primary/80 font-medium transition'
+                    href='https://gaggimate.eu'
+                    target='_blank'
+                    rel='noreferrer'
+                  >
+                    Caffinnova S.r.l.
+                  </a>
+                </span>
+              </div>
+            </>
+          )}
+
+          <div>
+            <button
+              type='button'
+              onClick={onToggleCollapsed}
+              className={
+                collapsed
+                  ? 'btn btn-square btn-md text-base-content hover:bg-base-content/10 hover:text-base-content h-12 min-h-0 w-12 min-w-0 rounded-xl border-none bg-transparent px-0'
+                  : 'btn btn-md text-base-content hover:text-base-content hover:bg-base-content/10 h-12 w-full justify-start gap-3 border-none bg-transparent px-2'
+              }
+              aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+              title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+            >
+              <FontAwesomeIcon
+                size='md'
+                icon={collapsed ? faCircleChevronRight : faCircleChevronLeft}
+              />
+              {!collapsed ? (
+                <div className='indicator'>
+                  <span>Collapse</span>
+                </div>
+              ) : null}
+            </button>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
