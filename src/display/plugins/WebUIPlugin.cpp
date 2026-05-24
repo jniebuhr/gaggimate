@@ -8,8 +8,31 @@
 #include <display/models/profile.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
+#include <esp_heap_caps.h>
 #include <esp_partition.h>
 #include <esp_system.h>
+
+// Allocator that backs ArduinoJson with PSRAM when available, falling back to
+// internal heap if PSRAM is full or unavailable. The profile-list response
+// (~20-60 KB for many profiles) used to allocate its node pool from internal
+// heap, contributing significantly to the 33%+ heap fragmentation the device
+// reports. ESP32-S3 boards in this project have 8 MB PSRAM that is otherwise
+// almost idle.
+struct PsramAllocator : ArduinoJson::Allocator {
+    void *allocate(size_t size) override {
+        void *p = heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (!p) p = heap_caps_malloc(size, MALLOC_CAP_DEFAULT);
+        return p;
+    }
+    void deallocate(void *pointer) override { heap_caps_free(pointer); }
+    void *reallocate(void *ptr, size_t new_size) override {
+        void *p = heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (!p) p = heap_caps_realloc(ptr, new_size, MALLOC_CAP_DEFAULT);
+        return p;
+    }
+};
+
+static PsramAllocator psramAllocator;
 
 #include <SD_MMC.h>
 #include <algorithm>
@@ -88,41 +111,41 @@ void WebUIPlugin::loop() {
     }
     if (now > lastStatus + STATUS_PERIOD && !ws.getClients().empty()) {
         lastStatus = now;
-        JsonDocument doc;
-        doc["tp"] = "evt:status";
-        doc["ct"] = controller->getCurrentTemp();
-        doc["tt"] = controller->getTargetTemp();
-        doc["pr"] = controller->getCurrentPressure();
-        doc["fl"] = controller->getCurrentPumpFlow();
-        doc["pt"] = controller->getTargetPressure();
-        doc["m"] = controller->getMode();
-        doc["p"] = controller->getProfileManager()->getSelectedProfile().label;
-        doc["puid"] = controller->getProfileManager()->getSelectedProfile().id;
-        doc["cp"] = controller->getSystemInfo().capabilities.pressure;
-        doc["cd"] = controller->getSystemInfo().capabilities.dimming;
-        doc["tw"] = profileManager->getSelectedProfile().getTotalVolume(); // total target weight for the process
-        doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
-        doc["bt"] =
+        statusDoc.clear();
+        statusDoc["tp"] = "evt:status";
+        statusDoc["ct"] = controller->getCurrentTemp();
+        statusDoc["tt"] = controller->getTargetTemp();
+        statusDoc["pr"] = controller->getCurrentPressure();
+        statusDoc["fl"] = controller->getCurrentPumpFlow();
+        statusDoc["pt"] = controller->getTargetPressure();
+        statusDoc["m"] = controller->getMode();
+        statusDoc["p"] = controller->getProfileManager()->getSelectedProfile().label;
+        statusDoc["puid"] = controller->getProfileManager()->getSelectedProfile().id;
+        statusDoc["cp"] = controller->getSystemInfo().capabilities.pressure;
+        statusDoc["cd"] = controller->getSystemInfo().capabilities.dimming;
+        statusDoc["tw"] = profileManager->getSelectedProfile().getTotalVolume(); // total target weight for the process
+        statusDoc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
+        statusDoc["bt"] =
             controller->isVolumetricAvailable() && controller->getProfileManager()->getSelectedProfile().isVolumetric() ? 1 : 0;
-        doc["btd"] = profileManager->getSelectedProfile().getTotalDuration();
-        doc["led"] = controller->getSystemInfo().capabilities.ledControl;
-        doc["gtd"] = controller->getTargetGrindDuration();
-        doc["gtv"] = controller->getSettings().getTargetGrindVolume();
-        doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
-        doc["gact"] = controller->isGrindActive() ? 1 : 0;
-        doc["wl"] = controller->getWaterLevel();
-        doc["tof"] = controller->getTofDistance();
-        doc["rssi"] = 0;
+        statusDoc["btd"] = profileManager->getSelectedProfile().getTotalDuration();
+        statusDoc["led"] = controller->getSystemInfo().capabilities.ledControl;
+        statusDoc["gtd"] = controller->getTargetGrindDuration();
+        statusDoc["gtv"] = controller->getSettings().getTargetGrindVolume();
+        statusDoc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
+        statusDoc["gact"] = controller->isGrindActive() ? 1 : 0;
+        statusDoc["wl"] = controller->getWaterLevel();
+        statusDoc["tof"] = controller->getTofDistance();
+        statusDoc["rssi"] = 0;
 
         if (controller->getClientController()->getClient()->isConnected()) {
-            doc["rssi"] = controller->getClientController()->getClient()->getRssi();
+            statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
         }
 
         bool bleConnected = BLEScales.isConnected();
         // Add Bluetooth scale weight information
-        doc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
-        doc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
-        doc["bc"] = bleConnected;                                    // bluetooth scale connected status
+        statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
+        statusDoc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
+        statusDoc["bc"] = bleConnected;                                    // bluetooth scale connected status
         // Scale battery — only surfaced when the driver reports one and the
         // value isn't the UNKNOWN sentinel (255). UI omits the battery pill
         // entirely when `sbat` is absent, so disconnected/unknown scales don't
@@ -130,7 +153,7 @@ void WebUIPlugin::loop() {
         if (bleConnected && BLEScales.hasBatteryLevel()) {
             const uint8_t pct = BLEScales.getBatteryLevel();
             if (pct != REMOTE_SCALES_BATTERY_UNKNOWN) {
-                doc["sbat"] = pct;
+                statusDoc["sbat"] = pct;
             }
         }
 
@@ -139,7 +162,7 @@ void WebUIPlugin::loop() {
             process = controller->getLastProcess();
         }
         if (process != nullptr) {
-            auto pObj = doc["process"].to<JsonObject>();
+            auto pObj = statusDoc["process"].to<JsonObject>();
             pObj["a"] = controller->isActive() ? 1 : 0;
             if (process->getType() == MODE_BREW) {
                 auto *brew = static_cast<BrewProcess *>(process);
@@ -176,7 +199,7 @@ void WebUIPlugin::loop() {
             }
         }
 
-        ws.textAll(doc.as<String>());
+        ws.textAll(statusDoc.as<String>());
     }
     if (now > lastCleanup + CLEANUP_PERIOD) {
         lastCleanup = now;
@@ -237,7 +260,12 @@ void WebUIPlugin::setupServer() {
     ws.onEvent(
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
             if (type == WS_EVT_CONNECT) {
-                client->setCloseClientOnQueueFull(true);
+                // Drop individual messages instead of force-closing the
+                // connection when the per-client queue overflows. Status
+                // broadcasts at 500ms can back up during slow disk I/O
+                // (e.g. flaky SD reads) — losing one tick is preferable to
+                // disconnecting the user mid-action.
+                client->setCloseClientOnQueueFull(false);
                 ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DISCONNECT) {
                 ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
@@ -403,7 +431,9 @@ void WebUIPlugin::handleAutotuneStart(uint32_t clientId, JsonDocument &request) 
 }
 
 void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request) {
-    JsonDocument response;
+    // Allocate the response node pool from PSRAM — list responses can be tens
+    // of KB and would otherwise fragment the ~300 KB internal heap.
+    JsonDocument response(&psramAllocator);
     auto type = request["tp"].as<String>();
     ESP_LOGI("WebUIPlugin", "Handling request: %s", type.c_str());
     response["tp"] = String("res:") + type.substring(4);
@@ -413,7 +443,14 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
         auto arr = response["profiles"].to<JsonArray>();
         for (auto const &id : profileManager->listProfiles()) {
             Profile profile{};
-            profileManager->loadProfile(id, profile);
+            // Skip entries whose JSON couldn't be opened or failed validation
+            // (parseProfile returns false for missing label/type/phases). Without
+            // this, corrupt or partial profile files surface as blank cards in
+            // the UI — the user reported "blank Simple cards" originating here.
+            if (!profileManager->loadProfile(id, profile)) {
+                ESP_LOGW("WebUIPlugin", "Skipping unreadable profile %s in list response", id.c_str());
+                continue;
+            }
             auto p = arr.add<JsonObject>();
             if (request["minimal"].as<bool>()) {
                 p["id"] = profile.id;
@@ -825,7 +862,7 @@ void WebUIPlugin::sendAutotuneResult() {
 void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
     controller->onFlush();
 
-    JsonDocument response;
+    JsonDocument response(&psramAllocator);
     response["tp"] = "res:flush:start";
     response["rid"] = request["rid"];
     response["success"] = true;
