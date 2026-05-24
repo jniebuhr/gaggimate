@@ -1,27 +1,38 @@
-import 'preact/debug';
-
 import './style.css';
 import { initializeTheme } from './utils/themeManager.js';
+
+if (import.meta.env.DEV) {
+  // Dev-only Preact warnings; stripped from production builds.
+  import('preact/debug');
+}
 
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
+import lazy from 'preact-iso/lazy';
 
-import { Home } from './pages/Home/index.jsx';
-import { NotFound } from './pages/_404.jsx';
-import { Settings } from './pages/Settings/index.jsx';
-import { OTA } from './pages/OTA/index.jsx';
-import { Scales } from './pages/Scales/index.jsx';
 import ApiService, { ApiServiceContext } from './services/ApiService.js';
 import { Navigation } from './components/Navigation.jsx';
-import { ProfileList } from './pages/ProfileList/index.jsx';
-import { ProfileEdit } from './pages/ProfileEdit/index.jsx';
-import { Autotune } from './pages/Autotune/index.jsx';
-import { ShotHistory } from './pages/ShotHistory/index.jsx';
-import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
-import { StatisticsPage } from './pages/Statistics/index.jsx';
+import { Spinner } from './components/Spinner.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
+
+// Each page lazy-loads as its own Vite chunk so the initial bundle stays small.
+// Chart.js, FontAwesome icon sets, and the analyzer/statistics views are too
+// large to ship up-front on the ESP32's slow WiFi pipe.
+const Home = lazy(() => import('./pages/Home/index.jsx').then(m => m.Home));
+const NotFound = lazy(() => import('./pages/_404.jsx').then(m => m.NotFound));
+const Settings = lazy(() => import('./pages/Settings/index.jsx').then(m => m.Settings));
+const OTA = lazy(() => import('./pages/OTA/index.jsx').then(m => m.OTA));
+const Scales = lazy(() => import('./pages/Scales/index.jsx').then(m => m.Scales));
+const ProfileList = lazy(() => import('./pages/ProfileList/index.jsx').then(m => m.ProfileList));
+const ProfileEdit = lazy(() => import('./pages/ProfileEdit/index.jsx').then(m => m.ProfileEdit));
+const Autotune = lazy(() => import('./pages/Autotune/index.jsx').then(m => m.Autotune));
+const ShotHistory = lazy(() => import('./pages/ShotHistory/index.jsx').then(m => m.ShotHistory));
+const ShotAnalyzer = lazy(() => import('./pages/ShotAnalyzer/index.jsx').then(m => m.ShotAnalyzer));
+const StatisticsPage = lazy(() =>
+  import('./pages/Statistics/index.jsx').then(m => m.StatisticsPage),
+);
 
 const apiService = new ApiService();
 const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
@@ -35,6 +46,14 @@ function readInitialDesktopNavCollapsed() {
   } catch {
     return true;
   }
+}
+
+function RouteFallback() {
+  return (
+    <div className='flex w-full flex-row items-center justify-center py-16'>
+      <Spinner size={8} />
+    </div>
+  );
 }
 
 export function App() {
