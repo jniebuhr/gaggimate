@@ -129,7 +129,9 @@ function ProfileCard({
     ? data.phases.reduce((sum, p) => sum + (Number.isFinite(p?.duration) ? p.duration : 0), 0)
     : 0;
 
-  // Popover (mobile actions) state and positioning
+  // Mobile actions menu — state-driven (was using the Popover API which isn't
+  // supported in Safari <17 / Firefox <125, leaving the menu broken on most
+  // iPads and many phones).
   const kebabRef = useRef(null);
   const popoverRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -139,85 +141,62 @@ function ProfileCard({
     const pop = popoverRef.current;
     if (!btn || !pop) return;
     const rect = btn.getBoundingClientRect();
-    // Ensure width is measured: temporarily show if needed
-    if (!pop.matches(':popover-open')) {
-      try {
-        pop.showPopover();
-      } catch (_) {}
-    }
-    // Measure size
     const w = pop.offsetWidth || 224; // ~w-56
     const h = pop.offsetHeight || 0;
-    // Preferred to the right-end of button, below it
     const gap = 6;
     let top = rect.bottom + gap;
-    let left = rect.right - w; // right align
-    // Clamp within viewport with small margin
+    let left = rect.right - w; // right-aligned to the button
     const margin = 8;
     if (left < margin) left = margin;
     const maxLeft = window.innerWidth - w - margin;
     if (left > maxLeft) left = maxLeft;
     const maxTop = window.innerHeight - h - margin;
     if (top > maxTop) top = Math.max(margin, rect.top - h - gap);
-
     pop.style.position = 'fixed';
     pop.style.inset = 'auto auto auto auto';
     pop.style.left = `${left}px`;
     pop.style.top = `${top}px`;
   }, []);
 
-  const closeMenu = useCallback(() => {
-    const pop = popoverRef.current;
-    if (pop && pop.matches(':popover-open')) {
-      try {
-        pop.hidePopover();
-      } catch (_) {}
-    }
-    setMenuOpen(false);
-  }, []);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   const toggleMenu = useCallback(
     e => {
       e?.preventDefault?.();
-      const pop = popoverRef.current;
-      if (!pop) return;
-      if (pop.matches(':popover-open')) {
-        closeMenu();
-      } else {
-        positionPopover();
-        try {
-          pop.showPopover();
-          setMenuOpen(true);
-        } catch (_) {}
-      }
+      setMenuOpen(v => !v);
     },
-    [closeMenu, positionPopover],
+    [],
   );
 
   useEffect(() => {
-    const pop = popoverRef.current;
-    if (!pop) return;
-
-    const onToggle = () => {
-      const isOpen = pop.matches(':popover-open');
-      setMenuOpen(isOpen);
-      if (isOpen) positionPopover();
+    if (!menuOpen) return;
+    // Position now (DOM is mounted because the conditional render put the div
+    // in the tree this tick) and then re-position on resize/scroll.
+    positionPopover();
+    const onResize = () => positionPopover();
+    const onDocClick = e => {
+      const pop = popoverRef.current;
+      const btn = kebabRef.current;
+      if (!pop || !btn) return;
+      if (pop.contains(e.target) || btn.contains(e.target)) return;
+      setMenuOpen(false);
     };
-
-    const onResize = () => {
-      if (pop.matches(':popover-open')) positionPopover();
+    const onKey = e => {
+      if (e.key === 'Escape') setMenuOpen(false);
     };
-
-    pop.addEventListener('toggle', onToggle);
     window.addEventListener('resize', onResize);
     window.addEventListener('scroll', onResize, true);
-
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('touchstart', onDocClick, { passive: true });
+    document.addEventListener('keydown', onKey);
     return () => {
-      pop.removeEventListener('toggle', onToggle);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onResize, true);
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('touchstart', onDocClick);
+      document.removeEventListener('keydown', onKey);
     };
-  }, [positionPopover]);
+  }, [menuOpen, positionPopover]);
 
   return (
     <Card sm={12} role='listitem' className='profile-card-container mb-2'>
@@ -288,10 +267,10 @@ function ProfileCard({
                   >
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </button>
+                  {menuOpen && (
                   <div
                     id={`profile-${data.id}-menu`}
                     ref={popoverRef}
-                    popover='auto'
                     role='menu'
                     className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
                     onKeyDown={e => {
@@ -393,6 +372,7 @@ function ProfileCard({
                       </li>
                     </ul>
                   </div>
+                  )}
                 </div>
 
                 {/* Desktop: inline actions */}
@@ -486,10 +466,10 @@ function ProfileCard({
                     {totalDurationSeconds}s
                   </span>
                   {data.phases.length > 0 &&
-                    data.phases.at(-1)?.targets?.some(target => target.type === 'volumetric') && (
+                    data.phases[data.phases.length - 1]?.targets?.some(t => t.type === 'volumetric') && (
                       <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
                         <FontAwesomeIcon icon={faScaleBalanced} />
-                        {`${data.phases.at(-1).targets.find(target => target.type === 'volumetric').value}g`}
+                        {`${data.phases[data.phases.length - 1].targets.find(t => t.type === 'volumetric').value}g`}
                       </span>
                     )}
                   {data.phases.length > 0 && (

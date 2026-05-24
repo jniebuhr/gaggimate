@@ -23,6 +23,19 @@
       rel="stylesheet"
     />
     <title>Gaggimate Web UI</title>
+    <script>
+      // Apply the saved theme synchronously before any module loads, so we
+      // never flash the default-light theme on a fresh page load.
+      (function () {
+        try {
+          var key = 'gaggimate-daisyui-theme';
+          var allowed = ['light', 'dark', 'coffee', 'nord'];
+          var saved = localStorage.getItem(key);
+          var theme = allowed.indexOf(saved) >= 0 ? saved : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-base-100">
     <div id="app"></div>
