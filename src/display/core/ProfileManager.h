@@ -33,7 +33,7 @@ class ProfileManager {
     String _dir;
     bool ensureDirectory() const;
     String profilePath(const String &uuid) const;
-    void migrate();
+    void migrate(const std::vector<String> &existingProfiles);
 };
 
 #endif // PROFILEMANAGER_H

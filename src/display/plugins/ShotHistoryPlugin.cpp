@@ -472,9 +472,11 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
                         }
                     }
                 }
+                file.close();
                 file = root.openNextFile();
             }
         }
+        if (root) root.close();
     } else if (type == "req:history:get") {
         // Return error: binary must be fetched via HTTP endpoint
         response["error"] = "use HTTP /api/history?id=<id>";
@@ -785,6 +787,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     File directory = fs->open("/h");
     if (!directory || !directory.isDirectory()) {
         ESP_LOGW("ShotHistoryPlugin", "No history directory found");
+        if (directory) directory.close();
         // Emit completion event even if no directory exists
         if (pluginManager) {
             Event completedEvent;
@@ -805,6 +808,7 @@ void ShotHistoryPlugin::rebuildIndex() {
         if (fname.endsWith(".slog")) {
             slogFiles.push_back(fname);
         }
+        file.close();
         file = directory.openNextFile();
     }
     directory.close();
