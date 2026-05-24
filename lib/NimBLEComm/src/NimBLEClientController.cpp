@@ -26,11 +26,17 @@ void NimBLEClientController::scan() {
     readyForConnection = false;
     scanner->clearDuplicateCache();
     scanner->setAdvertisedDeviceCallbacks(this, true);
-    scanner->setInterval(2000);
-    scanner->setWindow(100);
+    // BLE and WiFi share the single 2.4 GHz radio on ESP32-S3. The previous
+    // settings (100ms window every 2s, ACTIVE scan with TX scan-requests) held
+    // the radio long enough to spike WiFi RTT into the 200–700 ms range,
+    // making the web UI feel unresponsive. Drop to 1.25% duty (50 / 4000) and
+    // passive scan (listen-only, no TX). BLE discovery is still functional —
+    // just slightly slower — and WiFi gets the radio back.
+    scanner->setInterval(4000);
+    scanner->setWindow(50);
     scanner->setMaxResults(0);
     scanner->setDuplicateFilter(false);
-    scanner->setActiveScan(true);
+    scanner->setActiveScan(false);
     scanner->start(0, nullptr, false); // Set to 0 for continuous
 }
 
