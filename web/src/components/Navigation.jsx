@@ -14,7 +14,7 @@ import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircle
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
-import { useCallback, useEffect } from 'preact/hooks';
+import { useCallback, useEffect, useMemo } from 'preact/hooks';
 
 // List of random icons to display - add your icons here (SVG strings, text, or emojis)
 const RANDOM_ICONS = [
@@ -106,15 +106,18 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
 }
 
 export function Navigation({ collapsed = false, onToggleCollapsed }) {
-  const randomIcon = getRandomIcon();
-  const mdDown = window.innerWidth < 768;
+  // Compute the icon once per mount so the avatar doesn't reshuffle on every render.
+  const randomIcon = useMemo(() => getRandomIcon(), []);
   const loc = useLocation();
 
   useEffect(() => {
-    if (!collapsed && mdDown) {
+    // Re-check viewport width INSIDE the effect (was captured once at module
+    // init, so iPad orientation changes were ignored).
+    const isMdDown = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (!collapsed && isMdDown) {
       onToggleCollapsed();
     }
-  }, [loc.path]);
+  }, [loc.path, collapsed, onToggleCollapsed]);
 
   return (
     <>
