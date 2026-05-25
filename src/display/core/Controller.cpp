@@ -196,8 +196,8 @@ void Controller::setupBluetooth() {
         ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
         // Guard: older controller firmware could emit zero/NaN gains (#672
         // class). Reject — keep existing PID, surface as "Autotune Failed".
-        if (!std::isfinite(Kp) || !std::isfinite(Ki) || !std::isfinite(Kd) || !std::isfinite(Kf) ||
-            Kp <= 0.0f || (Kp + Ki + Kd) <= 0.0f) {
+        if (!std::isfinite(Kp) || !std::isfinite(Ki) || !std::isfinite(Kd) || !std::isfinite(Kf) || Kp <= 0.0f ||
+            (Kp + Ki + Kd) <= 0.0f) {
             ESP_LOGW(LOG_TAG, "Rejecting autotune result: invalid gains, preserving existing PID");
             autotuning = false;
             pluginManager->trigger("controller:autotune:failed");

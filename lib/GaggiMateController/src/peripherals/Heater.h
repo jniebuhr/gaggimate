@@ -22,8 +22,7 @@ using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd, f
 class Heater {
   public:
     Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
-           const pid_result_callback_t &pid_callback,
-           const heater_autotune_fail_callback_t &autotune_fail_callback = nullptr);
+           const pid_result_callback_t &pid_callback, const heater_autotune_fail_callback_t &autotune_fail_callback = nullptr);
     void setup();
     void loop();
 

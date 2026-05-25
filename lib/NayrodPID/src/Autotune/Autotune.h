@@ -103,8 +103,8 @@ class Autotune {
 
     // ------------------- State machine flags and moments --------------------
 
-    float initialTemp = 0.0f;    // first temp sample this test
-    float initialSlope = 0.0f;   // noise-floor slope at step time
+    float initialTemp = 0.0f;  // first temp sample this test
+    float initialSlope = 0.0f; // noise-floor slope at step time
 
     unsigned int currentConfirmations = 0;
     bool reactionDetected = false;
