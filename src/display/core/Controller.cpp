@@ -168,6 +168,7 @@ void Controller::setupBluetooth() {
             return;
         }
         if (behavior == "water") {
+            handleWaterButton(status);
             return;
         }
         handleProfileButton(status, behavior);
@@ -758,7 +759,6 @@ void Controller::onVolumetricDelete() {
 }
 
 void Controller::handleBrewButton(int brewButtonStatus) {
-    printf("current screen %d, brew button %d\n", getMode(), brewButtonStatus);
     if (brewButtonStatus) {
         switch (getMode()) {
         case MODE_STANDBY:
@@ -798,21 +798,30 @@ void Controller::handleBrewButton(int brewButtonStatus) {
 }
 
 void Controller::handleSteamButton(int steamButtonStatus) {
-    printf("current screen %d, steam button %d\n", getMode(), steamButtonStatus);
     if (steamButtonStatus) {
-        switch (getMode()) {
-        case MODE_STANDBY:
+        if (getMode() != MODE_STEAM) {
             setMode(MODE_STEAM);
-            break;
-        case MODE_BREW:
-            setMode(MODE_STEAM);
-            break;
-        default:
-            break;
         }
     } else if (!settings.isMomentaryButtons() && getMode() == MODE_STEAM) {
         deactivate();
         setMode(MODE_BREW);
+    }
+}
+
+void Controller::handleWaterButton(int buttonStatus) {
+    if (buttonStatus) {
+        switch (getMode()) {
+        case MODE_WATER:
+            if (!isActive()) {
+                activate();
+            }
+            break;
+        default:
+            setMode(MODE_WATER);
+            break;
+        }
+    } else if (!settings.isMomentaryButtons() && getMode() == MODE_WATER && isActive()) {
+        deactivate();
     }
 }
 

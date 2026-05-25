@@ -123,6 +123,7 @@ class Controller {
 
     void handleBrewButton(int brewButtonStatus);
     void handleSteamButton(int steamButtonStatus);
+    void handleWaterButton(int buttonStatus);
     void handleProfileButton(int buttonStatus, String id);
     void handleProfileUpdate();
 
