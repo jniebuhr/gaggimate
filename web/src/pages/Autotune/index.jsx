@@ -170,9 +170,9 @@ export function Autotune() {
                     placeholder='680'
                   />
                   <div className='mb-2 text-xs opacity-70'>
-                    Boiler heating element wattage. Defaults: Gaggia Classic Pro 2019 / E24 = 680 W
-                    (230 V) or 570 W (120 V); Rancilio Silvia ≈ 1100 W. Used to derive Thermal
-                    Feedforward Gain after autotune completes.
+                    Boiler heating element wattage. Defaults: Gaggia Classic Pro 2019 / E24 = 1370
+                    W; Rancilio Silvia ≈ 1100 W. Used to derive Thermal Feedforward Gain after
+                    autotune completes.
                   </div>
                 </div>
               </div>

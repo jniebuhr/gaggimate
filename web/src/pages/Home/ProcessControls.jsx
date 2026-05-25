@@ -379,7 +379,7 @@ const ProcessControls = props => {
 
       {shouldExpand && (
         <>
-          <div className='flex flex-1 items-center justify-center '>
+          <div className='flex flex-1 items-center justify-center'>
             {(active || finished) && brew && <BrewProgress processInfo={processInfo} />}
             {(active || finished) && grind && showGrindTab && (
               <GrindProgress processInfo={processInfo} />
@@ -443,7 +443,7 @@ const ProcessControls = props => {
         </div>
       )}
 
-      <div className='flex flex-col items-center gap-4  py-1'>
+      <div className='flex flex-col items-center gap-4 py-1'>
         {grind &&
           showGrindTab &&
           !active &&
