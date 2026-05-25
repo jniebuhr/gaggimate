@@ -39,8 +39,8 @@ void GaggiMateController::setup() {
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
-    this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBrewBtnState(state); });
-    this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendSteamBtnState(state); });
+    this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBtnState(0, state); });
+    this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendBtnState(1, state); });
 
     // 4-Pin peripheral port
     if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {

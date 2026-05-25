@@ -13,9 +13,8 @@
 #define AUTOTUNE_RESULT_UUID "7f61607a-2817-4354-9b94-d49c057fc879"
 #define PID_CONTROL_CHAR_UUID "d448c469-3e1d-4105-b5b8-75bf7d492fad"
 #define PUMP_MODEL_COEFFS_CHAR_UUID "e448c469-3e1d-4105-b5b8-75bf7d492fae"
-#define BREW_BTN_UUID "a29eb137-b33e-45a4-b1fc-15eb04e8ab39"
-#define STEAM_BTN_UUID "53750675-4839-421e-971e-cc6823507d8e"
 #define INFO_UUID "f8d7203b-e00c-48e2-83ba-37ff49cdba74"
+#define BTN_UUID "d38a5efc-189e-4199-8105-1d94b94253fc"
 
 #define PRESSURE_SCALE_UUID "3aa65ab6-2dda-4c95-9cf3-58b2a0480623"
 #define SENSOR_DATA_UUID "62b69e72-ac19-4d4b-bd53-2edd65330c93"
@@ -46,13 +45,12 @@ using remote_err_callback_t = std::function<void(int errorCode)>;
 // Optional 3rd field on AUTOTUNE_CHAR_UUID payload — older display firmware
 // sends only "testTime,samples" and the parser defaults wattage to 0.
 using autotune_callback_t = std::function<void(int testTime, int samples, int heaterWattage)>;
-using brew_callback_t = std::function<void(bool brewButtonStatus)>;
-using steam_callback_t = std::function<void(bool steamButtonStatus)>;
 using void_callback_t = std::function<void()>;
 
 // New combined callbacks
 using float_callback_t = std::function<void(float val)>;
 using int_callback_t = std::function<void(int val)>;
+using button_callback_t = std::function<void(uint8_t index, bool val)>;
 using simple_output_callback_t = std::function<void(bool valve, float pumpSetpoint, float boilerSetpoint)>;
 using advanced_output_callback_t =
     std::function<void(bool valve, float boilerSetpoint, bool pressureTarget, float pumpPressure, float pumpFlow)>;

@@ -44,11 +44,8 @@ void NimBLEServerController::initServer(const String infoString) {
     autotuneChar->setCallbacks(this); // Use this class as the callback handler
     autotuneResultChar = pService->createCharacteristic(AUTOTUNE_RESULT_UUID, NIMBLE_PROPERTY::NOTIFY);
 
-    // Brew button Characteristic (Server notifies client of brew button)
-    brewBtnChar = pService->createCharacteristic(BREW_BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
-
-    // Steam button Characteristic (Server notifies client of steam button)
-    steamBtnChar = pService->createCharacteristic(STEAM_BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
+    // Brew button Characteristic (Server notifies client of button changes)
+    btnChar = pService->createCharacteristic(BTN_UUID, NIMBLE_PROPERTY::NOTIFY);
 
     infoChar = pService->createCharacteristic(INFO_UUID, NIMBLE_PROPERTY::READ);
     setInfo(infoString);
@@ -106,21 +103,12 @@ void NimBLEServerController::sendError(int errorCode) {
     }
 }
 
-void NimBLEServerController::sendBrewBtnState(bool brewButtonStatus) {
+void NimBLEServerController::sendBtnState(uint8_t index, bool status) {
     if (deviceConnected) {
         // Send brew notification to the client
-        snprintf(brewBtnBuffer, sizeof(brewBtnBuffer), "%d", static_cast<int>(brewButtonStatus));
-        brewBtnChar->setValue(brewBtnBuffer);
-        brewBtnChar->notify();
-    }
-}
-
-void NimBLEServerController::sendSteamBtnState(bool steamButtonStatus) {
-    if (deviceConnected) {
-        // Send steam notification to the client
-        snprintf(steamBtnBuffer, sizeof(steamBtnBuffer), "%d", static_cast<int>(steamButtonStatus));
-        steamBtnChar->setValue(steamBtnBuffer);
-        steamBtnChar->notify();
+        snprintf(btnBuffer, sizeof(btnBuffer), "%d,%d", static_cast<int>(index), static_cast<int>(status));
+        btnChar->setValue(btnBuffer);
+        btnChar->notify();
     }
 }
 
