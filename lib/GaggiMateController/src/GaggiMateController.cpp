@@ -41,11 +41,13 @@ void GaggiMateController::setup() {
     }
     heater = new Heater(
         this->brewTemperature, _config.heaterPin, [this]() { thermalRunawayShutdown(); },
-        [this](float Kp, float Ki, float Kd) { _ble.sendAutotuneResult(Kp, Ki, Kd); });
+        [this](float Kp, float Ki, float Kd, float Kf) { _ble.sendAutotuneResult(Kp, Ki, Kd, Kf); } ,
+        [this]() { _ble.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
     if (_config.capabilites.dualBoiler) {
         heater2 = new Heater(
             this->steamTemperature, _config.altPin, [this]() { thermalRunawayShutdown(); },
-            [this](float Kp, float Ki, float Kd) { _ble.sendAutotuneResult(Kp, Ki, Kd); });
+            [this](float Kp, float Ki, float Kd, float Kf) { _ble.sendAutotuneResult(Kp, Ki, Kd, Kf); },
+        [this]() { _ble.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
         refill = new SimpleRelay(_config.refillPin, _config.valveOn);
         aux = new SimpleRelay(_config.auxPin, _config.valveOn);
         waterSense = new DigitalInput(_config.waterSensePin, [this](const bool state) { _ble.sendLevelState(state); }, 25);
@@ -193,7 +195,9 @@ void GaggiMateController::setup() {
         }
     });
     _ble.registerPingCallback([this]() { handlePing(); });
-    _ble.registerAutotuneCallback([this](int goal, int windowSize) { this->heater->autotune(goal, windowSize); });
+    _ble.registerAutotuneCallback([this](int testTimeSec, int windowSize, int heaterWattage) {
+        this->heater->autotune(testTimeSec, windowSize, heaterWattage);
+    });
     _ble.registerTareCallback([this]() {
         if (!_config.capabilites.dimming) {
             return;

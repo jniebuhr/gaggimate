@@ -14,9 +14,10 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                         float temperature2);
     void sendError(int errorCode);
+
+    void sendAutotuneResult(float Kp, float Ki, float Kd, float Kf);
     void sendBtnState(uint8_t index, bool status);
     void sendLevelState(bool levelStatus);
-    void sendAutotuneResult(float Kp, float Ki, float Kd);
     void sendVolumetricMeasurement(float value);
     void sendTofMeasurement(int value);
     void registerOutputControlCallback(const simple_output_callback_t &callback);

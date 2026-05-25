@@ -56,7 +56,7 @@ class Controller {
 
     bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(taskHandle)); }
 
-    void autotune(int testTime, int samples);
+    void autotune(int testTime, int samples, int heaterWattage);
     void startProcess(Process *process);
     Process *getProcess() const { return currentProcess; }
     Process *getLastProcess() const { return lastProcess; }

@@ -17,7 +17,7 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void sendOutputControl(bool valve, float pumpSetpoint, float boilerSetpoint, bool refill, float heater2Setpoint);
     void sendAltControl(bool pinState);
     void sendPing();
-    void sendAutotune(int testTime, int samples);
+    void sendAutotune(int testTime, int samples, int heaterWattage);
     void sendPidSettings(const String &pid);
     void sendPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPressureScale(float scale);
@@ -78,7 +78,10 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     String _lastOutputControl = "";
     char advancedOutputBuffer[90]{};
     char outputBuffer[64]{};
-    char autotuneBuffer[24]{};
+    // Headroom for "%d,%d,%d" with INT_MAX/INT_MIN ints (worst case 35 bytes).
+    // Realistic values fit in single digits, but bump from 24 → 40 so a
+    // pathological wattage from a custom client doesn't silently truncate.
+    char autotuneBuffer[40]{};
     char pressureScaleBuffer[10]{};
 
     // BLEAdvertisedDeviceCallbacks override
