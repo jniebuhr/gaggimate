@@ -61,6 +61,13 @@ void ProfileManager::migrate(const std::vector<String> &existingProfiles) {
             const String resolvedId = existing.id.isEmpty() ? existingId : existing.id;
             _settings.setSelectedProfile(resolvedId);
             addFavoritedProfile(resolvedId);
+            // Favorite every other profile too — without this, only the
+            // reused Default ends up in favorites and the UI collapses to a
+            // single entry even when more profiles exist on disk. Matches
+            // the create-new-Default branch below.
+            for (const String &id : existingProfiles) {
+                if (id != existingId) addFavoritedProfile(id);
+            }
             ESP_LOGI("ProfileManager", "Reusing existing Default profile %s", resolvedId.c_str());
             return;
         }
