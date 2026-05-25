@@ -51,6 +51,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         ota->init(controller->getClientController()->getClient());
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
+    pluginManager->on("controller:autotune:failed", [this](Event const &) { sendAutotuneFailed(); });
 
     // Forward shot history rebuild progress events to WebSocket clients
     pluginManager->on("evt:history-rebuild-progress", [this](Event const &event) {
@@ -399,7 +400,12 @@ void WebUIPlugin::handleOTAStart(uint32_t clientId, JsonDocument &request) {
 void WebUIPlugin::handleAutotuneStart(uint32_t clientId, JsonDocument &request) {
     int testTime = request["time"].as<int>();
     int samples = request["samples"].as<int>();
-    controller->autotune(testTime, samples);
+    // Heater wattage drives combinedKff = TUNER_OUTPUT_SPAN / wattage on the
+    // controller. 0 = "skip combinedKff derivation" — happens when older Web
+    // UI builds omit the field. WebUI form default is 680 W (Gaggia Classic
+    // Pro 2019 / E24, 230 V boiler).
+    int heaterWattage = request["wattage"] | 0;
+    controller->autotune(testTime, samples, heaterWattage);
 }
 
 void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request) {
@@ -818,6 +824,15 @@ void WebUIPlugin::sendAutotuneResult() {
     JsonDocument doc;
     doc["tp"] = "evt:autotune-result";
     doc["pid"] = controller->getSettings().getPid();
+    String message = doc.as<String>();
+    ws.textAll(message);
+}
+
+void WebUIPlugin::sendAutotuneFailed() {
+    // Distinct WS event — Autotune page renders "timed out" error card
+    // instead of stuck spinner. Fires on ERROR_CODE_AUTOTUNE_TIMEOUT.
+    JsonDocument doc;
+    doc["tp"] = "evt:autotune-failed";
     String message = doc.as<String>();
     ws.textAll(message);
 }

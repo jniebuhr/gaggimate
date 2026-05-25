@@ -3,6 +3,7 @@
 #include "esp_sntp.h"
 #include <SD_MMC.h>
 #include <SPIFFS.h>
+#include <cmath>
 #include <ctime>
 #include <display/config.h>
 #include <display/core/constants.h>
@@ -173,6 +174,15 @@ void Controller::setupBluetooth() {
         handleProfileButton(status, behavior);
     });
     clientController.registerRemoteErrorCallback([this](const int error) {
+        // Autotune timeout = info-level, not runaway. Controller already
+        // preserved NVS PID. Clear autotuning flag, fire dedicated Web UI
+        // event. Don't latch this->error (would gate future setupBluetooth).
+        if (error == ERROR_CODE_AUTOTUNE_TIMEOUT) {
+            ESP_LOGW(LOG_TAG, "Autotune timed out — previous PID preserved");
+            autotuning = false;
+            pluginManager->trigger("controller:autotune:failed");
+            return;
+        }
         if (error != ERROR_CODE_TIMEOUT && error != this->error) {
             this->error = error;
             deactivate();
@@ -183,6 +193,15 @@ void Controller::setupBluetooth() {
     });
     clientController.registerAutotuneResultCallback([this](const float Kp, const float Ki, const float Kd, const float Kf) {
         ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
+        // Guard: older controller firmware could emit zero/NaN gains (#672
+        // class). Reject — keep existing PID, surface as "Autotune Failed".
+        if (!std::isfinite(Kp) || !std::isfinite(Ki) || !std::isfinite(Kd) || !std::isfinite(Kf) ||
+            Kp <= 0.0f || (Kp + Ki + Kd) <= 0.0f) {
+            ESP_LOGW(LOG_TAG, "Rejecting autotune result: invalid gains, preserving existing PID");
+            autotuning = false;
+            pluginManager->trigger("controller:autotune:failed");
+            return;
+        }
         char pid[64];
         // Store in simplified format with combined Kf
         snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
@@ -388,7 +407,7 @@ bool Controller::isVolumetricAvailable() const {
 #endif
 }
 
-void Controller::autotune(int testTime, int samples) {
+void Controller::autotune(int testTime, int samples, int heaterWattage) {
     if (isActive() || !isReady()) {
         return;
     }
@@ -396,7 +415,7 @@ void Controller::autotune(int testTime, int samples) {
         activateStandby();
     }
     autotuning = true;
-    clientController.sendAutotune(testTime, samples);
+    clientController.sendAutotune(testTime, samples, heaterWattage);
     pluginManager->trigger("controller:autotune:start");
 }
 

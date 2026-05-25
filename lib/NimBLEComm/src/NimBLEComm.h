@@ -30,13 +30,21 @@ constexpr size_t ERROR_CODE_COMM_RCV = 2;
 constexpr size_t ERROR_CODE_PROTO_ERR = 3;
 constexpr size_t ERROR_CODE_RUNAWAY = 4;
 constexpr size_t ERROR_CODE_TIMEOUT = 5;
+// Autotune hit test-duration window without detecting reaction/inflection.
+// Controller skips NVS persist on this fire — display PID preserved. Distinct
+// from generic TIMEOUT so display UI can surface it without watchdog-
+// disconnect UX.
+constexpr size_t ERROR_CODE_AUTOTUNE_TIMEOUT = 6;
 
 using pin_control_callback_t = std::function<void(bool isActive)>;
 using pid_control_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kf)>;
 using pump_model_coeffs_callback_t = std::function<void(float a, float b, float c, float d)>;
 using ping_callback_t = std::function<void()>;
 using remote_err_callback_t = std::function<void(int errorCode)>;
-using autotune_callback_t = std::function<void(int testTime, int samples)>;
+// heaterWattage in W; 0 = unknown (controller skips combinedKff derivation).
+// Optional 3rd field on AUTOTUNE_CHAR_UUID payload — older display firmware
+// sends only "testTime,samples" and the parser defaults wattage to 0.
+using autotune_callback_t = std::function<void(int testTime, int samples, int heaterWattage)>;
 using void_callback_t = std::function<void()>;
 
 // New combined callbacks
