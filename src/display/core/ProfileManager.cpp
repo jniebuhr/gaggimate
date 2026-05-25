@@ -54,9 +54,14 @@ void ProfileManager::migrate(const std::vector<String> &existingProfiles) {
             continue;
         }
         if (existing.label == "Default") {
-            _settings.setSelectedProfile(existing.id);
-            addFavoritedProfile(existing.id);
-            ESP_LOGI("ProfileManager", "Reusing existing Default profile %s", existing.id.c_str());
+            // existing.id comes from parsed JSON and may be empty if the file
+            // was hand-edited or pre-dates the id field. Fall back to
+            // existingId (the filename-derived id) so we never set an empty
+            // selected/favorite profile.
+            const String resolvedId = existing.id.isEmpty() ? existingId : existing.id;
+            _settings.setSelectedProfile(resolvedId);
+            addFavoritedProfile(resolvedId);
+            ESP_LOGI("ProfileManager", "Reusing existing Default profile %s", resolvedId.c_str());
             return;
         }
     }
