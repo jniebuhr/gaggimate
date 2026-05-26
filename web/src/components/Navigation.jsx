@@ -14,7 +14,7 @@ import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircle
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
-import { useCallback, useEffect } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 
 // List of random icons to display - add your icons here (SVG strings, text, or emojis)
 const RANDOM_ICONS = [
@@ -106,15 +106,25 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
 }
 
 export function Navigation({ collapsed = false, onToggleCollapsed }) {
-  const randomIcon = getRandomIcon();
-  const mdDown = window.innerWidth < 768;
+  // Compute the icon once per mount so the avatar doesn't reshuffle on every render.
+  const randomIcon = useMemo(() => getRandomIcon(), []);
   const loc = useLocation();
 
+  // Track the previous route so the collapse-on-navigation effect only fires
+  // when the route actually changes, not when `collapsed` flips back to false
+  // (which would close the menu immediately after the user opens it on mobile).
+  const previousPathRef = useRef(loc.path);
+
   useEffect(() => {
-    if (!collapsed && mdDown) {
+    const pathChanged = previousPathRef.current !== loc.path;
+    previousPathRef.current = loc.path;
+    // Re-check viewport width INSIDE the effect (was captured once at module
+    // init, so iPad orientation changes were ignored).
+    const isMdDown = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (pathChanged && !collapsed && isMdDown) {
       onToggleCollapsed();
     }
-  }, [loc.path]);
+  }, [loc.path, collapsed, onToggleCollapsed]);
 
   return (
     <>
