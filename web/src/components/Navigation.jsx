@@ -146,9 +146,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
             >
               <GmLogoIcon width={30} height={30} />
               {collapsed ? null : (
-                <span className='text-base-content font-logo text-3xl font-light'>
-                  <span className='font-semibold'>GAGGI</span>MATE
-                </span>
+                <img src="/logo.svg" alt="GaggiMate" className="w-50" />
               )}
             </div>
           </div>
