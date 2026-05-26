@@ -9,6 +9,8 @@ void NimBLEClientController::initClient() {
     NimBLEDevice::init("GPBLC");
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
     NimBLEDevice::setMTU(128);
+    NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_SC);
+    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
     client = NimBLEDevice::createClient();
     scanner = NimBLEDevice::getScan();
     if (client == nullptr) {
