@@ -8,8 +8,8 @@ void NimBLEServerController::initServer(const String infoString) {
     NimBLEDevice::init("GPBLS");
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
     NimBLEDevice::setMTU(128);
-    NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_SC);
-    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
+    NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_MITM | BLE_SM_PAIR_AUTHREQ_SC);
+    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_YESNO);
 
     // Create BLE Server
     server = NimBLEDevice::createServer();
@@ -81,6 +81,9 @@ void NimBLEServerController::initServer(const String infoString) {
 }
 
 void NimBLEServerController::loop() {
+    // Check for PIN confirmation timeout
+    checkPinConfirmationTimeout();
+
     if (server->getConnectedCount() == 0 && !advertising->isAdvertising()) {
         advertising->stop();
         advertising->start();
@@ -215,6 +218,64 @@ void NimBLEServerController::clearAllBonds() {
     ESP_LOGW(LOG_TAG, "Clearing all bonded devices - restart required");
     NimBLEDevice::deleteAllBonds();
     // Note: Device should restart after this for clean state
+}
+
+// PIN confirmation for DISPLAY_YESNO pairing
+bool NimBLEServerController::onConfirmPIN(uint32_t pass_key) {
+    ESP_LOGI(LOG_TAG, "");
+    ESP_LOGI(LOG_TAG, "╔════════════════════════════════════════╗");
+    ESP_LOGI(LOG_TAG, "║  PAIRING CONFIRMATION REQUIRED         ║");
+    ESP_LOGI(LOG_TAG, "║                                        ║");
+    ESP_LOGI(LOG_TAG, "║  PIN: %06d                        ║", pass_key);
+    ESP_LOGI(LOG_TAG, "║                                        ║");
+    ESP_LOGI(LOG_TAG, "║  Press BREW or BOOT button to confirm ║");
+    ESP_LOGI(LOG_TAG, "║  (30 second timeout)                   ║");
+    ESP_LOGI(LOG_TAG, "╚════════════════════════════════════════╝");
+    ESP_LOGI(LOG_TAG, "");
+
+    currentPairingPin = pass_key;
+    pinConfirmState = PinConfirmState::AWAITING_CONFIRM;
+    pinConfirmStartTime = millis();
+
+    return true; // Allow pairing to proceed (user confirmation pending)
+}
+
+void NimBLEServerController::confirmPairingPin() {
+    if (pinConfirmState == PinConfirmState::AWAITING_CONFIRM) {
+        ESP_LOGI(LOG_TAG, "PIN %06d confirmed by user", currentPairingPin);
+        pinConfirmState = PinConfirmState::CONFIRMED;
+        currentPairingPin = 0;
+    }
+}
+
+void NimBLEServerController::rejectPairingPin() {
+    if (pinConfirmState == PinConfirmState::AWAITING_CONFIRM) {
+        ESP_LOGW(LOG_TAG, "PIN confirmation rejected (timeout or user reject)");
+        pinConfirmState = PinConfirmState::REJECTED;
+        currentPairingPin = 0;
+
+        // Disconnect the pairing device
+        if (server != nullptr && deviceConnected) {
+            std::vector<uint16_t> connIds = server->getPeerDevices();
+            if (!connIds.empty()) {
+                server->disconnect(connIds[0]);
+            }
+        }
+    }
+}
+
+bool NimBLEServerController::isPinConfirmationPending() const {
+    return pinConfirmState == PinConfirmState::AWAITING_CONFIRM;
+}
+
+void NimBLEServerController::checkPinConfirmationTimeout() {
+    if (pinConfirmState == PinConfirmState::AWAITING_CONFIRM) {
+        unsigned long elapsed = millis() - pinConfirmStartTime;
+        if (elapsed >= PIN_CONFIRM_TIMEOUT_MS) {
+            ESP_LOGW(LOG_TAG, "PIN confirmation timeout after 30 seconds");
+            rejectPairingPin();
+        }
+    }
 }
 
 // BLEServerCallbacks override
