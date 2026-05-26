@@ -36,6 +36,18 @@ class GaggiMateController {
     void sendSensorData(void);
     void handleSerialCommand(char c);
 
+    // Button hold detection for pairing mode
+    void handleBrewButtonState(bool pressed);
+    void handleSteamButtonState(bool pressed);
+    void checkPairingButtonPress();
+
+    bool brewButtonHeld = false;
+    unsigned long brewButtonHoldStart = 0;
+    bool steamButtonHeld = false;
+    unsigned long steamButtonHoldStart = 0;
+    const unsigned long PAIRING_BUTTON_HOLD_MS = 5000;
+    const unsigned long CLEAR_BONDS_HOLD_MS = 10000;
+
     ControllerConfig _config = ControllerConfig{};
     NimBLEServerController _ble;
 

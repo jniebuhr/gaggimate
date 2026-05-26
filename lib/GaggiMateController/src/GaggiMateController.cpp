@@ -39,8 +39,8 @@ void GaggiMateController::setup() {
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
-    this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBtnState(0, state); });
-    this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendBtnState(1, state); });
+    this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { handleBrewButtonState(state); });
+    this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { handleSteamButtonState(state); });
 
     // 4-Pin peripheral port
     if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
@@ -155,6 +155,10 @@ void GaggiMateController::setup() {
 
 void GaggiMateController::loop() {
     unsigned long now = millis();
+
+    // Check for pairing button press
+    checkPairingButtonPress();
+
     if (lastPingTime < now && (now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
         handlePingTimeout();
     }
@@ -286,5 +290,62 @@ void GaggiMateController::handleSerialCommand(char c) {
         ESP_LOGI("Controller", "");
     } else {
         ESP_LOGI("Controller", "Unrecognized Input! Available commands: S (Status)");
+    }
+}
+
+// Button state handlers for pairing mode detection
+void GaggiMateController::handleBrewButtonState(bool pressed) {
+    // Always send button state to BLE client
+    _ble.sendBtnState(0, pressed);
+
+    // Track button hold for pairing mode
+    if (pressed) {
+        if (!brewButtonHeld) {
+            brewButtonHeld = true;
+            brewButtonHoldStart = millis();
+        }
+    } else {
+        brewButtonHeld = false;
+    }
+}
+
+void GaggiMateController::handleSteamButtonState(bool pressed) {
+    // Always send button state to BLE client
+    _ble.sendBtnState(1, pressed);
+
+    // Track button hold for pairing mode
+    if (pressed) {
+        if (!steamButtonHeld) {
+            steamButtonHeld = true;
+            steamButtonHoldStart = millis();
+        }
+    } else {
+        steamButtonHeld = false;
+    }
+}
+
+void GaggiMateController::checkPairingButtonPress() {
+    // Check for "clear all bonds" combo (brew + steam held 10s)
+    if (brewButtonHeld && steamButtonHeld) {
+        unsigned long holdTime = millis() - min(brewButtonHoldStart, steamButtonHoldStart);
+        if (holdTime >= CLEAR_BONDS_HOLD_MS) {
+            ESP_LOGW(LOG_TAG, "Both buttons held 10s - clearing all bonds and restarting");
+            _ble.clearAllBonds();
+            brewButtonHeld = false;
+            steamButtonHeld = false;
+            delay(1000);
+            esp_restart(); // Restart for clean state
+            return;
+        }
+    }
+
+    // Check for "enter pairing mode" (brew held 5s)
+    if (brewButtonHeld && !steamButtonHeld) {
+        unsigned long holdTime = millis() - brewButtonHoldStart;
+        if (holdTime >= PAIRING_BUTTON_HOLD_MS) {
+            ESP_LOGI(LOG_TAG, "Brew button held 5s - entering pairing mode");
+            _ble.enterPairingMode();
+            brewButtonHeld = false; // Prevent repeated triggers
+        }
     }
 }
