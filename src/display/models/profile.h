@@ -211,6 +211,27 @@ struct Profile {
 };
 
 inline bool parseProfile(const JsonObject &obj, Profile &profile) {
+    // Reject profiles missing the structural fields the rest of the system
+    // assumes are present. Without this, a truncated/corrupted JSON loads as
+    // a Profile with empty strings and zero floats — the UI shows a broken
+    // entry and the brew loop runs against garbage data.
+    const char *idStr = obj["id"].is<const char *>() ? obj["id"].as<const char *>() : "(no-id)";
+    if (obj.isNull()) {
+        ESP_LOGW("parseProfile", "Profile rejected: JSON root is null");
+        return false;
+    }
+    if (!obj["label"].is<const char *>()) {
+        ESP_LOGW("parseProfile", "Profile %s rejected: 'label' missing or not a string", idStr);
+        return false;
+    }
+    if (!obj["type"].is<const char *>()) {
+        ESP_LOGW("parseProfile", "Profile %s rejected: 'type' missing or not a string", idStr);
+        return false;
+    }
+    if (!obj["phases"].is<JsonArray>()) {
+        ESP_LOGW("parseProfile", "Profile %s rejected: 'phases' missing or not an array", idStr);
+        return false;
+    }
     if (obj["id"].is<String>())
         profile.id = obj["id"].as<String>();
     profile.label = obj["label"].as<String>();
@@ -298,6 +319,12 @@ inline bool parseProfile(const JsonObject &obj, Profile &profile) {
         }
 
         profile.phases.push_back(phase);
+    }
+
+    if (profile.phases.empty()) {
+        ESP_LOGW("parseProfile", "Profile %s ('%s') rejected: phases array empty after parsing",
+                 profile.id.c_str(), profile.label.c_str());
+        return false;
     }
 
     return true;

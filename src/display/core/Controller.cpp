@@ -170,6 +170,7 @@ void Controller::setupBluetooth() {
             return;
         }
         if (behavior == "water") {
+            handleWaterButton(status);
             return;
         }
         handleProfileButton(status, behavior);
@@ -200,8 +201,8 @@ void Controller::setupBluetooth() {
         ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
         // Guard: older controller firmware could emit zero/NaN gains (#672
         // class). Reject — keep existing PID, surface as "Autotune Failed".
-        if (!std::isfinite(Kp) || !std::isfinite(Ki) || !std::isfinite(Kd) || !std::isfinite(Kf) ||
-            Kp <= 0.0f || (Kp + Ki + Kd) <= 0.0f) {
+        if (!std::isfinite(Kp) || !std::isfinite(Ki) || !std::isfinite(Kd) || !std::isfinite(Kf) || Kp <= 0.0f ||
+            (Kp + Ki + Kd) <= 0.0f) {
             ESP_LOGW(LOG_TAG, "Rejecting autotune result: invalid gains, preserving existing PID");
             autotuning = false;
             pluginManager->trigger("controller:autotune:failed");
@@ -845,19 +846,29 @@ void Controller::handleBrewButton(int brewButtonStatus) {
 
 void Controller::handleSteamButton(int steamButtonStatus) {
     if (steamButtonStatus) {
-        switch (getMode()) {
-        case MODE_STANDBY:
+        if (getMode() != MODE_STEAM) {
             setMode(MODE_STEAM);
-            break;
-        case MODE_BREW:
-            setMode(MODE_STEAM);
-            break;
-        default:
-            break;
         }
     } else if (!settings.isMomentaryButtons() && getMode() == MODE_STEAM) {
         deactivate();
         setMode(MODE_BREW);
+    }
+}
+
+void Controller::handleWaterButton(int buttonStatus) {
+    if (buttonStatus) {
+        switch (getMode()) {
+        case MODE_WATER:
+            if (!isActive()) {
+                activate();
+            }
+            break;
+        default:
+            setMode(MODE_WATER);
+            break;
+        }
+    } else if (!settings.isMomentaryButtons() && getMode() == MODE_WATER && isActive()) {
+        deactivate();
     }
 }
 

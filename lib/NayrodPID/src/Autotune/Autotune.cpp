@@ -35,8 +35,10 @@ void Autotune::reset() {
 // handlePreReactionSample / handlePostReactionSample / finalizeInflection.
 // Stays short and reads top-down; each helper owns one phase.
 void Autotune::update(float temperature, float currentTime) {
-    if (finished) return;
-    if (values.empty()) initialTemp = temperature;
+    if (finished)
+        return;
+    if (values.empty())
+        initialTemp = temperature;
 
     values.push_back(temperature);
     times.push_back(currentTime);
@@ -69,7 +71,8 @@ void Autotune::update(float temperature, float currentTime) {
 }
 
 void Autotune::primeBaselineSlope(float currentTime) {
-    if (values.size() != N) return; // still accumulating baseline
+    if (values.size() != N)
+        return; // still accumulating baseline
 
     const std::deque<float> windowTimes(times.end() - N, times.end());
     const std::deque<float> windowValues(values.end() - N, values.end());
@@ -119,7 +122,8 @@ void Autotune::handlePostReactionSample(float slope, float currentTime, float te
     }
 
     // Not enough slope samples for inflection check yet.
-    if (slopes.size() < N) return;
+    if (slopes.size() < N)
+        return;
 
     // Inflection: slopeOfSlope ≈ 0 (slope saturated at k') AND temp rose ≥
     // 10 °C from start (guard against saturating on flat noise floor).
@@ -183,7 +187,8 @@ void Autotune::computeControllerGains(float L, float k_prime, float tau2) {
     // clamp triggers on extreme IDs (small k' or L blows Kc up). Un-clamped
     // Kc gave windup-class integrator term mismatched with delivered Kp (#672).
     Ki = Kp / Ti;
-    if (!std::isfinite(Ki) || Ki < 0.0f) Ki = 0.0f;
+    if (!std::isfinite(Ki) || Ki < 0.0f)
+        Ki = 0.0f;
 
     // cross_freq retained for log back-compat; approx PID crossover from SIMC
     // time scales.
@@ -217,7 +222,8 @@ float Autotune::identifyTau2(float k_prime) {
     int n = 0;
     for (size_t i = 0; i < allSlopes.size(); ++i) {
         const float deficit = k_prime - allSlopes[i];
-        if (deficit < lo_deficit || deficit > hi_deficit) continue;
+        if (deficit < lo_deficit || deficit > hi_deficit)
+            continue;
         const float t = allSlopeTimes[i];
         const float y = std::log(deficit); // ln(k' - slope)
         sum_t += t;
@@ -227,11 +233,13 @@ float Autotune::identifyTau2(float k_prime) {
         ++n;
     }
 
-    if (n < 4) return fallback;
+    if (n < 4)
+        return fallback;
 
     // LS slope of ln(k'-slope) vs t = -1/τ₂.
     const float denom = static_cast<float>(n) * sum_tt - sum_t * sum_t;
-    if (std::abs(denom) < 1e-6f) return fallback;
+    if (std::abs(denom) < 1e-6f)
+        return fallback;
     const float regression_slope = (static_cast<float>(n) * sum_ty - sum_t * sum_y) / denom;
     if (!std::isfinite(regression_slope) || regression_slope >= 0.0f) {
         // Non-negative slope ⇒ (k'-slope) flat or growing — plant not
@@ -289,9 +297,7 @@ void Autotune::setRequiredConfirmations(unsigned int confirmations) {
     requiredConfirmations = confirmations < 2 ? 2 : confirmations;
 }
 
-void Autotune::setTimeOut(float timeOut) {
-    maxTimeOut_s = (timeOut > 0.0f && std::isfinite(timeOut)) ? timeOut : 120.0f;
-}
+void Autotune::setTimeOut(float timeOut) { maxTimeOut_s = (timeOut > 0.0f && std::isfinite(timeOut)) ? timeOut : 120.0f; }
 
 bool Autotune::isFinished() const { return finished; }
 float Autotune::getKp() const { return Kp; }

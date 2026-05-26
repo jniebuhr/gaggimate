@@ -4,8 +4,7 @@
 #include <cmath>
 
 Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
-               const pid_result_callback_t &pid_callback,
-               const heater_autotune_fail_callback_t &autotune_fail_callback)
+               const pid_result_callback_t &pid_callback, const heater_autotune_fail_callback_t &autotune_fail_callback)
     : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback),
       autotune_fail_callback(autotune_fail_callback) {
 
@@ -184,8 +183,7 @@ void Heater::loopAutotune() {
         // doesn't mistake it for runaway + force pump/valve off.
         // getTimeOut() = configured window. getSystemDelay() only set on
         // success path — reads 0 here.
-        ESP_LOGW(LOG_TAG, "Autotune timed out (no inflection within %.1f s) — gains preserved",
-                 autotuner->getTimeOut());
+        ESP_LOGW(LOG_TAG, "Autotune timed out (no inflection within %.1f s) — gains preserved", autotuner->getTimeOut());
         if (autotune_fail_callback) {
             autotune_fail_callback();
         }
@@ -198,9 +196,7 @@ void Heater::loopAutotune() {
     // wasn't supplied — preserves prior no-disturbance-FF behaviour.
     // Variable name avoids shadowing the Heater member combinedKff (Sonar
     // cpp:S1117).
-    const float kffFromWattage = autotuneHeaterWattage > 0
-                                     ? TUNER_OUTPUT_SPAN / static_cast<float>(autotuneHeaterWattage)
-                                     : 0.0f;
+    const float kffFromWattage = autotuneHeaterWattage > 0 ? TUNER_OUTPUT_SPAN / static_cast<float>(autotuneHeaterWattage) : 0.0f;
 
     pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, kffFromWattage);
 
@@ -213,8 +209,8 @@ void Heater::loopAutotune() {
     // (SimplePID gainFF stays 0); useful for sanity-checking the identifier
     // without affecting the runtime FF path that uses kffFromWattage above.
     ESP_LOGI(LOG_TAG, "SIMC params: L=%.2fs k'=%.4f°C/s tau2=%.2fs fc=%.4fHz wattage=%dW setpoint_FF=%.2f",
-             autotuner->getSystemDelay(), autotuner->getSystemGain(), autotuner->getSystemTau2(),
-             autotuner->getCrossoverFreq(), autotuneHeaterWattage, autotuner->getKff() * 1000.0f);
+             autotuner->getSystemDelay(), autotuner->getSystemGain(), autotuner->getSystemTau2(), autotuner->getCrossoverFreq(),
+             autotuneHeaterWattage, autotuner->getKff() * 1000.0f);
 }
 
 float Heater::softPwm(uint32_t windowSize) {
