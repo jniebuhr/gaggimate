@@ -321,8 +321,8 @@ const ProcessControls = props => {
             {status.value.currentTemperature.toFixed(1) || 0}
           </span>
           <span className='text-success font-semibold'>
-            {' '}
-            / {status.value.targetTemperature || 0}°C
+            {' / '}
+            {status.value.targetTemperature || 0}°C
           </span>
         </div>
         {status.value.volumetricAvailable && mode !== 0 && (
@@ -334,8 +334,8 @@ const ProcessControls = props => {
                   {(status.value.currentWeight ?? 0).toFixed(1)}g
                 </span>
                 <span className='text-success font-semibold'>
-                  {' '}
-                  / {(status.value.targetWeight ?? 0).toFixed(0)}g
+                  {' / '}
+                  {(status.value.targetWeight ?? 0).toFixed(0)}g
                 </span>
               </>
             )}
@@ -344,7 +344,21 @@ const ProcessControls = props => {
         <div className='flex flex-row items-center gap-2 text-center text-base sm:text-right sm:text-lg'>
           <FontAwesomeIcon icon={faGauge} className='text-base-content/60' />
           <span className='text-base-content'>
-            {status.value.currentPressure?.toFixed(1) || 0} /{' '}
+            {/* Only the CURRENT pressure value turns red when above 1 bar in
+                Brew mode — typically means the boiler is over-pressurized
+                from the previous shot or heat-up cycle, and the user should
+                flush or open the steam wand before brewing to avoid wrecking
+                the puck. The target pressure and units stay normal color. */}
+            <span
+              className={
+                brew && (status.value.currentPressure ?? 0) > 1.0
+                  ? 'text-error font-semibold'
+                  : ''
+              }
+            >
+              {status.value.currentPressure?.toFixed(1) || 0}
+            </span>
+            {' / '}
             {status.value.targetPressure?.toFixed(1) || 0} bar
           </span>
         </div>
@@ -476,6 +490,79 @@ const ProcessControls = props => {
             </div>
           )}
         {/* Controls for different modes */}
+        {mode === 1 && !active && !finished && (
+          <div className='flex flex-col items-center gap-4'>
+            {/* Brew mode: quick stepper adjustments for the active profile's
+                target temp and weight, laid out side-by-side (temp left,
+                weight right). Each tap calls the same raiseTemp / lowerTemp
+                / raiseBrewTarget / lowerBrewTarget controller methods that
+                the device's gear-icon BrewScreen uses, so the behaviour is
+                identical across web + display. Changes mutate the in-memory
+                profile and the firmware reverts to the on-disk profile after
+                the next brew completes (Controller::deactivate) — for
+                permanent changes use the Profiles page. */}
+            <div className='flex flex-row flex-wrap items-start justify-center gap-x-8 gap-y-4'>
+              <div className='flex flex-col items-center gap-2'>
+                <div className='text-base-content/60 text-xs font-light tracking-wider'>
+                  TEMPERATURE
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <Tooltip content='Lower temperature'>
+                    <button
+                      onClick={lowerTemp}
+                      className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                      aria-label='Lower target temperature'
+                    >
+                      <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
+                    </button>
+                  </Tooltip>
+                  <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
+                    {status.value.targetTemperature || 0}°C
+                  </div>
+                  <Tooltip content='Raise temperature'>
+                    <button
+                      onClick={raiseTemp}
+                      className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                      aria-label='Raise target temperature'
+                    >
+                      <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+              {brewTarget && status.value.volumetricAvailable && (
+                <div className='flex flex-col items-center gap-2'>
+                  <div className='text-base-content/60 text-xs font-light tracking-wider'>
+                    TARGET WEIGHT
+                  </div>
+                  <div className='flex items-center space-x-2'>
+                    <Tooltip content='Lower target weight'>
+                      <button
+                        onClick={lowerTarget}
+                        className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                        aria-label='Lower target weight'
+                      >
+                        <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
+                      </button>
+                    </Tooltip>
+                    <div className='text-base-content min-w-[80px] text-center text-lg font-bold'>
+                      {(status.value.targetWeight ?? 0).toFixed(0)}g
+                    </div>
+                    <Tooltip content='Raise target weight'>
+                      <button
+                        onClick={raiseTarget}
+                        className='btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0'
+                        aria-label='Raise target weight'
+                      >
+                        <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
+                      </button>
+                    </Tooltip>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {mode === 2 && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
             {/* Temperature adjustment controls for steam mode */}
