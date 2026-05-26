@@ -10,22 +10,56 @@ export class TclConverter {
   static _succeed(json) {
     return { ok: true, json };
   }
-  static _uuidv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = (Math.random() * 16) | 0,
-        v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
+
+  static _getTclVal(tclText, key, defaultValue = 0) {
+    const match = tclText.match(new RegExp(`^${key}\\s+([\\d.]+)`, 'm'));
+    if (!match) return defaultValue;
+    const parsed = parseFloat(match[1]);
+    return Number.isFinite(parsed) ? parsed : defaultValue;
   }
 
-  static _getTclVal(tclText, key) {
-    const match = tclText.match(new RegExp(`^${key}\\s+([\\d.]+)`, 'm'));
-    return parseFloat(match?.[1] || 0);
+  static _getTclString(tclText, key) {
+    const braced = tclText.match(new RegExp(`^${key}\\s+\\{([^}]*)\\}`, 'm'));
+    if (braced) return braced[1].trim();
+    const bare = tclText.match(new RegExp(`^${key}\\s+(\\S+)`, 'm'));
+    return bare ? bare[1].trim() : null;
+  }
+
+  /**
+   * Mirrors `fix_profile_type` in DE's `de1plus/profile.tcl`.
+   */
+  static _normalizeProfileType(rawType) {
+    if (!rawType) return 'settings_2a';
+    switch (rawType) {
+      case 'settings_2':
+      case 'settings_profile_pressure':
+      case 'settings_2a':
+        return 'settings_2a';
+      case 'settings_profile_flow':
+      case 'settings_2b':
+        return 'settings_2b';
+      case 'settings_2c':
+      case 'settings_2c2':
+      case 'settings_profile_advanced':
+        return 'settings_2c';
+      default:
+        return rawType;
+    }
+  }
+
+  static _toSafeFloat(value, fallback) {
+    if (value === undefined || value === null || value === '') return fallback;
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  static _clampDuration(seconds) {
+    if (!Number.isFinite(seconds) || seconds <= 0) return 0.5;
+    return Math.max(0.5, Math.min(300, seconds));
   }
 
   static _generateDebugInfo(profile, tclText, parserType) {
-    const profileTypeMatch = tclText.match(/settings_profile_type\s+(\w+)/);
-    const sourceProfileType = profileTypeMatch ? profileTypeMatch[1] : 'unknown';
+    const sourceProfileType = this._getTclString(tclText, 'settings_profile_type') || 'unknown';
 
     let totalMaxDuration = 0;
     let brewingMaxDuration = 0;
@@ -36,7 +70,7 @@ export class TclConverter {
         brewingMaxDuration += p.duration;
       }
       const targetStrings =
-        p.targets?.map(t => `${t.type} ${t.operator === 'gte' ? '>' : '<'} ${t.value}`) || [];
+        p.targets?.map(t => `${t.type} ${t.operator === 'lte' ? '<' : '>'} ${t.value}`) || [];
       return {
         name: p.name,
         maxDuration: p.duration,
@@ -54,8 +88,7 @@ export class TclConverter {
     };
   }
 
-  static _generatePhasesFromSimpleProfile(tclText, profile) {
-    // Implementation from previous version...
+  static _generatePhasesFromPressureProfile(tclText, profile) {
     const get = key => this._getTclVal(tclText, key);
     const preinfusionTime = get('preinfusion_time');
     const preinfusionFlow = get('preinfusion_flow_rate');
@@ -64,96 +97,171 @@ export class TclConverter {
     const holdPressure = get('espresso_pressure');
     const declineTime = get('espresso_decline_time');
     const declineEndPressure = get('pressure_end');
-    const targetWeight = get('final_desired_shot_weight');
 
     if (preinfusionTime > 0) {
-      profile.phases.push({
+      const phase = {
         name: 'Pre-infusion',
         phase: 'preinfusion',
         valve: 1,
-        duration: preinfusionTime,
-        pump: { target: 'flow', pressure: 1.0, flow: preinfusionFlow },
-        targets: [{ type: 'pressure', operator: 'gte', value: preinfusionStopPressure }],
-      });
+        duration: this._clampDuration(preinfusionTime),
+        pump: { target: 'flow', pressure: 0, flow: preinfusionFlow },
+      };
+      if (preinfusionStopPressure > 0) {
+        phase.targets = [{ type: 'pressure', operator: 'gte', value: preinfusionStopPressure }];
+      }
+      profile.phases.push(phase);
     }
     if (holdTime > 0) {
       profile.phases.push({
         name: 'Hold',
         phase: 'brew',
         valve: 1,
-        duration: holdTime,
+        duration: this._clampDuration(holdTime),
         pump: { target: 'pressure', pressure: holdPressure, flow: 0 },
       });
     }
     if (declineTime > 0) {
+      const declineDuration = this._clampDuration(declineTime);
       profile.phases.push({
         name: 'Decline',
         phase: 'brew',
         valve: 1,
-        duration: declineTime,
+        duration: declineDuration,
+        transition: { type: 'linear', duration: declineDuration, adaptive: true },
         pump: { target: 'pressure', pressure: declineEndPressure, flow: 0 },
       });
-    }
-    if (targetWeight > 0 && profile.phases.length > 0) {
-      const lastPhase = profile.phases[profile.phases.length - 1];
-      if (!lastPhase.targets) lastPhase.targets = [];
-      lastPhase.targets.push({ type: 'volumetric', value: targetWeight });
     }
     return profile;
   }
 
+  static _generatePhasesFromFlowProfile(tclText, profile) {
+    const get = key => this._getTclVal(tclText, key);
+    const preinfusionTime = get('flow_profile_preinfusion_time') || get('preinfusion_time');
+    const preinfusionFlow = get('flow_profile_preinfusion') || get('preinfusion_flow_rate');
+    const preinfusionStopPressure = get('preinfusion_stop_pressure');
+    const holdTime = get('flow_profile_hold_time') || get('espresso_hold_time');
+    const holdFlow = get('flow_profile_hold');
+    const declineTime = get('flow_profile_decline_time') || get('espresso_decline_time');
+    const declineEndFlow = get('flow_profile_decline');
+
+    if (preinfusionTime > 0 && preinfusionFlow > 0) {
+      const phase = {
+        name: 'Pre-infusion',
+        phase: 'preinfusion',
+        valve: 1,
+        duration: this._clampDuration(preinfusionTime),
+        pump: { target: 'flow', pressure: 0, flow: preinfusionFlow },
+      };
+      if (preinfusionStopPressure > 0) {
+        phase.targets = [{ type: 'pressure', operator: 'gte', value: preinfusionStopPressure }];
+      }
+      profile.phases.push(phase);
+    }
+    if (holdTime > 0 && holdFlow > 0) {
+      profile.phases.push({
+        name: 'Hold',
+        phase: 'brew',
+        valve: 1,
+        duration: this._clampDuration(holdTime),
+        pump: { target: 'flow', pressure: 0, flow: holdFlow },
+      });
+    }
+    if (declineTime > 0 && declineEndFlow > 0) {
+      const declineDuration = this._clampDuration(declineTime);
+      profile.phases.push({
+        name: 'Decline',
+        phase: 'brew',
+        valve: 1,
+        duration: declineDuration,
+        transition: { type: 'linear', duration: declineDuration, adaptive: true },
+        pump: { target: 'flow', pressure: 0, flow: declineEndFlow },
+      });
+    }
+    return profile;
+  }
+
+  static _mapTransitionType(value) {
+    if (value === 'smooth') return 'linear';
+    return 'instant';
+  }
+
   static _parseAdvancedProfile(tclText, profile) {
-    // Implementation from previous version...
     const advancedShotMatch = tclText.match(/advanced_shot\s+{{(.*)}}/s);
     if (!advancedShotMatch) return this._fail("Could not find 'advanced_shot' block in TCL input.");
     const phasesText = advancedShotMatch[1].trim();
     const phaseBlocks = phasesText ? phasesText.split(/}\s*{/) : [];
-    for (const block of phaseBlocks) {
+
+    // Authoritative preinfusion split per DE: frames before count_start are preinfusion,
+    // the rest are brew (regardless of frame name). Fall back to name-keyword sniffing
+    // when count_start is 0 or missing.
+    const countStart = Math.trunc(
+      this._getTclVal(tclText, 'final_desired_shot_volume_advanced_count_start'),
+    );
+    const preinfusionKeywords = ['fill', 'preinfu', 'soak', 'bloom'];
+
+    for (let index = 0; index < phaseBlocks.length; index++) {
+      const block = phaseBlocks[index];
       const phaseData = {};
-      const regex = /(\w+|\{[^}]+\})\s+([^{}\s]+|{[^}]+})/g;
+      const kvRegex = /(\w+|\{[^}]+\})\s+([^{}\s]+|{[^}]+})/g;
       let match;
-      while ((match = regex.exec(block)) !== null) {
+      while ((match = kvRegex.exec(block)) !== null) {
         phaseData[match[1].replace(/{|}/g, '')] = match[2].replace(/{|}/g, '');
       }
       if (!phaseData.name) continue;
-      const preinfusionKeywords = ['fill', 'preinfu', 'soak', 'bloom'];
-      const isPreinfusion = preinfusionKeywords.some(kw =>
-        phaseData.name.toLowerCase().includes(kw),
-      );
+
+      const isPreinfusion = countStart > 0
+        ? index < countStart
+        : preinfusionKeywords.some(kw => phaseData.name.toLowerCase().includes(kw));
+
+      const pumpMode = phaseData.pump === 'pressure' ? 'pressure' : 'flow';
+      const setpointRaw =
+        pumpMode === 'pressure'
+          ? this._toSafeFloat(phaseData.pressure, -1)
+          : this._toSafeFloat(phaseData.flow, -1);
+      const limitRaw = this._toSafeFloat(phaseData.max_flow_or_pressure, 0);
+
       const newPhase = {
         name: phaseData.name,
         phase: isPreinfusion ? 'preinfusion' : 'brew',
         valve: 1,
-        duration: parseFloat(phaseData.seconds) || 0,
+        duration: this._clampDuration(this._toSafeFloat(phaseData.seconds, 0.5)),
         pump: {
-          target: phaseData.pump === 'flow' ? 'flow' : 'pressure',
-          pressure:
-            phaseData.pump === 'pressure'
-              ? parseFloat(phaseData.pressure) || -1
-              : parseFloat(phaseData.max_flow_or_pressure) || 0,
-          flow:
-            phaseData.pump === 'flow'
-              ? parseFloat(phaseData.flow) || -1
-              : parseFloat(phaseData.max_flow_or_pressure) || 0,
+          target: pumpMode,
+          pressure: pumpMode === 'pressure' ? setpointRaw : limitRaw,
+          flow: pumpMode === 'flow' ? setpointRaw : limitRaw,
         },
-        transition: { type: 'instant' },
+        transition: { type: 'instant', duration: 0, adaptive: false },
       };
-      if (phaseData.transition === 'smooth') {
+
+      const transitionType = this._mapTransitionType(phaseData.transition);
+      if (transitionType !== 'instant') {
         newPhase.transition = {
-          type: 'ease-in-out',
+          type: transitionType,
           duration: newPhase.duration,
-          adaptive: true,
+          adaptive: false,
         };
       }
-      if (phaseData.temperature) newPhase.temperature = parseFloat(phaseData.temperature);
+
+      const temperatureValue = this._toSafeFloat(phaseData.temperature, 0);
+      if (temperatureValue > 0) newPhase.temperature = temperatureValue;
+
       const targets = [];
-      if (phaseData.volume && parseFloat(phaseData.volume) > 0)
-        targets.push({ type: 'pumped', value: parseFloat(phaseData.volume) });
+      const pumpedVolume = this._toSafeFloat(phaseData.volume, 0);
+      if (pumpedVolume > 0) {
+        targets.push({ type: 'pumped', operator: 'gte', value: pumpedVolume });
+      }
+      const perPhaseWeight = this._toSafeFloat(phaseData.weight, 0);
+      if (perPhaseWeight > 0) {
+        targets.push({ type: 'volumetric', operator: 'gte', value: perPhaseWeight });
+      }
+
       const exitType = phaseData.exit_type;
       if (exitType && phaseData.exit_if === '1') {
-        let targetType, operator, valueKey;
+        let targetType;
         if (exitType.includes('pressure')) targetType = 'pressure';
-        if (exitType.includes('flow')) targetType = 'flow';
+        else if (exitType.includes('flow')) targetType = 'flow';
+        let operator;
+        let valueKey;
         if (exitType.includes('over')) {
           operator = 'gte';
           valueKey = `exit_${targetType}_over`;
@@ -161,13 +269,14 @@ export class TclConverter {
           operator = 'lte';
           valueKey = `exit_${targetType}_under`;
         }
-        if (targetType && operator && phaseData[valueKey])
-          targets.push({
-            type: targetType,
-            operator,
-            value: parseFloat(phaseData[valueKey]),
-          });
+        if (targetType && operator) {
+          const exitValue = this._toSafeFloat(phaseData[valueKey], NaN);
+          if (Number.isFinite(exitValue) && exitValue >= 0) {
+            targets.push({ type: targetType, operator, value: exitValue });
+          }
+        }
       }
+
       if (targets.length > 0) newPhase.targets = targets;
       profile.phases.push(newPhase);
     }
@@ -182,35 +291,57 @@ export class TclConverter {
       temperature: 93,
       phases: [],
     };
-    const titleMatch = tclText.match(/profile_title\s+{([^}]+)}/);
-    if (titleMatch) profile.label = titleMatch[1].trim();
-    const notesMatch = tclText.match(/profile_notes\s+{([^}]+)}/s);
-    if (notesMatch) profile.description = notesMatch[1].trim().replace(/\s+/g, ' ');
-    profile.temperature = this._getTclVal(tclText, 'espresso_temperature');
-    const profileTypeMatch = tclText.match(/settings_profile_type\s+(\w+)/);
-    const profileType = profileTypeMatch ? profileTypeMatch[1] : 'settings_2a';
+    const title = this._getTclString(tclText, 'profile_title');
+    if (title) profile.label = title;
+    const notes = this._getTclString(tclText, 'profile_notes');
+    if (notes) profile.description = notes.replace(/\s+/g, ' ');
 
-    const parserType = profileType === 'settings_2c' ? 'Advanced' : 'Simple';
+    const espressoTemp = this._getTclVal(tclText, 'espresso_temperature');
+    if (espressoTemp > 0) profile.temperature = espressoTemp;
+
+    const rawType = this._getTclString(tclText, 'settings_profile_type');
+    const normalizedType = this._normalizeProfileType(rawType);
+
+    let parserType;
     let resultProfile;
-
-    if (parserType === 'Advanced') {
+    if (normalizedType === 'settings_2c') {
+      parserType = 'Advanced';
       resultProfile = this._parseAdvancedProfile(tclText, profile);
+    } else if (normalizedType === 'settings_2b') {
+      parserType = 'SimpleFlow';
+      resultProfile = this._generatePhasesFromFlowProfile(tclText, profile);
     } else {
-      resultProfile = this._generatePhasesFromSimpleProfile(tclText, profile);
-    }
-    const shotWeight = this._getTclVal(tclText, 'final_desired_shot_weight');
-    if (shotWeight > 0) {
-      for (const phase of resultProfile.phases) {
-        phase.targets = phase.targets || [];
-        phase.targets.push({ type: 'volumetric', operator: 'gte', value: shotWeight });
-      }
+      parserType = 'SimplePressure';
+      resultProfile = this._generatePhasesFromPressureProfile(tclText, profile);
     }
 
     if (resultProfile.ok === false) return resultProfile;
     if (resultProfile.phases.length === 0)
       return this._fail('TCL parsing resulted in zero valid phases.');
 
-    // *** ADD DEBUG INFO IF ENABLED ***
+    // Apply shot weight target to every phase as a global overflow cap.
+    // DE itself only evaluates the global stop-on-weight after preinfusion
+    // (device_scale.tcl gates on `current_framenumber >= number_of_preinfusion_steps`).
+    // Applying it everywhere is more conservative than strict DE behavior, but Gaggia
+    // Classic lacks the platform-level safety nets DE relies on; the broader cap is the
+    // safer default for this hardware (overflow protection on broken/missing puck, etc).
+    // Profile authors who want per-phase weight stops have the per-frame `weight` field
+    // (handled separately during phase parsing).
+    // Advanced profiles store the target in `_advanced`; simple profiles use the unsuffixed key.
+    const advancedWeight = this._getTclVal(tclText, 'final_desired_shot_weight_advanced');
+    const simpleWeight = this._getTclVal(tclText, 'final_desired_shot_weight');
+    const shotWeight =
+      normalizedType === 'settings_2c' && advancedWeight > 0 ? advancedWeight : simpleWeight;
+    if (shotWeight > 0) {
+      for (const phase of resultProfile.phases) {
+        phase.targets = phase.targets || [];
+        const hasVolumetric = phase.targets.some(t => t.type === 'volumetric');
+        if (!hasVolumetric) {
+          phase.targets.push({ type: 'volumetric', operator: 'gte', value: shotWeight });
+        }
+      }
+    }
+
     if (this.debug === 1) {
       resultProfile.debug = this._generateDebugInfo(resultProfile, tclText, parserType);
     }
@@ -226,10 +357,6 @@ export class TclConverter {
     const profileObject = this._parseTcl(cleanText);
     if (profileObject.ok === false) return profileObject;
 
-    try {
-      return this._succeed(profileObject);
-    } catch (e) {
-      return this._fail(`JSON serialization failed: ${e.message}`);
-    }
+    return this._succeed(profileObject);
   }
 }
