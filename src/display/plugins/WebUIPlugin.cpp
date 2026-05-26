@@ -10,30 +10,6 @@
 #include <esp_err.h>
 #include <esp_heap_caps.h>
 #include <esp_partition.h>
-#include <esp_system.h>
-
-// Allocator that backs ArduinoJson with PSRAM when available, falling back to
-// internal heap if PSRAM is full or unavailable. The profile-list response
-// (~20-60 KB for many profiles) used to allocate its node pool from internal
-// heap, contributing significantly to the 33%+ heap fragmentation the device
-// reports. ESP32-S3 boards in this project have 8 MB PSRAM that is otherwise
-// almost idle.
-struct PsramAllocator : ArduinoJson::Allocator {
-    void *allocate(size_t size) override {
-        void *p = heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-        if (!p) p = heap_caps_malloc(size, MALLOC_CAP_DEFAULT);
-        return p;
-    }
-    void deallocate(void *pointer) override { heap_caps_free(pointer); }
-    void *reallocate(void *ptr, size_t new_size) override {
-        void *p = heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-        if (!p) p = heap_caps_realloc(ptr, new_size, MALLOC_CAP_DEFAULT);
-        return p;
-    }
-};
-
-static PsramAllocator psramAllocator;
-
 #include <SD_MMC.h>
 #include <algorithm>
 #include <display/plugins/BLEScalePlugin.h>
@@ -377,7 +353,7 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     }
                 } else if (msgType == "req:history:rebuild") {
                     // Handle rebuild asynchronously - send immediate ack, progress comes via events
-                    JsonDocument resp;
+                    JsonDocument resp(&psramAllocator);
                     resp["tp"] = "res:history:rebuild";
                     if (doc["rid"].is<const char *>()) {
                         resp["rid"] = doc["rid"];
@@ -389,7 +365,7 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     client->text(buffer);
                     ShotHistory.startAsyncRebuild();
                 } else if (msgType.startsWith("req:history")) {
-                    JsonDocument resp;
+                    JsonDocument resp(&psramAllocator);
                     ShotHistory.handleRequest(doc, resp);
                     size_t bufferSize = measureJson(resp);
                     auto *buffer = ws.makeBuffer(bufferSize);
@@ -658,7 +634,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     }
 
     AsyncResponseStream *response = request->beginResponseStream("application/json");
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     Settings const &settings = controller->getSettings();
     doc["startupMode"] = settings.getStartupMode() == MODE_BREW ? "brew" : "standby";
     doc["startupProfile"] = settings.getStartupProfile();
@@ -731,7 +707,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
 }
 
 void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     JsonArray scalesArray = doc.to<JsonArray>();
     std::vector<DiscoveredDevice> devices = BLEScales.getDiscoveredScales();
     for (const DiscoveredDevice &device : BLEScales.getDiscoveredScales()) {
@@ -752,7 +728,7 @@ void WebUIPlugin::handleBLEScaleScan(AsyncWebServerRequest *request) {
         return;
     }
     BLEScales.scan();
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     doc["success"] = true;
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
@@ -765,7 +741,7 @@ void WebUIPlugin::handleBLEScaleConnect(AsyncWebServerRequest *request) {
         return;
     }
     BLEScales.connect(request->arg("uuid").c_str());
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     doc["success"] = true;
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
@@ -773,7 +749,7 @@ void WebUIPlugin::handleBLEScaleConnect(AsyncWebServerRequest *request) {
 }
 
 void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     doc["connected"] = BLEScales.isConnected();
     doc["name"] = BLEScales.getName();
     doc["uuid"] = BLEScales.getUUID();
@@ -797,7 +773,7 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
         return;
     }
     Settings const &settings = controller->getSettings();
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["tp"] = "res:ota-settings";
     doc["displayUpdateAvailable"] = ota->isUpdateAvailable(false);
@@ -849,7 +825,7 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
 }
 
 void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:ota-progress";
     doc["phase"] = phase;
     doc["progress"] = progress;
@@ -858,7 +834,7 @@ void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
 }
 
 void WebUIPlugin::sendAutotuneResult() {
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-result";
     doc["pid"] = controller->getSettings().getPid();
     String message = doc.as<String>();
@@ -868,7 +844,7 @@ void WebUIPlugin::sendAutotuneResult() {
 void WebUIPlugin::sendAutotuneFailed() {
     // Distinct WS event — Autotune page renders "timed out" error card
     // instead of stuck spinner. Fires on ERROR_CODE_AUTOTUNE_TIMEOUT.
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-failed";
     String message = doc.as<String>();
     ws.textAll(message);

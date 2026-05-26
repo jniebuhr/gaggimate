@@ -157,9 +157,7 @@ function deriveDurations(stage, resolve) {
   ]);
   const isTimeAxis = stage.dynamics?.over === 'time';
   const rampSpan =
-    isTimeAxis && points.length >= 2
-      ? Math.max(0, points[points.length - 1][0] - points[0][0])
-      : 0;
+    isTimeAxis && points.length >= 2 ? Math.max(0, points[points.length - 1][0] - points[0][0]) : 0;
   const timeTrigger = (stage.exit_triggers || []).find(
     t => t && t.type === 'time' && t.relative !== false,
   );

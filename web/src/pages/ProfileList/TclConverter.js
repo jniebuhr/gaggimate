@@ -209,9 +209,10 @@ export class TclConverter {
       }
       if (!phaseData.name) continue;
 
-      const isPreinfusion = countStart > 0
-        ? index < countStart
-        : preinfusionKeywords.some(kw => phaseData.name.toLowerCase().includes(kw));
+      const isPreinfusion =
+        countStart > 0
+          ? index < countStart
+          : preinfusionKeywords.some(kw => phaseData.name.toLowerCase().includes(kw));
 
       const pumpMode = phaseData.pump === 'pressure' ? 'pressure' : 'flow';
       const setpointRaw =

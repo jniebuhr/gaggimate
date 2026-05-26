@@ -160,13 +160,10 @@ function ProfileCard({
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
-  const toggleMenu = useCallback(
-    e => {
-      e?.preventDefault?.();
-      setMenuOpen(v => !v);
-    },
-    [],
-  );
+  const toggleMenu = useCallback(e => {
+    e?.preventDefault?.();
+    setMenuOpen(v => !v);
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -268,110 +265,110 @@ function ProfileCard({
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </button>
                   {menuOpen && (
-                  <div
-                    id={`profile-${data.id}-menu`}
-                    ref={popoverRef}
-                    role='menu'
-                    className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
-                    onKeyDown={e => {
-                      if (e.key === 'Escape') closeMenu();
-                    }}
-                  >
-                    <ul className='menu' role='none'>
-                      <li role='none'>
-                        <button
-                          role='menuitem'
-                          onClick={() => {
-                            onFavoriteToggle();
-                            closeMenu();
-                          }}
-                          disabled={favoriteToggleDisabled}
-                          className={`justify-start ${favoriteToggleClass}`}
-                          aria-label={
-                            data.favorite
-                              ? `Remove ${data.label} from favorites`
-                              : `Add ${data.label} to favorites`
-                          }
-                          aria-pressed={data.favorite}
-                        >
-                          <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                          <span>{data.favorite ? 'Unfavorite' : 'Favorite'}</span>
-                        </button>
-                      </li>
-                      <li role='none'>
-                        <a
-                          role='menuitem'
-                          href={`/profiles/${data.id}`}
-                          onClick={closeMenu}
-                          aria-label={`Edit ${data.label} profile`}
-                        >
-                          <FontAwesomeIcon icon={faPen} />
-                          <span>Edit</span>
-                        </a>
-                      </li>
-                      <li role='none'>
-                        <a
-                          role='menuitem'
-                          href={statsHref}
-                          onClick={closeMenu}
-                          className='text-success justify-start'
-                          aria-label={`View statistics for ${data.label} profile`}
-                        >
-                          <FontAwesomeIcon icon={faChartSimple} />
-                          <span>Statistics</span>
-                        </a>
-                      </li>
-                      <li role='none'>
-                        <button
-                          role='menuitem'
-                          onClick={() => {
-                            onDownload();
-                            closeMenu();
-                          }}
-                          className='text-primary justify-start'
-                          aria-label={`Export ${data.label} profile`}
-                        >
-                          <FontAwesomeIcon icon={faFileExport} />
-                          <span>Export</span>
-                        </button>
-                      </li>
-                      <li role='none'>
-                        <button
-                          role='menuitem'
-                          onClick={() => {
-                            onDuplicate(data.id);
-                            closeMenu();
-                          }}
-                          className='text-success justify-start'
-                          aria-label={`Duplicate ${data.label} profile`}
-                        >
-                          <FontAwesomeIcon icon={faCopy} />
-                          <span>Duplicate</span>
-                        </button>
-                      </li>
-                      <li role='none'>
-                        <button
-                          role='menuitem'
-                          onClick={() => {
-                            confirmOrDelete(() => {
-                              onDelete(data.id);
+                    <div
+                      id={`profile-${data.id}-menu`}
+                      ref={popoverRef}
+                      role='menu'
+                      className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
+                      onKeyDown={e => {
+                        if (e.key === 'Escape') closeMenu();
+                      }}
+                    >
+                      <ul className='menu' role='none'>
+                        <li role='none'>
+                          <button
+                            role='menuitem'
+                            onClick={() => {
+                              onFavoriteToggle();
                               closeMenu();
-                            });
-                          }}
-                          className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
-                          aria-label={
-                            confirmDelete
-                              ? `Confirm deletion of ${data.label} profile`
-                              : `Delete ${data.label} profile`
-                          }
-                          title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
-                        >
-                          <FontAwesomeIcon icon={faTrashCan} />
-                          <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
+                            }}
+                            disabled={favoriteToggleDisabled}
+                            className={`justify-start ${favoriteToggleClass}`}
+                            aria-label={
+                              data.favorite
+                                ? `Remove ${data.label} from favorites`
+                                : `Add ${data.label} to favorites`
+                            }
+                            aria-pressed={data.favorite}
+                          >
+                            <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                            <span>{data.favorite ? 'Unfavorite' : 'Favorite'}</span>
+                          </button>
+                        </li>
+                        <li role='none'>
+                          <a
+                            role='menuitem'
+                            href={`/profiles/${data.id}`}
+                            onClick={closeMenu}
+                            aria-label={`Edit ${data.label} profile`}
+                          >
+                            <FontAwesomeIcon icon={faPen} />
+                            <span>Edit</span>
+                          </a>
+                        </li>
+                        <li role='none'>
+                          <a
+                            role='menuitem'
+                            href={statsHref}
+                            onClick={closeMenu}
+                            className='text-success justify-start'
+                            aria-label={`View statistics for ${data.label} profile`}
+                          >
+                            <FontAwesomeIcon icon={faChartSimple} />
+                            <span>Statistics</span>
+                          </a>
+                        </li>
+                        <li role='none'>
+                          <button
+                            role='menuitem'
+                            onClick={() => {
+                              onDownload();
+                              closeMenu();
+                            }}
+                            className='text-primary justify-start'
+                            aria-label={`Export ${data.label} profile`}
+                          >
+                            <FontAwesomeIcon icon={faFileExport} />
+                            <span>Export</span>
+                          </button>
+                        </li>
+                        <li role='none'>
+                          <button
+                            role='menuitem'
+                            onClick={() => {
+                              onDuplicate(data.id);
+                              closeMenu();
+                            }}
+                            className='text-success justify-start'
+                            aria-label={`Duplicate ${data.label} profile`}
+                          >
+                            <FontAwesomeIcon icon={faCopy} />
+                            <span>Duplicate</span>
+                          </button>
+                        </li>
+                        <li role='none'>
+                          <button
+                            role='menuitem'
+                            onClick={() => {
+                              confirmOrDelete(() => {
+                                onDelete(data.id);
+                                closeMenu();
+                              });
+                            }}
+                            className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
+                            aria-label={
+                              confirmDelete
+                                ? `Confirm deletion of ${data.label} profile`
+                                : `Delete ${data.label} profile`
+                            }
+                            title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
+                          >
+                            <FontAwesomeIcon icon={faTrashCan} />
+                            <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
                   )}
                 </div>
 
@@ -466,7 +463,9 @@ function ProfileCard({
                     {totalDurationSeconds}s
                   </span>
                   {data.phases.length > 0 &&
-                    data.phases[data.phases.length - 1]?.targets?.some(t => t.type === 'volumetric') && (
+                    data.phases[data.phases.length - 1]?.targets?.some(
+                      t => t.type === 'volumetric',
+                    ) && (
                       <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
                         <FontAwesomeIcon icon={faScaleBalanced} />
                         {`${data.phases[data.phases.length - 1].targets.find(t => t.type === 'volumetric').value}g`}
