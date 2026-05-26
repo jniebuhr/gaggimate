@@ -339,6 +339,13 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     controller->raiseGrindTarget();
                 } else if (msgType == "req:lower-grind-target") {
                     controller->lowerGrindTarget();
+                } else if (msgType == "req:raise-brew-target") {
+                    // Web dashboard Brew-mode +/- buttons. The web client has
+                    // long been sending this via raiseTarget() but no firmware
+                    // handler existed, so the message was silently dropped.
+                    controller->raiseBrewTarget();
+                } else if (msgType == "req:lower-brew-target") {
+                    controller->lowerBrewTarget();
                 } else if (msgType == "req:change-mode") {
                     if (doc["mode"].is<uint8_t>()) {
                         auto mode = doc["mode"].as<uint8_t>();
