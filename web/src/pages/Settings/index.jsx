@@ -1001,7 +1001,7 @@ export function Settings() {
 
           {/* Sunrise Settings */}
           {ledControl.value && (
-            <Card sm={10} lg={5} title='Sunrise Settings'>
+            <Card sm={10} lg={5} title='Alba Settings'>
               <div className='mb-2 text-sm opacity-70'>
                 Set the colors for the LEDs when in idle mode with no warnings.
               </div>
