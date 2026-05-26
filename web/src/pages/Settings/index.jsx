@@ -3,9 +3,14 @@ import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
-import { useCallback, useEffect, useRef, useState, useContext } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
+import {
+  InputGroupField,
+  SettingsFormField,
+  ToggleField,
+} from '../../components/SettingsFormField.jsx';
 import { timezones } from '../../config/zones.js';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
@@ -352,254 +357,42 @@ export function Settings() {
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
           {/* Temperature Settings */}
           <Card sm={10} lg={5} title='Temperature Settings'>
-            <div className='mb-4'>
-              <label htmlFor='targetSteamTemp' className='mb-2 block text-sm font-medium'>
-                Default Steam Temperature
-              </label>
-              <div className='input-group'>
-                <label htmlFor='targetSteamTemp' className='input w-full'>
-                  <input
-                    id='targetSteamTemp'
-                    name='targetSteamTemp'
-                    type='number'
-                    placeholder='135'
-                    value={formData.targetSteamTemp}
-                    onChange={onChange('targetSteamTemp')}
-                  />
-                  <span aria-label='celsius'>°C</span>
-                </label>
-              </div>
-            </div>
-            <div className='form-control'>
-              <label htmlFor='targetWaterTemp' className='mb-2 block text-sm font-medium'>
-                Default Water Temperature
-              </label>
-              <div className='input-group'>
-                <label htmlFor='targetWaterTemp' className='input w-full'>
-                  <input
-                    id='targetWaterTemp'
-                    name='targetWaterTemp'
-                    type='number'
-                    placeholder='80'
-                    value={formData.targetWaterTemp}
-                    onChange={onChange('targetWaterTemp')}
-                  />
-                  <span aria-label='celsius'>°C</span>
-                </label>
-              </div>
-            </div>
-          </Card>
-
-          {/* User Preferences */}
-          <Card sm={10} lg={5} title='User Preferences'>
-            <div className='form-control mb-4'>
-              <label htmlFor='startup-mode' className='mb-2 block text-sm font-medium'>
-                Startup Mode
-              </label>
-              <select
-                id='startup-mode'
-                name='startupMode'
-                className='select select-bordered w-full'
-                onChange={onChange('startupMode')}
-              >
-                <option value='standby' selected={formData.startupMode === 'standby'}>
-                  Standby
-                </option>
-                <option value='brew' selected={formData.startupMode === 'brew'}>
-                  Brew
-                </option>
-              </select>
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='startup-profile' className='mb-2 block text-sm font-medium'>
-                Startup Profile
-              </label>
-              <select
-                id='startup-profile'
-                name='startupProfile'
-                className='select select-bordered w-full'
-                value={formData.startupProfile || ''}
-                onChange={onChange('startupProfile')}
-              >
-                <option value=''>Last used profile</option>
-                {profiles.map(profile => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='standbyTimeout' className='mb-2 block text-sm font-medium'>
-                Standby Timeout
-              </label>
-              <div className='input-group'>
-                <label htmlFor='standbyTimeout' className='input w-full'>
-                  <input
-                    id='standbyTimeout'
-                    name='standbyTimeout'
-                    type='number'
-                    placeholder='0'
-                    value={formData.standbyTimeout}
-                    onChange={onChange('standbyTimeout')}
-                  />
-                  <span aria-label='seconds'>s</span>
-                </label>
-              </div>
-            </div>
-
-            <div className='divider'>Predictive Scale Delay</div>
-            <div className='mb-2 text-sm opacity-70'>
-              Shuts off the process ahead of time based on the flow rate to account for any dripping
-              or delays in the control.
-            </div>
-            <div className='form-control mb-4'>
-              <label className='label cursor-pointer'>
-                <span className='label-text'>Auto Adjust</span>
-                <input
-                  id='delayAdjust'
-                  name='delayAdjust'
-                  type='checkbox'
-                  className='toggle toggle-primary'
-                  checked={!!formData.delayAdjust}
-                  onChange={onChange('delayAdjust')}
-                />
-              </label>
-            </div>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='form-control'>
-                <label htmlFor='brewDelay' className='mb-2 block text-sm font-medium'>
-                  Brew
-                </label>
-                <div className='input-group'>
-                  <label htmlFor='brewDelay' className='input w-full'>
-                    <input
-                      id='brewDelay'
-                      name='brewDelay'
-                      type='number'
-                      step='any'
-                      className='grow'
-                      placeholder='0'
-                      value={formData.brewDelay}
-                      onChange={onChange('brewDelay')}
-                    />
-                    <span aria-label='milliseconds'>ms</span>
-                  </label>
-                </div>
-              </div>
-              <div className='form-control'>
-                <label htmlFor='grindDelay' className='mb-2 block text-sm font-medium'>
-                  Grind
-                </label>
-                <div className='input-group'>
-                  <label htmlFor='grindDelay' className='input w-full'>
-                    <input
-                      id='grindDelay'
-                      name='grindDelay'
-                      type='number'
-                      step='any'
-                      className='grow'
-                      placeholder='0'
-                      value={formData.grindDelay}
-                      onChange={onChange('grindDelay')}
-                    />
-                    <span aria-label='milliseconds'>ms</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className='divider'>Switch Control</div>
-            <div className='form-control'>
-              <label className='label cursor-pointer'>
-                <span className='label-text'>Use momentary switches</span>
-                <input
-                  id='momentaryButtons'
-                  name='momentaryButtons'
-                  type='checkbox'
-                  className='toggle toggle-primary'
-                  checked={!!formData.momentaryButtons}
-                  onChange={onChange('momentaryButtons')}
-                />
-              </label>
-            </div>
-
-            <div className='form-control'>
-              <label htmlFor='button0' className='mb-2 block text-sm font-medium'>
-                Brew Button Behavior (Button 1)
-              </label>
-              <select
-                id='button0'
-                name='button0'
-                className='select select-bordered w-full'
-                value={formData.button0}
-                onChange={onChange('button0')}
-              >
-                <option value='none'>None</option>
-                <option value='brew'>Brew button</option>
-                <option value='steam'>Steam button</option>
-                <option value='water'>Water button</option>
-                {profiles.map(p => (
-                  <option key={p.id} value={p.id}>
-                    Profile: {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className='form-control'>
-              <label htmlFor='button1' className='mb-2 block text-sm font-medium'>
-                Steam Button Behavior (Button 2)
-              </label>
-              <select
-                id='button1'
-                name='button1'
-                className='select select-bordered w-full'
-                value={formData.button1}
-                onChange={onChange('button1')}
-              >
-                <option value='none'>None</option>
-                <option value='brew'>Brew button</option>
-                <option value='steam'>Steam button</option>
-                <option value='water'>Water button</option>
-                {profiles.map(p => (
-                  <option key={p.id} value={p.id}>
-                    Profile: {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className='form-control'>
-              <label htmlFor='button2' className='mb-2 block text-sm font-medium'>
-                Water Button Behavior (Button 3)
-              </label>
-              <select
-                id='button2'
-                name='button2'
-                className='select select-bordered w-full'
-                value={formData.button2}
-                onChange={onChange('button2')}
-              >
-                <option value='none'>None</option>
-                <option value='brew'>Brew button</option>
-                <option value='steam'>Steam button</option>
-                <option value='water'>Water button</option>
-                {profiles.map(p => (
-                  <option key={p.id} value={p.id}>
-                    Profile: {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <InputGroupField
+              label='Default Steam Temperature'
+              htmlFor='targetSteamTemp'
+              unit='°C'
+              unitAriaLabel='celsius'
+            >
+              <input
+                id='targetSteamTemp'
+                name='targetSteamTemp'
+                type='number'
+                placeholder='135'
+                value={formData.targetSteamTemp}
+                onChange={onChange('targetSteamTemp')}
+              />
+            </InputGroupField>
+            <InputGroupField
+              label='Default Water Temperature'
+              htmlFor='targetWaterTemp'
+              unit='°C'
+              unitAriaLabel='celsius'
+              noMargin
+            >
+              <input
+                id='targetWaterTemp'
+                name='targetWaterTemp'
+                type='number'
+                placeholder='80'
+                value={formData.targetWaterTemp}
+                onChange={onChange('targetWaterTemp')}
+              />
+            </InputGroupField>
           </Card>
 
           {/* Web Settings */}
           <Card sm={10} lg={5} title='Web Settings'>
-            <div className='form-control mb-4'>
-              <label htmlFor='webui-theme' className='label'>
-                <span className='label-text font-medium'>Theme</span>
-              </label>
+            <SettingsFormField label='Theme' htmlFor='webui-theme'>
               <select
                 id='webui-theme'
                 name='webui-theme'
@@ -615,11 +408,8 @@ export function Settings() {
                 <option value='coffee'>Coffee</option>
                 <option value='nord'>Nord</option>
               </select>
-            </div>
-            <div className='form-control'>
-              <label htmlFor='dashboardLayout' className='label'>
-                <span className='label-text font-medium'>Dashboard Layout</span>
-              </label>
+            </SettingsFormField>
+            <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout' noMargin>
               <select
                 id='dashboardLayout'
                 name='dashboardLayout'
@@ -633,15 +423,12 @@ export function Settings() {
                 <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
                 <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
               </select>
-            </div>
+            </SettingsFormField>
           </Card>
 
           {/* System Preferences */}
           <Card sm={10} lg={5} title='System Preferences'>
-            <div className='form-control mb-4'>
-              <label htmlFor='wifiSsid' className='mb-2 block text-sm font-medium'>
-                Wi-Fi SSID
-              </label>
+            <SettingsFormField label='Wi-Fi SSID' htmlFor='wifiSsid'>
               <input
                 id='wifiSsid'
                 name='wifiSsid'
@@ -651,11 +438,8 @@ export function Settings() {
                 value={formData.wifiSsid}
                 onChange={onChange('wifiSsid')}
               />
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='wifiPassword' className='mb-2 block text-sm font-medium'>
-                Wi-Fi Password
-              </label>
+            </SettingsFormField>
+            <SettingsFormField label='Wi-Fi Password' htmlFor='wifiPassword'>
               <label className='input w-full'>
                 <input
                   id='wifiPassword'
@@ -673,11 +457,8 @@ export function Settings() {
                   <FontAwesomeIcon icon={showWifiPassword ? faEyeSlash : faEye} />
                 </span>
               </label>
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='mdnsName' className='mb-2 block text-sm font-medium'>
-                Hostname
-              </label>
+            </SettingsFormField>
+            <SettingsFormField label='Hostname' htmlFor='mdnsName'>
               <input
                 id='mdnsName'
                 name='mdnsName'
@@ -687,11 +468,8 @@ export function Settings() {
                 value={formData.mdnsName}
                 onChange={onChange('mdnsName')}
               />
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='timezone' className='mb-2 block text-sm font-medium'>
-                Time Zone
-              </label>
+            </SettingsFormField>
+            <SettingsFormField label='Time Zone' htmlFor='timezone' noMargin>
               <select
                 id='timezone'
                 name='timezone'
@@ -704,29 +482,253 @@ export function Settings() {
                   </option>
                 ))}
               </select>
-            </div>
+            </SettingsFormField>
             <div className='divider'>Clock</div>
-            <div className='form-control'>
-              <label className='label cursor-pointer'>
-                <span className='label-text'>Use 24h Format</span>
-                <input
-                  id='clock24hFormat'
-                  name='clock24hFormat'
-                  type='checkbox'
-                  className='toggle toggle-primary'
-                  checked={!!formData.clock24hFormat}
-                  onChange={onChange('clock24hFormat')}
-                />
-              </label>
+            <ToggleField
+              label='Use 24h Format'
+              htmlFor='clock24hFormat'
+              checked={!!formData.clock24hFormat}
+              onChange={onChange('clock24hFormat')}
+            />
+          </Card>
+
+          {/* Display Settings */}
+          <Card sm={10} lg={5} title='Display Settings'>
+            <SettingsFormField label='Main Brightness (1-16)' htmlFor='mainBrightness'>
+              <input
+                id='mainBrightness'
+                name='mainBrightness'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='16'
+                min='1'
+                max='16'
+                value={formData.mainBrightness}
+                onChange={onChange('mainBrightness')}
+              />
+            </SettingsFormField>
+            <div className='divider'>Standby Display</div>
+            <ToggleField
+              label='Enable standby display'
+              htmlFor='standbyDisplayEnabled'
+              checked={formData.standbyDisplayEnabled}
+              onChange={onChange('standbyDisplayEnabled')}
+            />
+            <SettingsFormField
+              label='Standby Brightness (0-16)'
+              htmlFor='standbyBrightness'
+              helpText='When the toggle is off, brightness will be set to 0'
+            >
+              <input
+                id='standbyBrightness'
+                name='standbyBrightness'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='8'
+                min='0'
+                max='16'
+                value={formData.standbyBrightness}
+                onChange={onChange('standbyBrightness')}
+                disabled={!formData.standbyDisplayEnabled}
+              />
+            </SettingsFormField>
+            <InputGroupField
+              label='Standby Brightness Timeout (s)'
+              htmlFor='standbyBrightnessTimeout'
+              unit='s'
+              unitAriaLabel='seconds'
+            >
+              <input
+                id='standbyBrightnessTimeout'
+                name='standbyBrightnessTimeout'
+                type='number'
+                className='grow'
+                placeholder='60'
+                min='1'
+                value={formData.standbyBrightnessTimeout}
+                onChange={onChange('standbyBrightnessTimeout')}
+              />
+            </InputGroupField>
+            <SettingsFormField label='Theme' htmlFor='themeMode' noMargin>
+              <select
+                id='themeMode'
+                name='themeMode'
+                className='select select-bordered w-full'
+                value={formData.themeMode}
+                onChange={onChange('themeMode')}
+              >
+                <option value={0}>Dark Theme</option>
+                <option value={1}>Light Theme</option>
+              </select>
+            </SettingsFormField>
+          </Card>
+
+          {/* User Preferences */}
+          <Card sm={10} lg={5} title='User Preferences'>
+            <SettingsFormField label='Startup Mode' htmlFor='startup-mode'>
+              <select
+                id='startup-mode'
+                name='startupMode'
+                className='select select-bordered w-full'
+                onChange={onChange('startupMode')}
+              >
+                <option value='standby' selected={formData.startupMode === 'standby'}>
+                  Standby
+                </option>
+                <option value='brew' selected={formData.startupMode === 'brew'}>
+                  Brew
+                </option>
+              </select>
+            </SettingsFormField>
+            <SettingsFormField label='Startup Profile' htmlFor='startup-profile'>
+              <select
+                id='startup-profile'
+                name='startupProfile'
+                className='select select-bordered w-full'
+                value={formData.startupProfile || ''}
+                onChange={onChange('startupProfile')}
+              >
+                <option value=''>Last used profile</option>
+                {profiles.map(profile => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.label}
+                  </option>
+                ))}
+              </select>
+            </SettingsFormField>
+            <InputGroupField
+              label='Standby Timeout'
+              htmlFor='standbyTimeout'
+              unit='s'
+              unitAriaLabel='seconds'
+            >
+              <input
+                id='standbyTimeout'
+                name='standbyTimeout'
+                type='number'
+                placeholder='0'
+                value={formData.standbyTimeout}
+                onChange={onChange('standbyTimeout')}
+              />
+            </InputGroupField>
+
+            <div className='divider'>Predictive Scale Delay</div>
+            <div className='mb-4 text-sm opacity-70'>
+              Shuts off the process ahead of time based on the flow rate to account for any dripping
+              or delays in the control.
             </div>
+            <ToggleField
+              label='Auto Adjust'
+              htmlFor='delayAdjust'
+              checked={!!formData.delayAdjust}
+              onChange={onChange('delayAdjust')}
+            />
+            <div className='grid grid-cols-2 gap-4'>
+              <InputGroupField
+                label='Brew'
+                htmlFor='brewDelay'
+                unit='ms'
+                unitAriaLabel='milliseconds'
+              >
+                <input
+                  id='brewDelay'
+                  name='brewDelay'
+                  type='number'
+                  step='any'
+                  className='grow'
+                  placeholder='0'
+                  value={formData.brewDelay}
+                  onChange={onChange('brewDelay')}
+                />
+              </InputGroupField>
+              <InputGroupField
+                label='Grind'
+                htmlFor='grindDelay'
+                unit='ms'
+                unitAriaLabel='milliseconds'
+              >
+                <input
+                  id='grindDelay'
+                  name='grindDelay'
+                  type='number'
+                  step='any'
+                  className='grow'
+                  placeholder='0'
+                  value={formData.grindDelay}
+                  onChange={onChange('grindDelay')}
+                />
+              </InputGroupField>
+            </div>
+
+            <div className='divider'>Switch Control</div>
+            <ToggleField
+              label='Use momentary switches'
+              htmlFor='momentaryButtons'
+              checked={!!formData.momentaryButtons}
+              onChange={onChange('momentaryButtons')}
+            />
+            <SettingsFormField label='Brew Button Behavior (Button 1)' htmlFor='button0'>
+              <select
+                id='button0'
+                name='button0'
+                className='select select-bordered w-full'
+                value={formData.button0}
+                onChange={onChange('button0')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </SettingsFormField>
+            <SettingsFormField label='Steam Button Behavior (Button 2)' htmlFor='button1'>
+              <select
+                id='button1'
+                name='button1'
+                className='select select-bordered w-full'
+                value={formData.button1}
+                onChange={onChange('button1')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </SettingsFormField>
+            <SettingsFormField label='Water Button Behavior (Button 3)' htmlFor='button2' noMargin>
+              <select
+                id='button2'
+                name='button2'
+                className='select select-bordered w-full'
+                value={formData.button2}
+                onChange={onChange('button2')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </SettingsFormField>
           </Card>
 
           {/* Machine Settings */}
           <Card sm={10} lg={5} title='Machine Settings'>
-            <div className='form-control mb-4'>
-              <label htmlFor='pid' className='mb-2 block text-sm font-medium'>
-                PID Values
-              </label>
+            <SettingsFormField label='PID Values' htmlFor='pid'>
               <div className='input-group'>
                 <label htmlFor='pid' className='input w-full'>
                   <input
@@ -743,13 +745,14 @@ export function Settings() {
                   </span>
                 </label>
               </div>
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='kf' className='mb-2 block text-sm font-medium'>
-                Thermal Feedforward Gain
-              </label>
+            </SettingsFormField>
+            <SettingsFormField
+              label='Thermal Feedforward Gain'
+              htmlFor='kf'
+              helpText='Set to 0 to disable feedforward control.'
+            >
               <div className='input-group'>
-                <label htmlFor={'kf'} className={'input w-full'}>
+                <label htmlFor='kf' className='input w-full'>
                   <input
                     id='kf'
                     name='kf'
@@ -765,17 +768,12 @@ export function Settings() {
                   </span>
                 </label>
               </div>
-              <div className='mt-2 text-xs opacity-70'>
-                Set to 0 to disable feedforward control.
-              </div>
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='pumpModelCoeffs' className='mb-2 block text-sm font-medium'>
-                Pump Flow Coefficients
-              </label>
-              <div className='mb-2 text-xs opacity-70'>
-                Enter 2 values (flow at 1 bar, flow at 9 bar)
-              </div>
+            </SettingsFormField>
+            <SettingsFormField
+              label='Pump Flow Coefficients'
+              htmlFor='pumpModelCoeffs'
+              helpText='Enter 2 values (flow at 1 bar, flow at 9 bar)'
+            >
               <input
                 id='pumpModelCoeffs'
                 name='pumpModelCoeffs'
@@ -785,35 +783,30 @@ export function Settings() {
                 value={formData.pumpModelCoeffs}
                 onChange={onChange('pumpModelCoeffs')}
               />
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='temperatureOffset' className='mb-2 block text-sm font-medium'>
-                Temperature Offset (°C)
-              </label>
-              <div className='input-group'>
-                <label htmlFor='temperatureOffset' className='input w-full'>
-                  <input
-                    id='temperatureOffset'
-                    name='temperatureOffset'
-                    type='number'
-                    step='any'
-                    className='grow'
-                    placeholder='0'
-                    value={formData.temperatureOffset}
-                    onChange={onChange('temperatureOffset')}
-                  />
-                  <span aria-label='celsius'>°C</span>
-                </label>
-              </div>
-            </div>
+            </SettingsFormField>
+            <InputGroupField
+              label='Temperature Offset (°C)'
+              htmlFor='temperatureOffset'
+              unit='°C'
+              unitAriaLabel='celsius'
+            >
+              <input
+                id='temperatureOffset'
+                name='temperatureOffset'
+                type='number'
+                step='any'
+                className='grow'
+                placeholder='0'
+                value={formData.temperatureOffset}
+                onChange={onChange('temperatureOffset')}
+              />
+            </InputGroupField>
             {pressureAvailable.value && (
-              <div className='form-control mb-4'>
-                <label htmlFor='pressureScaling' className='mb-2 block text-sm font-medium'>
-                  Pressure Sensor Rating
-                </label>
-                <div className='mb-2 text-xs opacity-70'>
-                  Enter the bar rating of the pressure sensor being used
-                </div>
+              <SettingsFormField
+                label='Pressure Sensor Rating'
+                htmlFor='pressureScaling'
+                helpText='Enter the bar rating of the pressure sensor being used'
+              >
                 <div className='input-group'>
                   <label htmlFor='pressureScaling' className='input w-full'>
                     <input
@@ -829,17 +822,17 @@ export function Settings() {
                     <span>bar</span>
                   </label>
                 </div>
-              </div>
+              </SettingsFormField>
             )}
-            <div className='form-control mb-4'>
-              <label htmlFor='steamPumpPercentage' className='mb-2 block text-sm font-medium'>
-                Steam Pump Assist
-              </label>
-              <div className='mb-2 text-xs opacity-70'>
-                {pressureAvailable.value
+            <SettingsFormField
+              label='Steam Pump Assist'
+              htmlFor='steamPumpPercentage'
+              helpText={
+                pressureAvailable.value
                   ? 'How many ml/s to pump into the boiler during steaming'
-                  : 'What percentage to run the pump at during steaming'}
-              </div>
+                  : 'What percentage to run the pump at during steaming'
+              }
+            >
               <div className='input-group'>
                 <label htmlFor='steamPumpPercentage' className='input w-full'>
                   <input
@@ -866,16 +859,13 @@ export function Settings() {
                   </span>
                 </label>
               </div>
-            </div>
+            </SettingsFormField>
             {pressureAvailable.value && (
-              <div className='form-control mb-4'>
-                <label htmlFor='steamPumpCutoff' className='mb-2 block text-sm font-medium'>
-                  Pump Assist Cutoff
-                </label>
-                <div className='mb-2 text-xs opacity-70'>
-                  At how many bars should the pump assist stop. This makes it so the pump will only
-                  run when steam is flowing.
-                </div>
+              <SettingsFormField
+                label='Pump Assist Cutoff'
+                htmlFor='steamPumpCutoff'
+                helpText='At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing.'
+              >
                 <div className='input-group'>
                   <label htmlFor='steamPumpCutoff' className='input w-full'>
                     <input
@@ -891,12 +881,13 @@ export function Settings() {
                     <span>bar</span>
                   </label>
                 </div>
-              </div>
+              </SettingsFormField>
             )}
-            <div className='form-control'>
-              <label htmlFor='altRelayFunction' className='mb-2 block text-sm font-medium'>
-                Alt Relay / SSR2 Function
-              </label>
+            <SettingsFormField
+              label='Alt Relay / SSR2 Function'
+              htmlFor='altRelayFunction'
+              noMargin
+            >
               <select
                 id='altRelayFunction'
                 name='altRelayFunction'
@@ -910,106 +901,17 @@ export function Settings() {
                   Steam Boiler (Coming Soon)
                 </option>
               </select>
-            </div>
-          </Card>
-
-          {/* Display Settings */}
-          <Card sm={10} lg={5} title='Display Settings'>
-            <div className='form-control mb-4'>
-              <label htmlFor='mainBrightness' className='mb-2 block text-sm font-medium'>
-                Main Brightness (1-16)
-              </label>
-              <input
-                id='mainBrightness'
-                name='mainBrightness'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='16'
-                min='1'
-                max='16'
-                value={formData.mainBrightness}
-                onChange={onChange('mainBrightness')}
-              />
-            </div>
-            <div className='divider'>Standby Display</div>
-            <div className='form-control mb-4'>
-              <label className='label cursor-pointer'>
-                <span className='label-text'>Enable standby display</span>
-                <input
-                  id='standbyDisplayEnabled'
-                  name='standbyDisplayEnabled'
-                  type='checkbox'
-                  className='toggle toggle-primary'
-                  checked={formData.standbyDisplayEnabled}
-                  onChange={onChange('standbyDisplayEnabled')}
-                />
-              </label>
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='standbyBrightness' className='mb-2 block text-sm font-medium'>
-                Standby Brightness (0-16)
-              </label>
-              <input
-                id='standbyBrightness'
-                name='standbyBrightness'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='8'
-                min='0'
-                max='16'
-                value={formData.standbyBrightness}
-                onChange={onChange('standbyBrightness')}
-                disabled={!formData.standbyDisplayEnabled}
-              />
-            </div>
-            <div className='form-control mb-4'>
-              <label htmlFor='standbyBrightnessTimeout' className='mb-2 block text-sm font-medium'>
-                Standby Brightness Timeout (s)
-              </label>
-              <div className='input-group'>
-                <label htmlFor='standbyBrightnessTimeout' className='input w-full'>
-                  <input
-                    id='standbyBrightnessTimeout'
-                    name='standbyBrightnessTimeout'
-                    type='number'
-                    className='grow'
-                    placeholder='60'
-                    min='1'
-                    value={formData.standbyBrightnessTimeout}
-                    onChange={onChange('standbyBrightnessTimeout')}
-                  />
-                  <span aria-label='seconds'>s</span>
-                </label>
-              </div>
-            </div>
-            <div className='form-control'>
-              <label htmlFor='themeMode' className='mb-2 block text-sm font-medium'>
-                Theme
-              </label>
-              <select
-                id='themeMode'
-                name='themeMode'
-                className='select select-bordered w-full'
-                value={formData.themeMode}
-                onChange={onChange('themeMode')}
-              >
-                <option value={0}>Dark Theme</option>
-                <option value={1}>Light Theme</option>
-              </select>
-            </div>
+            </SettingsFormField>
           </Card>
 
           {/* Sunrise Settings */}
           {ledControl.value && (
             <Card sm={10} lg={5} title='Sunrise Settings'>
-              <div className='mb-2 text-sm opacity-70'>
+              <div className='mb-4 text-sm opacity-70'>
                 Set the colors for the LEDs when in idle mode with no warnings.
               </div>
               <div className='mb-4 grid grid-cols-2 gap-4'>
-                <div className='form-control'>
-                  <label htmlFor='sunriseR' className='mb-2 block text-sm font-medium'>
-                    Red (0 - 255)
-                  </label>
+                <SettingsFormField label='Red (0 - 255)' htmlFor='sunriseR'>
                   <input
                     id='sunriseR'
                     name='sunriseR'
@@ -1019,11 +921,8 @@ export function Settings() {
                     value={formData.sunriseR}
                     onChange={onChange('sunriseR')}
                   />
-                </div>
-                <div className='form-control'>
-                  <label htmlFor='sunriseG' className='mb-2 block text-sm font-medium'>
-                    Green (0 - 255)
-                  </label>
+                </SettingsFormField>
+                <SettingsFormField label='Green (0 - 255)' htmlFor='sunriseG'>
                   <input
                     id='sunriseG'
                     name='sunriseG'
@@ -1033,11 +932,8 @@ export function Settings() {
                     value={formData.sunriseG}
                     onChange={onChange('sunriseG')}
                   />
-                </div>
-                <div className='form-control'>
-                  <label htmlFor='sunriseB' className='mb-2 block text-sm font-medium'>
-                    Blue (0 - 255)
-                  </label>
+                </SettingsFormField>
+                <SettingsFormField label='Blue (0 - 255)' htmlFor='sunriseB'>
                   <input
                     id='sunriseB'
                     name='sunriseB'
@@ -1047,11 +943,8 @@ export function Settings() {
                     value={formData.sunriseB}
                     onChange={onChange('sunriseB')}
                   />
-                </div>
-                <div className='form-control'>
-                  <label htmlFor='sunriseW' className='mb-2 block text-sm font-medium'>
-                    White (0 - 255)
-                  </label>
+                </SettingsFormField>
+                <SettingsFormField label='White (0 - 255)' htmlFor='sunriseW'>
                   <input
                     id='sunriseW'
                     name='sunriseW'
@@ -1061,12 +954,9 @@ export function Settings() {
                     value={formData.sunriseW}
                     onChange={onChange('sunriseW')}
                   />
-                </div>
+                </SettingsFormField>
               </div>
-              <div className='form-control mb-4'>
-                <label htmlFor='sunriseExtBrightness' className='mb-2 block text-sm font-medium'>
-                  External LED (0 - 255)
-                </label>
+              <SettingsFormField label='External LED (0 - 255)' htmlFor='sunriseExtBrightness'>
                 <input
                   id='sunriseExtBrightness'
                   name='sunriseExtBrightness'
@@ -1076,10 +966,10 @@ export function Settings() {
                   value={formData.sunriseExtBrightness}
                   onChange={onChange('sunriseExtBrightness')}
                 />
-              </div>
-              <div className='form-control'>
-                <label htmlFor='emptyTankDistance' className='mb-2 block text-sm font-medium'>
-                  Distance between ToF sensor and bottom of the tank
+              </SettingsFormField>
+              <div className='form-control mb-3'>
+                <label htmlFor='emptyTankDistance' className='mb-1 block text-sm font-medium'>
+                  Distance from sensor to bottom of the tank
                 </label>
                 <div className='flex flex-row gap-2'>
                   <div className='input-group flex-grow'>
@@ -1096,26 +986,25 @@ export function Settings() {
                       <span aria-label='millimeter'>mm</span>
                     </label>
                   </div>
-                  <div>
-                    <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
-                      <button
-                        className='btn btn-ghost'
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            emptyTankDistance: tofDistance,
-                          })
-                        }
-                      >
-                        <FontAwesomeIcon icon={faCrosshairs} />
-                      </button>
-                    </Tooltip>
-                  </div>
+                  <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
+                    <button
+                      type='button'
+                      className='btn btn-ghost'
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          emptyTankDistance: tofDistance,
+                        })
+                      }
+                    >
+                      <FontAwesomeIcon icon={faCrosshairs} />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
               <div className='form-control'>
-                <label htmlFor='fullTankDistance' className='mb-2 block text-sm font-medium'>
-                  Distance between ToF sensor and the max line of the tank
+                <label htmlFor='fullTankDistance' className='mb-1 block text-sm font-medium'>
+                  Distance from sensor to the fill line
                 </label>
                 <div className='flex flex-row gap-2'>
                   <div className='input-group flex-grow'>
@@ -1132,21 +1021,20 @@ export function Settings() {
                       <span aria-label='millimeter'>mm</span>
                     </label>
                   </div>
-                  <div>
-                    <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
-                      <button
-                        className='btn btn-ghost'
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            fullTankDistance: tofDistance,
-                          })
-                        }
-                      >
-                        <FontAwesomeIcon icon={faCrosshairs} />
-                      </button>
-                    </Tooltip>
-                  </div>
+                  <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
+                    <button
+                      type='button'
+                      className='btn btn-ghost'
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          fullTankDistance: tofDistance,
+                        })
+                      }
+                    >
+                      <FontAwesomeIcon icon={faCrosshairs} />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             </Card>
@@ -1165,21 +1053,25 @@ export function Settings() {
           </Card>
         </div>
 
-        <div className='pt-4 pb-4 lg:col-span-10'>
+        <div className='pt-4 lg:col-span-10'>
           <div className='alert alert-warning shadow-sm'>
             <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
           </div>
           <div className='flex flex-col gap-2 pt-4 sm:flex-row'>
-            <a href='/' className='btn btn-outline'>
+            <a href='/' className='btn btn-outline flex-1 sm:flex-none'>
               Back
             </a>
-            <button type='submit' className='btn btn-primary' disabled={submitting}>
+            <button
+              type='submit'
+              className='btn btn-primary flex-1 sm:flex-none'
+              disabled={submitting}
+            >
               {submitting && <Spinner size={4} />} Save
             </button>
             <button
               type='submit'
               name='restart'
-              className='btn btn-secondary'
+              className='btn btn-secondary flex-1 sm:flex-none'
               disabled={submitting}
               onClick={e => onSubmit(e, true)}
             >
