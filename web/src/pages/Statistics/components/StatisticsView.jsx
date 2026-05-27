@@ -1250,7 +1250,7 @@ function useStatisticsRunExecution({
         }
 
         const entries = [];
-
+        let skippedPayloadCount = 0;
         for (let i = 0; i < total; i += BATCH_SIZE) {
           if (loadId !== analyzeLoadIdRef.current) return;
 
@@ -1337,13 +1337,32 @@ function useStatisticsRunExecution({
             if (entry) entries.push(entry);
           }
 
+          skippedPayloadCount += batchResults.filter(entry => !entry).length;
+
           if (loadId !== analyzeLoadIdRef.current) return;
           setProgress({ current: Math.min(i + BATCH_SIZE, total), total });
         }
 
         if (cancelled || loadId !== analyzeLoadIdRef.current) return;
+
+        if (skippedPayloadCount > 0) {
+          const skippedText =
+            skippedPayloadCount === total
+              ? 'No selected shots have cached full payloads yet. Connect to GaggiMate and open Shot History to hydrate the local mirror.'
+              : `${skippedPayloadCount} of ${total} selected shots were skipped because their full cached payloads are missing.`;
+
+          setError(skippedText);
+        } else {
+          setError(null);
+        }
+
         entriesRef.current = entries;
-        setResult(computeStatistics(entries, { calcMode: !!runRequest.calcMode }));
+
+        setResult(
+          entries.length > 0
+            ? computeStatistics(entries, { calcMode: !!runRequest.calcMode })
+            : null,
+        );
       } catch {
         if (cancelled || loadId !== analyzeLoadIdRef.current) return;
         setError('Failed to load statistics. Please try again.');
