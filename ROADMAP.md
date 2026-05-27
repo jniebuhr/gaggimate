@@ -22,7 +22,7 @@ GaggiGo
 = safe sync client later
 ```
 
-The project has now moved out of broad analyzer/history regression territory and into cleanup + hardening before sync.
+The project has now moved out of analyzer/history regression territory and into cleanup + hardening before sync.
 
 ---
 
@@ -52,7 +52,7 @@ Merge-back direction:
 
 ## Phase 2 — Offline-First Behaviour + Cache Mirror Stabilisation
 
-Status: core architecture stable, hardening ongoing.
+Status: architecture stable, hardening ongoing.
 
 Current architecture:
 
@@ -68,7 +68,7 @@ LibraryService
 History / Analyzer / Statistics / Profiles
 ```
 
-Integrated and confirmed:
+Integrated and validated:
 
 - fast offline UI boot
 - cached startup behaviour
@@ -88,6 +88,10 @@ Integrated and confirmed:
 - statistics missing-payload reporting
 - deterministic mirrored GaggiMate profile snapshots
 - offline profile consistency model
+- reconnect lifecycle validation
+- offline refresh persistence validation
+- reconnect duplicate prevention validation
+- reconnect websocket stability validation
 
 Critical architecture fixes completed:
 
@@ -119,6 +123,7 @@ Recent fixes completed:
 - removed lazy live statistics payload loading
 - added statistics missing-payload warnings
 - replaced stale mirrored profile accumulation
+- validated reconnect lifecycle behaviour
 
 ---
 
@@ -126,14 +131,13 @@ Recent fixes completed:
 
 Still actively being stabilised:
 
-1. Connected/offline/reconnect workflow validation.
-2. Offline empty-state polish.
-3. Cache/source indicator clarity.
-4. Terminal/proxy noise reduction.
-5. Dead-code audit.
-6. ApiService safe-boundary mapping.
-7. Backup/archive architecture review before implementation.
-8. Runtime validation matrix across refresh/reopen/offline transitions.
+1. Offline empty-state polish.
+2. Cache/source indicator clarity.
+3. Terminal/proxy noise reduction.
+4. Dead-code audit.
+5. ApiService safe-boundary mapping.
+6. Backup/archive architecture review before implementation.
+7. Runtime validation matrix across refresh/reopen/browser restart transitions.
 
 Rules:
 
@@ -197,8 +201,8 @@ Status: blocked behind hardening validation.
 
 Sync work must not begin until:
 
-- connected/offline/reconnect behaviour is validated.
-- profile cache behaviour is stable.
+- offline empty states are stable.
+- source/cache indicators are stable.
 - no unexpected ApiService warnings remain.
 - local mirror behaviour is deterministic.
 - archive architecture is stable.
