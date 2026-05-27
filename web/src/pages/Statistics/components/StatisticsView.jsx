@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { ApiServiceContext } from '../../../services/ApiService';
 import { libraryService } from '../../ShotAnalyzer/services/LibraryService';
+import { indexedDBService } from '../../ShotAnalyzer/services/IndexedDBService';
 import { calculateShotMetrics, detectAutoDelay } from '../../ShotAnalyzer/services/AnalyzerService';
 import { computeStatistics } from '../services/StatisticsService';
 import {
@@ -123,10 +124,29 @@ function formatDateTimeLocalInputValue(ms) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+function isGaggiMateStatisticsSource(source) {
+  return source === 'gaggimate' || source === 'gaggimate-cache';
+}
+
 function getShotSelectionKey(shotMeta) {
   if (!shotMeta) return '';
-  if (shotMeta.source === 'gaggimate') return `gaggimate:${String(shotMeta.id || '')}`;
+  if (isGaggiMateStatisticsSource(shotMeta.source)) {
+    return `gaggimate:${String(shotMeta.gaggimateId || shotMeta.id || '')}`;
+  }
   return `browser:${String(shotMeta.storageKey || shotMeta.name || shotMeta.id || '')}`;
+}
+
+function getStatisticsShotCacheKey(shotMeta) {
+  if (!shotMeta) return '';
+  if (isGaggiMateStatisticsSource(shotMeta.source)) {
+    const id = shotMeta.gaggimateId || shotMeta.id;
+    return shotMeta.storageKey || (id ? `gaggimate:${String(id)}` : '');
+  }
+  return shotMeta.storageKey || shotMeta.name || shotMeta.id || '';
+}
+
+function hasCachedStatisticsPayload(shot) {
+  return Array.isArray(shot?.samples) && shot.samples.length > 0;
 }
 
 function getSourceShortLabel(source) {
@@ -1238,19 +1258,16 @@ function useStatisticsRunExecution({
           const batchResults = await Promise.all(
             batch.map(async shot => {
               try {
-                const shotId =
-                  shot.source === 'gaggimate' ? shot.id : shot.storageKey || shot.name || shot.id;
-                const loadedShot = await libraryService.loadShot(shotId, shot.source);
-                const fullShot = loadedShot
-                  ? {
-                      ...loadedShot,
-                      source: loadedShot.source || shot.source,
-                      storageKey:
-                        loadedShot.storageKey || shot.storageKey || shot.name || String(shotId),
-                      name: loadedShot.name || shot.name || shot.storageKey || String(shotId),
-                    }
-                  : null;
-                if (!fullShot || !fullShot.samples || fullShot.samples.length === 0) return null;
+                const shotId = getStatisticsShotCacheKey(shot);
+                const cachedShot = shotId ? await indexedDBService.getShot(shotId) : null;
+                if (!hasCachedStatisticsPayload(cachedShot)) return null;
+
+                const fullShot = {
+                  ...cachedShot,
+                  source: cachedShot.source || shot.source,
+                  storageKey: cachedShot.storageKey || shot.storageKey || shot.name || String(shotId),
+                  name: cachedShot.name || shot.name || shot.storageKey || String(shotId),
+                };
 
                 const profileField = fullShot.profile || '';
                 const profileKey = cleanName(profileField).toLowerCase();
