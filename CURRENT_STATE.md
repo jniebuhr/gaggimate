@@ -70,17 +70,24 @@ Hydration is the sync model.
 
 ## Runtime State Confirmed
 
-Confirmed working after recent fixes:
+Confirmed working after recent fixes and local validation:
 
 - Shot History loads correctly online.
 - Shot History remains available offline.
 - Shot Analyzer graphs load online.
 - Shot Analyzer works from cached full shot payloads offline after hydration.
 - Profiles show current live GaggiMate profiles while connected.
-- Full GaggiMate shot payloads are now hydrated into IndexedDB during shot index hydration.
-- Statistics now reads cached payloads instead of lazy live fetches.
-- Statistics now reports missing payload state instead of silent zero-result behaviour.
-- Cache-first architecture is now functioning as the active data model.
+- Profiles load from cache while offline.
+- Full GaggiMate shot payloads hydrate into IndexedDB during shot index hydration.
+- Statistics reads cached payloads instead of lazy live fetches.
+- Statistics reports missing payload state instead of silent zero-result behaviour.
+- Browser refresh preserves the local mirror.
+- Connected → offline → refresh → reconnect lifecycle has been validated.
+- Reconnect does not create duplicate shots.
+- Reconnect does not show stale profile accumulation.
+- Reconnect does not produce hydration spam.
+- Reconnect does not produce websocket retry flood.
+- Cache-first architecture is functioning as the active data model.
 
 Important implementation point:
 
@@ -146,18 +153,16 @@ No backup/archive implementation should begin before architecture review is comp
 
 ## Still Needs Validation / Hardening
 
-The project is no longer in the broad broken-analyzer state, but it is not ready for sync or archive implementation yet.
+The project is no longer in the broad broken-analyzer state, and reconnect lifecycle validation has passed.
 
-Remaining before sync/archive work:
+Remaining before sync/archive implementation:
 
-1. Clean profile cache fallback so offline profiles do not mix stale old browser/import profiles with current GaggiMate cache unexpectedly.
-2. Validate connected/offline/reconnect behaviour.
-3. Polish offline empty states.
-4. Clarify cache/source indicators.
-5. Reduce terminal/proxy noise.
-6. Audit inherited dead code.
-7. Map remaining ApiService safe-operation boundaries.
-8. Review and validate backup/archive architecture before implementation.
+1. Polish offline empty states.
+2. Clarify cache/source indicators.
+3. Reduce terminal/proxy noise.
+4. Audit inherited dead code.
+5. Map remaining ApiService safe-operation boundaries.
+6. Review and validate backup/archive architecture before implementation.
 
 No new product features before this hardening pass.
 
@@ -188,6 +193,15 @@ No new product features before this hardening pass.
 
 - Online profile list now prefers live GaggiMate profiles.
 - Cached/library fallback remains available when live profile load is unavailable.
+- Mirrored GaggiMate profile snapshots are replaced cleanly rather than accumulated.
+- Browser/import profiles remain preserved separately.
+
+### Reconnect Lifecycle
+
+- Online → offline → browser refresh → reconnect workflow validated.
+- Profiles, history, Analyzer, and Statistics survive offline refresh from the local mirror.
+- Reconnect does not duplicate shots or accumulate stale profiles.
+- Reconnect does not cause hydration spam or websocket retry flood.
 
 ### Safe Data Boundary
 
@@ -221,11 +235,11 @@ Cleanup and hardening before archive/sync work.
 
 Immediate next focus:
 
-1. Offline profile cache cleanup.
-2. Reconnect validation.
-3. Cache/source indicator clarity.
-4. Empty-state polish.
-5. Dead-code audit.
+1. Offline empty-state polish.
+2. Cache/source indicator clarity.
+3. Terminal/proxy noise reduction.
+4. Dead-code audit.
+5. ApiService safe-boundary mapping.
 6. Backup/archive architecture review.
 
 ---
