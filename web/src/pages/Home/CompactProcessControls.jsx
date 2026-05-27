@@ -184,8 +184,13 @@ const BrewIdleView = ({ s, brewTarget, sendTarget, send }) => (
         onDecrease={() => send('req:lower-temp')}
         onIncrease={() => send('req:raise-temp')}
       />
+      {/* "TARGET" prefix on the morphing label makes the read honest:
+          the value is the brew-stopping condition the firmware will use,
+          and that condition depends on the loaded profile (volumetric or
+          duration). Matches the wording the full-layout ProcessControls
+          already uses (TARGET WEIGHT / TARGET TIME). */}
       <MiniStepper
-        label={brewTarget ? 'WEIGHT' : 'TIME'}
+        label={brewTarget ? 'TARGET WEIGHT' : 'TARGET TIME'}
         value={
           brewTarget
             ? `${(s.targetWeight ?? 0).toFixed(0)}g`
