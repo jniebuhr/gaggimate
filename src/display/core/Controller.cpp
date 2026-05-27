@@ -651,8 +651,18 @@ void Controller::deactivate() {
         // raise/lowerBrewTarget) revert back to the profile's saved values
         // after each brew. For permanent changes the user should save via
         // the Profiles page or the display's Save button.
+        //
+        // Reset the profile in place before reload: parseProfile() appends to
+        // profile.phases rather than replacing, so feeding it the already-
+        // populated selectedProfile would double the phases on every brew
+        // (60s utility profile reading 1:00 → 2:00 → 3:00 across runs, and
+        // the brew loop actually executing the duplicated phases). Mirrors
+        // the `selectedProfile = Profile{}` pattern that
+        // ProfileManager::selectProfile already uses for the same reason.
         if (profileManager) {
-            profileManager->loadSelectedProfile(profileManager->getSelectedProfile());
+            Profile &p = profileManager->getSelectedProfile();
+            p = Profile{};
+            profileManager->loadSelectedProfile(p);
         }
     } else if (lastProcess->getType() == MODE_GRIND) {
         pluginManager->trigger("controller:grind:end");
