@@ -22,6 +22,7 @@ import PropTypes from 'prop-types';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { ModeTab } from './ModeTab.jsx';
 import {
+  fmtDuration,
   fmtElapsed,
   fmtPhaseTarget,
   getPhaseLabel,
@@ -168,12 +169,14 @@ const BrewIdleView = ({ s, brewTarget, sendTarget, send }) => (
         </span>
       </span>
     </a>
-    {/* Same +/- steppers as the full ProcessControls — temp left, weight
-        right. Calls the same Controller methods that the device's gear-icon
-        BrewScreen uses; firmware reverts profile to disk values after each
-        brew (Controller::deactivate). Uses a slimmer inline layout (not the
-        shared <Adjuster>) so two steppers fit side-by-side in the narrow
-        Compact container even on tight viewports. */}
+    {/* Mirrors the device's gear-icon BrewScreen Settings panel exactly:
+        always show TEMP, plus a second slot that morphs between WEIGHT and
+        TIME based on `brewTarget` (firmware's `bt` flag = scale connected
+        AND profile is volumetric). Both modes call the SAME Controller
+        methods — `raiseBrewTarget` / `lowerBrewTarget` — which decide
+        internally whether to adjust the profile's volumetric target or its
+        phase duration based on the same condition. Format is the only
+        visible difference. */}
     <div className='flex flex-row items-start justify-center gap-8'>
       <MiniStepper
         label='TEMP'
@@ -181,16 +184,17 @@ const BrewIdleView = ({ s, brewTarget, sendTarget, send }) => (
         onDecrease={() => send('req:lower-temp')}
         onIncrease={() => send('req:raise-temp')}
       />
-      {brewTarget && s.volumetricAvailable && (
-        <MiniStepper
-          label='WEIGHT'
-          value={`${(s.targetWeight ?? 0).toFixed(0)}g`}
-          onDecrease={() => send('req:lower-brew-target')}
-          onIncrease={() => send('req:raise-brew-target')}
-        />
-      )}
+      <MiniStepper
+        label={brewTarget ? 'WEIGHT' : 'TIME'}
+        value={
+          brewTarget
+            ? `${(s.targetWeight ?? 0).toFixed(0)}g`
+            : fmtDuration(s.brewTargetDuration ?? 0)
+        }
+        onDecrease={() => send('req:lower-brew-target')}
+        onIncrease={() => send('req:raise-brew-target')}
+      />
     </div>
-    {s.volumetricAvailable && <TargetToggle value={brewTarget ? 1 : 0} onChange={sendTarget} />}
   </div>
 );
 
@@ -329,11 +333,13 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
           current={(s.currentPressure ?? 0).toFixed(1)}
           target={(s.targetPressure ?? 0).toFixed(1)}
           unit=' bar'
-          /* Red alert when over 1 bar in Brew mode — boiler is likely
-             over-pressurized from previous shot/heat-up; flush or open
-             steam wand before brewing. */
+          /* Red alert when over 1 bar while sitting idle in Brew mode —
+             boiler is likely over-pressurized from previous shot/heat-up;
+             flush or open steam wand before brewing. Suppressed during an
+             active brew (high pressure is expected) and immediately after
+             (pressure takes a moment to bleed off). */
           currentClassName={
-            brew && (s.currentPressure ?? 0) > 1.0
+            brew && !active && !finished && (s.currentPressure ?? 0) > 1.0
               ? 'text-error font-semibold'
               : 'text-base-content'
           }
