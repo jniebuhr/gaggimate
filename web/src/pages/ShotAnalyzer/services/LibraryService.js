@@ -293,7 +293,28 @@ class LibraryService {
         normalizedShots.map(shot => indexedDBService.saveCachedGaggiMateShot(shot)),
       );
 
-      return cachedShots.map(normalizeLocalShot);
+      const missingPayloadShots = cachedShots
+        .map(normalizeLocalShot)
+        .filter(shot => isAnyGaggiMateSource(shot.source) && !hasLoadedSamples(shot))
+        .map(shot => getGaggiMateShotId(shot))
+        .filter(Boolean);
+
+      const concurrency = 2;
+
+      for (let i = 0; i < missingPayloadShots.length; i += concurrency) {
+        const batch = missingPayloadShots.slice(i, i + concurrency);
+
+        await Promise.all(
+          batch.map(id =>
+            this.hydrateGaggiMateShotPayload(id).catch(error => {
+              console.warn(`Failed to hydrate cached shot payload ${id}:`, error);
+              return null;
+            }),
+          ),
+        );
+      }
+
+      return this.getLocalShots('gaggimate');
     } catch (error) {
       console.error('Failed to hydrate GaggiMate shot index:', error);
       return [];
@@ -662,4 +683,5 @@ class LibraryService {
 }
 
 export const libraryService = new LibraryService();
+
 
