@@ -2,31 +2,25 @@
 
 ## Current Status
 
-GaggiGo is an offline-first observer frontend for GaggiMate with a documented merge-back direction.
+GaggiGo is an offline-first observer frontend and local mirror layer for GaggiMate.
 
-Core architecture direction remains valid.
-
-However:
+Core cache-first architecture direction is now functioning.
 
 ```text
-Analyzer and Statistics are currently under active debug.
+GaggiMate
+= runtime owner
+= telemetry source
+= machine authority
+
+GaggiGo
+= offline-first observer frontend
+= local IndexedDB mirror
+= historical viewer
+= analyzer/statistics workspace
+= safe sync client later
 ```
 
-Current regression:
-
-- analyzer graphs can fail to render
-- statistics can return zeroes
-- statistics batching can become extremely slow
-- metadata-only shot rows can be treated as fully-loaded payloads
-- `gaggimate-cache` source handling is not yet fully unified
-
-Do not treat offline analyzer/statistics behaviour as complete until the active debug handover is resolved and validated.
-
-Reference:
-
-```text
-project-docs/ANALYZER_STATISTICS_DEBUG_HANDOVER.md
-```
+The project has now moved out of broad analyzer/history regression territory and into cleanup + hardening before sync.
 
 ---
 
@@ -40,14 +34,13 @@ Completed:
 - desktop sidebar retained
 - mobile dropdown retained
 - safe informational homepage
-- unsafe/admin-oriented routes removed from GaggiGo shell
-- unsafe/admin-oriented navigation removed from GaggiGo shell
-- live proxy integration
+- unsafe/admin-oriented routes removed from active GaggiGo shell
 - websocket integration
+- live proxy integration
 - LibraryService abstraction reused
-- ShotHistory migrated onto unified data layer
-- Settings restored as read-only GaggiMate settings viewer
-- safe observer-mode frontend direction established
+- safe observer frontend direction established
+- Settings retained as filtered read-only viewer
+- SafeGaggiMateClient integration
 
 Merge-back direction:
 
@@ -55,95 +48,109 @@ Merge-back direction:
 
 ---
 
-## Phase 2 — Offline-First Behaviour + Hardening
+## Phase 2 — Offline-First Behaviour + Cache Mirror Stabilisation
 
-Status: partially complete.
+Status: major foundation complete, hardening ongoing.
 
 Current architecture:
 
 ```text
-Browser
+GaggiMate API/WebSocket
+↓
+hydration/import path
+↓
+IndexedDB local mirror
 ↓
 LibraryService
 ↓
-SafeGaggiMateClient + IndexedDBService
+History / Analyzer / Statistics / Profiles
 ```
 
-Integrated:
+Integrated and confirmed:
 
-- cached startup behaviour
-- background live refresh attempts
 - fast offline UI boot
-- profile cache fallback
+- cached startup behaviour
 - shot history cache fallback
+- analyzer cache fallback
+- full shot payload hydration into IndexedDB
+- profile cache fallback
+- live profile refresh path
 - settings snapshot fallback
 - cache-first rendering model
-- source/cache visibility indicators
+- source/cache indicators
 - safe websocket request classification
 - safe profile operation wrapping
 - ApiService hardening pass
 - repository audit pass
-- runtime/non-web diff classification
+
+Critical architecture fix completed:
+
+```text
+hydrateGaggiMateShotIndex()
+→ hydrates missing .slog payloads into IndexedDB
+```
+
+This allows:
+
+- offline analyzer graphs
+- local full-payload persistence
+- cache-first statistics direction
+- proper mirror behaviour
+
+Recent fixes completed:
+
+- fixed metadata-only payload handling
+- fixed analyzer empty-sample detection
+- fixed cached GaggiMate analyzer routing
+- fixed shot history hydration timing
+- fixed live profile preference while connected
+- added eager full-payload hydration during cache refresh
+
+---
+
+## Current Hardening Targets
 
 Still actively being stabilised:
 
-- analyzer cache fallback
-- statistics cache fallback
-- full payload hydration rules
-- metadata-only shot handling
-- source contract unification
-- `gaggimate-cache` handling
+1. Statistics cache-only behaviour.
+2. Statistics missing-payload reporting.
+3. Offline profile cache cleanup.
+4. Connected/offline/reconnect workflow validation.
+5. Offline empty-state polish.
+6. Cache/source indicator clarity.
+7. Terminal/proxy noise reduction.
+8. Dead-code audit.
+9. ApiService safe-boundary mapping.
 
-Current blocker:
+Rules:
 
 ```text
-The UI originally assumed:
-- gaggimate
-- browser
-
-The data layer introduced:
-- gaggimate-cache
-
-without fully updating all callers.
+No sync work before hardening completes.
+No new product features before hardening completes.
+No parallel cache architecture.
 ```
-
-Result:
-
-- cached GaggiMate rows may be routed as browser uploads
-- empty sample arrays may be treated as loaded payloads
-- analyzer graphs may receive empty data
-- statistics may skip shots or report zeroes
-
-Immediate priority:
-
-1. stabilize analyzer/statistics payload handling
-2. validate online behaviour
-3. validate offline cached full-payload behaviour
-4. confirm connected/offline/reconnect workflow
-5. confirm no unexpected ApiService warnings
-
-No new features before this is stable.
 
 ---
 
 ## Phase 3 — Safe Sync
 
-Status: blocked behind analyzer/statistics validation.
+Status: blocked behind hardening validation.
 
 Sync work must not begin until:
 
-- analyzer graphs work correctly from cached full payloads
-- statistics works correctly from cached full payloads
-- metadata-only rows no longer pretend to be loaded
-- `gaggimate-cache` handling is explicit and stable
-- the cache-first workflow is validated against a real GaggiMate runtime
+- Statistics is confirmed cache-first.
+- connected/offline/reconnect behaviour is validated.
+- missing payload handling is stable.
+- profile cache behaviour is stable.
+- no unexpected ApiService warnings remain.
+- local mirror behaviour is deterministic.
 
 Initial sync scope when unblocked:
 
 - notes
 - ratings
-- profile drafts
 - safe metadata
+- profile drafts
 - manual sync workflow first
 
 Planned behaviour:
@@ -158,6 +165,7 @@ Do not start with:
 - automatic two-way profile sync
 - machine/runtime configuration sync
 - conflict-heavy sync behaviour
+- unrestricted live mutation
 
 ---
 
@@ -168,9 +176,8 @@ Status: planned.
 Planned:
 
 - remove inherited dead services
-- further source unification
-- performance optimisation
 - statistics indexing improvements
+- performance optimisation
 - installable PWA behaviour
 - packaging/distribution
 - runtime cleanup
@@ -183,15 +190,16 @@ Planned:
 
 ```text
 GaggiMate
+= machine controller
+= telemetry authority
 = runtime owner
-= telemetry source
-= source authority
 
 GaggiGo
 = observer frontend
 = analysis layer
-= historical viewer
 = offline-first workspace
+= historical viewer
+= local mirror
 = safe sync client later
 ```
 
