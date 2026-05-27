@@ -11,12 +11,14 @@ GaggiMate
 = runtime owner
 = telemetry source
 = machine authority
+= rolling operational datastore
 
 GaggiGo
 = offline-first observer frontend
 = local IndexedDB mirror
 = historical viewer
 = analyzer/statistics workspace
+= persistent archive layer later
 = safe sync client later
 ```
 
@@ -82,6 +84,8 @@ Integrated and confirmed:
 - safe profile operation wrapping
 - ApiService hardening pass
 - repository audit pass
+- statistics cache-only payload reads
+- statistics missing-payload reporting
 
 Critical architecture fix completed:
 
@@ -105,6 +109,8 @@ Recent fixes completed:
 - fixed shot history hydration timing
 - fixed live profile preference while connected
 - added eager full-payload hydration during cache refresh
+- removed lazy live statistics payload loading
+- added statistics missing-payload warnings
 
 ---
 
@@ -112,15 +118,14 @@ Recent fixes completed:
 
 Still actively being stabilised:
 
-1. Statistics cache-only behaviour.
-2. Statistics missing-payload reporting.
-3. Offline profile cache cleanup.
-4. Connected/offline/reconnect workflow validation.
-5. Offline empty-state polish.
-6. Cache/source indicator clarity.
-7. Terminal/proxy noise reduction.
-8. Dead-code audit.
-9. ApiService safe-boundary mapping.
+1. Offline profile cache cleanup.
+2. Connected/offline/reconnect workflow validation.
+3. Offline empty-state polish.
+4. Cache/source indicator clarity.
+5. Terminal/proxy noise reduction.
+6. Dead-code audit.
+7. ApiService safe-boundary mapping.
+8. Backup/archive architecture review before implementation.
 
 Rules:
 
@@ -128,22 +133,67 @@ Rules:
 No sync work before hardening completes.
 No new product features before hardening completes.
 No parallel cache architecture.
+No backup/archive implementation before architecture review.
 ```
 
 ---
 
-## Phase 3 — Safe Sync
+## Phase 3 — Persistent Mirror + Archive Layer
+
+Status: architecture planning.
+
+Direction:
+
+```text
+GaggiMate
+= live authoritative rolling datastore
+
+GaggiGo
+= hydrated mirror node
+= persistent archive
+= continuity/recovery layer
+```
+
+Planned:
+
+- rolling 3-month hot mirror
+- monthly cold archive strategy
+- optional 6-month archive consolidation later
+- firmware-update continuity prompts
+- backup/export architecture
+- archive search/view behaviour
+- restore workflows
+- storage pressure handling
+- archive schema/version manifests
+
+Important rules:
+
+```text
+Hydration is the sync model.
+ESP32 rotation deletion must not delete archived GaggiGo history.
+Restore/import actions must remain explicit.
+```
+
+See:
+
+```text
+project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md
+```
+
+---
+
+## Phase 4 — Safe Sync
 
 Status: blocked behind hardening validation.
 
 Sync work must not begin until:
 
-- Statistics is confirmed cache-first.
 - connected/offline/reconnect behaviour is validated.
-- missing payload handling is stable.
 - profile cache behaviour is stable.
 - no unexpected ApiService warnings remain.
 - local mirror behaviour is deterministic.
+- archive architecture is stable.
+- restore model is defined.
 
 Initial sync scope when unblocked:
 
@@ -169,7 +219,7 @@ Do not start with:
 
 ---
 
-## Phase 4 — Hardening / PWA / Packaging
+## Phase 5 — Hardening / PWA / Packaging
 
 Status: planned.
 
@@ -193,6 +243,7 @@ GaggiMate
 = machine controller
 = telemetry authority
 = runtime owner
+= rolling operational datastore
 
 GaggiGo
 = observer frontend
@@ -200,6 +251,7 @@ GaggiGo
 = offline-first workspace
 = historical viewer
 = local mirror
+= persistent archive layer later
 = safe sync client later
 ```
 
@@ -207,7 +259,7 @@ Important implementation rule:
 
 ```text
 GaggiMate controls the machine.
-GaggiGo observes, stores, analyses, and later syncs safe data.
+GaggiGo observes, stores, analyses, archives, and later syncs safe data.
 ```
 
 Do not reintroduce:
