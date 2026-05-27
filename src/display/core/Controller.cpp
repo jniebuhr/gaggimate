@@ -749,11 +749,19 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
         return;
     }
-    if (currentProcess != nullptr) {
-        currentProcess->updateVolume(measurement);
+    // Local capture to avoid use-after-free with deactivate() / clear() running
+    // on another core. This callback fires from the NimBLE task on core 0 each
+    // time the BLE scale reports weight; deactivate() / clear() run on core 1
+    // (AsyncTCP/LVGL) and can `delete lastProcess` between our nullptr check
+    // and the dereference. Mirrors the same capture pattern used in
+    // updateControl() above (see comment around line 560).
+    Process *curr = currentProcess;
+    Process *last = lastProcess;
+    if (curr != nullptr) {
+        curr->updateVolume(measurement);
     }
-    if (lastProcess != nullptr && !lastProcess->isComplete()) {
-        lastProcess->updateVolume(measurement);
+    if (last != nullptr && !last->isComplete()) {
+        last->updateVolume(measurement);
     }
 }
 
