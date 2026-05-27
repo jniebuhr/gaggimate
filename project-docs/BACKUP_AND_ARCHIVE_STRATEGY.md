@@ -29,6 +29,22 @@ This is not hidden two-way sync.
 
 This is not automatic reverse control of GaggiMate.
 
+Implementation principle:
+
+```text
+Automatic protection.
+Explicit commitment.
+```
+
+Meaning:
+
+```text
+Automatic hydration = yes
+Automatic protection prompts = yes
+Automatic destructive storage behaviour = no
+Automatic reverse restore to GaggiMate = no
+```
+
 ---
 
 ## System Roles
@@ -82,6 +98,15 @@ GaggiGo is a read-only mirror/archive.
 
 ```text
 GaggiGo may push selected safe data back to GaggiMate only as an explicit user action.
+```
+
+Restore direction is intentionally narrow.
+
+Current intended rule:
+
+```text
+Profiles may restore back to GaggiMate.
+Historical shots/history remain GaggiGo continuity/archive data.
 ```
 
 GaggiGo must never silently overwrite GaggiMate.
@@ -356,7 +381,17 @@ Do not automatically merge entire archives into hot IndexedDB unless explicitly 
 
 Do not silently push restored data to GaggiMate.
 
-Restore to GaggiMate must be an explicit safe action.
+Current intended restore scope:
+
+```text
+Profiles
+→ may restore back to GaggiMate
+
+Historical shots/history
+→ remain GaggiGo continuity/archive data
+```
+
+Restore to GaggiMate must remain an explicit safe action.
 
 ---
 
