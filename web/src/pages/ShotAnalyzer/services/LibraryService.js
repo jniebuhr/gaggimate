@@ -408,9 +408,9 @@ class LibraryService {
       }));
 
       // Mirror into IndexedDB for offline use without blocking the live UI.
-      Promise.all(
-        normalizedProfiles.map(profile => indexedDBService.saveCachedGaggiMateProfile(profile)),
-      ).catch(error => console.warn('Failed to cache GaggiMate profiles:', error));
+      indexedDBService
+        .replaceCachedGaggiMateProfiles(normalizedProfiles)
+        .catch(error => console.warn('Failed to cache GaggiMate profiles:', error));
 
       return normalizedProfiles;
     } catch (error) {

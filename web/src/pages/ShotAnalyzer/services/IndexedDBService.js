@@ -224,6 +224,40 @@ class IndexedDBService {
 
     return this.saveProfile(normalizedProfile);
   }
+  /**
+   * Replace the active mirrored GaggiMate profile snapshot.
+   * Browser/import profiles are preserved.
+   * @param {Object[]} profiles - Current live GaggiMate profiles
+   */
+  async replaceCachedGaggiMateProfiles(profiles = []) {
+    const db = await this.init();
+    const tx = db.transaction('profiles', 'readwrite');
+    const store = tx.objectStore('profiles');
+
+    const existingProfiles = await store.getAll();
+
+    for (const profile of existingProfiles) {
+      if (profile?.source === GAGGIMATE_CACHE_SOURCE) {
+        await store.delete(profile.label);
+      }
+    }
+
+    for (const profile of profiles) {
+      const normalizedProfile = normalizeStoredProfile({
+        ...profile,
+        source: GAGGIMATE_CACHE_SOURCE,
+        cachedAt: Date.now(),
+      });
+
+      if (normalizedProfile) {
+        await store.put(normalizedProfile);
+      }
+    }
+
+    await tx.done;
+  }
+
+
 
   /**
    * Get all browser-uploaded and cached profiles
