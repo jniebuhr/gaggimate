@@ -101,22 +101,12 @@ void ShotHistoryPlugin::record() {
             currentFile = fs->open("/h/" + currentId + ".slog", FILE_WRITE);
             if (currentFile) {
                 isFileOpen = true;
-                // Prepare header
-                memset(&header, 0, sizeof(header));
-                header.magic = SHOT_LOG_MAGIC;
-                header.version = SHOT_LOG_VERSION;
-                header.reserved0 = (uint8_t)SHOT_LOG_SAMPLE_SIZE; // record sample size actually used
-                header.headerSize = SHOT_LOG_HEADER_SIZE;
-                header.sampleInterval = SHOT_LOG_SAMPLE_INTERVAL_MS;
-                header.fieldsMask = SHOT_LOG_FIELDS_MASK_ALL;
-                header.startEpoch = getTime();
-                Profile profile = controller->getProfileManager()->getSelectedProfile();
-                strncpy(header.profileId, profile.id.c_str(), sizeof(header.profileId) - 1);
-                header.profileId[sizeof(header.profileId) - 1] = '\0';
-                strncpy(header.profileName, profile.label.c_str(), sizeof(header.profileName) - 1);
-                header.profileName[sizeof(header.profileName) - 1] = '\0';
-                header.phaseTransitionCount = 0; // Initialize phase transition count
-                // Write header placeholder
+                // Header was populated synchronously in startRecording() —
+                // including profileId / profileName captured from the running
+                // BrewProcess's per-shot immutable profile copy. We only need
+                // to write the placeholder header to the file here; the
+                // sampleCount / durationMs / finalWeight fields will be
+                // patched by finalizeShotFile() when the shot ends.
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
         }
@@ -208,46 +198,56 @@ void ShotHistoryPlugin::record() {
         }
     }
     if (!recording && !extendedRecording && isFileOpen) {
-        flushBuffer();
-        // Patch header with sampleCount and duration
-        header.sampleCount = sampleCount;
-        header.durationMs = millis() - shotStart;
-        float finalWeight = currentBluetoothWeight;
-        header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
-        currentFile.seek(0, SeekSet);
-        currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
-        currentFile.close();
-        isFileOpen = false;
-        unsigned long duration = header.durationMs;
-        if (duration <= 7500) { // Exclude failed shots and flushes
-            fs->remove("/h/" + currentId + ".slog");
+        finalizeShotFile();
+    }
+}
 
-            // If we created an early index entry, mark it as deleted
-            if (indexEntryCreated) {
-                markIndexDeleted(currentId.toInt());
-            }
-        } else {
-            controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
-            cleanupHistory();
+// Finalize the in-progress shot file: patch header with final sampleCount /
+// duration / weight, close the file, and either discard (<=7.5s "failed") or
+// upsert an index entry. Extracted from record()'s cleanup branch so that
+// startRecording() can also call it defensively when a previous shot's file
+// was still open at the moment a new brew started (the cleanup-branch tick
+// only fires when recording=false AND extendedRecording=false, so a rapid
+// next-brew that flips recording=true before record()'s 250ms tick had a
+// chance to run would otherwise strand the file and the new brew would
+// inherit it).
+void ShotHistoryPlugin::finalizeShotFile() {
+    flushBuffer();
+    header.sampleCount = sampleCount;
+    header.durationMs = millis() - shotStart;
+    float finalWeight = currentBluetoothWeight;
+    header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
+    currentFile.seek(0, SeekSet);
+    currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
+    currentFile.close();
+    isFileOpen = false;
+    unsigned long duration = header.durationMs;
+    if (duration <= 7500) { // Exclude failed shots and flushes
+        fs->remove("/h/" + currentId + ".slog");
+        if (indexEntryCreated) {
+            markIndexDeleted(currentId.toInt());
+        }
+    } else {
+        controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
+        cleanupHistory();
 
-            // Always create a complete index entry via upsert.
-            // If an early entry exists, it gets overwritten with final data.
-            // If no early entry exists, a new one is appended.
-            ShotIndexEntry indexEntry{};
-            indexEntry.id = currentId.toInt();
-            indexEntry.timestamp = header.startEpoch;
-            indexEntry.duration = header.durationMs;
-            indexEntry.volume = header.finalWeight;
-            indexEntry.rating = 0;
-            indexEntry.flags = SHOT_FLAG_COMPLETED;
-            strncpy(indexEntry.profileId, header.profileId, sizeof(indexEntry.profileId) - 1);
-            indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
-            strncpy(indexEntry.profileName, header.profileName, sizeof(indexEntry.profileName) - 1);
-            indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
+        // Always create a complete index entry via upsert.
+        // If an early entry exists, it gets overwritten with final data.
+        // If no early entry exists, a new one is appended.
+        ShotIndexEntry indexEntry{};
+        indexEntry.id = currentId.toInt();
+        indexEntry.timestamp = header.startEpoch;
+        indexEntry.duration = header.durationMs;
+        indexEntry.volume = header.finalWeight;
+        indexEntry.rating = 0;
+        indexEntry.flags = SHOT_FLAG_COMPLETED;
+        strncpy(indexEntry.profileId, header.profileId, sizeof(indexEntry.profileId) - 1);
+        indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
+        strncpy(indexEntry.profileName, header.profileName, sizeof(indexEntry.profileName) - 1);
+        indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
 
-            if (!appendToIndex(indexEntry)) {
-                ESP_LOGE("ShotHistoryPlugin", "CRITICAL: Failed to add completed shot %u to index", indexEntry.id);
-            }
+        if (!appendToIndex(indexEntry)) {
+            ESP_LOGE("ShotHistoryPlugin", "CRITICAL: Failed to add completed shot %u to index", indexEntry.id);
         }
     }
 }
@@ -262,6 +262,15 @@ void ShotHistoryPlugin::startRecording() {
         // Capture initial volumetric mode state (brew by weight vs brew by time)
         shotStartedVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC;
     }
+    // Defensive cleanup: if the previous shot's file is still open (because
+    // the cleanup tick at record() hadn't run yet between brew:clear and our
+    // brew:start), finalize it now. Otherwise this new brew's samples would
+    // be appended to the previous file under the previous header, and the
+    // previous shot would lose its true ending while this shot would be
+    // mis-recorded under the previous profile's name.
+    if (isFileOpen) {
+        finalizeShotFile();
+    }
     currentId = padId(String(controller->getSettings().getHistoryIndex()));
     shotStart = millis();
     lastWeightChangeTime = 0;
@@ -270,7 +279,29 @@ void ShotHistoryPlugin::startRecording() {
     lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
-    currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
+    // Populate the header synchronously here, while we still have the running
+    // BrewProcess's immutable per-shot profile copy. Capturing now (rather
+    // than re-reading the live selectedProfile in record() on the next tick)
+    // closes a separate race where a user-driven profile switch landing
+    // between brew:start and the first record() tick would stamp the wrong
+    // profile name into the shot file's header.
+    memset(&header, 0, sizeof(header));
+    header.magic = SHOT_LOG_MAGIC;
+    header.version = SHOT_LOG_VERSION;
+    header.reserved0 = (uint8_t)SHOT_LOG_SAMPLE_SIZE;
+    header.headerSize = SHOT_LOG_HEADER_SIZE;
+    header.sampleInterval = SHOT_LOG_SAMPLE_INTERVAL_MS;
+    header.fieldsMask = SHOT_LOG_FIELDS_MASK_ALL;
+    header.startEpoch = getTime();
+    header.phaseTransitionCount = 0;
+    if (process != nullptr && process->getType() == MODE_BREW) {
+        auto *bp = static_cast<BrewProcess *>(process);
+        strncpy(header.profileId, bp->profile.id.c_str(), sizeof(header.profileId) - 1);
+        header.profileId[sizeof(header.profileId) - 1] = '\0';
+        strncpy(header.profileName, bp->profile.label.c_str(), sizeof(header.profileName) - 1);
+        header.profileName[sizeof(header.profileName) - 1] = '\0';
+    }
+    currentProfileName = String(header.profileName);
     recording = true;
     extendedRecording = false;
     indexEntryCreated = false; // Reset flag for new shot

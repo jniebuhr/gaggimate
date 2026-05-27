@@ -42,6 +42,7 @@ class ShotHistoryPlugin : public Plugin {
     void saveNotes(const String &id, const JsonDocument &notes);
     void loadNotes(const String &id, JsonDocument &notes);
     void startRecording();
+    void finalizeShotFile();
 
     uint16_t getSystemInfo(); // Helper to pack system state bits
 
