@@ -22,12 +22,14 @@ GaggiMate
 = runtime owner
 = live telemetry source
 = machine controller
+= rolling operational datastore
 
 GaggiGo
 = offline-first observer frontend
 = IndexedDB mirror
 = historical viewer
 = analyser/statistics workspace
+= persistent archive layer later
 = safe sync client later
 ```
 
@@ -58,7 +60,11 @@ GaggiMate hydrates the local mirror.
 GaggiGo pages render from the local mirror.
 ```
 
-Live GaggiMate access is valid for refreshing/hydrating IndexedDB. Analyzer and Statistics should not depend on repeated live fetches during normal rendering.
+Live GaggiMate access is valid for refreshing/hydrating IndexedDB.
+
+Analyzer and Statistics should not depend on repeated live fetches during normal rendering.
+
+Hydration is the sync model.
 
 ---
 
@@ -72,6 +78,8 @@ Confirmed working after recent fixes:
 - Shot Analyzer works from cached full shot payloads offline after hydration.
 - Profiles show current live GaggiMate profiles while connected.
 - Full GaggiMate shot payloads are now hydrated into IndexedDB during shot index hydration.
+- Statistics now reads cached payloads instead of lazy live fetches.
+- Statistics now reports missing payload state instead of silent zero-result behaviour.
 - Cache-first architecture is now functioning as the active data model.
 
 Important implementation point:
@@ -87,21 +95,69 @@ hydrateGaggiMateShotIndex()
 
 ---
 
+## Storage / Archive Direction
+
+The architecture direction is now moving toward persistent mirror and archive behaviour.
+
+Confirmed direction:
+
+```text
+ESP32 / GaggiMate
+= authoritative rolling datastore
+
+GaggiGo
+= hydrated mirror node
+= historical continuity layer
+= archive layer later
+```
+
+Current intended retention model:
+
+```text
+Tier 1
+ESP32 rolling operational store
+
+Tier 2
+GaggiGo IndexedDB hot mirror
+(rolling 3-month fast working set)
+
+Tier 3
+Monthly cold archive bundles later
+
+Tier 4
+Portable backup/export later
+```
+
+Important retention rule:
+
+```text
+ESP32 rotation deletion must not delete already mirrored GaggiGo history.
+```
+
+Archive strategy planning document:
+
+```text
+project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md
+```
+
+No backup/archive implementation should begin before architecture review is complete.
+
+---
+
 ## Still Needs Validation / Hardening
 
-The project is no longer in the broad broken-analyzer state, but it is not ready for sync work yet.
+The project is no longer in the broad broken-analyzer state, but it is not ready for sync or archive implementation yet.
 
-Remaining before sync design:
+Remaining before sync/archive work:
 
-1. Confirm Statistics uses cached full payloads cleanly and does not rely on live lazy `.slog` fetches during normal statistics runs.
-2. Add/confirm missing-payload reporting for Statistics instead of silent zeroes.
-3. Clean profile cache fallback so offline profiles do not mix stale old browser/import profiles with current GaggiMate cache unexpectedly.
-4. Validate connected/offline/reconnect behaviour.
-5. Polish offline empty states.
-6. Clarify cache/source indicators.
-7. Reduce terminal/proxy noise.
-8. Audit inherited dead code.
-9. Map remaining ApiService safe-operation boundaries.
+1. Clean profile cache fallback so offline profiles do not mix stale old browser/import profiles with current GaggiMate cache unexpectedly.
+2. Validate connected/offline/reconnect behaviour.
+3. Polish offline empty states.
+4. Clarify cache/source indicators.
+5. Reduce terminal/proxy noise.
+6. Audit inherited dead code.
+7. Map remaining ApiService safe-operation boundaries.
+8. Review and validate backup/archive architecture before implementation.
 
 No new product features before this hardening pass.
 
@@ -121,6 +177,12 @@ No new product features before this hardening pass.
 - GaggiMate shot index hydration now also hydrates missing full `.slog` payloads into IndexedDB.
 - Hydration uses low concurrency to avoid hammering the ESP32.
 - Existing hydrated payloads are preserved when metadata refreshes.
+
+### Statistics
+
+- Statistics now reads cached payloads directly from IndexedDB.
+- Statistics no longer lazily fetches payloads from GaggiMate during analysis runs.
+- Statistics now reports missing payload states clearly.
 
 ### Profiles
 
@@ -154,17 +216,17 @@ IndexedDB browser persistence
 Current phase:
 
 ```text
-Cleanup and hardening before sync.
+Cleanup and hardening before archive/sync work.
 ```
 
 Immediate next focus:
 
-1. Statistics cache-only behaviour.
-2. Offline profile cache cleanup.
-3. Reconnect validation.
-4. Cache/source indicator clarity.
-5. Empty-state polish.
-6. Dead-code audit.
+1. Offline profile cache cleanup.
+2. Reconnect validation.
+3. Cache/source indicator clarity.
+4. Empty-state polish.
+5. Dead-code audit.
+6. Backup/archive architecture review.
 
 ---
 
@@ -192,6 +254,6 @@ Current files still worth watching:
 
 GaggiMate remains the source authority and controls the machine.
 
-GaggiGo observes, stores, analyses, and later syncs safe data.
+GaggiGo observes, stores, analyses, archives, and later syncs safe data.
 
 History, Analyzer, and Statistics should operate from the local IndexedDB mirror once hydration has completed.
