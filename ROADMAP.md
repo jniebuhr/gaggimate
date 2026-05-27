@@ -52,7 +52,7 @@ Merge-back direction:
 
 ## Phase 2 — Offline-First Behaviour + Cache Mirror Stabilisation
 
-Status: major foundation complete, hardening ongoing.
+Status: core architecture stable, hardening ongoing.
 
 Current architecture:
 
@@ -86,12 +86,18 @@ Integrated and confirmed:
 - repository audit pass
 - statistics cache-only payload reads
 - statistics missing-payload reporting
+- deterministic mirrored GaggiMate profile snapshots
+- offline profile consistency model
 
-Critical architecture fix completed:
+Critical architecture fixes completed:
 
 ```text
 hydrateGaggiMateShotIndex()
 → hydrates missing .slog payloads into IndexedDB
+
+replaceCachedGaggiMateProfiles()
+→ replaces stale mirrored profile snapshots
+→ preserves browser/import profiles
 ```
 
 This allows:
@@ -99,6 +105,7 @@ This allows:
 - offline analyzer graphs
 - local full-payload persistence
 - cache-first statistics direction
+- deterministic offline profile behaviour
 - proper mirror behaviour
 
 Recent fixes completed:
@@ -111,6 +118,7 @@ Recent fixes completed:
 - added eager full-payload hydration during cache refresh
 - removed lazy live statistics payload loading
 - added statistics missing-payload warnings
+- replaced stale mirrored profile accumulation
 
 ---
 
@@ -118,14 +126,14 @@ Recent fixes completed:
 
 Still actively being stabilised:
 
-1. Offline profile cache cleanup.
-2. Connected/offline/reconnect workflow validation.
-3. Offline empty-state polish.
-4. Cache/source indicator clarity.
-5. Terminal/proxy noise reduction.
-6. Dead-code audit.
-7. ApiService safe-boundary mapping.
-8. Backup/archive architecture review before implementation.
+1. Connected/offline/reconnect workflow validation.
+2. Offline empty-state polish.
+3. Cache/source indicator clarity.
+4. Terminal/proxy noise reduction.
+5. Dead-code audit.
+6. ApiService safe-boundary mapping.
+7. Backup/archive architecture review before implementation.
+8. Runtime validation matrix across refresh/reopen/offline transitions.
 
 Rules:
 
@@ -172,6 +180,7 @@ Important rules:
 Hydration is the sync model.
 ESP32 rotation deletion must not delete archived GaggiGo history.
 Restore/import actions must remain explicit.
+Reuse existing GaggiMate export/import flows where possible.
 ```
 
 See:
