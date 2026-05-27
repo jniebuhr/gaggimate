@@ -78,6 +78,9 @@ export function ShotHistory() {
 
     try {
       libraryService.setApiService(apiService);
+      if (connected.value) {
+        await libraryService.hydrateGaggiMateShotIndex();
+      }
       const shotList = await libraryService.getAllShots('both');
       if (loadHistoryRequestRef.current !== requestId) return;
 
@@ -133,6 +136,9 @@ export function ShotHistory() {
     async shot => {
       setLoading(true);
       libraryService.setApiService(apiService);
+      if (connected.value) {
+        await libraryService.hydrateGaggiMateShotIndex();
+      }
       await libraryService.deleteShot(getShotStorageId(shot), shot.source || 'gaggimate');
       await loadHistory();
     },
