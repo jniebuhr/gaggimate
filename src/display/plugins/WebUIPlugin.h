@@ -58,6 +58,14 @@ class WebUIPlugin : public Plugin {
     static void profileListWorkerTask(void *arg);
     void buildAndSendProfileList(const ProfileListJob &job);
 
+    // OTA check needs to be off the main loop. On a flaky network DNS
+    // failure or SSL handshake stall can hold HTTPClient for tens of
+    // seconds — long enough to starve the 500 ms status broadcast and
+    // make the dashboard look frozen. One-shot task per check; the
+    // `otaCheckInProgress` flag prevents overlapping spawns.
+    volatile bool otaCheckInProgress = false;
+    static void otaCheckTask(void *arg);
+
     // HTTP handlers
     void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);

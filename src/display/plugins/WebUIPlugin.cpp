@@ -86,11 +86,14 @@ void WebUIPlugin::loop() {
         return;
     }
     const long now = millis();
-    if ((lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL)) {
-        ota->checkForUpdates();
-        pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
+    if ((lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL) && !otaCheckInProgress) {
         lastUpdateCheck = now;
-        updateOTAStatus(ota->getCurrentVersion());
+        otaCheckInProgress = true;
+        // Dedicated task — checkForUpdates() does HTTPS to github.com and
+        // blocks until the response or the HTTPClient timeout. On a flaky
+        // network that's a 30+ s stall, which prior to this fix blocked
+        // the WS status broadcast and made the dashboard appear dead.
+        xTaskCreate(otaCheckTask, "WebUI::otaCheck", 8192, this, 1, nullptr);
     }
     if (now > lastStatus + STATUS_PERIOD && !ws.getClients().empty()) {
         lastStatus = now;
@@ -538,6 +541,17 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
         ESP_LOGE("WebUIPlugin", "makeBuffer(%u) returned null for %s — client %u will see no response",
                  (unsigned)bufferSize, type.c_str(), clientId);
     }
+}
+
+void WebUIPlugin::otaCheckTask(void *arg) {
+    auto *plugin = static_cast<WebUIPlugin *>(arg);
+    plugin->ota->checkForUpdates();
+    // Listeners just toggle a couple of int flags (rerender,
+    // updateAvailable) — racy but benign on word-sized writes.
+    plugin->pluginManager->trigger("ota:update:status", "value", plugin->ota->isUpdateAvailable());
+    plugin->updateOTAStatus(plugin->ota->getCurrentVersion());
+    plugin->otaCheckInProgress = false;
+    vTaskDelete(nullptr);
 }
 
 void WebUIPlugin::profileListWorkerTask(void *arg) {
