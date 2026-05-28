@@ -66,6 +66,37 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     pluginManager->on("controller:volumetric-measurement:bluetooth:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
 
+    // Surface BLE-scale lifecycle to the web UI. Without these the
+    // /scales page cannot distinguish "scan in progress" from "scan
+    // finished, no scales found", cannot tell the user when a connect
+    // attempt failed, and cannot notify them that a mid-brew scale
+    // disconnect went past RECONNECTION_TRIES. Each maps to an
+    // evt:scale:* WS broadcast handled by ApiService.js.
+    pluginManager->on("scale:scan:complete", [this](Event const &event) {
+        JsonDocument doc;
+        doc["tp"] = "evt:scale:scan:complete";
+        doc["count"] = event.getInt("count");
+        ws.textAll(doc.as<String>());
+    });
+    pluginManager->on("scale:connect:error", [this](Event const &event) {
+        JsonDocument doc;
+        doc["tp"] = "evt:scale:connect:error";
+        doc["address"] = event.getString("address");
+        doc["reason"] = event.getString("reason");
+        ws.textAll(doc.as<String>());
+    });
+    pluginManager->on("scale:disconnect", [this](Event const &) {
+        JsonDocument doc;
+        doc["tp"] = "evt:scale:disconnect";
+        ws.textAll(doc.as<String>());
+    });
+    pluginManager->on("scale:connect:success", [this](Event const &event) {
+        JsonDocument doc;
+        doc["tp"] = "evt:scale:connect:success";
+        doc["address"] = event.getString("address");
+        ws.textAll(doc.as<String>());
+    });
+
     setupServer();
 }
 
