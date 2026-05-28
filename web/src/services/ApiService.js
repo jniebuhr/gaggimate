@@ -69,7 +69,7 @@ export default class ApiService {
       ...machine.value,
       connected: false,
       scale: {
-        ...(machine.value.scale || {}),
+        ...machine.value.scale,
         scanning: false,
       },
     };
@@ -116,7 +116,7 @@ export default class ApiService {
       machine.value = {
         ...machine.value,
         scale: {
-          ...(machine.value.scale || {}),
+          ...machine.value.scale,
           scanning: false,
           lastScanCount: message.count || 0,
           lastScanAt: Date.now(),
@@ -126,7 +126,7 @@ export default class ApiService {
       machine.value = {
         ...machine.value,
         scale: {
-          ...(machine.value.scale || {}),
+          ...machine.value.scale,
           lastConnectError: {
             address: message.address || '',
             reason: message.reason || 'unknown',
@@ -138,7 +138,7 @@ export default class ApiService {
       machine.value = {
         ...machine.value,
         scale: {
-          ...(machine.value.scale || {}),
+          ...machine.value.scale,
           lastDisconnectAt: Date.now(),
         },
       };
@@ -149,7 +149,7 @@ export default class ApiService {
       machine.value = {
         ...machine.value,
         scale: {
-          ...(machine.value.scale || {}),
+          ...machine.value.scale,
           lastDisconnectAt: 0,
           lastConnectError: null,
           lastConnectAt: Date.now(),

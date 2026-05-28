@@ -110,6 +110,13 @@ class BLEScalePlugin : public Plugin {
 
   private:
     void update();
+    // update() helpers — split out so the function stays under the
+    // cognitive-complexity / nesting limits enforced by SonarQube.
+    // `pollConnectedScale` runs when a scale pointer exists (whether
+    // currently connected or in mid-reconnect-retries); `tryAutoReconnect`
+    // runs when no scale pointer exists and a saved-scale address is set.
+    void pollConnectedScale(bool hasConnectedScale);
+    void tryAutoReconnectSaved();
     void onProcessStart() const;
     void pollScaleMetadata();
 

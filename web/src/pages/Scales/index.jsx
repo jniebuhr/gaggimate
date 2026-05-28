@@ -125,7 +125,7 @@ export function Scales() {
     // the scan).
     machine.value = {
       ...machine.value,
-      scale: { ...(machine.value.scale || {}), scanning: true },
+      scale: { ...machine.value.scale, scanning: true },
     };
     setConnectError(null);
     try {
@@ -142,7 +142,7 @@ export function Scales() {
       console.error('Scan failed:', error);
       machine.value = {
         ...machine.value,
-        scale: { ...(machine.value.scale || {}), scanning: false },
+        scale: { ...machine.value.scale, scanning: false },
       };
     }
   }, []);
@@ -172,7 +172,7 @@ export function Scales() {
   // arrives; we copy into setConnectError to scope per-page dismissal.
   useEffect(() => {
     const err = machine.value.scale?.lastConnectError;
-    if (err && err.at) {
+    if (err?.at) {
       setConnectError(err);
     }
   }, [machine.value.scale?.lastConnectError?.at]);

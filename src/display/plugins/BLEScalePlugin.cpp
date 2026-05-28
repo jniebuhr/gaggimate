@@ -164,61 +164,62 @@ void BLEScalePlugin::update() {
         return;
 
     if (scale != nullptr) {
-        // Call scale update with error checking
-        scale->update();
-        if (!hasConnectedScale) {
-            reconnectionTries++;
-            if (reconnectionTries > RECONNECTION_TRIES) {
-                ESP_LOGW("BLEScalePlugin", "Max reconnection attempts reached, disconnecting");
-                // Surface the giving-up moment to the UI exactly once per
-                // disconnect cycle. The disconnect() call below will null
-                // out `scale`, so the next `update()` won't re-enter this
-                // branch — but if we're paranoid we latch anyway.
-                if (!disconnectEventFired && pluginManager != nullptr) {
-                    disconnectEventFired = true;
-                    pluginManager->trigger("scale:disconnect");
-                }
-                disconnect();
-                scan();
-            }
-        } else {
-            // Poll slow-changing metadata (battery, unit). Flow rate is
-            // emitted inline with each weight measurement, not polled here.
-            pollScaleMetadata();
-        }
+        pollConnectedScale(hasConnectedScale);
     } else if (!doConnect && controller->getSettings().getSavedScale() != "" && scanner != nullptr) {
-        // Saved-scale auto-reconnect path. Two guards before we look:
-        //   1. `!doConnect` — the user may have already requested a connect
-        //      to a DIFFERENT scale via the /scales web UI. If we don't
-        //      respect that, this loop silently overwrites their choice
-        //      (uuid + doConnect) on the next tick. User-initiated wins.
-        //   2. SAVED_SCALE_RETRY_BUDGET — if the saved scale never appears
-        //      (powered off, out of range), we'd otherwise hit this path
-        //      every 1 s forever, hammering the scanner and battery for
-        //      no benefit. After the budget is spent, stop until the next
-        //      manual scan / reboot resets `savedScaleRetries`.
-        if (savedScaleRetries < SAVED_SCALE_RETRY_BUDGET) {
-            auto discoveredScales = scanner->getDiscoveredScales();
-            const String savedAddr = controller->getSettings().getSavedScale();
-            bool foundInList = false;
-            for (const auto &d : discoveredScales) {
-                if (d.getAddress().toString() == savedAddr.c_str()) {
-                    ESP_LOGI("BLEScalePlugin", "Connecting to last known scale");
-                    connect(d.getAddress().toString());
-                    foundInList = true;
-                    savedScaleRetries = 0;
-                    break;
-                }
-            }
-            if (!foundInList) {
-                savedScaleRetries++;
-                if (savedScaleRetries == SAVED_SCALE_RETRY_BUDGET) {
-                    ESP_LOGW("BLEScalePlugin",
-                             "Saved scale %s not seen in %u attempts — giving up auto-reconnect until next manual scan",
-                             savedAddr.c_str(), SAVED_SCALE_RETRY_BUDGET);
-                }
-            }
+        tryAutoReconnectSaved();
+    }
+}
+
+void BLEScalePlugin::pollConnectedScale(bool hasConnectedScale) {
+    // Drive the connected scale forward and handle the reconnect-retry
+    // exhaustion path. Extracted from update() to keep that function under
+    // SonarQube's cognitive-complexity / nesting limits.
+    scale->update();
+    if (hasConnectedScale) {
+        // Poll slow-changing metadata (battery, unit). Flow rate is
+        // emitted inline with each weight measurement, not polled here.
+        pollScaleMetadata();
+        return;
+    }
+    reconnectionTries++;
+    if (reconnectionTries <= RECONNECTION_TRIES) {
+        return;
+    }
+    ESP_LOGW("BLEScalePlugin", "Max reconnection attempts reached, disconnecting");
+    // Surface the giving-up moment to the UI exactly once per disconnect
+    // cycle. The disconnect() call below nulls out `scale`, so the next
+    // `update()` won't re-enter this branch — latched anyway for safety.
+    if (!disconnectEventFired && pluginManager != nullptr) {
+        disconnectEventFired = true;
+        pluginManager->trigger("scale:disconnect");
+    }
+    disconnect();
+    scan();
+}
+
+void BLEScalePlugin::tryAutoReconnectSaved() {
+    // Saved-scale auto-reconnect path. The outer caller already gated on
+    // `!doConnect` (user-initiated connect wins) and `scanner != nullptr`
+    // / `savedScale` non-empty. Here we enforce the budget so we don't
+    // hammer the scanner forever when the saved scale is powered off.
+    if (savedScaleRetries >= SAVED_SCALE_RETRY_BUDGET) {
+        return;
+    }
+    auto discoveredScales = scanner->getDiscoveredScales();
+    const String savedAddr = controller->getSettings().getSavedScale();
+    for (const auto &d : discoveredScales) {
+        if (d.getAddress().toString() == savedAddr.c_str()) {
+            ESP_LOGI("BLEScalePlugin", "Connecting to last known scale");
+            connect(d.getAddress().toString());
+            savedScaleRetries = 0;
+            return;
         }
+    }
+    savedScaleRetries++;
+    if (savedScaleRetries == SAVED_SCALE_RETRY_BUDGET) {
+        ESP_LOGW("BLEScalePlugin",
+                 "Saved scale %s not seen in %u attempts — giving up auto-reconnect until next manual scan",
+                 savedAddr.c_str(), SAVED_SCALE_RETRY_BUDGET);
     }
 }
 
