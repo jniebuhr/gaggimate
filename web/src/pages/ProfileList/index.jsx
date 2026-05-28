@@ -605,7 +605,7 @@ export function ProfileList() {
       setProfiles(list);
     } catch (err) {
       console.error('Failed to load profiles:', err);
-      setLoadError(err && err.message ? err.message : 'Request failed');
+      setLoadError(err?.message || 'Request failed');
       setProfiles([]);
     } finally {
       setLoading(false);
