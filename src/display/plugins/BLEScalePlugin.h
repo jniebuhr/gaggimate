@@ -29,7 +29,6 @@ class BLEScalePlugin : public Plugin {
 
     void setup(Controller *controller, PluginManager *pluginManager) override;
     void loop() override;
-    ;
 
     void connect(const std::string &uuid);
     void scan();

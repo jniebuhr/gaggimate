@@ -272,6 +272,7 @@ export const machine = signal({
     lastScanAt: 0,
     lastConnectError: null,
     lastDisconnectAt: 0,
+    lastConnectAt: 0,
   },
   status: {
     currentTemperature: 0,
