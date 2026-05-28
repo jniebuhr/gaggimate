@@ -180,17 +180,17 @@ void Controller::setupBluetooth() {
             // if a process is already active, so rapid presses don't
             // queue.
             //
-            // Ensure we land in MODE_BREW so the flush UI renders,
-            // regardless of which mode the user came from. Without
-            // this, pressing the flush button from steam/water/standby
-            // would start the BrewProcess but the screen would still
-            // show the source mode. Mirrors the mode-switch pattern
-            // used by the other button handlers.
+            // Ensure we land in MODE_BREW so the flush UI renders, but
+            // only when no other process is currently running. Mutating
+            // mode mid-process would orphan the active mode's UI while
+            // onFlush() silently no-ops on the re-entrancy guard. The
+            // setMode guard mirrors the pattern other button handlers
+            // use when they need to switch modes safely.
             if (status) {
                 if (getMode() == MODE_STANDBY) {
                     deactivateStandby();
                 }
-                if (getMode() != MODE_BREW) {
+                if (getMode() != MODE_BREW && !isActive()) {
                     setMode(MODE_BREW);
                 }
                 onFlush();
