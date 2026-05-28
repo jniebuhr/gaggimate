@@ -129,9 +129,12 @@ export function Scales() {
     };
     setConnectError(null);
     try {
-      await fetch('/api/scales/scan', {
+      const response = await fetch('/api/scales/scan', {
         method: 'post',
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       // Refresh the displayed list after scan kicks off; the firmware
       // event drives the spinner-off transition independently.
       setKey(Date.now().valueOf());
@@ -149,10 +152,13 @@ export function Scales() {
     try {
       const data = new FormData();
       data.append('uuid', uuid);
-      await fetch('/api/scales/connect', {
+      const response = await fetch('/api/scales/connect', {
         method: 'post',
         body: data,
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       // Refresh the data after connection
       setKey(Date.now().valueOf());
     } catch (error) {
