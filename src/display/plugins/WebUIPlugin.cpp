@@ -66,6 +66,12 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     pluginManager->on("controller:volumetric-measurement:bluetooth:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
 
+    // Spin up the profile-list worker. Pinned to core 0 so it doesn't
+    // contend with AsyncTCP (core 1) or the Arduino loop. Priority 1 so
+    // the BLE/Controller work on core 0 stays responsive.
+    profileListQueue = xQueueCreate(4, sizeof(ProfileListJob *));
+    xTaskCreatePinnedToCore(profileListWorkerTask, "WebUI::profileList", 6144, this, 1, &profileListTaskHandle, 0);
+
     setupServer();
 }
 
@@ -445,35 +451,30 @@ void WebUIPlugin::handleAutotuneStart(uint32_t clientId, JsonDocument &request) 
 }
 
 void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request) {
+    auto type = request["tp"].as<String>();
+    ESP_LOGI("WebUIPlugin", "Handling request: %s", type.c_str());
+
+    // List requests get dispatched to the worker task — they're the only
+    // long-running operation in this handler and historically tripped the
+    // AsyncTCP watchdog (~75 s of synchronous SPIFFS reads with 50+
+    // profiles). All other types are single-profile or metadata-only and
+    // complete in well under the watchdog threshold, so they stay inline.
+    if (type == "req:profiles:list") {
+        auto *job = new ProfileListJob{clientId, request["rid"].as<String>(), request["minimal"].as<bool>()};
+        if (profileListQueue == nullptr || xQueueSend(profileListQueue, &job, 0) != pdTRUE) {
+            ESP_LOGW("WebUIPlugin", "profile-list queue full or unavailable, dropping request from client %u", clientId);
+            delete job;
+        }
+        return;
+    }
+
     // Allocate the response node pool from PSRAM — list responses can be tens
     // of KB and would otherwise fragment the ~300 KB internal heap.
     JsonDocument response(&psramAllocator);
-    auto type = request["tp"].as<String>();
-    ESP_LOGI("WebUIPlugin", "Handling request: %s", type.c_str());
     response["tp"] = String("res:") + type.substring(4);
     response["rid"] = request["rid"].as<String>();
 
-    if (type == "req:profiles:list") {
-        auto arr = response["profiles"].to<JsonArray>();
-        for (auto const &id : profileManager->listProfiles()) {
-            Profile profile{};
-            // Skip entries whose JSON couldn't be opened or failed validation
-            // (parseProfile returns false for missing label/type/phases). Without
-            // this, corrupt or partial profile files surface as blank cards in
-            // the UI — the user reported "blank Simple cards" originating here.
-            if (!profileManager->loadProfile(id, profile)) {
-                ESP_LOGW("WebUIPlugin", "Skipping unreadable profile %s in list response", id.c_str());
-                continue;
-            }
-            auto p = arr.add<JsonObject>();
-            if (request["minimal"].as<bool>()) {
-                p["id"] = profile.id;
-                p["label"] = profile.label;
-            } else {
-                writeProfile(p, profile);
-            }
-        }
-    } else if (type == "req:profiles:load") {
+    if (type == "req:profiles:load") {
         auto id = request["id"].as<String>();
         Profile profile;
         if (profileManager->loadProfile(id, profile)) {
@@ -536,6 +537,53 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
         // page surfaces the failure rather than hanging forever.
         ESP_LOGE("WebUIPlugin", "makeBuffer(%u) returned null for %s — client %u will see no response",
                  (unsigned)bufferSize, type.c_str(), clientId);
+    }
+}
+
+void WebUIPlugin::profileListWorkerTask(void *arg) {
+    auto *plugin = static_cast<WebUIPlugin *>(arg);
+    ProfileListJob *job = nullptr;
+    while (true) {
+        if (xQueueReceive(plugin->profileListQueue, &job, portMAX_DELAY) == pdTRUE && job != nullptr) {
+            plugin->buildAndSendProfileList(*job);
+            delete job;
+            job = nullptr;
+        }
+    }
+}
+
+void WebUIPlugin::buildAndSendProfileList(const ProfileListJob &job) {
+    JsonDocument response(&psramAllocator);
+    response["tp"] = "res:profiles:list";
+    response["rid"] = job.rid;
+    auto arr = response["profiles"].to<JsonArray>();
+    for (auto const &id : profileManager->listProfiles()) {
+        // Yield between SPIFFS reads. We're not in AsyncTCP context any
+        // more, but the SPIFFS mutex is still shared with the static-file
+        // handler and other tasks — yielding lets them interleave.
+        vTaskDelay(1);
+        Profile profile{};
+        if (!profileManager->loadProfile(id, profile)) {
+            ESP_LOGW("WebUIPlugin", "Skipping unreadable profile %s in list response", id.c_str());
+            continue;
+        }
+        auto p = arr.add<JsonObject>();
+        if (job.minimal) {
+            p["id"] = profile.id;
+            p["label"] = profile.label;
+        } else {
+            writeProfile(p, profile);
+        }
+    }
+
+    size_t bufferSize = measureJson(response);
+    auto *buffer = ws.makeBuffer(bufferSize);
+    if (buffer != nullptr) {
+        serializeJson(response, buffer->get(), bufferSize);
+        ws.text(job.clientId, buffer);
+    } else {
+        ESP_LOGE("WebUIPlugin", "makeBuffer(%u) returned null for res:profiles:list — client %u will see no response",
+                 (unsigned)bufferSize, job.clientId);
     }
 }
 

@@ -41,6 +41,23 @@ class WebUIPlugin : public Plugin {
     void handleProfileRequest(uint32_t clientId, JsonDocument &request);
     void handleFlushStart(uint32_t clientId, JsonDocument &request);
 
+    // Profile-list worker: building the response involves N SPIFFS opens +
+    // ArduinoJson parses (50+ profiles → 5+ s of work). Running that inside
+    // the AsyncTCP WS_EVT_DATA callback starves the AsyncTCP task long
+    // enough to trip the task watchdog, which reboots the device. We
+    // dispatch the build to a dedicated low-priority task on core 0 and
+    // send the response via ws.text() from that task — AsyncWebSocket's
+    // send methods are queue-safe across tasks.
+    struct ProfileListJob {
+        uint32_t clientId;
+        String rid;
+        bool minimal;
+    };
+    QueueHandle_t profileListQueue = nullptr;
+    TaskHandle_t profileListTaskHandle = nullptr;
+    static void profileListWorkerTask(void *arg);
+    void buildAndSendProfileList(const ProfileListJob &job);
+
     // HTTP handlers
     void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
