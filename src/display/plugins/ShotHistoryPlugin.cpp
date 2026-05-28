@@ -296,10 +296,12 @@ void ShotHistoryPlugin::startRecording() {
     header.phaseTransitionCount = 0;
     if (process != nullptr && process->getType() == MODE_BREW) {
         auto *bp = static_cast<BrewProcess *>(process);
-        strncpy(header.profileId, bp->profile.id.c_str(), sizeof(header.profileId) - 1);
-        header.profileId[sizeof(header.profileId) - 1] = '\0';
-        strncpy(header.profileName, bp->profile.label.c_str(), sizeof(header.profileName) - 1);
-        header.profileName[sizeof(header.profileName) - 1] = '\0';
+        // snprintf is bounded and always null-terminates within the dst
+        // buffer; the prior strncpy + manual NUL write was equivalent but
+        // tripped SonarQube's `cpp:S5816` ("strncpy may not null-terminate")
+        // security-hotspot heuristic. Same observable behavior, no hotspot.
+        snprintf(header.profileId, sizeof(header.profileId), "%s", bp->profile.id.c_str());
+        snprintf(header.profileName, sizeof(header.profileName), "%s", bp->profile.label.c_str());
     }
     currentProfileName = String(header.profileName);
     recording = true;
