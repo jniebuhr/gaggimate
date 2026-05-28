@@ -132,6 +132,30 @@ class DefaultUI {
     int profileLoaded = 0;
     std::vector<String> favoritedProfileIds;
     std::vector<Profile> favoritedProfiles;
+
+    // Incremental cache mutations. Used by the four `profiles:profile:*`
+    // event handlers to avoid re-reading every favorited profile from
+    // SPIFFS on each profile change. Previously every select/favorite/
+    // unfavorite/save called reloadProfiles() which set profileLoaded=0
+    // and the profileLoopTask then re-read ALL favorited profiles — O(N)
+    // SPIFFS opens per change. With many favorites (e.g. 50+ after a
+    // bulk import) that is 1.5-4 seconds of contention per change.
+    // These methods touch only the affected entry.
+    void onProfileSelected(const String &id);
+    void onProfileFavorited(const String &id);
+    void onProfileUnfavorited(const String &id);
+    void onProfileSaved(const String &id);
+
+    // Lazy-load helpers. `favoritedProfiles` is a parallel vector to
+    // `favoritedProfileIds`, but only entries within a small window around
+    // `currentProfileIdx` are populated — others stay default-constructed
+    // (no String/vector heap allocations). Caps internal-heap usage at
+    // ~3 × sizeof(Profile-with-phases) regardless of favorite count.
+    // The 50+-profile import that previously starved the WiFi/BLE coex
+    // allocator at boot now fits comfortably.
+    static constexpr int PROFILE_CACHE_RADIUS = 1;
+    void ensureProfileLoaded(int idx);
+    void evictProfilesOutsideWindow(int center, int radius);
     int currentThemeMode = -1; // Force applyTheme on first loop
 
     // Screen change
