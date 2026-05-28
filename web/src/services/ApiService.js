@@ -59,9 +59,19 @@ export default class ApiService {
 
   _onClose() {
     console.log('WebSocket connection closed');
+    // Reset transient scan state on socket close. If the socket dropped
+    // mid-scan, the firmware's evt:scale:scan:complete will never reach
+    // this client, so the optimistic `scanning=true` flag set in
+    // Scales/index.jsx's onScan would stay latched forever — the
+    // "Scanning..." spinner would never clear. Clearing here lets the
+    // UI recover cleanly on the next reconnect.
     machine.value = {
       ...machine.value,
       connected: false,
+      scale: {
+        ...(machine.value.scale || {}),
+        scanning: false,
+      },
     };
     this._scheduleReconnect();
   }
