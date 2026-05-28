@@ -595,10 +595,21 @@ export function ProfileList() {
     }
   }, [hasUtilityProfiles]);
 
+  const [loadError, setLoadError] = useState(null);
+
   const loadProfiles = async () => {
-    const response = await apiService.request({ tp: 'req:profiles:list' });
-    setProfiles(response.profiles);
-    setLoading(false);
+    setLoadError(null);
+    try {
+      const response = await apiService.request({ tp: 'req:profiles:list' });
+      const list = Array.isArray(response?.profiles) ? response.profiles : [];
+      setProfiles(list);
+    } catch (err) {
+      console.error('Failed to load profiles:', err);
+      setLoadError(err && err.message ? err.message : 'Request failed');
+      setProfiles([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Placeholder for future persistence of order (intentionally empty)
@@ -933,6 +944,25 @@ export function ProfileList() {
       <div className='mb-4 flex flex-row items-center gap-2'>
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Profiles</h1>
       </div>
+
+      {loadError && (
+        <div role='alert' className='alert alert-error mb-4'>
+          <div className='flex-1'>
+            <span className='font-semibold'>Failed to load profiles.</span>{' '}
+            <span className='opacity-80'>{loadError}</span>
+          </div>
+          <button
+            type='button'
+            className='btn btn-sm'
+            onClick={async () => {
+              setLoading(true);
+              await loadProfiles();
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className='mb-4 flex flex-col items-center gap-2 sm:flex-row'>
         {/* Controls Row */}

@@ -176,7 +176,29 @@ void WebUIPlugin::loop() {
             }
         }
 
-        ws.textAll(statusDoc.as<String>());
+        // Per-client backpressure: skip clients whose send queue is already
+        // backed up so that 500 ms status ticks don't pile up behind a
+        // larger in-flight response (e.g. /profiles list build) and
+        // overflow the per-client message queue. PR #710 documented this
+        // guard in its description but the actual implementation never
+        // landed — only `setCloseClientOnQueueFull(false)` did, which
+        // prevented the close-on-overflow disconnect but didn't avoid the
+        // overflow drops. This is the missing half.
+        constexpr size_t STATUS_BACKLOG_LIMIT = 8;
+        const String payload = statusDoc.as<String>();
+        for (auto &client : ws.getClients()) {
+            if (client.status() != WS_CONNECTED) {
+                continue;
+            }
+            if (client.queueLen() >= STATUS_BACKLOG_LIMIT) {
+                // Client is slow or stuck behind an in-flight large
+                // response. Skip this tick; the next one is only 500 ms
+                // away and the dashboard will catch up once the backlog
+                // drains.
+                continue;
+            }
+            client.text(payload);
+        }
     }
     if (now > lastCleanup + CLEANUP_PERIOD) {
         lastCleanup = now;
@@ -361,16 +383,26 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     resp["msg"] = "Rebuild started";
                     size_t bufferSize = measureJson(resp);
                     auto *buffer = ws.makeBuffer(bufferSize);
-                    serializeJson(resp, buffer->get(), bufferSize);
-                    client->text(buffer);
+                    if (buffer != nullptr) {
+                        serializeJson(resp, buffer->get(), bufferSize);
+                        client->text(buffer);
+                    } else {
+                        ESP_LOGE("WebUIPlugin", "makeBuffer(%u) returned null for res:history:rebuild — client %u will see no response",
+                                 (unsigned)bufferSize, cid);
+                    }
                     ShotHistory.startAsyncRebuild();
                 } else if (msgType.startsWith("req:history")) {
                     JsonDocument resp(&psramAllocator);
                     ShotHistory.handleRequest(doc, resp);
                     size_t bufferSize = measureJson(resp);
                     auto *buffer = ws.makeBuffer(bufferSize);
-                    serializeJson(resp, buffer->get(), bufferSize);
-                    client->text(buffer);
+                    if (buffer != nullptr) {
+                        serializeJson(resp, buffer->get(), bufferSize);
+                        client->text(buffer);
+                    } else {
+                        ESP_LOGE("WebUIPlugin", "makeBuffer(%u) returned null for %s — client %u will see no response",
+                                 (unsigned)bufferSize, msgType.c_str(), cid);
+                    }
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
                 }
@@ -491,8 +523,20 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
 
     size_t bufferSize = measureJson(response);
     auto *buffer = ws.makeBuffer(bufferSize);
-    serializeJson(response, buffer->get(), bufferSize);
-    ws.text(clientId, buffer);
+    if (buffer != nullptr) {
+        serializeJson(response, buffer->get(), bufferSize);
+        ws.text(clientId, buffer);
+    } else {
+        // makeBuffer allocates from internal heap (AsyncWebSocketMessageBuffer
+        // is not PSRAM-aware). After several minutes of uptime the 500 ms
+        // status broadcast tends to fragment the ~300 KB internal heap; a
+        // 25-50 KB list response can then fail to allocate even when total
+        // free heap looks healthy. Without this guard the next line would
+        // null-deref. Log + drop the response — the client times out and the
+        // page surfaces the failure rather than hanging forever.
+        ESP_LOGE("WebUIPlugin", "makeBuffer(%u) returned null for %s — client %u will see no response",
+                 (unsigned)bufferSize, type.c_str(), clientId);
+    }
 }
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
