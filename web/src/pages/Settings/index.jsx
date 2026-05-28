@@ -539,6 +539,7 @@ export function Settings() {
                 <option value='brew'>Brew button</option>
                 <option value='steam'>Steam button</option>
                 <option value='water'>Water button</option>
+                <option value='flush'>Flush</option>
                 {profiles.map(p => (
                   <option key={p.id} value={p.id}>
                     Profile: {p.label}
@@ -562,6 +563,7 @@ export function Settings() {
                 <option value='brew'>Brew button</option>
                 <option value='steam'>Steam button</option>
                 <option value='water'>Water button</option>
+                <option value='flush'>Flush</option>
                 {profiles.map(p => (
                   <option key={p.id} value={p.id}>
                     Profile: {p.label}
@@ -585,6 +587,7 @@ export function Settings() {
                 <option value='brew'>Brew button</option>
                 <option value='steam'>Steam button</option>
                 <option value='water'>Water button</option>
+                <option value='flush'>Flush</option>
                 {profiles.map(p => (
                   <option key={p.id} value={p.id}>
                     Profile: {p.label}

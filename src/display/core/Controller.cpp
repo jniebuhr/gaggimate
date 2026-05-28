@@ -172,6 +172,31 @@ void Controller::setupBluetooth() {
             handleWaterButton(status);
             return;
         }
+        if (behavior == "flush") {
+            // Flush is a one-shot fixed-duration BrewProcess. Trigger on
+            // press only; release does nothing so the user can't
+            // accidentally cancel mid-flush by letting go (push button)
+            // or flipping the rocker back. onFlush() itself is a no-op
+            // if a process is already active, so rapid presses don't
+            // queue.
+            //
+            // Ensure we land in MODE_BREW so the flush UI renders,
+            // regardless of which mode the user came from. Without
+            // this, pressing the flush button from steam/water/standby
+            // would start the BrewProcess but the screen would still
+            // show the source mode. Mirrors the mode-switch pattern
+            // used by the other button handlers.
+            if (status) {
+                if (getMode() == MODE_STANDBY) {
+                    deactivateStandby();
+                }
+                if (getMode() != MODE_BREW) {
+                    setMode(MODE_BREW);
+                }
+                onFlush();
+            }
+            return;
+        }
         handleProfileButton(status, behavior);
     });
     clientController.registerRemoteErrorCallback([this](const int error) {
