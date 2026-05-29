@@ -450,6 +450,15 @@ void Controller::startProcess(Process *process) {
         delete process;
         return;
     }
+    // A previous process may have finished but not yet been deactivated:
+    // deactivate() only runs on the next loop() tick (every PROGRESS_INTERVAL),
+    // so isActive() reports false while currentProcess is still allocated. The
+    // web/BLE activate() paths run on other cores and can land in this window.
+    // Deactivate it first (moves it into lastProcess, firing the proper end
+    // events) so we don't overwrite—and leak—the live currentProcess pointer.
+    if (currentProcess != nullptr) {
+        deactivate();
+    }
     processCompleted = false;
     this->currentProcess = process;
     pluginManager->trigger("controller:process:start");
