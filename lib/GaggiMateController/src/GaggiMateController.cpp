@@ -39,8 +39,9 @@ void GaggiMateController::setup() {
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
-    this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _ble.sendBtnState(0, state); });
-    this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _ble.sendBtnState(1, state); });
+    this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { handleBrewButtonState(state); });
+    this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { handleSteamButtonState(state); });
+    this->bootBtn = new DigitalInput(0, [this](const bool state) { handleBootButtonState(state); }); // GPIO0 (boot button)
 
     // 4-Pin peripheral port
     if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
@@ -72,6 +73,7 @@ void GaggiMateController::setup() {
     this->pump->setup();
     this->brewBtn->setup();
     this->steamBtn->setup();
+    this->bootBtn->setup();
     if (_config.capabilites.pressure) {
         pressureSensor->setup();
         _ble.registerPressureScaleCallback([this](float scale) { this->pressureSensor->setScale(scale); });
@@ -155,6 +157,10 @@ void GaggiMateController::setup() {
 
 void GaggiMateController::loop() {
     unsigned long now = millis();
+
+    // Check for pairing button press
+    checkPairingButtonPress();
+
     if (lastPingTime < now && (now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
         handlePingTimeout();
     }
@@ -286,5 +292,113 @@ void GaggiMateController::handleSerialCommand(char c) {
         ESP_LOGI("Controller", "");
     } else {
         ESP_LOGI("Controller", "Unrecognized Input! Available commands: S (Status)");
+    }
+}
+
+// Button state handlers for pairing mode detection
+void GaggiMateController::handleBrewButtonState(bool pressed) {
+    // Always send button state to BLE client
+    _ble.sendBtnState(0, pressed);
+
+    // Thread-safe update of button hold state
+    portENTER_CRITICAL(&buttonMux);
+    if (pressed) {
+        if (!brewButtonHeld) {
+            brewButtonHeld = true;
+            brewButtonHoldStart = millis();
+        }
+    } else {
+        brewButtonHeld = false;
+    }
+    portEXIT_CRITICAL(&buttonMux);
+}
+
+void GaggiMateController::handleSteamButtonState(bool pressed) {
+    // Always send button state to BLE client
+    _ble.sendBtnState(1, pressed);
+
+    // Thread-safe update of button hold state
+    portENTER_CRITICAL(&buttonMux);
+    if (pressed) {
+        if (!steamButtonHeld) {
+            steamButtonHeld = true;
+            steamButtonHoldStart = millis();
+        }
+    } else {
+        steamButtonHeld = false;
+    }
+    portEXIT_CRITICAL(&buttonMux);
+}
+
+void GaggiMateController::handleBootButtonState(bool pressed) {
+    // Boot button is used for pairing confirmation
+    // Only act on button press (not release)
+    if (pressed && _ble.isPinConfirmationPending()) {
+        ESP_LOGI(LOG_TAG, "Boot button pressed - confirming pairing PIN");
+        _ble.confirmPairingPin();
+    }
+}
+
+void GaggiMateController::checkPairingButtonPress() {
+    // Check if we're waiting for PIN confirmation (highest priority)
+    if (_ble.isPinConfirmationPending()) {
+        // If brew button pressed during PIN confirmation, confirm the pairing
+        bool brewPressed = false;
+        portENTER_CRITICAL(&buttonMux);
+        brewPressed = brewButtonHeld;
+        portEXIT_CRITICAL(&buttonMux);
+
+        if (brewPressed) {
+            ESP_LOGI(LOG_TAG, "Brew button pressed - confirming pairing PIN");
+            _ble.confirmPairingPin();
+
+            // Clear button state to prevent repeated triggers
+            portENTER_CRITICAL(&buttonMux);
+            brewButtonHeld = false;
+            portEXIT_CRITICAL(&buttonMux);
+            return;
+        }
+    }
+
+    // Thread-safe snapshot of button state
+    bool brewHeld, steamHeld;
+    unsigned long brewStart, steamStart;
+
+    portENTER_CRITICAL(&buttonMux);
+    brewHeld = brewButtonHeld;
+    steamHeld = steamButtonHeld;
+    brewStart = brewButtonHoldStart;
+    steamStart = steamButtonHoldStart;
+    portEXIT_CRITICAL(&buttonMux);
+
+    // Check for "clear all bonds" combo (brew + steam held 10s)
+    if (brewHeld && steamHeld) {
+        unsigned long holdTime = millis() - min(brewStart, steamStart);
+        if (holdTime >= CLEAR_BONDS_HOLD_MS) {
+            ESP_LOGW(LOG_TAG, "Both buttons held 10s - clearing all bonds and restarting");
+            _ble.clearAllBonds();
+
+            portENTER_CRITICAL(&buttonMux);
+            brewButtonHeld = false;
+            steamButtonHeld = false;
+            portEXIT_CRITICAL(&buttonMux);
+
+            delay(1000);
+            esp_restart(); // Restart for clean state
+            return;
+        }
+    }
+
+    // Check for "enter pairing mode" (brew held 5s)
+    if (brewHeld && !steamHeld) {
+        unsigned long holdTime = millis() - brewStart;
+        if (holdTime >= PAIRING_BUTTON_HOLD_MS) {
+            ESP_LOGI(LOG_TAG, "Brew button held 5s - entering pairing mode");
+            _ble.enterPairingMode();
+
+            portENTER_CRITICAL(&buttonMux);
+            brewButtonHeld = false; // Prevent repeated triggers
+            portEXIT_CRITICAL(&buttonMux);
+        }
     }
 }

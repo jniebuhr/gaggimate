@@ -330,7 +330,7 @@ bool BLE_OTA_DFU::configure_OTA(NimBLEServer *pServer) {
     }
 
     BLECharacteristic *pCharacteristic_BLE_OTA_DFU_RX =
-        pServiceOTA->createCharacteristic(CHARACTERISTIC_OTA_BL_UUID_RX, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
+        pServiceOTA->createCharacteristic(CHARACTERISTIC_OTA_BL_UUID_RX, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
 
     if (pCharacteristic_BLE_OTA_DFU_RX == nullptr) {
         return false;

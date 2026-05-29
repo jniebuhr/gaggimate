@@ -8,6 +8,8 @@ void NimBLEServerController::initServer(const String infoString) {
     NimBLEDevice::init("GPBLS");
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Set to maximum power
     NimBLEDevice::setMTU(128);
+    NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_MITM | BLE_SM_PAIR_AUTHREQ_SC);
+    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_YESNO);
 
     // Create BLE Server
     server = NimBLEDevice::createServer();
@@ -17,30 +19,30 @@ void NimBLEServerController::initServer(const String infoString) {
     NimBLEService *pService = server->createService(SERVICE_UUID);
 
     // Output Control Characteristic (Client writes setpoints)
-    outputControlChar = pService->createCharacteristic(OUTPUT_CONTROL_UUID, NIMBLE_PROPERTY::WRITE);
+    outputControlChar = pService->createCharacteristic(OUTPUT_CONTROL_UUID, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
     outputControlChar->setCallbacks(this); // Use this class as the callback handler
 
     // Alt Control Characteristic (Client writes pin state)
-    altControlChar = pService->createCharacteristic(ALT_CONTROL_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
+    altControlChar = pService->createCharacteristic(ALT_CONTROL_CHAR_UUID, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
     altControlChar->setCallbacks(this); // Use this class as the callback handler
 
     // Ping Characteristic (Client writes ping, Server reads)
-    pingChar = pService->createCharacteristic(PING_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
+    pingChar = pService->createCharacteristic(PING_CHAR_UUID, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
     pingChar->setCallbacks(this); // Use this class as the callback handler
 
     // PID control Characteristic (Client writes PID settings, Server reads)
-    pidControlChar = pService->createCharacteristic(PID_CONTROL_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
+    pidControlChar = pService->createCharacteristic(PID_CONTROL_CHAR_UUID, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
     pidControlChar->setCallbacks(this); // Use this class as the callback handler
 
     // Pump Model Coefficients Characteristic (Client writes pump model coefficients, Server reads)
-    pumpModelCoeffsChar = pService->createCharacteristic(PUMP_MODEL_COEFFS_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
+    pumpModelCoeffsChar = pService->createCharacteristic(PUMP_MODEL_COEFFS_CHAR_UUID, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
     pumpModelCoeffsChar->setCallbacks(this); // Use this class as the callback handler
 
     // Error Characteristic (Server writes error, Client reads)
     errorChar = pService->createCharacteristic(ERROR_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
 
-    // Ping Characteristic (Client writes autotune, Server reads)
-    autotuneChar = pService->createCharacteristic(AUTOTUNE_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
+    // Autotune Characteristic (Client writes autotune, Server reads)
+    autotuneChar = pService->createCharacteristic(AUTOTUNE_CHAR_UUID, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
     autotuneChar->setCallbacks(this); // Use this class as the callback handler
     autotuneResultChar = pService->createCharacteristic(AUTOTUNE_RESULT_UUID, NIMBLE_PROPERTY::NOTIFY);
 
@@ -53,16 +55,16 @@ void NimBLEServerController::initServer(const String infoString) {
     // Pressure Read Characteristic (Server notifies client of pressure)
     sensorChar = pService->createCharacteristic(SENSOR_DATA_UUID, NIMBLE_PROPERTY::NOTIFY);
 
-    // PID control Characteristic (Client writes pressure settings, Server reads)
-    pressureScaleChar = pService->createCharacteristic(PRESSURE_SCALE_UUID, NIMBLE_PROPERTY::WRITE);
+    // Pressure Scale Characteristic (Client writes pressure settings, Server reads)
+    pressureScaleChar = pService->createCharacteristic(PRESSURE_SCALE_UUID, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
     pressureScaleChar->setCallbacks(this); // Use this class as the callback handler
 
     volumetricMeasurementChar = pService->createCharacteristic(VOLUMETRIC_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY);
-    volumetricTareChar = pService->createCharacteristic(VOLUMETRIC_TARE_UUID, NIMBLE_PROPERTY::WRITE);
+    volumetricTareChar = pService->createCharacteristic(VOLUMETRIC_TARE_UUID, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
     volumetricTareChar->setCallbacks(this);
 
     tofMeasurementChar = pService->createCharacteristic(TOF_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY);
-    ledControlChar = pService->createCharacteristic(LED_CONTROL_UUID, NIMBLE_PROPERTY::WRITE);
+    ledControlChar = pService->createCharacteristic(LED_CONTROL_UUID, NIMBLE_PROPERTY::WRITE_ENC | NIMBLE_PROPERTY::WRITE_AUTHEN);
     ledControlChar->setCallbacks(this);
 
     pService->start();
@@ -79,6 +81,9 @@ void NimBLEServerController::initServer(const String infoString) {
 }
 
 void NimBLEServerController::loop() {
+    // Check for PIN confirmation timeout
+    checkPinConfirmationTimeout();
+
     if (server->getConnectedCount() == 0 && !advertising->isAdvertising()) {
         advertising->stop();
         advertising->start();
@@ -164,11 +169,149 @@ void NimBLEServerController::registerPumpModelCoeffsCallback(const pump_model_co
     pumpModelCoeffsCallback = callback;
 }
 
+// Pairing mode management
+bool NimBLEServerController::isPairingModeActive() const {
+    if (pairingState != PairingState::PAIRING_INITIATED &&
+        pairingState != PairingState::PAIRING_ACTIVE) {
+        return false;
+    }
+    return (millis() - pairingModeStartTime) < PAIRING_TIMEOUT_MS;
+}
+
+bool NimBLEServerController::isConnectionSecure() const {
+    if (!deviceConnected || server == nullptr) {
+        return false;
+    }
+
+    std::vector<uint16_t> connIds = server->getPeerDevices();
+    if (connIds.empty()) {
+        return false;
+    }
+
+    NimBLEConnInfo connInfo = server->getPeerInfo(connIds[0]);
+    return connInfo.isEncrypted() && connInfo.isBonded();
+}
+
+void NimBLEServerController::enterPairingMode() {
+    ESP_LOGI(LOG_TAG, "Entering pairing mode - advertising as connectable for 60 seconds");
+    pairingState = PairingState::PAIRING_INITIATED;
+    pairingModeStartTime = millis();
+
+    // Restart advertising to allow new connections
+    if (deviceConnected && server != nullptr) {
+        std::vector<uint16_t> connIds = server->getPeerDevices();
+        if (!connIds.empty()) {
+            server->disconnect(connIds[0]);
+        }
+    }
+    if (advertising != nullptr) {
+        advertising->start();
+    }
+}
+
+void NimBLEServerController::exitPairingMode() {
+    ESP_LOGI(LOG_TAG, "Exiting pairing mode");
+    pairingState = PairingState::NORMAL;
+}
+
+void NimBLEServerController::clearAllBonds() {
+    ESP_LOGW(LOG_TAG, "Clearing all bonded devices - restart required");
+    NimBLEDevice::deleteAllBonds();
+    // Note: Device should restart after this for clean state
+}
+
+// PIN confirmation for DISPLAY_YESNO pairing
+bool NimBLEServerController::onConfirmPIN(uint32_t pass_key) {
+    ESP_LOGI(LOG_TAG, "");
+    ESP_LOGI(LOG_TAG, "╔════════════════════════════════════════╗");
+    ESP_LOGI(LOG_TAG, "║  PAIRING CONFIRMATION REQUIRED         ║");
+    ESP_LOGI(LOG_TAG, "║                                        ║");
+    ESP_LOGI(LOG_TAG, "║  PIN: %06d                        ║", pass_key);
+    ESP_LOGI(LOG_TAG, "║                                        ║");
+    ESP_LOGI(LOG_TAG, "║  Press BREW or BOOT button to confirm ║");
+    ESP_LOGI(LOG_TAG, "║  (30 second timeout)                   ║");
+    ESP_LOGI(LOG_TAG, "╚════════════════════════════════════════╝");
+    ESP_LOGI(LOG_TAG, "");
+
+    currentPairingPin = pass_key;
+    pinConfirmState = PinConfirmState::AWAITING_CONFIRM;
+    pinConfirmStartTime = millis();
+
+    return true; // Allow pairing to proceed (user confirmation pending)
+}
+
+void NimBLEServerController::confirmPairingPin() {
+    if (pinConfirmState == PinConfirmState::AWAITING_CONFIRM) {
+        ESP_LOGI(LOG_TAG, "PIN %06d confirmed by user", currentPairingPin);
+        pinConfirmState = PinConfirmState::CONFIRMED;
+        currentPairingPin = 0;
+    }
+}
+
+void NimBLEServerController::rejectPairingPin() {
+    if (pinConfirmState == PinConfirmState::AWAITING_CONFIRM) {
+        ESP_LOGW(LOG_TAG, "PIN confirmation rejected (timeout or user reject)");
+        pinConfirmState = PinConfirmState::REJECTED;
+        currentPairingPin = 0;
+
+        // Disconnect the pairing device
+        if (server != nullptr && deviceConnected) {
+            std::vector<uint16_t> connIds = server->getPeerDevices();
+            if (!connIds.empty()) {
+                server->disconnect(connIds[0]);
+            }
+        }
+    }
+}
+
+bool NimBLEServerController::isPinConfirmationPending() const {
+    return pinConfirmState == PinConfirmState::AWAITING_CONFIRM;
+}
+
+void NimBLEServerController::checkPinConfirmationTimeout() {
+    if (pinConfirmState == PinConfirmState::AWAITING_CONFIRM) {
+        unsigned long elapsed = millis() - pinConfirmStartTime;
+        if (elapsed >= PIN_CONFIRM_TIMEOUT_MS) {
+            ESP_LOGW(LOG_TAG, "PIN confirmation timeout after 30 seconds");
+            rejectPairingPin();
+        }
+    }
+}
+
 // BLEServerCallbacks override
 void NimBLEServerController::onConnect(NimBLEServer *pServer) {
     ESP_LOGI(LOG_TAG, "Client connected.");
     deviceConnected = true;
-    pServer->stopAdvertising();
+
+    // Get connection info
+    std::vector<uint16_t> connIds = pServer->getPeerDevices();
+    if (connIds.empty()) {
+        ESP_LOGE(LOG_TAG, "No peer devices found after connection");
+        return;
+    }
+
+    NimBLEConnInfo connInfo = pServer->getPeerInfo(connIds[0]);
+
+    // Check if this is a new (unbonded) connection
+    if (!connInfo.isBonded()) {
+        if (isPairingModeActive()) {
+            ESP_LOGI(LOG_TAG, "New device connecting in pairing mode - allowing pairing");
+            pairingState = PairingState::PAIRING_ACTIVE;
+            // Pairing will proceed automatically with Just Works
+        } else {
+            ESP_LOGW(LOG_TAG, "Unbonded device attempted connection outside pairing mode - rejecting");
+            pServer->disconnect(connIds[0]);
+            return;
+        }
+    } else {
+        ESP_LOGI(LOG_TAG, "Bonded device reconnected");
+        exitPairingMode(); // Exit pairing mode if active
+    }
+
+    // Stop advertising if not in pairing mode
+    if (pairingState == PairingState::NORMAL) {
+        pServer->stopAdvertising();
+    }
 }
 
 void NimBLEServerController::onDisconnect(NimBLEServer *pServer) {
@@ -178,6 +321,12 @@ void NimBLEServerController::onDisconnect(NimBLEServer *pServer) {
 }
 
 void NimBLEServerController::onWrite(NimBLECharacteristic *pCharacteristic) {
+    // CRITICAL SECURITY CHECK: Verify connection is encrypted and bonded
+    if (!isConnectionSecure()) {
+        ESP_LOGE(LOG_TAG, "Rejecting write from insecure connection");
+        return;
+    }
+
     ESP_LOGV(LOG_TAG, "Write received!");
 
     if (pCharacteristic->getUUID().equals(NimBLEUUID(OUTPUT_CONTROL_UUID))) {

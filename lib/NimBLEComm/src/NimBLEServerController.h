@@ -30,7 +30,44 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     void registerLedControlCallback(const led_control_callback_t &callback);
     void setInfo(String infoString);
 
+    // Pairing mode control
+    void enterPairingMode();
+    void exitPairingMode();
+    void clearAllBonds();
+
+    // PIN confirmation for DISPLAY_YESNO pairing
+    void confirmPairingPin();
+    void rejectPairingPin();
+    bool isPinConfirmationPending() const;
+
   private:
+    // Pairing state management
+    enum class PairingState {
+        NORMAL,           // Only accepts bonded devices
+        PAIRING_INITIATED,// User pressed button, waiting for connection
+        PAIRING_ACTIVE,   // Client connected, pairing in progress
+    };
+
+    PairingState pairingState = PairingState::NORMAL;
+    unsigned long pairingModeStartTime = 0;
+    const unsigned long PAIRING_TIMEOUT_MS = 60000; // 60 seconds
+
+    // PIN confirmation state for DISPLAY_YESNO pairing
+    enum class PinConfirmState {
+        IDLE,              // No confirmation pending
+        AWAITING_CONFIRM,  // Waiting for button press
+        CONFIRMED,         // User confirmed
+        REJECTED,          // User rejected or timeout
+    };
+
+    PinConfirmState pinConfirmState = PinConfirmState::IDLE;
+    uint32_t currentPairingPin = 0;
+    unsigned long pinConfirmStartTime = 0;
+    const unsigned long PIN_CONFIRM_TIMEOUT_MS = 30000; // 30 seconds
+
+    bool isPairingModeActive() const;
+    bool isConnectionSecure() const;
+    void checkPinConfirmationTimeout();
     bool deviceConnected = false;
     String infoString = "";
     NimBLEAdvertising *advertising = nullptr;
@@ -73,6 +110,7 @@ class NimBLEServerController : public NimBLEServerCallbacks, public NimBLECharac
     // BLEServerCallbacks overrides
     void onConnect(NimBLEServer *pServer) override;
     void onDisconnect(NimBLEServer *pServer) override;
+    bool onConfirmPIN(uint32_t pass_key) override;
 
     // BLECharacteristicCallbacks overrides
     void onWrite(NimBLECharacteristic *pCharacteristic) override;
