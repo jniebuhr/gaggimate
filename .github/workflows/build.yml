@@ -3,8 +3,6 @@ on:
     tags:
       - "*"
 
-permissions:
-  contents: write
 name: Build
 jobs:
   build:
@@ -107,9 +105,12 @@ jobs:
         with:
           name: gaggimate-firmware
           path: "out/*"
+
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download Firmware Files
         uses: actions/download-artifact@v4
