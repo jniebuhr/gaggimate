@@ -7,6 +7,7 @@
 #include "Transport.h"
 #include <array>
 #include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 #include <freertos/semphr.h>
 #include <functional>
 
@@ -25,8 +26,13 @@
  *     non-idempotent ops) and ACKed; payloads are dispatched by oneof tag to
  *     typed handlers -- no run-time type erasure.
  *
- * Thread-safety: queue + in-flight state are guarded by a mutex. Handlers are
- * invoked with the mutex released, so a handler may call send() re-entrantly.
+ * Threading: decode + ACK/dedup + the send pump run on the transport's callback
+ * thread, but registered handlers are invoked on a dedicated dispatch task (fed
+ * by an inbound payload queue) so slow application callbacks never block the BLE
+ * host task. If the inbound queue is full the frame is left un-ACKed, which
+ * back-pressures the sender into retransmitting. Queue + in-flight state are
+ * guarded by a mutex; handlers run with the mutex released, so a handler may
+ * call send() re-entrantly.
  */
 class Endpoint {
   public:
@@ -70,7 +76,9 @@ class Endpoint {
     static constexpr size_t MAX_PAYLOADS_PER_FRAME = 6; // matches Frame.payloads max_count
     static constexpr unsigned long ACK_TIMEOUT_MS = 150;
     static constexpr uint8_t MAX_RETRIES = 5;
-    static constexpr size_t HANDLER_SLOTS = 32; // > highest Payload_*_tag
+    static constexpr size_t HANDLER_SLOTS = 32;  // > highest Payload_*_tag
+    static constexpr size_t RX_QUEUE_DEPTH = 12; // inbound payloads awaiting dispatch
+    static constexpr uint32_t DISPATCH_STACK = 6144;
 
     Transport &_transport;
     CoalescingPrioQueue<QUEUE_CAPACITY, uint16_t, gm::Payload, MAX_KEYS> _queue;
@@ -90,6 +98,11 @@ class Endpoint {
 
     ConnectionHandler _connHandler = nullptr;
 
+    // Inbound payloads decoded on the transport thread, drained by the dispatch
+    // task so handlers never run on the BLE host task.
+    QueueHandle_t _rxQueue = nullptr;
+    TaskHandle_t _dispatchTask = nullptr;
+
     gm::Frame _rxFrame{}; // decode scratch (onData is single-threaded per link)
     gm::Frame _txFrame{}; // encode scratch (guarded by _mutex in pump())
 
@@ -97,6 +110,8 @@ class Endpoint {
     void handleConnection(bool connected);
     void pump();
     void sendAck(uint32_t id);
+    void dispatch(const gm::Payload &payload);
+    static void dispatchTaskFn(void *arg);
     static bool encodeFrame(const gm::Frame &frame, uint8_t *buf, size_t bufSize, size_t *outLen);
 
     void lock() {

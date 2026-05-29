@@ -19,8 +19,8 @@
 class GaggiMateClient {
   public:
     using ConnectionCallback = std::function<void(bool connected)>;
-    using SystemInfoCallback =
-        std::function<void(const char *hardware, const char *version, bool dimming, bool pressure, bool ledControl, bool tof)>;
+    using SystemInfoCallback = std::function<void(const char *hardware, const char *version, uint32_t protocolVersion,
+                                                  bool dimming, bool pressure, bool ledControl, bool tof)>;
     using SensorCallback =
         std::function<void(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance)>;
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
@@ -44,12 +44,23 @@ class GaggiMateClient {
     // its own BLE service, independent of this protocol).
     NimBLEClient *getClient() const { return _transport.getNativeClient(); }
 
+    // Build a payload without sending (compose your own batch, then send()).
+    gm::Payload buildPing();
+    gm::Payload buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
+    gm::Payload buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
+    gm::Payload buildValveControl(uint8_t index, bool open);
+    gm::Payload buildPidSettings(float kp, float ki, float kd, float kf);
+    gm::Payload buildPumpModelCoeffs(float a, float b, float c, float d);
+    gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
+    gm::Payload buildPressureScale(float scale);
+    gm::Payload buildTare();
+    gm::Payload buildLedControl(uint8_t channel, uint8_t brightness);
+
     // Commands (display -> controller)
     void sendPing();
-    void sendBoilerControl(uint8_t index, float setpoint);
+    void sendBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
     void sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
-    void sendValveControl(uint8_t index, bool open);
-    void sendAltControl(bool open);
+    void sendValveControl(uint8_t index, bool open); // index 0 = valve, 1 = alt relay
     void sendPidSettings(float kp, float ki, float kd, float kf);
     void sendPumpModelCoeffs(float a, float b, float c, float d);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
@@ -57,7 +68,12 @@ class GaggiMateClient {
     void tare();
     void sendLedControl(uint8_t channel, uint8_t brightness);
 
+    // Send a pre-built payload / batch of payloads (one frame).
+    void send(const gm::Payload &payload) { _endpoint.send(payload); }
+    void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
+
     // Atomic multi-component update: boiler + pump + valve + alt in one frame.
+    // (alt is delivered as ValveControl index 1.)
     void sendControlBatch(const BoilerCommand &boiler, const PumpCommand &pump, const ValveCommand &valve, bool altOpen);
 
     // Response registrations (controller -> display)

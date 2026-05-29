@@ -90,13 +90,18 @@ void GaggiMateController::setup() {
     // Output control is split into per-component, device-numbered messages. Each
     // arrives independently (or batched together in one frame for an atomic
     // update). Control messages feed the connection watchdog via handlePing().
-    _comms.onBoilerControl([this](uint8_t index, float setpoint) {
+    _comms.onBoilerControl([this](uint8_t index, BoilerControlMode mode, float setpoint) {
         (void)index; // single boiler today
         handlePing();
         if (errorState != ERROR_CODE_NONE) {
             return;
         }
-        this->heater->setSetpoint(setpoint);
+        if (mode == BoilerControlMode::Temperature) {
+            this->heater->setSetpoint(setpoint);
+        } else {
+            // Pressure-regulated boiler not supported by this hardware yet.
+            ESP_LOGW(LOG_TAG, "Boiler pressure mode requested but unsupported");
+        }
     });
     _comms.onPumpControl([this](uint8_t index, PumpControlMode mode, float power, float pressure, float flow) {
         (void)index; // single pump today
@@ -118,8 +123,14 @@ void GaggiMateController::setup() {
             dimmedPump->setFlowTarget(flow, pressure);
         }
     });
+    // Binary outputs: index 0 = brew valve, index 1 = alt relay.
     _comms.onValveControl([this](uint8_t index, bool open) {
-        (void)index; // single valve today
+        if (index == 1) {
+            // Alt relay: independent function, no watchdog/error gating (matches
+            // the previous dedicated alt-control path).
+            this->alt->set(open);
+            return;
+        }
         handlePing();
         if (errorState != ERROR_CODE_NONE) {
             return;
@@ -129,7 +140,6 @@ void GaggiMateController::setup() {
             static_cast<DimmedPump *>(pump)->setValveState(open);
         }
     });
-    _comms.onAltControl([this](bool open) { this->alt->set(open); });
     _comms.onPidSettings([this](float Kp, float Ki, float Kd, float Kf) {
         this->heater->setTunings(Kp, Ki, Kd);
 
@@ -244,11 +254,16 @@ void GaggiMateController::thermalRunawayShutdown() {
 void GaggiMateController::sendSensorData() {
     if (_config.capabilites.pressure) {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
-        _comms.sendSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getPuckFlow(),
-                              dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
+        // Sensor + (optional) volumetric ride in one frame.
+        gm::Payload batch[2];
+        size_t n = 0;
+        batch[n++] =
+            _comms.buildSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getPuckFlow(),
+                                   dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
         if (this->valve->getState()) {
-            _comms.sendVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+            batch[n++] = _comms.buildVolumetricMeasurement(dimmedPump->getCoffeeVolume());
         }
+        _comms.sendBatch(batch, n);
     } else {
         _comms.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
     }

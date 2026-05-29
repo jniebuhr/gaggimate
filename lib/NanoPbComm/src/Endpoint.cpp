@@ -6,9 +6,16 @@
 
 static const char *ENDPOINT_TAG = "Endpoint";
 
-Endpoint::Endpoint(Transport &transport) : _transport(transport) { _mutex = xSemaphoreCreateRecursiveMutex(); }
+Endpoint::Endpoint(Transport &transport) : _transport(transport) {
+    _mutex = xSemaphoreCreateRecursiveMutex();
+    _rxQueue = xQueueCreate(RX_QUEUE_DEPTH, sizeof(gm::Payload));
+}
 
 Endpoint::~Endpoint() {
+    if (_dispatchTask)
+        vTaskDelete(_dispatchTask);
+    if (_rxQueue)
+        vQueueDelete(_rxQueue);
     if (_mutex)
         vSemaphoreDelete(_mutex);
 }
@@ -16,6 +23,23 @@ Endpoint::~Endpoint() {
 void Endpoint::begin() {
     _transport.onData([this](const uint8_t *data, size_t length) { handleData(data, length); });
     _transport.onConnectionChange([this](bool connected) { handleConnection(connected); });
+    if (_dispatchTask == nullptr)
+        xTaskCreate(dispatchTaskFn, "GmDispatch", DISPATCH_STACK, this, 1, &_dispatchTask);
+}
+
+void Endpoint::dispatchTaskFn(void *arg) {
+    auto *self = static_cast<Endpoint *>(arg);
+    gm::Payload payload;
+    for (;;) {
+        if (xQueueReceive(self->_rxQueue, &payload, portMAX_DELAY) == pdTRUE)
+            self->dispatch(payload);
+    }
+}
+
+void Endpoint::dispatch(const gm::Payload &payload) {
+    const pb_size_t which = payload.which_content;
+    if (which < HANDLER_SLOTS && _handlers[which])
+        _handlers[which](payload);
 }
 
 void Endpoint::loop() { pump(); }
@@ -137,29 +161,39 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
     lock();
     if (ack != 0 && _inFlight && ack == _inFlightId)
         _inFlight = false;
-    if (id != 0) {
-        if (id <= _lastRxId)
-            duplicate = true; // retransmit of an already-processed frame
-        else
-            _lastRxId = id;
-    }
+    if (id != 0 && id <= _lastRxId)
+        duplicate = true; // retransmit of an already-processed frame
     unlock();
 
     if (id != 0 && duplicate) {
         sendAck(id); // peer's previous ACK was lost; re-ack without re-processing
+        pump();
         return;
     }
 
-    // Dispatch each payload by oneof tag to its typed handler.
-    for (pb_size_t i = 0; i < _rxFrame.payloads_count; i++) {
-        const gm::Payload &payload = _rxFrame.payloads[i];
-        const pb_size_t which = payload.which_content;
-        if (which < HANDLER_SLOTS && _handlers[which])
-            _handlers[which](payload);
+    // Hand the payloads to the dispatch task rather than running handlers on the
+    // transport (BLE) thread. Only ACK + advance the de-dup cursor once every
+    // payload is safely queued; otherwise leave the frame un-ACKed so the sender
+    // retransmits once the dispatch task has caught up (back-pressure).
+    bool accepted = true;
+    const pb_size_t n = _rxFrame.payloads_count;
+    if (n > 0) {
+        if (static_cast<pb_size_t>(uxQueueSpacesAvailable(_rxQueue)) < n) {
+            accepted = false;
+        } else {
+            for (pb_size_t i = 0; i < n; i++)
+                xQueueSend(_rxQueue, &_rxFrame.payloads[i], 0);
+        }
     }
 
-    if (id != 0)
-        sendAck(id);
+    if (accepted) {
+        if (id != 0) {
+            lock();
+            _lastRxId = id;
+            unlock();
+            sendAck(id);
+        }
+    }
 
     // A received ACK may have freed the in-flight slot; send the next frame now.
     pump();
@@ -175,6 +209,9 @@ void Endpoint::handleConnection(bool connected) {
     _nextId = 1;
     _queue.clear();
     unlock();
+
+    if (_rxQueue)
+        xQueueReset(_rxQueue); // drop any inbound payloads from a previous session
 
     if (_connHandler)
         _connHandler(connected); // e.g. push SystemInfo on connect

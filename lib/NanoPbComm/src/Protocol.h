@@ -15,6 +15,13 @@ static constexpr const char *SERVICE_UUID = "e75bc5b6-ff6e-4337-9d31-0c128f2e6e6
 static constexpr const char *TX_CHAR_UUID = "87654321-4321-8765-4321-cba987654321";
 // Display (client) -> controller (server) writes.
 static constexpr const char *RX_CHAR_UUID = "12345678-1234-5678-1234-123456789abc";
+// Legacy read-only system-info characteristic (JSON), kept for external readers.
+static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdba74";
+
+// Protocol/schema version. Bump on any breaking change to gaggimate.proto so a
+// display talking to an out-of-date controller (or vice versa) can detect the
+// mismatch. Carried in SystemInfo.protocol_version.
+static constexpr uint32_t PROTOCOL_VERSION = 1;
 
 // Outbound priorities (higher wins in the queue).
 enum Priority : uint8_t {
@@ -63,7 +70,6 @@ inline uint8_t defaultPriority(pb_size_t which) {
     case gaggimate_Payload_boiler_tag:
     case gaggimate_Payload_pump_tag:
     case gaggimate_Payload_valve_tag:
-    case gaggimate_Payload_alt_tag:
         return PRIO_CONTROL;
     case gaggimate_Payload_sensor_tag:
     case gaggimate_Payload_volumetric_tag:

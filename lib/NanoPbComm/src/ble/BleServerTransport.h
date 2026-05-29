@@ -21,6 +21,10 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     void init(const String &deviceName);
     void startAdvertising();
 
+    // Publish system info on the legacy read-only INFO characteristic (kept so
+    // external readers that predate the framed protocol still work).
+    void setInfo(const String &info);
+
     bool send(const uint8_t *data, size_t length) override;
     bool isConnected() const override;
 
@@ -28,8 +32,10 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     bool _connected = false;
     NimBLEServer *_server = nullptr;
     NimBLEAdvertising *_advertising = nullptr;
-    NimBLECharacteristic *_rxChar = nullptr; // client -> server (write)
-    NimBLECharacteristic *_txChar = nullptr; // server -> client (notify)
+    NimBLECharacteristic *_rxChar = nullptr;   // client -> server (write)
+    NimBLECharacteristic *_txChar = nullptr;   // server -> client (notify)
+    NimBLECharacteristic *_infoChar = nullptr; // legacy read-only system info
+    String _info;
     BLE_OTA_DFU _otaDfu;
 
     void onConnect(NimBLEServer *server) override;

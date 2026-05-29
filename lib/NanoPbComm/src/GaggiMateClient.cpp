@@ -17,21 +17,22 @@ void GaggiMateClient::loop() {
     _endpoint.loop();
 }
 
-void GaggiMateClient::sendPing() {
+gm::Payload GaggiMateClient::buildPing() {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_ping_tag;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateClient::sendBoilerControl(uint8_t index, float setpoint) {
+gm::Payload GaggiMateClient::buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_boiler_tag;
     p.content.boiler.index = index;
+    p.content.boiler.mode = static_cast<gm::BoilerMode>(mode);
     p.content.boiler.setpoint = setpoint;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow) {
+gm::Payload GaggiMateClient::buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_pump_tag;
     p.content.pump.index = index;
@@ -39,111 +40,130 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
     p.content.pump.power = power;
     p.content.pump.pressure = pressure;
     p.content.pump.flow = flow;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateClient::sendValveControl(uint8_t index, bool open) {
+gm::Payload GaggiMateClient::buildValveControl(uint8_t index, bool open) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_valve_tag;
     p.content.valve.index = index;
     p.content.valve.open = open;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateClient::sendAltControl(bool open) {
-    gm::Payload p = gaggimate_Payload_init_zero;
-    p.which_content = gaggimate_Payload_alt_tag;
-    p.content.alt.open = open;
-    _endpoint.send(p);
-}
-
-void GaggiMateClient::sendPidSettings(float kp, float ki, float kd, float kf) {
+gm::Payload GaggiMateClient::buildPidSettings(float kp, float ki, float kd, float kf) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_pid_tag;
     p.content.pid.kp = kp;
     p.content.pid.ki = ki;
     p.content.pid.kd = kd;
     p.content.pid.kf = kf;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateClient::sendPumpModelCoeffs(float a, float b, float c, float d) {
+gm::Payload GaggiMateClient::buildPumpModelCoeffs(float a, float b, float c, float d) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_pump_model_tag;
     p.content.pump_model.a = a;
     p.content.pump_model.b = b;
     p.content.pump_model.c = c;
     p.content.pump_model.d = d;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateClient::sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage) {
+gm::Payload GaggiMateClient::buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_autotune_tag;
     p.content.autotune.test_time = testTime;
     p.content.autotune.samples = samples;
     p.content.autotune.heater_wattage = heaterWattage;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateClient::sendPressureScale(float scale) {
+gm::Payload GaggiMateClient::buildPressureScale(float scale) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_pressure_scale_tag;
     p.content.pressure_scale.scale = scale;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateClient::tare() {
+gm::Payload GaggiMateClient::buildTare() {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_tare_tag;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateClient::sendLedControl(uint8_t channel, uint8_t brightness) {
+gm::Payload GaggiMateClient::buildLedControl(uint8_t channel, uint8_t brightness) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_led_tag;
     p.content.led.channel = channel;
     p.content.led.brightness = brightness;
-    _endpoint.send(p);
+    return p;
+}
+
+void GaggiMateClient::sendPing() { _endpoint.send(buildPing()); }
+
+void GaggiMateClient::sendBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint) {
+    _endpoint.send(buildBoilerControl(index, mode, setpoint));
+}
+
+void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow) {
+    _endpoint.send(buildPumpControl(index, mode, power, pressure, flow));
+}
+
+void GaggiMateClient::sendValveControl(uint8_t index, bool open) { _endpoint.send(buildValveControl(index, open)); }
+
+void GaggiMateClient::sendPidSettings(float kp, float ki, float kd, float kf) {
+    _endpoint.send(buildPidSettings(kp, ki, kd, kf));
+}
+
+void GaggiMateClient::sendPumpModelCoeffs(float a, float b, float c, float d) {
+    _endpoint.send(buildPumpModelCoeffs(a, b, c, d));
+}
+
+void GaggiMateClient::sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage) {
+    _endpoint.send(buildAutotune(testTime, samples, heaterWattage));
+}
+
+void GaggiMateClient::sendPressureScale(float scale) { _endpoint.send(buildPressureScale(scale)); }
+
+void GaggiMateClient::tare() { _endpoint.send(buildTare()); }
+
+void GaggiMateClient::sendLedControl(uint8_t channel, uint8_t brightness) {
+    _endpoint.send(buildLedControl(channel, brightness));
 }
 
 void GaggiMateClient::sendControlBatch(const BoilerCommand &boiler, const PumpCommand &pump, const ValveCommand &valve,
                                        bool altOpen) {
-    gm::Payload batch[4] = {gaggimate_Payload_init_zero, gaggimate_Payload_init_zero, gaggimate_Payload_init_zero,
-                            gaggimate_Payload_init_zero};
-
-    batch[0].which_content = gaggimate_Payload_boiler_tag;
-    batch[0].content.boiler.index = boiler.index;
-    batch[0].content.boiler.setpoint = boiler.setpoint;
-
-    batch[1].which_content = gaggimate_Payload_pump_tag;
-    batch[1].content.pump.index = pump.index;
-    batch[1].content.pump.mode = static_cast<gm::PumpMode>(pump.mode);
-    batch[1].content.pump.power = pump.power;
-    batch[1].content.pump.pressure = pump.pressure;
-    batch[1].content.pump.flow = pump.flow;
-
-    batch[2].which_content = gaggimate_Payload_valve_tag;
-    batch[2].content.valve.index = valve.index;
-    batch[2].content.valve.open = valve.open;
-
-    batch[3].which_content = gaggimate_Payload_alt_tag;
-    batch[3].content.alt.open = altOpen;
-
-    _endpoint.sendBatch(batch, 4);
+    // valve index 0 = brew valve, index 1 = alt relay (merged into ValveControl).
+    const gm::Payload batch[] = {
+        buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint),
+        buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow),
+        buildValveControl(valve.index, valve.open),
+        buildValveControl(1, altOpen),
+    };
+    _endpoint.sendBatch(batch, sizeof(batch) / sizeof(batch[0]));
 }
 
 void GaggiMateClient::registerHandlers() {
     _endpoint.on(gaggimate_Payload_system_info_tag, [this](const gm::Payload &p) {
         if (_systemInfoCb)
-            _systemInfoCb(p.content.system_info.hardware, p.content.system_info.version,
+            _systemInfoCb(p.content.system_info.hardware, p.content.system_info.version, p.content.system_info.protocol_version,
                           p.content.system_info.capabilities.dimming, p.content.system_info.capabilities.pressure,
                           p.content.system_info.capabilities.led_control, p.content.system_info.capabilities.tof);
     });
     _endpoint.on(gaggimate_Payload_sensor_tag, [this](const gm::Payload &p) {
-        if (_sensorCb)
-            _sensorCb(p.content.sensor.temperature, p.content.sensor.pressure, p.content.sensor.puck_flow,
-                      p.content.sensor.pump_flow, p.content.sensor.puck_resistance);
+        if (!_sensorCb)
+            return;
+        // The display tracks a single boiler today; read boiler 0 if present.
+        float temperature = 0.0f;
+        float pressure = 0.0f;
+        if (p.content.sensor.boilers_count > 0) {
+            temperature = p.content.sensor.boilers[0].temperature;
+            pressure = p.content.sensor.boilers[0].pressure;
+        }
+        _sensorCb(temperature, pressure, p.content.sensor.puck_flow, p.content.sensor.pump_flow,
+                  p.content.sensor.puck_resistance);
     });
     _endpoint.on(gaggimate_Payload_button_tag, [this](const gm::Payload &p) {
         if (_buttonCb)

@@ -13,10 +13,17 @@ enum class PumpControlMode : uint8_t {
     Flow = 2,     // target a flow, pressure is the limit
 };
 
+// Boiler control mode. Integer values match gaggimate_BoilerMode in the schema.
+enum class BoilerControlMode : uint8_t {
+    Temperature = 0, // setpoint is a target temperature in degC
+    Pressure = 1,    // setpoint is a target pressure in bar
+};
+
 // Per-component commands, used to drive several components atomically in one
 // frame (see GaggiMateClient::sendControlBatch).
 struct BoilerCommand {
     uint8_t index = 0;
+    BoilerControlMode mode = BoilerControlMode::Temperature;
     float setpoint = 0.0f;
 };
 struct PumpCommand {

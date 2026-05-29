@@ -1,4 +1,5 @@
 #include "GaggiMateServer.h"
+#include <cstdio>
 #include <cstring>
 
 GaggiMateServer::GaggiMateServer() : _endpoint(_transport) {}
@@ -31,11 +32,20 @@ void GaggiMateServer::setSystemInfo(const String &hardware, const String &versio
     memset(&_systemInfo, 0, sizeof(_systemInfo));
     strlcpy(_systemInfo.hardware, hardware.c_str(), sizeof(_systemInfo.hardware));
     strlcpy(_systemInfo.version, version.c_str(), sizeof(_systemInfo.version));
+    _systemInfo.protocol_version = gm_proto::PROTOCOL_VERSION;
     _systemInfo.has_capabilities = true;
     _systemInfo.capabilities.dimming = dimming;
     _systemInfo.capabilities.pressure = pressure;
     _systemInfo.capabilities.led_control = ledControl;
     _systemInfo.capabilities.tof = tof;
+
+    // Mirror system info onto the legacy read-only characteristic in the old
+    // JSON shape (plus "pv"), so pre-framing tools can still read it.
+    char json[224];
+    snprintf(json, sizeof(json), "{\"hw\":\"%s\",\"v\":\"%s\",\"pv\":%u,\"cp\":{\"ps\":%s,\"dm\":%s,\"led\":%s,\"tof\":%s}}",
+             hardware.c_str(), version.c_str(), static_cast<unsigned>(gm_proto::PROTOCOL_VERSION), pressure ? "true" : "false",
+             dimming ? "true" : "false", ledControl ? "true" : "false", tof ? "true" : "false");
+    _transport.setInfo(json);
 }
 
 void GaggiMateServer::pushSystemInfo() {
@@ -45,55 +55,74 @@ void GaggiMateServer::pushSystemInfo() {
     _endpoint.send(p);
 }
 
-void GaggiMateServer::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
+gm::Payload GaggiMateServer::buildSensorData(float temperature, float pressure, float puckFlow, float pumpFlow,
+                                             float puckResistance) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_sensor_tag;
-    p.content.sensor.temperature = temperature;
-    p.content.sensor.pressure = pressure;
+    p.content.sensor.boilers_count = 1; // boiler 0; schema allows more
+    p.content.sensor.boilers[0].index = 0;
+    p.content.sensor.boilers[0].temperature = temperature;
+    p.content.sensor.boilers[0].pressure = pressure;
     p.content.sensor.puck_flow = puckFlow;
     p.content.sensor.pump_flow = pumpFlow;
     p.content.sensor.puck_resistance = puckResistance;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateServer::sendButtonState(uint8_t index, bool pressed) {
+gm::Payload GaggiMateServer::buildButtonState(uint8_t index, bool pressed) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_button_tag;
     p.content.button.index = index;
     p.content.button.pressed = pressed;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateServer::sendAutotuneResult(float kp, float ki, float kd, float kf) {
+gm::Payload GaggiMateServer::buildAutotuneResult(float kp, float ki, float kd, float kf) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_autotune_result_tag;
     p.content.autotune_result.kp = kp;
     p.content.autotune_result.ki = ki;
     p.content.autotune_result.kd = kd;
     p.content.autotune_result.kf = kf;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateServer::sendVolumetricMeasurement(float volume) {
+gm::Payload GaggiMateServer::buildVolumetricMeasurement(float volume) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_volumetric_tag;
     p.content.volumetric.volume = volume;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateServer::sendTofMeasurement(uint32_t distance) {
+gm::Payload GaggiMateServer::buildTofMeasurement(uint32_t distance) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_tof_tag;
     p.content.tof.distance = distance;
-    _endpoint.send(p);
+    return p;
 }
 
-void GaggiMateServer::sendError(int code) {
+gm::Payload GaggiMateServer::buildError(int code) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_error_tag;
     p.content.error.code = static_cast<gm::ErrorCode>(code);
-    _endpoint.send(p);
+    return p;
 }
+
+void GaggiMateServer::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
+    _endpoint.send(buildSensorData(temperature, pressure, puckFlow, pumpFlow, puckResistance));
+}
+
+void GaggiMateServer::sendButtonState(uint8_t index, bool pressed) { _endpoint.send(buildButtonState(index, pressed)); }
+
+void GaggiMateServer::sendAutotuneResult(float kp, float ki, float kd, float kf) {
+    _endpoint.send(buildAutotuneResult(kp, ki, kd, kf));
+}
+
+void GaggiMateServer::sendVolumetricMeasurement(float volume) { _endpoint.send(buildVolumetricMeasurement(volume)); }
+
+void GaggiMateServer::sendTofMeasurement(uint32_t distance) { _endpoint.send(buildTofMeasurement(distance)); }
+
+void GaggiMateServer::sendError(int code) { _endpoint.send(buildError(code)); }
 
 void GaggiMateServer::registerHandlers() {
     _endpoint.on(gaggimate_Payload_ping_tag, [this](const gm::Payload &) {
@@ -102,7 +131,8 @@ void GaggiMateServer::registerHandlers() {
     });
     _endpoint.on(gaggimate_Payload_boiler_tag, [this](const gm::Payload &p) {
         if (_boilerCb)
-            _boilerCb(static_cast<uint8_t>(p.content.boiler.index), p.content.boiler.setpoint);
+            _boilerCb(static_cast<uint8_t>(p.content.boiler.index), static_cast<BoilerControlMode>(p.content.boiler.mode),
+                      p.content.boiler.setpoint);
     });
     _endpoint.on(gaggimate_Payload_pump_tag, [this](const gm::Payload &p) {
         if (_pumpCb)
@@ -112,10 +142,6 @@ void GaggiMateServer::registerHandlers() {
     _endpoint.on(gaggimate_Payload_valve_tag, [this](const gm::Payload &p) {
         if (_valveCb)
             _valveCb(static_cast<uint8_t>(p.content.valve.index), p.content.valve.open);
-    });
-    _endpoint.on(gaggimate_Payload_alt_tag, [this](const gm::Payload &p) {
-        if (_altCb)
-            _altCb(p.content.alt.open);
     });
     _endpoint.on(gaggimate_Payload_pid_tag, [this](const gm::Payload &p) {
         if (_pidCb)

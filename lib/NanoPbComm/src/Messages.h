@@ -21,7 +21,6 @@ using Ping = gaggimate_Ping;
 using BoilerControl = gaggimate_BoilerControl;
 using PumpControl = gaggimate_PumpControl;
 using ValveControl = gaggimate_ValveControl;
-using AltControl = gaggimate_AltControl;
 using PidSettings = gaggimate_PidSettings;
 using PumpModelCoeffs = gaggimate_PumpModelCoeffs;
 using AutotuneRequest = gaggimate_AutotuneRequest;
@@ -32,6 +31,7 @@ using LedControl = gaggimate_LedControl;
 using DeviceCapabilities = gaggimate_Capabilities;
 using SystemInfo = gaggimate_SystemInfo;
 using SensorData = gaggimate_SensorData;
+using BoilerReading = gaggimate_BoilerReading;
 using ButtonState = gaggimate_ButtonState;
 using AutotuneResult = gaggimate_AutotuneResult;
 using VolumetricMeasurement = gaggimate_VolumetricMeasurement;
@@ -39,6 +39,7 @@ using TofMeasurement = gaggimate_TofMeasurement;
 using Error = gaggimate_Error;
 
 using PumpMode = gaggimate_PumpMode;
+using BoilerMode = gaggimate_BoilerMode;
 using ErrorCode = gaggimate_ErrorCode;
 
 } // namespace gm

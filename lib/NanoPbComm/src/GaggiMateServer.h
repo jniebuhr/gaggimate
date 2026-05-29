@@ -16,10 +16,10 @@
 class GaggiMateServer {
   public:
     using PingCallback = std::function<void()>;
-    using BoilerCallback = std::function<void(uint8_t index, float setpoint)>;
+    using BoilerCallback = std::function<void(uint8_t index, BoilerControlMode mode, float setpoint)>;
     using PumpCallback = std::function<void(uint8_t index, PumpControlMode mode, float power, float pressure, float flow)>;
+    // Binary output: index 0 = brew valve, index 1 = alt relay.
     using ValveCallback = std::function<void(uint8_t index, bool open)>;
-    using AltCallback = std::function<void(bool open)>;
     using PidCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using PumpModelCallback = std::function<void(float a, float b, float c, float d)>;
     using AutotuneCallback = std::function<void(uint32_t testTime, uint32_t samples, uint32_t heaterWattage)>;
@@ -35,6 +35,15 @@ class GaggiMateServer {
 
     void setSystemInfo(const String &hardware, const String &version, bool dimming, bool pressure, bool ledControl, bool tof);
 
+    // Build a payload without sending (compose your own batch, then send()).
+    // sendSensorData reports boiler 0; the wire format supports several boilers.
+    gm::Payload buildSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance);
+    gm::Payload buildButtonState(uint8_t index, bool pressed);
+    gm::Payload buildAutotuneResult(float kp, float ki, float kd, float kf);
+    gm::Payload buildVolumetricMeasurement(float volume);
+    gm::Payload buildTofMeasurement(uint32_t distance);
+    gm::Payload buildError(int code);
+
     // Responses (controller -> display)
     void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance);
     void sendButtonState(uint8_t index, bool pressed);
@@ -43,12 +52,15 @@ class GaggiMateServer {
     void sendTofMeasurement(uint32_t distance);
     void sendError(int code);
 
+    // Send a pre-built payload / batch of payloads (one frame).
+    void send(const gm::Payload &payload) { _endpoint.send(payload); }
+    void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
+
     // Command registrations (display -> controller)
     void onPing(PingCallback cb) { _pingCb = std::move(cb); }
     void onBoilerControl(BoilerCallback cb) { _boilerCb = std::move(cb); }
     void onPumpControl(PumpCallback cb) { _pumpCb = std::move(cb); }
     void onValveControl(ValveCallback cb) { _valveCb = std::move(cb); }
-    void onAltControl(AltCallback cb) { _altCb = std::move(cb); }
     void onPidSettings(PidCallback cb) { _pidCb = std::move(cb); }
     void onPumpModelCoeffs(PumpModelCallback cb) { _pumpModelCb = std::move(cb); }
     void onAutotune(AutotuneCallback cb) { _autotuneCb = std::move(cb); }
@@ -65,7 +77,6 @@ class GaggiMateServer {
     BoilerCallback _boilerCb;
     PumpCallback _pumpCb;
     ValveCallback _valveCb;
-    AltCallback _altCb;
     PidCallback _pidCb;
     PumpModelCallback _pumpModelCb;
     AutotuneCallback _autotuneCb;

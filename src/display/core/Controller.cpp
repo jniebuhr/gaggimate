@@ -156,17 +156,18 @@ static void parseFloatCsv(const String &csv, float *out, size_t count, float def
 }
 
 void Controller::setupBluetooth() {
-    clientController.init("GPBLC");
-    clientController.onConnectionChanged([this](bool connected) {
+    comms.init("GPBLC");
+    comms.onConnectionChanged([this](bool connected) {
         if (!connected && initialized) {
             pluginManager->trigger("controller:bluetooth:disconnect");
             waitingForController = true;
             setMode(MODE_STANDBY);
         }
     });
-    clientController.onSystemInfo([this](const char *hardware, const char *version, bool dimming, bool pressure, bool ledControl,
-                                         bool tof) { onSystemInfo(hardware, version, dimming, pressure, ledControl, tof); });
-    clientController.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
+    comms.onSystemInfo(
+        [this](const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure, bool ledControl,
+               bool tof) { onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof); });
+    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
         onTempRead(temp);
         this->pressure = pressure;
         this->currentPuckFlow = puckFlow;
@@ -176,7 +177,7 @@ void Controller::setupBluetooth() {
         pluginManager->trigger("pump:flow:change", "value", pumpFlow);
         pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
     });
-    clientController.onButtonState([this](uint8_t index, bool pressed) {
+    comms.onButtonState([this](uint8_t index, bool pressed) {
         const int status = pressed ? 1 : 0;
         String behavior = settings.getButtonBehavior(index);
         ESP_LOGV("Controller", "Button %d changed to %d, behavior: %s", index, status, behavior);
@@ -222,7 +223,7 @@ void Controller::setupBluetooth() {
         }
         handleProfileButton(status, behavior);
     });
-    clientController.onError([this](int error) {
+    comms.onError([this](int error) {
         // Autotune timeout = info-level, not runaway. Controller already
         // preserved NVS PID. Clear autotuning flag, fire dedicated Web UI
         // event. Don't latch this->error (would gate future setupBluetooth).
@@ -240,7 +241,7 @@ void Controller::setupBluetooth() {
             ESP_LOGE(LOG_TAG, "Received error %d", error);
         }
     });
-    clientController.onAutotuneResult([this](float Kp, float Ki, float Kd, float Kf) {
+    comms.onAutotuneResult([this](float Kp, float Ki, float Kd, float Kf) {
         ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
         // Guard: older controller firmware could emit zero/NaN gains (#672
         // class). Reject — keep existing PID, surface as "Autotune Failed".
@@ -258,9 +259,9 @@ void Controller::setupBluetooth() {
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
     });
-    clientController.onVolumetricMeasurement(
+    comms.onVolumetricMeasurement(
         [this](float value) { onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION); });
-    clientController.onTofMeasurement([this](uint32_t value) {
+    comms.onTofMeasurement([this](uint32_t value) {
         tofDistance = static_cast<int>(value);
         ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", tofDistance);
         pluginManager->trigger("controller:tof:change", "value", tofDistance);
@@ -268,23 +269,33 @@ void Controller::setupBluetooth() {
     pluginManager->trigger("controller:bluetooth:init");
 }
 
-void Controller::onSystemInfo(const char *hardware, const char *version, bool dimming, bool pressure, bool ledControl, bool tof) {
+void Controller::onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
+                              bool ledControl, bool tof) {
+    const bool mismatch = protocolVersion != gm_proto::PROTOCOL_VERSION;
     systemInfo = SystemInfo{.hardware = String(hardware),
                             .version = String(version),
-                            .capabilities = SystemCapabilities{
-                                .dimming = dimming,
-                                .pressure = pressure,
-                                .ledControl = ledControl,
-                                .tof = tof,
-                            }};
-    ESP_LOGI(LOG_TAG, "System info: %s %s (dm=%d ps=%d led=%d tof=%d)", hardware, version, dimming, pressure, ledControl, tof);
+                            .capabilities =
+                                SystemCapabilities{
+                                    .dimming = dimming,
+                                    .pressure = pressure,
+                                    .ledControl = ledControl,
+                                    .tof = tof,
+                                },
+                            .protocolVersion = protocolVersion,
+                            .protocolMismatch = mismatch};
+    ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d)", hardware, version, protocolVersion,
+             gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof);
+    if (mismatch) {
+        ESP_LOGW(LOG_TAG, "Protocol version mismatch: controller=%u display=%u", protocolVersion, gm_proto::PROTOCOL_VERSION);
+        pluginManager->trigger("controller:protocol:mismatch", "value", static_cast<int>(protocolVersion));
+    }
 
     // Capability-dependent setup that the old protocol ran synchronously right
     // after connect, now driven by the asynchronous SystemInfo push.
     setPressureScale();
     float pid[4];
     parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
-    clientController.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+    comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
     setPumpModelCoeffs();
 
     if (!loaded) {
@@ -358,20 +369,20 @@ void Controller::loop() {
     }
 
     if (initialized) {
-        clientController.loop(); // drive the comms send pump + retransmit
+        comms.loop(); // drive the comms send pump + retransmit
     }
 
     unsigned long now = millis();
 
     // If BLE scanning has been running for a while without finding the controller,
     // notify the UI so it can update the startup label accordingly.
-    if (!waitingForController && initialized && !clientController.isConnected() &&
+    if (!waitingForController && initialized && !comms.isConnected() &&
         (now - connectStartTime) > CONTROLLER_WAITING_TIMEOUT_MS) {
         waitingForController = true;
         pluginManager->trigger("controller:bluetooth:waiting");
     }
 
-    if (clientController.isReadyForConnection() && clientController.connectToServer()) {
+    if (comms.isReadyForConnection() && comms.connectToServer()) {
         waitingForController = false;
         // Capability-dependent setup (pressure scale, PID, pump model) and the
         // controller:ready event are now driven by the controller's SystemInfo
@@ -465,7 +476,7 @@ void Controller::autotune(int testTime, int samples, int heaterWattage) {
         activateStandby();
     }
     autotuning = true;
-    clientController.sendAutotune(testTime, samples, heaterWattage);
+    comms.sendAutotune(testTime, samples, heaterWattage);
     pluginManager->trigger("controller:autotune:start");
 }
 
@@ -519,7 +530,7 @@ void Controller::setTargetTemp(float temperature) {
 
 void Controller::setPressureScale(void) {
     if (systemInfo.capabilities.pressure) {
-        clientController.sendPressureScale(settings.getPressureScaling());
+        comms.sendPressureScale(settings.getPressureScaling());
     }
 }
 
@@ -529,7 +540,7 @@ void Controller::setPumpModelCoeffs(void) {
         // flow-measurement semantics (c,d NaN) on the controller side.
         float coeffs[4];
         parseFloatCsv(settings.getPumpModelCoeffs(), coeffs, 4, NAN);
-        clientController.sendPumpModelCoeffs(coeffs[0], coeffs[1], coeffs[2], coeffs[3]);
+        comms.sendPumpModelCoeffs(coeffs[0], coeffs[1], coeffs[2], coeffs[3]);
     }
 }
 
@@ -670,14 +681,14 @@ void Controller::updateControl() {
         pump.power = active ? proc->getPumpValue() : 0;
     }
 
-    clientController.sendControlBatch(boiler, pump, valve, altRelayActive);
+    comms.sendControlBatch(boiler, pump, valve, altRelayActive);
 }
 
 void Controller::activate() {
     if (isActive())
         return;
     clear();
-    clientController.tare();
+    comms.tare();
     if (isVolumetricAvailable()) {
 #ifdef NIGHTLY_BUILD
         currentVolumetricSource =

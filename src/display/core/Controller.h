@@ -104,7 +104,7 @@ class Controller {
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    GaggiMateClient *getClientController() { return &clientController; }
+    GaggiMateClient *getClientController() { return &comms; }
 
   private:
     // Initialization methods
@@ -112,7 +112,8 @@ class Controller {
     void setupPanel();
 #endif
     void setupBluetooth();
-    void onSystemInfo(const char *hardware, const char *version, bool dimming, bool pressure, bool ledControl, bool tof);
+    void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
+                      bool ledControl, bool tof);
     void setupWifi();
 
     // Functional methods
@@ -132,7 +133,7 @@ class Controller {
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
 #endif
-    GaggiMateClient clientController;
+    GaggiMateClient comms;
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};

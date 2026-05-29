@@ -6,6 +6,9 @@
 # the statically-allocated Payload[] small.
 gaggimate.Frame.payloads max_count:6
 
+# Per-boiler readings inside SensorData (one today; room for multi-boiler).
+gaggimate.SensorData.boilers max_count:4
+
 # Keep the system-info strings short so the Payload union (sized to its largest
 # member) stays compact -- every batched Payload slot pays for this.
 gaggimate.SystemInfo.hardware max_size:40

@@ -17,6 +17,8 @@ struct SystemInfo {
     String hardware;
     String version;
     SystemCapabilities capabilities;
+    uint32_t protocolVersion = 0;  // controller's protocol version (0 = unknown)
+    bool protocolMismatch = false; // set when it differs from the display's
 };
 
 #endif // DISPLAY_SYSTEM_INFO_H

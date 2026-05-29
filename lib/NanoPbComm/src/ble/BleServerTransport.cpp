@@ -12,6 +12,8 @@ void BleServerTransport::init(const String &deviceName) {
     _rxChar = service->createCharacteristic(gm_proto::RX_CHAR_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
     _rxChar->setCallbacks(this);
     _txChar = service->createCharacteristic(gm_proto::TX_CHAR_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+    _infoChar = service->createCharacteristic(gm_proto::INFO_CHAR_UUID, NIMBLE_PROPERTY::READ);
+    _infoChar->setValue(std::string(_info.c_str()));
     service->start();
 
     // OTA DFU shares the same server (separate service/UUIDs).
@@ -28,6 +30,12 @@ void BleServerTransport::init(const String &deviceName) {
 void BleServerTransport::startAdvertising() {
     if (_advertising && !_advertising->isAdvertising())
         _advertising->start();
+}
+
+void BleServerTransport::setInfo(const String &info) {
+    _info = info;
+    if (_infoChar)
+        _infoChar->setValue(std::string(info.c_str()));
 }
 
 bool BleServerTransport::send(const uint8_t *data, size_t length) {

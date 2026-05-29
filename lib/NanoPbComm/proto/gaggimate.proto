@@ -37,7 +37,7 @@ message Payload {
         BoilerControl boiler = 2;
         PumpControl pump = 3;
         ValveControl valve = 4;
-        AltControl alt = 5;
+        // tag 5 retired (AltControl merged into ValveControl: valve index 1)
         PidSettings pid = 6;
         PumpModelCoeffs pump_model = 7;
         AutotuneRequest autotune = 8;
@@ -62,11 +62,19 @@ message Payload {
 
 message Ping {}
 
-// Boiler heater setpoint. index selects the boiler (0, 1, ...) the same way
-// ButtonState.index selects a button today.
+enum BoilerMode {
+    BOILER_MODE_TEMPERATURE = 0; // `setpoint` is a target temperature in degC
+    BOILER_MODE_PRESSURE = 1;    // `setpoint` is a target pressure in bar
+}
+
+// Boiler control. index selects the boiler (0, 1, ...) the same way
+// ButtonState.index selects a button today. `mode` chooses how `setpoint` is
+// interpreted (temperature today; pressure reserved for pressure-regulated
+// steam boilers).
 message BoilerControl {
     uint32 index = 1;
-    float setpoint = 2; // target temperature in degC, 0 = off
+    BoilerMode mode = 2;
+    float setpoint = 3; // degC or bar per `mode`, 0 = off
 }
 
 enum PumpMode {
@@ -83,16 +91,12 @@ message PumpControl {
     float flow = 5;     // ml/s
 }
 
-// Binary output / solenoid valve. index selects the valve (0, 1, ...).
+// Binary output. index selects the output: 0 = brew solenoid valve,
+// 1 = configurable "alt" relay (further indices reserved for additional
+// valves/relays).
 message ValveControl {
     uint32 index = 1;
     bool open = 2;
-}
-
-// The configurable "alt" relay -- a distinct, separately wired function from
-// the brew valve, kept as its own message.
-message AltControl {
-    bool open = 1;
 }
 
 message PidSettings {
@@ -143,14 +147,22 @@ message SystemInfo {
     string hardware = 1;
     string version = 2;
     Capabilities capabilities = 3;
+    uint32 protocol_version = 4; // bumped on any breaking schema change; lets the display detect a mismatch
+}
+
+// Per-boiler temperature + pressure reading. index selects the boiler (0, 1,
+// ...) so the controller can report several boilers.
+message BoilerReading {
+    uint32 index = 1;
+    float temperature = 2;
+    float pressure = 3;
 }
 
 message SensorData {
-    float temperature = 1;
-    float pressure = 2;
-    float puck_flow = 3;
-    float pump_flow = 4;
-    float puck_resistance = 5;
+    repeated BoilerReading boilers = 1;
+    float puck_flow = 2;
+    float pump_flow = 3;
+    float puck_resistance = 4;
 }
 
 message ButtonState {
