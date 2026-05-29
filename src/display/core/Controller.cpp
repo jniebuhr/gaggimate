@@ -304,6 +304,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
             activateStandby();
         pluginManager->trigger("controller:ready");
     }
+    pluginManager->trigger("controller:bluetooth:connect");
 }
 
 void Controller::setupWifi() {
@@ -384,10 +385,6 @@ void Controller::loop() {
 
     if (comms.isReadyForConnection() && comms.connectToServer()) {
         waitingForController = false;
-        // Capability-dependent setup (pressure scale, PID, pump model) and the
-        // controller:ready event are now driven by the controller's SystemInfo
-        // push, handled asynchronously in onSystemInfo().
-        pluginManager->trigger("controller:bluetooth:connect");
     }
 
     if (isErrorState()) {

@@ -12,6 +12,7 @@ void BleServerTransport::init(const String &deviceName) {
     _rxChar = service->createCharacteristic(gm_proto::RX_CHAR_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
     _rxChar->setCallbacks(this);
     _txChar = service->createCharacteristic(gm_proto::TX_CHAR_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+    _txChar->setCallbacks(this);
     _infoChar = service->createCharacteristic(gm_proto::INFO_CHAR_UUID, NIMBLE_PROPERTY::READ);
     _infoChar->setValue(std::string(_info.c_str()));
     service->start();
@@ -68,4 +69,8 @@ void BleServerTransport::onWrite(NimBLECharacteristic *characteristic) {
     NimBLEAttValue value = characteristic->getValue();
     if (value.length() > 0)
         emitData(value.data(), value.length());
+}
+
+void BleServerTransport::onSubscribe(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc, uint16_t subValue) {
+    emitConnection(true);
 }

@@ -41,6 +41,7 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     void onConnect(NimBLEServer *server) override;
     void onDisconnect(NimBLEServer *server) override;
     void onWrite(NimBLECharacteristic *characteristic) override;
+    void onSubscribe(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc, uint16_t subValue) override;
 
     static constexpr const char *LOG_TAG = "BleServerTransport";
 };
