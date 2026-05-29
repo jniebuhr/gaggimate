@@ -1,6 +1,7 @@
 #include "Controller.h"
 #include "ArduinoJson.h"
 #include "esp_sntp.h"
+#include <display/util/PsramAllocator.h>
 #include <SD_MMC.h>
 #include <SPIFFS.h>
 #include <cmath>
@@ -248,7 +249,7 @@ void Controller::setupBluetooth() {
 void Controller::setupInfos() {
     const std::string info = clientController.readInfo();
     printf("System info: %s\n", info.c_str());
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     DeserializationError err = deserializeJson(doc, info);
     if (err) {
         printf("Error deserializing JSON: %s\n", err.c_str());
