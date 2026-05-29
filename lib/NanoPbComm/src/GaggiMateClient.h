@@ -1,0 +1,88 @@
+#ifndef GAGGIMATE_CLIENT_H
+#define GAGGIMATE_CLIENT_H
+
+#include "Endpoint.h"
+#include "GaggiMateComm.h"
+#include "ble/BleClientTransport.h"
+#include <Arduino.h>
+#include <functional>
+
+/**
+ * Display-side protocol facade.
+ *
+ * Owns a BLE client transport + Endpoint and exposes semantic send methods and
+ * typed response callbacks. The connect sequence is asynchronous: the link is
+ * established via connectToServer(), and the controller's SystemInfo arrives as
+ * a pushed message (onSystemInfo) which is when capability-dependent setup
+ * should run.
+ */
+class GaggiMateClient {
+  public:
+    using ConnectionCallback = std::function<void(bool connected)>;
+    using SystemInfoCallback =
+        std::function<void(const char *hardware, const char *version, bool dimming, bool pressure, bool ledControl, bool tof)>;
+    using SensorCallback =
+        std::function<void(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance)>;
+    using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
+    using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
+    using VolumetricCallback = std::function<void(float volume)>;
+    using TofCallback = std::function<void(uint32_t distance)>;
+    using ErrorCallback = std::function<void(int code)>;
+
+    GaggiMateClient();
+
+    void init(const String &deviceName);
+    void loop();
+
+    // Connection lifecycle (driven from the display's main loop).
+    bool isReadyForConnection() const { return _transport.isReadyForConnection(); }
+    bool connectToServer() { return _transport.connectToServer(); }
+    bool isConnected() const { return _endpoint.isConnected(); }
+    void disconnect() { _transport.disconnect(); }
+
+    // Native client handle for ControllerOTA (OTA uses its own BLE service).
+    NimBLEClient *getNativeClient() const { return _transport.getNativeClient(); }
+
+    // Commands (display -> controller)
+    void sendPing();
+    void sendBoilerControl(uint8_t index, float setpoint);
+    void sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
+    void sendValveControl(uint8_t index, bool open);
+    void sendAltControl(bool open);
+    void sendPidSettings(float kp, float ki, float kd, float kf);
+    void sendPumpModelCoeffs(float a, float b, float c, float d);
+    void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
+    void sendPressureScale(float scale);
+    void sendTare();
+    void sendLedControl(uint8_t channel, uint8_t brightness);
+
+    // Atomic multi-component update: boiler + pump + valve + alt in one frame.
+    void sendControlBatch(const BoilerCommand &boiler, const PumpCommand &pump, const ValveCommand &valve, bool altOpen);
+
+    // Response registrations (controller -> display)
+    void onConnectionChanged(ConnectionCallback cb) { _connCb = std::move(cb); }
+    void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
+    void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }
+    void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }
+    void onAutotuneResult(AutotuneResultCallback cb) { _autotuneResultCb = std::move(cb); }
+    void onVolumetricMeasurement(VolumetricCallback cb) { _volumetricCb = std::move(cb); }
+    void onTofMeasurement(TofCallback cb) { _tofCb = std::move(cb); }
+    void onError(ErrorCallback cb) { _errorCb = std::move(cb); }
+
+  private:
+    BleClientTransport _transport;
+    Endpoint _endpoint;
+
+    ConnectionCallback _connCb;
+    SystemInfoCallback _systemInfoCb;
+    SensorCallback _sensorCb;
+    ButtonCallback _buttonCb;
+    AutotuneResultCallback _autotuneResultCb;
+    VolumetricCallback _volumetricCb;
+    TofCallback _tofCb;
+    ErrorCallback _errorCb;
+
+    void registerHandlers();
+};
+
+#endif // GAGGIMATE_CLIENT_H

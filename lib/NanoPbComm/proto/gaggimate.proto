@@ -1,0 +1,188 @@
+syntax = "proto3";
+
+// Namespaced so the generated C types (gaggimate_Frame, gaggimate_Error, ...)
+// never collide with app-side structs of the same short name.
+package gaggimate;
+
+// GaggiMate controller <-> display protocol.
+//
+// The transport (BLE today, UART tomorrow) delivers whole datagrams; each
+// datagram is exactly one nanopb-encoded `Frame`. A Frame bundles one or more
+// `Payload`s -- the "container" that lets us drive several components in the
+// same atomic update -- together with the id/ack bookkeeping the Endpoint uses
+// for reliable, de-duplicated delivery.
+
+// ---------------------------------------------------------------------------
+// Framing
+// ---------------------------------------------------------------------------
+
+message Frame {
+    // Monotonic per-sender sequence id. id == 0 marks a frame that needs no
+    // acknowledgement (a pure ACK). Data frames always use id >= 1.
+    uint32 id = 1;
+    // When non-zero, acknowledges receipt of the peer's frame with this id.
+    // A pure ACK carries id == 0, ack != 0 and an empty payloads list.
+    uint32 ack = 2;
+    // One or more messages delivered together (see Frame.payloads in the
+    // .options file for the cap).
+    repeated Payload payloads = 3;
+}
+
+// Tagged union of every protocol message. The oneof tag drives dispatch on the
+// receiving Endpoint -- there is no run-time type erasure.
+message Payload {
+    oneof content {
+        // Commands: display -> controller
+        Ping ping = 1;
+        BoilerControl boiler = 2;
+        PumpControl pump = 3;
+        ValveControl valve = 4;
+        AltControl alt = 5;
+        PidSettings pid = 6;
+        PumpModelCoeffs pump_model = 7;
+        AutotuneRequest autotune = 8;
+        PressureScale pressure_scale = 9;
+        Tare tare = 10;
+        LedControl led = 11;
+
+        // Responses: controller -> display
+        SystemInfo system_info = 20;
+        SensorData sensor = 21;
+        ButtonState button = 22;
+        AutotuneResult autotune_result = 23;
+        VolumetricMeasurement volumetric = 24;
+        TofMeasurement tof = 25;
+        Error error = 26;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Commands (display -> controller)
+// ---------------------------------------------------------------------------
+
+message Ping {}
+
+// Boiler heater setpoint. index selects the boiler (0, 1, ...) the same way
+// ButtonState.index selects a button today.
+message BoilerControl {
+    uint32 index = 1;
+    float setpoint = 2; // target temperature in degC, 0 = off
+}
+
+enum PumpMode {
+    PUMP_MODE_POWER = 0;    // run at `power` percent
+    PUMP_MODE_PRESSURE = 1; // target `pressure`, `flow` is the limit
+    PUMP_MODE_FLOW = 2;     // target `flow`, `pressure` is the limit
+}
+
+message PumpControl {
+    uint32 index = 1; // pump 0, 1, ...
+    PumpMode mode = 2;
+    float power = 3;    // 0..100 %, used in POWER mode
+    float pressure = 4; // bar
+    float flow = 5;     // ml/s
+}
+
+// Binary output / solenoid valve. index selects the valve (0, 1, ...).
+message ValveControl {
+    uint32 index = 1;
+    bool open = 2;
+}
+
+// The configurable "alt" relay -- a distinct, separately wired function from
+// the brew valve, kept as its own message.
+message AltControl {
+    bool open = 1;
+}
+
+message PidSettings {
+    float kp = 1;
+    float ki = 2;
+    float kd = 3;
+    float kf = 4; // combined thermal feedforward gain
+}
+
+message PumpModelCoeffs {
+    // c and d may be NaN to signal two-point flow-measurement mode
+    // (a = oneBarFlow, b = nineBarFlow) instead of polynomial coefficients.
+    float a = 1;
+    float b = 2;
+    float c = 3;
+    float d = 4;
+}
+
+message AutotuneRequest {
+    uint32 test_time = 1;      // seconds
+    uint32 samples = 2;
+    uint32 heater_wattage = 3; // 0 = unknown, controller skips combinedKff derivation
+}
+
+message PressureScale {
+    float scale = 1;
+}
+
+message Tare {}
+
+message LedControl {
+    uint32 channel = 1;
+    uint32 brightness = 2;
+}
+
+// ---------------------------------------------------------------------------
+// Responses (controller -> display)
+// ---------------------------------------------------------------------------
+
+message Capabilities {
+    bool dimming = 1;
+    bool pressure = 2;
+    bool led_control = 3;
+    bool tof = 4;
+}
+
+message SystemInfo {
+    string hardware = 1;
+    string version = 2;
+    Capabilities capabilities = 3;
+}
+
+message SensorData {
+    float temperature = 1;
+    float pressure = 2;
+    float puck_flow = 3;
+    float pump_flow = 4;
+    float puck_resistance = 5;
+}
+
+message ButtonState {
+    uint32 index = 1;
+    bool pressed = 2;
+}
+
+message AutotuneResult {
+    float kp = 1;
+    float ki = 2;
+    float kd = 3;
+    float kf = 4;
+}
+
+message VolumetricMeasurement {
+    float volume = 1;
+}
+
+message TofMeasurement {
+    uint32 distance = 1;
+}
+
+enum ErrorCode {
+    ERROR_CODE_NONE = 0;
+    ERROR_CODE_COMM_SEND = 1;
+    ERROR_CODE_COMM_RCV = 2;
+    ERROR_CODE_PROTO_ERR = 3;
+    ERROR_CODE_RUNAWAY = 4;
+    ERROR_CODE_TIMEOUT = 5;
+    ERROR_CODE_AUTOTUNE_TIMEOUT = 6;
+}
+
+message Error {
+    ErrorCode code = 1;
+}
