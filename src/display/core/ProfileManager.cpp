@@ -16,6 +16,11 @@ void ProfileManager::setup() {
                               _settings.getSelectedProfile() == "" || !loadSelectedProfile(selectedProfile);
     if (needsMigrate) {
         migrate(profiles);
+        // Reset before reload: parseProfile() appends to profile.phases. The
+        // earlier loadSelectedProfile in `needsMigrate` may have pushed phases
+        // before failing validation, leaving partial state that this reload
+        // would double. Defensive — current paths almost never hit this.
+        selectedProfile = Profile{};
         loadSelectedProfile(selectedProfile);
     }
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));

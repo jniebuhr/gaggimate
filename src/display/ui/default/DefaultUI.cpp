@@ -201,6 +201,12 @@ void DefaultUI::init() {
                       [this](Event const &) { changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
 
     pluginManager->on("profiles:profile:select", [this](Event const &event) {
+        // Reset the local copy before reload: parseProfile() appends to
+        // profile.phases rather than replacing, so feeding it the already-
+        // populated member would double the phase count on every profile
+        // switch (memory leak + corrupted internal phase count). Mirrors the
+        // pattern ProfileManager::selectProfile uses for the same reason.
+        selectedProfile = Profile{};
         profileManager->loadSelectedProfile(selectedProfile);
         selectedProfileId = event.getString("id");
         targetDuration = profileManager->getSelectedProfile().getTotalDuration();
@@ -366,6 +372,10 @@ void DefaultUI::setupState() {
     pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
     pressureScaling = std::ceil(settings.getPressureScaling());
     selectedProfileId = settings.getSelectedProfile();
+    // Defense in depth: reset before reload (this site is currently safe in
+    // practice because setupState runs once with a fresh field-initialized
+    // member, but keeps the pattern consistent with the event handler above).
+    selectedProfile = Profile{};
     profileManager->loadSelectedProfile(selectedProfile);
     profileVolumetric = selectedProfile.isVolumetric();
 }
