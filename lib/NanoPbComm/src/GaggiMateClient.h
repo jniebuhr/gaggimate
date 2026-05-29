@@ -68,13 +68,10 @@ class GaggiMateClient {
     void tare();
     void sendLedControl(uint8_t channel, uint8_t brightness);
 
-    // Send a pre-built payload / batch of payloads (one frame).
+    // Send a pre-built payload / batch of payloads (one frame). Compose batches
+    // from build*() helpers -- e.g. the display's delta-based control update.
     void send(const gm::Payload &payload) { _endpoint.send(payload); }
     void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
-
-    // Atomic multi-component update: boiler + pump + valve + alt in one frame.
-    // (alt is delivered as RelayControl index 1.)
-    void sendControlBatch(const BoilerCommand &boiler, const PumpCommand &pump, const RelayCommand &relay, bool altOpen);
 
     // Response registrations (controller -> display)
     void onConnectionChanged(ConnectionCallback cb) { _connCb = std::move(cb); }

@@ -20,11 +20,14 @@ enum class BoilerControlMode : uint8_t {
 };
 
 // Per-component commands, used to drive several components atomically in one
-// frame (see GaggiMateClient::sendControlBatch).
+// frame and to detect changes (callers can compare against the last value sent
+// and only transmit what actually changed).
 struct BoilerCommand {
     uint8_t index = 0;
     BoilerControlMode mode = BoilerControlMode::Temperature;
     float setpoint = 0.0f;
+    bool operator==(const BoilerCommand &o) const { return index == o.index && mode == o.mode && setpoint == o.setpoint; }
+    bool operator!=(const BoilerCommand &o) const { return !(*this == o); }
 };
 struct PumpCommand {
     uint8_t index = 0;
@@ -32,10 +35,16 @@ struct PumpCommand {
     float power = 0.0f;
     float pressure = 0.0f;
     float flow = 0.0f;
+    bool operator==(const PumpCommand &o) const {
+        return index == o.index && mode == o.mode && power == o.power && pressure == o.pressure && flow == o.flow;
+    }
+    bool operator!=(const PumpCommand &o) const { return !(*this == o); }
 };
 struct RelayCommand {
     uint8_t index = 0;
     bool open = false;
+    bool operator==(const RelayCommand &o) const { return index == o.index && open == o.open; }
+    bool operator!=(const RelayCommand &o) const { return !(*this == o); }
 };
 
 // Error codes. Values match the gaggimate.ErrorCode enum and the codes the old

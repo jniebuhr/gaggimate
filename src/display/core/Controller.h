@@ -150,6 +150,15 @@ class Controller {
 
     SystemInfo systemInfo{};
 
+    // Last control values sent to the controller. updateControl() only
+    // transmits components that differ from these (the controller is stateful
+    // and delivery is acknowledged). Reset on (re)connect to force a full resend.
+    BoilerCommand lastBoiler{};
+    PumpCommand lastPump{};
+    RelayCommand lastRelay{};
+    bool lastAlt = false;
+    bool controlStateSent = false;
+
     Process *currentProcess = nullptr;
     Process *lastProcess = nullptr;
 

@@ -133,18 +133,6 @@ void GaggiMateClient::sendLedControl(uint8_t channel, uint8_t brightness) {
     _endpoint.send(buildLedControl(channel, brightness));
 }
 
-void GaggiMateClient::sendControlBatch(const BoilerCommand &boiler, const PumpCommand &pump, const RelayCommand &relay,
-                                       bool altOpen) {
-    // relay index 0 = brew valve, index 1 = alt relay (merged into RelayControl).
-    const gm::Payload batch[] = {
-        buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint),
-        buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow),
-        buildRelayControl(relay.index, relay.open),
-        buildRelayControl(1, altOpen),
-    };
-    _endpoint.sendBatch(batch, sizeof(batch) / sizeof(batch[0]));
-}
-
 void GaggiMateClient::registerHandlers() {
     _endpoint.on(gaggimate_Payload_system_info_tag, [this](const gm::Payload &p) {
         if (_systemInfoCb)

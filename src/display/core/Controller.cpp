@@ -158,6 +158,9 @@ static void parseFloatCsv(const String &csv, float *out, size_t count, float def
 void Controller::setupBluetooth() {
     comms.init("GPBLC");
     comms.onConnectionChanged([this](bool connected) {
+        // Force a full control resend after any (re)connect -- the controller
+        // starts with no state and updateControl() otherwise only sends deltas.
+        controlStateSent = false;
         if (!connected && initialized) {
             pluginManager->trigger("controller:bluetooth:disconnect");
             waitingForController = true;
@@ -385,6 +388,14 @@ void Controller::loop() {
 
     if (comms.isReadyForConnection() && comms.connectToServer()) {
         waitingForController = false;
+    }
+
+    // Keepalive: updateControl() only sends control deltas now, so a steady-state
+    // session would otherwise go silent. A periodic ping keeps the controller's
+    // connection watchdog fed (sent in all states, including error).
+    if (comms.isConnected() && now - lastPing >= PING_INTERVAL) {
+        comms.sendPing();
+        lastPing = now;
     }
 
     if (isErrorState()) {
@@ -678,7 +689,30 @@ void Controller::updateControl() {
         pump.power = active ? proc->getPumpValue() : 0;
     }
 
-    comms.sendControlBatch(boiler, pump, relay, altRelayActive);
+    // Only send components that changed since the last update. The controller is
+    // stateful and every message is acknowledged, so re-sending unchanged values
+    // each cycle is unnecessary; a periodic ping (see loop()) keeps the watchdog
+    // fed when nothing changes. controlStateSent is reset on (re)connect to force
+    // a full resend.
+    gm::Payload batch[4];
+    size_t count = 0;
+    if (!controlStateSent || boiler != lastBoiler)
+        batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint);
+    if (!controlStateSent || pump != lastPump)
+        batch[count++] = comms.buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow);
+    if (!controlStateSent || relay != lastRelay)
+        batch[count++] = comms.buildRelayControl(relay.index, relay.open); // index 0 = brew valve
+    if (!controlStateSent || altRelayActive != lastAlt)
+        batch[count++] = comms.buildRelayControl(1, altRelayActive); // index 1 = alt relay
+
+    if (count > 0)
+        comms.sendBatch(batch, count);
+
+    lastBoiler = boiler;
+    lastPump = pump;
+    lastRelay = relay;
+    lastAlt = altRelayActive;
+    controlStateSent = true;
 }
 
 void Controller::activate() {
