@@ -6,9 +6,9 @@
 #include "Protocol.h"
 #include "Transport.h"
 #include <array>
-#include <functional>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
+#include <functional>
 
 /**
  * Transport-agnostic protocol session.

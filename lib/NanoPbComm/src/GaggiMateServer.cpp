@@ -3,8 +3,8 @@
 
 GaggiMateServer::GaggiMateServer() : _endpoint(_transport) {}
 
-void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version, bool dimming,
-                           bool pressure, bool ledControl, bool tof) {
+void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version, bool dimming, bool pressure,
+                           bool ledControl, bool tof) {
     setSystemInfo(hardware, version, dimming, pressure, ledControl, tof);
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
@@ -26,8 +26,8 @@ void GaggiMateServer::pumpTask(void *arg) {
     }
 }
 
-void GaggiMateServer::setSystemInfo(const String &hardware, const String &version, bool dimming, bool pressure,
-                                    bool ledControl, bool tof) {
+void GaggiMateServer::setSystemInfo(const String &hardware, const String &version, bool dimming, bool pressure, bool ledControl,
+                                    bool tof) {
     memset(&_systemInfo, 0, sizeof(_systemInfo));
     strlcpy(_systemInfo.hardware, hardware.c_str(), sizeof(_systemInfo.hardware));
     strlcpy(_systemInfo.version, version.c_str(), sizeof(_systemInfo.version));

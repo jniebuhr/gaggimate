@@ -93,7 +93,7 @@ void GaggiMateClient::sendPressureScale(float scale) {
     _endpoint.send(p);
 }
 
-void GaggiMateClient::sendTare() {
+void GaggiMateClient::tare() {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_tare_tag;
     _endpoint.send(p);

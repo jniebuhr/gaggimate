@@ -40,8 +40,9 @@ class GaggiMateClient {
     bool isConnected() const { return _endpoint.isConnected(); }
     void disconnect() { _transport.disconnect(); }
 
-    // Native client handle for ControllerOTA (OTA uses its own BLE service).
-    NimBLEClient *getNativeClient() const { return _transport.getNativeClient(); }
+    // Native NimBLE client handle, used by ControllerOTA / status RSSI (OTA uses
+    // its own BLE service, independent of this protocol).
+    NimBLEClient *getClient() const { return _transport.getNativeClient(); }
 
     // Commands (display -> controller)
     void sendPing();
@@ -53,7 +54,7 @@ class GaggiMateClient {
     void sendPumpModelCoeffs(float a, float b, float c, float d);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
-    void sendTare();
+    void tare();
     void sendLedControl(uint8_t channel, uint8_t brightness);
 
     // Atomic multi-component update: boiler + pump + valve + alt in one frame.

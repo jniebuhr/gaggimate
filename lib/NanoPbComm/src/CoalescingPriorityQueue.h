@@ -17,8 +17,7 @@
  * KeyT must map densely into [0, MaxKeys); keys outside that range are rejected.
  * All operations are O(log N); no dynamic allocation.
  */
-template <size_t N, typename KeyT = uint16_t, typename PayloadT = uint32_t, size_t MaxKeys = 1024>
-class CoalescingPrioQueue {
+template <size_t N, typename KeyT = uint16_t, typename PayloadT = uint32_t, size_t MaxKeys = 1024> class CoalescingPrioQueue {
   public:
     struct Msg {
         KeyT key;         // which message family/device

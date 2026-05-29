@@ -74,7 +74,7 @@ bool BleClientTransport::connectToServer() {
 
     if (_notifyChar->canNotify()) {
         _notifyChar->subscribe(true, std::bind(&BleClientTransport::notifyCallback, this, std::placeholders::_1,
-                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+                                               std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
     _readyForConnection = false;

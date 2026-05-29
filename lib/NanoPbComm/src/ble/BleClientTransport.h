@@ -20,8 +20,8 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
 
     void init(const String &deviceName);
     void scan();
-    void maintain();            // restart scan if it stalled; call from loop()
-    bool connectToServer();     // returns true once connected + subscribed
+    void maintain();        // restart scan if it stalled; call from loop()
+    bool connectToServer(); // returns true once connected + subscribed
     bool isReadyForConnection() const { return _readyForConnection; }
     void disconnect();
 
