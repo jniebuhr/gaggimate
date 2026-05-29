@@ -37,6 +37,8 @@ class DimmedPump : public Pump {
     void setValveState(bool open);
 
   private:
+    void plot(uint8_t everyNth);
+
     uint8_t _ssr_pin;
     uint8_t _sense_pin;
     PSM _psm;
@@ -54,6 +56,7 @@ class DimmedPump : public Pump {
     float _lastPressure = 0.0f;
     int _valveStatus = 0;
     int _cps = MAX_FREQ;
+    int plotCount = 0;
 
     float _opvPressure = 0.0f;
 
