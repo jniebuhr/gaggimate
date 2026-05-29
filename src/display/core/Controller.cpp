@@ -645,15 +645,15 @@ void Controller::updateControl() {
     boiler.setpoint = targetTemp;
     PumpCommand pump;
     pump.index = 0;
-    ValveCommand valve;
-    valve.index = 0;
+    RelayCommand relay; // index 0 = brew valve
+    relay.index = 0;
 
     bool handled = false;
     if (active && systemInfo.capabilities.pressure) {
         if (proc->getType() == MODE_STEAM) {
             targetPressure = settings.getSteamPumpCutoff();
             targetFlow = proc->getPumpValue() * 0.1f;
-            valve.open = false;
+            relay.open = false;
             pump.mode = PumpControlMode::Flow; // flow target, pressure as the limit
             pump.flow = targetFlow;
             pump.pressure = targetPressure;
@@ -662,7 +662,7 @@ void Controller::updateControl() {
             auto *brewProcess = static_cast<BrewProcess *>(proc);
             if (brewProcess->isAdvancedPump()) {
                 const bool pressureTarget = brewProcess->getPumpTarget() == PumpTarget::PUMP_TARGET_PRESSURE;
-                valve.open = brewProcess->isRelayActive();
+                relay.open = brewProcess->isRelayActive();
                 pump.mode = pressureTarget ? PumpControlMode::Pressure : PumpControlMode::Flow;
                 pump.pressure = brewProcess->getPumpPressure();
                 pump.flow = brewProcess->getPumpFlow();
@@ -676,12 +676,12 @@ void Controller::updateControl() {
     if (!handled) {
         targetPressure = 0.0f;
         targetFlow = 0.0f;
-        valve.open = active && proc->isRelayActive();
+        relay.open = active && proc->isRelayActive();
         pump.mode = PumpControlMode::Power;
         pump.power = active ? proc->getPumpValue() : 0;
     }
 
-    comms.sendControlBatch(boiler, pump, valve, altRelayActive);
+    comms.sendControlBatch(boiler, pump, relay, altRelayActive);
 }
 
 void Controller::activate() {

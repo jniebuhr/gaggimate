@@ -43,11 +43,11 @@ gm::Payload GaggiMateClient::buildPumpControl(uint8_t index, PumpControlMode mod
     return p;
 }
 
-gm::Payload GaggiMateClient::buildValveControl(uint8_t index, bool open) {
+gm::Payload GaggiMateClient::buildRelayControl(uint8_t index, bool open) {
     gm::Payload p = gaggimate_Payload_init_zero;
-    p.which_content = gaggimate_Payload_valve_tag;
-    p.content.valve.index = index;
-    p.content.valve.open = open;
+    p.which_content = gaggimate_Payload_relay_tag;
+    p.content.relay.index = index;
+    p.content.relay.open = open;
     return p;
 }
 
@@ -111,7 +111,7 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
     _endpoint.send(buildPumpControl(index, mode, power, pressure, flow));
 }
 
-void GaggiMateClient::sendValveControl(uint8_t index, bool open) { _endpoint.send(buildValveControl(index, open)); }
+void GaggiMateClient::sendRelayControl(uint8_t index, bool open) { _endpoint.send(buildRelayControl(index, open)); }
 
 void GaggiMateClient::sendPidSettings(float kp, float ki, float kd, float kf) {
     _endpoint.send(buildPidSettings(kp, ki, kd, kf));
@@ -133,14 +133,14 @@ void GaggiMateClient::sendLedControl(uint8_t channel, uint8_t brightness) {
     _endpoint.send(buildLedControl(channel, brightness));
 }
 
-void GaggiMateClient::sendControlBatch(const BoilerCommand &boiler, const PumpCommand &pump, const ValveCommand &valve,
+void GaggiMateClient::sendControlBatch(const BoilerCommand &boiler, const PumpCommand &pump, const RelayCommand &relay,
                                        bool altOpen) {
-    // valve index 0 = brew valve, index 1 = alt relay (merged into ValveControl).
+    // relay index 0 = brew valve, index 1 = alt relay (merged into RelayControl).
     const gm::Payload batch[] = {
         buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint),
         buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow),
-        buildValveControl(valve.index, valve.open),
-        buildValveControl(1, altOpen),
+        buildRelayControl(relay.index, relay.open),
+        buildRelayControl(1, altOpen),
     };
     _endpoint.sendBatch(batch, sizeof(batch) / sizeof(batch[0]));
 }

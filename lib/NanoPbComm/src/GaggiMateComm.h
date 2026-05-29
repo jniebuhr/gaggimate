@@ -33,7 +33,7 @@ struct PumpCommand {
     float pressure = 0.0f;
     float flow = 0.0f;
 };
-struct ValveCommand {
+struct RelayCommand {
     uint8_t index = 0;
     bool open = false;
 };

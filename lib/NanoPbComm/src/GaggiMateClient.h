@@ -48,7 +48,7 @@ class GaggiMateClient {
     gm::Payload buildPing();
     gm::Payload buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
     gm::Payload buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
-    gm::Payload buildValveControl(uint8_t index, bool open);
+    gm::Payload buildRelayControl(uint8_t index, bool open);
     gm::Payload buildPidSettings(float kp, float ki, float kd, float kf);
     gm::Payload buildPumpModelCoeffs(float a, float b, float c, float d);
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
@@ -60,7 +60,7 @@ class GaggiMateClient {
     void sendPing();
     void sendBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
     void sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
-    void sendValveControl(uint8_t index, bool open); // index 0 = valve, 1 = alt relay
+    void sendRelayControl(uint8_t index, bool open); // index 0 = brew valve, 1 = alt relay
     void sendPidSettings(float kp, float ki, float kd, float kf);
     void sendPumpModelCoeffs(float a, float b, float c, float d);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
@@ -73,8 +73,8 @@ class GaggiMateClient {
     void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
 
     // Atomic multi-component update: boiler + pump + valve + alt in one frame.
-    // (alt is delivered as ValveControl index 1.)
-    void sendControlBatch(const BoilerCommand &boiler, const PumpCommand &pump, const ValveCommand &valve, bool altOpen);
+    // (alt is delivered as RelayControl index 1.)
+    void sendControlBatch(const BoilerCommand &boiler, const PumpCommand &pump, const RelayCommand &relay, bool altOpen);
 
     // Response registrations (controller -> display)
     void onConnectionChanged(ConnectionCallback cb) { _connCb = std::move(cb); }

@@ -47,8 +47,8 @@ inline uint16_t coalescingKey(const gm::Payload &p) {
     case gaggimate_Payload_pump_tag:
         index = p.content.pump.index;
         break;
-    case gaggimate_Payload_valve_tag:
-        index = p.content.valve.index;
+    case gaggimate_Payload_relay_tag:
+        index = p.content.relay.index;
         break;
     case gaggimate_Payload_button_tag:
         index = p.content.button.index;
@@ -69,7 +69,7 @@ inline uint8_t defaultPriority(pb_size_t which) {
         return PRIO_HIGH;
     case gaggimate_Payload_boiler_tag:
     case gaggimate_Payload_pump_tag:
-    case gaggimate_Payload_valve_tag:
+    case gaggimate_Payload_relay_tag:
         return PRIO_CONTROL;
     case gaggimate_Payload_sensor_tag:
     case gaggimate_Payload_volumetric_tag:

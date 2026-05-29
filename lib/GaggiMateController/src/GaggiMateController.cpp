@@ -124,7 +124,7 @@ void GaggiMateController::setup() {
         }
     });
     // Binary outputs: index 0 = brew valve, index 1 = alt relay.
-    _comms.onValveControl([this](uint8_t index, bool open) {
+    _comms.onRelayControl([this](uint8_t index, bool open) {
         if (index == 1) {
             // Alt relay: independent function, no watchdog/error gating (matches
             // the previous dedicated alt-control path).

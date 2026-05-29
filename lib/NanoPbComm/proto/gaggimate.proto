@@ -36,8 +36,8 @@ message Payload {
         Ping ping = 1;
         BoilerControl boiler = 2;
         PumpControl pump = 3;
-        ValveControl valve = 4;
-        // tag 5 retired (AltControl merged into ValveControl: valve index 1)
+        RelayControl relay = 4;
+        // tag 5 retired (AltControl merged into RelayControl: relay index 1)
         PidSettings pid = 6;
         PumpModelCoeffs pump_model = 7;
         AutotuneRequest autotune = 8;
@@ -91,10 +91,10 @@ message PumpControl {
     float flow = 5;     // ml/s
 }
 
-// Binary output. index selects the output: 0 = brew solenoid valve,
-// 1 = configurable "alt" relay (further indices reserved for additional
-// valves/relays).
-message ValveControl {
+// Binary on/off output (solenoid valve or relay). index selects the output:
+// 0 = brew solenoid valve, 1 = configurable "alt" relay (further indices
+// reserved for additional valves/relays).
+message RelayControl {
     uint32 index = 1;
     bool open = 2;
 }

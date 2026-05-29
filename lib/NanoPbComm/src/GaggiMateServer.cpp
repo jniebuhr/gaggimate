@@ -139,9 +139,9 @@ void GaggiMateServer::registerHandlers() {
             _pumpCb(static_cast<uint8_t>(p.content.pump.index), static_cast<PumpControlMode>(p.content.pump.mode),
                     p.content.pump.power, p.content.pump.pressure, p.content.pump.flow);
     });
-    _endpoint.on(gaggimate_Payload_valve_tag, [this](const gm::Payload &p) {
-        if (_valveCb)
-            _valveCb(static_cast<uint8_t>(p.content.valve.index), p.content.valve.open);
+    _endpoint.on(gaggimate_Payload_relay_tag, [this](const gm::Payload &p) {
+        if (_relayCb)
+            _relayCb(static_cast<uint8_t>(p.content.relay.index), p.content.relay.open);
     });
     _endpoint.on(gaggimate_Payload_pid_tag, [this](const gm::Payload &p) {
         if (_pidCb)
