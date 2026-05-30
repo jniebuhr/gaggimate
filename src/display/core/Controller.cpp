@@ -176,6 +176,17 @@ void Controller::setupBluetooth() {
         [this](const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure, bool ledControl,
                bool tof) { onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof); });
     comms.onIncompatibleController([this](const String &info) { onIncompatibleController(info); });
+    // A controller OTA streams the firmware over this BLE link; the relaxed idle
+    // interval makes that crawl. Force a low-latency interval for the duration of
+    // a controller flash, then restore. (A display OTA is Wi-Fi-bound, so leave
+    // BLE relaxed to keep radio airtime for the download.)
+    pluginManager->on("ota:update:start", [this](Event const &event) {
+        if (event.getString("component") != "display") {
+            connLowLatency = true;
+            comms.setLowLatency(true);
+        }
+    });
+    pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
         onTempRead(temp);
         this->pressure = pressure;

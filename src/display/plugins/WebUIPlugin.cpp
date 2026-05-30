@@ -1,20 +1,20 @@
 #include "WebUIPlugin.h"
 #include <DNSServer.h>
+#include <SD_MMC.h>
 #include <SPIFFS.h>
+#include <algorithm>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
 #include <display/models/profile.h>
+#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/ShotHistoryPlugin.h>
+#include <display/util/PsramStlAllocator.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
 #include <esp_heap_caps.h>
 #include <esp_partition.h>
-#include <SD_MMC.h>
-#include <algorithm>
-#include <display/plugins/BLEScalePlugin.h>
-#include <display/plugins/ShotHistoryPlugin.h>
-#include <display/util/PsramStlAllocator.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -77,7 +77,10 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
 
 void WebUIPlugin::loop() {
     if (updating) {
-        pluginManager->trigger("ota:update:start");
+        // Pass which component is being flashed: a controller update streams the
+        // firmware over BLE (wants a low-latency link), a display update is over
+        // Wi-Fi (wants BLE to stay out of the radio's way). "" = both.
+        pluginManager->trigger("ota:update:start", "component", updateComponent);
         ota->update(updateComponent != "display", updateComponent != "controller");
         pluginManager->trigger("ota:update:end");
         updating = false;
