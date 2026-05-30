@@ -968,10 +968,14 @@ export function ProfileList() {
             <button
               onClick={() => setIsMobileSearchActive(active => !active)}
               className={`btn btn-ghost btn-circle text-base-content/80 transition-colors ${isMobileSearchActive ? 'text-primary bg-primary/10' : ''}`}
-              aria-label='Toggle search bar'
+              aria-label={isMobileSearchActive ? 'Close search' : 'Open search'}
               aria-expanded={isMobileSearchActive}
             >
-              <FontAwesomeIcon icon={faSearch} size="lg" />
+              <FontAwesomeIcon 
+                icon={isMobileSearchActive ? faXmark : faSearch} 
+                size="lg" 
+                className={`transition-transform duration-200 ${isMobileSearchActive ? 'rotate-90' : 'rotate-0'}`}
+              />
             </button>
             <a
               href='/profiles/new'
@@ -1046,18 +1050,24 @@ export function ProfileList() {
       {/* Mobile-only Slide-Down Search Bar (using nested sticky structure to bypass WebKit transform bugs) */}
       <div className={`search-slide-sticky sm:hidden ${isMobileSearchActive ? 'search-slide-sticky-active' : ''}`}>
         <div className="search-slide-container" onTransitionEnd={handleSearchTransitionEnd}>
-          <div className="bg-base-300 shadow-sm py-2 px-4 mx-[-16px]">
-            <label className="input flex items-center w-full bg-base-100 border border-base-content/10">
+          <div className="bg-base-300 shadow-sm py-2 px-4 mx-[-16px] flex flex-row items-center gap-3">
+            <label className="input flex items-center grow bg-base-100 border border-base-content/10">
               <FontAwesomeIcon icon={faSearch} className="text-base-content/60 mr-2" />
               <input
                 type="text"
                 placeholder="Search profiles..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="grow"
+                className="grow w-full"
                 ref={mobileSearchInputRef}
               />
             </label>
+            <button 
+              className="text-base-content/70 hover:text-base-content font-medium transition-colors whitespace-nowrap"
+              onClick={() => setIsMobileSearchActive(false)}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>
