@@ -1,5 +1,6 @@
 #include "ProfileManager.h"
 #include <ArduinoJson.h>
+#include <display/util/PsramAllocator.h>
 
 #include <utility>
 
@@ -156,7 +157,7 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
     if (!file)
         return false;
 
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     DeserializationError err = deserializeJson(doc, file);
     file.close();
     if (err)
@@ -187,7 +188,7 @@ bool ProfileManager::saveProfile(Profile &profile) {
     if (!file)
         return false;
 
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     JsonObject obj = doc.to<JsonObject>();
     writeProfile(obj, profile);
 

@@ -14,12 +14,18 @@
 #include <algorithm>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
+#include <display/util/PsramStlAllocator.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <version.h>
 
-static std::unordered_map<uint32_t, std::string> rxBuffers;
+// Incoming WebSocket payloads (profile uploads reserve up to 64 KB) are
+// reassembled here. Back the character storage with PSRAM so these large,
+// transient buffers don't spike the scarce internal SRAM. The map nodes
+// themselves stay on the default heap (tiny: an id + a string handle).
+using PsramString = std::basic_string<char, std::char_traits<char>, PsramStlAllocator<char>>;
+static std::unordered_map<uint32_t, PsramString> rxBuffers;
 static WebUIPlugin *g_webUIPlugin = nullptr;
 
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") { g_webUIPlugin = this; }
@@ -54,7 +60,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
 
     // Forward shot history rebuild progress events to WebSocket clients
     pluginManager->on("evt:history-rebuild-progress", [this](Event const &event) {
-        JsonDocument doc;
+        JsonDocument doc(&psramAllocator);
         doc["tp"] = "evt:history-rebuild-progress";
         doc["total"] = event.getInt("total");
         doc["current"] = event.getInt("current");
@@ -207,7 +213,7 @@ void WebUIPlugin::setupServer() {
     server.on("/api/settings", [this](AsyncWebServerRequest *request) { handleSettings(request); });
     server.on("/api/status", [this](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
-        JsonDocument doc;
+        JsonDocument doc(&psramAllocator);
         doc["mode"] = controller->getMode();
         doc["tt"] = controller->getTargetTemp();
         doc["ct"] = controller->getCurrentTemp();
@@ -303,7 +309,7 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
     if (isFinal) {
         if (info->opcode == WS_TEXT) {
             ESP_LOGV("WebUIPlugin", "Received request: %.*s", (int)buf.size(), buf.c_str());
-            JsonDocument doc;
+            JsonDocument doc(&psramAllocator);
             DeserializationError err = deserializeJson(doc, buf.c_str());
             if (!err) {
                 String msgType = doc["tp"].as<String>();
@@ -711,7 +717,7 @@ void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
     JsonArray scalesArray = doc.to<JsonArray>();
     std::vector<DiscoveredDevice> devices = BLEScales.getDiscoveredScales();
     for (const DiscoveredDevice &device : BLEScales.getDiscoveredScales()) {
-        JsonDocument scale;
+        JsonDocument scale(&psramAllocator);
         scale["uuid"] = device.getAddress().toString();
         scale["name"] = device.getName();
         scale["rssi"] = device.getRSSI();
