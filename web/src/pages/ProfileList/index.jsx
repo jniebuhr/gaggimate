@@ -967,15 +967,11 @@ export function ProfileList() {
           <div className='flex flex-row items-center gap-1 sm:hidden'>
             <button
               onClick={() => setIsMobileSearchActive(active => !active)}
-              className={`btn btn-ghost btn-circle text-base-content/80 transition-colors ${isMobileSearchActive ? 'text-primary bg-primary/10' : ''}`}
-              aria-label={isMobileSearchActive ? 'Close search' : 'Open search'}
+              className={`btn btn-ghost btn-circle text-base-content/80 transition-colors ${isMobileSearchActive ? 'text-primary bg-primary/10 duration-75' : 'duration-150'}`}
+              aria-label='Toggle search bar'
               aria-expanded={isMobileSearchActive}
             >
-              <FontAwesomeIcon 
-                icon={isMobileSearchActive ? faXmark : faSearch} 
-                size="lg" 
-                className={`transition-transform duration-200 ${isMobileSearchActive ? 'rotate-90' : 'rotate-0'}`}
-              />
+              <FontAwesomeIcon icon={faSearch} size="lg" />
             </button>
             <a
               href='/profiles/new'
