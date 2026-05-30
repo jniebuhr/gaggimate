@@ -37,7 +37,7 @@ import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
-import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
+
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
