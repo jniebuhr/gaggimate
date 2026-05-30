@@ -87,7 +87,7 @@ function ProfileCard({
 
   useEffect(() => {
     if (!cardDropdownOpen) return;
-    const handleOutsideClick = (event) => {
+    const handleOutsideClick = event => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setCardDropdownOpen(false);
       }
@@ -159,7 +159,7 @@ function ProfileCard({
         role='group'
         aria-labelledby={`profile-${data.id}-title`}
       >
-        <div className='flex flex-grow flex-col min-w-0'>
+        <div className='flex min-w-0 flex-grow flex-col'>
           <div className='mx-2 flex flex-row items-center gap-2 align-middle'>
             <div className='flex min-w-0 flex-grow flex-row items-center gap-4'>
               {/* CheckBox */}
@@ -209,7 +209,10 @@ function ProfileCard({
                 aria-label={`Actions for ${data.label} profile`}
               >
                 {/* Mobile: DaisyUI dropdown actions menu */}
-                <div className={`action-dropdown sm:hidden relative ${cardDropdownOpen ? 'action-dropdown-open' : ''}`} ref={dropdownRef}>
+                <div
+                  className={`action-dropdown relative sm:hidden ${cardDropdownOpen ? 'action-dropdown-open' : ''}`}
+                  ref={dropdownRef}
+                >
                   <button
                     onClick={() => setCardDropdownOpen(open => !open)}
                     className='btn btn-sm btn-ghost btn-circle'
@@ -218,7 +221,7 @@ function ProfileCard({
                   >
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </button>
-                  <ul className="menu action-dropdown-menu bg-base-100 rounded-box z-50 w-52 p-2 shadow-xl border border-base-content/10 mt-1 right-0">
+                  <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-xl'>
                     <li>
                       <button
                         onClick={() => {
@@ -532,10 +535,7 @@ export function ProfileList() {
   useEffect(() => {
     if (!isMobileSearchActive) {
       // Only blur if it's actually the active element to prevent unnecessary layout recalculations
-      if (
-        mobileSearchInputRef.current &&
-        document.activeElement === mobileSearchInputRef.current
-      ) {
+      if (mobileSearchInputRef.current && document.activeElement === mobileSearchInputRef.current) {
         mobileSearchInputRef.current.blur();
       }
     } else {
@@ -550,7 +550,7 @@ export function ProfileList() {
     }
   }, [isMobileSearchActive]);
 
-  const handleSearchTransitionEnd = (e) => {
+  const handleSearchTransitionEnd = e => {
     // Ensure we are triggering off the main transform transition and search is active
     if (isMobileSearchActive && e.propertyName === 'transform' && mobileSearchInputRef.current) {
       mobileSearchInputRef.current.focus({ preventScroll: true });
@@ -559,11 +559,19 @@ export function ProfileList() {
 
   // Close header dropdown menus when clicking anywhere outside
   useEffect(() => {
-    const handleOutsideClick = (event) => {
-      if (mobileHeaderDropdownOpen && mobileHeaderDropdownRef.current && !mobileHeaderDropdownRef.current.contains(event.target)) {
+    const handleOutsideClick = event => {
+      if (
+        mobileHeaderDropdownOpen &&
+        mobileHeaderDropdownRef.current &&
+        !mobileHeaderDropdownRef.current.contains(event.target)
+      ) {
         setMobileHeaderDropdownOpen(false);
       }
-      if (desktopHeaderDropdownOpen && desktopHeaderDropdownRef.current && !desktopHeaderDropdownRef.current.contains(event.target)) {
+      if (
+        desktopHeaderDropdownOpen &&
+        desktopHeaderDropdownRef.current &&
+        !desktopHeaderDropdownRef.current.contains(event.target)
+      ) {
         setDesktopHeaderDropdownOpen(false);
       }
     };
@@ -571,8 +579,6 @@ export function ProfileList() {
     document.addEventListener('click', handleOutsideClick);
     return () => document.removeEventListener('click', handleOutsideClick);
   }, [mobileHeaderDropdownOpen, desktopHeaderDropdownOpen]);
-
-
 
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
@@ -910,7 +916,7 @@ export function ProfileList() {
       <li>
         <button
           onClick={onExport}
-          className='justify-start text-primary hover:bg-primary/10'
+          className='text-primary hover:bg-primary/10 justify-start'
           aria-label='Export all profiles'
         >
           <FontAwesomeIcon icon={faFileExport} />
@@ -920,7 +926,7 @@ export function ProfileList() {
       <li>
         <label
           htmlFor='profileImport'
-          className='justify-start text-success hover:bg-success/10 cursor-pointer flex items-center gap-2'
+          className='text-success hover:bg-success/10 flex cursor-pointer items-center justify-start gap-2'
           aria-label='Import profiles'
         >
           <FontAwesomeIcon icon={faFileImport} />
@@ -932,7 +938,7 @@ export function ProfileList() {
           onClick={() => {
             confirmOrDeleteAll(onClear);
           }}
-          className={`justify-start ${confirmDeleteAll ? 'bg-error text-error-content font-semibold rounded' : 'text-error hover:bg-error/10'}`}
+          className={`justify-start ${confirmDeleteAll ? 'bg-error text-error-content rounded font-semibold' : 'text-error hover:bg-error/10'}`}
           aria-label={confirmDeleteAll ? 'Confirm deletion of all profiles' : 'Delete all profiles'}
         >
           <FontAwesomeIcon icon={faTrashCan} />
@@ -956,13 +962,13 @@ export function ProfileList() {
   }
 
   return (
-    <div className="w-full relative">
-      <div className="profile-list-header h-12 relative z-20 flex flex-row items-center justify-between overflow-visible">
+    <div className='relative w-full'>
+      <div className='profile-list-header relative z-20 flex h-12 flex-row items-center justify-between overflow-visible'>
         {/* Left Side: Title */}
         <h1 className='text-2xl font-bold sm:text-3xl'>Profiles</h1>
 
         {/* Right Side: Action Icons on Mobile, Standard controls on Desktop/Tablet */}
-        <div className="flex flex-row items-center gap-3">
+        <div className='flex flex-row items-center gap-3'>
           {/* Mobile-only Action Buttons */}
           <div className='flex flex-row items-center gap-1 sm:hidden'>
             <button
@@ -971,16 +977,16 @@ export function ProfileList() {
               aria-label='Toggle search bar'
               aria-expanded={isMobileSearchActive}
             >
-              <FontAwesomeIcon icon={faSearch} size="lg" />
+              <FontAwesomeIcon icon={faSearch} size='lg' />
             </button>
             <a
               href='/profiles/new'
               className='btn btn-ghost btn-circle text-primary'
               aria-label='Create new profile'
             >
-              <FontAwesomeIcon icon={faPlus} size="lg" />
+              <FontAwesomeIcon icon={faPlus} size='lg' />
             </a>
-            <div 
+            <div
               className={`action-dropdown relative ${mobileHeaderDropdownOpen ? 'action-dropdown-open' : ''}`}
               ref={mobileHeaderDropdownRef}
             >
@@ -990,16 +996,16 @@ export function ProfileList() {
                 aria-label='More options'
                 aria-expanded={mobileHeaderDropdownOpen}
               >
-                <FontAwesomeIcon icon={faEllipsisVertical} size="lg" />
+                <FontAwesomeIcon icon={faEllipsisVertical} size='lg' />
               </button>
-              <ul className="menu action-dropdown-menu bg-base-100 rounded-box z-50 w-52 p-2 shadow-xl border border-base-content/10 mt-1 right-0">
+              <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-xl'>
                 {dropdownMenuItems}
               </ul>
             </div>
           </div>
 
           {/* Desktop/Tablet Action Buttons (hidden on mobile) */}
-          <div className='hidden sm:flex flex-row items-center gap-3'>
+          <div className='hidden flex-row items-center gap-3 sm:flex'>
             {/* Search bar */}
             <label className='input w-40 md:w-48 lg:w-56'>
               <FontAwesomeIcon icon={faSearch} />
@@ -1023,19 +1029,19 @@ export function ProfileList() {
             </a>
 
             {/* More Actions Dropdown */}
-            <div 
+            <div
               className={`action-dropdown relative ${desktopHeaderDropdownOpen ? 'action-dropdown-open' : ''}`}
               ref={desktopHeaderDropdownRef}
             >
-              <button 
+              <button
                 onClick={() => setDesktopHeaderDropdownOpen(open => !open)}
-                className='btn btn-square btn-outline' 
+                className='btn btn-square btn-outline'
                 aria-label='More options'
                 aria-expanded={desktopHeaderDropdownOpen}
               >
                 <FontAwesomeIcon icon={faEllipsisVertical} />
               </button>
-              <ul className="menu action-dropdown-menu bg-base-100 rounded-box z-50 w-52 p-2 shadow-xl border border-base-content/10 mt-1 right-0">
+              <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-xl'>
                 {dropdownMenuItems}
               </ul>
             </div>
@@ -1044,22 +1050,24 @@ export function ProfileList() {
       </div>
 
       {/* Mobile-only Slide-Down Search Bar (using nested sticky structure to bypass WebKit transform bugs) */}
-      <div className={`search-slide-sticky sm:hidden ${isMobileSearchActive ? 'search-slide-sticky-active' : ''}`}>
-        <div className="search-slide-container" onTransitionEnd={handleSearchTransitionEnd}>
-          <div className="bg-base-300 shadow-sm py-2 px-4 mx-[-16px] flex flex-row items-center gap-3">
-            <label className="input flex items-center grow bg-base-100 border border-base-content/10">
-              <FontAwesomeIcon icon={faSearch} className="text-base-content/60 mr-2" />
+      <div
+        className={`search-slide-sticky sm:hidden ${isMobileSearchActive ? 'search-slide-sticky-active' : ''}`}
+      >
+        <div className='search-slide-container' onTransitionEnd={handleSearchTransitionEnd}>
+          <div className='bg-base-300 mx-[-16px] flex flex-row items-center gap-3 px-4 py-2 shadow-sm'>
+            <label className='input bg-base-100 border-base-content/10 flex grow items-center border'>
+              <FontAwesomeIcon icon={faSearch} className='text-base-content/60 mr-2' />
               <input
-                type="text"
-                placeholder="Search profiles..."
+                type='text'
+                placeholder='Search profiles...'
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="grow w-full"
+                className='w-full grow'
                 ref={mobileSearchInputRef}
               />
             </label>
-            <button 
-              className="text-base-content/70 hover:text-base-content font-medium transition-colors whitespace-nowrap"
+            <button
+              className='text-base-content/70 hover:text-base-content font-medium whitespace-nowrap transition-colors'
               onClick={() => setIsMobileSearchActive(false)}
             >
               Cancel

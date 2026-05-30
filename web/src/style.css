@@ -453,7 +453,10 @@ html[data-theme='coffee'] {
   }
 
   /* Prevent double-tap to zoom on interactive elements which can cause visual jumping when clicked rapidly */
-  button, a, input[type="button"], input[type="submit"] {
+  button,
+  a,
+  input[type='button'],
+  input[type='submit'] {
     touch-action: manipulation;
   }
 }
@@ -467,12 +470,16 @@ html[data-theme='coffee'] {
 /* Mobile Search Morph Transitions */
 @media (max-width: 639px) {
   .morph-track-exit {
-    transition: transform 200ms cubic-bezier(0.645, 0.045, 0.355, 1), opacity 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
+    transition:
+      transform 200ms cubic-bezier(0.645, 0.045, 0.355, 1),
+      opacity 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
     will-change: transform, opacity;
   }
 
   .morph-track-enter {
-    transition: transform 250ms cubic-bezier(0.23, 1, 0.32, 1), opacity 250ms cubic-bezier(0.23, 1, 0.32, 1);
+    transition:
+      transform 250ms cubic-bezier(0.23, 1, 0.32, 1),
+      opacity 250ms cubic-bezier(0.23, 1, 0.32, 1);
     will-change: transform, opacity;
   }
 }
@@ -546,15 +553,14 @@ html[data-theme='coffee'] {
   }
 }
 
-
 /* Premium hardware-accelerated animated focus ring for inputs */
 .input {
   outline: 2px solid transparent;
   outline-offset: 0px;
-  transition: 
-    outline-color 150ms ease, 
-    outline-offset 150ms ease, 
-    border-color 150ms ease, 
+  transition:
+    outline-color 150ms ease,
+    outline-offset 150ms ease,
+    border-color 150ms ease,
     box-shadow 150ms ease;
 }
 
@@ -579,7 +585,6 @@ html[data-theme='coffee'] {
   }
 }
 
-
 /* Premium hardware-accelerated slide-down transition for mobile search */
 @media (max-width: 639px) {
   /* Outer sticky element: has NO transforms to avoid breaking WebKit sticky positioning */
@@ -591,7 +596,7 @@ html[data-theme='coffee'] {
     margin-bottom: -64px;
     pointer-events: none;
   }
-  
+
   .search-slide-sticky-active {
     pointer-events: auto;
   }
@@ -601,15 +606,19 @@ html[data-theme='coffee'] {
     opacity: 0;
     transform: translateY(-16px) scale(0.98);
     /* Exit */
-    transition: transform 150ms ease, opacity 150ms ease;
+    transition:
+      transform 150ms ease,
+      opacity 150ms ease;
     will-change: transform, opacity;
   }
-  
+
   .search-slide-sticky-active .search-slide-container {
     opacity: 1;
     transform: translateY(0) scale(1);
     /* Enter */
-    transition: transform 250ms cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 250ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    transition:
+      transform 250ms cubic-bezier(0.175, 0.885, 0.32, 1.1),
+      opacity 250ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
   }
 
   .profiles-list-content {
@@ -631,7 +640,3 @@ html[data-theme='coffee'] {
     transition: none !important;
   }
 }
-
-
-
-
