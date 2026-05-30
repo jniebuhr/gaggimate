@@ -114,6 +114,9 @@ class Controller {
     void setupBluetooth();
     void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
                       bool ledControl, bool tof);
+    // Connected to a controller too old to speak the framed protocol: drive the
+    // same path as a protocol-version mismatch (OTA recovery only).
+    void onIncompatibleController();
     void setupWifi();
 
     // Functional methods

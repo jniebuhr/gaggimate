@@ -36,6 +36,12 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     // Native client handle, needed by ControllerOTA (OTA uses its own service).
     NimBLEClient *getNativeClient() const { return _client; }
 
+    // Fired when we connect to a GaggiMate controller that advertises the
+    // service but is missing the framed-comms characteristics (an old /
+    // incompatible firmware). The BLE link is intentionally kept up so the
+    // separate OTA service stays reachable.
+    void onIncompatible(std::function<void()> cb) { _onIncompatible = std::move(cb); }
+
   private:
     NimBLEClient *_client = nullptr;
     NimBLEScan *_scanner = nullptr;
@@ -44,6 +50,8 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     NimBLERemoteCharacteristic *_notifyChar = nullptr; // from server (TX_CHAR_UUID)
     bool _readyForConnection = false;
     bool _lowLatency = false;
+    bool _incompatible = false;
+    std::function<void()> _onIncompatible = nullptr;
 
     void applyConnParams();
 

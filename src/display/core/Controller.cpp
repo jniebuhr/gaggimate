@@ -175,6 +175,7 @@ void Controller::setupBluetooth() {
     comms.onSystemInfo(
         [this](const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure, bool ledControl,
                bool tof) { onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof); });
+    comms.onIncompatibleController([this]() { onIncompatibleController(); });
     comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
         onTempRead(temp);
         this->pressure = pressure;
@@ -320,6 +321,16 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     pluginManager->trigger("controller:bluetooth:connect");
 }
 
+void Controller::onIncompatibleController() {
+    // An old controller (no framed-comms characteristics) is, for our purposes,
+    // a protocol mismatch: reuse the exact same path. protocolVersion 0 != our
+    // PROTOCOL_VERSION, so onSystemInfo() inhibits control but still fires
+    // controller:ready so OTA can flash the controller back into compatibility.
+    // Version "0.0.0" makes the web UI offer the update.
+    waitingForController = false;
+    onSystemInfo("Legacy controller", "0.0.0", 0, false, false, false, false);
+}
+
 void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.setHostname(settings.getMdnsName().c_str());
@@ -402,8 +413,9 @@ void Controller::loop() {
 
     // Keepalive: updateControl() only sends control deltas now, so a steady-state
     // session would otherwise go silent. A periodic ping keeps the controller's
-    // connection watchdog fed (sent in all states, including error).
-    if (comms.isConnected() && now - lastPing >= PING_INTERVAL) {
+    // connection watchdog fed (sent in all states, including error). Skip it for
+    // an incompatible controller -- it can't parse the frame anyway.
+    if (comms.isConnected() && !systemInfo.protocolMismatch && now - lastPing >= PING_INTERVAL) {
         comms.sendPing();
         lastPing = now;
     }

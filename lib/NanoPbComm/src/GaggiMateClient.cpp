@@ -8,6 +8,10 @@ void GaggiMateClient::init(const String &deviceName) {
         if (_connCb)
             _connCb(connected);
     });
+    _transport.onIncompatible([this]() {
+        if (_incompatibleCb)
+            _incompatibleCb();
+    });
     _endpoint.begin();
     _transport.init(deviceName);
 }
