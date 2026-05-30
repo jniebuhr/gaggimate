@@ -39,8 +39,9 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     // Fired when we connect to a GaggiMate controller that advertises the
     // service but is missing the framed-comms characteristics (an old /
     // incompatible firmware). The BLE link is intentionally kept up so the
-    // separate OTA service stays reachable.
-    void onIncompatible(std::function<void()> cb) { _onIncompatible = std::move(cb); }
+    // separate OTA service stays reachable. The argument is the raw value of the
+    // legacy read-only INFO characteristic (JSON), if readable.
+    void onIncompatible(std::function<void(const String &info)> cb) { _onIncompatible = std::move(cb); }
 
   private:
     NimBLEClient *_client = nullptr;
@@ -51,7 +52,7 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool _readyForConnection = false;
     bool _lowLatency = false;
     bool _incompatible = false;
-    std::function<void()> _onIncompatible = nullptr;
+    std::function<void(const String &info)> _onIncompatible = nullptr;
 
     void applyConnParams();
 

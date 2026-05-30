@@ -19,7 +19,8 @@
 class GaggiMateClient {
   public:
     using ConnectionCallback = std::function<void(bool connected)>;
-    using IncompatibleCallback = std::function<void()>;
+    // Argument is the raw legacy INFO characteristic (JSON), if readable.
+    using IncompatibleCallback = std::function<void(const String &info)>;
     using SystemInfoCallback = std::function<void(const char *hardware, const char *version, uint32_t protocolVersion,
                                                   bool dimming, bool pressure, bool ledControl, bool tof)>;
     using SensorCallback =

@@ -115,8 +115,9 @@ class Controller {
     void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
                       bool ledControl, bool tof);
     // Connected to a controller too old to speak the framed protocol: drive the
-    // same path as a protocol-version mismatch (OTA recovery only).
-    void onIncompatibleController();
+    // same path as a protocol-version mismatch (OTA recovery only). infoJson is
+    // the legacy INFO characteristic contents (hardware/version/capabilities).
+    void onIncompatibleController(const String &infoJson);
     void setupWifi();
 
     // Functional methods

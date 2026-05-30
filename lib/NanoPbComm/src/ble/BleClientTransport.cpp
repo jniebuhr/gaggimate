@@ -79,8 +79,14 @@ bool BleClientTransport::connectToServer() {
         _notifyChar = nullptr;
         _readyForConnection = false;
         _incompatible = true;
+        // Read the legacy read-only INFO characteristic (present on old
+        // controllers too) so the display can show the real hardware/version.
+        String info;
+        NimBLERemoteCharacteristic *infoChar = service->getCharacteristic(NimBLEUUID(gm_proto::INFO_CHAR_UUID));
+        if (infoChar != nullptr && infoChar->canRead())
+            info = String(infoChar->readValue().c_str());
         if (_onIncompatible)
-            _onIncompatible();
+            _onIncompatible(info);
         return true; // link intentionally kept; do not disconnect/rescan
     }
 
