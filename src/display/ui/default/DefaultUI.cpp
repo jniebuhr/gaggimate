@@ -159,7 +159,9 @@ void DefaultUI::init() {
         waitingForController = false;
         rerender = true;
         initialized = true;
-        if (lv_scr_act() == ui_StandbyScreen) {
+        // Stay on the standby screen when the controller is incompatible so the
+        // mismatch message remains visible instead of jumping into brew.
+        if (lv_scr_act() == ui_StandbyScreen && !controller->getSystemInfo().protocolMismatch) {
             Settings &settings = controller->getSettings();
             if (settings.getStartupMode() == MODE_BREW) {
                 changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
@@ -192,6 +194,12 @@ void DefaultUI::init() {
         updateAvailable = event.getInt("value");
     });
     pluginManager->on("controller:error", [this](Event const &) {
+        rerender = true;
+        changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
+    });
+    pluginManager->on("controller:protocol:mismatch", [this](Event const &) {
+        // Incompatible firmware on the other end: control is inhibited (OTA only),
+        // so surface it on the standby screen like a runaway error.
         rerender = true;
         changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
     });
@@ -249,6 +257,7 @@ void DefaultUI::loop() {
         rerender = false;
         lastRender = now;
         error = controller->isErrorState();
+        protocolMismatch = controller->getSystemInfo().protocolMismatch;
         autotuning = controller->isAutotuning();
         const Settings &settings = controller->getSettings();
         volumetricAvailable = controller->isVolumetricAvailable();
@@ -354,6 +363,7 @@ void DefaultUI::setupPanel() {
 
 void DefaultUI::setupState() {
     error = controller->isErrorState();
+    protocolMismatch = controller->getSystemInfo().protocolMismatch;
     autotuning = controller->isAutotuning();
     const Settings &settings = controller->getSettings();
     volumetricAvailable = controller->isVolumetricAvailable();
@@ -515,6 +525,8 @@ void DefaultUI::setupReactive() {
                               bool deactivated = true;
                               if (updateActive) {
                                   lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Updating...");
+                              } else if (protocolMismatch) {
+                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Controller incompatible, please update");
                               } else if (error) {
                                   if (controller->getError() == ERROR_CODE_RUNAWAY) {
                                       lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Temperature error, please restart");
@@ -530,7 +542,7 @@ void DefaultUI::setupReactive() {
                               _ui_flag_modify(ui_StandbyScreen_touchIcon, LV_OBJ_FLAG_HIDDEN, !deactivated);
                               _ui_flag_modify(ui_StandbyScreen_statusContainer, LV_OBJ_FLAG_HIDDEN, !deactivated);
                           },
-                          &updateAvailable, &error, &autotuning, &waitingForController, &initialized);
+                          &updateAvailable, &error, &protocolMismatch, &autotuning, &waitingForController, &initialized);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
                               if (brewVolumetric) {
@@ -724,8 +736,8 @@ void DefaultUI::updateStandbyScreen() {
         }
     }
 
-    if (!apActive && WiFi.status() == WL_CONNECTED && !updateActive && !error && !autotuning && !waitingForController &&
-        initialized) {
+    if (!apActive && WiFi.status() == WL_CONNECTED && !updateActive && !error && !protocolMismatch && !autotuning &&
+        !waitingForController && initialized) {
         time_t now;
         struct tm timeinfo;
 

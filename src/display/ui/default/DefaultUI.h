@@ -94,6 +94,7 @@ class DefaultUI {
     int updateActive = false;
     int apActive = false;
     int error = false;
+    int protocolMismatch = false;
     int autotuning = false;
     int waitingForController = false;
     int volumetricAvailable = false;
