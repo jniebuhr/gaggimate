@@ -59,6 +59,13 @@ class Endpoint {
     // next pump as long as nothing else preempts them.
     void sendBatch(const gm::Payload *payloads, size_t count);
 
+    // Fire-and-forget: send immediately as an unacknowledged frame (id == 0).
+    // Not queued, not coalesced, never retransmitted -- dropped if the link is
+    // momentarily busy. For high-rate, self-refreshing telemetry where a missed
+    // sample is simply replaced by the next one.
+    void sendUnreliable(const gm::Payload &payload);
+    void sendUnreliable(const gm::Payload *payloads, size_t count);
+
     // Register a handler for a oneof tag (e.g. Payload_sensor_tag). Replaces any
     // previously registered handler for that tag.
     void on(pb_size_t which, Handler handler);
@@ -87,6 +94,7 @@ class Endpoint {
 
     // In-flight frame, retained until ACKed or retries are exhausted.
     uint8_t _txBuf[BUFFER_SIZE]{};
+    uint8_t _unrelBuf[BUFFER_SIZE]{}; // scratch for fire-and-forget sends (keeps _txBuf intact)
     size_t _txLen = 0;
     uint32_t _inFlightId = 0;
     unsigned long _sentAt = 0;

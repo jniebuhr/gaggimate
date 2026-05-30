@@ -118,6 +118,9 @@ class Controller {
 
     // Functional methods
     void updateControl();
+    // Switch the BLE connection interval based on whether a process is running.
+    // force re-applies even if the desired state is unchanged (use on connect).
+    void applyConnectionPriority(bool force = false);
 
     // Event handlers
     void onTempRead(float temperature);
@@ -158,6 +161,10 @@ class Controller {
     RelayCommand lastRelay{};
     bool lastAlt = false;
     bool controlStateSent = false;
+
+    // BLE connection-interval priority: tight while a process runs, relaxed when
+    // idle (frees radio airtime for Wi-Fi). Tracks the last requested state.
+    bool connLowLatency = false;
 
     Process *currentProcess = nullptr;
     Process *lastProcess = nullptr;

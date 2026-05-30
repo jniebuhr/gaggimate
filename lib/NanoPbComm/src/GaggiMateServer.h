@@ -56,6 +56,10 @@ class GaggiMateServer {
     void send(const gm::Payload &payload) { _endpoint.send(payload); }
     void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
 
+    // Fire-and-forget variants (unacknowledged) for high-rate telemetry.
+    void sendUnreliable(const gm::Payload &payload) { _endpoint.sendUnreliable(payload); }
+    void sendUnreliableBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendUnreliable(payloads, count); }
+
     // Command registrations (display -> controller)
     void onPing(PingCallback cb) { _pingCb = std::move(cb); }
     void onBoilerControl(BoilerCallback cb) { _boilerCb = std::move(cb); }

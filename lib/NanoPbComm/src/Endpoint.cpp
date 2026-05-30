@@ -68,6 +68,29 @@ void Endpoint::sendBatch(const gm::Payload *payloads, size_t count) {
     pump();
 }
 
+void Endpoint::sendUnreliable(const gm::Payload &payload) { sendUnreliable(&payload, 1); }
+
+void Endpoint::sendUnreliable(const gm::Payload *payloads, size_t count) {
+    if (payloads == nullptr || count == 0 || !_transport.isConnected())
+        return;
+    if (count > MAX_PAYLOADS_PER_FRAME)
+        count = MAX_PAYLOADS_PER_FRAME;
+
+    lock();
+    // id == 0 => the peer will not ACK and we never retransmit. Build into the
+    // dedicated _unrelBuf so an in-flight reliable frame (_txBuf) is untouched.
+    memset(&_txFrame, 0, sizeof(_txFrame));
+    _txFrame.id = 0;
+    _txFrame.ack = 0;
+    _txFrame.payloads_count = static_cast<pb_size_t>(count);
+    for (size_t i = 0; i < count; i++)
+        _txFrame.payloads[i] = payloads[i];
+    size_t len = 0;
+    if (encodeFrame(_txFrame, _unrelBuf, BUFFER_SIZE, &len))
+        _transport.send(_unrelBuf, len);
+    unlock();
+}
+
 bool Endpoint::encodeFrame(const gm::Frame &frame, uint8_t *buf, size_t bufSize, size_t *outLen) {
     pb_ostream_t os = pb_ostream_from_buffer(buf, bufSize);
     if (!pb_encode(&os, &gaggimate_Frame_msg, &frame))

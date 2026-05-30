@@ -40,6 +40,10 @@ class GaggiMateClient {
     bool isConnected() const { return _endpoint.isConnected(); }
     void disconnect() { _transport.disconnect(); }
 
+    // Tight connection interval (responsive control) while active; relaxed when
+    // idle to give the shared radio back to Wi-Fi.
+    void setLowLatency(bool active) { _transport.setLowLatency(active); }
+
     // Native NimBLE client handle, used by ControllerOTA / status RSSI (OTA uses
     // its own BLE service, independent of this protocol).
     NimBLEClient *getClient() const { return _transport.getNativeClient(); }

@@ -28,6 +28,11 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool send(const uint8_t *data, size_t length) override;
     bool isConnected() const override;
 
+    // Choose the connection interval: low-latency (tight, ~7.5-10ms) while a
+    // shot is running for responsive control, relaxed (~30-50ms) when idle so
+    // the shared 2.4GHz radio leaves more contiguous airtime for Wi-Fi.
+    void setLowLatency(bool active);
+
     // Native client handle, needed by ControllerOTA (OTA uses its own service).
     NimBLEClient *getNativeClient() const { return _client; }
 
@@ -38,6 +43,17 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     NimBLERemoteCharacteristic *_writeChar = nullptr;  // to server (RX_CHAR_UUID)
     NimBLERemoteCharacteristic *_notifyChar = nullptr; // from server (TX_CHAR_UUID)
     bool _readyForConnection = false;
+    bool _lowLatency = false;
+
+    void applyConnParams();
+
+    // Connection-interval units are 1.25ms; supervision timeout units are 10ms.
+    static constexpr uint16_t ACTIVE_MIN_INTERVAL = 6; // 7.5 ms
+    static constexpr uint16_t ACTIVE_MAX_INTERVAL = 8; // 10 ms
+    static constexpr uint16_t IDLE_MIN_INTERVAL = 24;  // 30 ms
+    static constexpr uint16_t IDLE_MAX_INTERVAL = 40;  // 50 ms
+    static constexpr uint16_t CONN_LATENCY = 0;
+    static constexpr uint16_t CONN_TIMEOUT = 400; // 4 s
 
     void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;
     void onDisconnect(NimBLEClient *client) override;

@@ -108,8 +108,12 @@ gm::Payload GaggiMateServer::buildError(int code) {
     return p;
 }
 
+// Telemetry (sensor / volumetric / ToF) is sent fire-and-forget: it is
+// high-rate and self-refreshing, so a dropped sample is replaced by the next
+// one. This avoids the constant ACK chatter on the high-rate path. Button /
+// autotune-result / error / system-info stay reliable.
 void GaggiMateServer::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
-    _endpoint.send(buildSensorData(temperature, pressure, puckFlow, pumpFlow, puckResistance));
+    _endpoint.sendUnreliable(buildSensorData(temperature, pressure, puckFlow, pumpFlow, puckResistance));
 }
 
 void GaggiMateServer::sendButtonState(uint8_t index, bool pressed) { _endpoint.send(buildButtonState(index, pressed)); }
@@ -118,9 +122,9 @@ void GaggiMateServer::sendAutotuneResult(float kp, float ki, float kd, float kf)
     _endpoint.send(buildAutotuneResult(kp, ki, kd, kf));
 }
 
-void GaggiMateServer::sendVolumetricMeasurement(float volume) { _endpoint.send(buildVolumetricMeasurement(volume)); }
+void GaggiMateServer::sendVolumetricMeasurement(float volume) { _endpoint.sendUnreliable(buildVolumetricMeasurement(volume)); }
 
-void GaggiMateServer::sendTofMeasurement(uint32_t distance) { _endpoint.send(buildTofMeasurement(distance)); }
+void GaggiMateServer::sendTofMeasurement(uint32_t distance) { _endpoint.sendUnreliable(buildTofMeasurement(distance)); }
 
 void GaggiMateServer::sendError(int code) { _endpoint.send(buildError(code)); }
 

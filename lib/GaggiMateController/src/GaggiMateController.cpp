@@ -263,7 +263,7 @@ void GaggiMateController::sendSensorData() {
         if (this->valve->getState()) {
             batch[n++] = _comms.buildVolumetricMeasurement(dimmedPump->getCoffeeVolume());
         }
-        _comms.sendBatch(batch, n);
+        _comms.sendUnreliableBatch(batch, n); // telemetry: fire-and-forget
     } else {
         _comms.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);
     }

@@ -161,7 +161,11 @@ void Controller::setupBluetooth() {
         // Force a full control resend after any (re)connect -- the controller
         // starts with no state and updateControl() otherwise only sends deltas.
         controlStateSent = false;
-        if (!connected && initialized) {
+        if (connected) {
+            // Re-assert the connection interval for the fresh link (e.g. tight
+            // again if we reconnected mid-shot).
+            applyConnectionPriority(true);
+        } else if (initialized) {
             pluginManager->trigger("controller:bluetooth:disconnect");
             waitingForController = true;
             setMode(MODE_STANDBY);
@@ -495,8 +499,19 @@ void Controller::startProcess(Process *process) {
     }
     processCompleted = false;
     this->currentProcess = process;
+    applyConnectionPriority(); // shot started -> tight BLE interval
     pluginManager->trigger("controller:process:start");
     updateLastAction();
+}
+
+void Controller::applyConnectionPriority(bool force) {
+    // A running process needs responsive 10Hz control; idle does not. Track the
+    // last requested state so we only renegotiate on transitions.
+    const bool lowLatency = currentProcess != nullptr;
+    if (force || lowLatency != connLowLatency) {
+        connLowLatency = lowLatency;
+        comms.setLowLatency(lowLatency);
+    }
 }
 
 float Controller::getTargetTemp() const {
@@ -760,6 +775,7 @@ void Controller::deactivate() {
     delete lastProcess;
     lastProcess = currentProcess;
     currentProcess = nullptr;
+    applyConnectionPriority(); // shot ended -> relaxed BLE interval
     if (lastProcess->getType() == MODE_BREW) {
         pluginManager->trigger("controller:brew:end");
     } else if (lastProcess->getType() == MODE_GRIND) {

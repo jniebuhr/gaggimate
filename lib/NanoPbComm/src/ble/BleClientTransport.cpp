@@ -54,7 +54,7 @@ bool BleClientTransport::connectToServer() {
         }
         tries++;
     } while (!_client->isConnected());
-    _client->updateConnParams(6, 8, 0, 400);
+    applyConnParams(); // baseline for the new connection (idle unless set active)
 
     NimBLERemoteService *service = _client->getService(NimBLEUUID(gm_proto::SERVICE_UUID));
     if (service == nullptr) {
@@ -88,6 +88,20 @@ void BleClientTransport::disconnect() {
     _serverDevice = nullptr;
     if (_client && _client->isConnected())
         _client->disconnect();
+}
+
+void BleClientTransport::setLowLatency(bool active) {
+    _lowLatency = active;
+    applyConnParams();
+}
+
+void BleClientTransport::applyConnParams() {
+    if (_client == nullptr || !_client->isConnected())
+        return;
+    if (_lowLatency)
+        _client->updateConnParams(ACTIVE_MIN_INTERVAL, ACTIVE_MAX_INTERVAL, CONN_LATENCY, CONN_TIMEOUT);
+    else
+        _client->updateConnParams(IDLE_MIN_INTERVAL, IDLE_MAX_INTERVAL, CONN_LATENCY, CONN_TIMEOUT);
 }
 
 bool BleClientTransport::send(const uint8_t *data, size_t length) {
