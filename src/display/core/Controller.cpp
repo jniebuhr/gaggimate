@@ -1,7 +1,6 @@
 #include "Controller.h"
 #include "ArduinoJson.h"
 #include "esp_sntp.h"
-#include <display/util/PsramAllocator.h>
 #include <SD_MMC.h>
 #include <SPIFFS.h>
 #include <cmath>
@@ -24,6 +23,7 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#include <display/util/PsramAllocator.h>
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
@@ -175,6 +175,7 @@ void Controller::setupBluetooth() {
     comms.onSystemInfo(
         [this](const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure, bool ledControl,
                bool tof) { onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof); });
+    comms.onIncompatibleController([this](const String &info) { onIncompatibleController(info); });
     comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
         onTempRead(temp);
         this->pressure = pressure;
@@ -320,6 +321,32 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     pluginManager->trigger("controller:bluetooth:connect");
 }
 
+void Controller::onIncompatibleController(const String &infoJson) {
+    // An old controller (no framed-comms characteristics) is, for our purposes,
+    // a protocol mismatch: reuse the exact same path. We force protocolVersion 0
+    // (it cannot speak the framed protocol), so onSystemInfo() inhibits control
+    // but still fires controller:ready so OTA can flash the controller back into
+    // compatibility. The real hardware/version/capabilities come from the legacy
+    // read-only INFO characteristic the old controller still exposes.
+    waitingForController = false;
+
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, infoJson);
+    if (err) {
+        ESP_LOGW(LOG_TAG, "Incompatible controller, no readable info (%s)", err.c_str());
+        onSystemInfo("Legacy controller", "0.0.0", 0, false, false, false, false);
+        return;
+    }
+    String hardware = doc["hw"].as<String>();
+    String version = doc["v"].as<String>();
+    if (hardware.isEmpty())
+        hardware = "Legacy controller";
+    if (version.isEmpty())
+        version = "0.0.0";
+    onSystemInfo(hardware.c_str(), version.c_str(), 0, doc["cp"]["dm"].as<bool>(), doc["cp"]["ps"].as<bool>(),
+                 doc["cp"]["led"].as<bool>(), doc["cp"]["tof"].as<bool>());
+}
+
 void Controller::setupWifi() {
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.setHostname(settings.getMdnsName().c_str());
@@ -402,8 +429,9 @@ void Controller::loop() {
 
     // Keepalive: updateControl() only sends control deltas now, so a steady-state
     // session would otherwise go silent. A periodic ping keeps the controller's
-    // connection watchdog fed (sent in all states, including error).
-    if (comms.isConnected() && now - lastPing >= PING_INTERVAL) {
+    // connection watchdog fed (sent in all states, including error). Skip it for
+    // an incompatible controller -- it can't parse the frame anyway.
+    if (comms.isConnected() && !systemInfo.protocolMismatch && now - lastPing >= PING_INTERVAL) {
         comms.sendPing();
         lastPing = now;
     }

@@ -69,10 +69,25 @@ bool BleClientTransport::connectToServer() {
     _writeChar = service->getCharacteristic(NimBLEUUID(gm_proto::RX_CHAR_UUID));
     _notifyChar = service->getCharacteristic(NimBLEUUID(gm_proto::TX_CHAR_UUID));
     if (_writeChar == nullptr || _notifyChar == nullptr) {
-        ESP_LOGE(LOG_TAG, "Characteristics not found");
-        _client->disconnect();
-        scan();
-        return false;
+        // The controller advertises the GaggiMate service but lacks the framed
+        // comms characteristics -> old/incompatible firmware. Keep the link up
+        // (the OTA service lives on a separate service and stays reachable) and
+        // report incompatibility so the display can offer an OTA recovery, the
+        // same way it handles a protocol-version mismatch.
+        ESP_LOGW(LOG_TAG, "Comms characteristics missing -- incompatible controller firmware (OTA only)");
+        _writeChar = nullptr;
+        _notifyChar = nullptr;
+        _readyForConnection = false;
+        _incompatible = true;
+        // Read the legacy read-only INFO characteristic (present on old
+        // controllers too) so the display can show the real hardware/version.
+        String info;
+        NimBLERemoteCharacteristic *infoChar = service->getCharacteristic(NimBLEUUID(gm_proto::INFO_CHAR_UUID));
+        if (infoChar != nullptr && infoChar->canRead())
+            info = String(infoChar->readValue().c_str());
+        if (_onIncompatible)
+            _onIncompatible(info);
+        return true; // link intentionally kept; do not disconnect/rescan
     }
 
     // Without the notify subscription we would connect but never receive data;
@@ -87,6 +102,7 @@ bool BleClientTransport::connectToServer() {
     }
 
     _readyForConnection = false;
+    _incompatible = false;
     ESP_LOGI(LOG_TAG, "Connected, MTU: %d", _client->getMTU());
     emitConnection(true);
     return true;
@@ -137,6 +153,7 @@ void BleClientTransport::onDisconnect(NimBLEClient *client) {
     ESP_LOGI(LOG_TAG, "Disconnected, will rescan");
     _writeChar = nullptr;
     _notifyChar = nullptr;
+    _incompatible = false;
     emitConnection(false);
     scan();
 }

@@ -19,6 +19,8 @@
 class GaggiMateClient {
   public:
     using ConnectionCallback = std::function<void(bool connected)>;
+    // Argument is the raw legacy INFO characteristic (JSON), if readable.
+    using IncompatibleCallback = std::function<void(const String &info)>;
     using SystemInfoCallback = std::function<void(const char *hardware, const char *version, uint32_t protocolVersion,
                                                   bool dimming, bool pressure, bool ledControl, bool tof)>;
     using SensorCallback =
@@ -77,6 +79,10 @@ class GaggiMateClient {
     void send(const gm::Payload &payload) { _endpoint.send(payload); }
     void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
 
+    // Fired when the connected controller is missing the framed-comms
+    // characteristics (old / incompatible firmware); link is kept for OTA.
+    void onIncompatibleController(IncompatibleCallback cb) { _incompatibleCb = std::move(cb); }
+
     // Response registrations (controller -> display)
     void onConnectionChanged(ConnectionCallback cb) { _connCb = std::move(cb); }
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
@@ -92,6 +98,7 @@ class GaggiMateClient {
     Endpoint _endpoint;
 
     ConnectionCallback _connCb;
+    IncompatibleCallback _incompatibleCb;
     SystemInfoCallback _systemInfoCb;
     SensorCallback _sensorCb;
     ButtonCallback _buttonCb;
