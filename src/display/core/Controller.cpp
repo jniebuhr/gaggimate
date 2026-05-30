@@ -1,6 +1,7 @@
 #include "Controller.h"
 #include "ArduinoJson.h"
 #include "esp_sntp.h"
+#include <display/util/PsramAllocator.h>
 #include <SD_MMC.h>
 #include <SPIFFS.h>
 #include <cmath>

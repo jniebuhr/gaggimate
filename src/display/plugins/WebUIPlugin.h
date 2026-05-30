@@ -77,7 +77,7 @@ class WebUIPlugin : public Plugin {
     // (device reports 33%+ fragmentation, causing AsyncTCP buffer allocs to
     // stall mid-asset-serve). Keeping one doc lets its underlying pool grow
     // once and stay put.
-    JsonDocument statusDoc;
+    JsonDocument statusDoc{&psramAllocator};
 };
 
 #endif // WEBUIPLUGIN_H
