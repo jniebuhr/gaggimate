@@ -242,7 +242,13 @@ void WebUIPlugin::setupServer() {
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
-    server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
+    // Content-hashed build assets (Vite emits them under /assets/ with a hash in the filename) never change for a
+    // given URL, so let the browser cache them forever and skip the revalidation round-trip entirely. This must be
+    // registered before the catch-all "/" handler so it wins for /assets/* requests. [GM-83]
+    server.serveStatic("/assets/", SPIFFS, "/w/assets/").setCacheControl("public, max-age=31536000, immutable");
+    // index.html and other unhashed root files must stay revalidated so a new build (which references freshly
+    // hashed assets) is always picked up after an OTA/filesystem update.
+    server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("no-cache");
     ws.onEvent(
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
             if (type == WS_EVT_CONNECT) {
