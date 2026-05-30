@@ -64,6 +64,25 @@ const PhaseLabels = {
 
 const connected = computed(() => machine.value.connected);
 
+/**
+ * Renders a single profile card with its chart, stats, and action dropdown.
+ *
+ * @param {Object} props - The component props.
+ * @param {Object} props.data - The profile data object.
+ * @param {Function} props.onDelete - Callback when the profile is deleted.
+ * @param {Function} props.onSelect - Callback when the profile is selected.
+ * @param {Function} props.onFavorite - Callback when the profile is favorited.
+ * @param {Function} props.onUnfavorite - Callback when the profile is unfavorited.
+ * @param {Function} props.onDuplicate - Callback when the profile is duplicated.
+ * @param {boolean} props.favoriteDisabled - Whether the favorite action is disabled.
+ * @param {boolean} props.unfavoriteDisabled - Whether the unfavorite action is disabled.
+ * @param {boolean} props.disabledDrag - Whether drag-and-drop is disabled.
+ * @param {boolean} props.isDragging - Whether this specific card is currently being dragged.
+ * @param {Function} props.onMoveTop - Callback to move the profile to the top.
+ * @param {Function} props.onMoveBottom - Callback to move the profile to the bottom.
+ * @param {boolean} props.isFirst - Whether this card is the first in the list.
+ * @param {boolean} props.isLast - Whether this card is the last in the list.
+ */
 function ProfileCard({
   data,
   onDelete,
@@ -515,6 +534,12 @@ function SimpleStep(props) {
   );
 }
 
+/**
+ * The main Profile List page component.
+ * Displays a sortable list of profiles with mobile search and header actions.
+ *
+ * @returns {JSX.Element} The rendered Profile List component.
+ */
 export function ProfileList() {
   const apiService = useContext(ApiServiceContext);
   const [profiles, setProfiles] = useState([]);
@@ -559,6 +584,10 @@ export function ProfileList() {
 
   // Close header dropdown menus when clicking anywhere outside
   useEffect(() => {
+    if (!mobileHeaderDropdownOpen && !desktopHeaderDropdownOpen) {
+      return;
+    }
+
     const handleOutsideClick = event => {
       if (
         mobileHeaderDropdownOpen &&
