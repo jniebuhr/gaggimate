@@ -1,0 +1,19 @@
+{
+  "name": "NanoPbComm",
+  "version": "2.0.0",
+  "description": "GaggiMate controller<->display protocol: transport-agnostic nanopb framing with a coalescing, acknowledged outbound queue.",
+  "keywords": "GaggiMate, nanopb, protobuf, BLE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gaggimate/gaggimate"
+  },
+  "frameworks": "arduino",
+  "platforms": ["espressif32"],
+  "dependencies": {
+    "nanopb/Nanopb": "^0.4.9",
+    "h2zero/NimBLE-Arduino": "^1.4.0"
+  },
+  "build": {
+    "flags": ["-I src"]
+  }
+}
