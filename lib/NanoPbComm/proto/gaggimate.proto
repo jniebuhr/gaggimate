@@ -127,9 +127,18 @@ message PressureScale {
 
 message Tare {}
 
+// One LED output's target brightness.
+message LedChannel {
+    uint32 channel = 1;    // PCA9634 output index (0..7)
+    uint32 brightness = 2; // 0..255
+}
+
+// Drive one or more LED channels in a single atomic update. Carrying every
+// changed channel in one message (instead of one message per channel) keeps the
+// outbound coalescing queue from collapsing a burst of per-channel updates into
+// a single surviving channel.
 message LedControl {
-    uint32 channel = 1;
-    uint32 brightness = 2;
+    repeated LedChannel channels = 1;
 }
 
 // ---------------------------------------------------------------------------

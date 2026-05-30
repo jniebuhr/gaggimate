@@ -60,7 +60,9 @@ class GaggiMateClient {
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
-    gm::Payload buildLedControl(uint8_t channel, uint8_t brightness);
+    // Pack channel/brightness pairs into one LedControl payload; entries beyond
+    // the schema's per-message cap (LedControl.channels max_count) are dropped.
+    gm::Payload buildLedControl(const LedChannelCommand *channels, size_t count);
 
     // Commands (display -> controller)
     void sendPing();
@@ -72,7 +74,9 @@ class GaggiMateClient {
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void tare();
-    void sendLedControl(uint8_t channel, uint8_t brightness);
+    // Drive several LED channels in one message (avoids per-channel sends that
+    // the outbound queue would coalesce down to a single channel).
+    void sendLedControl(const LedChannelCommand *channels, size_t count);
 
     // Send a pre-built payload / batch of payloads (one frame). Compose batches
     // from build*() helpers -- e.g. the display's delta-based control update.
