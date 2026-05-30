@@ -293,21 +293,26 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d)", hardware, version, protocolVersion,
              gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof);
     if (mismatch) {
-        ESP_LOGW(LOG_TAG, "Protocol version mismatch: controller=%u display=%u", protocolVersion, gm_proto::PROTOCOL_VERSION);
+        // Mixed-firmware links are not wire-compatible, so don't push config and
+        // don't drive control (updateControl() also bails on protocolMismatch).
+        // We still fire controller:ready below so OTA can init -- that's the
+        // recovery path to update the out-of-date side.
+        ESP_LOGW(LOG_TAG, "Protocol version mismatch: controller=%u display=%u -- control inhibited, OTA only", protocolVersion,
+                 gm_proto::PROTOCOL_VERSION);
         pluginManager->trigger("controller:protocol:mismatch", "value", static_cast<int>(protocolVersion));
+    } else {
+        // Capability-dependent setup that the old protocol ran synchronously right
+        // after connect, now driven by the asynchronous SystemInfo push.
+        setPressureScale();
+        float pid[4];
+        parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+        comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+        setPumpModelCoeffs();
     }
-
-    // Capability-dependent setup that the old protocol ran synchronously right
-    // after connect, now driven by the asynchronous SystemInfo push.
-    setPressureScale();
-    float pid[4];
-    parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
-    comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
-    setPumpModelCoeffs();
 
     if (!loaded) {
         loaded = true;
-        if (settings.getStartupMode() == MODE_STANDBY)
+        if (!mismatch && settings.getStartupMode() == MODE_STANDBY)
             activateStandby();
         pluginManager->trigger("controller:ready");
     }
@@ -644,6 +649,12 @@ void Controller::lowerGrindTarget() {
 }
 
 void Controller::updateControl() {
+    // Never drive a controller whose protocol version we don't match -- the
+    // commands could be misinterpreted (OTA recovery still works; see onSystemInfo).
+    if (systemInfo.protocolMismatch) {
+        return;
+    }
+
     // Local capture to avoid race condition with deactivate() running on another core
     Process *proc = currentProcess;
     bool active = isActive();

@@ -91,7 +91,10 @@ void GaggiMateController::setup() {
     // arrives independently (or batched together in one frame for an atomic
     // update). Control messages feed the connection watchdog via handlePing().
     _comms.onBoilerControl([this](uint8_t index, BoilerControlMode mode, float setpoint) {
-        (void)index; // single boiler today
+        if (index != 0) { // single boiler today; reject unknown devices
+            ESP_LOGW(LOG_TAG, "Ignoring boiler control for unsupported index %u", index);
+            return;
+        }
         handlePing();
         if (errorState != ERROR_CODE_NONE) {
             return;
@@ -104,7 +107,10 @@ void GaggiMateController::setup() {
         }
     });
     _comms.onPumpControl([this](uint8_t index, PumpControlMode mode, float power, float pressure, float flow) {
-        (void)index; // single pump today
+        if (index != 0) { // single pump today; reject unknown devices
+            ESP_LOGW(LOG_TAG, "Ignoring pump control for unsupported index %u", index);
+            return;
+        }
         handlePing();
         if (errorState != ERROR_CODE_NONE) {
             return;
@@ -129,6 +135,10 @@ void GaggiMateController::setup() {
             // Alt relay: independent function, no watchdog/error gating (matches
             // the previous dedicated alt-control path).
             this->alt->set(open);
+            return;
+        }
+        if (index != 0) { // only 0 (brew valve) and 1 (alt) exist
+            ESP_LOGW(LOG_TAG, "Ignoring relay control for unsupported index %u", index);
             return;
         }
         handlePing();
@@ -159,6 +169,10 @@ void GaggiMateController::setup() {
     });
     _comms.onPing([this]() { handlePing(); });
     _comms.onAutotune([this](uint32_t testTimeSec, uint32_t windowSize, uint32_t heaterWattage) {
+        handlePing();
+        if (errorState != ERROR_CODE_NONE) { // don't re-engage the heater while faulted
+            return;
+        }
         this->heater->autotune(static_cast<int>(testTimeSec), static_cast<int>(windowSize), static_cast<int>(heaterWattage));
     });
     _comms.onTare([this]() {
@@ -253,16 +267,25 @@ void GaggiMateController::thermalRunawayShutdown() {
 
 void GaggiMateController::sendSensorData() {
     if (_config.capabilites.pressure) {
-        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        // Flow/volumetric come from the DimmedPump; only cast when this board
+        // actually has one (pressure and dimming are configured independently).
+        float puckFlow = 0.0f;
+        float pumpFlow = 0.0f;
+        float puckResistance = 0.0f;
         // Sensor + (optional) volumetric ride in one frame.
         gm::Payload batch[2];
         size_t n = 0;
-        batch[n++] =
-            _comms.buildSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), dimmedPump->getPuckFlow(),
-                                   dimmedPump->getPumpFlow(), dimmedPump->getPuckResistance());
-        if (this->valve->getState()) {
-            batch[n++] = _comms.buildVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+        if (_config.capabilites.dimming) {
+            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            puckFlow = dimmedPump->getPuckFlow();
+            pumpFlow = dimmedPump->getPumpFlow();
+            puckResistance = dimmedPump->getPuckResistance();
+            if (this->valve->getState()) {
+                batch[n++] = _comms.buildVolumetricMeasurement(dimmedPump->getCoffeeVolume());
+            }
         }
+        batch[n++] = _comms.buildSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), puckFlow, pumpFlow,
+                                            puckResistance);
         _comms.sendUnreliableBatch(batch, n); // telemetry: fire-and-forget
     } else {
         _comms.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f);

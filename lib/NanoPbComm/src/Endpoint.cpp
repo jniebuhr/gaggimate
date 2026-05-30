@@ -9,9 +9,15 @@ static const char *ENDPOINT_TAG = "Endpoint";
 Endpoint::Endpoint(Transport &transport) : _transport(transport) {
     _mutex = xSemaphoreCreateRecursiveMutex();
     _rxQueue = xQueueCreate(RX_QUEUE_DEPTH, sizeof(gm::Payload));
+    if (_mutex == nullptr || _rxQueue == nullptr)
+        ESP_LOGE(ENDPOINT_TAG, "Failed to allocate endpoint resources (out of memory)");
 }
 
 Endpoint::~Endpoint() {
+    // Detach first so the transport can't invoke our (this-capturing) callbacks
+    // while/after we tear down the task, queue, and mutex.
+    _transport.onData(nullptr);
+    _transport.onConnectionChange(nullptr);
     if (_dispatchTask)
         vTaskDelete(_dispatchTask);
     if (_rxQueue)
@@ -21,10 +27,17 @@ Endpoint::~Endpoint() {
 }
 
 void Endpoint::begin() {
+    if (_mutex == nullptr || _rxQueue == nullptr) {
+        ESP_LOGE(ENDPOINT_TAG, "Endpoint resources missing; not starting (comms disabled)");
+        return;
+    }
     _transport.onData([this](const uint8_t *data, size_t length) { handleData(data, length); });
     _transport.onConnectionChange([this](bool connected) { handleConnection(connected); });
-    if (_dispatchTask == nullptr)
-        xTaskCreate(dispatchTaskFn, "GmDispatch", DISPATCH_STACK, this, 1, &_dispatchTask);
+    if (_dispatchTask == nullptr &&
+        xTaskCreate(dispatchTaskFn, "GmDispatch", DISPATCH_STACK, this, 1, &_dispatchTask) != pdPASS) {
+        _dispatchTask = nullptr;
+        ESP_LOGE(ENDPOINT_TAG, "Failed to create dispatch task; inbound messages will not be processed");
+    }
 }
 
 void Endpoint::dispatchTaskFn(void *arg) {
@@ -156,7 +169,13 @@ void Endpoint::pump() {
         _nextId = 1;
 
     if (!encodeFrame(_txFrame, _txBuf, BUFFER_SIZE, &_txLen)) {
-        ESP_LOGE(ENDPOINT_TAG, "Failed to encode outbound frame (%u payloads)", count);
+        ESP_LOGE(ENDPOINT_TAG, "Failed to encode outbound frame (%u payloads); re-queuing", count);
+        // The payloads were already popped -- put them back (coalescing keeps the
+        // latest value if a newer one arrived) so nothing is silently lost. The
+        // reserved id is simply skipped; the receiver only needs monotonic ids.
+        for (pb_size_t i = 0; i < count; i++)
+            _queue.upsert(gm_proto::coalescingKey(_txFrame.payloads[i]),
+                          gm_proto::defaultPriority(_txFrame.payloads[i].which_content), _txFrame.payloads[i]);
         unlock();
         return;
     }

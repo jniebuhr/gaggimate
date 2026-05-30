@@ -31,13 +31,13 @@ message Frame {
 // Tagged union of every protocol message. The oneof tag drives dispatch on the
 // receiving Endpoint -- there is no run-time type erasure.
 message Payload {
+    reserved 5; // retired AltControl (merged into RelayControl: relay index 1)
     oneof content {
         // Commands: display -> controller
         Ping ping = 1;
         BoilerControl boiler = 2;
         PumpControl pump = 3;
         RelayControl relay = 4;
-        // tag 5 retired (AltControl merged into RelayControl: relay index 1)
         PidSettings pid = 6;
         PumpModelCoeffs pump_model = 7;
         AutotuneRequest autotune = 8;

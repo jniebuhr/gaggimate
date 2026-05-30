@@ -1,6 +1,7 @@
 #include "GaggiMateServer.h"
 #include <cstdio>
 #include <cstring>
+#include <esp_log.h>
 
 GaggiMateServer::GaggiMateServer() : _endpoint(_transport) {}
 
@@ -15,7 +16,10 @@ void GaggiMateServer::init(const String &deviceName, const String &hardware, con
     _endpoint.begin();
     _transport.init(deviceName);
 
-    xTaskCreatePinnedToCore(pumpTask, "GaggiMateServer", 4096, this, 1, &_taskHandle, 0);
+    if (xTaskCreatePinnedToCore(pumpTask, "GaggiMateServer", 4096, this, 1, &_taskHandle, 0) != pdPASS) {
+        _taskHandle = nullptr;
+        ESP_LOGE("GaggiMateServer", "Failed to create pump task; ACK/retransmit will not run");
+    }
 }
 
 void GaggiMateServer::pumpTask(void *arg) {

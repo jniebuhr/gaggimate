@@ -30,6 +30,8 @@ void BleClientTransport::scan() {
 }
 
 void BleClientTransport::maintain() {
+    if (_client == nullptr || _scanner == nullptr)
+        return; // init() failed to create the client/scanner
     if (!_readyForConnection && !_client->isConnected() && !_scanner->isScanning()) {
         ESP_LOGI(LOG_TAG, "Scan stalled, restarting");
         scan();
@@ -59,6 +61,7 @@ bool BleClientTransport::connectToServer() {
     NimBLERemoteService *service = _client->getService(NimBLEUUID(gm_proto::SERVICE_UUID));
     if (service == nullptr) {
         ESP_LOGE(LOG_TAG, "Service not found");
+        _client->disconnect();
         scan();
         return false;
     }
@@ -72,9 +75,15 @@ bool BleClientTransport::connectToServer() {
         return false;
     }
 
-    if (_notifyChar->canNotify()) {
-        _notifyChar->subscribe(true, std::bind(&BleClientTransport::notifyCallback, this, std::placeholders::_1,
-                                               std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    // Without the notify subscription we would connect but never receive data;
+    // treat a failed subscribe as a failed connection.
+    if (!_notifyChar->canNotify() ||
+        !_notifyChar->subscribe(true, std::bind(&BleClientTransport::notifyCallback, this, std::placeholders::_1,
+                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))) {
+        ESP_LOGE(LOG_TAG, "Failed to subscribe to TX characteristic");
+        _client->disconnect();
+        scan();
+        return false;
     }
 
     _readyForConnection = false;

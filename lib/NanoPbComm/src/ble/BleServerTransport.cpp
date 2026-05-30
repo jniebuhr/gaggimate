@@ -43,7 +43,7 @@ bool BleServerTransport::send(const uint8_t *data, size_t length) {
     if (!_connected || _txChar == nullptr)
         return false;
     _txChar->setValue(data, length);
-    _txChar->notify();
+    _txChar->notify(); // NimBLE-Arduino 1.4.0: notify() returns void
     return true;
 }
 
