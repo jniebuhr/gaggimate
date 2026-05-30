@@ -172,7 +172,11 @@ void GaggiMateServer::registerHandlers() {
             _tareCb();
     });
     _endpoint.on(gaggimate_Payload_led_tag, [this](const gm::Payload &p) {
-        if (_ledCb)
-            _ledCb(static_cast<uint8_t>(p.content.led.channel), static_cast<uint8_t>(p.content.led.brightness));
+        if (!_ledCb)
+            return;
+        // One message carries every changed channel; apply them in order.
+        for (pb_size_t i = 0; i < p.content.led.channels_count; i++)
+            _ledCb(static_cast<uint8_t>(p.content.led.channels[i].channel),
+                   static_cast<uint8_t>(p.content.led.channels[i].brightness));
     });
 }

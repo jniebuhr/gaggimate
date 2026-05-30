@@ -97,11 +97,19 @@ gm::Payload GaggiMateClient::buildTare() {
     return p;
 }
 
-gm::Payload GaggiMateClient::buildLedControl(uint8_t channel, uint8_t brightness) {
+gm::Payload GaggiMateClient::buildLedControl(const LedChannelCommand *channels, size_t count) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_led_tag;
-    p.content.led.channel = channel;
-    p.content.led.brightness = brightness;
+    const size_t maxCount = sizeof(p.content.led.channels) / sizeof(p.content.led.channels[0]);
+    if (channels == nullptr)
+        count = 0;
+    if (count > maxCount)
+        count = maxCount;
+    p.content.led.channels_count = static_cast<pb_size_t>(count);
+    for (size_t i = 0; i < count; i++) {
+        p.content.led.channels[i].channel = channels[i].channel;
+        p.content.led.channels[i].brightness = channels[i].brightness;
+    }
     return p;
 }
 
@@ -133,8 +141,8 @@ void GaggiMateClient::sendPressureScale(float scale) { _endpoint.send(buildPress
 
 void GaggiMateClient::tare() { _endpoint.send(buildTare()); }
 
-void GaggiMateClient::sendLedControl(uint8_t channel, uint8_t brightness) {
-    _endpoint.send(buildLedControl(channel, brightness));
+void GaggiMateClient::sendLedControl(const LedChannelCommand *channels, size_t count) {
+    _endpoint.send(buildLedControl(channels, count));
 }
 
 void GaggiMateClient::registerHandlers() {

@@ -46,6 +46,15 @@ struct RelayCommand {
     bool operator==(const RelayCommand &o) const { return index == o.index && open == o.open; }
     bool operator!=(const RelayCommand &o) const { return !(*this == o); }
 };
+// One LED output's target brightness. Several are packed into a single
+// LedControl message so a multi-channel update can't be split (and coalesced)
+// into separate frames.
+struct LedChannelCommand {
+    uint8_t channel = 0;
+    uint8_t brightness = 0;
+    bool operator==(const LedChannelCommand &o) const { return channel == o.channel && brightness == o.brightness; }
+    bool operator!=(const LedChannelCommand &o) const { return !(*this == o); }
+};
 
 // Error codes. Values match the gaggimate.ErrorCode enum and the codes the old
 // string protocol used, so existing firmware comparisons keep working.

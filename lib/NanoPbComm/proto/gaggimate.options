@@ -9,6 +9,9 @@ gaggimate.Frame.payloads max_count:6
 # Per-boiler readings inside SensorData (one today; room for multi-boiler).
 gaggimate.SensorData.boilers max_count:4
 
+# LED channels driven in one LedControl message (PCA9634 has 8 outputs).
+gaggimate.LedControl.channels max_count:8
+
 # Keep the system-info strings short so the Payload union (sized to its largest
 # member) stays compact -- every batched Payload slot pays for this.
 gaggimate.SystemInfo.hardware max_size:40
