@@ -65,7 +65,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         doc["total"] = event.getInt("total");
         doc["current"] = event.getInt("current");
         doc["status"] = event.getString("status");
-        ws.textAll(doc.as<String>());
+        broadcastJson(doc);
     });
 
     // Subscribe to Bluetooth scale weight updates
@@ -185,7 +185,7 @@ void WebUIPlugin::loop() {
             }
         }
 
-        ws.textAll(statusDoc.as<String>());
+        broadcastJson(statusDoc);
     }
     if (now > lastCleanup + CLEANUP_PERIOD) {
         lastCleanup = now;
@@ -839,7 +839,7 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
             doc["sdUsedPct"] = static_cast<uint8_t>((used * 100) / total);
         }
     }
-    ws.textAll(doc.as<String>());
+    broadcastJson(doc);
 }
 
 void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
@@ -847,16 +847,31 @@ void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
     doc["tp"] = "evt:ota-progress";
     doc["phase"] = phase;
     doc["progress"] = progress;
-    String message = doc.as<String>();
-    ws.textAll(message);
+    broadcastJson(doc);
+}
+
+void WebUIPlugin::broadcastJson(JsonDocument &doc) {
+    if (ws.getClients().empty()) {
+        return;
+    }
+    const size_t len = measureJson(doc);
+    auto *buffer = ws.makeBuffer(len);
+    if (buffer == nullptr) {
+        return; // out of buffers; drop this broadcast rather than churn the heap
+    }
+    serializeJson(doc, buffer->get(), len);
+    for (auto client : ws.getClients()) {
+        if (!client.queueIsFull()) {
+            client.text(buffer);
+        }
+    }
 }
 
 void WebUIPlugin::sendAutotuneResult() {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-result";
     doc["pid"] = controller->getSettings().getPid();
-    String message = doc.as<String>();
-    ws.textAll(message);
+    broadcastJson(doc);
 }
 
 void WebUIPlugin::sendAutotuneFailed() {
@@ -864,8 +879,7 @@ void WebUIPlugin::sendAutotuneFailed() {
     // instead of stuck spinner. Fires on ERROR_CODE_AUTOTUNE_TIMEOUT.
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-failed";
-    String message = doc.as<String>();
-    ws.textAll(message);
+    broadcastJson(doc);
 }
 
 void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
