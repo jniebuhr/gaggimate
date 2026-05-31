@@ -526,7 +526,7 @@ void DefaultUI::setupReactive() {
                               if (updateActive) {
                                   lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Updating...");
                               } else if (protocolMismatch) {
-                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Controller incompatible, please update");
+                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Protocol error, please update");
                               } else if (error) {
                                   if (controller->getError() == ERROR_CODE_RUNAWAY) {
                                       lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Temperature error, please restart");
