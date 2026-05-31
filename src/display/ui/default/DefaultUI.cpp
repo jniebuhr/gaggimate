@@ -387,12 +387,44 @@ void DefaultUI::onProfileFavorited(const String &id) {
     if (std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id) != favoritedProfileIds.end()) {
         return; // already cached
     }
-    // Append an empty placeholder. The Profile data is loaded lazily when
-    // the user navigates the carousel to this entry. Avoids a SPIFFS read
-    // on the event-firing task (usually AsyncTCP) for an entry the user
-    // may never look at.
-    favoritedProfileIds.emplace_back(id);
-    favoritedProfiles.emplace_back(Profile{});
+    // Insert the new favorite at its canonical carousel position rather than
+    // the tail. getFavoritedProfiles() returns IDs sorted by profileOrder and
+    // already includes this id (addFavoritedProfile updates settings before
+    // firing the event). The carousel is [selected, ...favorites-in-that-order],
+    // so map the id's position in the sorted list to a carousel index,
+    // discounting the selected entry pinned at index 0. The Profile struct
+    // itself stays a lazy placeholder, loaded on demand when the carousel
+    // reaches it — no SPIFFS read on the event-firing task. Appending at the
+    // tail (the previous behavior) made a newly-favorited profile jump to the
+    // end of the carousel instead of slotting into its configured order.
+    const auto sorted = profileManager->getFavoritedProfiles();
+    size_t insertAt = favoritedProfileIds.size(); // fallback: tail
+    int sortedPos = -1;
+    for (int i = 0; i < static_cast<int>(sorted.size()); i++)
+        if (sorted[i] == id) {
+            sortedPos = i;
+            break;
+        }
+    if (sortedPos >= 0) {
+        // Index 0 is the pinned selected profile; the favorites that follow
+        // mirror `sorted` minus that selected entry, so discount it when it
+        // sorts ahead of the new id.
+        const String &selectedId = favoritedProfileIds.front();
+        int selectedBefore = 0;
+        for (int i = 0; i < sortedPos; i++)
+            if (sorted[i] == selectedId) {
+                selectedBefore = 1;
+                break;
+            }
+        insertAt = static_cast<size_t>(1 + sortedPos - selectedBefore);
+        if (insertAt > favoritedProfileIds.size())
+            insertAt = favoritedProfileIds.size();
+    }
+    favoritedProfileIds.insert(favoritedProfileIds.begin() + insertAt, id);
+    favoritedProfiles.insert(favoritedProfiles.begin() + insertAt, Profile{});
+    // Keep the cursor on the same profile if we inserted at or before it.
+    if (static_cast<int>(insertAt) <= currentProfileIdx)
+        currentProfileIdx++;
 }
 
 void DefaultUI::onProfileUnfavorited(const String &id) {
