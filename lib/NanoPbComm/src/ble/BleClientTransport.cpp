@@ -19,11 +19,12 @@ void BleClientTransport::init(const String &deviceName) {
 
 void BleClientTransport::scan() {
     _readyForConnection = false;
-    _scanner->clearResults(); // esp-nimble-cpp 2.x: no clearDuplicateCache(); clearResults() drops cached devices
-    // 2.x: setAdvertisedDeviceCallbacks(cb, wantDuplicates) -> setScanCallbacks(cb,
-    // deleteCallbacks). We own this object (member of GaggiMateClient), so pass
-    // false; the wantDuplicates behaviour is covered by setDuplicateFilter(false).
-    _scanner->setScanCallbacks(this, false);
+    _scanner->clearResults(); // esp-nimble-cpp 2.x has no clearDuplicateCache(); results vector is unused (setMaxResults(0))
+    // 1.x setAdvertisedDeviceCallbacks(cb, wantDuplicates=true) -> 2.x
+    // setScanCallbacks(cb, wantDuplicates). wantDuplicates=true keeps duplicate
+    // adverts flowing (internally setDuplicateFilter(false)) — same as the explicit
+    // setDuplicateFilter(false) below, preserving the pre-2.x rediscovery behaviour.
+    _scanner->setScanCallbacks(this, true);
     // BLE and Wi-Fi share the single 2.4 GHz radio. A low-duty passive scan
     // (1.25% duty, listen-only) keeps Wi-Fi RTT responsive; discovery is a touch
     // slower but still reliable. (Carried over from the previous transport.)

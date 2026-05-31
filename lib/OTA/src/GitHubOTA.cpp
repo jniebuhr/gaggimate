@@ -92,6 +92,11 @@ void GitHubOTA::update(bool controller, bool display) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
         this->phase = PHASE_CONTROLLER_FW;
         this->_phase_callback(PHASE_CONTROLLER_FW);
+        // ControllerOTA::update() does not attach the CA bundle itself; do it
+        // here like update_firmware/update_filesystem, else the HTTPS GET for the
+        // controller .bin hits GitHub with no trusted roots and the TLS handshake
+        // fails (the constructor no longer attaches it once for the client).
+        attach_ca_bundle(_wifi_client);
         _controller_ota.update(_wifi_client, _latest_url + _controller_firmware_name);
         ESP_LOGI(TAG, "Controller update successful. Restarting...\n");
         updateExecuted = true;
