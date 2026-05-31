@@ -19,7 +19,7 @@ void BleClientTransport::init(const String &deviceName) {
 
 void BleClientTransport::scan() {
     _readyForConnection = false;
-    _scanner->clearDuplicateCache();
+    _scanner->clearResults(); // esp-nimble-cpp 2.x: no clearDuplicateCache(); clearResults() drops cached devices
     // 2.x: setAdvertisedDeviceCallbacks(cb, wantDuplicates) -> setScanCallbacks(cb,
     // deleteCallbacks). We own this object (member of GaggiMateClient), so pass
     // false; the wantDuplicates behaviour is covered by setDuplicateFilter(false).

@@ -47,3 +47,10 @@ CONFIG_LWIP_IPV6_NUM_ADDRESSES=6
 # Full newlib costs ~15-25 KB flash.
 # NOTE: IDF 5.5 renamed NEWLIB_NANO_FORMAT → LIBC_NEWLIB_NANO_FORMAT.
 CONFIG_LIBC_NEWLIB_NANO_FORMAT=n
+
+# --- C++ exceptions ---
+# esp-arduino-ble-scales' RemoteScales uses try/catch (e.g. the noexcept dtor
+# wraps clientCleanup()). IDF defaults to -fno-exceptions; arduino-esp32 built
+# with exceptions on, so the display class enables them here. Controller env
+# does not link the scales lib and stays -fno-exceptions.
+CONFIG_COMPILER_CXX_EXCEPTIONS=y

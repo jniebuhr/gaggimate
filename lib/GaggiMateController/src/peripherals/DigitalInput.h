@@ -20,7 +20,7 @@ class DigitalInput {
     uint8_t _stable_counter = 0;
     int _current_state = 2;
     int _last_state = 2;
-    xTaskHandle taskHandle;
+    TaskHandle_t taskHandle;
     input_callback_t _callback;
 
     const char *LOG_TAG = "DigitalInput";
