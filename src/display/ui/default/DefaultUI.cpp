@@ -380,7 +380,10 @@ void DefaultUI::onProfileSelected(const String &id) {
 }
 
 void DefaultUI::onProfileFavorited(const String &id) {
-    if (!profileLoaded || id.isEmpty()) {
+    // favoritedProfileIds.empty() guards front() below: onProfileUnfavorited can
+    // erase the last entry, and a favorite event arriving on an empty cache would
+    // otherwise deref front() on an empty vector. Defer to the cold-start rebuild.
+    if (!profileLoaded || id.isEmpty() || favoritedProfileIds.empty()) {
         reloadProfiles();
         return;
     }
