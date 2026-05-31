@@ -445,7 +445,6 @@ void Controller::loop() {
         comms.sendPing();
         lastPing = now;
     }
-
 }
 
 void Controller::loopLogic() {
@@ -480,8 +479,7 @@ void Controller::loopLogic() {
     if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
         processCompleted = true;
         if (lastProcess->getType() == MODE_BREW) {
-            if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
-                brewProcess->target == ProcessTarget::VOLUMETRIC) {
+            if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess); brewProcess->target == ProcessTarget::VOLUMETRIC) {
                 double newDelay = brewProcess->getNewDelayTime();
                 if (newDelay >= 0) {
                     settings.setBrewDelay(newDelay);

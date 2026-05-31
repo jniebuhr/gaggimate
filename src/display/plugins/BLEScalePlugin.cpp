@@ -7,12 +7,12 @@
 #include <scales/bookoo.h>
 #include <scales/decent.h>
 #include <scales/difluid.h>
+#include <scales/dot.h>
 #include <scales/eclair.h>
 #include <scales/eureka.h>
 #include <scales/felicitaScale.h>
 #include <scales/myscale.h>
 #include <scales/timemore.h>
-#include <scales/dot.h>
 #include <scales/varia.h>
 #include <scales/weighmybru.h>
 
