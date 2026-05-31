@@ -1,6 +1,5 @@
 #include "ProfileManager.h"
 #include <ArduinoJson.h>
-#include <display/util/PsramAllocator.h>
 
 #include <utility>
 
@@ -152,12 +151,7 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
     if (!file)
         return false;
 
-    // Back the temp JsonDocument with PSRAM. Without this every loadProfile
-    // call allocates a fresh ~6-12 KB node pool from internal heap and
-    // releases it on scope exit. For req:profiles:list that's N round-trips
-    // through internal heap per request, contributing to the fragmentation
-    // PR #710 set out to address. ESP32-S3 boards have 8 MB PSRAM otherwise idle.
-    JsonDocument doc(&psramAllocator);
+    JsonDocument doc;
     DeserializationError err = deserializeJson(doc, file);
     file.close();
     if (err)
