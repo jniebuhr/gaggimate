@@ -843,6 +843,9 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
 }
 
 void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
+    if (ws.getClients().empty()) {
+        return;
+    }
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:ota-progress";
     doc["phase"] = phase;
@@ -860,11 +863,7 @@ void WebUIPlugin::broadcastJson(JsonDocument &doc) {
         return; // out of buffers; drop this broadcast rather than churn the heap
     }
     serializeJson(doc, buffer->get(), len);
-    for (auto &client : ws.getClients()) {
-        if (!client.queueIsFull()) {
-            client.text(buffer);
-        }
-    }
+    ws.textAll(buffer);
 }
 
 void WebUIPlugin::sendAutotuneResult() {
