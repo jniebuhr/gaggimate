@@ -157,9 +157,7 @@ void BleClientTransport::onResult(const NimBLEAdvertisedDevice *advertisedDevice
     }
 }
 
-void BleClientTransport::onDisconnect(NimBLEClient *client, int reason) {
-    (void)client;
-    (void)reason;
+void BleClientTransport::onDisconnect(NimBLEClient *, int) {
     ESP_LOGI(LOG_TAG, "Disconnected, will rescan");
     _writeChar = nullptr;
     _notifyChar = nullptr;
@@ -168,7 +166,6 @@ void BleClientTransport::onDisconnect(NimBLEClient *client, int reason) {
     scan();
 }
 
-void BleClientTransport::notifyCallback(NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool) {
-    (void)characteristic;
+void BleClientTransport::notifyCallback(NimBLERemoteCharacteristic *, uint8_t *data, size_t length, bool) {
     emitData(data, length);
 }

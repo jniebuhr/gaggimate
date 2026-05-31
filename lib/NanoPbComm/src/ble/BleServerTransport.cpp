@@ -51,25 +51,21 @@ bool BleServerTransport::send(const uint8_t *data, size_t length) {
 
 bool BleServerTransport::isConnected() const { return _connected; }
 
-void BleServerTransport::onConnect(NimBLEServer *server, NimBLEConnInfo &connInfo) {
-    (void)connInfo;
+void BleServerTransport::onConnect(NimBLEServer *server, NimBLEConnInfo &) {
     _connected = true;
     server->stopAdvertising();
     ESP_LOGI(LOG_TAG, "Client connected");
     emitConnection(true);
 }
 
-void BleServerTransport::onDisconnect(NimBLEServer *server, NimBLEConnInfo &connInfo, int reason) {
-    (void)connInfo;
-    (void)reason;
+void BleServerTransport::onDisconnect(NimBLEServer *server, NimBLEConnInfo &, int) {
     _connected = false;
     ESP_LOGI(LOG_TAG, "Client disconnected");
     emitConnection(false);
     server->startAdvertising();
 }
 
-void BleServerTransport::onWrite(NimBLECharacteristic *characteristic, NimBLEConnInfo &connInfo) {
-    (void)connInfo;
+void BleServerTransport::onWrite(NimBLECharacteristic *characteristic, NimBLEConnInfo &) {
     if (characteristic != _rxChar)
         return;
     NimBLEAttValue value = characteristic->getValue();
@@ -77,9 +73,4 @@ void BleServerTransport::onWrite(NimBLECharacteristic *characteristic, NimBLECon
         emitData(value.data(), value.length());
 }
 
-void BleServerTransport::onSubscribe(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo, uint16_t subValue) {
-    (void)pCharacteristic;
-    (void)connInfo;
-    (void)subValue;
-    emitConnection(true);
-}
+void BleServerTransport::onSubscribe(NimBLECharacteristic *, NimBLEConnInfo &, uint16_t) { emitConnection(true); }
