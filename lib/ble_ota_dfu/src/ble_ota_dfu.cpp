@@ -351,6 +351,11 @@ bool BLE_OTA_DFU::configure_OTA(NimBLEServer *pServer) {
         return false;
     }
 
+    // No-op under esp-nimble-cpp 2.x (services are registered by
+    // NimBLEServer::start(), invoked from NimBLEAdvertising::start()), but kept
+    // for symmetry with the comms service in BleServerTransport and to document
+    // intent.
+    pServiceOTA->start();
     return true;
 }
 

@@ -9,6 +9,7 @@
 #include "../core/PluginManager.h"
 #include "../core/constants.h"
 #include "../core/utils.h"
+#include <atomic>
 #include <utility>
 
 // HomeSpan's Span::pollTask() calls verifyRollbackLater() once as a diagnostic
@@ -87,7 +88,9 @@ struct HomekitPlugin::Impl {
     Characteristic::Identify *identify = nullptr;
     HomekitAccessory *accessory = nullptr;
     ::Controller *controller = nullptr; // qualify: HomeSpan also declares ::Controller
-    bool actionRequired = false;
+    // Set in the HomeSpan autoPoll() task callback, read+cleared in the Arduino
+    // loop task — atomic to avoid a cross-task data race on a plain bool.
+    std::atomic<bool> actionRequired{false};
 };
 
 HomekitPlugin::HomekitPlugin(String wifiSsid, String wifiPassword) : impl(std::make_unique<Impl>()) {
@@ -122,6 +125,9 @@ void HomekitPlugin::setup(::Controller *controller, PluginManager *pluginManager
             // GaggiMate's Controller owns STA lifecycle; suppress HomeSpan WiFi restarts.
         });
         homeSpan.begin(Category::Thermostats, kDeviceName, impl->controller->getSettings().getMdnsName().c_str());
+        // HomeSpan takes ownership of every SpanAccessory/Service/Characteristic
+        // created with raw new — it registers them internally and manages their
+        // lifetime, so these are not leaks (do not delete them manually).
         impl->spanAccessory = new SpanAccessory();
         impl->accessoryInformation = new Service::AccessoryInformation();
         impl->identify = new Characteristic::Identify();

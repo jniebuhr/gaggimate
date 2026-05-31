@@ -1,4 +1,5 @@
 #include "MemoryMonitor.h"
+#include <atomic>
 #include <esp_log.h>
 
 namespace {
@@ -6,7 +7,9 @@ namespace {
 constexpr const char *TAG = "MemMon";
 
 ESPMemoryMonitor g_monitor;
-bool g_ready = false;
+// Written once by init() (Controller setup task), read from other tasks
+// (WebUI status push, OTA). Atomic to avoid a data race on the non-atomic bool.
+std::atomic<bool> g_ready{false};
 
 const char *regionName(MemoryRegion r) { return r == MemoryRegion::Psram ? "psram" : "int"; }
 
