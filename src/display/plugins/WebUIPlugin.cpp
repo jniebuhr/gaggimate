@@ -860,7 +860,7 @@ void WebUIPlugin::broadcastJson(JsonDocument &doc) {
         return; // out of buffers; drop this broadcast rather than churn the heap
     }
     serializeJson(doc, buffer->get(), len);
-    for (auto client : ws.getClients()) {
+    for (auto &client : ws.getClients()) {
         if (!client.queueIsFull()) {
             client.text(buffer);
         }
