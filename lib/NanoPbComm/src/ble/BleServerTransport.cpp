@@ -3,7 +3,7 @@
 void BleServerTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
-    NimBLEDevice::setMTU(256); // headroom for batched frames
+    NimBLEDevice::setMTU(128); // headroom for batched frames
 
     _server = NimBLEDevice::createServer();
     _server->setCallbacks(this);
