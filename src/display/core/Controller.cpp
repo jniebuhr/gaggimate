@@ -467,6 +467,22 @@ void Controller::loop() {
                 brewProcess->updateFlow(currentPumpFlow);
             }
             currentProcess->progress();
+            // Scale-stuck guardrail: if a volumetric brew has pumped meaningful
+            // water without seeing any weight change on the BLE scale, something
+            // is wrong (scale missed its pre-brew tare, portafilter off the scale,
+            // scale lost BLE mid-shot, etc.). Emit a one-shot warning; we do NOT
+            // abort the shot from here — that's a policy decision for the
+            // maintainer / user to dial in. Warn-only by design for this PR.
+            if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+                auto *bp = static_cast<BrewProcess *>(currentProcess);
+                if (bp->target == ProcessTarget::VOLUMETRIC && isVolumetricAvailable() &&
+                    !bp->isScaleStuckWarned() && bp->isScaleStuck()) {
+                    bp->markScaleStuckWarned();
+                    pluginManager->trigger("controller:brew:scale-stuck");
+                    ESP_LOGW(LOG_TAG, "BLE scale stuck at 0g after pumping %.1fg of water; shot yield will be wrong",
+                             bp->waterPumped);
+                }
+            }
             if (!isActive()) {
                 deactivate();
             }

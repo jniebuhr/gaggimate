@@ -2,6 +2,7 @@
 #define BREWPROCESS_H
 
 #include <algorithm>
+#include <cmath>
 #include <display/core/constants.h>
 #include <display/core/predictive.h>
 #include <display/core/process/Process.h>
@@ -23,6 +24,7 @@ class BrewProcess : public Process {
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
     float waterPumped = 0.0f;
+    float totalWaterPumped = 0.0f; // persists across phase transitions, unlike waterPumped
     VolumetricRateCalculator volumetricRateCalculator{PREDICTIVE_TIME};
 
     explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
@@ -37,10 +39,29 @@ class BrewProcess : public Process {
 
     void updateVolume(double volume) override { // called even after the Process is no longer active
         currentVolume = volume;
+        if (std::abs(volume) > SCALE_STUCK_WEIGHT_THRESHOLD_G && firstFlowSeenAt == 0) {
+            firstFlowSeenAt = millis();
+        }
         if (processPhase != ProcessPhase::FINISHED) { // only store measurements while active
             volumetricRateCalculator.addMeasurement(volume);
         }
     }
+
+    // Scale-stuck guardrail. If we've pumped a meaningful amount of water but
+    // the BLE scale has not reported any weight change yet, the scale either
+    // missed its pre-brew tare or the portafilter is off the scale. Consumed
+    // by Controller::loop to emit a one-shot warning event.
+    static constexpr float SCALE_STUCK_WEIGHT_THRESHOLD_G = 1.0f;
+    static constexpr float SCALE_STUCK_WATER_PUMPED_G = 15.0f;
+    bool hasSeenFlow() const { return firstFlowSeenAt != 0; }
+    bool isScaleStuck() const {
+        // Use totalWaterPumped (persists across phases) so we don't false-positive
+        // on a dense puck during the short Fill phase, where waterPumped (per-phase)
+        // might hit the threshold before flow reaches the cup.
+        return !hasSeenFlow() && totalWaterPumped > SCALE_STUCK_WATER_PUMPED_G;
+    }
+    bool isScaleStuckWarned() const { return scaleStuckWarned; }
+    void markScaleStuckWarned() { scaleStuckWarned = true; }
 
     void updatePressure(float pressure) { currentPressure = pressure; }
 
@@ -134,7 +155,9 @@ class BrewProcess : public Process {
 
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
-        waterPumped += currentFlow / 10.0f; // Add current flow divided to 100ms to water pumped counter
+        const float pumpedDelta = currentFlow / 10.0f; // 100ms tick
+        waterPumped += pumpedDelta; // per-phase, reset when a phase advances below
+        totalWaterPumped += pumpedDelta; // shot-total, never resets here
         while (isCurrentPhaseFinished() && processPhase == ProcessPhase::RUNNING) {
             previousPhaseFinished = millis();
             if (phaseIndex + 1 < profile.phases.size()) {
@@ -167,6 +190,10 @@ class BrewProcess : public Process {
   private:
     float phaseStartPressure = 0.0f;
     float phaseStartFlow = 0.0f;
+
+    // Guardrail state (see hasSeenFlow / isScaleStuck above).
+    unsigned long firstFlowSeenAt = 0;
+    bool scaleStuckWarned = false;
 
     float effectivePressure = 0.0f;
     float effectiveFlow = 0.0f;
