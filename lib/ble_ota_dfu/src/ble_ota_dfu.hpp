@@ -56,8 +56,7 @@ public:
 
   uint16_t write_binary(fs::FS *file_system, const char *path, uint8_t *data,
                         uint16_t length, bool keep_open = true);
-  void onNotify(BLECharacteristic *pCharacteristic) override;
-  void onWrite(BLECharacteristic *pCharacteristic) override;
+  void onWrite(BLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) override;
 };
 
 class BLE_OTA_DFU {

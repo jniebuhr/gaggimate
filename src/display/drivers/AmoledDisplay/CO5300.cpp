@@ -1,8 +1,8 @@
 #include "CO5300.h"
 
-CO5300::CO5300(Arduino_DataBus *bus, int8_t rst, uint8_t r, bool ips, int16_t w, int16_t h, uint8_t col_offset1,
+CO5300::CO5300(Arduino_DataBus *bus, int8_t rst, uint8_t r, int16_t w, int16_t h, uint8_t col_offset1,
                uint8_t row_offset1, uint8_t col_offset2, uint8_t row_offset2, uint8_t color_order)
-    : Arduino_CO5300(bus, rst, r, ips, w, h, col_offset1, row_offset1, col_offset2, row_offset2), _color_order(color_order) {}
+    : Arduino_CO5300(bus, rst, r, w, h, col_offset1, row_offset1, col_offset2, row_offset2), _color_order(color_order) {}
 
 void CO5300::setRotation(uint8_t r) {
     Arduino_TFT::setRotation(r);

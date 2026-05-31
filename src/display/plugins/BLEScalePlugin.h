@@ -63,6 +63,7 @@ class BLEScalePlugin : public Plugin {
   private:
     void update();
     void onProcessStart() const;
+    bool autoScanAllowed() const;
     void pollScaleMetadata();
 
     void establishConnection();
@@ -72,7 +73,9 @@ class BLEScalePlugin : public Plugin {
     std::string uuid;
 
     unsigned long lastUpdate = 0;
+    unsigned long lastConnectAttempt = 0;
     unsigned int reconnectionTries = 0;
+    static constexpr unsigned long CONNECT_RETRY_INTERVAL_MS = 2000;
 
     // Cached scale-metadata values used to avoid firing an event for each
     // unchanged poll tick. Reset when the scale disconnects.

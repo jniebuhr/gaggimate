@@ -2,10 +2,17 @@
 #include <HTTPUpdate.h>
 #include <WiFiClientSecure.h>
 
+#include "GitHubOTA.h"
 #include "common.h"
 #include "semver.h"
 #include "semver_extensions.h"
 #include <ArduinoJson.h>
+
+void attach_ca_bundle(WiFiClientSecure &client) {
+    client.setCACertBundle(x509_crt_imported_bundle_bin_start,
+                           reinterpret_cast<uintptr_t>(x509_crt_imported_bundle_bin_end) -
+                               reinterpret_cast<uintptr_t>(x509_crt_imported_bundle_bin_start));
+}
 
 String get_updated_base_url_via_redirect(WiFiClientSecure &wifi_client, String &release_url) {
     const char *TAG = "get_updated_base_url_via_redirect";
@@ -30,6 +37,7 @@ String get_redirect_location(WiFiClientSecure &wifi_client, String &initial_url)
     const char *TAG = "get_redirect_location";
     ESP_LOGV(TAG, "initial_url: %s\n", initial_url.c_str());
 
+    attach_ca_bundle(wifi_client);
     HTTPClient https;
     https.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
 
@@ -55,6 +63,7 @@ String get_redirect_location(WiFiClientSecure &wifi_client, String &initial_url)
 
 String get_updated_version_via_txt_file(WiFiClientSecure &wifi_client, String &_release_url) {
     const char *TAG = "get_updated_version_via_txt_file";
+    attach_ca_bundle(wifi_client);
     HTTPClient https;
     https.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
 

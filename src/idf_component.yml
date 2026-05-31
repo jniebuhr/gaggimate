@@ -1,0 +1,6 @@
+dependencies:
+  # Pure-IDF C++ wrapper for NimBLE. Links directly against IDF's bt component;
+  # no bundled host C code and no duplicate NimBLE symbols. Also the only path
+  # that works for ESP32-P4 / esp_hosted-mcu.
+  h2zero/esp-nimble-cpp:
+    version: "~2.5.0"

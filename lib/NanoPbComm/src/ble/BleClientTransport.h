@@ -14,7 +14,7 @@
  * client controller, including the low-duty passive scan tuned for Wi-Fi
  * coexistence.
  */
-class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallbacks, public NimBLEClientCallbacks {
+class BleClientTransport : public Transport, public NimBLEScanCallbacks, public NimBLEClientCallbacks {
   public:
     BleClientTransport() = default;
 
@@ -72,8 +72,8 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     static constexpr uint16_t CONN_LATENCY = 0;
     static constexpr uint16_t CONN_TIMEOUT = 400; // 4 s
 
-    void onResult(NimBLEAdvertisedDevice *advertisedDevice) override;
-    void onDisconnect(NimBLEClient *client) override;
+    void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override;
+    void onDisconnect(NimBLEClient *client, int reason) override;
     void notifyCallback(NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool isNotify);
 
     static constexpr const char *LOG_TAG = "BleClientTransport";

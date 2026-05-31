@@ -2,7 +2,9 @@
 
 void BleServerTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
-    NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+    // esp-nimble-cpp (NimBLE 2.x): setPower takes int8_t dBm, not the enum.
+    // ESP_PWR_LVL_P9 (=11 on ESP32-S3) would quantize to +12 dBm; 9 = +9 dBm.
+    NimBLEDevice::setPower(9);
     NimBLEDevice::setMTU(256); // headroom for batched frames
 
     _server = NimBLEDevice::createServer();
@@ -23,7 +25,7 @@ void BleServerTransport::init(const String &deviceName) {
 
     _advertising = NimBLEDevice::getAdvertising();
     _advertising->addServiceUUID(gm_proto::SERVICE_UUID);
-    _advertising->setScanResponse(true);
+    _advertising->enableScanResponse(true); // 2.x renamed setScanResponse
     _advertising->start();
     ESP_LOGI(LOG_TAG, "BLE server started, advertising");
 }
@@ -43,27 +45,31 @@ bool BleServerTransport::send(const uint8_t *data, size_t length) {
     if (!_connected || _txChar == nullptr)
         return false;
     _txChar->setValue(data, length);
-    _txChar->notify(); // NimBLE-Arduino 1.4.0: notify() returns void
+    _txChar->notify(); // 2.x notify() returns bool; fire-and-forget here
     return true;
 }
 
 bool BleServerTransport::isConnected() const { return _connected; }
 
-void BleServerTransport::onConnect(NimBLEServer *server) {
+void BleServerTransport::onConnect(NimBLEServer *server, NimBLEConnInfo &connInfo) {
+    (void)connInfo;
     _connected = true;
     server->stopAdvertising();
     ESP_LOGI(LOG_TAG, "Client connected");
     emitConnection(true);
 }
 
-void BleServerTransport::onDisconnect(NimBLEServer *server) {
+void BleServerTransport::onDisconnect(NimBLEServer *server, NimBLEConnInfo &connInfo, int reason) {
+    (void)connInfo;
+    (void)reason;
     _connected = false;
     ESP_LOGI(LOG_TAG, "Client disconnected");
     emitConnection(false);
     server->startAdvertising();
 }
 
-void BleServerTransport::onWrite(NimBLECharacteristic *characteristic) {
+void BleServerTransport::onWrite(NimBLECharacteristic *characteristic, NimBLEConnInfo &connInfo) {
+    (void)connInfo;
     if (characteristic != _rxChar)
         return;
     NimBLEAttValue value = characteristic->getValue();
@@ -71,6 +77,9 @@ void BleServerTransport::onWrite(NimBLECharacteristic *characteristic) {
         emitData(value.data(), value.length());
 }
 
-void BleServerTransport::onSubscribe(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc, uint16_t subValue) {
+void BleServerTransport::onSubscribe(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo, uint16_t subValue) {
+    (void)pCharacteristic;
+    (void)connInfo;
+    (void)subValue;
     emitConnection(true);
 }

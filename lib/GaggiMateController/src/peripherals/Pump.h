@@ -5,9 +5,9 @@ class Pump {
   public:
     virtual ~Pump() = default;
 
-    virtual void setup();
-    virtual void loop();
-    virtual void setPower(float setpoint);
+    virtual void setup() = 0;
+    virtual void loop() = 0;
+    virtual void setPower(float setpoint) = 0;
 };
 
 #endif // PUMP_H
