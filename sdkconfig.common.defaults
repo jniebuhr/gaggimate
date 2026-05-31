@@ -15,7 +15,7 @@ CONFIG_IDF_TARGET="esp32s3"
 # board has none; enabling SPIRAM here would abort boot on "PSRAM chip is not
 # connected".
 
-# --- NimBLE: all roles (NimBLEComm shared lib compiles client+server code) ---
+# --- NimBLE: all roles (NanoPbComm BLE transport compiles client+server code) ---
 CONFIG_BT_ENABLED=y
 CONFIG_BT_NIMBLE_ENABLED=y
 # NimBLE host PSRAM routing lives in sdkconfig.gaggimate.defaults.

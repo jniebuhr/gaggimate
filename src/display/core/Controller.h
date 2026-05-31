@@ -107,6 +107,8 @@ class Controller {
 
     GaggiMateClient *getClientController() { return &comms; }
 
+    bool isApMode() const { return isApConnection; }
+
   private:
     // Initialization methods
 #ifndef GAGGIMATE_HEADLESS
@@ -198,8 +200,8 @@ class Controller {
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
-    xTaskHandle taskHandle;
-    xTaskHandle logicTaskHandle;
+    TaskHandle_t taskHandle;
+    TaskHandle_t logicTaskHandle;
 
     static void loopTask(void *arg);
     static void loopLogicTask(void *arg);

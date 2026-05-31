@@ -4,6 +4,7 @@
 #include <SPIFFS.h>
 #include <algorithm>
 #include <display/core/Controller.h>
+#include <display/core/MemoryMonitor.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
@@ -90,10 +91,15 @@ void WebUIPlugin::loop() {
     }
     const long now = millis();
     if ((lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL)) {
-        ota->checkForUpdates();
-        pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
+        // Skip OTA check in AP mode: no route to GitHub, and mbedtls handshake
+        // allocates ~30 KB internal heap that the pioarduino 55.x prebuilt
+        // can't spare — spike triggers BLE_INIT malloc failures.
+        if (!apMode) {
+            ota->checkForUpdates();
+            pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
+            updateOTAStatus(ota->getCurrentVersion());
+        }
         lastUpdateCheck = now;
-        updateOTAStatus(ota->getCurrentVersion());
     }
     if (now > lastStatus + STATUS_PERIOD && !ws.getClients().empty()) {
         lastStatus = now;
@@ -227,6 +233,7 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
+    server.on("/api/debug/heap", [this](AsyncWebServerRequest *request) { handleDebugHeap(request); });
     FS *fs = &SPIFFS;
     if (controller->isSDCard()) {
         fs = &SD_MMC;
@@ -786,6 +793,43 @@ void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
     request->send(response);
 }
 
+void WebUIPlugin::handleDebugHeap(AsyncWebServerRequest *request) {
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    JsonDocument doc;
+    MemorySnapshot snap;
+    if (gaggimate::memmon::isReady()) {
+        snap = gaggimate::memmon::instance().sampleNow();
+    }
+    const RegionStats *ri = nullptr;
+    const RegionStats *rp = nullptr;
+    for (const auto &rs : snap.regions) {
+        if (rs.region == MemoryRegion::Internal)
+            ri = &rs;
+        else if (rs.region == MemoryRegion::Psram)
+            rp = &rs;
+    }
+    JsonObject internalObj = doc["internal"].to<JsonObject>();
+    constexpr uint32_t kInternalCaps = MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL;
+    internalObj["free"] = ri ? ri->freeBytes : heap_caps_get_free_size(kInternalCaps);
+    internalObj["largest"] = ri ? ri->largestFreeBlock : heap_caps_get_largest_free_block(kInternalCaps);
+    internalObj["total"] = heap_caps_get_total_size(kInternalCaps);
+    internalObj["minimum_free"] = ri ? ri->minimumFreeBytes : heap_caps_get_minimum_free_size(kInternalCaps);
+    JsonObject psObj = doc["psram"].to<JsonObject>();
+    psObj["free"] = rp ? rp->freeBytes : heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    psObj["largest"] = rp ? rp->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
+    psObj["total"] = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+    psObj["minimum_free"] = rp ? rp->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
+    doc["fragmentation_internal"] = ri ? ri->fragmentation : 0.0f;
+    doc["fragmentation_psram"] = rp ? rp->fragmentation : 0.0f;
+    if (ri) {
+        internalObj["slope"] = ri->freeBytesSlope;
+        internalObj["seconds_to_warn"] = ri->secondsToWarn;
+        internalObj["seconds_to_critical"] = ri->secondsToCritical;
+    }
+    serializeJson(doc, *response);
+    request->send(response);
+}
+
 void WebUIPlugin::updateOTAStatus(const String &version) {
     if (ws.getClients().empty()) {
         return;
@@ -814,14 +858,29 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
             doc["spiffsUsedPct"] = static_cast<uint8_t>((used * 100) / total);
         }
     }
-    // Memory usage metrics
+    // Memory usage metrics — sourced from ESPMemoryMonitor so the settings UI
+    // shares a single source of truth with /api/debug/heap and the 60 s sampler
+    // task. Falls back to heap_caps_* during the boot window before init().
     {
-        size_t free = heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-        size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-        size_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
-        doc["heapFree"] = static_cast<uint32_t>(free);
-        doc["heapLargest"] = static_cast<uint32_t>(largest);
+        const RegionStats *ri = nullptr;
+        MemorySnapshot snap;
+        if (gaggimate::memmon::isReady()) {
+            snap = gaggimate::memmon::instance().sampleNow();
+            for (const auto &rs : snap.regions) {
+                if (rs.region == MemoryRegion::Internal) {
+                    ri = &rs;
+                    break;
+                }
+            }
+        }
+        const size_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL);
+        doc["heapFree"] = static_cast<uint32_t>(ri ? ri->freeBytes
+                                                   : heap_caps_get_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL));
+        doc["heapLargest"] = static_cast<uint32_t>(
+            ri ? ri->largestFreeBlock : heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL));
         doc["heapTotal"] = static_cast<uint32_t>(total);
+        doc["heapMinimum"] = static_cast<uint32_t>(
+            ri ? ri->minimumFreeBytes : heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL));
     }
     doc["controllerTaskHealth"] = controller->isTaskHealthy();
 #ifndef GAGGIMATE_HEADLESS
