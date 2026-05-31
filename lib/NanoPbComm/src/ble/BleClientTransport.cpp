@@ -3,7 +3,7 @@
 void BleClientTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
-    NimBLEDevice::setMTU(128);
+    NimBLEDevice::setMTU(256);
     _client = NimBLEDevice::createClient();
     _scanner = NimBLEDevice::getScan();
     if (_client == nullptr) {
