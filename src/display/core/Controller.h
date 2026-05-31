@@ -107,8 +107,6 @@ class Controller {
 
     GaggiMateClient *getClientController() { return &comms; }
 
-    bool isApMode() const { return isApConnection; }
-
   private:
     // Initialization methods
 #ifndef GAGGIMATE_HEADLESS
