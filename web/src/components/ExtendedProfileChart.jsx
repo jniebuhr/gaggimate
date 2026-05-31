@@ -133,6 +133,8 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
     },
     options: {
       fill: false,
+      responsive: true,
+      maintainAspectRatio: false,
       interaction: {
         intersect: false,
       },

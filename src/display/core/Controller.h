@@ -1,10 +1,10 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include "NimBLEClientController.h"
-#include "NimBLEComm.h"
+#include "GaggiMateClient.h"
 #include "PluginManager.h"
 #include "Settings.h"
+#include "SystemInfo.h"
 #include <WiFi.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
@@ -55,7 +55,7 @@ class Controller {
 
     bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(taskHandle)); }
 
-    void autotune(int testTime, int samples);
+    void autotune(int testTime, int samples, int heaterWattage);
     void startProcess(Process *process);
     Process *getProcess() const { return currentProcess; }
     Process *getLastProcess() const { return lastProcess; }
@@ -105,7 +105,7 @@ class Controller {
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    NimBLEClientController *getClientController() { return &clientController; }
+    GaggiMateClient *getClientController() { return &comms; }
 
   private:
     // Initialization methods
@@ -113,20 +113,27 @@ class Controller {
     void setupPanel();
 #endif
     void setupBluetooth();
-    void setupInfos();
+    void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
+                      bool ledControl, bool tof);
+    // Connected to a controller too old to speak the framed protocol: drive the
+    // same path as a protocol-version mismatch (OTA recovery only). infoJson is
+    // the legacy INFO characteristic contents (hardware/version/capabilities).
+    void onIncompatibleController(const String &infoJson);
     void setupWifi();
 
     // Functional methods
     void updateControl();
+    // Switch the BLE connection interval based on whether a process is running.
+    // force re-applies even if the desired state is unchanged (use on connect).
+    void applyConnectionPriority(bool force = false);
 
     // Event handlers
     void onTempRead(float temperature);
 
-    // brew button
     void handleBrewButton(int brewButtonStatus);
-
-    // steam button
     void handleSteamButton(int steamButtonStatus);
+    void handleWaterButton(int buttonStatus);
+    void handleProfileButton(int buttonStatus, String id);
     void handleProfileUpdate();
 
     // Private Attributes
@@ -134,7 +141,7 @@ class Controller {
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
 #endif
-    NimBLEClientController clientController;
+    GaggiMateClient comms;
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};
@@ -150,6 +157,19 @@ class Controller {
     int tofDistance = 0;
 
     SystemInfo systemInfo{};
+
+    // Last control values sent to the controller. updateControl() only
+    // transmits components that differ from these (the controller is stateful
+    // and delivery is acknowledged). Reset on (re)connect to force a full resend.
+    BoilerCommand lastBoiler{};
+    PumpCommand lastPump{};
+    RelayCommand lastRelay{};
+    bool lastAlt = false;
+    bool controlStateSent = false;
+
+    // BLE connection-interval priority: tight while a process runs, relaxed when
+    // idle (frees radio airtime for Wi-Fi). Tracks the last requested state.
+    bool connLowLatency = false;
 
     Process *currentProcess = nullptr;
     Process *lastProcess = nullptr;

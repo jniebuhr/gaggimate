@@ -3,11 +3,11 @@ import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState, useContext } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { timezones } from '../../config/zones.js';
-import { machine } from '../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
@@ -15,11 +15,11 @@ import { PluginCard } from './PluginCard.jsx';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 import { Tooltip } from '../../components/Tooltip.jsx';
-import { faRefresh } from '@fortawesome/free-solid-svg-icons/faRefresh';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
+const connected = computed(() => machine.value.connected);
 const tofDistance = computed(() => machine.value.status.tofDistance);
 
 /**
@@ -47,7 +47,15 @@ function splitPidString(pidString) {
   return { pid: pidString, kf: '0.000' };
 }
 
+function splitButtons(buttonBehavior) {
+  if (!buttonBehavior) return {};
+  const [button0, button1, button2] = buttonBehavior.split(',');
+  return { button0, button1, button2 };
+}
+
 export function Settings() {
+  const apiService = useContext(ApiServiceContext);
+  const [profiles, setProfiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
@@ -62,14 +70,30 @@ export function Settings() {
     return data;
   });
 
+  // Fetch profiles via WebSocket (wait for connection)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const loadProfiles = async () => {
+      if (connected.value) {
+        const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
+        setProfiles(response.profiles);
+      }
+    };
+    loadProfiles();
+  }, [connected.value]);
+
   const formRef = useRef();
 
   useEffect(() => {
     if (fetchedSettings) {
       // Initialize standbyDisplayEnabled based on standby brightness value
       // but preserve it if it already exists in the fetched data
+      const buttonFields = fetchedSettings.buttonBehavior
+        ? splitButtons(fetchedSettings.buttonBehavior)
+        : {};
       const settingsWithToggle = {
         ...fetchedSettings,
+        ...buttonFields,
         standbyDisplayEnabled:
           fetchedSettings.standbyDisplayEnabled !== undefined
             ? fetchedSettings.standbyDisplayEnabled
@@ -218,6 +242,10 @@ export function Settings() {
         'altRelayFunction',
         formData.altRelayFunction !== undefined ? formData.altRelayFunction : 1,
       );
+      formDataToSubmit.set(
+        'buttonBehavior',
+        `${formData.button0},${formData.button1},${formData.button2}`,
+      );
 
       // Combine PID and Kf into single PID string
       if (formData.pid && formData.kf !== undefined) {
@@ -251,12 +279,14 @@ export function Settings() {
       // with `formData.kf`, producing a 5-field CSV that grows on every
       // round-trip.
       const splitPid = data.pid ? splitPidString(data.pid) : null;
+      const buttonFields = data.buttonBehavior ? splitButtons(data.buttonBehavior) : {};
 
       // Only preserve standbyDisplayEnabled if brightness is greater than 0
       // If brightness is 0, let the useEffect recalculate it based on the saved value
       const updatedData = {
         ...data,
         ...(splitPid !== null ? { pid: splitPid.pid, kf: splitPid.kf } : {}),
+        ...buttonFields,
         standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
       };
 
@@ -381,6 +411,25 @@ export function Settings() {
               </select>
             </div>
             <div className='form-control mb-4'>
+              <label htmlFor='startup-profile' className='mb-2 block text-sm font-medium'>
+                Startup Profile
+              </label>
+              <select
+                id='startup-profile'
+                name='startupProfile'
+                className='select select-bordered w-full'
+                value={formData.startupProfile || ''}
+                onChange={onChange('startupProfile')}
+              >
+                <option value=''>Last used profile</option>
+                {profiles.map(profile => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className='form-control mb-4'>
               <label htmlFor='standbyTimeout' className='mb-2 block text-sm font-medium'>
                 Standby Timeout
               </label>
@@ -473,6 +522,78 @@ export function Settings() {
                   onChange={onChange('momentaryButtons')}
                 />
               </label>
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='button0' className='mb-2 block text-sm font-medium'>
+                Brew Button Behavior (Button 1)
+              </label>
+              <select
+                id='button0'
+                name='button0'
+                className='select select-bordered w-full'
+                value={formData.button0}
+                onChange={onChange('button0')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                <option value='flush'>Flush</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='button1' className='mb-2 block text-sm font-medium'>
+                Steam Button Behavior (Button 2)
+              </label>
+              <select
+                id='button1'
+                name='button1'
+                className='select select-bordered w-full'
+                value={formData.button1}
+                onChange={onChange('button1')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                <option value='flush'>Flush</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='button2' className='mb-2 block text-sm font-medium'>
+                Water Button Behavior (Button 3)
+              </label>
+              <select
+                id='button2'
+                name='button2'
+                className='select select-bordered w-full'
+                value={formData.button2}
+                onChange={onChange('button2')}
+              >
+                <option value='none'>None</option>
+                <option value='brew'>Brew button</option>
+                <option value='steam'>Steam button</option>
+                <option value='water'>Water button</option>
+                <option value='flush'>Flush</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    Profile: {p.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </Card>
 
@@ -883,7 +1004,7 @@ export function Settings() {
 
           {/* Sunrise Settings */}
           {ledControl.value && (
-            <Card sm={10} lg={5} title='Sunrise Settings'>
+            <Card sm={10} lg={5} title='Alba Settings'>
               <div className='mb-2 text-sm opacity-70'>
                 Set the colors for the LEDs when in idle mode with no warnings.
               </div>
@@ -1047,7 +1168,7 @@ export function Settings() {
           </Card>
         </div>
 
-        <div className='pt-4 lg:col-span-10'>
+        <div className='pt-4 pb-4 lg:col-span-10'>
           <div className='alert alert-warning shadow-sm'>
             <span>Some options like Wi-Fi, NTP, and managing plugins require a restart.</span>
           </div>

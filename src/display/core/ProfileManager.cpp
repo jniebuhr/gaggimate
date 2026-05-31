@@ -1,5 +1,6 @@
 #include "ProfileManager.h"
 #include <ArduinoJson.h>
+#include <display/util/PsramAllocator.h>
 
 #include <utility>
 
@@ -8,13 +9,34 @@ ProfileManager::ProfileManager(fs::FS *fs, String dir, Settings &settings, Plugi
 
 void ProfileManager::setup() {
     ensureDirectory();
+    // Call listProfiles once; each call scans the filesystem and (historically)
+    // burned a file handle. Reuse this snapshot for both the entry guard and
+    // the migrate() call so we hit the FS as little as possible at boot.
     auto profiles = listProfiles();
-    if (getFavoritedProfiles().empty() || profiles.empty() || _settings.getSelectedProfile() == "" ||
-        !loadSelectedProfile(selectedProfile)) {
-        migrate();
+    const bool needsMigrate = profiles.empty() || getFavoritedProfiles().empty() ||
+                              _settings.getSelectedProfile() == "" || !loadSelectedProfile(selectedProfile);
+    if (needsMigrate) {
+        migrate(profiles);
+        // Reset before reload: parseProfile() appends to profile.phases. The
+        // earlier loadSelectedProfile in `needsMigrate` may have pushed phases
+        // before failing validation, leaving partial state that this reload
+        // would double. Defensive — current paths almost never hit this.
+        selectedProfile = Profile{};
         loadSelectedProfile(selectedProfile);
     }
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));
+
+    String startupProfile = _settings.getStartupProfile();
+    if (!startupProfile.isEmpty()) {
+        // Validate profile integrity by loading it
+        Profile testProfile{};
+        if (loadProfile(startupProfile, testProfile)) {
+            selectProfile(startupProfile);
+        } else {
+            ESP_LOGW("ProfileManager", "Startup profile %s not found or invalid, resetting", startupProfile.c_str());
+            _settings.setStartupProfile("");
+        }
+    }
 }
 
 bool ProfileManager::ensureDirectory() const {
@@ -26,7 +48,37 @@ bool ProfileManager::ensureDirectory() const {
 
 String ProfileManager::profilePath(const String &uuid) const { return _dir + "/" + uuid + ".json"; }
 
-void ProfileManager::migrate() {
+void ProfileManager::migrate(const std::vector<String> &existingProfiles) {
+    // Reuse an already-loaded Default if present so we don't accumulate one per
+    // boot when a transient SD read fails. Without this guard, every
+    // intermittent loadSelectedProfile() failure (e.g. SD pull-up jitter)
+    // triggers migrate() → fresh Default → favorites list grows endlessly.
+    for (const String &existingId : existingProfiles) {
+        Profile existing{};
+        if (!loadProfile(existingId, existing)) {
+            ESP_LOGW("ProfileManager", "Skipping unreadable profile %s during migrate", existingId.c_str());
+            continue;
+        }
+        if (existing.label == "Default") {
+            // existing.id comes from parsed JSON and may be empty if the file
+            // was hand-edited or pre-dates the id field. Fall back to
+            // existingId (the filename-derived id) so we never set an empty
+            // selected/favorite profile.
+            const String resolvedId = existing.id.isEmpty() ? existingId : existing.id;
+            _settings.setSelectedProfile(resolvedId);
+            addFavoritedProfile(resolvedId);
+            // Favorite every other profile too — without this, only the
+            // reused Default ends up in favorites and the UI collapses to a
+            // single entry even when more profiles exist on disk. Matches
+            // the create-new-Default branch below.
+            for (const String &id : existingProfiles) {
+                if (id != existingId) addFavoritedProfile(id);
+            }
+            ESP_LOGI("ProfileManager", "Reusing existing Default profile %s", resolvedId.c_str());
+            return;
+        }
+    }
+
     Profile profile{};
     profile.id = generateShortID();
     profile.label = "Default";
@@ -46,9 +98,15 @@ void ProfileManager::migrate() {
     target.value = 36;
     brewPhase.targets.push_back(target);
     profile.phases.push_back(brewPhase);
-    saveProfile(profile);
+    if (!saveProfile(profile)) {
+        ESP_LOGE("ProfileManager", "Failed to save Default profile during migrate");
+        return;
+    }
     _settings.setSelectedProfile(profile.id);
-    for (String id : listProfiles()) {
+    // Favorite the new Default plus any other profiles found earlier in this
+    // boot — same behavior as before but driven by the already-collected list.
+    addFavoritedProfile(profile.id);
+    for (const String &id : existingProfiles) {
         addFavoritedProfile(id);
     }
 }
@@ -56,8 +114,10 @@ void ProfileManager::migrate() {
 std::vector<String> ProfileManager::listProfiles() {
     std::vector<String> uuids;
     File root = _fs->open(_dir);
-    if (!root || !root.isDirectory())
+    if (!root || !root.isDirectory()) {
+        if (root) root.close();
         return uuids;
+    }
 
     File file = root.openNextFile();
     while (file) {
@@ -67,8 +127,14 @@ std::vector<String> ProfileManager::listProfiles() {
             int end = name.lastIndexOf('.');
             uuids.push_back(name.substring(start, end));
         }
+        file.close();
         file = root.openNextFile();
     }
+    // SPIFFS has a small open-file table; failing to close the directory
+    // handle here exhausts it within ~30 list calls and causes subsequent
+    // loadProfile open() calls to fail silently — the root cause of profiles
+    // disappearing from the UI once the user has many of them on SD/SPIFFS.
+    root.close();
 
     std::vector<String> ordered;
     auto stored = _settings.getProfileOrder();
@@ -91,7 +157,7 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
     if (!file)
         return false;
 
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     DeserializationError err = deserializeJson(doc, file);
     file.close();
     if (err)
@@ -122,7 +188,7 @@ bool ProfileManager::saveProfile(Profile &profile) {
     if (!file)
         return false;
 
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     JsonObject obj = doc.to<JsonObject>();
     writeProfile(obj, profile);
 
@@ -142,6 +208,9 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
 bool ProfileManager::deleteProfile(const String &uuid) {
     removeFavoritedProfile(uuid);
+    if (_settings.getStartupProfile() == uuid) {
+        _settings.setStartupProfile("");
+    }
     return _fs->remove(profilePath(uuid));
 }
 
