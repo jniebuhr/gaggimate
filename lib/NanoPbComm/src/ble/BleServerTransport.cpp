@@ -2,8 +2,10 @@
 
 void BleServerTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
-    // esp-nimble-cpp (NimBLE 2.x): setPower takes int8_t dBm, not the enum.
-    // ESP_PWR_LVL_P9 (=11 on ESP32-S3) would quantize to +12 dBm; 9 = +9 dBm.
+    // +9 dBm — preserves master's setPower(ESP_PWR_LVL_P9), which was +9 dBm
+    // under NimBLE 1.4.x. 2.x setPower takes int8_t dBm, so pass 9 directly
+    // (2.x quantizes 9 -> ESP_PWR_LVL_P9). Do NOT pass the enum: ESP_PWR_LVL_P9
+    // is value 11 on ESP32-S3 and would round up to +12 dBm.
     NimBLEDevice::setPower(9);
     NimBLEDevice::setMTU(256); // headroom for batched frames
 

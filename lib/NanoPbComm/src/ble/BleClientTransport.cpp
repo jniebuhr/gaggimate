@@ -2,9 +2,10 @@
 
 void BleClientTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
-    // esp-nimble-cpp (NimBLE 2.x) replaced setPower(esp_power_level_t) with
-    // setPower(int8_t dbm). Passing ESP_PWR_LVL_P9 (enum value 11 on ESP32-S3)
-    // would quantize to +12 dBm; the literal 9 preserves the intended +9 dBm.
+    // +9 dBm — preserves master's setPower(ESP_PWR_LVL_P9), which was +9 dBm
+    // under NimBLE 1.4.x. 2.x setPower takes int8_t dBm, so pass 9 directly
+    // (2.x quantizes 9 -> ESP_PWR_LVL_P9). Do NOT pass the enum: ESP_PWR_LVL_P9
+    // is value 11 on ESP32-S3 and would round up to +12 dBm.
     NimBLEDevice::setPower(9);
     NimBLEDevice::setMTU(256);
     _client = NimBLEDevice::createClient();

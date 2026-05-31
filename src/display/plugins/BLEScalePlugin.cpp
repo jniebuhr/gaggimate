@@ -2,7 +2,6 @@
 #include "remote_scales.h"
 #include "remote_scales_plugin_registry.h"
 #include <cmath> // For isfinite()
-#include <esp_heap_caps.h>
 #include <display/core/Controller.h>
 #include <scales/acaia.h>
 #include <scales/bookoo.h>
@@ -84,18 +83,8 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     }
 
     manager->on("controller:bluetooth:connect", [this](Event const &) {
-        if (this->controller != nullptr && this->controller->getMode() != MODE_STANDBY && autoScanAllowed()) {
+        if (this->controller != nullptr && this->controller->getMode() != MODE_STANDBY) {
             ESP_LOGI("BLEScalePlugin", "Resuming scanning");
-            scan();
-            active = true;
-        }
-    });
-    manager->on("controller:wifi:connect", [this](Event const &event) {
-        // When STA finally attaches (AP mode drops), internal heap recovers —
-        // safe to start auto-scan that was held back in AP-only state.
-        if (event.getInt("AP") != 0) return;
-        if (this->controller != nullptr && this->controller->getMode() != MODE_STANDBY && autoScanAllowed()) {
-            ESP_LOGI("BLEScalePlugin", "WiFi STA up, resuming scanning");
             scan();
             active = true;
         }
@@ -115,11 +104,9 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     manager->on("controller:grind:start", [this](Event const &) { onProcessStart(); });
     manager->on("controller:mode:change", [this](Event const &event) {
         if (event.getInt("value") != MODE_STANDBY) {
-            if (autoScanAllowed()) {
-                ESP_LOGI("BLEScalePlugin", "Resuming scanning");
-                scan();
-                active = true;
-            }
+            ESP_LOGI("BLEScalePlugin", "Resuming scanning");
+            scan();
+            active = true;
         } else {
             active = false;
             disconnect();
@@ -220,30 +207,7 @@ void BLEScalePlugin::scan() const {
         ESP_LOGE("BLEScalePlugin", "Scanner not initialized, cannot start scan");
         return;
     }
-    // BT controller link-layer buffers come from internal heap. Under pressure
-    // (WiFi AP + HomeSpan + controller GATT link) starting an active scan
-    // triggers BLE_INIT malloc failures that cascade into rc:6 write errors
-    // on the controller link. Gate on a conservative floor.
-    const size_t freeInt = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
-    const size_t largestInt = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
-    ESP_LOGI("BLEScalePlugin", "scan() heap internal free=%u largest=%u", freeInt, largestInt);
-    constexpr size_t kMinInternalForScan = 40000;
-    if (freeInt < kMinInternalForScan) {
-        ESP_LOGW("BLEScalePlugin", "Deferring scan: internal heap %u < %u", freeInt, kMinInternalForScan);
-        return;
-    }
     scanner->initializeAsyncScan();
-}
-
-bool BLEScalePlugin::autoScanAllowed() const {
-    if (controller == nullptr) return false;
-    if (controller->getSettings().getSavedScale().isEmpty()) return false;
-    // WiFi AP mode keeps ~40-50 KB of LWIP/WiFi buffers in internal heap that
-    // would otherwise live in PSRAM on a custom-sdkconfig build. Pairing that
-    // with an active BLE scan starves the BT controller's link-layer mbufs and
-    // triggers BLE_INIT: Malloc failed storms. Skip auto-scan until STA.
-    if (controller->isApMode()) return false;
-    return true;
 }
 
 void BLEScalePlugin::disconnect() {
