@@ -46,7 +46,15 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
   private:
     NimBLEClient *_client = nullptr;
     NimBLEScan *_scanner = nullptr;
-    NimBLEAdvertisedDevice *_serverDevice = nullptr;
+    // Copy of the controller's address taken in onResult(). We must NOT keep the
+    // NimBLEAdvertisedDevice* itself: with setMaxResults(0) NimBLE deletes that
+    // object the moment onResult() returns (NimBLEScan erase()), so dereferencing
+    // it later in connectToServer() -- which runs on the main loop task -- is a
+    // use-after-free that reads whatever string now occupies the freed heap slot
+    // back as a bogus peer address. NimBLEAddress is a value type, so copying it
+    // while the device is still alive is safe and survives the deletion.
+    NimBLEAddress _serverAddress{};
+    bool _haveServerAddress = false;
     NimBLERemoteCharacteristic *_writeChar = nullptr;  // to server (RX_CHAR_UUID)
     NimBLERemoteCharacteristic *_notifyChar = nullptr; // from server (TX_CHAR_UUID)
     bool _readyForConnection = false;

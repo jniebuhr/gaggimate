@@ -39,7 +39,7 @@ void BleClientTransport::maintain() {
 }
 
 bool BleClientTransport::connectToServer() {
-    if (_serverDevice == nullptr)
+    if (!_haveServerAddress)
         return false;
 
     ESP_LOGI(LOG_TAG, "Connecting to advertised device");
@@ -50,7 +50,7 @@ bool BleClientTransport::connectToServer() {
             scan();
             return false;
         }
-        if (!_client->connect(NimBLEAddress(_serverDevice->getAddress()))) {
+        if (!_client->connect(_serverAddress)) {
             ESP_LOGW(LOG_TAG, "Connect failed, retrying");
             delay(500);
         }
@@ -110,7 +110,7 @@ bool BleClientTransport::connectToServer() {
 
 void BleClientTransport::disconnect() {
     _readyForConnection = false;
-    _serverDevice = nullptr;
+    _haveServerAddress = false;
     if (_client && _client->isConnected())
         _client->disconnect();
 }
@@ -143,7 +143,10 @@ void BleClientTransport::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
     if (advertisedDevice->isAdvertisingService(NimBLEUUID(gm_proto::SERVICE_UUID))) {
         ESP_LOGI(LOG_TAG, "Found controller, ready to connect");
         _scanner->stop();
-        _serverDevice = advertisedDevice;
+        // Take a value copy of the address now -- the device object is freed as
+        // soon as this callback returns (see _serverAddress note in the header).
+        _serverAddress = advertisedDevice->getAddress();
+        _haveServerAddress = true;
         _readyForConnection = true;
     }
 }
