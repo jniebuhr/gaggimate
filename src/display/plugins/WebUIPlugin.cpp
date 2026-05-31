@@ -185,29 +185,7 @@ void WebUIPlugin::loop() {
             }
         }
 
-        // Per-client backpressure: skip clients whose send queue is already
-        // backed up so that 500 ms status ticks don't pile up behind a
-        // larger in-flight response (e.g. /profiles list build) and
-        // overflow the per-client message queue. PR #710 documented this
-        // guard in its description but the actual implementation never
-        // landed — only `setCloseClientOnQueueFull(false)` did, which
-        // prevented the close-on-overflow disconnect but didn't avoid the
-        // overflow drops. This is the missing half.
-        constexpr size_t STATUS_BACKLOG_LIMIT = 8;
-        const String payload = statusDoc.as<String>();
-        for (auto &client : ws.getClients()) {
-            if (client.status() != WS_CONNECTED) {
-                continue;
-            }
-            if (client.queueLen() >= STATUS_BACKLOG_LIMIT) {
-                // Client is slow or stuck behind an in-flight large
-                // response. Skip this tick; the next one is only 500 ms
-                // away and the dashboard will catch up once the backlog
-                // drains.
-                continue;
-            }
-            client.text(payload);
-        }
+        ws.textAll(statusDoc.as<String>());
     }
     if (now > lastCleanup + CLEANUP_PERIOD) {
         lastCleanup = now;
