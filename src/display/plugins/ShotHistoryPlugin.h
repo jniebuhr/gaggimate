@@ -62,9 +62,8 @@ class ShotHistoryPlugin : public Plugin {
     File currentFile;
     ShotLogHeader header{};
     uint32_t sampleCount = 0;
-    static constexpr size_t IO_BUFFER_SIZE = 4096;
-    uint8_t *ioBuffer = nullptr; // write-coalescing buffer, allocated in PSRAM (see setup())
-    size_t ioBufferPos = 0;      // bytes used
+    uint8_t ioBuffer[4096];
+    size_t ioBufferPos = 0; // bytes used
 
     bool recording = false;
     bool extendedRecording = false;

@@ -73,15 +73,6 @@ ShotHistoryPlugin ShotHistory;
 void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     controller = c;
     pluginManager = pm;
-    if (ioBuffer == nullptr) {
-        // Prefer PSRAM for this 4 KB I/O buffer (CPU-accessed only, no DMA),
-        // keeping it off the scarce internal SRAM. Fall back to internal heap
-        // if PSRAM is unavailable.
-        ioBuffer = static_cast<uint8_t *>(heap_caps_malloc(IO_BUFFER_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
-        if (ioBuffer == nullptr) {
-            ioBuffer = static_cast<uint8_t *>(heap_caps_malloc(IO_BUFFER_SIZE, MALLOC_CAP_DEFAULT));
-        }
-    }
     if (controller->isSDCard()) {
         fs = &SD_MMC;
         ESP_LOGI("ShotHistoryPlugin", "Logging shot history to SD card");
@@ -166,8 +157,8 @@ void ShotHistoryPlugin::record() {
             }
         }
 
-        if (isFileOpen && ioBuffer != nullptr) {
-            if (ioBufferPos + sizeof(sample) > IO_BUFFER_SIZE) {
+        if (isFileOpen) {
+            if (ioBufferPos + sizeof(sample) > sizeof(ioBuffer)) {
                 flushBuffer();
             }
             memcpy(ioBuffer + ioBufferPos, &sample, sizeof(sample));
