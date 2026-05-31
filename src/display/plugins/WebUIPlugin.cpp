@@ -252,12 +252,15 @@ void WebUIPlugin::setupServer() {
     ws.onEvent(
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
             if (type == WS_EVT_CONNECT) {
-                // Drop individual messages instead of force-closing the
-                // connection when the per-client queue overflows. Status
-                // broadcasts at 500ms can back up during slow disk I/O
-                // (e.g. flaky SD reads) — losing one tick is preferable to
-                // disconnecting the user mid-action.
-                client->setCloseClientOnQueueFull(false);
+                // Close (and let the browser reconnect) a client whose send
+                // queue backs up, instead of keeping it open. With it kept open
+                // (false), a client that stalls under load — e.g. while the UI
+                // is fetching many shot files for statistics — never has its
+                // queued frames / AsyncTCP buffers reclaimed, so they accumulate
+                // in internal DRAM until the whole IP stack starves (web + ICMP
+                // die, no recovery). Reclaiming via close is the safer failure
+                // mode. (Was the v1.8.1 behaviour.)
+                client->setCloseClientOnQueueFull(true);
                 ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DISCONNECT) {
                 ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
