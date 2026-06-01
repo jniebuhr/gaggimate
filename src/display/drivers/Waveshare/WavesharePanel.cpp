@@ -879,6 +879,7 @@ bool WavesharePanel::initTouch() {
     _touchDrv->setPins(0x00, touch_irq_pin);
     result = _touchDrv->begin(Wire, CST816_SLAVE_ADDRESS, WS_BOARD_I2C_SDA, WS_BOARD_I2C_SCL);
     if (result) {
+        static_cast<TouchDrvCSTXXX *>(_touchDrv)->disableAutoSleep();
         const char *model = _touchDrv->getModelName();
         log_i("Successfully initialized %s, using %s Driver!\n", model, model);
         return true;

@@ -431,6 +431,10 @@ bool LilyGo_RGBPanel::initTouch() {
     _touchDrv->setPins(touch_reset_pin, touch_irq_pin);
     result = _touchDrv->begin(Wire, CST816_SLAVE_ADDRESS, BOARD_I2C_SDA, BOARD_I2C_SCL);
     if (result) {
+        // Keep CST816/CST820 awake: it auto-sleeps when idle and then NACKs every
+        // poll, which IDF 5.x's i2c.master driver logs at ERROR level. No-op on
+        // non-CST816 chips.
+        static_cast<TouchDrvCSTXXX *>(_touchDrv)->disableAutoSleep();
 
         _init_cmd = st7701_2_1_inches;
 
