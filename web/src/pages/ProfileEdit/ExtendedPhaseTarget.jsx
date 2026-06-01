@@ -59,12 +59,16 @@ export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
                   className='grow'
                   type='number'
                   value={target.value || 0}
-                  onChange={e =>
-                    onChange({
-                      ...target,
-                      value: parseFloat(e.target.value),
-                    })
-                  }
+                  onChange={e => {
+                    const newValue = Number.parseFloat(e.target.value)
+                    if (newValue !== target.value) {
+                      onChange({
+                        ...target,
+                        value: newValue,
+                      }
+                      )
+                    }
+                  }}
                   aria-label={`Target value in ${targetType.unit}`}
                   min='0'
                   step='0.1'
