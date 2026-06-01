@@ -95,8 +95,8 @@ class Controller {
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
                               static_cast<float>(std::min(settings.getEmptyTankDistance(), tofDistance));
-        return static_cast<int>((reversedLevel - settings.getFullTankDistance()) /
-                                static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance()) * 100.0f);
+        float range = static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance());
+        return static_cast<int>(std::min(reversedLevel / range * 100.0f, 100.0f));
     };
     int getTofDistance() const { return tofDistance; }
 
