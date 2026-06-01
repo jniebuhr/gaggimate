@@ -50,7 +50,7 @@ bool BleClientTransport::connectToServer() {
     if (!_haveServerAddress)
         return false;
 
-    ESP_LOGI(LOG_TAG, "Connecting to advertised device");
+    ESP_LOGI(LOG_TAG, "Connecting to advertised device: %s", _serverAddress.toString().c_str());
     unsigned int tries = 0;
     do {
         if (tries >= MAX_CONNECT_RETRIES) {
@@ -59,7 +59,8 @@ bool BleClientTransport::connectToServer() {
             return false;
         }
         if (!_client->connect(_serverAddress)) {
-            ESP_LOGW(LOG_TAG, "Connect failed, retrying");
+            int error = _client->getLastError();
+            ESP_LOGW(LOG_TAG, "Connect failed: %d, retrying", error);
             delay(500);
         }
         tries++;
@@ -149,12 +150,16 @@ void BleClientTransport::onResult(const NimBLEAdvertisedDevice *advertisedDevice
     if (!advertisedDevice->haveServiceUUID())
         return;
     if (advertisedDevice->isAdvertisingService(NimBLEUUID(gm_proto::SERVICE_UUID))) {
-        ESP_LOGI(LOG_TAG, "Found controller, ready to connect");
-        _scanner->stop();
-        // Take a value copy of the address now -- the device object is freed as
-        // soon as this callback returns (see _serverAddress note in the header).
+        // Copy everything we need off advertisedDevice BEFORE stopping the scan.
+        // With setMaxResults(0), NimBLEScan::stop() calls clearResults(), which
+        // deletes the very advertisedDevice handed to this callback -- so reading
+        // it after stop() is a use-after-free that returns a garbage peer address
+        // (the connect then fails with BLE_HS_EINVAL).
         _serverAddress = advertisedDevice->getAddress();
         _haveServerAddress = true;
+        ESP_LOGI(LOG_TAG, "Found controller at address %s with name %s, ready to connect",
+                 _serverAddress.toString().c_str(), advertisedDevice->getName().c_str());
+        _scanner->stop();
         _readyForConnection = true;
     }
 }
