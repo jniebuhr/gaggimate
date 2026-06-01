@@ -3,7 +3,12 @@
 #include <algorithm>
 #include <utility>
 
-Settings::Settings() {
+Settings::Settings() = default;
+
+void Settings::load() {
+    if (taskHandle != nullptr) {
+        return; // already loaded — guard against re-entry spawning a second save task
+    }
     preferences.begin(PREFERENCES_KEY, true);
     startupMode = preferences.getInt("sm", MODE_STANDBY);
     targetSteamTemp = preferences.getInt("ts", 145);
@@ -114,10 +119,6 @@ Settings::Settings() {
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
 }
 
-void Settings::batchUpdate(const SettingsCallback &callback) {
-    callback(this);
-    save();
-}
 
 void Settings::save(bool noDelay) {
     if (noDelay) {

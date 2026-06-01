@@ -1,0 +1,80 @@
+# Shared sdkconfig base for all dual-framework envs.
+# Applied as the first entry in SDKCONFIG_DEFAULTS; env-specific files follow
+# and override only what differs (MAX_CONNECTIONS, LWIP, nano-newlib).
+#
+# Workflow: pioarduino caches a merged sdkconfig.<env> at project root and
+# reuses it on subsequent builds. Edits to any .defaults file don't propagate
+# until that per-env file is regenerated. After editing, run:
+#   pio run -e <env> -t fullclean
+# else the build ignores your change and you will chase ghosts.
+
+CONFIG_IDF_TARGET="esp32s3"
+
+# PSRAM config lives in sdkconfig.gaggimate.defaults — only the display-class
+# boards (LilyGo-T-RGB, seeed_xiao_esp32s3) have PSRAM. The Gaggimate-Controller
+# board has none; enabling SPIRAM here would abort boot on "PSRAM chip is not
+# connected".
+
+# --- NimBLE: all roles (NanoPbComm BLE transport compiles client+server code) ---
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+# NimBLE host PSRAM routing lives in sdkconfig.gaggimate.defaults.
+CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y
+CONFIG_BT_NIMBLE_ROLE_CENTRAL=y
+CONFIG_BT_NIMBLE_ROLE_OBSERVER=y
+CONFIG_BT_NIMBLE_ROLE_BROADCASTER=y
+CONFIG_BT_CTRL_RUN_IN_FLASH_ONLY=y
+
+# Must explicitly unset template's default=INFO for Kconfig choice to honour WARN.
+# CONFIG_BT_NIMBLE_LOG_LEVEL_INFO is not set
+CONFIG_BT_NIMBLE_LOG_LEVEL_WARNING=y
+# esp-nimble-cpp C++ wrapper log level. 0=DEBUG 1=INFO 2=WARNING 3=ERROR.
+CONFIG_NIMBLE_CPP_LOG_LEVEL=2
+
+# --- mbedTLS ---
+# MBEDTLS_EXTERNAL_MEM_ALLOC lives in sdkconfig.gaggimate.defaults (needs PSRAM).
+CONFIG_MBEDTLS_HARDWARE_AES=y
+CONFIG_MBEDTLS_HARDWARE_MPI=y
+CONFIG_MBEDTLS_HARDWARE_SHA=y
+# Arduino-as-component always compiles ssl_client.cpp; it unconditionally
+# references esp_crt_bundle_attach and gates all code behind PSK modes.
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_CMN=y
+CONFIG_MBEDTLS_PSK_MODES=y
+CONFIG_MBEDTLS_KEY_EXCHANGE_PSK=y
+CONFIG_MBEDTLS_KEY_EXCHANGE_DHE_PSK=y
+CONFIG_MBEDTLS_KEY_EXCHANGE_ECDHE_PSK=y
+CONFIG_MBEDTLS_KEY_EXCHANGE_RSA_PSK=y
+
+# --- Task WDT ---
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
+
+# --- FreeRTOS ---
+CONFIG_FREERTOS_HZ=1000
+CONFIG_FREERTOS_PLACE_FUNCTIONS_INTO_FLASH=y
+CONFIG_RINGBUF_PLACE_FUNCTIONS_INTO_FLASH=y
+
+# --- Stacks ---
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# --- Logging ---
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_LOG_MAXIMUM_LEVEL_VERBOSE=y
+
+# --- Arduino (as-component) trims ---
+# SELECTIVE_COMPILATION=y + per-lib =n gates out libs that break IDF 5.5+GCC 14
+# or add unused flash. ESP_HostedOTA has no SELECTIVE Kconfig guard, but its
+# entire body is wrapped in #if CONFIG_ESP_WIFI_REMOTE_ENABLED (esp32p4-only),
+# so it compiles to a zero-symbol stub on esp32s3 — no exclusion needed.
+CONFIG_ARDUINO_SELECTIVE_COMPILATION=y
+CONFIG_ARDUINO_SELECTIVE_ESP_SR=n
+CONFIG_ARDUINO_SELECTIVE_Zigbee=n
+CONFIG_ARDUINO_SELECTIVE_BluetoothSerial=n
+CONFIG_ARDUINO_SELECTIVE_Matter=n
+CONFIG_ARDUINO_SELECTIVE_Insights=n
+CONFIG_ARDUINO_SELECTIVE_RainMaker=n
+CONFIG_ARDUINO_SELECTIVE_OpenThread=n
+CONFIG_ARDUINO_SELECTIVE_SimpleBLE=n
+# Arduino's cores/esp32/main.cpp only defines app_main when =y; src/ has no app_main.
+CONFIG_AUTOSTART_ARDUINO=y

@@ -2,7 +2,11 @@
 
 void BleClientTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
-    NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+    // +9 dBm — preserves master's setPower(ESP_PWR_LVL_P9), which was +9 dBm
+    // under NimBLE 1.4.x. 2.x setPower takes int8_t dBm, so pass 9 directly
+    // (2.x quantizes 9 -> ESP_PWR_LVL_P9). Do NOT pass the enum: ESP_PWR_LVL_P9
+    // is value 11 on ESP32-S3 and would round up to +12 dBm.
+    NimBLEDevice::setPower(9);
     NimBLEDevice::setMTU(256);
     _client = NimBLEDevice::createClient();
     _scanner = NimBLEDevice::getScan();
@@ -16,8 +20,12 @@ void BleClientTransport::init(const String &deviceName) {
 
 void BleClientTransport::scan() {
     _readyForConnection = false;
-    _scanner->clearDuplicateCache();
-    _scanner->setAdvertisedDeviceCallbacks(this, true);
+    _scanner->clearResults(); // esp-nimble-cpp 2.x has no clearDuplicateCache(); results vector is unused (setMaxResults(0))
+    // 1.x setAdvertisedDeviceCallbacks(cb, wantDuplicates=true) -> 2.x
+    // setScanCallbacks(cb, wantDuplicates). wantDuplicates=true keeps duplicate
+    // adverts flowing (internally setDuplicateFilter(false)) — same as the explicit
+    // setDuplicateFilter(false) below, preserving the pre-2.x rediscovery behaviour.
+    _scanner->setScanCallbacks(this, true);
     // BLE and Wi-Fi share the single 2.4 GHz radio. A low-duty passive scan
     // (1.25% duty, listen-only) keeps Wi-Fi RTT responsive; discovery is a touch
     // slower but still reliable. (Carried over from the previous transport.)
@@ -26,7 +34,7 @@ void BleClientTransport::scan() {
     _scanner->setMaxResults(0);
     _scanner->setDuplicateFilter(false);
     _scanner->setActiveScan(false);
-    _scanner->start(0, nullptr, false); // 0 = continuous
+    _scanner->start(0, false, false); // 2.x: start(duration=0 continuous, isContinue, restart)
 }
 
 void BleClientTransport::maintain() {
@@ -137,7 +145,7 @@ bool BleClientTransport::send(const uint8_t *data, size_t length) {
 
 bool BleClientTransport::isConnected() const { return _client != nullptr && _client->isConnected(); }
 
-void BleClientTransport::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
+void BleClientTransport::onResult(const NimBLEAdvertisedDevice *advertisedDevice) {
     if (!advertisedDevice->haveServiceUUID())
         return;
     if (advertisedDevice->isAdvertisingService(NimBLEUUID(gm_proto::SERVICE_UUID))) {
@@ -151,8 +159,7 @@ void BleClientTransport::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
     }
 }
 
-void BleClientTransport::onDisconnect(NimBLEClient *client) {
-    (void)client;
+void BleClientTransport::onDisconnect(NimBLEClient *, int) {
     ESP_LOGI(LOG_TAG, "Disconnected, will rescan");
     _writeChar = nullptr;
     _notifyChar = nullptr;
@@ -161,7 +168,6 @@ void BleClientTransport::onDisconnect(NimBLEClient *client) {
     scan();
 }
 
-void BleClientTransport::notifyCallback(NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool) {
-    (void)characteristic;
+void BleClientTransport::notifyCallback(NimBLERemoteCharacteristic *, uint8_t *data, size_t length, bool) {
     emitData(data, length);
 }

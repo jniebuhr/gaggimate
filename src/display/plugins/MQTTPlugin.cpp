@@ -5,7 +5,7 @@
 #include <display/util/PsramAllocator.h>
 #include <esp_log.h>
 
-const String LOG_TAG = F("MQTTPlugin");
+static constexpr const char *LOG_TAG = "MQTTPlugin";
 
 bool MQTTPlugin::connect(Controller *controller) {
     const Settings settings = controller->getSettings();
@@ -17,16 +17,16 @@ bool MQTTPlugin::connect(Controller *controller) {
 
     client.begin(ip.c_str(), haPort, net);
     client.setKeepAlive(10);
-    ESP_LOGI(LOG_TAG.c_str(), "Connecting to %s:%d", ip.c_str(), haPort);
+    ESP_LOGI(LOG_TAG, "Connecting to %s:%d", ip.c_str(), haPort);
     for (int i = 0; i < MQTT_CONNECTION_RETRIES; i++) {
-        ESP_LOGD(LOG_TAG.c_str(), "Attempt (%d/%d)", i + 1, MQTT_CONNECTION_RETRIES);
+        ESP_LOGD(LOG_TAG, "Attempt (%d/%d)", i + 1, MQTT_CONNECTION_RETRIES);
         if (client.connect(clientId.c_str(), haUser.c_str(), haPassword.c_str())) {
-            ESP_LOGI(LOG_TAG.c_str(), "Successfully connected");
+            ESP_LOGI(LOG_TAG, "Successfully connected");
             return true;
         }
         delay(MQTT_CONNECTION_DELAY);
     }
-    ESP_LOGW(LOG_TAG.c_str(), "Connection failed");
+    ESP_LOGW(LOG_TAG, "Connection failed");
     return false;
 }
 
@@ -104,7 +104,7 @@ void MQTTPlugin::publishDiscovery(Controller *controller) {
     String payloadStr;
     serializeJson(payload, payloadStr);
 
-    ESP_LOGD(LOG_TAG.c_str(), "Publishing discovery %s: %s", publishTopic, payloadStr.c_str());
+    ESP_LOGD(LOG_TAG, "Publishing discovery %s: %s", publishTopic, payloadStr.c_str());
     client.publish(publishTopic, payloadStr);
 }
 
@@ -117,7 +117,7 @@ void MQTTPlugin::publish(const std::string &topic, const std::string &message) {
     char publishTopic[80];
     snprintf(publishTopic, sizeof(publishTopic), "gaggimate/%s/%s", cmac, topic.c_str());
 
-    ESP_LOGD(LOG_TAG.c_str(), "Publishing %s: %s", publishTopic, message.c_str());
+    ESP_LOGD(LOG_TAG, "Publishing %s: %s", publishTopic, message.c_str());
     client.publish(publishTopic, message.c_str());
 }
 void MQTTPlugin::publishBrewState(const char *state) {

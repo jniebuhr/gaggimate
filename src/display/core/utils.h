@@ -2,7 +2,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 #include <Arduino.h>
+#include <functional>
 #include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 template <typename T, typename... Args> std::unique_ptr<T> make_unique(Args &&...args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
@@ -23,7 +27,24 @@ extern uint8_t randomByte();
 extern String generateShortID(uint8_t length = 10);
 extern std::vector<String> explode(const String &input, char delim);
 extern String implode(const std::vector<String> &strings, String delim);
+// Runtime heap observability (60 s sampler, onFailedAlloc, panic hook) lives
+// in src/display/core/MemoryMonitor.* and is always compiled.
+//
+// The helpers below are debug-only boot/trace profilers, compiled to no-ops
+// unless the build defines -DGAGGIMATE_HEAP_PROFILE=1 (see platformio.ini).
 extern void measure_heap(const String &label, std::function<void()> callback);
 extern bool is_task_healthy(const eTaskState task_state);
+
+// Per-subsystem heap checkpoint. Logs current internal + PSRAM free/largest/
+// fragmentation, plus delta since the previous call. No-op unless
+// GAGGIMATE_HEAP_PROFILE=1.
+extern void heap_checkpoint(const char *label);
+
+// Reset the heap_checkpoint() baseline. No-op unless GAGGIMATE_HEAP_PROFILE=1.
+extern void heap_checkpoint_reset();
+
+// Heavyweight dump of heap_caps_print_heap_info() for both regions. No-op
+// unless GAGGIMATE_HEAP_PROFILE=1.
+extern void heap_dump(const char *label);
 
 #endif // UTILS_H

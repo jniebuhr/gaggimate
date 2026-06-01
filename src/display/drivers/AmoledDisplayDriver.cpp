@@ -60,9 +60,23 @@ bool AmoledDisplayDriver::supportsSDCard() { return true; }
 bool AmoledDisplayDriver::installSDCard() { return panel->installSD(); }
 
 bool AmoledDisplayDriver::testHw(AmoledHwConfig hwConfig) {
-    // No Wire on these pins, definitely wrong board
-    if (!Wire.begin(hwConfig.i2c_sda, hwConfig.i2c_scl))
+    // Cold-boot peripherals need a moment; also recover from any prior
+    // Wire.end()/begin() that left hal-i2c-ng in ESP_ERR_INVALID_STATE.
+    Wire.end();
+    delay(20);
+
+    // Assert board power rail (shared by LCD + touch on LilyGo T-Display-S3
+    // AMOLED) before probing I2C; touch chip won't ACK unpowered on cold boot.
+    if (hwConfig.lcd_en != -1) {
+        pinMode(hwConfig.lcd_en, OUTPUT);
+        digitalWrite(hwConfig.lcd_en, HIGH);
+        delay(50);
+    }
+
+    if (!Wire.begin(hwConfig.i2c_sda, hwConfig.i2c_scl)) {
         return false;
+    }
+    delay(20);
 
     // Required: PCF8563 (RTC) when present, and a touch sensor
     // Touch sensor: Either CST92XX (1.75 inch) or FT3168 (1.43 inch)

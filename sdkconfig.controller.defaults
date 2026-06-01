@@ -1,0 +1,20 @@
+# Controller-env sdkconfig overrides (layered on top of sdkconfig.common.defaults).
+# Controller is BLE peripheral-only (display is the central). No WiFi network
+# stacks, no HomeKit, no WebServer — no LWIP tuning or HKDF needed.
+
+# 1 connection: single display consumer.
+CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1
+
+# 2 BLE link-layer activity slots: 1 peripheral connection + 1 advertising set.
+# Common base leaves the default (6), sized for the display's central + peripheral
+# workload. Narrowing it here reclaims ~1 KB static BSS.
+CONFIG_BT_CTRL_BLE_MAX_ACT=2
+
+# Nano newlib safe here: controller has no GNU %m scanf users.
+CONFIG_LIBC_NEWLIB_NANO_FORMAT=y
+
+# Re-enable idle-task watchdog: controller has no LVGL/WebServer pinning idle,
+# so a genuine idle-starvation loop should be caught. Display env keeps it off
+# inherited from common.defaults.
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=y
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=y

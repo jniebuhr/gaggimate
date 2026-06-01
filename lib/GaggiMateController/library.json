@@ -17,7 +17,6 @@
     "ble_ota_dfu": "file://lib/ble_ota_dfu",
     "NanoPbComm": "file://lib/NanoPbComm",
     "nanopb/Nanopb": "^0.4.9",
-    "h2zero/NimBLE-Arduino": "^1.4.0",
     "robtillaart/MAX31855": "^0.6.1",
     "bblanchon/ArduinoJson": "^7.2.1",
     "PSM": "https://github.com/gaggimate/PSM.Library.git",

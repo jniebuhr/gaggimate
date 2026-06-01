@@ -3,8 +3,10 @@
 
 class TemperatureSensor {
   public:
-    virtual float read();
-    virtual bool isErrorState();
+    virtual ~TemperatureSensor() = default;
+
+    virtual float read() = 0;
+    virtual bool isErrorState() = 0;
 };
 
 #endif // TEMPERATURESENSOR_H

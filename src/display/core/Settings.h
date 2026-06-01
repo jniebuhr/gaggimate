@@ -43,14 +43,21 @@ struct AutoWakeupSchedule {
     }
 };
 
-class Settings;
-using SettingsCallback = std::function<void(Settings *)>;
-
 class Settings {
   public:
     Settings();
 
-    void batchUpdate(const SettingsCallback &callback);
+    // Open NVS + populate fields + start the async-save task.
+    // Split from the ctor so we don't touch NVS during C++ global init
+    // (Controller is a global; under IDF 5.5 the NVS driver is only
+    // guaranteed ready once Arduino's init() has run).
+    void load();
+
+    template <typename F>
+    void batchUpdate(const F &callback) {
+        callback(this);
+        save();
+    }
     void save(bool noDelay = false);
 
     // Getters and setters
@@ -248,8 +255,8 @@ class Settings {
     std::vector<String> buttonBehavior;
 
     void doSave();
-    xTaskHandle taskHandle;
-    static void loopTask(void *arg);
+    TaskHandle_t taskHandle = nullptr;
+    [[noreturn]] static void loopTask(void *arg);
 };
 
 #endif // SETTINGS_H

@@ -38,10 +38,10 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     String _info;
     BLE_OTA_DFU _otaDfu;
 
-    void onConnect(NimBLEServer *server) override;
-    void onDisconnect(NimBLEServer *server) override;
-    void onWrite(NimBLECharacteristic *characteristic) override;
-    void onSubscribe(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc, uint16_t subValue) override;
+    void onConnect(NimBLEServer *server, NimBLEConnInfo &connInfo) override;
+    void onDisconnect(NimBLEServer *server, NimBLEConnInfo &connInfo, int reason) override;
+    void onWrite(NimBLECharacteristic *characteristic, NimBLEConnInfo &connInfo) override;
+    void onSubscribe(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo, uint16_t subValue) override;
 
     static constexpr const char *LOG_TAG = "BleServerTransport";
 };

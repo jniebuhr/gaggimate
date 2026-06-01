@@ -5,7 +5,6 @@
 #include "driver/spi_master.h"
 #include "utilities.h"
 #include <display/drivers/common/RGBPanelInit.h>
-#include <esp_adc_cal.h>
 
 static void TouchDrvDigitalWrite(uint32_t gpio, uint8_t level);
 static int TouchDrvDigitalRead(uint32_t gpio);
@@ -50,8 +49,7 @@ bool WavesharePanel::begin(WS_RGBPanel_Color_Order order) {
 
     _order = order;
 
-    ledcSetup(WS_PWM_CHANNEL, WS_PWM_FREQ, WS_PWM_RESOLUTION);
-    ledcAttachPin(WS_BOARD_TFT_BL, WS_PWM_CHANNEL);
+    ledcAttach(WS_BOARD_TFT_BL, WS_PWM_FREQ, WS_PWM_RESOLUTION);
 
     initExtension();
     Set_EXIO(EXIO_PIN8, Low);
@@ -112,7 +110,7 @@ void WavesharePanel::uninstallSD() {
 void WavesharePanel::setBrightness(uint8_t value) {
     value = constrain(value, 0, WS_BACKLIGHT_MAX);
     _brightness = value;
-    ledcWrite(WS_PWM_CHANNEL, _brightness);
+    ledcWrite(WS_BOARD_TFT_BL, _brightness);
 }
 
 uint8_t WavesharePanel::getBrightness() const { return _brightness; }
@@ -202,7 +200,7 @@ void WavesharePanel::sleep() {
     }
 
     if (_panelDrv) {
-        esp_lcd_panel_disp_off(_panelDrv, true);
+        esp_lcd_panel_disp_on_off(_panelDrv, false);
         esp_lcd_panel_del(_panelDrv);
     }
 
@@ -253,22 +251,13 @@ bool WavesharePanel::isPressed() const {
 }
 
 uint16_t WavesharePanel::getBattVoltage() {
-    esp_adc_cal_characteristics_t adc_chars;
-    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
-
     const int number_of_samples = 20;
     uint32_t sum = 0;
-    uint16_t raw_buffer[number_of_samples] = {0};
     for (int i = 0; i < number_of_samples; i++) {
-        raw_buffer[i] = analogRead(WS_BOARD_ADC_DET);
+        sum += analogReadMilliVolts(WS_BOARD_ADC_DET);
         delay(2);
     }
-    for (int i = 0; i < number_of_samples; i++) {
-        sum += raw_buffer[i];
-    }
-    sum = sum / number_of_samples;
-
-    return esp_adc_cal_raw_to_voltage(sum, &adc_chars) * 2;
+    return (sum / number_of_samples) * 2;
 }
 
 void WavesharePanel::initBUS() {
@@ -845,6 +834,7 @@ void WavesharePanel::initBUS() {
         .vsync_gpio_num = WS_BOARD_TFT_VSYNC,
         .de_gpio_num = WS_BOARD_TFT_DE,
         .pclk_gpio_num = WS_BOARD_TFT_PCLK,
+        .disp_gpio_num = GPIO_NUM_NC,
         .data_gpio_nums =
             {
                 ESP_PANEL_LCD_PIN_NUM_RGB_DATA0,
@@ -864,9 +854,6 @@ void WavesharePanel::initBUS() {
                 ESP_PANEL_LCD_PIN_NUM_RGB_DATA14,
                 ESP_PANEL_LCD_PIN_NUM_RGB_DATA15,
             },
-        .disp_gpio_num = GPIO_NUM_NC,
-        .on_frame_trans_done = NULL,
-        .user_ctx = NULL,
         .flags =
             {
                 .fb_in_psram = 1, // allocate frame buffer in PSRAM

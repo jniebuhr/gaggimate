@@ -1,0 +1,56 @@
+# Display-env sdkconfig overrides (layered on top of sdkconfig.common.defaults).
+# Routes NimBLE host + WiFi/LWIP + BSS to PSRAM and keeps 16 KB internal
+# reserved for DMA-bound callers. Avoids BLE_INIT malloc storms under the
+# combined pressure of WiFi AP + HomeSpan + BLE GATT links on ESP32-S3.
+
+# Flash mode/freq/size intentionally omitted — boards are heterogeneous
+# (16 MB LilyGo, 8 MB seeed xiao). PlatformIO sets these from board.json.
+
+# --- PSRAM (octal 80MHz) — display-class boards only ---
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_TYPE_AUTO=y
+CONFIG_SPIRAM_BOOT_INIT=y
+CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=512
+CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=16384
+
+# Route NimBLE host + mbedTLS allocations to PSRAM (reclaims ~40 KB internal).
+CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_INTERNAL=n
+CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL=y
+CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC=y
+
+# 4 connections: display acts as central for BLE scales + peripheral for HomeKit.
+CONFIG_BT_NIMBLE_MAX_CONNECTIONS=4
+
+# Bump host task stack from 4096: continuous scale scanning drives the NimBLE
+# host callback context hot. 4 KB runs close to the high-water mark during
+# scan-complete bursts.
+CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE=5120
+
+# HKDF used by HomeSpan for HomeKit pairing key derivation.
+CONFIG_MBEDTLS_HKDF_C=y
+
+# --- LWIP (socket tuning borrowed from ESPHome PR #10647) ---
+CONFIG_LWIP_TCPIP_CORE_LOCKING=y
+CONFIG_LWIP_CHECK_THREAD_SAFETY=y
+
+# --- IPv6 ---
+CONFIG_LWIP_IPV6_AUTOCONFIG=y
+CONFIG_LWIP_IPV6_NUM_ADDRESSES=6
+
+# --- Nano newlib ---
+# Disabled: HomeSpan 2.1.7 uses GNU %m scanf in Span::configureNetwork() —
+# nano-newlib drops it, leaving `d` uninitialised and crashing on strlen(d).
+# Full newlib costs ~15-25 KB flash.
+# NOTE: IDF 5.5 renamed NEWLIB_NANO_FORMAT → LIBC_NEWLIB_NANO_FORMAT.
+CONFIG_LIBC_NEWLIB_NANO_FORMAT=n
+
+# --- C++ exceptions ---
+# esp-arduino-ble-scales' RemoteScales uses try/catch (e.g. the noexcept dtor
+# wraps clientCleanup()). IDF defaults to -fno-exceptions; arduino-esp32 built
+# with exceptions on, so the display class enables them here. Controller env
+# does not link the scales lib and stays -fno-exceptions.
+CONFIG_COMPILER_CXX_EXCEPTIONS=y
