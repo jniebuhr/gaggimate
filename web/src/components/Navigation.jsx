@@ -145,9 +145,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
               className={`align-center flex h-12 flex-row items-center justify-center gap-2 ${collapsed ? 'w-12' : 'w-full'}`}
             >
               <GmLogoIcon width={30} height={30} />
-              {collapsed ? null : (
-                <img src="/logo.svg" alt="GaggiMate" className="w-50" />
-              )}
+              {collapsed ? null : <img src='/logo.svg' alt='GaggiMate' className='w-50' />}
             </div>
           </div>
           {NAVIGATION_SECTIONS.map(section => (

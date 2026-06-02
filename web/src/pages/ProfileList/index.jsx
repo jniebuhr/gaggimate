@@ -19,7 +19,6 @@ import {
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
-import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
@@ -37,7 +36,8 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
-import { ConfirmButton } from '../../components/ConfirmButton.jsx';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
@@ -64,6 +64,25 @@ const PhaseLabels = {
 
 const connected = computed(() => machine.value.connected);
 
+/**
+ * Renders a single profile card with its chart, stats, and action dropdown.
+ *
+ * @param {Object} props - The component props.
+ * @param {Object} props.data - The profile data object.
+ * @param {Function} props.onDelete - Callback when the profile is deleted.
+ * @param {Function} props.onSelect - Callback when the profile is selected.
+ * @param {Function} props.onFavorite - Callback when the profile is favorited.
+ * @param {Function} props.onUnfavorite - Callback when the profile is unfavorited.
+ * @param {Function} props.onDuplicate - Callback when the profile is duplicated.
+ * @param {boolean} props.favoriteDisabled - Whether the favorite action is disabled.
+ * @param {boolean} props.unfavoriteDisabled - Whether the unfavorite action is disabled.
+ * @param {boolean} props.disabledDrag - Whether drag-and-drop is disabled.
+ * @param {boolean} props.isDragging - Whether this specific card is currently being dragged.
+ * @param {Function} props.onMoveTop - Callback to move the profile to the top.
+ * @param {Function} props.onMoveBottom - Callback to move the profile to the bottom.
+ * @param {boolean} props.isFirst - Whether this card is the first in the list.
+ * @param {boolean} props.isLast - Whether this card is the last in the list.
+ */
 function ProfileCard({
   data,
   onDelete,
@@ -82,6 +101,24 @@ function ProfileCard({
 }) {
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
   const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
+  const [cardDropdownOpen, setCardDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!cardDropdownOpen) return;
+    const handleOutsideClick = event => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setCardDropdownOpen(false);
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleOutsideClick);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [cardDropdownOpen]);
 
   const handleMoveTop = useCallback(() => {
     setTooltipsDisabled(true);
@@ -129,71 +166,10 @@ function ProfileCard({
     ? data.phases.reduce((sum, p) => sum + (Number.isFinite(p?.duration) ? p.duration : 0), 0)
     : 0;
 
-  // Mobile actions menu — state-driven (was using the Popover API which isn't
-  // supported in Safari <17 / Firefox <125, leaving the menu broken on most
-  // iPads and many phones).
-  const kebabRef = useRef(null);
-  const popoverRef = useRef(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const positionPopover = useCallback(() => {
-    const btn = kebabRef.current;
-    const pop = popoverRef.current;
-    if (!btn || !pop) return;
-    const rect = btn.getBoundingClientRect();
-    const w = pop.offsetWidth || 224; // ~w-56
-    const h = pop.offsetHeight || 0;
-    const gap = 6;
-    let top = rect.bottom + gap;
-    let left = rect.right - w; // right-aligned to the button
-    const margin = 8;
-    if (left < margin) left = margin;
-    const maxLeft = window.innerWidth - w - margin;
-    if (left > maxLeft) left = maxLeft;
-    const maxTop = window.innerHeight - h - margin;
-    if (top > maxTop) top = Math.max(margin, rect.top - h - gap);
-    pop.style.position = 'fixed';
-    pop.style.inset = 'auto auto auto auto';
-    pop.style.left = `${left}px`;
-    pop.style.top = `${top}px`;
+  // Simple handler to close dropdown on item click
+  const closeDropdownMenu = useCallback(() => {
+    setCardDropdownOpen(false);
   }, []);
-
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
-
-  const toggleMenu = useCallback(e => {
-    e?.preventDefault?.();
-    setMenuOpen(v => !v);
-  }, []);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    // Position now (DOM is mounted because the conditional render put the div
-    // in the tree this tick) and then re-position on resize/scroll.
-    positionPopover();
-    const onResize = () => positionPopover();
-    const onDocClick = e => {
-      const pop = popoverRef.current;
-      const btn = kebabRef.current;
-      if (!pop || !btn) return;
-      if (pop.contains(e.target) || btn.contains(e.target)) return;
-      setMenuOpen(false);
-    };
-    const onKey = e => {
-      if (e.key === 'Escape') setMenuOpen(false);
-    };
-    window.addEventListener('resize', onResize);
-    window.addEventListener('scroll', onResize, true);
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('touchstart', onDocClick, { passive: true });
-    document.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('scroll', onResize, true);
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('touchstart', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [menuOpen, positionPopover]);
 
   return (
     <Card sm={12} role='listitem' className='profile-card-container mb-2'>
@@ -202,7 +178,7 @@ function ProfileCard({
         role='group'
         aria-labelledby={`profile-${data.id}-title`}
       >
-        <div className='flex flex-grow flex-col overflow-hidden'>
+        <div className='flex min-w-0 flex-grow flex-col'>
           <div className='mx-2 flex flex-row items-center gap-2 align-middle'>
             <div className='flex min-w-0 flex-grow flex-row items-center gap-4'>
               {/* CheckBox */}
@@ -251,125 +227,107 @@ function ProfileCard({
                 role='group'
                 aria-label={`Actions for ${data.label} profile`}
               >
-                {/* Mobile: Popover actions menu */}
-                <div>
+                {/* Mobile: DaisyUI dropdown actions menu */}
+                <div
+                  className={`action-dropdown relative sm:hidden ${cardDropdownOpen ? 'action-dropdown-open' : ''}`}
+                  ref={dropdownRef}
+                >
                   <button
-                    ref={kebabRef}
-                    onClick={toggleMenu}
-                    className='btn btn-sm btn-ghost sm:hidden'
+                    onClick={() => setCardDropdownOpen(open => !open)}
+                    className='btn btn-sm btn-ghost btn-circle'
                     aria-label={`Open actions menu for ${data.label} profile`}
-                    aria-haspopup='menu'
-                    aria-expanded={menuOpen}
-                    aria-controls={`profile-${data.id}-menu`}
+                    aria-expanded={cardDropdownOpen}
                   >
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </button>
-                  {menuOpen && (
-                    <div
-                      id={`profile-${data.id}-menu`}
-                      ref={popoverRef}
-                      role='menu'
-                      className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
-                      onKeyDown={e => {
-                        if (e.key === 'Escape') closeMenu();
-                      }}
-                    >
-                      <ul className='menu' role='none'>
-                        <li role='none'>
-                          <button
-                            role='menuitem'
-                            onClick={() => {
-                              onFavoriteToggle();
-                              closeMenu();
-                            }}
-                            disabled={favoriteToggleDisabled}
-                            className={`justify-start ${favoriteToggleClass}`}
-                            aria-label={
-                              data.favorite
-                                ? `Remove ${data.label} from favorites`
-                                : `Add ${data.label} to favorites`
-                            }
-                            aria-pressed={data.favorite}
-                          >
-                            <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                            <span>{data.favorite ? 'Unfavorite' : 'Favorite'}</span>
-                          </button>
-                        </li>
-                        <li role='none'>
-                          <a
-                            role='menuitem'
-                            href={`/profiles/${data.id}`}
-                            onClick={closeMenu}
-                            aria-label={`Edit ${data.label} profile`}
-                          >
-                            <FontAwesomeIcon icon={faPen} />
-                            <span>Edit</span>
-                          </a>
-                        </li>
-                        <li role='none'>
-                          <a
-                            role='menuitem'
-                            href={statsHref}
-                            onClick={closeMenu}
-                            className='text-success justify-start'
-                            aria-label={`View statistics for ${data.label} profile`}
-                          >
-                            <FontAwesomeIcon icon={faChartSimple} />
-                            <span>Statistics</span>
-                          </a>
-                        </li>
-                        <li role='none'>
-                          <button
-                            role='menuitem'
-                            onClick={() => {
-                              onDownload();
-                              closeMenu();
-                            }}
-                            className='text-primary justify-start'
-                            aria-label={`Export ${data.label} profile`}
-                          >
-                            <FontAwesomeIcon icon={faFileExport} />
-                            <span>Export</span>
-                          </button>
-                        </li>
-                        <li role='none'>
-                          <button
-                            role='menuitem'
-                            onClick={() => {
-                              onDuplicate(data.id);
-                              closeMenu();
-                            }}
-                            className='text-success justify-start'
-                            aria-label={`Duplicate ${data.label} profile`}
-                          >
-                            <FontAwesomeIcon icon={faCopy} />
-                            <span>Duplicate</span>
-                          </button>
-                        </li>
-                        <li role='none'>
-                          <button
-                            role='menuitem'
-                            onClick={() => {
-                              confirmOrDelete(() => {
-                                onDelete(data.id);
-                                closeMenu();
-                              });
-                            }}
-                            className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
-                            aria-label={
-                              confirmDelete
-                                ? `Confirm deletion of ${data.label} profile`
-                                : `Delete ${data.label} profile`
-                            }
-                            title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
-                          >
-                            <FontAwesomeIcon icon={faTrashCan} />
-                            <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  )}
+                  <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-xl'>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onFavoriteToggle();
+                          closeDropdownMenu();
+                        }}
+                        disabled={favoriteToggleDisabled}
+                        className={`justify-start ${favoriteToggleClass}`}
+                        aria-label={
+                          data.favorite
+                            ? `Remove ${data.label} from favorites`
+                            : `Add ${data.label} to favorites`
+                        }
+                        aria-pressed={data.favorite}
+                      >
+                        <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                        <span>{data.favorite ? 'Unfavorite' : 'Favorite'}</span>
+                      </button>
+                    </li>
+                    <li>
+                      <a
+                        href={`/profiles/${data.id}`}
+                        onClick={closeDropdownMenu}
+                        aria-label={`Edit ${data.label} profile`}
+                      >
+                        <FontAwesomeIcon icon={faPen} />
+                        <span>Edit</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href={statsHref}
+                        onClick={closeDropdownMenu}
+                        className='text-success justify-start'
+                        aria-label={`View statistics for ${data.label} profile`}
+                      >
+                        <FontAwesomeIcon icon={faChartSimple} />
+                        <span>Statistics</span>
+                      </a>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onDownload();
+                          closeDropdownMenu();
+                        }}
+                        className='text-primary justify-start'
+                        aria-label={`Export ${data.label} profile`}
+                      >
+                        <FontAwesomeIcon icon={faFileExport} />
+                        <span>Export</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onDuplicate(data.id);
+                          closeDropdownMenu();
+                        }}
+                        className='text-success justify-start'
+                        aria-label={`Duplicate ${data.label} profile`}
+                      >
+                        <FontAwesomeIcon icon={faCopy} />
+                        <span>Duplicate</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          confirmOrDelete(() => {
+                            onDelete(data.id);
+                            closeDropdownMenu();
+                          });
+                        }}
+                        className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
+                        aria-label={
+                          confirmDelete
+                            ? `Confirm deletion of ${data.label} profile`
+                            : `Delete ${data.label} profile`
+                        }
+                        title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
+                      >
+                        <FontAwesomeIcon icon={faTrashCan} />
+                        <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
+                      </button>
+                    </li>
+                  </ul>
                 </div>
 
                 {/* Desktop: inline actions */}
@@ -576,6 +534,12 @@ function SimpleStep(props) {
   );
 }
 
+/**
+ * The main Profile List page component.
+ * Displays a sortable list of profiles with mobile search and header actions.
+ *
+ * @returns {JSX.Element} The rendered Profile List component.
+ */
 export function ProfileList() {
   const apiService = useContext(ApiServiceContext);
   const [profiles, setProfiles] = useState([]);
@@ -584,6 +548,67 @@ export function ProfileList() {
   const [activeTab, setActiveTab] = useState('extraction');
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
+  const { armed: confirmDeleteAll, armOrRun: confirmOrDeleteAll } = useConfirmAction(4000);
+  const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
+  const mobileSearchInputRef = useRef(null);
+  const [mobileHeaderDropdownOpen, setMobileHeaderDropdownOpen] = useState(false);
+  const [desktopHeaderDropdownOpen, setDesktopHeaderDropdownOpen] = useState(false);
+  const mobileHeaderDropdownRef = useRef(null);
+  const desktopHeaderDropdownRef = useRef(null);
+
+  // Manage immediate blur when mobile search is dismissed, and handle reduced-motion focus
+  useEffect(() => {
+    if (!isMobileSearchActive) {
+      // Only blur if it's actually the active element to prevent unnecessary layout recalculations
+      if (mobileSearchInputRef.current && document.activeElement === mobileSearchInputRef.current) {
+        mobileSearchInputRef.current.blur();
+      }
+    } else {
+      // If motion is reduced, bypass the transition delay and focus instantly for 0ms accessibility
+      if (
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+        mobileSearchInputRef.current
+      ) {
+        mobileSearchInputRef.current.focus({ preventScroll: true });
+      }
+    }
+  }, [isMobileSearchActive]);
+
+  const handleSearchTransitionEnd = e => {
+    // Ensure we are triggering off the main transform transition and search is active
+    if (isMobileSearchActive && e.propertyName === 'transform' && mobileSearchInputRef.current) {
+      mobileSearchInputRef.current.focus({ preventScroll: true });
+    }
+  };
+
+  // Close header dropdown menus when clicking anywhere outside
+  useEffect(() => {
+    if (!mobileHeaderDropdownOpen && !desktopHeaderDropdownOpen) {
+      return;
+    }
+
+    const handleOutsideClick = event => {
+      if (
+        mobileHeaderDropdownOpen &&
+        mobileHeaderDropdownRef.current &&
+        !mobileHeaderDropdownRef.current.contains(event.target)
+      ) {
+        setMobileHeaderDropdownOpen(false);
+      }
+      if (
+        desktopHeaderDropdownOpen &&
+        desktopHeaderDropdownRef.current &&
+        !desktopHeaderDropdownRef.current.contains(event.target)
+      ) {
+        setDesktopHeaderDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [mobileHeaderDropdownOpen, desktopHeaderDropdownOpen]);
+
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
   const favoriteDisabled = favoriteCount >= 10;
@@ -915,6 +940,43 @@ export function ProfileList() {
     await loadProfiles();
   }, [profiles, apiService]);
 
+  const dropdownMenuItems = (
+    <>
+      <li>
+        <button
+          onClick={onExport}
+          className='text-primary hover:bg-primary/10 justify-start'
+          aria-label='Export all profiles'
+        >
+          <FontAwesomeIcon icon={faFileExport} />
+          <span>Export All</span>
+        </button>
+      </li>
+      <li>
+        <label
+          htmlFor='profileImport'
+          className='text-success hover:bg-success/10 flex cursor-pointer items-center justify-start gap-2'
+          aria-label='Import profiles'
+        >
+          <FontAwesomeIcon icon={faFileImport} />
+          <span>Import Profiles</span>
+        </label>
+      </li>
+      <li>
+        <button
+          onClick={() => {
+            confirmOrDeleteAll(onClear);
+          }}
+          className={`justify-start ${confirmDeleteAll ? 'bg-error text-error-content rounded font-semibold' : 'text-error hover:bg-error/10'}`}
+          aria-label={confirmDeleteAll ? 'Confirm deletion of all profiles' : 'Delete all profiles'}
+        >
+          <FontAwesomeIcon icon={faTrashCan} />
+          <span>{confirmDeleteAll ? 'Confirm Delete All' : 'Delete All Profiles'}</span>
+        </button>
+      </li>
+    </>
+  );
+
   if (loading) {
     return (
       <div
@@ -929,115 +991,178 @@ export function ProfileList() {
   }
 
   return (
-    <>
-      <div className='mb-4 flex flex-row items-center gap-2'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Profiles</h1>
+    <div className='relative w-full'>
+      <div className='profile-list-header relative z-20 flex h-12 flex-row items-center justify-between overflow-visible'>
+        {/* Left Side: Title */}
+        <h1 className='text-2xl font-bold sm:text-3xl'>Profiles</h1>
+
+        {/* Right Side: Action Icons on Mobile, Standard controls on Desktop/Tablet */}
+        <div className='flex flex-row items-center gap-3'>
+          {/* Mobile-only Action Buttons */}
+          <div className='flex flex-row items-center gap-1 sm:hidden'>
+            <button
+              onClick={() => setIsMobileSearchActive(active => !active)}
+              className={`btn btn-ghost btn-circle text-base-content/80 transition-colors ${isMobileSearchActive ? 'text-primary bg-primary/10 duration-75' : 'duration-150'}`}
+              aria-label='Toggle search bar'
+              aria-expanded={isMobileSearchActive}
+            >
+              <FontAwesomeIcon icon={faSearch} size='lg' />
+            </button>
+            <a
+              href='/profiles/new'
+              className='btn btn-ghost btn-circle text-primary'
+              aria-label='Create new profile'
+            >
+              <FontAwesomeIcon icon={faPlus} size='lg' />
+            </a>
+            <div
+              className={`action-dropdown relative ${mobileHeaderDropdownOpen ? 'action-dropdown-open' : ''}`}
+              ref={mobileHeaderDropdownRef}
+            >
+              <button
+                onClick={() => setMobileHeaderDropdownOpen(open => !open)}
+                className='btn btn-ghost btn-circle text-base-content/80'
+                aria-label='More options'
+                aria-expanded={mobileHeaderDropdownOpen}
+              >
+                <FontAwesomeIcon icon={faEllipsisVertical} size='lg' />
+              </button>
+              <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-xl'>
+                {dropdownMenuItems}
+              </ul>
+            </div>
+          </div>
+
+          {/* Desktop/Tablet Action Buttons (hidden on mobile) */}
+          <div className='hidden flex-row items-center gap-3 sm:flex'>
+            {/* Search bar */}
+            <label className='input w-40 md:w-48 lg:w-56'>
+              <FontAwesomeIcon icon={faSearch} />
+              <input
+                type='text'
+                placeholder='Search profiles...'
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className='grow'
+              />
+            </label>
+
+            {/* Create Profile Button */}
+            <a
+              href='/profiles/new'
+              className='btn btn-primary gap-2'
+              aria-label='Create new profile'
+            >
+              <FontAwesomeIcon icon={faPlus} />
+              <span>Create Profile</span>
+            </a>
+
+            {/* More Actions Dropdown */}
+            <div
+              className={`action-dropdown relative ${desktopHeaderDropdownOpen ? 'action-dropdown-open' : ''}`}
+              ref={desktopHeaderDropdownRef}
+            >
+              <button
+                onClick={() => setDesktopHeaderDropdownOpen(open => !open)}
+                className='btn btn-square btn-outline'
+                aria-label='More options'
+                aria-expanded={desktopHeaderDropdownOpen}
+              >
+                <FontAwesomeIcon icon={faEllipsisVertical} />
+              </button>
+              <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-xl'>
+                {dropdownMenuItems}
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className='mb-4 flex flex-col items-center gap-2 sm:flex-row'>
-        {/* Controls Row */}
-        <div className='flex flex-col items-start gap-3 sm:flex-row sm:items-center'>
-          {/* Search */}
-          <label className='input w-full'>
-            <FontAwesomeIcon icon={faSearch} />
-            <input
-              type='text'
-              placeholder='Search...'
-              value={searchTerm}
-              onChange={e => {
-                setSearchTerm(e.target.value);
-              }}
-              className='grow'
-            />
-          </label>
-        </div>
-        <div className='flex flex-grow items-center justify-end gap-2'>
-          <Tooltip content='Export all profiles'>
-            <button
-              id='export-profiles'
-              onClick={onExport}
-              className='btn btn-ghost btn-sm'
-              aria-label='Export all profiles'
-            >
-              <FontAwesomeIcon icon={faFileExport} />
-            </button>
-          </Tooltip>
-          <Tooltip content='Import profiles'>
-            <label
-              htmlFor='profileImport'
-              className='btn btn-ghost btn-sm cursor-pointer'
-              aria-label='Import profiles'
-            >
-              <FontAwesomeIcon icon={faFileImport} />
-            </label>
-          </Tooltip>
-          <input
-            onChange={onUpload}
-            className='hidden'
-            id='profileImport'
-            type='file'
-            accept='.json,application/json,.tcl'
-            aria-label='Select a JSON file containing profile data to import'
-          />
-          <ConfirmButton
-            onAction={onClear}
-            icon={faTrashCan}
-            tooltip='Delete all profiles'
-            confirmTooltip='Confirm deletion'
-          />
-        </div>
-      </div>
-      <div className='mb-4' aria-label='Add profile'>
-        <ProfileAddCard />
-      </div>
-      {hasUtilityProfiles && (
-        <div role='tablist' className='tabs tabs-border mb-4'>
-          <button
-            role='tab'
-            className={`tab ${activeTab === 'extraction' ? 'tab-active' : ''}`}
-            onClick={() => setActiveTab('extraction')}
-            aria-label='Switch to extraction tab'
-          >
-            Extraction
-          </button>
-          <button
-            role='tab'
-            className={`tab ${activeTab === 'utility' ? 'tab-active' : ''}`}
-            onClick={() => setActiveTab('utility')}
-            aria-label='Switch to utility tab'
-          >
-            Utility
-          </button>
-        </div>
-      )}
+      {/* Mobile-only Slide-Down Search Bar (using nested sticky structure to bypass WebKit transform bugs) */}
       <div
-        className='grid grid-cols-1 gap-4 lg:grid-cols-12'
-        role='list'
-        aria-label='Profile list'
-        ref={containerRef}
+        className={`search-slide-sticky sm:hidden ${isMobileSearchActive ? 'search-slide-sticky-active' : ''}`}
       >
-        {profilesToShow
-          .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
-          .map((data, idx, filtered) => (
-            <ProfileCard
-              key={data.id}
-              data={data}
-              onDelete={onDelete}
-              onSelect={onSelect}
-              favoriteDisabled={favoriteDisabled}
-              unfavoriteDisabled={unfavoriteDisabled}
-              onUnfavorite={onUnfavorite}
-              onFavorite={onFavorite}
-              onDuplicate={onDuplicate}
-              disabledDrag={!!searchTerm.trim()}
-              isDragging={isDragging}
-              onMoveTop={moveProfileTop}
-              onMoveBottom={moveProfileBottom}
-              isFirst={idx === 0}
-              isLast={idx === filtered.length - 1}
-            />
-          ))}
+        <div className='search-slide-container' onTransitionEnd={handleSearchTransitionEnd}>
+          <div className='bg-base-300 mx-[-16px] flex flex-row items-center gap-3 px-4 py-2 shadow-sm'>
+            <label className='input bg-base-100 border-base-content/10 flex grow items-center border'>
+              <FontAwesomeIcon icon={faSearch} className='text-base-content/60 mr-2' />
+              <input
+                type='text'
+                placeholder='Search profiles...'
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className='w-full grow'
+                ref={mobileSearchInputRef}
+              />
+            </label>
+            <button
+              className='text-base-content/70 hover:text-base-content font-medium whitespace-nowrap transition-colors'
+              onClick={() => setIsMobileSearchActive(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
-    </>
+
+      <input
+        onChange={onUpload}
+        className='hidden'
+        id='profileImport'
+        type='file'
+        accept='.json,application/json,.tcl'
+        aria-label='Select a JSON file containing profile data to import'
+      />
+      <div className={`profiles-list-content mt-4 ${isMobileSearchActive ? 'search-active' : ''}`}>
+        {hasUtilityProfiles && (
+          <div role='tablist' className='tabs tabs-border mb-4'>
+            <button
+              role='tab'
+              className={`tab ${activeTab === 'extraction' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('extraction')}
+              aria-label='Switch to extraction tab'
+            >
+              Extraction
+            </button>
+            <button
+              role='tab'
+              className={`tab ${activeTab === 'utility' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('utility')}
+              aria-label='Switch to utility tab'
+            >
+              Utility
+            </button>
+          </div>
+        )}
+        <div
+          className='grid grid-cols-1 gap-4 lg:grid-cols-12'
+          role='list'
+          aria-label='Profile list'
+          ref={containerRef}
+        >
+          {profilesToShow
+            .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
+            .map((data, idx, filtered) => (
+              <ProfileCard
+                key={data.id}
+                data={data}
+                onDelete={onDelete}
+                onSelect={onSelect}
+                favoriteDisabled={favoriteDisabled}
+                unfavoriteDisabled={unfavoriteDisabled}
+                onUnfavorite={onUnfavorite}
+                onFavorite={onFavorite}
+                onDuplicate={onDuplicate}
+                disabledDrag={!!searchTerm.trim()}
+                isDragging={isDragging}
+                onMoveTop={moveProfileTop}
+                onMoveBottom={moveProfileBottom}
+                isFirst={idx === 0}
+                isLast={idx === filtered.length - 1}
+              />
+            ))}
+        </div>
+      </div>
+    </div>
   );
 }

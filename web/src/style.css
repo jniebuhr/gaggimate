@@ -450,10 +450,192 @@ html[data-theme='coffee'] {
   .profile-card-container.drop-highlight {
     @apply bg-primary/10;
   }
+
+  /* Prevent double-tap to zoom on interactive elements which can cause visual jumping when clicked rapidly */
+  button,
+  a,
+  input[type='button'],
+  input[type='submit'] {
+    touch-action: manipulation;
+  }
 }
 
 @custom-variant hmd {
   @media (min-height: 429px) {
     @slot;
+  }
+}
+
+/* Mobile Search Morph Transitions */
+@media (max-width: 639px) {
+  .morph-track-exit {
+    transition:
+      transform 200ms cubic-bezier(0.645, 0.045, 0.355, 1),
+      opacity 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
+    will-change: transform, opacity;
+  }
+
+  .morph-track-enter {
+    transition:
+      transform 250ms cubic-bezier(0.23, 1, 0.32, 1),
+      opacity 250ms cubic-bezier(0.23, 1, 0.32, 1);
+    will-change: transform, opacity;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .morph-track-exit,
+  .morph-track-enter {
+    transition: none !important;
+  }
+}
+
+/* Elevate card stacking context when its actions dropdown is open */
+.profile-card-container:has(.action-dropdown-open),
+.card:has(.action-dropdown-open) {
+  position: relative !important;
+  z-index: 50 !important;
+  overflow: visible !important;
+}
+
+/* Elevate header stacking context when its actions dropdown is open to prevent overlapping by sticky mobile search */
+.profile-list-header:has(.action-dropdown-open) {
+  z-index: 50 !important;
+}
+
+/* ── Action dropdown transitions (fully decoupled from DaisyUI) ── */
+.action-dropdown {
+  display: inline-block;
+  position: relative;
+}
+
+/* Menu panel: always in the DOM, hidden via opacity+visibility+transform.
+   No display:none — that kills CSS transitions. */
+.action-dropdown .action-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 999;
+
+  /* Closed state */
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.95) translateY(-4px);
+  pointer-events: none;
+
+  /* Exit: 120ms (~20% faster than entrance) */
+  transition:
+    transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    visibility 120ms step-end;
+  transform-origin: top right;
+  will-change: transform, opacity;
+}
+
+/* Open state */
+.action-dropdown.action-dropdown-open .action-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+
+  /* Enter: 150ms */
+  transition:
+    transform 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    visibility 150ms step-start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-dropdown .action-dropdown-menu {
+    transition: none;
+  }
+}
+
+/* Premium hardware-accelerated animated focus ring for inputs */
+.input {
+  outline: 2px solid transparent;
+  outline-offset: 0px;
+  transition:
+    outline-color 150ms ease,
+    outline-offset 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.input:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Prevent double focus outlines and unify caret color on nested inputs */
+.input input {
+  caret-color: var(--color-primary);
+}
+
+.input input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input {
+    transition: none !important;
+  }
+}
+
+/* Premium hardware-accelerated slide-down transition for mobile search */
+@media (max-width: 639px) {
+  /* Outer sticky element: has NO transforms to avoid breaking WebKit sticky positioning */
+  .search-slide-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    height: 64px;
+    margin-bottom: -64px;
+    pointer-events: none;
+  }
+
+  .search-slide-sticky-active {
+    pointer-events: auto;
+  }
+
+  /* Inner animated container: handles GPU transforms and opacity transitions */
+  .search-slide-container {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.98);
+    /* Exit */
+    transition:
+      transform 150ms ease,
+      opacity 150ms ease;
+    will-change: transform, opacity;
+  }
+
+  .search-slide-sticky-active .search-slide-container {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    /* Enter */
+    transition:
+      transform 250ms cubic-bezier(0.175, 0.885, 0.32, 1.1),
+      opacity 250ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  }
+
+  .profiles-list-content {
+    /* Exit */
+    transition: transform 150ms ease;
+    will-change: transform;
+  }
+
+  .profiles-list-content.search-active {
+    transform: translateY(64px);
+    /* Enter */
+    transition: transform 250ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-slide-container,
+  .profiles-list-content {
+    transition: none !important;
   }
 }
