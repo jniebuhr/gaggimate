@@ -1,6 +1,7 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
+#include <cstdlib>
 #include <display/core/Controller.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
@@ -220,12 +221,12 @@ void DefaultUI::init() {
         targetDuration = profileManager->getSelectedProfile().getTotalDuration();
         targetVolume = profileManager->getSelectedProfile().getTotalVolume();
         profileVolumetric = profileManager->getSelectedProfile().isVolumetric();
-        reloadProfiles();
+        onProfileSelected(selectedProfileId);
         rerender = true;
     });
-    pluginManager->on("profiles:profile:favorite", [this](Event const &event) { reloadProfiles(); });
-    pluginManager->on("profiles:profile:unfavorite", [this](Event const &event) { reloadProfiles(); });
-    pluginManager->on("profiles:profile:save", [this](Event const &event) { reloadProfiles(); });
+    pluginManager->on("profiles:profile:favorite", [this](Event const &event) { onProfileFavorited(event.getString("id")); });
+    pluginManager->on("profiles:profile:unfavorite", [this](Event const &event) { onProfileUnfavorited(event.getString("id")); });
+    pluginManager->on("profiles:profile:save", [this](Event const &event) { onProfileSaved(event.getString("id")); });
     pluginManager->on("controller:volumetric-measurement:bluetooth:change", [=](Event const &event) {
         double newWeight = event.getFloat("value");
         if (round(newWeight * 10.0) != round(bluetoothWeight * 10.0)) {
@@ -287,6 +288,13 @@ void DefaultUI::loop() {
 
 void DefaultUI::loopProfiles() {
     if (!profileLoaded) {
+        // Cold-start: build the full ID list (cheap — just Strings) but
+        // defer loading the Profile structs themselves. With 50+ favorited
+        // profiles a synchronous scan here would put 100 KB+ on the
+        // internal heap, starving the WiFi/BLE coexistence allocator that
+        // setupBluetooth needs after WiFi connect — coex_enable aborts and
+        // the device boot-loops. Lazy-load keeps only ~3 profile structs
+        // populated at a time, regardless of how many are favorited.
         const auto favoritedIds = profileManager->getFavoritedProfiles();
         favoritedProfileIds.clear();
         favoritedProfiles.clear();
@@ -296,13 +304,191 @@ void DefaultUI::loopProfiles() {
             if (std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id) == favoritedProfileIds.end())
                 favoritedProfileIds.emplace_back(id);
         }
-        favoritedProfiles.reserve(favoritedProfileIds.size());
-        for (const auto &profileId : favoritedProfileIds) {
-            Profile profile{};
-            profileManager->loadProfile(profileId, profile);
-            favoritedProfiles.emplace_back(std::move(profile));
-        }
+        // Empty placeholders — populated on demand via ensureProfileLoaded.
+        favoritedProfiles.resize(favoritedProfileIds.size());
         profileLoaded = 1;
+    }
+    // Maintain the warm window around the currently-displayed index every
+    // 25 ms tick. Sync loads in onNextProfile / onPreviousProfile cover the
+    // common interactive case; this handles any drift (e.g. an incremental
+    // mutator inserting an entry).
+    ensureProfileLoaded(currentProfileIdx);
+    for (int d = 1; d <= PROFILE_CACHE_RADIUS; d++) {
+        ensureProfileLoaded(currentProfileIdx - d);
+        ensureProfileLoaded(currentProfileIdx + d);
+    }
+    evictProfilesOutsideWindow(currentProfileIdx, PROFILE_CACHE_RADIUS);
+}
+
+void DefaultUI::ensureProfileLoaded(int idx) {
+    if (idx < 0 || idx >= static_cast<int>(favoritedProfileIds.size())) return;
+    if (idx >= static_cast<int>(favoritedProfiles.size())) return;
+    // "Already loaded" check: the parsed Profile always has a non-empty
+    // `id` populated by parseProfile. Default-constructed slots have empty
+    // id. This lets us distinguish "filled" from "empty placeholder"
+    // without a parallel bit-vector.
+    if (!favoritedProfiles[idx].id.isEmpty()) return;
+    Profile p{};
+    if (profileManager->loadProfile(favoritedProfileIds[idx], p)) {
+        favoritedProfiles[idx] = std::move(p);
+    }
+}
+
+void DefaultUI::evictProfilesOutsideWindow(int center, int radius) {
+    for (int i = 0; i < static_cast<int>(favoritedProfiles.size()); i++) {
+        if (std::abs(i - center) > radius && !favoritedProfiles[i].id.isEmpty()) {
+            // Assigning a default-constructed Profile triggers the previous
+            // entry's destructor, freeing its String / phases / etc heap.
+            favoritedProfiles[i] = Profile{};
+        }
+    }
+}
+
+// Each of the four incremental mutators touches only the affected cache
+// entry. They are invoked from the `profiles:profile:*` event handlers
+// installed in init() and replace what used to be a blanket
+// reloadProfiles() that invalidated the entire cache (forcing the
+// profileLoopTask to re-read every favorited profile from SPIFFS on its
+// next tick). With many favorites that full reload was 1.5-4 s of
+// contention per change; these are O(1) per change.
+//
+// If the cache hasn't completed its initial cold-start build yet, we
+// defer to reloadProfiles() so the cold-start path picks up the latest
+// settings state. After cold-start completes (profileLoaded=1) these
+// methods are the only path that mutates favoritedProfileIds /
+// favoritedProfiles.
+
+void DefaultUI::onProfileSelected(const String &id) {
+    if (!profileLoaded || id.isEmpty()) {
+        reloadProfiles();
+        return;
+    }
+    auto it = std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id);
+    if (it == favoritedProfileIds.end()) {
+        // Selected profile is not yet in the favorited cache (rare —
+        // selecting a non-favorited profile via the API). Load and
+        // prepend so it occupies the canonical "selected at index 0" slot.
+        Profile p{};
+        if (profileManager->loadProfile(id, p)) {
+            favoritedProfileIds.insert(favoritedProfileIds.begin(), id);
+            favoritedProfiles.insert(favoritedProfiles.begin(), std::move(p));
+        }
+    } else if (it != favoritedProfileIds.begin()) {
+        // Already cached but not at the front. Move both vectors so the
+        // selected entry occupies index 0, preserving relative order of
+        // the rest.
+        const size_t idx = std::distance(favoritedProfileIds.begin(), it);
+        if (idx < favoritedProfiles.size()) {
+            Profile movedProfile = std::move(favoritedProfiles[idx]);
+            favoritedProfiles.erase(favoritedProfiles.begin() + idx);
+            favoritedProfiles.insert(favoritedProfiles.begin(), std::move(movedProfile));
+        }
+        const String movedId = *it;
+        favoritedProfileIds.erase(it);
+        favoritedProfileIds.insert(favoritedProfileIds.begin(), movedId);
+    }
+    currentProfileIdx = 0;
+    // The slot may have been a lazy placeholder before the move; populate
+    // it (and the prefetch neighbor) so the ProfileScreen renders cleanly.
+    ensureProfileLoaded(0);
+    ensureProfileLoaded(1);
+}
+
+void DefaultUI::onProfileFavorited(const String &id) {
+    // favoritedProfileIds.empty() guards front() below: onProfileUnfavorited can
+    // erase the last entry, and a favorite event arriving on an empty cache would
+    // otherwise deref front() on an empty vector. Defer to the cold-start rebuild.
+    if (!profileLoaded || id.isEmpty() || favoritedProfileIds.empty()) {
+        reloadProfiles();
+        return;
+    }
+    if (std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id) != favoritedProfileIds.end()) {
+        return; // already cached
+    }
+    // Insert the new favorite at its canonical carousel position rather than
+    // the tail. getFavoritedProfiles() returns IDs sorted by profileOrder and
+    // already includes this id (addFavoritedProfile updates settings before
+    // firing the event). The carousel is [selected, ...favorites-in-that-order],
+    // so map the id's position in the sorted list to a carousel index,
+    // discounting the selected entry pinned at index 0. The Profile struct
+    // itself stays a lazy placeholder, loaded on demand when the carousel
+    // reaches it — no SPIFFS read on the event-firing task. Appending at the
+    // tail (the previous behavior) made a newly-favorited profile jump to the
+    // end of the carousel instead of slotting into its configured order.
+    const auto sorted = profileManager->getFavoritedProfiles();
+    size_t insertAt = favoritedProfileIds.size(); // fallback: tail
+    int sortedPos = -1;
+    for (int i = 0; i < static_cast<int>(sorted.size()); i++)
+        if (sorted[i] == id) {
+            sortedPos = i;
+            break;
+        }
+    if (sortedPos >= 0) {
+        // Index 0 is the pinned selected profile; the favorites that follow
+        // mirror `sorted` minus that selected entry, so discount it when it
+        // sorts ahead of the new id.
+        const String &selectedId = favoritedProfileIds.front();
+        int selectedBefore = 0;
+        for (int i = 0; i < sortedPos; i++)
+            if (sorted[i] == selectedId) {
+                selectedBefore = 1;
+                break;
+            }
+        insertAt = static_cast<size_t>(1 + sortedPos - selectedBefore);
+        if (insertAt > favoritedProfileIds.size())
+            insertAt = favoritedProfileIds.size();
+    }
+    favoritedProfileIds.insert(favoritedProfileIds.begin() + insertAt, id);
+    favoritedProfiles.insert(favoritedProfiles.begin() + insertAt, Profile{});
+    // Keep the cursor on the same profile if we inserted at or before it.
+    if (static_cast<int>(insertAt) <= currentProfileIdx)
+        currentProfileIdx++;
+}
+
+void DefaultUI::onProfileUnfavorited(const String &id) {
+    if (!profileLoaded || id.isEmpty()) {
+        reloadProfiles();
+        return;
+    }
+    auto it = std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id);
+    if (it == favoritedProfileIds.end()) {
+        return;
+    }
+    const size_t idx = std::distance(favoritedProfileIds.begin(), it);
+    favoritedProfileIds.erase(it);
+    if (idx < favoritedProfiles.size()) {
+        favoritedProfiles.erase(favoritedProfiles.begin() + idx);
+    }
+    // Clamp the rendered index so we don't paint past the end if the
+    // just-removed entry was at or before currentProfileIdx.
+    if (!favoritedProfiles.empty() && currentProfileIdx >= static_cast<int>(favoritedProfiles.size())) {
+        currentProfileIdx = static_cast<int>(favoritedProfiles.size()) - 1;
+    }
+}
+
+void DefaultUI::onProfileSaved(const String &id) {
+    if (!profileLoaded || id.isEmpty()) {
+        reloadProfiles();
+        return;
+    }
+    auto it = std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id);
+    if (it == favoritedProfileIds.end()) {
+        return; // saved profile isn't in the favorited cache, no display update needed
+    }
+    const size_t idx = std::distance(favoritedProfileIds.begin(), it);
+    if (idx >= favoritedProfiles.size()) {
+        return;
+    }
+    // Only re-read if the slot was already populated — lazy slots will
+    // load fresh from disk next time the carousel visits them anyway, and
+    // we want to avoid SPIFFS reads on the event-firing task for entries
+    // outside the warm window.
+    if (favoritedProfiles[idx].id.isEmpty()) {
+        return;
+    }
+    Profile p{};
+    if (profileManager->loadProfile(id, p)) {
+        favoritedProfiles[idx] = std::move(p);
     }
 }
 
@@ -326,8 +512,14 @@ void DefaultUI::onProfileSwitch() {
 }
 
 void DefaultUI::onNextProfile() {
-    if (currentProfileIdx < favoritedProfileIds.size() - 1) {
+    if (currentProfileIdx < static_cast<int>(favoritedProfileIds.size()) - 1) {
         currentProfileIdx++;
+        // Synchronously load the new current + prefetch the next so the
+        // ProfileScreen LVGL effect sees populated data on its very next
+        // frame. The 25 ms loopProfiles tick is too slow if the user
+        // swipes quickly — would paint an empty label briefly.
+        ensureProfileLoaded(currentProfileIdx);
+        ensureProfileLoaded(currentProfileIdx + 1);
     }
     rerender = true;
 }
@@ -335,6 +527,8 @@ void DefaultUI::onNextProfile() {
 void DefaultUI::onPreviousProfile() {
     if (currentProfileIdx > 0) {
         currentProfileIdx--;
+        ensureProfileLoaded(currentProfileIdx);
+        ensureProfileLoaded(currentProfileIdx - 1);
     }
     rerender = true;
 }
