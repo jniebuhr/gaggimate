@@ -5,6 +5,7 @@ import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
 import { useCallback, useEffect, useRef, useState, useContext } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
+import PumpFlowCalibrationModal from '../../components/PumpFlowCalibration/index.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { timezones } from '../../config/zones.js';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
@@ -64,6 +65,7 @@ export function Settings() {
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
+  const [pumpCalibrationOpen, setPumpCalibrationOpen] = useState(false);
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -779,15 +781,24 @@ export function Settings() {
               <div className='mb-2 text-xs opacity-70'>
                 Enter 2 values (flow at 1 bar, flow at 9 bar)
               </div>
-              <input
-                id='pumpModelCoeffs'
-                name='pumpModelCoeffs'
-                type='text'
-                className='input input-bordered w-full'
-                placeholder='10.205,5.521'
-                value={formData.pumpModelCoeffs}
-                onChange={onChange('pumpModelCoeffs')}
-              />
+              <div className='flex gap-2'>
+                <input
+                  id='pumpModelCoeffs'
+                  name='pumpModelCoeffs'
+                  type='text'
+                  className='input input-bordered flex-1'
+                  placeholder='10.205,5.521'
+                  value={formData.pumpModelCoeffs}
+                  onChange={onChange('pumpModelCoeffs')}
+                />
+                <button
+                  type='button'
+                  className='btn btn-outline'
+                  onClick={() => setPumpCalibrationOpen(true)}
+                >
+                  Calibrate
+                </button>
+              </div>
             </div>
             <div className='form-control mb-4'>
               <label htmlFor='temperatureOffset' className='mb-2 block text-sm font-medium'>
@@ -1191,6 +1202,12 @@ export function Settings() {
           </div>
         </div>
       </form>
+      <PumpFlowCalibrationModal
+        isOpen={pumpCalibrationOpen}
+        onClose={() => setPumpCalibrationOpen(false)}
+        currentCoeffs={formData.pumpModelCoeffs || ''}
+        onApplied={newCoeffs => setFormData(prev => ({ ...prev, pumpModelCoeffs: newCoeffs }))}
+      />
     </>
   );
 }
