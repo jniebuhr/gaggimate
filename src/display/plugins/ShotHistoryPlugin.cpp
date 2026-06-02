@@ -832,6 +832,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     }
 
     int currentIndex = 0;
+    uint32_t maxId = controller->getSettings().getHistoryIndex();
     for (const String &fileName : slogFiles) {
         currentIndex++;
         File shotFile = fs->open("/h/" + fileName, "r");
@@ -851,6 +852,9 @@ void ShotHistoryPlugin::rebuildIndex() {
         int start = fileName.lastIndexOf('/') + 1;
         int end = fileName.lastIndexOf('.');
         uint32_t shotId = fileName.substring(start, end).toInt();
+        if (shotId > maxId) {
+            maxId = shotId;
+        }
 
         // Create index entry
         ShotIndexEntry entry{};
@@ -916,6 +920,11 @@ void ShotHistoryPlugin::rebuildIndex() {
             vTaskDelay(pdMS_TO_TICKS(10));
         }
     }
+
+    if (maxId > controller->getSettings().getHistoryIndex()) {
+        controller->getSettings().setHistoryIndex(maxId);
+    }
+
 
     // Emit completion event
     if (pluginManager) {
