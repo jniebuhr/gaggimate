@@ -59,9 +59,19 @@ export default class ApiService {
 
   _onClose() {
     console.log('WebSocket connection closed');
+    // Reset transient scan state on socket close. If the socket dropped
+    // mid-scan, the firmware's evt:scale:scan:complete will never reach
+    // this client, so the optimistic `scanning=true` flag set in
+    // Scales/index.jsx's onScan would stay latched forever — the
+    // "Scanning..." spinner would never clear. Clearing here lets the
+    // UI recover cleanly on the next reconnect.
     machine.value = {
       ...machine.value,
       connected: false,
+      scale: {
+        ...machine.value.scale,
+        scanning: false,
+      },
     };
     this._scheduleReconnect();
   }
@@ -102,6 +112,49 @@ export default class ApiService {
     const listeners = Object.values(this.listeners[message.tp] || {});
     if (message.tp === 'evt:status') {
       this._onStatus(message);
+    } else if (message.tp === 'evt:scale:scan:complete') {
+      machine.value = {
+        ...machine.value,
+        scale: {
+          ...machine.value.scale,
+          scanning: false,
+          lastScanCount: message.count || 0,
+          lastScanAt: Date.now(),
+        },
+      };
+    } else if (message.tp === 'evt:scale:connect:error') {
+      machine.value = {
+        ...machine.value,
+        scale: {
+          ...machine.value.scale,
+          lastConnectError: {
+            address: message.address || '',
+            reason: message.reason || 'unknown',
+            at: Date.now(),
+          },
+        },
+      };
+    } else if (message.tp === 'evt:scale:disconnect') {
+      machine.value = {
+        ...machine.value,
+        scale: {
+          ...machine.value.scale,
+          lastDisconnectAt: Date.now(),
+        },
+      };
+    } else if (message.tp === 'evt:scale:connect:success') {
+      // A scale just (re)connected — drop any lingering disconnect /
+      // connect-error state so the /scales banners clear immediately
+      // instead of riding out the 60 s auto-dismiss timer.
+      machine.value = {
+        ...machine.value,
+        scale: {
+          ...machine.value.scale,
+          lastDisconnectAt: 0,
+          lastConnectError: null,
+          lastConnectAt: Date.now(),
+        },
+      };
     }
     for (const listener of listeners) {
       listener(message);
@@ -213,6 +266,14 @@ export const ApiServiceContext = createContext(null);
 
 export const machine = signal({
   connected: false,
+  scale: {
+    scanning: false,
+    lastScanCount: 0,
+    lastScanAt: 0,
+    lastConnectError: null,
+    lastDisconnectAt: 0,
+    lastConnectAt: 0,
+  },
   status: {
     currentTemperature: 0,
     targetTemperature: 0,
