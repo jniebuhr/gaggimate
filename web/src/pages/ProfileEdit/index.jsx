@@ -6,7 +6,6 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 
 const connected = computed(() => machine.value.connected);
@@ -26,6 +25,7 @@ export function ProfileEdit() {
           label: 'New Profile',
           description: '',
           temperature: 93,
+          utility: false,
           phases: [
             {
               name: 'Pump',
