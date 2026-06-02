@@ -1,6 +1,7 @@
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import homekitImage from '../../assets/homekit.png';
+import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
 
 export function PluginCard({
   formData,
@@ -36,23 +37,32 @@ export function PluginCard({
               <label className='mb-2 block text-sm font-medium'>Auto Wakeup Schedule</label>
               <div className='space-y-2'>
                 {autowakeupSchedules?.map((schedule, scheduleIndex) => (
-                  <div key={scheduleIndex} className='flex flex-wrap items-center gap-1'>
+                  <div
+                    key={scheduleIndex}
+                    className='flex flex-wrap items-center gap-1 md:flex-nowrap'
+                  >
                     {/* Time input */}
-                    <input
-                      type='time'
-                      className='input input-bordered input-sm w-auto min-w-0 pr-6'
-                      value={schedule.time}
-                      onChange={e => updateAutoWakeupTime(scheduleIndex, e.target.value)}
-                      disabled={!formData.autowakeupEnabled}
-                    />
+                    <div className='grow-1 text-center sm:text-start'>
+                      <input
+                        type='time'
+                        className='input input-bordered input-sm md:input-md w-auto min-w-0 pr-6 text-center'
+                        value={schedule.time}
+                        onChange={e => updateAutoWakeupTime(scheduleIndex, e.target.value)}
+                        disabled={!formData.autowakeupEnabled}
+                      />
+                    </div>
 
                     {/* Days toggle buttons */}
-                    <div className='join' role='group' aria-label='Days of week selection'>
+                    <div
+                      className='join flex grow-8'
+                      role='group'
+                      aria-label='Days of week selection'
+                    >
                       {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((dayLabel, dayIndex) => (
                         <button
                           key={dayIndex}
                           type='button'
-                          className={`join-item btn btn-xs ${schedule.days[dayIndex] ? 'btn-primary' : 'btn-outline'}`}
+                          className={`join-item btn btn-sm md:btn-md flex-grow ${schedule.days[dayIndex] ? 'btn-primary' : 'btn-neutral text-neutral-content/20'}`}
                           onClick={() =>
                             updateAutoWakeupDay(scheduleIndex, dayIndex, !schedule.days[dayIndex])
                           }
@@ -85,24 +95,23 @@ export function PluginCard({
                         </button>
                       ))}
                     </div>
-
                     {/* Delete button */}
                     {autowakeupSchedules.length > 1 ? (
                       <button
                         type='button'
                         onClick={() => removeAutoWakeupSchedule(scheduleIndex)}
-                        className='btn btn-ghost btn-xs'
+                        className='btn btn-ghost btn-sm md:btn-md grow-1'
                         disabled={!formData.autowakeupEnabled}
                         title='Delete this schedule'
                       >
-                        <FontAwesomeIcon icon={faTrashCan} className='text-xs' />
+                        <FontAwesomeIcon icon={faTrashCan} className='text-base' />
                       </button>
                     ) : (
                       <div
-                        className='btn btn-ghost btn-xs cursor-not-allowed opacity-30'
+                        className='btn btn-ghost btn-sm md:btn-md grow-1 cursor-not-allowed opacity-30'
                         title='Cannot delete the last schedule'
                       >
-                        <FontAwesomeIcon icon={faTrashCan} className='text-xs' />
+                        <FontAwesomeIcon icon={faTrashCan} className='text-base' />
                       </div>
                     )}
                   </div>
@@ -110,10 +119,12 @@ export function PluginCard({
                 <button
                   type='button'
                   onClick={addAutoWakeupSchedule}
-                  className='btn btn-primary btn-sm'
+                  className='btn btn-primary btn-sm md:btn-md mt-2'
                   disabled={!formData.autowakeupEnabled}
+                  aria-label='Add schedule'
+                  title='Add schedule'
                 >
-                  Add Schedule
+                  <FontAwesomeIcon icon={faCalendarDays} />
                 </button>
               </div>
             </div>
