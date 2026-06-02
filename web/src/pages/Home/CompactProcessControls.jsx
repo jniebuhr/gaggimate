@@ -22,6 +22,7 @@ import PropTypes from 'prop-types';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { ModeTab } from './ModeTab.jsx';
 import {
+  fmtDuration,
   fmtElapsed,
   fmtPhaseTarget,
   getPhaseLabel,
@@ -32,10 +33,10 @@ import {
 
 const status = computed(() => machine.value.status);
 
-const Metric = ({ icon, current, target, unit, rotation }) => (
+const Metric = ({ icon, current, target, unit, rotation, currentClassName = 'text-base-content' }) => (
   <div className='flex items-center gap-1.5'>
     <FontAwesomeIcon icon={icon} className='text-base-content/60 text-xs' />
-    <span className='text-base-content tabular-nums'>{current}</span>
+    <span className={`${currentClassName} tabular-nums`}>{current}</span>
     <span className='text-success font-semibold tabular-nums'>
       / {target}
       {unit}
@@ -54,6 +55,29 @@ const TargetToggle = ({ value, onChange }) => {
       <button className={pill(value === 1)} onClick={() => onChange(1)}>
         <FontAwesomeIcon icon={faWeightScale} className='text-[0.65rem]' /> <span>Weight</span>
       </button>
+    </div>
+  );
+};
+
+// Compact two-up stepper for Brew mode (TEMP + WEIGHT side-by-side).
+// Slimmer than the full <Adjuster> so two of them fit in the narrow Compact
+// card width even on smaller tablets / portrait windows.
+const MiniStepper = ({ label, value, onDecrease, onIncrease }) => {
+  const btn = 'btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded-full p-0';
+  return (
+    <div className='flex flex-col items-center gap-1'>
+      <div className='text-base-content/60 text-[0.6rem] font-light tracking-wider'>{label}</div>
+      <div className='flex items-center space-x-1'>
+        <button onClick={onDecrease} className={btn} aria-label={`Lower ${label}`}>
+          <FontAwesomeIcon icon={faMinus} className='h-2.5 w-2.5' />
+        </button>
+        <div className='text-base-content min-w-[44px] text-center text-sm font-bold tabular-nums'>
+          {value}
+        </div>
+        <button onClick={onIncrease} className={btn} aria-label={`Raise ${label}`}>
+          <FontAwesomeIcon icon={faPlus} className='h-2.5 w-2.5' />
+        </button>
+      </div>
     </div>
   );
 };
@@ -126,7 +150,7 @@ const InfoView = ({ title, hint }) => (
   </div>
 );
 
-const BrewIdleView = ({ s, brewTarget, sendTarget }) => (
+const BrewIdleView = ({ s, brewTarget, sendTarget, send }) => (
   <div className='flex w-full max-w-sm min-w-0 flex-col items-stretch gap-3'>
     <a
       href='/profiles'
@@ -145,7 +169,37 @@ const BrewIdleView = ({ s, brewTarget, sendTarget }) => (
         </span>
       </span>
     </a>
-    {s.volumetricAvailable && <TargetToggle value={brewTarget ? 1 : 0} onChange={sendTarget} />}
+    {/* Mirrors the device's gear-icon BrewScreen Settings panel exactly:
+        always show TEMP, plus a second slot that morphs between WEIGHT and
+        TIME based on `brewTarget` (firmware's `bt` flag = scale connected
+        AND profile is volumetric). Both modes call the SAME Controller
+        methods — `raiseBrewTarget` / `lowerBrewTarget` — which decide
+        internally whether to adjust the profile's volumetric target or its
+        phase duration based on the same condition. Format is the only
+        visible difference. */}
+    <div className='flex flex-row items-start justify-center gap-8'>
+      <MiniStepper
+        label='TEMP'
+        value={`${s.targetTemperature ?? 0}°C`}
+        onDecrease={() => send('req:lower-temp')}
+        onIncrease={() => send('req:raise-temp')}
+      />
+      {/* "TARGET" prefix on the morphing label makes the read honest:
+          the value is the brew-stopping condition the firmware will use,
+          and that condition depends on the loaded profile (volumetric or
+          duration). Matches the wording the full-layout ProcessControls
+          already uses (TARGET WEIGHT / TARGET TIME). */}
+      <MiniStepper
+        label={brewTarget ? 'TARGET WEIGHT' : 'TARGET TIME'}
+        value={
+          brewTarget
+            ? `${(s.targetWeight ?? 0).toFixed(0)}g`
+            : fmtDuration(s.brewTargetDuration ?? 0)
+        }
+        onDecrease={() => send('req:lower-brew-target')}
+        onIncrease={() => send('req:raise-brew-target')}
+      />
+    </div>
   </div>
 );
 
@@ -241,7 +295,8 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
     if (processRunning && finished) return <FinishedView elapsed={fmtElapsed(p?.e)} />;
     if (processRunning) return <ActiveView p={p} grind={grind} />;
     if (mode === 0) return <InfoView title='Standby' hint='Machine is ready' />;
-    if (mode === 1) return <BrewIdleView s={s} brewTarget={brewTarget} sendTarget={sendTarget} />;
+    if (mode === 1)
+      return <BrewIdleView s={s} brewTarget={brewTarget} sendTarget={sendTarget} send={send} />;
     if (mode === 2 || mode === 3) return <TemperatureView s={s} mode={mode} send={send} />;
     if (grind && !grindAvailable)
       return <InfoView title='Grind' hint='Grind function not available' />;
@@ -283,6 +338,16 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
           current={(s.currentPressure ?? 0).toFixed(1)}
           target={(s.targetPressure ?? 0).toFixed(1)}
           unit=' bar'
+          /* Red alert when over 1 bar while sitting idle in Brew mode —
+             boiler is likely over-pressurized from previous shot/heat-up;
+             flush or open steam wand before brewing. Suppressed during an
+             active brew (high pressure is expected) and immediately after
+             (pressure takes a moment to bleed off). */
+          currentClassName={
+            brew && !active && !finished && (s.currentPressure ?? 0) > 1.0
+              ? 'text-error font-semibold'
+              : 'text-base-content'
+          }
         />
       </div>
 

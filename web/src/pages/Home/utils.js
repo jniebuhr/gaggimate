@@ -20,6 +20,14 @@ export const fmtElapsed = (ms = 0) => {
   return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
 };
 
+// fmtDuration takes a value in SECONDS (vs fmtElapsed which takes ms) and
+// renders M:SS. Used by the Brew-mode stepper when the profile/scale combo
+// puts it in time mode rather than weight mode.
+export const fmtDuration = (s = 0) => {
+  const secs = Math.floor(s);
+  return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+};
+
 export const fmtPhaseTarget = (p, grind) => {
   if (p?.tt === 'time') return `${(p.pt / 1000).toFixed(0)}s`;
   if (p?.tt === 'volumetric') return `${p.pt.toFixed(grind ? 1 : 0)}g`;
