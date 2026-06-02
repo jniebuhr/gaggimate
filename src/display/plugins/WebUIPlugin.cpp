@@ -538,7 +538,13 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMdnsName(request->arg("mdnsName"));
             if (request->hasArg("wifiPassword") && request->arg("wifiPassword") != "---unchanged---")
                 settings->setWifiPassword(request->arg("wifiPassword"));
-            settings->setHomekit(request->hasArg("homekit"));
+            if (request->hasArg("homekitMode")) {
+                settings->setHomekitMode(request->arg("homekitMode").toInt());
+            }
+            // Handle HomeKit Toggle Settings
+            settings->setHkPowerEnabled(request->hasArg("hkPowerEnabled"));
+            settings->setHkSteamEnabled(request->hasArg("hkSteamEnabled"));
+            settings->setHkSensorEnabled(request->hasArg("hkSensorEnabled"));
             settings->setBoilerFillActive(request->hasArg("boilerFillActive"));
             if (request->hasArg("startupFillTime"))
                 settings->setStartupFillTime(request->arg("startupFillTime").toInt() * 1000);
@@ -658,7 +664,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["startupProfile"] = settings.getStartupProfile();
     doc["targetSteamTemp"] = settings.getTargetSteamTemp();
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
-    doc["homekit"] = settings.isHomekit();
+    doc["homekitMode"] = static_cast<int>(settings.getHomekitMode());
+    doc["hkPowerEnabled"] = settings.isHkPowerEnabled();
+    doc["hkSteamEnabled"] = settings.isHkSteamEnabled();
+    doc["hkSensorEnabled"] = settings.isHkSensorEnabled();
     doc["homeAssistant"] = settings.isHomeAssistant();
     doc["haUser"] = settings.getHomeAssistantUser();
     doc["haPassword"] = settings.getHomeAssistantPassword();

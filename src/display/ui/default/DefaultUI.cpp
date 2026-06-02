@@ -41,6 +41,8 @@ void DefaultUI::updateTempHistory() {
 }
 
 void DefaultUI::updateTempStableFlag() {
+    int oldIsStable = isTemperatureStable;
+
     if (isTempHistoryInitialized) {
         float totalError = 0.0f;
         float maxError = 0.0f;
@@ -62,6 +64,10 @@ void DefaultUI::updateTempStableFlag() {
     }
 
     prevTargetTemp = targetTemp;
+
+    if (isTemperatureStable != oldIsStable) {
+        pluginManager->trigger("boiler:heating:stable", "isStable", isTemperatureStable);
+    }
 }
 
 void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {

@@ -2,8 +2,11 @@
 
 #include <algorithm>
 #include <utility>
+#include <esp32-hal-log.h>
 
 Settings::Settings() {
+    migrateHomekitSettings();
+
     preferences.begin(PREFERENCES_KEY, true);
     startupMode = preferences.getInt("sm", MODE_STANDBY);
     targetSteamTemp = preferences.getInt("ts", 145);
@@ -20,7 +23,9 @@ Settings::Settings() {
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
-    homekit = preferences.getBool("hk", false);
+    hkPowerEnabled = preferences.getBool("hk_pe", true);
+    hkSteamEnabled = preferences.getBool("hk_se", true);
+    hkSensorEnabled = preferences.getBool("hk_he", true);
     volumetricTarget = preferences.getBool("vt", false);
     otaChannel = preferences.getString("oc", DEFAULT_OTA_CHANNEL);
     savedScale = preferences.getString("ssc", "");
@@ -207,8 +212,26 @@ void Settings::setMdnsName(const String &mdnsName) {
     save();
 }
 
-void Settings::setHomekit(const bool homekit) {
-    this->homekit = homekit;
+void Settings::setHomekitMode(const int mode) {
+    HomeKitMode clampedMode = parseHomekitMode(mode);
+    if (this->homekitMode != clampedMode) {
+        this->homekitMode = clampedMode;
+        save();
+    }
+}
+
+void Settings::setHkPowerEnabled(bool enabled) {
+    hkPowerEnabled = enabled;
+    save();
+}
+
+void Settings::setHkSteamEnabled(bool enabled) {
+    hkSteamEnabled = enabled;
+    save();
+}
+
+void Settings::setHkSensorEnabled(bool enabled) {
+    hkSensorEnabled = enabled;
     save();
 }
 
@@ -465,7 +488,11 @@ void Settings::doSave() {
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
     preferences.putString("mn", mdnsName);
-    preferences.putBool("hk", homekit);
+    preferences.putInt("hkm", static_cast<int>(homekitMode));
+    preferences.putBool("hk_pe", hkPowerEnabled);
+    preferences.putBool("hk_se", hkSteamEnabled);
+    preferences.putBool("hk_he", hkSensorEnabled);
+
     preferences.putBool("vt", volumetricTarget);
     preferences.putString("oc", otaChannel);
     preferences.putString("ssc", savedScale);
@@ -528,6 +555,29 @@ void Settings::doSave() {
     preferences.putString("btnb", implode(buttonBehavior, ","));
 
     preferences.end();
+}
+
+void Settings::migrateHomekitSettings() {
+    preferences.begin(PREFERENCES_KEY, false);
+
+    if (preferences.isKey("hk")) {
+        ESP_LOGW("Settings", "Migrating old HomeKit bool setting 'hk' to new int setting 'hkm'.");
+        bool oldHomekitBool = preferences.getBool("hk", false);
+        homekitMode = oldHomekitBool ? HomeKitMode::Thermostat : HomeKitMode::Disabled;
+
+        preferences.putInt("hkm", static_cast<int>(homekitMode));
+        preferences.remove("hk");
+        ESP_LOGI("Settings", "HomeKit migration complete. New mode: %d", static_cast<int>(homekitMode));
+    } else {
+        homekitMode = parseHomekitMode(preferences.getInt("hkm", static_cast<int>(HomeKitMode::Disabled)));
+    }
+
+    preferences.end();
+}
+
+HomeKitMode Settings::parseHomekitMode(int mode) {
+    int clampedMode = std::clamp(mode, static_cast<int>(HomeKitMode::Disabled), static_cast<int>(HomeKitMode::Bridge));
+    return static_cast<HomeKitMode>(clampedMode);
 }
 
 [[noreturn]] void Settings::loopTask(void *arg) {

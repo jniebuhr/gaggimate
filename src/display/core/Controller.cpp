@@ -16,7 +16,8 @@
 #include <display/plugins/AutoWakeupPlugin.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
-#include <display/plugins/HomekitPlugin.h>
+#include <display/plugins/HomekitThermostatPlugin.h>
+#include <display/plugins/HomekitBridgePlugin.h>
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
@@ -58,10 +59,12 @@ void Controller::setup() {
     }
     profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
-    if (settings.isHomekit())
-        pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
-    else
-        pluginManager->registerPlugin(new mDNSPlugin());
+    if (settings.getHomekitMode() == HomeKitMode::Thermostat) {
+        pluginManager->registerPlugin(new HomekitThermostatPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
+    } else if (settings.getHomekitMode() == HomeKitMode::Bridge) {
+        pluginManager->registerPlugin(new HomekitBridgePlugin(settings.getWifiSsid(), settings.getWifiPassword()));
+    }
+    pluginManager->registerPlugin(new mDNSPlugin());
     if (settings.isBoilerFillActive()) {
         pluginManager->registerPlugin(new BoilerFillPlugin());
     }
