@@ -116,9 +116,15 @@ export default class ApiService {
     }
   }
 
-  async request(data = {}) {
+  async request(data = {}, signal) {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       throw new Error('WebSocket is not connected');
+    }
+
+    if (signal?.aborted) {
+      const error = new Error('Request aborted');
+      error.name = 'AbortError';
+      throw error;
     }
 
     const returnType = `res:${data.tp.substring(4)}`;
@@ -127,12 +133,27 @@ export default class ApiService {
     return new Promise((resolve, reject) => {
       let timeoutId;
 
+      const abortHandler = () => {
+        clearTimeout(timeoutId);
+        this.off(returnType, listenerId);
+        const error = new Error('Request aborted');
+        error.name = 'AbortError';
+        reject(error);
+      };
+
+      if (signal) {
+        signal.addEventListener('abort', abortHandler, { once: true });
+      }
+
       // Create a listener for the response with matching rid
       const listenerId = this.on(returnType, response => {
         if (response.rid === rid) {
           // Clean up the listener and cancel the timeout to free the closure.
           clearTimeout(timeoutId);
           this.off(returnType, listenerId);
+          if (signal) {
+            signal.removeEventListener('abort', abortHandler);
+          }
           resolve(response);
         }
       });
@@ -143,6 +164,9 @@ export default class ApiService {
       // Timeout: reject if no matching response arrives within 30 seconds
       timeoutId = setTimeout(() => {
         this.off(returnType, listenerId);
+        if (signal) {
+          signal.removeEventListener('abort', abortHandler);
+        }
         reject(new Error(`Request ${data.tp} timed out`));
       }, 30000); // 30 second timeout
     });

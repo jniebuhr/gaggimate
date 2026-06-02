@@ -1,24 +1,15 @@
 import {
-  Chart,
-  LineController,
-  TimeScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Legend,
-  Filler,
   CategoryScale,
+  Chart,
+  Filler,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  TimeScale,
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
-Chart.register(LineController);
-Chart.register(TimeScale);
-Chart.register(LinearScale);
-Chart.register(CategoryScale);
-Chart.register(PointElement);
-Chart.register(LineElement);
-Chart.register(Filler);
-Chart.register(Legend);
-
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useEffect, useRef, useState, useContext, useMemo } from 'preact/hooks';
 import { computed } from '@preact/signals';
@@ -30,6 +21,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { downloadJson } from '../../utils/download.js';
+import { loadShotNotes } from './loadShotNotes.js';
+
+
+Chart.register(LineController);
+Chart.register(TimeScale);
+Chart.register(LinearScale);
+Chart.register(CategoryScale);
+Chart.register(PointElement);
+Chart.register(LineElement);
+Chart.register(Filler);
+Chart.register(Legend);
 
 const connected = computed(() => machine.value.connected);
 
@@ -43,7 +47,10 @@ export function ShotHistory() {
   const [filterBy, setFilterBy] = useState('all'); // all, rated, unrated
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportingHistoryPercentage, setExportingHistoryPercentage] = useState(0);
   const loadHistoryAbortRef = useRef(null);
+  const exportAbortRef = useRef(null);
   const loadHistory = async () => {
     // Abort any in-flight fetch to prevent request pileup on the ESP32.
     loadHistoryAbortRef.current?.abort();
@@ -98,7 +105,10 @@ export function ShotHistory() {
     if (connected.value) {
       loadHistory();
     }
-    return () => loadHistoryAbortRef.current?.abort();
+    return () => {
+      loadHistoryAbortRef.current?.abort();
+      exportAbortRef.current?.abort();
+    };
   }, [connected.value]);
 
   const onDelete = useCallback(
@@ -115,6 +125,95 @@ export function ShotHistory() {
     // Reload the index to get updated ratings
     await loadHistory();
   }, []);
+
+  // Reusable loader for a single shot's detailed data (from .slog file)
+  const fetchShotData = useCallback(async (id, signal) => {
+    try {
+      const strId = String(id);
+      const paddedId = strId.padStart(6, '0');
+      const resp = await fetch(`/api/history/${paddedId}.slog`, { signal });
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const buf = await resp.arrayBuffer();
+
+      return parseBinaryShot(buf, strId);
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      console.error('Failed loading shot', e);
+      return null;
+    }
+  }, []);
+
+  const onExport = useCallback(async () => {
+    if (history.length > 0 && !isExporting) {
+      setIsExporting(true);
+      setExportingHistoryPercentage(0);
+      const controller = new AbortController();
+      exportAbortRef.current = controller;
+
+      try {
+        const totalShots = history.length;
+        let completed = 0;
+        const exportedHistory = [];
+
+        for (const p of history) {
+          try {
+            // fetchShotData will throw immediately if aborted.
+            const shotData = await fetchShotData(p.id, controller.signal);
+
+            if (shotData) {
+              const loadedNotes = await loadShotNotes(
+                apiService,
+                {
+                  id: p.id,
+                  volume: p.volume ?? shotData.volume,
+                },
+                controller.signal,
+              );
+
+              // Since loadShotNotes doesn't throw error, we check the signal here to avoid
+              // pushing a "fallback/incomplete" result to the export.
+              if (controller.signal.aborted) break;
+
+              exportedHistory.push({
+                ...shotData,
+                rating: p.rating,
+                notes: loadedNotes,
+                volume: p.volume ?? shotData.volume,
+                incomplete: p.incomplete ?? shotData.incomplete,
+              });
+            }
+          } catch (_e) {
+            if (_e.name === 'AbortError') break;
+            console.error(`Failed to export shot ${p.id}`, _e);
+          } finally {
+            completed++;
+            setExportingHistoryPercentage(Math.round((completed / totalShots) * 100));
+          }
+        }
+
+        if (!controller.signal.aborted) {
+          if (exportedHistory.length > 0) {
+            downloadJson(exportedHistory, 'history.json');
+          } else {
+            console.warn('Shots could not be exported');
+          }
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.error('Export failed', e);
+        }
+      } finally {
+        setIsExporting(false);
+        setExportingHistoryPercentage(0);
+        if (exportAbortRef.current === controller) {
+          exportAbortRef.current = null;
+        }
+      }
+    } else {
+      console.log('Already exporting or No shots to export');
+    }
+  }, [history, isExporting, fetchShotData, apiService]);
 
   // Filtered and sorted history with pagination
   const { paginatedHistory, totalPages, totalFilteredItems } = useMemo(() => {
@@ -273,6 +372,24 @@ export function ShotHistory() {
         </div>
       </div>
 
+      <div className='flex flex-row items-center justify-end gap-2' aria-label='Export history'>
+        <button
+          onClick={onExport}
+          disabled={history.length === 0 || isExporting }
+          className={`btn btn-ghost btn-sm lg:btn-lg`}
+          title='Export full history'
+          aria-label='Export full history'
+        > {isExporting ? (
+          <span className='flex flex-row items-center gap-2 text-base-content'>
+            <span className="loading loading-sm lg:loading-lg loading-dots" />
+            <span aria-live='polite' className="text-xs lg:text-sm">{exportingHistoryPercentage}%</span>
+          </span>
+          ) : (
+            <FontAwesomeIcon icon={faFileExport} />
+          )}
+        </button>
+      </div>
+
       <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
         {paginatedHistory.map((item, idx) => (
           <HistoryCard
@@ -285,12 +402,10 @@ export function ShotHistory() {
               const target = history.find(h => h.id === id);
               if (!target || target.loaded) return;
               try {
-                // Pad ID to 6 digits with zeros to match backend filename format
-                const paddedId = id.padStart(6, '0');
-                const resp = await fetch(`/api/history/${paddedId}.slog`);
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const buf = await resp.arrayBuffer();
-                const parsed = parseBinaryShot(buf, id);
+                const parsed = await fetchShotData(id);
+                if (!parsed) {
+                  return;
+                }
                 parsed.incomplete = (target?.incomplete ?? false) || parsed.incomplete;
                 if (target?.notes) parsed.notes = target.notes;
                 setHistory(prev =>
