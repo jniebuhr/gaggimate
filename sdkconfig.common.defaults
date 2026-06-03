@@ -2,13 +2,30 @@
 # Applied as the first entry in SDKCONFIG_DEFAULTS; env-specific files follow
 # and override only what differs (MAX_CONNECTIONS, LWIP, nano-newlib).
 #
-# Workflow: pioarduino caches a merged sdkconfig.<env> at project root and
-# reuses it on subsequent builds. Edits to any .defaults file don't propagate
-# until that per-env file is regenerated. After editing, run:
-#   pio run -e <env> -t fullclean
+# Workflow: pioarduino caches a merged sdkconfig.<env> at project root (it is
+# gitignored). ESP-IDF applies these .defaults ONLY when generating a fresh
+# sdkconfig.<env>; if the cache already exists it is reused verbatim and your
+# .defaults edits are silently ignored. `-t fullclean` does NOT regenerate it.
+# After editing any .defaults file you MUST delete the cache, then rebuild:
+#   rm -f sdkconfig.<env> && pio run -e <env>
 # else the build ignores your change and you will chase ghosts.
 
 CONFIG_IDF_TARGET="esp32s3"
+
+# --- CPU clock ---
+# Run at full 240 MHz. board.json declares f_cpu=240 MHz, but that does NOT set
+# the IDF Kconfig CPU freq in a dual-framework build — so the unpinned default
+# (160 MHz) was leaking through, a ~33% clock cut behind the uniform HTTP
+# slowdown (all endpoints ~-34% req/s vs the arduino build). 240 MHz is the
+# ESP32-S3 rated max and what arduino Nightly 77 ran on this exact board.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ=240
+
+# --- Compiler optimization ---
+# Optimize for size (-Os), matching arduino-esp32. IDF's default is -Og (debug),
+# which is slower across the board. SIZE (not PERF/-O2) keeps flash/IRAM in
+# budget while restoring baseline performance.
+CONFIG_COMPILER_OPTIMIZATION_SIZE=y
 
 # PSRAM config lives in sdkconfig.gaggimate.defaults — only the display-class
 # boards (LilyGo-T-RGB, seeed_xiao_esp32s3) have PSRAM. The Gaggimate-Controller

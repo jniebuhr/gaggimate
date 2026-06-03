@@ -14,7 +14,12 @@ CONFIG_SPIRAM_TYPE_AUTO=y
 CONFIG_SPIRAM_BOOT_INIT=y
 CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y
 CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
-CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=512
+# Threshold below which allocations are forced into internal DRAM. arduino-esp32
+# baseline is 4096; we had dropped it to 512, which pushed mid-size (512-4096 B)
+# allocations to PSRAM and left internal DRAM shattered into tiny blocks —
+# startup fragmentation (1 - largest_free/total_free) ballooned 15% -> 64%,
+# starving contiguous internal allocs AsyncTCP needs to serve. Restore 4096.
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096
 CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=16384
 
 # Route NimBLE host + mbedTLS allocations to PSRAM (reclaims ~40 KB internal).

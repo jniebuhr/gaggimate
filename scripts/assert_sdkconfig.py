@@ -25,6 +25,18 @@ REQUIRED = [
         "Set CONFIG_FATFS_LFN_HEAP=y + CONFIG_FATFS_MAX_LFN=255 in "
         "sdkconfig.common.defaults, then `pio run -e <env> -t fullclean`.",
     ),
+    (
+        "CPU at 240 MHz (IDF default 160 MHz leaks through if unpinned)",
+        lambda t: "#define CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ 240" in t,
+        "Set CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y in sdkconfig.common.defaults, "
+        "delete the cached sdkconfig.<env>, then rebuild.",
+    ),
+    (
+        "Compiler optimization = SIZE (-Os), not the slower IDF default -Og",
+        lambda t: "#define CONFIG_COMPILER_OPTIMIZATION_SIZE 1" in t,
+        "Set CONFIG_COMPILER_OPTIMIZATION_SIZE=y in sdkconfig.common.defaults, "
+        "then `pio run -e <env> -t fullclean`.",
+    ),
 ]
 
 
