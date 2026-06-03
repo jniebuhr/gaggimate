@@ -575,6 +575,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             settings->setClockFormat(request->hasArg("clock24hFormat"));
             if (request->hasArg("standbyTimeout"))
                 settings->setStandbyTimeout(request->arg("standbyTimeout").toInt() * 1000);
+            if (request->hasArg("flushDuration"))
+                settings->setFlushDuration(request->arg("flushDuration").toInt() * 1000);
             if (request->hasArg("mainBrightness"))
                 settings->setMainBrightness(request->arg("mainBrightness").toInt());
             if (request->hasArg("standbyBrightness"))
@@ -689,6 +691,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["timezone"] = settings.getTimezone();
     doc["clock24hFormat"] = settings.isClock24hFormat();
     doc["standbyTimeout"] = settings.getStandbyTimeout() / 1000;
+    doc["flushDuration"] = settings.getFlushDuration() / 1000;
     doc["mainBrightness"] = settings.getMainBrightness();
     doc["standbyBrightness"] = settings.getStandbyBrightness();
     doc["standbyBrightnessTimeout"] = settings.getStandbyBrightnessTimeout() / 1000;

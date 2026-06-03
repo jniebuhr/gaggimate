@@ -64,6 +64,7 @@ class Settings {
     int getStandbyTimeout() const { return standbyTimeout; }
     double getBrewDelay() const { return brewDelay; }
     double getGrindDelay() const { return grindDelay; }
+    int getFlushDuration() const { return flushDuration; }
     bool isDelayAdjust() const { return delayAdjust; }
     String getPid() const { return pid; }
     String getPumpModelCoeffs() const { return pumpModelCoeffs; }
@@ -127,6 +128,7 @@ class Settings {
     void setStandbyTimeout(int standby_timeout);
     void setBrewDelay(double brewDelay);
     void setGrindDelay(double grindDelay);
+    void setFlushDuration(int flush_duration);
     void setDelayAdjust(bool delay_adjust);
     void setPid(const String &pid);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
@@ -193,6 +195,7 @@ class Settings {
     int targetGrindDuration = 25000;
     double brewDelay = 1000.0;
     double grindDelay = 1000.0;
+    int flushDuration = 5000;
     bool delayAdjust = true;
     int startupMode = MODE_STANDBY;
     bool autowakeupEnabled = false;
