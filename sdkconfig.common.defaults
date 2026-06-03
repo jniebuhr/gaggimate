@@ -78,3 +78,18 @@ CONFIG_ARDUINO_SELECTIVE_OpenThread=n
 CONFIG_ARDUINO_SELECTIVE_SimpleBLE=n
 # Arduino's cores/esp32/main.cpp only defines app_main when =y; src/ has no app_main.
 CONFIG_AUTOSTART_ARDUINO=y
+
+# --- FATFS (SD card) long filenames ---
+# IDF 5.5's Kconfig default is LFN_NONE (8.3 names only). Under that default,
+# 4-char extensions like ".slog"/".json" cannot be opened or listed on the SD
+# card, so /api/history/<id>.slog GETs miss serveStatic and fall through to the
+# SPA catch-all that returns index.html — the web UI then fails parsing with
+# "Bad magic: ... got 0x6f64213c" (the bytes "<!do"). The old pure-Arduino build
+# inherited arduino-esp32's prebuilt sdkconfig where LFN was enabled; the
+# dual-framework build compiles IDF from source and lost it. Restore it.
+# HEAP allocation keeps the LFN work buffer off the async webserver task stack
+# (internal DRAM is tight). UTF-8 + codepage 850 match the arduino-esp32 config.
+CONFIG_FATFS_LFN_HEAP=y
+CONFIG_FATFS_MAX_LFN=255
+CONFIG_FATFS_API_ENCODING_UTF_8=y
+CONFIG_FATFS_CODEPAGE_850=y
