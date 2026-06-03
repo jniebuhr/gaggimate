@@ -99,6 +99,9 @@ export function Settings() {
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
         dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
+        hkPowerEnabled: fetchedSettings.hkPowerEnabled ?? true,
+        hkSteamEnabled: fetchedSettings.hkSteamEnabled ?? true,
+        hkSensorEnabled: fetchedSettings.hkSensorEnabled ?? true,
       };
 
       // Extract Kf from PID string and separate them. Mirrors the same
@@ -152,9 +155,7 @@ export function Settings() {
   const onChange = key => {
     return e => {
       let value = e.currentTarget.value;
-      if (key === 'homekit') {
-        value = !formData.homekit;
-      }
+
       if (key === 'boilerFillActive') {
         value = !formData.boilerFillActive;
       }
@@ -163,6 +164,12 @@ export function Settings() {
       }
       if (key === 'smartGrindToggle') {
         value = !formData.smartGrindToggle;
+      }
+      if (key === 'homekitMode') {
+        value = Number.parseInt(value, 10);
+      }
+      if (['hkPowerEnabled', 'hkSteamEnabled', 'hkSensorEnabled'].includes(key)) {
+        value = !formData[key];
       }
       if (key === 'homeAssistant') {
         value = !formData.homeAssistant;
@@ -210,6 +217,13 @@ export function Settings() {
         days: [true, true, true, true, true, true, true],
       },
     ]);
+  };
+
+  const updateHomekitMode = mode => {
+    setFormData({
+      ...formData,
+      homekitMode: Number.parseInt(mode, 10),
+    });
   };
 
   const removeAutoWakeupSchedule = index => {
@@ -263,6 +277,15 @@ export function Settings() {
       if (!formData.standbyDisplayEnabled) {
         formDataToSubmit.set('standbyBrightness', '0');
       }
+
+      formDataToSubmit.set('homekitMode', formData.homekitMode ?? 0);
+      ['hkPowerEnabled', 'hkSteamEnabled', 'hkSensorEnabled'].forEach(key => {
+        if (formData[key] === false) {
+          formDataToSubmit.delete(key);
+        } else {
+          formDataToSubmit.set(key, 'on');
+        }
+      });
 
       if (restart) {
         formDataToSubmit.append('restart', '1');
@@ -1159,6 +1182,7 @@ export function Settings() {
             <PluginCard
               formData={formData}
               onChange={onChange}
+              updateHomekitMode={updateHomekitMode}
               autowakeupSchedules={autowakeupSchedules}
               addAutoWakeupSchedule={addAutoWakeupSchedule}
               removeAutoWakeupSchedule={removeAutoWakeupSchedule}
