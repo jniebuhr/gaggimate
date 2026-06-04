@@ -44,9 +44,9 @@ function getSourceBadge(shot) {
     case 'gaggimate':
       return { label: 'Live', className: 'badge-success' };
     case 'gaggimate-cache':
-      return { label: 'Cached', className: 'badge-warning' };
+      return { label: 'Last mirrored', className: 'badge-warning' };
     case 'browser':
-      return { label: 'Browser', className: 'badge-info' };
+      return { label: 'Imported', className: 'badge-info' };
     default:
       return { label: 'Local', className: 'badge-ghost' };
   }
