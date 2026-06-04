@@ -80,7 +80,7 @@ void GaggiMateController::setup() {
     }
 
     _comms.init("GPBLS", _config.name.c_str(), _version, _config.capabilites.dimming, _config.capabilites.pressure,
-                _config.capabilites.ledControls, _config.capabilites.tof);
+                _config.capabilites.ledControls, _config.capabilites.tof, _config.capabilites.dualBoiler);
 
     if (_config.capabilites.ledControls) {
         ledController->setup();
@@ -180,6 +180,7 @@ void GaggiMateController::setup() {
                     return;
                 default:
                     // noop
+                    break;
             }
         } else if (index == 1) {
             // Alt relay: independent function, no watchdog/error gating (matches

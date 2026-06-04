@@ -6,8 +6,8 @@
 GaggiMateServer::GaggiMateServer() : _endpoint(_transport) {}
 
 void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version, bool dimming, bool pressure,
-                           bool ledControl, bool tof) {
-    setSystemInfo(hardware, version, dimming, pressure, ledControl, tof);
+                           bool ledControl, bool tof, bool dualBoiler) {
+    setSystemInfo(hardware, version, dimming, pressure, ledControl, tof, dualBoiler);
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
         if (connected)
@@ -32,7 +32,7 @@ void GaggiMateServer::pumpTask(void *arg) {
 }
 
 void GaggiMateServer::setSystemInfo(const String &hardware, const String &version, bool dimming, bool pressure, bool ledControl,
-                                    bool tof) {
+                                    bool tof, bool dualBoiler) {
     memset(&_systemInfo, 0, sizeof(_systemInfo));
     strlcpy(_systemInfo.hardware, hardware.c_str(), sizeof(_systemInfo.hardware));
     strlcpy(_systemInfo.version, version.c_str(), sizeof(_systemInfo.version));
@@ -42,6 +42,7 @@ void GaggiMateServer::setSystemInfo(const String &hardware, const String &versio
     _systemInfo.capabilities.pressure = pressure;
     _systemInfo.capabilities.led_control = ledControl;
     _systemInfo.capabilities.tof = tof;
+    _systemInfo.capabilities.dual_boiler = dualBoiler;
 
     // Mirror system info onto the legacy read-only characteristic in the old
     // JSON shape (plus "pv"), so pre-framing tools can still read it.
