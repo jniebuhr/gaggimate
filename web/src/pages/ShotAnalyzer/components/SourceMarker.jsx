@@ -71,7 +71,7 @@ function GmLogoIcon({ width, height }) {
 export function SourceMarker({ source, variant = 'compact' }) {
   // Central size map for the GM/Web source markers.
   const resolvedVariant = SOURCE_MARKER_VARIANTS[variant] || SOURCE_MARKER_VARIANTS.compact;
-  const isGaggiMate = source === 'gaggimate';
+  const isGaggiMate = source === 'gaggimate' || source === 'gaggimate-cache';
 
   return (
     <span
