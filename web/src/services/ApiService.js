@@ -48,6 +48,13 @@ function getWebSocketUrl() {
   return `${wsProtocol}${apiHost}/ws`;
 }
 
+
+function logWebSocketDebug(...args) {
+  if (import.meta.env.DEV && import.meta.env.VITE_GAGGIGO_WS_DEBUG === 'true') {
+    console.debug('[gaggigo:ws]', ...args);
+  }
+}
+
 export default class ApiService {
   socket = null;
   listeners = {};
