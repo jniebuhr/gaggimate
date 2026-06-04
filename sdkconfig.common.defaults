@@ -66,14 +66,56 @@ CONFIG_MBEDTLS_KEY_EXCHANGE_RSA_PSK=y
 # --- Task WDT ---
 CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
 CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
+# Arduino sets PANIC=y so WDT trips invoke the panic handler -> clean reboot
+# + coredump. IDF default is n: WDT silently logs and the offending task can
+# soft-wedge until manual power-cycle. Prefer auto-reboot for async_tcp WDT
+# (Bug #3 hot path) and any other task that misses its deadline.
+CONFIG_ESP_TASK_WDT_PANIC=y
 
 # --- FreeRTOS ---
 CONFIG_FREERTOS_HZ=1000
 CONFIG_FREERTOS_PLACE_FUNCTIONS_INTO_FLASH=y
 CONFIG_RINGBUF_PLACE_FUNCTIONS_INTO_FLASH=y
+# Hardware watchpoint on the bottom of each task stack — traps overflow at
+# the moment it happens instead of letting it corrupt the next allocation.
+# Arduino-prebuilt has this on; IDF default is n.
+CONFIG_FREERTOS_WATCHPOINT_END_OF_STACK=y
+# FreeRTOS software-timer task stack. Arduino: 3120. IDF default: 2048 (the
+# Kconfig minimum). Restore Arduino's headroom — anything dispatched via
+# xTimerCreate runs on this stack.
+CONFIG_FREERTOS_TIMER_TASK_STACK_DEPTH=3120
 
 # --- Stacks ---
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+# esp_timer high-resolution timer task dispatches every esp_timer_create
+# callback (Wi-Fi, BT, our brew/grind state machines). Arduino: 8192. IDF
+# default: 3584 (right at the Kconfig minimum). Restore Arduino's value.
+CONFIG_ESP_TIMER_TASK_STACK_SIZE=8192
+
+# --- Stack-overflow + heap diagnostics ---
+# GCC -fstack-protector. Arduino has it on; IDF default is none. Cheap
+# overflow detection at function entry.
+CONFIG_COMPILER_STACK_CHECK_MODE_NORM=y
+CONFIG_COMPILER_STACK_CHECK=y
+# Canary bytes around each heap allocation; small overflows / use-after-free
+# trap at free() with a clean abort + trace instead of silently corrupting
+# downstream allocations. Negligible cost.
+CONFIG_HEAP_POISONING_LIGHT=y
+
+# --- lwIP TCP/IP task ---
+# Arduino: pinned to CPU0 (0x0). IDF default: NO_AFFINITY (any core), which
+# lets the task drift across cores and pay cross-core IPC on every callback,
+# or contend with NimBLE for core 0 cycles. We pin AsyncTCP + NimBLE to core
+# 0 via build_flags; make lwIP match.
+CONFIG_LWIP_TCPIP_TASK_AFFINITY_CPU0=y
+# Stack of the lwIP TCP/IP task. Arduino: 4096. IDF default: 3072. The IDF
+# Kconfig itself notes that at LOG_DEFAULT_LEVEL >= INFO (we use INFO) the
+# stack needs more headroom: "esp_netif API calls can end up a few calls
+# deep and logging there can trigger a stack overflow."
+CONFIG_LWIP_TCPIP_TASK_STACK_SIZE=4096
+# Hard cap on simultaneous sockets. Arduino: 16. IDF default: 10. AsyncWebServer
+# (HTTP+WS) + HomeKit + MQTT + mDNS + OTA can hit 10 under load.
+CONFIG_LWIP_MAX_SOCKETS=16
 
 # --- Logging ---
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
