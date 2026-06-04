@@ -58,7 +58,7 @@ export default class ApiService {
   isConnecting = false;
 
   constructor() {
-    console.log('Established websocket connection');
+    logWebSocketDebug('initialising websocket connection');
     this.connect();
   }
 
@@ -87,7 +87,7 @@ export default class ApiService {
   }
 
   _onOpen() {
-    console.log('WebSocket connected successfully');
+    logWebSocketDebug('connected');
     this.reconnectAttempts = 0;
     machine.value = {
       ...machine.value,
@@ -96,7 +96,7 @@ export default class ApiService {
   }
 
   _onClose() {
-    console.log('WebSocket connection closed');
+    logWebSocketDebug('closed');
     machine.value = {
       ...machine.value,
       connected: false,
@@ -105,7 +105,7 @@ export default class ApiService {
   }
 
   _onError(error) {
-    console.error('WebSocket error:', error);
+    logWebSocketDebug('error event', error);
     if (this.socket) {
       this.socket.close();
     }
@@ -122,7 +122,7 @@ export default class ApiService {
       this.maxReconnectDelay,
     );
 
-    console.log(`Scheduling reconnect attempt ${this.reconnectAttempts + 1} in ${delay}ms`);
+    logWebSocketDebug(`reconnect attempt ${this.reconnectAttempts + 1} scheduled in ${delay}ms`);
 
     this.reconnectTimeout = setTimeout(() => {
       this.reconnectAttempts++;
