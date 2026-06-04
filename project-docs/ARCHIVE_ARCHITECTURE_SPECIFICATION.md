@@ -143,23 +143,100 @@ Archive bundles should be human readable, portable, versioned, and self-describi
 - Profile count
 - Metadata count
 - GaggiGo version
+- Source information
+- Storage metrics
+- Archive summaries
 - Integrity information
+
+## Manifest Scope Rule
+
+The manifest contains only fields required by the current schema.
+
+Do not create:
+
+- Reserved fields
+- Placeholder fields
+- Future schema sections
+
+Future requirements are introduced through schema version updates.
 
 ## Integrity Model
 
 Mandatory and automatic.
 
-Create archive -> checksum -> verify -> valid.
+Integrity algorithm:
 
-Import archive -> verify -> validate manifest -> validate schema -> import.
+```text
+SHA256 only
+```
+
+Rules:
+
+- No alternative checksum algorithms
+- No user-selectable checksum algorithms
+- No fallback algorithms
+- Future algorithm changes require a schema version update
+
+Archive creation:
+
+- Generate manifest
+- Generate SHA256 checksums
+- Store section integrity information
+
+Archive import:
+
+- Read manifest first
+- Validate manifest
+- Validate schema
+- Validate SHA256 checksums
+- Continue only if validation rules allow it
+
+Integrity should include:
+
+- Overall archive checksum
+- Section checksums
+- Shot data checksum
+- Profile data checksum
+- Notes / metadata checksum where present
 
 ## Archive Health Model
+
+Health states:
 
 - Good
 - Warning
 - Critical
 
-Each status must provide explanation and recommended action.
+Every health status must include:
+
+- Reason
+- Recommended action
+
+Health is calculated at import or validation time, not permanently fixed at archive creation time.
+
+Reason:
+
+Archive health depends on current environment, current schema support, current compatibility rules, and current validation results.
+
+Archive creation records the data needed to validate health later.
+
+Archive import calculates the current health outcome.
+
+Health status must never be vague.
+
+Good example:
+
+```text
+Warning
+Reason: Archive uses an older supported schema.
+Action: Import is supported. Re-export using the latest version when convenient.
+```
+
+Bad example:
+
+```text
+Warning
+```
 
 ## Local Archive vs Backup
 
@@ -254,6 +331,93 @@ and prevents:
 - Archive import overwriting active profiles
 - Archive import becoming a full restore operation
 
+## Import Behaviour
+
+Archive import must be manifest-first.
+
+Import flow:
+
+- Select archive
+- Read manifest.json
+- Validate manifest
+- Validate schema
+- Validate integrity information
+- Show summary
+- Import only if validation allows it
+
+Duplicate records are skipped.
+
+Import results must report:
+
+- Records imported
+- Records skipped
+- Reason for skipped records
+- Any warnings
+
+Example:
+
+```text
+Imported: 114
+Skipped: 18
+Reason: Duplicate records
+```
+
+Partial recovery is allowed.
+
+If part of an archive is damaged but other sections validate, GaggiGo may import valid data, skip invalid data, and report a warning.
+
+The import should not fail completely because one non-critical record is damaged.
+
+Backwards-compatible imports are allowed.
+
+Older supported schema versions should import with a warning and a re-export recommendation.
+
+Unsupported or unsafe schema versions may be blocked.
+
+## Storage Pressure Behaviour
+
+When storage usage exceeds recommended limits:
+
+- Display warning
+- Explain reason
+- Recommend action
+- Offer archive/export workflow
+
+The system should guide the user to archive or export data.
+
+The system must not automatically archive data.
+
+## Archive Creation Behaviour
+
+Archive creation is user controlled.
+
+GaggiGo may recommend archive creation.
+
+GaggiGo must not automatically create archives.
+
+When the hot mirror threshold is reached, GaggiGo should prompt the user rather than automatically archiving.
+
+Reason:
+
+A device may be primary, secondary, temporary, or shared. The app should not assume that every device should hold or create archives.
+
+## Cleanup Rules
+
+GaggiGo may recommend cleanup.
+
+GaggiGo must not perform cleanup automatically.
+
+Data may only be removed when all conditions are true:
+
+1. Archive exists
+2. Archive integrity is verified
+3. User confirms cleanup
+4. Records being removed exist within the verified archive
+
+Cleanup must remove only records contained in the verified archive.
+
+Do not delete records merely because they are older than the hot mirror window.
+
 ## Editability Model
 
 Immutable:
@@ -276,13 +440,27 @@ Facts are historical. Interpretation can evolve.
 
 Archive import must be idempotent.
 
-Duplicate records are skipped silently.
+Duplicate records are skipped and reported.
+
+Provisional archive identity:
+
+```text
+shotDateTime + shotNumber
+```
+
+This must be validated against real GaggiMate exports before implementation.
+
+Future schema versions may add a derived fingerprint if real-world testing proves it is needed.
 
 ## Schema Compatibility Rule
 
-Archive readers support older archive versions.
+Archive readers support older archive versions where practical.
 
 Archive writers only create current archive versions.
+
+No reserved future fields should be added to v1 manifests.
+
+Future features should be introduced through schema version updates.
 
 ## Single Archive Authority Rule
 
@@ -298,15 +476,113 @@ Each device hydrates from the same GaggiMate authority.
 
 Older history may be restored from archive imports.
 
+Archive import rehydrates GaggiGo, not GaggiMate.
+
+## User Experience Principle
+
+Simple by default.
+Detailed when requested.
+
+Casual users should not be overwhelmed.
+
+Advanced users should have access to detailed archive information when required.
+
+The target audience includes both enthusiast users and household users.
+
+## Transparency Principle
+
+Simple internally.
+Transparent externally.
+
+Users should be informed of:
+
+- Import results
+- Duplicate handling
+- Integrity results
+- Health status
+- Recommended actions
+- Cleanup consequences
+
+Avoid unexplained success messages.
+
+Prefer clear summaries such as:
+
+```text
+Imported: 114
+Skipped: 18 duplicates
+Health: Good
+```
+
+## MVP Scope Classification
+
+### Must Have
+
+- Export archive
+- Import archive
+- .gaggigo.zip archive format
+- manifest.json
+- SHA256 integrity verification
+- Archive version
+- Schema version
+- Source metadata
+- Archive summaries
+- Duplicate detection
+- Duplicate skipping
+- Duplicate reporting
+- Merge-only import
+- Partial recovery
+- Backwards-compatible imports where safe
+- Archive import boundary
+- Separate profile import path
+- Restore-as-copy profiles
+- 6-month hot mirror
+- 6-month archive bundles
+- Optional cleanup
+- Cleanup only after verified archive
+- Cleanup only for archived records
+- Manifest-first validation
+- Health status with reason and action
+
+### Should Have
+
+- Storage pressure warnings
+- Archive size metrics
+- Estimated restore size
+- Archive creation guidance
+- Archive review screen
+- Archive health display
+- Archive compatibility warnings
+- Re-export recommendations
+- Import summary screen
+
+### Future
+
+Do not build for archive MVP:
+
+- Archive history database
+- Archive lineage tracking
+- Archive relationship graphs
+- Advanced diagnostics centre
+- Archive analytics
+- Storage trend graphs
+- Recommendation engine
+- Automatic archive scheduling
+- Automatic cleanup
+- Multi-archive dependency systems
+- Cloud archive support
+- Cross-device archive orchestration
+
 ## Pre-Implementation Requirements
 
-- Measure real shot payload sizes
+- Measure real shot payload sizes with larger real-life datasets
 - Measure IndexedDB growth
 - Measure archive sizes
 - Measure browser storage behaviour
-- Define shot identity algorithm
-- Define archive manifest schema
+- Define and validate shot identity algorithm
+- Define final archive manifest schema
 - Validate archive import boundary against existing profile import behaviour
+- Test large archive import behaviour
+- Complete runtime validation matrix review
 
 ## Final Principle
 
