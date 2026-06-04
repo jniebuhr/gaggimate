@@ -4,7 +4,7 @@
 
 GaggiGo is an offline-first observer frontend and local mirror layer for GaggiMate.
 
-Core cache-first architecture direction is now functioning.
+Core cache-first architecture direction is functioning and validated.
 
 ```text
 GaggiMate
@@ -22,191 +22,120 @@ GaggiGo
 = safe sync client later
 ```
 
-The project has now moved out of analyzer/history regression territory and into cleanup + hardening before sync.
+The project has moved beyond analyzer/history recovery and hardening.
+
+Current phase:
+
+```text
+Archive pre-implementation review.
+```
 
 ---
 
 ## Phase 1 — Safety + Live Observer Frontend
 
-Status: complete.
-
-Completed:
-
-- responsive shell retained
-- desktop sidebar retained
-- mobile dropdown retained
-- safe informational homepage
-- unsafe/admin-oriented routes removed from active GaggiGo shell
-- websocket integration
-- live proxy integration
-- LibraryService abstraction reused
-- safe observer frontend direction established
-- Settings retained as filtered read-only viewer
-- SafeGaggiMateClient integration
-
-Merge-back direction:
-
-- long term this should become app mode / feature gating rather than permanent upstream deletion.
+Status: Complete.
 
 ---
 
 ## Phase 2 — Offline-First Behaviour + Cache Mirror Stabilisation
 
-Status: architecture stable, hardening ongoing.
+Status: Complete.
 
-Current architecture:
+Validated:
 
-```text
-GaggiMate API/WebSocket
-↓
-hydration/import path
-↓
-IndexedDB local mirror
-↓
-LibraryService
-↓
-History / Analyzer / Statistics / Profiles
-```
-
-Integrated and validated:
-
-- fast offline UI boot
-- cached startup behaviour
-- shot history cache fallback
-- analyzer cache fallback
-- full shot payload hydration into IndexedDB
-- profile cache fallback
-- live profile refresh path
+- profiles online/offline
+- history online/offline
+- analyzer online/offline
+- statistics from cached payloads
+- hydration-once behaviour
+- reconnect lifecycle
+- duplicate prevention
+- cache-first rendering
 - settings snapshot fallback
-- cache-first rendering model
-- source/cache indicators
-- safe websocket request classification
-- safe profile operation wrapping
-- ApiService hardening pass
-- repository audit pass
-- statistics cache-only payload reads
-- statistics missing-payload reporting
-- deterministic mirrored GaggiMate profile snapshots
-- offline profile consistency model
-- reconnect lifecycle validation
-- offline refresh persistence validation
-- reconnect duplicate prevention validation
-- reconnect websocket stability validation
+- IndexedDB persistence authority
 
-Critical architecture fixes completed:
+Hardening completed:
 
-```text
-hydrateGaggiMateShotIndex()
-→ hydrates missing .slog payloads into IndexedDB
-
-replaceCachedGaggiMateProfiles()
-→ replaces stale mirrored profile snapshots
-→ preserves browser/import profiles
-```
-
-This allows:
-
-- offline analyzer graphs
-- local full-payload persistence
-- cache-first statistics direction
-- deterministic offline profile behaviour
-- proper mirror behaviour
-
-Recent fixes completed:
-
-- fixed metadata-only payload handling
-- fixed analyzer empty-sample detection
-- fixed cached GaggiMate analyzer routing
-- fixed shot history hydration timing
-- fixed live profile preference while connected
-- added eager full-payload hydration during cache refresh
-- removed lazy live statistics payload loading
-- added statistics missing-payload warnings
-- replaced stale mirrored profile accumulation
-- validated reconnect lifecycle behaviour
+- offline empty-state polish
+- cache/source indicator review
+- terminal/proxy noise review
+- dead-code audit
+- ApiService boundary mapping
+- LocalCacheService removal
+- localStorage persistence removal
 
 ---
 
-## Current Hardening Targets
+## Phase 3 — Archive Architecture
 
-Still actively being stabilised:
+Status: In review.
 
-1. Offline empty-state polish.
-2. Cache/source indicator clarity.
-3. Terminal/proxy noise reduction.
-4. Dead-code audit.
-5. ApiService safe-boundary mapping.
-6. Backup/archive architecture review before implementation.
-7. Runtime validation matrix across refresh/reopen/browser restart transitions.
-
-Rules:
-
-```text
-No sync work before hardening completes.
-No new product features before hardening completes.
-No parallel cache architecture.
-No backup/archive implementation before architecture review.
-```
-
----
-
-## Phase 3 — Persistent Mirror + Archive Layer
-
-Status: architecture planning.
-
-Direction:
-
-```text
-GaggiMate
-= live authoritative rolling datastore
-
-GaggiGo
-= hydrated mirror node
-= persistent archive
-= continuity/recovery layer
-```
-
-Planned:
-
-- rolling 3-month hot mirror
-- monthly cold archive strategy
-- optional 6-month archive consolidation later
-- firmware-update continuity prompts
-- backup/export architecture
-- archive search/view behaviour
-- restore workflows
-- storage pressure handling
-- archive schema/version manifests
-
-Important rules:
-
-```text
-Hydration is the sync model.
-ESP32 rotation deletion must not delete archived GaggiGo history.
-Restore/import actions must remain explicit.
-Reuse existing GaggiMate export/import flows where possible.
-```
-
-See:
+Authoritative documents:
 
 ```text
 project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md
+project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
+project-docs/API_SERVICE_BOUNDARY_MAP.md
 ```
+
+Approved direction:
+
+```text
+Tier 1
+ESP32 rolling operational store
+
+Tier 2
+6-month IndexedDB hot mirror
+
+Tier 3
+Quarterly archive bundles
+
+Tier 4
+Portable exported backups
+```
+
+Approved architecture:
+
+- archive facts
+- recompute insights
+- GaggiMate-compatible profile JSON
+- preserve all profiles including utility profiles
+- merge-only restore
+- silent duplicate skipping
+- idempotent imports
+- automatic integrity verification
+- archive health model
+- local archive != backup
+- single archive authority
+
+Not approved for implementation yet.
+
+Remaining review work:
+
+1. Measure real shot payload sizes.
+2. Measure IndexedDB growth.
+3. Measure browser storage behaviour.
+4. Define deterministic shot identity.
+5. Define archive manifest schema.
+6. Complete runtime validation matrix review.
+
+Implementation must not begin until those items are complete.
 
 ---
 
 ## Phase 4 — Safe Sync
 
-Status: blocked behind hardening validation.
+Status: Blocked.
 
 Sync work must not begin until:
 
-- offline empty states are stable.
-- source/cache indicators are stable.
-- no unexpected ApiService warnings remain.
-- local mirror behaviour is deterministic.
-- archive architecture is stable.
-- restore model is defined.
+- archive architecture is stable
+- archive measurements are complete
+- shot identity is defined
+- manifest schema is defined
+- runtime validation review is complete
+- local mirror behaviour remains deterministic
 
 Initial sync scope when unblocked:
 
@@ -214,38 +143,59 @@ Initial sync scope when unblocked:
 - ratings
 - safe metadata
 - profile drafts
-- manual sync workflow first
-
-Planned behaviour:
-
-- dirty-state tracking
-- manual sync queue
-- safe merge behaviour
-- export/import tooling
+- manual sync workflow
 
 Do not start with:
 
 - automatic two-way profile sync
-- machine/runtime configuration sync
+- machine configuration sync
+- machine restoration sync
 - conflict-heavy sync behaviour
-- unrestricted live mutation
+- unrestricted mutation
 
 ---
 
-## Phase 5 — Hardening / PWA / Packaging
+## Phase 5 — Archive Implementation
 
-Status: planned.
+Status: Not started.
+
+Expected implementation order:
+
+1. Archive identity layer.
+2. Manifest schema.
+3. Archive storage model.
+4. Archive creation workflow.
+5. Archive health system.
+6. Export workflow.
+7. Import workflow.
+8. Restore workflow.
+
+Rules:
+
+```text
+Simple by default.
+Deterministic by design.
+Archive facts.
+Recompute insights.
+Protect data.
+Avoid complexity.
+```
+
+---
+
+## Phase 6 — Hardening / PWA / Packaging
+
+Status: Planned.
 
 Planned:
 
-- remove inherited dead services
-- statistics indexing improvements
 - performance optimisation
+- statistics indexing improvements
 - installable PWA behaviour
 - packaging/distribution
 - runtime cleanup
 - end-to-end testing
-- feature-gating/app-mode architecture
+- feature gating/app-mode architecture
 
 ---
 
@@ -264,8 +214,8 @@ GaggiGo
 = offline-first workspace
 = historical viewer
 = local mirror
-= persistent archive layer later
-= safe sync client later
+= archive layer
+= future safe sync client
 ```
 
 Important implementation rule:
