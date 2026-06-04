@@ -108,7 +108,7 @@ Completed review decisions:
 - archive import rehydrates GaggiGo only
 - profile restore from archive is explicit and restore-as-copy
 - merge-only restore
-- silent duplicate skipping
+- duplicate skipping and reporting
 - idempotent imports
 - automatic integrity verification
 - archive health model
@@ -122,13 +122,28 @@ Not approved for implementation yet.
 
 Remaining review work:
 
-1. Real-life storage validation with larger datasets.
-2. Measure IndexedDB growth.
-3. Measure browser storage behaviour.
-4. Define deterministic shot identity.
-5. Define archive manifest schema.
-6. Complete runtime validation matrix review.
-7. Validate archive import boundary against existing profile import behaviour.
+1. Real GaggiMate export structure review.
+2. Validate deterministic shot identity.
+   - Can shot numbers reset?
+   - Can exports from different machines collide?
+   - Can archive imports collide with live data?
+3. Real-life storage validation with larger datasets.
+4. Measure IndexedDB growth.
+5. Measure browser storage behaviour.
+6. Measure real archive sizes.
+7. Test large archive import behaviour.
+8. Complete runtime validation matrix review.
+9. Validate archive import boundary against existing profile import behaviour.
+
+Archive implementation gate:
+
+Implementation must not begin until:
+
+- real export structure has been reviewed
+- shot identity has been validated
+- storage testing has been completed
+- import testing has been completed
+- runtime validation review has been completed
 
 Implementation must not begin until those items are complete.
 
@@ -142,7 +157,7 @@ Sync work must not begin until:
 
 - archive architecture is stable
 - archive measurements are complete
-- shot identity is defined
+- shot identity is defined and validated
 - manifest schema is defined
 - runtime validation review is complete
 - local mirror behaviour remains deterministic
