@@ -45,7 +45,10 @@ bool Amoled_DisplayPanel::installSD() {
 
     SD_MMC.setPins(hwConfig.sd_sclk, hwConfig.sd_mosi, hwConfig.sd_miso);
 
-    return SD_MMC.begin("/sdcard", true, false);
+    // maxOpenFiles 5 -> 10: shot history lives on SD, and the web server serves
+    // many .slog files concurrently alongside live shot logging + index access;
+    // the default of 5 exhausts and throws "too many open files". [GM-90]
+    return SD_MMC.begin("/sdcard", true, false, BOARD_MAX_SDMMC_FREQ, 10);
 }
 
 void Amoled_DisplayPanel::uninstallSD() {

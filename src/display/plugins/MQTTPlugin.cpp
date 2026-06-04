@@ -2,6 +2,7 @@
 #include "../core/Controller.h"
 #include <ArduinoJson.h>
 #include <ctime>
+#include <display/util/PsramAllocator.h>
 #include <esp_log.h>
 
 const String LOG_TAG = F("MQTTPlugin");
@@ -38,9 +39,9 @@ void MQTTPlugin::publishDiscovery(Controller *controller) {
     mac.replace(":", "_");
     const char *cmac = mac.c_str();
 
-    JsonDocument device;
-    JsonDocument origin;
-    JsonDocument components;
+    JsonDocument device(&psramAllocator);
+    JsonDocument origin(&psramAllocator);
+    JsonDocument components(&psramAllocator);
 
     // Device information
     device["ids"] = cmac;
@@ -57,10 +58,10 @@ void MQTTPlugin::publishDiscovery(Controller *controller) {
     origin["url"] = "https://gaggimate.eu/";
 
     // Components information
-    JsonDocument cmps;
-    JsonDocument boilerTemperature;
-    JsonDocument boilerTargetTemperature;
-    JsonDocument mode;
+    JsonDocument cmps(&psramAllocator);
+    JsonDocument boilerTemperature(&psramAllocator);
+    JsonDocument boilerTargetTemperature(&psramAllocator);
+    JsonDocument mode(&psramAllocator);
 
     boilerTemperature["name"] = "Boiler Temperature";
     boilerTemperature["p"] = "sensor";
@@ -90,7 +91,7 @@ void MQTTPlugin::publishDiscovery(Controller *controller) {
     cmps["mode"] = mode;
 
     // Prepare the payload for Home Assistant discovery
-    JsonDocument payload;
+    JsonDocument payload(&psramAllocator);
     payload["dev"] = device;
     payload["o"] = origin;
     payload["cmps"] = cmps;

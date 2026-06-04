@@ -322,8 +322,8 @@ inline bool parseProfile(const JsonObject &obj, Profile &profile) {
     }
 
     if (profile.phases.empty()) {
-        ESP_LOGW("parseProfile", "Profile %s ('%s') rejected: phases array empty after parsing",
-                 profile.id.c_str(), profile.label.c_str());
+        ESP_LOGW("parseProfile", "Profile %s ('%s') rejected: phases array empty after parsing", profile.id.c_str(),
+                 profile.label.c_str());
         return false;
     }
 

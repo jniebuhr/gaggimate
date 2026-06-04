@@ -12,6 +12,7 @@ class LedControlPlugin : public Plugin {
 
   private:
     void updateControl();
+    void sendControl(String hexColor, uint8_t ext);
     void sendControl(uint8_t r, uint8_t g, uint8_t b, uint8_t w, uint8_t ext);
 
     unsigned long lastUpdate = 0;

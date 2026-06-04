@@ -101,10 +101,19 @@ class Settings {
     float getSteamPumpCutoff() const { return steamPumpCutoff; }
     int getThemeMode() const { return themeMode; }
     int getHistoryIndex() const { return historyIndex; }
+
+    [[deprecated]]
     int getSunriseR() const { return sunriseR; }
+    [[deprecated]]
     int getSunriseG() const { return sunriseG; }
+    [[deprecated]]
     int getSunriseB() const { return sunriseB; }
+    [[deprecated]]
     int getSunriseW() const { return sunriseW; }
+    String getSunriseIdle() const { return sunriseIdle; }
+    String getSunriseActive() const { return sunriseActive; }
+    String getSunriseFinished() const { return sunriseFinished; }
+    String getSunriseError() const { return sunriseError; }
     int getSunriseExtBrightness() const { return sunriseExtBrightness; }
     int getEmptyTankDistance() const { return emptyTankDistance; }
     int getFullTankDistance() const { return fullTankDistance; }
@@ -166,10 +175,18 @@ class Settings {
     void setSteamPumpCutoff(float steam_pump_cutoff);
     void setThemeMode(int theme_mode);
     void setHistoryIndex(int history_index);
+    [[deprecated]]
     void setSunriseR(int sunrise_r);
+    [[deprecated]]
     void setSunriseG(int sunrise_g);
+    [[deprecated]]
     void setSunriseB(int sunrise_b);
+    [[deprecated]]
     void setSunriseW(int sunrise_w);
+    void setSunriseIdle(String hexColor);
+    void setSunriseActive(String hexColor);
+    void setSunriseFinished(String hexColor);
+    void setSunriseError(String hexColor);
     void setSunriseExtBrightness(int sunrise_ext_brightness);
     void setEmptyTankDistance(int empty_tank_distance);
     void setFullTankDistance(int full_tank_distance);
@@ -241,6 +258,10 @@ class Settings {
     int sunriseG = 0;
     int sunriseB = 255;
     int sunriseW = 50;
+    String sunriseIdle = "#00FFFF";
+    String sunriseActive = "#0000FF";
+    String sunriseFinished = "#00FF00";
+    String sunriseError = "#FF0000";
     int sunriseExtBrightness = 255;
     int emptyTankDistance = 200;
     int fullTankDistance = 50;

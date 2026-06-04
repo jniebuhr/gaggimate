@@ -1,6 +1,6 @@
 #include "ControllerOTA.h"
 #include <HTTPClient.h>
-#include <SPIFFS.h>
+#include <LittleFS.h>
 
 void ControllerOTA::init(NimBLEClient *client, const ctr_progress_callback_t &progress_callback) {
     this->client = client;
@@ -19,14 +19,14 @@ void ControllerOTA::init(NimBLEClient *client, const ctr_progress_callback_t &pr
 }
 
 void ControllerOTA::update(WiFiClientSecure &wifi_client, const String &release_url) {
-    if (SPIFFS.exists("/board-firmware.bin")) {
+    if (LittleFS.exists("/board-firmware.bin")) {
         ESP_LOGI("ControllerOTA", "Removing previous update file");
-        SPIFFS.remove("/board-firmware.bin");
+        LittleFS.remove("/board-firmware.bin");
     }
     if (!downloadFile(wifi_client, release_url)) {
         ESP_LOGE("ControllerOTA", "Download of firmware file failed");
     }
-    File file = SPIFFS.open("/board-firmware.bin", FILE_READ);
+    File file = LittleFS.open("/board-firmware.bin", FILE_READ);
     runUpdate(file, file.size());
     file.close();
 }
@@ -68,7 +68,7 @@ bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &re
         return false;
     }
 
-    File file = SPIFFS.open("/board-firmware.bin", FILE_WRITE, true);
+    File file = LittleFS.open("/board-firmware.bin", FILE_WRITE, true);
 
     int written = 0;
     while (written < len) {

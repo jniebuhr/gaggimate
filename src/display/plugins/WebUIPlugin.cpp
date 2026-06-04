@@ -1,25 +1,31 @@
 #include "WebUIPlugin.h"
 #include <DNSServer.h>
-#include <SPIFFS.h>
+#include <LittleFS.h>
+#include <SD_MMC.h>
+#include <algorithm>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
 #include <display/models/profile.h>
+#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/ShotHistoryPlugin.h>
+#include <display/util/PsramStlAllocator.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
 #include <esp_heap_caps.h>
 #include <esp_partition.h>
-#include <SD_MMC.h>
-#include <algorithm>
-#include <display/plugins/BLEScalePlugin.h>
-#include <display/plugins/ShotHistoryPlugin.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <version.h>
 
-static std::unordered_map<uint32_t, std::string> rxBuffers;
+// Incoming WebSocket payloads (profile uploads reserve up to 64 KB) are
+// reassembled here. Back the character storage with PSRAM so these large,
+// transient buffers don't spike the scarce internal SRAM. The map nodes
+// themselves stay on the default heap (tiny: an id + a string handle).
+using PsramString = std::basic_string<char, std::char_traits<char>, PsramStlAllocator<char>>;
+static std::unordered_map<uint32_t, PsramString> rxBuffers;
 static WebUIPlugin *g_webUIPlugin = nullptr;
 
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") { g_webUIPlugin = this; }
@@ -44,7 +50,13 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         apMode = event.getInt("AP");
         start();
     });
-    pluginManager->on("controller:wifi:disconnect", [this](Event const &) { stop(); });
+    // Intentionally do NOT stop the server on a WiFi disconnect: the listen
+    // socket survives a reconnect, and tearing it down only to rebind moments
+    // later races AsyncTCP's async close (bind: -8) and churns sockets in the
+    // recovery path. The server keeps listening; clients reconnect on their own.
+    pluginManager->on("controller:wifi:disconnect", [this](Event const &) {
+        ws.cleanupClients(); // drop dead websocket clients; keep the listener up
+    });
     pluginManager->on("controller:ready", [this](Event const &) {
         ota->setControllerVersion(controller->getSystemInfo().version);
         ota->init(controller->getClientController()->getClient());
@@ -54,12 +66,12 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
 
     // Forward shot history rebuild progress events to WebSocket clients
     pluginManager->on("evt:history-rebuild-progress", [this](Event const &event) {
-        JsonDocument doc;
+        JsonDocument doc(&psramAllocator);
         doc["tp"] = "evt:history-rebuild-progress";
         doc["total"] = event.getInt("total");
         doc["current"] = event.getInt("current");
         doc["status"] = event.getString("status");
-        ws.textAll(doc.as<String>());
+        broadcastJson(doc);
     });
 
     // Subscribe to Bluetooth scale weight updates
@@ -71,7 +83,10 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
 
 void WebUIPlugin::loop() {
     if (updating) {
-        pluginManager->trigger("ota:update:start");
+        // Pass which component is being flashed: a controller update streams the
+        // firmware over BLE (wants a low-latency link), a display update is over
+        // Wi-Fi (wants BLE to stay out of the radio's way). "" = both.
+        pluginManager->trigger("ota:update:start", "component", updateComponent);
         ota->update(updateComponent != "display", updateComponent != "controller");
         pluginManager->trigger("ota:update:end");
         updating = false;
@@ -116,9 +131,13 @@ void WebUIPlugin::loop() {
         statusDoc["wl"] = controller->getWaterLevel();
         statusDoc["tof"] = controller->getTofDistance();
         statusDoc["rssi"] = 0;
+        statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
+        }
+        if (controller->getClientController()->hasLatency()) {
+            statusDoc["lat"] = controller->getClientController()->getLatencyMs();
         }
 
         bool bleConnected = BLEScales.isConnected();
@@ -179,7 +198,7 @@ void WebUIPlugin::loop() {
             }
         }
 
-        ws.textAll(statusDoc.as<String>());
+        broadcastJson(statusDoc);
     }
     if (now > lastCleanup + CLEANUP_PERIOD) {
         lastCleanup = now;
@@ -210,7 +229,7 @@ void WebUIPlugin::setupServer() {
     server.on("/api/settings", [this](AsyncWebServerRequest *request) { handleSettings(request); });
     server.on("/api/status", [this](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
-        JsonDocument doc;
+        JsonDocument doc(&psramAllocator);
         doc["mode"] = controller->getMode();
         doc["tt"] = controller->getTargetTemp();
         doc["ct"] = controller->getCurrentTemp();
@@ -221,7 +240,7 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
-    FS *fs = &SPIFFS;
+    FS *fs = &LittleFS;
     if (controller->isSDCard()) {
         fs = &SD_MMC;
     }
@@ -235,17 +254,26 @@ void WebUIPlugin::setupServer() {
         }
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
-    server.onNotFound([](AsyncWebServerRequest *request) { request->send(SPIFFS, "/w/index.html"); });
-    server.serveStatic("/", SPIFFS, "/w").setDefaultFile("index.html").setCacheControl("max-age=0");
+    server.onNotFound([](AsyncWebServerRequest *request) { request->send(LittleFS, "/w/index.html"); });
+    // Content-hashed build assets (Vite emits them under /assets/ with a hash in the filename) never change for a
+    // given URL, so let the browser cache them forever and skip the revalidation round-trip entirely. This must be
+    // registered before the catch-all "/" handler so it wins for /assets/* requests. [GM-83]
+    server.serveStatic("/assets/", LittleFS, "/w/assets/").setCacheControl("public, max-age=31536000, immutable");
+    // index.html and other unhashed root files must stay revalidated so a new build (which references freshly
+    // hashed assets) is always picked up after an OTA/filesystem update.
+    server.serveStatic("/", LittleFS, "/w").setDefaultFile("index.html").setCacheControl("no-cache");
     ws.onEvent(
         [this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
             if (type == WS_EVT_CONNECT) {
-                // Drop individual messages instead of force-closing the
-                // connection when the per-client queue overflows. Status
-                // broadcasts at 500ms can back up during slow disk I/O
-                // (e.g. flaky SD reads) — losing one tick is preferable to
-                // disconnecting the user mid-action.
-                client->setCloseClientOnQueueFull(false);
+                // Close (and let the browser reconnect) a client whose send
+                // queue backs up, instead of keeping it open. With it kept open
+                // (false), a client that stalls under load — e.g. while the UI
+                // is fetching many shot files for statistics — never has its
+                // queued frames / AsyncTCP buffers reclaimed, so they accumulate
+                // in internal DRAM until the whole IP stack starves (web + ICMP
+                // die, no recovery). Reclaiming via close is the safer failure
+                // mode. (Was the v1.8.1 behaviour.)
+                client->setCloseClientOnQueueFull(true);
                 ESP_LOGI("WebUIPlugin", "WebSocket client connected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DISCONNECT) {
                 ESP_LOGI("WebUIPlugin", "WebSocket client disconnected (%d open connections)", server->getClients().size());
@@ -258,7 +286,13 @@ void WebUIPlugin::setupServer() {
 }
 
 void WebUIPlugin::start() {
-    stop();
+    if (serverRunning) {
+        // Already listening. The 0.0.0.0:80 listen socket survives a WiFi
+        // reconnect, so re-running end()+begin() only races AsyncTCP's async
+        // socket close and fails to rebind ("bind: -8, port in use"). A transient
+        // STA reconnect needs nothing done here.
+        return;
+    }
     server.begin();
     ESP_LOGI("WebUIPlugin", "Started webserver");
     if (apMode) {
@@ -274,14 +308,15 @@ void WebUIPlugin::start() {
 void WebUIPlugin::stop() {
     if (!serverRunning)
         return;
-    server.end();
     ws.closeAll();
+    server.end();
     if (dnsServer != nullptr) {
         dnsServer->stop();
         delete dnsServer;
         dnsServer = nullptr;
     }
     serverRunning = false;
+    ESP_LOGI("WebUIPlugin", "WebUIPlugin stopped (wifi disconnected)");
 }
 
 void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg,
@@ -306,7 +341,7 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
     if (isFinal) {
         if (info->opcode == WS_TEXT) {
             ESP_LOGV("WebUIPlugin", "Received request: %.*s", (int)buf.size(), buf.c_str());
-            JsonDocument doc;
+            JsonDocument doc(&psramAllocator);
             DeserializationError err = deserializeJson(doc, buf.c_str());
             if (!err) {
                 String msgType = doc["tp"].as<String>();
@@ -568,14 +603,14 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setSteamPumpCutoff(request->arg("steamPumpCutoff").toFloat());
             if (request->hasArg("themeMode"))
                 settings->setThemeMode(request->arg("themeMode").toInt());
-            if (request->hasArg("sunriseR"))
-                settings->setSunriseR(request->arg("sunriseR").toInt());
-            if (request->hasArg("sunriseG"))
-                settings->setSunriseG(request->arg("sunriseG").toInt());
-            if (request->hasArg("sunriseB"))
-                settings->setSunriseB(request->arg("sunriseB").toInt());
-            if (request->hasArg("sunriseW"))
-                settings->setSunriseW(request->arg("sunriseW").toInt());
+            if (request->hasArg("sunriseIdle"))
+                settings->setSunriseIdle(request->arg("sunriseIdle"));
+            if (request->hasArg("sunriseActive"))
+                settings->setSunriseActive(request->arg("sunriseActive"));
+            if (request->hasArg("sunriseFinished"))
+                settings->setSunriseFinished(request->arg("sunriseFinished"));
+            if (request->hasArg("sunriseError"))
+                settings->setSunriseError(request->arg("sunriseError"));
             if (request->hasArg("sunriseExtBrightness"))
                 settings->setSunriseExtBrightness(request->arg("sunriseExtBrightness").toInt());
             if (request->hasArg("emptyTankDistance"))
@@ -676,10 +711,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["steamPumpPercentage"] = settings.getSteamPumpPercentage();
     doc["steamPumpCutoff"] = settings.getSteamPumpCutoff();
     doc["themeMode"] = settings.getThemeMode();
-    doc["sunriseR"] = settings.getSunriseR();
-    doc["sunriseG"] = settings.getSunriseG();
-    doc["sunriseB"] = settings.getSunriseB();
-    doc["sunriseW"] = settings.getSunriseW();
+    doc["sunriseIdle"] = settings.getSunriseIdle();
+    doc["sunriseActive"] = settings.getSunriseActive();
+    doc["sunriseFinished"] = settings.getSunriseFinished();
+    doc["sunriseError"] = settings.getSunriseError();
     doc["sunriseExtBrightness"] = settings.getSunriseExtBrightness();
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
@@ -714,7 +749,7 @@ void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
     JsonArray scalesArray = doc.to<JsonArray>();
     std::vector<DiscoveredDevice> devices = BLEScales.getDiscoveredScales();
     for (const DiscoveredDevice &device : BLEScales.getDiscoveredScales()) {
-        JsonDocument scale;
+        JsonDocument scale(&psramAllocator);
         scale["uuid"] = device.getAddress().toString();
         scale["name"] = device.getName();
         scale["rssi"] = device.getRSSI();
@@ -787,10 +822,10 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;
-    // SPIFFS usage metrics
+    // LittleFS usage metrics
     {
-        size_t total = SPIFFS.totalBytes();
-        size_t used = SPIFFS.usedBytes();
+        size_t total = LittleFS.totalBytes();
+        size_t used = LittleFS.usedBytes();
         size_t freeBytes = total > used ? (total - used) : 0;
         doc["spiffsTotal"] = static_cast<uint32_t>(total);
         doc["spiffsUsed"] = static_cast<uint32_t>(used);
@@ -824,24 +859,38 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
             doc["sdUsedPct"] = static_cast<uint8_t>((used * 100) / total);
         }
     }
-    ws.textAll(doc.as<String>());
+    broadcastJson(doc);
 }
 
 void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
+    if (ws.getClients().empty()) {
+        return;
+    }
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:ota-progress";
     doc["phase"] = phase;
     doc["progress"] = progress;
-    String message = doc.as<String>();
-    ws.textAll(message);
+    broadcastJson(doc);
+}
+
+void WebUIPlugin::broadcastJson(JsonDocument &doc) {
+    if (ws.getClients().empty()) {
+        return;
+    }
+    const size_t len = measureJson(doc);
+    auto *buffer = ws.makeBuffer(len);
+    if (buffer == nullptr) {
+        return; // out of buffers; drop this broadcast rather than churn the heap
+    }
+    serializeJson(doc, buffer->get(), len);
+    ws.textAll(buffer);
 }
 
 void WebUIPlugin::sendAutotuneResult() {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-result";
     doc["pid"] = controller->getSettings().getPid();
-    String message = doc.as<String>();
-    ws.textAll(message);
+    broadcastJson(doc);
 }
 
 void WebUIPlugin::sendAutotuneFailed() {
@@ -849,8 +898,7 @@ void WebUIPlugin::sendAutotuneFailed() {
     // instead of stuck spinner. Fires on ERROR_CODE_AUTOTUNE_TIMEOUT.
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-failed";
-    String message = doc.as<String>();
-    ws.textAll(message);
+    broadcastJson(doc);
 }
 
 void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {

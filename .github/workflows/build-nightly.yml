@@ -63,10 +63,10 @@ jobs:
       - name: Build display FS
         run: |
           pio run -t buildfs -e display
-          cp .pio/build/display/spiffs.bin upload/display/filesystem.bin
-          cp .pio/build/display/spiffs.bin upload/headless/filesystem.bin
-          cp .pio/build/display/spiffs.bin out/display-filesystem.bin
-          cp .pio/build/display/spiffs.bin out/display-headless-filesystem.bin
+          cp .pio/build/display/littlefs.bin upload/display/filesystem.bin
+          cp .pio/build/display/littlefs.bin upload/headless/filesystem.bin
+          cp .pio/build/display/littlefs.bin out/display-filesystem.bin
+          cp .pio/build/display/littlefs.bin out/display-headless-filesystem.bin
       - name: Build display
         run: |
           export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"

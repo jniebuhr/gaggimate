@@ -1,13 +1,14 @@
 #include "ShotHistoryPlugin.h"
 
+#include <LittleFS.h>
 #include <SD_MMC.h>
-#include <SPIFFS.h>
 #include <cmath>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
+#include <display/util/PsramAllocator.h>
 
 namespace {
 constexpr float TEMP_SCALE = 10.0f;
@@ -428,8 +429,8 @@ size_t ShotHistoryPlugin::getFreeSpace() {
         // Cap to size_t max for consistency
         return free > SIZE_MAX ? SIZE_MAX : static_cast<size_t>(free);
     }
-    size_t total = SPIFFS.totalBytes();
-    size_t used = SPIFFS.usedBytes();
+    size_t total = LittleFS.totalBytes();
+    size_t used = LittleFS.usedBytes();
     return total > used ? (total - used) : 0;
 }
 
@@ -476,7 +477,8 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
                 file = root.openNextFile();
             }
         }
-        if (root) root.close();
+        if (root)
+            root.close();
     } else if (type == "req:history:get") {
         // Return error: binary must be fetched via HTTP endpoint
         response["error"] = "use HTTP /api/history?id=<id>";
@@ -495,7 +497,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         response["msg"] = "Ok";
     } else if (type == "req:history:notes:get") {
         auto id = request["id"].as<String>();
-        JsonDocument notes;
+        JsonDocument notes(&psramAllocator);
         loadNotes(id, notes);
         response["notes"] = notes;
     } else if (type == "req:history:notes:save") {
@@ -787,7 +789,8 @@ void ShotHistoryPlugin::rebuildIndex() {
     File directory = fs->open("/h");
     if (!directory || !directory.isDirectory()) {
         ESP_LOGW("ShotHistoryPlugin", "No history directory found");
-        if (directory) directory.close();
+        if (directory)
+            directory.close();
         // Emit completion event even if no directory exists
         if (pluginManager) {
             Event completedEvent;
@@ -829,6 +832,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     }
 
     int currentIndex = 0;
+    uint32_t maxId = controller->getSettings().getHistoryIndex();
     for (const String &fileName : slogFiles) {
         currentIndex++;
         File shotFile = fs->open("/h/" + fileName, "r");
@@ -848,6 +852,9 @@ void ShotHistoryPlugin::rebuildIndex() {
         int start = fileName.lastIndexOf('/') + 1;
         int end = fileName.lastIndexOf('.');
         uint32_t shotId = fileName.substring(start, end).toInt();
+        if (shotId > maxId) {
+            maxId = shotId;
+        }
 
         // Create index entry
         ShotIndexEntry entry{};
@@ -877,7 +884,7 @@ void ShotHistoryPlugin::rebuildIndex() {
                 String notesStr = notesFile.readString();
                 notesFile.close();
 
-                JsonDocument notesDoc;
+                JsonDocument notesDoc(&psramAllocator);
                 if (deserializeJson(notesDoc, notesStr) == DeserializationError::Ok) {
                     entry.rating = notesDoc["rating"].as<uint8_t>();
 
@@ -912,6 +919,10 @@ void ShotHistoryPlugin::rebuildIndex() {
             // Small delay to allow UI updates and prevent overwhelming the system
             vTaskDelay(pdMS_TO_TICKS(10));
         }
+    }
+
+    if (maxId > controller->getSettings().getHistoryIndex()) {
+        controller->getSettings().setHistoryIndex(maxId);
     }
 
     // Emit completion event

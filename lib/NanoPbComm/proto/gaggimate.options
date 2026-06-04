@@ -1,0 +1,18 @@
+# nanopb code-generation options for the GaggiMate protocol.
+# Keys are package-qualified because gaggimate.proto declares `package gaggimate`.
+
+# Container frame: cap how many payloads ride in a single datagram. Realistic
+# batches (boiler + pump + valve + alt) need 4; 6 leaves headroom while keeping
+# the statically-allocated Payload[] small.
+gaggimate.Frame.payloads max_count:6
+
+# Per-boiler readings inside SensorData (one today; room for multi-boiler).
+gaggimate.SensorData.boilers max_count:4
+
+# LED channels driven in one LedControl message (PCA9634 has 8 outputs).
+gaggimate.LedControl.channels max_count:8
+
+# Keep the system-info strings short so the Payload union (sized to its largest
+# member) stays compact -- every batched Payload slot pays for this.
+gaggimate.SystemInfo.hardware max_size:40
+gaggimate.SystemInfo.version max_size:24

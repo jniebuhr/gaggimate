@@ -6,6 +6,7 @@ import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { machine } from '../../services/ApiService.js';
+import { computed } from '@preact/signals';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -21,6 +22,8 @@ const imageUrlToBase64 = async blob => {
   });
 };
 
+const connected = computed(() => machine.value.connected);
+
 export function OTA() {
   const apiService = useContext(ApiServiceContext);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +32,7 @@ export function OTA() {
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
   const rssi = machine.value.status.rssi;
+  const lat = machine.value.status.lat;
 
   const downloadSupportData = useCallback(async () => {
     const settingsResponse = await fetch(`/api/settings`);
@@ -84,10 +88,10 @@ export function OTA() {
     };
   }, [apiService]);
   useEffect(() => {
-    setTimeout(() => {
+    if (connected.value) {
       apiService.send({ tp: 'req:ota-settings' });
-    }, 500);
-  }, [apiService]);
+    }
+  }, [apiService, connected.value]);
 
   const formRef = useRef();
 
@@ -206,7 +210,7 @@ export function OTA() {
             <div className='flex flex-col space-y-4'>
               <label className='mb-2 block text-sm font-medium'>Controller Signal Strength</label>
               <span className='font-light'>
-                {rssi}dB{' '}
+                {rssi}dB (Roundtrip: {lat} ms)
                 <span
                   className={`indicator-item status ml-2 ${rssi < -90 ? 'status-error' : rssi < -80 ? 'status-warning' : 'status-success'}`}
                 ></span>
@@ -215,7 +219,7 @@ export function OTA() {
 
             {formData.spiffsTotal !== undefined && (
               <div className='flex flex-col space-y-2'>
-                <label className='mb-2 block text-sm font-medium'>Storage (SPIFFS)</label>
+                <label className='mb-2 block text-sm font-medium'>Storage (LittleFS)</label>
                 <div className='flex flex-col gap-1'>
                   <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
                     <div

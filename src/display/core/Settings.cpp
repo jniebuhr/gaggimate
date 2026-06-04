@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <display/util/ColorConversion.h>
 
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);
@@ -101,6 +102,11 @@ Settings::Settings() {
     sunriseG = preferences.getInt("sr_g", 250);
     sunriseB = preferences.getInt("sr_b", 150);
     sunriseW = preferences.getInt("sr_w", 255);
+    String sunriseIdleDefault = ColorConversion::toHex(sunriseR, sunriseG, sunriseB, sunriseW);
+    sunriseIdle = preferences.getString("sr_i", sunriseIdleDefault);
+    sunriseActive = preferences.getString("sr_a", "#0000FF");
+    sunriseFinished = preferences.getString("sr_f", "#00FF00");
+    sunriseError = preferences.getString("sr_e", "#FF0000");
     sunriseExtBrightness = preferences.getInt("sr_exb", 75);
     emptyTankDistance = preferences.getInt("sr_ed", 210);
     fullTankDistance = preferences.getInt("sr_fd", 30);
@@ -403,6 +409,26 @@ void Settings::setSunriseW(int sunrise_w) {
     save();
 }
 
+void Settings::setSunriseIdle(String hexColor) {
+    sunriseIdle = hexColor;
+    save();
+}
+
+void Settings::setSunriseActive(String hexColor) {
+    sunriseActive = hexColor;
+    save();
+}
+
+void Settings::setSunriseFinished(String hexColor) {
+    sunriseFinished = hexColor;
+    save();
+}
+
+void Settings::setSunriseError(String hexColor) {
+    sunriseError = hexColor;
+    save();
+}
+
 void Settings::setSunriseExtBrightness(int sunrise_ext_brightness) {
     sunriseExtBrightness = sunrise_ext_brightness;
     save();
@@ -517,10 +543,10 @@ void Settings::doSave() {
     preferences.putInt("theme", themeMode);
 
     // Sunrise Settings
-    preferences.putInt("sr_r", sunriseR);
-    preferences.putInt("sr_g", sunriseG);
-    preferences.putInt("sr_b", sunriseB);
-    preferences.putInt("sr_w", sunriseW);
+    preferences.putString("sr_i", sunriseIdle);
+    preferences.putString("sr_a", sunriseActive);
+    preferences.putString("sr_f", sunriseFinished);
+    preferences.putString("sr_e", sunriseError);
     preferences.putInt("sr_exb", sunriseExtBrightness);
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);

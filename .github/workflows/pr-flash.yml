@@ -6,6 +6,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Only run for PRs opened by the repo owner; fork PRs get a read-only
+    # GITHUB_TOKEN and can't publish to gh-pages.
+    if: github.event.pull_request.user.login == github.repository_owner
     permissions:
       contents: write
       pages: write
@@ -56,7 +59,7 @@ jobs:
     - name: Build display FS
       run: |
         pio run -t buildfs -e display
-        cp .pio/build/display/spiffs.bin out/display-filesystem.bin
+        cp .pio/build/display/littlefs.bin out/display-filesystem.bin
     - name: Deploy to GitHub Pages subdirectory
       uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
       with:
