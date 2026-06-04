@@ -6,7 +6,7 @@ Define the storage, archive, backup, and restore direction before any archive, b
 
 This document exists to prevent drift.
 
-No coding should begin on backup/archive/restore until this model has been reviewed and accepted.
+No coding should begin on backup/archive/restore until this model has been reviewed, validated, and accepted.
 
 ---
 
@@ -40,8 +40,8 @@ Meaning:
 
 ```text
 Automatic hydration = yes
-Automatic archive creation = yes
 Automatic integrity verification = yes
+Automatic archive creation = no
 Automatic destructive storage behaviour = no
 Automatic reverse restore to GaggiMate = no
 ```
@@ -172,7 +172,6 @@ ratings
 tags
 user annotations
 embedded profile snapshots
-analysis context
 safe machine/version metadata
 manifest
 integrity data
@@ -189,6 +188,24 @@ GaggiMate storage was wiped
 firmware changed
 profile IDs changed
 ```
+
+Archive facts.
+
+Recompute insights.
+
+Do not store:
+
+```text
+analyzer outputs
+statistics outputs
+derived caches
+computed snapshots
+generated videos
+```
+
+Generated videos are export artefacts only.
+
+Raw shot data remains the replay source.
 
 ---
 
@@ -267,7 +284,7 @@ Archive metadata
 Example archive layout:
 
 ```text
-2026-Q2.gaggigo.zip
+2026-H1.gaggigo.zip
 │
 ├── manifest.json
 ├── shots/
@@ -291,7 +308,7 @@ Profile map metadata can preserve archive-only context such as:
 
 ```json
 {
-  "archiveProfileId": "profile_2026_Q2_espresso",
+  "archiveProfileId": "profile_2026_H1_espresso",
   "originalGaggiMateId": 4,
   "label": "House Espresso",
   "usedByShots": ["shot_001", "shot_002"]
@@ -405,7 +422,7 @@ unlimited
 ### Tier 3 — GaggiGo Cold Archive
 
 ```text
-quarterly archive bundles
+6-month archive bundles
 slower than hot mirror
 still searchable/viewable/openable through GaggiGo
 ```
@@ -445,7 +462,7 @@ shot count
 storage size
 ```
 
-Whichever limit is reached first should trigger archive migration.
+Whichever limit is reached first should trigger an archive/export recommendation.
 
 The actual limits are not yet defined.
 
@@ -468,22 +485,20 @@ Do not invent hard caps before measurement.
 Default archive unit:
 
 ```text
-quarterly archive bundle
+6-month archive bundle
 ```
 
-Example:
+Examples:
 
 ```text
-2026-Q1.gaggigo.zip
-2026-Q2.gaggigo.zip
-2026-Q3.gaggigo.zip
-2026-Q4.gaggigo.zip
+2026-H1.gaggigo.zip
+2026-H2.gaggigo.zip
 ```
 
 Default packaging:
 
 ```text
-one archive bundle per quarter
+one archive bundle per half-year
 ```
 
 Exception:
@@ -495,13 +510,13 @@ import/export performance
 storage reliability
 ```
 
-If measured problems appear, quarter bundles may be split into parts.
+If measured problems appear, half-year bundles may be split into parts.
 
 Example:
 
 ```text
-2026-Q1-part1.gaggigo.zip
-2026-Q1-part2.gaggigo.zip
+2026-H1-part1.gaggigo.zip
+2026-H1-part2.gaggigo.zip
 ```
 
 Rule:
@@ -532,7 +547,7 @@ ZIP-compatible archive
 JSON contents
 documented schema
 manifest
-checksums/integrity data
+SHA256 integrity data
 ```
 
 Data should outlive software.
@@ -555,8 +570,23 @@ shot count
 profile snapshot count
 metadata count
 originating GaggiGo version
-checksum/hash information
+source information
+storage metrics
+archive summaries
+SHA256 checksum information
 ```
+
+The manifest contains only fields required by the current schema.
+
+Do not create:
+
+```text
+reserved fields
+placeholder fields
+future schema sections
+```
+
+Future requirements are introduced through schema version updates.
 
 Reason:
 
@@ -571,11 +601,26 @@ Data with a manifest remains usable.
 
 Integrity verification is mandatory and automatic.
 
+Integrity algorithm:
+
+```text
+SHA256 only
+```
+
+Rules:
+
+```text
+No alternative checksum algorithms.
+No user-selectable checksum algorithms.
+No fallback algorithms.
+Future algorithm changes require a schema version update.
+```
+
 Archive creation flow:
 
 ```text
 create archive
-generate checksum/hash
+generate SHA256 checksums
 store integrity data in manifest
 verify archive integrity
 mark archive as valid
@@ -586,7 +631,8 @@ Import flow:
 
 ```text
 read archive
-verify checksum/hash
+read manifest first
+verify SHA256 checksums
 validate manifest
 validate schema version
 import if valid
@@ -597,6 +643,7 @@ If verification fails:
 ```text
 Archive Health = Critical
 Reason = archive integrity check failed
+Action = do not import damaged records; use another backup if available
 ```
 
 Users should see:
@@ -617,49 +664,50 @@ They should not need to understand checksum internals.
 
 ## Archive Creation and Migration
 
-Archive creation should be automatic by default.
+Archive creation is user controlled.
+
+GaggiGo may recommend archive creation.
+
+GaggiGo must not automatically create archives.
+
+When the hot mirror threshold is reached, GaggiGo should prompt the user rather than automatically archiving.
 
 Reason:
 
 ```text
-People forget backups.
-People do not forget data loss.
+A device may be primary, secondary, temporary, or shared.
+The app should not assume every device should hold or create archives.
 ```
 
-Automatic archive creation does not mean automatic deletion.
-
-Normal operation:
+Storage pressure behaviour:
 
 ```text
-scheduled maintenance task
-startup maintenance
-idle-time maintenance
+display warning
+explain reason
+recommend action
+offer archive/export workflow
 ```
 
-Avoid archive migration during:
+The system must guide the user, not silently mutate storage.
 
-```text
-active shot analysis
-history browsing
-active user interaction
-```
+---
 
-Emergency exception:
+## Cleanup Rules
 
-```text
-data at risk
-storage exhaustion imminent
-browser quota pressure
-```
+GaggiGo may recommend cleanup.
 
-In that case emergency archive migration is allowed.
+GaggiGo must not perform cleanup automatically.
 
-Principle:
+Data may only be removed when all conditions are true:
 
-```text
-User experience first.
-Data integrity always wins.
-```
+1. Archive exists.
+2. Archive integrity is verified.
+3. User confirms cleanup.
+4. Records being removed exist inside the verified archive.
+
+Cleanup must remove only records contained in the verified archive.
+
+Do not delete records merely because they are older than the hot mirror window.
 
 ---
 
@@ -735,9 +783,111 @@ Restore to GaggiMate must remain an explicit safe action.
 
 ---
 
+## Archive Import Behaviour
+
+Archive import is separate from profile import.
+
+Archive import must be manifest-first.
+
+Archive import flow:
+
+```text
+select .gaggigo.zip
+read manifest.json
+validate manifest
+validate schema
+validate SHA256 integrity information
+show summary
+import only if validation allows it
+```
+
+Duplicate records are skipped and reported.
+
+Import results must report:
+
+```text
+records imported
+records skipped
+reason for skipped records
+warnings
+health status
+recommended action
+```
+
+Example:
+
+```text
+Imported: 114
+Skipped: 18
+Reason: Duplicate records
+Health: Good
+```
+
+Partial recovery is allowed.
+
+If part of an archive is damaged but other sections validate, GaggiGo may import valid data, skip invalid data, and report a warning.
+
+The import should not fail completely because one non-critical record is damaged.
+
+Backwards-compatible imports are allowed.
+
+Older supported schema versions should import with a warning and a re-export recommendation.
+
+Unsupported or unsafe schema versions may be blocked.
+
+---
+
+## Archive Health Model
+
+Archive health uses clear status states:
+
+```text
+Good
+Warning
+Critical
+```
+
+Each state must include:
+
+```text
+status
+reason
+recommended action
+```
+
+Health is calculated during validation/import.
+
+Health is not permanently stored as a fixed archive fact.
+
+Reason:
+
+```text
+Archive health depends on current environment, current schema support, current compatibility rules, and current validation results.
+```
+
+Good example:
+
+```text
+Warning
+Reason: Archive uses an older supported schema.
+Action: Import is supported. Re-export using the latest version when convenient.
+```
+
+Bad example:
+
+```text
+Warning
+```
+
+Health status should be informative and actionable.
+
+It should not nag, block, or force routine actions unless data is genuinely at risk.
+
+---
+
 ## Archive Storage and Export
 
-GaggiGo should keep local archive copies so older history remains browsable.
+GaggiGo may keep local archive copies so older history remains browsable.
 
 However:
 
@@ -784,43 +934,6 @@ GaggiGo does not take ownership of them.
 
 ---
 
-## Archive Health Model
-
-Archive health should use clear status states:
-
-```text
-Good
-Warning
-Critical
-```
-
-Each state should include:
-
-```text
-status
-plain-English explanation
-recommended action
-```
-
-Examples:
-
-```text
-Good
-→ Archives exist and recent export is confirmed.
-
-Warning
-→ Archives exist but have not been exported recently.
-
-Critical
-→ Archives exist only locally, integrity check failed, or storage pressure risks data loss.
-```
-
-Health status should be informative and actionable.
-
-It should not nag, block, or force routine actions unless data is genuinely at risk.
-
----
-
 ## Firmware Update Safety Flow
 
 Before risky firmware/update actions, GaggiGo should eventually show a protection prompt.
@@ -838,7 +951,7 @@ Prompt:
 
 Backup must be easy and explicit.
 
-GaggiGo should not silently upload or externally export data without user consent.
+GaggiGo should not silently upload, externally export, or automatically archive data without user consent.
 
 ---
 
@@ -891,17 +1004,35 @@ This preserves the current PWA-style behaviour while adding long-term continuity
 Before implementation, validate:
 
 ```text
+real GaggiMate export structure
 real shot payload sizes
 real IndexedDB growth rate
 browser quota behaviour
 archive schema/version manifest
-hot/cold query model
-archive index strategy
-restore UX
-firmware update prompt UX
-storage pressure warnings
-safe profile compatibility
-existing GaggiMate export/import behaviour
+shot identity algorithm
+large archive import behaviour
+archive import boundary against existing profile import behaviour
+runtime validation matrix
 ```
 
-No implementation until this review is complete.
+See:
+
+```text
+project-docs/ARCHIVE_VALIDATION_PLAN.md
+```
+
+---
+
+## Final Principle
+
+Simple by default.
+
+Deterministic by design.
+
+Archive facts.
+
+Recompute insights.
+
+Protect data.
+
+Avoid complexity.
