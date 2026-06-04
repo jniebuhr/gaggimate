@@ -133,10 +133,10 @@ ESP32 rolling operational store
 
 Tier 2
 GaggiGo IndexedDB hot mirror
-(rolling 3-month fast working set)
+(default 6-month fast working set)
 
 Tier 3
-Monthly cold archive bundles later
+Quarterly archive bundles later
 
 Tier 4
 Portable backup/export later
@@ -148,13 +148,79 @@ Important retention rule:
 ESP32 rotation deletion must not delete already mirrored GaggiGo history.
 ```
 
-Archive strategy planning document:
+Archive strategy documents:
 
 ```text
 project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md
+project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
 ```
 
-No backup/archive implementation should begin before architecture review is complete.
+Current archive architecture decisions:
+
+```text
+6-month hot mirror by default
+quarterly archive bundles
+single archive format
+single archive location
+single archive index
+archive facts, recompute insights
+GaggiMate-compatible profile JSON inside archive bundles
+all profiles preserved, including utility profiles
+merge-only restore
+silent duplicate skipping
+idempotent archive import
+automatic integrity verification
+local archive is convenience
+exported archive is backup
+```
+
+No backup/archive implementation should begin until pre-implementation requirements are complete.
+
+Pre-implementation requirements:
+
+```text
+measure real shot payload sizes
+measure IndexedDB growth
+measure archive sizes
+measure browser storage behaviour
+define shot identity algorithm
+define archive manifest schema
+```
+
+---
+
+## Settings Model
+
+Settings remain a filtered read-only snapshot.
+
+Online behaviour:
+
+```text
+read live GaggiMate settings
+filter unsafe/sensitive data
+display safe snapshot
+cache latest safe snapshot
+```
+
+Offline behaviour:
+
+```text
+display last safe cached settings snapshot
+clearly treat as cached/offline context
+```
+
+Settings snapshots are context only.
+
+They are not authority, backup, sync input, or restore target.
+
+Do not store:
+
+- WiFi credentials
+- secrets
+- HomeKit data
+- private keys
+- authentication data
+- unsafe machine configuration
 
 ---
 
@@ -181,9 +247,9 @@ Completed during hardening:
 
 Remaining before archive/sync implementation:
 
-1. Backup/archive architecture review.
-2. Runtime validation matrix review.
-3. Pre-sync readiness review.
+1. Runtime validation matrix review.
+2. Pre-sync readiness review.
+3. Archive pre-implementation measurements and identity/schema definition.
 
 No new product features before these reviews complete.
 
@@ -222,7 +288,6 @@ No new product features before these reviews complete.
 - Online → offline → browser refresh → reconnect workflow validated.
 - Profiles, History, Analyzer, and Statistics survive offline refresh from the local mirror.
 - Reconnect does not duplicate shots or accumulate stale profiles.
-- Reconnect does not accumulate stale profiles.
 - Reconnect does not cause hydration spam or websocket retry flood.
 
 ### Safe Data Boundary
@@ -296,6 +361,7 @@ Do not introduce:
 - localStorage persistence layers
 - competing sync queues
 - alternative storage authorities
+- parallel archive systems
 
 ---
 
@@ -304,14 +370,16 @@ Do not introduce:
 Current phase:
 
 ```text
-Archive architecture review before sync work.
+Archive pre-implementation review before sync work.
 ```
 
 Immediate next focus:
 
-1. Backup/archive architecture review.
-2. Runtime validation matrix review.
-3. Pre-sync readiness review.
+1. Runtime validation matrix review.
+2. Archive measurement pass.
+3. Shot identity algorithm definition.
+4. Archive manifest schema definition.
+5. Pre-sync readiness review.
 
 Completed this phase:
 
@@ -320,6 +388,7 @@ Completed this phase:
 - terminal/proxy review
 - dead-code architecture pass
 - ApiService safe-boundary mapping
+- archive architecture specification
 
 ---
 
@@ -331,11 +400,12 @@ Before any investigation, planning, patching, or coding:
 2. Read `ROADMAP.md`.
 3. Read `project-docs/API_SERVICE_BOUNDARY_MAP.md`.
 4. Read `project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md`.
-5. Read `project-docs/GAGGIGO_PATCH_PROTOCOL.md`.
-6. Check current GitHub branch state.
-7. Confirm working branch is `gaggigo-mvp`.
-8. Inspect actual runtime behaviour before theorising.
-9. Validate that documentation matches repository reality.
+5. Read `project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md`.
+6. Read `project-docs/GAGGIGO_PATCH_PROTOCOL.md`.
+7. Check current GitHub branch state.
+8. Confirm working branch is `gaggigo-mvp`.
+9. Inspect actual runtime behaviour before theorising.
+10. Validate that documentation matches repository reality.
 
 Do not begin implementation from handover text alone.
 
