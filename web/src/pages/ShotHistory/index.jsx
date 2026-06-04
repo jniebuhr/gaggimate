@@ -351,7 +351,16 @@ export function ShotHistory() {
         {totalFilteredItems === 0 && !loading && (
           <div className='flex flex-row items-center justify-center py-20 lg:col-span-12'>
             {history.length === 0 ? (
-              <span>No shots available</span>
+              <div className='text-center'>
+                <h2 className='text-lg font-semibold'>
+                  {connected.value ? 'No shots found' : 'No cached shots available'}
+                </h2>
+                <p className='text-base-content/70 mt-2 max-w-xl text-sm'>
+                  {connected.value
+                    ? 'Shot history will appear here after GaggiMate has recorded shots and the local mirror has hydrated.'
+                    : 'Connect to GaggiMate once to hydrate the local mirror. After that, shot history remains available offline.'}
+                </p>
+              </div>
             ) : (
               <span>No shots match your search and filter criteria</span>
             )}

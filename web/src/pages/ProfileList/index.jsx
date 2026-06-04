@@ -1042,9 +1042,13 @@ export function ProfileList() {
       {profilesToShow.length === 0 && (
   <Card sm={12}>
     <div className='flex flex-col items-center justify-center gap-3 py-10 text-center'>
-      <h2 className='text-xl font-semibold'>No profiles cached yet</h2>
+      <h2 className='text-xl font-semibold'>
+        {connected.value ? 'No profiles found' : 'No cached profiles available'}
+      </h2>
       <p className='text-base-content/70 max-w-xl text-sm'>
-        Connect to GaggiMate or import profiles to populate GaggiGo.
+        {connected.value
+          ? 'Profiles will appear here after GaggiGo reads them from GaggiMate. You can also import profiles manually.'
+          : 'Connect to GaggiMate once to mirror the current profile list. After that, the last mirrored profiles remain available offline.'}
       </p>
     </div>
   </Card>
