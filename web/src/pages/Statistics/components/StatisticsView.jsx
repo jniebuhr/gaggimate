@@ -46,7 +46,17 @@ import {
 
 // StatisticsView orchestrates metadata loading, filter state, and batch analysis runs.
 // StatisticsService remains pure; this component handles UI-specific selection semantics.
-const BATCH_SIZE = 5;
+//
+// Each in-flight shot fetch makes the device serve a .slog over HTTP; every
+// concurrent stream holds TCP segments/pbufs in the ESP32's scarce internal
+// SRAM. At 5-wide this peaked the internal heap's *largest contiguous free
+// block* low enough that WiFi/LWIP could no longer allocate a TX buffer, which
+// wedged the whole IP stack (web + ICMP dead, no recovery) even though total
+// heap usage stayed flat — classic fragmentation, not a leak. Capping the
+// batch caps peak concurrent buffers; analysis is marginally slower but the
+// network stays alive. See GM-90. (Tunable: 2 is conservative, 3 trades a bit
+// of headroom for speed.)
+const BATCH_SIZE = 2;
 const DEFAULT_SETTINGS = { scaleDelayMs: 200, sensorDelayMs: 200, isAutoAdjusted: true };
 const NO_PROFILE_LOADED = 'No Profile Loaded';
 const STATISTICS_PANEL_CLASS = 'bg-base-100 border-base-content/10 rounded-xl border shadow-sm';

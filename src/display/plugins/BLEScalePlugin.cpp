@@ -7,6 +7,7 @@
 #include <scales/bookoo.h>
 #include <scales/decent.h>
 #include <scales/difluid.h>
+#include <scales/dot.h>
 #include <scales/eclair.h>
 #include <scales/eureka.h>
 #include <scales/felicitaScale.h>
@@ -72,6 +73,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     VariaScalesPlugin::apply();
     WeighMyBrewScalePlugin::apply();
     myscalePlugin::apply();
+    TimemoreDotScalesPlugin::apply();
 
     // Initialize scanner with error handling
     this->scanner = new (std::nothrow) RemoteScalesScanner();

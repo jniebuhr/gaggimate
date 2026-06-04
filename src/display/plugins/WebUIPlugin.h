@@ -9,11 +9,12 @@
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 #include <display/core/Plugin.h>
+#include <display/util/PsramAllocator.h>
 
-constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
+constexpr size_t UPDATE_CHECK_INTERVAL = 30 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 5 * 1000;
 constexpr size_t STATUS_PERIOD = 500;
-constexpr size_t DNS_PERIOD = 10;
+constexpr size_t DNS_PERIOD = 50;
 
 const String LOCAL_URL = "http://4.4.4.1/";
 const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
@@ -49,6 +50,16 @@ class WebUIPlugin : public Plugin {
     void updateOTAStatus(const String &version);
     void updateOTAProgress(uint8_t phase, int progress);
     void sendAutotuneResult();
+    void sendAutotuneFailed();
+
+    // Broadcast a JsonDocument to all WebSocket clients with a single internal
+    // allocation. `doc.as<String>()` builds an Arduino String on the internal
+    // heap via doubling reallocs and then textAll() copies it into a message
+    // buffer — two-plus allocations per broadcast, dropped into the middle of
+    // the file-serving burst during a statistics build, which generates heap
+    // fragmentation. measureJson + makeBuffer + serializeJson writes straight
+    // into one exact-sized buffer instead. [GM-90]
+    void broadcastJson(JsonDocument &doc);
 
     // Core dump download
     void handleCoreDumpDownload(AsyncWebServerRequest *request);
@@ -70,6 +81,12 @@ class WebUIPlugin : public Plugin {
     bool serverRunning = false;
     String updateComponent = "";
     float currentBluetoothWeight = 0.0f;
+    // Reused for every 500ms status broadcast. Allocating a fresh JsonDocument
+    // each tick was a major contributor to internal-heap fragmentation
+    // (device reports 33%+ fragmentation, causing AsyncTCP buffer allocs to
+    // stall mid-asset-serve). Keeping one doc lets its underlying pool grow
+    // once and stay put.
+    JsonDocument statusDoc{&psramAllocator};
 };
 
 #endif // WEBUIPLUGIN_H
