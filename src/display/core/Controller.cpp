@@ -812,7 +812,13 @@ void Controller::updateControl() {
     }
 
     if (!active && systemInfo.capabilities.dualBoiler && steamBoilerLow) {
+        targetPressure = 0.0f;
+        targetFlow = 0.0f;
+        relay.open = false;
+        pump.mode = PumpControlMode::Power;
+        pump.power = 100;
         refill.open = true;
+        handled = true;
     }
 
     if (!handled) {
