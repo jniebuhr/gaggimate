@@ -89,18 +89,24 @@ Tier 2
 6-month IndexedDB hot mirror
 
 Tier 3
-Quarterly archive bundles
+6-month archive bundles
 
 Tier 4
 Portable exported backups
 ```
 
-Approved architecture:
+Completed review decisions:
 
-- archive facts
-- recompute insights
-- GaggiMate-compatible profile JSON
-- preserve all profiles including utility profiles
+- archive format is `.gaggigo.zip`
+- archive facts, recompute insights
+- generated videos are export artefacts, not archive source data
+- raw shot data is the replay source
+- GaggiMate-compatible profile JSON remains first-class
+- all profiles are preserved, including utility profiles
+- archive import is separate from existing profile import
+- existing `.json` / `.tcl` profile import remains unchanged
+- archive import rehydrates GaggiGo only
+- profile restore from archive is explicit and restore-as-copy
 - merge-only restore
 - silent duplicate skipping
 - idempotent imports
@@ -108,17 +114,21 @@ Approved architecture:
 - archive health model
 - local archive != backup
 - single archive authority
+- 6-month hot mirror
+- 6-month archive bundle cadence
+- sampled normal, long, and extreme shot payloads for architecture planning
 
 Not approved for implementation yet.
 
 Remaining review work:
 
-1. Measure real shot payload sizes.
+1. Real-life storage validation with larger datasets.
 2. Measure IndexedDB growth.
 3. Measure browser storage behaviour.
 4. Define deterministic shot identity.
 5. Define archive manifest schema.
 6. Complete runtime validation matrix review.
+7. Validate archive import boundary against existing profile import behaviour.
 
 Implementation must not begin until those items are complete.
 
@@ -164,11 +174,12 @@ Expected implementation order:
 1. Archive identity layer.
 2. Manifest schema.
 3. Archive storage model.
-4. Archive creation workflow.
-5. Archive health system.
-6. Export workflow.
-7. Import workflow.
-8. Restore workflow.
+4. Archive import/export boundary layer.
+5. Archive creation workflow.
+6. Archive health system.
+7. Export workflow.
+8. Import workflow.
+9. Restore-as-copy profile workflow.
 
 Rules:
 
