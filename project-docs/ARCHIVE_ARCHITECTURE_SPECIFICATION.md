@@ -5,44 +5,40 @@ Status: Approved For Pre-Implementation Review
 
 ## Purpose
 
-This document defines the archive, backup, retention, and restore architecture for GaggiGo.
+This document defines the archive, backup, retention, import, and restore architecture for GaggiGo.
 
 Implementation must follow this document.
 
 ## System Identity
 
 ### GaggiMate
-- Source Authority
-- Machine Controller
-- Runtime Owner
-- Telemetry Source
-- Rolling Operational Datastore
+
+- Source authority
+- Runtime owner
+- Telemetry source
+- Rolling operational datastore
 
 ### GaggiGo
-- Offline-First Observer
-- IndexedDB Mirror
-- Historical Archive
-- Analyzer Workspace
-- Statistics Workspace
-- Future Safe Sync Client
 
-## Non-Negotiable Rule
-
-GaggiMate controls the machine.
-
-GaggiGo observes, stores, analyses, archives, and later syncs safe data.
-
-Never introduce machine controls, brew controls, grinder controls, scale controls, PID control, autotune, OTA, Bluetooth management, raw websocket administration, or unrestricted settings writes.
+- Offline-first observer
+- IndexedDB mirror
+- Historical archive
+- Analyzer workspace
+- Statistics workspace
+- Future safe sync client
 
 ## Authority Model
 
 Connected:
+
 GaggiMate is authoritative.
 
 Offline:
+
 GaggiGo is a historical mirror.
 
 Restore:
+
 Explicit only. Never automatic.
 
 ## Storage Architecture
@@ -67,22 +63,25 @@ Archive facts.
 
 Recompute insights.
 
-Store shots, profiles, metadata, notes, ratings, tags and annotations.
+Store shots, profiles, metadata, notes, ratings, tags, and annotations.
 
 Do not store analyzer results, statistics results, derived caches, or computed snapshots.
 
 ## Retention Model
 
-Tier 1: ESP32 Rolling Store
+Tier 1: ESP32 rolling store.
 
-Tier 2: GaggiGo Hot Mirror
+Tier 2: GaggiGo hot mirror.
+
 - Default 6 months
 - Current month plus previous 5 months
 
-Tier 3: Quarterly Archives
-- Example: 2026-Q1.gaggigo.zip
+Tier 3: six-month archive bundles.
 
-Tier 4: Exported Backups
+- Example: 2026-H1.gaggigo.zip
+- Example: 2026-H2.gaggigo.zip
+
+Tier 4: exported backups.
 
 ## Archive Contents
 
@@ -93,7 +92,7 @@ Tier 4: Exported Backups
 - Tags
 - User annotations
 - Embedded profile snapshots
-- Machine metadata
+- Safe machine metadata
 - Version metadata
 - Manifest
 - Integrity information
@@ -103,6 +102,7 @@ Tier 4: Exported Backups
 Archive all profiles exactly as exported.
 
 Includes:
+
 - Brew profiles
 - Utility profiles
 - Default profiles
@@ -121,14 +121,16 @@ Use GaggiMate-compatible profile JSON plus GaggiGo archive metadata.
 
 ## Archive Bundle Structure
 
-2026-Q2.gaggigo.zip
+Example:
+
+- 2026-H1.gaggigo.zip
 - manifest.json
 - shots/
 - profiles/
 - notes/
 - metadata/
 
-Human readable, portable, versioned, self-describing.
+Archive bundles should be human readable, portable, versioned, and self-describing.
 
 ## Manifest Requirements
 
@@ -161,15 +163,15 @@ Each status must provide explanation and recommended action.
 
 ## Local Archive vs Backup
 
-Local Archive != Backup
+Local Archive != Backup.
 
-Exported Archive = Backup
+Exported Archive = Backup.
 
 ## Export Model
 
 Single-click export.
 
-System handles build, verification, manifest creation and download.
+System handles archive build, verification, manifest creation, and download.
 
 ## Restore Model
 
@@ -177,15 +179,92 @@ Merge only.
 
 Never replace existing data.
 
+## Archive Import Boundary Rule
+
+Archive functionality must not be mixed into the existing GaggiMate profile import workflow.
+
+Existing profile import remains unchanged:
+
+- .json / .tcl
+- parseProfile()
+- save profile through the existing profile save request
+- GaggiMate profile storage
+
+Purpose:
+
+- Profile restore
+- Profile migration
+- Profile sharing
+
+Archive import is a separate workflow:
+
+- .gaggigo.zip
+- Archive Import
+- Manifest Validation
+- Integrity Verification
+- Duplicate Detection
+- IndexedDB Merge
+- GaggiGo Archive/History
+
+Purpose:
+
+- Historical restoration
+- Archive rehydration
+- Device migration
+- Backup recovery
+
+Authority separation:
+
+Profile Import may write to GaggiMate.
+
+Archive Import must not automatically write to GaggiMate.
+
+Archive imports restore GaggiGo data only.
+
+Do not extend the existing profile import control to handle archives.
+
+Do not add .gaggigo.zip to the existing profile import input.
+
+Archive Import, Archive Export, and Archive Health must be separate archive functionality.
+
+Profile restoration from an archive is allowed only as an explicit user action:
+
+- User selects archived profile
+- Restore as copy
+- Explicit confirmation
+- Save through the existing profile save request
+
+Restored archive profiles must be created as copies.
+
+Example:
+
+House Espresso -> House Espresso (Restored)
+
+This preserves:
+
+- Clear authority boundaries
+- Existing master compatibility
+- Merge-back compatibility
+- Safety
+- User expectations
+
+and prevents:
+
+- Archive import unexpectedly modifying live state
+- Archive import overwriting active profiles
+- Archive import becoming a full restore operation
+
 ## Editability Model
 
 Immutable:
+
 - Shot telemetry
 - Timestamps
 - Profile snapshots
 - Machine context
 
 Editable:
+
 - Notes
 - Ratings
 - Tags
@@ -227,6 +306,7 @@ Older history may be restored from archive imports.
 - Measure browser storage behaviour
 - Define shot identity algorithm
 - Define archive manifest schema
+- Validate archive import boundary against existing profile import behaviour
 
 ## Final Principle
 
