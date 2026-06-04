@@ -35,7 +35,14 @@ GaggiGo
 
 Merge-back compatibility remains a hard requirement.
 
-Do not reintroduce machine controls, OTA, PID/autotune, Bluetooth management, raw websocket admin, or unrestricted settings writes.
+Do not reintroduce:
+
+- machine controls
+- OTA
+- PID/autotune
+- Bluetooth management
+- raw websocket admin
+- unrestricted settings writes
 
 ---
 
@@ -70,7 +77,7 @@ Hydration is the sync model.
 
 ## Runtime State Confirmed
 
-Confirmed working after recent fixes and local validation:
+Confirmed working after recent fixes and validation:
 
 - Shot History loads correctly online.
 - Shot History remains available offline.
@@ -151,20 +158,34 @@ No backup/archive implementation should begin before architecture review is comp
 
 ---
 
-## Still Needs Validation / Hardening
+## Current Hardening Status
 
-The project is no longer in the broad broken-analyzer state, and reconnect lifecycle validation has passed.
+Architecture hardening completed:
 
-Remaining before sync/archive implementation:
+- offline empty-state polish
+- cache/source indicator clarity
+- terminal/proxy noise review
+- dead-code architecture pass
+- ApiService safe-boundary mapping
 
-1. Polish offline empty states.
-2. Clarify cache/source indicators.
-3. Reduce terminal/proxy noise.
-4. Audit inherited dead code.
-5. Map remaining ApiService safe-operation boundaries.
-6. Review and validate backup/archive architecture before implementation.
+Completed during hardening:
 
-No new product features before this hardening pass.
+- LocalCacheService removed
+- deprecated parallel localStorage persistence path removed
+- IndexedDB confirmed as sole persistence authority
+- SafeGaggiMateClient reviewed
+- ApiService reviewed
+- machine-state operations documented
+- observer-safe operations documented
+- sync/archive safety boundaries documented
+
+Remaining before archive/sync implementation:
+
+1. Backup/archive architecture review.
+2. Runtime validation matrix review.
+3. Pre-sync readiness review.
+
+No new product features before these reviews complete.
 
 ---
 
@@ -199,15 +220,51 @@ No new product features before this hardening pass.
 ### Reconnect Lifecycle
 
 - Online → offline → browser refresh → reconnect workflow validated.
-- Profiles, history, Analyzer, and Statistics survive offline refresh from the local mirror.
+- Profiles, History, Analyzer, and Statistics survive offline refresh from the local mirror.
 - Reconnect does not duplicate shots or accumulate stale profiles.
+- Reconnect does not accumulate stale profiles.
 - Reconnect does not cause hydration spam or websocket retry flood.
 
 ### Safe Data Boundary
 
-- `SafeGaggiMateClient` is the named safe GaggiMate access layer.
+- SafeGaggiMateClient is the named safe GaggiMate access layer.
 - Safe profile operations are wrapped.
 - GaggiGo remains observer/data-first, not controller-first.
+
+### ApiService Boundary Map
+
+Documented in:
+
+```text
+project-docs/API_SERVICE_BOUNDARY_MAP.md
+```
+
+Observer-safe operations:
+
+- profile hydration
+- profile loading
+- history loading
+- shot hydration
+- analyzer/statistics hydration
+- notes retrieval
+
+Machine-state operations:
+
+- profile save
+- profile delete
+- profile reorder
+- profile select
+- profile favorite
+- profile unfavorite
+
+Important:
+
+```text
+favorite/unfavorite affects ESP32 profile-slot state.
+
+These operations must never be treated as passive sync.
+They require explicit user intent.
+```
 
 ---
 
@@ -221,7 +278,24 @@ IndexedDBService
 IndexedDB browser persistence
 ```
 
-`LocalCacheService` is deprecated. Do not build sync on it.
+Current persistence authority:
+
+```text
+LibraryService
+↓
+IndexedDBService
+↓
+IndexedDB
+```
+
+LocalCacheService has been removed as deprecated architecture.
+
+Do not introduce:
+
+- parallel cache systems
+- localStorage persistence layers
+- competing sync queues
+- alternative storage authorities
 
 ---
 
@@ -230,17 +304,42 @@ IndexedDB browser persistence
 Current phase:
 
 ```text
-Cleanup and hardening before archive/sync work.
+Archive architecture review before sync work.
 ```
 
 Immediate next focus:
 
-1. Offline empty-state polish.
-2. Cache/source indicator clarity.
-3. Terminal/proxy noise reduction.
-4. Dead-code audit.
-5. ApiService safe-boundary mapping.
-6. Backup/archive architecture review.
+1. Backup/archive architecture review.
+2. Runtime validation matrix review.
+3. Pre-sync readiness review.
+
+Completed this phase:
+
+- offline empty-state polish
+- cache/source indicator clarity
+- terminal/proxy review
+- dead-code architecture pass
+- ApiService safe-boundary mapping
+
+---
+
+## Mandatory First Actions For New Work
+
+Before any investigation, planning, patching, or coding:
+
+1. Read `CURRENT_STATE.md`.
+2. Read `ROADMAP.md`.
+3. Read `project-docs/API_SERVICE_BOUNDARY_MAP.md`.
+4. Read `project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md`.
+5. Read `project-docs/GAGGIGO_PATCH_PROTOCOL.md`.
+6. Check current GitHub branch state.
+7. Confirm working branch is `gaggigo-mvp`.
+8. Inspect actual runtime behaviour before theorising.
+9. Validate that documentation matches repository reality.
+
+Do not begin implementation from handover text alone.
+
+Verify repository state first.
 
 ---
 
@@ -261,6 +360,8 @@ Current files still worth watching:
 - `web/src/pages/ShotAnalyzer/index.jsx`
 - `web/src/pages/Statistics/components/StatisticsView.jsx`
 - `web/src/services/ProfileCacheService.js`
+- `web/src/services/SafeGaggiMateClient.js`
+- `web/src/services/ApiService.js`
 
 ---
 
@@ -270,4 +371,11 @@ GaggiMate remains the source authority and controls the machine.
 
 GaggiGo observes, stores, analyses, archives, and later syncs safe data.
 
-History, Analyzer, and Statistics should operate from the local IndexedDB mirror once hydration has completed.
+History, Analyzer, Statistics, and Profiles should operate from the local IndexedDB mirror once hydration has completed.
+
+Current implementation rule:
+
+```text
+GaggiMate hydrates the local mirror.
+GaggiGo renders from the local mirror.
+```
