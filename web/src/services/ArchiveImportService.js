@@ -29,12 +29,8 @@ function countByAction(items) {
 }
 
 class ArchiveImportService {
-  /**
-   * Build a read-only import preview from an archive container.
-   * No IndexedDB writes. No GaggiMate writes. No restore operations.
-   */
-  async previewImport(content) {
-    const importValidation = await archiveImportValidationService.validateImportContainer(content);
+  async previewImport(input) {
+    const importValidation = await archiveImportValidationService.validateImportArchive(input);
 
     if (!importValidation.canImport) {
       return {
@@ -54,8 +50,7 @@ class ArchiveImportService {
       };
     }
 
-    const parsed = archiveImportValidationService.parseJsonContainer(content);
-    const bundle = archiveImportValidationService.buildBundleFromContainer(parsed.data);
+    const bundle = importValidation.bundle;
 
     const [existingShots, existingProfiles, existingNotes] = await Promise.all([
       indexedDBService.getAllShots(),
@@ -105,6 +100,7 @@ class ArchiveImportService {
       validation: importValidation.validation,
       health: importValidation.health,
       manifest: bundle.manifest,
+      bundle,
       summary: {
         shots: countByAction(shotActions),
         profiles: countByAction(profileActions),
