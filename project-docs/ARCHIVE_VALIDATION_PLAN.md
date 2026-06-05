@@ -35,7 +35,44 @@ Evidence Required:
 - Structure notes.
 - Compatibility findings.
 
-Status: Not started.
+Status: Initial shot export evidence captured.
+
+Initial shot export finding:
+
+```text
+A real active GaggiMate shot download was reviewed.
+
+The exported shot JSON includes the same identity and analysis fields already used by the GaggiGo IndexedDB mirror:
+
+- id
+- profile
+- profileId
+- timestamp
+- duration
+- samples[]
+- per-sample telemetry
+- systemInfo
+- phaseNumber / phaseDisplayNumber
+
+This confirms that GaggiMate shot downloads already preserve the core factual shot data needed by GaggiGo archive storage.
+```
+
+Decision:
+
+```text
+Do not invent a separate telemetry storage model for archive MVP.
+
+Archive records should preserve raw shot facts in the existing shot JSON shape, with archive metadata handled separately through the archive manifest.
+
+The archive layer should organise and verify shot records; it should not transform them into a new primary data model.
+```
+
+Remaining:
+
+```text
+Profile export/import structure still needs review before implementation.
+Archive manifest structure still needs validation.
+```
 
 ---
 
@@ -58,7 +95,7 @@ Evidence Required:
 - Collision analysis.
 - Decision record.
 
-Status: In progress.
+Status: Substantially validated for MVP.
 
 Initial repo findings:
 
@@ -77,7 +114,21 @@ Cached mirror keys use:
 gaggimate:<id>
 ```
 
-Provisional archive identity decision:
+Real export evidence:
+
+```text
+A real active GaggiMate shot download preserves:
+
+- id
+- profileId
+- timestamp
+- duration
+- samples[]
+
+This confirms the fields needed for MVP duplicate detection survive the real shot export/download boundary.
+```
+
+MVP archive duplicate identity:
 
 ```text
 shotId + timestamp + profileId + sampleCount + duration
@@ -86,7 +137,7 @@ shotId + timestamp + profileId + sampleCount + duration
 Reason:
 
 ```text
-Provides substantially stronger uniqueness than shotId alone.
+Provides stronger uniqueness than shotId alone while staying simple.
 
 Captures:
 - machine shot identifier
@@ -95,9 +146,7 @@ Captures:
 - recording length
 - sample structure
 
-Simple enough for MVP.
-
-Must still be validated against real exports before implementation.
+This is sufficient for the current one-machine coffee workflow and avoids unnecessary UUIDs, machine fingerprints, lineage tracking, or archive identity registries.
 ```
 
 Open validation questions:
@@ -105,8 +154,16 @@ Open validation questions:
 ```text
 Can shot IDs reset after firmware events?
 Can two machines generate the same shot IDs?
-Does export/import preserve all identity fields?
-Is an additional machine identifier required?
+Is an additional machine identifier ever needed for multi-machine archive use?
+```
+
+Decision:
+
+```text
+Do not add archive-only UUIDs for MVP.
+Do not add machine fingerprinting for MVP.
+Use the existing shot facts for duplicate detection.
+Use SHA256 for archive integrity verification only, not as a new primary identity system.
 ```
 
 ---
@@ -146,6 +203,14 @@ Total measured JSON size: 5.76 MB
 Average shot size: 44.70 KB
 Largest observed shot: approx 107 KB
 Smallest metadata-only shot: approx 0.35 KB
+```
+
+Decision:
+
+```text
+Initial real-world storage measurement supports the 6-month hot mirror direction.
+Storage pressure is not currently the primary archive risk.
+Archive remains justified for continuity, portability, backup, recovery, firmware-update safety, and browser/site-data loss protection.
 ```
 
 ---
@@ -202,14 +267,14 @@ Archive implementation may begin only when all conditions are true:
 ## Current Next Validation Target
 
 ```text
-Real GaggiMate export structure review
+Profile export/import structure review
 ```
 
 Reason:
 
 ```text
-Archive identity now has a provisional decision.
-The next step is verifying that export data preserves the required identity fields.
+Shot export shape and MVP shot identity are now sufficiently validated for architecture purposes.
+The next remaining export-boundary risk is profile export/import shape and restore-as-copy behaviour.
 ```
 
 ---
