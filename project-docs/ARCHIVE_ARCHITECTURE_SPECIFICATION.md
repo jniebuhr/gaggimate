@@ -1,7 +1,7 @@
 # GaggiGo Archive Architecture Specification
 
-Version: Draft 1.0
-Status: Approved For Pre-Implementation Review
+Version: 1.0
+Status: Implemented and Validated
 
 ## Purpose
 
@@ -572,17 +572,33 @@ Do not build for archive MVP:
 - Cloud archive support
 - Cross-device archive orchestration
 
-## Pre-Implementation Requirements
+## Implementation Verification
 
-- Measure real shot payload sizes with larger real-life datasets
-- Measure IndexedDB growth
-- Measure archive sizes
-- Measure browser storage behaviour
-- Define and validate shot identity algorithm
-- Define final archive manifest schema
-- Validate archive import boundary against existing profile import behaviour
-- Test large archive import behaviour
-- Complete runtime validation matrix review
+Completed:
+
+- Real shot payload measurement
+- IndexedDB growth measurement
+- Archive size measurement
+- Browser storage behaviour review
+- Shot identity validation
+- Archive manifest implementation
+- Archive import boundary validation
+- Runtime validation matrix review
+- Archive ZIP import/export implementation
+- Archive validation implementation
+- Archive health implementation
+- Archive merge implementation
+- Archive execution implementation
+- Archive engine audit
+
+Current remaining work:
+
+- Archive Export UI
+- Archive Import UI
+- Archive Browser
+- Archive Management Views
+- Manual archive runtime validation
+- Large archive import runtime testing
 
 ## Final Principle
 
