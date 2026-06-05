@@ -27,7 +27,7 @@ The project has moved beyond analyzer/history recovery and hardening.
 Current phase:
 
 ```text
-Archive pre-implementation review.
+Archive Validation Phase.
 ```
 
 ---
@@ -69,7 +69,7 @@ Hardening completed:
 
 ## Phase 3 — Archive Architecture
 
-Status: In review.
+Status: Validation phase.
 
 Authoritative documents:
 
@@ -79,7 +79,13 @@ project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
 project-docs/API_SERVICE_BOUNDARY_MAP.md
 ```
 
-Approved archive direction is defined by:`r`n`r`n```text`r`nproject-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md`r`n``` `r`n`r`nCompleted review decisions:
+Approved archive direction is defined by:
+
+```text
+project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
+```
+
+Completed review decisions:
 
 - archive format is `.gaggigo.zip`
 - archive facts, recompute insights
@@ -104,20 +110,15 @@ Approved archive direction is defined by:`r`n`r`n```text`r`nproject-docs/ARCHIVE
 
 Not approved for implementation yet.
 
-Remaining review work:
+Remaining validation work:
 
-1. Real GaggiMate export structure review.
-2. Validate deterministic shot identity.
-   - Can shot numbers reset?
-   - Can exports from different machines collide?
-   - Can archive imports collide with live data?
-3. Real-life storage validation with larger datasets.
-4. Measure IndexedDB growth.
-5. Measure browser storage behaviour.
-6. Measure real archive sizes.
-7. Test large archive import behaviour.
-8. Complete runtime validation matrix review.
-9. Validate archive import boundary against existing profile import behaviour.
+1. Complete runtime validation matrix review.
+2. Complete pre-sync readiness review.
+3. Complete browser storage behaviour testing.
+4. Measure real archive sizes.
+5. Test large archive import behaviour.
+6. Define smallest useful archive manifest shape.
+7. Finalise restore-as-copy profile UX/flow before implementation.
 
 Archive implementation gate:
 
@@ -128,6 +129,8 @@ Implementation must not begin until:
 - storage testing has been completed
 - import testing has been completed
 - runtime validation review has been completed
+- archive import boundary has been validated
+- archive manifest schema has been defined
 
 Implementation must not begin until those items are complete.
 
@@ -247,4 +250,3 @@ Do not reintroduce:
 - unrestricted settings writes
 
 Merge-back compatibility remains a hard requirement.
-
