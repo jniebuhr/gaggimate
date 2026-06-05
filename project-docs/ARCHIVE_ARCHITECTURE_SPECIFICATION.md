@@ -445,7 +445,7 @@ Duplicate records are skipped and reported.
 Provisional archive identity:
 
 ```text
-shotDateTime + shotNumber
+shotId + timestamp + profileId + sampleCount + duration
 ```
 
 This must be validated against real GaggiMate exports before implementation.
