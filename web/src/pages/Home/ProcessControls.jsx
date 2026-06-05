@@ -17,6 +17,8 @@ import { ProcessProfileChart } from '../../components/ProcessProfileChart.jsx';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { Tooltip } from '../../components/Tooltip.jsx';
+import { MODES } from './utils.js';
+import { ModeTab } from './ModeTab.jsx';
 
 const status = computed(() => machine.value.status);
 
@@ -297,27 +299,17 @@ const ProcessControls = props => {
   };
 
   return (
-    <div className={`flex min-h-[250px] flex-col justify-between lg:min-h-[350px]`}>
+    <div className={`flex h-full min-h-[250px] flex-col justify-between lg:min-h-[350px]`}>
       <div className='mb-2 flex justify-center'>
-        <div className='bg-base-300 flex w-full max-w-md rounded-full p-1'>
-          {[
-            { id: 0, label: 'Standby' },
-            { id: 1, label: 'Brew' },
-            { id: 2, label: 'Steam' },
-            { id: 3, label: 'Water' },
-            ...(showGrindTab ? [{ id: 4, label: 'Grind' }] : []),
-          ].map(tab => (
-            <button
-              key={tab.id}
-              className={`flex-1 cursor-pointer rounded-full px-1 py-1 text-sm transition-all duration-200 sm:px-4 lg:px-2 lg:py-2 ${
-                mode === tab.id
-                  ? 'bg-primary text-primary-content font-medium'
-                  : 'text-base-content/60 hover:text-base-content'
-              }`}
-              onClick={() => changeMode(tab.id)}
-            >
-              {tab.label}
-            </button>
+        <div className='bg-base-200/70 flex h-9 w-full shrink-0 gap-0.5 rounded-full p-0.5'>
+          {MODES.filter(m => m.id !== 4 || showGrindTab).map(m => (
+            <ModeTab
+              key={m.id}
+              mode={m}
+              active={mode === m.id}
+              onClick={() => changeMode(m.id)}
+              rotation={m.iconRotation}
+            />
           ))}
         </div>
       </div>
@@ -358,7 +350,7 @@ const ProcessControls = props => {
         </div>
       </div>
       {brew && (
-        <div className='mb-2 text-center'>
+        <div className={`mb-2 text-center ${active && 'hidden lg:contents'}`}>
           <div className='text-base-content/60 text-sm'>Current Profile</div>
           <a href='/profiles' className='mb-2 flex items-center justify-center gap-2'>
             <span className='text-base-content text-xl font-semibold sm:text-2xl'>
@@ -451,7 +443,7 @@ const ProcessControls = props => {
         </div>
       )}
 
-      <div className='mt-4 flex flex-col items-center gap-4 space-y-4'>
+      <div className='flex flex-col items-center gap-4 py-1'>
         {grind &&
           showGrindTab &&
           !active &&
@@ -484,11 +476,6 @@ const ProcessControls = props => {
             </div>
           )}
         {/* Controls for different modes */}
-        {mode === 1 && (
-          <div className='flex flex-col items-center gap-4 space-y-4'>
-            {/* Brew mode has no additional controls beyond common ones */}
-          </div>
-        )}
         {mode === 2 && (
           <div className='flex flex-col items-center gap-4 space-y-4'>
             {/* Temperature adjustment controls for steam mode */}
@@ -589,7 +576,7 @@ const ProcessControls = props => {
 
         {/* Common controls for all modes that need them */}
         {(mode === 1 || mode === 3 || (mode === 4 && showGrindTab && isGrindAvailable)) && (
-          <div className='flex flex-col items-center gap-4 space-y-4'>
+          <div className='flex flex-row items-center gap-4 lg:flex-col'>
             <Tooltip content={active ? 'Pause' : finished ? 'Finish' : 'Start'}>
               <button className='btn btn-circle btn-lg btn-primary' onClick={handleButtonClick}>
                 <FontAwesomeIcon icon={getButtonIcon()} className='text-2xl' />

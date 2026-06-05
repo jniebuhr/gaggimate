@@ -68,7 +68,7 @@ When building the firmware, the `scripts/build_spiffs.sh` script installs the we
 
 - Review plugin implementations in `src/display/plugins` to see how new functionality hooks into the controller using events.
 - Look at `src/display/core/Settings.*` for how user preferences are stored and updated.
-- Study the BLE protocol defined in `lib/NimBLEComm` to understand how the display and controller communicate.
+- Study the BLE protocol defined in `lib/NanoPbComm` (nanopb schema in `lib/NanoPbComm/proto/gaggimate.proto`) to understand how the display and controller communicate.
 
 ## Getting Started
 
