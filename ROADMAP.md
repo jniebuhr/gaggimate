@@ -79,23 +79,7 @@ project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
 project-docs/API_SERVICE_BOUNDARY_MAP.md
 ```
 
-Approved direction:
-
-```text
-Tier 1
-ESP32 rolling operational store
-
-Tier 2
-6-month IndexedDB hot mirror
-
-Tier 3
-6-month archive bundles
-
-Tier 4
-Portable exported backups
-```
-
-Completed review decisions:
+Approved archive direction is defined by:`r`n`r`n```text`r`nproject-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md`r`n``` `r`n`r`nCompleted review decisions:
 
 - archive format is `.gaggigo.zip`
 - archive facts, recompute insights
@@ -263,3 +247,4 @@ Do not reintroduce:
 - unrestricted settings writes
 
 Merge-back compatibility remains a hard requirement.
+

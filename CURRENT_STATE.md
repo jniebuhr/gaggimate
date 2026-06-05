@@ -125,54 +125,9 @@ GaggiGo
 = archive layer later
 ```
 
-Current intended retention model:
+Archive retention model is defined by:`r`n`r`n```text`r`nproject-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md`r`n``` `r`n`r`nCURRENT_STATE.md reflects current implementation status only.`r`n`r`nCurrent archive architecture decisions are defined by:
 
-```text
-Tier 1
-ESP32 rolling operational store
-
-Tier 2
-GaggiGo IndexedDB hot mirror
-(default 6-month fast working set)
-
-Tier 3
-Quarterly archive bundles later
-
-Tier 4
-Portable backup/export later
-```
-
-Important retention rule:
-
-```text
-ESP32 rotation deletion must not delete already mirrored GaggiGo history.
-```
-
-Archive strategy documents:
-
-```text
-project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md
-project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
-```
-
-Current archive architecture decisions:
-
-```text
-6-month hot mirror by default
-quarterly archive bundles
-single archive format
-single archive location
-single archive index
-archive facts, recompute insights
-GaggiMate-compatible profile JSON inside archive bundles
-all profiles preserved, including utility profiles
-merge-only restore
-silent duplicate skipping
-idempotent archive import
-automatic integrity verification
-local archive is convenience
-exported archive is backup
-```
+```text`r`nproject-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md`r`n```
 
 No backup/archive implementation should begin until pre-implementation requirements are complete.
 
@@ -449,3 +404,4 @@ Current implementation rule:
 GaggiMate hydrates the local mirror.
 GaggiGo renders from the local mirror.
 ```
+
