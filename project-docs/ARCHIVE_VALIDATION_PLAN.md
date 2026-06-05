@@ -35,7 +35,7 @@ Evidence Required:
 - Structure notes.
 - Compatibility findings.
 
-Status: Initial shot export evidence captured.
+Status: Shot export evidence captured. Profile export/import boundary reviewed.
 
 Initial shot export finding:
 
@@ -57,6 +57,41 @@ The exported shot JSON includes the same identity and analysis fields already us
 This confirms that GaggiMate shot downloads already preserve the core factual shot data needed by GaggiGo archive storage.
 ```
 
+Profile export/import findings:
+
+```text
+Single-profile export:
+- exports the current profile object
+- strips id
+- strips selected
+- strips favorite
+- downloads as profile-<id>.json
+
+All-profile export:
+- exports the profile list
+- strips id
+- strips selected
+- strips favorite
+- downloads as profiles.json
+
+Profile import:
+- accepts JSON and TCL
+- parses one profile or an array of profiles
+- saves each parsed profile through SafeGaggiMateClient.saveProfile()
+- saveProfile sends req:profiles:save to GaggiMate
+```
+
+Compatibility finding:
+
+```text
+Existing profile import is a live GaggiMate write path.
+It is not a passive archive import path.
+
+Archive import must remain separate from profile import.
+Archive import may preserve embedded profile snapshots as historical context inside GaggiGo.
+Any restore of a profile back to GaggiMate must be explicit restore-as-copy behaviour.
+```
+
 Decision:
 
 ```text
@@ -64,14 +99,16 @@ Do not invent a separate telemetry storage model for archive MVP.
 
 Archive records should preserve raw shot facts in the existing shot JSON shape, with archive metadata handled separately through the archive manifest.
 
-The archive layer should organise and verify shot records; it should not transform them into a new primary data model.
+Profiles inside archives should be treated as historical snapshots by default.
+
+Existing profile export/import remains useful for compatibility, but archive restore must not automatically reuse the profile import path because that writes to GaggiMate.
 ```
 
 Remaining:
 
 ```text
-Profile export/import structure still needs review before implementation.
 Archive manifest structure still needs validation.
+Restore-as-copy profile UX/flow still needs design before implementation.
 ```
 
 ---
@@ -247,7 +284,21 @@ WebSocket timeout noise while GaggiMate unavailable.
 
 ### 8. Archive Import Boundary Validation
 
-Status: Not started.
+Status: Partially reviewed.
+
+Finding:
+
+```text
+Profile import is a live write to GaggiMate through req:profiles:save.
+Therefore archive import must not silently call profile import.
+```
+
+Decision:
+
+```text
+Archive import must be GaggiGo-side first.
+Profile restore to GaggiMate must be a separate explicit restore-as-copy action.
+```
 
 ---
 
@@ -267,14 +318,14 @@ Archive implementation may begin only when all conditions are true:
 ## Current Next Validation Target
 
 ```text
-Profile export/import structure review
+Archive manifest shape
 ```
 
 Reason:
 
 ```text
-Shot export shape and MVP shot identity are now sufficiently validated for architecture purposes.
-The next remaining export-boundary risk is profile export/import shape and restore-as-copy behaviour.
+Shot export shape, MVP shot identity, and profile import/export boundaries are now sufficiently validated for architecture purposes.
+The next remaining archive-design risk is defining the smallest useful manifest shape without adding future-only fields.
 ```
 
 ---
