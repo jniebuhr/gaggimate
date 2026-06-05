@@ -29,7 +29,7 @@ GaggiGo
 = IndexedDB mirror
 = historical viewer
 = analyser/statistics workspace
-= persistent archive layer later
+= archive layer
 = safe sync client later
 ```
 
@@ -71,7 +71,7 @@ Live GaggiMate access is valid for refreshing/hydrating IndexedDB.
 
 Analyzer and Statistics should not depend on repeated live fetches during normal rendering.
 
-Hydration is the sync model.
+Hydration is the sync model for the current frontend MVP.
 
 ---
 
@@ -89,7 +89,9 @@ Confirmed working after recent fixes and validation:
 - Statistics reads cached payloads instead of lazy live fetches.
 - Statistics reports missing payload state instead of silent zero-result behaviour.
 - Browser refresh preserves the local mirror.
+- Full browser close and offline restart have been personally validated.
 - Connected → offline → refresh → reconnect lifecycle has been validated.
+- Machine unavailable behaviour has been validated against cached data.
 - Reconnect does not create duplicate shots.
 - Reconnect does not show stale profile accumulation.
 - Reconnect does not produce hydration spam.
@@ -109,29 +111,16 @@ hydrateGaggiMateShotIndex()
 
 ---
 
-## Storage / Archive Direction
+## Storage / Archive State
 
-The architecture direction is now moving toward persistent mirror and archive behaviour.
-
-Current archive phase:
+Archive status:
 
 ```text
-Archive Validation Phase
+Archive Engine Implementation Complete
+Archive UX Not Started
 ```
 
-Confirmed direction:
-
-```text
-ESP32 / GaggiMate
-= authoritative rolling datastore
-
-GaggiGo
-= hydrated mirror node
-= historical continuity layer
-= archive layer later
-```
-
-Archive retention model and current archive architecture decisions are defined by:
+Archive architecture is defined by:
 
 ```text
 project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
@@ -139,19 +128,107 @@ project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
 
 CURRENT_STATE.md reflects current implementation status only.
 
-No backup/archive implementation should begin until pre-implementation requirements are complete.
-
-Pre-implementation requirements:
+The archive engine now implements the documented backend/domain flow while preserving the existing authority model:
 
 ```text
-measure real shot payload sizes
-measure IndexedDB growth
-measure archive sizes
-measure browser storage behaviour
-define shot identity algorithm
-define archive manifest schema
-complete runtime validation matrix review
+GaggiMate
+= authoritative rolling datastore
+= live machine/runtime authority
+
+GaggiGo
+= hydrated mirror node
+= historical continuity layer
+= archive layer
+= ZIP import/export engine
+= IndexedDB-only archive restore target
 ```
+
+Implemented archive services:
+
+```text
+web/src/services/ArchiveService.js
+web/src/services/ArchiveValidationService.js
+web/src/services/ArchiveHealthService.js
+web/src/services/ArchiveExportService.js
+web/src/services/ArchiveZipService.js
+web/src/services/ArchiveZipImportService.js
+web/src/services/ArchiveImportValidationService.js
+web/src/services/ArchiveImportService.js
+web/src/services/ArchiveMergeService.js
+web/src/services/ArchiveExecutionService.js
+```
+
+Archive engine capabilities now present:
+
+- Build archive payloads from the IndexedDB hot mirror.
+- Generate manifest data.
+- Generate SHA256 section and overall integrity data.
+- Validate archive manifest, schema, counts, and integrity.
+- Evaluate archive health as Good / Warning / Critical.
+- Prepare `.gaggigo.zip` archive exports.
+- Read `.gaggigo.zip` archive imports.
+- Validate ZIP-backed imports.
+- Preview archive imports without mutation.
+- Generate deterministic merge plans.
+- Execute approved imports into IndexedDB only.
+- Skip duplicate shots.
+- Preserve existing profiles.
+- Restore archived profiles as copies.
+- Preserve existing notes and import only new notes.
+
+End-to-end archive engine flow:
+
+```text
+Export:
+ArchiveService
+↓
+ArchiveExportService
+↓
+ArchiveZipService
+↓
+.gaggigo.zip
+
+Import:
+.gaggigo.zip
+↓
+ArchiveZipImportService
+↓
+ArchiveImportValidationService
+↓
+ArchiveValidationService
+↓
+ArchiveHealthService
+↓
+ArchiveImportService
+↓
+ArchiveMergeService
+↓
+ArchiveExecutionService
+↓
+IndexedDBService / IndexedDB
+```
+
+Archive engine audit result:
+
+```text
+ZIP export        PASS
+ZIP import        PASS
+Validation        PASS
+Health            PASS
+Preview           PASS
+Merge plan        PASS
+Execution         PASS
+Build             PASS
+Repository sync   PASS
+```
+
+No GaggiMate write path was introduced by archive import.
+
+No parallel persistence system was introduced.
+
+Archive import restores GaggiGo data only.
+
+Archive UX is the next phase.
 
 ---
 
@@ -211,13 +288,24 @@ Completed during hardening:
 - observer-safe operations documented
 - sync/archive safety boundaries documented
 
-Remaining before archive/sync implementation:
+Completed during archive validation / implementation:
 
-1. Runtime validation matrix review.
-2. Pre-sync readiness review.
-3. Archive pre-implementation measurements and identity/schema definition.
+- Runtime validation matrix review.
+- Pre-sync readiness review.
+- Archive manifest shape implemented.
+- Archive ZIP import/export implemented.
+- Archive validation and health implemented.
+- Archive merge and execution implemented.
 
-No new product features before these reviews complete.
+Remaining before safe sync implementation:
+
+1. Archive UX implementation and validation.
+2. Archive browser / management UI.
+3. Manual archive import/export runtime validation.
+4. Large archive import behaviour testing.
+5. Browser storage behaviour testing.
+
+No safe sync implementation should begin before archive UX and archive runtime validation are complete.
 
 ---
 
