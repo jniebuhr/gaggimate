@@ -4,7 +4,7 @@
 
 GaggiGo is an offline-first observer frontend and local mirror layer for GaggiMate.
 
-Core cache-first architecture direction is functioning and validated.
+Core cache-first architecture is implemented, validated, and stable.
 
 ```text
 GaggiMate
@@ -18,16 +18,16 @@ GaggiGo
 = local IndexedDB mirror
 = historical viewer
 = analyzer/statistics workspace
-= persistent archive layer later
-= safe sync client later
+= archive layer
+= future safe sync client
 ```
 
-The project has moved beyond analyzer/history recovery and hardening.
+The project has moved beyond analyzer/history recovery, hardening, and archive engine implementation.
 
 Current phase:
 
 ```text
-Archive Validation Phase.
+Archive UX Phase
 ```
 
 ---
@@ -44,32 +44,32 @@ Status: Complete.
 
 Validated:
 
-- profiles online/offline
-- history online/offline
-- analyzer online/offline
-- statistics from cached payloads
-- hydration-once behaviour
-- reconnect lifecycle
-- duplicate prevention
-- cache-first rendering
-- settings snapshot fallback
-- IndexedDB persistence authority
+* profiles online/offline
+* history online/offline
+* analyzer online/offline
+* statistics from cached payloads
+* hydration-once behaviour
+* reconnect lifecycle
+* duplicate prevention
+* cache-first rendering
+* settings snapshot fallback
+* IndexedDB persistence authority
 
 Hardening completed:
 
-- offline empty-state polish
-- cache/source indicator review
-- terminal/proxy noise review
-- dead-code audit
-- ApiService boundary mapping
-- LocalCacheService removal
-- localStorage persistence removal
+* offline empty-state polish
+* cache/source indicator review
+* terminal/proxy noise review
+* dead-code audit
+* ApiService boundary mapping
+* LocalCacheService removal
+* localStorage persistence removal
 
 ---
 
-## Phase 3 — Archive Architecture
+## Phase 3 — Archive Architecture & Validation
 
-Status: Validation phase.
+Status: Complete.
 
 Authoritative documents:
 
@@ -79,60 +79,48 @@ project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
 project-docs/API_SERVICE_BOUNDARY_MAP.md
 ```
 
-Approved archive direction is defined by:
+Approved archive direction remains defined by:
 
 ```text
 project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
 ```
 
-Completed review decisions:
+Completed architecture and validation decisions:
 
-- archive format is `.gaggigo.zip`
-- archive facts, recompute insights
-- generated videos are export artefacts, not archive source data
-- raw shot data is the replay source
-- GaggiMate-compatible profile JSON remains first-class
-- all profiles are preserved, including utility profiles
-- archive import is separate from existing profile import
-- existing `.json` / `.tcl` profile import remains unchanged
-- archive import rehydrates GaggiGo only
-- profile restore from archive is explicit and restore-as-copy
-- merge-only restore
-- duplicate skipping and reporting
-- idempotent imports
-- automatic integrity verification
-- archive health model
-- local archive != backup
-- single archive authority
-- 6-month hot mirror
-- 6-month archive bundle cadence
-- sampled normal, long, and extreme shot payloads for architecture planning
+* archive format is `.gaggigo.zip`
+* archive facts, recompute insights
+* generated videos are export artefacts, not archive source data
+* raw shot data is the replay source
+* GaggiMate-compatible profile JSON remains first-class
+* all profiles are preserved, including utility profiles
+* archive import is separate from existing profile import
+* existing `.json` / `.tcl` profile import remains unchanged
+* archive import rehydrates GaggiGo only
+* profile restore from archive is explicit and restore-as-copy
+* merge-only restore
+* duplicate skipping and reporting
+* idempotent imports
+* automatic integrity verification
+* archive health model
+* local archive != backup
+* single archive authority
+* 6-month hot mirror
+* 6-month archive bundle cadence
+* sampled normal, long, and extreme shot payloads for architecture planning
 
-Not approved for implementation yet.
+Validation completed:
 
-Remaining validation work:
+* runtime validation matrix review
+* pre-sync readiness review
+* archive ownership validation
+* archive import boundary validation
+* archive identity validation
+* archive manifest validation
+* storage projection review
+* archive implementation audit
+* end-to-end archive engine audit
 
-1. Complete runtime validation matrix review.
-2. Complete pre-sync readiness review.
-3. Complete browser storage behaviour testing.
-4. Measure real archive sizes.
-5. Test large archive import behaviour.
-6. Define smallest useful archive manifest shape.
-7. Finalise restore-as-copy profile UX/flow before implementation.
-
-Archive implementation gate:
-
-Implementation must not begin until:
-
-- real export structure has been reviewed
-- shot identity has been validated
-- storage testing has been completed
-- import testing has been completed
-- runtime validation review has been completed
-- archive import boundary has been validated
-- archive manifest schema has been defined
-
-Implementation must not begin until those items are complete.
+Archive architecture phase is complete.
 
 ---
 
@@ -142,46 +130,70 @@ Status: Blocked.
 
 Sync work must not begin until:
 
-- archive architecture is stable
-- archive measurements are complete
-- shot identity is defined and validated
-- manifest schema is defined
-- runtime validation review is complete
-- local mirror behaviour remains deterministic
+* archive UX is complete
+* archive runtime validation is complete
+* archive measurements remain valid
+* shot identity remains validated
+* manifest schema remains stable
+* local mirror behaviour remains deterministic
 
 Initial sync scope when unblocked:
 
-- notes
-- ratings
-- safe metadata
-- profile drafts
-- manual sync workflow
+* notes
+* ratings
+* safe metadata
+* profile drafts
+* manual sync workflow
 
 Do not start with:
 
-- automatic two-way profile sync
-- machine configuration sync
-- machine restoration sync
-- conflict-heavy sync behaviour
-- unrestricted mutation
+* automatic two-way profile sync
+* machine configuration sync
+* machine restoration sync
+* conflict-heavy sync behaviour
+* unrestricted mutation
 
 ---
 
-## Phase 5 — Archive Implementation
+## Phase 5 — Archive UX
 
-Status: Not started.
+Status: Active.
 
-Expected implementation order:
+Archive engine implementation is complete.
 
-1. Archive identity layer.
-2. Manifest schema.
-3. Archive storage model.
-4. Archive import/export boundary layer.
-5. Archive creation workflow.
-6. Archive health system.
-7. Export workflow.
-8. Import workflow.
-9. Restore-as-copy profile workflow.
+Current implementation includes:
+
+* ArchiveService
+* ArchiveValidationService
+* ArchiveHealthService
+* ArchiveExportService
+* ArchiveZipService
+* ArchiveZipImportService
+* ArchiveImportValidationService
+* ArchiveImportService
+* ArchiveMergeService
+* ArchiveExecutionService
+
+Archive engine audit status:
+
+```text
+ZIP export        PASS
+ZIP import        PASS
+Validation        PASS
+Health            PASS
+Preview           PASS
+Merge plan        PASS
+Execution         PASS
+Repository audit  PASS
+```
+
+Current UX implementation order:
+
+1. Archive Export UI
+2. Archive Import UI
+3. Archive Browser
+4. Archive Management Views
+5. Runtime archive validation
 
 Rules:
 
@@ -202,13 +214,13 @@ Status: Planned.
 
 Planned:
 
-- performance optimisation
-- statistics indexing improvements
-- installable PWA behaviour
-- packaging/distribution
-- runtime cleanup
-- end-to-end testing
-- feature gating/app-mode architecture
+* performance optimisation
+* statistics indexing improvements
+* installable PWA behaviour
+* packaging/distribution
+* runtime cleanup
+* end-to-end testing
+* feature gating/app-mode architecture
 
 ---
 
@@ -240,13 +252,13 @@ GaggiGo observes, stores, analyses, archives, and later syncs safe data.
 
 Do not reintroduce:
 
-- brew control
-- grinder control
-- scales control
-- PID/autotune
-- OTA
-- Bluetooth device management
-- raw websocket admin
-- unrestricted settings writes
+* brew control
+* grinder control
+* scales control
+* PID/autotune
+* OTA
+* Bluetooth device management
+* raw websocket admin
+* unrestricted settings writes
 
 Merge-back compatibility remains a hard requirement.
