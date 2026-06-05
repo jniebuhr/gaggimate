@@ -1,56 +1,32 @@
 import { archiveValidationService } from './ArchiveValidationService.js';
 import { archiveHealthService } from './ArchiveHealthService.js';
+import { archiveZipImportService } from './ArchiveZipImportService.js';
 
 class ArchiveImportValidationService {
-  parseJsonContainer(content) {
+  async buildBundleFromArchive(input) {
+    return archiveZipImportService.readZipArchive(input);
+  }
+
+  async validateImportArchive(input) {
+    let bundle;
+
     try {
-      const parsed = typeof content === 'string' ? JSON.parse(content) : content;
-
-      return {
-        success: true,
-        data: parsed,
-      };
+      bundle = await this.buildBundleFromArchive(input);
     } catch (error) {
-      return {
-        success: false,
-        error: `Invalid archive format: ${error.message}`,
-      };
-    }
-  }
-
-  buildBundleFromContainer(container) {
-    const files = container?.files || {};
-
-    return {
-      manifest: container?.manifest,
-      integrity: JSON.parse(files['metadata/integrity.json'] || '{}'),
-      payload: {
-        shots: JSON.parse(files['shots/shots.json'] || '[]'),
-        profiles: JSON.parse(files['profiles/profiles.json'] || '[]'),
-        notes: JSON.parse(files['notes/notes.json'] || '[]'),
-        metadata: JSON.parse(files['metadata/metadata.json'] || '{}'),
-      },
-    };
-  }
-
-  async validateImportContainer(content) {
-    const parsed = this.parseJsonContainer(content);
-
-    if (!parsed.success) {
       return {
         validation: {
           status: 'Critical',
-          reason: parsed.error,
+          reason: `Invalid archive format: ${error.message}`,
         },
         health: {
           status: 'Critical',
-          reason: parsed.error,
+          reason: `Invalid archive format: ${error.message}`,
         },
         canImport: false,
+        manifest: null,
+        counts: null,
       };
     }
-
-    const bundle = this.buildBundleFromContainer(parsed.data);
 
     const validation = await archiveValidationService.validatePreparedBundle(bundle);
     const health = archiveHealthService.evaluate(validation, bundle.manifest);
@@ -61,6 +37,7 @@ class ArchiveImportValidationService {
       canImport: validation.status !== 'Critical' && health.status !== 'Critical',
       manifest: bundle.manifest,
       counts: bundle.manifest?.counts || null,
+      bundle,
     };
   }
 }
