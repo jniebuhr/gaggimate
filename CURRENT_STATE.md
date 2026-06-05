@@ -113,6 +113,12 @@ hydrateGaggiMateShotIndex()
 
 The architecture direction is now moving toward persistent mirror and archive behaviour.
 
+Current archive phase:
+
+```text
+Archive Validation Phase
+```
+
 Confirmed direction:
 
 ```text
@@ -125,9 +131,13 @@ GaggiGo
 = archive layer later
 ```
 
-Archive retention model is defined by:`r`n`r`n```text`r`nproject-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md`r`n``` `r`n`r`nCURRENT_STATE.md reflects current implementation status only.`r`n`r`nCurrent archive architecture decisions are defined by:
+Archive retention model and current archive architecture decisions are defined by:
 
-```text`r`nproject-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md`r`n```
+```text
+project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
+```
+
+CURRENT_STATE.md reflects current implementation status only.
 
 No backup/archive implementation should begin until pre-implementation requirements are complete.
 
@@ -140,6 +150,7 @@ measure archive sizes
 measure browser storage behaviour
 define shot identity algorithm
 define archive manifest schema
+complete runtime validation matrix review
 ```
 
 ---
@@ -218,190 +229,3 @@ No new product features before these reviews complete.
 - Fixed Analyzer loaded-payload check so `samples: []` is not treated as valid loaded data.
 - Fixed cached GaggiMate shot routing so `gaggimate-cache` is treated as GaggiMate-origin for Analyzer routes.
 - Added Shot History hydration before local shot-list rendering.
-
-### Full Payload Hydration
-
-- GaggiMate shot index hydration now also hydrates missing full `.slog` payloads into IndexedDB.
-- Hydration uses low concurrency to avoid hammering the ESP32.
-- Existing hydrated payloads are preserved when metadata refreshes.
-
-### Statistics
-
-- Statistics now reads cached payloads directly from IndexedDB.
-- Statistics no longer lazily fetches payloads from GaggiMate during analysis runs.
-- Statistics now reports missing payload states clearly.
-
-### Profiles
-
-- Online profile list now prefers live GaggiMate profiles.
-- Cached/library fallback remains available when live profile load is unavailable.
-- Mirrored GaggiMate profile snapshots are replaced cleanly rather than accumulated.
-- Browser/import profiles remain preserved separately.
-
-### Reconnect Lifecycle
-
-- Online → offline → browser refresh → reconnect workflow validated.
-- Profiles, History, Analyzer, and Statistics survive offline refresh from the local mirror.
-- Reconnect does not duplicate shots or accumulate stale profiles.
-- Reconnect does not cause hydration spam or websocket retry flood.
-
-### Safe Data Boundary
-
-- SafeGaggiMateClient is the named safe GaggiMate access layer.
-- Safe profile operations are wrapped.
-- GaggiGo remains observer/data-first, not controller-first.
-
-### ApiService Boundary Map
-
-Documented in:
-
-```text
-project-docs/API_SERVICE_BOUNDARY_MAP.md
-```
-
-Observer-safe operations:
-
-- profile hydration
-- profile loading
-- history loading
-- shot hydration
-- analyzer/statistics hydration
-- notes retrieval
-
-Machine-state operations:
-
-- profile save
-- profile delete
-- profile reorder
-- profile select
-- profile favorite
-- profile unfavorite
-
-Important:
-
-```text
-favorite/unfavorite affects ESP32 profile-slot state.
-
-These operations must never be treated as passive sync.
-They require explicit user intent.
-```
-
----
-
-## Authoritative Persistence Path
-
-```text
-LibraryService
-↓
-IndexedDBService
-↓
-IndexedDB browser persistence
-```
-
-Current persistence authority:
-
-```text
-LibraryService
-↓
-IndexedDBService
-↓
-IndexedDB
-```
-
-LocalCacheService has been removed as deprecated architecture.
-
-Do not introduce:
-
-- parallel cache systems
-- localStorage persistence layers
-- competing sync queues
-- alternative storage authorities
-- parallel archive systems
-
----
-
-## Current Technical Focus
-
-Current phase:
-
-```text
-Archive pre-implementation review before sync work.
-```
-
-Immediate next focus:
-
-1. Runtime validation matrix review.
-2. Archive measurement pass.
-3. Shot identity algorithm definition.
-4. Archive manifest schema definition.
-5. Pre-sync readiness review.
-
-Completed this phase:
-
-- offline empty-state polish
-- cache/source indicator clarity
-- terminal/proxy review
-- dead-code architecture pass
-- ApiService safe-boundary mapping
-- archive architecture specification
-
----
-
-## Mandatory First Actions For New Work
-
-Before any investigation, planning, patching, or coding:
-
-1. Read `CURRENT_STATE.md`.
-2. Read `ROADMAP.md`.
-3. Read `project-docs/API_SERVICE_BOUNDARY_MAP.md`.
-4. Read `project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md`.
-5. Read `project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md`.
-6. Read `project-docs/GAGGIGO_PATCH_PROTOCOL.md`.
-7. Check current GitHub branch state.
-8. Confirm working branch is `gaggigo-mvp`.
-9. Inspect actual runtime behaviour before theorising.
-10. Validate that documentation matches repository reality.
-
-Do not begin implementation from handover text alone.
-
-Verify repository state first.
-
----
-
-## Important Stable Files
-
-Do not modify without reason:
-
-- `web/src/index.jsx`
-- `web/src/components/Navigation.jsx`
-- `web/src/components/Header.jsx`
-- `web/src/pages/Home/index.jsx`
-- `web/src/pages/Settings/index.jsx`
-
-Current files still worth watching:
-
-- `web/src/pages/ShotAnalyzer/services/LibraryService.js`
-- `web/src/pages/ShotAnalyzer/services/IndexedDBService.js`
-- `web/src/pages/ShotAnalyzer/index.jsx`
-- `web/src/pages/Statistics/components/StatisticsView.jsx`
-- `web/src/services/ProfileCacheService.js`
-- `web/src/services/SafeGaggiMateClient.js`
-- `web/src/services/ApiService.js`
-
----
-
-## Working Mental Model
-
-GaggiMate remains the source authority and controls the machine.
-
-GaggiGo observes, stores, analyses, archives, and later syncs safe data.
-
-History, Analyzer, Statistics, and Profiles should operate from the local IndexedDB mirror once hydration has completed.
-
-Current implementation rule:
-
-```text
-GaggiMate hydrates the local mirror.
-GaggiGo renders from the local mirror.
-```
-
