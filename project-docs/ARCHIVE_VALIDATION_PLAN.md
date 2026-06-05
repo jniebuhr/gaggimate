@@ -43,11 +43,7 @@ Status: Not started.
 
 Objectives:
 
-Validate provisional identity:
-
-```text
-shotDateTime + shotNumber
-```
+Validate archive-safe shot identity.
 
 Questions:
 
@@ -62,7 +58,56 @@ Evidence Required:
 - Collision analysis.
 - Decision record.
 
-Status: Not started.
+Status: In progress.
+
+Initial repo findings:
+
+```text
+Current GaggiMate identity is a sequential shot ID.
+
+index.bin entries contain:
+- id (uint32)
+- timestamp
+- profileId
+
+Shot payloads are loaded from:
+/api/history/000123.slog
+
+Cached mirror keys use:
+gaggimate:<id>
+```
+
+Provisional archive identity decision:
+
+```text
+shotId + timestamp + profileId + sampleCount + duration
+```
+
+Reason:
+
+```text
+Provides substantially stronger uniqueness than shotId alone.
+
+Captures:
+- machine shot identifier
+- execution time
+- profile context
+- recording length
+- sample structure
+
+Simple enough for MVP.
+
+Must still be validated against real exports before implementation.
+```
+
+Open validation questions:
+
+```text
+Can shot IDs reset after firmware events?
+Can two machines generate the same shot IDs?
+Does export/import preserve all identity fields?
+Is an additional machine identifier required?
+```
 
 ---
 
@@ -101,42 +146,11 @@ Total measured JSON size: 5.76 MB
 Average shot size: 44.70 KB
 Largest observed shot: approx 107 KB
 Smallest metadata-only shot: approx 0.35 KB
-
-Projected uncompressed JSON size:
-100 shots: 4.36 MB
-300 shots: 13.09 MB
-600 shots: 26.19 MB
-1000 shots: approx 43.65 MB
-2000 shots: approx 87.30 MB
-```
-
-Decision:
-
-```text
-Initial real-world storage measurement supports the 6-month hot mirror direction.
-Storage pressure is not currently the primary archive risk.
-Archive remains justified for continuity, portability, backup, recovery, firmware-update safety, and browser/site-data loss protection.
-Further measurement is still required with larger datasets and browser quota checks before implementation.
 ```
 
 ---
 
 ### 4. Browser Storage Testing
-
-Objectives:
-
-Measure:
-
-- Chrome behaviour.
-- Edge behaviour.
-- Quota behaviour.
-- Storage pressure behaviour.
-
-Evidence Required:
-
-- Browser version.
-- Dataset size.
-- Observed limits.
 
 Status: Not started.
 
@@ -144,40 +158,11 @@ Status: Not started.
 
 ### 5. Archive Size Measurement
 
-Objectives:
-
-Measure:
-
-- Small archive.
-- Medium archive.
-- Large archive.
-
-Evidence Required:
-
-- Shot counts.
-- Archive size.
-- Compression ratios.
-
-Status: Initial uncompressed projection captured from IndexedDB measurement. Real archive bundle and compression measurement still required.
+Status: Initial projection captured. Real archive measurement pending.
 
 ---
 
 ### 6. Large Archive Import Testing
-
-Objectives:
-
-Measure:
-
-- Import duration.
-- Memory behaviour.
-- Duplicate detection behaviour.
-- Partial recovery behaviour.
-
-Evidence Required:
-
-- Dataset size.
-- Results.
-- Risks.
 
 Status: Not started.
 
@@ -185,62 +170,17 @@ Status: Not started.
 
 ### 7. Runtime Validation Matrix Review
 
-Objectives:
-
-Verify current MVP behaviour remains stable.
-
-Areas:
-
-- Profiles.
-- History.
-- Analyzer.
-- Statistics.
-- Offline behaviour.
-- Hydration behaviour.
-- Duplicate prevention.
-
-Evidence Required:
-
-- Validation results.
-- Issues found.
-- Decisions.
-
 Status: Not started for archive gate.
 
-Observed during measurement:
+Observed:
 
 ```text
-Repeated WebSocket timeout noise was present while GaggiMate was unavailable:
-ws://192.168.0.129/ws
-ERR_CONNECTION_TIMED_OUT
-ApiService.js:82
-```
-
-Decision:
-
-```text
-This does not block archive measurement, but should remain tracked as runtime noise during validation.
+WebSocket timeout noise while GaggiMate unavailable.
 ```
 
 ---
 
 ### 8. Archive Import Boundary Validation
-
-Objectives:
-
-Verify archive import remains separate from profile import.
-
-Validate:
-
-- Existing profile import unchanged.
-- Archive import rehydrates GaggiGo only.
-- No automatic GaggiMate writes.
-- Restore-as-copy profile workflow.
-
-Evidence Required:
-
-- Test results.
-- Boundary confirmation.
 
 Status: Not started.
 
@@ -259,32 +199,17 @@ Archive implementation may begin only when all conditions are true:
 
 ---
 
-## Required Record Format
-
-Each validation task should capture:
-
-```text
-Objective
-Method
-Dataset
-Results
-Risks
-Decision
-```
-
----
-
 ## Current Next Validation Target
 
 ```text
-Shot identity validation
+Real GaggiMate export structure review
 ```
 
 Reason:
 
 ```text
-Initial storage measurement suggests archive size is manageable.
-The next architectural risk is deterministic shot identity across resets, exports, imports, and possible multi-device use.
+Archive identity now has a provisional decision.
+The next step is verifying that export data preserves the required identity fields.
 ```
 
 ---
