@@ -35,6 +35,8 @@ Evidence Required:
 - Structure notes.
 - Compatibility findings.
 
+Status: Not started.
+
 ---
 
 ### 2. Shot Identity Validation
@@ -60,6 +62,8 @@ Evidence Required:
 - Collision analysis.
 - Decision record.
 
+Status: Not started.
+
 ---
 
 ### 3. IndexedDB Growth Testing
@@ -78,6 +82,42 @@ Evidence Required:
 - Dataset size.
 - IndexedDB size.
 - Growth projections.
+
+Status: Initial measurement captured.
+
+Initial measurement:
+
+```text
+Date: 2026-06-04
+Environment: Local GaggiGo dev app, browser IndexedDB
+Database: gaggimate-analyzer
+Store: shots
+
+Total cached shots: 132
+GaggiMate cached shots: 132
+Loaded full-payload shots: 119
+Metadata-only shots: 13
+Total measured JSON size: 5.76 MB
+Average shot size: 44.70 KB
+Largest observed shot: approx 107 KB
+Smallest metadata-only shot: approx 0.35 KB
+
+Projected uncompressed JSON size:
+100 shots: 4.36 MB
+300 shots: 13.09 MB
+600 shots: 26.19 MB
+1000 shots: approx 43.65 MB
+2000 shots: approx 87.30 MB
+```
+
+Decision:
+
+```text
+Initial real-world storage measurement supports the 6-month hot mirror direction.
+Storage pressure is not currently the primary archive risk.
+Archive remains justified for continuity, portability, backup, recovery, firmware-update safety, and browser/site-data loss protection.
+Further measurement is still required with larger datasets and browser quota checks before implementation.
+```
 
 ---
 
@@ -98,6 +138,8 @@ Evidence Required:
 - Dataset size.
 - Observed limits.
 
+Status: Not started.
+
 ---
 
 ### 5. Archive Size Measurement
@@ -115,6 +157,8 @@ Evidence Required:
 - Shot counts.
 - Archive size.
 - Compression ratios.
+
+Status: Initial uncompressed projection captured from IndexedDB measurement. Real archive bundle and compression measurement still required.
 
 ---
 
@@ -134,6 +178,8 @@ Evidence Required:
 - Dataset size.
 - Results.
 - Risks.
+
+Status: Not started.
 
 ---
 
@@ -159,6 +205,23 @@ Evidence Required:
 - Issues found.
 - Decisions.
 
+Status: Not started for archive gate.
+
+Observed during measurement:
+
+```text
+Repeated WebSocket timeout noise was present while GaggiMate was unavailable:
+ws://192.168.0.129/ws
+ERR_CONNECTION_TIMED_OUT
+ApiService.js:82
+```
+
+Decision:
+
+```text
+This does not block archive measurement, but should remain tracked as runtime noise during validation.
+```
+
 ---
 
 ### 8. Archive Import Boundary Validation
@@ -178,6 +241,8 @@ Evidence Required:
 
 - Test results.
 - Boundary confirmation.
+
+Status: Not started.
 
 ---
 
@@ -205,6 +270,21 @@ Dataset
 Results
 Risks
 Decision
+```
+
+---
+
+## Current Next Validation Target
+
+```text
+Shot identity validation
+```
+
+Reason:
+
+```text
+Initial storage measurement suggests archive size is manageable.
+The next architectural risk is deterministic shot identity across resets, exports, imports, and possible multi-device use.
 ```
 
 ---
