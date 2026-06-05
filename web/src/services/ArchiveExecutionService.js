@@ -1,4 +1,3 @@
-import { archiveImportValidationService } from './ArchiveImportValidationService.js';
 import { archiveImportService } from './ArchiveImportService.js';
 import { archiveMergeService } from './ArchiveMergeService.js';
 import { indexedDBService } from '../pages/ShotAnalyzer/services/IndexedDBService.js';
@@ -26,8 +25,8 @@ function restoreProfileLabel(profile = {}) {
 }
 
 class ArchiveExecutionService {
-  async executeImport(content) {
-    const preview = await archiveImportService.previewImport(content);
+  async executeImport(input) {
+    const preview = await archiveImportService.previewImport(input);
     const mergePlan = archiveMergeService.buildImportPlan(preview);
 
     if (!mergePlan.canExecute) {
@@ -39,8 +38,7 @@ class ArchiveExecutionService {
       };
     }
 
-    const parsed = archiveImportValidationService.parseJsonContainer(content);
-    const bundle = archiveImportValidationService.buildBundleFromContainer(parsed.data);
+    const bundle = preview.bundle;
 
     const shotsByIdentity = new Map(bundle.payload.shots.map(shot => [shotIdentity(shot), shot]));
     const profilesByIdentity = new Map(bundle.payload.profiles.map(profile => [profileIdentity(profile), profile]));
