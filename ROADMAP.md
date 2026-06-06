@@ -20,11 +20,11 @@ GaggiGo
 = archive layer
 = future safe sync client
 
-The project has moved beyond analyzer/history recovery, hardening, archive engine implementation, archive UX planning, and archive export validation.
+The project has moved beyond analyzer/history recovery, hardening, archive engine implementation, archive UX planning, archive export validation, and ZIP compression hardening.
 
 Current phase:
 
-Archive Export Hardening
+Archive Runtime Validation
 
 ⸻
 
@@ -87,7 +87,6 @@ Sync work must not begin until:
 
 * archive UX implementation is complete
 * archive runtime validation is complete
-* archive export hardening is complete
 * manifest schema remains stable
 * local mirror behaviour remains deterministic
 
@@ -109,6 +108,7 @@ Completed:
 * Canonical archive shot authority implemented
 * Archive count consistency validated
 * Archive quality gate passed
+* ZIP compression implemented and validated
 
 Validated archive export:
 
@@ -119,14 +119,14 @@ Validated archive export:
 * Canonical local mirror export
 * Local-only export path
 * Snapshot-consistent export path
+* ZIP size reduced from ~7.05 MB to ~382 KB
 
-Current active hardening:
+Current active validation:
 
-1. Enable real ZIP compression
-2. Revalidate archive size metrics
-3. Revalidate archive contents and integrity
-4. Restore Backup runtime validation
-5. Import runtime validation
+1. Restore Backup runtime validation
+2. Import runtime validation
+3. Large archive import behaviour testing
+4. Browser storage behaviour testing
 
 Deferred:
 
