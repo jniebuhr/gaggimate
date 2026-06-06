@@ -1,5 +1,6 @@
 import { archiveImportValidationService } from './ArchiveImportValidationService.js';
 import { indexedDBService } from '../pages/ShotAnalyzer/services/IndexedDBService.js';
+import { libraryService } from '../pages/ShotAnalyzer/services/LibraryService.js';
 
 function shotIdentity(shot = {}) {
   if (shot.archiveIdentity) return String(shot.archiveIdentity);
@@ -53,7 +54,7 @@ class ArchiveImportService {
     const bundle = importValidation.bundle;
 
     const [existingShots, existingProfiles, existingNotes] = await Promise.all([
-      indexedDBService.getAllShots(),
+      libraryService.getAllShots('both'),
       indexedDBService.getAllProfiles(),
       this.getAllNotes(),
     ]);
@@ -69,7 +70,7 @@ class ArchiveImportService {
         type: 'shot',
         identity,
         action: duplicate ? 'skip-duplicate' : 'import',
-        reason: duplicate ? 'Matching shot identity already exists in local mirror.' : 'New archive shot.',
+        reason: duplicate ? 'Matching shot identity already exists in canonical local mirror.' : 'New archive shot.',
       };
     });
 
