@@ -1,5 +1,7 @@
 import { useState } from 'preact/hooks';
 
+import { archiveService } from '../../services/ArchiveService.js';
+
 const REVIEW_ITEMS = [
   'Coffee shot history',
   'Profiles',
@@ -7,8 +9,57 @@ const REVIEW_ITEMS = [
   'Safe archive metadata',
 ];
 
+function formatBytes(bytes = 0) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return '0 KB';
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / 1024 ** exponent;
+
+  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
+}
+
+function countLabel(value) {
+  return Number.isFinite(value) ? value.toLocaleString() : '—';
+}
+
+function getEstimatedSize(bundle) {
+  const metrics = bundle?.manifest?.storageMetrics || {};
+  return (metrics.shotsJsonBytes || 0) + (metrics.profilesJsonBytes || 0) + (metrics.notesJsonBytes || 0);
+}
+
 export function Storage() {
   const [reviewingBackup, setReviewingBackup] = useState(false);
+  const [backupBundle, setBackupBundle] = useState(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupError, setBackupError] = useState('');
+
+  async function openBackupReview() {
+    setReviewingBackup(true);
+    setBackupLoading(true);
+    setBackupError('');
+
+    try {
+      const bundle = await archiveService.prepareArchiveBundle();
+      setBackupBundle(bundle);
+    } catch (error) {
+      console.error('Failed to prepare backup review', error);
+      setBackupBundle(null);
+      setBackupError('Backup details could not be loaded. Try again before creating a backup.');
+    } finally {
+      setBackupLoading(false);
+    }
+  }
+
+  function closeBackupReview() {
+    setReviewingBackup(false);
+    setBackupError('');
+  }
+
+  const counts = backupBundle?.manifest?.counts || {};
+  const estimatedSize = getEstimatedSize(backupBundle);
 
   return (
     <div className='space-y-6'>
@@ -33,11 +84,7 @@ export function Storage() {
 
             {!reviewingBackup && (
               <div className='card-actions mt-4'>
-                <button
-                  type='button'
-                  className='btn btn-primary w-full sm:w-auto'
-                  onClick={() => setReviewingBackup(true)}
-                >
+                <button type='button' className='btn btn-primary w-full sm:w-auto' onClick={openBackupReview}>
                   Create Backup
                 </button>
               </div>
@@ -53,23 +100,31 @@ export function Storage() {
                     </p>
                   </div>
 
-                  <span className='badge badge-info'>Review</span>
+                  <span className='badge badge-info'>{backupLoading ? 'Loading' : 'Review'}</span>
                 </div>
+
+                {backupError && <div className='alert alert-warning mt-4 text-sm'>{backupError}</div>}
 
                 <div className='mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3'>
                   <div className='bg-base-200 rounded-box p-3'>
                     <div className='text-base-content/60 text-xs uppercase'>Shots</div>
-                    <div className='mt-1 text-lg font-semibold'>Pending</div>
+                    <div className='mt-1 text-lg font-semibold'>
+                      {backupLoading ? 'Loading' : countLabel(counts.shots)}
+                    </div>
                   </div>
 
                   <div className='bg-base-200 rounded-box p-3'>
                     <div className='text-base-content/60 text-xs uppercase'>Profiles</div>
-                    <div className='mt-1 text-lg font-semibold'>Pending</div>
+                    <div className='mt-1 text-lg font-semibold'>
+                      {backupLoading ? 'Loading' : countLabel(counts.profiles)}
+                    </div>
                   </div>
 
                   <div className='bg-base-200 rounded-box p-3'>
                     <div className='text-base-content/60 text-xs uppercase'>Estimated Size</div>
-                    <div className='mt-1 text-lg font-semibold'>Pending</div>
+                    <div className='mt-1 text-lg font-semibold'>
+                      {backupLoading ? 'Loading' : formatBytes(estimatedSize)}
+                    </div>
                   </div>
                 </div>
 
@@ -83,11 +138,7 @@ export function Storage() {
                 </div>
 
                 <div className='card-actions mt-5 justify-end'>
-                  <button
-                    type='button'
-                    className='btn btn-ghost w-full sm:w-auto'
-                    onClick={() => setReviewingBackup(false)}
-                  >
+                  <button type='button' className='btn btn-ghost w-full sm:w-auto' onClick={closeBackupReview}>
                     Back
                   </button>
 
