@@ -2,9 +2,9 @@ ARCHIVE_UX_SPECIFICATION.md
 
 Status
 
-Version: Draft 1.1
+Version: Draft 1.2
 
-Status: Archive UX Planning Complete
+Status: Archive UX Implementation Active / Runtime Validation Active
 
 Authority Level: Archive UX Authority
 
@@ -18,7 +18,11 @@ Deferred
 
 Implementation Status:
 
-Archive UX Implementation Not Started
+Storage page implemented
+Create Backup UI implemented
+Restore Backup preview UI implemented
+Restore Backup execution UI implemented
+Archive Runtime Validation active
 
 Purpose
 
@@ -321,18 +325,46 @@ The following areas have been defined and approved:
 * Mobile-first layout
 * Information hierarchy
 
+Implementation Outcome
+
+Archive UX implementation is active and partially complete.
+
+The following areas are implemented:
+
+* Storage page
+* Create Backup UI
+* Restore Backup preview UI
+* Restore Backup execution UI
+
+Runtime validation is active.
+
+Completed runtime validation:
+
+* Create Backup export
+* ZIP compression
+* Archive import preview into an empty mirror
+* Archive restore execution into an empty mirror
+* History rendering after restore
+* Analyzer rendering after restore
+* Statistics rendering after restore
+
+Remaining runtime validation:
+
+* Populated-mirror duplicate restore preview
+* Populated-mirror duplicate restore execution, only if preview reports zero shots to import and all matching shots as duplicates
+* Large archive import behaviour testing
+* Browser storage behaviour testing
+
 Next Phase
 
-Archive UX Implementation Planning
+Archive Runtime Validation Continuation
 
 Objectives:
 
-* Storage page implementation
-* Create Backup UI implementation
-* Restore Backup UI implementation
-* Conflict resolution UI implementation
-* Archive information panel implementation
-* Runtime validation planning
-* Accessibility review during implementation
+* Validate populated-mirror duplicate restore preview
+* Validate populated-mirror duplicate restore execution only if preview passes
+* Validate large archive import behaviour
+* Validate browser storage behaviour
+* Keep Archive Browser and Archive Management deferred unless real-world usage evidence justifies reopening them
 
 Archive UX planning should not be reopened unless implementation uncovers a genuine UX gap.
