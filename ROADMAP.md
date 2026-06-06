@@ -11,6 +11,7 @@ GaggiMate
 = telemetry source
 = machine authority
 = rolling operational datastore
+
 GaggiGo
 = offline-first observer frontend
 = local IndexedDB mirror
@@ -19,11 +20,11 @@ GaggiGo
 = archive layer
 = future safe sync client
 
-The project has moved beyond analyzer/history recovery, hardening, archive engine implementation, and archive UX planning.
+The project has moved beyond analyzer/history recovery, hardening, archive engine implementation, archive UX planning, and archive export validation.
 
 Current phase:
 
-Archive UX Implementation Planning
+Archive Export Hardening
 
 ⸻
 
@@ -72,46 +73,9 @@ project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md
 project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
 project-docs/API_SERVICE_BOUNDARY_MAP.md
 
-Approved archive direction remains defined by:
-
-project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
-
-Completed architecture and validation decisions:
-
-* archive format is .gaggigo.zip
-* archive facts, recompute insights
-* generated videos are export artefacts, not archive source data
-* raw shot data is the replay source
-* GaggiMate-compatible profile JSON remains first-class
-* all profiles are preserved, including utility profiles
-* archive import is separate from existing profile import
-* existing .json / .tcl profile import remains unchanged
-* archive import rehydrates GaggiGo only
-* profile restore from archive is explicit and restore-as-copy
-* merge-only restore
-* duplicate skipping and reporting
-* idempotent imports
-* automatic integrity verification
-* archive health model
-* local archive != backup
-* single archive authority
-* 6-month hot mirror
-* 6-month archive bundle cadence
-* sampled normal, long, and extreme shot payloads for architecture planning
-
-Validation completed:
-
-* runtime validation matrix review
-* pre-sync readiness review
-* archive ownership validation
-* archive import boundary validation
-* archive identity validation
-* archive manifest validation
-* storage projection review
-* archive implementation audit
-* end-to-end archive engine audit
-
-Archive architecture phase is complete.
+Archive architecture phase complete.
+Archive engine phase complete.
+Archive validation phase complete.
 
 ⸻
 
@@ -123,87 +87,51 @@ Sync work must not begin until:
 
 * archive UX implementation is complete
 * archive runtime validation is complete
-* archive measurements remain valid
-* shot identity remains validated
+* archive export hardening is complete
 * manifest schema remains stable
 * local mirror behaviour remains deterministic
 
-Initial sync scope when unblocked:
-
-* notes
-* ratings
-* safe metadata
-* profile drafts
-* manual sync workflow
-
-Do not start with:
-
-* automatic two-way profile sync
-* machine configuration sync
-* machine restoration sync
-* conflict-heavy sync behaviour
-* unrestricted mutation
-
 ⸻
 
-Phase 5 — Archive UX Implementation
+Phase 5 — Archive UX + Archive Runtime Validation
 
-Status: Next.
+Status: Active.
 
-Archive engine implementation is complete.
+Completed:
 
-Archive UX planning is complete.
+* Storage page implemented
+* Create Backup UI implemented
+* Archive download workflow implemented
+* Archive engine implementation complete
+* Archive validation pipeline complete
+* Archive import pipeline complete
+* Unique archive filenames implemented
+* Canonical archive shot authority implemented
+* Archive count consistency validated
+* Archive quality gate passed
 
-UX authority:
+Validated archive export:
 
-project-docs/ARCHIVE_UX_SPECIFICATION.md
+* 141 shots
+* 20,555 samples
+* 5 profiles
+* 0 warnings
+* Canonical local mirror export
+* Local-only export path
+* Snapshot-consistent export path
 
-Current implementation includes:
+Current active hardening:
 
-* ArchiveService
-* ArchiveValidationService
-* ArchiveHealthService
-* ArchiveExportService
-* ArchiveZipService
-* ArchiveZipImportService
-* ArchiveImportValidationService
-* ArchiveImportService
-* ArchiveMergeService
-* ArchiveExecutionService
-
-Archive engine audit status:
-
-ZIP export        PASS
-ZIP import        PASS
-Validation        PASS
-Health            PASS
-Preview           PASS
-Merge plan        PASS
-Execution         PASS
-Repository audit  PASS
-
-Current implementation order:
-
-1. Storage page
-2. Create Backup UI
-3. Restore Backup UI
-4. Conflict resolution UI
-5. Archive information panel
-6. Runtime archive validation
+1. Enable real ZIP compression
+2. Revalidate archive size metrics
+3. Revalidate archive contents and integrity
+4. Restore Backup runtime validation
+5. Import runtime validation
 
 Deferred:
 
 * Archive Browser
 * Archive Management
-
-Rules:
-
-Simple by default.
-Deterministic by design.
-Archive facts.
-Recompute insights.
-Protect data.
-Avoid complexity.
 
 ⸻
 
@@ -230,6 +158,7 @@ GaggiMate
 = telemetry authority
 = runtime owner
 = rolling operational datastore
+
 GaggiGo
 = observer frontend
 = analysis layer
