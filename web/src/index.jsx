@@ -18,6 +18,7 @@ import { ProfileEdit } from './pages/ProfileEdit/index.jsx';
 import { ShotHistory } from './pages/ShotHistory/index.jsx';
 import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
 import { StatisticsPage } from './pages/Statistics/index.jsx';
+import { Storage } from './pages/Storage/index.jsx';
 
 const apiService = new ApiService();
 
@@ -43,12 +44,12 @@ export function App() {
                         <Route path='/history' component={ShotHistory} />
                         <Route path='/analyzer' component={ShotAnalyzer} />
                         <Route path='/statistics' component={StatisticsPage} />
+                        <Route path='/storage' component={Storage} />
                         <Route
                           path='/statistics/:sourceAlias/:profileName'
                           component={StatisticsPage}
                         />
-                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
-                        {/*deep-link route (sorce & ID)*/}
+                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />
                         <Route default component={NotFound} />
                       </Router>
                     </ErrorBoundary>
@@ -64,7 +65,6 @@ export function App() {
   );
 }
 
-// Must be called before render
 initializeTheme();
 
 render(<App />, document.getElementById('app'));
