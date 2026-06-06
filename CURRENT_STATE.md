@@ -110,8 +110,12 @@ Archive status:
 Archive Engine Implementation Complete
 Archive UX Planning Complete
 Storage Page / Create Backup UI Implemented
-Archive Export Hardening Active
-Restore UX Blocked Pending Export Hardening Completion
+Archive Export Hardening Complete
+ZIP Compression Hardening Complete
+Restore Backup Preview UI Implemented
+Restore Backup Execution UI Implemented
+Archive Import Runtime Validation Complete for empty-mirror restore
+Duplicate-over-existing restore validation still requires a populated-mirror duplicate test before being marked complete
 
 Archive architecture is defined by:
 
@@ -157,13 +161,13 @@ Archive engine capabilities now present:
 * Generate SHA256 section and overall integrity data.
 * Validate archive manifest, schema, counts, and integrity.
 * Evaluate archive health as Good / Warning / Critical.
-* Prepare .gaggigo.zip archive exports.
+* Prepare compressed .gaggigo.zip archive exports.
 * Read .gaggigo.zip archive imports.
 * Validate ZIP-backed imports.
 * Preview archive imports without mutation.
 * Generate deterministic merge plans.
 * Execute approved imports into IndexedDB only.
-* Skip duplicate shots.
+* Skip duplicate shots when duplicate identities are detected.
 * Preserve existing profiles.
 * Restore archived profiles as copies.
 * Preserve existing notes and import only new notes.
@@ -201,6 +205,7 @@ IndexedDBService / IndexedDB
 Archive engine audit result:
 
 ZIP export        PASS
+ZIP compression  PASS
 ZIP import        PASS
 Validation        PASS
 Health            PASS
@@ -222,9 +227,8 @@ Archive UX planning has been completed.
 
 Archive Export Hardening — Validated Findings
 
-Validated archive export after canonical-count fix:
+Validated archive export after canonical-count and compression fixes:
 
-* Archive file: 2026-H1-20260606-151133.gaggigo.zip
 * Shots: 141
 * Profiles: 5
 * Notes: 0
@@ -232,8 +236,9 @@ Validated archive export after canonical-count fix:
 * Summary-only shots: 0
 * Samples: 20,555
 * Warnings: 0
-* ZIP size: 7,049,579 bytes, about 6.72 MB
-* shots/shots.json size: 7,040,356 bytes, about 6.71 MB
+* Pre-compression ZIP size: about 7.05 MB
+* Compressed ZIP size: about 382 KB
+* Compression ratio: about 18.5x smaller
 
 Defects fixed during archive hardening:
 
@@ -245,6 +250,7 @@ Defects fixed during archive hardening:
 * LibraryService/exportItem hydration path removed from backup export.
 * Unique timestamped archive filenames implemented.
 * Pretty-printed JSON replaced with compact JSON for archive files.
+* Real ZIP compression enabled.
 * Archive shot enumeration switched from raw IndexedDB rows to canonical LibraryService.getAllShots('both') output.
 * Count mismatch between raw IndexedDB rows and History/Analyzer canonical rows fixed.
 
@@ -259,24 +265,81 @@ Current export rule:
 
 Backup export is local-only and must not repair, hydrate, fetch, or mutate data.
 
-Current remaining archive hardening item:
+⸻
 
-* Enable real ZIP compression. Current ZIP container stores files effectively uncompressed.
+Archive Restore / Import Runtime Validation
 
-Restore workflow remains blocked until archive export hardening is complete and revalidated after compression.
+Validated fresh-browser restore result:
+
+* Restore source: compressed .gaggigo.zip archive
+* Local starting state: empty browser mirror
+* Imported shots: 141
+* Imported profiles: 5
+* Imported notes: 0
+* Skipped duplicate shots: 0
+* History after restore: 141 shots
+* Analyzer after restore: PASS
+* Statistics after restore: PASS
+
+This proves:
+
+.gaggigo.zip
+→ Archive import
+→ IndexedDB
+→ Shot History
+→ Shot Analyzer
+→ Statistics
+
+is functioning end-to-end for restoring into an empty local mirror.
+
+Duplicate detection authority defect found and fixed:
+
+Previous import preview duplicate detection used:
+
+ArchiveImportService
+→ IndexedDBService.getAllShots()
+
+Corrected import preview duplicate detection now uses:
+
+ArchiveImportService
+→ LibraryService.getAllShots('both')
+
+This aligns import preview duplicate detection with the same canonical shot authority used by archive export, History, Analyzer, Statistics, and Storage archive counts.
+
+Important validation boundary:
+
+The empty-mirror restore path is validated.
+
+The duplicate-over-existing restore path must still be validated from a populated mirror before duplicate protection is marked complete.
+
+Expected populated-mirror preview result:
+
+* Shots to import: 0
+* Duplicate shots: 141
+
+Do not mark duplicate protection complete until this has been confirmed.
 
 ⸻
 
 Current phase:
 
-Archive Export Hardening
+Archive Runtime Validation
 
-Next implementation targets:
+Current next validation targets:
 
-1. Enable actual ZIP compression.
-2. Revalidate archive size, contents, manifest, and hydration counts.
-3. Confirm Storage review count, Archive ZIP count, History count, and Analyzer count remain identical.
-4. Then resume Restore Backup UI / restore runtime validation.
+1. Validate duplicate-over-existing restore preview on a populated mirror.
+2. Validate restore execution on a populated mirror only if preview shows 0 shots to import and 141 duplicate shots.
+3. Large archive import behaviour testing.
+4. Browser storage behaviour testing.
+
+Deferred:
+
+* Archive Browser
+* Archive Management
+
+These remain future enhancements and are not required for Archive UX v1.
+
+No safe sync implementation should begin before archive UX and archive runtime validation are complete.
 
 ⸻
 
@@ -342,28 +405,21 @@ Completed during archive validation / implementation:
 * Archive merge and execution implemented.
 * Archive Storage page shell implemented.
 * Create Backup UI implemented.
+* Restore Backup preview UI implemented.
+* Restore Backup execution UI implemented.
 * Archive download flow implemented.
 * Archive filename uniqueness implemented.
 * Canonical archive shot count implemented and validated.
+* ZIP compression implemented and validated.
+* Empty-mirror restore import validated through History, Analyzer, and Statistics.
+* Archive import duplicate detection authority aligned with LibraryService.getAllShots('both').
 
 Remaining before safe sync implementation:
 
-1. Archive export compression and revalidation.
-2. Restore Backup UI implementation and validation.
-3. Manual archive import/export runtime validation.
-4. Large archive import behaviour testing.
-5. Browser storage behaviour testing.
-
-Deferred:
-
-* Archive Browser
-* Archive Management
-
-These remain future enhancements and are not required for Archive UX v1.
-
-No safe sync implementation should begin before archive UX and archive runtime validation are complete.
-
-⸻
+1. Populated-mirror duplicate restore preview validation.
+2. Populated-mirror duplicate restore execution validation.
+3. Large archive import behaviour testing.
+4. Browser storage behaviour testing.
 
 Completed Stabilisation Fixes
 
@@ -374,3 +430,4 @@ Shot History / Analyzer
 * Fixed cached GaggiMate shot routing so gaggimate-cache is treated as GaggiMate-origin for Analyzer routes.
 * Added Shot History hydration before local shot-list rendering.
 * Archive export now uses the same canonical merged shot list as History/Analyzer instead of raw IndexedDB rows.
+* Archive import preview now uses the same canonical merged shot list as History/Analyzer instead of raw IndexedDB rows.
