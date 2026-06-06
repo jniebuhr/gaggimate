@@ -1,5 +1,4 @@
 import { indexedDBService } from '../pages/ShotAnalyzer/services/IndexedDBService.js';
-import { libraryService } from '../pages/ShotAnalyzer/services/LibraryService.js';
 
 const ARCHIVE_VERSION = '1.0.0';
 const ARCHIVE_SCHEMA_VERSION = 1;
@@ -40,10 +39,8 @@ function stripRuntimeOnlyFields(record = {}) {
   delete copy.source;
   delete copy.uploadedAt;
   delete copy.cachedAt;
-  delete copy.loaded;
   delete copy.storageKey;
   delete copy.name;
-  delete copy.data;
 
   return copy;
 }
@@ -69,12 +66,21 @@ function buildBundleName(date = new Date()) {
   return `${year}-${half}${ARCHIVE_EXTENSION}`;
 }
 
-function normaliseArchiveShot(shot = {}, sourceShot = {}) {
-  return {
+function normaliseArchiveShot(shot = {}) {
+  const archivedShot = {
     ...stripRuntimeOnlyFields(shot),
     archiveIdentity: buildShotIdentity(shot),
-    originalSource: sourceShot.source || shot.source || 'unknown',
+    originalSource: shot.source || 'unknown',
   };
+
+  if (!hasSamples(archivedShot)) {
+    archivedShot.archiveWarning = 'summary-only-local-shot';
+    archivedShot.archiveWarningId = getShotDiagnosticId(shot);
+    archivedShot.archiveWarningName = 'SummaryOnlyShot';
+    archivedShot.archiveWarningMessage = 'Local IndexedDB shot record has no samples. Backup contains summary metadata only for this shot.';
+  }
+
+  return archivedShot;
 }
 
 function normaliseArchiveProfile(profile = {}) {
@@ -91,9 +97,8 @@ function normaliseArchiveNote(note = {}) {
 
 class ArchiveService {
   /**
-   * Build the archive payload from the existing IndexedDB mirror.
-   * This prepares archive records, manifest, and integrity data only.
-   * It does not create ZIP files, write to GaggiMate, or mutate local storage.
+   * Build the archive payload from the existing IndexedDB mirror only.
+   * Backup export must not hydrate, fetch, call GaggiMate, or mutate local storage.
    */
   async prepareArchiveBundle(options = {}) {
     const createdAt = options.createdAt || new Date().toISOString();
@@ -105,7 +110,7 @@ class ArchiveService {
     ]);
 
     const rawNotes = await this.getAllNotes();
-    const shots = await this.buildArchiveShots(rawShots);
+    const shots = this.buildArchiveShots(rawShots);
     const profiles = rawProfiles.map(normaliseArchiveProfile);
     const notes = rawNotes.map(normaliseArchiveNote);
     const hydration = this.buildHydrationSummary(shots);
@@ -118,6 +123,7 @@ class ArchiveService {
         generatedBy: 'GaggiGo',
         createdAt,
         source: 'IndexedDB hot mirror',
+        exportMode: 'local-indexeddb-only',
       },
     };
 
@@ -140,27 +146,8 @@ class ArchiveService {
     };
   }
 
-  async buildArchiveShots(rawShots = []) {
-    const shots = [];
-
-    for (const rawShot of rawShots) {
-      try {
-        const { exportData } = await libraryService.exportItem(rawShot, true);
-        shots.push(normaliseArchiveShot(exportData, rawShot));
-      } catch (error) {
-        const diagnosticId = getShotDiagnosticId(rawShot);
-        console.warn('Falling back to cached shot summary for archive export:', diagnosticId, error);
-        shots.push({
-          ...normaliseArchiveShot(rawShot, rawShot),
-          archiveWarning: 'full-shot-export-failed',
-          archiveWarningId: diagnosticId,
-          archiveWarningName: error?.name || 'Error',
-          archiveWarningMessage: error?.message || 'Full shot export failed',
-        });
-      }
-    }
-
-    return shots;
+  buildArchiveShots(rawShots = []) {
+    return rawShots.map(normaliseArchiveShot);
   }
 
   buildHydrationSummary(shots = []) {
@@ -173,7 +160,6 @@ class ArchiveService {
       .filter(shot => Boolean(shot.archiveWarning))
       .map(shot => ({
         id: shot.archiveWarningId || getShotDiagnosticId(shot),
-        name: shot.name || shot.storageKey || '',
         warning: shot.archiveWarning,
         errorName: shot.archiveWarningName || '',
         message: shot.archiveWarningMessage || '',
@@ -208,7 +194,8 @@ class ArchiveService {
       source: {
         app: 'GaggiGo',
         persistence: 'IndexedDB hot mirror',
-        authority: 'LibraryService -> IndexedDBService -> IndexedDB',
+        authority: 'IndexedDBService -> IndexedDB',
+        exportMode: 'local-indexeddb-only',
       },
       hydration,
       storageMetrics: {
