@@ -4,6 +4,7 @@ import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faDatabase } from '@fortawesome/free-solid-svg-icons/faDatabase';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 
@@ -38,6 +39,7 @@ export function Navigation(props) {
         <MenuItem label='Shot History' link='/history' icon={faTimeline} />
         <MenuItem label='Shot Analyzer' link='/analyzer' icon={faMagnifyingGlassChart} isNew />
         <MenuItem label='Statistics' link='/statistics' icon={faChartSimple} isNew />
+        <MenuItem label='Storage' link='/storage' icon={faDatabase} />
       </div>
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
