@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { archiveService } from '../../services/ArchiveService.js';
 import { archiveZipService } from '../../services/ArchiveZipService.js';
 import { archiveImportService } from '../../services/ArchiveImportService.js';
+import { archiveExecutionService } from '../../services/ArchiveExecutionService.js';
 
 const REVIEW_ITEMS = [
   'Coffee shot history',
@@ -66,8 +67,11 @@ export function Storage() {
   const [backupReady, setBackupReady] = useState(null);
   const [backupDownloadRequested, setBackupDownloadRequested] = useState(false);
   const [backupError, setBackupError] = useState('');
+  const [restoreFile, setRestoreFile] = useState(null);
   const [restorePreview, setRestorePreview] = useState(null);
   const [restoreLoading, setRestoreLoading] = useState(false);
+  const [restoreExecuting, setRestoreExecuting] = useState(false);
+  const [restoreResult, setRestoreResult] = useState(null);
   const [restoreError, setRestoreError] = useState('');
 
   async function openBackupReview() {
@@ -148,7 +152,9 @@ export function Storage() {
 
     if (!file) return;
 
+    setRestoreFile(file);
     setRestorePreview(null);
+    setRestoreResult(null);
     setRestoreError('');
     setRestoreLoading(true);
 
@@ -161,6 +167,7 @@ export function Storage() {
       }
     } catch (error) {
       console.error('Failed to preview restore backup', error);
+      setRestoreFile(null);
       setRestoreError(`Backup could not be read. ${error?.message || 'Unknown restore preview error'}`);
     } finally {
       setRestoreLoading(false);
@@ -175,6 +182,28 @@ export function Storage() {
   const restoreCounts = restorePreview?.manifest?.counts || {};
   const restoreHydration = restorePreview?.manifest?.hydration || {};
   const restoreShotSummary = restorePreview?.summary?.shots || {};
+
+  async function executeRestoreBackup() {
+    if (!restoreFile || !restorePreview?.canImport) return;
+
+    setRestoreExecuting(true);
+    setRestoreResult(null);
+    setRestoreError('');
+
+    try {
+      const result = await archiveExecutionService.executeImport(restoreFile);
+      setRestoreResult(result);
+
+      if (!result.success) {
+        setRestoreError(result.reason || 'Restore completed with errors. Review the restore result.');
+      }
+    } catch (error) {
+      console.error('Failed to restore backup', error);
+      setRestoreError('Backup could not be restored. ' + (error?.message || 'Unknown restore error'));
+    } finally {
+      setRestoreExecuting(false);
+    }
+  }
 
   return (
     <div className='space-y-6'>
@@ -323,7 +352,7 @@ export function Storage() {
                   type='file'
                   className='sr-only'
                   accept='.gaggigo.zip,application/zip'
-                  disabled={restoreLoading}
+                  disabled={restoreLoading || restoreExecuting}
                   onChange={previewRestoreBackup}
                 />
               </label>
@@ -337,7 +366,7 @@ export function Storage() {
                   <div>
                     <h3 className='font-semibold'>Restore Preview</h3>
                     <p className='text-base-content/60 mt-1 text-sm'>
-                      Backup has been validated. Import execution is not enabled yet.
+                      Existing data is preserved. Duplicate shots are skipped and profiles are restored as copies.
                     </p>
                   </div>
                   <span className='badge badge-info'>{restorePreview.health?.status || restorePreview.validation?.status}</span>
@@ -374,6 +403,25 @@ export function Storage() {
 
                 {restorePreview.health?.reason && (
                   <p className='text-base-content/60 mt-1 text-sm'>Health: {restorePreview.health.reason}</p>
+                )}
+
+                {restorePreview.canImport && !restoreResult && (
+                  <div className='card-actions mt-5 justify-end'>
+                    <button
+                      type='button'
+                      className='btn btn-primary w-full sm:w-auto'
+                      onClick={executeRestoreBackup}
+                      disabled={restoreExecuting}
+                    >
+                      {restoreExecuting ? 'Restoring Backup' : 'Restore Backup'}
+                    </button>
+                  </div>
+                )}
+
+                {restoreResult && (
+                  <div className={`alert mt-4 text-sm ${restoreResult.success ? 'alert-success' : 'alert-warning'}`}>
+                    Restore complete. Imported {countLabel(restoreResult.imported?.shots || 0)} shots, {countLabel(restoreResult.imported?.profiles || 0)} profiles, and {countLabel(restoreResult.imported?.notes || 0)} notes. Skipped {countLabel(restoreResult.skipped?.shots || 0)} duplicate shots.
+                  </div>
                 )}
               </div>
             )}
