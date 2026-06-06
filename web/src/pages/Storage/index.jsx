@@ -37,10 +37,14 @@ function downloadBlob(blob, filename) {
 
   link.href = url;
   link.download = filename;
+  link.style.display = 'none';
   document.body.appendChild(link);
   link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 1000);
 }
 
 export function Storage() {
@@ -49,12 +53,14 @@ export function Storage() {
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupCreating, setBackupCreating] = useState(false);
   const [backupReady, setBackupReady] = useState(null);
+  const [backupDownloaded, setBackupDownloaded] = useState(false);
   const [backupError, setBackupError] = useState('');
 
   async function openBackupReview() {
     setReviewingBackup(true);
     setBackupLoading(true);
     setBackupReady(null);
+    setBackupDownloaded(false);
     setBackupError('');
 
     try {
@@ -72,6 +78,7 @@ export function Storage() {
   async function createBackup() {
     setBackupCreating(true);
     setBackupReady(null);
+    setBackupDownloaded(false);
     setBackupError('');
 
     try {
@@ -94,6 +101,7 @@ export function Storage() {
   function closeBackupReview() {
     setReviewingBackup(false);
     setBackupReady(null);
+    setBackupDownloaded(false);
     setBackupError('');
   }
 
@@ -103,8 +111,7 @@ export function Storage() {
     }
 
     downloadBlob(backupReady.blob, backupReady.filename);
-    setBackupReady(null);
-    setReviewingBackup(false);
+    setBackupDownloaded(true);
   }
 
   const counts = backupBundle?.manifest?.counts || backupReady?.manifest?.counts || {};
@@ -160,6 +167,12 @@ export function Storage() {
                 {backupReady && (
                   <div className='alert alert-success mt-4 text-sm'>
                     Backup created successfully. Download the file and keep it somewhere safe.
+                  </div>
+                )}
+
+                {backupDownloaded && (
+                  <div className='alert alert-info mt-4 text-sm'>
+                    Download started. If your browser asks where to save the file, choose a safe location.
                   </div>
                 )}
 
