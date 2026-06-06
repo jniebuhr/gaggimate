@@ -92,7 +92,9 @@ export function Storage() {
     setBackupError('');
 
     try {
-      const result = await archiveZipService.buildZipArchive();
+      const bundle = backupBundle || await archiveService.prepareArchiveBundle();
+      setBackupBundle(bundle);
+      const result = await archiveZipService.buildZipArchive({ bundle });
 
       if (!result.success) {
         setBackupError(result.reason || 'Backup could not be created.');
