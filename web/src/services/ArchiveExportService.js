@@ -2,6 +2,10 @@ import { archiveService } from './ArchiveService.js';
 import { archiveValidationService } from './ArchiveValidationService.js';
 import { archiveHealthService } from './ArchiveHealthService.js';
 
+function toArchiveJson(value) {
+  return JSON.stringify(value);
+}
+
 function toPrettyJson(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
@@ -10,22 +14,17 @@ function buildArchiveFiles(bundle) {
   const { manifest, payload } = bundle;
 
   return {
-    'manifest.json': toPrettyJson(manifest),
-    'shots/shots.json': toPrettyJson(payload.shots),
-    'profiles/profiles.json': toPrettyJson(payload.profiles),
-    'notes/notes.json': toPrettyJson(payload.notes),
-    'metadata/metadata.json': toPrettyJson(payload.metadata),
-    'metadata/integrity.json': toPrettyJson(bundle.integrity),
+    'manifest.json': toArchiveJson(manifest),
+    'shots/shots.json': toArchiveJson(payload.shots),
+    'profiles/profiles.json': toArchiveJson(payload.profiles),
+    'notes/notes.json': toArchiveJson(payload.notes),
+    'metadata/metadata.json': toArchiveJson(payload.metadata),
+    'metadata/integrity.json': toArchiveJson(bundle.integrity),
   };
 }
 
 class ArchiveExportService {
-  /**
-   * Build a complete export-ready archive object from the current IndexedDB mirror.
-   * This does not create a ZIP yet and does not trigger a browser download.
-   */
-  async prepareExport(options = {}) {
-    const bundle = await archiveService.prepareArchiveBundle(options);
+  async prepareBundleForExport(bundle) {
     const validation = await archiveValidationService.validatePreparedBundle(bundle);
     const health = archiveHealthService.evaluate(validation, bundle.manifest);
     const files = buildArchiveFiles(bundle);
@@ -38,6 +37,15 @@ class ArchiveExportService {
       files,
       canExport: validation.status !== 'Critical' && health.status !== 'Critical',
     };
+  }
+
+  /**
+   * Build a complete export-ready archive object from the current IndexedDB mirror.
+   * This does not create a ZIP yet and does not trigger a browser download.
+   */
+  async prepareExport(options = {}) {
+    const bundle = options.bundle || await archiveService.prepareArchiveBundle(options);
+    return this.prepareBundleForExport(bundle);
   }
 
   /**
