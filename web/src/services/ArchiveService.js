@@ -60,10 +60,25 @@ function buildShotIdentity(shot = {}) {
     .join(':');
 }
 
+function padDatePart(value) {
+  return String(value).padStart(2, '0');
+}
+
+function buildBundleTimestamp(date = new Date()) {
+  const year = date.getFullYear();
+  const month = padDatePart(date.getMonth() + 1);
+  const day = padDatePart(date.getDate());
+  const hour = padDatePart(date.getHours());
+  const minute = padDatePart(date.getMinutes());
+  const second = padDatePart(date.getSeconds());
+
+  return `${year}${month}${day}-${hour}${minute}${second}`;
+}
+
 function buildBundleName(date = new Date()) {
   const year = date.getFullYear();
   const half = date.getMonth() < 6 ? 'H1' : 'H2';
-  return `${year}-${half}${ARCHIVE_EXTENSION}`;
+  return `${year}-${half}-${buildBundleTimestamp(date)}${ARCHIVE_EXTENSION}`;
 }
 
 function normaliseArchiveShot(shot = {}) {
