@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 
 import { archiveService } from '../../services/ArchiveService.js';
 import { archiveZipService } from '../../services/ArchiveZipService.js';
+import { archiveImportService } from '../../services/ArchiveImportService.js';
 
 const REVIEW_ITEMS = [
   'Coffee shot history',
@@ -65,6 +66,9 @@ export function Storage() {
   const [backupReady, setBackupReady] = useState(null);
   const [backupDownloadRequested, setBackupDownloadRequested] = useState(false);
   const [backupError, setBackupError] = useState('');
+  const [restorePreview, setRestorePreview] = useState(null);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [restoreError, setRestoreError] = useState('');
 
   async function openBackupReview() {
     setReviewingBackup(true);
@@ -138,11 +142,39 @@ export function Storage() {
     setBackupError('');
   }
 
+  async function previewRestoreBackup(event) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+
+    if (!file) return;
+
+    setRestorePreview(null);
+    setRestoreError('');
+    setRestoreLoading(true);
+
+    try {
+      const preview = await archiveImportService.previewImport(file);
+      setRestorePreview(preview);
+
+      if (!preview.canImport) {
+        setRestoreError(preview.validation?.reason || preview.health?.reason || 'Backup could not be validated.');
+      }
+    } catch (error) {
+      console.error('Failed to preview restore backup', error);
+      setRestoreError(`Backup could not be read. ${error?.message || 'Unknown restore preview error'}`);
+    } finally {
+      setRestoreLoading(false);
+    }
+  }
+
   const counts = backupBundle?.manifest?.counts || backupReady?.manifest?.counts || {};
   const estimatedSize = getEstimatedSize(backupBundle);
   const zipSize = backupReady?.blob?.size || 0;
   const reviewBadge = backupCreating ? 'Creating' : backupReady ? 'Backup Ready' : backupLoading ? 'Loading' : 'Review';
   const backupFilename = backupReady?.filename || '';
+  const restoreCounts = restorePreview?.manifest?.counts || {};
+  const restoreHydration = restorePreview?.manifest?.hydration || {};
+  const restoreShotSummary = restorePreview?.summary?.shots || {};
 
   return (
     <div className='space-y-6'>
@@ -285,10 +317,66 @@ export function Storage() {
             <p className='text-base-content/70'>Restore coffee data from a backup file.</p>
 
             <div className='card-actions mt-4'>
-              <button type='button' className='btn btn-primary w-full sm:w-auto' disabled>
-                Restore Backup
-              </button>
+              <label className={`btn btn-primary w-full sm:w-auto ${restoreLoading ? 'btn-disabled' : ''}`}>
+                {restoreLoading ? 'Processing Backup' : 'Choose Backup File'}
+                <input
+                  type='file'
+                  className='sr-only'
+                  accept='.gaggigo.zip,application/zip'
+                  disabled={restoreLoading}
+                  onChange={previewRestoreBackup}
+                />
+              </label>
             </div>
+
+            {restoreError && <div className='alert alert-warning mt-4 text-sm'>{restoreError}</div>}
+
+            {restorePreview && (
+              <div className='border-base-300 mt-5 rounded-box border p-4'>
+                <div className='flex items-start justify-between gap-3'>
+                  <div>
+                    <h3 className='font-semibold'>Restore Preview</h3>
+                    <p className='text-base-content/60 mt-1 text-sm'>
+                      Backup has been validated. Import execution is not enabled yet.
+                    </p>
+                  </div>
+                  <span className='badge badge-info'>{restorePreview.health?.status || restorePreview.validation?.status}</span>
+                </div>
+
+                <div className='mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3'>
+                  <div className='bg-base-200 rounded-box p-3'>
+                    <div className='text-base-content/60 text-xs uppercase'>Shots</div>
+                    <div className='mt-1 text-lg font-semibold'>{countLabel(restoreCounts.shots)}</div>
+                  </div>
+
+                  <div className='bg-base-200 rounded-box p-3'>
+                    <div className='text-base-content/60 text-xs uppercase'>Profiles</div>
+                    <div className='mt-1 text-lg font-semibold'>{countLabel(restoreCounts.profiles)}</div>
+                  </div>
+
+                  <div className='bg-base-200 rounded-box p-3'>
+                    <div className='text-base-content/60 text-xs uppercase'>Notes</div>
+                    <div className='mt-1 text-lg font-semibold'>{countLabel(restoreCounts.notes)}</div>
+                  </div>
+                </div>
+
+                <div className='bg-base-200 mt-3 rounded-box p-3 text-sm'>
+                  Hydrated shots: {countLabel(restoreHydration.hydratedShots)} · Samples: {countLabel(restoreHydration.sampleCount)} · Warnings: {countLabel(restoreHydration.warningCount)}
+                </div>
+
+                <div className='bg-base-200 mt-3 rounded-box p-3 text-sm'>
+                  Shots to import: {countLabel(restoreShotSummary.import || 0)} · Duplicate shots: {countLabel(restoreShotSummary['skip-duplicate'] || 0)}
+                </div>
+
+                {restorePreview.validation?.reason && (
+                  <p className='text-base-content/60 mt-3 text-sm'>Validation: {restorePreview.validation.reason}</p>
+                )}
+
+                {restorePreview.health?.reason && (
+                  <p className='text-base-content/60 mt-1 text-sm'>Health: {restorePreview.health.reason}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
