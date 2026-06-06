@@ -1,4 +1,5 @@
 import { indexedDBService } from '../pages/ShotAnalyzer/services/IndexedDBService.js';
+import { libraryService } from '../pages/ShotAnalyzer/services/LibraryService.js';
 
 const ARCHIVE_VERSION = '1.0.0';
 const ARCHIVE_SCHEMA_VERSION = 1;
@@ -47,6 +48,10 @@ function stripRuntimeOnlyFields(record = {}) {
   return copy;
 }
 
+function hasSamples(shot = {}) {
+  return Array.isArray(shot.samples) && shot.samples.length > 0;
+}
+
 function buildShotIdentity(shot = {}) {
   const sampleCount = Array.isArray(shot.samples) ? shot.samples.length : 0;
   return [shot.gaggimateId || shot.id || '', shot.timestamp || '', shot.profileId || '', sampleCount, shot.duration || '']
@@ -60,11 +65,11 @@ function buildBundleName(date = new Date()) {
   return `${year}-${half}${ARCHIVE_EXTENSION}`;
 }
 
-function normaliseArchiveShot(shot = {}) {
+function normaliseArchiveShot(shot = {}, sourceShot = {}) {
   return {
     ...stripRuntimeOnlyFields(shot),
     archiveIdentity: buildShotIdentity(shot),
-    originalSource: shot.source || 'unknown',
+    originalSource: sourceShot.source || shot.source || 'unknown',
   };
 }
 
@@ -96,9 +101,10 @@ class ArchiveService {
     ]);
 
     const rawNotes = await this.getAllNotes();
-    const shots = rawShots.map(normaliseArchiveShot);
+    const shots = await this.buildArchiveShots(rawShots);
     const profiles = rawProfiles.map(normaliseArchiveProfile);
     const notes = rawNotes.map(normaliseArchiveNote);
+    const hydration = this.buildHydrationSummary(shots);
 
     const payload = {
       shots,
@@ -118,6 +124,7 @@ class ArchiveService {
       shots,
       profiles,
       notes,
+      hydration,
       integrity,
     });
 
@@ -129,12 +136,48 @@ class ArchiveService {
     };
   }
 
+  async buildArchiveShots(rawShots = []) {
+    const shots = [];
+
+    for (const rawShot of rawShots) {
+      try {
+        const { exportData } = await libraryService.exportItem(rawShot, true);
+        shots.push(normaliseArchiveShot(exportData, rawShot));
+      } catch (error) {
+        console.warn('Falling back to cached shot summary for archive export:', rawShot?.id || rawShot?.name, error);
+        shots.push({
+          ...normaliseArchiveShot(rawShot, rawShot),
+          archiveWarning: 'full-shot-export-failed',
+          archiveWarningMessage: error?.message || 'Full shot export failed',
+        });
+      }
+    }
+
+    return shots;
+  }
+
+  buildHydrationSummary(shots = []) {
+    const hydratedShots = shots.filter(hasSamples).length;
+    const sampleCount = shots.reduce(
+      (total, shot) => total + (Array.isArray(shot.samples) ? shot.samples.length : 0),
+      0,
+    );
+    const warningCount = shots.filter(shot => Boolean(shot.archiveWarning)).length;
+
+    return {
+      hydratedShots,
+      summaryOnlyShots: shots.length - hydratedShots,
+      sampleCount,
+      warningCount,
+    };
+  }
+
   async getAllNotes() {
     const db = await indexedDBService.init();
     return db.getAll('notes');
   }
 
-  buildManifest({ bundleName, createdAt, shots, profiles, notes, integrity }) {
+  buildManifest({ bundleName, createdAt, shots, profiles, notes, hydration, integrity }) {
     return {
       archiveVersion: ARCHIVE_VERSION,
       schemaVersion: ARCHIVE_SCHEMA_VERSION,
@@ -151,6 +194,7 @@ class ArchiveService {
         persistence: 'IndexedDB hot mirror',
         authority: 'LibraryService -> IndexedDBService -> IndexedDB',
       },
+      hydration,
       storageMetrics: {
         shotsJsonBytes: stableJson(shots).length,
         profilesJsonBytes: stableJson(profiles).length,
