@@ -15,7 +15,7 @@ function formatBytes(bytes = 0) {
     return '0 KB';
   }
 
-  const units = ['B', 'KB', 'MB', 'GB'];
+  const units = ['B', 'KB', 'GB'];
   const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
   const value = bytes / 1024 ** exponent;
 
@@ -32,12 +32,21 @@ function getEstimatedSize(bundle) {
 }
 
 function downloadWithAnchor(blob, filename) {
+  if (!blob?.size) {
+    throw new Error('Backup ZIP is empty');
+  }
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
 
   link.href = url;
   link.download = filename;
+  link.rel = 'noopener';
   link.style.display = 'none';
+  link.addEventListener('click', event => {
+    event.stopPropagation();
+  });
+
   document.body.appendChild(link);
   link.click();
 
@@ -47,38 +56,6 @@ function downloadWithAnchor(blob, filename) {
   }, 1000);
 }
 
-async function saveBackupFile(blob, filename) {
-  if (window.showSaveFilePicker) {
-    try {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: filename,
-        types: [
-          {
-            description: 'GaggiGo Backup',
-            accept: {
-              'application/zip': ['.zip'],
-            },
-          },
-        ],
-      });
-
-      const writable = await handle.createWritable();
-      await writable.write({ type: 'write', data: blob });
-      await writable.close();
-      return 'saved';
-    } catch (error) {
-      if (error?.name === 'AbortError') {
-        throw error;
-      }
-
-      console.warn('File picker save failed; falling back to browser download', error);
-    }
-  }
-
-  downloadWithAnchor(blob, filename);
-  return 'requested';
-}
-
 export function Storage() {
   const [reviewingBackup, setReviewingBackup] = useState(false);
   const [backupBundle, setBackupBundle] = useState(null);
@@ -86,7 +63,6 @@ export function Storage() {
   const [backupCreating, setBackupCreating] = useState(false);
   const [backupSaving, setBackupSaving] = useState(false);
   const [backupReady, setBackupReady] = useState(null);
-  const [backupSaved, setBackupSaved] = useState(false);
   const [backupDownloadRequested, setBackupDownloadRequested] = useState(false);
   const [backupError, setBackupError] = useState('');
 
@@ -94,7 +70,6 @@ export function Storage() {
     setReviewingBackup(true);
     setBackupLoading(true);
     setBackupReady(null);
-    setBackupSaved(false);
     setBackupDownloadRequested(false);
     setBackupError('');
 
@@ -113,7 +88,6 @@ export function Storage() {
   async function createBackup() {
     setBackupCreating(true);
     setBackupReady(null);
-    setBackupSaved(false);
     setBackupDownloadRequested(false);
     setBackupError('');
 
@@ -134,7 +108,7 @@ export function Storage() {
     }
   }
 
-  async function downloadBackup() {
+  function downloadBackup() {
     if (!backupReady?.blob || !backupReady?.filename) {
       return;
     }
@@ -143,14 +117,9 @@ export function Storage() {
     setBackupError('');
 
     try {
-      const result = await saveBackupFile(backupReady.blob, backupReady.filename);
-      setBackupSaved(result === 'saved');
-      setBackupDownloadRequested(result === 'requested');
+      downloadWithAnchor(backupReady.blob, backupReady.filename);
+      setBackupDownloadRequested(true);
     } catch (error) {
-      if (error?.name === 'AbortError') {
-        return;
-      }
-
       console.error('Failed to save backup', error);
       setBackupError(
         `Backup was created, but the file could not be saved. ${error?.name || 'Error'}: ${error?.message || 'Unknown save error'}`,
@@ -163,13 +132,13 @@ export function Storage() {
   function closeBackupReview() {
     setReviewingBackup(false);
     setBackupReady(null);
-    setBackupSaved(false);
     setBackupDownloadRequested(false);
     setBackupError('');
   }
 
   const counts = backupBundle?.manifest?.counts || backupReady?.manifest?.counts || {};
   const estimatedSize = getEstimatedSize(backupBundle);
+  const zipSize = backupReady?.blob?.size || 0;
   const reviewBadge = backupCreating ? 'Creating' : backupReady ? 'Backup Ready' : backupLoading ? 'Loading' : 'Review';
   const backupFilename = backupReady?.filename || '';
 
@@ -209,7 +178,7 @@ export function Storage() {
                     <h3 className='font-semibold'>{backupReady ? 'Backup Ready' : 'Review Backup'}</h3>
                     <p className='text-base-content/60 mt-1 text-sm'>
                       {backupReady
-                        ? `Your backup is ready to save: ${backupFilename}`
+                        ? `Your backup is ready to download: ${backupFilename}`
                         : 'Check what will be included before creating a backup.'}
                     </p>
                   </div>
@@ -221,13 +190,7 @@ export function Storage() {
 
                 {backupReady && (
                   <div className='alert alert-success mt-4 text-sm'>
-                    Backup created successfully. Save {backupFilename} somewhere safe.
-                  </div>
-                )}
-
-                {backupSaved && (
-                  <div className='alert alert-info mt-4 text-sm'>
-                    Backup saved as {backupFilename}.
+                    Backup created successfully. Download {backupFilename} and keep it somewhere safe.
                   </div>
                 )}
 
@@ -259,6 +222,13 @@ export function Storage() {
                     </div>
                   </div>
                 </div>
+
+                {backupReady && (
+                  <div className='bg-base-200 mt-3 rounded-box p-3'>
+                    <div className='text-base-content/60 text-xs uppercase'>ZIP Size</div>
+                    <div className='mt-1 text-sm font-semibold'>{formatBytes(zipSize)}</div>
+                  </div>
+                )}
 
                 <div className='mt-4'>
                   <h4 className='text-sm font-semibold'>Backup contents</h4>
@@ -297,7 +267,7 @@ export function Storage() {
                       onClick={downloadBackup}
                       disabled={backupSaving}
                     >
-                      {backupSaving ? 'Saving Backup' : 'Save Backup'}
+                      {backupSaving ? 'Saving Backup' : 'Download Backup'}
                     </button>
                   )}
                 </div>
