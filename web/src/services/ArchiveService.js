@@ -5,6 +5,10 @@ const ARCHIVE_VERSION = '1.0.0';
 const ARCHIVE_SCHEMA_VERSION = 1;
 const ARCHIVE_EXTENSION = '.gaggigo.zip';
 
+function stableJsonEntry(value, key) {
+  return `${JSON.stringify(key)}:${stableJson(value[key])}`;
+}
+
 function stableJson(value) {
   if (value == null || typeof value !== 'object') {
     return JSON.stringify(value);
@@ -14,8 +18,8 @@ function stableJson(value) {
     return `[${value.map(item => stableJson(item)).join(',')}]`;
   }
 
-  const keys = Object.keys(value).sort();
-  return `{${keys.map(key => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`;
+  const keys = Object.keys(value).sort((left, right) => left.localeCompare(right));
+  return `{${keys.map(key => stableJsonEntry(value, key)).join(',')}}`;
 }
 
 function bytesToHex(buffer) {
@@ -57,7 +61,7 @@ function getShotDiagnosticId(shot = {}) {
 function buildShotIdentity(shot = {}) {
   const sampleCount = Array.isArray(shot.samples) ? shot.samples.length : 0;
   return [shot.gaggimateId || shot.id || '', shot.timestamp || '', shot.profileId || '', sampleCount, shot.duration || '']
-    .map(value => String(value))
+    .map(String)
     .join(':');
 }
 
@@ -120,11 +124,8 @@ class ArchiveService {
     const createdAt = options.createdAt || new Date().toISOString();
     const bundleName = options.bundleName || buildBundleName(new Date(createdAt));
 
-    const [rawShots, rawProfiles] = await Promise.all([
-      libraryService.getAllShots('both'),
-      indexedDBService.getAllProfiles(),
-    ]);
-
+    const rawShots = await libraryService.getAllShots('both');
+    const rawProfiles = await indexedDBService.getAllProfiles();
     const rawNotes = await this.getAllNotes();
     const shots = this.buildArchiveShots(rawShots);
     const profiles = rawProfiles.map(normaliseArchiveProfile);
