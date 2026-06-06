@@ -52,6 +52,10 @@ function hasSamples(shot = {}) {
   return Array.isArray(shot.samples) && shot.samples.length > 0;
 }
 
+function getShotDiagnosticId(shot = {}) {
+  return String(shot.gaggimateId || shot.id || shot.storageKey || shot.name || '').trim();
+}
+
 function buildShotIdentity(shot = {}) {
   const sampleCount = Array.isArray(shot.samples) ? shot.samples.length : 0;
   return [shot.gaggimateId || shot.id || '', shot.timestamp || '', shot.profileId || '', sampleCount, shot.duration || '']
@@ -144,10 +148,13 @@ class ArchiveService {
         const { exportData } = await libraryService.exportItem(rawShot, true);
         shots.push(normaliseArchiveShot(exportData, rawShot));
       } catch (error) {
-        console.warn('Falling back to cached shot summary for archive export:', rawShot?.id || rawShot?.name, error);
+        const diagnosticId = getShotDiagnosticId(rawShot);
+        console.warn('Falling back to cached shot summary for archive export:', diagnosticId, error);
         shots.push({
           ...normaliseArchiveShot(rawShot, rawShot),
           archiveWarning: 'full-shot-export-failed',
+          archiveWarningId: diagnosticId,
+          archiveWarningName: error?.name || 'Error',
           archiveWarningMessage: error?.message || 'Full shot export failed',
         });
       }
@@ -162,13 +169,22 @@ class ArchiveService {
       (total, shot) => total + (Array.isArray(shot.samples) ? shot.samples.length : 0),
       0,
     );
-    const warningCount = shots.filter(shot => Boolean(shot.archiveWarning)).length;
+    const warnings = shots
+      .filter(shot => Boolean(shot.archiveWarning))
+      .map(shot => ({
+        id: shot.archiveWarningId || getShotDiagnosticId(shot),
+        name: shot.name || shot.storageKey || '',
+        warning: shot.archiveWarning,
+        errorName: shot.archiveWarningName || '',
+        message: shot.archiveWarningMessage || '',
+      }));
 
     return {
       hydratedShots,
       summaryOnlyShots: shots.length - hydratedShots,
       sampleCount,
-      warningCount,
+      warningCount: warnings.length,
+      warnings,
     };
   }
 
