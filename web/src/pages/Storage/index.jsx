@@ -31,30 +31,64 @@ function getEstimatedSize(bundle) {
   return (metrics.shotsJsonBytes || 0) + (metrics.profilesJsonBytes || 0) + (metrics.notesJsonBytes || 0);
 }
 
+function downloadWithAnchor(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+async function saveBackupFile(blob, filename) {
+  if (window.showSaveFilePicker) {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: filename,
+      types: [
+        {
+          description: 'GaggiGo Backup',
+          accept: {
+            'application/zip': ['.zip'],
+          },
+        },
+      ],
+    });
+
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return 'saved';
+  }
+
+  downloadWithAnchor(blob, filename);
+  return 'requested';
+}
+
 export function Storage() {
   const [reviewingBackup, setReviewingBackup] = useState(false);
   const [backupBundle, setBackupBundle] = useState(null);
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupCreating, setBackupCreating] = useState(false);
+  const [backupSaving, setBackupSaving] = useState(false);
   const [backupReady, setBackupReady] = useState(null);
-  const [backupDownloadUrl, setBackupDownloadUrl] = useState('');
-  const [backupDownloaded, setBackupDownloaded] = useState(false);
+  const [backupSaved, setBackupSaved] = useState(false);
+  const [backupDownloadRequested, setBackupDownloadRequested] = useState(false);
   const [backupError, setBackupError] = useState('');
-
-  function clearDownloadUrl() {
-    if (backupDownloadUrl) {
-      URL.revokeObjectURL(backupDownloadUrl);
-      setBackupDownloadUrl('');
-    }
-  }
 
   async function openBackupReview() {
     setReviewingBackup(true);
     setBackupLoading(true);
     setBackupReady(null);
-    setBackupDownloaded(false);
+    setBackupSaved(false);
+    setBackupDownloadRequested(false);
     setBackupError('');
-    clearDownloadUrl();
 
     try {
       const bundle = await archiveService.prepareArchiveBundle();
@@ -71,9 +105,9 @@ export function Storage() {
   async function createBackup() {
     setBackupCreating(true);
     setBackupReady(null);
-    setBackupDownloaded(false);
+    setBackupSaved(false);
+    setBackupDownloadRequested(false);
     setBackupError('');
-    clearDownloadUrl();
 
     try {
       const result = await archiveZipService.buildZipArchive();
@@ -84,7 +118,6 @@ export function Storage() {
       }
 
       setBackupReady(result);
-      setBackupDownloadUrl(URL.createObjectURL(result.blob));
     } catch (error) {
       console.error('Failed to create backup', error);
       setBackupError('Backup could not be created. Try again.');
@@ -93,16 +126,36 @@ export function Storage() {
     }
   }
 
+  async function downloadBackup() {
+    if (!backupReady?.blob || !backupReady?.filename) {
+      return;
+    }
+
+    setBackupSaving(true);
+    setBackupError('');
+
+    try {
+      const result = await saveBackupFile(backupReady.blob, backupReady.filename);
+      setBackupSaved(result === 'saved');
+      setBackupDownloadRequested(result === 'requested');
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+
+      console.error('Failed to save backup', error);
+      setBackupError('Backup was created, but the file could not be saved. Try again.');
+    } finally {
+      setBackupSaving(false);
+    }
+  }
+
   function closeBackupReview() {
     setReviewingBackup(false);
     setBackupReady(null);
-    setBackupDownloaded(false);
+    setBackupSaved(false);
+    setBackupDownloadRequested(false);
     setBackupError('');
-    clearDownloadUrl();
-  }
-
-  function markBackupDownloaded() {
-    setBackupDownloaded(true);
   }
 
   const counts = backupBundle?.manifest?.counts || backupReady?.manifest?.counts || {};
@@ -146,7 +199,7 @@ export function Storage() {
                     <h3 className='font-semibold'>{backupReady ? 'Backup Ready' : 'Review Backup'}</h3>
                     <p className='text-base-content/60 mt-1 text-sm'>
                       {backupReady
-                        ? `Your backup is ready to download: ${backupFilename}`
+                        ? `Your backup is ready to save: ${backupFilename}`
                         : 'Check what will be included before creating a backup.'}
                     </p>
                   </div>
@@ -158,11 +211,17 @@ export function Storage() {
 
                 {backupReady && (
                   <div className='alert alert-success mt-4 text-sm'>
-                    Backup created successfully. Download {backupFilename} and keep it somewhere safe.
+                    Backup created successfully. Save {backupFilename} somewhere safe.
                   </div>
                 )}
 
-                {backupDownloaded && (
+                {backupSaved && (
+                  <div className='alert alert-info mt-4 text-sm'>
+                    Backup saved as {backupFilename}.
+                  </div>
+                )}
+
+                {backupDownloadRequested && (
                   <div className='alert alert-info mt-4 text-sm'>
                     Download requested for {backupFilename}. Check your browser downloads list or downloads folder.
                   </div>
@@ -205,7 +264,7 @@ export function Storage() {
                     type='button'
                     className='btn btn-ghost w-full sm:w-auto'
                     onClick={closeBackupReview}
-                    disabled={backupCreating}
+                    disabled={backupCreating || backupSaving}
                   >
                     Back
                   </button>
@@ -221,15 +280,15 @@ export function Storage() {
                     </button>
                   )}
 
-                  {backupReady && backupDownloadUrl && (
-                    <a
+                  {backupReady && (
+                    <button
+                      type='button'
                       className='btn btn-primary w-full sm:w-auto'
-                      href={backupDownloadUrl}
-                      download={backupFilename}
-                      onClick={markBackupDownloaded}
+                      onClick={downloadBackup}
+                      disabled={backupSaving}
                     >
-                      Download Backup
-                    </a>
+                      {backupSaving ? 'Saving Backup' : 'Save Backup'}
+                    </button>
                   )}
                 </div>
               </div>
