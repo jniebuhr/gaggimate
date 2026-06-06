@@ -11,6 +11,10 @@ const REQUIRED_MANIFEST_FIELDS = [
   'integrity',
 ];
 
+function stableJsonEntry(value, key) {
+  return `${JSON.stringify(key)}:${stableJson(value[key])}`;
+}
+
 function stableJson(value) {
   if (value == null || typeof value !== 'object') {
     return JSON.stringify(value);
@@ -20,8 +24,8 @@ function stableJson(value) {
     return `[${value.map(item => stableJson(item)).join(',')}]`;
   }
 
-  const keys = Object.keys(value).sort();
-  return `{${keys.map(key => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`;
+  const keys = Object.keys(value).sort((left, right) => left.localeCompare(right));
+  return `{${keys.map(key => stableJsonEntry(value, key)).join(',')}}`;
 }
 
 function bytesToHex(buffer) {
