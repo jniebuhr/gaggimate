@@ -20,7 +20,13 @@ class ArchiveZipService {
       zip.file(path, content);
     });
 
-    const blob = await zip.generateAsync({ type: 'blob' });
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: {
+        level: 6,
+      },
+    });
 
     return {
       success: true,
