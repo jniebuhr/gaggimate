@@ -82,9 +82,34 @@ Do not show archive health, metadata or statistics.
 
 ## Returning User Experience
 
-Show Last Backup Activity.
+Show only backup activities that have occurred.
+
+Default archive information may include:
+
+- Last Backup Created
+- Last Backup Restored
+
+Do not show empty rows such as:
+
+- Never
+- N/A
+- No activity
 
 Additional archive information remains behind details expansion.
+
+Expanded archive information order:
+
+1. Backup Size
+2. Backup Period
+3. Backup Health
+
+Backup Health display:
+
+- 🟢 Good
+- 🟠 Warning
+- 🔴 Critical
+
+Health status explanation remains hidden unless details or intervention are required.
 
 ## Create Backup Flow
 
@@ -105,6 +130,14 @@ Details view:
 
 No automatic download.
 
+## Backup Download Result
+
+Backup downloaded successfully.
+
+This is a transient success message.
+
+It may auto-dismiss.
+
 ## Restore Backup Flow
 
 Restore Backup -> Choose Backup File -> Processing -> Backup Restored
@@ -119,13 +152,23 @@ Always show:
 - Duplicate count
 - Warning count when present
 
+Restore result summaries remain visible.
+
+Do not auto-dismiss restore result summaries.
+
+The user remains on the Storage page.
+
 ## Warning Behaviour
 
 Warnings do not block restore.
 
+Warnings are shown in the restore summary.
+
 ## Critical Failure Behaviour
 
 Critical failures block restore.
+
+Critical failures remain visible until resolved or dismissed by the user.
 
 ## Profile Conflict Handling
 
@@ -138,6 +181,10 @@ Options:
 No default selection.
 
 Single conflict review screen.
+
+Do not show repeated conflict dialogs.
+
+Multiple profile conflicts are resolved together before restore continues.
 
 Keep Both naming:
 
@@ -154,3 +201,14 @@ Simple by default.
 Detailed when requested.
 
 Advanced information should remain behind Show Details style controls.
+
+## Remaining UX Design Work
+
+- Storage page wireframe
+- Archive Browser definition
+- Archive Management definition
+- Mobile layout review
+- Tablet layout review
+- Desktop layout review
+- Accessibility review
+- Runtime validation criteria
