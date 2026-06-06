@@ -31,30 +31,22 @@ function getEstimatedSize(bundle) {
   return (metrics.shotsJsonBytes || 0) + (metrics.profilesJsonBytes || 0) + (metrics.notesJsonBytes || 0);
 }
 
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-
-  link.href = url;
-  link.download = filename;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-
-  window.setTimeout(() => {
-    link.remove();
-    URL.revokeObjectURL(url);
-  }, 1000);
-}
-
 export function Storage() {
   const [reviewingBackup, setReviewingBackup] = useState(false);
   const [backupBundle, setBackupBundle] = useState(null);
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupCreating, setBackupCreating] = useState(false);
   const [backupReady, setBackupReady] = useState(null);
+  const [backupDownloadUrl, setBackupDownloadUrl] = useState('');
   const [backupDownloaded, setBackupDownloaded] = useState(false);
   const [backupError, setBackupError] = useState('');
+
+  function clearDownloadUrl() {
+    if (backupDownloadUrl) {
+      URL.revokeObjectURL(backupDownloadUrl);
+      setBackupDownloadUrl('');
+    }
+  }
 
   async function openBackupReview() {
     setReviewingBackup(true);
@@ -62,6 +54,7 @@ export function Storage() {
     setBackupReady(null);
     setBackupDownloaded(false);
     setBackupError('');
+    clearDownloadUrl();
 
     try {
       const bundle = await archiveService.prepareArchiveBundle();
@@ -80,6 +73,7 @@ export function Storage() {
     setBackupReady(null);
     setBackupDownloaded(false);
     setBackupError('');
+    clearDownloadUrl();
 
     try {
       const result = await archiveZipService.buildZipArchive();
@@ -90,6 +84,7 @@ export function Storage() {
       }
 
       setBackupReady(result);
+      setBackupDownloadUrl(URL.createObjectURL(result.blob));
     } catch (error) {
       console.error('Failed to create backup', error);
       setBackupError('Backup could not be created. Try again.');
@@ -103,20 +98,17 @@ export function Storage() {
     setBackupReady(null);
     setBackupDownloaded(false);
     setBackupError('');
+    clearDownloadUrl();
   }
 
-  function downloadBackup() {
-    if (!backupReady?.blob || !backupReady?.filename) {
-      return;
-    }
-
-    downloadBlob(backupReady.blob, backupReady.filename);
+  function markBackupDownloaded() {
     setBackupDownloaded(true);
   }
 
   const counts = backupBundle?.manifest?.counts || backupReady?.manifest?.counts || {};
   const estimatedSize = getEstimatedSize(backupBundle);
   const reviewBadge = backupCreating ? 'Creating' : backupReady ? 'Backup Ready' : backupLoading ? 'Loading' : 'Review';
+  const backupFilename = backupReady?.filename || '';
 
   return (
     <div className='space-y-6'>
@@ -154,7 +146,7 @@ export function Storage() {
                     <h3 className='font-semibold'>{backupReady ? 'Backup Ready' : 'Review Backup'}</h3>
                     <p className='text-base-content/60 mt-1 text-sm'>
                       {backupReady
-                        ? 'Your backup is ready to download.'
+                        ? `Your backup is ready to download: ${backupFilename}`
                         : 'Check what will be included before creating a backup.'}
                     </p>
                   </div>
@@ -166,13 +158,13 @@ export function Storage() {
 
                 {backupReady && (
                   <div className='alert alert-success mt-4 text-sm'>
-                    Backup created successfully. Download the file and keep it somewhere safe.
+                    Backup created successfully. Download {backupFilename} and keep it somewhere safe.
                   </div>
                 )}
 
                 {backupDownloaded && (
                   <div className='alert alert-info mt-4 text-sm'>
-                    Download started. If your browser asks where to save the file, choose a safe location.
+                    Download requested for {backupFilename}. Check your browser downloads list or downloads folder.
                   </div>
                 )}
 
@@ -229,10 +221,15 @@ export function Storage() {
                     </button>
                   )}
 
-                  {backupReady && (
-                    <button type='button' className='btn btn-primary w-full sm:w-auto' onClick={downloadBackup}>
+                  {backupReady && backupDownloadUrl && (
+                    <a
+                      className='btn btn-primary w-full sm:w-auto'
+                      href={backupDownloadUrl}
+                      download={backupFilename}
+                      onClick={markBackupDownloaded}
+                    >
                       Download Backup
-                    </button>
+                    </a>
                   )}
                 </div>
               </div>
