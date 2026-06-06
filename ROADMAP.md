@@ -1,18 +1,16 @@
-# GaggiGo MVP Roadmap
+GaggiGo MVP Roadmap
 
-## Current Status
+Current Status
 
 GaggiGo is an offline-first observer frontend and local mirror layer for GaggiMate.
 
 Core cache-first architecture is implemented, validated, and stable.
 
-```text
 GaggiMate
 = runtime owner
 = telemetry source
 = machine authority
 = rolling operational datastore
-
 GaggiGo
 = offline-first observer frontend
 = local IndexedDB mirror
@@ -20,25 +18,22 @@ GaggiGo
 = analyzer/statistics workspace
 = archive layer
 = future safe sync client
-```
 
-The project has moved beyond analyzer/history recovery, hardening, and archive engine implementation.
+The project has moved beyond analyzer/history recovery, hardening, archive engine implementation, and archive UX planning.
 
 Current phase:
 
-```text
-Archive UX Phase
-```
+Archive UX Implementation Planning
 
----
+⸻
 
-## Phase 1 — Safety + Live Observer Frontend
+Phase 1 — Safety + Live Observer Frontend
 
 Status: Complete.
 
----
+⸻
 
-## Phase 2 — Offline-First Behaviour + Cache Mirror Stabilisation
+Phase 2 — Offline-First Behaviour + Cache Mirror Stabilisation
 
 Status: Complete.
 
@@ -65,36 +60,32 @@ Hardening completed:
 * LocalCacheService removal
 * localStorage persistence removal
 
----
+⸻
 
-## Phase 3 — Archive Architecture & Validation
+Phase 3 — Archive Architecture & Validation
 
 Status: Complete.
 
 Authoritative documents:
 
-```text
 project-docs/BACKUP_AND_ARCHIVE_STRATEGY.md
 project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
 project-docs/API_SERVICE_BOUNDARY_MAP.md
-```
 
 Approved archive direction remains defined by:
 
-```text
 project-docs/ARCHIVE_ARCHITECTURE_SPECIFICATION.md
-```
 
 Completed architecture and validation decisions:
 
-* archive format is `.gaggigo.zip`
+* archive format is .gaggigo.zip
 * archive facts, recompute insights
 * generated videos are export artefacts, not archive source data
 * raw shot data is the replay source
 * GaggiMate-compatible profile JSON remains first-class
 * all profiles are preserved, including utility profiles
 * archive import is separate from existing profile import
-* existing `.json` / `.tcl` profile import remains unchanged
+* existing .json / .tcl profile import remains unchanged
 * archive import rehydrates GaggiGo only
 * profile restore from archive is explicit and restore-as-copy
 * merge-only restore
@@ -122,15 +113,15 @@ Validation completed:
 
 Archive architecture phase is complete.
 
----
+⸻
 
-## Phase 4 — Safe Sync
+Phase 4 — Safe Sync
 
 Status: Blocked.
 
 Sync work must not begin until:
 
-* archive UX is complete
+* archive UX implementation is complete
 * archive runtime validation is complete
 * archive measurements remain valid
 * shot identity remains validated
@@ -153,13 +144,19 @@ Do not start with:
 * conflict-heavy sync behaviour
 * unrestricted mutation
 
----
+⸻
 
-## Phase 5 — Archive UX
+Phase 5 — Archive UX Implementation
 
-Status: Active.
+Status: Next.
 
 Archive engine implementation is complete.
+
+Archive UX planning is complete.
+
+UX authority:
+
+project-docs/ARCHIVE_UX_SPECIFICATION.md
 
 Current implementation includes:
 
@@ -176,7 +173,6 @@ Current implementation includes:
 
 Archive engine audit status:
 
-```text
 ZIP export        PASS
 ZIP import        PASS
 Validation        PASS
@@ -185,30 +181,33 @@ Preview           PASS
 Merge plan        PASS
 Execution         PASS
 Repository audit  PASS
-```
 
-Current UX implementation order:
+Current implementation order:
 
-1. Archive Export UI
-2. Archive Import UI
-3. Archive Browser
-4. Archive Management Views
-5. Runtime archive validation
+1. Storage page
+2. Create Backup UI
+3. Restore Backup UI
+4. Conflict resolution UI
+5. Archive information panel
+6. Runtime archive validation
+
+Deferred:
+
+* Archive Browser
+* Archive Management
 
 Rules:
 
-```text
 Simple by default.
 Deterministic by design.
 Archive facts.
 Recompute insights.
 Protect data.
 Avoid complexity.
-```
 
----
+⸻
 
-## Phase 6 — Hardening / PWA / Packaging
+Phase 6 — Hardening / PWA / Packaging
 
 Status: Planned.
 
@@ -222,17 +221,15 @@ Planned:
 * end-to-end testing
 * feature gating/app-mode architecture
 
----
+⸻
 
-## Architectural Direction
+Architectural Direction
 
-```text
 GaggiMate
 = machine controller
 = telemetry authority
 = runtime owner
 = rolling operational datastore
-
 GaggiGo
 = observer frontend
 = analysis layer
@@ -241,14 +238,11 @@ GaggiGo
 = local mirror
 = archive layer
 = future safe sync client
-```
 
 Important implementation rule:
 
-```text
 GaggiMate controls the machine.
 GaggiGo observes, stores, analyses, archives, and later syncs safe data.
-```
 
 Do not reintroduce:
 
