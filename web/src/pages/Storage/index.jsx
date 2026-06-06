@@ -49,22 +49,30 @@ function downloadWithAnchor(blob, filename) {
 
 async function saveBackupFile(blob, filename) {
   if (window.showSaveFilePicker) {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: filename,
-      types: [
-        {
-          description: 'GaggiGo Backup',
-          accept: {
-            'application/zip': ['.zip'],
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [
+          {
+            description: 'GaggiGo Backup',
+            accept: {
+              'application/zip': ['.zip'],
+            },
           },
-        },
-      ],
-    });
+        ],
+      });
 
-    const writable = await handle.createWritable();
-    await writable.write(blob);
-    await writable.close();
-    return 'saved';
+      const writable = await handle.createWritable();
+      await writable.write({ type: 'write', data: blob });
+      await writable.close();
+      return 'saved';
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        throw error;
+      }
+
+      console.warn('File picker save failed; falling back to browser download', error);
+    }
   }
 
   downloadWithAnchor(blob, filename);
@@ -144,7 +152,9 @@ export function Storage() {
       }
 
       console.error('Failed to save backup', error);
-      setBackupError('Backup was created, but the file could not be saved. Try again.');
+      setBackupError(
+        `Backup was created, but the file could not be saved. ${error?.name || 'Error'}: ${error?.message || 'Unknown save error'}`,
+      );
     } finally {
       setBackupSaving(false);
     }
@@ -223,7 +233,7 @@ export function Storage() {
 
                 {backupDownloadRequested && (
                   <div className='alert alert-info mt-4 text-sm'>
-                    Download requested for {backupFilename}. Check your browser downloads list or downloads folder.
+                    Browser download requested for {backupFilename}. Check your browser downloads list or downloads folder.
                   </div>
                 )}
 
