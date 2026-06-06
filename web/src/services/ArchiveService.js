@@ -1,4 +1,5 @@
 import { indexedDBService } from '../pages/ShotAnalyzer/services/IndexedDBService.js';
+import { libraryService } from '../pages/ShotAnalyzer/services/LibraryService.js';
 
 const ARCHIVE_VERSION = '1.0.0';
 const ARCHIVE_SCHEMA_VERSION = 1;
@@ -92,7 +93,7 @@ function normaliseArchiveShot(shot = {}) {
     archivedShot.archiveWarning = 'summary-only-local-shot';
     archivedShot.archiveWarningId = getShotDiagnosticId(shot);
     archivedShot.archiveWarningName = 'SummaryOnlyShot';
-    archivedShot.archiveWarningMessage = 'Local IndexedDB shot record has no samples. Backup contains summary metadata only for this shot.';
+    archivedShot.archiveWarningMessage = 'Local canonical shot record has no samples. Backup contains summary metadata only for this shot.';
   }
 
   return archivedShot;
@@ -112,7 +113,7 @@ function normaliseArchiveNote(note = {}) {
 
 class ArchiveService {
   /**
-   * Build the archive payload from the existing IndexedDB mirror only.
+   * Build the archive payload from the canonical local shot mirror only.
    * Backup export must not hydrate, fetch, call GaggiMate, or mutate local storage.
    */
   async prepareArchiveBundle(options = {}) {
@@ -120,7 +121,7 @@ class ArchiveService {
     const bundleName = options.bundleName || buildBundleName(new Date(createdAt));
 
     const [rawShots, rawProfiles] = await Promise.all([
-      indexedDBService.getAllShots(),
+      libraryService.getAllShots('both'),
       indexedDBService.getAllProfiles(),
     ]);
 
@@ -137,8 +138,8 @@ class ArchiveService {
       metadata: {
         generatedBy: 'GaggiGo',
         createdAt,
-        source: 'IndexedDB hot mirror',
-        exportMode: 'local-indexeddb-only',
+        source: 'Canonical local shot mirror',
+        exportMode: 'canonical-local-indexeddb-only',
       },
     };
 
@@ -208,9 +209,9 @@ class ArchiveService {
       },
       source: {
         app: 'GaggiGo',
-        persistence: 'IndexedDB hot mirror',
-        authority: 'IndexedDBService -> IndexedDB',
-        exportMode: 'local-indexeddb-only',
+        persistence: 'Canonical local IndexedDB mirror',
+        authority: 'LibraryService.getAllShots(local) -> IndexedDBService -> IndexedDB',
+        exportMode: 'canonical-local-indexeddb-only',
       },
       hydration,
       storageMetrics: {
