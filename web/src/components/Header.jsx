@@ -5,6 +5,7 @@ import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faDatabase } from '@fortawesome/free-solid-svg-icons/faDatabase';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
@@ -122,6 +123,12 @@ export function Header() {
               label='Statistics'
               link='/statistics'
               icon={faChartSimple}
+              onClick={() => openCb(false)}
+            />
+            <HeaderItem
+              label='Storage'
+              link='/storage'
+              icon={faDatabase}
               onClick={() => openCb(false)}
             />
           </div>
