@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 
 import { archiveService } from '../../services/ArchiveService.js';
+import { archiveZipService } from '../../services/ArchiveZipService.js';
 
 const REVIEW_ITEMS = [
   'Coffee shot history',
@@ -30,15 +31,30 @@ function getEstimatedSize(bundle) {
   return (metrics.shotsJsonBytes || 0) + (metrics.profilesJsonBytes || 0) + (metrics.notesJsonBytes || 0);
 }
 
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function Storage() {
   const [reviewingBackup, setReviewingBackup] = useState(false);
   const [backupBundle, setBackupBundle] = useState(null);
   const [backupLoading, setBackupLoading] = useState(false);
+  const [backupCreating, setBackupCreating] = useState(false);
+  const [backupReady, setBackupReady] = useState(null);
   const [backupError, setBackupError] = useState('');
 
   async function openBackupReview() {
     setReviewingBackup(true);
     setBackupLoading(true);
+    setBackupReady(null);
     setBackupError('');
 
     try {
@@ -53,13 +69,47 @@ export function Storage() {
     }
   }
 
+  async function createBackup() {
+    setBackupCreating(true);
+    setBackupReady(null);
+    setBackupError('');
+
+    try {
+      const result = await archiveZipService.buildZipArchive();
+
+      if (!result.success) {
+        setBackupError(result.reason || 'Backup could not be created.');
+        return;
+      }
+
+      setBackupReady(result);
+    } catch (error) {
+      console.error('Failed to create backup', error);
+      setBackupError('Backup could not be created. Try again.');
+    } finally {
+      setBackupCreating(false);
+    }
+  }
+
   function closeBackupReview() {
     setReviewingBackup(false);
+    setBackupReady(null);
     setBackupError('');
   }
 
-  const counts = backupBundle?.manifest?.counts || {};
+  function downloadBackup() {
+    if (!backupReady?.blob || !backupReady?.filename) {
+      return;
+    }
+
+    downloadBlob(backupReady.blob, backupReady.filename);
+    setBackupReady(null);
+    setReviewingBackup(false);
+  }
+
+  const counts = backupBundle?.manifest?.counts || backupReady?.manifest?.counts || {};
   const estimatedSize = getEstimatedSize(backupBundle);
+  const reviewBadge = backupCreating ? 'Creating' : backupReady ? 'Backup Ready' : backupLoading ? 'Loading' : 'Review';
 
   return (
     <div className='space-y-6'>
@@ -94,16 +144,24 @@ export function Storage() {
               <div className='border-base-300 mt-5 rounded-box border p-4'>
                 <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
                   <div>
-                    <h3 className='font-semibold'>Review Backup</h3>
+                    <h3 className='font-semibold'>{backupReady ? 'Backup Ready' : 'Review Backup'}</h3>
                     <p className='text-base-content/60 mt-1 text-sm'>
-                      Check what will be included before creating a backup.
+                      {backupReady
+                        ? 'Your backup is ready to download.'
+                        : 'Check what will be included before creating a backup.'}
                     </p>
                   </div>
 
-                  <span className='badge badge-info'>{backupLoading ? 'Loading' : 'Review'}</span>
+                  <span className='badge badge-info'>{reviewBadge}</span>
                 </div>
 
                 {backupError && <div className='alert alert-warning mt-4 text-sm'>{backupError}</div>}
+
+                {backupReady && (
+                  <div className='alert alert-success mt-4 text-sm'>
+                    Backup created successfully. Download the file and keep it somewhere safe.
+                  </div>
+                )}
 
                 <div className='mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3'>
                   <div className='bg-base-200 rounded-box p-3'>
@@ -138,13 +196,31 @@ export function Storage() {
                 </div>
 
                 <div className='card-actions mt-5 justify-end'>
-                  <button type='button' className='btn btn-ghost w-full sm:w-auto' onClick={closeBackupReview}>
+                  <button
+                    type='button'
+                    className='btn btn-ghost w-full sm:w-auto'
+                    onClick={closeBackupReview}
+                    disabled={backupCreating}
+                  >
                     Back
                   </button>
 
-                  <button type='button' className='btn btn-primary w-full sm:w-auto' disabled>
-                    Create Backup
-                  </button>
+                  {!backupReady && (
+                    <button
+                      type='button'
+                      className='btn btn-primary w-full sm:w-auto'
+                      onClick={createBackup}
+                      disabled={backupLoading || backupCreating || Boolean(backupError)}
+                    >
+                      {backupCreating ? 'Creating Backup' : 'Create Backup'}
+                    </button>
+                  )}
+
+                  {backupReady && (
+                    <button type='button' className='btn btn-primary w-full sm:w-auto' onClick={downloadBackup}>
+                      Download Backup
+                    </button>
+                  )}
                 </div>
               </div>
             )}
