@@ -60,7 +60,7 @@ def assert_sdkconfig(*_args, **_kwargs):
         print(f"  (checked {sdkconfig_h})\n")
         env.Exit(1)
     else:
-        print("sdkconfig guard: OK (%d invariant(s) satisfied)" % len(REQUIRED))
+        print(f"sdkconfig guard: OK ({len(REQUIRED)} invariant(s) satisfied)")
 
 
 # Run after the firmware ELF is built, so the merged sdkconfig.h exists.
