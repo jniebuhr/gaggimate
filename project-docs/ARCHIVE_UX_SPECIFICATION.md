@@ -1,14 +1,26 @@
-# ARCHIVE_UX_SPECIFICATION.md
+ARCHIVE_UX_SPECIFICATION.md
 
-## Status
+Status
 
-Version: Draft 1.0
+Version: Draft 1.1
 
-Status: UX Design Phase
+Status: Archive UX Planning Complete
 
 Authority Level: Archive UX Authority
 
-## Purpose
+Archive Browser Status:
+
+Deferred
+
+Archive Management Status:
+
+Deferred
+
+Implementation Status:
+
+Archive UX Implementation Not Started
+
+Purpose
 
 This document defines the user experience requirements for the GaggiGo archive system.
 
@@ -16,38 +28,38 @@ The archive engine implementation is already complete.
 
 This document defines how users interact with that engine.
 
-## Design Principles
+Design Principles
 
-- Simple by default
-- Detailed when requested
-- Action first
-- Information second
-- Human language over technical language
-- User controlled
-- No surprise automation
-- Warnings inform
-- Critical failures block
-- Success disappears
-- Problems remain visible
+* Simple by default
+* Detailed when requested
+* Action first
+* Information second
+* Human language over technical language
+* User controlled
+* No surprise automation
+* Warnings inform
+* Critical failures block
+* Success disappears
+* Problems remain visible
 
-## User Terminology
+User Terminology
 
 Backend terminology remains Archive/Import/Export.
 
 User-facing terminology becomes:
 
-- Backup
-- Restore
-- Backup Ready
-- Backup Restored
+* Backup
+* Restore
+* Backup Ready
+* Backup Restored
 
-## Navigation
+Navigation
 
 Archive functionality is accessed through:
 
 Storage
 
-## Storage Page
+Storage Page
 
 Purpose text:
 
@@ -55,12 +67,26 @@ Protect your coffee history and profiles by creating backups you can restore lat
 
 Primary actions:
 
-- Create Backup
-- Restore Backup
+* Create Backup
+* Restore Backup
+
+Primary actions should be presented as cards.
+
+Card 1:
+
+Create Backup
+
+Save a backup copy of your coffee data.
+
+Card 2:
+
+Restore Backup
+
+Restore coffee data from a backup file.
 
 Equal size and equal prominence.
 
-## Layout Rules
+Layout Rules
 
 Storage
 
@@ -74,26 +100,26 @@ Archive Information
 
 Action first. Information second.
 
-## First-Time User Experience
+First-Time User Experience
 
 Show only purpose text and backup actions.
 
 Do not show archive health, metadata or statistics.
 
-## Returning User Experience
+Returning User Experience
 
 Show only backup activities that have occurred.
 
 Default archive information may include:
 
-- Last Backup Created
-- Last Backup Restored
+* Last Backup Created
+* Last Backup Restored
 
 Do not show empty rows such as:
 
-- Never
-- N/A
-- No activity
+* Never
+* N/A
+* No activity
 
 Additional archive information remains behind details expansion.
 
@@ -105,32 +131,40 @@ Expanded archive information order:
 
 Backup Health display:
 
-- 🟢 Good
-- 🟠 Warning
-- 🔴 Critical
+* 🟢 Good
+* 🟠 Warning
+* 🔴 Critical
 
 Health status explanation remains hidden unless details or intervention are required.
 
-## Create Backup Flow
+Archive information expands inline.
+
+Do not use:
+
+* Modals
+* Dedicated pages
+* Separate panels
+
+Create Backup Flow
 
 Create Backup -> Review Backup -> Create Backup -> Backup Ready -> Download Backup
 
 Review Backup default view:
 
-- Shots
-- Profiles
-- Estimated Size
+* Shots
+* Profiles
+* Estimated Size
 
 Details view:
 
-- Notes
-- Tags
-- Archive Period
-- Archive Health
+* Notes
+* Tags
+* Archive Period
+* Archive Health
 
 No automatic download.
 
-## Backup Download Result
+Backup Download Result
 
 Backup downloaded successfully.
 
@@ -138,19 +172,28 @@ This is a transient success message.
 
 It may auto-dismiss.
 
-## Restore Backup Flow
+Generated backup artifacts are temporary.
+
+After successful download:
+
+* Remove temporary artifact
+* Return Storage page to normal state
+
+The downloaded file becomes the authoritative backup copy.
+
+Restore Backup Flow
 
 Restore Backup -> Choose Backup File -> Processing -> Backup Restored
 
 Hide engine implementation details unless intervention is required.
 
-## Restore Results
+Restore Results
 
 Always show:
 
-- Imported count
-- Duplicate count
-- Warning count when present
+* Imported count
+* Duplicate count
+* Warning count when present
 
 Restore result summaries remain visible.
 
@@ -158,25 +201,35 @@ Do not auto-dismiss restore result summaries.
 
 The user remains on the Storage page.
 
-## Warning Behaviour
+Warning Behaviour
 
 Warnings do not block restore.
 
 Warnings are shown in the restore summary.
 
-## Critical Failure Behaviour
+Critical Failure Behaviour
 
 Critical failures block restore.
 
+Display:
+
+Restore Blocked
+
+The selected backup file could not be validated.
+
+[ Show Details ]
+
 Critical failures remain visible until resolved or dismissed by the user.
 
-## Profile Conflict Handling
+Technical details remain hidden until requested.
+
+Profile Conflict Handling
 
 Options:
 
-- Keep Current
-- Restore Backup
-- Keep Both
+* Keep Current
+* Restore Backup
+* Keep Both
 
 No default selection.
 
@@ -192,9 +245,13 @@ Profile Name (YYYY-MM-DD)
 
 Date source: Profile Creation Date.
 
-Avoid Copy, Copy 2, Copy 3.
+Avoid:
 
-## Information Hierarchy
+* Copy
+* Copy 2
+* Copy 3
+
+Information Hierarchy
 
 Simple by default.
 
@@ -202,13 +259,80 @@ Detailed when requested.
 
 Advanced information should remain behind Show Details style controls.
 
-## Remaining UX Design Work
+Mobile Layout
 
-- Storage page wireframe
-- Archive Browser definition
-- Archive Management definition
-- Mobile layout review
-- Tablet layout review
-- Desktop layout review
-- Accessibility review
-- Runtime validation criteria
+Primary action cards are displayed vertically.
+
+Create Backup
+
+↓
+
+Restore Backup
+
+Use full-width cards and large touch targets.
+
+Deferred Scope
+
+Archive Browser
+
+Status:
+
+Deferred
+
+Reason:
+
+No demonstrated user requirement.
+
+Backup ZIP files and manifests already provide inspection capability.
+
+Additional tooling would duplicate existing functionality.
+
+Archive Management
+
+Status:
+
+Deferred
+
+Reason:
+
+No demonstrated user requirement.
+
+Would introduce unnecessary complexity into the MVP.
+
+Future implementation remains possible if justified by real-world usage evidence.
+
+Planning Outcome
+
+Archive UX planning is considered complete.
+
+The following areas have been defined and approved:
+
+* Storage page
+* Backup terminology
+* Create Backup flow
+* Restore Backup flow
+* Backup activity display
+* Backup information display
+* Backup health presentation
+* Success states
+* Warning states
+* Critical failure states
+* Profile conflict handling
+* Mobile-first layout
+* Information hierarchy
+
+Next Phase
+
+Archive UX Implementation Planning
+
+Objectives:
+
+* Storage page implementation
+* Create Backup UI implementation
+* Restore Backup UI implementation
+* Conflict resolution UI implementation
+* Archive information panel implementation
+* Runtime validation planning
+* Accessibility review during implementation
+
+Archive UX planning should not be reopened unless implementation uncovers a genuine UX gap.
