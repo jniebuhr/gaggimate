@@ -145,12 +145,12 @@ function storeSettingsSnapshot(settings) {
 
 async function fetchSettingsWithTimeout() {
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), SETTINGS_HTTP_TIMEOUT_MS);
+  const timeout = globalThis.setTimeout(() => controller.abort(), SETTINGS_HTTP_TIMEOUT_MS);
 
   try {
     return await fetch('/api/settings', { signal: controller.signal });
   } finally {
-    window.clearTimeout(timeout);
+    globalThis.clearTimeout(timeout);
   }
 }
 
