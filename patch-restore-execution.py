@@ -1,7 +1,14 @@
 from pathlib import Path
 
-path = Path("web/src/pages/Storage/index.jsx")
-text = path.read_text(encoding="utf-8")
+REPO_ROOT = Path(__file__).resolve().parent
+TARGET_FILE = (REPO_ROOT / "web" / "src" / "pages" / "Storage" / "index.jsx").resolve()
+
+try:
+    TARGET_FILE.relative_to(REPO_ROOT)
+except ValueError as exc:
+    raise SystemExit("Patch target must remain inside the repository root") from exc
+
+text = TARGET_FILE.read_text(encoding="utf-8")
 
 required = [
     "import { archiveImportService } from '../../services/ArchiveImportService.js';",
@@ -141,5 +148,5 @@ for marker in post_required:
 if "Backup could not be restored. " not in text:
     raise SystemExit("Patch verification failed: restore error text missing")
 
-path.write_text(text, encoding="utf-8", newline="\n")
+TARGET_FILE.write_text(text, encoding="utf-8", newline="\n")
 print("Restore execution patch applied and self-verified.")
