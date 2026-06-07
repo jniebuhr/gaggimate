@@ -323,8 +323,8 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
                                 },
                             .protocolVersion = protocolVersion,
                             .protocolMismatch = mismatch};
-    ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d)", hardware, version, protocolVersion,
-             gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof);
+    ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d, db=%d)", hardware, version, protocolVersion,
+             gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof, dualBoiler);
     if (mismatch) {
         // Mixed-firmware links are not wire-compatible, so don't push config and
         // don't drive control (updateControl() also bails on protocolMismatch).
@@ -777,8 +777,8 @@ void Controller::updateControl() {
     boiler.index = 0;
     boiler.setpoint = targetTemp;
     BoilerCommand boiler2;
-    boiler.index = 1;
-    boiler.setpoint = targetSteamTemp;
+    boiler2.index = 1;
+    boiler2.setpoint = targetSteamTemp;
     PumpCommand pump;
     pump.index = 0;
     RelayCommand relay; // index 0 = brew valve
