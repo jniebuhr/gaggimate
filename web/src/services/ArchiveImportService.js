@@ -7,7 +7,7 @@ function shotIdentity(shot = {}) {
 
   const sampleCount = Array.isArray(shot.samples) ? shot.samples.length : 0;
   return [shot.gaggimateId || shot.id || '', shot.timestamp || '', shot.profileId || '', sampleCount, shot.duration || '']
-    .map(value => String(value))
+    .map(String)
     .join(':');
 }
 
@@ -53,10 +53,14 @@ class ArchiveImportService {
 
     const bundle = importValidation.bundle;
 
+    const existingShotsPromise = Promise.resolve(libraryService.getAllShots('both'));
+    const existingProfilesPromise = Promise.resolve(indexedDBService.getAllProfiles());
+    const existingNotesPromise = Promise.resolve(this.getAllNotes());
+
     const [existingShots, existingProfiles, existingNotes] = await Promise.all([
-      libraryService.getAllShots('both'),
-      indexedDBService.getAllProfiles(),
-      this.getAllNotes(),
+      existingShotsPromise,
+      existingProfilesPromise,
+      existingNotesPromise,
     ]);
 
     const existingShotIdentities = new Set(existingShots.map(shotIdentity));
