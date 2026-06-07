@@ -6,14 +6,15 @@ const DEFAULT_INTERVALS = Object.freeze({
 });
 
 class RefreshCoordinator {
+  apiService = null;
+  started = false;
+  timers = new Map();
+  inFlight = new Set();
+  lastRefresh = new Map();
+  listeners = new Set();
+  intervals = DEFAULT_INTERVALS;
+
   constructor() {
-    this.apiService = null;
-    this.started = false;
-    this.timers = new Map();
-    this.inFlight = new Set();
-    this.lastRefresh = new Map();
-    this.listeners = new Set();
-    this.intervals = DEFAULT_INTERVALS;
     this.onVisibilityChange = this.handleVisibilityChange.bind(this);
   }
 
@@ -23,11 +24,7 @@ class RefreshCoordinator {
   }
 
   isConnected() {
-    return Boolean(
-      this.apiService &&
-        this.apiService.socket &&
-        this.apiService.socket.readyState === WebSocket.OPEN,
-    );
+    return this.apiService?.socket?.readyState === WebSocket.OPEN;
   }
 
   isVisible() {
@@ -117,14 +114,14 @@ class RefreshCoordinator {
 
     this.timers.set(
       'shots',
-      window.setInterval(() => {
+      globalThis.setInterval(() => {
         if (this.isVisible()) this.refreshShots({ reason: 'timer' });
       }, this.intervals.shots),
     );
 
     this.timers.set(
       'profiles',
-      window.setInterval(() => {
+      globalThis.setInterval(() => {
         if (this.isVisible()) this.refreshProfiles({ reason: 'timer' });
       }, this.intervals.profiles),
     );
@@ -135,7 +132,7 @@ class RefreshCoordinator {
 
   stop() {
     for (const timer of this.timers.values()) {
-      window.clearInterval(timer);
+      globalThis.clearInterval(timer);
     }
     this.timers.clear();
     this.started = false;
