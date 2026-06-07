@@ -7,7 +7,7 @@ function shotIdentity(shot = {}) {
 
   const sampleCount = Array.isArray(shot.samples) ? shot.samples.length : 0;
   return [shot.gaggimateId || shot.id || '', shot.timestamp || '', shot.profileId || '', sampleCount, shot.duration || '']
-    .map(value => String(value))
+    .map(String)
     .join(':');
 }
 
@@ -22,6 +22,20 @@ function noteIdentity(note = {}) {
 function restoreProfileLabel(profile = {}) {
   const baseLabel = String(profile.label || profile.name || profile.profileId || profile.id || 'Archived Profile').trim();
   return `${baseLabel} (Restored)`;
+}
+
+async function importEntities(identities, entityMap, saveFn, importedKey, imported, errors, entityType) {
+  for (const identity of identities) {
+    const entity = entityMap.get(identity);
+    if (!entity) continue;
+
+    try {
+      await saveFn(entity, identity);
+      imported[importedKey] += 1;
+    } catch (error) {
+      errors.push({ type: entityType, identity, error: error.message });
+    }
+  }
 }
 
 class ArchiveExecutionService {
@@ -47,58 +61,52 @@ class ArchiveExecutionService {
     const imported = { shots: 0, profiles: 0, notes: 0 };
     const errors = [];
 
-    for (const identity of mergePlan.plan.shotsToImport) {
-      const shot = shotsByIdentity.get(identity);
-      if (!shot) continue;
+    await importEntities(
+      mergePlan.plan.shotsToImport,
+      shotsByIdentity,
+      (shot, identity) => indexedDBService.saveShot({
+        ...shot,
+        source: 'archive-import',
+        archiveIdentity: identity,
+        importedAt: Date.now(),
+      }),
+      'shots',
+      imported,
+      errors,
+      'shot',
+    );
 
-      try {
-        await indexedDBService.saveShot({
-          ...shot,
-          source: 'archive-import',
-          archiveIdentity: identity,
-          importedAt: Date.now(),
-        });
-        imported.shots += 1;
-      } catch (error) {
-        errors.push({ type: 'shot', identity, error: error.message });
-      }
-    }
+    await importEntities(
+      mergePlan.plan.profilesToRestoreAsCopy,
+      profilesByIdentity,
+      (profile, identity) => indexedDBService.saveProfile({
+        ...profile,
+        label: restoreProfileLabel(profile),
+        source: 'archive-import',
+        archiveIdentity: identity,
+        restoredAsCopy: true,
+        importedAt: Date.now(),
+      }),
+      'profiles',
+      imported,
+      errors,
+      'profile',
+    );
 
-    for (const identity of mergePlan.plan.profilesToRestoreAsCopy) {
-      const profile = profilesByIdentity.get(identity);
-      if (!profile) continue;
-
-      try {
-        await indexedDBService.saveProfile({
-          ...profile,
-          label: restoreProfileLabel(profile),
-          source: 'archive-import',
-          archiveIdentity: identity,
-          restoredAsCopy: true,
-          importedAt: Date.now(),
-        });
-        imported.profiles += 1;
-      } catch (error) {
-        errors.push({ type: 'profile', identity, error: error.message });
-      }
-    }
-
-    for (const identity of mergePlan.plan.notesToMerge) {
-      const note = notesByIdentity.get(identity);
-      if (!note) continue;
-
-      try {
-        await indexedDBService.saveNotes({
-          ...note,
-          source: 'archive-import',
-          archiveIdentity: identity,
-          importedAt: Date.now(),
-        });
-        imported.notes += 1;
-      } catch (error) {
-        errors.push({ type: 'note', identity, error: error.message });
-      }
-    }
+    await importEntities(
+      mergePlan.plan.notesToMerge,
+      notesByIdentity,
+      (note, identity) => indexedDBService.saveNotes({
+        ...note,
+        source: 'archive-import',
+        archiveIdentity: identity,
+        importedAt: Date.now(),
+      }),
+      'notes',
+      imported,
+      errors,
+      'note',
+    );
 
     return {
       success: errors.length === 0,
