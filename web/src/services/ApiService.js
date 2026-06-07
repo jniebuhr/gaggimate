@@ -38,16 +38,15 @@ function getWebSocketUrl() {
   const configuredHost = getConfiguredGaggiMateHost();
 
   if (configuredHost) {
-    const isSecurePage = window.location.protocol === 'https:';
+    const isSecurePage = globalThis.location.protocol === 'https:';
     const wsProtocol = isSecurePage ? 'wss://' : 'ws://';
     return `${wsProtocol}${configuredHost}/ws`;
   }
 
-  const apiHost = window.location.host;
-  const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const apiHost = globalThis.location.host;
+  const wsProtocol = globalThis.location.protocol === 'https:' ? 'wss://' : 'ws://';
   return `${wsProtocol}${apiHost}/ws`;
 }
-
 
 function logWebSocketDebug(...args) {
   if (import.meta.env.DEV && import.meta.env.VITE_GAGGIGO_WS_DEBUG === 'true') {
@@ -120,7 +119,7 @@ export default class ApiService {
 
   _scheduleReconnect() {
     if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
+      globalThis.clearTimeout(this.reconnectTimeout);
     }
 
     // Calculate delay with exponential backoff
@@ -131,7 +130,7 @@ export default class ApiService {
 
     logWebSocketDebug(`reconnect attempt ${this.reconnectAttempts + 1} scheduled in ${delay}ms`);
 
-    this.reconnectTimeout = setTimeout(() => {
+    this.reconnectTimeout = globalThis.setTimeout(() => {
       this.reconnectAttempts++;
       this.connect();
     }, delay);
@@ -180,7 +179,7 @@ export default class ApiService {
       const listenerId = this.on(returnType, response => {
         if (response.rid === rid) {
           // Clean up the listener and cancel the timeout to free the closure.
-          clearTimeout(timeoutId);
+          globalThis.clearTimeout(timeoutId);
           this.off(returnType, listenerId);
           resolve(response);
         }
@@ -190,7 +189,7 @@ export default class ApiService {
       this.send(message);
 
       // Timeout: reject if no matching response arrives within 30 seconds
-      timeoutId = setTimeout(() => {
+      timeoutId = globalThis.setTimeout(() => {
         this.off(returnType, listenerId);
         reject(new Error(`Request ${data.tp} timed out`));
       }, 30000); // 30 second timeout
