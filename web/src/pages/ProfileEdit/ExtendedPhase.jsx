@@ -304,7 +304,11 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     min={mode === 'pressure' ? '0.1' : '0'}
                     value={pumpInput.pressure.toString()}
                     onChange={e =>
-                      onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
+                      onFieldChange('pump', {
+                        ...phase.pump,
+                        pressure:
+                          e.target.value === '' ? 0 : Number.parseFloat(e.target.value),
+                      })
                     }
                     aria-label='Pressure in bar'
                   />
@@ -328,7 +332,10 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     step='0.01'
                     value={pumpInput.flow.toString()}
                     onChange={e =>
-                      onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
+                      onFieldChange('pump', {
+                        ...phase.pump,
+                        flow: e.target.value === '' ? 0 : Number.parseFloat(e.target.value),
+                      })
                     }
                     aria-label='Flow rate in grams per second'
                     min={mode === 'flow' ? '0.1' : '0'}

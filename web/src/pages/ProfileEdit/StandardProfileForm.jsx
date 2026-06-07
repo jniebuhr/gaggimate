@@ -353,8 +353,8 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                     mode !== 'pressure' &&
                     onFieldChange('pump', {
                       target: 'pressure',
-                      pressure: phase.pump?.pressure || 0,
-                      flow: phase.pump?.flow || 0,
+                      pressure: pumpInput.pressure,
+                      flow: pumpInput.flow,
                     })
                   }
                   aria-pressed={mode === 'pressure'}
@@ -369,8 +369,8 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                     mode !== 'flow' &&
                     onFieldChange('pump', {
                       target: 'flow',
-                      pressure: phase.pump?.pressure || 0,
-                      flow: phase.pump?.flow || 0,
+                      pressure: pumpInput.pressure,
+                      flow: pumpInput.flow,
                     })
                   }
                   aria-pressed={mode === 'flow'}
@@ -422,7 +422,11 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   step='0.01'
                   value={pumpInput.pressure}
                   onChange={e =>
-                    onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
+                    onFieldChange('pump', {
+                      ...phase.pump,
+                      pressure:
+                        e.target.value === '' ? 0 : Number.parseFloat(e.target.value),
+                    })
                   }
                   aria-label='Pressure in bar'
                   min='0'
@@ -444,7 +448,10 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   step='0.01'
                   value={pumpInput.flow}
                   onChange={e =>
-                    onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
+                    onFieldChange('pump', {
+                      ...phase.pump,
+                      flow: e.target.value === '' ? 0 : Number.parseFloat(e.target.value),
+                    })
                   }
                   aria-label='Flow rate in grams per second'
                   min='0'
