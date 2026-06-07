@@ -4,6 +4,12 @@ import { useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { Tooltip } from '../../components/Tooltip.jsx';
+import {
+  getPumpMode,
+  getPumpPowerInputValue,
+  isPumpObject,
+  normalizePumpPower,
+} from './pumpInput.js';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const onFieldChange = (field, value) => {
@@ -43,10 +49,26 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
 
   const targets = phase?.targets || [];
 
-  const pumpPower = isNumber(phase.pump) ? phase.pump : 100;
-  const pressure = !isNumber(phase.pump) ? phase.pump.pressure : 0;
-  const flow = !isNumber(phase.pump) ? phase.pump.flow : 0;
-  let mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
+  const pumpPower = getPumpPowerInputValue(phase.pump);
+  const pressure = isPumpObject(phase.pump) ? phase.pump.pressure : 0;
+  const flow = isPumpObject(phase.pump) ? phase.pump.flow : 0;
+  let mode = getPumpMode(phase.pump);
+
+  const onPumpPowerChange = e => {
+    const raw = e.target.value;
+    if (raw === '') {
+      onFieldChange('pump', NaN);
+      return;
+    }
+    const parsed = parseFloat(raw);
+    if (!Number.isNaN(parsed)) {
+      onFieldChange('pump', parsed);
+    }
+  };
+
+  const onPumpPowerBlur = () => {
+    onFieldChange('pump', normalizePumpPower(phase.pump));
+  };
   if (mode === 'pressure' && phase.pump.pressure === -1) mode = 'hold-pressure';
   if (mode === 'flow' && phase.pump.flow === -1) mode = 'hold-flow';
   const availableTargetTypes = TargetTypes.filter(
@@ -272,8 +294,9 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 step='1'
                 min={0}
                 max={100}
-                value={pumpPower.toString()}
-                onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
+                value={pumpPower}
+                onChange={onPumpPowerChange}
+                onBlur={onPumpPowerBlur}
                 aria-label='Pump power as percentage'
               />
               <span aria-label='percent'>%</span>

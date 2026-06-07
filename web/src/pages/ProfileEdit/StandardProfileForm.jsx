@@ -7,6 +7,12 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
+import {
+  getPumpMode,
+  getPumpPowerInputValue,
+  isPumpObject,
+  normalizePumpPower,
+} from './pumpInput.js';
 
 export function StandardProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
@@ -54,7 +60,13 @@ export function StandardProfileForm(props) {
     <form
       onSubmit={e => {
         e.preventDefault();
-        onSave(data);
+        onSave({
+          ...data,
+          phases: data.phases.map(phase => ({
+            ...phase,
+            pump: normalizePumpPower(phase.pump),
+          })),
+        });
       }}
     >
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
@@ -197,10 +209,26 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const volumetricTarget = targets.find(t => t.type === 'volumetric') || {};
   const targetWeight = volumetricTarget?.value || 0;
 
-  const pumpPower = isNumber(phase.pump) ? phase.pump : 100;
-  const pressure = !isNumber(phase.pump) ? phase.pump.pressure : 0;
-  const flow = !isNumber(phase.pump) ? phase.pump.flow : 0;
-  const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
+  const pumpPower = getPumpPowerInputValue(phase.pump);
+  const pressure = isPumpObject(phase.pump) ? phase.pump.pressure : 0;
+  const flow = isPumpObject(phase.pump) ? phase.pump.flow : 0;
+  const mode = getPumpMode(phase.pump);
+
+  const onPumpPowerChange = e => {
+    const raw = e.target.value;
+    if (raw === '') {
+      onFieldChange('pump', NaN);
+      return;
+    }
+    const parsed = parseFloat(raw);
+    if (!Number.isNaN(parsed)) {
+      onFieldChange('pump', parsed);
+    }
+  };
+
+  const onPumpPowerBlur = () => {
+    onFieldChange('pump', normalizePumpPower(phase.pump));
+  };
 
   return (
     <div
@@ -396,7 +424,8 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 min={0}
                 max={100}
                 value={pumpPower}
-                onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
+                onChange={onPumpPowerChange}
+                onBlur={onPumpPowerBlur}
                 aria-label='Pump power as percentage'
               />
               <span aria-label='percent'>%</span>
