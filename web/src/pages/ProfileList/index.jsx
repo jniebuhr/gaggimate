@@ -255,12 +255,12 @@ function ProfileCard({
         >
           {/* Desktop-only: Inline Visibility & Edit actions */}
           <div className='hidden sm:flex flex-row items-center gap-2'>
-            <Tooltip content={data.favorite ? 'Hide profile' : 'Make profile visible'}>
+            <Tooltip content={data.favorite ? 'Hide from machine' : 'Make visible on machine'}>
               <button
                 onClick={onFavoriteToggle}
                 disabled={favoriteToggleDisabled}
                 className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
-                aria-label={data.favorite ? `Hide ${data.label}` : `Make ${data.label} visible`}
+                aria-label={data.favorite ? `Hide ${data.label} from machine` : `Make ${data.label} visible on machine`}
                 aria-pressed={data.favorite}
               >
                 <FontAwesomeIcon icon={visibilityIcon} className={visibilityClass} />
@@ -297,7 +297,7 @@ function ProfileCard({
                   onClick={() => { onFavoriteToggle(); closeDropdownMenu(); }}
                   disabled={favoriteToggleDisabled}
                   className={`justify-start ${favoriteToggleClass}`}
-                  aria-label={data.favorite ? `Hide ${data.label}` : `Make ${data.label} visible`}
+                  aria-label={data.favorite ? `Hide ${data.label} from machine` : `Make ${data.label} visible on machine`}
                   aria-pressed={data.favorite}
                 >
                   <FontAwesomeIcon icon={visibilityIcon} className={visibilityClass} />
