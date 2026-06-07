@@ -1,5 +1,4 @@
 import { ExtendedPhaseTarget, TargetTypes } from './ExtendedPhaseTarget.jsx';
-import { isNumber } from 'chart.js/helpers';
 import { useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
@@ -9,6 +8,7 @@ import {
   getPumpPowerInputValue,
   isPumpObject,
   normalizePumpPower,
+  parsePumpPowerInput,
 } from './pumpInput.js';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
@@ -55,13 +55,8 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
   let mode = getPumpMode(phase.pump);
 
   const onPumpPowerChange = e => {
-    const raw = e.target.value;
-    if (raw === '') {
-      onFieldChange('pump', NaN);
-      return;
-    }
-    const parsed = parseFloat(raw);
-    if (!Number.isNaN(parsed)) {
+    const parsed = parsePumpPowerInput(e.target.value);
+    if (parsed !== undefined) {
       onFieldChange('pump', parsed);
     }
   };

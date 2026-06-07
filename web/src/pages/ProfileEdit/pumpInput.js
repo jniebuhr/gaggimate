@@ -21,3 +21,10 @@ export function normalizePumpPower(pump) {
 export function isPumpObject(pump) {
   return !isNumber(pump) && !Number.isNaN(pump);
 }
+
+export function parsePumpPowerInput(raw) {
+  if (raw === '') return Number.NaN;
+  const parsed = Number.parseFloat(raw);
+  if (!Number.isNaN(parsed)) return parsed;
+  return undefined;
+}
