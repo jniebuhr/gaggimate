@@ -1,5 +1,5 @@
 import Card from '../../components/Card.jsx';
-import { useCallback, useState, useContext } from 'preact/hooks';
+import { useCallback, useState, useContext, useRef, useEffect } from 'preact/hooks';
 import { HistoryChart } from './HistoryChart.jsx';
 import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,8 +12,9 @@ import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import ShotNotesCard from './ShotNotesCard.jsx';
-import { useConfirmAction } from '../../hooks/useConfirmAction.js';
+import { HoldToConfirmButton } from '../../components/HoldToConfirmButton.jsx';
 
 import VisualizerUploadModal from '../../components/VisualizerUploadModal.jsx';
 import { visualizerService } from '../../services/VisualizerService.js';
@@ -29,7 +30,29 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
   const apiService = useContext(ApiServiceContext);
   const [shotNotes, setShotNotes] = useState(shot.notes || null);
   const [expanded, setExpanded] = useState(false);
-  const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
+  const [hasOpened, setHasOpened] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handleOutsideClick = event => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleOutsideClick);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [dropdownOpen]);
+
+  const closeDropdownMenu = useCallback(() => {
+    setDropdownOpen(false);
+  }, []);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -141,6 +164,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
             onClick={() => {
               const next = !expanded;
               setExpanded(next);
+              if (next) setHasOpened(true);
               if (next && !shot.loaded && onLoad) onLoad(shot.id);
             }}
             aria-label={expanded ? 'Collapse shot details' : 'Expand shot details'}
@@ -177,61 +201,73 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                   </span>
                 )}
 
-                <div className='flex flex-row gap-1'>
-                  <Tooltip content={shot.loaded ? 'Export' : 'Load first'}>
-                    <button
-                      disabled={!shot.loaded}
-                      onClick={onExport}
-                      className='text-base-content/50 hover:text-info hover:bg-info/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
-                      aria-label='Export shot data'
-                    >
-                      <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
-                    </button>
-                  </Tooltip>
-
-                  {/* Analyzer Button */}
-                  <Tooltip content='Open in Analyzer'>
-                    <a
-                      href={`/analysis/analyzer/internal/${shot.id}`}
-                      className='text-base-content/50 hover:text-primary hover:bg-primary/10 flex items-center justify-center rounded-md p-2 transition-colors'
-                      aria-label='Open in Analyzer'
-                    >
-                      <FontAwesomeIcon icon={faMagnifyingGlassChart} className='h-4 w-4' />
-                    </a>
-                  </Tooltip>
-
-                  <Tooltip
-                    content={
-                      canUpload
-                        ? 'Upload to Visualizer.coffee'
-                        : 'Load shot data first by expanding the shot'
-                    }
+                <div
+                  className={`action-dropdown relative ${dropdownOpen ? 'action-dropdown-open' : ''}`}
+                  ref={dropdownRef}
+                >
+                  <button
+                    onClick={() => setDropdownOpen(open => !open)}
+                    className='btn btn-sm btn-ghost btn-circle'
+                    aria-label={`Open actions menu for shot ${shot.id}`}
+                    aria-expanded={dropdownOpen}
                   >
-                    <button
-                      onClick={() => setShowUploadModal(true)}
-                      disabled={!canUpload}
-                      className={`group inline-block cursor-pointer items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm font-semibold ${
-                        canUpload
-                          ? 'text-success hover:bg-success/10 active:border-success/20'
-                          : 'cursor-not-allowed text-gray-400'
-                      }`}
-                      aria-label='Upload to visualizer.coffee'
-                    >
-                      <FontAwesomeIcon icon={faUpload} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content={confirmDelete ? 'Click to confirm delete' : 'Delete'}>
-                    <button
-                      onClick={() => {
-                        confirmOrDelete(() => onDelete(shot.id));
-                      }}
-                      className={`cursor-pointer rounded-md p-2 transition-colors ${confirmDelete ? 'bg-error text-error-content font-semibold' : 'text-base-content/50 hover:text-error hover:bg-error/10'}`}
-                      aria-label={confirmDelete ? 'Confirm deletion of shot' : 'Delete shot'}
-                    >
-                      <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
-                      {confirmDelete && <span className='ml-2 hidden sm:inline'>Confirm</span>}
-                    </button>
-                  </Tooltip>
+                    <FontAwesomeIcon icon={faEllipsisVertical} />
+                  </button>
+                  <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-lg'>
+                    <li>
+                      <button
+                        disabled={!shot.loaded}
+                        onClick={() => {
+                          onExport();
+                          closeDropdownMenu();
+                        }}
+                        className='justify-start disabled:opacity-50'
+                        aria-label='Export shot data'
+                      >
+                        <FontAwesomeIcon icon={faFileExport} />
+                        <span>Export</span>
+                      </button>
+                    </li>
+                    <li>
+                      <a
+                        href={`/analysis/analyzer/internal/${shot.id}`}
+                        onClick={closeDropdownMenu}
+                        className='justify-start'
+                        aria-label='Open in Analyzer'
+                      >
+                        <FontAwesomeIcon icon={faMagnifyingGlassChart} />
+                        <span>Analyzer</span>
+                      </a>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          setShowUploadModal(true);
+                          closeDropdownMenu();
+                        }}
+                        disabled={!canUpload}
+                        className='justify-start disabled:opacity-50'
+                        aria-label='Upload to visualizer.coffee'
+                      >
+                        <FontAwesomeIcon icon={faUpload} />
+                        <span>Upload</span>
+                      </button>
+                    </li>
+                    <li>
+                      <HoldToConfirmButton
+                        onConfirm={() => {
+                          onDelete(shot.id);
+                          closeDropdownMenu();
+                        }}
+                        className='justify-start text-error hover:bg-error/10 active:!bg-transparent active:!text-error'
+                        aria-label='Hold to delete shot'
+                        holdDurationMs={2000}
+                      >
+                        <FontAwesomeIcon icon={faTrashCan} />
+                        <span>Hold to Delete</span>
+                      </HoldToConfirmButton>
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -263,23 +299,30 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
               )}
             </div>
 
-            {expanded && (
-              <div className='border-base-content/20 mt-4 border-t pt-4'>
-                {!shot.loaded && (
-                  <div className='flex items-center justify-center py-8'>
-                    <span className='text-base-content/70 text-sm'>Loading shot data...</span>
+            <div
+              className='grid transition-all duration-[250ms] ease-out'
+              style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
+            >
+              <div className='overflow-hidden'>
+                {hasOpened && (
+                  <div className='border-base-content/20 mt-4 border-t pt-4'>
+                    {!shot.loaded && (
+                      <div className='flex items-center justify-center py-8'>
+                        <span className='text-base-content/70 text-sm'>Loading shot data...</span>
+                      </div>
+                    )}
+                    {shot.loaded && <HistoryChart shot={shot} />}
+                    {shot.loaded && (
+                      <ShotNotesCard
+                        shot={shot}
+                        onNotesLoaded={handleNotesLoaded}
+                        onNotesUpdate={handleNotesUpdate}
+                      />
+                    )}
                   </div>
                 )}
-                {shot.loaded && <HistoryChart shot={shot} />}
-                {shot.loaded && (
-                  <ShotNotesCard
-                    shot={shot}
-                    onNotesLoaded={handleNotesLoaded}
-                    onNotesUpdate={handleNotesUpdate}
-                  />
-                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

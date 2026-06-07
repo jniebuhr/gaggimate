@@ -19,7 +19,7 @@ import {
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
 import { ProfileTypeSelection } from '../ProfileEdit/ProfileTypeSelection.jsx';
-import { useConfirmAction } from '../../hooks/useConfirmAction.js';
+import { HoldToConfirmButton } from '../../components/HoldToConfirmButton.jsx';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver.js';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
@@ -34,7 +34,8 @@ import { ProgressiveContent } from '../../components/ProgressiveContent.jsx';
 import { ProfileListSkeleton } from '../../components/Skeletons.jsx';
 import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy';
@@ -108,7 +109,7 @@ function ProfileCard({
   isFirst,
   isLast,
 }) {
-  const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
+  // (Removed useConfirmAction for single delete)
   const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
   const [cardDropdownOpen, setCardDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -145,7 +146,8 @@ function ProfileCard({
     setTimeout(() => setTooltipsDisabled(false), 500);
   }, [onMoveBottom, data.id]);
 
-  const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
+  const visibilityClass = data.favorite ? 'text-success' : 'text-base-content/60';
+  const visibilityIcon = data.favorite ? faEye : faEyeSlash;
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
   const favoriteToggleDisabled = data.favorite ? unfavoriteDisabled : favoriteDisabled;
@@ -169,8 +171,20 @@ function ProfileCard({
   const statsHref = buildStatisticsProfileHref({ source: 'gaggimate', profileName: data.label });
 
   // Toggle profile details
-  const [detailsCollapsed, setDetailsCollapsed] = useState(true);
-  const onToggleDetails = useCallback(() => setDetailsCollapsed(v => !v), []);
+  const [detailsCollapsed, setDetailsCollapsed] = useState(!data.selected);
+  const [hasOpened, setHasOpened] = useState(!!data.selected);
+
+  useEffect(() => {
+    if (data.selected) {
+      setHasOpened(true);
+      setDetailsCollapsed(false);
+    }
+  }, [data.selected]);
+
+  const onToggleDetails = useCallback(() => {
+    setHasOpened(true);
+    setDetailsCollapsed(v => !v);
+  }, []);
   const chevronRotation = detailsCollapsed ? '' : 'rotate-90';
   const detailsSectionId = `profile-${data.id}-summary`;
 
@@ -185,246 +199,181 @@ function ProfileCard({
   }, []);
 
   return (
-    <Card role='listitem' className='profile-card-container col-span-12'>
+    <Card role='listitem' className='profile-card-container col-span-12 [&>.card-body]:p-0 [&>.card-body]:gap-0 overflow-hidden'>
+      {/* ── Clickable header row ── */}
       <div
-        className='flex flex-row items-center'
-        role='group'
-        aria-labelledby={`profile-${data.id}-title`}
+        className='px-5 py-4 flex flex-row items-center gap-3 cursor-pointer select-none transition-colors duration-150 hover:bg-base-content/5'
+        onClick={onToggleDetails}
+        role='button'
+        tabIndex={0}
+        aria-expanded={!detailsCollapsed}
+        aria-controls={detailsSectionId}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggleDetails();
+          }
+        }}
       >
-        <div className='flex min-w-0 flex-grow flex-col'>
-          <div className='mx-2 flex flex-row items-center gap-2 align-middle'>
-            <div className='flex min-w-0 flex-grow flex-row items-center gap-4'>
-              {/* CheckBox */}
-              <div>
-                <label className='cursor-pointer'>
-                  <input
-                    checked={data.selected}
-                    type='checkbox'
-                    onClick={() => onSelect(data.id)}
-                    className='checkbox checkbox-success checkbox-sm'
-                    aria-label={`Select ${data.label} profile`}
-                  />
-                </label>
-              </div>
-              {/* Label and Type */}
-              <div className='flex flex-row flex-wrap items-center gap-4'>
-                <span
-                  id={`profile-${data.id}-title`}
-                  className='min-w-0 flex-1 truncate text-sm leading-tight font-bold lg:text-xl'
-                >
-                  {data.label}
-                </span>
-                <span
-                  className={`${typeClass} badge-sm lg:badge-md font-medium`}
-                  aria-label={`Profile type: ${typeText}`}
-                >
-                  {typeText}
-                </span>
-                <button
-                  onClick={onToggleDetails}
-                  className='btn btn-xs btn-ghost self-start'
-                  aria-label={`${detailsCollapsed ? 'Show' : 'Hide'} details for ${data.label}`}
-                  aria-expanded={!detailsCollapsed}
-                  aria-controls={detailsSectionId}
-                  title={detailsCollapsed ? 'Show details' : 'Hide details'}
-                >
-                  <FontAwesomeIcon
-                    icon={faChevronRight}
-                    className={`transition-transform ${chevronRotation}`}
-                  />
-                </button>
-              </div>
-              {/*- Actions -*/}
-              <div
-                className='flex flex-1 flex-row justify-end gap-2'
-                role='group'
-                aria-label={`Actions for ${data.label} profile`}
-              >
-                {/* Mobile: DaisyUI dropdown actions menu */}
-                <div
-                  className={`action-dropdown relative sm:hidden ${cardDropdownOpen ? 'action-dropdown-open' : ''}`}
-                  ref={dropdownRef}
-                >
-                  <button
-                    onClick={() => setCardDropdownOpen(open => !open)}
-                    className='btn btn-sm btn-ghost btn-circle'
-                    aria-label={`Open actions menu for ${data.label} profile`}
-                    aria-expanded={cardDropdownOpen}
-                  >
-                    <FontAwesomeIcon icon={faEllipsisVertical} />
-                  </button>
-                  <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-lg'>
-                    <li>
-                      <button
-                        onClick={() => {
-                          onFavoriteToggle();
-                          closeDropdownMenu();
-                        }}
-                        disabled={favoriteToggleDisabled}
-                        className={`justify-start ${favoriteToggleClass}`}
-                        aria-label={
-                          data.favorite
-                            ? `Remove ${data.label} from favorites`
-                            : `Add ${data.label} to favorites`
-                        }
-                        aria-pressed={data.favorite}
-                      >
-                        <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                        <span>{data.favorite ? 'Unfavorite' : 'Favorite'}</span>
-                      </button>
-                    </li>
-                    <li>
-                      <a
-                        href={`/profiles/${data.id}`}
-                        onClick={closeDropdownMenu}
-                        aria-label={`Edit ${data.label} profile`}
-                      >
-                        <FontAwesomeIcon icon={faPen} />
-                        <span>Edit</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href={statsHref}
-                        onClick={closeDropdownMenu}
-                        className='text-success justify-start'
-                        aria-label={`View statistics for ${data.label} profile`}
-                      >
-                        <FontAwesomeIcon icon={faChartSimple} />
-                        <span>Statistics</span>
-                      </a>
-                    </li>
-                    <li>
-                      <button
-                        onClick={() => {
-                          onDownload();
-                          closeDropdownMenu();
-                        }}
-                        className='text-primary justify-start'
-                        aria-label={`Export ${data.label} profile`}
-                      >
-                        <FontAwesomeIcon icon={faFileExport} />
-                        <span>Export</span>
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        onClick={() => {
-                          onDuplicate(data.id);
-                          closeDropdownMenu();
-                        }}
-                        className='text-success justify-start'
-                        aria-label={`Duplicate ${data.label} profile`}
-                      >
-                        <FontAwesomeIcon icon={faCopy} />
-                        <span>Duplicate</span>
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        onClick={() => {
-                          confirmOrDelete(() => {
-                            onDelete(data.id);
-                            closeDropdownMenu();
-                          });
-                        }}
-                        className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
-                        aria-label={
-                          confirmDelete
-                            ? `Confirm deletion of ${data.label} profile`
-                            : `Delete ${data.label} profile`
-                        }
-                        title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
-                      >
-                        <FontAwesomeIcon icon={faTrashCan} />
-                        <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
-                      </button>
-                    </li>
-                  </ul>
-                </div>
+        {/* Checkbox — stop propagation so click doesn't toggle accordion */}
+        <div className='flex items-center shrink-0' onClick={e => e.stopPropagation()}>
+          <Tooltip content={data.selected ? 'Active' : 'Set active'}>
+            <label className='cursor-pointer'>
+              <input
+                checked={data.selected}
+                type='checkbox'
+                onClick={() => onSelect(data.id)}
+                className='checkbox checkbox-success checkbox-sm'
+                aria-label={`Select ${data.label} profile`}
+              />
+            </label>
+          </Tooltip>
+        </div>
 
-                {/* Desktop: inline actions */}
-                <div
-                  className='hidden flex-row justify-end gap-2 sm:flex'
-                  role='group'
-                  aria-label={`Actions for ${data.label} profile`}
-                >
-                  <Tooltip content={data.favorite ? 'Remove from favorites' : 'Add to favorites'}>
-                    <button
-                      onClick={onFavoriteToggle}
-                      disabled={favoriteToggleDisabled}
-                      className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
-                      aria-label={
-                        data.favorite
-                          ? `Remove ${data.label} from favorites`
-                          : `Add ${data.label} to favorites`
-                      }
-                      aria-pressed={data.favorite}
-                    >
-                      <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content='Edit profile'>
-                    <a
-                      href={`/profiles/${data.id}`}
-                      className='btn btn-sm btn-ghost'
-                      aria-label={`Edit ${data.label} profile`}
-                    >
-                      <FontAwesomeIcon icon={faPen} />
-                    </a>
-                  </Tooltip>
-                  <Tooltip content='View statistics for this profile'>
-                    <a
-                      href={statsHref}
-                      className='btn btn-sm btn-ghost text-success'
-                      aria-label={`View statistics for ${data.label} profile`}
-                    >
-                      <FontAwesomeIcon icon={faChartSimple} />
-                    </a>
-                  </Tooltip>
-                  <Tooltip content='Export profile'>
-                    <button
-                      onClick={onDownload}
-                      className='btn btn-sm btn-ghost text-primary'
-                      aria-label={`Export ${data.label} profile`}
-                    >
-                      <FontAwesomeIcon icon={faFileExport} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content='Duplicate profile'>
-                    <button
-                      onClick={() => onDuplicate(data.id)}
-                      className='btn btn-sm btn-ghost text-success'
-                      aria-label={`Duplicate ${data.label} profile`}
-                    >
-                      <FontAwesomeIcon icon={faCopy} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content={confirmDelete ? 'Click to confirm' : 'Delete profile'}>
-                    <button
-                      onClick={() => {
-                        confirmOrDelete(() => onDelete(data.id));
-                      }}
-                      className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
-                      aria-label={
-                        confirmDelete
-                          ? `Confirm deletion of ${data.label} profile`
-                          : `Delete ${data.label} profile`
-                      }
-                    >
-                      <FontAwesomeIcon icon={faTrashCan} />
-                      {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
-                    </button>
-                  </Tooltip>
-                </div>
-              </div>
-            </div>
+        {/* Title + Chevron grouped together */}
+        <div className='flex-1 min-w-0 flex items-center gap-2'>
+          <span
+            id={`profile-${data.id}-title`}
+            className='min-w-0 truncate text-sm leading-tight font-bold lg:text-xl'
+          >
+            {data.label}
+          </span>
+          <FontAwesomeIcon
+            icon={faChevronRight}
+            className={`profile-card-chevron shrink-0 text-base-content/40 ${detailsCollapsed ? '' : 'expanded'}`}
+            aria-hidden='true'
+          />
+        </div>
+
+        {/* Actions — stop propagation */}
+        <div
+          className='flex items-center gap-2 shrink-0'
+          role='group'
+          aria-label={`Actions for ${data.label} profile`}
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => e.stopPropagation()}
+        >
+          {/* Desktop-only: Inline Visibility & Edit actions */}
+          <div className='hidden sm:flex flex-row items-center gap-2'>
+            <Tooltip content={data.favorite ? 'Hide profile' : 'Make profile visible'}>
+              <button
+                onClick={onFavoriteToggle}
+                disabled={favoriteToggleDisabled}
+                className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
+                aria-label={data.favorite ? `Hide ${data.label}` : `Make ${data.label} visible`}
+                aria-pressed={data.favorite}
+              >
+                <FontAwesomeIcon icon={visibilityIcon} className={visibilityClass} />
+              </button>
+            </Tooltip>
+            <Tooltip content='Edit profile'>
+              <a
+                href={`/profiles/${data.id}`}
+                className='btn btn-sm btn-ghost'
+                aria-label={`Edit ${data.label} profile`}
+              >
+                <FontAwesomeIcon icon={faPen} />
+              </a>
+            </Tooltip>
           </div>
-          <div className={`${isDragging ? 'hidden' : ''}`}>
-            {!detailsCollapsed && (
-              <div id={detailsSectionId} className='mx-2 mt-2 flex flex-col items-start gap-2'>
-                <span className='text-base-content/60 text-xs md:text-sm'>{data.description}</span>
-                <div className='flex flex-row gap-2'>
+
+          {/* Overflow/Actions Dropdown */}
+          <div
+            className={`action-dropdown relative ${cardDropdownOpen ? 'action-dropdown-open' : ''}`}
+            ref={dropdownRef}
+          >
+            <button
+              onClick={() => setCardDropdownOpen(open => !open)}
+              className='btn btn-sm btn-ghost btn-circle'
+              aria-label={`Open actions menu for ${data.label} profile`}
+              aria-expanded={cardDropdownOpen}
+            >
+              <FontAwesomeIcon icon={faEllipsisVertical} />
+            </button>
+            <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-lg'>
+              {/* Mobile-only actions inside overflow */}
+              <li className='sm:hidden'>
+                <button
+                  onClick={() => { onFavoriteToggle(); closeDropdownMenu(); }}
+                  disabled={favoriteToggleDisabled}
+                  className={`justify-start ${favoriteToggleClass}`}
+                  aria-label={data.favorite ? `Hide ${data.label}` : `Make ${data.label} visible`}
+                  aria-pressed={data.favorite}
+                >
+                  <FontAwesomeIcon icon={visibilityIcon} className={visibilityClass} />
+                  <span>{data.favorite ? 'Visible' : 'Hidden'}</span>
+                </button>
+              </li>
+              <li className='sm:hidden'>
+                <a
+                  href={`/profiles/${data.id}`}
+                  onClick={closeDropdownMenu}
+                  aria-label={`Edit ${data.label} profile`}
+                >
+                  <FontAwesomeIcon icon={faPen} />
+                  <span>Edit</span>
+                </a>
+              </li>
+              {/* Shared actions */}
+              <li>
+                <a href={statsHref} onClick={closeDropdownMenu} className='justify-start' aria-label={`View statistics for ${data.label} profile`}>
+                  <FontAwesomeIcon icon={faChartSimple} />
+                  <span>Statistics</span>
+                </a>
+              </li>
+              <li>
+                <button onClick={() => { onDownload(); closeDropdownMenu(); }} className='justify-start' aria-label={`Export ${data.label} profile`}>
+                  <FontAwesomeIcon icon={faFileExport} />
+                  <span>Export</span>
+                </button>
+              </li>
+              <li>
+                <button onClick={() => { onDuplicate(data.id); closeDropdownMenu(); }} className='justify-start' aria-label={`Duplicate ${data.label} profile`}>
+                  <FontAwesomeIcon icon={faCopy} />
+                  <span>Duplicate</span>
+                </button>
+              </li>
+              <li>
+                <HoldToConfirmButton
+                  onConfirm={() => { onDelete(data.id); closeDropdownMenu(); }}
+                  className='justify-start text-error hover:bg-error/10 active:!bg-transparent active:!text-error'
+                  aria-label={`Hold to delete ${data.label} profile`}
+                  title='Hold to delete profile'
+                  holdDurationMs={2000}
+                >
+                  <FontAwesomeIcon icon={faTrashCan} />
+                  <span>Hold to Delete</span>
+                </HoldToConfirmButton>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── Animated accordion body ── */}
+      {!isDragging && (
+        <div
+          className='profile-card-accordion'
+          data-expanded={!detailsCollapsed}
+        >
+          <div className='overflow-hidden'>
+            {hasOpened && (
+              <div
+                id={detailsSectionId}
+                className='profile-card-content px-5 pb-5 flex flex-col gap-3'
+              >
+                {/* Meta badges */}
+                <div className='flex flex-row flex-wrap items-center gap-2'>
+                  {data.description && (
+                    <span className='text-base-content/60 text-xs md:text-sm w-full'>{data.description}</span>
+                  )}
+                  <span
+                    className={`${typeClass} badge-xs md:badge-sm font-medium`}
+                    aria-label={`Profile type: ${typeText}`}
+                  >
+                    {typeText}
+                  </span>
                   <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
                     <FontAwesomeIcon icon={faTemperatureFull} />
                     {data.temperature}°C
@@ -434,9 +383,7 @@ function ProfileCard({
                     {totalDurationSeconds}s
                   </span>
                   {data.phases.length > 0 &&
-                    data.phases[data.phases.length - 1]?.targets?.some(
-                      t => t.type === 'volumetric',
-                    ) && (
+                    data.phases[data.phases.length - 1]?.targets?.some(t => t.type === 'volumetric') && (
                       <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
                         <FontAwesomeIcon icon={faScaleBalanced} />
                         {`${data.phases[data.phases.length - 1].targets.find(t => t.type === 'volumetric').value}g`}
@@ -448,63 +395,60 @@ function ProfileCard({
                     </span>
                   )}
                 </div>
+
+                {/* Chart + reorder controls */}
+                <div className='flex flex-row gap-2'>
+                  {/* Reorder controls */}
+                  <div className='flex flex-col justify-evenly shrink-0'>
+                    <Tooltip content='Move to top' disabled={isDragging || tooltipsDisabled}>
+                      <button
+                        onClick={handleMoveTop}
+                        disabled={isFirst}
+                        className='drag-to-top btn btn-sm btn-ghost'
+                        aria-label={`Move ${data.label} to top`}
+                        aria-disabled={isFirst}
+                      >
+                        <FontAwesomeIcon icon={faAnglesUp} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={disabledDrag ? 'Drag disabled on search result' : 'Drag to reorder'} disabled={isDragging}>
+                      <div className={`drag-handle btn btn-sm btn-ghost ${disabledDrag ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}>
+                        <FontAwesomeIcon icon={faGripVertical} />
+                      </div>
+                    </Tooltip>
+                    <Tooltip content='Move to bottom' disabled={isDragging || tooltipsDisabled}>
+                      <button
+                        onClick={handleMoveBottom}
+                        disabled={isLast}
+                        className='drag-to-bottom btn btn-sm btn-ghost'
+                        aria-label={`Move ${data.label} to bottom`}
+                        aria-disabled={isLast}
+                      >
+                        <FontAwesomeIcon icon={faAnglesDown} />
+                      </button>
+                    </Tooltip>
+                  </div>
+
+                  {/* Chart */}
+                  <div className='flex-1 min-w-0' ref={chartContainerRef}>
+                    {hasIntersected ? (
+                      data.type === 'pro' ? (
+                        <ExtendedProfileChart data={data} className='h-36 md:h-48 w-full' />
+                      ) : (
+                        <SimpleContent data={data} />
+                      )
+                    ) : data.type === 'pro' ? (
+                      <div className='skeleton h-36 md:h-48 w-full opacity-30' aria-hidden='true'></div>
+                    ) : (
+                      <div className='skeleton h-16 w-full opacity-30' aria-hidden='true'></div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
-            <div
-              className='flex flex-row gap-2 py-2'
-              aria-label={`Profile details for ${data.label}`}
-            >
-              <div className='flex flex-col justify-evenly pr-1'>
-                <Tooltip content='Move to top' disabled={isDragging || tooltipsDisabled}>
-                  <button
-                    onClick={handleMoveTop}
-                    disabled={isFirst}
-                    className='drag-to-top btn btn-sm btn-ghost'
-                    aria-label={`Move ${data.label} to top`}
-                    aria-disabled={isFirst}
-                  >
-                    <FontAwesomeIcon icon={faAnglesUp} />
-                  </button>
-                </Tooltip>
-                <Tooltip
-                  content={`${disabledDrag ? 'Drag disabled on search result' : 'Drag to reorder'}`}
-                  disabled={isDragging}
-                >
-                  <div
-                    className={`drag-handle btn btn-sm btn-ghost ${disabledDrag ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
-                  >
-                    <FontAwesomeIcon icon={faGripVertical} />
-                  </div>
-                </Tooltip>
-                <Tooltip content='Move to bottom' disabled={isDragging || tooltipsDisabled}>
-                  <button
-                    onClick={handleMoveBottom}
-                    disabled={isLast}
-                    className='drag-to-bottom btn btn-sm btn-ghost'
-                    aria-label={`Move ${data.label} to bottom`}
-                    aria-disabled={isLast}
-                  >
-                    <FontAwesomeIcon icon={faAnglesDown} />
-                  </button>
-                </Tooltip>
-              </div>
-              <div className='flex-grow overflow-x-auto min-h-16' ref={chartContainerRef}>
-                {hasIntersected ? (
-                  data.type === 'pro' ? (
-                    <ExtendedProfileChart data={data} className='max-h-36' />
-                  ) : (
-                    <SimpleContent data={data} />
-                  )
-                ) : data.type === 'pro' ? (
-                  <div className='skeleton h-36 w-full opacity-30' aria-hidden='true'></div>
-                ) : (
-                  <div className='skeleton h-16 w-full opacity-30' aria-hidden='true'></div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
-      </div>
+      )}
     </Card>
   );
 }
@@ -567,7 +511,7 @@ export function ProfileList() {
   const [activeTab, setActiveTab] = useState('extraction');
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
-  const { armed: confirmDeleteAll, armOrRun: confirmOrDeleteAll } = useConfirmAction(4000);
+  // (Removed useConfirmAction for delete all)
   const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
   const mobileSearchInputRef = useRef(null);
   const [mobileHeaderDropdownOpen, setMobileHeaderDropdownOpen] = useState(false);
@@ -964,7 +908,7 @@ export function ProfileList() {
       <li>
         <button
           onClick={onExport}
-          className='text-primary hover:bg-primary/10 justify-start'
+          className='justify-start'
           aria-label='Export all profiles'
         >
           <FontAwesomeIcon icon={faFileExport} />
@@ -974,7 +918,7 @@ export function ProfileList() {
       <li>
         <label
           htmlFor='profileImport'
-          className='text-success hover:bg-success/10 flex cursor-pointer items-center justify-start gap-2'
+          className='flex cursor-pointer items-center justify-start gap-2'
           aria-label='Import profiles'
         >
           <FontAwesomeIcon icon={faFileImport} />
@@ -982,16 +926,15 @@ export function ProfileList() {
         </label>
       </li>
       <li>
-        <button
-          onClick={() => {
-            confirmOrDeleteAll(onClear);
-          }}
-          className={`justify-start ${confirmDeleteAll ? 'bg-error text-error-content rounded font-semibold' : 'text-error hover:bg-error/10'}`}
-          aria-label={confirmDeleteAll ? 'Confirm deletion of all profiles' : 'Delete all profiles'}
+        <HoldToConfirmButton
+          onConfirm={onClear}
+          className='justify-start text-error hover:bg-error/10 active:!bg-transparent active:!text-error'
+          aria-label='Hold to delete all profiles'
+          holdDurationMs={2000}
         >
           <FontAwesomeIcon icon={faTrashCan} />
-          <span>{confirmDeleteAll ? 'Confirm Delete All' : 'Delete All Profiles'}</span>
-        </button>
+          <span>Hold to Delete All</span>
+        </HoldToConfirmButton>
       </li>
     </>
   );

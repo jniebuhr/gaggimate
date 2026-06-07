@@ -103,6 +103,15 @@ export function ChartComponent({ data, className, chartClassName }) {
       window.visualViewport.addEventListener('resize', handleResize);
     }
 
+    // ResizeObserver: handles accordion open/close animations and any container resize
+    let resizeObserver;
+    if (ref.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        chart.resize();
+      });
+      resizeObserver.observe(ref.current);
+    }
+
     // Initial call to ensure correct sizing
     handleResize();
 
@@ -112,6 +121,9 @@ export function ChartComponent({ data, className, chartClassName }) {
       window.removeEventListener('orientationchange', handleOrientationChange);
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', handleResize);
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect();
       }
     };
   }, [chart]);

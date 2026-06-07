@@ -8,7 +8,7 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { Tooltip } from '../../components/Tooltip.jsx';
 
 export function StandardProfileForm(props) {
-  const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
+  const { data, onChange, onSave, saving = true, pressureAvailable = false, isNew = false } = props;
 
   const onFieldChange = (field, value) => {
     onChange({
@@ -158,10 +158,10 @@ export function StandardProfileForm(props) {
               type='submit'
               className='btn btn-primary btn-sm flex-1 sm:flex-none'
               disabled={saving}
-              aria-label={saving ? 'Saving profile...' : 'Save profile'}
+              aria-label={saving ? (isNew ? 'Creating profile...' : 'Saving profile...') : (isNew ? 'Create profile' : 'Save profile')}
             >
               {saving && <Spinner size={4} className='mr-2' />}
-              Save
+              {isNew ? 'Create' : 'Save'}
             </button>
             <a href='/profiles' className='btn btn-ghost btn-sm flex-1 sm:flex-none'>
               Cancel

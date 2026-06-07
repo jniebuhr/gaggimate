@@ -8,9 +8,10 @@ import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { Tooltip } from '../../components/Tooltip.jsx';
 
 export function ExtendedProfileForm(props) {
-  const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
+  const { data, onChange, onSave, saving = true, pressureAvailable = false, isNew = false } = props;
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
 
   const onFieldChange = (field, value) => {
@@ -140,43 +141,51 @@ export function ExtendedProfileForm(props) {
               {currentPhaseIndex + 1} / {data.phases.length}
             </h5>
             <div>
-              <div className='join' role='group' aria-label='Phase navigation'>
-                <button
-                  type='button'
-                  className={`join-item btn btn-outline max-sm:btn-sm`}
-                  aria-label='Previous'
-                  disabled={currentPhaseIndex === 0}
-                  onClick={() => setCurrentPhaseIndex(currentPhaseIndex - 1)}
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} />
-                </button>
-                <button
-                  type='button'
-                  className={`join-item btn btn-outline max-sm:btn-sm`}
-                  aria-label='Next'
-                  disabled={currentPhaseIndex === data.phases.length - 1}
-                  onClick={() => setCurrentPhaseIndex(currentPhaseIndex + 1)}
-                >
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </button>
+              <div className='flex gap-1' role='group' aria-label='Phase navigation'>
+                <Tooltip content='Previous Phase'>
+                  <button
+                    type='button'
+                    className={`btn btn-outline max-sm:btn-sm`}
+                    aria-label='Previous'
+                    disabled={currentPhaseIndex === 0}
+                    onClick={() => setCurrentPhaseIndex(currentPhaseIndex - 1)}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                  </button>
+                </Tooltip>
+                <Tooltip content='Next Phase'>
+                  <button
+                    type='button'
+                    className={`btn btn-outline max-sm:btn-sm`}
+                    aria-label='Next'
+                    disabled={currentPhaseIndex === data.phases.length - 1}
+                    onClick={() => setCurrentPhaseIndex(currentPhaseIndex + 1)}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                  </button>
+                </Tooltip>
               </div>
             </div>
-            <button
-              type='button'
-              className={`join-item btn btn-outline max-sm:btn-sm`}
-              aria-label='Add phase'
-              onClick={() => onPhaseAdd()}
-            >
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-            <button
-              type='button'
-              className={`join-item btn btn-outline text-error max-sm:btn-sm`}
-              aria-label='Remove phase'
-              onClick={() => onPhaseRemove(currentPhaseIndex)}
-            >
-              <FontAwesomeIcon icon={faTrashCan} />
-            </button>
+            <Tooltip content='Add Phase'>
+              <button
+                type='button'
+                className={`btn btn-outline max-sm:btn-sm`}
+                aria-label='Add phase'
+                onClick={() => onPhaseAdd()}
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </Tooltip>
+            <Tooltip content='Remove Phase'>
+              <button
+                type='button'
+                className={`btn btn-outline text-error max-sm:btn-sm`}
+                aria-label='Remove phase'
+                onClick={() => onPhaseRemove(currentPhaseIndex)}
+              >
+                <FontAwesomeIcon icon={faTrashCan} />
+              </button>
+            </Tooltip>
           </div>
           <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
             <ExtendedPhase
@@ -197,10 +206,10 @@ export function ExtendedProfileForm(props) {
               type='submit'
               className='btn btn-primary btn-sm flex-1 sm:flex-none'
               disabled={saving}
-              aria-label={saving ? 'Saving profile...' : 'Save profile'}
+              aria-label={saving ? (isNew ? 'Creating profile...' : 'Saving profile...') : (isNew ? 'Create profile' : 'Save profile')}
             >
               {saving && <Spinner size={4} className='mr-2' />}
-              Save
+              {isNew ? 'Create' : 'Save'}
             </button>
             <a href='/profiles' className='btn btn-ghost btn-sm flex-1 sm:flex-none'>
               Cancel

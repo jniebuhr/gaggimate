@@ -388,7 +388,7 @@ export function Settings() {
                     onExport();
                     setDropdownOpen(false);
                   }}
-                  className='text-primary hover:bg-primary/10 justify-start gap-2 font-medium'
+                  className='justify-start gap-2 font-medium'
                   aria-label='Export settings'
                 >
                   <FontAwesomeIcon icon={faFileExport} />
@@ -398,7 +398,7 @@ export function Settings() {
               <li>
                 <label
                   htmlFor='settingsImport'
-                  className='text-success hover:bg-success/10 flex cursor-pointer items-center justify-start gap-2 font-medium'
+                  className='flex cursor-pointer items-center justify-start gap-2 font-medium'
                   aria-label='Import settings'
                   onClick={() => setDropdownOpen(false)}
                 >

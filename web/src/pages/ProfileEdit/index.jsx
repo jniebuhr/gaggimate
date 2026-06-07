@@ -166,7 +166,7 @@ export function ProfileEdit() {
                 onConvert();
                 setDropdownOpen(false);
               }}
-              className='text-primary hover:bg-primary/10 justify-start gap-2 font-medium'
+              className='justify-start gap-2 font-medium'
               aria-label='Convert to Pro'
             >
               <FontAwesomeIcon icon={faSliders} />
@@ -182,7 +182,7 @@ export function ProfileEdit() {
                 onExport();
                 setDropdownOpen(false);
               }}
-              className='text-success hover:bg-success/10 justify-start gap-2 font-medium'
+              className='justify-start gap-2 font-medium'
               aria-label='Export profile'
             >
               <FontAwesomeIcon icon={faFileExport} />
@@ -211,6 +211,7 @@ export function ProfileEdit() {
             onSave={onSave}
             saving={saving}
             pressureAvailable={pressureAvailable.value}
+            isNew={params.id === 'new'}
           />
         )}
         {data?.type === 'pro' && (
@@ -220,6 +221,7 @@ export function ProfileEdit() {
             onSave={onSave}
             saving={saving}
             pressureAvailable={pressureAvailable.value}
+            isNew={params.id === 'new'}
           />
         )}
       </ProgressiveContent>

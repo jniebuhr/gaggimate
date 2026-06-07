@@ -496,6 +496,49 @@ html[data-theme='coffee'] {
   }
 }
 
+/* ── Profile card accordion animation ── */
+
+/* Chevron rotates 90° when expanded */
+.profile-card-chevron {
+  transition: transform 280ms cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.profile-card-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+/* Accordion container: grid trick for height 0 → auto */
+.profile-card-accordion {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.profile-card-accordion[data-expanded='true'] {
+  grid-template-rows: 1fr;
+}
+
+/* Content fades + slides up as it reveals */
+.profile-card-content {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 220ms cubic-bezier(0.165, 0.84, 0.44, 1) 60ms,
+    transform 280ms cubic-bezier(0.165, 0.84, 0.44, 1);
+  will-change: opacity, transform;
+}
+.profile-card-accordion[data-expanded='true'] .profile-card-content {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .profile-card-chevron,
+  .profile-card-accordion,
+  .profile-card-content {
+    transition: none !important;
+  }
+}
+
 /* Elevate card stacking context when its actions dropdown is open */
 .profile-card-container:has(.action-dropdown-open),
 .card:has(.action-dropdown-open) {
