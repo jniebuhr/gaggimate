@@ -14,7 +14,12 @@ CONFIG_SPIRAM_TYPE_AUTO=y
 CONFIG_SPIRAM_BOOT_INIT=y
 CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y
 CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
-CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=512
+# Threshold below which allocations are forced into internal DRAM. arduino-esp32
+# baseline is 4096; we had dropped it to 512, which pushed mid-size (512-4096 B)
+# allocations to PSRAM and left internal DRAM shattered into tiny blocks —
+# startup fragmentation (1 - largest_free/total_free) ballooned 15% -> 64%,
+# starving contiguous internal allocs AsyncTCP needs to serve. Restore 4096.
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096
 CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=16384
 
 # Route NimBLE host + mbedTLS allocations to PSRAM (reclaims ~40 KB internal).
@@ -54,3 +59,21 @@ CONFIG_LIBC_NEWLIB_NANO_FORMAT=n
 # with exceptions on, so the display class enables them here. Controller env
 # does not link the scales lib and stays -fno-exceptions.
 CONFIG_COMPILER_CXX_EXCEPTIONS=y
+
+# --- RGB LCD: restart GDMA at every VBlank ---
+# Arduino's precompiled libs set this implicitly; the dual-framework build
+# would otherwise inherit the IDF default (n) and lose the protection.
+# Without it, a single PSRAM-bus contention event (WiFi/BT alloc, TLS
+# handshake, big WS payload) can desync LCD_CAM's pixel pointer from the
+# panel's HSYNC and PERMANENTLY shift the image until reboot — IDF docs
+# call this out as "permanently shifted image". Resetting the GDMA channel
+# at VSYNC_END (the start of VBlank) restarts the DMA stream from the
+# framebuffer head every frame, so any desync clears on the next refresh.
+# See components/esp_lcd/rgb/esp_lcd_panel_rgb.c — lcd_rgb_panel_try_restart_transmission().
+CONFIG_LCD_RGB_RESTART_IN_VSYNC=y
+
+# --- NimBLE bond persistence ---
+# IDF Kconfig help: "Enable this flag to make bonding persistent across
+# device reboots." Arduino-prebuilt has it on; IDF default is n. Without
+# it, every paired BLE peer (scale, HomeKit phone) re-pairs on every boot.
+CONFIG_BT_NIMBLE_NVS_PERSIST=y
