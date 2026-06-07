@@ -1,18 +1,12 @@
 class SafeGaggiMateClient {
-  constructor() {
-    this.apiService = null;
-  }
+  apiService = null;
 
   setApiService(apiService) {
     this.apiService = apiService;
   }
 
   isConnected() {
-    return Boolean(
-      this.apiService &&
-        this.apiService.socket &&
-        this.apiService.socket.readyState === WebSocket.OPEN,
-    );
+    return this.apiService?.socket?.readyState === WebSocket.OPEN;
   }
 
   getConnectionStatus() {
@@ -21,19 +15,19 @@ class SafeGaggiMateClient {
     };
   }
 
-  async requestRead(data) {
+  assertConnected() {
     if (!this.isConnected()) {
       throw new Error('GaggiMate websocket is not connected');
     }
+  }
 
+  async requestRead(data) {
+    this.assertConnected();
     return this.apiService.request(data);
   }
 
   async requestDataWrite(data) {
-    if (!this.isConnected()) {
-      throw new Error('GaggiMate websocket is not connected');
-    }
-
+    this.assertConnected();
     return this.apiService.request(data);
   }
 
