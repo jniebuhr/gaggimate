@@ -76,7 +76,7 @@ export default function VisualizerUploadModal({
 
   return (
     <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
-      <div className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'>
+      <div className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-lg dark:bg-gray-800'>
         <div className='p-6'>
           <div className='mb-4 flex items-center justify-between'>
             <h3 className='text-lg font-semibold'>Upload to Visualizer.coffee</h3>

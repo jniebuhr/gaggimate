@@ -33,7 +33,7 @@ import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 
 const connected = computed(() => machine.value.connected);
 
-export function ShotHistory() {
+export function ShotHistory({ isTab = false }) {
   const apiService = useContext(ApiServiceContext);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -198,13 +198,22 @@ export function ShotHistory() {
   return (
     <>
       <div className='mb-6'>
-        <div className='mb-4 flex flex-row items-center gap-2'>
-          <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
-          <span className='text-base-content/70 text-sm'>
-            {totalFilteredItems} of {history.length} shots{' '}
-            {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
-          </span>
-        </div>
+        {!isTab ? (
+          <div className='mb-4 flex flex-row items-center gap-2'>
+            <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
+            <span className='text-base-content/70 text-sm'>
+              {totalFilteredItems} of {history.length} shots{' '}
+              {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
+            </span>
+          </div>
+        ) : (
+          <div className='mb-4 flex flex-row items-center justify-between gap-2'>
+            <span className='text-base-content/70 text-sm font-medium'>
+              Showing {totalFilteredItems} of {history.length} shots{' '}
+              {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
+            </span>
+          </div>
+        )}
 
         {/* Controls Row */}
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>

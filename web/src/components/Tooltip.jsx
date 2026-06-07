@@ -11,7 +11,7 @@ import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/d
  * @param {preact.ComponentChildren} props.children - Trigger element
  * @param {'top'|'bottom'|'left'|'right'} [props.placement='top'] - Preferred placement
  */
-export function Tooltip({ content, children, placement = 'top', disabled = false }) {
+export function Tooltip({ content, children, placement = 'top', disabled = false, className = '' }) {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [actualPlacement, setActualPlacement] = useState(placement);
@@ -81,7 +81,7 @@ export function Tooltip({ content, children, placement = 'top', disabled = false
         onMouseLeave={hide}
         onFocus={show}
         onBlur={hide}
-        className='inline-flex'
+        className={`inline-flex ${className}`}
       >
         {children}
       </span>

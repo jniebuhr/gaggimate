@@ -23,6 +23,9 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
+import PageLayout from '../../components/PageLayout.jsx';
+import PageHeader from '../../components/PageHeader.jsx';
+import TabBar from '../../components/TabBar.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
 import { downloadJson } from '../../utils/download.js';
@@ -43,7 +46,9 @@ import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
-import { faAnglesDown, faAnglesUp, faGripVertical } from '@fortawesome/free-solid-svg-icons';
+import { faAnglesDown } from '@fortawesome/free-solid-svg-icons/faAnglesDown';
+import { faAnglesUp } from '@fortawesome/free-solid-svg-icons/faAnglesUp';
+import { faGripVertical } from '@fortawesome/free-solid-svg-icons/faGripVertical';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 
 Chart.register(
@@ -172,7 +177,7 @@ function ProfileCard({
   }, []);
 
   return (
-    <Card sm={12} role='listitem' className='profile-card-container mb-2'>
+    <Card role='listitem' className='profile-card-container col-span-12'>
       <div
         className='flex flex-row items-center'
         role='group'
@@ -240,7 +245,7 @@ function ProfileCard({
                   >
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </button>
-                  <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-xl'>
+                  <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-lg'>
                     <li>
                       <button
                         onClick={() => {
@@ -991,99 +996,98 @@ export function ProfileList() {
   }
 
   return (
-    <div className='relative w-full'>
-      <div className='profile-list-header relative z-20 flex h-12 flex-row items-center justify-between overflow-visible'>
-        {/* Left Side: Title */}
-        <h1 className='text-2xl font-bold sm:text-3xl'>Profiles</h1>
-
-        {/* Right Side: Action Icons on Mobile, Standard controls on Desktop/Tablet */}
-        <div className='flex flex-row items-center gap-3'>
-          {/* Mobile-only Action Buttons */}
-          <div className='flex flex-row items-center gap-1 sm:hidden'>
-            <button
-              onClick={() => setIsMobileSearchActive(active => !active)}
-              className={`btn btn-ghost btn-circle text-base-content/80 transition-colors ${isMobileSearchActive ? 'text-primary bg-primary/10 duration-75' : 'duration-150'}`}
-              aria-label='Toggle search bar'
-              aria-expanded={isMobileSearchActive}
-            >
-              <FontAwesomeIcon icon={faSearch} size='lg' />
-            </button>
-            <a
-              href='/profiles/new'
-              className='btn btn-ghost btn-circle text-primary'
-              aria-label='Create new profile'
-            >
-              <FontAwesomeIcon icon={faPlus} size='lg' />
-            </a>
-            <div
-              className={`action-dropdown relative ${mobileHeaderDropdownOpen ? 'action-dropdown-open' : ''}`}
-              ref={mobileHeaderDropdownRef}
-            >
+    <PageLayout variant='narrow'>
+      <PageHeader
+        title='Profiles'
+        actions={
+          <div className='flex flex-row items-center gap-3'>
+            {/* Mobile-only Action Buttons */}
+            <div className='flex flex-row items-center gap-1 sm:hidden'>
               <button
-                onClick={() => setMobileHeaderDropdownOpen(open => !open)}
-                className='btn btn-ghost btn-circle text-base-content/80'
-                aria-label='More options'
-                aria-expanded={mobileHeaderDropdownOpen}
+                onClick={() => setIsMobileSearchActive(active => !active)}
+                className={`btn btn-ghost btn-circle text-base-content/80 transition-colors ${isMobileSearchActive ? 'text-primary bg-primary/10 duration-75' : 'duration-150'}`}
+                aria-label='Toggle search bar'
+                aria-expanded={isMobileSearchActive}
               >
-                <FontAwesomeIcon icon={faEllipsisVertical} size='lg' />
+                <FontAwesomeIcon icon={faSearch} size='lg' />
               </button>
-              <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-xl'>
-                {dropdownMenuItems}
-              </ul>
+              <a
+                href='/profiles/new'
+                className='btn btn-ghost btn-circle text-primary'
+                aria-label='Create new profile'
+              >
+                <FontAwesomeIcon icon={faPlus} size='lg' />
+              </a>
+              <div
+                className={`action-dropdown relative ${mobileHeaderDropdownOpen ? 'action-dropdown-open' : ''}`}
+                ref={mobileHeaderDropdownRef}
+              >
+                <button
+                  onClick={() => setMobileHeaderDropdownOpen(open => !open)}
+                  className='btn btn-ghost btn-circle text-base-content/80'
+                  aria-label='More options'
+                  aria-expanded={mobileHeaderDropdownOpen}
+                >
+                  <FontAwesomeIcon icon={faEllipsisVertical} size='lg' />
+                </button>
+                <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-lg'>
+                  {dropdownMenuItems}
+                </ul>
+              </div>
+            </div>
+
+            {/* Desktop/Tablet Action Buttons (hidden on mobile) */}
+            <div className='hidden flex-row items-center gap-3 sm:flex'>
+              {/* Search bar */}
+              <label className='input w-40 md:w-48 lg:w-56'>
+                <FontAwesomeIcon icon={faSearch} />
+                <input
+                  type='text'
+                  placeholder='Search profiles...'
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className='grow'
+                />
+              </label>
+
+              {/* Create Profile Button */}
+              <a
+                href='/profiles/new'
+                className='btn btn-primary gap-2'
+                aria-label='Create new profile'
+              >
+                <FontAwesomeIcon icon={faPlus} />
+                <span>Create Profile</span>
+              </a>
+
+              {/* More Actions Dropdown */}
+              <div
+                className={`action-dropdown relative ${desktopHeaderDropdownOpen ? 'action-dropdown-open' : ''}`}
+                ref={desktopHeaderDropdownRef}
+              >
+                <button
+                  onClick={() => setDesktopHeaderDropdownOpen(open => !open)}
+                  className='btn btn-square btn-outline'
+                  aria-label='More options'
+                  aria-expanded={desktopHeaderDropdownOpen}
+                >
+                  <FontAwesomeIcon icon={faEllipsisVertical} />
+                </button>
+                <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-lg'>
+                  {dropdownMenuItems}
+                </ul>
+              </div>
             </div>
           </div>
-
-          {/* Desktop/Tablet Action Buttons (hidden on mobile) */}
-          <div className='hidden flex-row items-center gap-3 sm:flex'>
-            {/* Search bar */}
-            <label className='input w-40 md:w-48 lg:w-56'>
-              <FontAwesomeIcon icon={faSearch} />
-              <input
-                type='text'
-                placeholder='Search profiles...'
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className='grow'
-              />
-            </label>
-
-            {/* Create Profile Button */}
-            <a
-              href='/profiles/new'
-              className='btn btn-primary gap-2'
-              aria-label='Create new profile'
-            >
-              <FontAwesomeIcon icon={faPlus} />
-              <span>Create Profile</span>
-            </a>
-
-            {/* More Actions Dropdown */}
-            <div
-              className={`action-dropdown relative ${desktopHeaderDropdownOpen ? 'action-dropdown-open' : ''}`}
-              ref={desktopHeaderDropdownRef}
-            >
-              <button
-                onClick={() => setDesktopHeaderDropdownOpen(open => !open)}
-                className='btn btn-square btn-outline'
-                aria-label='More options'
-                aria-expanded={desktopHeaderDropdownOpen}
-              >
-                <FontAwesomeIcon icon={faEllipsisVertical} />
-              </button>
-              <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-xl'>
-                {dropdownMenuItems}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Mobile-only Slide-Down Search Bar (using nested sticky structure to bypass WebKit transform bugs) */}
       <div
         className={`search-slide-sticky sm:hidden ${isMobileSearchActive ? 'search-slide-sticky-active' : ''}`}
       >
         <div className='search-slide-container' onTransitionEnd={handleSearchTransitionEnd}>
-          <div className='bg-base-300 mx-[-16px] flex flex-row items-center gap-3 px-4 py-2 shadow-sm'>
+          <div className='bg-base-300 border-b border-base-content/8 mx-[-16px] flex flex-row items-center gap-3 px-4 py-2'>
             <label className='input bg-base-100 border-base-content/10 flex grow items-center border'>
               <FontAwesomeIcon icon={faSearch} className='text-base-content/60 mr-2' />
               <input
@@ -1113,26 +1117,17 @@ export function ProfileList() {
         accept='.json,application/json,.tcl'
         aria-label='Select a JSON file containing profile data to import'
       />
-      <div className={`profiles-list-content mt-4 ${isMobileSearchActive ? 'search-active' : ''}`}>
+      <div className={`profiles-list-content ${isMobileSearchActive ? 'search-active' : ''}`}>
         {hasUtilityProfiles && (
-          <div role='tablist' className='tabs tabs-border mb-4'>
-            <button
-              role='tab'
-              className={`tab ${activeTab === 'extraction' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('extraction')}
-              aria-label='Switch to extraction tab'
-            >
-              Extraction
-            </button>
-            <button
-              role='tab'
-              className={`tab ${activeTab === 'utility' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('utility')}
-              aria-label='Switch to utility tab'
-            >
-              Utility
-            </button>
-          </div>
+          <TabBar
+            tabs={[
+              { id: 'extraction', label: 'Extraction' },
+              { id: 'utility', label: 'Utility' }
+            ]}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            className='mb-4'
+          />
         )}
         <div
           className='grid grid-cols-1 gap-4 lg:grid-cols-12'
@@ -1163,6 +1158,6 @@ export function ProfileList() {
             ))}
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

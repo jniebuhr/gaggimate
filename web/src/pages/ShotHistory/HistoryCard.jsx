@@ -133,7 +133,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
   const canUpload = visualizerService.validateShot(shot);
 
   return (
-    <Card sm={12} className='[&>.card-body]:p-2'>
+    <Card className='col-span-12'>
       <div className='flex flex-col gap-2'>
         <div className='flex flex-row items-start gap-2'>
           <button
@@ -147,7 +147,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
           >
             <FontAwesomeIcon icon={expanded ? faMinus : faPlus} className='h-3 w-3' />
           </button>
-
+          
           <div className='min-w-0 flex-grow'>
             {/* Header Row */}
             <div className='mb-1 flex flex-row items-start justify-between gap-3'>
@@ -192,7 +192,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                   {/* Analyzer Button */}
                   <Tooltip content='Open in Analyzer'>
                     <a
-                      href={`/analyzer/internal/${shot.id}`}
+                      href={`/analysis/analyzer/internal/${shot.id}`}
                       className='text-base-content/50 hover:text-primary hover:bg-primary/10 flex items-center justify-center rounded-md p-2 transition-colors'
                       aria-label='Open in Analyzer'
                     >

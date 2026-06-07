@@ -11,10 +11,11 @@ import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagn
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
 import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
-import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
+import { GmLogoIcon } from './GmLogoIcon.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
+import { Tooltip } from './Tooltip.jsx';
 
 // List of random icons to display - add your icons here (SVG strings, text, or emojis)
 const RANDOM_ICONS = [
@@ -42,66 +43,57 @@ function getRandomIcon() {
 
 const NAVIGATION_SECTIONS = [
   {
-    id: 'dashboard',
-    showDivider: true,
-    items: [{ label: 'Dashboard', link: '/', icon: faHome }],
-  },
-  {
-    id: 'analysis',
+    id: 'main',
     showDivider: true,
     items: [
+      { label: 'Dashboard', link: '/', icon: faHome },
       { label: 'Profiles', link: '/profiles', icon: faList },
-      { label: 'Shot History', link: '/history', icon: faTimeline },
-      { label: 'Shot Analyzer', link: '/analyzer', icon: faMagnifyingGlassChart, isNew: true },
-      { label: 'Statistics', link: '/statistics', icon: faChartSimple, isNew: true },
-    ],
-  },
-  {
-    id: 'devices',
-    showDivider: true,
-    items: [
-      { label: 'PID Autotune', link: '/pidtune', icon: faTemperatureHalf },
-      { label: 'Bluetooth Devices', link: '/scales', icon: faBluetoothB },
+      { label: 'Analysis', link: '/analysis', icon: faMagnifyingGlassChart },
       { label: 'Settings', link: '/settings', icon: faCog },
     ],
-  },
-  {
-    id: 'updates',
-    showDivider: true,
-    items: [{ label: 'System & Updates', link: '/ota', icon: faRotate }],
   },
 ];
 
 function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
   const { path } = useLocation();
-  const isActive = path === link;
+  const isActive = link === '/' ? path === '/' : path.startsWith(link);
   const isExpanded = collapsed === false;
-  const baseClassName = collapsed
-    ? 'btn btn-square btn-md h-12 min-h-0 w-12 min-w-0 rounded-xl border-none bg-transparent px-0 text-base-content hover:bg-base-content/10 hover:text-base-content'
-    : 'btn btn-md justify-start h-12 gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
-  const activeClassName = collapsed
-    ? 'btn btn-square btn-md h-12 min-h-0 w-12 min-w-0 rounded-xl border-none bg-primary px-0 text-primary-content hover:bg-primary hover:text-primary-content'
-    : 'btn btn-md justify-start h-12 gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
-  const className = isActive ? activeClassName : baseClassName;
+
+  const baseClassName = 'btn btn-md h-12 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none nav-btn-transition';
+  const activeClassName = 'btn btn-md h-12 w-full bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary border-none nav-btn-transition';
+
+  const className = `${isActive ? activeClassName : baseClassName} flex items-center overflow-hidden ${
+    collapsed ? 'nav-btn-collapsed' : ''
+  }`;
 
   return (
-    <a
-      href={link}
-      className={className}
-      aria-label={collapsed ? label : undefined}
-      aria-current={isActive ? 'page' : undefined}
-      title={collapsed ? label : undefined}
+    <Tooltip
+      content={label}
+      placement='right'
+      disabled={!collapsed}
+      className='w-full'
     >
-      <FontAwesomeIcon size='md' icon={icon} />
-      {isExpanded ? (
-        <div className='indicator'>
-          {isNew ? (
-            <span className='indicator-item text-success pl-8 text-xs font-bold'>NEW</span>
-          ) : null}
-          <span>{label}</span>
+      <a
+        href={link}
+        className={className}
+        aria-label={collapsed ? label : undefined}
+        aria-current={isActive ? 'page' : undefined}
+      >
+        <div className='flex items-center justify-center shrink-0 w-6 h-6'>
+          <FontAwesomeIcon size='md' icon={icon} />
         </div>
-      ) : null}
-    </a>
+        <span
+          className={`sidebar-label ${
+            collapsed ? 'sidebar-label-collapsed' : 'sidebar-label-expanded'
+          }`}
+        >
+          {isNew ? (
+            <span className='indicator-item text-success pr-2 text-xs font-bold'>NEW</span>
+          ) : null}
+          {label}
+        </span>
+      </a>
+    </Tooltip>
   );
 }
 
@@ -135,23 +127,33 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
         ></div>
       )}
       <aside
-        className={`sidebar fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-y-auto border-r border-gray-200 bg-white p-5 md:static landscape:static dark:border-gray-800 dark:bg-black ${
-          collapsed ? 'hidden md:flex md:w-[90px] landscape:flex landscape:w-[90px]' : 'w-[290px]'
+        className={`sidebar fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-hidden border-r border-base-content/10 bg-base-100 md:static landscape:static sidebar-transition ${
+          collapsed ? 'hidden md:flex md:w-[80px] landscape:flex landscape:w-[80px] sidebar-collapsed' : 'w-[280px]'
         }`}
       >
-        <div className='flex h-full flex-col'>
-          <div>
+        <div className='flex h-full flex-col w-full'>
+          <div className='w-full'>
             <div
-              className={`align-center flex h-12 flex-row items-center justify-center gap-2 ${collapsed ? 'w-12' : 'w-full'}`}
+              className={`align-center flex h-12 flex-row items-center gap-2 overflow-hidden nav-btn-transition w-full ${
+                collapsed ? 'nav-btn-collapsed' : ''
+              }`}
             >
-              <GmLogoIcon width={30} height={30} />
-              {collapsed ? null : <img src='/logo.svg' alt='GaggiMate' className='w-50' />}
+              <div className='shrink-0 flex items-center justify-center w-6 h-6'>
+                <GmLogoIcon width={24} height={24} />
+              </div>
+              <img
+                src='/logo.svg'
+                alt='GaggiMate'
+                className={`sidebar-logo-img ${
+                  collapsed ? 'sidebar-logo-collapsed' : 'sidebar-logo-expanded'
+                }`}
+              />
             </div>
           </div>
           {NAVIGATION_SECTIONS.map(section => (
-            <div key={section.id}>
+            <div key={section.id} className='w-full'>
               {section.showDivider ? <hr className='h-5 border-0' /> : null}
-              <div className='space-y-1.5'>
+              <div className='space-y-1 w-full'>
                 {section.items.map(item => (
                   <MenuItem key={item.link} collapsed={collapsed} {...item} />
                 ))}
@@ -161,77 +163,90 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
 
           <div className='flex-grow'>&nbsp;</div>
 
-          {!collapsed && (
-            <>
-              <div className='flex flex-row items-center justify-center gap-2'>
-                <div className='relative inline-block'>
-                  <a
-                    aria-label='github'
-                    rel='noopener noreferrer'
-                    href='https://github.com/jniebuhr/gaggimate'
-                    target='_blank'
-                    className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
-                  >
-                    <FontAwesomeIcon icon={faGithub} className='text-lg' />
-                  </a>
-                </div>
-
-                <div className='relative inline-block'>
-                  <a
-                    aria-label='discord'
-                    rel='noopener noreferrer'
-                    href='https://discord.gaggimate.eu/'
-                    target='_blank'
-                    className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
-                  >
-                    <FontAwesomeIcon icon={faDiscord} className='text-lg' />
-                  </a>
-                </div>
+          {/* Social icons and footer elements are always mounted, but transition opacity, scale, and height to prevent unmount reflow */}
+          <div
+            className={`sidebar-footer overflow-hidden flex flex-col w-full ${
+              collapsed ? 'sidebar-footer-collapsed' : 'sidebar-footer-expanded'
+            }`}
+          >
+            <div className='flex flex-row items-center justify-center gap-2 whitespace-nowrap overflow-hidden'>
+              <div className='relative inline-block'>
+                <a
+                  aria-label='github'
+                  rel='noopener noreferrer'
+                  href='https://github.com/jniebuhr/gaggimate'
+                  target='_blank'
+                  className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
+                >
+                  <FontAwesomeIcon icon={faGithub} className='text-lg' />
+                </a>
               </div>
-              <div className='my-5 text-center'>
-                <span>Crafted with</span>
-                <span className='mx-1'>{randomIcon}</span>
-                <span>
-                  {' '}
-                  in Italy by&nbsp;
-                  <a
-                    className='text-primary hover:text-primary/80 font-medium transition'
-                    href='https://gaggimate.eu'
-                    target='_blank'
-                    rel='noreferrer'
-                  >
-                    Caffinnova S.r.l.
-                  </a>
-                </span>
-              </div>
-            </>
-          )}
 
-          <div>
-            <button
-              type='button'
-              onClick={onToggleCollapsed}
-              className={
-                collapsed
-                  ? 'btn btn-square btn-md text-base-content hover:bg-base-content/10 hover:text-base-content h-12 min-h-0 w-12 min-w-0 rounded-xl border-none bg-transparent px-0'
-                  : 'btn btn-md text-base-content hover:text-base-content hover:bg-base-content/10 h-12 w-full justify-start gap-3 border-none bg-transparent px-2'
-              }
-              aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-              title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+              <div className='relative inline-block'>
+                <a
+                  aria-label='discord'
+                  rel='noopener noreferrer'
+                  href='https://discord.gaggimate.eu/'
+                  target='_blank'
+                  className='btn btn-sm btn-circle text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent'
+                >
+                  <FontAwesomeIcon icon={faDiscord} className='text-lg' />
+                </a>
+              </div>
+            </div>
+            <div className='my-4 text-center text-xs text-base-content/70 whitespace-nowrap overflow-hidden'>
+              <span>Crafted with</span>
+              <span className='mx-1'>{randomIcon}</span>
+              <span>
+                in Italy by&nbsp;
+                <a
+                  className='text-primary hover:text-primary/80 font-medium transition'
+                  href='https://gaggimate.eu'
+                  target='_blank'
+                  rel='noreferrer'
+                  >
+                  Caffinnova S.r.l.
+                </a>
+              </span>
+            </div>
+          </div>
+
+          <div className='w-full'>
+            <Tooltip
+              content={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+              placement='right'
+              disabled={!collapsed}
+              className='w-full'
             >
-              <FontAwesomeIcon
-                size='md'
-                icon={collapsed ? faCircleChevronRight : faCircleChevronLeft}
-              />
-              {!collapsed ? (
-                <div className='indicator'>
-                  <span>Collapse</span>
+              <button
+                type='button'
+                onClick={onToggleCollapsed}
+                className={`btn btn-md h-12 w-full text-base-content hover:text-base-content hover:bg-base-content/10 border-none bg-transparent nav-btn-transition flex items-center overflow-hidden ${
+                  collapsed ? 'nav-btn-collapsed' : ''
+                }`}
+                aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+              >
+                <div className={`flex items-center justify-center shrink-0 w-6 h-6 chevron-rotate-transition ${
+                  collapsed ? 'rotate-180' : 'rotate-0'
+                }`}>
+                  <FontAwesomeIcon
+                    size='md'
+                    icon={faCircleChevronLeft}
+                  />
                 </div>
-              ) : null}
-            </button>
+                <span className={`sidebar-label ${
+                  collapsed 
+                    ? 'sidebar-label-collapsed' 
+                    : 'sidebar-label-expanded'
+                }`}>
+                  Collapse
+                </span>
+              </button>
+            </Tooltip>
           </div>
         </div>
       </aside>
     </>
   );
 }
+

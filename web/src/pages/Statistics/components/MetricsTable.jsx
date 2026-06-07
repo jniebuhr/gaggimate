@@ -150,10 +150,9 @@ function MetricRangeViz({ row, metric }) {
 
   return (
     <div
-      className='flex h-full min-h-[11.5rem] flex-col rounded-2xl p-3 shadow-sm transition-shadow sm:p-3.5'
+      className='flex h-full min-h-[11.5rem] flex-col rounded-2xl p-3 transition-shadow sm:p-3.5'
       style={{
         background: 'var(--statistics-summary-surface-muted)',
-        boxShadow: '0 8px 22px var(--statistics-summary-shadow)',
       }}
     >
       <div className='flex items-center gap-3'>
@@ -182,7 +181,7 @@ function MetricRangeViz({ row, metric }) {
       </div>
 
       <div
-        className='mt-3 rounded-xl px-3 py-2 shadow-sm'
+        className='mt-3 rounded-xl px-3 py-2'
         style={{
           background: 'var(--statistics-summary-surface-strong)',
         }}

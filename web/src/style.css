@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 @import 'tailwindcss';
 @plugin 'daisyui';
 
@@ -12,8 +11,8 @@
   --color-base-200: oklch(97.466% 0.011 259.822);
   --color-base-300: oklch(93.268% 0.016 262.751);
   --color-base-content: oklch(41.886% 0.053 255.824);
-  --color-primary: oklch(56.86% 0.255 257.57);
-  --color-primary-content: oklch(91.372% 0.051 257.57);
+  --color-primary: oklch(45% 0.255 257.57);
+  --color-primary-content: oklch(97.5% 0.015 257.57);
   --color-secondary: oklch(42.551% 0.161 282.339);
   --color-secondary-content: oklch(88.51% 0.032 282.339);
   --color-accent: oklch(59.939% 0.191 335.171);
@@ -120,8 +119,8 @@
   --color-base-200: oklch(93.299% 0.01 261.788);
   --color-base-300: oklch(89.925% 0.016 262.749);
   --color-base-content: oklch(32.437% 0.022 264.182);
-  --color-primary: oklch(59.435% 0.077 254.027);
-  --color-primary-content: oklch(11.887% 0.015 254.027);
+  --color-primary: oklch(44.5% 0.077 254.027);
+  --color-primary-content: oklch(98% 0.012 254.027);
   --color-secondary: oklch(69.651% 0.059 248.687);
   --color-secondary-content: oklch(13.93% 0.011 248.687);
   --color-accent: oklch(77.464% 0.062 217.469);
@@ -421,7 +420,7 @@ html[data-theme='coffee'] {
 }
 
 @theme {
-  --font-logo: 'Montserrat', sans-serif;
+  --font-logo: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 @source inline("{,sm:,md:,lg:,xl:}col-span-{1..12}");
@@ -446,10 +445,16 @@ html[data-theme='coffee'] {
 
 @layer utilities {
   .profile-list-drag-selected-item {
-    @apply ring-primary/50 bg-primary/10 shadow-md ring-2;
+    @apply ring-primary/50 bg-primary/10 ring-2;
   }
   .profile-card-container.drop-highlight {
     @apply bg-primary/10;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   /* Prevent double-tap to zoom on interactive elements which can cause visual jumping when clicked rapidly */
@@ -640,3 +645,170 @@ html[data-theme='coffee'] {
     transition: none !important;
   }
 }
+
+/* Fix DaisyUI v5 alert text contrast/legibility by ensuring content colors override base-content */
+.alert-warning {
+  color: var(--color-warning-content);
+}
+.alert-error {
+  color: var(--color-error-content);
+}
+.alert-success {
+  color: var(--color-success-content);
+}
+.alert-info {
+  color: var(--color-info-content);
+}
+
+/* Sidebar morph transitions */
+.sidebar-transition {
+  padding-top: 1.25rem; /* 20px */
+  padding-bottom: 1.25rem; /* 20px */
+  padding-left: 1rem; /* 16px */
+  padding-right: 1rem; /* 16px */
+  transition: width 280ms cubic-bezier(0.34, 1.15, 0.64, 1);
+  will-change: width;
+}
+
+
+.sidebar-label {
+  display: inline-block;
+  vertical-align: middle;
+  white-space: nowrap;
+  will-change: opacity, transform;
+}
+
+.sidebar-label-collapsed {
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  transition: opacity 120ms cubic-bezier(0.215, 0.61, 0.355, 1),
+              transform 180ms cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.sidebar-label-expanded {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 180ms ease-out 100ms,
+              transform 220ms cubic-bezier(0.34, 1.15, 0.64, 1) 80ms;
+}
+
+.sidebar-logo-img {
+  width: 150px;
+  max-width: none !important;
+  flex-shrink: 0;
+  will-change: opacity, transform;
+}
+
+.sidebar-logo-collapsed {
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  transition: opacity 120ms cubic-bezier(0.215, 0.61, 0.355, 1),
+              transform 180ms cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.sidebar-logo-expanded {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 180ms ease-out 100ms,
+              transform 220ms cubic-bezier(0.34, 1.15, 0.64, 1) 80ms;
+}
+
+.nav-btn-transition {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0.75rem !important;   /* 12px — overrides DaisyUI btn-md padding */
+  padding-right: 0.75rem !important;  /* 12px — overrides DaisyUI btn-md padding */
+  justify-content: flex-start !important; /* overrides DaisyUI btn justify-center */
+  transition: background-color 150ms ease,
+              color 150ms ease;
+  will-change: background-color, color;
+}
+
+.nav-btn-collapsed {
+  /* Buttons are 100% width; the sidebar container controls sizing */
+}
+
+/* Sidebar social icons and copyright footer transition rules */
+.sidebar-footer {
+  will-change: opacity, transform;
+  width: 250px;
+  flex-shrink: 0;
+  margin-top: 1rem;
+}
+
+.sidebar-footer-collapsed {
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  transition: opacity 120ms cubic-bezier(0.215, 0.61, 0.355, 1),
+              transform 180ms cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.sidebar-footer-expanded {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 180ms ease-out 100ms,
+              transform 220ms cubic-bezier(0.34, 1.15, 0.64, 1) 80ms;
+}
+
+.chevron-rotate-transition {
+  transition: transform 280ms cubic-bezier(0.34, 1.15, 0.64, 1),
+              rotate 280ms cubic-bezier(0.34, 1.15, 0.64, 1);
+  will-change: transform, rotate;
+}
+
+/* Progressive loading transitions */
+.progressive-transition-container {
+  display: grid;
+  grid-template-columns: 100%;
+  width: 100%;
+}
+
+.progressive-transition-container > * {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+.progressive-transition-fade-out {
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 200ms cubic-bezier(0.215, 0.61, 0.355, 1), transform 200ms cubic-bezier(0.215, 0.61, 0.355, 1);
+  will-change: opacity, transform;
+  pointer-events: none;
+}
+
+.progressive-transition-fade-in {
+  animation: progressive-fade-in 200ms cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+  will-change: opacity, transform;
+}
+
+@keyframes progressive-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressive-transition-fade-out {
+    opacity: 0;
+    transform: none;
+    transition: none;
+  }
+  .progressive-transition-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+
+
+

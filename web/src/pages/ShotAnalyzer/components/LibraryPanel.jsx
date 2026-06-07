@@ -1364,7 +1364,7 @@ export function LibraryPanel({
       <div ref={barRef} style={fixedBarStyle}>
         <div
           className={`bg-base-100/80 border-base-content/10 ${compareMode ? 'overflow-visible' : 'overflow-hidden'} border backdrop-blur-md transition-all duration-200 ${
-            collapsed ? 'rounded-xl shadow-lg' : 'rounded-t-xl border-b-0 shadow-none'
+            collapsed ? 'rounded-xl' : 'rounded-t-xl border-b-0 shadow-none'
           }`}
         >
           {compareMode ? (
@@ -1415,14 +1415,14 @@ export function LibraryPanel({
             onClick={() => setCollapsed(true)}
           />
           <div style={dropdownStyle}>
-            <div className='bg-base-100/80 border-base-content/10 animate-fade-in-down origin-top overflow-hidden rounded-b-xl border border-t-0 shadow-2xl backdrop-blur-md'>
+            <div className='bg-base-100/80 border-base-content/10 animate-fade-in-down origin-top overflow-hidden rounded-b-xl border border-t-0 shadow-lg backdrop-blur-md'>
               <div className='px-4 pt-4 lg:hidden'>
                 <div className='bg-base-200/60 flex items-center gap-1 rounded-lg p-1'>
                   <button
                     type='button'
                     className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                       mobileActiveSection === 'shots'
-                        ? 'bg-base-100 text-base-content shadow-sm'
+                        ? 'bg-base-100 text-base-content'
                         : getAnalyzerTextButtonClasses({
                             className: 'justify-center',
                           })
@@ -1435,7 +1435,7 @@ export function LibraryPanel({
                     type='button'
                     className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                       mobileActiveSection === 'profiles'
-                        ? 'bg-base-100 text-base-content shadow-sm'
+                        ? 'bg-base-100 text-base-content'
                         : getAnalyzerTextButtonClasses({
                             className: 'justify-center',
                           })
