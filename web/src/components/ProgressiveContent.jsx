@@ -29,72 +29,50 @@ export function preloadComponent(loader) {
 export function ProgressiveContent({
   loader,
   skeleton: Skeleton,
-  loadingDelay = 200,
+  loadingDelay = 0,
   minDisplayDuration = 500,
+  isLoading = false,
+  children,
   ...componentProps
 }) {
+  // A component is "ready" to show if its code is loaded (or not needed) AND data is not loading.
+  const isCodeLoadedInitially = !loader || loaderCache.has(loader);
+  
   const [status, setStatus] = useState(() => {
-    return loaderCache.has(loader) ? 'ready' : 'idle';
+    return (isCodeLoadedInitially && !isLoading) ? 'ready' : 'idle';
   });
   
   const [loadedComponent, setLoadedComponent] = useState(() => {
-    return loaderCache.get(loader) || null;
+    return loader && loaderCache.has(loader) ? loaderCache.get(loader) : null;
   });
 
   const loaderRef = useRef(loader);
   const statusRef = useRef(status);
   const skeletonShownAtRef = useRef(0);
+  const isLoadingRef = useRef(isLoading);
 
   // Keep refs in sync
   loaderRef.current = loader;
   statusRef.current = status;
+  isLoadingRef.current = isLoading;
 
+  // 1. Code Loading Effect
   useEffect(() => {
-    const currentLoader = loader;
+    if (!loader) return;
     
+    const currentLoader = loader;
     if (loaderCache.has(currentLoader)) {
-      setLoadedComponent(loaderCache.get(currentLoader));
-      setStatus('ready');
+      setLoadedComponent(() => loaderCache.get(currentLoader));
       return;
     }
-
-    setStatus('loading');
-    const delayTimer = setTimeout(() => {
-      if (loaderRef.current === currentLoader && statusRef.current === 'loading') {
-        setStatus('skeleton');
-        skeletonShownAtRef.current = Date.now();
-      }
-    }, loadingDelay);
-
+    
     let isSubscribed = true;
-
     currentLoader().then(
       (module) => {
         if (!isSubscribed || loaderRef.current !== currentLoader) return;
-        
         const resolvedComponent = module.default || module;
         loaderCache.set(currentLoader, resolvedComponent);
         setLoadedComponent(() => resolvedComponent);
-
-        if (statusRef.current === 'skeleton') {
-          // Calculate how long the skeleton was visible
-          const elapsed = Date.now() - skeletonShownAtRef.current;
-          const remaining = Math.max(0, minDisplayDuration - elapsed);
-
-          if (remaining > 0) {
-            setTimeout(() => {
-              if (isSubscribed && loaderRef.current === currentLoader) {
-                setStatus('transitioning');
-              }
-            }, remaining);
-          } else {
-            setStatus('transitioning');
-          }
-        } else {
-          // Never showed the skeleton, show immediately without transition
-          clearTimeout(delayTimer);
-          setStatus('ready');
-        }
       },
       (error) => {
         console.error('ProgressiveContent failed to load chunk:', error);
@@ -103,26 +81,70 @@ export function ProgressiveContent({
         }
       }
     );
-
     return () => {
       isSubscribed = false;
-      clearTimeout(delayTimer);
     };
-  }, [loader, loadingDelay, minDisplayDuration]);
+  }, [loader]);
 
-  // Handle transition completion (crossfade animation is 200ms)
+  // 2. State Machine Effect (Depends on Code loaded and Data loading)
+  useEffect(() => {
+    const currentLoader = loader;
+    const isCodeLoaded = !loader || loadedComponent !== null;
+    const isReadyToShow = isCodeLoaded && !isLoading;
+
+    if (statusRef.current === 'error') return;
+
+    if (isReadyToShow) {
+      if (statusRef.current === 'skeleton') {
+        const elapsed = Date.now() - skeletonShownAtRef.current;
+        const remaining = Math.max(0, minDisplayDuration - elapsed);
+
+        if (remaining > 0) {
+          setTimeout(() => {
+            if (loaderRef.current === currentLoader && !isLoadingRef.current) {
+              setStatus('transitioning');
+            }
+          }, remaining);
+        } else {
+          setStatus('transitioning');
+        }
+      } else if (statusRef.current === 'idle' || statusRef.current === 'loading') {
+        // Never showed the skeleton, show immediately without transition
+        setStatus('ready');
+      }
+    } else {
+      // Need to show skeleton or loading
+      if (statusRef.current === 'ready' || statusRef.current === 'idle') {
+        setStatus('loading');
+        const delayTimer = setTimeout(() => {
+          if (loaderRef.current === currentLoader && statusRef.current === 'loading') {
+            setStatus('skeleton');
+            skeletonShownAtRef.current = Date.now();
+          }
+        }, loadingDelay);
+        return () => clearTimeout(delayTimer);
+      }
+    }
+  }, [loadedComponent, isLoading, loader, loadingDelay, minDisplayDuration]);
+
+  // Handle transition completion (crossfade animation is 250ms)
   useEffect(() => {
     if (status === 'transitioning') {
       const timer = setTimeout(() => {
         setStatus('ready');
-      }, 200); // matches transition durations in CSS
+      }, 250); // matches transition durations in CSS
       return () => clearTimeout(timer);
     }
   }, [status]);
 
   if (status === 'idle' || status === 'loading') {
-    // Render an empty container with layout spacing to prevent collapse before skeleton triggers
-    return <div className="min-h-16" />;
+    // Render the skeleton but make it invisible so it occupies the exact same layout space
+    // and prevents layout shift (jank) when the skeleton or component loads
+    return (
+      <div className="opacity-0 pointer-events-none select-none transition-none">
+        <Skeleton />
+      </div>
+    );
   }
 
   if (status === 'error') {
@@ -137,7 +159,7 @@ export function ProgressiveContent({
     return <Skeleton />;
   }
 
-  if (status === 'transitioning' && loadedComponent) {
+  if (status === 'transitioning' && (loadedComponent || children)) {
     const Component = loadedComponent;
     return (
       <div className="progressive-transition-container">
@@ -145,15 +167,15 @@ export function ProgressiveContent({
           <Skeleton />
         </div>
         <div className="progressive-transition-fade-in">
-          <Component {...componentProps} />
+          {Component ? <Component {...componentProps} /> : children}
         </div>
       </div>
     );
   }
 
-  if (status === 'ready' && loadedComponent) {
+  if (status === 'ready' && (loadedComponent || children)) {
     const Component = loadedComponent;
-    return <Component {...componentProps} />;
+    return Component ? <Component {...componentProps} /> : children;
   }
 
   return null;

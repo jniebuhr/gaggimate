@@ -13,6 +13,8 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders';
 import { downloadJson } from '../../utils/download.js';
+import { ProgressiveContent } from '../../components/ProgressiveContent.jsx';
+import { ProfileEditSkeleton } from '../../components/Skeletons.jsx';
 
 const connected = computed(() => machine.value.connected);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -132,13 +134,7 @@ export function ProfileEdit() {
     downloadJson(download, `profile-${params.id}.json`);
   }, [data, params.id]);
 
-  if (loading) {
-    return (
-      <div className='flex w-full flex-row items-center justify-center py-16'>
-        <Spinner size={8} />
-      </div>
-    );
-  }
+  // Remove if(loading) spinner check here
 
   const canConvert = data?.type === 'standard' && pressureAvailable.value;
   const canExport = params.id !== 'new' && data;
@@ -198,30 +194,32 @@ export function ProfileEdit() {
   return (
     <PageLayout variant="narrow">
       <PageHeader
-        title={params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}
+        title={params.id === 'new' ? 'Create Profile' : (data ? `Edit ${data.label}` : 'Loading...')}
         noStack={true}
         actions={actions}
       />
 
-      {!data?.type && <ProfileTypeSelection onSelect={type => setData({ ...data, type })} />}
-      {data?.type === 'standard' && (
-        <StandardProfileForm
-          data={data}
-          onChange={data => setData(data)}
-          onSave={onSave}
-          saving={saving}
-          pressureAvailable={pressureAvailable.value}
-        />
-      )}
-      {data?.type === 'pro' && (
-        <ExtendedProfileForm
-          data={data}
-          onChange={data => setData(data)}
-          onSave={onSave}
-          saving={saving}
-          pressureAvailable={pressureAvailable.value}
-        />
-      )}
+      <ProgressiveContent isLoading={loading} skeleton={ProfileEditSkeleton}>
+        {!data?.type && <ProfileTypeSelection onSelect={type => setData({ ...data, type })} />}
+        {data?.type === 'standard' && (
+          <StandardProfileForm
+            data={data}
+            onChange={data => setData(data)}
+            onSave={onSave}
+            saving={saving}
+            pressureAvailable={pressureAvailable.value}
+          />
+        )}
+        {data?.type === 'pro' && (
+          <ExtendedProfileForm
+            data={data}
+            onChange={data => setData(data)}
+            onSave={onSave}
+            saving={saving}
+            pressureAvailable={pressureAvailable.value}
+          />
+        )}
+      </ProgressiveContent>
     </PageLayout>
   );
 }

@@ -42,7 +42,7 @@ export function Analysis() {
         ]}
         activeTab={tab}
         basePath="/analysis"
-        className="-mb-4 lg:-mb-6"
+        className="mb-6 sm:-mx-6 sm:px-6"
       />
       
       {tab === 'history' && (

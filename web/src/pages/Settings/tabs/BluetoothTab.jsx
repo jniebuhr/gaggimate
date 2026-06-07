@@ -12,6 +12,8 @@ import { faBatteryThreeQuarters } from '@fortawesome/free-solid-svg-icons/faBatt
 import { faBatteryHalf } from '@fortawesome/free-solid-svg-icons/faBatteryHalf';
 import { faBatteryQuarter } from '@fortawesome/free-solid-svg-icons/faBatteryQuarter';
 import { faBatteryEmpty } from '@fortawesome/free-solid-svg-icons/faBatteryEmpty';
+import { ProgressiveContent } from '../../../components/ProgressiveContent.jsx';
+import { BluetoothTabSkeleton } from '../../../components/Skeletons.jsx';
 
 function batteryIcon(pct) {
   if (pct >= 87) return faBatteryFull;
@@ -132,13 +134,15 @@ export function BluetoothTab() {
               </div>
             )}
             {mode > 0 && (
-              <ScaleList
-                isLoading={loading}
-                isError={isError}
-                isInfoError={isInfoError}
-                scaleData={scaleData}
-                onConnect={onConnect}
-              />
+              <ProgressiveContent isLoading={loading} skeleton={BluetoothTabSkeleton}>
+                <ScaleList
+                  isLoading={loading}
+                  isError={isError}
+                  isInfoError={isInfoError}
+                  scaleData={scaleData}
+                  onConnect={onConnect}
+                />
+              </ProgressiveContent>
             )}
             <div className='mt-4'>
               <div className='alert alert-warning text-xs'>
@@ -164,33 +168,41 @@ function ScaleList(props) {
       </div>
     );
   }
-  if (scaleData.length > 0) {
-    return (
-      <div className='space-y-4'>
-        {scaleData.map((scale, i) => (
-          <div key={i} className='bg-base-200/40 border border-base-content/8 rounded-xl p-4'>
-            <div className='flex items-center justify-between'>
-              <div className='px-4 text-lg text-base-content'>
-                <FontAwesomeIcon icon={faScaleBalanced} />
-              </div>
-              <div className='flex-1'>
-                <h3 className='text-base-content font-semibold'>{scale.name}</h3>
-                <p className='text-base-content/60 text-sm flex flex-wrap gap-x-4 gap-y-1 mt-1'>
-                  <span className='flex items-center gap-1'>
-                    <FontAwesomeIcon icon={faNetworkWired} /> {scale.uuid}
-                  </span>
-                  <span className='flex items-center gap-1'>
-                    <FontAwesomeIcon icon={faSignal} /> {scale.rssi}dB
+  return (
+    <ProgressiveContent isLoading={isLoading || isInfoLoading} skeleton={BluetoothTabSkeleton}>
+      {scaleData.length > 0 ? (
+        <div className='space-y-4'>
+          {scaleData.map(scale => (
+            <div
+              key={scale.uuid}
+              className='flex flex-col space-y-4 rounded-xl border border-base-content/10 bg-base-100 p-4 shadow-sm md:flex-row md:items-center md:justify-between md:space-y-0'
+            >
+              <div className='flex items-center space-x-4'>
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+                    scale.connected ? 'bg-success/20 text-success' : 'bg-base-200 text-base-content/50'
+                  }`}
+                >
+                  <FontAwesomeIcon icon={faScaleBalanced} size='lg' />
+                </div>
+                <div>
+                  <h4 className='font-bold text-base-content'>
+                    {scale.name || 'Unknown Scale'}
                     <span
-                      className={`indicator-item status ml-1 ${scale.rssi < -90 ? 'status-error' : scale.rssi < -80 ? 'status-warning' : 'status-success'}`}
+                      className={`ml-2 inline-block h-2 w-2 rounded-full ${
+                        scale.connected ? 'bg-success' : 'bg-base-content/20'
+                      }`}
                     ></span>
-                  </span>
-                  {scale.connected && scale.hasBattery && typeof scale.battery === 'number' && (
-                    <span className={`flex items-center gap-1 ${batteryColorClass(scale.battery)}`}>
-                      <FontAwesomeIcon icon={batteryIcon(scale.battery)} /> {scale.battery}%
-                    </span>
-                  )}
-                </p>
+                  </h4>
+                  <p className='text-sm text-base-content/70 flex items-center space-x-2'>
+                    <span className='font-mono text-xs'>{scale.uuid}</span>
+                    {scale.connected && scale.hasBattery && typeof scale.battery === 'number' && (
+                      <span className={`flex items-center gap-1 ${batteryColorClass(scale.battery)}`}>
+                        <FontAwesomeIcon icon={batteryIcon(scale.battery)} /> {scale.battery}%
+                      </span>
+                    )}
+                  </p>
+                </div>
               </div>
               <div className='flex items-center space-x-3'>
                 {scale.connected ? (
@@ -202,17 +214,7 @@ function ScaleList(props) {
                 )}
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return (
-    <>
-      {isLoading || isInfoLoading ? (
-        <div className='flex items-center justify-center py-12'>
-          <Spinner size={8} />
-          <span className='text-base-content/70 ml-3'>Loading devices...</span>
+          ))}
         </div>
       ) : (
         <div className='py-12 text-center border border-base-content/8 rounded-xl bg-base-200/40'>
@@ -229,6 +231,6 @@ function ScaleList(props) {
           </div>
         </div>
       )}
-    </>
+    </ProgressiveContent>
   );
 }

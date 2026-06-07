@@ -331,14 +331,6 @@ export function Settings() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className='flex w-full flex-row items-center justify-center py-16'>
-        <Spinner size={8} />
-      </div>
-    );
-  }
-
   const settingsTabs = [
     { id: 'general', label: 'General', icon: faSliders, preload: () => preloadComponent(loadGeneralTab) },
     { id: 'machine', label: 'Machine', icon: faTemperatureHalf, preload: () => preloadComponent(loadMachineTab) },
@@ -407,7 +399,7 @@ export function Settings() {
         tabs={settingsTabs}
         activeTab={tab}
         basePath="/settings"
-        className="-mb-4 lg:-mb-6"
+        className="mb-6 sm:-mx-6 sm:px-6"
       />
 
       <form key='settings' ref={formRef} method='post' action='/api/settings' onSubmit={onSubmit} className={isFormTab ? '' : 'hidden'}>
@@ -415,6 +407,7 @@ export function Settings() {
           <ProgressiveContent
             loader={loadGeneralTab}
             skeleton={GeneralTabSkeleton}
+            isLoading={isLoading}
             formData={formData}
             onChange={onChange}
             profiles={profiles}
@@ -429,6 +422,7 @@ export function Settings() {
           <ProgressiveContent
             loader={loadMachineTab}
             skeleton={MachineTabSkeleton}
+            isLoading={isLoading}
             formData={formData}
             onChange={onChange}
           />
@@ -437,6 +431,7 @@ export function Settings() {
           <ProgressiveContent
             loader={loadPluginsTab}
             skeleton={PluginsTabSkeleton}
+            isLoading={isLoading}
             formData={formData}
             onChange={onChange}
             autowakeupSchedules={autowakeupSchedules}
@@ -459,12 +454,14 @@ export function Settings() {
         <ProgressiveContent
           loader={loadBluetoothTab}
           skeleton={BluetoothTabSkeleton}
+          isLoading={isLoading}
         />
       )}
       {tab === 'system' && (
         <ProgressiveContent
           loader={loadSystemTab}
           skeleton={SystemTabSkeleton}
+          isLoading={isLoading}
         />
       )}
     </PageLayout>

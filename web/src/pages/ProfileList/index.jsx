@@ -28,6 +28,8 @@ import PageHeader from '../../components/PageHeader.jsx';
 import TabBar from '../../components/TabBar.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
+import { ProgressiveContent } from '../../components/ProgressiveContent.jsx';
+import { ProfileListSkeleton } from '../../components/Skeletons.jsx';
 import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
@@ -982,18 +984,7 @@ export function ProfileList() {
     </>
   );
 
-  if (loading) {
-    return (
-      <div
-        className='flex w-full flex-row items-center justify-center py-16'
-        role='status'
-        aria-live='polite'
-        aria-label='Loading profiles'
-      >
-        <Spinner size={8} />
-      </div>
-    );
-  }
+  // Remove if(loading) spinner check here
 
   return (
     <PageLayout variant='narrow'>
@@ -1129,34 +1120,36 @@ export function ProfileList() {
             className='mb-4'
           />
         )}
-        <div
-          className='grid grid-cols-1 gap-4 lg:grid-cols-12'
-          role='list'
-          aria-label='Profile list'
-          ref={containerRef}
-        >
-          {profilesToShow
-            .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
-            .map((data, idx, filtered) => (
-              <ProfileCard
-                key={data.id}
-                data={data}
-                onDelete={onDelete}
-                onSelect={onSelect}
-                favoriteDisabled={favoriteDisabled}
-                unfavoriteDisabled={unfavoriteDisabled}
-                onUnfavorite={onUnfavorite}
-                onFavorite={onFavorite}
-                onDuplicate={onDuplicate}
-                disabledDrag={!!searchTerm.trim()}
-                isDragging={isDragging}
-                onMoveTop={moveProfileTop}
-                onMoveBottom={moveProfileBottom}
-                isFirst={idx === 0}
-                isLast={idx === filtered.length - 1}
-              />
-            ))}
-        </div>
+        <ProgressiveContent isLoading={loading} skeleton={ProfileListSkeleton}>
+          <div
+            className='grid grid-cols-1 gap-4 lg:grid-cols-12'
+            role='list'
+            aria-label='Profile list'
+            ref={containerRef}
+          >
+            {profilesToShow
+              .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
+              .map((data, idx, filtered) => (
+                <ProfileCard
+                  key={data.id}
+                  data={data}
+                  onDelete={onDelete}
+                  onSelect={onSelect}
+                  favoriteDisabled={favoriteDisabled}
+                  unfavoriteDisabled={unfavoriteDisabled}
+                  onUnfavorite={onUnfavorite}
+                  onFavorite={onFavorite}
+                  onDuplicate={onDuplicate}
+                  disabledDrag={!!searchTerm.trim()}
+                  isDragging={isDragging}
+                  onMoveTop={moveProfileTop}
+                  onMoveBottom={moveProfileBottom}
+                  isFirst={idx === 0}
+                  isLast={idx === filtered.length - 1}
+                />
+              ))}
+          </div>
+        </ProgressiveContent>
       </div>
     </PageLayout>
   );
