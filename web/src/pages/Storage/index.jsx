@@ -33,6 +33,30 @@ function getEstimatedSize(bundle) {
   return (metrics.shotsJsonBytes || 0) + (metrics.profilesJsonBytes || 0) + (metrics.notesJsonBytes || 0);
 }
 
+function getReviewBadge({ backupCreating, backupReady, backupLoading }) {
+  if (backupCreating) return 'Creating';
+  if (backupReady) return 'Backup Ready';
+  if (backupLoading) return 'Loading';
+  return 'Review';
+}
+
+function getBackupReviewTitle(backupReady) {
+  return backupReady ? 'Backup Ready' : 'Review Backup';
+}
+
+function getBackupReviewDescription(backupReady, backupFilename) {
+  if (backupReady) {
+    return `Your backup is ready to download: ${backupFilename}`;
+  }
+
+  return 'Check what will be included before creating a backup.';
+}
+
+function getBackupMetricLabel({ backupLoading, value, formatter = countLabel }) {
+  if (backupLoading) return 'Loading';
+  return formatter(value);
+}
+
 function downloadWithAnchor(blob, filename) {
   if (!blob?.size) {
     throw new Error('Backup ZIP is empty');
@@ -52,7 +76,7 @@ function downloadWithAnchor(blob, filename) {
   document.body.appendChild(link);
   link.click();
 
-  window.setTimeout(() => {
+  globalThis.setTimeout(() => {
     link.remove();
     URL.revokeObjectURL(url);
   }, 1000);
@@ -177,8 +201,10 @@ export function Storage() {
   const counts = backupBundle?.manifest?.counts || backupReady?.manifest?.counts || {};
   const estimatedSize = getEstimatedSize(backupBundle);
   const zipSize = backupReady?.blob?.size || 0;
-  const reviewBadge = backupCreating ? 'Creating' : backupReady ? 'Backup Ready' : backupLoading ? 'Loading' : 'Review';
   const backupFilename = backupReady?.filename || '';
+  const reviewBadge = getReviewBadge({ backupCreating, backupReady, backupLoading });
+  const backupReviewTitle = getBackupReviewTitle(backupReady);
+  const backupReviewDescription = getBackupReviewDescription(backupReady, backupFilename);
   const restoreCounts = restorePreview?.manifest?.counts || {};
   const restoreHydration = restorePreview?.manifest?.hydration || {};
   const restoreShotSummary = restorePreview?.summary?.shots || {};
@@ -238,12 +264,8 @@ export function Storage() {
               <div className='border-base-300 mt-5 rounded-box border p-4'>
                 <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
                   <div>
-                    <h3 className='font-semibold'>{backupReady ? 'Backup Ready' : 'Review Backup'}</h3>
-                    <p className='text-base-content/60 mt-1 text-sm'>
-                      {backupReady
-                        ? `Your backup is ready to download: ${backupFilename}`
-                        : 'Check what will be included before creating a backup.'}
-                    </p>
+                    <h3 className='font-semibold'>{backupReviewTitle}</h3>
+                    <p className='text-base-content/60 mt-1 text-sm'>{backupReviewDescription}</p>
                   </div>
 
                   <span className='badge badge-info'>{reviewBadge}</span>
@@ -267,21 +289,21 @@ export function Storage() {
                   <div className='bg-base-200 rounded-box p-3'>
                     <div className='text-base-content/60 text-xs uppercase'>Shots</div>
                     <div className='mt-1 text-lg font-semibold'>
-                      {backupLoading ? 'Loading' : countLabel(counts.shots)}
+                      {getBackupMetricLabel({ backupLoading, value: counts.shots })}
                     </div>
                   </div>
 
                   <div className='bg-base-200 rounded-box p-3'>
                     <div className='text-base-content/60 text-xs uppercase'>Profiles</div>
                     <div className='mt-1 text-lg font-semibold'>
-                      {backupLoading ? 'Loading' : countLabel(counts.profiles)}
+                      {getBackupMetricLabel({ backupLoading, value: counts.profiles })}
                     </div>
                   </div>
 
                   <div className='bg-base-200 rounded-box p-3'>
                     <div className='text-base-content/60 text-xs uppercase'>Estimated Size</div>
                     <div className='mt-1 text-lg font-semibold'>
-                      {backupLoading ? 'Loading' : formatBytes(estimatedSize)}
+                      {getBackupMetricLabel({ backupLoading, value: estimatedSize, formatter: formatBytes })}
                     </div>
                   </div>
                 </div>
