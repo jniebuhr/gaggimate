@@ -49,8 +49,8 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
   const pumpInput = getPumpInputState(phase.pump);
   const powerFieldProps = getPumpPowerInputProps(phase.pump, value => onFieldChange('pump', value));
   let mode = pumpInput.mode;
-  if (mode === 'pressure' && phase.pump.pressure === -1) mode = 'hold-pressure';
-  if (mode === 'flow' && phase.pump.flow === -1) mode = 'hold-flow';
+  if (mode === 'pressure' && pumpInput.pressure === -1) mode = 'hold-pressure';
+  if (mode === 'flow' && pumpInput.flow === -1) mode = 'hold-flow';
   const availableTargetTypes = TargetTypes.filter(
     t => !targets.find(t2 => t2.type === t.type && t2.operator === t.operator),
   );
