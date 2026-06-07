@@ -32,9 +32,15 @@ import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 
 const connected = computed(() => machine.value.connected);
+const DEFAULT_SOURCE = 'gaggimate';
+const PAGE_BUTTON_LIMIT = 5;
 
 function getShotStorageId(shot) {
   return String(shot?.storageKey || shot?.name || shot?.id || '');
+}
+
+function getShotScopedKey(shot, storageId = getShotStorageId(shot)) {
+  return `${shot?.source || DEFAULT_SOURCE}:${storageId}`;
 }
 
 function normalizeHistoryShot(shot) {
@@ -43,7 +49,7 @@ function normalizeHistoryShot(shot) {
   const normalized = {
     ...shot,
     id,
-    source: shot?.source || 'gaggimate',
+    source: shot?.source || DEFAULT_SOURCE,
     timestamp: shot?.timestamp || 0,
     duration: shot?.duration || 0,
     volume: shot?.volume ?? null,
@@ -58,6 +64,118 @@ function normalizeHistoryShot(shot) {
   }
 
   return normalized;
+}
+
+function mergeExistingLoadedShot(existing, normalized) {
+  return {
+    ...existing,
+    ...normalized,
+    samples: existing.samples,
+    loaded: true,
+    volume: normalized.volume ?? existing.volume,
+    rating: normalized.rating ?? existing.rating,
+    incomplete: normalized.incomplete ?? existing.incomplete,
+    notes: normalized.notes ?? existing.notes,
+  };
+}
+
+function mergeShotListWithExisting(prev, shotList) {
+  const existingMap = new Map(prev.map(shot => [getShotScopedKey(shot), shot]));
+
+  return shotList.map(newShot => {
+    const normalized = normalizeHistoryShot(newShot);
+    const existing = existingMap.get(getShotScopedKey(normalized));
+
+    if (existing?.loaded) {
+      return mergeExistingLoadedShot(existing, normalized);
+    }
+
+    return normalized;
+  });
+}
+
+function mergeLoadedShot(previousShot, parsedShot) {
+  return normalizeHistoryShot({
+    ...previousShot,
+    ...parsedShot,
+    id: previousShot.id,
+    storageKey: previousShot.storageKey,
+    source: previousShot.source || parsedShot.source,
+    volume: previousShot.volume ?? parsedShot.volume,
+    rating: previousShot.rating ?? parsedShot.rating,
+    incomplete: previousShot.incomplete ?? parsedShot.incomplete,
+    notes: previousShot.notes ?? parsedShot.notes,
+    loaded: true,
+  });
+}
+
+function updateLoadedShotInHistory(prev, item, storageId, parsedShot) {
+  const targetKey = getShotScopedKey(item, storageId);
+
+  return prev.map(historyShot => {
+    if (getShotScopedKey(historyShot) !== targetKey) return historyShot;
+    return mergeLoadedShot(historyShot, parsedShot);
+  });
+}
+
+function compareHistoryShotByDate(a, b) {
+  if (a.timestamp >= 10000 && b.timestamp >= 10000) {
+    return a.timestamp - b.timestamp;
+  }
+
+  if (a.timestamp >= 10000) {
+    return 1;
+  }
+
+  if (b.timestamp >= 10000) {
+    return -1;
+  }
+
+  return parseInt(a.id) - parseInt(b.id);
+}
+
+function compareHistoryShots(a, b, sortBy) {
+  switch (sortBy) {
+    case 'rating':
+      return (a.rating || 0) - (b.rating || 0);
+    case 'profile':
+      return (a.profile || '').localeCompare(b.profile || '');
+    case 'duration':
+      return a.duration - b.duration;
+    case 'volume':
+      return (a.volume || 0) - (b.volume || 0);
+    case 'id':
+      return parseInt(a.id) - parseInt(b.id);
+    case 'date':
+    default:
+      return compareHistoryShotByDate(a, b);
+  }
+}
+
+function getPageNumbers(currentPage, totalPages) {
+  const visiblePageCount = Math.min(PAGE_BUTTON_LIMIT, totalPages);
+
+  if (totalPages <= PAGE_BUTTON_LIMIT || currentPage <= 3) {
+    return Array.from({ length: visiblePageCount }, (_, index) => index + 1);
+  }
+
+  if (currentPage >= totalPages - 2) {
+    return Array.from({ length: visiblePageCount }, (_, index) => totalPages - PAGE_BUTTON_LIMIT + 1 + index);
+  }
+
+  return Array.from({ length: visiblePageCount }, (_, index) => currentPage - 2 + index);
+}
+
+function getEmptyHistoryTitle(isConnected) {
+  return isConnected ? 'No shots found' : 'No cached shots available';
+}
+
+function getEmptyHistoryDescription(isConnected) {
+  if (isConnected) {
+    return 'Shot history will appear here after GaggiMate has recorded shots and the local mirror has hydrated.';
+  }
+
+  return 'Connect to GaggiMate once to hydrate the local mirror. After that, shot history remains available offline.';
 }
 
 export function ShotHistory() {
@@ -84,31 +202,7 @@ export function ShotHistory() {
       const shotList = await libraryService.getAllShots('both');
       if (loadHistoryRequestRef.current !== requestId) return;
 
-      setHistory(prev => {
-        const existingMap = new Map(
-          prev.map(shot => [`${shot.source || 'gaggimate'}:${getShotStorageId(shot)}`, shot]),
-        );
-
-        return shotList.map(newShot => {
-          const normalized = normalizeHistoryShot(newShot);
-          const existing = existingMap.get(`${normalized.source}:${getShotStorageId(normalized)}`);
-
-          if (existing && existing.loaded) {
-            return {
-              ...existing,
-              ...normalized,
-              samples: existing.samples,
-              loaded: true,
-              volume: normalized.volume ?? existing.volume,
-              rating: normalized.rating ?? existing.rating,
-              incomplete: normalized.incomplete ?? existing.incomplete,
-              notes: normalized.notes ?? existing.notes,
-            };
-          }
-
-          return normalized;
-        });
-      });
+      setHistory(prev => mergeShotListWithExisting(prev, shotList));
       setLoading(false);
     } catch (error) {
       if (loadHistoryRequestRef.current !== requestId) return;
@@ -139,7 +233,7 @@ export function ShotHistory() {
       if (connected.value) {
         await libraryService.hydrateGaggiMateShotIndex();
       }
-      await libraryService.deleteShot(getShotStorageId(shot), shot.source || 'gaggimate');
+      await libraryService.deleteShot(getShotStorageId(shot), shot.source || DEFAULT_SOURCE);
       await loadHistory();
     },
     [apiService, loadHistory],
@@ -148,6 +242,18 @@ export function ShotHistory() {
   const onNotesChanged = useCallback(async () => {
     await loadHistory();
   }, [loadHistory]);
+
+  const onLoadShot = useCallback(async item => {
+    if (item.loaded) return;
+
+    try {
+      const storageId = getShotStorageId(item);
+      const parsed = await libraryService.loadShot(storageId, item.source || DEFAULT_SOURCE);
+      setHistory(prev => updateLoadedShotInHistory(prev, item, storageId, parsed));
+    } catch (error) {
+      console.error('Failed loading shot', error);
+    }
+  }, []);
 
   // Filtered and sorted history with pagination
   const { paginatedHistory, totalPages, totalFilteredItems } = useMemo(() => {
@@ -175,37 +281,7 @@ export function ShotHistory() {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let comparison = 0;
-
-      switch (sortBy) {
-        case 'rating':
-          comparison = (a.rating || 0) - (b.rating || 0);
-          break;
-        case 'profile':
-          comparison = (a.profile || '').localeCompare(b.profile || '');
-          break;
-        case 'duration':
-          comparison = a.duration - b.duration;
-          break;
-        case 'volume':
-          comparison = (a.volume || 0) - (b.volume || 0);
-          break;
-        case 'id':
-          comparison = parseInt(a.id) - parseInt(b.id);
-          break;
-        case 'date':
-        default:
-          if (a.timestamp >= 10000 && b.timestamp >= 10000) {
-            comparison = a.timestamp - b.timestamp;
-          } else if (a.timestamp >= 10000) {
-            comparison = 1;
-          } else if (b.timestamp >= 10000) {
-            comparison = -1;
-          } else {
-            comparison = parseInt(a.id) - parseInt(b.id);
-          }
-      }
-
+      const comparison = compareHistoryShots(a, b, sortBy);
       return sortOrder === 'desc' ? -comparison : comparison;
     });
 
@@ -219,6 +295,8 @@ export function ShotHistory() {
 
     return { paginatedHistory, totalPages, totalFilteredItems };
   }, [history, searchTerm, filterBy, sortBy, sortOrder, currentPage]);
+
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   if (loading) {
     return (
@@ -309,56 +387,20 @@ export function ShotHistory() {
       <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
         {paginatedHistory.map(item => (
           <HistoryCard
-            key={`${item.source || 'gaggimate'}-${getShotStorageId(item)}`}
+            key={`${item.source || DEFAULT_SOURCE}-${getShotStorageId(item)}`}
             shot={item}
             onDelete={() => onDelete(item)}
             onNotesChanged={onNotesChanged}
-            onLoad={async () => {
-              if (item.loaded) return;
-
-              try {
-                const storageId = getShotStorageId(item);
-                const parsed = await libraryService.loadShot(storageId, item.source || 'gaggimate');
-
-                setHistory(prev =>
-                  prev.map(h => {
-                    const sameShot =
-                      `${h.source || 'gaggimate'}:${getShotStorageId(h)}` ===
-                      `${item.source || 'gaggimate'}:${storageId}`;
-
-                    if (!sameShot) return h;
-
-                    return normalizeHistoryShot({
-                      ...h,
-                      ...parsed,
-                      id: h.id,
-                      storageKey: h.storageKey,
-                      source: h.source || parsed.source,
-                      volume: h.volume ?? parsed.volume,
-                      rating: h.rating ?? parsed.rating,
-                      incomplete: h.incomplete ?? parsed.incomplete,
-                      notes: h.notes ?? parsed.notes,
-                      loaded: true,
-                    });
-                  }),
-                );
-              } catch (e) {
-                console.error('Failed loading shot', e);
-              }
-            }}
+            onLoad={() => onLoadShot(item)}
           />
         ))}
         {totalFilteredItems === 0 && !loading && (
           <div className='flex flex-row items-center justify-center py-20 lg:col-span-12'>
             {history.length === 0 ? (
               <div className='text-center'>
-                <h2 className='text-lg font-semibold'>
-                  {connected.value ? 'No shots found' : 'No cached shots available'}
-                </h2>
+                <h2 className='text-lg font-semibold'>{getEmptyHistoryTitle(connected.value)}</h2>
                 <p className='text-base-content/70 mt-2 max-w-xl text-sm'>
-                  {connected.value
-                    ? 'Shot history will appear here after GaggiMate has recorded shots and the local mirror has hydrated.'
-                    : 'Connect to GaggiMate once to hydrate the local mirror. After that, shot history remains available offline.'}
+                  {getEmptyHistoryDescription(connected.value)}
                 </p>
               </div>
             ) : (
@@ -380,29 +422,15 @@ export function ShotHistory() {
           </button>
 
           <div className='flex items-center gap-1'>
-            {/* Show page numbers */}
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-
-              return (
-                <button
-                  key={pageNum}
-                  className={`btn btn-sm ${currentPage === pageNum ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setCurrentPage(pageNum)}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
+            {pageNumbers.map(pageNum => (
+              <button
+                key={pageNum}
+                className={`btn btn-sm ${currentPage === pageNum ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setCurrentPage(pageNum)}
+              >
+                {pageNum}
+              </button>
+            ))}
           </div>
 
           <button
