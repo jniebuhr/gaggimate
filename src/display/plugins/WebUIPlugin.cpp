@@ -422,25 +422,8 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
     response["rid"] = request["rid"].as<String>();
 
     if (type == "req:profiles:list") {
-        auto arr = response["profiles"].to<JsonArray>();
-        for (auto const &id : profileManager->listProfiles()) {
-            Profile profile{};
-            // Skip entries whose JSON couldn't be opened or failed validation
-            // (parseProfile returns false for missing label/type/phases). Without
-            // this, corrupt or partial profile files surface as blank cards in
-            // the UI — the user reported "blank Simple cards" originating here.
-            if (!profileManager->loadProfile(id, profile)) {
-                ESP_LOGW("WebUIPlugin", "Skipping unreadable profile %s in list response", id.c_str());
-                continue;
-            }
-            auto p = arr.add<JsonObject>();
-            if (request["minimal"].as<bool>()) {
-                p["id"] = profile.id;
-                p["label"] = profile.label;
-            } else {
-                writeProfile(p, profile);
-            }
-        }
+        bool minimal = request["minimal"].as<bool>();
+        response["profiles"] = serialized(profileManager->getProfilesJsonCache(minimal));
     } else if (type == "req:profiles:load") {
         auto id = request["id"].as<String>();
         Profile profile;
@@ -486,6 +469,7 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
                 }
             }
             controller->getSettings().setProfileOrder(order);
+            profileManager->invalidateCache();
         }
     }
 

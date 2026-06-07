@@ -78,6 +78,12 @@ export function App() {
     }
   }, [navCollapsed]);
 
+  useEffect(() => {
+    const handleOpenNav = () => setNavCollapsed(false);
+    window.addEventListener('open-mobile-nav', handleOpenNav);
+    return () => window.removeEventListener('open-mobile-nav', handleOpenNav);
+  }, []);
+
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
@@ -116,16 +122,6 @@ export function App() {
               </div>
             </div>
           </div>
-          {navCollapsed && (
-            <div className='fab end-auto left-4 md:hidden landscape:hidden'>
-              <button
-                className='btn btn-lg btn-circle btn-primary'
-                onClick={() => setNavCollapsed(false)}
-              >
-                <FontAwesomeIcon icon={faBars} />
-              </button>
-            </div>
-          )}
         </div>
       </ApiServiceContext.Provider>
     </LocationProvider>

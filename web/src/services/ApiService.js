@@ -233,3 +233,31 @@ export const machine = signal({
   },
   history: [],
 });
+
+let settingsCache = null;
+let settingsData = null;
+
+export const prefetchSettings = () => {
+  if (!settingsCache) {
+    settingsCache = fetch('/api/settings').then(res => res.json()).then(data => {
+      settingsData = data;
+      return data;
+    }).catch(err => {
+      settingsCache = null;
+      throw err;
+    });
+  }
+  return settingsCache;
+};
+
+export const getCachedSettings = () => settingsData;
+
+export const updateSettingsCache = (data) => {
+  settingsData = data;
+  settingsCache = Promise.resolve(data);
+};
+
+export const invalidateSettingsCache = () => {
+  settingsData = null;
+  settingsCache = null;
+};

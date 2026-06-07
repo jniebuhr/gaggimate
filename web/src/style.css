@@ -666,8 +666,22 @@ html[data-theme='coffee'] {
   padding-bottom: 1.25rem; /* 20px */
   padding-left: 1rem; /* 16px */
   padding-right: 1rem; /* 16px */
-  transition: width 280ms cubic-bezier(0.34, 1.15, 0.64, 1);
-  will-change: width;
+  transition: width 280ms cubic-bezier(0.34, 1.15, 0.64, 1),
+              translate 280ms cubic-bezier(0.34, 1.15, 0.64, 1),
+              transform 280ms cubic-bezier(0.34, 1.15, 0.64, 1);
+  will-change: width, translate, transform;
+}
+
+.sidebar-backdrop-transition {
+  transition: opacity 280ms cubic-bezier(0.34, 1.15, 0.64, 1);
+  will-change: opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-transition,
+  .sidebar-backdrop-transition {
+    transition: none !important;
+  }
 }
 
 

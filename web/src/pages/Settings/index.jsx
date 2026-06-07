@@ -2,10 +2,9 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useQuery } from 'preact-fetching';
 import { useCallback, useEffect, useRef, useState, useContext } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
-import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { ApiServiceContext, machine, prefetchSettings, updateSettingsCache, getCachedSettings } from '../../services/ApiService.js';
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
@@ -15,8 +14,9 @@ import PageLayout from '../../components/PageLayout.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
 import TabBar from '../../components/TabBar.jsx';
 
+import lazy from 'preact-iso/lazy';
+
 import { StickyFormFooter } from './StickyFormFooter.jsx';
-import { ProgressiveContent, preloadComponent } from '../../components/ProgressiveContent.jsx';
 import {
   GeneralTabSkeleton,
   MachineTabSkeleton,
@@ -24,12 +24,17 @@ import {
   BluetoothTabSkeleton,
   SystemTabSkeleton,
 } from '../../components/Skeletons.jsx';
+import { GeneralTab } from './tabs/GeneralTab.jsx';
 
-const loadGeneralTab = () => import('./tabs/GeneralTab.jsx').then(m => m.GeneralTab);
-const loadMachineTab = () => import('./tabs/MachineTab.jsx').then(m => m.MachineTab);
-const loadPluginsTab = () => import('./tabs/PluginsTab.jsx').then(m => m.PluginsTab);
-const loadBluetoothTab = () => import('./tabs/BluetoothTab.jsx').then(m => m.BluetoothTab);
-const loadSystemTab = () => import('./tabs/SystemTab.jsx').then(m => m.SystemTab);
+const LazyMachineTab = lazy(() => import('./tabs/MachineTab.jsx').then(m => m.MachineTab));
+const LazyPluginsTab = lazy(() => import('./tabs/PluginsTab.jsx').then(m => m.PluginsTab));
+const LazyBluetoothTab = lazy(() => import('./tabs/BluetoothTab.jsx').then(m => m.BluetoothTab));
+const LazySystemTab = lazy(() => import('./tabs/SystemTab.jsx').then(m => m.SystemTab));
+
+const loadMachineTab = () => import('./tabs/MachineTab.jsx');
+const loadPluginsTab = () => import('./tabs/PluginsTab.jsx');
+const loadBluetoothTab = () => import('./tabs/BluetoothTab.jsx');
+const loadSystemTab = () => import('./tabs/SystemTab.jsx');
 
 // Icons
 import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders';
@@ -69,10 +74,20 @@ export function Settings() {
     { time: '07:00', days: [true, true, true, true, true, true, true] },
   ]);
 
-  const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
-    const response = await fetch(`/api/settings`);
-    return await response.json();
-  });
+  const [fetchedSettings, setFetchedSettings] = useState(() => getCachedSettings());
+  const [isLoading, setIsLoading] = useState(!fetchedSettings);
+
+  useEffect(() => {
+    if (!fetchedSettings) {
+      prefetchSettings().then(data => {
+        setFetchedSettings(data);
+        setIsLoading(false);
+      }).catch(err => {
+        console.error('Failed to prefetch settings:', err);
+        setIsLoading(false);
+      });
+    }
+  }, [fetchedSettings]);
 
   useEffect(() => {
     const loadProfiles = async () => {
@@ -305,6 +320,7 @@ export function Settings() {
           standbyDisplayEnabled: data.standbyBrightness > 0 ? formData.standbyDisplayEnabled : false,
         };
 
+        updateSettingsCache(data);
         setFormData(updatedData);
       } catch (error) {
         console.error('Failed to save settings:', error);
@@ -332,11 +348,11 @@ export function Settings() {
   };
 
   const settingsTabs = [
-    { id: 'general', label: 'General', icon: faSliders, preload: () => preloadComponent(loadGeneralTab) },
-    { id: 'machine', label: 'Machine', icon: faTemperatureHalf, preload: () => preloadComponent(loadMachineTab) },
-    { id: 'plugins', label: 'Plugins', icon: faPuzzlePiece, preload: () => preloadComponent(loadPluginsTab) },
-    { id: 'bluetooth', label: 'Bluetooth', icon: faBluetoothB, preload: () => preloadComponent(loadBluetoothTab) },
-    { id: 'system', label: 'System', icon: faRotate, preload: () => preloadComponent(loadSystemTab) },
+    { id: 'general', label: 'General', icon: faSliders },
+    { id: 'machine', label: 'Machine', icon: faTemperatureHalf, preload: loadMachineTab },
+    { id: 'plugins', label: 'Plugins', icon: faPuzzlePiece, preload: loadPluginsTab },
+    { id: 'bluetooth', label: 'Bluetooth', icon: faBluetoothB, preload: loadBluetoothTab },
+    { id: 'system', label: 'System', icon: faRotate, preload: loadSystemTab },
   ];
 
   return (
@@ -344,6 +360,13 @@ export function Settings() {
       <PageHeader
         title="Settings"
         noStack={true}
+        tabs={
+          <TabBar
+            tabs={settingsTabs}
+            activeTab={tab}
+            basePath="/settings"
+          />
+        }
         actions={
           <div
             className={`action-dropdown relative ${dropdownOpen ? 'action-dropdown-open' : ''}`}
@@ -395,51 +418,41 @@ export function Settings() {
         }
       />
 
-      <TabBar
-        tabs={settingsTabs}
-        activeTab={tab}
-        basePath="/settings"
-        className="mb-6 sm:-mx-6 sm:px-6"
-      />
-
       <form key='settings' ref={formRef} method='post' action='/api/settings' onSubmit={onSubmit} className={isFormTab ? '' : 'hidden'}>
         {tab === 'general' && (
-          <ProgressiveContent
-            loader={loadGeneralTab}
-            skeleton={GeneralTabSkeleton}
-            isLoading={isLoading}
-            formData={formData}
-            onChange={onChange}
-            profiles={profiles}
-            currentTheme={currentTheme}
-            setCurrentTheme={setCurrentTheme}
-            handleThemeChange={handleThemeChange}
-            showWifiPassword={showWifiPassword}
-            setShowWifiPassword={setShowWifiPassword}
-          />
+          isLoading ? <GeneralTabSkeleton /> : (
+            <GeneralTab
+              formData={formData}
+              onChange={onChange}
+              profiles={profiles}
+              currentTheme={currentTheme}
+              setCurrentTheme={setCurrentTheme}
+              handleThemeChange={handleThemeChange}
+              showWifiPassword={showWifiPassword}
+              setShowWifiPassword={setShowWifiPassword}
+            />
+          )
         )}
         {tab === 'machine' && (
-          <ProgressiveContent
-            loader={loadMachineTab}
-            skeleton={MachineTabSkeleton}
-            isLoading={isLoading}
-            formData={formData}
-            onChange={onChange}
-          />
+          isLoading ? <MachineTabSkeleton /> : (
+            <LazyMachineTab
+              formData={formData}
+              onChange={onChange}
+            />
+          )
         )}
         {tab === 'plugins' && (
-          <ProgressiveContent
-            loader={loadPluginsTab}
-            skeleton={PluginsTabSkeleton}
-            isLoading={isLoading}
-            formData={formData}
-            onChange={onChange}
-            autowakeupSchedules={autowakeupSchedules}
-            addAutoWakeupSchedule={addAutoWakeupSchedule}
-            removeAutoWakeupSchedule={removeAutoWakeupSchedule}
-            updateAutoWakeupTime={updateAutoWakeupTime}
-            updateAutoWakeupDay={updateAutoWakeupDay}
-          />
+          isLoading ? <PluginsTabSkeleton /> : (
+            <LazyPluginsTab
+              formData={formData}
+              onChange={onChange}
+              autowakeupSchedules={autowakeupSchedules}
+              addAutoWakeupSchedule={addAutoWakeupSchedule}
+              removeAutoWakeupSchedule={removeAutoWakeupSchedule}
+              updateAutoWakeupTime={updateAutoWakeupTime}
+              updateAutoWakeupDay={updateAutoWakeupDay}
+            />
+          )
         )}
 
         {isFormTab && (
@@ -451,18 +464,10 @@ export function Settings() {
       </form>
 
       {tab === 'bluetooth' && (
-        <ProgressiveContent
-          loader={loadBluetoothTab}
-          skeleton={BluetoothTabSkeleton}
-          isLoading={isLoading}
-        />
+        isLoading ? <BluetoothTabSkeleton /> : <LazyBluetoothTab />
       )}
       {tab === 'system' && (
-        <ProgressiveContent
-          loader={loadSystemTab}
-          skeleton={SystemTabSkeleton}
-          isLoading={isLoading}
-        />
+        isLoading ? <SystemTabSkeleton /> : <LazySystemTab />
       )}
     </PageLayout>
   );

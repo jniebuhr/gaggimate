@@ -45,8 +45,11 @@ export function ProfileEdit() {
   useEffect(() => {
     async function fetchData() {
       if (params.id === 'new') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const initialType = searchParams.get('type');
         setData({
           label: 'New Profile',
+          type: initialType || undefined,
           description: '',
           temperature: 93,
           phases: [

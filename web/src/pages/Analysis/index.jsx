@@ -7,12 +7,16 @@ import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 
-import { ProgressiveContent, preloadComponent } from '../../components/ProgressiveContent.jsx';
-import { AnalysisSkeleton } from '../../components/Skeletons.jsx';
+import lazy from 'preact-iso/lazy';
 
-const loadShotHistory = () => import('../ShotHistory/index.jsx').then(m => m.ShotHistory);
-const loadShotAnalyzer = () => import('../ShotAnalyzer/index.jsx').then(m => m.ShotAnalyzer);
-const loadStatisticsPage = () => import('../Statistics/index.jsx').then(m => m.StatisticsPage);
+const LazyShotHistory = lazy(() => import('../ShotHistory/index.jsx').then(m => m.ShotHistory));
+const LazyShotAnalyzer = lazy(() => import('../ShotAnalyzer/index.jsx').then(m => m.ShotAnalyzer));
+const LazyStatisticsPage = lazy(() => import('../Statistics/index.jsx').then(m => m.StatisticsPage));
+
+// Expose preloaders for the TabBar hover
+const loadShotHistory = () => import('../ShotHistory/index.jsx');
+const loadShotAnalyzer = () => import('../ShotAnalyzer/index.jsx');
+const loadStatisticsPage = () => import('../Statistics/index.jsx');
 
 function resolveAnalysisTab(params) {
   if (!params.tab) {
@@ -32,42 +36,25 @@ export function Analysis() {
   const tab = resolveAnalysisTab(params);
 
   return (
-    <PageLayout variant="wide">
-      <PageHeader title="Analysis" />
-      <TabBar
-        tabs={[
-          { id: 'history',    label: 'Shot History',    icon: faTimeline, preload: () => preloadComponent(loadShotHistory) },
-          { id: 'analyzer',   label: 'Shot Analyzer',   icon: faMagnifyingGlassChart, preload: () => preloadComponent(loadShotAnalyzer) },
-          { id: 'statistics', label: 'Statistics',      icon: faChartSimple, preload: () => preloadComponent(loadStatisticsPage) },
-        ]}
-        activeTab={tab}
-        basePath="/analysis"
-        className="mb-6 sm:-mx-6 sm:px-6"
+    <PageLayout variant="narrow">
+      <PageHeader 
+        title="Analysis" 
+        tabs={
+          <TabBar
+            tabs={[
+              { id: 'history',    label: 'Shot History',    icon: faTimeline, preload: loadShotHistory },
+              { id: 'analyzer',   label: 'Shot Analyzer',   icon: faMagnifyingGlassChart, preload: loadShotAnalyzer },
+              { id: 'statistics', label: 'Statistics',      icon: faChartSimple, preload: loadStatisticsPage },
+            ]}
+            activeTab={tab}
+            basePath="/analysis"
+          />
+        }
       />
       
-      {tab === 'history' && (
-        <ProgressiveContent
-          loader={loadShotHistory}
-          skeleton={AnalysisSkeleton}
-          isTab={true}
-        />
-      )}
-      {tab === 'analyzer' && (
-        <ProgressiveContent
-          loader={loadShotAnalyzer}
-          skeleton={AnalysisSkeleton}
-          isTab={true}
-          params={params}
-        />
-      )}
-      {tab === 'statistics' && (
-        <ProgressiveContent
-          loader={loadStatisticsPage}
-          skeleton={AnalysisSkeleton}
-          isTab={true}
-          params={params}
-        />
-      )}
+      {tab === 'history' && <LazyShotHistory isTab={true} />}
+      {tab === 'analyzer' && <LazyShotAnalyzer isTab={true} params={params} />}
+      {tab === 'statistics' && <LazyStatisticsPage isTab={true} params={params} />}
     </PageLayout>
   );
 }

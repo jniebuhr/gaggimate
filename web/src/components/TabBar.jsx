@@ -17,7 +17,7 @@ export default function TabBar({ tabs, activeTab, onTabChange, basePath, classNa
     <div className={`w-full overflow-x-auto scrollbar-none ${className}`}>
       <div 
         role="tablist" 
-        className="tabs tabs-border min-w-full px-1"
+        className="tabs tabs-border min-w-full px-1 flex-nowrap"
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
@@ -34,14 +34,14 @@ export default function TabBar({ tabs, activeTab, onTabChange, basePath, classNa
               aria-selected={isActive}
               aria-controls={`panel-${tab.id}`}
               id={`tab-${tab.id}`}
-              className={`tab h-12 text-sm font-medium transition-all duration-150 whitespace-nowrap ${
+              className={`tab h-12 flex flex-row items-center justify-center gap-2 text-sm font-medium transition-all duration-150 whitespace-nowrap ${
                 isActive
                   ? 'tab-active text-primary'
                   : 'text-base-content/60 hover:text-base-content/85'
               }`}
             >
               {tab.icon && (
-                <FontAwesomeIcon icon={tab.icon} className="mr-2 h-4 w-4 shrink-0" />
+                <FontAwesomeIcon icon={tab.icon} className="h-4 w-4 shrink-0" />
               )}
               {tab.label}
             </a>

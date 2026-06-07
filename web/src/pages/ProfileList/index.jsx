@@ -18,7 +18,9 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
+import { ProfileTypeSelection } from '../ProfileEdit/ProfileTypeSelection.jsx';
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
+import { useIntersectionObserver } from '../../hooks/useIntersectionObserver.js';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
@@ -110,6 +112,10 @@ function ProfileCard({
   const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
   const [cardDropdownOpen, setCardDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const chartContainerRef = useRef(null);
+  const { hasIntersected } = useIntersectionObserver(chartContainerRef, {
+    rootMargin: '300px 0px',
+  });
 
   useEffect(() => {
     if (!cardDropdownOpen) return;
@@ -482,11 +488,17 @@ function ProfileCard({
                   </button>
                 </Tooltip>
               </div>
-              <div className='flex-grow overflow-x-auto'>
-                {data.type === 'pro' ? (
-                  <ExtendedProfileChart data={data} className='max-h-36' />
+              <div className='flex-grow overflow-x-auto min-h-16' ref={chartContainerRef}>
+                {hasIntersected ? (
+                  data.type === 'pro' ? (
+                    <ExtendedProfileChart data={data} className='max-h-36' />
+                  ) : (
+                    <SimpleContent data={data} />
+                  )
+                ) : data.type === 'pro' ? (
+                  <div className='skeleton h-36 w-full opacity-30' aria-hidden='true'></div>
                 ) : (
-                  <SimpleContent data={data} />
+                  <div className='skeleton h-16 w-full opacity-30' aria-hidden='true'></div>
                 )}
               </div>
             </div>
@@ -987,10 +999,39 @@ export function ProfileList() {
   // Remove if(loading) spinner check here
 
   return (
+    <>
+      <dialog id="new_profile_modal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box w-11/12 max-w-4xl p-6 sm:p-8">
+          <form method="dialog">
+            <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+          </form>
+          <h3 className="font-bold text-2xl mb-6 text-base-content text-center">Select Profile Type</h3>
+          <ProfileTypeSelection onSelect={(type) => {
+            document.getElementById('new_profile_modal').close();
+            window.location.href = `/profiles/new?type=${type}`;
+          }} />
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
     <PageLayout variant='narrow'>
-      <PageHeader
-        title='Profiles'
-        actions={
+      <div>
+        <PageHeader
+          title='Profiles'
+          noStack={true}
+          tabs={hasUtilityProfiles ? (
+            <TabBar
+              tabs={[
+                { id: 'extraction', label: 'Extraction' },
+                { id: 'utility', label: 'Utility' }
+              ]}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+            />
+          ) : null}
+          actions={
           <div className='flex flex-row items-center gap-3'>
             {/* Mobile-only Action Buttons */}
             <div className='flex flex-row items-center gap-1 sm:hidden'>
@@ -1002,13 +1043,9 @@ export function ProfileList() {
               >
                 <FontAwesomeIcon icon={faSearch} size='lg' />
               </button>
-              <a
-                href='/profiles/new'
-                className='btn btn-ghost btn-circle text-primary'
-                aria-label='Create new profile'
-              >
+              <button onClick={() => document.getElementById('new_profile_modal').showModal()} className='btn btn-ghost btn-circle text-primary' aria-label='Create new profile'>
                 <FontAwesomeIcon icon={faPlus} size='lg' />
-              </a>
+              </button>
               <div
                 className={`action-dropdown relative ${mobileHeaderDropdownOpen ? 'action-dropdown-open' : ''}`}
                 ref={mobileHeaderDropdownRef}
@@ -1042,14 +1079,14 @@ export function ProfileList() {
               </label>
 
               {/* Create Profile Button */}
-              <a
-                href='/profiles/new'
+              <button
+                onClick={() => document.getElementById('new_profile_modal').showModal()}
                 className='btn btn-primary gap-2'
                 aria-label='Create new profile'
               >
                 <FontAwesomeIcon icon={faPlus} />
                 <span>Create Profile</span>
-              </a>
+              </button>
 
               {/* More Actions Dropdown */}
               <div
@@ -1108,18 +1145,8 @@ export function ProfileList() {
         accept='.json,application/json,.tcl'
         aria-label='Select a JSON file containing profile data to import'
       />
+      </div>
       <div className={`profiles-list-content ${isMobileSearchActive ? 'search-active' : ''}`}>
-        {hasUtilityProfiles && (
-          <TabBar
-            tabs={[
-              { id: 'extraction', label: 'Extraction' },
-              { id: 'utility', label: 'Utility' }
-            ]}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            className='mb-4'
-          />
-        )}
         <ProgressiveContent isLoading={loading} skeleton={ProfileListSkeleton}>
           <div
             className='grid grid-cols-1 gap-4 lg:grid-cols-12'
@@ -1152,5 +1179,6 @@ export function ProfileList() {
         </ProgressiveContent>
       </div>
     </PageLayout>
+    </>
   );
 }

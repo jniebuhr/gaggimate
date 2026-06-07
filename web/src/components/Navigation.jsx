@@ -11,6 +11,7 @@ import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagn
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
 import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
+import { prefetchSettings } from '../services/ApiService.js';
 import { GmLogoIcon } from './GmLogoIcon.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
@@ -49,12 +50,12 @@ const NAVIGATION_SECTIONS = [
       { label: 'Dashboard', link: '/', icon: faHome },
       { label: 'Profiles', link: '/profiles', icon: faList },
       { label: 'Analysis', link: '/analysis', icon: faMagnifyingGlassChart },
-      { label: 'Settings', link: '/settings', icon: faCog },
+      { label: 'Settings', link: '/settings', icon: faCog, onHover: prefetchSettings },
     ],
   },
 ];
 
-function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
+function MenuItem({ collapsed = false, icon, isNew = false, label, link, onHover }) {
   const { path } = useLocation();
   const isActive = link === '/' ? path === '/' : path.startsWith(link);
   const isExpanded = collapsed === false;
@@ -65,6 +66,10 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
   const className = `${isActive ? activeClassName : baseClassName} flex items-center overflow-hidden ${
     collapsed ? 'nav-btn-collapsed' : ''
   }`;
+
+  const handleHover = () => {
+    if (onHover) onHover();
+  };
 
   return (
     <Tooltip
@@ -78,6 +83,8 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
         className={className}
         aria-label={collapsed ? label : undefined}
         aria-current={isActive ? 'page' : undefined}
+        onMouseEnter={handleHover}
+        onTouchStart={handleHover}
       >
         <div className='flex items-center justify-center shrink-0 w-6 h-6'>
           <FontAwesomeIcon size='md' icon={icon} />
@@ -120,15 +127,16 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
 
   return (
     <>
-      {!collapsed && (
-        <div
-          className='fixed end-0 top-0 bottom-0 left-0 z-9998 cursor-pointer backdrop-blur-sm backdrop-brightness-50 md:hidden'
-          onClick={onToggleCollapsed}
-        ></div>
-      )}
+      <div
+        className={`fixed inset-0 z-[9998] cursor-pointer backdrop-blur-sm backdrop-brightness-50 md:hidden sidebar-backdrop-transition ${
+          collapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        onClick={onToggleCollapsed}
+        aria-hidden="true"
+      ></div>
       <aside
-        className={`sidebar fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-hidden border-r border-base-content/10 bg-base-100 md:static landscape:static sidebar-transition ${
-          collapsed ? 'hidden md:flex md:w-[80px] landscape:flex landscape:w-[80px] sidebar-collapsed' : 'w-[280px]'
+        className={`sidebar fixed top-0 left-0 z-[9999] flex h-screen flex-col overflow-hidden border-r border-base-content/10 bg-base-100 md:static landscape:static sidebar-transition ${
+          collapsed ? '-translate-x-full w-[280px] md:translate-x-0 md:w-[80px] landscape:translate-x-0 landscape:w-[80px] sidebar-collapsed' : 'translate-x-0 w-[280px]'
         }`}
       >
         <div className='flex h-full flex-col w-full'>

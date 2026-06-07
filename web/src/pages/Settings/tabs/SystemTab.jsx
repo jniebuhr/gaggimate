@@ -1,7 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { ApiServiceContext } from '../../../services/ApiService.js';
 import { downloadJson } from '../../../utils/download.js';
-import { ProgressiveContent } from '../../../components/ProgressiveContent.jsx';
 import { SystemTabSkeleton } from '../../../components/Skeletons.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
@@ -150,8 +149,12 @@ export function SystemTab() {
     );
   }
 
+  if (isLoading) {
+    return <SystemTabSkeleton />;
+  }
+
   return (
-    <ProgressiveContent isLoading={isLoading} skeleton={SystemTabSkeleton}>
+    <>
       <div className='space-y-4 sm:space-y-6'>
         {/* Firmware updates channel */}
         <Section title='System Version & Updates'>
@@ -359,6 +362,6 @@ export function SystemTab() {
           )}
         </Section>
       </div>
-    </ProgressiveContent>
+    </>
   );
 }

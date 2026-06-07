@@ -13,6 +13,8 @@ import {
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
+import PageLayout from '../../components/PageLayout.jsx';
+import PageHeader from '../../components/PageHeader.jsx';
 import ProcessControls from './ProcessControls.jsx';
 import CompactProcessControls from './CompactProcessControls.jsx';
 import { getDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
@@ -51,10 +53,11 @@ export function Home() {
   const mode = machine.value.status.mode;
 
   return (
-    <div className='landscape:max-lg:flex landscape:max-lg:h-full landscape:max-lg:flex-col'>
-      <div className='mb-4 flex flex-row items-center gap-2 landscape:hidden landscape:lg:block'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
-      </div>
+    <PageLayout variant="narrow" className='landscape:max-lg:flex landscape:max-lg:h-full landscape:max-lg:flex-col'>
+      <PageHeader 
+        title="Dashboard" 
+        className='landscape:hidden landscape:lg:flex' 
+      />
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10 lg:items-stretch landscape:max-lg:min-h-0 landscape:max-lg:flex-1 landscape:sm:grid-cols-10'>
         <Card
@@ -81,6 +84,6 @@ export function Home() {
           <OverviewChart />
         </Card>
       </div>
-    </div>
+    </PageLayout>
   );
 }

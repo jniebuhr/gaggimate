@@ -12,7 +12,6 @@ import { faBatteryThreeQuarters } from '@fortawesome/free-solid-svg-icons/faBatt
 import { faBatteryHalf } from '@fortawesome/free-solid-svg-icons/faBatteryHalf';
 import { faBatteryQuarter } from '@fortawesome/free-solid-svg-icons/faBatteryQuarter';
 import { faBatteryEmpty } from '@fortawesome/free-solid-svg-icons/faBatteryEmpty';
-import { ProgressiveContent } from '../../../components/ProgressiveContent.jsx';
 import { BluetoothTabSkeleton } from '../../../components/Skeletons.jsx';
 
 function batteryIcon(pct) {
@@ -134,7 +133,7 @@ export function BluetoothTab() {
               </div>
             )}
             {mode > 0 && (
-              <ProgressiveContent isLoading={loading} skeleton={BluetoothTabSkeleton}>
+              loading ? <BluetoothTabSkeleton /> : (
                 <ScaleList
                   isLoading={loading}
                   isError={isError}
@@ -142,7 +141,7 @@ export function BluetoothTab() {
                   scaleData={scaleData}
                   onConnect={onConnect}
                 />
-              </ProgressiveContent>
+              )
             )}
             <div className='mt-4'>
               <div className='alert alert-warning text-xs'>
@@ -168,8 +167,11 @@ function ScaleList(props) {
       </div>
     );
   }
+  if (isLoading || isInfoLoading) {
+    return <BluetoothTabSkeleton />;
+  }
   return (
-    <ProgressiveContent isLoading={isLoading || isInfoLoading} skeleton={BluetoothTabSkeleton}>
+    <>
       {scaleData.length > 0 ? (
         <div className='space-y-4'>
           {scaleData.map(scale => (
@@ -231,6 +233,6 @@ function ScaleList(props) {
           </div>
         </div>
       )}
-    </ProgressiveContent>
+    </>
   );
 }

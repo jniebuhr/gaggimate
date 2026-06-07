@@ -26,6 +26,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import HistoryCard from './HistoryCard.jsx';
 import { parseBinaryShot } from './parseBinaryShot.js';
 import { parseBinaryIndex, indexToShotList } from './parseBinaryIndex.js';
+import { getCachedShotHistory, setCachedShotHistory } from '../../services/ShotHistoryCache.js';
 import { ProgressiveContent } from '../../components/ProgressiveContent.jsx';
 import { ShotHistorySkeleton } from '../../components/Skeletons.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -37,8 +38,8 @@ const connected = computed(() => machine.value.connected);
 
 export function ShotHistory({ isTab = false }) {
   const apiService = useContext(ApiServiceContext);
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [history, setHistory] = useState(getCachedShotHistory() || []);
+  const [loading, setLoading] = useState(!getCachedShotHistory());
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date'); // date, rating, profile, duration, volume
   const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
@@ -102,6 +103,12 @@ export function ShotHistory({ isTab = false }) {
     }
     return () => loadHistoryAbortRef.current?.abort();
   }, [connected.value]);
+
+  useEffect(() => {
+    if (history.length > 0 || !loading) {
+      setCachedShotHistory(history);
+    }
+  }, [history, loading]);
 
   const onDelete = useCallback(
     async id => {
@@ -192,8 +199,8 @@ export function ShotHistory({ isTab = false }) {
   // Remove if(loading) spinner check here
 
   return (
-    <>
-      <div className='mb-6'>
+    <div className='flex flex-col gap-6'>
+      <div>
         {!isTab ? (
           <div className='mb-4 flex flex-row items-center gap-2'>
             <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
@@ -378,6 +385,6 @@ export function ShotHistory({ isTab = false }) {
           </div>
         )}
       </ProgressiveContent>
-    </>
+    </div>
   );
 }
