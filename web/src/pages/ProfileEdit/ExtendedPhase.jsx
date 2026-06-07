@@ -4,11 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import {
-  getPumpMode,
-  getPumpPowerInputValue,
-  isPumpObject,
-  normalizePumpPower,
-  parsePumpPowerInput,
+  getPumpInputState,
+  getPumpPowerInputProps,
 } from './pumpInput.js';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
@@ -49,21 +46,9 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
 
   const targets = phase?.targets || [];
 
-  const pumpPower = getPumpPowerInputValue(phase.pump);
-  const pressure = isPumpObject(phase.pump) ? phase.pump.pressure : 0;
-  const flow = isPumpObject(phase.pump) ? phase.pump.flow : 0;
-  let mode = getPumpMode(phase.pump);
-
-  const onPumpPowerChange = e => {
-    const parsed = parsePumpPowerInput(e.target.value);
-    if (parsed !== undefined) {
-      onFieldChange('pump', parsed);
-    }
-  };
-
-  const onPumpPowerBlur = () => {
-    onFieldChange('pump', normalizePumpPower(phase.pump));
-  };
+  const pumpInput = getPumpInputState(phase.pump);
+  const powerFieldProps = getPumpPowerInputProps(phase.pump, value => onFieldChange('pump', value));
+  let mode = pumpInput.mode;
   if (mode === 'pressure' && phase.pump.pressure === -1) mode = 'hold-pressure';
   if (mode === 'flow' && phase.pump.flow === -1) mode = 'hold-flow';
   const availableTargetTypes = TargetTypes.filter(
@@ -289,9 +274,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                 step='1'
                 min={0}
                 max={100}
-                value={pumpPower}
-                onChange={onPumpPowerChange}
-                onBlur={onPumpPowerBlur}
+                {...powerFieldProps}
                 aria-label='Pump power as percentage'
               />
               <span aria-label='percent'>%</span>
@@ -319,7 +302,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     type='number'
                     step='0.01'
                     min={mode === 'pressure' ? '0.1' : '0'}
-                    value={pressure.toString()}
+                    value={pumpInput.pressure.toString()}
                     onChange={e =>
                       onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
                     }
@@ -343,7 +326,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                     className='grow'
                     type='number'
                     step='0.01'
-                    value={flow.toString()}
+                    value={pumpInput.flow.toString()}
                     onChange={e =>
                       onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
                     }

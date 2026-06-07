@@ -9,7 +9,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
-import { normalizePumpPower } from './pumpInput.js';
+import { normalizeProfilePumpPowers } from './pumpInput.js';
 
 export function ExtendedProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
@@ -67,13 +67,7 @@ export function ExtendedProfileForm(props) {
     <form
       onSubmit={e => {
         e.preventDefault();
-        onSave({
-          ...data,
-          phases: data.phases.map(phase => ({
-            ...phase,
-            pump: normalizePumpPower(phase.pump),
-          })),
-        });
+        onSave(normalizeProfilePumpPowers(data));
       }}
     >
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
