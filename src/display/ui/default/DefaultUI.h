@@ -6,8 +6,8 @@
 #include <display/core/constants.h>
 #include <display/drivers/Driver.h>
 #include <display/models/profile.h>
-
-#include "./lvgl/ui.h"
+#include <display/ui/default/eez/screens.h>
+#include <display/ui/default/eez/structs.h>
 
 class Controller;
 
@@ -31,7 +31,7 @@ class DefaultUI {
     void loopProfiles();
 
     // Interface methods
-    void changeScreen(lv_obj_t **screen, void (*target_init)(void));
+    void changeScreen(ScreensEnum screen);
 
     void changeBrewScreenMode(BrewScreenState state);
     void onProfileSwitch();
@@ -128,6 +128,17 @@ class DefaultUI {
     double bluetoothWeight = 0.0;
     BrewScreenState brewScreenState = BrewScreenState::Brew;
 
+    // EEZ Structs
+    SystemStatusValue systemStatus;
+    ProfileInfoValue profileInfo;
+    BoilerValue boiler;
+    UIFlagsValue uiFlags;
+    BrewProcessValue brewProcess;
+    Value currentWeight = FloatValue(0.0);
+    Value steamReady = BooleanValue(false);
+    Value grindWeightTarget = FloatValue(18.0);
+    Value grindTimeTarget = StringValue("0:15");
+
     int profileDirty = 0;
     int currentProfileIdx;
     int profileLoaded = 0;
@@ -136,9 +147,8 @@ class DefaultUI {
     int currentThemeMode = -1; // Force applyTheme on first loop
 
     // Screen change
-    lv_obj_t **targetScreen = &ui_StandbyScreen;
-    lv_obj_t *currentScreen = ui_StandbyScreen;
-    void (*targetScreenInit)(void) = &ui_StandbyScreen_screen_init;
+    ScreensEnum targetScreen = ScreensEnum::SCREEN_ID_STANDBY_SCREEN;
+    ScreensEnum currentScreen = ScreensEnum::SCREEN_ID_STANDBY_SCREEN;
 
     // Standby brightness control
     unsigned long standbyEnterTime = 0;

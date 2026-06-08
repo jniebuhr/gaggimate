@@ -1,8 +1,8 @@
 #include "Settings.h"
 
 #include <algorithm>
-#include <utility>
 #include <display/util/ColorConversion.h>
+#include <utility>
 
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);

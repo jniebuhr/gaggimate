@@ -103,13 +103,21 @@ class Settings {
     int getHistoryIndex() const { return historyIndex; }
 
     [[deprecated]]
-    int getSunriseR() const { return sunriseR; }
+    int getSunriseR() const {
+        return sunriseR;
+    }
     [[deprecated]]
-    int getSunriseG() const { return sunriseG; }
+    int getSunriseG() const {
+        return sunriseG;
+    }
     [[deprecated]]
-    int getSunriseB() const { return sunriseB; }
+    int getSunriseB() const {
+        return sunriseB;
+    }
     [[deprecated]]
-    int getSunriseW() const { return sunriseW; }
+    int getSunriseW() const {
+        return sunriseW;
+    }
     String getSunriseIdle() const { return sunriseIdle; }
     String getSunriseActive() const { return sunriseActive; }
     String getSunriseFinished() const { return sunriseFinished; }

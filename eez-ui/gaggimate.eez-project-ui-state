@@ -1,8 +1,8 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/0",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/2",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
-    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/14",
+    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/7",
     "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/4",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
     "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/35",
@@ -130,6 +130,7 @@
                   "type": "tabset",
                   "id": "#62043989-83c1-428b-8417-b89c3070fb5a",
                   "weight": 0.5267379679144385,
+                  "selected": 1,
                   "enableClose": false,
                   "children": [
                     {
@@ -195,16 +196,17 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 44.06285141286475,
+              "selected": 2,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
                   "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
-                  "name": "StandbyScreen",
+                  "name": "StatusScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/0",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/2",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -235,7 +237,7 @@
                 {
                   "type": "tab",
                   "id": "#c60bcd4b-9cca-4b7a-b219-3299251afca2",
-                  "name": "StatusScreen",
+                  "name": "StandbyScreen",
                   "component": "editor",
                   "config": {
                     "objectPath": "[gaggimate.eez-project]:/userPages/0",
@@ -243,8 +245,7 @@
                   },
                   "icon": "svg:page"
                 }
-              ],
-              "active": true
+              ]
             },
             {
               "type": "row",
@@ -264,7 +265,8 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ]
+                  ],
+                  "active": true
                 },
                 {
                   "type": "tabset",
@@ -1176,7 +1178,19 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {}
+          "0": {},
+          "1": {
+            "2": {
+              "2": {
+                "1": {},
+                "2": {
+                  "0": {
+                    "$selected": true
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -1208,12 +1222,12 @@
         "0": {
           "0": {},
           "2": {
+            "0": {
+              "$selected": true
+            },
             "2": {},
             "11": {
               "0": {}
-            },
-            "12": {
-              "2": {}
             }
           }
         }
@@ -1242,10 +1256,10 @@
       },
       "selectionFront": {},
       "selectionBack": {
-        "0": {},
-        "2": {
+        "0": {
           "$selected": true
         },
+        "2": {},
         "6": {}
       }
     },
@@ -1364,12 +1378,7 @@
           "1": {
             "0": {},
             "1": {
-              "1": {
-                "0": {
-                  "1": {}
-                },
-                "1": {}
-              }
+              "1": {}
             }
           }
         }
@@ -1889,15 +1898,7 @@
         "0": {
           "0": {},
           "1": {
-            "1": {
-              "1": {
-                "1": {
-                  "1": {
-                    "$selected": true
-                  }
-                }
-              }
-            },
+            "1": {},
             "2": {},
             "4": {}
           }
@@ -2031,6 +2032,15 @@
       "selectionBack": {
         "0": {
           "0": {},
+          "1": {
+            "2": {
+              "0": {
+                "5": {
+                  "$selected": true
+                }
+              }
+            }
+          },
           "2": {},
           "3": {}
         }
@@ -2106,5 +2116,5 @@
   "globalFlowZoom": true,
   "flowZoom": 1,
   "implementationLanguage": "C++",
-  "openDialogDefaultPath": "/Users/jniebuhr/work/3d/projects/paros-control/icons/out/info-80x80.png"
+  "openDialogDefaultPath": "/Users/jniebuhr/work/3d/projects/paros-control/src/display/ui/default"
 }
