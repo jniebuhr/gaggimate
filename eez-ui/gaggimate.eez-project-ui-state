@@ -5,6 +5,7 @@
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/14",
     "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/4",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
+    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/35",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Global"
     }
@@ -194,17 +195,16 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 44.06285141286475,
-              "selected": 3,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
                   "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
-                  "name": "BrewScreen",
+                  "name": "StandbyScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/1",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/0",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -243,7 +243,8 @@
                   },
                   "icon": "svg:page"
                 }
-              ]
+              ],
+              "active": true
             },
             {
               "type": "row",
@@ -263,8 +264,7 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -974,8 +974,7 @@
                       "component": "themes",
                       "enableClose": false
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -991,7 +990,8 @@
                       "component": "colors",
                       "enableClose": false
                     }
-                  ]
+                  ],
+                  "active": true
                 }
               ]
             }
@@ -1132,8 +1132,8 @@
       },
       "transform": {
         "translate": {
-          "x": -240,
-          "y": -240
+          "x": -224,
+          "y": -248
         },
         "scale": 1
       },
@@ -1147,17 +1147,7 @@
       "selectionBack": {
         "0": {
           "0": {},
-          "2": {
-            "2": {
-              "$selected": true
-            },
-            "11": {
-              "0": {}
-            },
-            "12": {
-              "2": {}
-            }
-          }
+          "1": {}
         }
       }
     },
@@ -1173,7 +1163,7 @@
       "transform": {
         "translate": {
           "x": -240,
-          "y": -240
+          "y": -120.8258056640625
         },
         "scale": 1
       },
@@ -1202,8 +1192,8 @@
       },
       "transform": {
         "translate": {
-          "x": -224,
-          "y": -248
+          "x": -240,
+          "y": -120.8258056640625
         },
         "scale": 1
       },
@@ -1217,11 +1207,14 @@
       "selectionBack": {
         "0": {
           "0": {},
-          "1": {
-            "0": {},
-            "1": {},
+          "2": {
             "2": {},
-            "3": {}
+            "11": {
+              "0": {}
+            },
+            "12": {
+              "2": {}
+            }
           }
         }
       }
@@ -1250,7 +1243,9 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {},
-        "2": {},
+        "2": {
+          "$selected": true
+        },
         "6": {}
       }
     },
@@ -1975,14 +1970,7 @@
     "[gaggimate.eez-project]:/userPages/8[flow-state]": {
       "selectionFront": {},
       "selectionBack": {
-        "0": {
-          "1": {
-            "0": {},
-            "1": {
-              "$selected": true
-            }
-          }
-        }
+        "0": {}
       },
       "transform": {
         "translate": {
@@ -2060,6 +2048,30 @@
         "secondToPx": 200,
         "scrollLeft": 0
       }
+    },
+    "[gaggimate.eez-project]:/userPages/10[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {},
+          "3": {
+            "0": {}
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -240
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
     }
   },
   "activeOutputSection": 0,
@@ -2094,5 +2106,5 @@
   "globalFlowZoom": true,
   "flowZoom": 1,
   "implementationLanguage": "C++",
-  "openDialogDefaultPath": "/Users/cristiansartori/eez-projects/gaggimate-new/src"
+  "openDialogDefaultPath": "/Users/jniebuhr/work/3d/projects/paros-control/icons/out/info-80x80.png"
 }
