@@ -22,7 +22,7 @@ char albaSwRxBuffer[128];
 void GaggiMateController::setup() {
     delay(5000);
     detectBoard();
-    // detectAddon();
+    detectAddon();
 
     this->thermocouple = new Max31855Thermocouple(
         _config.maxCsPin, _config.maxMisoPin, _config.maxSckPin, [this](float temperature) { /* noop */ },
