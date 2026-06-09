@@ -154,11 +154,12 @@ Validated populated-mirror restore execution:
 
 Remaining future hardening / validation:
 
-1. Large archive import behaviour testing
-2. Browser storage behaviour testing
+1. Browser storage behaviour testing
+2. Merge-back readiness audit
 
 Deferred:
 
+* Large archive import behaviour testing — insufficient real-world archive volume
 * Archive Browser
 * Archive Management
 
@@ -217,4 +218,5 @@ Do not reintroduce:
 * unrestricted settings writes
 
 Merge-back compatibility remains a hard requirement.
+
 
