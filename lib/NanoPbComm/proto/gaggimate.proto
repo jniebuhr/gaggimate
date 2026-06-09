@@ -150,6 +150,11 @@ message Capabilities {
     bool pressure = 2;
     bool led_control = 3;
     bool tof = 4;
+    repeated Addon addons = 5;
+}
+
+message Addon {
+    uint32 type = 1;
 }
 
 message SystemInfo {

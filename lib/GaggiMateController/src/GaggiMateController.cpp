@@ -16,10 +16,13 @@ GaggiMateController::GaggiMateController(String version) : _version(std::move(ve
     configs.push_back(GM_PRO_REV_11);
 }
 
+char albaSwTxBuffer[128];
+char albaSwRxBuffer[128];
+
 void GaggiMateController::setup() {
     delay(5000);
     detectBoard();
-    detectAddon();
+    // detectAddon();
 
     this->thermocouple = new Max31855Thermocouple(
         _config.maxCsPin, _config.maxMisoPin, _config.maxSckPin, [this](float temperature) { /* noop */ },
@@ -43,19 +46,31 @@ void GaggiMateController::setup() {
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); });
 
     // 4-Pin peripheral port
-    if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
-        ESP_LOGE(LOG_TAG, "Failed to initialize I2C bus");
-    }
-    this->ledController = new LedController(&Wire);
-    this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _comms.sendTofMeasurement(distance); });
+    albaComms = new SoftWire(_config.sunriseSdaPin, _config.sunriseSclPin);
+    albaComms->setTxBuffer(albaSwTxBuffer, sizeof(albaSwTxBuffer));
+    albaComms->setRxBuffer(albaSwRxBuffer, sizeof(albaSwRxBuffer));
+    albaComms->setTimeout_ms(200);
+    albaComms->setDelay_us(20);
+    albaComms->begin();
+    this->ledController = new LedController(albaComms);
+    this->distanceSensor = new DistanceSensor(albaComms, [this](int distance) { _comms.sendTofMeasurement(distance); });
     if (this->ledController->isAvailable()) {
         _config.capabilites.ledControls = true;
         _config.capabilites.tof = true;
         _comms.onLedControl([this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
     }
 
-    _comms.init("GPBLS", _config.name.c_str(), _version, _config.capabilites.dimming, _config.capabilites.pressure,
-                _config.capabilites.ledControls, _config.capabilites.tof);
+    gm::DeviceCapabilities capabilities = gaggimate_Capabilities_init_zero;
+    capabilities.dimming = _config.capabilites.dimming;
+    capabilities.pressure = _config.capabilites.pressure;
+    capabilities.tof = _config.capabilites.tof;
+    capabilities.led_control = _config.capabilites.ledControls;
+    if (this->gearpumpAddon != nullptr) {
+        capabilities.addons_count = 1;
+        capabilities.addons[0] = gaggimate_Addon_init_zero;
+        capabilities.addons[0].type = 7;
+    }
+    _comms.init("GPBLS", _config.name.c_str(), _version, capabilities);
 
     if (_config.capabilites.ledControls) {
         this->ledController->setup();

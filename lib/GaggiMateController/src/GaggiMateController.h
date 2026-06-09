@@ -56,6 +56,8 @@ class GaggiMateController {
 
     GearpumpAddon *gearpumpAddon = nullptr;
 
+    SoftWire *albaComms = nullptr;
+
     std::vector<ControllerConfig> configs;
 
     String _version;

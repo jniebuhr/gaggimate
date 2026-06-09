@@ -30,6 +30,7 @@ using LedChannel = gaggimate_LedChannel;
 using LedControl = gaggimate_LedControl;
 
 using DeviceCapabilities = gaggimate_Capabilities;
+using Addon = gaggimate_Addon;
 using SystemInfo = gaggimate_SystemInfo;
 using SensorData = gaggimate_SensorData;
 using BoilerReading = gaggimate_BoilerReading;

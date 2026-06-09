@@ -29,11 +29,10 @@ class GaggiMateServer {
 
     GaggiMateServer();
 
-    void init(const String &deviceName, const String &hardware, const String &version, bool dimming, bool pressure,
-              bool ledControl, bool tof);
+    void init(const String &deviceName, const String &hardware, const String &version, const gm::DeviceCapabilities &capabilities);
     bool isConnected() const { return _endpoint.isConnected(); }
 
-    void setSystemInfo(const String &hardware, const String &version, bool dimming, bool pressure, bool ledControl, bool tof);
+    void setSystemInfo(const String &hardware, const String &version, const gm::DeviceCapabilities &capabilities);
 
     // Build a payload without sending (compose your own batch, then send()).
     // sendSensorData reports boiler 0; the wire format supports several boilers.

@@ -1,6 +1,6 @@
 #include "LedController.h"
 
-LedController::LedController(TwoWire *i2c) { this->pca9634 = new PCA9634(0x00, i2c); }
+LedController::LedController(SoftWire *i2c) { this->pca9634 = new PCA9634(0x00, i2c); }
 
 void LedController::setup() {
     this->initialize();
