@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import preact from '@preact/preset-vite';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 
 function normalizeTarget(host, protocol) {
   const fallback = `${protocol}://gaggimate.local`;
@@ -33,6 +34,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      basicSsl(),
       preact(),
       tailwindcss(),
       VitePWA({
@@ -42,8 +44,13 @@ export default defineConfig(({ mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
           navigateFallback: '/index.html',
+          skipWaiting: true,
+          clientsClaim: true,
         },
         manifest: false,
+        devOptions: {
+          enabled: true,
+        },
       }),
     ],
 
