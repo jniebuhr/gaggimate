@@ -2,7 +2,7 @@
 #define SHOTHISTORYPLUGIN_H
 
 #include <ArduinoJson.h>
-#include <SPIFFS.h>
+#include <LittleFS.h>
 #include <display/core/Plugin.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
@@ -56,7 +56,7 @@ class ShotHistoryPlugin : public Plugin {
 
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
-    FS *fs = &SPIFFS;
+    FS *fs = &LittleFS;
     String currentId = "";
     bool isFileOpen = false;
     File currentFile;

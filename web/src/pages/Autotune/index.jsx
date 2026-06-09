@@ -8,25 +8,41 @@ export function Autotune() {
   const apiService = useContext(ApiServiceContext);
   const [active, setActive] = useState(false);
   const [result, setResult] = useState(null);
-  const [time, setTime] = useState(60);
-  const [samples, setSamples] = useState(4);
+  const [failed, setFailed] = useState(false);
+  const [time, setTime] = useState(120);
+  const [samples, setSamples] = useState(6);
+  // Default 680 W matches Gaggia Classic Pro 2019 / E24 boiler element on
+  // 230 V. (120 V variant is 570 W; cafeparts.com EF0030-A datasheet.) Used
+  // controller-side as combinedKff = TUNER_OUTPUT_SPAN / wattage so the
+  // Thermal Feedforward Gain is auto-populated on completion.
+  const [wattage, setWattage] = useState(680);
 
   const onStart = useCallback(() => {
     apiService.send({
       tp: 'req:autotune-start',
       time,
       samples,
+      wattage,
     });
+    setFailed(false);
+    setResult(null);
     setActive(true);
-  }, [time, samples, apiService]);
+  }, [time, samples, wattage, apiService]);
 
   useEffect(() => {
-    const listenerId = apiService.on('evt:autotune-result', msg => {
+    const resultListener = apiService.on('evt:autotune-result', msg => {
       setActive(false);
+      setFailed(false);
       setResult(msg.pid);
     });
+    const failedListener = apiService.on('evt:autotune-failed', () => {
+      setActive(false);
+      setResult(null);
+      setFailed(true);
+    });
     return () => {
-      apiService.off('evt:autotune-result', listenerId);
+      apiService.off('evt:autotune-result', resultListener);
+      apiService.off('evt:autotune-failed', failedListener);
     };
   }, [apiService]);
 
@@ -50,8 +66,9 @@ export function Autotune() {
                 </div>
                 <div className='alert alert-warning max-w-md'>
                   <span>
-                    Please wait while the system optimizes your PID settings. This may take up to 30
-                    seconds.
+                    The boiler will heat at full power until its temperature inflection is detected,
+                    then the SIMC tuning rule derives PID gains. Typically 1–3 minutes depending on
+                    machine.
                   </span>
                 </div>
               </div>
@@ -74,7 +91,21 @@ export function Autotune() {
             </div>
           )}
 
-          {!active && !result && (
+          {failed && (
+            <div className='space-y-4 text-center'>
+              <div className='alert alert-error mx-auto max-w-md'>
+                <div>
+                  <h3 className='font-bold'>Autotune Failed</h3>
+                  <div className='text-sm'>
+                    No valid gains were produced. Your existing PID settings have been preserved.
+                    Try increasing Test Duration or confirm the boiler was cold at start.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!active && !result && !failed && (
             <div className='space-y-4'>
               <div className='alert alert-warning'>
                 <span>
@@ -85,41 +116,63 @@ export function Autotune() {
 
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div className='form-control'>
-                  <label htmlFor='tuningGoal' className='mb-2 block text-sm font-medium'>
-                    Tuning Goal
+                  <label htmlFor='testTime' className='mb-2 block text-sm font-medium'>
+                    Test Duration (seconds)
                   </label>
                   <input
-                    id='tuningGoal'
+                    id='testTime'
                     type='number'
-                    min='0'
-                    max='100'
+                    min='30'
+                    max='300'
                     className='input input-bordered w-full'
                     value={time}
-                    onChange={e => setTime(parseInt(e.target.value, 10) || 0)}
-                    placeholder='60'
+                    onChange={e => setTime(Number.parseInt(e.target.value, 10) || 0)}
+                    placeholder='120'
                   />
                   <div className='mb-2 text-xs opacity-70'>
-                    0 = Conservative, 100 = Aggressive. Higher values result in faster response but
-                    may cause overshoot.
+                    Upper bound on the identification test. Most espresso boilers resolve within
+                    60–120 s. Extend if Autotune fails before peak slope is detected.
                   </div>
                 </div>
 
                 <div className='form-control'>
-                  <label htmlFor='windowSize' className='mb-2 block text-sm font-medium'>
-                    Window Size
+                  <label htmlFor='slopeWindow' className='mb-2 block text-sm font-medium'>
+                    Slope Window
                   </label>
                   <input
-                    id='windowSize'
+                    id='slopeWindow'
                     type='number'
-                    min='1'
-                    max='10'
+                    min='4'
+                    max='20'
                     className='input input-bordered w-full'
                     value={samples}
-                    onChange={e => setSamples(parseInt(e.target.value, 10) || 1)}
-                    placeholder='4'
+                    onChange={e => setSamples(Number.parseInt(e.target.value, 10) || 4)}
+                    placeholder='6'
                   />
                   <div className='mb-2 text-xs opacity-70'>
-                    Number of samples. More samples provide better accuracy but take longer.
+                    Moving-window length (samples) used for slope estimation. Larger values smooth
+                    MAX31855 quantisation but lag the inflection. 6 is the sweet spot.
+                  </div>
+                </div>
+
+                <div className='form-control'>
+                  <label htmlFor='heaterWattage' className='mb-2 block text-sm font-medium'>
+                    Heater Wattage (W)
+                  </label>
+                  <input
+                    id='heaterWattage'
+                    type='number'
+                    min='300'
+                    max='1500'
+                    className='input input-bordered w-full'
+                    value={wattage}
+                    onChange={e => setWattage(Number.parseInt(e.target.value, 10) || 0)}
+                    placeholder='680'
+                  />
+                  <div className='mb-2 text-xs opacity-70'>
+                    Boiler heating element wattage. Defaults: Gaggia Classic Pro 2019 / E24 = 1370
+                    W; Rancilio Silvia ≈ 1100 W. Used to derive Thermal Feedforward Gain after
+                    autotune completes.
                   </div>
                 </div>
               </div>
@@ -130,11 +183,18 @@ export function Autotune() {
 
       <div className='pt-4 lg:col-span-12'>
         <div className='flex flex-col gap-2 sm:flex-row'>
-          {!active && !result && (
+          {!active && !result && !failed && (
             <button
               className='btn btn-primary'
               onClick={onStart}
-              disabled={time < 0 || time > 100 || samples < 1 || samples > 10}
+              disabled={
+                time < 30 ||
+                time > 300 ||
+                samples < 4 ||
+                samples > 20 ||
+                wattage < 300 ||
+                wattage > 1500
+              }
             >
               Start Autotune
             </button>
@@ -142,6 +202,12 @@ export function Autotune() {
 
           {result && (
             <button className='btn btn-outline' onClick={() => setResult(null)}>
+              Back to Settings
+            </button>
+          )}
+
+          {failed && (
+            <button className='btn btn-outline' onClick={() => setFailed(false)}>
               Back to Settings
             </button>
           )}

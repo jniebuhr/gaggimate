@@ -30,8 +30,6 @@ export function NotesBarExpanded({
   onEdit,
   onSave,
   onCancel,
-  onCollapse,
-  isExpanded = false,
 }) {
   const borderClasses = 'border-base-content/5 border-t';
 
@@ -215,23 +213,17 @@ export function NotesBarExpanded({
           </div>
         ) : (
           /* ── VIEW MODE: Notes text + edit button ── */
-          <div className='flex items-start gap-3'>
-            <div
-              className={getAnalyzerSurfaceTriggerClasses({
-                className:
-                  'bg-base-200/50 hover:text-base-content/80 min-h-[2rem] min-w-0 flex-1 cursor-pointer px-3 py-2 text-xs',
-              })}
-              onClick={onCollapse}
-              title='Click to collapse'
+          <div className='group bg-base-200/50 hover:bg-base-content/5 flex items-stretch overflow-hidden rounded-md transition-colors duration-150'>
+            <button
+              type='button'
+              className='text-base-content/70 hover:text-base-content/80 min-h-[2rem] min-w-0 flex-1 cursor-pointer px-3 py-2 text-left text-xs transition-colors duration-150'
+              onClick={onEdit}
+              title='Click to edit notes'
             >
               {notes.notes || 'No notes added'}
-            </div>
+            </button>
             <button
-              className={getAnalyzerTextButtonClasses({
-                className:
-                  'btn btn-sm border-base-content/10 text-base-content/70 flex-shrink-0 bg-transparent shadow-none',
-                tone: 'neutral',
-              })}
+              className='border-base-content/10 text-base-content/70 group-hover:border-base-content/20 group-hover:text-base-content hover:text-primary inline-flex flex-shrink-0 items-center border-l bg-transparent px-3 py-2 text-xs shadow-none transition-colors duration-150'
               onClick={onEdit}
               title='Edit notes'
             >

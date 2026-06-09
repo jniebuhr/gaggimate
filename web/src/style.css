@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 @import 'tailwindcss';
 @plugin 'daisyui';
 
@@ -441,5 +440,20 @@ html[data-theme='coffee'] {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .profile-list-drag-selected-item {
+    @apply ring-primary/50 bg-primary/10 shadow-md ring-2;
+  }
+  .profile-card-container.drop-highlight {
+    @apply bg-primary/10;
+  }
+}
+
+@custom-variant hmd {
+  @media (min-height: 429px) {
+    @slot;
   }
 }

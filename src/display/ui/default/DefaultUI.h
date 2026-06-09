@@ -52,6 +52,10 @@ class DefaultUI {
 
     void applyTheme();
 
+    bool isTaskHealthy() const {
+        return is_task_healthy(eTaskGetState(taskHandle)) && is_task_healthy(eTaskGetState(profileTaskHandle));
+    }
+
   private:
     void setupPanel();
     void setupState();
@@ -90,6 +94,7 @@ class DefaultUI {
     int updateActive = false;
     int apActive = false;
     int error = false;
+    int protocolMismatch = false;
     int autotuning = false;
     int waitingForController = false;
     int volumetricAvailable = false;

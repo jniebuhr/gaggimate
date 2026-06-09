@@ -7,6 +7,28 @@ import { machine } from '../../services/ApiService.js';
 import { Spinner } from '../../components/Spinner.jsx';
 import { faSignal } from '@fortawesome/free-solid-svg-icons/faSignal';
 import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
+import { faBatteryFull } from '@fortawesome/free-solid-svg-icons/faBatteryFull';
+import { faBatteryThreeQuarters } from '@fortawesome/free-solid-svg-icons/faBatteryThreeQuarters';
+import { faBatteryHalf } from '@fortawesome/free-solid-svg-icons/faBatteryHalf';
+import { faBatteryQuarter } from '@fortawesome/free-solid-svg-icons/faBatteryQuarter';
+import { faBatteryEmpty } from '@fortawesome/free-solid-svg-icons/faBatteryEmpty';
+
+// Pick an icon that roughly matches the fill level for a richer at-a-glance
+// read on the Scales page. The thresholds here are visual-only; the color
+// below is what actually conveys "pay attention" (≤9% red, ≤29% yellow).
+function batteryIcon(pct) {
+  if (pct >= 87) return faBatteryFull;
+  if (pct >= 62) return faBatteryThreeQuarters;
+  if (pct >= 37) return faBatteryHalf;
+  if (pct >= 12) return faBatteryQuarter;
+  return faBatteryEmpty;
+}
+
+function batteryColorClass(pct) {
+  if (pct <= 9) return 'text-error'; // critical — user must charge soon
+  if (pct <= 29) return 'text-warning'; // heads-up
+  return 'text-base-content/60'; // everyday — same tone as RSSI
+}
 
 export function Scales() {
   const [key, setKey] = useState(0);
@@ -156,6 +178,14 @@ function ScaleList(props) {
                   <span
                     className={`indicator-item status ml-2 ${scale.rssi < -90 ? 'status-error' : scale.rssi < -80 ? 'status-warning' : 'status-success'}`}
                   ></span>
+                  {scale.connected && scale.hasBattery && typeof scale.battery === 'number' && (
+                    <>
+                      <span className='mx-2'></span>
+                      <span className={batteryColorClass(scale.battery)}>
+                        <FontAwesomeIcon icon={batteryIcon(scale.battery)} /> {scale.battery}%
+                      </span>
+                    </>
+                  )}
                 </p>
               </div>
               <div className='flex items-center space-x-3'>
