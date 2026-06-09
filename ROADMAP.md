@@ -24,7 +24,7 @@ The project has moved beyond analyzer/history recovery, cache-first stabilisatio
 
 Current phase:
 
-Documentation Synchronisation
+Post-Validation Audit
 
 ⸻
 
@@ -217,3 +217,4 @@ Do not reintroduce:
 * unrestricted settings writes
 
 Merge-back compatibility remains a hard requirement.
+
