@@ -52,6 +52,10 @@ class GaggiMateServer {
     void sendTofMeasurement(uint32_t distance);
     void sendError(int code);
 
+    // Drop the current BLE link. The ping watchdog calls this so the display
+    // sees a real disconnect instead of having to interpret an in-band error.
+    void disconnect() { _transport.disconnect(); }
+
     // Send a pre-built payload / batch of payloads (one frame).
     void send(const gm::Payload &payload) { _endpoint.send(payload); }
     void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }

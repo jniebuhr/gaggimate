@@ -245,12 +245,22 @@ void GaggiMateController::handlePing() {
 }
 
 void GaggiMateController::handlePingTimeout() {
-    ESP_LOGE(LOG_TAG, "Ping timeout detected. Turning off heater and pump for safety.\n");
     // Turn off the heater and pump as a safety measure
     this->heater->setSetpoint(0);
     this->pump->setPower(0);
     this->valve->set(false);
     this->alt->set(false);
+    // On the healthy->timeout transition, drop the BLE link. An in-band error
+    // notify can be silently swallowed on a wedged GATT (the failure mode this
+    // is here to recover from), but LL_TERMINATE_IND propagates reliably at
+    // the link layer. The display's existing disconnect path then rebuilds
+    // the link and re-sends control state. loop() re-enters every 250 ms while
+    // timed out -- guard so we don't repeatedly bounce the connection or spam
+    // the log.
+    if (errorState != ERROR_CODE_TIMEOUT) {
+        ESP_LOGE(LOG_TAG, "Ping timeout detected. Turning off heater and pump for safety.");
+        _comms.disconnect();
+    }
     errorState = ERROR_CODE_TIMEOUT;
 }
 
