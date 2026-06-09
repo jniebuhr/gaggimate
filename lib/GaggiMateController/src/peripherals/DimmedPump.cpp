@@ -97,3 +97,7 @@ void DimmedPump::setPumpFlowCoeff(float oneBarFlow, float nineBarFlow) {
 void DimmedPump::setPumpFlowPolyCoeffs(float a, float b, float c, float d) {
     _pressureController.setPumpFlowPolyCoeffs(a, b, c, d);
 }
+
+void DimmedPump::setGains(float commutationGain, float convergenceGain, float integralGain) {
+    _pressureController.setGains(commutationGain, convergenceGain, integralGain);
+}

@@ -5,7 +5,8 @@
 
 GaggiMateServer::GaggiMateServer() : _endpoint(_transport) {}
 
-void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version, const gm::DeviceCapabilities &capabilities) {
+void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version,
+                           const gm::DeviceCapabilities &capabilities) {
     setSystemInfo(hardware, version, capabilities);
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
@@ -42,8 +43,9 @@ void GaggiMateServer::setSystemInfo(const String &hardware, const String &versio
     // JSON shape (plus "pv"), so pre-framing tools can still read it.
     char json[224];
     snprintf(json, sizeof(json), "{\"hw\":\"%s\",\"v\":\"%s\",\"pv\":%u,\"cp\":{\"ps\":%s,\"dm\":%s,\"led\":%s,\"tof\":%s}}",
-             hardware.c_str(), version.c_str(), static_cast<unsigned>(gm_proto::PROTOCOL_VERSION), capabilities.pressure ? "true" : "false",
-             capabilities.dimming ? "true" : "false", capabilities.led_control ? "true" : "false", capabilities.tof ? "true" : "false");
+             hardware.c_str(), version.c_str(), static_cast<unsigned>(gm_proto::PROTOCOL_VERSION),
+             capabilities.pressure ? "true" : "false", capabilities.dimming ? "true" : "false",
+             capabilities.led_control ? "true" : "false", capabilities.tof ? "true" : "false");
     _transport.setInfo(json);
 }
 
@@ -151,8 +153,8 @@ void GaggiMateServer::registerHandlers() {
             _pidCb(p.content.pid.kp, p.content.pid.ki, p.content.pid.kd, p.content.pid.kf);
     });
     _endpoint.on(gaggimate_Payload_pump_model_tag, [this](const gm::Payload &p) {
-        if (_pumpModelCb)
-            _pumpModelCb(p.content.pump_model.a, p.content.pump_model.b, p.content.pump_model.c, p.content.pump_model.d);
+        if (_pumpSettingsCb)
+            _pumpSettingsCb(p.content.pump_model);
     });
     _endpoint.on(gaggimate_Payload_autotune_tag, [this](const gm::Payload &p) {
         if (_autotuneCb)

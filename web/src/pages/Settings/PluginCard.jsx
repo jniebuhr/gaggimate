@@ -2,6 +2,10 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import homekitImage from '../../assets/homekit.png';
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
+import { computed } from '@preact/signals';
+import { machine } from '../../services/ApiService.js';
+
+const gearpumpAddon = computed(() => machine.value.status.gearpumpAddon);
 
 export function PluginCard({
   formData,
@@ -368,6 +372,91 @@ export function PluginCard({
           </div>
         )}
       </div>
+
+      {gearpumpAddon && (
+        <div className='bg-base-200 rounded-lg p-4'>
+          <div className='flex items-center justify-between'>
+            <span className='text-xl font-medium'>BLDC Pump Settings</span>
+          </div>
+          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            <p className='text-sm opacity-70'>
+              The BLDC pump addon was detected in your system. You can change the pump control
+              characteristics using the values below.
+            </p>
+
+            <div className='form-control'>
+              <label htmlFor='commutationGain' className='mb-2 block text-sm font-medium'>
+                Commutation Gain
+              </label>
+              <input
+                id='commutationGain'
+                name='commutationGain'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='0'
+                min='0'
+                max='100'
+                step='any'
+                value={formData.commutationGain?.toString()}
+                onChange={onChange('commutationGain')}
+              />
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='convergenceGain' className='mb-2 block text-sm font-medium'>
+                Convergence Gain
+              </label>
+              <input
+                id='convergenceGain'
+                name='convergenceGain'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='0'
+                min='0'
+                max='100'
+                step='any'
+                value={formData.convergenceGain?.toString()}
+                onChange={onChange('convergenceGain')}
+              />
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='integralGain' className='mb-2 block text-sm font-medium'>
+                Integral Gain
+              </label>
+              <input
+                id='integralGain'
+                name='integralGain'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='0'
+                min='0'
+                max='100'
+                step='any'
+                value={formData.integralGain?.toString()}
+                onChange={onChange('integralGain')}
+              />
+            </div>
+            <div className='form-control'>
+              <label htmlFor='maxPumpPower' className='mb-2 block text-sm font-medium'>
+                Maximum Pump Power (0 - 1)
+              </label>
+              <input
+                id='maxPumpPower'
+                name='maxPumpPower'
+                type='number'
+                placeholder='0'
+                min='0'
+                max='1'
+                step='any'
+                className='input input-bordered w-full'
+                value={formData.maxPumpPower?.toString()}
+                onChange={onChange('maxPumpPower')}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

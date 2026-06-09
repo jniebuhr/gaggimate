@@ -114,7 +114,7 @@ class Controller {
 #endif
     void setupBluetooth();
     void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
-                      bool ledControl, bool tof);
+                      bool ledControl, bool tof, std::vector<uint32_t> addons);
     // Connected to a controller too old to speak the framed protocol: drive the
     // same path as a protocol-version mismatch (OTA recovery only). infoJson is
     // the legacy INFO characteristic contents (hardware/version/capabilities).

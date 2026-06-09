@@ -115,6 +115,7 @@ void WebUIPlugin::loop() {
         statusDoc["puid"] = controller->getProfileManager()->getSelectedProfile().id;
         statusDoc["cp"] = controller->getSystemInfo().capabilities.pressure;
         statusDoc["cd"] = controller->getSystemInfo().capabilities.dimming;
+        statusDoc["gp"] = controller->getSystemInfo().capabilities.hasAddon(7);
         statusDoc["tw"] = profileManager->getSelectedProfile().getTotalVolume(); // total target weight for the process
         statusDoc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
         statusDoc["bt"] =
@@ -618,6 +619,14 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setAltRelayFunction(request->arg("altRelayFunction").toInt());
             if (request->hasArg("buttonBehavior"))
                 settings->setButtonBehaviorList(explode(request->arg("buttonBehavior"), ','));
+            if (request->hasArg("commutationGain"))
+                settings->setCommutationGain(request->arg("commutationGain").toFloat());
+            if (request->hasArg("convergenceGain"))
+                settings->setConvergenceGain(request->arg("convergenceGain").toFloat());
+            if (request->hasArg("integralGain"))
+                settings->setIntegralGain(request->arg("integralGain").toFloat());
+            if (request->hasArg("maxPumpPower"))
+                settings->setMaxPumpPower(request->arg("maxPumpPower").toFloat());
             settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
             if (request->hasArg("autowakeupSchedules")) {
                 // Handle schedule format with days
@@ -719,6 +728,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     // Add auto-wakeup settings to response
     doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
     doc["buttonBehavior"] = implode(settings.getButtonBehaviorList(), ",");
+    doc["commutationGain"] = settings.getCommutationGain();
+    doc["convergenceGain"] = settings.getConvergenceGain();
+    doc["integralGain"] = settings.getIntegralGain();
+    doc["maxPumpPower"] = settings.getMaxPumpPower();
 
     // Add schedule format with days
     std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();

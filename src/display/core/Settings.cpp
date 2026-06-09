@@ -1,8 +1,8 @@
 #include "Settings.h"
 
 #include <algorithm>
-#include <utility>
 #include <display/util/ColorConversion.h>
+#include <utility>
 
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);
@@ -111,6 +111,11 @@ Settings::Settings() {
     emptyTankDistance = preferences.getInt("sr_ed", 210);
     fullTankDistance = preferences.getInt("sr_fd", 30);
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
+
+    commutationGain = preferences.getFloat("p_cm", DEFAULT_COMMUTATION_GAIN);
+    convergenceGain = preferences.getFloat("p_cv", DEFAULT_CONVERGENCE_GAIN);
+    integralGain = preferences.getFloat("p_ig", DEFAULT_INTEGRAL_GAIN);
+    maxPumpPower = preferences.getFloat("p_mp", 1.0);
 
     String buttonBehaviorStr = preferences.getString("btnb", "brew,steam,water");
     buttonBehavior = explode(buttonBehaviorStr, ',');
@@ -469,6 +474,26 @@ void Settings::setButtonBehaviorList(const std::vector<String> &behavior_list) {
     save();
 }
 
+void Settings::setCommutationGain(float commutation_gain) {
+    commutationGain = commutation_gain;
+    save();
+}
+
+void Settings::setConvergenceGain(float convergence_gain) {
+    convergenceGain = convergence_gain;
+    save();
+}
+
+void Settings::setIntegralGain(float integral_gain) {
+    integralGain = integral_gain;
+    save();
+}
+
+void Settings::setMaxPumpPower(float max_pump_power) {
+    maxPumpPower = max_pump_power;
+    save();
+}
+
 void Settings::doSave() {
     if (!dirty) {
         return;
@@ -552,6 +577,10 @@ void Settings::doSave() {
     preferences.putInt("sr_fd", fullTankDistance);
     preferences.putInt("alt_relay", altRelayFunction);
     preferences.putString("btnb", implode(buttonBehavior, ","));
+    preferences.putFloat("p_cm", commutationGain);
+    preferences.putFloat("p_cv", convergenceGain);
+    preferences.putFloat("p_ig", integralGain);
+    preferences.putFloat("p_mp", maxPumpPower);
 
     preferences.end();
 }

@@ -2,8 +2,8 @@
 #define DISTANCESENSOR_H
 
 #include <Arduino.h>
-#include <VL35L0X/VL53L0X.h>
 #include <SoftWire.h>
+#include <VL35L0X/VL53L0X.h>
 
 using distance_callback_t = std::function<void(int)>;
 

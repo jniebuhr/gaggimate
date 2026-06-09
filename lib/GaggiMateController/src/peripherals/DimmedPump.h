@@ -25,14 +25,15 @@ class DimmedPump : public Pump {
     float getFlowTarget() { return _ctrlFlow; }
     float getPowerTarget() { return _power; }
     float *getPumpPowerPtr() override { return &_power; } // For external pump control
-    float *getPumpFlowPtr() { return &_currentFlow; }  // For thermal feedforward
-    int *getValveStatusPtr() { return &_valveStatus; } // For thermal feedforward valve state
+    float *getPumpFlowPtr() { return &_currentFlow; }     // For thermal feedforward
+    int *getValveStatusPtr() { return &_valveStatus; }    // For thermal feedforward valve state
     void tare();
 
     void setFlowTarget(float targetFlow, float pressureLimit);
     void setPressureTarget(float targetPressure, float flowLimit);
     void setPumpFlowCoeff(float oneBarFlow, float nineBarFlow);
     void setPumpFlowPolyCoeffs(float a, float b, float c, float d);
+    void setGains(float commutationGain, float convergenceGain, float integralGain);
     void stop();
     void fullPower();
     void setValveState(bool open);

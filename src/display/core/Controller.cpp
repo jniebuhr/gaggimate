@@ -180,9 +180,10 @@ void Controller::setupBluetooth() {
             setMode(MODE_STANDBY);
         }
     });
-    comms.onSystemInfo(
-        [this](const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure, bool ledControl,
-               bool tof) { onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof); });
+    comms.onSystemInfo([this](const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
+                              bool ledControl, bool tof, vector<uint32_t> addons) {
+        onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof, addons);
+    });
     comms.onIncompatibleController([this](const String &info) { onIncompatibleController(info); });
     // A controller OTA streams the firmware over this BLE link; the relaxed idle
     // interval makes that crawl. Force a low-latency interval for the duration of
@@ -303,7 +304,7 @@ void Controller::setupBluetooth() {
 }
 
 void Controller::onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
-                              bool ledControl, bool tof) {
+                              bool ledControl, bool tof, vector<uint32_t> addons) {
     const bool mismatch = protocolVersion != gm_proto::PROTOCOL_VERSION;
     systemInfo = SystemInfo{.hardware = String(hardware),
                             .version = String(version),
@@ -313,6 +314,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
                                     .pressure = pressure,
                                     .ledControl = ledControl,
                                     .tof = tof,
+                                    .addons = addons,
                                 },
                             .protocolVersion = protocolVersion,
                             .protocolMismatch = mismatch};
@@ -358,7 +360,7 @@ void Controller::onIncompatibleController(const String &infoJson) {
     DeserializationError err = deserializeJson(doc, infoJson);
     if (err) {
         ESP_LOGW(LOG_TAG, "Incompatible controller, no readable info (%s)", err.c_str());
-        onSystemInfo("Legacy controller", "0.0.0", 0, false, false, false, false);
+        onSystemInfo("Legacy controller", "0.0.0", 0, false, false, false, false, {});
         return;
     }
     String hardware = doc["hw"].as<String>();
@@ -368,7 +370,7 @@ void Controller::onIncompatibleController(const String &infoJson) {
     if (version.isEmpty())
         version = "0.0.0";
     onSystemInfo(hardware.c_str(), version.c_str(), 0, doc["cp"]["dm"].as<bool>(), doc["cp"]["ps"].as<bool>(),
-                 doc["cp"]["led"].as<bool>(), doc["cp"]["tof"].as<bool>());
+                 doc["cp"]["led"].as<bool>(), doc["cp"]["tof"].as<bool>(), {});
 }
 
 void Controller::setupWifi() {
@@ -644,7 +646,11 @@ void Controller::setPumpModelCoeffs(void) {
         // flow-measurement semantics (c,d NaN) on the controller side.
         float coeffs[4];
         parseFloatCsv(settings.getPumpModelCoeffs(), coeffs, 4, NAN);
-        comms.sendPumpModelCoeffs(coeffs[0], coeffs[1], coeffs[2], coeffs[3]);
+        bool gearpumpEnabled = systemInfo.capabilities.hasAddon(7);
+        comms.sendPumpSettings(coeffs[0], coeffs[1], coeffs[2], coeffs[3],
+                               gearpumpEnabled ? settings.getCommutationGain() : DEFAULT_COMMUTATION_GAIN,
+                               gearpumpEnabled ? settings.getConvergenceGain() : DEFAULT_CONVERGENCE_GAIN,
+                               gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower());
     }
 }
 

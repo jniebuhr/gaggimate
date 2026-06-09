@@ -86,12 +86,14 @@ void GearpumpAddon::setup(float *power) {
 void GearpumpAddon::loop() {
     if (_power != nullptr) {
         _currentPower = *_power * 0.05f + _currentPower * 0.95f;
-        float voltage = MCP_VOLTAGE * _currentPower / 100.0f;
+        float voltage = MCP_VOLTAGE * (_currentPower / 100.0f * _maxPower);
         mcp->setVoltage(voltage);
     }
 }
 
 void GearpumpAddon::stop() { _currentPower = 0.0f; }
+
+void GearpumpAddon::setMaxPower(float maxPower) { _maxPower = maxPower; }
 
 void GearpumpAddon::loopTask(void *arg) {
     auto *pump = static_cast<GearpumpAddon *>(arg);

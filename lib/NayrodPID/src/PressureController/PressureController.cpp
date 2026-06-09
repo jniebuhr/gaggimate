@@ -116,6 +116,12 @@ void PressureController::setPumpFlowPolyCoeffs(float a, float b, float c, float 
     _pumpFlowCoefficients[3] = d;
 }
 
+void PressureController::setGains(float commutationGain, float convergenceGain, float integralGain) {
+    _commutationGain = commutationGain;
+    _convergenceGain = convergenceGain;
+    _integralGain = integralGain;
+}
+
 void PressureController::tare() {
     _coffeeOutput = 0.0f;
     _pumpVolume = 0.0f;

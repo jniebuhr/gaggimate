@@ -11,6 +11,7 @@ class GearpumpAddon {
     void setup(float *power);
     void loop();
     void stop();
+    void setMaxPower(float maxPower);
 
   private:
     uint8_t _addr;
@@ -20,6 +21,7 @@ class GearpumpAddon {
 
     float *_power = nullptr;
     float _currentPower = 0.0f;
+    float _maxPower = 1.0f;
     SoftWire *i2c;
     MCP4725 *mcp;
 
