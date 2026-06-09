@@ -116,7 +116,10 @@ void WebUIPlugin::loop() {
         return;
     }
     const long now = millis();
-    if ((lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL)) {
+    // Skip the (blocking, TLS) update check while a process is active: a brew/steam/grind
+    // must not have the control loop stalled for the duration of the handshake, nor compete
+    // with it for memory. isActive() is the reliable "a process is running" signal.
+    if (!controller->isActive() && (lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL)) {
         ota->checkForUpdates();
         pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
         lastUpdateCheck = now;
