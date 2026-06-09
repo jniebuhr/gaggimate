@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import preact from '@preact/preset-vite';
 import tailwindcss from '@tailwindcss/vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 function normalizeTarget(host, protocol) {
   const fallback = `${protocol}://gaggimate.local`;
@@ -31,7 +32,20 @@ export default defineConfig(({ mode }) => {
   const wsTarget = normalizeTarget(configuredHost, 'ws');
 
   return {
-    plugins: [preact(), tailwindcss()],
+    plugins: [
+      preact(),
+      tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        injectRegister: 'auto',
+        includeAssets: ['gm.svg', 'gm.png', 'app.webmanifest'],
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+          navigateFallback: '/index.html',
+        },
+        manifest: false,
+      }),
+    ],
 
     server: {
       proxy: {
