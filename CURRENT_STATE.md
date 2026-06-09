@@ -334,15 +334,16 @@ PASS
 
 Current phase:
 
-Documentation Synchronisation
+Post-Validation Audit
 
 Current remaining validation targets:
 
-1. Large archive import behaviour testing.
-2. Browser storage behaviour testing.
+1. Browser storage behaviour testing.
+2. Merge-back readiness audit.
 
 Deferred:
 
+* Large archive import behaviour testing — insufficient real-world archive volume.
 * Archive Browser
 * Archive Management
 
@@ -442,10 +443,12 @@ Completed during archive validation / implementation:
 
 Remaining before safe sync implementation:
 
-1. Documentation synchronisation.
-2. Large archive import behaviour testing.
-3. Browser storage behaviour testing.
-4. Owner/merge-back branch hygiene audit if preparing upstream handoff.
+1. Browser storage behaviour testing.
+2. Owner/merge-back branch hygiene audit if preparing upstream handoff.
+
+Deferred:
+
+* Large archive import behaviour testing — insufficient real-world archive volume.
 
 Completed Stabilisation Fixes
 
@@ -457,3 +460,4 @@ Shot History / Analyzer
 * Added Shot History hydration before local shot-list rendering.
 * Archive export now uses the same canonical merged shot list as History/Analyzer instead of raw IndexedDB rows.
 * Archive import preview now uses the same canonical merged shot list as History/Analyzer instead of raw IndexedDB rows.
+

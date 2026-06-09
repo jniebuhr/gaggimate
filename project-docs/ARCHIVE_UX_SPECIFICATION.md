@@ -367,14 +367,16 @@ Remaining future hardening:
 
 Next Phase
 
-Documentation Synchronisation
+Post-Validation Audit
 
 Objectives:
 
-* Align CURRENT_STATE.md with validated repository state
-* Align ROADMAP.md with validated repository state
+* Browser storage behaviour testing remains the next immediate validation target
+* Merge-back readiness audit follows browser storage testing
+* Large archive import behaviour testing is deferred until sufficient real-world archive volume exists
 * Keep Archive Browser deferred
 * Keep Archive Management deferred
 * Preserve archive authority alignment
 
 Archive UX planning should not be reopened unless implementation uncovers a genuine UX gap.
+
