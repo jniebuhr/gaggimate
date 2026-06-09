@@ -15,6 +15,7 @@
 #include <esp_err.h>
 #include <esp_heap_caps.h>
 #include <esp_partition.h>
+#include <mbedtls/platform.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -28,9 +29,29 @@ using PsramString = std::basic_string<char, std::char_traits<char>, PsramStlAllo
 static std::unordered_map<uint32_t, PsramString> rxBuffers;
 static WebUIPlugin *g_webUIPlugin = nullptr;
 
+// Route mbedTLS allocations to PSRAM. The Arduino-ESP32 sdkconfig sets
+// CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC=y, pinning TLS handshake buffers (~32 KB) to the
+// scarce internal DRAM that WiFi + BLE already leave near ~60 KB free. A CA-verified OTA
+// update check then drives internal free toward zero and crypto allocations start failing
+// (esp-sha/esp-aes "Failed to allocate"). mbedTLS is built with MBEDTLS_PLATFORM_MEMORY
+// (function-pointer allocator), so this runtime override moves those buffers to the 8 MB
+// PSRAM. Falls back to internal DRAM if PSRAM is exhausted so TLS still functions;
+// heap_caps_free handles pointers from either heap.
+static void *mbedtlsPsramCalloc(size_t n, size_t size) {
+    void *p = heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (p == nullptr) {
+        p = heap_caps_calloc(n, size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    }
+    return p;
+}
+static void mbedtlsPsramFree(void *p) { heap_caps_free(p); }
+
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") { g_webUIPlugin = this; }
 
 void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) {
+    // Redirect mbedTLS allocations to PSRAM before any TLS (OTA) handshake runs, so the
+    // ~32 KB handshake buffers don't exhaust the scarce internal-DRAM pool. See mbedtlsPsramCalloc.
+    (void)mbedtls_platform_set_calloc_free(mbedtlsPsramCalloc, mbedtlsPsramFree);
     this->controller = _controller;
     this->profileManager = _controller->getProfileManager();
     this->pluginManager = _pluginManager;
