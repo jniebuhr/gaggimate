@@ -20,11 +20,11 @@ GaggiGo
 = archive layer
 = future safe sync client
 
-The project has moved beyond analyzer/history recovery, hardening, archive engine implementation, archive UX planning, archive export validation, and ZIP compression hardening.
+The project has moved beyond analyzer/history recovery, cache-first stabilisation, hardening, archive engine implementation, archive UX planning, archive export validation, ZIP compression hardening, and archive runtime validation.
 
 Current phase:
 
-Archive Runtime Validation
+Documentation Synchronisation
 
 ⸻
 
@@ -76,6 +76,7 @@ project-docs/API_SERVICE_BOUNDARY_MAP.md
 Archive architecture phase complete.
 Archive engine phase complete.
 Archive validation phase complete.
+Archive import/export authority phase complete.
 
 ⸻
 
@@ -85,22 +86,27 @@ Status: Blocked.
 
 Sync work must not begin until:
 
+* documentation synchronisation is complete
 * archive UX implementation is complete
 * archive runtime validation is complete
 * manifest schema remains stable
 * local mirror behaviour remains deterministic
+* large archive behaviour is consciously accepted as future hardening or validated
+* browser storage behaviour is consciously accepted as future hardening or validated
 
 ⸻
 
 Phase 5 — Archive UX + Archive Runtime Validation
 
-Status: Active.
+Status: Complete.
 
 Completed:
 
 * Storage page implemented
 * Create Backup UI implemented
 * Archive download workflow implemented
+* Restore Backup preview UI implemented
+* Restore Backup execution UI implemented
 * Archive engine implementation complete
 * Archive validation pipeline complete
 * Archive import pipeline complete
@@ -109,6 +115,11 @@ Completed:
 * Archive count consistency validated
 * Archive quality gate passed
 * ZIP compression implemented and validated
+* Empty-mirror restore execution validated
+* Populated-mirror duplicate restore preview validated
+* Populated-mirror duplicate restore execution validated
+* Lint validation passed
+* Production build validation passed
 
 Validated archive export:
 
@@ -121,12 +132,30 @@ Validated archive export:
 * Snapshot-consistent export path
 * ZIP size reduced from ~7.05 MB to ~382 KB
 
-Current active validation:
+Validated empty-mirror restore:
 
-1. Restore Backup runtime validation
-2. Import runtime validation
-3. Large archive import behaviour testing
-4. Browser storage behaviour testing
+* Imported shots: 141
+* Imported profiles: 5
+* Imported notes: 0
+* Skipped duplicate shots: 0
+* History rendering after restore: PASS
+* Analyzer rendering after restore: PASS
+* Statistics rendering after restore: PASS
+
+Validated populated-mirror duplicate protection:
+
+* Shots to import: 0
+* Duplicate shots: 141
+
+Validated populated-mirror restore execution:
+
+* Imported shots: 0
+* Skipped duplicate shots: 141
+
+Remaining future hardening / validation:
+
+1. Large archive import behaviour testing
+2. Browser storage behaviour testing
 
 Deferred:
 
@@ -148,6 +177,9 @@ Planned:
 * runtime cleanup
 * end-to-end testing
 * feature gating/app-mode architecture
+* large archive import behaviour testing
+* browser storage behaviour testing
+* owner/merge-back branch hygiene audit if preparing upstream handoff
 
 ⸻
 
