@@ -91,6 +91,8 @@ Confirmed working after recent fixes and validation:
 * Reconnect does not produce hydration spam.
 * Reconnect does not produce websocket retry flood.
 * Cache-first architecture is functioning as the active data model.
+* npm run lint:check passes.
+* npm run build passes.
 
 Important implementation point:
 
@@ -114,8 +116,9 @@ Archive Export Hardening Complete
 ZIP Compression Hardening Complete
 Restore Backup Preview UI Implemented
 Restore Backup Execution UI Implemented
-Archive Import Runtime Validation Complete for empty-mirror restore
-Duplicate-over-existing restore validation still requires a populated-mirror duplicate test before being marked complete
+Archive Import Runtime Validation Complete
+Populated-mirror duplicate validation Complete
+Populated-mirror restore execution validation Complete
 
 Archive architecture is defined by:
 
@@ -213,6 +216,7 @@ Preview           PASS
 Merge plan        PASS
 Execution         PASS
 Build             PASS
+Lint              PASS
 Repository sync   PASS
 
 No GaggiMate write path was introduced by archive import.
@@ -222,6 +226,10 @@ No parallel persistence system was introduced.
 Archive import restores GaggiGo data only.
 
 Archive UX planning has been completed.
+
+Archive UX implementation has been completed for v1 scope.
+
+Archive Runtime Validation has been completed for the validated 141-shot archive.
 
 ⸻
 
@@ -306,31 +314,32 @@ ArchiveImportService
 
 This aligns import preview duplicate detection with the same canonical shot authority used by archive export, History, Analyzer, Statistics, and Storage archive counts.
 
-Important validation boundary:
-
-The empty-mirror restore path is validated.
-
-The duplicate-over-existing restore path must still be validated from a populated mirror before duplicate protection is marked complete.
-
-Expected populated-mirror preview result:
+Validated populated-mirror duplicate restore preview result:
 
 * Shots to import: 0
 * Duplicate shots: 141
 
-Do not mark duplicate protection complete until this has been confirmed.
+Validated populated-mirror restore execution result:
+
+* Imported shots: 0
+* Skipped duplicate shots: 141
+
+This confirms duplicate protection operates correctly against an already-populated mirror.
+
+Duplicate protection validation:
+
+PASS
 
 ⸻
 
 Current phase:
 
-Archive Runtime Validation
+Documentation Synchronisation
 
-Current next validation targets:
+Current remaining validation targets:
 
-1. Validate duplicate-over-existing restore preview on a populated mirror.
-2. Validate restore execution on a populated mirror only if preview shows 0 shots to import and 141 duplicate shots.
-3. Large archive import behaviour testing.
-4. Browser storage behaviour testing.
+1. Large archive import behaviour testing.
+2. Browser storage behaviour testing.
 
 Deferred:
 
@@ -339,7 +348,7 @@ Deferred:
 
 These remain future enhancements and are not required for Archive UX v1.
 
-No safe sync implementation should begin before archive UX and archive runtime validation are complete.
+No safe sync implementation should begin before documentation synchronisation is complete and the remaining archive/browser behaviour tests are consciously accepted as future hardening or completed.
 
 ⸻
 
@@ -395,6 +404,21 @@ Completed during hardening:
 * observer-safe operations documented
 * sync/archive safety boundaries documented
 
+Validation completed:
+
+* npm run lint:check PASS
+* npm run build PASS
+
+Repository hardening pass completed successfully.
+
+Completed during cleanup/hardening:
+
+* Archive runtime hardening review
+* Sonar cleanup pass
+* ESLint validation pass
+* Production build validation pass
+* globalThis portability cleanup
+
 Completed during archive validation / implementation:
 
 * Runtime validation matrix review.
@@ -412,14 +436,16 @@ Completed during archive validation / implementation:
 * Canonical archive shot count implemented and validated.
 * ZIP compression implemented and validated.
 * Empty-mirror restore import validated through History, Analyzer, and Statistics.
+* Populated-mirror duplicate restore preview validated.
+* Populated-mirror duplicate restore execution validated.
 * Archive import duplicate detection authority aligned with LibraryService.getAllShots('both').
 
 Remaining before safe sync implementation:
 
-1. Populated-mirror duplicate restore preview validation.
-2. Populated-mirror duplicate restore execution validation.
-3. Large archive import behaviour testing.
-4. Browser storage behaviour testing.
+1. Documentation synchronisation.
+2. Large archive import behaviour testing.
+3. Browser storage behaviour testing.
+4. Owner/merge-back branch hygiene audit if preparing upstream handoff.
 
 Completed Stabilisation Fixes
 
